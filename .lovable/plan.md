@@ -1,91 +1,141 @@
-# Plan : Funnel Autonome Acquisition Entrepreneur
+## Phase B — Landing prospect + Stripe→AIPP auto-publish (livraison complète)
 
-## Décisions actées
-- **Source de vérité unique** : `outbound_*` (38 tables, 14 pages admin déjà construites)
-- **Sources de données** : Firecrawl (déjà connecté) + Google Places (clé `GOOGLE_PLACES_API_KEY` à confirmer)
-- **MVP de validation** : Isolation à Laval + Terrebonne, 100 prospects
-- **Aucune nouvelle table** sauf vue d'unification (les 38 tables outbound suffisent)
-
-## Architecture cible (chaîne unique)
-
-```text
-[1] Scrape Google Places (trade+city) ─► outbound_companies
-       │
-[2] Firecrawl enrich site web ─────────► outbound_lead_enrichment
-       │
-[3] AIPP Score (réutilise aipp-real-scan) ► outbound_ai_scores
-       │
-[4] Personnalisation Gemini ───────────► outbound_ai_personalizations
-       │
-[5] Approval gate (existant) ──────────► outbound_approvals
-       │
-[6] Email + SMS via process-outbound-queue ► outbound_send_logs
-       │
-[7] Landing /pro/diagnostic/:slug (existe en partie) ► outbound_clicks
-       │
-[8] Alex onboarding (existe : contractor-onboarding) ► contractor_onboarding_sessions
-       │
-[9] Stripe checkout (existe : create-contractor-checkout) ► contractor_subscriptions
-       │
-[10] AIPP profil publié (existe : aipp_profiles) ► /ai-indexed-profiles/:slug
-```
-
-## Livraison (3 phases courtes)
-
-### Phase A — Orchestrateur unique (cette session)
-1. **Edge function `autopilot-mvp`** : orchestre les 10 étapes sur un batch de prospects (paramètres : `trade`, `cities[]`, `limit`, `dry_run`)
-   - Étape 1-2 : appelle Google Places + Firecrawl, insère dans `outbound_companies` + `outbound_lead_enrichment`
-   - Étape 3 : appelle `aipp-real-scan` existant, stocke dans `outbound_ai_scores`
-   - Étape 4 : appelle Gemini via Lovable AI Gateway, stocke dans `outbound_ai_personalizations`
-   - Étape 5-6 : pousse vers `outbound_approvals` (gate humain) puis queue
-   - Logging unifié dans `outbound_pipeline_errors` + `outbound_run_stage_transitions`
-2. **Page `/admin/autopilot-mvp`** : 1 écran cockpit
-   - Sélecteur trade (10 métiers prioritaires)
-   - Sélecteur villes (Laval, Terrebonne précochés)
-   - Slider `limit` (10-200)
-   - Toggle `dry_run`
-   - Bouton **Lancer**
-   - Timeline temps réel des étapes (realtime sur `outbound_run_stage_transitions`)
-   - KPI : scraped / scored / approved / sent / clicked / paid
-
-### Phase B — Glue manquante (cette session)
-1. **Page publique `/pro/diagnostic/:slug`** (créer si absente)
-   - Score AIPP + faiblesses + revenu perdu
-   - Aperçu profil futur
-   - CTA "Activer mon profil"
-   - Alex orb pré-contextualisé
-2. **Connecter post-paiement → AIPP auto-publish**
-   - Webhook Stripe existant (`activate-contractor-plan`) déclenche création `aipp_profiles` + `aipp_pages` automatique
-   - Aucune nouvelle fonction, juste ajouter le lien dans `activate-contractor-plan`
-
-### Phase C — Migration de données (différée, après preuve MVP)
-- Migration `acq_*` + `prospect_*` + `sniper_*` → `outbound_*`
-- Deprecation flags sur anciennes tables
-- À planifier après 10 conversions payées via Phase A+B
-
-## Migrations SQL (Phase A)
-1 seule migration légère :
-- `outbound_companies` : ajouter `trade`, `google_place_id`, `google_rating`, `google_review_count`, `rbq_number`, `neq_number` si absents
-- Index sur `(trade, city, status)` pour le cockpit
-- Vue `v_autopilot_pipeline` agrégant les KPI temps réel
-
-## Risques traités
-- **Pas de duplication** : on réutilise `aipp-real-scan`, `create-contractor-checkout`, `activate-contractor-plan`, queue d'envoi existante
-- **RLS** : `autopilot-mvp` exige `has_role(uid, 'admin')`, profile public RLS = `public_status = 'published'`
-- **Légal scraping** : Google Places API + sites publics uniquement, logging provenance dans `outbound_companies.source_url`
-- **Approval gate** : aucun email envoyé sans validation humaine en MVP (toggle `auto_approve` désactivé par défaut)
-
-## Critères de succès Phase A+B
-- Admin clique "Lancer" → 100 prospects isolation Laval+Terrebonne scrapés + scorés en <10 min
-- 10 prospects approuvés manuellement → emails envoyés
-- 1 prospect clique → landing /pro/diagnostic/:slug s'affiche avec son score
-- 1 prospect ouvre Alex → onboarding → Stripe → profil AIPP publié sur `/ai-indexed-profiles/:slug` automatiquement
-
-## Hors scope (volontairement)
-- Migration des 4 systèmes legacy (Phase C)
-- SMS Twilio (la queue existe, on l'active si Twilio est connecté ; sinon email-only)
-- 10 métiers × tout le Québec (on prouve avec 1 métier × 2 villes)
+Boucle l'autopilot end-to-end : email envoyé → prospect clique → landing personnalisée premium avec son score AIPP réel + faiblesses + Alex + checkout → paiement → profil entrepreneur publié automatiquement + email de bienvenue.
 
 ---
 
-**Confirme et je commence Phase A : migration légère + edge function `autopilot-mvp` + page `/admin/autopilot-mvp`.**
+### 1. Données (1 migration)
+
+**Nouvelles colonnes `outbound_leads`:**
+- `landing_slug` text unique (généré : `slugify(company)-{shortId}`)
+- `landing_token` text unique (sécurité contre énumération)
+- `landing_first_viewed_at`, `landing_last_viewed_at`, `landing_view_count` int default 0
+- `checkout_initiated_at`, `checkout_session_id`, `checkout_plan_code`
+- `paid_at`, `published_contractor_id` uuid (FK `contractors.id`)
+- `publish_status` enum : `pending|published|failed`
+
+**Nouvelle table `outbound_landing_events`** : `lead_id, event_type (view|cta_click|alex_open|checkout_start|paid|published), payload jsonb, ip, ua, created_at`. RLS: insert public + select admin only.
+
+**Vue `v_outbound_funnel`** : agrège views→clicks→checkout→paid→published par jour/trade/ville.
+
+**Trigger** : à l'insert d'un lead par autopilot-mvp, génère `landing_slug` + `landing_token` automatiquement.
+
+---
+
+### 2. Edge functions
+
+**`outbound-landing-resolve` (public, verify_jwt=false)**
+- GET `?slug=...&t=...` → vérifie token, log view dans `outbound_landing_events`, incrémente view_count, retourne `{ lead, aipp_score, weaknesses, recommended_plan, company_meta }`.
+- Calcule plan recommandé via logique existante `compute-plan-recommendation` (score < 40 → Pro, 40-60 → Premium, 60+ → Élite).
+
+**`outbound-checkout-start` (public)**
+- POST `{ slug, token, plan_code }` → crée Stripe Checkout session avec `metadata: { lead_id, slug, source: "outbound_landing" }`, log event, retourne URL.
+- Réutilise `create-contractor-checkout` existant (wrapper qui injecte metadata).
+
+**`outbound-checkout-webhook` (public, signature Stripe)**
+- Sur `checkout.session.completed` avec `metadata.source = "outbound_landing"` :
+  1. Marque `outbound_leads.paid_at`, `checkout_session_id`, `checkout_plan_code`
+  2. Appelle `outbound-publish-contractor` (chaîne interne)
+  3. Log `paid` event
+
+**`outbound-publish-contractor` (interne, service-role)**
+- Crée ou met à jour ligne `contractors` à partir des données enrichies du lead (business_name, phone, website, rbq, neq, address, services, trade, google_rating, google_review_count).
+- Crée `contractor_scores` avec AIPP réel.
+- Crée `contractor_plans` ligne active avec plan acheté.
+- Génère slug public `/entrepreneur/:slug`.
+- Marque `outbound_leads.published_contractor_id`, `publish_status='published'`, log `published`.
+- Envoie email bienvenue via `send-transactional-email` existant (template "contractor_welcome") avec lien magic vers `/contractor/onboarding?lead=...` pour finir profil (photo, équipe, avant-après).
+
+**`outbound-magic-link` (public)**
+- GET `?lead_id=...&token=...` → crée user Supabase auth (passwordless), lie à `contractor.user_id`, redirige `/contractor/dashboard`.
+
+---
+
+### 3. UI publique — Landing /pro/diagnostic/:slug
+
+Route React, dark cinematic theme (memory:premium-cinematic-theme), mobile-first.
+
+**Sections (scroll narratif) :**
+1. **Hero personnalisé** : `Bonjour {prénom_dirigeant_si_connu}, voici l'analyse IA de {Nom Entreprise}` + AIPP score animé /100 + verdict en 1 phrase.
+2. **Breakdown 5 dimensions** (Web, Google, Trust, AI Readiness, Conversion) avec barres + chiffres réels.
+3. **3 faiblesses critiques** identifiées (cards avec icônes, impact $ estimé).
+4. **Projection revenus** : "Avec ces 3 corrections + UNPRO, +{X} rendez-vous/mois = +{Y}$ revenus annuels" (utilise `compute-plan-recommendation`).
+5. **Plan recommandé** sticky avec CTA Stripe inline (Payment Element existant) + 2 alternatives.
+6. **Alex orb** flottant : voice-first, prompt contextuel `"Tu parles à {dirigeant} de {entreprise}, score AIPP {X}, faiblesses : {liste}. Explique le plan en 30 sec."` (réutilise `alexCopilotEngine` + `alexVoiceConfig`).
+7. **Trust strip** : RBQ, NEQ, témoignages, garantie 30j.
+8. **Footer minimal** avec lien désabonnement.
+
+Composants : `PageOutboundLanding.tsx`, `AippScoreReveal` (réutilise `mem://features/aipp-score-reveal-engine`), `WeaknessCard`, `RevenueProjection`, `RecommendedPlanCard`, `OutboundAlexOrb`.
+
+Tracking : appel `outbound-landing-resolve` au mount (view) + events sur scroll, CTA click, Alex open, checkout start.
+
+---
+
+### 4. UI admin — Dashboard funnel `/admin/outbound/landing-funnel`
+
+Tableau live (refresh 10s) : par lead → status (sent, viewed, alex_engaged, checkout_started, paid, published), views, last_seen, CTA "Voir landing", "Republier".
+
+KPIs en haut : conversion rate (sent→view, view→checkout, checkout→paid), revenus 7j/30j, top trades convertissant.
+
+Branchée sur `v_outbound_funnel`.
+
+---
+
+### 5. Intégration autopilot-mvp existant
+
+Modifier `autopilot-mvp/index.ts` :
+- À l'insertion du lead, capturer `landing_slug` + `landing_token` retournés.
+- Personnalisation Gemini : injecter URL landing `https://app.unpro.ca/pro/diagnostic/{slug}?t={token}` dans le prompt + email body.
+
+---
+
+### 6. Stripe
+
+- Vérifier `STRIPE_SECRET_KEY` (déjà présent, mémoires confirment Stripe natif actif).
+- Ajouter secret `STRIPE_WEBHOOK_SECRET_OUTBOUND` (l'utilisateur le configurera après création du webhook côté Stripe dashboard pointant sur `outbound-checkout-webhook`).
+- Wrapper `create-contractor-checkout` accepte param `metadata` pour pass-through.
+
+---
+
+### 7. Email de bienvenue
+
+- Template `contractor_welcome.tsx` dans `supabase/functions/_shared/email-templates/` : confirmation paiement, score AIPP, plan activé, magic link onboarding, prochaines étapes.
+- Branché sur `send-transactional-email` (queue pgmq existante).
+
+---
+
+### 8. Sécurité
+
+- Token URL signé (HMAC, secret `OUTBOUND_LANDING_SECRET` à ajouter).
+- Rate-limit `outbound-landing-resolve` (5 req/min par IP via simple table in-memory edge).
+- Webhook Stripe : vérification signature stricte.
+- RLS landing_events : public insert, admin select only.
+
+---
+
+### Risques & non-objectifs
+
+**Pas dans cette phase** : refonte route `/entrepreneur/:slug` publique (existe déjà), refacto `contractors`, suppression `acq_*` legacy, SMS fallback (déjà branché ailleurs).
+
+**Risques** :
+- Si `outbound_leads` n'a pas tous les champs enrichis attendus → fallback gracieux (score affiché, faiblesses génériques par défaut).
+- Race condition double-paiement → idempotency Stripe + lock sur `outbound_leads.paid_at IS NULL`.
+
+---
+
+### Succès
+
+Un prospect Isolation Laval reçoit l'email envoyé par autopilot → clique → voit son score AIPP réel + plan recommandé → engage Alex 30 sec → paie via Stripe → 5 sec plus tard son profil `/entrepreneur/isolation-xyz-laval` est live + il reçoit email magic-link pour compléter onboarding. Admin voit toute la chaîne dans `/admin/outbound/landing-funnel`.
+
+---
+
+### Détails techniques (résumé)
+
+- **Migration** : `outbound_leads` (colonnes landing/paid/published), `outbound_landing_events` (table+RLS), trigger slug, vue `v_outbound_funnel`.
+- **Edge functions (5 nouvelles)** : `outbound-landing-resolve`, `outbound-checkout-start`, `outbound-checkout-webhook`, `outbound-publish-contractor`, `outbound-magic-link`.
+- **Edge functions modifiées (2)** : `autopilot-mvp` (capture slug/URL), `create-contractor-checkout` (accepte metadata).
+- **Routes React (2)** : `/pro/diagnostic/:slug` (public landing), `/admin/outbound/landing-funnel` (admin).
+- **Composants nouveaux (~8)** sous `src/features/outboundLanding/`.
+- **Secrets à ajouter** : `OUTBOUND_LANDING_SECRET` (HMAC), `STRIPE_WEBHOOK_SECRET_OUTBOUND`.
+- **Email template** : `contractor_welcome` via queue pgmq existante.
+- **Stack respecté** : dark cinematic #050816, Inter -0.04em, ElevenLabs Sophia voice ID locked, Stripe Payment Element fr-CA, esm.sh@2.49.1 pour Supabase.
