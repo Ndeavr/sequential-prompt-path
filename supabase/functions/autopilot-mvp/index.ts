@@ -373,7 +373,7 @@ serve(async (req) => {
             reasoning_summary: scoreResult.weaknesses.slice(0, 3).join(" • "),
           });
           (p as any).__lead_id = leadId;
-          (prospect as any).__lead_id = leadId;
+          (fresh.data as any).__lead_id = leadId;
         }
         stats.scored++;
       } catch (e) {
