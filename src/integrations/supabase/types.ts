@@ -44462,64 +44462,97 @@ export type Database = {
       }
       outbound_landing_pages: {
         Row: {
+          aipp_score_snapshot: Json | null
           aipp_summary: string | null
+          checkout_plan_code: string | null
+          checkout_session_id: string | null
+          checkout_started_at: string | null
           city: string | null
           company_id: string | null
           created_at: string | null
           cta_primary: string | null
           cta_secondary: string | null
+          first_viewed_at: string | null
           hero_subtitle: string | null
           hero_title: string | null
           id: string
+          landing_token: string | null
           language: string | null
+          last_viewed_at: string | null
           lead_id: string | null
           missing_elements_json: Json | null
           page_slug: string
           page_status: string | null
           page_url: string | null
+          paid_at: string | null
+          publish_status: string
+          published_contractor_id: string | null
           specialty: string | null
           strengths_json: Json | null
           updated_at: string | null
+          view_count: number
         }
         Insert: {
+          aipp_score_snapshot?: Json | null
           aipp_summary?: string | null
+          checkout_plan_code?: string | null
+          checkout_session_id?: string | null
+          checkout_started_at?: string | null
           city?: string | null
           company_id?: string | null
           created_at?: string | null
           cta_primary?: string | null
           cta_secondary?: string | null
+          first_viewed_at?: string | null
           hero_subtitle?: string | null
           hero_title?: string | null
           id?: string
+          landing_token?: string | null
           language?: string | null
+          last_viewed_at?: string | null
           lead_id?: string | null
           missing_elements_json?: Json | null
           page_slug: string
           page_status?: string | null
           page_url?: string | null
+          paid_at?: string | null
+          publish_status?: string
+          published_contractor_id?: string | null
           specialty?: string | null
           strengths_json?: Json | null
           updated_at?: string | null
+          view_count?: number
         }
         Update: {
+          aipp_score_snapshot?: Json | null
           aipp_summary?: string | null
+          checkout_plan_code?: string | null
+          checkout_session_id?: string | null
+          checkout_started_at?: string | null
           city?: string | null
           company_id?: string | null
           created_at?: string | null
           cta_primary?: string | null
           cta_secondary?: string | null
+          first_viewed_at?: string | null
           hero_subtitle?: string | null
           hero_title?: string | null
           id?: string
+          landing_token?: string | null
           language?: string | null
+          last_viewed_at?: string | null
           lead_id?: string | null
           missing_elements_json?: Json | null
           page_slug?: string
           page_status?: string | null
           page_url?: string | null
+          paid_at?: string | null
+          publish_status?: string
+          published_contractor_id?: string | null
           specialty?: string | null
           strengths_json?: Json | null
           updated_at?: string | null
+          view_count?: number
         }
         Relationships: [
           {
@@ -44628,6 +44661,8 @@ export type Database = {
           booked_at: string | null
           bounced_at: string | null
           campaign_id: string | null
+          checkout_plan_code: string | null
+          checkout_session_id: string | null
           city_priority_score: number | null
           closed_at: string | null
           company_id: string | null
@@ -44649,9 +44684,12 @@ export type Database = {
           notes: string | null
           outbound_readiness_score: number | null
           owner_user_id: string | null
+          paid_at: string | null
           personalization_score: number | null
           phone: string | null
           pipeline_stage: string | null
+          publish_status: string
+          published_contractor_id: string | null
           qualification_status: string | null
           rejection_reason: string | null
           replied_at: string | null
@@ -44670,6 +44708,8 @@ export type Database = {
           booked_at?: string | null
           bounced_at?: string | null
           campaign_id?: string | null
+          checkout_plan_code?: string | null
+          checkout_session_id?: string | null
           city_priority_score?: number | null
           closed_at?: string | null
           company_id?: string | null
@@ -44691,9 +44731,12 @@ export type Database = {
           notes?: string | null
           outbound_readiness_score?: number | null
           owner_user_id?: string | null
+          paid_at?: string | null
           personalization_score?: number | null
           phone?: string | null
           pipeline_stage?: string | null
+          publish_status?: string
+          published_contractor_id?: string | null
           qualification_status?: string | null
           rejection_reason?: string | null
           replied_at?: string | null
@@ -44712,6 +44755,8 @@ export type Database = {
           booked_at?: string | null
           bounced_at?: string | null
           campaign_id?: string | null
+          checkout_plan_code?: string | null
+          checkout_session_id?: string | null
           city_priority_score?: number | null
           closed_at?: string | null
           company_id?: string | null
@@ -44733,9 +44778,12 @@ export type Database = {
           notes?: string | null
           outbound_readiness_score?: number | null
           owner_user_id?: string | null
+          paid_at?: string | null
           personalization_score?: number | null
           phone?: string | null
           pipeline_stage?: string | null
+          publish_status?: string
+          published_contractor_id?: string | null
           qualification_status?: string | null
           rejection_reason?: string | null
           replied_at?: string | null
@@ -68832,6 +68880,20 @@ export type Database = {
           },
         ]
       }
+      v_outbound_funnel: {
+        Row: {
+          checkout_started: number | null
+          city: string | null
+          day: string | null
+          landing_viewed: number | null
+          leads_sent: number | null
+          leads_total: number | null
+          paid: number | null
+          published: number | null
+          trade: string | null
+        }
+        Relationships: []
+      }
       v_pipeline_agents_live: {
         Row: {
           agent_key: string | null
@@ -69421,6 +69483,10 @@ export type Database = {
           source_queue: string
         }
         Returns: number
+      }
+      outbound_resolve_landing: {
+        Args: { p_slug: string; p_token: string }
+        Returns: Json
       }
       owns_contractor: { Args: { _contractor_id: string }; Returns: boolean }
       owns_verification_run: {
