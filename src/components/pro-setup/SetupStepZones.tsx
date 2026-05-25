@@ -30,6 +30,13 @@ export default function SetupStepZones({ contractorId, onNext, onBack }: Props) 
   const [custom, setCustom] = useState("");
   const [saving, setSaving] = useState(false);
   const [radius, setRadius] = useState(25);
+  const { data: goalProfile } = useGoalProfile();
+  const runtime = {
+    goal: goalProfile?.primary_goal ?? null,
+    cityName: zones[0] ?? null,
+    capacity: goalProfile?.capacity_per_month ?? null,
+    currentValue: radius,
+  };
 
   useEffect(() => {
     if (!contractorId) return;
