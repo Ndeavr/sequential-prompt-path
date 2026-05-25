@@ -18,7 +18,11 @@ export type AlexUIActionType =
   | "open_booking"
   | "show_chips"
   | "show_trust"
-  | "show_prediction";
+  | "show_prediction"
+  | "smart.highlight_field"
+  | "smart.open_bubble"
+  | "smart.suggest_value";
+
 
 export interface AlexUIAction {
   type: AlexUIActionType | string;
