@@ -120,6 +120,7 @@ const PageAdminAiEntities = lazy(() => import("@/pages/admin/PageAdminAiEntities
 const PageAdminSmartContext = lazy(() => import("@/pages/admin/PageAdminSmartContext"));
 const PageAdminPlansMatrix = lazy(() => import("@/pages/admin/PageAdminPlansMatrix"));
 const PageAdminAutopilotMvp = lazy(() => import("@/pages/admin/PageAdminAutopilotMvp"));
+const PageAdminAutopilotRunDetail = lazy(() => import("@/pages/admin/PageAdminAutopilotRunDetail"));
 const PageAdminOutboundLandingFunnel = lazy(() => import("@/pages/admin/outbound/PageAdminOutboundLandingFunnel"));
 const PageOutboundLanding = lazy(() => import("@/pages/outbound/PageOutboundLanding"));
 const PageOutboundLandingSuccess = lazy(() => import("@/pages/outbound/PageOutboundLandingSuccess"));
@@ -1306,6 +1307,7 @@ export const AppRouter = () => (
         <Route path="/admin/outreach/analytics" element={<ProtectedRoute requiredRole="admin"><AdminOutreachAnalytics /></ProtectedRoute>} />
         <Route path="/admin/outbound" element={<ProtectedRoute requiredRole="admin"><PageOutboundControlTower /></ProtectedRoute>} />
         <Route path="/admin/autopilot-mvp" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAutopilotMvp /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/autopilot-mvp/run/:runId" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAutopilotRunDetail /></Suspense></ProtectedRoute>} />
         <Route path="/admin/outbound/legacy" element={<ProtectedRoute requiredRole="admin"><PageOutboundDashboard /></ProtectedRoute>} />
         <Route path="/admin/outbound/test-center" element={<ProtectedRoute requiredRole="admin"><PageOutboundTestCenter /></ProtectedRoute>} />
         <Route path="/admin/outreach-live" element={<ProtectedRoute requiredRole="admin"><PageOutreachLive /></ProtectedRoute>} />
