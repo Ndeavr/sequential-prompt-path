@@ -1,144 +1,88 @@
-# UNPRO Smart Context Engine — Global UX Intelligence Layer
+# Phase 2 — Déploiement Smart Context Engine sur 4 surfaces
 
-Build a reusable system that turns every strategic field, metric, and setting across UNPRO into an explained, recommended, AI-guided decision — never a raw form input.
+Tu as dit "Tous" → on étend `SmartFieldShell` / `SmartBubble` / `SmartRecommendationCard` / `SmartGoalSelector` aux 4 surfaces stratégiques restantes.
 
----
+## 1. Plans (sélection plan entrepreneur)
+- Retrofit `src/pages/contractor/PageContractorPlans.tsx` (et composants `PlanCard` associés).
+- Gate `SmartGoalSelector` si `useGoalProfile()` vide avant d'afficher la grille de plans.
+- Sur chaque carte : badge "UNPRO recommande" sur le tier retourné par `recommend("plan.tier", { goal, capacity })`.
+- Bulles sur : prix, nb de rendez-vous, exclusivité, accès XL (`access.xl_projects`).
+- Ajout registry entries : `plan.tier`, `plan.appointments_per_month`, `plan.exclusivity`, `plan.upsell_xl`.
 
-## 1. Core primitive: `SmartContext`
+## 2. Dashboard entrepreneur
+- Retrofit `src/pages/contractor/PageContractorDashboard.tsx` (widgets KPI principaux).
+- Wrap chaque KPI critique (taux d'acceptation, temps de réponse, conversion, revenu projeté) avec `SmartBubbleTrigger` à côté du titre.
+- Ajout `SmartRecommendationCard` "Opportunité" en haut si goal défini + signal détecté (ex: réponse > 15min → reco baisser temps de réponse).
+- Nouveau composant `WidgetSmartOpportunities` qui itère `getRecommendationsForDashboard(profile, goal)`.
+- Registry entries : `dashboard.acceptance_rate`, `dashboard.response_time`, `dashboard.conversion_rate`, `dashboard.projected_revenue`.
 
-A single source of truth for "what is this / why it matters / what should I do".
+## 3. Profil entrepreneur
+- Retrofit `src/pages/contractor/PageContractorProfile.tsx` + steps `SetupStep*` restants (photos, services, bio, certifications).
+- Wrap chaque champ stratégique avec `SmartFieldShell` :
+  - `profile.photos_before_after` (déjà au registry)
+  - `profile.services_offered`
+  - `profile.bio_length`
+  - `profile.certifications`
+  - `profile.years_experience`
+  - `profile.languages`
+- Ajout indicateur AI visibility par champ (high/medium/low) influençant l'AIPP score.
+- Sticky progress bar en bas : "Profil 72% — +8% si vous ajoutez 3 photos avant/après".
 
-**New module:** `src/features/smartContext/`
+## 4. Automation (réglages)
+- Retrofit `src/pages/contractor/PageAutomationSettings.tsx` (ou créer si absent — vérifier `useAutomation.ts`).
+- `SmartFieldShell` sur chaque toggle/setting :
+  - `automation.auto_accept_bookings`
+  - `automation.calendar_sync` (déjà au registry comme `operations.calendar_sync` → renommer ou aliaser)
+  - `automation.sms_followup`
+  - `automation.review_request`
+  - `automation.no_show_protection`
+  - `automation.quote_auto_send`
+- Chaque toggle affiche moneyImpact ("+12% conversion") + warning si désactivé.
+- Banner `SmartRecommendationCard` en haut listant les 3 automations à activer en priorité selon le goal.
 
-- `types.ts` — `SmartContextEntry`:
-  ```
-  {
-    id: string;                    // e.g. "territory.radius_km"
-    label: string;
-    what: string;                  // 1 phrase
-    why: string;                   // impact on revenue/visibility
-    moneyImpact?: string;          // "+12% conversion typique"
-    ifEnabled?: string;            // consequence of enabling
-    warning?: string;
-    recommendation?: {
-      value: string | number;
-      reasonFr: string;
-      source: "ai" | "benchmark" | "territory";
-    };
-    aiVisibilityImpact?: "high" | "medium" | "low" | "none";
-    examples?: string[];           // dynamic, city/trade-aware
-    alexScript?: string;           // what Alex says, NOT label readout
-  }
-  ```
-- `registry.ts` — static catalog of all ~60 strategic UNPRO fields (territory, cities, plans, response time, calendar sync, photos, AI score, XL projects, automation, badges, verification…).
-- `resolver.ts` — `useSmartContext(id, ctx)` hook merging static registry + dynamic signals from `useContractorProfile`, `useDemandGrid`, `useCityServiceDemandGrid`, `useAippScore`, `useGoalProfile` (new) to personalize `recommendation`, `examples`, `moneyImpact`.
+## 5. Registry & moteur
+- Étendre `src/features/smartContext/registry.ts` avec ~25 nouvelles entrées (4 plans + 6 dashboard + 8 profil + 7 automation).
+- Étendre `src/services/smartRecommendationEngine.ts` avec les `case` correspondants (logique déterministe goal × capacity × current value).
+- Ajouter helper `getRecommendationsForSurface(surface, ctx)` retournant top-3 recos triées par impact.
 
----
+## 6. Admin (overrides live)
+- Page `/admin/smart-context` (`PageAdminSmartContext.tsx`) : liste des entrées registry, édition du payload (`what`, `why`, `moneyImpact`, `alexScript`), toggle `active`, écrit dans `smart_context_overrides`.
+- Table de filtrage par surface (plans / dashboard / profil / automation / territory).
 
-## 2. UI primitives (reusable everywhere)
+## 7. Alex integration (minimal phase 2)
+- Étendre `alexUiActionDispatcher.ts` avec actions :
+  - `smart.highlight_field(fieldId)` → scrollIntoView + glow
+  - `smart.open_bubble(fieldId)` → trigger SmartBubble open
+  - `smart.suggest_value(fieldId, value)` → pre-fill input
+- Hook `useSmartContext` expose `askAlex(id)` qui pousse `alexScript` dans la session courante.
 
-**New components:** `src/components/smart-context/`
+## Détails techniques
 
-- `<SmartBubble id="...">` — premium glass popover (desktop hover, mobile tap-sheet). Sections: What → Why → Money impact → AI recommendation → "Demander à Alex".
-- `<SmartBubbleTrigger>` — subtle `info` icon, glow on AI-recommended/warning state.
-- `<SmartFieldShell>` — wraps any input/setting; renders label + bubble trigger + inline AI recommendation chip ("UNPRO recommande 25 km") + accept-suggestion action.
-- `<SmartRecommendationCard>` — for dashboards: `Recommended | Not Recommended | Upgrade | Opportunity | High-demand | Visibility | Capacity warning` variants.
-- `<SmartGoalSelector>` — the "Quel est votre objectif principal ?" gate (7 options from spec). Stores to `contractor_goal_profile`.
-- `<AlexFieldHighlight>` — listens to `alexUiActionDispatcher` events (`highlight_field`, `suggest_value`) → glow + auto-scroll + recommended-range overlay.
+### Fichiers créés
+- `src/components/smart-context/WidgetSmartOpportunities.tsx`
+- `src/components/smart-context/SmartProfileProgressBar.tsx`
+- `src/pages/admin/PageAdminSmartContext.tsx`
+- `src/features/smartContext/recommendationsBySurface.ts`
 
-Design tokens: glassmorphism (`bg-card/80 backdrop-blur-xl`), 24px radius, 420ms `cubic-bezier(.22,1,.36,1)`, mobile-first, no blocking overlays, swipe-to-close on mobile sheet.
+### Fichiers édités
+- `src/features/smartContext/registry.ts` (+25 entrées)
+- `src/services/smartRecommendationEngine.ts` (+25 cases)
+- `src/components/smart-context/SmartBubble.tsx` (ajout `useImperativeHandle` pour `smart.open_bubble`)
+- `src/components/smart-context/index.ts`
+- `src/lib/alexUiActionDispatcher.ts` (+3 actions smart.*)
+- `src/features/smartContext/useSmartContext.ts` (ajout `askAlex`)
+- `src/app/router.tsx` (route `/admin/smart-context`)
+- Pages plans / dashboard / profil / automation (retrofit non-destructif)
 
----
+### Base de données
+- Aucune nouvelle table. Réutilise `smart_context_overrides`, `contractor_goal_profiles`, `smart_context_cache` créées en phase 1.
+- Migration minimale : seed initial de ~10 overrides exemples (optionnel).
 
-## 3. Goal-based personalization
+### Contraintes
+- Zéro régression sur les formulaires existants (wrapping uniquement).
+- Tout en fr-CA, ton "Concierge Décisif", style Cinematic Dark.
+- Glass `rgba(255,255,255,0.04)` + blur 24px, easing `cubic-bezier(.22,1,.36,1)`.
+- Pas de re-render coûteux : `useSmartContext` mémoïsé.
 
-**New table:** `contractor_goal_profiles`
-```
-contractor_id (pk fk), primary_goal enum, secondary_goals jsonb,
-capacity_per_month int, avg_contract_value numeric,
-updated_at timestamptz
-```
-RLS: owner read/write, admin read.
-
-**Hook:** `useGoalProfile()` — drives recommendation logic across plans, territory radius, city suggestions, automation defaults, Alex tone.
-
-Gate: before showing plans / territory / visibility / automation pages, if `primary_goal` missing → render `<SmartGoalSelector>` first.
-
----
-
-## 4. Recommendation engine
-
-**New service:** `src/services/smartRecommendationEngine.ts`
-
-Pure function: `recommend(fieldId, { profile, goal, demandGrid, aippScore, capacity }) → SmartRecommendation`.
-
-Rules (deterministic, no LLM call on render):
-- `territory.radius_km` → goal × trade × demand density.
-- `territory.cities` → cross `useCityServiceDemandGrid` gap score; flag saturated vs opportunity.
-- `plan.tier` → capacity + goal + current AIPP.
-- `response_time` → benchmark vs trade median.
-- `calendar.sync`, `photos.before_after`, `xl_projects.access`, `automation.*` → binary recommend with reason.
-
-LLM-backed enrichment (cached): edge function `smart-context-enrich` (Gemini 3 Flash) generates 1-phrase `examples[]` per (fieldId, city, trade) → cached in `smart_context_cache` (24h TTL).
-
----
-
-## 5. Alex integration
-
-- Extend `src/lib/alexUiActionDispatcher.ts` with actions: `highlight_field(id)`, `suggest_value(id, value)`, `open_bubble(id)`.
-- Update Alex system prompt (mem `ai/alex/system-prompt-active`) with a "Strategist Guidance" section: when user lands on a strategic field, Alex speaks the `alexScript` from the registry — never reads labels. Examples (city, radius, plan) from spec embedded as few-shot.
-- `useSmartContext` exposes `askAlex(id)` → opens Alex chat with pre-loaded context + dispatches `highlight_field`.
-
----
-
-## 6. Coverage map (where it ships)
-
-Phase 1 retrofit (this build):
-- Contractor onboarding wizard (`ProSetupWizard` — all 6 steps)
-- Territory & city selection screens
-- Plan selection / pricing pages
-- Contractor dashboard strategic widgets (AIPP score, response time, calendar sync, XL access)
-- Profile completion fields (photos, bio, badges, verification)
-
-Phase 2 (next build, scoped separately): automation settings, CRM integrations, growth dashboards, project qualification, AIPP cockpit, condo manager flows, homeowner-side trust badges.
-
----
-
-## 7. Admin
-
-`/admin/smart-context` — edit/override registry entries, A/B test copy, see top-clicked bubbles, accept-rate of AI recommendations, per-field conversion lift.
-
-Table: `smart_context_overrides` (id, field_id, lang, payload jsonb, active, updated_by).
-
----
-
-## Technical details
-
-- All copy fr-CA, follows localization memory.
-- No new top-level routes except `/admin/smart-context`.
-- Storage: 2 new tables + 1 cache table; reuses existing demand/AIPP/contractor data.
-- 1 edge function (`smart-context-enrich`) using Lovable AI Gateway (`google/gemini-3-flash-preview`).
-- Bubble component shared between desktop popover and mobile bottom-sheet via `useIsMobile`.
-- Zero impact on existing forms — `<SmartFieldShell>` wraps without changing form state.
-- Telemetry: `conversion_events` `bubble_opened`, `recommendation_accepted`, `goal_set`, `alex_field_guidance`.
-
----
-
-## Out of scope
-
-- Rewriting plan pricing logic, AIPP scoring, demand grid (already shipped).
-- Homeowner-side bubbles (Phase 2).
-- Voice generation changes (only prompt + dispatcher additions).
-- Migrating existing tooltips/Popovers everywhere — Phase 1 retrofits only the 5 surfaces above; rest follows incrementally.
-
----
-
-## Success criteria
-
-- Every strategic field on the 5 Phase 1 surfaces has a `SmartBubble` with What/Why/Money/AI-reco.
-- Goal selector gates plans/territory/automation.
-- Alex highlights fields and speaks strategist scripts, never label readouts.
-- Recommendations visibly personalize by city + trade + goal.
-- Admin can edit copy live without redeploy.
-
-Confirm and I ship Phase 1.
+## Question
+Confirme et je build Phase 2 d'un coup, ou je commence par 1 surface précise en priorité ?
