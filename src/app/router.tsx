@@ -119,6 +119,7 @@ const PageAiEntity = lazy(() => import("@/pages/ai/PageAiEntity"));
 const PageAdminAiEntities = lazy(() => import("@/pages/admin/PageAdminAiEntities"));
 const PageAdminSmartContext = lazy(() => import("@/pages/admin/PageAdminSmartContext"));
 const PageAdminPlansMatrix = lazy(() => import("@/pages/admin/PageAdminPlansMatrix"));
+const PageAdminAutopilotMvp = lazy(() => import("@/pages/admin/PageAdminAutopilotMvp"));
 
 const PageAippImport = lazy(() => import("@/pages/admin/PageAippImport"));
 const PageAippProfiles = lazy(() => import("@/pages/admin/PageAippProfiles"));
