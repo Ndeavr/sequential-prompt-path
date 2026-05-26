@@ -1,0 +1,523 @@
+/**
+ * PageHomeUnicorn — Premium AI SaaS homepage matching mockup.
+ * Light-blue glassmorphism theme scoped via .unicorn-theme (does NOT leak to global tokens).
+ * Mobile-first, mounted at "/" and "/index" via router.
+ */
+import { useState } from "react";
+import { Helmet } from "react-helmet-async";
+import { Link } from "react-router-dom";
+import {
+  Bell, ChevronDown, Mic, Image as ImageIcon, FileText, ChevronRight, RefreshCw,
+  Home as HomeIcon, Hammer, Thermometer, Droplets, Building2, Zap, Wrench,
+  BarChart3, ShieldCheck, Users, Clock, BadgeCheck, Star, ArrowRight,
+} from "lucide-react";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
+import AlexOrbPremium from "@/components/home-unicorn/AlexOrbPremium";
+import BottomDockGlass from "@/components/home-unicorn/BottomDockGlass";
+import "@/styles/unicorn-theme.css";
+
+/* ---------------- Header ---------------- */
+function HeaderFloatingGlass() {
+  return (
+    <header className="px-4 pt-4 pb-2 relative z-10">
+      <div className="flex items-center justify-between gap-2">
+        <div
+          className="uc-glass-strong rounded-2xl pl-3 pr-4 py-2 flex items-center gap-2"
+          style={{ borderRadius: 18 }}
+        >
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center"
+            style={{
+              background: "linear-gradient(135deg, #2563FF, #3B82F6)",
+              boxShadow: "0 6px 14px -4px rgba(37,99,255,0.55)",
+            }}
+          >
+            <HomeIcon size={15} color="white" strokeWidth={2.4} />
+          </div>
+          <span className="font-extrabold tracking-tight text-[15px]" style={{ color: "#0B1220" }}>
+            UN<span style={{ color: "#94A3B8" }}>PRO</span>
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            className="uc-glass-strong rounded-xl px-3 py-2 flex items-center gap-1 text-[12px] font-semibold"
+            style={{ borderRadius: 14, color: "#0B1220" }}
+          >
+            FR <ChevronDown size={13} />
+          </button>
+          <button
+            className="uc-glass-strong rounded-xl w-10 h-10 flex items-center justify-center relative"
+            style={{ borderRadius: 14 }}
+            aria-label="Notifications"
+          >
+            <Bell size={16} color="#0B1220" />
+            <span
+              className="absolute top-2 right-2 w-2 h-2 rounded-full"
+              style={{ background: "#2563FF", boxShadow: "0 0 0 2px white" }}
+            />
+          </button>
+          <button
+            className="uc-glass-strong rounded-xl pl-1 pr-2 py-1 flex items-center gap-1"
+            style={{ borderRadius: 14 }}
+            aria-label="Profil"
+          >
+            <span
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-[12px] font-bold text-white"
+              style={{ background: "linear-gradient(135deg, #6366F1, #3B82F6)" }}
+            >
+              P
+            </span>
+            <ChevronDown size={13} color="#0B1220" />
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+/* ---------------- Hero ---------------- */
+function HeroAlexOrb() {
+  return (
+    <section className="px-4 pt-3 pb-2 grid grid-cols-[1.05fr_1fr] gap-2 items-center relative z-10 uc-fade-up">
+      <div>
+        <h1
+          className="font-extrabold leading-[0.98] text-[34px] sm:text-[44px] tracking-[-0.035em]"
+          style={{ color: "#0B1220" }}
+        >
+          Décrivez votre situation.{" "}
+          <span className="uc-gradient-text">Alex s'occupe du reste.</span>
+        </h1>
+        <p
+          className="mt-3 text-[13px] sm:text-[14px] leading-snug max-w-[26ch]"
+          style={{ color: "#475467" }}
+        >
+          UNPRO détecte les problèmes, estime les coûts et recommande les meilleurs
+          professionnels.
+        </p>
+      </div>
+      <div className="flex justify-end pr-1">
+        <AlexOrbPremium size={170} />
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- AI Input Card ---------------- */
+const QUICK_CHIPS = [
+  "Mon entretoit est trop froid",
+  "Je veux refaire ma toiture",
+  "Analyser mes soumissions",
+];
+
+function WaveformMini() {
+  return (
+    <span className="inline-flex items-end gap-[2px] h-4">
+      {[0.4, 0.8, 1, 0.6, 0.9, 0.5].map((h, i) => (
+        <span
+          key={i}
+          className="w-[2px] rounded-full bg-white/85"
+          style={{
+            height: `${h * 100}%`,
+            transformOrigin: "bottom",
+            animation: `uc-wave 1.1s ease-in-out infinite`,
+            animationDelay: `${i * 0.08}s`,
+          }}
+        />
+      ))}
+    </span>
+  );
+}
+
+function AiInputCard({ onTalk }: { onTalk: (hint?: string) => void }) {
+  const [activeChip, setActiveChip] = useState(0);
+  return (
+    <section className="px-4 mt-4 relative z-10 uc-fade-up" style={{ animationDelay: "60ms" }}>
+      <div
+        className="uc-glass-strong p-4"
+        style={{ borderRadius: 28 }}
+      >
+        {/* Top tab dot */}
+        <div className="flex justify-center -mt-6 mb-2">
+          <div
+            className="w-3 h-3 rounded-full"
+            style={{ background: "#3B82F6", boxShadow: "0 0 0 4px rgba(59,130,246,0.18)" }}
+          />
+        </div>
+
+        <div className="text-[14px] mb-3" style={{ color: "#94A3B8" }}>
+          Décrivez votre situation…
+        </div>
+
+        {/* Chips row */}
+        <div className="flex items-center gap-2 mb-3 overflow-x-auto uc-no-scrollbar -mx-1 px-1">
+          {QUICK_CHIPS.map((c, i) => (
+            <button
+              key={c}
+              onClick={() => {
+                setActiveChip(i);
+                onTalk(c);
+              }}
+              className="shrink-0 px-3 py-2 rounded-full text-[12px] font-semibold whitespace-nowrap transition-all"
+              style={{
+                background: i === activeChip ? "rgba(37,99,255,0.10)" : "rgba(247,250,255,0.9)",
+                color: i === activeChip ? "#2563FF" : "#475467",
+                border:
+                  i === activeChip ? "1px solid rgba(37,99,255,0.35)" : "1px solid rgba(11,18,32,0.06)",
+              }}
+            >
+              {c}
+            </button>
+          ))}
+          <button
+            className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center ml-auto"
+            style={{ background: "white", border: "1px solid rgba(11,18,32,0.08)" }}
+            aria-label="Régénérer"
+          >
+            <RefreshCw size={14} color="#475467" />
+          </button>
+        </div>
+
+        {/* Primary CTA */}
+        <button
+          onClick={() => onTalk()}
+          className="uc-cta w-full py-4 rounded-full flex items-center justify-center gap-3 text-[15px] font-semibold relative overflow-hidden"
+        >
+          <Mic size={18} />
+          <span>Parler avec Alex</span>
+          <span className="absolute right-5"><WaveformMini /></span>
+        </button>
+
+        {/* Secondary cards */}
+        <div className="grid grid-cols-2 gap-2 mt-3">
+          <Link
+            to="/diagnostic-photo"
+            className="uc-hover-lift flex items-center gap-2 p-3 rounded-2xl"
+            style={{ background: "white", border: "1px solid rgba(11,18,32,0.05)" }}
+          >
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: "linear-gradient(135deg,#EFF6FF,#DBEAFE)" }}
+            >
+              <ImageIcon size={16} color="#2563FF" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[12px] font-semibold leading-tight" style={{ color: "#0B1220" }}>
+                Téléverser une photo
+              </div>
+              <div className="text-[10px]" style={{ color: "#94A3B8" }}>
+                Analyse IA instantanée
+              </div>
+            </div>
+            <ChevronRight size={14} color="#94A3B8" />
+          </Link>
+          <Link
+            to="/analyser-soumissions"
+            className="uc-hover-lift flex items-center gap-2 p-3 rounded-2xl"
+            style={{ background: "white", border: "1px solid rgba(11,18,32,0.05)" }}
+          >
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: "linear-gradient(135deg,#EFF6FF,#DBEAFE)" }}
+            >
+              <FileText size={16} color="#2563FF" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[12px] font-semibold leading-tight" style={{ color: "#0B1220" }}>
+                Analyser une soumission
+              </div>
+              <div className="text-[10px]" style={{ color: "#94A3B8" }}>
+                Obtenez une évaluation
+              </div>
+            </div>
+            <ChevronRight size={14} color="#94A3B8" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- Category chips ---------------- */
+const CATEGORIES = [
+  { label: "Isolation", icon: HomeIcon, c: "#2563FF", bg: "#EFF6FF" },
+  { label: "Toiture", icon: Hammer, c: "#F97316", bg: "#FFF4E6" },
+  { label: "Thermopompe", icon: Thermometer, c: "#10B981", bg: "#ECFDF5" },
+  { label: "Humidité", icon: Droplets, c: "#8B5CF6", bg: "#F3EEFF" },
+  { label: "Condo", icon: Building2, c: "#2563FF", bg: "#EFF6FF" },
+  { label: "Électricité", icon: Zap, c: "#F59E0B", bg: "#FFFBEB" },
+  { label: "Appareils", icon: Wrench, c: "#0EA5E9", bg: "#E0F2FE" },
+];
+
+function CategoryChipsScroll() {
+  return (
+    <section className="mt-5 relative z-10">
+      <div className="flex gap-2 overflow-x-auto uc-no-scrollbar px-4 pb-1">
+        {CATEGORIES.map((cat) => {
+          const Icon = cat.icon;
+          return (
+            <button
+              key={cat.label}
+              className="uc-glass-strong shrink-0 flex flex-col items-center justify-center gap-1.5 py-3 px-4 min-w-[78px] uc-hover-lift"
+              style={{ borderRadius: 20 }}
+            >
+              <div
+                className="w-10 h-10 rounded-2xl flex items-center justify-center"
+                style={{ background: cat.bg }}
+              >
+                <Icon size={20} color={cat.c} strokeWidth={2.2} />
+              </div>
+              <span className="text-[11px] font-semibold" style={{ color: "#0B1220" }}>
+                {cat.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- Live stats ---------------- */
+function LiveStatsCard() {
+  const stats = [
+    { icon: BarChart3, c: "#2563FF", bg: "#EFF6FF", value: "4 238", label: "analyses aujourd'hui", delta: "+12%" },
+    { icon: ShieldCheck, c: "#10B981", bg: "#ECFDF5", value: "312", label: "entrepreneurs certifiés", delta: "+8%" },
+    { icon: Users, c: "#8B5CF6", bg: "#F3EEFF", value: "98%", label: "satisfaction clients", delta: "+3%" },
+    { icon: Clock, c: "#F59E0B", bg: "#FFFBEB", value: "24/7", label: "assistance IA disponible", delta: "En ligne", online: true },
+  ];
+  return (
+    <section className="px-4 mt-4 relative z-10">
+      <div className="uc-glass-strong p-4 grid grid-cols-2 gap-y-4 gap-x-3" style={{ borderRadius: 24 }}>
+        {stats.map((s) => {
+          const Icon = s.icon;
+          return (
+            <div key={s.label} className="flex items-start gap-2.5">
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: s.bg }}
+              >
+                <Icon size={16} color={s.c} strokeWidth={2.2} />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[18px] font-extrabold leading-tight" style={{ color: "#0B1220" }}>
+                  {s.value}
+                </div>
+                <div className="text-[10px] leading-tight" style={{ color: "#667085" }}>
+                  {s.label}
+                </div>
+                <div
+                  className="text-[10px] font-semibold mt-0.5 flex items-center gap-1"
+                  style={{ color: s.online ? "#10B981" : "#10B981" }}
+                >
+                  {s.online && <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#10B981" }} />}
+                  {s.delta}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- How it works ---------------- */
+function HowItWorksCards() {
+  const steps = [
+    { n: 1, title: "Détection IA", desc: "Vous décrivez, envoyez une photo ou parlez. Alex détecte le problème." },
+    { n: 2, title: "Analyse intelligente", desc: "Alex comprend, analyse et estime les coûts avec précision." },
+    { n: 3, title: "Recommandation instantanée", desc: "UNPRO vous connecte aux meilleurs professionnels disponibles." },
+  ];
+  return (
+    <section className="px-4 mt-6 relative z-10">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-[16px] font-extrabold tracking-tight" style={{ color: "#0B1220" }}>
+          Comment fonctionne UNPRO
+        </h2>
+        <Link to="/comment-ca-marche" className="text-[12px] font-semibold" style={{ color: "#2563FF" }}>
+          Voir en détail
+        </Link>
+      </div>
+      <div className="flex gap-2 overflow-x-auto uc-no-scrollbar -mx-4 px-4 pb-2">
+        {steps.map((s, i) => (
+          <div key={s.n} className="flex items-stretch shrink-0">
+            <div
+              className="uc-glass-strong p-3 w-[180px] flex flex-col uc-hover-lift"
+              style={{ borderRadius: 22 }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
+                  style={{
+                    background: "linear-gradient(135deg,#2563FF,#3B82F6)",
+                    boxShadow: "0 6px 14px -4px rgba(37,99,255,0.55)",
+                  }}
+                >
+                  {s.n}
+                </div>
+                <div className="text-[13px] font-bold leading-tight" style={{ color: "#0B1220" }}>
+                  {s.title}
+                </div>
+              </div>
+              <p className="text-[11px] leading-snug" style={{ color: "#667085" }}>
+                {s.desc}
+              </p>
+            </div>
+            {i < steps.length - 1 && (
+              <div className="self-center px-1">
+                <ArrowRight size={14} color="#94A3B8" />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- Contractor split ---------------- */
+function ContractorAippSplit() {
+  return (
+    <section className="px-4 mt-6 mb-8 relative z-10">
+      <div className="uc-glass-strong p-4" style={{ borderRadius: 24 }}>
+        <div>
+          <h3 className="text-[18px] font-extrabold leading-tight tracking-tight" style={{ color: "#0B1220" }}>
+            Transformez votre expertise en machine de croissance IA.
+          </h3>
+          <p className="text-[12px] mt-2" style={{ color: "#667085" }}>
+            Rejoignez les entrepreneurs qui reçoivent des rendez-vous qualifiés 24/7.
+          </p>
+          <div className="flex gap-2 mt-3">
+            <Link
+              to="/entrepreneur/aipp"
+              className="uc-cta px-4 py-2.5 rounded-full text-[12px] font-semibold"
+            >
+              Voir mon AIPP
+            </Link>
+            <Link
+              to="/entrepreneur/join"
+              className="px-4 py-2.5 rounded-full text-[12px] font-semibold"
+              style={{
+                background: "white",
+                color: "#2563FF",
+                border: "1px solid rgba(37,99,255,0.30)",
+              }}
+            >
+              Activer mon profil
+            </Link>
+          </div>
+        </div>
+
+        {/* AIPP card */}
+        <div
+          className="mt-4 p-3 rounded-2xl relative"
+          style={{
+            background: "linear-gradient(180deg,#FFFFFF,#F7FAFF)",
+            border: "1px solid rgba(11,18,32,0.06)",
+            boxShadow: "0 12px 30px -16px rgba(37,99,255,0.25)",
+          }}
+        >
+          <div
+            className="absolute -top-2 left-3 px-2 py-0.5 rounded-md text-[9px] font-bold text-white"
+            style={{ background: "linear-gradient(135deg,#2563FF,#3B82F6)" }}
+          >
+            AIPP
+          </div>
+          <div className="flex items-start gap-3">
+            <div
+              className="w-12 h-12 rounded-full shrink-0 flex items-center justify-center text-white font-bold"
+              style={{
+                background: "linear-gradient(135deg,#6366F1,#3B82F6)",
+                boxShadow: "0 0 0 2px white, 0 8px 18px -6px rgba(37,99,255,0.45)",
+              }}
+            >
+              LB
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-[13px] font-bold truncate" style={{ color: "#0B1220" }}>
+                  Toitures LB inc.
+                </div>
+                <div className="text-[10px] font-semibold flex items-center gap-1" style={{ color: "#10B981" }}>
+                  <BadgeCheck size={11} /> Profil vérifié
+                </div>
+              </div>
+              <div className="flex items-center gap-1 mt-0.5">
+                <Star size={12} color="#F59E0B" fill="#F59E0B" />
+                <span className="text-[11px] font-bold" style={{ color: "#0B1220" }}>4.9</span>
+                <span className="text-[10px]" style={{ color: "#94A3B8" }}>(128)</span>
+              </div>
+              <div className="text-[10px] flex items-center gap-1 mt-0.5" style={{ color: "#667085" }}>
+                Spécialiste toiture <BadgeCheck size={10} color="#2563FF" />
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t" style={{ borderColor: "rgba(11,18,32,0.06)" }}>
+            <div>
+              <div className="text-[13px] font-extrabold" style={{ color: "#0B1220" }}>289</div>
+              <div className="text-[9px]" style={{ color: "#94A3B8" }}>Projets complétés</div>
+            </div>
+            <div>
+              <div className="text-[13px] font-extrabold" style={{ color: "#0B1220" }}>98%</div>
+              <div className="text-[9px]" style={{ color: "#94A3B8" }}>Satisfaction</div>
+            </div>
+            <div>
+              <div className="text-[13px] font-extrabold" style={{ color: "#0B1220" }}>2h</div>
+              <div className="text-[9px]" style={{ color: "#94A3B8" }}>Réponse moyenne</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================== */
+export default function PageHomeUnicorn() {
+  const { openAlex } = useAlexVoice();
+  const onTalk = (hint?: string) => openAlex("home_intent", hint);
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: "UNPRO",
+    description:
+      "Concierge IA québécois. UNPRO détecte les problèmes, estime les coûts et recommande les meilleurs professionnels.",
+    url: "https://unpro.ca",
+    areaServed: { "@type": "Place", name: "Quebec" },
+    provider: { "@type": "Organization", name: "UNPRO", url: "https://unpro.ca" },
+    serviceType: "Concierge IA résidentiel",
+  };
+
+  return (
+    <>
+      <Helmet>
+        <title>UNPRO — Décrivez votre situation. Alex s'occupe du reste.</title>
+        <meta
+          name="description"
+          content="UNPRO détecte les problèmes, estime les coûts et recommande les meilleurs professionnels au Québec. Parlez à Alex."
+        />
+        <meta property="og:title" content="UNPRO — Alex s'occupe du reste" />
+        <meta
+          property="og:description"
+          content="Concierge IA québécois. Décrivez votre situation, Alex analyse et recommande."
+        />
+        <meta name="theme-color" content="#F7FAFF" />
+        <link rel="canonical" href="https://unpro.ca" />
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+      </Helmet>
+
+      <div className="unicorn-theme min-h-screen pb-28 relative overflow-x-hidden">
+        <HeaderFloatingGlass />
+        <HeroAlexOrb />
+        <AiInputCard onTalk={onTalk} />
+        <CategoryChipsScroll />
+        <LiveStatsCard />
+        <HowItWorksCards />
+        <ContractorAippSplit />
+        <BottomDockGlass />
+      </div>
+    </>
+  );
+}
