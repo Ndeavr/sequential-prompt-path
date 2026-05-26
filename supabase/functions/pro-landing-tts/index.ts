@@ -1,5 +1,6 @@
 // Alex premium TTS for the Nuclear Close landing.
 // Uses ElevenLabs Charlotte (FR) / Sarah (EN) — same Alex voice as main platform.
+import { applyBrandPhoneticLock } from "../_shared/brand-phonetic-lock.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
