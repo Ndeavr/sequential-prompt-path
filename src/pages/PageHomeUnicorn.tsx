@@ -5,19 +5,23 @@
  */
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Bell, ChevronDown, Mic, Image as ImageIcon, FileText, ChevronRight, RefreshCw,
   Home as HomeIcon, Hammer, Thermometer, Droplets, Building2, Zap, Wrench,
   BarChart3, ShieldCheck, Users, Clock, BadgeCheck, Star, ArrowRight,
+  QrCode, Menu, TrendingUp, User as UserIcon, Settings, LogOut, Sparkles,
 } from "lucide-react";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import AlexOrbPremium from "@/components/home-unicorn/AlexOrbPremium";
 import BottomDockGlass from "@/components/home-unicorn/BottomDockGlass";
+import NearbyContractorsCarousel from "@/components/home-unicorn/NearbyContractorsCarousel";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import "@/styles/unicorn-theme.css";
 
 /* ---------------- Header ---------------- */
 function HeaderFloatingGlass() {
+  const navigate = useNavigate();
   return (
     <header className="px-4 pt-4 pb-2 relative z-10">
       <div className="flex items-center justify-between gap-2">
@@ -58,6 +62,14 @@ function HeaderFloatingGlass() {
             />
           </button>
           <button
+            onClick={() => navigate("/scan")}
+            className="uc-glass-strong rounded-xl w-10 h-10 flex items-center justify-center"
+            style={{ borderRadius: 14 }}
+            aria-label="Scanner QR / carte d'affaires"
+          >
+            <QrCode size={16} color="#0B1220" />
+          </button>
+          <button
             className="uc-glass-strong rounded-xl pl-1 pr-2 py-1 flex items-center gap-1"
             style={{ borderRadius: 14 }}
             aria-label="Profil"
@@ -70,6 +82,42 @@ function HeaderFloatingGlass() {
             </span>
             <ChevronDown size={13} color="#0B1220" />
           </button>
+          <Sheet>
+            <SheetTrigger asChild>
+              <button
+                className="uc-glass-strong rounded-xl w-10 h-10 flex items-center justify-center"
+                style={{ borderRadius: 14 }}
+                aria-label="Menu"
+              >
+                <Menu size={16} color="#0B1220" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[82vw] max-w-[340px] p-0">
+              <SheetHeader className="px-5 pt-5 pb-3">
+                <SheetTitle className="text-left text-[18px]">Menu</SheetTitle>
+              </SheetHeader>
+              <nav className="px-3 pb-6 flex flex-col gap-1">
+                {[
+                  { to: "/", label: "Accueil", icon: HomeIcon },
+                  { to: "/dashboard", label: "Croissance", icon: TrendingUp },
+                  { to: "/alex", label: "Parler à Alex", icon: Sparkles },
+                  { to: "/profile", label: "Profil", icon: UserIcon },
+                  { to: "/account", label: "Compte", icon: Settings },
+                  { to: "/scan", label: "Scanner QR", icon: QrCode },
+                  { to: "/logout", label: "Déconnexion", icon: LogOut },
+                ].map(({ to, label, icon: Icon }) => (
+                  <Link
+                    key={to}
+                    to={to}
+                    className="flex items-center gap-3 px-3 py-3 rounded-xl text-[14px] font-medium hover:bg-muted transition-colors"
+                  >
+                    <Icon size={18} className="text-muted-foreground" />
+                    {label}
+                  </Link>
+                ))}
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>
@@ -409,65 +457,7 @@ function ContractorAippSplit() {
           </div>
         </div>
 
-        {/* AIPP card */}
-        <div
-          className="mt-4 p-3 rounded-2xl relative"
-          style={{
-            background: "linear-gradient(180deg,#FFFFFF,#F7FAFF)",
-            border: "1px solid rgba(11,18,32,0.06)",
-            boxShadow: "0 12px 30px -16px rgba(37,99,255,0.25)",
-          }}
-        >
-          <div
-            className="absolute -top-2 left-3 px-2 py-0.5 rounded-md text-[9px] font-bold text-white"
-            style={{ background: "linear-gradient(135deg,#2563FF,#3B82F6)" }}
-          >
-            AIPP
-          </div>
-          <div className="flex items-start gap-3">
-            <div
-              className="w-12 h-12 rounded-full shrink-0 flex items-center justify-center text-white font-bold"
-              style={{
-                background: "linear-gradient(135deg,#6366F1,#3B82F6)",
-                boxShadow: "0 0 0 2px white, 0 8px 18px -6px rgba(37,99,255,0.45)",
-              }}
-            >
-              LB
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-[13px] font-bold truncate" style={{ color: "#0B1220" }}>
-                  Toitures LB inc.
-                </div>
-                <div className="text-[10px] font-semibold flex items-center gap-1" style={{ color: "#10B981" }}>
-                  <BadgeCheck size={11} /> Profil vérifié
-                </div>
-              </div>
-              <div className="flex items-center gap-1 mt-0.5">
-                <Star size={12} color="#F59E0B" fill="#F59E0B" />
-                <span className="text-[11px] font-bold" style={{ color: "#0B1220" }}>4.9</span>
-                <span className="text-[10px]" style={{ color: "#94A3B8" }}>(128)</span>
-              </div>
-              <div className="text-[10px] flex items-center gap-1 mt-0.5" style={{ color: "#667085" }}>
-                Spécialiste toiture <BadgeCheck size={10} color="#2563FF" />
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t" style={{ borderColor: "rgba(11,18,32,0.06)" }}>
-            <div>
-              <div className="text-[13px] font-extrabold" style={{ color: "#0B1220" }}>289</div>
-              <div className="text-[9px]" style={{ color: "#94A3B8" }}>Projets complétés</div>
-            </div>
-            <div>
-              <div className="text-[13px] font-extrabold" style={{ color: "#0B1220" }}>98%</div>
-              <div className="text-[9px]" style={{ color: "#94A3B8" }}>Satisfaction</div>
-            </div>
-            <div>
-              <div className="text-[13px] font-extrabold" style={{ color: "#0B1220" }}>2h</div>
-              <div className="text-[9px]" style={{ color: "#94A3B8" }}>Réponse moyenne</div>
-            </div>
-          </div>
-        </div>
+        <NearbyContractorsCarousel />
       </div>
     </section>
   );
