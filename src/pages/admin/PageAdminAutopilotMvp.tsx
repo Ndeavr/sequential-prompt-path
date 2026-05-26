@@ -323,7 +323,6 @@ export default function PageAdminAutopilotMvp() {
                       {r.execution_mode && (
                         <Badge variant="outline" className={`text-[10px] ${EXEC_BADGE[r.execution_mode] ?? ""}`}>
                           {r.execution_mode === "real" ? "REAL DATA" :
-                           r.execution_mode === "simulation" ? "SIMULATION" :
                            r.execution_mode === "blocked" ? "BLOCKED" : "PENDING"}
                         </Badge>
                       )}
@@ -335,10 +334,9 @@ export default function PageAdminAutopilotMvp() {
                     </div>
                   </div>
                   <ExecutionTimeline r={r} />
-                  <div className="grid grid-cols-4 md:grid-cols-8 gap-3 mt-4 text-center">
+                  <div className="grid grid-cols-4 md:grid-cols-7 gap-3 mt-4 text-center">
                     <Stat label="Cible" value={r.target_count ?? r.target_limit ?? 0} />
                     <Stat label="Scrapés" value={r.scraped_count ?? 0} />
-                    <Stat label="Simulés" value={r.simulated_count ?? 0} />
                     <Stat label="Enrichis" value={r.enriched_count ?? 0} />
                     <Stat label="Scorés" value={r.scored_count ?? 0} />
                     <Stat label="Personnalisés" value={r.personalized_count ?? 0} />
