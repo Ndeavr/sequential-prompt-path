@@ -4,6 +4,7 @@
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { applyBrandPhoneticLock } from "../_shared/brand-phonetic-lock.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,7 +43,8 @@ serve(async (req) => {
     }
 
     const voiceId = voice_id || profile?.voice_id_primary || "XB0fDUnXU5powFXDhCwa";
-    const text = test_text || DEFAULT_PHRASES[language || "fr"] || DEFAULT_PHRASES.fr;
+    const rawText = test_text || DEFAULT_PHRASES[language || "fr"] || DEFAULT_PHRASES.fr;
+    const text = applyBrandPhoneticLock(rawText, language || "fr");
 
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,

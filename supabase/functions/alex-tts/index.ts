@@ -11,6 +11,7 @@
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.0";
+import { applyBrandPhoneticLock } from "../_shared/brand-phonetic-lock.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -106,13 +107,14 @@ serve(async (req) => {
       });
     }
 
-    const { text, voice_session_id, settings, voice_id } = await req.json();
-    if (!text || typeof text !== "string" || text.trim().length === 0) {
+    const { text: rawText, voice_session_id, settings, voice_id, language } = await req.json();
+    if (!rawText || typeof rawText !== "string" || rawText.trim().length === 0) {
       return new Response(JSON.stringify({ error: "text required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const text = applyBrandPhoneticLock(rawText, typeof language === "string" ? language : "fr");
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,

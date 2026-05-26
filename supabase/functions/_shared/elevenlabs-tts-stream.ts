@@ -9,6 +9,7 @@
  */
 
 import { ALEX_VOICE_CONFIG, getAlexVoiceSettings, type AlexVoiceProfile } from "./alex-french-voice.ts";
+import { applyBrandPhoneticLock } from "./brand-phonetic-lock.ts";
 
 export type OnAudioChunk = (base64Audio: string) => void;
 
@@ -43,6 +44,7 @@ export class ElevenLabsTtsProvider {
     }
 
     if (!text.trim()) return;
+    const spokenText = applyBrandPhoneticLock(text, "fr");
 
     const { voiceId, modelId, outputFormat } = ALEX_VOICE_CONFIG;
     const voiceSettings = voiceProfile
@@ -99,7 +101,7 @@ export class ElevenLabsTtsProvider {
         ws.send(JSON.stringify(bos));
 
         // Stream sentences one by one
-        const sentences = splitSentences(text);
+        const sentences = splitSentences(spokenText);
         for (const sentence of sentences) {
           if (signal?.aborted) break;
           ws.send(JSON.stringify({ text: sentence + " " }));
@@ -171,7 +173,7 @@ export class ElevenLabsTtsProvider {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          text,
+          text: applyBrandPhoneticLock(text, "fr"),
           model_id: modelId,
           voice_settings: {
             stability: voiceSettings.stability,

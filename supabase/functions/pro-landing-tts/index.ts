@@ -1,5 +1,6 @@
 // Alex premium TTS for the Nuclear Close landing.
 // Uses ElevenLabs Charlotte (FR) / Sarah (EN) — same Alex voice as main platform.
+import { applyBrandPhoneticLock } from "../_shared/brand-phonetic-lock.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,6 +39,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const voiceId = language === "en" ? VOICE_EN : VOICE_FR;
+    const spokenText = applyBrandPhoneticLock(text, language);
 
     const ttsRes = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream?output_format=mp3_44100_128`,
@@ -48,7 +50,7 @@ Deno.serve(async (req: Request) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          text,
+          text: spokenText,
           model_id: "eleven_turbo_v2_5",
           voice_settings: {
             stability: 0.45,
