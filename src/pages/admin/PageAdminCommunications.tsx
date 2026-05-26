@@ -191,14 +191,18 @@ export default function PageAdminCommunications() {
           </div>
           <div className="space-y-2">
             {logs.map((l) => (
-              <div key={l.id} className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3 text-sm">
-                {l.channel === "sms" ? <Phone className="h-4 w-4 text-cyan-300" /> : <Mail className="h-4 w-4 text-white/60" />}
-                <span className="text-white/40 text-xs w-24 shrink-0">{new Date(l.created_at).toLocaleTimeString("fr-CA")}</span>
-                <span className="font-mono text-xs text-white/70 w-44 truncate">{l.template_key || "—"}</span>
-                <span className={`rounded-full px-2.5 py-0.5 text-xs ${statusTone[l.delivery_status] ?? "bg-white/5 text-white/60"}`}>{l.delivery_status}</span>
-                {l.fallback_triggered && <Badge variant="outline" className="border-cyan-400/30 bg-cyan-500/10 text-[10px] text-cyan-300">fallback</Badge>}
-                <span className="ml-auto truncate text-xs text-white/40">{l.provider || "—"}</span>
-                {l.error_message && <span className="max-w-[300px] truncate text-xs text-rose-300">{l.error_message}</span>}
+              <div key={l.id} className="rounded-xl border border-white/5 bg-white/[0.02] px-3 py-3 text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  {l.channel === "sms" ? <Phone className="h-4 w-4 text-cyan-300 shrink-0" /> : <Mail className="h-4 w-4 text-white/60 shrink-0" />}
+                  <span className="text-white/40 text-xs">{new Date(l.created_at).toLocaleTimeString("fr-CA")}</span>
+                  <span className={`rounded-full px-2.5 py-0.5 text-xs ${statusTone[l.delivery_status] ?? "bg-white/5 text-white/60"}`}>{l.delivery_status}</span>
+                  {l.fallback_triggered && <Badge variant="outline" className="border-cyan-400/30 bg-cyan-500/10 text-[10px] text-cyan-300">fallback</Badge>}
+                  <span className="ml-auto text-xs text-white/40 truncate max-w-[120px]">{l.provider || "—"}</span>
+                </div>
+                <div className="mt-2 flex flex-col gap-1 min-w-0">
+                  <span className="font-mono text-xs text-white/70 break-all">{l.template_key || "—"}</span>
+                  {l.error_message && <span className="text-xs text-rose-300 break-words">{l.error_message}</span>}
+                </div>
               </div>
             ))}
             {logs.length === 0 && !loading && <p className="text-sm text-white/40">Aucun envoi récent.</p>}
