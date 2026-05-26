@@ -13,6 +13,7 @@ type Mission = {
   sent_count: number; opened_count: number; clicked_count: number;
   replied_count: number; paid_count: number;
   first_payment_at: string | null;
+  last_error: any | null;
 };
 
 const DEFAULT_MISSION = {
@@ -59,7 +60,15 @@ export default function PageMissionControl() {
     });
     setBusy(null);
     if (error) alert(error.message);
-    else console.log("mission run", data);
+    else {
+      console.log("mission run", data);
+      if (data?.trace) {
+        const summary = data.trace
+          .map((t: any) => `${t.phase}: ${t.ok ? "OK" : "FAIL"} (${t.status}) ${JSON.stringify(t.data?.diagnostics ?? t.data?.error ?? t.data?.scraped ?? "")}`)
+          .join("\n");
+        alert(`Pipeline ${data.ok ? "OK" : "STOPPED"} — status: ${data.status}\n\n${summary}`);
+      }
+    }
     refresh();
   }
 
