@@ -71,16 +71,15 @@ const STATUS_STYLE: Record<string, string> = {
 
 const EXEC_BADGE: Record<string, string> = {
   real: "bg-emerald-500/15 text-emerald-400 border-emerald-500/40",
-  simulation: "bg-purple-500/15 text-purple-300 border-purple-500/40",
   blocked: "bg-red-500/15 text-red-400 border-red-500/40",
   pending: "bg-slate-500/15 text-slate-400 border-slate-500/40",
 };
 
 function ExecutionTimeline({ r }: { r: Run }) {
   const steps = [
-    { label: "Sources", done: r.scraped_count > 0 || (r.simulated_count ?? 0) > 0 },
-    { label: "Scraping", done: r.scraped_count > 0 || (r.simulated_count ?? 0) > 0 },
-    { label: "Enrichissement", done: r.enriched_count > 0 || r.simulation_mode },
+    { label: "Sources", done: r.scraped_count > 0 },
+    { label: "Scraping", done: r.scraped_count > 0 },
+    { label: "Enrichissement", done: r.enriched_count > 0 },
     { label: "Scoring AIPP", done: r.scored_count > 0 },
     { label: "Personnalisation", done: r.personalized_count > 0 },
     { label: "Approbation", done: r.pending_count > 0 },
