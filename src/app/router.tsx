@@ -407,6 +407,7 @@ const PageAuditAIPPv2 = lazy(() => import("@/pages/PageAuditAIPPv2"));
 const PageAuditResultsAIPPv2 = lazy(() => import("@/pages/PageAuditResultsAIPPv2"));
 const PageAdminAIPPv2Dashboard = lazy(() => import("@/pages/admin/PageAdminAIPPv2Dashboard"));
 const PageAippDebug = lazy(() => import("@/pages/admin/PageAippDebug"));
+const PageMissionControl = lazy(() => import("@/pages/admin/PageMissionControl"));
 const PageContractorAippAudit = lazy(() => import("@/pages/PageContractorAippAudit"));
 
 // Instant Audit Intake Funnel + Outreach + Sniper
@@ -1220,6 +1221,7 @@ export const AppRouter = () => (
         <Route path="/admin/navigation" element={<ProtectedRoute requiredRole="admin"><PageAdminNavigation /></ProtectedRoute>} />
         <Route path="/admin/aipp-v2" element={<ProtectedRoute requiredRole="admin"><PageAdminAIPPv2Dashboard /></ProtectedRoute>} />
         <Route path="/admin/aipp-debug" element={<ProtectedRoute requiredRole="admin"><PageAippDebug /></ProtectedRoute>} />
+        <Route path="/admin/mission-control" element={<ProtectedRoute requiredRole="admin"><PageMissionControl /></ProtectedRoute>} />
         <Route path="/contractor/aipp-audit/:contractorId" element={<PageContractorAippAudit />} />
         <Route path="/admin/home-graph" element={<ProtectedRoute requiredRole="admin"><AdminHomeGraph /></ProtectedRoute>} />
         <Route path="/admin/uos" element={<ProtectedRoute requiredRole="admin"><AdminUOS /></ProtectedRoute>} />
