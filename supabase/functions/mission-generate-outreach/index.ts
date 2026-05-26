@@ -94,21 +94,13 @@ Génère le JSON demandé.`;
         const out = await callLLM(systemPrompt, userPrompt);
         await supabase.from("outbound_ai_personalizations").insert({
           lead_id: lead.id,
-          variant: 1,
-          subject: out.subject,
-          email_body: out.email_body,
-          sms_body: out.sms_body,
-          landing_hook: out.landing_hook,
-          generated_at: new Date().toISOString(),
-        }).then(() => {}, async (e) => {
-          // schema may differ; store payload
-          await supabase.from("outbound_ai_personalizations").insert({
-            lead_id: lead.id,
-            payload: out,
-          });
+          personalization_type: "full_outreach",
+          prompt_used: userPrompt,
+          generated_output: JSON.stringify(out),
+          approved: true,
         });
         await supabase.from("outbound_leads").update({
-          pipeline_stage: "ready_to_send", hook_summary: out.landing_hook,
+          pipeline_stage: "ready_to_send", hook_summary: out.landing_hook ?? null,
         }).eq("id", lead.id);
         generated++;
       } catch (e) {
