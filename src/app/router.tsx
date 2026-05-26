@@ -1323,6 +1323,7 @@ export const AppRouter = () => (
         <Route path="/pro/diagnostic/:slug" element={<Suspense fallback={<LazyFallback />}><PageOutboundLanding /></Suspense>} />
         <Route path="/pro/diagnostic/:slug/merci" element={<Suspense fallback={<LazyFallback />}><PageOutboundLandingSuccess /></Suspense>} />
         <Route path="/admin/outbound/ops" element={<ProtectedRoute requiredRole="admin"><PageOutboundOpsCenter /></ProtectedRoute>} />
+        <Route path="/admin/communications" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminCommunications /></Suspense></ProtectedRoute>} />
         <Route path="/admin/outbound/verification" element={<ProtectedRoute requiredRole="admin"><PageOutboundVerification /></ProtectedRoute>} />
         <Route path="/admin/outbound/tests" element={<ProtectedRoute requiredRole="admin"><PageOutboundTests /></ProtectedRoute>} />
         <Route path="/admin/outbound/automations" element={<ProtectedRoute requiredRole="admin"><PageOutboundAutomations /></ProtectedRoute>} />
