@@ -44,6 +44,7 @@ export class ElevenLabsTtsProvider {
     }
 
     if (!text.trim()) return;
+    text = applyBrandPhoneticLock(text, "fr");
 
     const { voiceId, modelId, outputFormat } = ALEX_VOICE_CONFIG;
     const voiceSettings = voiceProfile
