@@ -1,47 +1,88 @@
-# Fix — Smoke test email not delivered
+## Objectif
 
-## Diagnostic (root cause)
+Recréer pixel-par-pixel la homepage premium du mockup (bleu clair / glassmorphism / orb Alex) sur `/`, en isolant le nouveau thème à la home uniquement, et remplacer globalement la bottom nav par la nouvelle dock 5-icônes.
 
-The router fell back to email and the email send failed with `non-2xx`. Logs + code review confirm:
+## Architecture
 
-1. The admin "Tester le routage" panel calls the router with `template_key: "router-smoke-test"`.
-2. The router's email path invokes `send-transactional-email` with that key.
-3. `supabase/functions/_shared/transactional-email-templates/registry.ts` does **not** contain a `router-smoke-test` entry, so `send-transactional-email` returns `404 Template not found` → the router logs `failed / lovable_email / Edge Function returned a non-2xx status code`.
-4. Secondary issue: the SMS branch only fires when Twilio Lookup returns `phone_type === "mobile"` **and** `phone_verified === true`. When the test number's lookup is missing/cached as non-mobile, the router silently chooses email — which then hits issue #1.
+```
+src/pages/PageHomeUnicorn.tsx              ← nouvelle home, scope CSS `.unicorn-theme`
+src/styles/unicorn-theme.css               ← variables HSL bleu clair (#F7FAFF, #2563FF, #3B82F6)
+src/components/home-unicorn/
+  ├── HeaderFloatingGlass.tsx              ← logo + FR + cloche + profil
+  ├── HeroAlexOrb.tsx                      ← headline 2 colonnes + orb
+  ├── AlexOrbPremium.tsx                   ← orb liquide animé (CSS + framer-motion)
+  ├── AiInputCard.tsx                      ← input + chips + CTA "Parler avec Alex"
+  ├── SecondaryActionCards.tsx             ← Téléverser photo / Analyser soumission
+  ├── CategoryChipsScroll.tsx              ← 6+ pills horizontales scrollables
+  ├── LiveStatsCard.tsx                    ← 4 stats avec deltas verts
+  ├── HowItWorksCards.tsx                  ← 3 cartes étapes avec flèches
+  ├── ContractorAippSplit.tsx              ← split text gauche + carte pro droite
+  └── BottomDockGlass.tsx                  ← (utilisée aussi globalement)
+```
 
-So even with a real mobile number, the test currently never produces a delivered email and may not produce an SMS either.
+## Changements de routage / nav
 
-## Fix
+- `src/app/router.tsx` : route `/` et `/index` → `PageHomeUnicorn` (remplace `HomeWithFeatureFlag` / `PageHomeCopilot` pour ces 2 routes uniquement). Toutes les autres routes inchangées.
+- `MobileBottomNav` global remplacé par `BottomDockGlass` (Accueil / Croissance / **Alex (orb central glow)** / Profil / Compte). Conserve la signature props existante pour rester drop-in dans `MainLayout` / `DashboardLayout`.
 
-### 1. Register a real `router-smoke-test` email template
-Create `supabase/functions/_shared/transactional-email-templates/router-smoke-test.tsx` — minimal UNPRO-branded "Test de routage" email (FR), subject "UNPRO — Test de routage Smart Router". Add it to `registry.ts`.
+## Thème isolé (clé)
 
-### 2. Add raw-HTML email path in the router (resilience)
-Update `supabase/functions/contact-router/index.ts` `sendEmail()`:
-- If `email_html` is supplied in the request body, send a one-off email directly through `send-transactional-email`'s raw-mode (or, simpler, only fall back to the registered template when `email_html` is absent). This guarantees any ad-hoc smoke test / one-off send works without registry edits.
+- `unicorn-theme.css` définit des tokens HSL scopés sous `.unicorn-theme { --bg, --primary, --primary-glow, --text, --muted, --glass, --shadow-soft, --shadow-glow }`.
+- `PageHomeUnicorn` enveloppe tout dans `<div className="unicorn-theme min-h-screen">` — aucun token global modifié, le reste de l'app (Cinematic Dark, Landing Warm) intact.
+- Background : 3 couches → gradient base `#F7FAFF`, radial glows bleu/cyan, noise SVG 0.015.
 
-### 3. Surface lookup result in the admin test toast
-After the test call, show `phone_type` + `phone_verified` returned by the router so the operator immediately sees *why* SMS vs email was chosen (avoids "I sent a mobile number but got email" confusion).
+## Composants détaillés
 
-Tiny return-shape addition in router: include `phone_type`, `phone_verified`, `reason` in the JSON response. Display them in `runTest()`'s success toast inside `PageAdminCommunications.tsx`.
+**AlexOrbPremium** : sphère 220px, 3 calques (core gradient bleu→cyan, reflet spéculaire blanc, halo blur 60px), 6 particules flottantes en orbit (framer-motion `repeat: Infinity`), breathing scale 1→1.04 sur 4s.
 
-### 4. Verify end-to-end
-- Redeploy `contact-router` + `send-transactional-email`.
-- Run the smoke test from the admin UI with the same mobile number + the user's real email.
-- Confirm in `communication_logs` that one row is `sent / lovable_email` (or `sent / twilio` if mobile-verified) and check inbox.
-- If SMS path is selected, confirm Twilio message SID is logged.
+**AiInputCard** : container blanc radius 28px, shadow layered `0 20px 60px -20px rgba(37,99,255,.25)`, input top, row chips scrollable + bouton refresh, CTA full-width gradient `#2563FF→#3B82F6` avec icône mic + waveform 5 barres animées.
 
-## Files touched
-- `supabase/functions/_shared/transactional-email-templates/router-smoke-test.tsx` (new)
-- `supabase/functions/_shared/transactional-email-templates/registry.ts`
-- `supabase/functions/contact-router/index.ts`
-- `src/pages/admin/PageAdminCommunications.tsx`
+**HeroAlexOrb mobile** : grid `1fr 1fr`, headline gauche (Inter 800, tracking -0.04em, "Alex s'occupe du reste" en gradient), orb droite. Sur ≥sm garde 2 colonnes plus aérées.
 
-## Out of scope
-No DB migration, no rule changes, no Twilio config changes. Email infra (`notify.unpro.ca`) is already verified.
+**CategoryChipsScroll** : `overflow-x-auto snap-x`, 6 pills avec icône pastel circulaire (Isolation/Toiture/Thermopompe/Humidité/Condo/Électricité/Apparei…).
 
-## Success
-- Clicking "Tester le routage" with a valid email delivers the email to the inbox within ~1 min.
-- With a verified mobile number + SMS consent, an SMS arrives via Twilio.
-- The toast shows the detected `phone_type` and the chosen channel.
-- `communication_logs` row is `sent`, no more `Edge Function returned a non-2xx status code`.
+**LiveStatsCard** : 1 carte blanche, 4 colonnes (mobile : 2×2 grid), chaque stat = icône colorée + chiffre 24px bold + label muted + delta vert.
+
+**HowItWorksCards** : 3 cartes radius 24px, badge numéroté bleu, titre, description, illustration coin bas-droit, connecteurs SVG horizontal entre cartes (caché sur mobile).
+
+**ContractorAippSplit** : grid 1fr/1fr, texte+2 boutons (Voir mon AIPP plein bleu, Activer mon profil outline) à gauche, carte AIPP (photo, "Toitures LB inc.", 4.9★ (128), badge "Profil vérifié", 3 stats) à droite.
+
+**BottomDockGlass** : fixed bottom, `backdrop-blur-xl bg-white/70`, 4 ic+labels + orb central surélevé (-translate-y-4) avec glow bleu.
+
+## Animations
+
+- Page : `fade-in` global 400ms.
+- Orb : breathing + particles orbit (framer-motion).
+- CTA : magnetic hover (translateY -2px + shadow expand).
+- Chips : `hover:scale-105` désactivé, on garde translate uniquement (cohérent avec règle "never scale").
+- Stats : count-up sur viewport entry.
+
+## Données
+
+- Pas de migration DB. Stats `LiveStatsCard` lues du counter engine existant (`src/lib/counterEngine.ts`), avec valeurs mock fallback si indispo.
+- Carte AIPP utilise mock realistic data (Toitures LB, 4.9, 289 projets).
+
+## Intégration Alex
+
+- CTA "Parler avec Alex" → `useAlexVoice().openAlex("home_intent")` (respecte permission manager + event-driven session).
+- Chips → `openAlex("home_intent", chip.label)`.
+- Pas d'autostart, conforme à `mem://features/alex-event-driven-session`.
+
+## SEO
+
+- Helmet identique à `PageHomeCopilot` (title, meta, JSON-LD Service + FAQ), canonical `https://unpro.ca`.
+- H1 unique = headline "Décrivez votre situation. Alex s'occupe du reste."
+
+## Hors scope (à ne PAS toucher)
+
+- Aucune autre page, aucun token global, aucune logique business.
+- `PageHomeCopilot` conservé (peut servir ailleurs).
+- Pas de changement DB, edge functions, ou Alex prompt.
+
+## Critères de succès
+
+1. `/` affiche la home unicorn identique au mockup à 384px (viewport actuel).
+2. Aucun token global modifié — visiter `/admin/*` confirme le dark theme intact.
+3. Bottom dock visible partout en mobile.
+4. CTA orb / "Parler avec Alex" ouvre Alex sans erreur console.
+5. Build passe sans warning TS.
