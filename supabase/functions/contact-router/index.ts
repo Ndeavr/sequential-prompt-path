@@ -200,7 +200,16 @@ serve(async (req) => {
       return json({ ok: r2.ok, channel_used: fallback, fallback_used: true, log_id: log?.id });
     }
 
-    return json({ ok: sendResult.ok, channel_used: primary, log_id: log?.id, fallback_scheduled: fallbackQueued });
+    return json({
+      ok: sendResult.ok,
+      channel_used: primary,
+      log_id: log?.id,
+      fallback_scheduled: fallbackQueued,
+      phone_type: contact.phone_type ?? null,
+      phone_verified: contact.phone_verified ?? null,
+      rule: rule.rule_name,
+      error: sendResult.error ?? null,
+    });
   } catch (e) {
     return json({ error: String((e as Error).message ?? e) }, 500);
   }
