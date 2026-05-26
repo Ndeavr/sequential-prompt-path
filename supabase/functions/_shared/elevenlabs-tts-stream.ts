@@ -173,7 +173,7 @@ export class ElevenLabsTtsProvider {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          text,
+          text: applyBrandPhoneticLock(text, "fr"),
           model_id: modelId,
           voice_settings: {
             stability: voiceSettings.stability,
