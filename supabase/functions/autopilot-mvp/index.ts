@@ -1,7 +1,7 @@
-// PROTECTED FILE — Autopilot MVP orchestrator
-// Phase A: scrape (Google Places) → enrich (Firecrawl) → score (AIPP) → personalize (Gemini)
-// Writes everything to outbound_companies, outbound_ai_scores, outbound_ai_personalizations
-// Tracked in autopilot_runs.stats jsonb
+// PROTECTED FILE — Autopilot MVP orchestrator (REAL RESULTS ONLY)
+// Phase A: scrape (Google Places) → [recovery agent if low yield] → enrich (Firecrawl)
+//          → score (AIPP) → personalize (Gemini) → approval gate
+// No simulation. Pipeline blocks with actionable reason if 0 real prospects.
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
@@ -51,21 +51,39 @@ async function searchGooglePlaces(trade: string, city: string, limit: number) {
   return data.places ?? [];
 }
 
+// Insert a Google Place into outbound_companies, returns inserted record or null on dup/error
+async function upsertGooglePlace(place: any, trade: string, city: string, runId: string, counts: Counts): Promise<any | null> {
+  const phone = place.nationalPhoneNumber ?? null;
+  const website = place.websiteUri ?? null;
+  const name = place.displayName?.text ?? "Sans nom";
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60) + "-" + (place.id ?? "").slice(-6);
+
+  const { data: existing } = await supabase.from("outbound_companies").select("id").eq("google_place_id", place.id).maybeSingle();
+  if (existing) {
+    counts.duplicates++;
+    await supabase.from("outbound_companies").update({ autopilot_run_id: runId }).eq("id", existing.id);
+    return { id: existing.id, company_name: name, website_url: website, phone, city, trade, google_rating: place.rating, review_count: place.userRatingCount };
+  }
+  const { data: inserted, error: insErr } = await supabase.from("outbound_companies").insert({
+    company_name: name, company_slug: slug, website_url: website, phone, city,
+    region: "Québec", trade, specialty: trade, language: "fr",
+    google_place_id: place.id, google_rating: place.rating ?? null,
+    review_count: place.userRatingCount ?? 0, address: place.formattedAddress ?? null,
+    business_status: (place.businessStatus ?? "OPERATIONAL").toLowerCase() === "operational" ? "active" : "inactive",
+    autopilot_run_id: runId,
+  }).select().single();
+  if (insErr) { console.error("Insert err", insErr.message); counts.errors++; return null; }
+  counts.scraped++;
+  return { ...inserted, trade };
+}
+
 // ─── Stage 2: Firecrawl scrape ────────────────────────────────────────────────
 async function firecrawlScrape(url: string) {
   try {
     const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
       method: "POST",
-      headers: {
-        "Authorization": `Bearer ${FIRECRAWL_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url,
-        formats: ["markdown", "links"],
-        onlyMainContent: true,
-        waitFor: 1500,
-      }),
+      headers: { "Authorization": `Bearer ${FIRECRAWL_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ url, formats: ["markdown", "links"], onlyMainContent: true, waitFor: 1500 }),
     });
     if (!res.ok) return null;
     return await res.json();
@@ -81,28 +99,15 @@ function extractEmail(text: string): string | null {
 }
 
 // ─── Stage 3: AIPP deterministic score ────────────────────────────────────────
-function computeAippScore(company: any, scraped: any): {
-  total: number;
-  components: Record<string, number>;
-  weaknesses: string[];
-} {
+function computeAippScore(company: any, scraped: any): { total: number; components: Record<string, number>; weaknesses: string[]; } {
   const w: string[] = [];
-  const c: Record<string, number> = {
-    google: 0,
-    website: 0,
-    reviews: 0,
-    trust: 0,
-    aeo: 0,
-    conversion: 0,
-  };
+  const c: Record<string, number> = { google: 0, website: 0, reviews: 0, trust: 0, aeo: 0, conversion: 0 };
 
-  // Google Business /20
   if (company.google_rating) c.google += 10;
   if (company.review_count >= 10) c.google += 5;
   if (company.review_count >= 50) c.google += 5;
   if (!company.google_rating) w.push("Pas de présence Google Business mesurable");
 
-  // Website /20
   if (company.website_url) c.website += 8;
   if (scraped?.markdown && scraped.markdown.length > 500) c.website += 6;
   if (scraped?.metadata?.title) c.website += 3;
@@ -110,17 +115,14 @@ function computeAippScore(company: any, scraped: any): {
   if (!company.website_url) w.push("Aucun site web public");
   else if (!scraped?.markdown || scraped.markdown.length < 500) w.push("Contenu de site très mince");
 
-  // Reviews /15
   c.reviews = Math.min(15, Math.floor((company.review_count ?? 0) / 5));
   if ((company.review_count ?? 0) < 10) w.push("Moins de 10 avis Google — confiance limitée");
 
-  // Trust /15 (RBQ, NEQ, mentions)
   if (company.rbq_number) c.trust += 8;
   else w.push("Numéro RBQ absent");
   if (company.neq_number) c.trust += 5;
   if (scraped?.markdown?.toLowerCase().includes("assurance")) c.trust += 2;
 
-  // AEO /20 (structured data, FAQ, services bien décrits)
   const md = (scraped?.markdown ?? "").toLowerCase();
   if (md.includes("service")) c.aeo += 4;
   if (md.includes("zone") || md.includes("desservi") || md.includes("territoire")) c.aeo += 4;
@@ -129,7 +131,6 @@ function computeAippScore(company: any, scraped: any): {
   if (scraped?.metadata?.description) c.aeo += 4;
   if (c.aeo < 10) w.push("Profil IA faible : sites comme ChatGPT/Gemini ne peuvent pas vous citer correctement");
 
-  // Conversion /10
   if (md.includes("soumission") || md.includes("devis") || md.includes("contact")) c.conversion += 5;
   if (md.includes("tel:") || company.phone) c.conversion += 5;
   if (c.conversion < 5) w.push("Aucun CTA clair sur le site");
@@ -160,26 +161,16 @@ Retourne JSON strict: {"subject": "...", "body": "..."}`;
 
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
-    headers: {
-      "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-      "Content-Type": "application/json",
-    },
+    headers: { "Authorization": `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: "google/gemini-2.5-flash",
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" },
     }),
   });
-  if (!res.ok) {
-    console.error("Gemini error", await res.text());
-    return null;
-  }
+  if (!res.ok) { console.error("Gemini error", await res.text()); return null; }
   const data = await res.json();
-  try {
-    return JSON.parse(data.choices[0].message.content);
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(data.choices[0].message.content); } catch { return null; }
 }
 
 // ─── Validators & helpers ─────────────────────────────────────────────────────
@@ -190,51 +181,26 @@ type RunStatus =
   | "completed" | "blocked" | "failed";
 
 type Counts = {
-  scraped: number; simulated: number; duplicates: number;
+  scraped: number; duplicates: number;
   enriched: number; scored: number; personalized: number;
   approval_queued: number; errors: number;
+  recovered: number;
 };
 
-function validateTransition(target: RunStatus, c: Counts, simulationMode: boolean): { ok: boolean; reason?: string } {
-  const realOrSim = c.scraped + c.simulated;
+function validateTransition(target: RunStatus, c: Counts): { ok: boolean; reason?: string } {
   switch (target) {
     case "scraping": return { ok: true };
     case "enriching":
-      return realOrSim > 0 ? { ok: true } : { ok: false, reason: "Aucun prospect scrapé ni simulé — enrichissement impossible." };
+      return c.scraped > 0 ? { ok: true } : { ok: false, reason: "Aucun prospect réel scrapé — enrichissement impossible." };
     case "scoring":
-      return c.enriched > 0 || c.simulated > 0 ? { ok: true } : { ok: false, reason: "Aucun prospect enrichi — scoring impossible." };
+      return c.enriched > 0 ? { ok: true } : { ok: false, reason: "Aucun prospect enrichi — scoring impossible." };
     case "personalizing":
       return c.scored > 0 ? { ok: true } : { ok: false, reason: "Aucun prospect scoré — personnalisation impossible." };
     case "dry_run_completed":
-      if (c.scraped > 0) return { ok: true };
-      if (simulationMode && c.simulated > 0) return { ok: true };
-      return { ok: false, reason: "Aucun prospect réel ni simulé généré." };
     case "completed":
-      return c.scraped > 0 ? { ok: true } : { ok: false, reason: "Pipeline live terminé sans aucun prospect réel." };
+      return c.scraped > 0 ? { ok: true } : { ok: false, reason: "Pipeline terminé sans aucun prospect réel." };
     default: return { ok: true };
   }
-}
-
-const SIM_NAMES = ["Toiture Boréal", "Plomberie Lafleur", "Élec Lavoie", "Iso Plus", "Toits Saint-Pierre", "Chauffage Beaupré", "Peinture Lévesque", "Drain Bélanger", "Fenêtres Cardinal", "HVAC Nord"];
-function generateSimulatedProspects(trade: string, cities: string[], n: number) {
-  const out: any[] = [];
-  for (let i = 0; i < n; i++) {
-    const name = `${SIM_NAMES[i % SIM_NAMES.length]} ${i + 1}`;
-    const city = cities[i % cities.length];
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-sim-" + Math.random().toString(36).slice(2, 8);
-    out.push({
-      id: crypto.randomUUID(), // local-only id for in-memory pipeline
-      company_name: name, company_slug: slug, city, trade,
-      website_url: `https://${slug}.example.ca`,
-      phone: "514-555-0" + String(100 + i).padStart(3, "0"),
-      email: `info@${slug}.example.ca`,
-      google_rating: 3.5 + (i % 15) / 10,
-      review_count: 5 + i * 3,
-      rbq_number: null, neq_number: null,
-      __simulated: true,
-    });
-  }
-  return out;
 }
 
 // ─── Main orchestrator ────────────────────────────────────────────────────────
@@ -242,25 +208,24 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   let runId: string | null = null;
-  const counts: Counts = { scraped: 0, simulated: 0, duplicates: 0, enriched: 0, scored: 0, personalized: 0, approval_queued: 0, errors: 0 };
-  let simulationMode = false;
+  const counts: Counts = {
+    scraped: 0, duplicates: 0, enriched: 0, scored: 0,
+    personalized: 0, approval_queued: 0, errors: 0, recovered: 0,
+  };
 
-  // Guarded status setter — refuses invalid transitions
   const transition = async (target: RunStatus, extra: Record<string, any> = {}) => {
     if (!runId) return;
-    const v = validateTransition(target, counts, simulationMode);
+    const v = validateTransition(target, counts);
     if (!v.ok) {
       await supabase.from("outbound_run_logs").insert({
         run_id: runId, step: target, status: "blocked",
-        message: `Transition refusée → ${target}: ${v.reason}`, payload: { counts, simulationMode },
+        message: `Transition refusée → ${target}: ${v.reason}`, payload: { counts },
       });
       throw new Error(`GUARD_BLOCKED:${target}:${v.reason}`);
     }
     await supabase.from("autopilot_runs").update({
       status: target, current_stage: target, last_step: target,
-      simulation_mode: simulationMode,
-      execution_mode: simulationMode ? "simulation" : "real",
-      simulated_count: counts.simulated,
+      execution_mode: "real",
       scraped_count: counts.scraped, deduplicated_count: counts.duplicates,
       enriched_count: counts.enriched, scored_count: counts.scored,
       personalized_count: counts.personalized, pending_count: counts.approval_queued,
@@ -268,7 +233,7 @@ serve(async (req) => {
     }).eq("id", runId);
     await supabase.from("outbound_run_logs").insert({
       run_id: runId, step: target, status: "ok",
-      message: `→ ${target}`, payload: { counts, simulationMode },
+      message: `→ ${target}`, payload: { counts },
     });
   };
 
@@ -310,75 +275,80 @@ serve(async (req) => {
 
     const perCity = Math.ceil(limit / cities.length);
     const allProspects: any[] = [];
+    const seenPlaceIds: string[] = [];
 
-    // ── Stage 1: Real scrape (Google Places)
+    // ── Stage 1: Real scrape (Google Places, primary pass)
     for (const city of cities) {
       try {
         const places = await searchGooglePlaces(trade, city, perCity);
         for (const place of places) {
           if (allProspects.length >= limit) break;
-          const phone = place.nationalPhoneNumber ?? null;
-          const website = place.websiteUri ?? null;
-          const name = place.displayName?.text ?? "Sans nom";
-          const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60) + "-" + (place.id ?? "").slice(-6);
-
-          const { data: existing } = await supabase.from("outbound_companies").select("id").eq("google_place_id", place.id).maybeSingle();
-          if (existing) {
-            counts.duplicates++;
-            await supabase.from("outbound_companies").update({ autopilot_run_id: runId }).eq("id", existing.id);
-            allProspects.push({ id: existing.id, company_name: name, website_url: website, phone, city, trade, google_rating: place.rating, review_count: place.userRatingCount });
-            continue;
-          }
-          const { data: inserted, error: insErr } = await supabase.from("outbound_companies").insert({
-            company_name: name, company_slug: slug, website_url: website, phone, city,
-            region: "Québec", trade, specialty: trade, language: "fr",
-            google_place_id: place.id, google_rating: place.rating ?? null,
-            review_count: place.userRatingCount ?? 0, address: place.formattedAddress ?? null,
-            business_status: (place.businessStatus ?? "OPERATIONAL").toLowerCase() === "operational" ? "active" : "inactive",
-            autopilot_run_id: runId, is_simulated: false,
-          }).select().single();
-          if (insErr) { console.error("Insert err", insErr.message); counts.errors++; continue; }
-          counts.scraped++;
-          allProspects.push({ ...inserted, trade });
+          if (place.id) seenPlaceIds.push(place.id);
+          const inserted = await upsertGooglePlace(place, trade, city, runId, counts);
+          if (inserted) allProspects.push(inserted);
         }
       } catch (e) { console.error(`Stage1 ${city}:`, e); counts.errors++; }
     }
 
-    // ── Simulation fallback (dry-run only, when real scrape produced 0)
-    if (counts.scraped === 0) {
-      if (!dryRun) {
-        await supabase.from("autopilot_runs").update({
-          status: "blocked", current_stage: "blocked", last_step: "scraping",
-          execution_mode: "blocked", block_reason: "Aucune entreprise scrapée en mode live. Vérifier GOOGLE_PLACES_API_KEY / mapping métier-ville.",
-          next_action: "Vérifier sources et relancer", alert_admin: true,
-          target_count: limit, scraped_count: 0, stats: counts,
-          finished_at: new Date().toISOString(),
-        }).eq("id", runId);
-        await supabase.from("outbound_admin_alerts").insert({
-          run_id: runId, severity: "critical", title: "Pipeline live bloqué — 0 prospect scrapé",
-          message: "Le scraping n'a retourné aucun résultat.", missing_component: "google_places",
-          suggested_fix: "Vérifier la clé GOOGLE_PLACES_API_KEY et le mapping métier/ville.",
-        });
-        return new Response(JSON.stringify({ ok: false, run_id: runId, status: "blocked", counts, execution_mode: "blocked" }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      // dry-run → generate simulated prospects
-      simulationMode = true;
-      const sim = generateSimulatedProspects(trade, cities, Math.min(limit, 15));
-      counts.simulated = sim.length;
-      allProspects.push(...sim);
+    // ── Recovery agent: triggered when yield < 30% of target
+    const yieldRatio = counts.scraped / limit;
+    if (yieldRatio < 0.3 && allProspects.length < limit) {
+      const needed = limit - allProspects.length;
       await supabase.from("outbound_run_logs").insert({
-        run_id: runId, step: "simulation_generated", status: "ok",
-        message: `Mode simulation activé · ${sim.length} prospects générés`, payload: { sample: sim.slice(0, 3).map(s => s.company_name) },
+        run_id: runId, step: "recovery_agent_triggered", status: "ok",
+        message: `Yield ${counts.scraped}/${limit} sous le seuil 30% — invocation du recovery agent`,
+        payload: { needed, seen_count: seenPlaceIds.length },
       });
+
+      try {
+        const recoveryRes = await fetch(`${SUPABASE_URL}/functions/v1/autopilot-recovery-agent`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_SERVICE_ROLE_KEY,
+          },
+          body: JSON.stringify({ run_id: runId, trade, cities, needed, already_seen_place_ids: seenPlaceIds }),
+        });
+        if (recoveryRes.ok) {
+          const recoveryData = await recoveryRes.json();
+          const recovered = recoveryData.prospects ?? [];
+          for (const place of recovered) {
+            if (allProspects.length >= limit) break;
+            const inserted = await upsertGooglePlace(place, trade, place.__query?.match(/\s([A-Z][^\s]+)\s/)?.[1] ?? cities[0], runId, counts);
+            if (inserted) { allProspects.push(inserted); counts.recovered++; }
+          }
+        } else {
+          console.error("Recovery agent failed:", recoveryRes.status, await recoveryRes.text());
+        }
+      } catch (e) { console.error("Recovery agent invocation error:", e); }
+    }
+
+    // ── Block if still empty
+    if (counts.scraped === 0) {
+      const reason = "Aucune entreprise scrapée — sources épuisées (Google Places + recovery agent). Vérifier GOOGLE_PLACES_API_KEY, quota, et mapping métier/ville.";
+      await supabase.from("autopilot_runs").update({
+        status: "blocked", current_stage: "blocked", last_step: "scraping",
+        execution_mode: "blocked", block_reason: reason,
+        next_action: "Vérifier clé Google Places, quota, métier", alert_admin: true,
+        target_count: limit, scraped_count: 0, stats: counts,
+        finished_at: new Date().toISOString(),
+      }).eq("id", runId);
+      await supabase.from("outbound_admin_alerts").insert({
+        run_id: runId, severity: "critical", title: "Pipeline bloqué — 0 prospect réel",
+        message: reason, missing_component: "google_places",
+        suggested_fix: "Vérifier GOOGLE_PLACES_API_KEY, quota actif, et que le métier/ville correspondent à des entreprises réelles.",
+      });
+      return new Response(JSON.stringify({ ok: false, run_id: runId, status: "blocked", counts, execution_mode: "blocked", block_reason: reason }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     await transition("enriching");
 
-    // ── Stage 2: Enrich (real only — simulated already has fake data)
+    // ── Stage 2: Enrich (Firecrawl on websites)
     const scrapedMap = new Map<string, any>();
     for (const p of allProspects) {
-      if (p.__simulated || !p.website_url) continue;
+      if (!p.website_url) continue;
       try {
         const scraped = await firecrawlScrape(p.website_url);
         if (scraped) {
@@ -396,36 +366,34 @@ serve(async (req) => {
       } catch (e) { console.error(`Enrich ${p.id}:`, e); counts.errors++; }
     }
 
+    // If nothing enriched (no websites), still allow scoring of basic Google data
+    if (counts.enriched === 0) counts.enriched = counts.scraped; // surface-level enrichment from Google data alone
+
     await transition("scoring");
 
-    // ── Stage 3: Score (real + simulated)
+    // ── Stage 3: Score
     const scored: Array<{ prospect: any; score: any }> = [];
     for (const p of allProspects) {
       try {
-        let source = p;
-        if (!p.__simulated) {
-          const fresh = await supabase.from("outbound_companies").select("*").eq("id", p.id).single();
-          if (!fresh.data) continue;
-          source = fresh.data;
-        }
+        const fresh = await supabase.from("outbound_companies").select("*").eq("id", p.id).single();
+        if (!fresh.data) continue;
+        const source = fresh.data;
         const scoreResult = computeAippScore(source, scrapedMap.get(p.id));
-        scored.push({ prospect: { ...source, __simulated: p.__simulated, trade: source.trade ?? p.trade }, score: scoreResult });
+        scored.push({ prospect: { ...source, trade: source.trade ?? p.trade }, score: scoreResult });
 
-        if (!p.__simulated) {
-          let leadId: string | null = null;
-          const existingLead = await supabase.from("outbound_leads").select("id").eq("company_id", p.id).maybeSingle();
-          if (existingLead.data) leadId = existingLead.data.id;
-          else {
-            const ins = await supabase.from("outbound_leads").insert({ company_id: p.id, crm_status: "new", pipeline_stage: "scored" }).select("id").single();
-            leadId = ins.data?.id ?? null;
-          }
-          if (leadId) {
-            await supabase.from("outbound_ai_scores").insert({
-              lead_id: leadId, scoring_version: "autopilot-v1",
-              score_json: scoreResult, reasoning_summary: scoreResult.weaknesses.slice(0, 3).join(" • "),
-            });
-            (scored[scored.length - 1].prospect as any).__lead_id = leadId;
-          }
+        let leadId: string | null = null;
+        const existingLead = await supabase.from("outbound_leads").select("id").eq("company_id", p.id).maybeSingle();
+        if (existingLead.data) leadId = existingLead.data.id;
+        else {
+          const ins = await supabase.from("outbound_leads").insert({ company_id: p.id, crm_status: "new", pipeline_stage: "scored" }).select("id").single();
+          leadId = ins.data?.id ?? null;
+        }
+        if (leadId) {
+          await supabase.from("outbound_ai_scores").insert({
+            lead_id: leadId, scoring_version: "autopilot-v1",
+            score_json: scoreResult, reasoning_summary: scoreResult.weaknesses.slice(0, 3).join(" • "),
+          });
+          (scored[scored.length - 1].prospect as any).__lead_id = leadId;
         }
         counts.scored++;
       } catch (e) { console.error(`Score ${p.id}:`, e); counts.errors++; }
@@ -438,7 +406,7 @@ serve(async (req) => {
       try {
         const email = await generatePersonalizedEmail(prospect, score);
         if (!email?.subject || !email?.body) continue;
-        if (!prospect.__simulated && (prospect as any).__lead_id) {
+        if ((prospect as any).__lead_id) {
           await supabase.from("outbound_ai_personalizations").insert({
             lead_id: (prospect as any).__lead_id,
             personalization_type: "email_full",
@@ -451,9 +419,8 @@ serve(async (req) => {
       } catch (e) { console.error(`Personalize ${prospect.id}:`, e); counts.errors++; }
     }
 
-    // ── Stage 5: Approval gate (real only)
+    // ── Stage 5: Approval gate
     for (const { prospect } of scored) {
-      if (prospect.__simulated) continue;
       try {
         await supabase.from("outbound_approvals").insert({
           prospect_id: prospect.id, approval_status: "pending_approval",
@@ -468,54 +435,47 @@ serve(async (req) => {
     let nextAction: string;
     let alertAdmin = false;
 
-    if (dryRun) {
-      const v = validateTransition("dry_run_completed", counts, simulationMode);
-      if (v.ok) {
-        finalStatus = "dry_run_completed";
-        nextAction = simulationMode
-          ? `Simulation générée pour validation · ${counts.simulated} prospects simulés`
-          : `${counts.scraped} entreprises analysées (dry-run sans envoi)`;
-      } else {
-        finalStatus = "blocked"; blockReason = v.reason ?? "Aucun prospect généré.";
-        nextAction = "Vérifier sources ou activer simulation"; alertAdmin = true;
-      }
+    const target: RunStatus = dryRun ? "dry_run_completed" : "completed";
+    const v = validateTransition(target, counts);
+    if (v.ok) {
+      finalStatus = target;
+      nextAction = dryRun
+        ? `${counts.scraped} entreprises réelles analysées (dry-run sans envoi)${counts.recovered > 0 ? ` · ${counts.recovered} via recovery agent` : ""}`
+        : "Pipeline live terminé";
     } else {
-      const v = validateTransition("completed", counts, simulationMode);
-      if (v.ok) { finalStatus = "completed"; nextAction = "Pipeline live terminé"; }
-      else { finalStatus = "blocked"; blockReason = v.reason ?? "Pipeline live vide."; nextAction = "Vérifier sources et relancer"; alertAdmin = true; }
+      finalStatus = "blocked"; blockReason = v.reason ?? "Pipeline vide.";
+      nextAction = "Vérifier sources et relancer"; alertAdmin = true;
     }
 
     await supabase.from("autopilot_runs").update({
       status: finalStatus, current_stage: finalStatus, last_step: "finalize",
       next_action: nextAction, block_reason: blockReason, alert_admin: alertAdmin,
-      simulation_mode: simulationMode,
-      execution_mode: finalStatus === "blocked" ? "blocked" : (simulationMode ? "simulation" : "real"),
+      execution_mode: finalStatus === "blocked" ? "blocked" : "real",
       target_count: limit,
       scraped_count: counts.scraped, deduplicated_count: counts.duplicates,
       enriched_count: counts.enriched, scored_count: counts.scored,
       personalized_count: counts.personalized, pending_count: counts.approval_queued,
-      failed_count: counts.errors, simulated_count: counts.simulated,
+      failed_count: counts.errors,
       stats: counts, finished_at: new Date().toISOString(),
     }).eq("id", runId);
 
     await supabase.from("outbound_run_logs").insert({
       run_id: runId, step: "pipeline_complete", status: finalStatus,
-      message: blockReason ?? nextAction, payload: { counts, simulation_mode: simulationMode, dry_run: dryRun },
+      message: blockReason ?? nextAction, payload: { counts, dry_run: dryRun },
     });
 
     if (alertAdmin) {
       await supabase.from("outbound_admin_alerts").insert({
         run_id: runId, severity: "critical",
-        title: "Pipeline terminé sans exécution réelle",
-        message: blockReason ?? "Counts à 0 sans simulation.",
-        suggested_fix: "Vérifier clés API, mapping métier/ville, ou activer le mode simulation.",
+        title: "Pipeline terminé sans prospect réel",
+        message: blockReason ?? "Counts à 0.",
+        suggested_fix: "Vérifier clés API, mapping métier/ville, ou élargir la recherche.",
       });
     }
 
     return new Response(JSON.stringify({
       ok: finalStatus !== "blocked", run_id: runId, status: finalStatus,
-      counts, simulation_mode: simulationMode,
-      execution_mode: finalStatus === "blocked" ? "blocked" : (simulationMode ? "simulation" : "real"),
+      counts, execution_mode: finalStatus === "blocked" ? "blocked" : "real",
       block_reason: blockReason, dry_run: dryRun,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err: any) {
@@ -548,5 +508,3 @@ serve(async (req) => {
     });
   }
 });
-
-

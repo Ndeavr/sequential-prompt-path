@@ -38,13 +38,11 @@ type Run = {
   block_reason: string | null;
   alert_admin: boolean;
   dry_run: boolean;
-  simulation_mode?: boolean;
-  execution_mode?: "real" | "simulation" | "blocked" | "pending";
+  execution_mode?: "real" | "blocked" | "pending";
   target_count: number;
   target_limit: number;
   stats: Record<string, number>;
   scraped_count: number;
-  simulated_count?: number;
   deduplicated_count: number;
   enriched_count: number;
   scored_count: number;
@@ -73,16 +71,15 @@ const STATUS_STYLE: Record<string, string> = {
 
 const EXEC_BADGE: Record<string, string> = {
   real: "bg-emerald-500/15 text-emerald-400 border-emerald-500/40",
-  simulation: "bg-purple-500/15 text-purple-300 border-purple-500/40",
   blocked: "bg-red-500/15 text-red-400 border-red-500/40",
   pending: "bg-slate-500/15 text-slate-400 border-slate-500/40",
 };
 
 function ExecutionTimeline({ r }: { r: Run }) {
   const steps = [
-    { label: "Sources", done: r.scraped_count > 0 || (r.simulated_count ?? 0) > 0 },
-    { label: "Scraping", done: r.scraped_count > 0 || (r.simulated_count ?? 0) > 0 },
-    { label: "Enrichissement", done: r.enriched_count > 0 || r.simulation_mode },
+    { label: "Sources", done: r.scraped_count > 0 },
+    { label: "Scraping", done: r.scraped_count > 0 },
+    { label: "Enrichissement", done: r.enriched_count > 0 },
     { label: "Scoring AIPP", done: r.scored_count > 0 },
     { label: "Personnalisation", done: r.personalized_count > 0 },
     { label: "Approbation", done: r.pending_count > 0 },
@@ -326,7 +323,6 @@ export default function PageAdminAutopilotMvp() {
                       {r.execution_mode && (
                         <Badge variant="outline" className={`text-[10px] ${EXEC_BADGE[r.execution_mode] ?? ""}`}>
                           {r.execution_mode === "real" ? "REAL DATA" :
-                           r.execution_mode === "simulation" ? "SIMULATION" :
                            r.execution_mode === "blocked" ? "BLOCKED" : "PENDING"}
                         </Badge>
                       )}
@@ -338,10 +334,9 @@ export default function PageAdminAutopilotMvp() {
                     </div>
                   </div>
                   <ExecutionTimeline r={r} />
-                  <div className="grid grid-cols-4 md:grid-cols-8 gap-3 mt-4 text-center">
+                  <div className="grid grid-cols-4 md:grid-cols-7 gap-3 mt-4 text-center">
                     <Stat label="Cible" value={r.target_count ?? r.target_limit ?? 0} />
                     <Stat label="Scrapés" value={r.scraped_count ?? 0} />
-                    <Stat label="Simulés" value={r.simulated_count ?? 0} />
                     <Stat label="Enrichis" value={r.enriched_count ?? 0} />
                     <Stat label="Scorés" value={r.scored_count ?? 0} />
                     <Stat label="Personnalisés" value={r.personalized_count ?? 0} />
