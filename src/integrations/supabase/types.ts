@@ -45594,6 +45594,7 @@ export type Database = {
           enriched_count: number
           first_payment_at: string | null
           id: string
+          last_error: Json | null
           name: string
           opened_count: number
           paid_count: number
@@ -45619,6 +45620,7 @@ export type Database = {
           enriched_count?: number
           first_payment_at?: string | null
           id?: string
+          last_error?: Json | null
           name: string
           opened_count?: number
           paid_count?: number
@@ -45644,6 +45646,7 @@ export type Database = {
           enriched_count?: number
           first_payment_at?: string | null
           id?: string
+          last_error?: Json | null
           name?: string
           opened_count?: number
           paid_count?: number
