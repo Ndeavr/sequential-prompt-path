@@ -1221,6 +1221,7 @@ export const AppRouter = () => (
         <Route path="/admin/navigation" element={<ProtectedRoute requiredRole="admin"><PageAdminNavigation /></ProtectedRoute>} />
         <Route path="/admin/aipp-v2" element={<ProtectedRoute requiredRole="admin"><PageAdminAIPPv2Dashboard /></ProtectedRoute>} />
         <Route path="/admin/aipp-debug" element={<ProtectedRoute requiredRole="admin"><PageAippDebug /></ProtectedRoute>} />
+        <Route path="/admin/mission-control" element={<ProtectedRoute requiredRole="admin"><PageMissionControl /></ProtectedRoute>} />
         <Route path="/contractor/aipp-audit/:contractorId" element={<PageContractorAippAudit />} />
         <Route path="/admin/home-graph" element={<ProtectedRoute requiredRole="admin"><AdminHomeGraph /></ProtectedRoute>} />
         <Route path="/admin/uos" element={<ProtectedRoute requiredRole="admin"><AdminUOS /></ProtectedRoute>} />
