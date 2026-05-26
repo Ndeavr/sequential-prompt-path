@@ -13,6 +13,7 @@ type Mission = {
   sent_count: number; opened_count: number; clicked_count: number;
   replied_count: number; paid_count: number;
   first_payment_at: string | null;
+  last_error: any | null;
 };
 
 const DEFAULT_MISSION = {
@@ -59,7 +60,15 @@ export default function PageMissionControl() {
     });
     setBusy(null);
     if (error) alert(error.message);
-    else console.log("mission run", data);
+    else {
+      console.log("mission run", data);
+      if (data?.trace) {
+        const summary = data.trace
+          .map((t: any) => `${t.phase}: ${t.ok ? "OK" : "FAIL"} (${t.status}) ${JSON.stringify(t.data?.diagnostics ?? t.data?.error ?? t.data?.scraped ?? "")}`)
+          .join("\n");
+        alert(`Pipeline ${data.ok ? "OK" : "STOPPED"} — status: ${data.status}\n\n${summary}`);
+      }
+    }
     refresh();
   }
 
@@ -114,6 +123,12 @@ export default function PageMissionControl() {
                         </Button>
                       </div>
                     </div>
+                    {m.last_error && (
+                      <div className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200">
+                        <div className="font-semibold mb-1">Dernière erreur</div>
+                        <pre className="whitespace-pre-wrap break-words max-h-40 overflow-auto">{JSON.stringify(m.last_error, null, 2)}</pre>
+                      </div>
+                    )}
                     <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 text-center">
                       {[
                         ["Scrapés", m.scraped_count],

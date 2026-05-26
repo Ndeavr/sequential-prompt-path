@@ -1,0 +1,1 @@
+ALTER TABLE public.outbound_missions ADD COLUMN IF NOT EXISTS last_error jsonb;

@@ -24,17 +24,37 @@ function normalizeKey(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-async function scrapeGooglePlaces(trade: string, city: string): Promise<ScrapedCompany[]> {
+async function placesTextSearch(query: string): Promise<any[]> {
   if (!GOOGLE_PLACES_API_KEY) return [];
-  const query = `${trade} ${city} Québec`;
   const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&region=ca&language=fr&key=${GOOGLE_PLACES_API_KEY}`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Places ${res.status}`);
+  if (!res.ok) {
+    console.error("places http", res.status);
+    return [];
+  }
   const data = await res.json();
-  const results: any[] = data.results ?? [];
+  if (data.status && data.status !== "OK" && data.status !== "ZERO_RESULTS") {
+    console.error("places status", data.status, data.error_message);
+  }
+  return data.results ?? [];
+}
+
+async function scrapeGooglePlaces(trade: string, city: string): Promise<ScrapedCompany[]> {
+  if (!GOOGLE_PLACES_API_KEY) return [];
+  const queries = [
+    `${trade} ${city} Québec`,
+    `isolation entretoit ${city}`,
+    `isolation toiture ${city}`,
+    `entrepreneur isolation ${city}`,
+  ];
+  let results: any[] = [];
+  for (const q of queries) {
+    results = await placesTextSearch(q);
+    console.log(`[places] "${q}" => ${results.length}`);
+    if (results.length > 0) break;
+  }
   const enriched: ScrapedCompany[] = [];
   for (const r of results.slice(0, 20)) {
-    // Get details for phone + website
     let phone: string | null = null;
     let website: string | null = null;
     try {
@@ -60,25 +80,53 @@ async function scrapeGooglePlaces(trade: string, city: string): Promise<ScrapedC
   return enriched;
 }
 
+function extractFirecrawlItems(data: any): any[] {
+  // Firecrawl v2 shape variations:
+  //  - { success, data: [...] }
+  //  - { success, data: { web: [...] } }
+  //  - { success, data: { web: { results: [...] } } }
+  //  - { web: { results: [...] } }
+  const candidates: any[] = [
+    data?.data,
+    data?.data?.web,
+    data?.data?.web?.results,
+    data?.web,
+    data?.web?.results,
+    data?.results,
+  ];
+  for (const c of candidates) {
+    if (Array.isArray(c)) return c;
+  }
+  return [];
+}
+
 async function scrapeFirecrawlFallback(trade: string, city: string): Promise<ScrapedCompany[]> {
   if (!FIRECRAWL_API_KEY) return [];
-  const query = `${trade} ${city} entrepreneur`;
+  const query = `${trade} ${city} entrepreneur Québec`;
   const res = await fetch("https://api.firecrawl.dev/v2/search", {
     method: "POST",
     headers: { Authorization: `Bearer ${FIRECRAWL_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({ query, limit: 15, country: "ca", lang: "fr" }),
   });
-  if (!res.ok) return [];
+  if (!res.ok) {
+    console.error("firecrawl http", res.status);
+    return [];
+  }
   const data = await res.json();
+  const items = extractFirecrawlItems(data);
+  console.log(`[firecrawl] "${query}" => ${items.length}`);
   const out: ScrapedCompany[] = [];
-  const items: any[] = data.data ?? data.web?.results ?? [];
   for (const r of items) {
+    const url = r?.url || r?.link;
+    if (!url) continue;
     try {
-      const host = new URL(r.url).hostname.replace(/^www\./, "");
+      const host = new URL(url).hostname.replace(/^www\./, "");
+      // Skip obvious aggregators
+      if (/(facebook|linkedin|kijiji|pagesjaunes|yelp|youtube|instagram|google)\./i.test(host)) continue;
       out.push({
-        name: r.title?.split("|")[0]?.trim() || host,
+        name: (r.title || "").split("|")[0]?.trim() || host,
         city,
-        website: r.url,
+        website: url,
       });
     } catch {}
   }
@@ -97,40 +145,40 @@ Deno.serve(async (req) => {
     if (mErr || !mission) return jsonResponse({ error: "mission not found" }, 404);
 
     await supabase.from("outbound_missions").update({
-      status: "scraping", started_at: new Date().toISOString(),
+      status: "scraping", started_at: new Date().toISOString(), last_error: null,
     }).eq("id", mission_id);
 
     const seen = new Set<string>();
     const inserted: any[] = [];
-    let totalAttempts = 0;
+    const perCityDiag: Record<string, { places: number; firecrawl: number; inserted: number }> = {};
+    const errors: any[] = [];
     const targetTotal = mission.target_count ?? 30;
     const perCity = Math.ceil(targetTotal / mission.cities.length);
 
     for (const city of mission.cities as string[]) {
-      // Init territory state row
+      const diag = { places: 0, firecrawl: 0, inserted: 0 };
+      perCityDiag[city] = diag;
+
       await supabase.from("mission_territory_state").upsert({
         mission_id, city, total_slots: 5,
       }, { onConflict: "mission_id,city" });
 
-      let attempts = 0;
       let companies: ScrapedCompany[] = [];
-      while (attempts < 3 && companies.length === 0) {
-        attempts++;
-        totalAttempts++;
+      try {
+        companies = await scrapeGooglePlaces(mission.trade_slug, city);
+        diag.places = companies.length;
+      } catch (e) {
+        console.error("places err", city, e);
+        errors.push({ phase: "places", city, error: String(e) });
+      }
+
+      if (companies.length === 0) {
         try {
-          companies = await scrapeGooglePlaces(mission.trade_slug, city);
-          if (companies.length === 0 && attempts >= 2) {
-            companies = await scrapeFirecrawlFallback(mission.trade_slug, city);
-          }
+          companies = await scrapeFirecrawlFallback(mission.trade_slug, city);
+          diag.firecrawl = companies.length;
         } catch (e) {
-          console.error("scrape error", city, e);
-          if (attempts >= 3) {
-            await supabase.from("outbound_admin_alerts").insert({
-              alert_type: "mission_scrape_failed",
-              severity: "warning",
-              payload: { mission_id, city, error: String(e) },
-            }).then(() => {}, () => {});
-          }
+          console.error("firecrawl err", city, e);
+          errors.push({ phase: "firecrawl", city, error: String(e) });
         }
       }
 
@@ -141,7 +189,6 @@ Deno.serve(async (req) => {
         if (seen.has(key)) continue;
         seen.add(key);
 
-        // Insert company (dedup by google_place_id when present)
         const { data: existing } = c.google_place_id
           ? await supabase.from("outbound_companies")
               .select("id").eq("google_place_id", c.google_place_id).maybeSingle()
@@ -169,11 +216,10 @@ Deno.serve(async (req) => {
             business_status: "active",
             language: "fr",
           }).select("id").single();
-          if (insErr) { console.error("insert company", insErr); continue; }
+          if (insErr) { console.error("insert company", insErr); errors.push({ phase: "insert", city, error: insErr.message }); continue; }
           companyId = ins.id;
         }
 
-        // Create or attach lead
         const { data: existingLead } = await supabase.from("outbound_leads")
           .select("id").eq("company_id", companyId).maybeSingle();
         if (!existingLead) {
@@ -195,16 +241,42 @@ Deno.serve(async (req) => {
 
         inserted.push({ companyId, name: c.name, city });
         cityCount++;
+        diag.inserted++;
       }
     }
 
-    await supabase.from("outbound_missions").update({ status: "enriching" }).eq("id", mission_id);
+    const diagnostics = {
+      per_city: perCityDiag,
+      total_inserted: inserted.length,
+      errors,
+      has_places_key: !!GOOGLE_PLACES_API_KEY,
+      has_firecrawl_key: !!FIRECRAWL_API_KEY,
+    };
+
+    const next_status = inserted.length === 0 ? "scrape_failed" : "enriching";
+    await supabase.from("outbound_missions").update({
+      status: next_status,
+      last_error: inserted.length === 0 ? diagnostics : null,
+    }).eq("id", mission_id);
 
     return jsonResponse({
-      ok: true, mission_id, scraped: inserted.length, attempts: totalAttempts,
+      ok: inserted.length > 0,
+      mission_id,
+      scraped: inserted.length,
+      diagnostics,
     });
   } catch (e) {
     console.error("mission-scrape failed", e);
+    try {
+      const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+      const body = await req.clone().json().catch(() => ({}));
+      if (body?.mission_id) {
+        await supabase.from("outbound_missions").update({
+          status: "scrape_failed",
+          last_error: { fatal: String(e) },
+        }).eq("id", body.mission_id);
+      }
+    } catch {}
     return jsonResponse({ error: String(e) }, 500);
   }
 });
