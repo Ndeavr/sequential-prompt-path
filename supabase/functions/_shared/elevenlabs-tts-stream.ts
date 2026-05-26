@@ -9,6 +9,7 @@
  */
 
 import { ALEX_VOICE_CONFIG, getAlexVoiceSettings, type AlexVoiceProfile } from "./alex-french-voice.ts";
+import { applyBrandPhoneticLock } from "./brand-phonetic-lock.ts";
 
 export type OnAudioChunk = (base64Audio: string) => void;
 
