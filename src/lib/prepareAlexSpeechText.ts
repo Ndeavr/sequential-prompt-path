@@ -11,12 +11,29 @@ export type AlexSpeechLang = "fr" | "en";
 
 const APOSTROPHES = "['’]";
 
+/**
+ * Normalize every UNPRO-ish written variant into a phonetic-safe form
+ * so TTS never spells the brand letter-by-letter and never says "une pro".
+ *
+ * Display strings are untouched — only TTS-bound text is mutated.
+ */
 export function prepareAlexSpeechText(
   text: string,
   language: AlexSpeechLang = "fr",
 ): string {
   if (!text) return text;
   let out = text;
+
+  // ----- Normalize spelled-out / spaced / dotted variants FIRST -----
+  // "U.N.PRO" / "U.N. PRO" / "U-N-PRO" — dotted/dashed → UNPRO (case-insensitive ok)
+  out = out.replace(/\bU[.\-]N[.\-]?\s?PRO\b/gi, "UNPRO");
+  // "U N PRO" (spaced, ALL CAPS only — avoid catching prose "un pro")
+  out = out.replace(/\bU N PRO\b/g, "UNPRO");
+  // "UNE PRO" / "une pro" — wrong-gender brand spelling
+  out = out.replace(/\bUNE PRO\b/gi, "UNPRO");
+  // unpro.ca / www.unpro.ca → "un pro point ca"
+  const domainReplacement = language === "fr" ? "un pro point ca" : "un pro dot ca";
+  out = out.replace(/\b(?:www\.)?unpro\.ca\b/gi, domainReplacement);
 
   if (language === "fr") {
     // d'UNPRO / d’UNPRO → d'Un Pro

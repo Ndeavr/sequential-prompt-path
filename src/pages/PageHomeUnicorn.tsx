@@ -16,6 +16,7 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import AlexOrbPremium from "@/components/home-unicorn/AlexOrbPremium";
 import BottomDockGlass from "@/components/home-unicorn/BottomDockGlass";
 import NearbyContractorsCarousel from "@/components/home-unicorn/NearbyContractorsCarousel";
+import CinematicArchScenes from "@/components/home-unicorn/CinematicArchScenes";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import "@/styles/unicorn-theme.css";
 
@@ -499,6 +500,7 @@ export default function PageHomeUnicorn() {
       </Helmet>
 
       <div className="unicorn-theme min-h-screen pb-28 relative overflow-x-hidden">
+        <CinematicArchScenes />
         <HeaderFloatingGlass />
         <HeroAlexOrb />
         <AiInputCard onTalk={onTalk} />
