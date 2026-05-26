@@ -5,15 +5,18 @@
  */
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Bell, ChevronDown, Mic, Image as ImageIcon, FileText, ChevronRight, RefreshCw,
   Home as HomeIcon, Hammer, Thermometer, Droplets, Building2, Zap, Wrench,
   BarChart3, ShieldCheck, Users, Clock, BadgeCheck, Star, ArrowRight,
+  QrCode, Menu, TrendingUp, User as UserIcon, Settings, LogOut, Sparkles,
 } from "lucide-react";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import AlexOrbPremium from "@/components/home-unicorn/AlexOrbPremium";
 import BottomDockGlass from "@/components/home-unicorn/BottomDockGlass";
+import NearbyContractorsCarousel from "@/components/home-unicorn/NearbyContractorsCarousel";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import "@/styles/unicorn-theme.css";
 
 /* ---------------- Header ---------------- */
