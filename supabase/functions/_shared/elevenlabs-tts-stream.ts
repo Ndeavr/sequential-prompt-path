@@ -101,7 +101,7 @@ export class ElevenLabsTtsProvider {
         ws.send(JSON.stringify(bos));
 
         // Stream sentences one by one
-        const sentences = splitSentences(text);
+        const sentences = splitSentences(spokenText);
         for (const sentence of sentences) {
           if (signal?.aborted) break;
           ws.send(JSON.stringify({ text: sentence + " " }));
