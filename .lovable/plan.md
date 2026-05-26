@@ -1,88 +1,44 @@
 ## Objectif
+Remplacer la carte AIPP statique de `PageHomeUnicorn` par un **carrousel premium des 5 entrepreneurs vérifiés les plus proches de l'utilisateur**, qui change automatiquement toutes les **4 secondes**, et compléter le header avec **QR + Hamburger** (cloche et profil conservés).
 
-Recréer pixel-par-pixel la homepage premium du mockup (bleu clair / glassmorphism / orb Alex) sur `/`, en isolant le nouveau thème à la home uniquement, et remplacer globalement la bottom nav par la nouvelle dock 5-icônes.
+## 1. Header — `HeaderFloatingGlass` (dans `src/pages/PageHomeUnicorn.tsx`)
+Ordre final : Logo · `FR/EN` · 🔔 Bell · **QR** · Profil P · **Hamburger**
+- Bouton QR : ouvre `/scan` (route existante du scanner carte d'affaires)
+- Bouton Hamburger (`Menu` lucide) : ouvre une `Sheet` (shadcn) latérale droite avec liens principaux (Accueil, Croissance, Profil, Compte, Déconnexion). Composant léger inline.
+- Garder rendu actuel des autres boutons inchangé.
 
-## Architecture
+## 2. Geo "local to user"
+Nouveau hook `src/hooks/useNearbyCity.ts` :
+1. Lit `localStorage.unpro_user_city` si présent → retourne immédiatement.
+2. Sinon `fetch("https://ipapi.co/json/")` (no key, CORS OK), prend `city` si `country_code === "CA"`, fallback `"Montréal"`.
+3. Persiste dans `localStorage` (24h TTL).
+Aucun appel au démarrage de page sans handler — exécuté dans `useEffect` du carrousel uniquement.
 
-```
-src/pages/PageHomeUnicorn.tsx              ← nouvelle home, scope CSS `.unicorn-theme`
-src/styles/unicorn-theme.css               ← variables HSL bleu clair (#F7FAFF, #2563FF, #3B82F6)
-src/components/home-unicorn/
-  ├── HeaderFloatingGlass.tsx              ← logo + FR + cloche + profil
-  ├── HeroAlexOrb.tsx                      ← headline 2 colonnes + orb
-  ├── AlexOrbPremium.tsx                   ← orb liquide animé (CSS + framer-motion)
-  ├── AiInputCard.tsx                      ← input + chips + CTA "Parler avec Alex"
-  ├── SecondaryActionCards.tsx             ← Téléverser photo / Analyser soumission
-  ├── CategoryChipsScroll.tsx              ← 6+ pills horizontales scrollables
-  ├── LiveStatsCard.tsx                    ← 4 stats avec deltas verts
-  ├── HowItWorksCards.tsx                  ← 3 cartes étapes avec flèches
-  ├── ContractorAippSplit.tsx              ← split text gauche + carte pro droite
-  └── BottomDockGlass.tsx                  ← (utilisée aussi globalement)
-```
+## 3. Nouveau composant `src/components/home-unicorn/NearbyContractorsCarousel.tsx`
+- Utilise `usePublicContractorSearch({ city, sort: "trust" })` (hook existant) et garde les 5 premiers résultats vérifiés.
+- Fallback si <5 résultats : remplit avec mocks réalistes locaux (Toitures LB inc., Isolation BioVert, etc.) déjà présents dans `mockProfessionals.ts`.
+- Auto-rotate index toutes les **4000 ms** via `setInterval` ; pause sur `hover`/`focus`/`document.hidden`.
+- Transition : `AnimatePresence` (framer-motion déjà installé) avec fade + slide-up 220 ms, easing `cubic-bezier(.22,1,.36,1)`.
+- Indicateurs : 5 petits dots cliquables sous la carte (style premium light-blue).
+- Carte identique au mockup actuel (badge AIPP, avatar gradient avec initiales, nom, étoile + rating + (count), badge "Profil vérifié", 3 mini-stats : Projets complétés / Satisfaction / Réponse moyenne).
+- Mini-stats dérivées : `projects = review_count`, `satisfaction = round(rating/5*100)%`, `response = "2h"` (placeholder déterministe par id pour stabilité).
+- A11y : `role="region" aria-label="Entrepreneurs recommandés près de vous"`, swipe tactile (touch start/end) pour passer carte suivante/précédente.
 
-## Changements de routage / nav
+## 4. Intégration
+- `ContractorAippSplit` : remplacer le bloc `AIPP card` (lignes ~412-…) par `<NearbyContractorsCarousel />`. Garder titre + CTAs ("Voir mon AIPP", "Activer mon profil") au-dessus.
 
-- `src/app/router.tsx` : route `/` et `/index` → `PageHomeUnicorn` (remplace `HomeWithFeatureFlag` / `PageHomeCopilot` pour ces 2 routes uniquement). Toutes les autres routes inchangées.
-- `MobileBottomNav` global remplacé par `BottomDockGlass` (Accueil / Croissance / **Alex (orb central glow)** / Profil / Compte). Conserve la signature props existante pour rester drop-in dans `MainLayout` / `DashboardLayout`.
+## 5. Détails techniques
+- Aucun changement DB, aucune edge function, aucun changement de tokens globaux.
+- Respecte `.unicorn-theme` scope (toutes les couleurs en inline style cohérent avec le reste de la page).
+- Pas de modification de `BottomDockGlass` ni de routing.
+- Pas de modification d'`AlexVoiceContext`.
 
-## Thème isolé (clé)
+## Fichiers
+- **Nouveau** : `src/hooks/useNearbyCity.ts`
+- **Nouveau** : `src/components/home-unicorn/NearbyContractorsCarousel.tsx`
+- **Édité** : `src/pages/PageHomeUnicorn.tsx` (header + remplacement bloc AIPP)
 
-- `unicorn-theme.css` définit des tokens HSL scopés sous `.unicorn-theme { --bg, --primary, --primary-glow, --text, --muted, --glass, --shadow-soft, --shadow-glow }`.
-- `PageHomeUnicorn` enveloppe tout dans `<div className="unicorn-theme min-h-screen">` — aucun token global modifié, le reste de l'app (Cinematic Dark, Landing Warm) intact.
-- Background : 3 couches → gradient base `#F7FAFF`, radial glows bleu/cyan, noise SVG 0.015.
-
-## Composants détaillés
-
-**AlexOrbPremium** : sphère 220px, 3 calques (core gradient bleu→cyan, reflet spéculaire blanc, halo blur 60px), 6 particules flottantes en orbit (framer-motion `repeat: Infinity`), breathing scale 1→1.04 sur 4s.
-
-**AiInputCard** : container blanc radius 28px, shadow layered `0 20px 60px -20px rgba(37,99,255,.25)`, input top, row chips scrollable + bouton refresh, CTA full-width gradient `#2563FF→#3B82F6` avec icône mic + waveform 5 barres animées.
-
-**HeroAlexOrb mobile** : grid `1fr 1fr`, headline gauche (Inter 800, tracking -0.04em, "Alex s'occupe du reste" en gradient), orb droite. Sur ≥sm garde 2 colonnes plus aérées.
-
-**CategoryChipsScroll** : `overflow-x-auto snap-x`, 6 pills avec icône pastel circulaire (Isolation/Toiture/Thermopompe/Humidité/Condo/Électricité/Apparei…).
-
-**LiveStatsCard** : 1 carte blanche, 4 colonnes (mobile : 2×2 grid), chaque stat = icône colorée + chiffre 24px bold + label muted + delta vert.
-
-**HowItWorksCards** : 3 cartes radius 24px, badge numéroté bleu, titre, description, illustration coin bas-droit, connecteurs SVG horizontal entre cartes (caché sur mobile).
-
-**ContractorAippSplit** : grid 1fr/1fr, texte+2 boutons (Voir mon AIPP plein bleu, Activer mon profil outline) à gauche, carte AIPP (photo, "Toitures LB inc.", 4.9★ (128), badge "Profil vérifié", 3 stats) à droite.
-
-**BottomDockGlass** : fixed bottom, `backdrop-blur-xl bg-white/70`, 4 ic+labels + orb central surélevé (-translate-y-4) avec glow bleu.
-
-## Animations
-
-- Page : `fade-in` global 400ms.
-- Orb : breathing + particles orbit (framer-motion).
-- CTA : magnetic hover (translateY -2px + shadow expand).
-- Chips : `hover:scale-105` désactivé, on garde translate uniquement (cohérent avec règle "never scale").
-- Stats : count-up sur viewport entry.
-
-## Données
-
-- Pas de migration DB. Stats `LiveStatsCard` lues du counter engine existant (`src/lib/counterEngine.ts`), avec valeurs mock fallback si indispo.
-- Carte AIPP utilise mock realistic data (Toitures LB, 4.9, 289 projets).
-
-## Intégration Alex
-
-- CTA "Parler avec Alex" → `useAlexVoice().openAlex("home_intent")` (respecte permission manager + event-driven session).
-- Chips → `openAlex("home_intent", chip.label)`.
-- Pas d'autostart, conforme à `mem://features/alex-event-driven-session`.
-
-## SEO
-
-- Helmet identique à `PageHomeCopilot` (title, meta, JSON-LD Service + FAQ), canonical `https://unpro.ca`.
-- H1 unique = headline "Décrivez votre situation. Alex s'occupe du reste."
-
-## Hors scope (à ne PAS toucher)
-
-- Aucune autre page, aucun token global, aucune logique business.
-- `PageHomeCopilot` conservé (peut servir ailleurs).
-- Pas de changement DB, edge functions, ou Alex prompt.
-
-## Critères de succès
-
-1. `/` affiche la home unicorn identique au mockup à 384px (viewport actuel).
-2. Aucun token global modifié — visiter `/admin/*` confirme le dark theme intact.
-3. Bottom dock visible partout en mobile.
-4. CTA orb / "Parler avec Alex" ouvre Alex sans erreur console.
-5. Build passe sans warning TS.
+## Succès
+- `/` affiche 5 cartes entrepreneur réelles de la ville détectée, rotation fluide toutes les 4 s, pause au survol.
+- Header montre Logo · FR · 🔔 · QR · P · ☰, hamburger ouvre un menu latéral fonctionnel.
+- Aucune régression sur le reste de l'app (cinematic dark, landing warm intacts).
