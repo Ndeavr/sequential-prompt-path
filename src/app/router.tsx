@@ -38,6 +38,7 @@ const PageAdminQASimulationTemplates = lazy(() => import("@/pages/admin/PageAdmi
 const PageAdminOutboundApprovals = lazy(() => import("@/pages/admin/outbound/PageAdminOutboundApprovals"));
 const PageSniperPipeline = lazy(() => import("@/pages/admin/outbound/PageSniperPipeline"));
 const PageSMSPipeline = lazy(() => import("@/pages/admin/outbound/PageSMSPipeline"));
+const PageAdminCommunications = lazy(() => import("@/pages/admin/PageAdminCommunications"));
 
 // Contractor Voice-First Landing
 const PageContractorVoiceFirstLanding = lazy(() => import("@/pages/contractor-landing/PageContractorVoiceFirstLanding"));
