@@ -1,67 +1,112 @@
-## Objectif
+# Smart Contact Routing — Plan
 
-Éliminer le mode simulation. Chaque run doit produire des prospects RÉELS issus de Google Places + Firecrawl, sinon être bloqué avec une raison actionnable. Ajouter un agent de récupération automatique qui élargit la recherche jusqu'à obtenir des résultats réels.
+Centralized routing layer that picks the right channel (SMS/email) per contact, falls back automatically, and logs everything. Reusable across contractor onboarding, homeowner matching, reminders, Alex follow-ups, outbound prospecting.
 
-## Diagnostic actuel
+## What exists already
+- `outbound_contacts` (prospect-scoped, no phone_type / consent / preference)
+- Twilio secrets present (`TWILIO_ACCOUNT_SID`, `TWILIO_API_KEY`, `TWILIO_AUTH_TOKEN`, `TWILIO_MESSAGING_SERVICE_SID`)
+- Send functions exist but siloed: `send-sms-prospect`, `acq-sms-send`, `send-transactional-email`, `send-outbound-test`, `send-outreach-direct`, etc. No router, no Twilio Lookup, no fallback engine.
 
-Dans `supabase/functions/autopilot-mvp/index.ts` :
-- En dry_run, si `counts.scraped === 0`, le système génère 15 prospects simulés (`generateSimulatedProspects`) → c'est ce qui produit "Run lancé · 0 prospects scrappés" sans valeur réelle.
-- `simulationMode`, `simulated_count`, `execution_mode = 'simulation'`, `is_simulated = true` polluent les vraies données.
-- La requête Google Places utilise `${trade} ${city} Québec` sans variantes ni élargissement géographique.
+## Scope — what we build
 
-## Plan d'exécution
+### 1. Database (migration)
+- `contacts` — universal identity record (first/last, email, phone, `phone_e164`, `phone_type ∈ mobile|landline|voip|unknown`, `phone_verified`, `sms_consent`, `email_consent`, `preferred_channel`, `last_channel_used`, `lookup_cached_at`)
+- `outbound_contact_rules` — priority-ordered rules (`condition_type`, `primary_channel`, `fallback_channel`, `delay_before_fallback_minutes`, `is_active`)
+- `communication_logs` — every send attempt (`contact_id`, `channel`, `template_key`, `delivery_status`, `provider`, `provider_message_id`, `error_message`, `fallback_triggered`, `parent_log_id`, timestamps)
+- `communication_fallback_queue` — scheduled fallbacks (run by cron when SMS not delivered after N minutes)
+- RLS: service-role write only; admins can read; users read their own contact rows
+- Indexes on `phone_e164`, `email`, `(delivery_status, created_at)`, `(scheduled_for) WHERE processed=false`
+- Seed default rules (mobile→sms, landline→email, unknown→email)
 
-### 1. Suppression totale de la simulation
-Fichier : `supabase/functions/autopilot-mvp/index.ts`
-- Supprimer `generateSimulatedProspects`, `SIM_NAMES`, `simulationMode`, `counts.simulated`, le champ `__simulated`.
-- Supprimer la branche `dry_run → simulation`.
-- Simplifier `validateTransition` : plus de fallback "simulated", uniquement `c.scraped > 0`.
-- `dry_run` garde son sens : scrape + enrich + score + personalize RÉELS, mais aucun email envoyé.
+### 2. Edge functions
+- **`contact-router`** (main entry) — `{ contact_id | contact_payload, template_key, channel_override?, idempotency_key }` → resolves contact → runs rules → calls sender → logs → schedules fallback
+- **`twilio-lookup-phone`** — `POST { phone }` → Twilio Lookup v2 (`line_type_intelligence`) → upserts `phone_type` + `phone_verified` + caches 90d
+- **`contact-router-fallback-cron`** — runs every 5 min, scans `communication_fallback_queue` for due undelivered SMS, triggers email version
+- **`twilio-status-webhook`** — receives Twilio delivery callbacks, updates `communication_logs.delivery_status` + `delivered_at`, triggers fallback if `failed/undelivered`
+- Reuses existing `send-transactional-email` and a thin SMS sender (wrapping Twilio Messaging Service) — no duplicate provider code
 
-### 2. Nouvel agent de récupération `autopilot-recovery-agent`
-Nouveau fichier : `supabase/functions/autopilot-recovery-agent/index.ts`
-- Invoqué automatiquement par `autopilot-mvp` quand `counts.scraped < target * 0.3` après la première passe.
-- 3 stratégies en cascade :
-  1. **Variantes de requête** : ajoute synonymes du métier (ex: "rénovation cuisine" → "rénovateur cuisine", "entrepreneur cuisine", "designer cuisine"), `languageCode: fr-CA` puis `en`.
-  2. **Élargissement géographique** : ajoute les villes adjacentes via une table `city_adjacency` (ou liste statique QC) pour chaque ville cible.
-  3. **Pagination Google Places** : utilise `pageToken` pour aller chercher au-delà des 20 premiers résultats.
-- Retourne les nouveaux prospects à `autopilot-mvp` qui les insère dans `outbound_companies` (mêmes règles dedup).
+### 3. Routing logic (deterministic, in `contact-router`)
+```
+1. Resolve contact (DB lookup or inline payload)
+2. If phone present AND lookup_cached_at > 90d ago → call twilio-lookup-phone synchronously
+3. Match highest-priority active rule whose condition matches contact
+4. primary = rule.primary_channel ; fallback = rule.fallback_channel
+5. Hard override: missing email → force sms (if eligible); missing/no consent sms → force email
+6. Send via primary; log row with status=queued; on provider 2xx → status=sent
+7. If primary=sms AND fallback=email → insert fallback_queue row scheduled_for=now()+delay
+8. Webhook flips status=delivered → cancels queued fallback ; status=failed → fires fallback immediately
+```
 
-### 3. Blocage explicite si toujours 0 prospect
-- Statut `blocked`, `execution_mode = 'blocked'`, `block_reason` détaillé avec : variantes essayées, villes essayées, codes HTTP Google.
-- Alerte admin critique avec `suggested_fix` (vérifier quota Google Places, vérifier mapping métier).
-- Plus jamais de `dry_run_completed` avec 0 prospect.
+### 4. Client SDK
+- `src/lib/communications/router.ts` exposes `sendViaRouter({ contactId, templateKey, data })` — single import used by:
+  - contractor onboarding abandoned-step trigger
+  - quote follow-up
+  - appointment reminders (T-24h, T-2h)
+  - Alex post-conversation follow-up
+  - outbound prospect first-touch
+- Existing direct senders stay but are deprecated (router-first)
 
-### 4. Migration DB
-Fichier : nouvelle migration
-- `ALTER TABLE autopilot_runs DROP COLUMN simulation_mode, DROP COLUMN simulated_count;`
-- `ALTER TYPE` execution_mode : retirer `'simulation'`, garder `real | blocked | pending`.
-- `ALTER TABLE outbound_companies DROP COLUMN is_simulated;`
-- Purger les lignes simulées existantes : `DELETE FROM outbound_companies WHERE is_simulated = true;` (avant le DROP).
-- Recréer `v_autopilot_pipeline` sans les colonnes supprimées.
-- Optionnel : créer `city_adjacency(city, neighbor, distance_km)` seed pour QC métropolitain.
+### 5. Admin UI — `/admin/communications`
+- Header KPIs: 24h SMS sent/delivered %, email delivered %, fallback-trigger rate, replies, bookings-by-channel
+- **Routing Rules** table — drag-reorder priority, toggle active, edit fallback delay
+- **Live Activity Feed** — realtime via `supabase.channel('communication_logs')`, glass cards with status pills (queued/sent/delivered/failed/fallback), provider badge (Twilio/Resend)
+- **Contacts inspector** — search by phone/email, shows phone_type, consent, last channel, history
+- **AI Insights placeholder** — best send hour, best channel per trade/city (Phase 2, stubbed UI)
+- Style: existing UNPRO Cinematic Dark (`#050816`, glass `rgba(255,255,255,0.04)` blur 24px, radii 28/18/999, easing `cubic-bezier(.22,1,.36,1)`)
+- Mobile-first
 
-### 5. UI Cleanup
-Fichier : `src/pages/admin/PageAdminAutopilotMvp.tsx`
-- Retirer les badges **SIMULATION** et le compteur **Simulés**.
-- Ajouter dans la timeline une étape **Recovery Agent** (avec stratégie utilisée + résultat).
-- Quand `status = blocked`, afficher le `block_reason` + bouton "Relancer avec recovery agressif".
+### 6. Security & safety
+- All sending server-side only (service role)
+- RLS as above
+- Per-contact dedupe key `(contact_id, template_key, idempotency_key)` unique → prevents duplicate sends
+- Per-contact rate limit (max 1 SMS / 4h, max 3 emails / 24h) enforced in `contact-router`
+- Twilio Lookup cache to control cost
+- Strict consent gates (`sms_consent`, `email_consent`) — non-bypassable
+- Suppressed emails already blocked by existing `send-transactional-email`
 
-### 6. Vérification
-- Lancer un run sur "Rénovation cuisine et salle de bain" / Laval + Terrebonne / 30.
-- Vérifier dans les logs : `scrape` → si < 30%, `recovery_agent_triggered` → `scraped_count > 0` réel.
-- Confirmer en DB : `SELECT scraped_count, execution_mode FROM autopilot_runs ORDER BY started_at DESC LIMIT 1;` → réel ou bloqué, jamais simulé.
+### 7. Out of scope (Phase 2)
+- AI best-time / best-channel optimizer
+- WhatsApp / RCS channels
+- Reply parsing / auto-responder
+- Per-tenant rule overrides
 
-## Détails techniques
+## Success criteria
+- `contact-router` called from any feature picks the right channel deterministically
+- Mobile + consent → SMS first, email fallback after delay if undelivered
+- Landline/no-mobile → email first
+- 100% of attempts visible in `/admin/communications` live feed
+- No duplicate sends under retry
+- Existing pipelines (outbound, Alex, quotes) routed through one entry point
 
-- L'agent récupération réutilise `searchGooglePlaces` mais avec `nextPageToken` (header `X-Goog-FieldMask` doit inclure `nextPageToken`).
-- Liste statique de variantes par métier dans une constante `TRADE_SYNONYMS: Record<string, string[]>` (rénovation, plomberie, toiture, électricité, peinture, etc.).
-- Liste statique d'adjacence pour les principales villes QC (Laval ↔ Montréal/Boisbriand/Rosemère ; Terrebonne ↔ Mascouche/Repentigny/Bois-des-Filion).
-- Tous les inserts gardent `is_simulated = false` jusqu'à suppression de la colonne.
+## Files
 
-## Fichiers touchés
-- `supabase/functions/autopilot-mvp/index.ts` (refactor)
-- `supabase/functions/autopilot-recovery-agent/index.ts` (créer)
-- `supabase/migrations/<timestamp>_remove_simulation.sql` (créer)
-- `src/pages/admin/PageAdminAutopilotMvp.tsx` (nettoyer UI)
-- `src/integrations/supabase/types.ts` (auto-régénéré après migration)
+### Migration
+- `supabase/migrations/<ts>_smart_contact_router.sql`
+
+### Edge functions (new)
+- `supabase/functions/contact-router/index.ts`
+- `supabase/functions/twilio-lookup-phone/index.ts`
+- `supabase/functions/contact-router-fallback-cron/index.ts`
+- `supabase/functions/twilio-status-webhook/index.ts`
+
+### Frontend
+- `src/lib/communications/router.ts` (SDK)
+- `src/lib/communications/types.ts`
+- `src/pages/admin/PageAdminCommunications.tsx`
+- `src/components/admin/communications/CardRoutingRule.tsx`
+- `src/components/admin/communications/PanelLiveActivityFeed.tsx`
+- `src/components/admin/communications/PanelChannelMetrics.tsx`
+- `src/components/admin/communications/DrawerContactInspector.tsx`
+- Route entry in `src/app/router.tsx` + admin nav link
+
+### Wiring (light touch — replace direct send calls with router)
+- Contractor abandoned onboarding follow-up
+- Quote follow-up sender
+- Alex post-chat follow-up
+
+## Confirmation needed before build
+1. Use existing `send-transactional-email` for email leg (recommended) vs spin a new sender — I'll use existing.
+2. Twilio Lookup cost (~$0.005/lookup) — cache 90 days OK?
+3. Default fallback delay = 60 min as in your spec — confirmed?
+
+Reply **go** to start Phase 1 (migration + `contact-router` + `twilio-lookup-phone` + `/admin/communications` shell). Wiring of existing pipelines comes in Phase 2 once the router is proven.
