@@ -18715,6 +18715,138 @@ export type Database = {
         }
         Relationships: []
       }
+      communication_fallback_queue: {
+        Row: {
+          cancelled: boolean
+          cancelled_reason: string | null
+          contact_id: string
+          created_at: string
+          fallback_channel: string
+          id: string
+          parent_log_id: string
+          payload: Json
+          processed: boolean
+          processed_at: string | null
+          scheduled_for: string
+          template_key: string | null
+        }
+        Insert: {
+          cancelled?: boolean
+          cancelled_reason?: string | null
+          contact_id: string
+          created_at?: string
+          fallback_channel: string
+          id?: string
+          parent_log_id: string
+          payload?: Json
+          processed?: boolean
+          processed_at?: string | null
+          scheduled_for: string
+          template_key?: string | null
+        }
+        Update: {
+          cancelled?: boolean
+          cancelled_reason?: string | null
+          contact_id?: string
+          created_at?: string
+          fallback_channel?: string
+          id?: string
+          parent_log_id?: string
+          payload?: Json
+          processed?: boolean
+          processed_at?: string | null
+          scheduled_for?: string
+          template_key?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_fallback_queue_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_fallback_queue_parent_log_id_fkey"
+            columns: ["parent_log_id"]
+            isOneToOne: false
+            referencedRelation: "communication_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communication_logs: {
+        Row: {
+          channel: string
+          contact_id: string | null
+          created_at: string
+          delivered_at: string | null
+          delivery_status: string
+          direction: string
+          error_message: string | null
+          fallback_triggered: boolean
+          id: string
+          idempotency_key: string | null
+          parent_log_id: string | null
+          payload: Json
+          provider: string | null
+          provider_message_id: string | null
+          sent_at: string | null
+          template_key: string | null
+        }
+        Insert: {
+          channel: string
+          contact_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          delivery_status?: string
+          direction?: string
+          error_message?: string | null
+          fallback_triggered?: boolean
+          id?: string
+          idempotency_key?: string | null
+          parent_log_id?: string | null
+          payload?: Json
+          provider?: string | null
+          provider_message_id?: string | null
+          sent_at?: string | null
+          template_key?: string | null
+        }
+        Update: {
+          channel?: string
+          contact_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          delivery_status?: string
+          direction?: string
+          error_message?: string | null
+          fallback_triggered?: boolean
+          id?: string
+          idempotency_key?: string | null
+          parent_log_id?: string | null
+          payload?: Json
+          provider?: string | null
+          provider_message_id?: string | null
+          sent_at?: string | null
+          template_key?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_logs_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_logs_parent_log_id_fkey"
+            columns: ["parent_log_id"]
+            isOneToOne: false
+            referencedRelation: "communication_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address_line_1: string | null
@@ -19521,6 +19653,63 @@ export type Database = {
           phone?: string | null
           role_type?: string | null
           status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      contacts: {
+        Row: {
+          created_at: string
+          email: string | null
+          email_consent: boolean
+          first_name: string | null
+          id: string
+          last_channel_used: string | null
+          last_name: string | null
+          lookup_cached_at: string | null
+          metadata: Json
+          phone: string | null
+          phone_e164: string | null
+          phone_type: string
+          phone_verified: boolean
+          preferred_channel: string | null
+          sms_consent: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          email_consent?: boolean
+          first_name?: string | null
+          id?: string
+          last_channel_used?: string | null
+          last_name?: string | null
+          lookup_cached_at?: string | null
+          metadata?: Json
+          phone?: string | null
+          phone_e164?: string | null
+          phone_type?: string
+          phone_verified?: boolean
+          preferred_channel?: string | null
+          sms_consent?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          email_consent?: boolean
+          first_name?: string | null
+          id?: string
+          last_channel_used?: string | null
+          last_name?: string | null
+          lookup_cached_at?: string | null
+          metadata?: Json
+          phone?: string | null
+          phone_e164?: string | null
+          phone_type?: string
+          phone_verified?: boolean
+          preferred_channel?: string | null
+          sms_consent?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -44309,6 +44498,48 @@ export type Database = {
           trade?: string | null
           updated_at?: string | null
           website_url?: string | null
+        }
+        Relationships: []
+      }
+      outbound_contact_rules: {
+        Row: {
+          condition_type: string
+          created_at: string
+          delay_before_fallback_minutes: number
+          description: string | null
+          fallback_channel: string | null
+          id: string
+          is_active: boolean
+          primary_channel: string
+          priority: number
+          rule_name: string
+          updated_at: string
+        }
+        Insert: {
+          condition_type: string
+          created_at?: string
+          delay_before_fallback_minutes?: number
+          description?: string | null
+          fallback_channel?: string | null
+          id?: string
+          is_active?: boolean
+          primary_channel: string
+          priority?: number
+          rule_name: string
+          updated_at?: string
+        }
+        Update: {
+          condition_type?: string
+          created_at?: string
+          delay_before_fallback_minutes?: number
+          description?: string | null
+          fallback_channel?: string | null
+          id?: string
+          is_active?: boolean
+          primary_channel?: string
+          priority?: number
+          rule_name?: string
+          updated_at?: string
         }
         Relationships: []
       }
