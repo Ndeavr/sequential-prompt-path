@@ -38,13 +38,11 @@ type Run = {
   block_reason: string | null;
   alert_admin: boolean;
   dry_run: boolean;
-  simulation_mode?: boolean;
-  execution_mode?: "real" | "simulation" | "blocked" | "pending";
+  execution_mode?: "real" | "blocked" | "pending";
   target_count: number;
   target_limit: number;
   stats: Record<string, number>;
   scraped_count: number;
-  simulated_count?: number;
   deduplicated_count: number;
   enriched_count: number;
   scored_count: number;
