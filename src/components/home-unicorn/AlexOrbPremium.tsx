@@ -1,15 +1,68 @@
 /**
- * AlexOrbPremium — Liquid glass futuristic orb with breathing, halo & orbiting particles.
- * Pure CSS animations (no framer-motion) to keep bundle lean and 60fps on mobile.
+ * AlexOrbPremium — Liquid glass futuristic orb, voice-state reactive.
+ *
+ * Subscribes to alexVoiceLockedStore.machineState to modulate:
+ *  - breathing speed (idle / listening / thinking / speaking)
+ *  - halo intensity and rotation
+ *  - particle orbit speed and density
+ *  - ambient hue shift
+ *
+ * Pure CSS animations for 60fps on mobile. No microphone access here —
+ * the actual mic capture is owned by the locked overlay voice pipeline.
  */
 import { useMemo } from "react";
+import { useAlexVoiceLockedStore, type LockedVoiceState } from "@/stores/alexVoiceLockedStore";
 
 interface Props {
   size?: number;
   className?: string;
+  /** When false, render the static idle preset regardless of voice state. */
+  reactive?: boolean;
 }
 
-export default function AlexOrbPremium({ size = 200, className = "" }: Props) {
+type OrbVisualState = "idle" | "listening" | "thinking" | "speaking" | "processing";
+
+function mapMachineToOrb(state: LockedVoiceState): OrbVisualState {
+  switch (state) {
+    case "listening":
+    case "capturing_voice":
+    case "session_ready":
+      return "listening";
+    case "processing_stt":
+    case "processing_response":
+      return "thinking";
+    case "speaking":
+      return "speaking";
+    case "opening_session":
+    case "requesting_permission":
+    case "stabilizing":
+      return "processing";
+    default:
+      return "idle";
+  }
+}
+
+const STATE_TUNING: Record<OrbVisualState, {
+  breatheSec: number;
+  haloOpacity: number;
+  haloSpinSec: number;
+  auraScale: number;
+  glow: string;
+  swirlSec: number;
+  particleBoost: number;
+}> = {
+  idle:       { breatheSec: 4.2, haloOpacity: 0.55, haloSpinSec: 18, auraScale: 1.35, glow: "rgba(37,99,255,0.45)",  swirlSec: 22, particleBoost: 1 },
+  listening:  { breatheSec: 2.4, haloOpacity: 0.85, haloSpinSec: 9,  auraScale: 1.55, glow: "rgba(56,189,248,0.70)", swirlSec: 14, particleBoost: 1.25 },
+  thinking:   { breatheSec: 3.0, haloOpacity: 0.75, haloSpinSec: 5,  auraScale: 1.42, glow: "rgba(139,92,246,0.65)", swirlSec: 9,  particleBoost: 1.4 },
+  speaking:   { breatheSec: 1.6, haloOpacity: 0.95, haloSpinSec: 7,  auraScale: 1.62, glow: "rgba(99,102,241,0.78)", swirlSec: 12, particleBoost: 1.35 },
+  processing: { breatheSec: 3.6, haloOpacity: 0.70, haloSpinSec: 6,  auraScale: 1.40, glow: "rgba(189,231,255,0.65)", swirlSec: 11, particleBoost: 1.2 },
+};
+
+export default function AlexOrbPremium({ size = 200, className = "", reactive = true }: Props) {
+  const machineState = useAlexVoiceLockedStore((s) => s.machineState);
+  const visualState: OrbVisualState = reactive ? mapMachineToOrb(machineState) : "idle";
+  const t = STATE_TUNING[visualState];
+
   const particles = useMemo(
     () => [
       { r: size * 0.55, d: 9, delay: 0, dot: 6 },
@@ -25,19 +78,26 @@ export default function AlexOrbPremium({ size = 200, className = "" }: Props) {
   return (
     <div
       className={`relative inline-block ${className}`}
-      style={{ width: size, height: size }}
+      style={{
+        width: size,
+        height: size,
+        transition: "filter 600ms cubic-bezier(.22,1,.36,1)",
+        filter: visualState === "speaking" ? "saturate(115%)" : "saturate(100%)",
+      }}
       aria-hidden
+      data-orb-state={visualState}
     >
-      {/* Outer atmospheric aura */}
+      {/* Outer atmospheric aura — scales up when listening / speaking */}
       <div
         className="absolute inset-0 rounded-full"
         style={{
-          background:
-            "radial-gradient(circle at 50% 50%, rgba(59,130,246,0.38) 0%, rgba(189,231,255,0.18) 35%, transparent 70%)",
-          filter: "blur(20px)",
-          transform: "scale(1.35)",
+          background: `radial-gradient(circle at 50% 50%, ${t.glow} 0%, rgba(189,231,255,0.18) 35%, transparent 70%)`,
+          filter: "blur(22px)",
+          transform: `scale(${t.auraScale})`,
+          transition: "transform 700ms cubic-bezier(.22,1,.36,1), background 700ms ease",
         }}
       />
+
       {/* Animated glow ring */}
       <div
         className="absolute inset-0 rounded-full"
@@ -45,10 +105,27 @@ export default function AlexOrbPremium({ size = 200, className = "" }: Props) {
           background:
             "conic-gradient(from 0deg, rgba(37,99,255,0) 0%, rgba(59,130,246,.5) 25%, rgba(189,231,255,.4) 50%, rgba(99,102,241,.5) 75%, rgba(37,99,255,0) 100%)",
           filter: "blur(10px)",
-          opacity: 0.55,
-          animation: "spin 14s linear infinite",
+          opacity: t.haloOpacity,
+          animation: `spin ${t.haloSpinSec}s linear infinite`,
+          transition: "opacity 600ms ease",
         }}
       />
+
+      {/* Listening / speaking pulse rings (only on those states) */}
+      {(visualState === "listening" || visualState === "speaking") && (
+        <>
+          {[0, 0.6, 1.2].map((delay, i) => (
+            <div
+              key={i}
+              className="absolute inset-0 rounded-full pointer-events-none"
+              style={{
+                border: `1.5px solid ${t.glow}`,
+                animation: `uc-orb-pulse 1.8s ${visualState === "speaking" ? "ease-out" : "ease-in-out"} ${delay}s infinite`,
+              }}
+            />
+          ))}
+        </>
+      )}
 
       {/* Orb core */}
       <div
@@ -56,9 +133,9 @@ export default function AlexOrbPremium({ size = 200, className = "" }: Props) {
         style={{
           background:
             "radial-gradient(circle at 35% 30%, #FFFFFF 0%, #BDE7FF 12%, #3B82F6 45%, #1E40AF 85%, #0B1E5C 100%)",
-          boxShadow:
-            "inset -18px -22px 60px rgba(11,18,60,0.55), inset 14px 18px 50px rgba(255,255,255,0.45), 0 30px 70px -10px rgba(37,99,255,0.55)",
-          animation: "uc-breathe 4.2s ease-in-out infinite",
+          boxShadow: `inset -18px -22px 60px rgba(11,18,60,0.55), inset 14px 18px 50px rgba(255,255,255,0.45), 0 30px 70px -10px ${t.glow}`,
+          animation: `uc-breathe ${t.breatheSec}s ease-in-out infinite`,
+          transition: "box-shadow 600ms ease",
         }}
       >
         {/* Inner liquid swirl */}
@@ -68,7 +145,7 @@ export default function AlexOrbPremium({ size = 200, className = "" }: Props) {
             background:
               "radial-gradient(ellipse at 65% 70%, rgba(99,102,241,0.7), transparent 55%), radial-gradient(ellipse at 30% 60%, rgba(56,189,248,0.5), transparent 50%)",
             mixBlendMode: "screen",
-            animation: "spin 22s linear infinite",
+            animation: `spin ${t.swirlSec}s linear infinite`,
           }}
         />
         {/* Top specular highlight */}
@@ -84,7 +161,7 @@ export default function AlexOrbPremium({ size = 200, className = "" }: Props) {
             filter: "blur(2px)",
           }}
         />
-        {/* Subtle smile glow (mockup feeling) */}
+        {/* Subtle smile glow */}
         <div
           className="absolute"
           style={{
@@ -108,13 +185,13 @@ export default function AlexOrbPremium({ size = 200, className = "" }: Props) {
             key={i}
             className="absolute rounded-full"
             style={{
-              width: p.dot,
-              height: p.dot,
+              width: p.dot * t.particleBoost,
+              height: p.dot * t.particleBoost,
               background:
                 "radial-gradient(circle, rgba(255,255,255,0.95), rgba(189,231,255,0.6) 60%, transparent 100%)",
               boxShadow: "0 0 10px rgba(189,231,255,0.9)",
               ["--r" as never]: `${p.r}px`,
-              animation: `uc-orbit ${p.d}s linear infinite`,
+              animation: `uc-orbit ${p.d / t.particleBoost}s linear infinite`,
               animationDelay: `${p.delay}s`,
             }}
           />

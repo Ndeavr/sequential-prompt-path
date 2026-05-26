@@ -96,6 +96,11 @@
   0%, 100% { transform: scaleY(0.35); opacity: .55; }
   50%      { transform: scaleY(1);    opacity: 1;   }
 }
+@keyframes uc-orb-pulse {
+  0%   { transform: scale(0.92); opacity: 0.55; }
+  80%  { transform: scale(1.35); opacity: 0;    }
+  100% { transform: scale(1.45); opacity: 0;    }
+}
 @keyframes uc-fade-up {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
