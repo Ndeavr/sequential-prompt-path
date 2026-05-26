@@ -4101,6 +4101,96 @@ export type Database = {
           },
         ]
       }
+      aipp_geo_pages: {
+        Row: {
+          city: string
+          content_md: string
+          contractor_id: string | null
+          created_at: string
+          faq: Json
+          hero_image_url: string | null
+          id: string
+          jsonld: Json
+          meta_description: string | null
+          published_at: string | null
+          service: string
+          slug: string
+          title: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          city: string
+          content_md: string
+          contractor_id?: string | null
+          created_at?: string
+          faq?: Json
+          hero_image_url?: string | null
+          id?: string
+          jsonld?: Json
+          meta_description?: string | null
+          published_at?: string | null
+          service: string
+          slug: string
+          title: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          city?: string
+          content_md?: string
+          contractor_id?: string | null
+          created_at?: string
+          faq?: Json
+          hero_image_url?: string | null
+          id?: string
+          jsonld?: Json
+          meta_description?: string | null
+          published_at?: string | null
+          service?: string
+          slug?: string
+          title?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aipp_geo_pages_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aipp_geo_pages_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aipp_geo_pages_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aipp_geo_pages_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "aipp_geo_pages_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       aipp_import_runs: {
         Row: {
           completed_at: string | null
@@ -23493,6 +23583,75 @@ export type Database = {
           },
           {
             foreignKeyName: "contractor_duplicate_candidates_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_embeddings: {
+        Row: {
+          chunk_text: string
+          chunk_type: string
+          contractor_id: string
+          created_at: string
+          embedding: string | null
+          id: string
+          metadata: Json
+          source_ref: string | null
+        }
+        Insert: {
+          chunk_text: string
+          chunk_type: string
+          contractor_id: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          metadata?: Json
+          source_ref?: string | null
+        }
+        Update: {
+          chunk_text?: string
+          chunk_type?: string
+          contractor_id?: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          metadata?: Json
+          source_ref?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_embeddings_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_embeddings_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_embeddings_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_embeddings_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_embeddings_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
@@ -69854,6 +70013,21 @@ export type Database = {
           _reason: string
         }
         Returns: Json
+      }
+      match_contractor_chunks: {
+        Args: {
+          filter_contractor_id?: string
+          match_count?: number
+          query_embedding: string
+        }
+        Returns: {
+          chunk_text: string
+          chunk_type: string
+          contractor_id: string
+          id: string
+          similarity: number
+          source_ref: string
+        }[]
       }
       match_rag_chunks: {
         Args: {
