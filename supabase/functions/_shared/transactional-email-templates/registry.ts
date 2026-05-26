@@ -22,6 +22,7 @@ import { template as prospectOutreach } from './prospect-outreach.tsx'
 import { template as manualLiveTest } from './manual-live-test.tsx'
 import { template as formUserConfirmation } from './form-user-confirmation.tsx'
 import { template as formAdminNotification } from './form-admin-notification.tsx'
+import { template as routerSmokeTest } from './router-smoke-test.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'form-user-confirmation': formUserConfirmation,
@@ -37,4 +38,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'incomplete-checkout-followup': incompleteCheckoutFollowup,
   'prospect-outreach': prospectOutreach,
   'manual-live-test': manualLiveTest,
+  'router-smoke-test': routerSmokeTest,
 }
