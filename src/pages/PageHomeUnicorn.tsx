@@ -61,6 +61,14 @@ function HeaderFloatingGlass() {
             />
           </button>
           <button
+            onClick={() => navigate("/scan")}
+            className="uc-glass-strong rounded-xl w-10 h-10 flex items-center justify-center"
+            style={{ borderRadius: 14 }}
+            aria-label="Scanner QR / carte d'affaires"
+          >
+            <QrCode size={16} color="#0B1220" />
+          </button>
+          <button
             className="uc-glass-strong rounded-xl pl-1 pr-2 py-1 flex items-center gap-1"
             style={{ borderRadius: 14 }}
             aria-label="Profil"
@@ -73,6 +81,42 @@ function HeaderFloatingGlass() {
             </span>
             <ChevronDown size={13} color="#0B1220" />
           </button>
+          <Sheet>
+            <SheetTrigger asChild>
+              <button
+                className="uc-glass-strong rounded-xl w-10 h-10 flex items-center justify-center"
+                style={{ borderRadius: 14 }}
+                aria-label="Menu"
+              >
+                <Menu size={16} color="#0B1220" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[82vw] max-w-[340px] p-0">
+              <SheetHeader className="px-5 pt-5 pb-3">
+                <SheetTitle className="text-left text-[18px]">Menu</SheetTitle>
+              </SheetHeader>
+              <nav className="px-3 pb-6 flex flex-col gap-1">
+                {[
+                  { to: "/", label: "Accueil", icon: HomeIcon },
+                  { to: "/dashboard", label: "Croissance", icon: TrendingUp },
+                  { to: "/alex", label: "Parler à Alex", icon: Sparkles },
+                  { to: "/profile", label: "Profil", icon: UserIcon },
+                  { to: "/account", label: "Compte", icon: Settings },
+                  { to: "/scan", label: "Scanner QR", icon: QrCode },
+                  { to: "/logout", label: "Déconnexion", icon: LogOut },
+                ].map(({ to, label, icon: Icon }) => (
+                  <Link
+                    key={to}
+                    to={to}
+                    className="flex items-center gap-3 px-3 py-3 rounded-xl text-[14px] font-medium hover:bg-muted transition-colors"
+                  >
+                    <Icon size={18} className="text-muted-foreground" />
+                    {label}
+                  </Link>
+                ))}
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>
