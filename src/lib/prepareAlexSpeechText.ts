@@ -25,10 +25,12 @@ export function prepareAlexSpeechText(
   let out = text;
 
   // ----- Normalize spelled-out / spaced / dotted variants FIRST -----
-  // "U.N.PRO" / "U.N. PRO" / "U N PRO" / "U-N-PRO" → UNPRO
-  out = out.replace(/\bU[\s.\-]?N[\s.\-]?\s?PRO\b/gi, "UNPRO");
-  // "UNE PRO" (wrong gender) → UNPRO
-  out = out.replace(/\bUNE\s+PRO\b/gi, "UNPRO");
+  // "U.N.PRO" / "U.N. PRO" / "U-N-PRO" — dotted/dashed → UNPRO (case-insensitive ok)
+  out = out.replace(/\bU[.\-]N[.\-]?\s?PRO\b/gi, "UNPRO");
+  // "U N PRO" (spaced, ALL CAPS only — avoid catching prose "un pro")
+  out = out.replace(/\bU N PRO\b/g, "UNPRO");
+  // "UNE PRO" — wrong-gender brand spelling, ALL CAPS only
+  out = out.replace(/\bUNE PRO\b/g, "UNPRO");
   // unpro.ca / www.unpro.ca → "un pro point ca"
   const domainReplacement = language === "fr" ? "un pro point ca" : "un pro dot ca";
   out = out.replace(/\b(?:www\.)?unpro\.ca\b/gi, domainReplacement);
