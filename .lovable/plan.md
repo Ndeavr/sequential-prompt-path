@@ -1,101 +1,152 @@
+## Goal
 
-# UNPRO Homepage — Living AI Environment (Phase 1)
+Run the existing UNPRO outbound infrastructure end-to-end against a real campaign — no dry-run, no mock data — until at least one contractor pays via Stripe. Trade: **Isolation d'entretoits**. Cities: **Laval, Terrebonne, Longueuil, Montréal**. Target: **30 real companies**.
 
-Trois systèmes connectés, déployés ensemble sur la home `/` (`PageHomeUnicorn`), sans casser l'orchestration Alex existante.
+All secrets are present (FIRECRAWL, GOOGLE_PLACES, RESEND, TWILIO, STRIPE, GEMINI, LOVABLE_AI). All 43 `outbound_*` tables exist. ~80% of edge functions already exist; we wire them into one orchestrator + a Mission Control UI and fill the gaps.
 
-## 1. Cinematic Architectural Background
+---
 
-**Nouveau composant** : `src/components/home-unicorn/CinematicArchScenes.tsx`
-- 5 scènes WebP générées via `imagegen` (premium), stockées dans `src/assets/scenes/`:
-  1. `scene-luxury-exterior.webp` — maison moderne, atmosphère bleue cinéma
-  2. `scene-roofing.webp` — toiture, dégradé bleu doux
-  3. `scene-kitchen.webp` — cuisine premium blanc/bleu
-  4. `scene-framing.webp` — structure bois, brouillard cinématique
-  5. `scene-blueprint.webp` — wireframe maison, lignes glow bleu
-- Toutes générées dans une palette unifiée (overlay bleu/cyan, glow blanc, esthétique blueprint AI) → pas de jaune chantier.
-- Crossfade Framer Motion `AnimatePresence mode="sync"` : 4s par scène, transition 1.4s (opacity + blur 0→8→0 + scale 1→1.025).
-- Couche overlay SVG `BlueprintOverlay` (grille, traits architecturaux, marques de cotation) qui dérive doucement.
-- Particules ambiantes (8 dots, drift lent) en `will-change: transform`.
-- Masque vignettage + dégradé bas pour lisibilité texte.
-- Respecte `prefers-reduced-motion` (fige sur scène 1, fade simple).
+## Phase 1 — Real Scraping (30 companies)
 
-**Intégration** : monté en `position: fixed inset-0 -z-10` derrière `<PageHomeUnicorn>` via le layout, masque flou `backdrop-blur-[2px]` derrière la carte glass.
+**New edge function: `mission-scrape-trade-cities`**
+- Input: `{ trade_slug, cities[], target_count }`.
+- For each city: call Google Places Text Search (`textsearch + nearbysearch`) using `GOOGLE_PLACES_API_KEY` → harvest place_id, name, phone, website, rating, review_count, address.
+- Dedupe by normalized name + city + phone. Insert into `outbound_companies` + `outbound_prospects` only after row write succeeds (so counters reflect reality).
+- Retry policy: 2 retries per city; on persistent failure → write `outbound_admin_alerts` row + continue. Fallback source: Firecrawl search (`isolation entretoit {ville}`) → top-20 domains.
+- Counter `scraped_count` increments per DB insert ACK, exposed via realtime channel.
 
-## 2. Alex Orb Intelligence System
+## Phase 2 — Real Enrichment
 
-**Nouveau singleton global** : `src/components/alex-orb-system/AlexOrbGlobal.tsx`
-- Monté **une fois** dans `MainLayout` (jamais remount au changement de route).
-- Branché sur `AlexVoiceContext` existant + nouveau store Zustand `src/stores/alexOrbState.ts` :
-  - `state: 'idle' | 'listening' | 'thinking' | 'speaking' | 'processing' | 'success'`
-  - `micAmplitude: number` (0-1, RAF loop via Web Audio AnalyserNode)
-  - `ttsAmplitude: number` (depuis `alexSingleAudioChannel` existant)
-- Composants visuels (Framer Motion + SVG, GPU-only):
-  - `OrbCore` — sphère bleue dégradée, breathing 4s, scale ±2%
-  - `OrbHalo` — anneau conique tournant, intensité liée à `micAmplitude`
-  - `OrbWaveRings` — 3 cercles d'amplitude réels (listening)
-  - `OrbParticleSwirl` — particules orbitales (thinking/processing)
-  - `OrbSpeechWaves` — vagues synchronisées TTS (speaking)
-  - `OrbSuccessFlash` — pulse vert doux (success)
-- **CSS variable globale** `--alex-glow-color` mise à jour selon state → influence subtilement les composants voisins (voice bar, cards) via `box-shadow: 0 0 60px var(--alex-glow-color)`.
+Reuse `enrich-business-profile` + `aipp-real-scan` (already deterministic 37-signal scorer per memory).
 
-**Voice Bar réactive** : `src/components/alex-orb-system/AlexVoiceBar.tsx`
-- Remplace l'actuel bouton "Parler avec Alex" dans `PageHomeUnicorn`.
-- Visualiseur d'amplitude réel (mic ou TTS selon state) via canvas léger.
-- États visuels alignés sur l'orb.
+**Orchestrator: `mission-enrich-batch`**
+- Pulls `outbound_prospects WHERE enrichment_status='pending' AND mission_id=$1`.
+- For each: Firecrawl scrape website (formats: markdown, links, screenshot, branding) → extract services, RBQ pattern, schema.org presence, mobile signals, before/after detection, CTA presence.
+- Cross-check RBQ via `aipp-verify-rbq`. Persist trust signals + weaknesses into `outbound_lead_enrichment`.
 
-## 3. Voice Session Continuity (no-switch lock)
+## Phase 3 — AIPP Scoring
 
-**Renforcement** de `AlexVoiceContext` + `alexSingleAudioChannel`:
-- Ajouter `voiceSessionLock` : une fois session démarrée, `voiceId`/`agentId`/`language` figés jusqu'à `endSession()` explicite.
-- Bloquer tout `switchVoice` mid-session (warn + ignore).
-- Fallback voice résolu **avant** `startSession` uniquement (via `useVoiceConfig` health check).
-- Fix existing reconnection paths to reuse the same `voiceId` from `alexVoiceConfig.ts`.
+Invoke `aipp-pipeline-run` (existing) per prospect. Persist into `outbound_ai_scores`:
+- visibility / trust / conversion / ai_readiness / estimated_lost_revenue_monthly.
+- Confidence-gated per existing scoring engine memory.
 
-## 4. UNPRO Pronunciation Global Lock
+## Phase 4 — Personalized Outreach Generation
 
-Étendre `src/lib/prepareAlexSpeechText.ts` (existe déjà avec règle "Un Pro"/"Hun Pro"):
-- Couvrir cas manquants : `UN PRO`, `U.N. PRO`, `UNE PRO`, `U N PRO`, `unpro.ca` → "un pro point ca".
-- Ajouter tests `src/lib/__tests__/prepareAlexSpeechText.test.ts` pour chaque variante interdite.
-- **Injection prompt** : ajouter ligne dans `mem://ai/alex/system-prompt-active` côté DB via migration:
-  > "UNPRO se prononce naturellement 'un pro', jamais lettre par lettre, jamais 'une pro'."
-- Audit : sweep tous les fichiers où du texte est envoyé à TTS → vérifier que `prepareAlexSpeechText` est appliqué (services/alex* + edge functions `alex-voice-*`).
+**New edge function: `mission-generate-outreach`**
+- Calls Lovable AI Gateway (`google/gemini-2.5-flash`) with a strict FR-CA prompt grounded ONLY in real findings from `outbound_ai_scores` + `outbound_lead_enrichment`.
+- Output schema (per prospect): `{ subject, email_body, sms_body, landing_hook }`.
+- Tone: short, specific, revenue-focused, local demand, territory scarcity, no agency fluff. Forbidden patterns enforced via regex post-filter.
+- Saves to `outbound_ai_personalizations` + `outbound_messages` (status=`ready`).
 
-## Constraintes & non-régressions
+## Phase 5 — Wave 1 Send (10)
 
-- **Ne pas** créer de nouvelles tables.
-- **Ne pas** toucher `src/integrations/supabase/*`, `.env`, `supabase/config.toml`.
-- Respecter `alexSessionState` (greet once per tab, MAX_AUTO_RETRIES=0).
-- Respecter `permissionManager` : mic demandé au tap orb uniquement.
-- Pas d'autostart vocal mobile (memory rule).
-- Theme `unicorn-theme.css` préservé, Warm Neutral pages publiques intactes.
+**New edge function: `mission-execute-wave`**
+- Wave 1: select top-10 by AIPP weakness × territory priority.
+- Channel routing:
+  - Mobile phone detected (Twilio Lookup `type=mobile`) → SMS first via existing Twilio path.
+  - Else → Email via existing Resend path (`process-outbound-queue` honors `outbound_global_settings` send windows + per-mailbox quotas).
+- All sends logged to `outbound_sent_messages` + `outbound_delivery_metrics`. UTM-tagged links → `/analyse/:slug` (existing Nuclear Close landing).
+- Webhooks already hooked (Resend events → `outbound_events`).
 
-## Files Plan
+## Phase 6 — Auto-Optimization Loop
 
-**Created:**
-- `src/components/home-unicorn/CinematicArchScenes.tsx`
-- `src/components/home-unicorn/BlueprintOverlay.tsx`
-- `src/components/alex-orb-system/AlexOrbGlobal.tsx`
-- `src/components/alex-orb-system/OrbCore.tsx`, `OrbHalo.tsx`, `OrbWaveRings.tsx`, `OrbParticleSwirl.tsx`, `OrbSpeechWaves.tsx`
-- `src/components/alex-orb-system/AlexVoiceBar.tsx`
-- `src/components/alex-orb-system/useMicAmplitude.ts`
-- `src/components/alex-orb-system/useTtsAmplitude.ts`
-- `src/stores/alexOrbState.ts`
-- `src/assets/scenes/scene-{1..5}.webp` (imagegen)
+**New edge function: `mission-optimize` (cron every 30 min)**
+- Reads `outbound_delivery_metrics` for current mission.
+- Triggers regeneration thresholds:
+  - open_rate < 20% → regenerate subjects only.
+  - click_rate < 5% → regenerate landing hook + email CTA.
+  - checkout_start_rate < 2% on landing → simplify checkout copy variant (Stripe `metadata.variant`).
+- New variants stored in `outbound_ai_personalizations` with `variant` index. Wave 2 uses top-performing hook.
 
-**Edited:**
-- `src/pages/PageHomeUnicorn.tsx` — monte `<CinematicArchScenes />`, remplace orb/CTA actuels par `<AlexVoiceBar />`
-- `src/layouts/MainLayout.tsx` — monte singleton `<AlexOrbGlobal />`
-- `src/contexts/AlexVoiceContext.tsx` — ajout `voiceSessionLock`
-- `src/lib/prepareAlexSpeechText.ts` — patterns étendus
-- `src/lib/__tests__/prepareAlexSpeechText.test.ts` — couverture variantes
-- `src/styles/unicorn-theme.css` — variables `--alex-glow-color`, scene layers
+## Phase 7 — Follow-up Engine
 
-## Success criteria
+Reuses `outbound_sequences` + `outbound_sequence_steps`. Seed sequence:
+- Day 0 (Wave 1), Day 2 (short reminder + 1 finding), Day 5 (territory scarcity + competitor count), Day 10 (last-call urgency, founder pricing window).
+- `process-outbound-queue` already drains the queue; ensure cron is active.
 
-- Background 5 scènes loop 4s, transitions cinéma fluides, mobile 60fps.
-- Orb visuellement vivant dans les 5 états, réactif au micro et au TTS réel.
-- Une seule voix du début à la fin d'une session (test : ouvrir Alex → conversation 3 tours → aucun switch).
-- "UNPRO" jamais épelé lettre par lettre dans aucun TTS, vérifié par tests unitaires.
-- Aucun remount d'orb au changement de route.
+## Phase 8 — Landing + Alex → Stripe
 
-Confirme et je lance le build (Phase 1 complète en un message, génération images incluse).
+Use existing `/analyse/:slug` (Nuclear Close memory). Wire Mission prospects so:
+- `outbound-landing-resolve` returns AIPP findings, weaknesses, estimated loss, territory status (places remaining via `mission_territory_state`), competitor count.
+- Alex opens with Charlotte voice (locked config), explains findings, pushes to `outbound-checkout-start` → Stripe Payment Element (existing native checkout per memory).
+- Stripe webhook (`stripe-webhook`) on `checkout.session.completed`:
+  1. Mark prospect `converted=true`.
+  2. Call `contractor-activation-enrich` to create contractor + AIPP profile.
+  3. Allocate territory slot via `territory-management` (existing).
+  4. Emit `mission_event: first_payment` → triggers Phase 9.
+
+## Phase 9 — Post-Payment Activation
+
+After first paid contractor:
+- Mark mission `success=true`.
+- Kick off (background, non-blocking): homeowner SEO pages for `isolation-entretoit/{ville}` via existing `aeo-batch-orchestrator`, Facebook campaign brief row in `marketing_campaigns`, Google-indexed page generation.
+
+## Phase 10 — Mission Control UI (`/admin/mission-control`)
+
+Premium dark cinematic admin page (uses `unicorn-theme.css`, no new colors).
+
+Sections:
+- **KPI bar (realtime)**: scraped / enriched / scored / sent / opens / clicks / replies / checkout_starts / payments / territory_fill %.
+- **Pipeline funnel** (8 stages with live counts from DB only).
+- **Prospects table** with status pills + per-row drawer (findings, score, generated copy preview, send history, events).
+- **Wave controls**: Pause automation · Retry failed · Approve next wave · Trigger AI rewrite · Send test · Expand territory.
+- **Live event log** (realtime channel on `outbound_events`).
+- **Mission success banner** when first Stripe payment lands.
+
+Wired via new hook `useMissionControl.ts` (TanStack Query + Supabase realtime on `outbound_companies`, `outbound_sent_messages`, `outbound_events`, `outbound_ai_scores`).
+
+---
+
+## Technical details
+
+### Database migration
+New table `outbound_missions`:
+- `id, name, trade_slug, cities[], target_count, status, started_at, completed_at, first_payment_at, success boolean`
+- `scraped_count, enriched_count, scored_count, sent_count, paid_count` (atomic updates via trigger on related tables, so counters reflect only committed rows)
+- RLS: admin-only via existing `has_role(auth.uid(),'admin')`. GRANTs to authenticated + service_role.
+- Companion `mission_territory_state(mission_id, city, total_slots, taken_slots, remaining_slots)`.
+
+### New edge functions
+1. `mission-scrape-trade-cities`
+2. `mission-enrich-batch`
+3. `mission-generate-outreach`
+4. `mission-execute-wave`
+5. `mission-optimize` (cron 30m)
+6. `mission-orchestrator` — single entrypoint that walks phases 1→5 and schedules 6/7.
+
+All use `https://esm.sh/@supabase/supabase-js@2.49.1` (per project rule), share `_shared/brand-phonetic-lock.ts`, and apply `cors`, Zod validation, granular retries, write to `outbound_pipeline_errors` on failure.
+
+### Files to create
+- `supabase/migrations/<ts>_outbound_missions.sql`
+- `supabase/functions/mission-scrape-trade-cities/index.ts`
+- `supabase/functions/mission-enrich-batch/index.ts`
+- `supabase/functions/mission-generate-outreach/index.ts`
+- `supabase/functions/mission-execute-wave/index.ts`
+- `supabase/functions/mission-optimize/index.ts`
+- `supabase/functions/mission-orchestrator/index.ts`
+- `src/pages/admin/PageMissionControl.tsx`
+- `src/hooks/useMissionControl.ts`
+- `src/services/missionControlService.ts`
+- Route entry in `routesConfig.ts` → `/admin/mission-control`
+
+### Files to edit
+- `supabase/functions/stripe-webhook/index.ts` — emit `mission_event` on first matching paid prospect.
+- `supabase/functions/outbound-landing-resolve/index.ts` — include mission territory state in payload.
+
+### Success condition
+Pipeline reports success ONLY when:
+1. ≥1 row in `outbound_sent_messages` with `status='delivered'` to a Mission prospect.
+2. ≥1 row in `stripe_payments` linked to a Mission prospect with `status='succeeded'`.
+3. Contractor row created + AIPP profile generated + territory slot taken.
+
+Mission Control banner flips to `MISSION SUCCESS` only when (1)+(2)+(3) all true.
+
+---
+
+## Build order on approval
+
+1. Migration `outbound_missions` + `mission_territory_state` + triggers (await user approval).
+2. 6 edge functions in parallel.
+3. Mission Control UI + hooks.
+4. Wire Stripe webhook + landing resolver patches.
+5. Seed mission row for *Isolation d'entretoits × 4 villes × 30 cibles* and invoke `mission-orchestrator` from the UI's "Launch Mission" button.
