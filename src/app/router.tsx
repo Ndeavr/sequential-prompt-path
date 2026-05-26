@@ -407,6 +407,7 @@ const PageAuditAIPPv2 = lazy(() => import("@/pages/PageAuditAIPPv2"));
 const PageAuditResultsAIPPv2 = lazy(() => import("@/pages/PageAuditResultsAIPPv2"));
 const PageAdminAIPPv2Dashboard = lazy(() => import("@/pages/admin/PageAdminAIPPv2Dashboard"));
 const PageAippDebug = lazy(() => import("@/pages/admin/PageAippDebug"));
+const PageMissionControl = lazy(() => import("@/pages/admin/PageMissionControl"));
 const PageContractorAippAudit = lazy(() => import("@/pages/PageContractorAippAudit"));
 
 // Instant Audit Intake Funnel + Outreach + Sniper
