@@ -75,20 +75,15 @@ Deno.serve(async (req) => {
         signals = extractTrustSignals(markdown);
       }
 
-      await supabase.from("outbound_lead_enrichment").upsert({
+      await supabase.from("outbound_lead_enrichment").insert({
         lead_id: lead.id,
+        website_detected: !!url,
+        phone_detected: false,
         enrichment_payload: {
           weaknesses, trust_signals: signals,
           content_length: markdown.length,
           scraped_at: new Date().toISOString(),
         },
-        enriched_at: new Date().toISOString(),
-      }, { onConflict: "lead_id" }).then(() => {}, async () => {
-        // table may not have unique on lead_id — fallback insert
-        await supabase.from("outbound_lead_enrichment").insert({
-          lead_id: lead.id,
-          enrichment_payload: { weaknesses, trust_signals: signals, content_length: markdown.length },
-        });
       });
 
       await supabase.from("outbound_leads").update({
