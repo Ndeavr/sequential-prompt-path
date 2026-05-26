@@ -29,8 +29,8 @@ export function prepareAlexSpeechText(
   out = out.replace(/\bU[.\-]N[.\-]?\s?PRO\b/gi, "UNPRO");
   // "U N PRO" (spaced, ALL CAPS only — avoid catching prose "un pro")
   out = out.replace(/\bU N PRO\b/g, "UNPRO");
-  // "UNE PRO" — wrong-gender brand spelling, ALL CAPS only
-  out = out.replace(/\bUNE PRO\b/g, "UNPRO");
+  // "UNE PRO" / "une pro" — wrong-gender brand spelling
+  out = out.replace(/\bUNE PRO\b/gi, "UNPRO");
   // unpro.ca / www.unpro.ca → "un pro point ca"
   const domainReplacement = language === "fr" ? "un pro point ca" : "un pro dot ca";
   out = out.replace(/\b(?:www\.)?unpro\.ca\b/gi, domainReplacement);
