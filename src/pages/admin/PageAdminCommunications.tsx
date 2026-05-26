@@ -102,8 +102,12 @@ export default function PageAdminCommunications() {
       },
     });
     setTestSending(false);
+    const d = data as any;
     if (error) toast.error(error.message);
-    else toast.success(`Canal utilisé : ${(data as any)?.channel_used ?? "—"}${(data as any)?.fallback_scheduled ? " · fallback courriel planifié" : ""}`);
+    else if (d?.ok === false) toast.error(`Échec (${d?.channel_used}) : ${d?.error ?? "raison inconnue"}`);
+    else toast.success(
+      `Canal: ${d?.channel_used ?? "—"} · type: ${d?.phone_type ?? "n/a"}${d?.phone_verified ? " ✓" : ""}${d?.fallback_scheduled ? " · fallback email planifié" : ""}`
+    );
     load();
   };
 
