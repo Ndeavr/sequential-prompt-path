@@ -43,7 +43,8 @@ serve(async (req) => {
     }
 
     const voiceId = voice_id || profile?.voice_id_primary || "XB0fDUnXU5powFXDhCwa";
-    const text = test_text || DEFAULT_PHRASES[language || "fr"] || DEFAULT_PHRASES.fr;
+    const rawText = test_text || DEFAULT_PHRASES[language || "fr"] || DEFAULT_PHRASES.fr;
+    const text = applyBrandPhoneticLock(rawText, language || "fr");
 
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
