@@ -19,12 +19,13 @@ serve(async (req) => {
     const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
     if (!ELEVENLABS_API_KEY) throw new Error("ELEVENLABS_API_KEY not configured");
 
-    const { text, profile_key, language, voice_id: overrideVoiceId } = await req.json();
-    if (!text || typeof text !== "string") {
+    const { text: rawText, profile_key, language, voice_id: overrideVoiceId } = await req.json();
+    if (!rawText || typeof rawText !== "string") {
       return new Response(JSON.stringify({ error: "text required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const text = applyBrandPhoneticLock(rawText, language || "fr");
 
     // Load voice config from DB
     const supabase = createClient(
