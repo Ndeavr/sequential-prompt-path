@@ -123,6 +123,12 @@ export default function PageMissionControl() {
                         </Button>
                       </div>
                     </div>
+                    {m.last_error && (
+                      <div className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200">
+                        <div className="font-semibold mb-1">Dernière erreur</div>
+                        <pre className="whitespace-pre-wrap break-words max-h-40 overflow-auto">{JSON.stringify(m.last_error, null, 2)}</pre>
+                      </div>
+                    )}
                     <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 text-center">
                       {[
                         ["Scrapés", m.scraped_count],
