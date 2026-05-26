@@ -14,7 +14,7 @@ import { useLanguage } from "@/components/ui/LanguageToggle";
 import DeferredAfterInteractive from "@/components/system/DeferredAfterInteractive";
 
 const AlexCompanionOrb = lazy(() => import("@/components/alex/AlexCompanionOrb"));
-const MobileBottomNav = lazy(() => import("@/components/navigation/MobileBottomNav"));
+const MobileBottomNav = lazy(() => import("@/components/home-unicorn/BottomDockGlass"));
 const CommandPalette = lazy(() => import("@/components/navigation/CommandPalette"));
 const SeoStructuredDataInjector = lazy(() => import("@/seo/components/SeoStructuredDataInjector"));
 
