@@ -42750,6 +42750,47 @@ export type Database = {
         }
         Relationships: []
       }
+      mission_territory_state: {
+        Row: {
+          city: string
+          created_at: string
+          id: string
+          mission_id: string
+          remaining_slots: number | null
+          taken_slots: number
+          total_slots: number
+          updated_at: string
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          id?: string
+          mission_id: string
+          remaining_slots?: number | null
+          taken_slots?: number
+          total_slots?: number
+          updated_at?: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          id?: string
+          mission_id?: string
+          remaining_slots?: number | null
+          taken_slots?: number
+          total_slots?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mission_territory_state_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       navigation_click_events: {
         Row: {
           clicked_at: string | null
@@ -44591,6 +44632,7 @@ export type Database = {
           id: string
           language: string | null
           legitimacy_score: number | null
+          mission_id: string | null
           neq_number: string | null
           phone: string | null
           postal_code: string | null
@@ -44618,6 +44660,7 @@ export type Database = {
           id?: string
           language?: string | null
           legitimacy_score?: number | null
+          mission_id?: string | null
           neq_number?: string | null
           phone?: string | null
           postal_code?: string | null
@@ -44645,6 +44688,7 @@ export type Database = {
           id?: string
           language?: string | null
           legitimacy_score?: number | null
+          mission_id?: string | null
           neq_number?: string | null
           phone?: string | null
           postal_code?: string | null
@@ -45181,6 +45225,7 @@ export type Database = {
           lead_score: number | null
           legitimacy_score: number | null
           mailbox_id: string | null
+          mission_id: string | null
           next_step_at: string | null
           notes: string | null
           outbound_readiness_score: number | null
@@ -45228,6 +45273,7 @@ export type Database = {
           lead_score?: number | null
           legitimacy_score?: number | null
           mailbox_id?: string | null
+          mission_id?: string | null
           next_step_at?: string | null
           notes?: string | null
           outbound_readiness_score?: number | null
@@ -45275,6 +45321,7 @@ export type Database = {
           lead_score?: number | null
           legitimacy_score?: number | null
           mailbox_id?: string | null
+          mission_id?: string | null
           next_step_at?: string | null
           notes?: string | null
           outbound_readiness_score?: number | null
@@ -45534,6 +45581,84 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      outbound_missions: {
+        Row: {
+          checkout_start_count: number
+          cities: string[]
+          clicked_count: number
+          completed_at: string | null
+          config: Json
+          created_at: string
+          created_by: string | null
+          enriched_count: number
+          first_payment_at: string | null
+          id: string
+          name: string
+          opened_count: number
+          paid_count: number
+          replied_count: number
+          scored_count: number
+          scraped_count: number
+          sent_count: number
+          started_at: string | null
+          status: string
+          success: boolean
+          target_count: number
+          trade_slug: string
+          updated_at: string
+        }
+        Insert: {
+          checkout_start_count?: number
+          cities?: string[]
+          clicked_count?: number
+          completed_at?: string | null
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          enriched_count?: number
+          first_payment_at?: string | null
+          id?: string
+          name: string
+          opened_count?: number
+          paid_count?: number
+          replied_count?: number
+          scored_count?: number
+          scraped_count?: number
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          success?: boolean
+          target_count?: number
+          trade_slug: string
+          updated_at?: string
+        }
+        Update: {
+          checkout_start_count?: number
+          cities?: string[]
+          clicked_count?: number
+          completed_at?: string | null
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          enriched_count?: number
+          first_payment_at?: string | null
+          id?: string
+          name?: string
+          opened_count?: number
+          paid_count?: number
+          replied_count?: number
+          scored_count?: number
+          scraped_count?: number
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          success?: boolean
+          target_count?: number
+          trade_slug?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       outbound_notes: {
         Row: {
@@ -46069,6 +46194,7 @@ export type Database = {
           id: string
           lead_id: string
           mailbox_id: string | null
+          mission_id: string | null
           provider_message_id: string | null
           sent_at: string | null
           sequence_id: string | null
@@ -46082,6 +46208,7 @@ export type Database = {
           id?: string
           lead_id: string
           mailbox_id?: string | null
+          mission_id?: string | null
           provider_message_id?: string | null
           sent_at?: string | null
           sequence_id?: string | null
@@ -46095,6 +46222,7 @@ export type Database = {
           id?: string
           lead_id?: string
           mailbox_id?: string | null
+          mission_id?: string | null
           provider_message_id?: string | null
           sent_at?: string | null
           sequence_id?: string | null
