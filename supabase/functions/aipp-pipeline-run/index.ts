@@ -90,6 +90,42 @@ function chunkText(text: string, max = 1200): string[] {
   return chunks.slice(0, 30);
 }
 
+// ───────────── Asset extraction & heuristic classification
+const IMG_EXT = /\.(png|jpe?g|webp|gif|svg|avif)(\?|$)/i;
+
+function extractImageUrls(markdown: string, links: string[] = [], baseUrl?: string): string[] {
+  const found = new Set<string>();
+  const mdImg = /!\[[^\]]*\]\(([^)\s]+)/g;
+  let m: RegExpExecArray | null;
+  while ((m = mdImg.exec(markdown || "")) !== null) {
+    let u = m[1].trim();
+    if (u.startsWith("//")) u = "https:" + u;
+    if (u.startsWith("/") && baseUrl) {
+      try { u = new URL(u, baseUrl).toString(); } catch { /* noop */ }
+    }
+    if (/^https?:\/\//i.test(u)) found.add(u);
+  }
+  for (const l of links || []) {
+    if (typeof l === "string" && IMG_EXT.test(l)) found.add(l);
+  }
+  return Array.from(found).slice(0, 40);
+}
+
+function classifyAssetByUrl(url: string): { type: string; confidence: number } {
+  const u = url.toLowerCase();
+  if (/favicon/.test(u)) return { type: "favicon", confidence: 0.9 };
+  if (/logo|brand|identite/.test(u)) return { type: "logo", confidence: 0.75 };
+  if (/(og[-_]?image|opengraph|share)/.test(u)) return { type: "og_image", confidence: 0.8 };
+  if (/(camion|truck|van|vehicule)/.test(u)) return { type: "camion", confidence: 0.6 };
+  if (/(equipe|team|staff|crew)/.test(u)) return { type: "equipe", confidence: 0.6 };
+  if (/(certif|rbq|attestation|garantie)/.test(u)) return { type: "certificat", confidence: 0.6 };
+  if (/(avant|after|before|apres)/.test(u)) return { type: "avant_apres", confidence: 0.6 };
+  if (/(chantier|projet|portfolio|gallery|realisation|travaux)/.test(u)) {
+    return { type: "chantier", confidence: 0.6 };
+  }
+  return { type: "chantier", confidence: 0.4 };
+}
+
 // ───────────── Score engine (déterministe pondéré)
 function computeScores(signals: {
   hasWebsite: boolean;
@@ -148,6 +184,8 @@ function computeScores(signals: {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  let runId: string | null = null;
+
   try {
     const { contractor_id, dry_run } = await req.json();
     if (!contractor_id) throw new Error("contractor_id required");
@@ -167,20 +205,106 @@ Deno.serve(async (req) => {
     if (cErr || !contractor) throw new Error(`Contractor not found: ${cErr?.message}`);
     log(`Loaded contractor: ${contractor.business_name} (${contractor.website})`);
 
+    // 0) Open scraping run (tracking row)
+    if (!dry_run) {
+      const { data: runRow } = await supabase
+        .from("contractor_scraping_runs")
+        .insert({
+          contractor_id,
+          status: "scraping",
+          source: contractor.website ? "website" : "manual",
+        })
+        .select("id")
+        .single();
+      runId = runRow?.id ?? null;
+    }
+    const updateRun = async (patch: Record<string, unknown>) => {
+      if (!runId) return;
+      await supabase.from("contractor_scraping_runs").update(patch).eq("id", runId);
+    };
+
     let websiteMd = "";
     let websiteWords = 0;
+    let scrapedLinks: string[] = [];
 
     // 1) Crawl website
     if (contractor.website) {
       try {
         const scrape = await firecrawlScrape(contractor.website);
-        websiteMd = scrape.data?.markdown ?? scrape.markdown ?? "";
+        const payload = scrape.data ?? scrape;
+        websiteMd = payload?.markdown ?? "";
+        scrapedLinks = Array.isArray(payload?.links) ? payload.links : [];
         websiteWords = websiteMd.split(/\s+/).length;
-        log(`Crawled ${websiteWords} words from ${contractor.website}`);
+        log(`Crawled ${websiteWords} words, ${scrapedLinks.length} links from ${contractor.website}`);
       } catch (e) {
         log(`Crawl failed: ${(e as Error).message}`);
+        await updateRun({ error_message: `crawl: ${(e as Error).message}` });
       }
     }
+
+    // 1b) Extract & persist assets (detected → pending validation)
+    let assetsDetected = 0;
+    let assetsValidated = 0;
+    let assetsRejected = 0;
+    let logosDetected = 0;
+    let logosValidated = 0;
+    let photosDetected = 0;
+    let photosValidated = 0;
+
+    if (!dry_run) {
+      await updateRun({ status: "classifying" });
+      const imageUrls = extractImageUrls(websiteMd, scrapedLinks, contractor.website);
+      assetsDetected = imageUrls.length;
+      log(`Detected ${assetsDetected} image assets on website`);
+
+      // Wipe previous website-sourced assets for a clean snapshot
+      await supabase
+        .from("contractor_assets")
+        .delete()
+        .eq("contractor_id", contractor_id)
+        .eq("source", "website");
+
+      const rows = imageUrls.map((u) => {
+        const cls = classifyAssetByUrl(u);
+        const isPhotoType = ["chantier", "equipe", "camion", "avant_apres"].includes(cls.type);
+        if (cls.type === "logo") logosDetected++;
+        if (isPhotoType) photosDetected++;
+        // Heuristic validation: confidence ≥ 0.6 → validated, else pending
+        const validated = cls.confidence >= 0.6;
+        if (validated && cls.type === "logo") logosValidated++;
+        if (validated && isPhotoType) photosValidated++;
+        if (validated) assetsValidated++;
+        return {
+          contractor_id,
+          asset_type: cls.type,
+          source: "website",
+          url: u,
+          ai_confidence: cls.confidence,
+          ai_classification: { method: "url-heuristic" },
+          validated,
+          validation_status: validated ? "validated" : "pending",
+          is_published: validated && (cls.type === "logo" || isPhotoType),
+        };
+      });
+
+      if (rows.length) {
+        const { error: insErr } = await supabase.from("contractor_assets").insert(rows);
+        if (insErr) log(`Asset insert failed: ${insErr.message}`);
+      }
+
+      await updateRun({
+        status: "validating",
+        assets_detected: assetsDetected,
+        assets_validated: assetsValidated,
+        assets_rejected: assetsRejected,
+        logos_detected: logosDetected,
+        logos_validated: logosValidated,
+        photos_detected: photosDetected,
+        photos_validated: photosValidated,
+      });
+      log(`Assets — validated ${assetsValidated}/${assetsDetected} (logos ${logosValidated}/${logosDetected}, photos ${photosValidated}/${photosDetected})`);
+    }
+
 
     // 2) AI Summary (Gemini)
     let summaryFr = contractor.description ?? "";
@@ -274,11 +398,14 @@ Retourne UNIQUEMENT du JSON (pas de markdown, pas de backticks):
     }
 
     // 5) Aggregate signals for score
+    await updateRun({ status: "scoring" });
     const [{ count: servicesCount }, { count: areasCount }, { count: mediaCount }] = await Promise.all([
       supabase.from("contractor_services").select("id", { count: "exact", head: true }).eq("contractor_id", contractor_id),
       supabase.from("contractor_service_areas").select("id", { count: "exact", head: true }).eq("contractor_id", contractor_id),
       supabase.from("contractor_media").select("id", { count: "exact", head: true }).eq("contractor_id", contractor_id),
     ]);
+    // Boost media count with newly validated photo-class assets from this run
+    const effectiveMediaCount = (mediaCount ?? 0) + photosValidated;
 
     const scores = computeScores({
       hasWebsite: !!contractor.website,
@@ -288,7 +415,7 @@ Retourne UNIQUEMENT du JSON (pas de markdown, pas de backticks):
       reviewsCount: contractor.review_count ?? 0,
       rating: contractor.rating ?? 0,
       rbqVerified: !!contractor.rbq_number,
-      mediaCount: mediaCount ?? 0,
+      mediaCount: effectiveMediaCount,
       faqCount: 0,
       hasSummary: !!summaryFr,
       embeddingsCount,
@@ -382,6 +509,13 @@ Retourne UNIQUEMENT du JSON (pas de markdown, pas de backticks):
       lead_intents: 0,
     });
 
+    // 10) Mark run completed
+    await updateRun({
+      status: "completed",
+      completed_at: new Date().toISOString(),
+      logs,
+    });
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -391,6 +525,14 @@ Retourne UNIQUEMENT du JSON (pas de markdown, pas de backticks):
         scores,
         embeddings: embeddingsCount,
         geo_pages: geoCreated,
+        run_id: runId,
+        assets: {
+          detected: assetsDetected,
+          validated: assetsValidated,
+          rejected: assetsRejected,
+          logos: { detected: logosDetected, validated: logosValidated },
+          photos: { detected: photosDetected, validated: photosValidated },
+        },
         logs,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
@@ -398,8 +540,18 @@ Retourne UNIQUEMENT du JSON (pas de markdown, pas de backticks):
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Unknown error";
     console.error("Pipeline failed:", msg);
+    if (runId) {
+      await supabase
+        .from("contractor_scraping_runs")
+        .update({
+          status: "failed",
+          error_message: msg,
+          completed_at: new Date().toISOString(),
+        })
+        .eq("id", runId);
+    }
     return new Response(
-      JSON.stringify({ success: false, error: msg }),
+      JSON.stringify({ success: false, error: msg, run_id: runId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 },
     );
   }
