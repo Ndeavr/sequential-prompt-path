@@ -9,50 +9,119 @@
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
     --font-display: 'Inter', system-ui, -apple-system, sans-serif;
 
-    /* ─── Cinematic motion contract (Searchable-grade) ─── */
+    /* ─── Cinematic motion contract ─── */
     --ease-cinematic: cubic-bezier(0.22, 1, 0.36, 1);
     --duration-cinematic: 420ms;
     --duration-reveal: 600ms;
 
-    /* ─── Strict radius system ─── */
+    /* ─── Radius (premium soft) ─── */
     --radius-card: 28px;
     --radius-button: 18px;
     --radius-pill: 999px;
-    --radius-input: 14px;
+    --radius-input: 16px;
+    --radius: 1rem;
 
-    /* ─── UNPRO Dark Sharp Palette ─── */
+    /* ─── UNPRO Light Premium Palette ─── */
+    /* #2563FF primary, #3B82F6 electric, #BDE7FF cyan, #0B1220 navy, #667085 muted */
+    --primary: 222 100% 57%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 217 91% 60%;
+    --secondary: 217 91% 60%;
+    --secondary-foreground: 0 0% 100%;
+    --accent: 200 100% 87%;
+    --accent-foreground: 222 49% 9%;
+
+    --background: 220 100% 98%;
+    --foreground: 222 49% 9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 49% 9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 49% 9%;
+
+    --muted: 220 60% 96%;
+    --muted-foreground: 220 13% 46%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 153 78% 43%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 222 30% 90%;
+    --input: 222 30% 92%;
+    --ring: 222 100% 57%;
+
+    /* ─── Premium Shadow System (light) ─── */
+    --shadow-xs: 0 1px 2px 0 rgba(11, 18, 32, 0.04);
+    --shadow-sm: 0 2px 6px -1px rgba(11, 18, 32, 0.06), 0 1px 2px -1px rgba(11, 18, 32, 0.04);
+    --shadow-md: 0 8px 20px -6px rgba(11, 18, 32, 0.08), 0 3px 8px -4px rgba(11, 18, 32, 0.05);
+    --shadow-lg: 0 16px 36px -10px rgba(11, 18, 32, 0.10), 0 6px 12px -6px rgba(11, 18, 32, 0.06);
+    --shadow-xl: 0 24px 60px -16px rgba(37, 99, 255, 0.18), 0 10px 20px -10px rgba(11, 18, 32, 0.08);
+    --shadow-2xl: 0 32px 80px -20px rgba(37, 99, 255, 0.22);
+    --shadow-glow: 0 0 32px -8px rgba(37, 99, 255, 0.30), 0 0 10px -4px rgba(59, 130, 246, 0.20);
+    --shadow-glow-lg: 0 0 60px -10px rgba(37, 99, 255, 0.40), 0 0 24px -6px rgba(59, 130, 246, 0.25);
+    --shadow-inner-glow: inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
+    --shadow-metal: 0 1px 0 0 rgba(255, 255, 255, 0.9), 0 -1px 0 0 rgba(11, 18, 32, 0.04);
+    --shadow-glass: 0 24px 60px -28px rgba(37, 99, 255, 0.22), 0 8px 24px -16px rgba(11, 18, 32, 0.08);
+    --shadow-cta: 0 18px 40px -14px rgba(37, 99, 255, 0.55);
+
+    /* ─── Glass — light, frosted, premium ─── */
+    --glass-bg: rgba(255, 255, 255, 0.72);
+    --glass-border: rgba(11, 18, 32, 0.06);
+    --glass-highlight: linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, transparent 45%);
+    --glass-blur: 22px;
+    --glass-metal-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(247, 250, 255, 0.72));
+    --glass-metal-border: rgba(11, 18, 32, 0.08);
+    --glass-metal-shine: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, transparent 50%, rgba(189, 231, 255, 0.18) 100%);
+
+    --gradient-primary: linear-gradient(135deg, #2563FF 0%, #3B82F6 100%);
+    --gradient-bg: radial-gradient(1100px 700px at 80% -10%, rgba(59, 130, 246, 0.18), transparent 60%),
+                   radial-gradient(900px 600px at -10% 30%, rgba(189, 231, 255, 0.35), transparent 65%),
+                   radial-gradient(800px 900px at 50% 110%, rgba(99, 102, 241, 0.10), transparent 70%),
+                   linear-gradient(180deg, #FFFFFF 0%, #F7FAFF 40%, #EEF4FF 100%);
+
+    --section-glow-blue: rgba(37, 99, 255, 0.04);
+    --section-glow-purple: rgba(99, 102, 241, 0.04);
+    --section-glow-cyan: rgba(189, 231, 255, 0.30);
+    --section-glow-green: rgba(25, 195, 125, 0.04);
+    --section-glow-warm: rgba(245, 158, 11, 0.04);
+    --section-glow-neutral: rgba(220, 230, 245, 0.50);
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 49% 9%;
+    --sidebar-primary: 222 100% 57%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 60% 96%;
+    --sidebar-accent-foreground: 222 49% 9%;
+    --sidebar-border: 222 30% 90%;
+    --sidebar-ring: 222 100% 57%;
+  }
+
+  /* ═══════════════════════════════════════════════
+     ADMIN / IMMERSIVE SCOPE — keeps dark cinematic palette
+     ═══════════════════════════════════════════════ */
+  .admin-theme,
+  .alex-immersive {
     --primary: 222 100% 60%;
     --primary-foreground: 0 0% 100%;
     --secondary: 252 100% 68%;
     --secondary-foreground: 0 0% 100%;
     --accent: 195 100% 52%;
     --accent-foreground: 0 0% 100%;
-
     --background: 226 63% 5%;
     --foreground: 216 30% 95%;
-
     --card: 222 40% 7%;
     --card-foreground: 216 30% 95%;
-
     --popover: 222 40% 6%;
     --popover-foreground: 216 30% 95%;
-
     --muted: 222 25% 11%;
     --muted-foreground: 218 18% 52%;
-
-    --destructive: 0 72% 50%;
-    --destructive-foreground: 0 0% 100%;
-    --success: 152 69% 42%;
-    --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-
     --border: 222 20% 14%;
     --input: 222 20% 15%;
     --ring: 222 100% 60%;
-    --radius: 0.75rem;
-
-    /* ─── Sharp Shadow System ─── */
     --shadow-xs: 0 1px 2px 0 hsl(222 50% 2% / 0.6);
     --shadow-sm: 0 2px 4px -1px hsl(222 50% 2% / 0.7), 0 1px 2px -1px hsl(222 50% 2% / 0.5);
     --shadow-md: 0 6px 12px -2px hsl(222 50% 2% / 0.7), 0 3px 6px -3px hsl(222 50% 2% / 0.5);
@@ -63,8 +132,6 @@
     --shadow-glow-lg: 0 0 48px -8px hsl(222 100% 60% / 0.25), 0 0 20px -4px hsl(222 100% 60% / 0.15);
     --shadow-inner-glow: inset 0 1px 0 0 hsl(0 0% 100% / 0.04);
     --shadow-metal: 0 1px 0 0 hsl(0 0% 100% / 0.04), 0 -1px 0 0 hsl(222 50% 2% / 0.6);
-
-    /* ─── Glass — dark, controlled, never milky ─── */
     --glass-bg: hsl(0 0% 100% / 0.04);
     --glass-border: hsl(0 0% 100% / 0.06);
     --glass-highlight: linear-gradient(180deg, hsl(0 0% 100% / 0.05) 0%, transparent 40%);
@@ -72,23 +139,13 @@
     --glass-metal-bg: linear-gradient(135deg, hsl(0 0% 100% / 0.05), hsl(0 0% 100% / 0.02));
     --glass-metal-border: hsl(0 0% 100% / 0.07);
     --glass-metal-shine: linear-gradient(135deg, hsl(0 0% 100% / 0.04) 0%, transparent 50%, hsl(0 0% 100% / 0.02) 100%);
-
-    /* ─── Section Underglow Tokens ─── */
-    --section-glow-blue: hsl(222 100% 60% / 0.04);
-    --section-glow-purple: hsl(252 100% 68% / 0.04);
-    --section-glow-cyan: hsl(195 100% 52% / 0.04);
-    --section-glow-green: hsl(152 69% 42% / 0.03);
-    --section-glow-warm: hsl(38 92% 50% / 0.03);
-    --section-glow-neutral: hsl(222 25% 11% / 0.5);
-
     --sidebar-background: 222 40% 5%;
     --sidebar-foreground: 216 30% 95%;
-    --sidebar-primary: 222 100% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 222 25% 10%;
     --sidebar-accent-foreground: 216 30% 95%;
     --sidebar-border: 222 20% 12%;
-    --sidebar-ring: 222 100% 60%;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }
 
@@ -98,10 +155,17 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply text-foreground font-sans antialiased;
+    background: var(--gradient-bg);
+    background-attachment: fixed;
+    min-height: 100vh;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  .admin-theme,
+  .alex-immersive {
+    background: hsl(var(--background)) !important;
   }
 
   h1, h2, h3, h4, h5, h6 {
