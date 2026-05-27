@@ -6,7 +6,7 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
-import { ArrowRight, ArrowLeft, TrendingUp, Shield, Eye, Zap, Star } from "lucide-react";
+import { ArrowRight, ArrowLeft, TrendingUp, Shield, Eye, Zap, CheckCircle2, Loader2, AlertTriangle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FunnelLayout from "@/components/contractor-funnel/FunnelLayout";
 import CardGlass from "@/components/unpro/CardGlass";
@@ -24,8 +24,22 @@ interface AIPPScoreData {
   conversion: number;
 }
 
+type SignalState = "validated" | "processing" | "warning" | "missing";
+
+interface ProfileSignal {
+  key: string;
+  label: string;
+  state: SignalState;
+  detail: string;
+  impact: string;
+}
+
 const FALLBACK_SCORE: AIPPScoreData = { overall: 62, trust: 55, completeness: 48, visibility: 35, conversion: 42 };
-const POTENTIAL_BOOST = 25; // average expected improvement
+const POTENTIAL_BOOST = 25;
+const PHOTOS_MIN = 3;
+const REVIEWS_MIN = 5;
+const DESCRIPTION_MIN_CHARS = 120;
+
 
 function computeAfterScore(score: AIPPScoreData): AIPPScoreData {
   return {
