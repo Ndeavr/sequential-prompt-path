@@ -509,6 +509,13 @@ Retourne UNIQUEMENT du JSON (pas de markdown, pas de backticks):
       lead_intents: 0,
     });
 
+    // 10) Mark run completed
+    await updateRun({
+      status: "completed",
+      completed_at: new Date().toISOString(),
+      logs,
+    });
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -518,6 +525,14 @@ Retourne UNIQUEMENT du JSON (pas de markdown, pas de backticks):
         scores,
         embeddings: embeddingsCount,
         geo_pages: geoCreated,
+        run_id: runId,
+        assets: {
+          detected: assetsDetected,
+          validated: assetsValidated,
+          rejected: assetsRejected,
+          logos: { detected: logosDetected, validated: logosValidated },
+          photos: { detected: photosDetected, validated: photosValidated },
+        },
         logs,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
@@ -525,8 +540,18 @@ Retourne UNIQUEMENT du JSON (pas de markdown, pas de backticks):
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Unknown error";
     console.error("Pipeline failed:", msg);
+    if (runId) {
+      await supabase
+        .from("contractor_scraping_runs")
+        .update({
+          status: "failed",
+          error_message: msg,
+          completed_at: new Date().toISOString(),
+        })
+        .eq("id", runId);
+    }
     return new Response(
-      JSON.stringify({ success: false, error: msg }),
+      JSON.stringify({ success: false, error: msg, run_id: runId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 },
     );
   }
