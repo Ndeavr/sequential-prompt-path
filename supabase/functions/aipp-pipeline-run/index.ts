@@ -206,7 +206,6 @@ Deno.serve(async (req) => {
     log(`Loaded contractor: ${contractor.business_name} (${contractor.website})`);
 
     // 0) Open scraping run (tracking row)
-    let runId: string | null = null;
     if (!dry_run) {
       const { data: runRow } = await supabase
         .from("contractor_scraping_runs")
