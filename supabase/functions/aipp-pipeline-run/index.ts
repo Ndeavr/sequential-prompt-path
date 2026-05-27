@@ -203,20 +203,107 @@ Deno.serve(async (req) => {
     if (cErr || !contractor) throw new Error(`Contractor not found: ${cErr?.message}`);
     log(`Loaded contractor: ${contractor.business_name} (${contractor.website})`);
 
+    // 0) Open scraping run (tracking row)
+    let runId: string | null = null;
+    if (!dry_run) {
+      const { data: runRow } = await supabase
+        .from("contractor_scraping_runs")
+        .insert({
+          contractor_id,
+          status: "scraping",
+          source: contractor.website ? "website" : "manual",
+        })
+        .select("id")
+        .single();
+      runId = runRow?.id ?? null;
+    }
+    const updateRun = async (patch: Record<string, unknown>) => {
+      if (!runId) return;
+      await supabase.from("contractor_scraping_runs").update(patch).eq("id", runId);
+    };
+
     let websiteMd = "";
     let websiteWords = 0;
+    let scrapedLinks: string[] = [];
 
     // 1) Crawl website
     if (contractor.website) {
       try {
         const scrape = await firecrawlScrape(contractor.website);
-        websiteMd = scrape.data?.markdown ?? scrape.markdown ?? "";
+        const payload = scrape.data ?? scrape;
+        websiteMd = payload?.markdown ?? "";
+        scrapedLinks = Array.isArray(payload?.links) ? payload.links : [];
         websiteWords = websiteMd.split(/\s+/).length;
-        log(`Crawled ${websiteWords} words from ${contractor.website}`);
+        log(`Crawled ${websiteWords} words, ${scrapedLinks.length} links from ${contractor.website}`);
       } catch (e) {
         log(`Crawl failed: ${(e as Error).message}`);
+        await updateRun({ error_message: `crawl: ${(e as Error).message}` });
       }
     }
+
+    // 1b) Extract & persist assets (detected → pending validation)
+    let assetsDetected = 0;
+    let assetsValidated = 0;
+    let assetsRejected = 0;
+    let logosDetected = 0;
+    let logosValidated = 0;
+    let photosDetected = 0;
+    let photosValidated = 0;
+
+    if (!dry_run) {
+      await updateRun({ status: "classifying" });
+      const imageUrls = extractImageUrls(websiteMd, scrapedLinks, contractor.website);
+      assetsDetected = imageUrls.length;
+      log(`Detected ${assetsDetected} image assets on website`);
+
+      // Wipe previous website-sourced assets for a clean snapshot
+      await supabase
+        .from("contractor_assets")
+        .delete()
+        .eq("contractor_id", contractor_id)
+        .eq("source", "website");
+
+      const rows = imageUrls.map((u) => {
+        const cls = classifyAssetByUrl(u);
+        const isPhotoType = ["chantier", "equipe", "camion", "avant_apres"].includes(cls.type);
+        if (cls.type === "logo") logosDetected++;
+        if (isPhotoType) photosDetected++;
+        // Heuristic validation: confidence ≥ 0.6 → validated, else pending
+        const validated = cls.confidence >= 0.6;
+        if (validated && cls.type === "logo") logosValidated++;
+        if (validated && isPhotoType) photosValidated++;
+        if (validated) assetsValidated++;
+        return {
+          contractor_id,
+          asset_type: cls.type,
+          source: "website",
+          url: u,
+          ai_confidence: cls.confidence,
+          ai_classification: { method: "url-heuristic" },
+          validated,
+          validation_status: validated ? "validated" : "pending",
+          is_published: validated && (cls.type === "logo" || isPhotoType),
+        };
+      });
+
+      if (rows.length) {
+        const { error: insErr } = await supabase.from("contractor_assets").insert(rows);
+        if (insErr) log(`Asset insert failed: ${insErr.message}`);
+      }
+
+      await updateRun({
+        status: "validating",
+        assets_detected: assetsDetected,
+        assets_validated: assetsValidated,
+        assets_rejected: assetsRejected,
+        logos_detected: logosDetected,
+        logos_validated: logosValidated,
+        photos_detected: photosDetected,
+        photos_validated: photosValidated,
+      });
+      log(`Assets — validated ${assetsValidated}/${assetsDetected} (logos ${logosValidated}/${logosDetected}, photos ${photosValidated}/${photosDetected})`);
+    }
+
 
     // 2) AI Summary (Gemini)
     let summaryFr = contractor.description ?? "";
