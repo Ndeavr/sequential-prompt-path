@@ -1526,5 +1526,6 @@ export const AppRouter = () => (
           <Route path="*" element={<FallbackRoutePage />} />
       </Routes>
     </Suspense>
+    <FloatingAlexGuide />
   </BrowserRouter>
 );
