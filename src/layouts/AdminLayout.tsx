@@ -236,7 +236,7 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className="admin-theme min-h-screen flex bg-background">
       <aside className="hidden md:flex w-64 flex-col border-r border-border/30 bg-card/40 p-3 sticky top-0 h-screen">
         <Link to="/" className="flex items-center gap-2 px-3 mb-1 mt-2">
           <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
