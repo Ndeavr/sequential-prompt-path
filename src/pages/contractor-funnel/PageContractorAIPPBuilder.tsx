@@ -54,18 +54,19 @@ function computeAfterScore(score: AIPPScoreData): AIPPScoreData {
 export default function PageContractorAIPPBuilder() {
   const { state, goToStep } = useContractorFunnel();
   const [score, setScore] = useState<AIPPScoreData>(FALLBACK_SCORE);
-  const [gaps, setGaps] = useState<Array<{ label: string; severity: string; impact: string }>>([]);
+  const [signals, setSignals] = useState<ProfileSignal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [scrapingRun, setScrapingRun] = useState<{ status: string; assets_detected: number; assets_validated: number; assets_rejected: number } | null>(null);
 
   useEffect(() => {
     trackFunnelEvent("aipp_viewed", { businessName: state.businessName });
 
-    const fetchScore = async () => {
+    const fetchAll = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { setLoading(false); return; }
 
-        // Try to get real AIPP score from aipp_scores table
+        // 1) Score
         const { data: scoreData } = await supabase
           .from("aipp_scores")
           .select("overall_score, component_scores")
@@ -75,7 +76,7 @@ export default function PageContractorAIPPBuilder() {
           .maybeSingle();
 
         if (scoreData) {
-          const components = scoreData.component_scores as any || {};
+          const components = (scoreData.component_scores as any) || {};
           setScore({
             overall: scoreData.overall_score || FALLBACK_SCORE.overall,
             trust: components.trust || components.authority || FALLBACK_SCORE.trust,
@@ -85,48 +86,156 @@ export default function PageContractorAIPPBuilder() {
           });
         }
 
-        // Try to get from activation funnel imported data
-        const { data: funnelData } = await supabase
-          .from("contractor_activation_funnel" as any)
-          .select("aipp_score, imported_data")
+        // 2) Contractor record (real data — logo_url, description, rbq, rating, review_count)
+        const { data: contractor } = await supabase
+          .from("contractors")
+          .select("id, logo_url, description, rbq_number, rating, review_count, website")
           .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
           .maybeSingle();
 
-        if (funnelData) {
-          const fd = funnelData as any;
-          if (fd.aipp_score) {
-            const aipp = fd.aipp_score;
-            if (aipp.overall) {
-              setScore({
-                overall: aipp.overall,
-                trust: aipp.subscores?.find((s: any) => s.key === "trust")?.score || FALLBACK_SCORE.trust,
-                completeness: aipp.subscores?.find((s: any) => s.key === "completeness")?.score || FALLBACK_SCORE.completeness,
-                visibility: aipp.subscores?.find((s: any) => s.key === "visibility")?.score || FALLBACK_SCORE.visibility,
-                conversion: aipp.subscores?.find((s: any) => s.key === "conversion")?.score || FALLBACK_SCORE.conversion,
-              });
-            }
-            // Use missing items as gaps
-            if (aipp.missing_items?.length > 0) {
-              setGaps(aipp.missing_items.map((item: string) => ({
-                label: item,
-                severity: "medium",
-                impact: "Améliore votre score global",
-              })));
-            }
+        // 3) Media count (real)
+        let mediaCount = 0;
+        let assetsDetected = 0;
+        let assetsValidated = 0;
+        let assetsRejected = 0;
+        let runStatus: string | null = null;
+
+        if (contractor?.id) {
+          const { count: mc } = await supabase
+            .from("contractor_media")
+            .select("id", { count: "exact", head: true })
+            .eq("contractor_id", contractor.id);
+          mediaCount = mc ?? 0;
+
+          // 4) Latest scraping run (detected vs validated split)
+          const { data: run } = await supabase
+            .from("contractor_scraping_runs" as any)
+            .select("status, assets_detected, assets_validated, assets_rejected")
+            .eq("contractor_id", contractor.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (run) {
+            const r = run as any;
+            runStatus = r.status;
+            assetsDetected = r.assets_detected ?? 0;
+            assetsValidated = r.assets_validated ?? 0;
+            assetsRejected = r.assets_rejected ?? 0;
+            setScrapingRun({
+              status: r.status,
+              assets_detected: assetsDetected,
+              assets_validated: assetsValidated,
+              assets_rejected: assetsRejected,
+            });
           }
         }
+
+        // 5) Derive coherent signals (no hardcoded lies)
+        const pipelineRunning = runStatus !== null && runStatus !== "completed" && runStatus !== "failed";
+
+        const computedSignals: ProfileSignal[] = [];
+
+        // — Logo
+        if (contractor?.logo_url) {
+          computedSignals.push({
+            key: "logo",
+            label: "Logo",
+            state: "validated",
+            detail: "Logo validé",
+            impact: "Identité visuelle reconnue",
+          });
+        } else if (pipelineRunning) {
+          computedSignals.push({
+            key: "logo",
+            label: "Logo",
+            state: "processing",
+            detail: "Logo détecté — optimisation en cours",
+            impact: "Validation IA en cours",
+          });
+        } else {
+          computedSignals.push({
+            key: "logo",
+            label: "Logo",
+            state: "missing",
+            detail: "Aucun logo trouvé",
+            impact: "Réduit la crédibilité de 20%",
+          });
+        }
+
+        // — Photos
+        if (mediaCount >= PHOTOS_MIN) {
+          computedSignals.push({
+            key: "photos",
+            label: "Photos",
+            state: "validated",
+            detail: `${mediaCount} photos validées`,
+            impact: "Boost conversion +15%",
+          });
+        } else if (assetsDetected > mediaCount || pipelineRunning) {
+          computedSignals.push({
+            key: "photos",
+            label: "Photos",
+            state: "processing",
+            detail: `${assetsDetected} détectées — validation en cours`,
+            impact: "Classification IA en cours",
+          });
+        } else if (mediaCount > 0) {
+          computedSignals.push({
+            key: "photos",
+            label: "Photos",
+            state: "warning",
+            detail: `Seulement ${mediaCount}/${PHOTOS_MIN} photos validées`,
+            impact: "Réduit la conversion de 15%",
+          });
+        } else {
+          computedSignals.push({
+            key: "photos",
+            label: "Photos",
+            state: "missing",
+            detail: "Aucune photo trouvée",
+            impact: "Réduit la conversion de 15%",
+          });
+        }
+
+        // — Description
+        const descLen = contractor?.description?.length ?? 0;
+        computedSignals.push(
+          descLen >= DESCRIPTION_MIN_CHARS
+            ? { key: "description", label: "Description", state: "validated", detail: `${descLen} caractères`, impact: "Bien indexée par les IA" }
+            : descLen > 0
+            ? { key: "description", label: "Description", state: "warning", detail: `Trop courte (${descLen} car.)`, impact: "Réduit le SEO de 10%" }
+            : { key: "description", label: "Description", state: "missing", detail: "Description absente", impact: "Réduit le SEO de 10%" },
+        );
+
+        // — RBQ
+        computedSignals.push(
+          contractor?.rbq_number
+            ? { key: "rbq", label: "Licence RBQ", state: "validated", detail: contractor.rbq_number, impact: "Confiance +25 points" }
+            : { key: "rbq", label: "Licence RBQ", state: "missing", detail: "Licence non renseignée", impact: "Confiance -25 points" },
+        );
+
+        // — Reviews
+        const rc = contractor?.review_count ?? 0;
+        computedSignals.push(
+          rc >= REVIEWS_MIN
+            ? { key: "reviews", label: "Avis clients", state: "validated", detail: `${rc} avis · ${contractor?.rating ?? "-"}★`, impact: "Preuve sociale forte" }
+            : rc > 0
+            ? { key: "reviews", label: "Avis clients", state: "warning", detail: `Seulement ${rc} avis`, impact: "Preuve sociale faible" }
+            : { key: "reviews", label: "Avis clients", state: "missing", detail: "Aucun avis importé", impact: "Preuve sociale absente" },
+        );
+
+        setSignals(computedSignals);
       } catch (e) {
-        console.error("Failed to fetch AIPP score:", e);
+        console.error("Failed to fetch AIPP data:", e);
       }
       setLoading(false);
     };
 
-    fetchScore();
+    fetchAll();
   }, [state.businessName]);
 
   const afterScore = computeAfterScore(score);
+
 
   const displayGaps = gaps.length > 0 ? gaps : [
     { label: "Logo manquant", severity: "high", impact: "Réduit la crédibilité de 20%" },
