@@ -398,11 +398,14 @@ Retourne UNIQUEMENT du JSON (pas de markdown, pas de backticks):
     }
 
     // 5) Aggregate signals for score
+    await updateRun({ status: "scoring" });
     const [{ count: servicesCount }, { count: areasCount }, { count: mediaCount }] = await Promise.all([
       supabase.from("contractor_services").select("id", { count: "exact", head: true }).eq("contractor_id", contractor_id),
       supabase.from("contractor_service_areas").select("id", { count: "exact", head: true }).eq("contractor_id", contractor_id),
       supabase.from("contractor_media").select("id", { count: "exact", head: true }).eq("contractor_id", contractor_id),
     ]);
+    // Boost media count with newly validated photo-class assets from this run
+    const effectiveMediaCount = (mediaCount ?? 0) + photosValidated;
 
     const scores = computeScores({
       hasWebsite: !!contractor.website,
