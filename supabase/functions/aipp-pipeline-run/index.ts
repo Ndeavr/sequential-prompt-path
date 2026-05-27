@@ -415,7 +415,7 @@ Retourne UNIQUEMENT du JSON (pas de markdown, pas de backticks):
       reviewsCount: contractor.review_count ?? 0,
       rating: contractor.rating ?? 0,
       rbqVerified: !!contractor.rbq_number,
-      mediaCount: mediaCount ?? 0,
+      mediaCount: effectiveMediaCount,
       faqCount: 0,
       hasSummary: !!summaryFr,
       embeddingsCount,
