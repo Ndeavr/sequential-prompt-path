@@ -184,6 +184,8 @@ function computeScores(signals: {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  let runId: string | null = null;
+
   try {
     const { contractor_id, dry_run } = await req.json();
     if (!contractor_id) throw new Error("contractor_id required");
