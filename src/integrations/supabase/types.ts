@@ -21000,6 +21000,63 @@ export type Database = {
           },
         ]
       }
+      contractor_assets: {
+        Row: {
+          ai_classification: Json | null
+          ai_confidence: number | null
+          asset_type: string
+          contractor_id: string
+          created_at: string
+          height: number | null
+          id: string
+          is_published: boolean
+          metadata: Json | null
+          rejected_reason: string | null
+          source: string
+          updated_at: string
+          url: string
+          validated: boolean
+          validation_status: string
+          width: number | null
+        }
+        Insert: {
+          ai_classification?: Json | null
+          ai_confidence?: number | null
+          asset_type: string
+          contractor_id: string
+          created_at?: string
+          height?: number | null
+          id?: string
+          is_published?: boolean
+          metadata?: Json | null
+          rejected_reason?: string | null
+          source: string
+          updated_at?: string
+          url: string
+          validated?: boolean
+          validation_status?: string
+          width?: number | null
+        }
+        Update: {
+          ai_classification?: Json | null
+          ai_confidence?: number | null
+          asset_type?: string
+          contractor_id?: string
+          created_at?: string
+          height?: number | null
+          id?: string
+          is_published?: boolean
+          metadata?: Json | null
+          rejected_reason?: string | null
+          source?: string
+          updated_at?: string
+          url?: string
+          validated?: boolean
+          validation_status?: string
+          width?: number | null
+        }
+        Relationships: []
+      }
       contractor_authority_events: {
         Row: {
           contractor_id: string
@@ -28828,6 +28885,72 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      contractor_scraping_runs: {
+        Row: {
+          assets_detected: number
+          assets_rejected: number
+          assets_validated: number
+          completed_at: string | null
+          contractor_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          logos_detected: number
+          logos_validated: number
+          logs: Json | null
+          photos_detected: number
+          photos_validated: number
+          reviews_detected: number
+          reviews_validated: number
+          source: string | null
+          started_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assets_detected?: number
+          assets_rejected?: number
+          assets_validated?: number
+          completed_at?: string | null
+          contractor_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          logos_detected?: number
+          logos_validated?: number
+          logs?: Json | null
+          photos_detected?: number
+          photos_validated?: number
+          reviews_detected?: number
+          reviews_validated?: number
+          source?: string | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assets_detected?: number
+          assets_rejected?: number
+          assets_validated?: number
+          completed_at?: string | null
+          contractor_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          logos_detected?: number
+          logos_validated?: number
+          logs?: Json | null
+          photos_detected?: number
+          photos_validated?: number
+          reviews_detected?: number
+          reviews_validated?: number
+          source?: string | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       contractor_service_areas: {
         Row: {
