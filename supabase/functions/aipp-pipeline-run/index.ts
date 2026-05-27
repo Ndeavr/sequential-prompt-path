@@ -90,6 +90,42 @@ function chunkText(text: string, max = 1200): string[] {
   return chunks.slice(0, 30);
 }
 
+// ───────────── Asset extraction & heuristic classification
+const IMG_EXT = /\.(png|jpe?g|webp|gif|svg|avif)(\?|$)/i;
+
+function extractImageUrls(markdown: string, links: string[] = [], baseUrl?: string): string[] {
+  const found = new Set<string>();
+  const mdImg = /!\[[^\]]*\]\(([^)\s]+)/g;
+  let m: RegExpExecArray | null;
+  while ((m = mdImg.exec(markdown || "")) !== null) {
+    let u = m[1].trim();
+    if (u.startsWith("//")) u = "https:" + u;
+    if (u.startsWith("/") && baseUrl) {
+      try { u = new URL(u, baseUrl).toString(); } catch { /* noop */ }
+    }
+    if (/^https?:\/\//i.test(u)) found.add(u);
+  }
+  for (const l of links || []) {
+    if (typeof l === "string" && IMG_EXT.test(l)) found.add(l);
+  }
+  return Array.from(found).slice(0, 40);
+}
+
+function classifyAssetByUrl(url: string): { type: string; confidence: number } {
+  const u = url.toLowerCase();
+  if (/favicon/.test(u)) return { type: "favicon", confidence: 0.9 };
+  if (/logo|brand|identite/.test(u)) return { type: "logo", confidence: 0.75 };
+  if (/(og[-_]?image|opengraph|share)/.test(u)) return { type: "og_image", confidence: 0.8 };
+  if (/(camion|truck|van|vehicule)/.test(u)) return { type: "camion", confidence: 0.6 };
+  if (/(equipe|team|staff|crew)/.test(u)) return { type: "equipe", confidence: 0.6 };
+  if (/(certif|rbq|attestation|garantie)/.test(u)) return { type: "certificat", confidence: 0.6 };
+  if (/(avant|after|before|apres)/.test(u)) return { type: "avant_apres", confidence: 0.6 };
+  if (/(chantier|projet|portfolio|gallery|realisation|travaux)/.test(u)) {
+    return { type: "chantier", confidence: 0.6 };
+  }
+  return { type: "chantier", confidence: 0.4 };
+}
+
 // ───────────── Score engine (déterministe pondéré)
 function computeScores(signals: {
   hasWebsite: boolean;
