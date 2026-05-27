@@ -155,10 +155,17 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply text-foreground font-sans antialiased;
+    background: var(--gradient-bg);
+    background-attachment: fixed;
+    min-height: 100vh;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  .admin-theme,
+  .alex-immersive {
+    background: hsl(var(--background)) !important;
   }
 
   h1, h2, h3, h4, h5, h6 {
