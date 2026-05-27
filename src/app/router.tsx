@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import FloatingAlexGuide from "@/components/alex/FloatingAlexGuide";
 import { lazy, Suspense } from "react";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -1525,5 +1526,6 @@ export const AppRouter = () => (
           <Route path="*" element={<FallbackRoutePage />} />
       </Routes>
     </Suspense>
+    <FloatingAlexGuide />
   </BrowserRouter>
 );
