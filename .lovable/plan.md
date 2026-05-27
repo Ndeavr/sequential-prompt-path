@@ -1,127 +1,162 @@
+# Funnel Entrepreneur Conversationnel Continu — Alex Live Layer
 
-# Refonte UI globale UNPRO — Light Premium Design System
+Transformer le flow Import → Analyse → AIPP → Plans → Checkout → Paiement en expérience IA continue où Alex reste vivant en permanence. Ajouter un essai 7 jours à 1$ bulletproof avec anti-abus. Refondre les plans en logique "rythme de croissance" (jamais "prix par lead").
 
-Transformation **UI/UX uniquement**. Zéro changement métier, Supabase, RLS, Edge Functions, Stripe, routes admin.
+## Phase 1 — Floating Alex Guide (couche persistante)
 
-## 1. Stratégie d'exécution
+**Nouveau composant : `src/components/alex/FloatingAlexGuide.tsx`**
+- Mini orbe (40px) coin bas-droite, persistant pendant tout le funnel entrepreneur
+- États : `idle | listening | analyzing | speaking | success | hesitating`
+- Bulle de transcription live au-dessus de l'orbe (max 2 lignes, fade in/out)
+- Reste visible pendant scroll, Stripe Element, loading
+- Tap → ouvre overlay voix Alex existant (`openAlex()` via `AlexVoiceContext`)
+- Caché uniquement sur `/admin/*` et `/auth/*`
 
-Plutôt que de réécrire 100+ pages, on **propage le thème via les tokens et les composants partagés**. 90% des pages héritent automatiquement.
+**Nouveau hook : `src/hooks/useAlexCheckoutNarration.ts`**
+- Driver de messages contextuels basé sur l'étape courante
+- Rotation intelligente (3–6 messages par étape, 4–8s d'intervalle, jamais en boucle stricte)
+- Pas d'audio TTS auto (respecte la règle "voice on tap") — texte seulement par défaut, voix si Alex déjà ouvert
+- Détecte hésitation : >20s inactif, scroll sans clic, ouverture promo, retour arrière → micro-intervention
 
-```text
-Tokens CSS (index.css) ──► Composants UI (button, card, input…) ──► Shells (Public/User/Contractor) ──► Pages
-                                                                  └──► AlexOrb singleton global
+**Nouveau store : `src/stores/alexCheckoutState.ts` (Zustand)**
+- État : `importing | analyzing | scoring | recommending | hesitating | trial_offer | checkout | payment_processing | activation_success`
+- Contexte : `companyName, city, score, recommendedPlan, hesitationCount`
+- Branché par chaque page du funnel via `setStage()`
+
+## Phase 2 — Import & Analyse vivants
+
+Pages concernées : `PageInstantAuditFunnel`, `PageContractorAippAudit`, `PageAuditAIPPv2`
+- Brancher `FloatingAlexGuide` + `setStage("importing"|"analyzing"|"scoring")`
+- Messages : "Je détecte votre territoire…", "Je compare votre présence locale…", "Analyse des preuves sociales…", "Je vérifie votre visibilité IA."
+- Apparition progressive des étapes (stagger 600ms), shimmer loading, jamais d'écran statique
+
+## Phase 3 — AIPP = moment WOW
+
+**Nouveaux composants :**
+- `src/components/aipp/OpportunityInsights.tsx` — cartes dynamiques (domination locale, FAQ IA, contenu visuel, avant/après, spécialisation, territoire)
+- `src/components/aipp/PotentialScoreCard.tsx` — animation score actuel → score potentiel (compteur progressif + arc gauge)
+- Section "Signaux de confiance" (RBQ, entreprise active, avis, présence locale, spécialisation) avec badges verts
+- Section "Projection IA" : "Les entreprises similaires avec un profil optimisé obtiennent jusqu'à 3.2x plus de demandes qualifiées dans votre région."
+
+Intégré dans la page résultat AIPP existante sous le score brut.
+
+## Phase 4 — Plans "Rythme de croissance"
+
+**Nouveau composant : `src/components/plans/GrowthPlanCards.tsx`**
+- Titre : "Quel rythme de croissance voulez-vous ?"
+- 4 plans en cartes verticales premium :
+  1. **Activation locale** — ~5 opportunités/mois
+  2. **Croissance stable** — ~10/mois — badge "RECOMMANDÉ POUR VOUS" (dynamique selon AIPP)
+  3. **Domination régionale** — ~25/mois
+  4. **Expansion maximale** — ~50/mois
+- Aucune mention "prix par lead", "coût par RDV", "cost per lead"
+- Mapping vers les plans existants (`CONTRACTOR_PLANS`) sans modifier la table `pricing_plans` ni Stripe products
+
+Pages mises à jour : `PageOnboardingPlan`, `PricingContractorsPage`, `PageContractorVoiceFirstLanding` (section plans)
+
+Alex parle pendant la sélection (via `FloatingAlexGuide` + `setStage("recommending")`) :
+- "Je recommande un volume que votre équipe peut absorber confortablement."
+- "Le plan Croissance stable semble le plus adapté à votre profil."
+
+## Phase 5 — Essai 7 jours à 1$
+
+**Nouveau composant : `src/components/trial/TrialActivationCard.tsx`**
+- Inséré AVANT le checkout standard (étape pré-checkout)
+- Titre : "Tester UNPRO sans risque"
+- 6 bénéfices (activation immédiate, dashboard, agenda, visibilité IA, Alex, opportunités)
+- CTA principal : "Activer mon essai 7 jours — 1$"
+- CTA secondaire : "Voir l'abonnement complet"
+
+**Migration Supabase : table `contractor_trials`**
+```
+id uuid pk, contractor_id uuid, stripe_customer_id text, stripe_subscription_id text,
+plan_code text, started_at timestamptz, ends_at timestamptz, converted_at timestamptz,
+cancelled_at timestamptz, status text check (status in ('active','converted','cancelled','expired')),
+ip_address inet, rbq text, neq text, phone text, email text, stripe_fingerprint text,
+browser_fingerprint text, created_at timestamptz default now()
+```
++ GRANTs + RLS (contractor ne voit que ses trials, service_role full).
+
+**Anti-abus (edge function `start-contractor-trial`)**
+- Refus si RBQ/NEQ/email/phone/fingerprint déjà présent avec status in ('active','converted','cancelled','expired') dans les 12 derniers mois
+- IP rate-limit (max 3 tentatives/jour)
+- Stripe customer fingerprint vérifié côté backend
+
+**Stripe**
+- Mode trial : abonnement avec `trial_period_days: 7` + `trial_settings.end_behavior.missing_payment_method: 'cancel'`, montant initial de setup_fee 1$ via invoice item (ou price one-time 1$ + subscription qui commence après 7j)
+- Mode standard : abonnement direct (existant, intact)
+- Pas de webhooks ajoutés (suit la règle "DO NOT USE WEBHOOKS unless asked")
+- Edge function de vérification `check-contractor-trial-status` polled
+
+## Phase 6 — Checkout conversationnel premium
+
+**Nouveaux composants :**
+- `src/components/checkout/CheckoutConversationBar.tsx` — bandeau sticky haut sous le header avec messages Alex pendant le paiement
+- `src/components/checkout/StickyTrustFooter.tsx` — enrichit le footer "Total aujourd'hui" existant avec :
+  - micro-trust : "Paiement sécurisé Stripe · Activation immédiate · Annulable en tout temps"
+  - micro-bénéfice : "Activation immédiate + visibilité IA incluse"
+  - mini orbe Alex animé à gauche du total
+
+Page mise à jour : checkout natif Stripe existant (`/checkout/native/:planCode`)
+- `FloatingAlexGuide` reste visible
+- `setStage("checkout"|"payment_processing")` selon l'état Stripe Element
+- Pas de toucher à la logique Stripe / `contractor_checkouts` / calcul taxes — uniquement couche visuelle + narration
+
+## Phase 7 — Activation success cinématique
+
+Page existante `PageContractorActivated` enrichie :
+- Pas de fin abrupte
+- Séquence : "Activation en cours…" → confettis subtils → orbe success → progression réelle (5 étapes animées : connexion profil, optimisation visibilité, indexation IA, préparation opportunités, ouverture dashboard)
+- `setStage("activation_success")` + message Alex : "UNPRO commence déjà à travailler pour vous."
+
+## Phase 8 — Micro-interactions globales
+
+Tokens animation existants étendus dans `src/index.css` :
+- `--ease-spring`, `glow-pulse`, `shimmer`, `typing-dots`, `fade-up-stagger`
+- Haptics mobile (`navigator.vibrate(10)`) sur tap plan, CTA paiement, success
+- Spring transitions Framer Motion sur cartes plans (déjà installé)
+
+## Technique
+
+**Fichiers créés :**
+```
+src/components/alex/FloatingAlexGuide.tsx
+src/components/plans/GrowthPlanCards.tsx
+src/components/trial/TrialActivationCard.tsx
+src/components/checkout/CheckoutConversationBar.tsx
+src/components/checkout/StickyTrustFooter.tsx
+src/components/aipp/OpportunityInsights.tsx
+src/components/aipp/PotentialScoreCard.tsx
+src/hooks/useAlexCheckoutNarration.ts
+src/stores/alexCheckoutState.ts
+supabase/functions/start-contractor-trial/index.ts
+supabase/functions/check-contractor-trial-status/index.ts
+supabase/migrations/<ts>_contractor_trials.sql
 ```
 
-Le thème actuel `.unicorn-theme` (déjà présent dans `src/styles/unicorn-theme.css`) sert de **base** : on le promeut en thème global par défaut au lieu d'un opt-in scopé.
+**Fichiers édités :**
+- `src/app/App.tsx` — monter `<FloatingAlexGuide />` global (hidden sur /admin & /auth)
+- `src/pages/entrepreneur/PageOnboardingPlan.tsx` — remplacer cartes par `GrowthPlanCards` + insertion `TrialActivationCard`
+- `src/pages/PageInstantAuditFunnel.tsx`, `PageContractorAippAudit.tsx`, `PageAuditAIPPv2.tsx` — `setStage()` + insertion `OpportunityInsights` + `PotentialScoreCard`
+- Page checkout natif Stripe — ajouter `CheckoutConversationBar` + `StickyTrustFooter`
+- `PageContractorActivated.tsx` — séquence cinématique
 
-## 2. Phase 1 — Fondation tokens (1 fichier, impact global)
+**Hors scope (intouché) :**
+- `/admin/*` (theme sombre préservé)
+- `pricing_plans` table, prices Stripe existants, calcul taxes, `contractor_checkouts`
+- `AlexBrain`, voice config, prompt Alex, `alexVoiceConfig.ts`
+- Edge functions Alex (`alex-sales-process-turn`, etc.)
+- Logique RLS / auth existante
+- Design tokens light premium (déjà en place)
 
-**`src/index.css`** — Remplacer les tokens HSL `:root` par la palette light premium :
+**Voix Alex :** respecte la règle event-driven — pas d'auto-start TTS pendant le funnel. Texte uniquement dans `FloatingAlexGuide`. Si l'utilisateur tap l'orbe, ouverture overlay voix standard.
 
-| Token | Valeur |
-|---|---|
-| `--background` | `#F7FAFF` |
-| `--foreground` | `#0B1220` |
-| `--primary` | `#2563FF` |
-| `--primary-glow` | `#3B82F6` |
-| `--accent` | `#BDE7FF` |
-| `--muted-foreground` | `#667085` |
-| `--success` | `#19C37D` |
-| `--warning` | `#F59E0B` |
-| `--destructive` | `#EF4444` |
-| `--radius` | `1.5rem` (24px), `--radius-lg` 32px |
-| `--shadow-glass` | `0 24px 60px -28px rgba(37,99,255,.22)` |
-| `--shadow-glow` | `0 0 80px rgba(59,130,246,.35)` |
-| `--gradient-primary` | `linear-gradient(135deg,#2563FF,#3B82F6)` |
-| `--gradient-bg` | radial halos cyan/bleu sur blanc |
+## Critères de succès
 
-- Forcer **light mode par défaut** (`useThemeToggle` reste no-op mais inversé).
-- Exclure `/admin/*` : wrapper `.admin-theme` qui réapplique l'ancienne palette dark (override scopé dans `index.css`).
-- Garder le bg dark cinématique uniquement dans `.alex-immersive` (page Alex voix immersive).
-
-## 3. Phase 2 — Composants partagés (déjà existants, à reskinner)
-
-Mise à jour visuelle, **API inchangée** :
-
-- `src/components/ui/button.tsx` — variants `default`, `premium`, `cinematic` utilisent le gradient bleu + halo + hover lift -2px
-- `src/components/ui/card.tsx` — `glass-card` = `rgba(255,255,255,.72)` + `backdrop-blur(22px)` + shadow premium
-- `src/components/ui/input.tsx` — devient **FloatingInput** : label flottant, focus glow bleu, radius 16px
-- `src/components/shared.tsx` — `StatCard`, `EmptyState`, `PageHeader`, `Section` reskinnés glass
-
-Nouveaux composants partagés dans `src/components/ds/` :
-
-- `GlassCard.tsx`
-- `GradientButton.tsx` (wrapper Button variant=premium)
-- `IntentChip.tsx`
-- `TrustBadge.tsx`
-- `AISectionCard.tsx`
-- `EmptyStateAI.tsx` (avec CTA Alex)
-- `SmartListCard.tsx`
-- `FloatingGlassHeader.tsx`
-- `FloatingBottomDock.tsx` (Accueil / Croissance / Alex / Profil / Compte)
-- `PageHero.tsx`
-
-## 4. Phase 3 — Shells globaux
-
-Standardiser les 3 layouts non-admin :
-
-- `src/layouts/MainLayout.tsx` → utilise `FloatingGlassHeader` + `FloatingBottomDock` (mobile) + `<AlexOrbSingleton/>`
-- `src/layouts/DashboardLayout.tsx` (homeowner) → idem + sidebar glass desktop
-- `src/layouts/ContractorLayout.tsx` → idem accent contractor
-
-`src/layouts/AdminLayout.tsx` (s'il existe) ou les pages `/admin/*` : wrapper `<div className="admin-theme">` pour bypass total.
-
-## 5. Phase 4 — Alex singleton global
-
-- Promouvoir `AlexOrb` en **singleton monté dans `App.tsx`** (pas dans chaque page).
-- États visuels : `idle / listening / thinking / speaking / processing / success` (gradient + halos animés).
-- Mémoire conservée entre routes (déjà géré par `AlexVoiceContext`).
-- Caché uniquement sur `/admin/*` et `/auth/*` minimal.
-
-## 6. Phase 5 — Pages spécifiques à retoucher
-
-La majorité héritent via les tokens. Retouches ciblées sur :
-
-| Page | Action |
-|---|---|
-| `Home.tsx` / `PageHomeIntentUNPRO.tsx` | Hero glass + halos cyan + AlexOrb central |
-| `Login.tsx` / `LoginPageUnpro.tsx` | Card glass centrée, FloatingInput |
-| Onboarding homeowner/entrepreneur | Steps glass + progress gradient |
-| `ProDashboard.tsx`, `ProAccount.tsx`, `ProAppointments.tsx` | Remplacer tables denses par `SmartListCard` |
-| Pages SEO (`/probleme/:x/:city`, `/ville/:x`) | **Garder structure H1/H2/JSON-LD intacte**, juste reskin cartes/CTA |
-| Pages pricing | Cards glass + gradient CTA |
-| `NotFound.tsx`, success/cancel | `EmptyStateAI` |
-| Pages AIPP / soumissions | Glass + Alex CTA |
-
-## 7. Hors-scope (intouché)
-
-- `/admin/*` (toutes pages, layouts, Mission Control, Operations Hub, Outbound, Sniper, Plans Matrix, etc.)
-- Logique métier, hooks, edge functions, migrations, types Supabase
-- AlexBrain, prompts, voice config
-- Stripe, RLS, auth flows
-
-## 8. Détails techniques
-
-- **Tailwind config** : ajouter `radius-2xl: 24px`, `radius-3xl: 32px`, keyframes `fade-up`, `glow-pulse`, `magnetic-hover`.
-- **Animations** : `motion-safe` only, GPU `transform/opacity`, easing `cubic-bezier(.22,1,.36,1)`, 320–420ms.
-- **Perf** : lazy-load images existantes, pas de nouveau script lourd, glass via `backdrop-filter` (fallback solid sur Android low-end via `@supports`).
-- **Light mode forcé** : retirer `dark` class du `html`, garder `dark` scopé à `.admin-theme` et `.alex-immersive`.
-- **Tests** : pas de nouveaux tests, vérification visuelle sur Home, Alex, Login, ProDashboard, AIPP, page SEO ville.
-
-## 9. Critères de succès
-
-- Toutes les pages non-admin partagent palette + glass + radius + shadows.
-- Alex visible en singleton, jamais remonté entre routes.
-- Aucune route admin modifiée (diff vide sur `src/pages/admin/**`).
-- Mobile 384px clean (viewport actuel utilisateur).
-- Aucune régression fonctionnelle (routes, formulaires, paiements inchangés).
-
-## 10. Ordre d'exécution (build)
-
-1. Tokens `index.css` + `tailwind.config.ts` + scope `.admin-theme`
-2. Reskin `button`, `card`, `input`, `shared.tsx`
-3. Créer `src/components/ds/*` (10 composants)
-4. `FloatingGlassHeader` + `FloatingBottomDock` dans `MainLayout` / `DashboardLayout` / `ContractorLayout`
-5. AlexOrb singleton dans `App.tsx`
-6. Retouches ciblées Home / Login / Onboarding / Pro* / Pricing / SEO / NotFound
-7. QA visuelle sur 8 pages clés en 384px
+- Alex visible en permanence pendant import → analyse → AIPP → plans → checkout → paiement → activation
+- Aucune mention "prix par lead" / "coût par RDV"
+- Essai 7j 1$ disponible avec anti-abus actif (RBQ + NEQ + email + phone + IP + fingerprint)
+- Checkout existant fonctionnel (aucune régression Stripe)
+- Mobile 384px parfait
+- Aucune page admin modifiée
+- Aucun écran statique > 3s sans message ou animation Alex
