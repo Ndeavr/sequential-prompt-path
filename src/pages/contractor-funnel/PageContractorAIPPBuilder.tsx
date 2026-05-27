@@ -359,27 +359,86 @@ export default function PageContractorAIPPBuilder() {
             </CardGlass>
           </div>
 
-          {/* ─── Right: Gaps & Actions ─── */}
+          {/* ─── Right: Signals & Actions ─── */}
           <div className="space-y-4">
             <CardGlass noAnimation className="sticky top-24">
-              <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-                <Star className="h-4 w-4 text-warning" />
-                Éléments manquants
-              </h3>
-              <div className="space-y-3">
-                {displayGaps.map((gap, i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30">
-                    <div
-                      className={`w-2 h-2 rounded-full mt-1 ${
-                        gap.severity === "high" ? "bg-destructive" : gap.severity === "medium" ? "bg-warning" : "bg-muted-foreground"
-                      }`}
-                    />
-                    <div>
-                      <p className="text-xs font-medium text-foreground">{gap.label}</p>
-                      <p className="text-xs text-muted-foreground">{gap.impact}</p>
-                    </div>
+              <div className="flex items-start justify-between mb-3">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-primary" />
+                  État du profil
+                </h3>
+                {scrapingRun && scrapingRun.status !== "completed" && (
+                  <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                    Pipeline actif
+                  </span>
+                )}
+              </div>
+
+              {/* Sources detected counter */}
+              {scrapingRun && (
+                <div className="grid grid-cols-3 gap-2 mb-4 text-center">
+                  <div className="rounded-lg bg-muted/40 px-2 py-2">
+                    <p className="text-base font-semibold text-foreground">{scrapingRun.assets_detected}</p>
+                    <p className="text-[10px] text-muted-foreground">Détectés</p>
                   </div>
-                ))}
+                  <div className="rounded-lg bg-success/10 px-2 py-2">
+                    <p className="text-base font-semibold text-success">{scrapingRun.assets_validated}</p>
+                    <p className="text-[10px] text-success">Validés</p>
+                  </div>
+                  <div className="rounded-lg bg-destructive/10 px-2 py-2">
+                    <p className="text-base font-semibold text-destructive">{scrapingRun.assets_rejected}</p>
+                    <p className="text-[10px] text-destructive">Rejetés</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Summary chips */}
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                {counts.validated > 0 && (
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${stateMeta.validated.chipClass}`}>
+                    ✓ {counts.validated} validé{counts.validated > 1 ? "s" : ""}
+                  </span>
+                )}
+                {counts.processing > 0 && (
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${stateMeta.processing.chipClass}`}>
+                    ⟳ {counts.processing} en cours
+                  </span>
+                )}
+                {counts.warning > 0 && (
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${stateMeta.warning.chipClass}`}>
+                    ⚠ {counts.warning} faible{counts.warning > 1 ? "s" : ""}
+                  </span>
+                )}
+                {counts.missing > 0 && (
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${stateMeta.missing.chipClass}`}>
+                    ✕ {counts.missing} manquant{counts.missing > 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                {(loading ? [] : signals).map((sig) => {
+                  const meta = stateMeta[sig.state];
+                  const Icon = meta.icon;
+                  return (
+                    <div key={sig.key} className="flex items-start gap-2.5 p-2.5 rounded-xl bg-muted/30">
+                      <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${meta.iconClass}`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs font-medium text-foreground truncate">{sig.label}</p>
+                          <span className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded ${meta.chipClass}`}>
+                            {meta.chip}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground truncate">{sig.detail}</p>
+                        <p className="text-[10px] text-muted-foreground/70 mt-0.5">{sig.impact}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+                {loading && (
+                  <p className="text-xs text-muted-foreground text-center py-4">Analyse en cours…</p>
+                )}
               </div>
 
               <div className="mt-6 space-y-2">
@@ -391,6 +450,7 @@ export default function PageContractorAIPPBuilder() {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
                 <Button
+
                   variant="ghost"
                   className="w-full h-10 rounded-xl text-xs text-muted-foreground"
                   onClick={() => goToStep("plan_recommendation")}
