@@ -237,12 +237,20 @@ export default function PageContractorAIPPBuilder() {
   const afterScore = computeAfterScore(score);
 
 
-  const displayGaps = gaps.length > 0 ? gaps : [
-    { label: "Logo manquant", severity: "high", impact: "Réduit la crédibilité de 20%" },
-    { label: "Moins de 3 photos", severity: "medium", impact: "Réduit la conversion de 15%" },
-    { label: "Aucune FAQ", severity: "medium", impact: "Réduit la visibilité IA de 25%" },
-    { label: "Description courte absente", severity: "low", impact: "Réduit le SEO de 10%" },
-  ];
+  const stateMeta: Record<SignalState, { icon: typeof CheckCircle2; iconClass: string; dotClass: string; chip: string; chipClass: string }> = {
+    validated: { icon: CheckCircle2, iconClass: "text-success", dotClass: "bg-success", chip: "Validé", chipClass: "bg-success/10 text-success" },
+    processing: { icon: Loader2, iconClass: "text-primary animate-spin", dotClass: "bg-primary", chip: "En cours", chipClass: "bg-primary/10 text-primary" },
+    warning: { icon: AlertTriangle, iconClass: "text-warning", dotClass: "bg-warning", chip: "Faible", chipClass: "bg-warning/10 text-warning" },
+    missing: { icon: XCircle, iconClass: "text-destructive", dotClass: "bg-destructive", chip: "Manquant", chipClass: "bg-destructive/10 text-destructive" },
+  };
+
+  const counts = {
+    validated: signals.filter((s) => s.state === "validated").length,
+    processing: signals.filter((s) => s.state === "processing").length,
+    warning: signals.filter((s) => s.state === "warning").length,
+    missing: signals.filter((s) => s.state === "missing").length,
+  };
+
 
   const radarData = [
     { axis: "Identité", before: score.trust, after: afterScore.trust },
