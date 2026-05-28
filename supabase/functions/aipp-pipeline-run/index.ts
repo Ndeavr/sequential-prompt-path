@@ -56,6 +56,55 @@ async function aiGenerate(model: string, system: string, user: string): Promise<
   return data.choices?.[0]?.message?.content ?? "";
 }
 
+// Vision classification via Gemini (multimodal). Returns null on failure.
+async function aiClassifyImage(imageUrl: string): Promise<
+  { type: string; confidence: number; quality: "low" | "medium" | "high"; reason: string } | null
+> {
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Tu es un classificateur d'images pour profils d'entrepreneurs en construction au Québec. Réponds UNIQUEMENT en JSON strict, sans markdown.",
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text:
+                  'Classe cette image dans UN des types suivants: "logo", "favicon", "og_image", "chantier", "equipe", "camion", "avant_apres", "certificat", "decoratif", "rejet". Évalue la qualité (low/medium/high). Retourne JSON: {"type":"...","confidence":0.0-1.0,"quality":"low|medium|high","reason":"court"}',
+              },
+              { type: "image_url", image_url: { url: imageUrl } },
+            ],
+          },
+        ],
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const raw = (data.choices?.[0]?.message?.content ?? "").replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(raw);
+    if (!parsed?.type) return null;
+    return {
+      type: String(parsed.type),
+      confidence: Number(parsed.confidence ?? 0.5),
+      quality: (parsed.quality ?? "medium") as "low" | "medium" | "high",
+      reason: String(parsed.reason ?? ""),
+    };
+  } catch {
+    return null;
+  }
+}
+
 async function aiEmbed(input: string): Promise<number[]> {
   const res = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
     method: "POST",
