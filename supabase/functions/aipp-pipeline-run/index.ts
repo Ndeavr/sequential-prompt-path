@@ -351,7 +351,7 @@ Deno.serve(async (req) => {
         photos_detected: photosDetected,
         photos_validated: photosValidated,
       });
-      log(`Assets — validated ${assetsValidated}/${assetsDetected} (logos ${logosValidated}/${logosValidated}, photos ${photosValidated}/${photosDetected})`);
+      log(`Assets — validated ${assetsValidated}/${assetsDetected} (logos ${logosValidated}/${logosDetected}, photos ${photosValidated}/${photosDetected})`);
 
       // 1c) Gemini Vision pass: upgrade pending → validated/rejected with real content classification
       const { data: pendingAssets } = await supabase
