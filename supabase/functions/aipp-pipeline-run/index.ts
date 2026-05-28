@@ -351,7 +351,57 @@ Deno.serve(async (req) => {
         photos_detected: photosDetected,
         photos_validated: photosValidated,
       });
-      log(`Assets — validated ${assetsValidated}/${assetsDetected} (logos ${logosValidated}/${logosDetected}, photos ${photosValidated}/${photosDetected})`);
+      log(`Assets — validated ${assetsValidated}/${assetsDetected} (logos ${logosValidated}/${logosValidated}, photos ${photosValidated}/${photosDetected})`);
+
+      // 1c) Gemini Vision pass: upgrade pending → validated/rejected with real content classification
+      const { data: pendingAssets } = await supabase
+        .from("contractor_assets")
+        .select("id, url, asset_type")
+        .eq("contractor_id", contractor_id)
+        .eq("source", "website")
+        .eq("validation_status", "pending")
+        .limit(10);
+
+      let visionProcessed = 0;
+      let visionUpgraded = 0;
+      for (const a of pendingAssets ?? []) {
+        const cls = await aiClassifyImage(a.url);
+        visionProcessed++;
+        if (!cls) continue;
+        const isPhotoType = ["chantier", "equipe", "camion", "avant_apres"].includes(cls.type);
+        const isLogoType = cls.type === "logo";
+        const isReject = cls.type === "rejet" || cls.type === "decoratif" || cls.quality === "low";
+        const validated = !isReject && cls.confidence >= 0.55 && (isPhotoType || isLogoType || cls.type === "certificat" || cls.type === "og_image");
+
+        await supabase
+          .from("contractor_assets")
+          .update({
+            asset_type: cls.type === "rejet" ? a.asset_type : cls.type,
+            ai_confidence: cls.confidence,
+            ai_classification: { method: "gemini-vision", quality: cls.quality, reason: cls.reason },
+            validated,
+            validation_status: validated ? "validated" : (isReject ? "rejected" : "pending"),
+            is_published: validated && (isPhotoType || isLogoType),
+          })
+          .eq("id", a.id);
+
+        if (validated) {
+          visionUpgraded++;
+          assetsValidated++;
+          if (isLogoType) logosValidated++;
+          if (isPhotoType) photosValidated++;
+        } else if (isReject) {
+          assetsRejected++;
+        }
+      }
+      log(`Vision pass — processed ${visionProcessed}, upgraded ${visionUpgraded}, rejected ${assetsRejected}`);
+
+      await updateRun({
+        assets_validated: assetsValidated,
+        assets_rejected: assetsRejected,
+        logos_validated: logosValidated,
+        photos_validated: photosValidated,
+      });
     }
 
 
