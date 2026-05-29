@@ -42,7 +42,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="min-h-screen flex flex-col relative overflow-x-hidden">
       {/* Cinematic 4-layer background — fixed, never repaints on route change */}
-      <div className="fixed inset-0 -z-10 noise-overlay">
+      <div className="fixed inset-0 -z-10 noise-overlay pointer-events-none">
         {/* Layer 1: base */}
         <div className="absolute inset-0" style={{ background: "#050816" }} />
         {/* Layer 2: blue glow top-left */}
