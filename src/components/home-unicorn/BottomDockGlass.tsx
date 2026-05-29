@@ -5,6 +5,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { Home, TrendingUp, User, Settings, Sparkles } from "lucide-react";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
+import { useNavigationContext } from "@/hooks/useNavigationContext";
 import "@/styles/unicorn-theme.css";
 
 interface Item {
@@ -13,18 +14,30 @@ interface Item {
   icon: typeof Home;
 }
 
-const LEFT: Item[] = [
-  { label: "Accueil", to: "/", icon: Home },
-  { label: "Croissance", to: "/dashboard", icon: TrendingUp },
-];
-const RIGHT: Item[] = [
-  { label: "Profil", to: "/profile", icon: User },
-  { label: "Compte", to: "/account", icon: Settings },
-];
-
 export default function BottomDockGlass() {
   const { pathname } = useLocation();
   const { openAlex } = useAlexVoice();
+  const { activeRole } = useNavigationContext();
+
+  const growthPath =
+    activeRole === "contractor" ? "/pro/dashboard"
+    : activeRole === "admin" ? "/admin"
+    : "/dashboard";
+  const profilePath =
+    activeRole === "contractor" ? "/pro/account"
+    : activeRole === "admin" ? "/admin"
+    : "/dashboard/account";
+  const accountPath = profilePath;
+
+  const LEFT: Item[] = [
+    { label: "Accueil", to: "/", icon: Home },
+    { label: "Croissance", to: growthPath, icon: TrendingUp },
+  ];
+  const RIGHT: Item[] = [
+    { label: "Profil", to: profilePath, icon: User },
+    { label: "Compte", to: accountPath, icon: Settings },
+  ];
+
 
   const Tab = ({ item }: { item: Item }) => {
     const active = pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to));
