@@ -69,7 +69,7 @@ const SmartHeader = () => {
   return (
     <>
       <header
-        className="sticky top-0 z-50"
+        className="sticky top-0 z-[60] pointer-events-auto"
         style={{
           background:
             "linear-gradient(180deg, hsl(220 45% 7% / 0.92) 0%, hsl(220 40% 5% / 0.85) 100%)",
