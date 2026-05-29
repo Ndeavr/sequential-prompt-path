@@ -207,10 +207,18 @@ const SmartHeader = () => {
               </Button>
 
               {/* Notifications */}
-              {ctx && ctx.system.notificationsCount > 0 && (
-                <Button variant="ghost" size="icon" className="relative h-7 w-7 sm:h-9 sm:w-9 rounded-lg text-muted-foreground hover:text-foreground">
+              {ctx && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative h-7 w-7 sm:h-9 sm:w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                  onClick={() => navigate("/dashboard/notifications")}
+                  aria-label={lang === "en" ? "Notifications" : "Notifications"}
+                >
                   <Bell className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                  {ctx.system.notificationsCount > 0 && (
+                    <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                  )}
                 </Button>
               )}
 
