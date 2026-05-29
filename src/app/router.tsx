@@ -1522,6 +1522,24 @@ export const AppRouter = () => (
           <Route path="/tuyaux-plomb/:quartier" element={<Suspense fallback={<LazyFallback />}><LeadPipePageTuyauxPlombQuartier /></Suspense>} />
           <Route path="/admin/lead-empire" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><LeadPipePageAdminEmpire /></Suspense></UniversalRouteGuard>} />
 
+          {/* Legacy/orphan link redirects — keeps old CTAs working */}
+          <Route path="/account" element={<Navigate to="/dashboard/account" replace />} />
+          <Route path="/settings" element={<Navigate to="/dashboard/account" replace />} />
+          <Route path="/aipp" element={<Navigate to="/entrepreneur" replace />} />
+          <Route path="/auth" element={<Navigate to="/role" replace />} />
+          <Route path="/inscription" element={<Navigate to="/role" replace />} />
+          <Route path="/classification-projets" element={<Navigate to="/services" replace />} />
+          <Route path="/solutions" element={<Navigate to="/services" replace />} />
+          <Route path="/types-de-propriete" element={<Navigate to="/services" replace />} />
+          <Route path="/compare" element={<Navigate to="/comparer" replace />} />
+          <Route path="/decrire-projet" element={<Navigate to="/decrire-mon-projet" replace />} />
+          <Route path="/soumission-travaux" element={<Navigate to="/decrire-mon-projet" replace />} />
+          <Route path="/recherche" element={<Navigate to="/trouver" replace />} />
+          <Route path="/trouver-entrepreneur" element={<Navigate to="/trouver" replace />} />
+          <Route path="/scan" element={<Navigate to="/diagnostic-photo" replace />} />
+          <Route path="/verifier-pro" element={<Navigate to="/verifier-un-entrepreneur" replace />} />
+          <Route path="/verification-entrepreneur" element={<Navigate to="/verifier-un-entrepreneur" replace />} />
+
           {/* Catch-all: try fallback, then 404 */}
           <Route path="*" element={<FallbackRoutePage />} />
       </Routes>
