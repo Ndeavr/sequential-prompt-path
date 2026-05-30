@@ -6,6 +6,7 @@
  * Anti-hallucination: Never fabricates data. Shows safe fallbacks.
  */
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import MainLayout from "@/layouts/MainLayout";
 import { Input } from "@/components/ui/input";
