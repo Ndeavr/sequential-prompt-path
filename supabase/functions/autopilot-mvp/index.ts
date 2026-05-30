@@ -19,7 +19,8 @@ interface AutopilotPayload {
   dry_run?: boolean;
 }
 
-const GOOGLE_PLACES_API_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY")!;
+const GOOGLE_PLACES_API_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY");
+const GOOGLE_MAPS_API_KEY = Deno.env.get("GOOGLE_MAPS_API_KEY");
 const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY")!;
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -32,16 +33,35 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 // ─── Stage 1: Google Places search ────────────────────────────────────────────
 async function searchGooglePlaces(trade: string, city: string, limit: number) {
   const query = `${trade} ${city} Québec`;
-  const url = "https://places.googleapis.com/v1/places:searchText";
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
+  const fieldMask =
+    "places.id,places.displayName,places.formattedAddress,places.websiteUri,places.nationalPhoneNumber,places.rating,places.userRatingCount,places.types,places.businessStatus";
+
+  // Preferred: Lovable Google Maps Platform connector gateway
+  let url: string;
+  let headers: Record<string, string>;
+  if (LOVABLE_API_KEY && GOOGLE_MAPS_API_KEY) {
+    url = "https://connector-gateway.lovable.dev/google_maps/places/v1/places:searchText";
+    headers = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+      "X-Connection-Api-Key": GOOGLE_MAPS_API_KEY,
+      "X-Goog-FieldMask": fieldMask,
+    };
+  } else if (GOOGLE_PLACES_API_KEY) {
+    url = "https://places.googleapis.com/v1/places:searchText";
+    headers = {
       "Content-Type": "application/json",
       "X-Goog-Api-Key": GOOGLE_PLACES_API_KEY,
-      "X-Goog-FieldMask":
-        "places.id,places.displayName,places.formattedAddress,places.websiteUri,places.nationalPhoneNumber,places.rating,places.userRatingCount,places.types,places.businessStatus",
-    },
-    body: JSON.stringify({ textQuery: query, languageCode: "fr-CA", maxResultCount: Math.min(limit, 20) }),
+      "X-Goog-FieldMask": fieldMask,
+    };
+  } else {
+    throw new Error("Google Places non configuré (connecteur Google Maps Platform ou GOOGLE_PLACES_API_KEY)");
+  }
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ textQuery: query, languageCode: "fr-CA", regionCode: "CA", maxResultCount: Math.min(limit, 20) }),
   });
   if (!res.ok) {
     const err = await res.text();

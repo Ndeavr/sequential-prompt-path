@@ -32,37 +32,87 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ ok: false, blocked: true, reason: health.reason }), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
   }
 
-  const key = Deno.env.get("GOOGLE_PLACES_API_KEY")!;
-  const query = encodeURIComponent(`${body.trade} ${body.city} Québec`);
+  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+  const mapsKey = Deno.env.get("GOOGLE_MAPS_API_KEY");
+  const legacyKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
+  const useGateway = !!(lovableKey && mapsKey);
 
   let created = 0, skipped = 0, errors = 0;
+  let results: any[] = [];
   try {
-    const r = await fetch(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&region=ca&language=fr&key=${key}`);
-    const j = await r.json();
-    if (j.status !== "OK" && j.status !== "ZERO_RESULTS") {
-      await log(s, runId, "scrape.api", "error", `${j.status}: ${j.error_message || ""}`);
-      await finishRun(s, runId, { status: "failed", error_summary: j.status });
-      return new Response(JSON.stringify({ ok: false, error: j.status, message: j.error_message }), { status: 200, headers: cors });
+    if (useGateway) {
+      // Places API (New) via Lovable connector gateway — single call returns all needed fields
+      const r = await fetch("https://connector-gateway.lovable.dev/google_maps/places/v1/places:searchText", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${lovableKey}`,
+          "X-Connection-Api-Key": mapsKey!,
+          "Content-Type": "application/json",
+          "X-Goog-FieldMask":
+            "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.googleMapsUri,places.rating,places.userRatingCount",
+        },
+        body: JSON.stringify({
+          textQuery: `${body.trade} ${body.city} Québec`,
+          languageCode: "fr-CA",
+          regionCode: "CA",
+          maxResultCount: Math.min(max, 20),
+        }),
+      });
+      if (!r.ok) {
+        const t = await r.text();
+        await log(s, runId, "scrape.api", "error", `Gateway ${r.status}: ${t.slice(0, 300)}`);
+        await finishRun(s, runId, { status: "failed", error_summary: `Gateway ${r.status}` });
+        return new Response(JSON.stringify({ ok: false, error: `Gateway ${r.status}`, message: t.slice(0, 300) }), { status: 200, headers: cors });
+      }
+      const j = await r.json();
+      results = (j.places || []).slice(0, max).map((p: any) => ({
+        place_id: p.id,
+        name: p.displayName?.text,
+        formatted_phone_number: p.nationalPhoneNumber,
+        international_phone_number: p.internationalPhoneNumber,
+        website: p.websiteUri,
+        url: p.googleMapsUri,
+        formatted_address: p.formattedAddress,
+        rating: p.rating,
+        user_ratings_total: p.userRatingCount,
+      }));
+    } else if (legacyKey) {
+      // Legacy fallback
+      const query = encodeURIComponent(`${body.trade} ${body.city} Québec`);
+      const r = await fetch(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&region=ca&language=fr&key=${legacyKey}`);
+      const j = await r.json();
+      if (j.status !== "OK" && j.status !== "ZERO_RESULTS") {
+        await log(s, runId, "scrape.api", "error", `${j.status}: ${j.error_message || ""}`);
+        await finishRun(s, runId, { status: "failed", error_summary: j.status });
+        return new Response(JSON.stringify({ ok: false, error: j.status, message: j.error_message }), { status: 200, headers: cors });
+      }
+      results = (j.results || []).slice(0, max);
+      // Hydrate with details
+      for (const r0 of results) {
+        const detUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${r0.place_id}&fields=name,formatted_phone_number,international_phone_number,website,url,formatted_address,rating,user_ratings_total&language=fr&key=${legacyKey}`;
+        try {
+          const dr = await fetch(detUrl);
+          const dj = await dr.json();
+          Object.assign(r0, dj.result || {});
+        } catch { /* keep partial */ }
+      }
+    } else {
+      await log(s, runId, "scrape.api", "error", "Aucune clé Google Places disponible");
+      await finishRun(s, runId, { status: "failed", error_summary: "no_google_key" });
+      return new Response(JSON.stringify({ ok: false, error: "no_google_key" }), { status: 200, headers: cors });
     }
-    const results = (j.results || []).slice(0, max);
 
     for (const r0 of results) {
       try {
-        // Details for phone + website
-        const detUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${r0.place_id}&fields=name,formatted_phone_number,international_phone_number,website,url,formatted_address,rating,user_ratings_total&language=fr&key=${key}`;
-        const dr = await fetch(detUrl);
-        const dj = await dr.json();
-        const det = dj.result || {};
-        const phone = normalizePhone(det.international_phone_number || det.formatted_phone_number);
-        const websiteHost = normalizeUrl(det.website);
-        const business_name = det.name || r0.name;
+        const phone = normalizePhone(r0.international_phone_number || r0.formatted_phone_number);
+        const websiteHost = normalizeUrl(r0.website);
+        const business_name = r0.name || "Sans nom";
 
         // Dedup: same name+city OR same website host OR same phone
         const orFilters: string[] = [];
         if (websiteHost) orFilters.push(`website_url.ilike.%${websiteHost}%`);
         if (phone) orFilters.push(`phone.eq.${phone}`);
-        const dupQ = s.from("contractor_prospects").select("id").eq("city", body.city).eq("business_name", business_name).limit(1);
-        const { data: dup1 } = await dupQ;
+        const { data: dup1 } = await s.from("contractor_prospects").select("id").eq("city", body.city).eq("business_name", business_name).limit(1);
         let isDup = !!dup1?.length;
         if (!isDup && orFilters.length) {
           const { data: dup2 } = await s.from("contractor_prospects").select("id").or(orFilters.join(",")).limit(1);
@@ -77,14 +127,14 @@ Deno.serve(async (req) => {
           city: body.city,
           region: "QC",
           province: "QC",
-          website_url: det.website || null,
-          google_business_url: det.url || null,
+          website_url: r0.website || null,
+          google_business_url: r0.url || null,
           phone,
-          address: det.formatted_address || r0.formatted_address || null,
-          review_count: det.user_ratings_total ?? 0,
-          review_rating: det.rating ?? null,
+          address: r0.formatted_address || null,
+          review_count: r0.user_ratings_total ?? 0,
+          review_rating: r0.rating ?? null,
           source: body.source || "google_places",
-          source_url: det.url || null,
+          source_url: r0.url || null,
           discovery_method: "scrape",
           enrichment_status: "pending",
           aipp_status: "pending",
