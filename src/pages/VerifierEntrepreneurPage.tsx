@@ -115,6 +115,71 @@ export default function VerifierEntrepreneurPage() {
     }
   }, [form, hasInput, mutation]);
 
+  // Hydrate from router state (?q=…, location.state.prefill) and optionally auto-run.
+  useEffect(() => {
+    if (autoRanRef.current) return;
+    const state = (location.state || {}) as {
+      prefill?: Partial<VerificationFormInput> & { place_id?: string };
+      autoRun?: boolean;
+    };
+    const q = searchParams.get("q")?.trim();
+
+    let nextForm: VerificationFormInput = {};
+    if (state.prefill) {
+      nextForm = {
+        business_name: state.prefill.business_name || undefined,
+        phone: state.prefill.phone || undefined,
+        website: state.prefill.website || undefined,
+        city: state.prefill.city || undefined,
+        rbq_number: state.prefill.rbq_number || undefined,
+      };
+    } else if (q) {
+      nextForm = { business_name: q };
+    } else {
+      return;
+    }
+
+    setForm(nextForm);
+
+    const strongCount = ["business_name", "phone", "website", "rbq_number"].filter(
+      (k) => (nextForm as Record<string, string | undefined>)[k]?.trim()
+    ).length;
+    const shouldAutoRun = state.autoRun === true || strongCount >= 2;
+    if (shouldAutoRun) {
+      autoRanRef.current = true;
+      // Defer so state propagates before handleVerify reads it.
+      setTimeout(() => {
+        setPageState("loading");
+        setResult(null);
+        setErrorMsg("");
+        setShowEvidence(false);
+        mutation
+          .mutateAsync({ form: nextForm })
+          .then((response) => {
+            setActiveStep(10);
+            setTimeout(() => {
+              setResult(response.output);
+              setRunId(response.verification_run_id);
+              setPageState("results");
+              setTimeout(
+                () => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                100
+              );
+            }, 700);
+          })
+          .catch((err: unknown) => {
+            setErrorMsg(
+              err instanceof Error
+                ? err.message
+                : "Une erreur est survenue lors de la vérification. Veuillez réessayer."
+            );
+            setPageState("error");
+          });
+      }, 50);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleEvidenceUpload = useCallback(
     async (base64: string, type: EvidenceType) => {
       if (!runId) return;
