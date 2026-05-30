@@ -849,6 +849,98 @@ export type Database = {
         }
         Relationships: []
       }
+      acquisition_pipeline_logs: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          metadata: Json
+          prospect_id: string | null
+          run_id: string | null
+          status: string
+          step: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          metadata?: Json
+          prospect_id?: string | null
+          run_id?: string | null
+          status: string
+          step: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          metadata?: Json
+          prospect_id?: string | null
+          run_id?: string | null
+          status?: string
+          step?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acquisition_pipeline_logs_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "acquisition_pipeline_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acquisition_pipeline_runs: {
+        Row: {
+          blocked_count: number
+          completed_at: string | null
+          created_at: string
+          error_summary: string | null
+          failed_count: number
+          id: string
+          input_params: Json
+          run_type: string
+          started_at: string
+          status: string
+          succeeded_count: number
+          total_items: number
+          triggered_by: string | null
+          triggered_by_label: string | null
+        }
+        Insert: {
+          blocked_count?: number
+          completed_at?: string | null
+          created_at?: string
+          error_summary?: string | null
+          failed_count?: number
+          id?: string
+          input_params?: Json
+          run_type: string
+          started_at?: string
+          status?: string
+          succeeded_count?: number
+          total_items?: number
+          triggered_by?: string | null
+          triggered_by_label?: string | null
+        }
+        Update: {
+          blocked_count?: number
+          completed_at?: string | null
+          created_at?: string
+          error_summary?: string | null
+          failed_count?: number
+          id?: string
+          input_params?: Json
+          run_type?: string
+          started_at?: string
+          status?: string
+          succeeded_count?: number
+          total_items?: number
+          triggered_by?: string | null
+          triggered_by_label?: string | null
+        }
+        Relationships: []
+      }
       acquisition_run_steps: {
         Row: {
           completed_at: string | null
@@ -27085,11 +27177,14 @@ export type Database = {
           activation_status: string
           address: string | null
           aipp_score: number | null
+          aipp_status: string
           avg_job_value_cad: number | null
+          blocked_reason: string | null
           business_name: string
           category_slug: string | null
           city: string | null
           confidence_score: number | null
+          contractor_id: string | null
           created_at: string
           discovery_method: string | null
           do_not_contact: boolean
@@ -27111,6 +27206,7 @@ export type Database = {
           postal_code: string | null
           priority_score: number | null
           province: string | null
+          public_slug: string | null
           qualification_status: string
           raw_data: Json | null
           rbq: string | null
@@ -27119,10 +27215,13 @@ export type Database = {
           region: string | null
           review_count: number | null
           review_rating: number | null
+          selected_plan: string | null
           source: string | null
           source_name: string | null
           source_record_id: string | null
           source_url: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           trade: string | null
           trade_category: Database["public"]["Enums"]["exterior_trade"] | null
           updated_at: string
@@ -27132,11 +27231,14 @@ export type Database = {
           activation_status?: string
           address?: string | null
           aipp_score?: number | null
+          aipp_status?: string
           avg_job_value_cad?: number | null
+          blocked_reason?: string | null
           business_name: string
           category_slug?: string | null
           city?: string | null
           confidence_score?: number | null
+          contractor_id?: string | null
           created_at?: string
           discovery_method?: string | null
           do_not_contact?: boolean
@@ -27158,6 +27260,7 @@ export type Database = {
           postal_code?: string | null
           priority_score?: number | null
           province?: string | null
+          public_slug?: string | null
           qualification_status?: string
           raw_data?: Json | null
           rbq?: string | null
@@ -27166,10 +27269,13 @@ export type Database = {
           region?: string | null
           review_count?: number | null
           review_rating?: number | null
+          selected_plan?: string | null
           source?: string | null
           source_name?: string | null
           source_record_id?: string | null
           source_url?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           trade?: string | null
           trade_category?: Database["public"]["Enums"]["exterior_trade"] | null
           updated_at?: string
@@ -27179,11 +27285,14 @@ export type Database = {
           activation_status?: string
           address?: string | null
           aipp_score?: number | null
+          aipp_status?: string
           avg_job_value_cad?: number | null
+          blocked_reason?: string | null
           business_name?: string
           category_slug?: string | null
           city?: string | null
           confidence_score?: number | null
+          contractor_id?: string | null
           created_at?: string
           discovery_method?: string | null
           do_not_contact?: boolean
@@ -27205,6 +27314,7 @@ export type Database = {
           postal_code?: string | null
           priority_score?: number | null
           province?: string | null
+          public_slug?: string | null
           qualification_status?: string
           raw_data?: Json | null
           rbq?: string | null
@@ -27213,10 +27323,13 @@ export type Database = {
           region?: string | null
           review_count?: number | null
           review_rating?: number | null
+          selected_plan?: string | null
           source?: string | null
           source_name?: string | null
           source_record_id?: string | null
           source_url?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           trade?: string | null
           trade_category?: Database["public"]["Enums"]["exterior_trade"] | null
           updated_at?: string
@@ -65661,6 +65774,36 @@ export type Database = {
           unit_count?: number | null
           updated_at?: string
           year_built?: number | null
+        }
+        Relationships: []
+      }
+      system_config_health: {
+        Row: {
+          error_message: string | null
+          last_checked_at: string | null
+          metadata: Json
+          required_for: string[]
+          service_name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          error_message?: string | null
+          last_checked_at?: string | null
+          metadata?: Json
+          required_for?: string[]
+          service_name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          error_message?: string | null
+          last_checked_at?: string | null
+          metadata?: Json
+          required_for?: string[]
+          service_name?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
