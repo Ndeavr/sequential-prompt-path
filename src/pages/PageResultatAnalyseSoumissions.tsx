@@ -1,28 +1,59 @@
 /**
- * PageResultatAnalyseSoumissions — Display analysis results
+ * PageResultatAnalyseSoumissions — Display real analysis results behind an auth gate.
  */
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, MessageCircle, FolderOpen } from "lucide-react";
 import {
   StepperAnalyseTroisSoumissions,
   SectionComparaisonIA,
   BadgeUsageSoumission,
+  ModalAuthGateResultats,
+  TeaserResultatsFloutes,
+  claimAndLoadAnalysis,
+  getStoredAnalysisId,
+  type QuoteAnalysisPayload,
 } from "@/features/quoteAnalyzer";
-
-// Mock result for demo
-const MOCK_RESULT = {
-  quotes: [
-    { slot: 1, vendor: "Toitures Laval Pro", amount: 12500, warranty: "25 ans", score: 88, isBestValue: true, risks: [], inclusions: ["Bardeaux GAF", "Protection glace", "Nettoyage"], exclusions: ["Soffites"] },
-    { slot: 2, vendor: "Couvreur Express", amount: 9800, warranty: "10 ans", score: 65, risks: ["Protection glace manquante", "Garantie courte"], inclusions: ["Bardeaux BP", "Nettoyage"], exclusions: ["Protection glace", "Ventilation"] },
-    { slot: 3, vendor: "Pro-Toit Inc.", amount: 14200, warranty: "15 ans", score: 72, risks: ["Prix au-dessus du marché"], inclusions: ["Bardeaux BP", "Protection glace", "Ventilation"], exclusions: [] },
-  ],
-  recommendation: "Soumission de Toitures Laval Pro — meilleur rapport qualité-prix avec garantie de 25 ans et couverture complète.",
-  confidenceScore: 87,
-};
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function PageResultatAnalyseSoumissions() {
+  const [params] = useSearchParams();
+  const analysisId = params.get("id") || getStoredAnalysisId();
+
+  const [authed, setAuthed] = useState<boolean | null>(null);
+  const [payload, setPayload] = useState<QuoteAnalysisPayload | null>(null);
+  const [fileCount, setFileCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setAuthed(!!session);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!authed || !analysisId || payload) return;
+    setLoading(true);
+    claimAndLoadAnalysis(analysisId)
+      .then((row) => {
+        setPayload(row.payload);
+        setFileCount(row.file_count);
+      })
+      .catch((e) => {
+        console.error(e);
+        toast.error("Impossible de charger votre analyse.");
+      })
+      .finally(() => setLoading(false));
+  }, [authed, analysisId, payload]);
+
+  const showGate = authed === false && !!analysisId;
+  const teaserCount = fileCount || 3;
+
   return (
     <>
       <Helmet>
@@ -38,7 +69,9 @@ export default function PageResultatAnalyseSoumissions() {
             </Button>
             <div className="flex-1">
               <h1 className="text-lg font-bold text-foreground">Résultat de l'analyse</h1>
-              <p className="text-xs text-muted-foreground">3 soumissions comparées</p>
+              <p className="text-xs text-muted-foreground">
+                {payload ? `${payload.quotes.length} soumission${payload.quotes.length > 1 ? "s" : ""} comparée${payload.quotes.length > 1 ? "s" : ""}` : "Analyse prête"}
+              </p>
             </div>
             <BadgeUsageSoumission type="comparison" />
           </div>
@@ -51,26 +84,48 @@ export default function PageResultatAnalyseSoumissions() {
             ]}
           />
 
-          <SectionComparaisonIA result={MOCK_RESULT} />
+          {!analysisId && (
+            <div className="rounded-2xl border border-border/60 bg-card p-6 text-center space-y-3">
+              <p className="text-sm text-muted-foreground">Aucune analyse trouvée.</p>
+              <Button asChild className="rounded-xl">
+                <Link to="/analyse-soumissions/importer">Importer des soumissions</Link>
+              </Button>
+            </div>
+          )}
 
-          {/* Actions */}
-          <div className="space-y-2 pt-4">
-            <Button variant="outline" className="w-full gap-2 rounded-xl" size="lg">
-              <Download className="h-4 w-4" /> Télécharger le rapport
-            </Button>
-            <Button asChild variant="outline" className="w-full gap-2 rounded-xl" size="lg">
-              <Link to="/alex">
-                <MessageCircle className="h-4 w-4" /> Demander l'avis d'Alex
-              </Link>
-            </Button>
-            <Button asChild variant="ghost" className="w-full gap-2 rounded-xl text-muted-foreground" size="sm">
-              <Link to="/dossier-soumissions/ajouter">
-                <FolderOpen className="h-3.5 w-3.5" /> Ajouter une soumission au dossier client
-              </Link>
-            </Button>
-          </div>
+          {analysisId && payload && authed && (
+            <SectionComparaisonIA result={payload} />
+          )}
+
+          {analysisId && !payload && (showGate || loading) && (
+            <TeaserResultatsFloutes fileCount={teaserCount} />
+          )}
+
+          {payload && authed && (
+            <div className="space-y-2 pt-4">
+              <Button variant="outline" className="w-full gap-2 rounded-xl" size="lg" disabled>
+                <Download className="h-4 w-4" /> Télécharger le rapport
+              </Button>
+              <Button asChild variant="outline" className="w-full gap-2 rounded-xl" size="lg">
+                <Link to="/alex">
+                  <MessageCircle className="h-4 w-4" /> Demander l'avis d'Alex
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" className="w-full gap-2 rounded-xl text-muted-foreground" size="sm">
+                <Link to="/dossier-soumissions/ajouter">
+                  <FolderOpen className="h-3.5 w-3.5" /> Ajouter une soumission au dossier client
+                </Link>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
+
+      <ModalAuthGateResultats
+        open={showGate}
+        fileCount={teaserCount}
+        onAuthSuccess={() => setAuthed(true)}
+      />
     </>
   );
 }
