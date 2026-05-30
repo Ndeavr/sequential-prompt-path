@@ -27,14 +27,14 @@ export default function HeroSectionAnalyseTroisSoumissions({ ctaHref = "/analyse
             <Brain className="h-3 w-3" /> Analyse IA comparative
           </motion.div>
           <motion.h1 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
-            Analysez jusqu'à <span className="text-primary">3 soumissions</span> en 30 secondes
+            Comparez vos soumissions <span className="text-primary">en 30 secondes</span>
           </motion.h1>
           <motion.p variants={fadeUp} custom={2} className="text-sm text-muted-foreground max-w-sm mx-auto">
-            Importez vos soumissions d'entrepreneurs. Notre IA compare les prix, garanties, couvertures et détecte les risques.
+            Notre IA analyse les prix, exclusions, garanties et risques pour recommander la meilleure option.
           </motion.p>
           <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild size="lg" className="rounded-2xl shadow-glow">
-              <Link to={ctaHref}>Analyser jusqu'à 3 soumissions <ArrowRight className="h-4 w-4 ml-1" /></Link>
+              <Link to={ctaHref}>Analyser mes soumissions <ArrowRight className="h-4 w-4 ml-1" /></Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="rounded-2xl">
               <Link to="/compare-quotes">Voir un exemple d'analyse</Link>
