@@ -1,80 +1,52 @@
-# Plan — UNPRO Acquisition Pipeline End-to-End
+# Search "Solution Isolation" → instant results, from page 1
 
-This is a large system. Building it in one shot would be unstable. I'll deliver it in **4 phases**, each shippable and testable on its own. After your approval, I start Phase 1 immediately.
+## Problem
 
-## Existing assets I'll reuse (no rebuild)
-- `outbound_*` tables + edge functions (sniper-import, sniper-enrich, sniper-generate, sniper-send) → already cover scrape/enrich/outreach
-- `aipp-real-scan`, `aipp-v2-analyze`, `enrich-business-profile` → AIPP scoring
-- `create-contractor-checkout`, `contractorPlans.ts` (Recrue 149, Pro 349, Premium 599, Élite 999, Signature 1799) → Stripe
-- `pricing-calculate`, `pricing-create-checkout`, `territory_market_scores` (if present) → dynamic pricing
-- `/admin/operations`, `/admin/dispatch-center`, `/admin/sniper`, `/admin/outbound/*` → admin surfaces
-- `pro/:slug` landing (Nuclear Close) → personalized landing
+Today on `/verifier-entrepreneur` the hero has a single text input "Nom, téléphone, RBQ ou site web" with a **Vérifier** button. Typing "Solution Isolation" and pressing Vérifier just navigates to `/verifier-un-entrepreneur?q=...`, which shows a 5-field form. If the user clicks Vérifier again with only that one field, the backend can't disambiguate → "Aucune entreprise n'a pu être reliée — 0/100".
 
-The plan **unifies** these into a single coherent funnel + admin under `/admin/acquisition`, fills the gaps, and adds the missing webhook + activation + health-check layer.
+The user expects: from the first page, typing a business name surfaces matching companies (Google Places), the user picks one (or it auto-picks if there's a single strong match), and verification runs immediately on rich data (name + phone + address + website + place_id).
 
----
+The required backend already exists: edge function `business-lookup` + the `BusinessNameSearch` autocomplete component (used inside the inner page only).
 
-## Phase 1 — Foundation: unified schema + system health (ship first)
+## Goal
 
-**Goal:** one canonical pipeline view, every blocker visible.
+The first page must be enough to find and verify a company. No second form, no clarifying questions.
 
-DB migration (single migration):
-- `contractor_prospects` (canonical funnel row — see your spec; UNIQUE on `(business_name, city)` to dedupe, FKs to existing `outbound_prospects` via `source_id`)
-- `acquisition_pipeline_runs` + `acquisition_pipeline_logs`
-- `system_config_health` (seed rows: google_places, openai, lovable_ai, resend/email, twilio, stripe, stripe_webhook, supabase_edge, public_url, cron)
-- RLS: admin-only via `has_role(auth.uid(),'admin')`, plus `service_role` GRANTS for edge functions
-- View `v_acquisition_funnel` aggregating counts per step
+## Changes
 
-Edge functions:
-- `acquisition-health-check` — pings each service, writes `system_config_health` (idempotent, run via cron every 15 min)
-- `acquisition-log` — shared logger used by all other functions (write to `acquisition_pipeline_logs`)
+### 1. `src/pages/VerifyLandingPage.tsx` — Hero search becomes a real autocomplete
 
-Admin UI:
-- New route `/admin/acquisition` (uses existing `AdminLayout`)
-- 7 KPI cards across top (Prospects / AIPP / Sent / Landings / Onboarding / Paid / Blocked)
-- Pipeline visual: 8 segments (Scrape → Enrich → AIPP → Outreach → Landing → Onboarding → Stripe → Activation), color = green/yellow/red/gray from `system_config_health` + funnel counts
-- "Errors & Missing Config" panel reading `system_config_health`
+- Replace the plain `<Input>` + `<Button>Vérifier</Button>` block with a new component `HeroBusinessVerifySearch` that:
+  - As the user types (≥3 chars, debounced 300ms), calls `supabase.functions.invoke("business-lookup", { body: { query } })` (same call BusinessNameSearch already uses).
+  - Renders a results dropdown directly under the input: business name, city, rating, category, small "Vérifier" affordance per row. Use the existing UI tokens (glass card, `bg-card`, `text-foreground`, etc.) — no hard-coded colors.
+  - Keyboard support: ↑/↓ to highlight, Enter to pick the highlighted row (or top row if none highlighted), Esc to close.
+- Behavior when user presses the **Vérifier** button or hits Enter on the input:
+  - If results contain exactly 1 candidate, pick it.
+  - If results contain 2+ candidates, keep the dropdown open and focus the first row (do NOT navigate yet — let user choose). No modal, no extra question.
+  - If results are empty, navigate to the inner page in "manual" mode with the raw query (current behavior) so the user can still proceed.
+- On candidate pick: navigate to `/verifier-un-entrepreneur` with the full payload passed via `location.state` (`{ prefill: { business_name, phone, website, city, place_id }, autoRun: true }`) plus a fallback `?q=` for shareable URLs.
 
-## Phase 2 — Unified prospect funnel + AIPP
+### 2. `src/pages/VerifierEntrepreneurPage.tsx` — Accept prefill + auto-run
 
-- `acquisition-ingest-prospect` edge fn: wraps existing scrapers (sniper-import, outbound-firecrawl-scrape) and writes into `contractor_prospects` with idempotent dedupe
-- `acquisition-enrich-prospect` edge fn: orchestrates `enrich-business-profile` + writes `enrichment_status` + `missing_data`
-- `acquisition-generate-aipp` edge fn: calls `aipp-real-scan` → writes `contractor_aipp_profiles` (reuse existing scoring), generates `public_slug`
-- Admin tab "Prospects" — paginated table with row actions: Enrich / Generate AIPP / Preview landing / Generate outreach
-- Admin tab "Scraping Runs" + "AIPP Scores" tabs (read from `acquisition_pipeline_runs` + `contractor_aipp_profiles`)
+- On mount, read `useLocation().state` and `useSearchParams()`:
+  - If `state.prefill` is present, hydrate `form` with all provided fields.
+  - If `state.autoRun === true` OR (≥2 strong identifiers among name/phone/website/rbq), call `handleVerify()` automatically once (guarded by a ref so it never loops).
+  - If only `?q=` is present (no prefill), put the value in the strongest-looking field (name by default) and stay idle — user can still hit Vérifier.
+- Do not change the existing 5-field form, the loading animation, or the results layout. The page just stops being a dead-end when arriving from the hero.
 
-## Phase 3 — Outreach + landing + onboarding tracking
+### 3. No backend changes
 
-- `acquisition-generate-outreach` edge fn: wraps existing `outbound-ai-personalize` → writes `contractor_outreach_messages` in `draft` status (NEVER auto-sends)
-- `acquisition-send-outreach` edge fn: requires explicit trigger, verifies provider health before sending, supports `mode: 'test'` (sends to admin only) vs `'live'`
-- `contractor_landing_sessions` tracking: add page-view + CTA-click logging to `/pro/:slug` (reuse existing route)
-- Admin tabs: Outreach, Landing Sessions, Onboarding
-- Per-prospect timeline drawer showing every log entry
+- `business-lookup` already returns name, phone, website, city, place_id, etc. — enough to drive the existing `verify-contractor` edge function with multiple strong identifiers, which is what produces a real score instead of 0/100.
+- No DB migration. No new edge function. No new dependency.
 
-## Phase 4 — Stripe checkout + webhook + activation + full test
+## Out of scope
 
-- Extend `create-contractor-checkout` to accept `prospect_id` in metadata
-- New `stripe-acquisition-webhook` edge fn (verify_jwt=false): on `checkout.session.completed` → write `contractor_payments`, convert prospect → contractor row, set `activation_status='active'`, create auth user (magic link email), log everything
-- Admin "Stripe Payments" tab
-- `acquisition-full-test` edge fn: creates a synthetic prospect tagged `is_test=true`, runs every step in dry-run, returns structured report `{step, status, error, next_action}[]`
-- Admin "Test End-to-End" tab with "Run Full Pipeline Test" button → renders the report visually
-- Manual "Activate" + "Retry failed step" + "Send test to admin" actions
+- Tweaking the verification scoring engine itself.
+- Adding "create a missing company" flow (the user explicitly said "do not ask").
+- Redesigning the results page.
 
----
+## Acceptance
 
-## Technical notes
-
-- **Dynamic pricing**: the existing `pricing-calculate` engine + `territory_market_scores` already covers your "Plan IA personnalisé" spec. Phase 4 wires its output into the onboarding flow + admin "Dynamic Pricing" tab (override coefficients, see saturation). No new engine needed — just UI surface + the "Créer mon plan sur mesure" Alex hand-off.
-- **No silent failure**: every edge fn wraps its body in try/catch → `acquisition-log` with `status='failed'` + writes to `system_config_health` if root cause is a missing key.
-- **Default = draft/test**: `acquisition-send-outreach` requires `confirm: true` AND `mode` to send live; otherwise it stores message only.
-- **Reuse, don't duplicate**: I won't recreate scrapers, AIPP scoring, or pricing — Phase 2/4 functions are thin orchestrators over existing ones.
-
-## Out of scope (this plan)
-- New scraping sources (use existing Firecrawl + sniper-import)
-- Rebuilding Alex onboarding chat (already exists in `alexContractorOnboardingService`)
-- Live Stripe activation (test mode only until you confirm live)
-
-## Questions before I start
-1. **Confirm phasing**: ship Phase 1 first, then I open Phase 2 in a follow-up turn? Or do you want all 4 in one go (longer, riskier)?
-2. **Stripe mode**: stay in **test mode** for Phase 4, then you flip to live manually after a successful end-to-end test? (recommended)
-3. **Email/SMS provider**: use existing Lovable email infra + existing Twilio secret (if present), or do you want me to flag both as "missing" until you confirm?
+- On `/verifier-entrepreneur`, typing "Solution Isolation" shows a dropdown of real matches within ~1s.
+- Clicking a match (or pressing Enter when only one match exists) takes the user straight to the loading animation, then to a populated results page with a non-zero score when public data exists.
+- If multiple matches exist, the user picks one in the dropdown — no second form, no extra question.

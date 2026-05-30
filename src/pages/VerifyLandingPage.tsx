@@ -3,17 +3,17 @@
  * High-conversion SEO landing page with FAQ schema, structured headings,
  * and conversion funnels into the verification engine.
  */
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import MainLayout from "@/layouts/MainLayout";
 import SeoHead from "@/seo/components/SeoHead";
 import SeoFaqSection from "@/seo/components/SeoFaqSection";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import QRCodeCard from "@/components/sharing/QRCodeCard";
+import HeroBusinessVerifySearch from "@/components/verify/HeroBusinessVerifySearch";
 import {
   Shield, Search, ArrowRight, Upload, FileText, Building2,
   Fingerprint, Eye, Phone, Globe, CheckCircle2, AlertCircle,
@@ -111,11 +111,6 @@ const RISKS = [
 export default function VerifyLandingPage() {
   const navigate = useNavigate();
   const { openAlex } = useAlexVoice();
-  const [heroInput, setHeroInput] = useState("");
-
-  const handleVerify = () => {
-    navigate(`/verifier-un-entrepreneur${heroInput.trim() ? `?q=${encodeURIComponent(heroInput.trim())}` : ""}`);
-  };
 
   return (
     <MainLayout>
@@ -153,26 +148,9 @@ export default function VerifyLandingPage() {
                 RBQ, numéro de téléphone, site web, carte d'affaires ou soumission : UnPRO vous aide à relier les bonnes informations sans rien inventer.
               </motion.p>
 
-              {/* Search box */}
+              {/* Search box — live autocomplete via business-lookup */}
               <motion.div variants={fadeUp} custom={3} className="max-w-lg mx-auto">
-                <GlassCard className="p-2">
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        value={heroInput}
-                        onChange={(e) => setHeroInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleVerify()}
-                        placeholder="Nom, téléphone, RBQ ou site web"
-                        className="pl-10 h-12 border-0 bg-transparent text-sm md:text-base focus-visible:ring-0 focus-visible:ring-offset-0"
-                        aria-label="Identifiant de l'entrepreneur"
-                      />
-                    </div>
-                    <Button onClick={handleVerify} size="lg" className="h-12 px-5 md:px-6 gap-2 font-semibold shrink-0">
-                      Vérifier <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </GlassCard>
+                <HeroBusinessVerifySearch />
 
                 <motion.div variants={fadeUp} custom={4} className="flex flex-wrap justify-center gap-3 mt-5">
                   <Button variant="outline" size="sm" className="text-xs gap-1.5 rounded-full" onClick={() => navigate("/analyser-document")}>
@@ -305,7 +283,7 @@ export default function VerifyLandingPage() {
 
           {/* Inline CTA */}
           <div className="mt-10 text-center">
-            <Button size="lg" className="gap-2 font-semibold h-12 px-6" onClick={handleVerify}>
+            <Button size="lg" className="gap-2 font-semibold h-12 px-6" onClick={() => { window.scrollTo({ top: 0, behavior: "smooth" }); }}>
               <ShieldCheck className="w-4 h-4" /> Vérifier un entrepreneur maintenant
             </Button>
           </div>
@@ -362,7 +340,7 @@ export default function VerifyLandingPage() {
               </motion.p>
 
               <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button size="lg" className="gap-2 font-semibold h-12 px-6" onClick={handleVerify}>
+                <Button size="lg" className="gap-2 font-semibold h-12 px-6" onClick={() => navigate("/verifier-entrepreneur")}>
                   <ShieldCheck className="w-4 h-4" /> Vérifier un entrepreneur
                 </Button>
                 <Button size="lg" variant="outline" className="gap-2 font-semibold h-12 px-6" onClick={() => navigate("/analyser-document")}>
