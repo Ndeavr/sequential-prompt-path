@@ -60,6 +60,7 @@ const PageContractorPlanOnboarding = lazy(() => import("@/pages/voice-sales/Page
 
 // Visual Search
 const ProVisualSearchPage = lazy(() => import("@/pages/ProVisualSearchPage"));
+const PageRadonLanding = lazy(() => import("@/pages/PageRadonLanding"));
 
 // Intent homepage (direct route for testing)
 const PageHomeIntentUNPRO = lazy(() => import("@/pages/PageHomeIntentUNPRO"));
