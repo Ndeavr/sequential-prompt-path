@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
           continue;
         }
         const { subject, body } = buildEmail(p, scores, missing);
-        const { data: msg } = await s.from("outreach_messages").insert({
+        const { data: msg, error: insErr } = await s.from("outreach_messages").insert({
           prospect_id,
           channel_type: "email",
           provider_name: "resend",
@@ -66,14 +66,18 @@ Deno.serve(async (req) => {
           body_rendered: body,
           message_status: "draft",
         }).select("id").single();
-        if (msg) created.push({ channel: "email", id: msg.id });
+        if (insErr) {
+          await log(s, runId, "outreach.email", "error", insErr.message, prospect_id);
+        } else if (msg) {
+          created.push({ channel: "email", id: msg.id });
+        }
       } else if (ch === "sms") {
         if (!p.phone) {
           await log(s, runId, "outreach.sms", "blocked", "Téléphone manquant", prospect_id);
           continue;
         }
         const body = buildSms(p, scores);
-        const { data: msg } = await s.from("outreach_messages").insert({
+        const { data: msg, error: insErr } = await s.from("outreach_messages").insert({
           prospect_id,
           channel_type: "sms",
           provider_name: "twilio",
@@ -81,7 +85,11 @@ Deno.serve(async (req) => {
           body_rendered: body,
           message_status: "draft",
         }).select("id").single();
-        if (msg) created.push({ channel: "sms", id: msg.id });
+        if (insErr) {
+          await log(s, runId, "outreach.sms", "error", insErr.message, prospect_id);
+        } else if (msg) {
+          created.push({ channel: "sms", id: msg.id });
+        }
       }
     } catch (e) {
       await log(s, runId, `outreach.${ch}`, "error", String(e), prospect_id);

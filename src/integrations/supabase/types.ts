@@ -47122,7 +47122,7 @@ export type Database = {
             foreignKeyName: "outreach_messages_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
-            referencedRelation: "prospects"
+            referencedRelation: "contractor_prospects"
             referencedColumns: ["id"]
           },
           {
