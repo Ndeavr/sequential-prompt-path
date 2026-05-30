@@ -32,9 +32,7 @@ export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole 
 
   const sections = getDrawerSections(activeRole as UserRole | "guest");
 
-  const dashboardTo = activeRole === "admin" ? "/admin"
-    : activeRole === "contractor" ? "/pro"
-    : "/dashboard";
+  const dashboardTo = activeRole === "contractor" ? "/pro" : "/dashboard";
 
   return (
     <motion.div

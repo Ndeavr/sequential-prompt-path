@@ -136,7 +136,7 @@ const MobileDrawer = ({ onClose }: { onClose: () => void }) => {
         {ctx ? (
           <>
             <Link
-              to={activeRole === "contractor" ? "/pro/account" : activeRole === "admin" ? "/admin" : "/dashboard/account"}
+              to={activeRole === "contractor" ? "/pro/account" : "/dashboard/account"}
               onClick={onClose}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-meta text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
             >

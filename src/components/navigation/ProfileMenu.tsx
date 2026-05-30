@@ -50,9 +50,9 @@ const ProfileMenu = () => {
   const otherRoles = ctx.user.roles.filter((r) => r !== ctx.user.activeRole);
 
   const accountPath =
-    activeRole === "admin" ? "/admin"
-    : activeRole === "contractor" ? "/pro/account"
+    activeRole === "contractor" ? "/pro/account"
     : "/dashboard/account";
+  const isAdmin = ctx.user.roles.includes("admin");
 
   return (
     <div className="relative" ref={ref}>
@@ -187,6 +187,16 @@ const ProfileMenu = () => {
 
             {/* Account section */}
             <div className="px-1 py-1">
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-meta font-medium text-primary hover:bg-primary/10 transition-colors"
+                >
+                  <Settings className="h-3.5 w-3.5" />
+                  {lang === "en" ? "Admin panel" : "Console admin"}
+                </Link>
+              )}
               <Link
                 to={accountPath}
                 onClick={() => setOpen(false)}
