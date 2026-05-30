@@ -3,17 +3,17 @@
  * High-conversion SEO landing page with FAQ schema, structured headings,
  * and conversion funnels into the verification engine.
  */
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import MainLayout from "@/layouts/MainLayout";
 import SeoHead from "@/seo/components/SeoHead";
 import SeoFaqSection from "@/seo/components/SeoFaqSection";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import QRCodeCard from "@/components/sharing/QRCodeCard";
+import HeroBusinessVerifySearch from "@/components/verify/HeroBusinessVerifySearch";
 import {
   Shield, Search, ArrowRight, Upload, FileText, Building2,
   Fingerprint, Eye, Phone, Globe, CheckCircle2, AlertCircle,
