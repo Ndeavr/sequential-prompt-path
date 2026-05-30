@@ -63,10 +63,10 @@ function HeaderFloatingGlass() {
             />
           </button>
           <button
-            onClick={() => navigate("/scan")}
+            onClick={() => navigate("/qr")}
             className="uc-glass-strong rounded-xl w-10 h-10 flex items-center justify-center"
             style={{ borderRadius: 14 }}
-            aria-label="Scanner QR / carte d'affaires"
+            aria-label="Mon QR Code"
           >
             <QrCode size={16} color="#0B1220" />
           </button>
