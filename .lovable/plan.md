@@ -1,26 +1,31 @@
-## Fix top menu mobile — homepage
+## Problem
 
-**Problème** : sur mobile (384px) le header de `PageHomeUnicorn.tsx` contient 5 boutons (FR · Bell · QR · Profil · Hamburger) + le logo → débordement, items coupés à droite.
+`AuthReturnRouter` listens to `SIGNED_IN` and treats `/` and `/index` as "auth surfaces" eligible for automatic role-based redirect. When an admin's session is restored on page load (Supabase emits `SIGNED_IN`), the router immediately navigates to `/admin`, making the home page unreachable for any logged-in admin.
 
-**Demande utilisateur** : tous les items du top menu (FR, bell, QR, profil) doivent rester visibles sur mobile. Le hamburger doit être **caché** sur mobile.
+This explains the screenshots: user lands on `/index` (home) → instantly bounced to `/admin`.
 
-### Changements (`src/pages/PageHomeUnicorn.tsx` — fonction `HeaderFloatingGlass` uniquement)
+## Fix (single file)
 
-1. **Cacher le hamburger sur mobile** : ajouter `hidden md:flex` sur le bouton `SheetTrigger` (reste accessible desktop). Le `<Sheet>` lui-même reste mais le déclencheur disparaît sous md.
-2. **Compacter la rangée droite pour éviter l'overflow** :
-   - `gap-2` → `gap-1.5`
-   - Boutons icônes 40×40 → **36×36** (`w-9 h-9`) sur mobile, retour à 40 sur `md:`
-   - Bouton FR : padding réduit (`px-2.5 py-1.5`), texte `text-[11px]`
-   - Bouton Profil : avatar 28→26px, padding réduit
-3. **Logo plus compact** : `pl-2 pr-3 py-1.5`, badge maison 24×24 au lieu de 28
-4. **Wrapper header** : `px-3` au lieu de `px-4` sur mobile pour gagner 8px ; `gap-1.5` entre le bloc logo et la rangée actions
-5. **Garde-fou** : ajouter `min-w-0` sur les conteneurs flex pour empêcher tout débordement, et `flex-shrink-0` sur les icônes
+**`src/components/auth/AuthReturnRouter.tsx`**
 
-### Hors périmètre
-- Aucun changement aux routes, à la logique du Sheet, ni au reste de la page.
-- Pas de redesign visuel.
+1. Remove `/` and `/index` from `isAuthSurface()`. The home is a real destination, not a transient auth page.
+   - Drop the two early `return true` branches (lines 20-21).
+   - Keep redirect only for `/login`, `/signup`, `/role`, `/start`, `/auth/callback`.
 
-### Critères de succès
-- Sur 384px : FR + Bell + QR + Profil tous visibles à droite, aucun item coupé.
-- Hamburger absent sur mobile (`< 768px`), visible dès `md:`.
-- Aucun débordement horizontal de la page.
+2. Belt-and-suspenders: in the `SIGNED_IN` handler, ignore the event when there is no explicit `intent.returnPath` AND the current path is not an auth surface. This prevents any future regression where a refresh event lands the user somewhere they intentionally navigated to.
+
+3. Keep the existing logic for:
+   - Explicit `intent.returnPath` (still honored from anywhere — that's the post-login flow).
+   - Approved partner safety net (still routes from auth surfaces only after the change).
+   - `/auth/callback` early return.
+
+## Why not touch guards or router
+
+`UniversalRouteGuard` is not on `/`, and no other code force-navigates home → admin. The bug is fully contained in `AuthReturnRouter`'s overly-broad auth-surface definition.
+
+## Verification
+
+- Reload `/` while logged in as admin → stays on home.
+- Login flow from `/login` as admin → still routes to `/admin`.
+- Login with a `returnPath` intent → still honored.
+- Logout / login as homeowner from `/login` → still routes to `/dashboard`.
