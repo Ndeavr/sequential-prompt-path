@@ -340,7 +340,7 @@ export default function VerifyLandingPage() {
               </motion.p>
 
               <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button size="lg" className="gap-2 font-semibold h-12 px-6" onClick={handleVerify}>
+                <Button size="lg" className="gap-2 font-semibold h-12 px-6" onClick={() => navigate("/verifier-entrepreneur")}>
                   <ShieldCheck className="w-4 h-4" /> Vérifier un entrepreneur
                 </Button>
                 <Button size="lg" variant="outline" className="gap-2 font-semibold h-12 px-6" onClick={() => navigate("/analyser-document")}>
