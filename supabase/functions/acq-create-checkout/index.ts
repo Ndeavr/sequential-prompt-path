@@ -1,92 +1,89 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import Stripe from "https://esm.sh/stripe@18.5.0";
-const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
+// acq-create-checkout — Stripe Checkout for contractor subscription tied to a prospect
+import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
+import { svc, startRun, finishRun, log, cors, requireService } from "../_shared/acq-logger.ts";
+
+const PLANS: Record<string, { name: string; amount: number; description: string }> = {
+  recrue:    { name: "Recrue",    amount: 14900,  description: "Présence AI-indexée UNPRO" },
+  pro:       { name: "Pro",       amount: 34900,  description: "Jusqu'à 5 rendez-vous exclusifs" },
+  premium:   { name: "Premium",   amount: 59900,  description: "Jusqu'à 10 rendez-vous exclusifs" },
+  elite:     { name: "Élite",     amount: 99900,  description: "Jusqu'à 25 rendez-vous exclusifs" },
+  signature: { name: "Signature", amount: 179900, description: "Jusqu'à 50 rendez-vous exclusifs" },
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
+  const s = svc();
+  const { prospect_id, plan_id, success_url, cancel_url } = await req.json().catch(() => ({}));
+  if (!prospect_id || !plan_id) return new Response(JSON.stringify({ error: "prospect_id et plan_id requis" }), { status: 400, headers: cors });
+  const plan = PLANS[plan_id];
+  if (!plan) return new Response(JSON.stringify({ error: "plan_id inconnu" }), { status: 400, headers: cors });
+
+  const runId = await startRun(s, "checkout", { prospect_id, plan_id });
+
+  const h = await requireService(s, "stripe");
+  if (!h.ok) {
+    await log(s, runId, "checkout.health", "blocked", h.reason, prospect_id);
+    await finishRun(s, runId, { status: "failed", error_summary: h.reason });
+    return new Response(JSON.stringify({ ok: false, blocked: true, reason: h.reason }), { headers: cors });
+  }
+
+  const { data: p } = await s.from("contractor_prospects").select("*").eq("id", prospect_id).maybeSingle();
+  if (!p) {
+    await finishRun(s, runId, { status: "failed", error_summary: "Prospect introuvable" });
+    return new Response(JSON.stringify({ error: "Not found" }), { status: 404, headers: cors });
+  }
+
+  const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, { apiVersion: "2025-04-30.basil" });
+  const origin = req.headers.get("origin") || "https://unpro.ca";
+
   try {
-    const { contractor_id, plan_code, coupon_code, success_url, cancel_url } = await req.json();
-    const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, { apiVersion: "2025-08-27.basil" });
-
-    const { data: c } = await sb.from("acq_contractors").select("*").eq("id", contractor_id).single();
-    const { data: plan } = await sb.from("acq_pricing_plans").select("*").eq("plan_code", plan_code).single();
-    if (!c || !plan) throw new Error("missing_contractor_or_plan");
-
-    // Resolve primary trade for slot enforcement
-    const { data: services } = await sb.from("acq_contractor_services")
-      .select("category").eq("contractor_id", contractor_id).limit(1);
-    const trade = (services?.[0] as any)?.category || "general";
-    const city = c.city || "Laval";
-
-    // Slot check (read-only here; increment happens on webhook success)
-    const { data: slot } = await sb.from("acq_territory_slots")
-      .select("max_slots, used_slots")
-      .ilike("city", city).ilike("trade", trade).maybeSingle();
-    if (slot && slot.used_slots >= slot.max_slots) {
-      return new Response(JSON.stringify({ error: "territory_full", city, trade }),
-        { status: 409, headers: { ...cors, "Content-Type": "application/json" } });
-    }
-
-    let amountCents = Math.round(Number(plan.monthly_price) * 100);
-    let description = `Abonnement ${plan.name} — UNPRO`;
-    let isTrialOffer = false;
-
-    if (coupon_code) {
-      const { data: coupon } = await sb.from("acq_coupons").select("*").eq("code", coupon_code).single();
-      if (!coupon || !coupon.active) throw new Error("coupon_invalid");
-      if (coupon.redemptions_count >= coupon.max_redemptions) throw new Error("coupon_exhausted");
-      if (coupon.discount_type === "dynamic_to_1_dollar") {
-        amountCents = (coupon.min_charge_amount || 1) * 100;
-        description = `Activation UNPRO — ${plan.name} (offre 1$)`;
-        isTrialOffer = true;
-      }
-    }
-
-    const origin = req.headers.get("origin") || "https://unpro.ca";
     const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      customer_email: c.email || undefined,
-      customer_creation: "always",
-      payment_intent_data: {
-        setup_future_usage: "off_session",
-        description,
-      },
+      mode: "subscription",
+      customer_email: p.email || undefined,
       line_items: [{
+        quantity: 1,
         price_data: {
           currency: "cad",
-          product_data: { name: description },
-          unit_amount: amountCents,
+          recurring: { interval: "month" },
+          unit_amount: plan.amount,
+          product_data: { name: `UNPRO ${plan.name}`, description: plan.description },
         },
-        quantity: 1,
       }],
-      success_url: success_url || `${origin}/activation-success?cid=${contractor_id}`,
-      cancel_url: cancel_url || `${origin}/activation/${c.slug}`,
       metadata: {
-        contractor_id, plan_code,
-        coupon_code: coupon_code || "",
-        is_trial_offer: isTrialOffer ? "1" : "0",
-        slot_city: city,
-        slot_trade: trade,
+        prospect_id,
+        plan_id,
+        plan_name: plan.name,
+        trade: p.trade || "",
+        city: p.city || "",
+        source: "acquisition_pipeline",
       },
+      subscription_data: {
+        metadata: {
+          prospect_id,
+          plan_id,
+          source: "acquisition_pipeline",
+        },
+      },
+      success_url: success_url || `${origin}/pro/onboarding/${prospect_id}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: cancel_url || `${origin}/pro/onboarding/${prospect_id}?cancelled=1`,
     });
 
-    await sb.from("acq_subscriptions").insert({
-      contractor_id,
-      plan_code,
-      status: "pending",
-      stripe_session_id: session.id,
-      coupon_code: coupon_code || null,
-      amount_due: Math.round(amountCents / 100),
-      upgrade_plan_code: plan_code,
-      auto_upgrade: true,
-    });
+    await s.from("contractor_prospects").update({
+      payment_status: "checkout_started",
+      selected_plan: plan_id,
+      onboarding_status: "started",
+      updated_at: new Date().toISOString(),
+    }).eq("id", prospect_id);
 
-    return new Response(JSON.stringify({ url: session.url, session_id: session.id, amount: amountCents / 100 }), {
+    await log(s, runId, "checkout.created", "success", session.id, prospect_id, { plan_id, amount: plan.amount });
+    await finishRun(s, runId, { status: "succeeded", total_items: 1, succeeded_count: 1 });
+
+    return new Response(JSON.stringify({ ok: true, url: session.url, session_id: session.id, run_id: runId }), {
       headers: { ...cors, "Content-Type": "application/json" },
     });
   } catch (e) {
-    console.error("[acq-checkout]", e);
-    return new Response(JSON.stringify({ error: String((e as any)?.message ?? e) }), { status: 500, headers: { ...cors, "Content-Type": "application/json" } });
+    await log(s, runId, "checkout.error", "error", String(e), prospect_id);
+    await finishRun(s, runId, { status: "failed", error_summary: String(e) });
+    return new Response(JSON.stringify({ ok: false, error: String(e) }), { status: 500, headers: cors });
   }
 });
