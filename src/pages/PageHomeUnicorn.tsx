@@ -24,69 +24,69 @@ import "@/styles/unicorn-theme.css";
 function HeaderFloatingGlass() {
   const navigate = useNavigate();
   return (
-    <header className="px-4 pt-4 pb-2 relative z-10">
-      <div className="flex items-center justify-between gap-2">
+    <header className="px-3 md:px-4 pt-4 pb-2 relative z-10">
+      <div className="flex items-center justify-between gap-1.5 min-w-0">
         <div
-          className="uc-glass-strong rounded-2xl pl-3 pr-4 py-2 flex items-center gap-2"
+          className="uc-glass-strong rounded-2xl pl-2 pr-2.5 md:pl-3 md:pr-4 py-1.5 md:py-2 flex items-center gap-1.5 md:gap-2 flex-shrink-0"
           style={{ borderRadius: 18 }}
         >
           <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
+            className="w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{
               background: "linear-gradient(135deg, #2563FF, #3B82F6)",
               boxShadow: "0 6px 14px -4px rgba(37,99,255,0.55)",
             }}
           >
-            <HomeIcon size={15} color="white" strokeWidth={2.4} />
+            <HomeIcon size={14} color="white" strokeWidth={2.4} />
           </div>
-          <span className="font-extrabold tracking-tight text-[15px]" style={{ color: "#0B1220" }}>
+          <span className="font-extrabold tracking-tight text-[13px] md:text-[15px]" style={{ color: "#0B1220" }}>
             UN<span style={{ color: "#94A3B8" }}>PRO</span>
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
           <button
-            className="uc-glass-strong rounded-xl px-3 py-2 flex items-center gap-1 text-[12px] font-semibold"
+            className="uc-glass-strong rounded-xl px-2 md:px-3 py-1.5 md:py-2 flex items-center gap-0.5 text-[11px] md:text-[12px] font-semibold flex-shrink-0"
             style={{ borderRadius: 14, color: "#0B1220" }}
           >
-            FR <ChevronDown size={13} />
+            FR <ChevronDown size={12} />
           </button>
           <button
-            className="uc-glass-strong rounded-xl w-10 h-10 flex items-center justify-center relative"
+            className="uc-glass-strong rounded-xl w-9 h-9 md:w-10 md:h-10 flex items-center justify-center relative flex-shrink-0"
             style={{ borderRadius: 14 }}
             aria-label="Notifications"
           >
-            <Bell size={16} color="#0B1220" />
+            <Bell size={15} color="#0B1220" />
             <span
-              className="absolute top-2 right-2 w-2 h-2 rounded-full"
+              className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
               style={{ background: "#2563FF", boxShadow: "0 0 0 2px white" }}
             />
           </button>
           <button
             onClick={() => navigate("/qr")}
-            className="uc-glass-strong rounded-xl w-10 h-10 flex items-center justify-center"
+            className="uc-glass-strong rounded-xl w-9 h-9 md:w-10 md:h-10 flex items-center justify-center flex-shrink-0"
             style={{ borderRadius: 14 }}
             aria-label="Mon QR Code"
           >
-            <QrCode size={16} color="#0B1220" />
+            <QrCode size={15} color="#0B1220" />
           </button>
           <button
-            className="uc-glass-strong rounded-xl pl-1 pr-2 py-1 flex items-center gap-1"
+            className="uc-glass-strong rounded-xl pl-1 pr-1.5 md:pr-2 py-1 flex items-center gap-0.5 md:gap-1 flex-shrink-0"
             style={{ borderRadius: 14 }}
             aria-label="Profil"
           >
             <span
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-[12px] font-bold text-white"
+              className="w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center text-[11px] md:text-[12px] font-bold text-white"
               style={{ background: "linear-gradient(135deg, #6366F1, #3B82F6)" }}
             >
               P
             </span>
-            <ChevronDown size={13} color="#0B1220" />
+            <ChevronDown size={12} color="#0B1220" />
           </button>
           <Sheet>
             <SheetTrigger asChild>
               <button
-                className="uc-glass-strong rounded-xl w-10 h-10 flex items-center justify-center"
+                className="uc-glass-strong rounded-xl w-10 h-10 hidden md:flex items-center justify-center flex-shrink-0"
                 style={{ borderRadius: 14 }}
                 aria-label="Menu"
               >
@@ -122,6 +122,7 @@ function HeaderFloatingGlass() {
         </div>
       </div>
     </header>
+
   );
 }
 
