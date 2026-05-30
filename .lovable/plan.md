@@ -1,46 +1,62 @@
-## Correction homepage mobile — Carousel 4 cartes
+## /radon — Landing Page UNPRO
 
-### Contexte
-La home (`src/pages/PageHomeUnicorn.tsx`) affiche actuellement une grille compacte 4-cols `HomeQuickActionsGrid` (8 items) qui a remplacé les 2 grandes cartes "Téléverser une photo" / "Analyser une soumission". L'utilisateur veut **restaurer** le format des 2 grandes cartes et **les étendre à 4** via un carousel horizontal premium type Apple Wallet / Tesla.
+Nouvelle page publique premium française, intégrée au système UNPRO (Alex, Passeport Maison, matching pro). Mobile-first, dark cinematic theme conforme au design system.
 
-### Livrable
-Remplacer `HomeQuickActionsGrid` par un nouveau composant `HomeActionsCarousel` rendant 4 cartes dans un scroll horizontal snap.
+### 1. Route & fichier
+- Nouvelle route `/radon` enregistrée dans `src/app/router.tsx`
+- Page : `src/pages/PageRadonLanding.tsx`
+- SEO via `SeoHead` (title, description, canonical `https://unpro.ca/radon`, JSON-LD `Service` + `FAQPage`)
 
-### Cartes (ordre exact)
-| # | Label | Sous-texte | Icône | Route |
-|---|---|---|---|---|
-| 1 | Diagnostic visuel IA | Analyse IA instantanée | `ImageIcon` (bleu) | `/diagnostic-visuel` |
-| 2 | Analyser 3 soumissions | Comparez vos devis | `FileText` (bleu) | `/analyse-soumissions` |
-| 3 | Vérifier un entrepreneur | RBQ, avis, fiabilité | `ShieldCheck` (vert) | `/verifier-entrepreneur` |
-| 4 | Imaginez un décor | Studio design IA | `Sparkles` (violet) | `/design-ai` |
+### 2. Structure (sections)
 
-Routes 3 et 4 : on garde les chemins demandés tels quels (si la route n'existe pas, le routeur affichera la 404 existante — non bloquant pour cette tâche UI).
+**Hero**
+- H1 : « Radon dans votre maison? Faites mesurer, comprendre et corriger sans deviner. »
+- Sous-titre avec la ligne directrice 200 Bq/m³ (Santé Canada)
+- CTA primaire : **Vérifier mon risque avec Alex** → ouvre `useAlexVoice().openAlex("radon")` avec contexte `{ topic: "radon" }`
+- CTA secondaire : **Réserver un test radon** → `/onboarding?intent=radon_test&utm_source=radon_landing`
+- Microcopy en 4 puces (Résultat clair · Entrepreneur qualifié · Passeport Maison · Québec seulement)
 
-### Comportement carousel
-- Container : `flex overflow-x-auto snap-x snap-mandatory uc-no-scrollbar` + `scroll-padding-left: 16px`
-- Padding latéral 16px + `gap-3`
-- Chaque carte : `snap-start shrink-0`, largeur `w-[78vw] max-w-[300px]`, hauteur **uniforme** `h-[108px]`
-- `-webkit-overflow-scrolling: touch` pour inertie iOS
-- Scrollbar masquée (classe existante `uc-no-scrollbar`)
-- Tap feedback : `active:scale-[0.98] transition-transform`
-- Desktop (`md:`) : bascule en `grid grid-cols-4 gap-3` (pas de scroll)
+**Pourquoi agir** — bloc explicatif court, icônes (sous-sol, vide sanitaire, étanchéité)
 
-### Style cartes (cohérent design system UNPRO)
-- `uc-glass-strong` + `rounded-[22px]` + ombre douce existante
-- Layout interne : icône 40×40 dans pastille colorée à gauche, titre 14px semi-bold + sous-texte 11px muted à droite, chevron `›` discret
-- Titres en 2 lignes max avec `line-clamp-2`, sous-texte 1 ligne `truncate`
-- Aucune carte plus haute (`h-[108px]` fixe sur toutes)
+**Ce que UNPRO fait** — 5 puces (comprendre, réserver, comparer, recommander, archiver)
 
-### Fichier touché
-- `src/pages/PageHomeUnicorn.tsx` : remplacer `QUICK_ACTIONS` + `HomeQuickActionsGrid` par `ACTIONS_CAROUSEL` + `HomeActionsCarousel`. L'appel dans le JSX (ligne 507) reste identique en nom.
+**Offres** — 3 cartes `glass-card` :
+1. Test radon résidentiel → `/onboarding?intent=radon_test`
+2. Analyse de rapport existant → `/onboarding?intent=radon_report_analysis` (upload pris en charge par flow Alex existant)
+3. Correction / mitigation → `/onboarding?intent=radon_mitigation`
 
-### Hors scope
-- Pas de création des pages cibles `/diagnostic-visuel`, `/verifier-entrepreneur`, `/design-ai` (UI only — routes à créer ultérieurement si manquantes).
-- "Parler avec Alex" CTA conservé tel quel au-dessus.
-- Stats live + catégories chips inchangés.
+**Flow Alex (aperçu visuel)** — Timeline 5 étapes (propriété, sous-sol, année construction, test existant, tester/corriger). Visuel uniquement ; les questions réelles sont posées par Alex via le contexte `radon` (pas de nouveau formulaire).
 
-### Critères de succès
-- 4 cartes visibles en swipe horizontal sur 384px sans overflow ni texte coupé
-- Snap par carte, scrollbar invisible, 60fps
-- Hauteur uniforme, glassmorphism cohérent
-- Desktop = grid 4 colonnes propre
+**Bloc confiance** — texte rassurance + icônes (fondation, ventilation, fissures, drain)
+
+**FAQ** — 4-5 questions (Qu'est-ce que le radon? · Quel est le seuil au Canada? · Combien coûte un test? · Que faire si élevé? · Couverture Québec) — alimente JSON-LD FAQPage
+
+**CTA final** — pleine largeur, fond accent, bouton « Parlez à Alex maintenant » avec phrase suggérée « Je veux vérifier le radon dans ma maison. »
+
+### 3. Intégration Alex
+- Ajouter une entrée `radon` dans `src/config/alexModes.ts` (greeting + 5 questions ci-dessus + intent capturé)
+- `openAlex("radon")` injecte le contexte initial. Pas d'auto-start (respect règle event-driven).
+
+### 4. Visuels
+- Hero : illustration générée (capteur radon stylisé sur fond sous-sol, dark cinematic) → `src/assets/radon-hero.jpg`
+- Icônes lucide : `Wind`, `Home`, `ShieldCheck`, `FileSearch`, `Wrench`
+
+### 5. Tracking
+- `trackFunnelEvent("radon_landing_view")` au mount
+- `radon_cta_alex`, `radon_cta_book`, `radon_offer_click` (avec offre)
+
+### 6. Composants réutilisés (zéro duplication)
+- `PageHero`, `SectionContainer`, `SectionHeading`, `CTASection`, `Card`, `SeoHead`, `SeoFaqSection`
+- Layout public via `MainLayout` (warm? non — page produit, garde Cinematic Dark base + `landing-warm` classe NON appliquée — cohérent avec autres landings produits sous app/.)
+
+### 7. Hors périmètre
+- Pas de table SQL nouvelle (le flow utilise `user_sessions` + Alex existants)
+- Pas de logique de matching pro nouvelle (réutilise pipeline existant via intent `radon_mitigation`)
+- Pas de page `/r/:shortCode` ni QR — feature séparée déjà livrée
+
+### 8. Critères de succès
+- Page accessible à `/radon`, indexable (canonical + JSON-LD)
+- Mobile 384px : aucun overflow, CTA full-width, sections espacées
+- CTA Alex ouvre l'overlay vocal en français, contexte radon chargé
+- CTA secondaires redirigent vers onboarding avec bons UTM/intents
+- FAQ rendue + structured data validée
