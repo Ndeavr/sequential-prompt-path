@@ -13,8 +13,8 @@ export default function PageAnalyseTroisSoumissions() {
   return (
     <>
       <Helmet>
-        <title>Analyser jusqu'à 3 soumissions | UNPRO</title>
-        <meta name="description" content="Comparez jusqu'à 3 soumissions d'entrepreneurs avec l'IA. Prix, garanties, risques analysés en 30 secondes." />
+        <title>Comparer vos soumissions avec l'IA | UNPRO</title>
+        <meta name="description" content="Comparez vos soumissions d'entrepreneurs avec l'IA. Prix, garanties, exclusions et risques analysés en 30 secondes. 3 analyses gratuites." />
       </Helmet>
 
       <div className="min-h-screen bg-background">
