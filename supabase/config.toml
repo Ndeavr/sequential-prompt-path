@@ -149,3 +149,7 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.analyze-painting-photo]
     verify_jwt = false
+  [functions.analyze-quote-comparative]
+    verify_jwt = false
+  [functions.claim-quote-analysis]
+    verify_jwt = true

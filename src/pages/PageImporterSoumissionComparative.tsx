@@ -1,30 +1,39 @@
 /**
- * PageImporterSoumissionComparative — Upload 1-3 quotes for comparison
+ * PageImporterSoumissionComparative — Upload 1-3 quotes for real AI comparison
  */
+import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import {
   PanelDropzoneSoumissionComparative,
   StepperAnalyseTroisSoumissions,
   BadgeUsageSoumission,
+  OverlayAnalyseProgress,
+  runQuoteAnalysis,
 } from "@/features/quoteAnalyzer";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 
 export default function PageImporterSoumissionComparative() {
   const navigate = useNavigate();
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const handleStartAnalysis = (files: (File | null)[]) => {
-    const filled = files.filter(Boolean);
+  const handleStartAnalysis = async (files: (File | null)[]) => {
+    const filled = files.filter(Boolean) as File[];
     if (filled.length === 0) {
       toast.error("Ajoutez au moins une soumission.");
       return;
     }
-    // TODO: create comparison session, upload files, run analysis
-    toast.success(`Analyse de ${filled.length} soumission(s) lancée`);
-    navigate("/analyse-soumissions/resultats");
+    setIsAnalyzing(true);
+    try {
+      const { analysis_id } = await runQuoteAnalysis(filled);
+      navigate(`/analyse-soumissions/resultats?id=${analysis_id}`);
+    } catch (e) {
+      console.error(e);
+      toast.error("L'analyse n'a pas pu être complétée. Réessayez.");
+      setIsAnalyzing(false);
+    }
   };
 
   return (
@@ -55,9 +64,14 @@ export default function PageImporterSoumissionComparative() {
             ]}
           />
 
-          <PanelDropzoneSoumissionComparative onStartAnalysis={handleStartAnalysis} />
+          <PanelDropzoneSoumissionComparative
+            onStartAnalysis={handleStartAnalysis}
+            isAnalyzing={isAnalyzing}
+          />
         </div>
       </div>
+
+      <OverlayAnalyseProgress open={isAnalyzing} />
     </>
   );
 }

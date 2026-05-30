@@ -1,31 +1,68 @@
-## Problem
+## Objectif
 
-`AuthReturnRouter` listens to `SIGNED_IN` and treats `/` and `/index` as "auth surfaces" eligible for automatic role-based redirect. When an admin's session is restored on page load (Supabase emits `SIGNED_IN`), the router immediately navigates to `/admin`, making the home page unreachable for any logged-in admin.
+Transformer `/analyse-soumissions` d'une démo mock en un flux réel :
+1. **Analyse réelle** des PDF/images uploadés via Lovable AI (Gemini)
+2. **Animation de progression** (~6–10s) pendant l'analyse, pas de résultat instantané
+3. **Gate d'authentification** (login ou création de compte) avant l'affichage des résultats
 
-This explains the screenshots: user lands on `/index` (home) → instantly bounced to `/admin`.
+---
 
-## Fix (single file)
+## 1. Analyse réelle des documents
 
-**`src/components/auth/AuthReturnRouter.tsx`**
+**Nouvelle edge function** `analyze-quote-comparative` (Deno, esm.sh Supabase 2.49.1) :
+- Input : `files: [{ name, mimeType, base64 }]` (1–3 fichiers PDF/JPG/PNG)
+- Pour chaque fichier → appel **Lovable AI Gateway** (`google/gemini-2.5-flash`) avec image/PDF inline + prompt FR-CA structuré demandant : entrepreneur, prix total, garantie, inclusions, exclusions, risques, complétude.
+- Retourne JSON normalisé `quotes[]` + calcule `score` (0–100) déterministe à partir des champs (garantie, complétude scope, prix vs médiane, mentions assurance/RBQ).
+- Sélectionne `isBestValue` = meilleur ratio score/prix; produit `recommendation` + `confidenceScore`.
+- Persiste dans nouvelle table `quote_analyses` (id, user_id, created_at, payload jsonb) pour retrouver le résultat post-login.
 
-1. Remove `/` and `/index` from `isAuthSurface()`. The home is a real destination, not a transient auth page.
-   - Drop the two early `return true` branches (lines 20-21).
-   - Keep redirect only for `/login`, `/signup`, `/role`, `/start`, `/auth/callback`.
+**Côté client** `PageImporterSoumissionComparative` :
+- Convertit les `File` en base64, appelle la fonction via `supabase.functions.invoke`.
+- Stocke l'`analysis_id` retourné dans `sessionStorage` + navigue vers résultats.
 
-2. Belt-and-suspenders: in the `SIGNED_IN` handler, ignore the event when there is no explicit `intent.returnPath` AND the current path is not an auth surface. This prevents any future regression where a refresh event lands the user somewhere they intentionally navigated to.
+## 2. Animation de progression
 
-3. Keep the existing logic for:
-   - Explicit `intent.returnPath` (still honored from anywhere — that's the post-login flow).
-   - Approved partner safety net (still routes from auth surfaces only after the change).
-   - `/auth/callback` early return.
+Nouveau composant `OverlayAnalyseProgress` (modal plein écran, glassmorphism cohérent avec le thème) avec 4 étapes scénarisées :
+1. « Lecture des documents… »
+2. « Extraction des prix, garanties et exclusions… »
+3. « Comparaison avec les standards du marché QC… »
+4. « Préparation de votre recommandation… »
 
-## Why not touch guards or router
+Durée minimum 6s (Promise.all entre l'appel API réel et un `setTimeout` plancher) pour éviter l'effet "instantané" même si l'IA répond vite. Barre de progression + ticks animés (framer-motion).
 
-`UniversalRouteGuard` is not on `/`, and no other code force-navigates home → admin. The bug is fully contained in `AuthReturnRouter`'s overly-broad auth-surface definition.
+## 3. Paywall login/compte avant résultats
 
-## Verification
+Sur `/analyse-soumissions/resultats` :
+- Au mount : si l'utilisateur n'est pas authentifié, afficher `ModalAuthGateResultats` (bloquant, non dismissible) au-dessus d'un **aperçu floutté** des résultats (teaser : « 3 soumissions analysées · Recommandation prête »).
+- Modal contient onglets **Connexion** / **Créer un compte** (email+password + Google via `lovable.auth.signInWithOAuth("google", …)`).
+- L'`analysis_id` est conservé dans `sessionStorage` + transmis via `authIntent.returnPath = "/analyse-soumissions/resultats?id=…"` pour reprise après auth.
+- Une fois authentifié : `useEffect` charge `quote_analyses` row par id → rend `SectionComparaisonIA` avec les vraies données.
+- Si l'`analysis_id` n'appartient à personne encore, l'edge function `claim-quote-analysis` lie `user_id` au premier appel authentifié.
 
-- Reload `/` while logged in as admin → stays on home.
-- Login flow from `/login` as admin → still routes to `/admin`.
-- Login with a `returnPath` intent → still honored.
-- Logout / login as homeowner from `/login` → still routes to `/dashboard`.
+## Détails techniques
+
+**Backend / Supabase**
+- Migration : table `public.quote_analyses` (id uuid pk, user_id uuid null, payload jsonb, created_at timestamptz). GRANTS `authenticated` SELECT/INSERT/UPDATE sur ses propres lignes, `service_role` ALL. RLS : owner-only after claim, edge function utilise service role.
+- Edge functions : `analyze-quote-comparative` (verify_jwt=false, anonymous upload OK), `claim-quote-analysis` (verify_jwt=true).
+- Secret requis : `LOVABLE_API_KEY` (déjà présent dans projet).
+
+**Frontend**
+- Nouveaux fichiers :
+  - `src/features/quoteAnalyzer/components/OverlayAnalyseProgress.tsx`
+  - `src/features/quoteAnalyzer/components/ModalAuthGateResultats.tsx`
+  - `src/features/quoteAnalyzer/components/TeaserResultatsFloutes.tsx`
+  - `src/features/quoteAnalyzer/services/quoteAnalysisClient.ts` (upload + invoke + claim)
+- Modifs :
+  - `PageImporterSoumissionComparative.tsx` → vrai appel + overlay
+  - `PageResultatAnalyseSoumissions.tsx` → fetch real data + auth gate
+  - `src/features/quoteAnalyzer/index.ts` → exports
+
+**UX**
+- Conserve la nav existante, copy FR-CA, pas d'emoji.
+- Durée plancher 6s, max 20s puis fallback message si AI échoue.
+- Erreur AI → toast + bouton « Réessayer » (ne pas exposer détails techniques).
+
+## Hors scope
+- Pas de génération PDF du rapport (bouton "Télécharger" reste désactivé/à venir).
+- Pas de modification du flux "dossier client".
+- Pas de stockage des fichiers originaux (analyse en mémoire uniquement pour cette V1).

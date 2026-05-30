@@ -21,3 +21,9 @@ export { default as PanelDifferenceSoumissionTypes } from "./components/PanelDif
 export { default as PanelAlexGuidedQuoteIntent } from "./components/PanelAlexGuidedQuoteIntent";
 export { default as BadgeUsageSoumission } from "./components/BadgeUsageSoumission";
 export { default as BadgeSourceSoumission } from "./components/BadgeSourceSoumission";
+
+// Real-analysis pipeline
+export { default as OverlayAnalyseProgress } from "./components/OverlayAnalyseProgress";
+export { default as ModalAuthGateResultats } from "./components/ModalAuthGateResultats";
+export { default as TeaserResultatsFloutes } from "./components/TeaserResultatsFloutes";
+export * from "./services/quoteAnalysisClient";
