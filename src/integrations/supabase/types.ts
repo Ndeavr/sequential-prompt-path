@@ -56889,6 +56889,33 @@ export type Database = {
         }
         Relationships: []
       }
+      quote_analyses: {
+        Row: {
+          created_at: string
+          expires_at: string
+          file_count: number
+          id: string
+          payload: Json
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          file_count?: number
+          id?: string
+          payload: Json
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          file_count?: number
+          id?: string
+          payload?: Json
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       quote_analysis: {
         Row: {
           ai_model: string | null
