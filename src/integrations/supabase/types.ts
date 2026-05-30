@@ -46006,48 +46006,81 @@ export type Database = {
       outbound_replies: {
         Row: {
           assigned_to: string | null
+          auto_action_taken: string | null
           campaign_id: string | null
+          classification_confidence: number | null
+          company_id: string | null
+          contact_id: string | null
           created_at: string | null
+          from_email: string | null
           handled: boolean | null
           handled_at: string | null
           id: string
+          in_reply_to_header: string | null
           lead_id: string | null
           message_id: string | null
+          message_id_header: string | null
+          processed_at: string | null
+          raw_payload: Json | null
+          received_at: string | null
           reply_body: string | null
           reply_intent: string | null
           reply_sentiment: string | null
           reply_subject: string | null
           suggested_crm_status: string | null
+          to_email: string | null
         }
         Insert: {
           assigned_to?: string | null
+          auto_action_taken?: string | null
           campaign_id?: string | null
+          classification_confidence?: number | null
+          company_id?: string | null
+          contact_id?: string | null
           created_at?: string | null
+          from_email?: string | null
           handled?: boolean | null
           handled_at?: string | null
           id?: string
+          in_reply_to_header?: string | null
           lead_id?: string | null
           message_id?: string | null
+          message_id_header?: string | null
+          processed_at?: string | null
+          raw_payload?: Json | null
+          received_at?: string | null
           reply_body?: string | null
           reply_intent?: string | null
           reply_sentiment?: string | null
           reply_subject?: string | null
           suggested_crm_status?: string | null
+          to_email?: string | null
         }
         Update: {
           assigned_to?: string | null
+          auto_action_taken?: string | null
           campaign_id?: string | null
+          classification_confidence?: number | null
+          company_id?: string | null
+          contact_id?: string | null
           created_at?: string | null
+          from_email?: string | null
           handled?: boolean | null
           handled_at?: string | null
           id?: string
+          in_reply_to_header?: string | null
           lead_id?: string | null
           message_id?: string | null
+          message_id_header?: string | null
+          processed_at?: string | null
+          raw_payload?: Json | null
+          received_at?: string | null
           reply_body?: string | null
           reply_intent?: string | null
           reply_sentiment?: string | null
           reply_subject?: string | null
           suggested_crm_status?: string | null
+          to_email?: string | null
         }
         Relationships: [
           {
