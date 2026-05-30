@@ -903,7 +903,10 @@ export const AppRouter = () => (
         <Route path="/analyser-document" element={<AnalyzeDocumentPage />} />
         <Route path="/verifier-:tradeSlug/:citySlug" element={<VerificationSeoPage />} />
         <Route path="/qr/:token" element={<QrScanPage />} />
-        <Route path="/r/:refCode" element={<ReferralLandingPage />} />
+        <Route path="/qr" element={<QrGeneratorPage />} />
+        <Route path="/r/:shortCode" element={<QrRedirectPage />} />
+        <Route path="/ref/:refCode" element={<ReferralLandingPage />} />
+        <Route path="/admin/qr-codes" element={<PageAdminQrCodes />} />
         <Route path="/i/:code" element={<DeepLinkPage />} />
         <Route path="/unsubscribe" element={<Unsubscribe />} />
         <Route path="/unlock" element={<UnlockPage />} />
