@@ -26,4 +26,6 @@ export { default as BadgeSourceSoumission } from "./components/BadgeSourceSoumis
 export { default as OverlayAnalyseProgress } from "./components/OverlayAnalyseProgress";
 export { default as ModalAuthGateResultats } from "./components/ModalAuthGateResultats";
 export { default as TeaserResultatsFloutes } from "./components/TeaserResultatsFloutes";
+export { default as SlotUploadVerrouille } from "./components/SlotUploadVerrouille";
+export { default as ModalUpsellPasseportMaison } from "./components/ModalUpsellPasseportMaison";
 export * from "./services/quoteAnalysisClient";
