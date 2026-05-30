@@ -283,7 +283,7 @@ export default function VerifyLandingPage() {
 
           {/* Inline CTA */}
           <div className="mt-10 text-center">
-            <Button size="lg" className="gap-2 font-semibold h-12 px-6" onClick={handleVerify}>
+            <Button size="lg" className="gap-2 font-semibold h-12 px-6" onClick={() => { window.scrollTo({ top: 0, behavior: "smooth" }); }}>
               <ShieldCheck className="w-4 h-4" /> Vérifier un entrepreneur maintenant
             </Button>
           </div>
