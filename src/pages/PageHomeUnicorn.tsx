@@ -104,7 +104,7 @@ function HeaderFloatingGlass() {
                   { to: "/alex", label: "Parler à Alex", icon: Sparkles },
                   { to: "/profile", label: "Profil", icon: UserIcon },
                   { to: "/account", label: "Compte", icon: Settings },
-                  { to: "/scan", label: "Scanner QR", icon: QrCode },
+                  { to: "/qr", label: "Mon QR Code", icon: QrCode },
                   { to: "/logout", label: "Déconnexion", icon: LogOut },
                 ].map(({ to, label, icon: Icon }) => (
                   <Link
