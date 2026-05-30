@@ -153,3 +153,5 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.claim-quote-analysis]
     verify_jwt = true
+  [functions.resend-inbound-webhook]
+    verify_jwt = false
