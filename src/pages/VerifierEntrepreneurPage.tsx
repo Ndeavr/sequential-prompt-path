@@ -45,6 +45,8 @@ function isPhoneOnly(form: VerificationFormInput): boolean {
 }
 
 export default function VerifierEntrepreneurPage() {
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [pageState, setPageState] = useState<PageState>("idle");
   const [form, setForm] = useState<VerificationFormInput>({});
   const [activeStep, setActiveStep] = useState(0);
@@ -55,6 +57,7 @@ export default function VerifierEntrepreneurPage() {
   const [phoneOnlyWarningDismissed, setPhoneOnlyWarningDismissed] = useState(false);
   const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const autoRanRef = useRef(false);
 
   const mutation = useVerifyContractor();
 
