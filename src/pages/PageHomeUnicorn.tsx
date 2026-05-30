@@ -504,7 +504,7 @@ export default function PageHomeUnicorn() {
         <HeaderFloatingGlass />
         <HeroAlexOrb />
         <AiInputCard onTalk={onTalk} />
-        <CategoryChipsScroll />
+        <HomeQuickActionsGrid />
         <LiveStatsCard />
         <HowItWorksCards />
         <ContractorAippSplit />
