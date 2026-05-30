@@ -73,6 +73,36 @@ Deno.serve(async (req) => {
         const redemptionId = session.metadata?.redemption_id;
         const promoCode = session.metadata?.promo_code;
 
+        // ACQUISITION PIPELINE flow: prospect-driven checkout (acq-create-checkout)
+        if (session.metadata?.source === "acquisition_pipeline" && session.metadata?.prospect_id) {
+          const prospectId = session.metadata.prospect_id;
+          const acqPlanId = session.metadata.plan_id;
+          try {
+            const sub = session.subscription ? await stripe.subscriptions.retrieve(session.subscription as string) : null;
+            await supabase.from("contractor_prospects").update({
+              payment_status: "paid",
+              activation_status: "active",
+              onboarding_status: "completed",
+              selected_plan: acqPlanId,
+              stripe_customer_id: (session.customer as string) || null,
+              stripe_subscription_id: sub?.id || null,
+              blocked_reason: null,
+              updated_at: new Date().toISOString(),
+            }).eq("id", prospectId);
+            await supabase.from("acquisition_pipeline_logs").insert({
+              prospect_id: prospectId, step: "stripe_webhook.activation", status: "success",
+              message: `Activé via plan ${acqPlanId}`,
+              metadata: { session_id: session.id, subscription_id: sub?.id, amount: session.amount_total },
+            });
+          } catch (e) {
+            await supabase.from("acquisition_pipeline_logs").insert({
+              prospect_id: prospectId, step: "stripe_webhook.activation", status: "error", message: String(e), metadata: { session_id: session.id },
+            });
+          }
+          break;
+        }
+
+
         // ACQ flow: acquisition pipeline (acq_subscriptions / acq_contractors)
         if (contractorId && planCode && !planId) {
           const couponCode = session.metadata?.coupon_code || null;
