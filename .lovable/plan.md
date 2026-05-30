@@ -1,52 +1,32 @@
-# Search "Solution Isolation" → instant results, from page 1
+# Brancher Google Places (connecteur Google Maps Platform)
 
-## Problem
+Le connecteur Google Maps Platform vient d'être lié au projet — secrets disponibles côté edge: `LOVABLE_API_KEY`, `GOOGLE_MAPS_API_KEY`, `GOOGLE_MAPS_TRACKING_ID`. Tous les appels doivent passer par la gateway `https://connector-gateway.lovable.dev/google_maps/...` (pas d'appel direct à `googleapis.com`).
 
-Today on `/verifier-entrepreneur` the hero has a single text input "Nom, téléphone, RBQ ou site web" with a **Vérifier** button. Typing "Solution Isolation" and pressing Vérifier just navigates to `/verifier-un-entrepreneur?q=...`, which shows a 5-field form. If the user clicks Vérifier again with only that one field, the backend can't disambiguate → "Aucune entreprise n'a pu être reliée — 0/100".
+`STRIPE_WEBHOOK_SECRET` est déjà configuré → aucun changement code requis, juste re-run du health check.
 
-The user expects: from the first page, typing a business name surfaces matching companies (Google Places), the user picks one (or it auto-picks if there's a single strong match), and verification runs immediately on rich data (name + phone + address + website + place_id).
+## Changements
 
-The required backend already exists: edge function `business-lookup` + the `BusinessNameSearch` autocomplete component (used inside the inner page only).
+### 1. `supabase/functions/acq-health-check/index.ts`
+Réécrire `pingGooglePlaces()`:
+- Accepter le connecteur en priorité: si `LOVABLE_API_KEY` + `GOOGLE_MAPS_API_KEY` présents → ping `places/v1/places:searchText` via la gateway avec un payload minimal (`{textQuery:"test"}`) et le header `X-Goog-FieldMask: places.id`.
+- Fallback: ancienne clé `GOOGLE_PLACES_API_KEY` (legacy) si quelqu'un l'a mise à la main.
+- Sinon `missing`.
+- Statut `connected` si HTTP 2xx, `invalid` si 401/403, `limited` si autre erreur.
 
-## Goal
+### 2. `supabase/functions/acq-scrape-contractors/index.ts`
+Remplacer les appels directs `maps.googleapis.com/maps/api/place/textsearch` et `place/details` par la **Places API (New)** via la gateway:
+- `POST {GATEWAY}/places/v1/places:searchText` avec body `{textQuery, regionCode:"CA", languageCode:"fr"}`, headers `Authorization: Bearer ${LOVABLE_API_KEY}`, `X-Connection-Api-Key: ${GOOGLE_MAPS_API_KEY}`, `X-Goog-FieldMask: places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.googleMapsUri,places.rating,places.userRatingCount`.
+- Plus besoin d'un second appel "details" — les champs sont retournés directement via le FieldMask.
+- Mapper les nouveaux champs (`displayName.text`, `nationalPhoneNumber`, `websiteUri`, etc.) dans l'insert prospect existant.
+- Garder le garde `requireService(s, "google_places")`.
 
-The first page must be enough to find and verify a company. No second form, no clarifying questions.
+### 3. `supabase/functions/autopilot-mvp/index.ts`
+Mêmes changements: utiliser la gateway pour `places:searchText`. Remplacer le header `X-Goog-Api-Key` par `Authorization`+`X-Connection-Api-Key`+URL gateway. Garder le message de fallback en l'adaptant ("Vérifier le connecteur Google Maps Platform").
 
-## Changes
+### 4. Re-run du health check
+Pas de code: après déploiement, l'utilisateur clique "Run Full Pipeline Test" → `google_places` et `stripe_webhook` doivent passer `connected`.
 
-### 1. `src/pages/VerifyLandingPage.tsx` — Hero search becomes a real autocomplete
-
-- Replace the plain `<Input>` + `<Button>Vérifier</Button>` block with a new component `HeroBusinessVerifySearch` that:
-  - As the user types (≥3 chars, debounced 300ms), calls `supabase.functions.invoke("business-lookup", { body: { query } })` (same call BusinessNameSearch already uses).
-  - Renders a results dropdown directly under the input: business name, city, rating, category, small "Vérifier" affordance per row. Use the existing UI tokens (glass card, `bg-card`, `text-foreground`, etc.) — no hard-coded colors.
-  - Keyboard support: ↑/↓ to highlight, Enter to pick the highlighted row (or top row if none highlighted), Esc to close.
-- Behavior when user presses the **Vérifier** button or hits Enter on the input:
-  - If results contain exactly 1 candidate, pick it.
-  - If results contain 2+ candidates, keep the dropdown open and focus the first row (do NOT navigate yet — let user choose). No modal, no extra question.
-  - If results are empty, navigate to the inner page in "manual" mode with the raw query (current behavior) so the user can still proceed.
-- On candidate pick: navigate to `/verifier-un-entrepreneur` with the full payload passed via `location.state` (`{ prefill: { business_name, phone, website, city, place_id }, autoRun: true }`) plus a fallback `?q=` for shareable URLs.
-
-### 2. `src/pages/VerifierEntrepreneurPage.tsx` — Accept prefill + auto-run
-
-- On mount, read `useLocation().state` and `useSearchParams()`:
-  - If `state.prefill` is present, hydrate `form` with all provided fields.
-  - If `state.autoRun === true` OR (≥2 strong identifiers among name/phone/website/rbq), call `handleVerify()` automatically once (guarded by a ref so it never loops).
-  - If only `?q=` is present (no prefill), put the value in the strongest-looking field (name by default) and stay idle — user can still hit Vérifier.
-- Do not change the existing 5-field form, the loading animation, or the results layout. The page just stops being a dead-end when arriving from the hero.
-
-### 3. No backend changes
-
-- `business-lookup` already returns name, phone, website, city, place_id, etc. — enough to drive the existing `verify-contractor` edge function with multiple strong identifiers, which is what produces a real score instead of 0/100.
-- No DB migration. No new edge function. No new dependency.
-
-## Out of scope
-
-- Tweaking the verification scoring engine itself.
-- Adding "create a missing company" flow (the user explicitly said "do not ask").
-- Redesigning the results page.
-
-## Acceptance
-
-- On `/verifier-entrepreneur`, typing "Solution Isolation" shows a dropdown of real matches within ~1s.
-- Clicking a match (or pressing Enter when only one match exists) takes the user straight to the loading animation, then to a populated results page with a non-zero score when public data exists.
-- If multiple matches exist, the user picks one in the dropdown — no second form, no extra question.
+## Hors scope
+- Pas de changement UI.
+- Pas de migration DB.
+- Pas de touche au domaine custom (la warning du connecteur concerne le navigateur Maps JS — ici on n'utilise que des appels serveur via gateway, qui fonctionnent sur n'importe quel domaine).
