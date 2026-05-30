@@ -1,62 +1,26 @@
-## /radon — Landing Page UNPRO
+## Fix top menu mobile — homepage
 
-Nouvelle page publique premium française, intégrée au système UNPRO (Alex, Passeport Maison, matching pro). Mobile-first, dark cinematic theme conforme au design system.
+**Problème** : sur mobile (384px) le header de `PageHomeUnicorn.tsx` contient 5 boutons (FR · Bell · QR · Profil · Hamburger) + le logo → débordement, items coupés à droite.
 
-### 1. Route & fichier
-- Nouvelle route `/radon` enregistrée dans `src/app/router.tsx`
-- Page : `src/pages/PageRadonLanding.tsx`
-- SEO via `SeoHead` (title, description, canonical `https://unpro.ca/radon`, JSON-LD `Service` + `FAQPage`)
+**Demande utilisateur** : tous les items du top menu (FR, bell, QR, profil) doivent rester visibles sur mobile. Le hamburger doit être **caché** sur mobile.
 
-### 2. Structure (sections)
+### Changements (`src/pages/PageHomeUnicorn.tsx` — fonction `HeaderFloatingGlass` uniquement)
 
-**Hero**
-- H1 : « Radon dans votre maison? Faites mesurer, comprendre et corriger sans deviner. »
-- Sous-titre avec la ligne directrice 200 Bq/m³ (Santé Canada)
-- CTA primaire : **Vérifier mon risque avec Alex** → ouvre `useAlexVoice().openAlex("radon")` avec contexte `{ topic: "radon" }`
-- CTA secondaire : **Réserver un test radon** → `/onboarding?intent=radon_test&utm_source=radon_landing`
-- Microcopy en 4 puces (Résultat clair · Entrepreneur qualifié · Passeport Maison · Québec seulement)
+1. **Cacher le hamburger sur mobile** : ajouter `hidden md:flex` sur le bouton `SheetTrigger` (reste accessible desktop). Le `<Sheet>` lui-même reste mais le déclencheur disparaît sous md.
+2. **Compacter la rangée droite pour éviter l'overflow** :
+   - `gap-2` → `gap-1.5`
+   - Boutons icônes 40×40 → **36×36** (`w-9 h-9`) sur mobile, retour à 40 sur `md:`
+   - Bouton FR : padding réduit (`px-2.5 py-1.5`), texte `text-[11px]`
+   - Bouton Profil : avatar 28→26px, padding réduit
+3. **Logo plus compact** : `pl-2 pr-3 py-1.5`, badge maison 24×24 au lieu de 28
+4. **Wrapper header** : `px-3` au lieu de `px-4` sur mobile pour gagner 8px ; `gap-1.5` entre le bloc logo et la rangée actions
+5. **Garde-fou** : ajouter `min-w-0` sur les conteneurs flex pour empêcher tout débordement, et `flex-shrink-0` sur les icônes
 
-**Pourquoi agir** — bloc explicatif court, icônes (sous-sol, vide sanitaire, étanchéité)
+### Hors périmètre
+- Aucun changement aux routes, à la logique du Sheet, ni au reste de la page.
+- Pas de redesign visuel.
 
-**Ce que UNPRO fait** — 5 puces (comprendre, réserver, comparer, recommander, archiver)
-
-**Offres** — 3 cartes `glass-card` :
-1. Test radon résidentiel → `/onboarding?intent=radon_test`
-2. Analyse de rapport existant → `/onboarding?intent=radon_report_analysis` (upload pris en charge par flow Alex existant)
-3. Correction / mitigation → `/onboarding?intent=radon_mitigation`
-
-**Flow Alex (aperçu visuel)** — Timeline 5 étapes (propriété, sous-sol, année construction, test existant, tester/corriger). Visuel uniquement ; les questions réelles sont posées par Alex via le contexte `radon` (pas de nouveau formulaire).
-
-**Bloc confiance** — texte rassurance + icônes (fondation, ventilation, fissures, drain)
-
-**FAQ** — 4-5 questions (Qu'est-ce que le radon? · Quel est le seuil au Canada? · Combien coûte un test? · Que faire si élevé? · Couverture Québec) — alimente JSON-LD FAQPage
-
-**CTA final** — pleine largeur, fond accent, bouton « Parlez à Alex maintenant » avec phrase suggérée « Je veux vérifier le radon dans ma maison. »
-
-### 3. Intégration Alex
-- Ajouter une entrée `radon` dans `src/config/alexModes.ts` (greeting + 5 questions ci-dessus + intent capturé)
-- `openAlex("radon")` injecte le contexte initial. Pas d'auto-start (respect règle event-driven).
-
-### 4. Visuels
-- Hero : illustration générée (capteur radon stylisé sur fond sous-sol, dark cinematic) → `src/assets/radon-hero.jpg`
-- Icônes lucide : `Wind`, `Home`, `ShieldCheck`, `FileSearch`, `Wrench`
-
-### 5. Tracking
-- `trackFunnelEvent("radon_landing_view")` au mount
-- `radon_cta_alex`, `radon_cta_book`, `radon_offer_click` (avec offre)
-
-### 6. Composants réutilisés (zéro duplication)
-- `PageHero`, `SectionContainer`, `SectionHeading`, `CTASection`, `Card`, `SeoHead`, `SeoFaqSection`
-- Layout public via `MainLayout` (warm? non — page produit, garde Cinematic Dark base + `landing-warm` classe NON appliquée — cohérent avec autres landings produits sous app/.)
-
-### 7. Hors périmètre
-- Pas de table SQL nouvelle (le flow utilise `user_sessions` + Alex existants)
-- Pas de logique de matching pro nouvelle (réutilise pipeline existant via intent `radon_mitigation`)
-- Pas de page `/r/:shortCode` ni QR — feature séparée déjà livrée
-
-### 8. Critères de succès
-- Page accessible à `/radon`, indexable (canonical + JSON-LD)
-- Mobile 384px : aucun overflow, CTA full-width, sections espacées
-- CTA Alex ouvre l'overlay vocal en français, contexte radon chargé
-- CTA secondaires redirigent vers onboarding avec bons UTM/intents
-- FAQ rendue + structured data validée
+### Critères de succès
+- Sur 384px : FR + Bell + QR + Profil tous visibles à droite, aucun item coupé.
+- Hamburger absent sur mobile (`< 768px`), visible dès `md:`.
+- Aucun débordement horizontal de la page.
