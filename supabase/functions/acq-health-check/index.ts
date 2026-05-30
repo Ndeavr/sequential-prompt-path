@@ -23,16 +23,50 @@ async function checkSecret(name: string): Promise<boolean> {
 }
 
 async function pingGooglePlaces(): Promise<Result> {
-  const key = Deno.env.get("GOOGLE_PLACES_API_KEY");
-  if (!key) return { service_name: "google_places", status: "missing", required_for: ["scrape"], error_message: "GOOGLE_PLACES_API_KEY absent" };
-  try {
-    const r = await fetch(`https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=test&inputtype=textquery&key=${key}`);
-    const j = await r.json();
-    if (j.status === "REQUEST_DENIED") return { service_name: "google_places", status: "invalid", required_for: ["scrape"], error_message: j.error_message || "REQUEST_DENIED" };
-    return { service_name: "google_places", status: "connected", required_for: ["scrape"] };
-  } catch (e) {
-    return { service_name: "google_places", status: "invalid", required_for: ["scrape"], error_message: String(e) };
+  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+  const mapsKey = Deno.env.get("GOOGLE_MAPS_API_KEY");
+  const legacyKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
+
+  // Preferred: Lovable Google Maps Platform connector via gateway
+  if (lovableKey && mapsKey) {
+    try {
+      const r = await fetch("https://connector-gateway.lovable.dev/google_maps/places/v1/places:searchText", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${lovableKey}`,
+          "X-Connection-Api-Key": mapsKey,
+          "Content-Type": "application/json",
+          "X-Goog-FieldMask": "places.id",
+        },
+        body: JSON.stringify({ textQuery: "plombier Montréal", languageCode: "fr-CA", maxResultCount: 1 }),
+      });
+      if (r.status === 401 || r.status === 403) {
+        const t = await r.text();
+        return { service_name: "google_places", status: "invalid", required_for: ["scrape"], error_message: `Gateway ${r.status}: ${t.slice(0, 200)}` };
+      }
+      if (!r.ok) {
+        const t = await r.text();
+        return { service_name: "google_places", status: "limited", required_for: ["scrape"], error_message: `Gateway ${r.status}: ${t.slice(0, 200)}` };
+      }
+      return { service_name: "google_places", status: "connected", required_for: ["scrape"], metadata: { source: "lovable_connector" } };
+    } catch (e) {
+      return { service_name: "google_places", status: "invalid", required_for: ["scrape"], error_message: String(e) };
+    }
   }
+
+  // Legacy fallback: standalone GOOGLE_PLACES_API_KEY
+  if (legacyKey) {
+    try {
+      const r = await fetch(`https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=test&inputtype=textquery&key=${legacyKey}`);
+      const j = await r.json();
+      if (j.status === "REQUEST_DENIED") return { service_name: "google_places", status: "invalid", required_for: ["scrape"], error_message: j.error_message || "REQUEST_DENIED" };
+      return { service_name: "google_places", status: "connected", required_for: ["scrape"], metadata: { source: "legacy_key" } };
+    } catch (e) {
+      return { service_name: "google_places", status: "invalid", required_for: ["scrape"], error_message: String(e) };
+    }
+  }
+
+  return { service_name: "google_places", status: "missing", required_for: ["scrape"], error_message: "Connecteur Google Maps Platform non lié (LOVABLE_API_KEY + GOOGLE_MAPS_API_KEY)" };
 }
 
 async function pingResend(): Promise<Result> {
