@@ -35,7 +35,8 @@ function getLogoDestination(role: UserRole | "guest"): string {
   switch (role) {
     case "homeowner": return "/dashboard";
     case "contractor": return "/pro";
-    case "admin": return "/admin";
+    // Admin = supervisor — logo lands on user dashboard so admin can browse the app.
+    case "admin": return "/dashboard";
     case "partner": return "/dashboard";
     default: return "/";
   }

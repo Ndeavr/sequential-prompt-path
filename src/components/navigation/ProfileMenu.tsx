@@ -50,9 +50,9 @@ const ProfileMenu = () => {
   const otherRoles = ctx.user.roles.filter((r) => r !== ctx.user.activeRole);
 
   const accountPath =
-    activeRole === "admin" ? "/admin"
-    : activeRole === "contractor" ? "/pro/account"
+    activeRole === "contractor" ? "/pro/account"
     : "/dashboard/account";
+  const isAdmin = ctx.user.roles.includes("admin");
 
   return (
     <div className="relative" ref={ref}>

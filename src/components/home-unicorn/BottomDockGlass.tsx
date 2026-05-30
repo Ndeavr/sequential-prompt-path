@@ -19,13 +19,13 @@ export default function BottomDockGlass() {
   const { openAlex } = useAlexVoice();
   const { activeRole } = useNavigationContext();
 
+  // Admin is a supervisor role — primary nav points to user surfaces so admins
+  // can freely browse the app. /admin reachable via ProfileMenu.
   const growthPath =
     activeRole === "contractor" ? "/pro/dashboard"
-    : activeRole === "admin" ? "/admin"
     : "/dashboard";
   const profilePath =
     activeRole === "contractor" ? "/pro/account"
-    : activeRole === "admin" ? "/admin"
     : "/dashboard/account";
   const accountPath = profilePath;
 
