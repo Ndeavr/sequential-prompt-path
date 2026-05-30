@@ -242,43 +242,76 @@ function AiInputCard({ onTalk }: { onTalk: (hint?: string) => void }) {
   );
 }
 
-/* ---------------- Quick Actions Grid (compact) ---------------- */
-const QUICK_ACTIONS = [
-  { to: "/diagnostic-photo", label: "Diagnostic", icon: ImageIcon, c: "#2563FF", bg: "#EFF6FF" },
-  { to: "/analyser-soumissions", label: "Soumission", icon: FileText, c: "#2563FF", bg: "#EFF6FF" },
-  { to: "/qr", label: "QR Code", icon: QrCode, c: "#6366F1", bg: "#EEF2FF" },
-  { to: "/probleme/isolation", label: "Isolation", icon: HomeIcon, c: "#2563FF", bg: "#EFF6FF" },
-  { to: "/probleme/toiture", label: "Toiture", icon: Hammer, c: "#F97316", bg: "#FFF4E6" },
-  { to: "/probleme/thermopompe", label: "Thermo", icon: Thermometer, c: "#10B981", bg: "#ECFDF5" },
-  { to: "/probleme/humidite", label: "Humidité", icon: Droplets, c: "#8B5CF6", bg: "#F3EEFF" },
-  { to: "/probleme/electricite", label: "Électricité", icon: Zap, c: "#F59E0B", bg: "#FFFBEB" },
+/* ---------------- Actions Carousel (Apple Wallet style) ---------------- */
+const ACTIONS_CAROUSEL = [
+  { to: "/diagnostic-visuel", label: "Diagnostic visuel IA", sub: "Analyse IA instantanée", icon: ImageIcon, c: "#2563FF", bg: "#EFF6FF" },
+  { to: "/analyse-soumissions", label: "Analyser 3 soumissions", sub: "Comparez vos devis", icon: FileText, c: "#2563FF", bg: "#EFF6FF" },
+  { to: "/verifier-entrepreneur", label: "Vérifier un entrepreneur", sub: "RBQ, avis, fiabilité", icon: ShieldCheck, c: "#10B981", bg: "#ECFDF5" },
+  { to: "/design-ai", label: "Imaginez un décor", sub: "Studio design IA", icon: Sparkles, c: "#8B5CF6", bg: "#F3EEFF" },
 ];
 
 function HomeQuickActionsGrid() {
   return (
-    <section className="px-4 mt-4 relative z-10 uc-fade-up" style={{ animationDelay: "120ms" }}>
-      <div className="grid grid-cols-4 gap-2">
-        {QUICK_ACTIONS.map((a) => {
+    <section className="mt-4 relative z-10 uc-fade-up" style={{ animationDelay: "120ms" }}>
+      {/* Mobile: horizontal snap carousel (Apple Wallet / Tesla style) */}
+      <div
+        className="md:hidden flex overflow-x-auto uc-no-scrollbar gap-3 px-4 pb-1 snap-x snap-mandatory"
+        style={{ WebkitOverflowScrolling: "touch", scrollPaddingLeft: 16, scrollPaddingRight: 16 }}
+      >
+        {ACTIONS_CAROUSEL.map((a) => {
           const Icon = a.icon;
           return (
             <Link
               key={a.to}
               to={a.to}
-              className="uc-glass-strong uc-hover-lift flex flex-col items-center justify-center gap-1.5 py-3 px-1 min-w-0"
-              style={{ borderRadius: 16 }}
+              className="uc-glass-strong uc-hover-lift snap-start shrink-0 w-[78vw] max-w-[300px] h-[108px] flex items-center gap-3 px-4 active:scale-[0.98] transition-transform"
+              style={{ borderRadius: 22 }}
             >
               <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
                 style={{ background: a.bg }}
               >
-                <Icon size={18} color={a.c} strokeWidth={2.2} />
+                <Icon size={22} color={a.c} strokeWidth={2.2} />
               </div>
-              <span
-                className="text-[10px] font-semibold leading-none truncate max-w-full px-0.5"
-                style={{ color: "#0B1220" }}
+              <div className="min-w-0 flex-1">
+                <div className="text-[14px] font-semibold leading-tight line-clamp-2" style={{ color: "#0B1220" }}>
+                  {a.label}
+                </div>
+                <div className="text-[11px] mt-1 truncate" style={{ color: "#64748B" }}>
+                  {a.sub}
+                </div>
+              </div>
+              <ArrowRight size={16} className="shrink-0 opacity-40" />
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Desktop: 4-col grid */}
+      <div className="hidden md:grid grid-cols-4 gap-3 px-4">
+        {ACTIONS_CAROUSEL.map((a) => {
+          const Icon = a.icon;
+          return (
+            <Link
+              key={a.to}
+              to={a.to}
+              className="uc-glass-strong uc-hover-lift h-[108px] flex items-center gap-3 px-4"
+              style={{ borderRadius: 22 }}
+            >
+              <div
+                className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
+                style={{ background: a.bg }}
               >
-                {a.label}
-              </span>
+                <Icon size={22} color={a.c} strokeWidth={2.2} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-[14px] font-semibold leading-tight line-clamp-2" style={{ color: "#0B1220" }}>
+                  {a.label}
+                </div>
+                <div className="text-[11px] mt-1 truncate" style={{ color: "#64748B" }}>
+                  {a.sub}
+                </div>
+              </div>
             </Link>
           );
         })}
