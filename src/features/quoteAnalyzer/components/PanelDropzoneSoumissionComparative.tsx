@@ -1,5 +1,7 @@
 import { useState } from "react";
 import UploaderSoumissionComparativeSlot from "./UploaderSoumissionComparativeSlot";
+import SlotUploadVerrouille from "./SlotUploadVerrouille";
+import ModalUpsellPasseportMaison from "./ModalUpsellPasseportMaison";
 import { Button } from "@/components/ui/button";
 import { Brain, ArrowRight } from "lucide-react";
 import BadgeUsageSoumission from "./BadgeUsageSoumission";
@@ -11,6 +13,8 @@ interface Props {
 
 export default function PanelDropzoneSoumissionComparative({ onStartAnalysis, isAnalyzing }: Props) {
   const [files, setFiles] = useState<(File | null)[]>([null, null, null]);
+  const [upsellOpen, setUpsellOpen] = useState(false);
+  const [upsellTier, setUpsellTier] = useState<"passeport" | "gold">("passeport");
 
   const setSlot = (index: number, file: File | null) => {
     setFiles((prev) => {
@@ -22,12 +26,19 @@ export default function PanelDropzoneSoumissionComparative({ onStartAnalysis, is
 
   const filledCount = files.filter(Boolean).length;
 
+  const openUpsell = (tier: "passeport" | "gold") => {
+    setUpsellTier(tier);
+    setUpsellOpen(true);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold text-foreground">Importez vos soumissions</h3>
-          <p className="text-xs text-muted-foreground">1 à 3 fichiers maximum</p>
+          <p className="text-xs text-muted-foreground">
+            {filledCount > 0 ? `${filledCount} soumission${filledCount > 1 ? "s" : ""} prête${filledCount > 1 ? "s" : ""}` : "Glissez vos PDF ou images"}
+          </p>
         </div>
         <BadgeUsageSoumission type="comparison" />
       </div>
@@ -43,6 +54,11 @@ export default function PanelDropzoneSoumissionComparative({ onStartAnalysis, is
         ))}
       </div>
 
+      <div className="space-y-2">
+        <SlotUploadVerrouille tier="passeport" onClick={() => openUpsell("passeport")} />
+        <SlotUploadVerrouille tier="gold" onClick={() => openUpsell("gold")} />
+      </div>
+
       <Button
         onClick={() => onStartAnalysis?.(files)}
         disabled={filledCount < 1 || isAnalyzing}
@@ -50,9 +66,15 @@ export default function PanelDropzoneSoumissionComparative({ onStartAnalysis, is
         size="lg"
       >
         <Brain className="h-4 w-4" />
-        {isAnalyzing ? "Analyse en cours…" : `Analyser ${filledCount} soumission${filledCount > 1 ? "s" : ""}`}
+        {isAnalyzing ? "Analyse en cours…" : "Analyser mes soumissions"}
         {!isAnalyzing && <ArrowRight className="h-4 w-4" />}
       </Button>
+
+      <ModalUpsellPasseportMaison
+        open={upsellOpen}
+        onOpenChange={setUpsellOpen}
+        highlight={upsellTier}
+      />
     </div>
   );
 }
