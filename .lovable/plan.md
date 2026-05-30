@@ -1,95 +1,112 @@
 
-## Contexte (état réel constaté)
+## Contexte
 
-- `contractor_prospects` (80 lignes) a déjà **exactement** les colonnes du brief (`enrichment_status`, `aipp_status` via `contractor_aipp_scores`, `outreach_status`, `onboarding_status`, `payment_status`, `activation_status`) → **table canonique**.
-- 30+ edge functions déjà déployées : `autonomous-acquisition-engine`, `run-live-acquisition`, `enrich-prospect`, `edge-generate-aipp-preview`, `mission-generate-outreach`, `send-outreach-direct`, `send-sms-prospect`, `stripe-webhook`, `create-stripe-checkout-session`.
-- 20+ pages admin existent (`PageAdminAcquisition`, `PageAdminWarRoom`, `PageAdminPipelineProspects`, `PageSniperPipeline`, `PageOutboundOpsCenter`…) → fragmenté, pas de vue **unique** scrape→paiement.
-- Secrets tous présents : `GOOGLE_PLACES_API_KEY`, `RESEND_API_KEY`, `TWILIO_*`, `STRIPE_SECRET_KEY`, `GEMINI_API_KEY`, `FIRECRAWL_API_KEY`.
+La homepage `/` (`PageHomeUnicorn.tsx`) déborde sur mobile (cards "Téléverser une photo" / "Analyser une soumission" coupées, capture utilisateur à 384px). Le bouton QR header pointe vers `/scan` (qui redirige vers diagnostic-photo) — il n'y a pas de page `/qr` ni de générateur QR utilisateur. L'infra DB existe déjà : `qr_user_links` (avec `short_code`, `destination_url`, RLS user/admin), `qr_scans` (référence `link_id`). On consolide dessus — pas de nouvelle table.
 
-Décision (validée) : **consolider sur l'existant**, livraison **tout en une fois**, source de vérité = `contractor_prospects`. Aucune nouvelle table métier — uniquement 3 tables de cockpit (runs, logs, health). Aucune duplication.
+## Objectif
 
----
-
-## Livrables
-
-### 1. Migration Supabase — 3 nouvelles tables cockpit
-
-- `acquisition_pipeline_runs` (id, run_type[scrape|enrich|aipp|outreach|payment|full_test], status, total/succeeded/failed/blocked counts, timings, triggered_by, error_summary)
-- `acquisition_pipeline_logs` (id, run_id, prospect_id?, step, status, message, metadata jsonb)
-- `system_config_health` (service_name PK, status[connected|missing|invalid|limited], required_for[], last_checked_at, error_message)
-
-Plus colonnes manquantes sur `contractor_prospects` si absentes (`aipp_status` text, `blocked_reason` text). RLS admin-only. GRANTs explicites.
-
-### 2. Edge functions — créer / consolider
-
-| Fonction | Action |
-|---|---|
-| `acq-health-check` | **NEW** — ping Google Places, Resend, Twilio, Stripe, Gemini, Firecrawl, webhook Stripe, cron. Écrit `system_config_health`. |
-| `acq-scrape-contractors` | **NEW** wrapper unifié → délègue à `fn-scrape-google-results` (Google Places). Insère dans `contractor_prospects` avec dédup (neq/website/phone). |
-| `acq-enrich-prospect` | wrapper → `enrich-prospect` existante, normalise sortie, log. |
-| `acq-generate-aipp` | wrapper → `aipp-real-scan` + `aipp-recalc-score`, écrit `contractor_aipp_scores` + `public_slug`. |
-| `acq-generate-outreach` | wrapper → `mission-generate-outreach` (email + SMS), status `draft` par défaut. |
-| `acq-send-outreach` | wrapper → `send-outreach-direct` (email) / `send-sms-prospect`. **Mode draft par défaut**, flag `live=true` requis. |
-| `acq-create-checkout` | **NEW** — Stripe Checkout `mode=subscription`, metadata `{prospect_id, plan_id, source:'acquisition_pipeline'}`, retourne URL. 5 plans (Recrue 149, Pro 349, Premium 599, Élite 999, Signature 1799). |
-| `stripe-webhook` | **PATCH** — sur `checkout.session.completed` avec `metadata.source=acquisition_pipeline` : crée contractor account, lie `prospect.contractor_id`, set `payment_status=paid`, `activation_status=active`, log. |
-| `acq-full-test` | **NEW** — crée prospect test → enrich → AIPP → outreach draft → Stripe **test** checkout → vérifie webhook readiness → rapporte chaque étape (working/blocked/missing config). |
-
-Toutes les fonctions logguent dans `acquisition_pipeline_logs` et créent une `acquisition_pipeline_runs`.
-
-### 3. Cockpit admin — `/admin/acquisition` (page unique)
-
-Composants :
-- **HeaderCards** : Prospects, AIPP, Messages envoyés, Landing visits, Onboarding, Payments, Blocked steps.
-- **PipelineFlow visuel** : Scraping → Enrichment → AIPP → Outreach → Landing → Onboarding → Stripe → Activation. Chaque étape : vert/jaune/rouge/gris (depuis `system_config_health` + comptes de `contractor_prospects`).
-- **ConfigHealthPanel** : liste des services avec statut + message clair (« SMS bloqué : TWILIO_API_KEY manquant »).
-- **ProspectsTable** : business_name, trade, city, AIPP score, outreach_status, landing visited?, plan, payment, activation. Actions inline : Enrich, AIPP, Preview landing, Generate outreach, Send test (admin), Send live, Create checkout, Activate manually, Retry, View logs.
-- **RunsTimeline** + **LogsDrawer** (jsonb metadata pretty-printed).
-- **Bouton « Run Full Pipeline Test »** → appelle `acq-full-test`, affiche rapport étape par étape (Working / Partial / Blocked / Missing config / Next action).
-
-Route : `/admin/acquisition` (la page existante `PageAdminAcquisition` sera **remplacée**, pas dupliquée). Anciennes pages (`PageAdminPipelineProspects`, `PageAdminWarRoom`) restent accessibles mais marquées « legacy ».
-
-### 4. Landing publique `/pro/:slug`
-
-Déjà existante (mem `nuclear-close-landing`). **Vérifier** branchement sur `contractor_aipp_scores.public_slug` et que le CTA « Activer mes rendez-vous exclusifs » route vers le **nouvel onboarding** ci-dessous.
-
-### 5. Onboarding contractor — 7 écrans
-
-`/pro/onboarding/:prospect_id` : Confirm business → Capacity/mois → Territoire → Services → Plan (recommandation auto selon capacité : <3 RDV→Recrue, 3-5→Pro, 6-10→Premium, 11-25→Élite, 25+→Signature) → Stripe Checkout (via `acq-create-checkout`) → Confirmation. Tracking `contractor_landing_sessions` (vue sur tables existantes).
+1. Compacter la homepage mobile (zéro débordement).
+2. Restaurer un item "QR Code" cliquable → page `/qr` (générateur).
+3. Brancher tracking via `qr_user_links` + `qr_scans` existants + route `/r/:short_code`.
+4. Vue admin des QR.
 
 ---
 
-## Logique critique
+## 1. Homepage mobile compacte
 
-- **Aucun silent fail** : chaque erreur → row `acquisition_pipeline_logs` + maj `contractor_prospects.blocked_reason`.
-- **Mode draft par défaut** pour outreach. Envoi live requiert clic explicite admin.
-- **Stripe en mode live** (clé existante) mais bouton « Test checkout » force `mode=test` via Price IDs test.
-- **Dédup scraping** : skip si (neq) OR (website_url normalisé) OR (phone E.164) déjà présent.
-- **Health gating** : si `GOOGLE_PLACES_API_KEY` absent → bouton Scraping désactivé + badge rouge (jamais d'erreur masquée). Idem chaque service.
-- **Recommandation plan** dérivée de capacité_mensuelle dans onboarding ; storable dans `contractor_prospect_scores` existante.
+**Fichier** : `src/pages/PageHomeUnicorn.tsx`
 
----
+Remplacer le bloc 2-cards "Téléverser/Analyser" (lignes 241-284) + section catégories par **une seule grille compacte d'actions** :
 
-## Tâches d'exécution (ordre)
+```
+[ Diagnostic photo ] [ Soumission ] [ QR Code ]
+[ Isolation ] [ Toiture ] [ Thermopompe ] [ Humidité ]
+```
 
-1. Migration : 3 tables cockpit + colonnes manquantes + RLS + GRANTs + index.
-2. Edge function `acq-health-check` + déploiement + seed initial.
-3. Edge functions wrappers (`acq-scrape`, `acq-enrich`, `acq-generate-aipp`, `acq-generate-outreach`, `acq-send-outreach`).
-4. Edge function `acq-create-checkout` + patch `stripe-webhook` activation auto.
-5. Edge function `acq-full-test`.
-6. Page `/admin/acquisition` (remplace PageAdminAcquisition) + composants Header/Flow/Health/Table/Timeline/Drawer.
-7. Onboarding `/pro/onboarding/:prospect_id` (7 écrans).
-8. Vérif landing `/pro/:slug` branchée sur nouveau flow.
-9. Run E2E manuel via bouton Full Test → corriger ce qui apparaît rouge.
-10. Mettre à jour `mem://features/` avec le nouveau cockpit canonique.
+- Composant nouveau `HomeQuickActionsGrid` (interne au fichier).
+- `grid-cols-4` mobile avec `gap-2`, cards 72×80px : icône 22px en haut, label 11px 1 ligne, `truncate`.
+- Si plus de 8 items : scroll horizontal `snap-x` (pas le cas ici).
+- Garder en gros bouton uniquement "Parler avec Alex" (CTA prioritaire).
+- Retirer la double card secondaire qui débordait.
 
----
+Items :
+| Label | Route | Icon |
+|---|---|---|
+| Diagnostic photo | /diagnostic-photo | ImageIcon |
+| Soumission | /analyser-soumissions | FileText |
+| QR Code | /qr | QrCode |
+| Isolation | /probleme/isolation | HomeIcon |
+| Toiture | /probleme/toiture | Hammer |
+| Thermopompe | /probleme/thermopompe | Thermometer |
+| Humidité | /probleme/humidite | Droplets |
 
-## Hors périmètre
+Header : QR icône passe de `/scan` → `/qr`.
+Sheet menu : item "Scanner QR" → "QR Code" `/qr`.
 
-- Pas de refonte des 20 autres pages admin (gel, marquées legacy).
-- Pas de nouveau scraper RBQ (utilise `scrape-rbq-leads` existant via wrapper futur).
-- Pas de migration des tables `prospects`/`war_prospects`/`contractors_prospects` legacy — accès via vues si nécessaire plus tard.
+## 2. Page `/qr` — Générateur QR utilisateur
 
-## Critères de succès
+**Nouveau** : `src/pages/QrGeneratorPage.tsx`, route ajoutée `src/app/router.tsx`.
 
-Validés quand le bouton **Run Full Pipeline Test** affiche tous verts ET qu'un vrai prospect peut être scrapé → enrichi → AIPP → outreach draft → checkout Stripe → paiement test → contractor activé automatiquement, chaque étape traçable dans `/admin/acquisition`.
+Flow :
+1. Si non connecté → `AuthOverlayPremium` (déjà existant) avec retour `/qr`.
+2. Sélecteur de type QR (chips) :
+   - `contractor_booking` → destination `/pro/{userId}/book`
+   - `home_passport_gold` → `/dashboard/passport`
+   - `diagnostic_photo` → `/diagnostic-photo?ref={short}`
+   - `quote_analyzer` → `/analyser-soumissions?ref={short}`
+   - `contractor_profile` → `/pro/{userId}`
+   - `affiliate` → `/?ref={short}`
+3. Bouton "Générer mon QR" → INSERT dans `qr_user_links` (le `short_code` est auto-généré par la DB).
+4. Affichage : QR rendu via `qrcode.react` (déjà packagé) pointant vers `https://unpro.ca/r/{short_code}`, boutons Télécharger PNG / Copier le lien / Partager.
+5. Liste "Mes QR" sous le générateur (lecture `qr_user_links` user) avec compteur `scans_count` (sous-requête `qr_scans` group by link_id) et toggle `is_active`.
+
+## 3. Tracking — Route `/r/:short_code`
+
+**Nouveau** : `src/pages/QrRedirectPage.tsx` montée sur `/r/:short_code` (la route `/r/:refCode` existe déjà → `ReferralLandingPage`; on la remplace par redirection silencieuse + tracking).
+
+Logique :
+1. SELECT `qr_user_links` où `short_code = param` et `is_active = true`.
+2. INSERT `qr_scans` { link_id, intent_slug, variant, user_agent, source:'qr' } (table existe, RLS permissive insert).
+3. Set `localStorage.qr_referrer_code` + `qr_code_id` + `source=qr` (attribution).
+4. `window.location.replace(destination_url)`.
+
+Si introuvable → redirige `/` avec toast.
+
+## 4. Mini-migration (extension seulement)
+
+Une seule migration pour rester aligné avec l'existant :
+
+```sql
+ALTER TABLE public.qr_user_links
+  ADD COLUMN IF NOT EXISTS qr_type text DEFAULT 'affiliate',
+  ADD COLUMN IF NOT EXISTS label text;
+
+CREATE INDEX IF NOT EXISTS idx_qr_user_links_active ON public.qr_user_links(user_id, is_active);
+```
+
+Pas de nouvelles tables. `qr_user_links` + `qr_scans` couvrent tout le brief (le brief demande `user_qr_codes` + `qr_scan_events` mais les équivalents existent déjà — on consolide).
+
+## 5. Admin
+
+**Nouveau** : `src/pages/admin/PageAdminQrCodes.tsx` route `/admin/qr-codes`.
+
+Tableau : owner email (join profiles), `qr_type`, `short_code`, `destination_url`, total scans (count `qr_scans`), dernier scan, `is_active`, bouton toggle (UPDATE `is_active`). Filtres : type, actif/inactif. Pagination 50.
+
+Ajouter entrée dans la sidebar admin (chercher `src/components/admin/AdminSidebar*` ou équivalent — link "QR Codes").
+
+## 6. Critères de succès
+
+- Aucun élément coupé à 384px sur `/`.
+- Item "QR Code" visible (grille homepage + header + sheet menu).
+- `/qr` génère un short_code unique par clic, affiche le QR scannable.
+- Scan d'un QR → `/r/{short}` → insert dans `qr_scans` → redirection.
+- `/admin/qr-codes` liste tous les QR et leurs scans.
+- RLS déjà en place (user CRUD own + admin all).
+
+## Détails techniques
+
+- Pas de nouvel item layout dans bottom dock (le dock garde Accueil / Croissance / Alex / Profil / Compte).
+- `qrcode.react` est déjà importé ailleurs (vérifier `package.json`); sinon `bun add qrcode.react`.
+- `AuthOverlayPremium` réutilisé pour gating sans page séparée.
+- Pas de modification des engines Alex, scoring, etc.
+- Texte FR-CA conforme aux règles localisation.
