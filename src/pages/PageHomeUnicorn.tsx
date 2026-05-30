@@ -63,10 +63,10 @@ function HeaderFloatingGlass() {
             />
           </button>
           <button
-            onClick={() => navigate("/scan")}
+            onClick={() => navigate("/qr")}
             className="uc-glass-strong rounded-xl w-10 h-10 flex items-center justify-center"
             style={{ borderRadius: 14 }}
-            aria-label="Scanner QR / carte d'affaires"
+            aria-label="Mon QR Code"
           >
             <QrCode size={16} color="#0B1220" />
           </button>
@@ -104,7 +104,7 @@ function HeaderFloatingGlass() {
                   { to: "/alex", label: "Parler à Alex", icon: Sparkles },
                   { to: "/profile", label: "Profil", icon: UserIcon },
                   { to: "/account", label: "Compte", icon: Settings },
-                  { to: "/scan", label: "Scanner QR", icon: QrCode },
+                  { to: "/qr", label: "Mon QR Code", icon: QrCode },
                   { to: "/logout", label: "Déconnexion", icon: LogOut },
                 ].map(({ to, label, icon: Icon }) => (
                   <Link
@@ -237,51 +237,51 @@ function AiInputCard({ onTalk }: { onTalk: (hint?: string) => void }) {
           <span className="absolute right-5"><WaveformMini /></span>
         </button>
 
-        {/* Secondary cards */}
-        <div className="grid grid-cols-2 gap-2 mt-3">
-          <Link
-            to="/diagnostic-photo"
-            className="uc-hover-lift flex items-center gap-2 p-3 rounded-2xl"
-            style={{ background: "white", border: "1px solid rgba(11,18,32,0.05)" }}
-          >
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: "linear-gradient(135deg,#EFF6FF,#DBEAFE)" }}
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- Quick Actions Grid (compact) ---------------- */
+const QUICK_ACTIONS = [
+  { to: "/diagnostic-photo", label: "Diagnostic", icon: ImageIcon, c: "#2563FF", bg: "#EFF6FF" },
+  { to: "/analyser-soumissions", label: "Soumission", icon: FileText, c: "#2563FF", bg: "#EFF6FF" },
+  { to: "/qr", label: "QR Code", icon: QrCode, c: "#6366F1", bg: "#EEF2FF" },
+  { to: "/probleme/isolation", label: "Isolation", icon: HomeIcon, c: "#2563FF", bg: "#EFF6FF" },
+  { to: "/probleme/toiture", label: "Toiture", icon: Hammer, c: "#F97316", bg: "#FFF4E6" },
+  { to: "/probleme/thermopompe", label: "Thermo", icon: Thermometer, c: "#10B981", bg: "#ECFDF5" },
+  { to: "/probleme/humidite", label: "Humidité", icon: Droplets, c: "#8B5CF6", bg: "#F3EEFF" },
+  { to: "/probleme/electricite", label: "Électricité", icon: Zap, c: "#F59E0B", bg: "#FFFBEB" },
+];
+
+function HomeQuickActionsGrid() {
+  return (
+    <section className="px-4 mt-4 relative z-10 uc-fade-up" style={{ animationDelay: "120ms" }}>
+      <div className="grid grid-cols-4 gap-2">
+        {QUICK_ACTIONS.map((a) => {
+          const Icon = a.icon;
+          return (
+            <Link
+              key={a.to}
+              to={a.to}
+              className="uc-glass-strong uc-hover-lift flex flex-col items-center justify-center gap-1.5 py-3 px-1 min-w-0"
+              style={{ borderRadius: 16 }}
             >
-              <ImageIcon size={16} color="#2563FF" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-[12px] font-semibold leading-tight" style={{ color: "#0B1220" }}>
-                Téléverser une photo
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: a.bg }}
+              >
+                <Icon size={18} color={a.c} strokeWidth={2.2} />
               </div>
-              <div className="text-[10px]" style={{ color: "#94A3B8" }}>
-                Analyse IA instantanée
-              </div>
-            </div>
-            <ChevronRight size={14} color="#94A3B8" />
-          </Link>
-          <Link
-            to="/analyser-soumissions"
-            className="uc-hover-lift flex items-center gap-2 p-3 rounded-2xl"
-            style={{ background: "white", border: "1px solid rgba(11,18,32,0.05)" }}
-          >
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: "linear-gradient(135deg,#EFF6FF,#DBEAFE)" }}
-            >
-              <FileText size={16} color="#2563FF" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-[12px] font-semibold leading-tight" style={{ color: "#0B1220" }}>
-                Analyser une soumission
-              </div>
-              <div className="text-[10px]" style={{ color: "#94A3B8" }}>
-                Obtenez une évaluation
-              </div>
-            </div>
-            <ChevronRight size={14} color="#94A3B8" />
-          </Link>
-        </div>
+              <span
+                className="text-[10px] font-semibold leading-none truncate max-w-full px-0.5"
+                style={{ color: "#0B1220" }}
+              >
+                {a.label}
+              </span>
+            </Link>
+          );
+        })}
       </div>
     </section>
   );
@@ -504,7 +504,7 @@ export default function PageHomeUnicorn() {
         <HeaderFloatingGlass />
         <HeroAlexOrb />
         <AiInputCard onTalk={onTalk} />
-        <CategoryChipsScroll />
+        <HomeQuickActionsGrid />
         <LiveStatsCard />
         <HowItWorksCards />
         <ContractorAippSplit />

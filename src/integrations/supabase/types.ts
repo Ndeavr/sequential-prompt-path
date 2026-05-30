@@ -56708,6 +56708,8 @@ export type Database = {
           id: string
           intent_slug: string
           is_active: boolean | null
+          label: string | null
+          qr_type: string | null
           short_code: string
           user_id: string
           variant: string | null
@@ -56718,6 +56720,8 @@ export type Database = {
           id?: string
           intent_slug: string
           is_active?: boolean | null
+          label?: string | null
+          qr_type?: string | null
           short_code?: string
           user_id: string
           variant?: string | null
@@ -56728,6 +56732,8 @@ export type Database = {
           id?: string
           intent_slug?: string
           is_active?: boolean | null
+          label?: string | null
+          qr_type?: string | null
           short_code?: string
           user_id?: string
           variant?: string | null
