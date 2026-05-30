@@ -1,0 +1,2 @@
+ALTER TABLE public.outreach_messages DROP CONSTRAINT outreach_messages_prospect_id_fkey;
+ALTER TABLE public.outreach_messages ADD CONSTRAINT outreach_messages_prospect_id_fkey FOREIGN KEY (prospect_id) REFERENCES public.contractor_prospects(id) ON DELETE CASCADE;
