@@ -111,11 +111,6 @@ const RISKS = [
 export default function VerifyLandingPage() {
   const navigate = useNavigate();
   const { openAlex } = useAlexVoice();
-  const [heroInput, setHeroInput] = useState("");
-
-  const handleVerify = () => {
-    navigate(`/verifier-un-entrepreneur${heroInput.trim() ? `?q=${encodeURIComponent(heroInput.trim())}` : ""}`);
-  };
 
   return (
     <MainLayout>
@@ -153,26 +148,9 @@ export default function VerifyLandingPage() {
                 RBQ, numéro de téléphone, site web, carte d'affaires ou soumission : UnPRO vous aide à relier les bonnes informations sans rien inventer.
               </motion.p>
 
-              {/* Search box */}
+              {/* Search box — live autocomplete via business-lookup */}
               <motion.div variants={fadeUp} custom={3} className="max-w-lg mx-auto">
-                <GlassCard className="p-2">
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        value={heroInput}
-                        onChange={(e) => setHeroInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleVerify()}
-                        placeholder="Nom, téléphone, RBQ ou site web"
-                        className="pl-10 h-12 border-0 bg-transparent text-sm md:text-base focus-visible:ring-0 focus-visible:ring-offset-0"
-                        aria-label="Identifiant de l'entrepreneur"
-                      />
-                    </div>
-                    <Button onClick={handleVerify} size="lg" className="h-12 px-5 md:px-6 gap-2 font-semibold shrink-0">
-                      Vérifier <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </GlassCard>
+                <HeroBusinessVerifySearch />
 
                 <motion.div variants={fadeUp} custom={4} className="flex flex-wrap justify-center gap-3 mt-5">
                   <Button variant="outline" size="sm" className="text-xs gap-1.5 rounded-full" onClick={() => navigate("/analyser-document")}>
