@@ -46,6 +46,7 @@ const PageAdminCommunications = lazy(() => import("@/pages/admin/PageAdminCommun
 const PageContractorVoiceFirstLanding = lazy(() => import("@/pages/contractor-landing/PageContractorVoiceFirstLanding"));
 const PageAiTrustAudit = lazy(() => import("@/pages/entrepreneur/PageAiTrustAudit"));
 const PageWhyResultsAreDropping = lazy(() => import("@/pages/entrepreneur/PageWhyResultsAreDropping"));
+const PageBadgesConsommateur2026 = lazy(() => import("@/pages/articles/PageBadgesConsommateur2026"));
 const PageAdminAiTrustDashboard = lazy(() => import("@/pages/admin/PageAdminAiTrustDashboard"));
 const PageAdminAiTrustTerritory = lazy(() => import("@/pages/admin/PageAdminAiTrustTerritory"));
 const PageDynamicPlanGeneration = lazy(() => import("@/pages/entrepreneur/PageDynamicPlanGeneration"));
@@ -797,6 +798,8 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/ai-trust-audit" element={<Suspense fallback={<LazyFallback />}><PageAiTrustAudit /></Suspense>} />
         <Route path="/entrepreneur/pourquoi-vos-resultats-chutent" element={<Suspense fallback={<LazyFallback />}><PageWhyResultsAreDropping /></Suspense>} />
         <Route path="/pourquoi-vos-resultats-chutent" element={<Suspense fallback={<LazyFallback />}><PageWhyResultsAreDropping /></Suspense>} />
+        <Route path="/articles/badges-choix-consommateur-2026" element={<Suspense fallback={<LazyFallback />}><PageBadgesConsommateur2026 /></Suspense>} />
+        <Route path="/badges-choix-consommateur-2026" element={<Suspense fallback={<LazyFallback />}><PageBadgesConsommateur2026 /></Suspense>} />
         <Route path="/entrepreneur/plan-ia" element={<Suspense fallback={<LazyFallback />}><PageDynamicPlanGeneration /></Suspense>} />
         <Route path="/admin/dynamic-pricing" element={<Suspense fallback={<LazyFallback />}><PageAdminDynamicPricing /></Suspense>} />
         <Route path="/entrepreneur/onboarding-voice" element={<Suspense fallback={<LazyFallback />}><PageContractorVoiceFirstLanding /></Suspense>} />
