@@ -222,3 +222,58 @@ export default function PageAdminDynamicPricing() {
     </div>
   );
 }
+
+function OverrideForm({ onSaved }: { onSaved: () => void }) {
+  const [contractorId, setContractorId] = useState("");
+  const [territory, setTerritory] = useState("");
+  const [trade, setTrade] = useState("");
+  const [price, setPrice] = useState("");
+  const [planSlug, setPlanSlug] = useState("");
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    if (!reason.trim()) {
+      toast.error("Une raison est requise");
+      return;
+    }
+    if (!contractorId && (!territory || !trade)) {
+      toast.error("Spécifier un contractor_id OU (territoire + métier)");
+      return;
+    }
+    setSaving(true);
+    const payload: any = {
+      reason,
+      contractor_id: contractorId || null,
+      territory: territory || null,
+      trade: trade || null,
+      forced_price_cents: price ? Math.round(Number(price) * 100) : null,
+      forced_plan_slug: planSlug || null,
+    };
+    const { error } = await supabase.from("pricing_overrides").insert(payload);
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Override créé");
+    setContractorId(""); setTerritory(""); setTrade(""); setPrice(""); setPlanSlug(""); setReason("");
+    onSaved();
+  }
+
+  return (
+    <div className="grid md:grid-cols-3 gap-3">
+      <Input placeholder="contractor_id (uuid)" value={contractorId} onChange={(e) => setContractorId(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+      <Input placeholder="Territoire (ex: Laval)" value={territory} onChange={(e) => setTerritory(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+      <Input placeholder="Métier (ex: isolation)" value={trade} onChange={(e) => setTrade(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+      <Input placeholder="Prix forcé $ (ex: 799)" value={price} onChange={(e) => setPrice(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+      <Input placeholder="Plan forcé (recrue|pro|premium|elite|signature)" value={planSlug} onChange={(e) => setPlanSlug(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+      <Input placeholder="Raison interne" value={reason} onChange={(e) => setReason(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+      <div className="md:col-span-3 flex justify-end">
+        <Button onClick={save} disabled={saving} className="bg-[hsl(210,100%,65%)] text-black hover:bg-[hsl(210,100%,70%)]">
+          {saving ? "Enregistrement…" : "Créer l'override"}
+        </Button>
+      </div>
+    </div>
+  );
+}
