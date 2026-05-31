@@ -1,155 +1,168 @@
-A — PROMPT LOVABLE FINAL
+# Refonte Home + Fiche Entrepreneur — Direction Cinematic Premium
 
-1. CONTEXT
-- Problème confirmé dans le flux entrepreneur voice-sales.
-- Le popup `ModalHeyButWaitUpgrade` affiche une offre Fondateurs à prix inférieur (`799 $/mois`) après sélection Élite.
-- `PageContractorPlanOnboarding` calcule ce downgrade avec `selectedPlan.monthly_price * 0.8`.
-- Le récapitulatif et le checkout continuent ensuite avec `planCode=elite`, donc Stripe et le pricing backend restent à `999 $`.
-- Résultat actuel: popup ≠ résumé ≠ intention pricing. Trust cassé.
+Scope strictement limité à **2 surfaces** : la home (`/`) et la fiche entrepreneur publique (`/entrepreneur/:slug`). Tout le reste du site (Alex, checkout, admin, outbound, AIPP, etc.) reste intact.
 
-2. OBJECTIVE
-Implémenter un fix conversion-first:
-- Supprimer toute réduction surprise après sélection d’un plan.
-- Transformer Fondateurs en couche prestige/exclusivité, jamais en rabais caché.
-- Forcer une seule source de vérité pour le plan sélectionné entre UI, résumé, taxes et checkout.
-- Bloquer techniquement tout plan Fondateurs mensuel inférieur au plan de base.
+## Direction visuelle
 
-3. USERS
-- Entrepreneur en onboarding.
-- Alex conseiller UNPRO.
-- Admin / support qui doit éviter les incohérences de paiement.
+**Palette** (conforme à `mem://style/premium-cinematic-theme` côté app + warm côté public — ici on bascule la home publique vers le cinematic dark)
+- Base: `#050816` → `#0A1428` (dégradé radial)
+- Glow primaire: cyan `hsl(189 94% 55%)` à 18% opacité
+- Glow secondaire: bleu UNPRO `hsl(217 91% 60%)` à 14% opacité
+- Texte: blanc pur sur dark, bleu nuit `#0B1430` pour CTA sticky
+- Accent verre: `rgba(255,255,255,0.04)` + `backdrop-blur(24px)` + border `rgba(255,255,255,0.08)`
 
-4. DELIVERABLES
-- Désactiver le popup downgrade `Hey, attendez!` dans le flux de sélection.
-- Remplacer la logique Fondateurs après sélection par une expérience avant ou pendant le choix du plan.
-- Ajouter une structure canonique `selectedPlan` côté frontend pour transporter:
-  - `planCode`
-  - `variantCode`
-  - `displayName`
-  - `billingInterval`
-  - `basePriceCents`
-  - `addOnPriceCents`
-  - `stripePlanCode`
-  - `isFounderPrestige`
-- Brancher le récapitulatif uniquement sur cette sélection canonique.
-- Router le checkout uniquement avec le code canonique résolu.
-- Ajouter des garde-fous pour empêcher `foundersPrice < regularPrice` dans ce contexte.
+**Typo**
+- Inter (déjà présent), `tracking-[-0.04em]` sur H1, font-weight 600 max, line-height 1.05 sur titres
+- Tailles mobile: H1 44px, H2 32px, body 17px
 
-5. LOGIC
-Implement Option A immédiatement.
+**Motion** (subtil, jamais gadget)
+- Easing master `cubic-bezier(.22,1,.36,1)` @ 420ms
+- Hover = `translateY(-2px)`, jamais scale
+- Glow pulse 4s sur orb Alex
+- Float slow 8s sur éléments hero
+- Parallax léger sur image hero (translateY au scroll)
 
-Flow cible:
+## 1. HOME (`src/pages/Index.tsx` ou route `/`)
+
+D'abord vérifier le composant actuellement monté sur `/` puis créer une nouvelle version `HomeCinematic.tsx` (ne pas casser l'existant — feature flag/route swap minimal).
+
+### Sections (mobile-first, ordre strict)
+
 ```text
-Voir les plans
-  → Afficher Pro / Premium / Élite / Signature
-  → Afficher Élite Fondateur comme prestige séparé, pas comme rabais
-  → Sélection utilisateur
-  → selectedPlan canonique
-  → Récapitulatif
-  → Taxes backend
-  → Stripe intent/session
+┌─────────────────────────────────┐
+│ HERO IMMERSIF                   │
+│  Image maison + glow cyan       │
+│  H1 "Trouvez le bon             │
+│      entrepreneur du            │
+│      premier coup."             │
+│  Sous-titre 1 ligne             │
+│  Input géant glassmorphism      │
+│  Chips suggestions x8           │
+│  CTA "Analyser mon projet"      │
+└─────────────────────────────────┘
+┌─────────────────────────────────┐
+│ ACTIONS RAPIDES (2x2 mobile)    │
+│  [Analyser 3 soumissions]       │
+│  [Score Maison] [Parler Alex]   │
+│  [Vérifier entrepreneur]        │
+└─────────────────────────────────┘
+┌─────────────────────────────────┐
+│ ENTREPRENEURS RECOMMANDÉS       │
+│  Cards "recommandation IA"      │
+│  Bloc "Pourquoi recommandé ?"   │
+└─────────────────────────────────┘
+┌─────────────────────────────────┐
+│ SOCIAL PROOF ÉMOTIONNEL         │
+│  Visages réels + stats glow     │
+└─────────────────────────────────┘
 ```
 
-Règle produit:
+### Composants à créer
+- `src/components/home-cinematic/HeroImmersive.tsx` — image hero + input central + chips
+- `src/components/home-cinematic/QuickActionsGrid.tsx` — 4 cards glassmorphism
+- `src/components/home-cinematic/RecommendedProsRail.tsx` — cards entrepreneur "AI-style" avec bloc "Pourquoi recommandé"
+- `src/components/home-cinematic/SocialProofEmotional.tsx` — stats + visages
+- `src/components/home-cinematic/PageHomeCinematic.tsx` — assembleur
+
+### Logique
+- Input + CTA → `openAlex("home_intent", { prefill: userText })` via le hook `useAlexVoice()` existant (pas de nouvelle route)
+- Chips → pré-remplissent l'input puis déclenchent le même handler
+- Cards entrepreneurs → fetch `contractors` top 3 par `recommendation_score` (vue existante `v_contractor_recommendation_score`)
+
+## 2. FICHE ENTREPRENEUR (`src/pages/PageEntrepreneurPublic.tsx` ou équivalent)
+
+Localiser la fiche actuelle (`/entrepreneur/:slug`) puis refondre **uniquement** son rendu visuel. Conserver toute la data layer (queries, hooks, edge calls).
+
+### Sections (ordre)
+
 ```text
-Si plan sélectionné ∈ Pro, Premium, Élite, Signature:
-  Interdire popup avec prix inférieur
-  Autoriser seulement:
-    - annualisation
-    - add-on prestige
-    - statut Fondateur
-    - territoire prioritaire
-    - visibilité IA renforcée
-    - prix verrouillé 10 ans
-    - paiement unique Fondateur
+┌─────────────────────────────────┐
+│ HEADER HERO immersif            │
+│  Image grande + gradient        │
+│  Nom · Métier · Score · Ville   │
+│  Badges: RBQ · Vérifié · Avis   │
+└─────────────────────────────────┘
+┌─────────────────────────────────┐
+│ POURQUOI UNPRO LE RECOMMANDE    │
+│  4 raisons IA (checks cyan)     │
+└─────────────────────────────────┘
+┌─────────────────────────────────┐
+│ AVANTAGES (cards)               │
+│  Certifié · Assuré · Garantie   │
+│  Financement · 24/7 · Photos    │
+└─────────────────────────────────┘
+┌─────────────────────────────────┐
+│ PROJETS AVANT/APRÈS             │
+│  Slider visuel Tesla-style      │
+└─────────────────────────────────┘
+┌─────────────────────────────────┐
+│ AVIS + RÉSUMÉ IA                │
+│  "Les clients mentionnent..."   │
+└─────────────────────────────────┘
+┌─────────────────────────────────┐
+│ FAQ accordions                  │
+└─────────────────────────────────┘
+
+[STICKY MOBILE BOTTOM]
+ Appeler · Message · Rendez-vous
 ```
 
-6. DATA
-- Ne pas créer de table au premier fix.
-- Utiliser `plan_catalog` comme source backend existante pour checkout natif.
-- Garder `CONTRACTOR_PLANS` comme fallback marketing seulement.
-- Aligner les codes Fondateurs existants:
-  - `founder_elite_10y`
-  - `founder_signature_10y`
-- Vérifier que le flux n’utilise plus de pseudo-variant `founders` avec `planCode=elite` quand le prix affiché diffère.
+### Composants à créer
+- `src/components/contractor-public/HeaderImmersive.tsx`
+- `src/components/contractor-public/WhyRecommendedBlock.tsx`
+- `src/components/contractor-public/AdvantagesGrid.tsx`
+- `src/components/contractor-public/BeforeAfterShowcase.tsx` (réutilise le clip-path slider du Design AI Workspace si présent)
+- `src/components/contractor-public/ReviewsAiSummary.tsx`
+- `src/components/contractor-public/StickyMobileCta.tsx`
+- `src/components/contractor-public/FaqAccordions.tsx`
 
-7. UI/UX
-- Supprimer la modal bleue “Hey, attendez!”.
-- Remplacer par un bloc prestige non intrusif avant checkout:
-  - “Statut Fondateur Élite”
-  - “Territoire prioritaire”
-  - “Visibilité IA renforcée”
-  - “Prix verrouillé 10 ans”
-  - “Badge Fondateur vérifié”
-  - “Paiement unique” ou “supplément prestige”, jamais rabais.
-- CTA:
-  - “Activer Élite — 999 $/mois”
-  - “Réserver Élite Fondateur” si disponible.
-- Texte interdit:
-  - “offre exclusive pour vous” après sélection
-  - “799 $/mois” comme downgrade
-  - prix barré inférieur/surprise après engagement.
+### Logique
+- Sticky CTA mobile : `fixed bottom-0` avec `safe-area-inset-bottom`, 3 boutons (tel:, ouvrir thread, modal booking existante)
+- "Pourquoi recommandé" : si `recommendation_reasons` jsonb manquant → fallback déterministe (avis ≥4.5, distance < 25km, slot < 7j, projets similaires count)
+- Résumé IA avis : si `reviews_ai_summary` absent → top 3 mots récurrents calculés client-side sur les avis chargés
 
-8. COMPONENTS
-Modifier:
-- `src/pages/voice-sales/PageContractorPlanOnboarding.tsx`
-  - Supprimer `showFoundersModal` comme étape post-sélection.
-  - Supprimer le calcul `monthly_price * 0.8`.
-  - Utiliser une sélection canonique.
-  - Diriger Élite/Signature directement vers lead packs ou vers choix prestige affiché avant sélection.
+## 3. Assets & images
 
-- `src/components/voice-sales/ModalHeyButWaitUpgrade.tsx`
-  - Ne plus l’utiliser dans ce flow.
-  - Option safe: convertir en modal upsell prestige sans prix inférieur, ou laisser inutilisée.
+- Générer 1 image hero home (maison premium nuit + glow cyan subtil) → `src/assets/home-hero-cinematic.jpg` via `imagegen` premium
+- Générer 1 image fallback header entrepreneur (chantier lumière dorée) → `src/assets/contractor-hero-fallback.jpg`
+- Tokens glow réutilisés depuis `index.css` existant (ne pas dupliquer)
 
-- `src/components/voice-sales/CardPlanFounders.tsx`
-  - Repositionner comme carte prestige: prix supérieur, paiement unique ou 10 ans.
-  - Supprimer savings, line-through et tout signal de rabais.
+## 4. Détails techniques
 
-- `src/components/voice-sales/PanelInlineCheckout.tsx`
-  - Remplacer les props éparpillées par `selectedPlan` canonique.
-  - Afficher uniquement le prix issu de cette sélection.
-  - Ne plus afficher “(Fondateurs)” si le `planCode` reste `elite`.
-  - Si Fondateur réel: afficher le vrai code/prix Fondateur.
+- Tailwind tokens semantic only — aucun hex en dur dans les composants
+- Ajouter dans `index.css` (sous `:root`) si manquant :
+  - `--cinematic-base: 222 60% 5%;`
+  - `--cinematic-glow-cyan: 189 94% 55%;`
+  - `--cinematic-glow-blue: 217 91% 60%;`
+  - `--glass-surface: 0 0% 100% / 0.04;`
+- Lazy load `RecommendedProsRail` et `BeforeAfterShowcase` via `React.lazy`
+- Toutes images: `loading="lazy"`, `decoding="async"`, `srcset` 1x/2x
+- Pas de framer-motion sur la home (CSS animations only pour perf mobile)
 
-- `src/pages/checkout/PageCheckoutNativeScrollable.tsx`
-  - Garder le backend pricing comme source de vérité.
-  - Ajouter un état d’erreur clair si un code Fondateur one-time est envoyé au checkout subscription.
+## 5. SEO (maintenu)
 
-- `supabase/functions/create-contractor-checkout/index.ts`
-  - Ajouter validation serveur stricte: aucun plan mensuel Fondateur à prix inférieur à son plan de base.
-  - Conserver les plans Fondateurs comme one-time uniquement.
+- H1 unique par page
+- `<title>` + `<meta description>` mis à jour via Helmet existant
+- JSON-LD `LocalBusiness` conservé sur fiche entrepreneur
 
-9. ACTIONS
-- Create canonical plan selection helper.
-- Refactor voice-sales selection flow.
-- Remove downgrade modal trigger.
-- Reposition founder as prestige option.
-- Sync inline summary with canonical selection.
-- Validate checkout route/code mapping.
-- Verify taxes derive from backend pricing only.
-- Add guardrails in server checkout function.
+## 6. Hors scope (ne PAS toucher)
 
-10. CONSTRAINTS
-- Ne pas casser `/checkout/native/:planCode`.
-- Ne pas modifier `src/integrations/supabase/client.ts` ni `types.ts`.
-- Ne pas introduire de réduction Fondateurs implicite.
-- Ne pas recalculer Stripe price côté client.
-- Ne pas créer de checkout avec un prix client-supplied.
-- Utiliser tokens sémantiques Tailwind existants dans l’UI.
+- Routes admin, AIPP, outbound, sniper, journal, lead-empire
+- Alex voice/chat logic (uniquement consommé via hook existant)
+- Checkout / pricing / Stripe
+- Auth, role selection
+- Edge functions
+- Schéma DB
 
-11. SUCCESS
-Terminé quand:
-- Le popup `799 $/mois` ne peut plus apparaître après sélection Élite/Signature.
-- Un utilisateur qui choisit Élite voit Élite à `999 $/mois` partout.
-- Un utilisateur qui choisit Fondateur voit un vrai plan prestige distinct, jamais un rabais surprise.
-- Résumé UI, taxes, Payment Element et checkout backend utilisent le même `planCode` canonique.
-- Aucun chemin ne peut afficher `Plan Élite (Fondateurs)` tout en chargeant `elite` standard sans cohérence explicite.
+## Ordre d'exécution
 
-12. TASKS
-1. Refactor `PageContractorPlanOnboarding` pour supprimer le downgrade modal et créer une sélection canonique.
-2. Refactor `CardPlanFounders` en carte prestige sans rabais ni prix barré.
-3. Refactor `PanelInlineCheckout` pour consommer une source unique de sélection.
-4. Ajouter garde-fous dans `create-contractor-checkout` contre tout prix Fondateurs inférieur au plan de base.
-5. Vérifier les routes `create-stripe-checkout-session`, `create-subscription-intent`, `calculate-checkout-pricing` et le checkout natif pour confirmer résumé = taxes = Stripe.
-6. Ajouter un test manuel ciblé: Élite sélectionné → résumé 999 → checkout 999; Fondateur sélectionné → code/prix Fondateur distinct.
+1. Lire la home et la fiche actuelles (identifier composants montés)
+2. Générer les 2 images hero (parallèle)
+3. Créer composants Home + assembler `PageHomeCinematic`
+4. Brancher la route `/` sur la nouvelle page (garder l'ancienne en backup `/home-legacy`)
+5. Créer composants fiche + remplacer le rendu de `PageEntrepreneurPublic`
+6. Vérifier visuellement via screenshot mobile (375x812)
+
+## Critère de succès
+
+Sur mobile : effet "wow / 5 ans en avance", input central immédiatement visible, valeur en <5s, glow subtil non agressif, sticky CTA fiche entrepreneur fonctionnel.
