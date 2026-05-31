@@ -1,97 +1,63 @@
-## Objectif
+## État actuel — le système est déjà construit à 80%
 
-Créer une landing page SEO premium dédiée au problème **pyrite / dalle de béton soulevée** au slug `/problemes/pyrite-sous-sol`, avec déclenchement Alex et CTA secondaire vers un expert pyrite. Mobile-first, dark cinematic, fr-CA.
+La base existe et fonctionne :
+- **Tables** : `contractor_growth_profiles`, `territory_market_scores`, `dynamic_plan_recommendations`, `pricing_engine_coefficients` ✅
+- **Edge function** : `api_generate_dynamic_plan` (287 lignes, calcul prix dynamique + reco) ✅
+- **UI entrepreneur** : `/entrepreneur/plan-ia` → `PageDynamicPlanGeneration` (intro cinématique + `GrowthProfileWizard` 10 questions + `DynamicPlanReveal`) ✅
+- **Admin** : `/admin/dynamic-pricing` → `PageAdminDynamicPricing` (coefficients) ✅
 
-## Fichiers à créer
+**Ce qui manque** vs. la spec : intégration au funnel, handler Alex "plan sur mesure", admin saturation/territoires, et remplacement des CTA "Choisissez un forfait" dans le reste du parcours.
 
-1. **`src/pages/problemes/PagePyriteSousSol.tsx`** — page complète, autonome, basée sur les composants UI partagés existants (`PageHero`, `SectionHeading`, `CTAGroup`, `FAQSection`, `CTASection`, `SeoHead`, `SchemaStack`).
+## Ce qu'on ajoute (5 deltas)
 
-2. **Route** dans `src/app/router.tsx` :
-   ```tsx
-   <Route path="/problemes/pyrite-sous-sol" element={<PagePyriteSousSol />} />
-   ```
+### 1. Brancher AIPP → Plan IA (au lieu de la grille statique)
 
-3. **Sitemap** : ajouter l'URL dans `scripts/generate-ai-sitemap.ts` (entrée statique haute priorité 0.8).
+Dans `PageEntrepreneurDiagnosticLanding.tsx` (ligne 982) : remplacer le `Link to="/entrepreneur/plans"` (grille générique) par `Link to="/entrepreneur/plan-ia"` après que le score AIPP est révélé. Idem dans `ContractorOnboardingLanding` et le CTA post-paiement.
 
-## Structure de la page (sections)
+Repositionner le copy CTA : `"Voir mon plan IA personnalisé"` (au lieu de "Choisissez un forfait" / "Voir les forfaits").
 
-```text
-┌─ HERO (dark, glow rouge alerte douce)
-│  H1: Pyrite dans le sous-sol? Ne rénovez pas avant de vérifier.
-│  Sub: Dalle fissurée, soulevée ou réparée? Documentez avant d'agir.
-│  CTA primaire: [Analyser mes photos avec Alex]  → openAlex("pyrite")
-│  CTA secondaire: [Trouver un expert pyrite]     → /pros/expert-pyrite
-│  Trust strip: "Sans engagement · Réponse en 60 sec · fr-CA"
-│
-├─ SECTION "Ce que UNPRO vérifie" (grid 3x3 icônes + libellés)
-│  9 items: photos dalle, fissures, anciennes réparations, soulèvement,
-│           humidité, historique réno, risque vice caché, test pyrite,
-│           type de pro à consulter
-│
-├─ SECTION "Pourquoi agir rapidement" (alert card amber)
-│  5 erreurs à éviter (liste avec X icons)
-│
-├─ SECTION "Professionnels recommandés" (4 cards)
-│  Expert pyrite · Ingénieur · Entrepreneur spécialisé · Avocat vice caché
-│  Chaque card → CTA "Voir disponibilité" → Alex avec contexte
-│
-├─ SECTION "Coûts possibles" (split: diagnostic vs correction majeure)
-│  Diagnostic: quelques centaines $
-│  Correction: démolition · excavation · remblai · dalle · drainage · finition
-│  Punch line: "Diagnostiquer avant de rénover."
-│
-├─ SECTION "Commencez ici" (3 steps timeline)
-│  1. Téléversez photos  2. Décrivez découverte  3. Alex analyse + recommande
-│  CTA central: [Analyser mon sous-sol avec Alex]
-│
-├─ FAQ (5 items via FAQSection — déjà schema FAQPage ready)
-│
-└─ CTA FINAL (CTASection variant="accent")
-   "Une découverte récente? Le temps compte."
-   Primary: Alex · Secondary: Expert pyrite
-```
+### 2. Handler Alex "Plan sur mesure"
 
-## SEO
+Ajouter `custom_plan_consultation` comme mode Alex (`src/config/alexModes.ts` + listener sur `alex:open` dans `AlexVoiceContext`). Alex pose 3-4 questions ouvertes (objectif, exclusivité voulue, contraintes), génère un brouillon via `api_generate_dynamic_plan` avec `override_mode=custom`, puis propose un prix négocié + bouton "Verrouiller ce plan".
 
-- **Title** : `Pyrite sous-sol Québec | Vérifier une dalle soulevée avant rénovation` (60 car ✓)
-- **Description** : `Dalle fissurée, soulevée ou réparée? UNPRO vous aide à documenter le risque de pyrite, vice caché et travaux correctifs avant de rénover.` (160 car ✓)
-- **Canonical** : `https://unpro.ca/problemes/pyrite-sous-sol`
-- **hreflang** : fr-CA principal, x-default = fr
-- **JSON-LD** via `SchemaStack` :
-  - `WebPage` + `BreadcrumbList` (Accueil › Problèmes › Pyrite sous-sol)
-  - `FAQPage` (5 Q/R)
-  - `Service` (nom: "Diagnostic pyrite sous-sol", areaServed: QC)
-- H1 unique, H2 par section, alt text descriptifs, lazy images.
+Ajouter sur la page principale entrepreneur un bouton tertiaire `Créer mon plan sur mesure` qui déclenche le même évènement (déjà présent dans `DynamicPlanReveal`, à hisser au niveau du parcours).
 
-## Intégration Alex
+### 3. Admin Dynamic Pricing — extensions
 
-- CTA primaire et tertiaire : `openAlex("pyrite_basement")` via `useAlexVoice()` (contexte injecté pour préfill conversation).
-- Le contexte `"pyrite_basement"` sera reconnu par le router d'intents Alex existant; sinon fallback `"general"` (à confirmer — si non reconnu, on log juste l'event et passe en general avec message d'amorce stocké dans `alexSessionState`).
+Étendre `PageAdminDynamicPricing` (177 lignes) avec 3 nouveaux panels lisant le data existant :
+- **Saturation marchés** : table `territory_market_scores` ordonnée par `exclusivity_slots_taken/exclusivity_slots_total DESC`, badge rouge si saturé.
+- **Métiers sous-desservis** : agrégation `demand_score - competition_score` (gap > 30 → highlight).
+- **Override prix manuel** : drawer sur ligne `dynamic_plan_recommendations` permettant d'écrire dans `pricing_overrides` (table existante).
 
-## Design tokens
+### 4. Rafraîchir UI Reveal (positionnement premium)
 
-- Base `bg-background` (dark cinematic `#050816`)
-- Glow d'alerte : `bg-amber-500/5` blur 80px sur section "Pourquoi agir rapidement"
-- Cards : `glass` (`rgba(255,255,255,0.04)` + backdrop-blur 24px), radius 28px
-- Boutons primary : radius 18px, hover `translateY(-2px)` easing `cubic-bezier(.22,1,.36,1)` 420ms
-- Font : Inter, H1 tracking -0.04em
-- Aucune couleur hardcodée → tokens uniquement
+`DynamicPlanReveal` : ajouter 3 ScoreRings côte à côte (marché / opportunité / compétition — données déjà retournées par l'edge function dans `recommendation_reason`), badge "Exclusivité partielle disponible" si `exclusivity_level !== 'none'`, et plage de revenus estimés en gros caractères au-dessus du prix.
 
-## Contraintes
+Garantir le wording exigé :
+- Header : "Plan IA optimisé pour votre marché"
+- Sous-titre : "Optimisé selon votre métier, territoire et capacité"
+- Jamais "Choisissez un forfait" ni "Forfait" comme mot principal.
 
-- Pas de nouveaux composants partagés — réutiliser `PageHero`, `SectionHeading`, `CTAGroup`, `FAQSection`, `CTASection`, `SeoHead`, `SchemaStack`, `Button`, `Card`.
-- Pas de backend / migration — page statique fr-CA.
-- Pas de scroll-jacking, pas de modal d'entrée.
-- Mobile-first (viewport 384px testé).
+### 5. Audit + suppression points d'entrée "grille statique"
 
-## Succès
+Recenser via `rg "Choisissez un forfait|/entrepreneur/plans"` les autres entrées qui pointent vers une grille SaaS classique et les rediriger vers `/entrepreneur/plan-ia` (ou les rendre internes/admin uniquement).
 
-- Route `/problemes/pyrite-sous-sol` rend la page sans erreur console
-- CTA Alex ouvre l'orb avec contexte
-- Lighthouse SEO ≥ 95, structured data valide
-- Page incluse au prochain sitemap build
+## Hors-scope (déjà fait, on ne touche pas)
 
-## Hors scope
+- Le moteur de calcul (`api_generate_dynamic_plan`) — la formule actuelle est conforme à la spec.
+- Les tables de base — schéma déjà aligné.
+- Le wizard 10 questions (`GrowthProfileWizard`) — couvre déjà capacité / ticket / équipes / territoires / objectif / exclusivité / services / saison / dispo / qualité-vs-volume.
 
-- Pas de page `/pros/expert-pyrite` créée ici (CTA secondaire pointera vers la recherche de pros existante avec query `?specialite=pyrite` — fallback `/entrepreneurs?q=pyrite`).
-- Pas de variantes par ville (à faire dans une phase 2 programmatique).
+## Fichiers touchés
+
+- **Édité** : `src/pages/entrepreneur/PageEntrepreneurDiagnosticLanding.tsx` (CTA → plan-ia)
+- **Édité** : `src/features/contractorProfile/...ContractorOnboardingLanding.tsx` (CTA)
+- **Édité** : `src/features/dynamicPricing/components/DynamicPlanReveal.tsx` (3 ScoreRings + badges + revenue range)
+- **Édité** : `src/config/alexModes.ts` + `src/contexts/AlexVoiceContext.tsx` (mode `custom_plan_consultation`)
+- **Édité** : `supabase/functions/api_generate_dynamic_plan/index.ts` (paramètre `override_mode`)
+- **Édité** : `src/pages/admin/PageAdminDynamicPricing.tsx` (3 panels saturation/sous-desservi/override)
+- **Édité** : `mem://index.md` + nouvelle mémoire `mem://pricing/dynamic-plan-ia-flow`
+
+## Critère de succès
+
+Un entrepreneur qui termine son scan AIPP atterrit sur `/entrepreneur/plan-ia`, complète le wizard en 60s, voit son plan personnalisé avec 3 scores marché + plage de revenus + statut exclusivité, et peut soit accepter soit lancer Alex pour un plan sur mesure. L'admin voit en temps réel quels territoires sont saturés et peut overrider un prix.
