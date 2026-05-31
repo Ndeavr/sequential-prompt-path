@@ -11,6 +11,14 @@ type Phase = "intro" | "wizard" | "analyzing" | "reveal";
 export default function PageDynamicPlanGeneration() {
   const [phase, setPhase] = useState<Phase>("intro");
   const [recommendation, setRecommendation] = useState<any>(null);
+  const { openAlex } = useAlexVoice();
+
+  function openCustomPlanAlex() {
+    openAlex(
+      "custom_plan_consultation",
+      "L'entrepreneur veut un plan sur mesure. Pose 3 questions courtes : objectif #1, exclusivité territoriale voulue (oui/non), contrainte budgétaire. Ensuite confirme un brouillon de plan négocié et propose de le verrouiller.",
+    );
+  }
 
   async function handleGenerate(profile: GrowthProfileInput) {
     setPhase("analyzing");
