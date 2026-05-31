@@ -1,125 +1,108 @@
-## Objectif
+## Problème confirmé
+Le scrape précédent a halluciné « cellulose ». La home d'isroyal.ca dit explicitement :
+> « Spécialistes en isolation soufflée à la **fibre de verre rose**, en décontamination et en ventilation optimale. »
 
-Créer `unpro.ca/isolation-solution-royal` — page partenaire **Signature** dédiée à *Isolation Solution Royal* (isroyal.ca), enrichie par scraping en temps réel, avec prise de rendez-vous directe synchronisée à l'agenda du partenaire.
+ISR n'utilise **pas** de cellulose. Il faut corriger les données, enrichir avec les vrais médias (logo + photos), et brancher Google Calendar sur les rendez-vous.
 
-## Approche en 3 couches
+---
 
-### 1. Couche données — Scraping & enrichissement (`isroyal.ca`)
+## 1. Correction du matériau (data fix)
 
-Edge function `partner-scrape-enrich` (Firecrawl + Lovable AI Gateway / `google/gemini-3-flash-preview`) :
-- **Firecrawl scrape** d'isroyal.ca (`formats: ['markdown', 'links', 'screenshot', 'branding']`) + crawl léger (`limit: 15`, `maxDepth: 2`) pour pages Services / À propos / Contact / Réalisations.
-- **Extraction structurée** (Gemini + schema JSON) :
-  - identité (nom légal, slogan, années d'expérience, fondateurs)
-  - services (isolation uréthane, cellulose, fibre de verre, insonorisation, etc.)
-  - zones desservies (Laurentides, Lanaudière, Grand Montréal…)
-  - certifications / RBQ / APCHQ / Écohabitation
-  - témoignages, projets, garanties
-  - coordonnées (tél, email, adresse)
-- **Branding** : couleurs, logo, screenshots hero → stockés dans `storage` bucket `partners/isolation-solution-royal/`.
-- **Persistence** : table `signature_partners` (1 ligne par slug) avec `scraped_data jsonb`, `enriched_at`, `source_url`, `brand jsonb`, `services jsonb`, `coverage jsonb`, `media jsonb`.
-- **Cache** : refresh hebdomadaire via cron (`pg_cron` ou bouton admin "Re-scrape").
+Migration `UPDATE public.signature_partners` pour `isolation-solution-royal` :
 
-### 2. Couche présentation — Page Signature
+- `tagline` → « Spécialistes en **isolation soufflée à la fibre de verre rose**, décontamination et ventilation optimale »
+- `services` (JSON) :
+  - « Isolation d'entretoit (R-51 soufflée) » → description : *Fibre de verre rose soufflée haute performance jusqu'à R-51 pour stopper les pertes de chaleur et l'inconfort à l'étage.*
+  - Tous les autres services revus pour retirer toute mention de cellulose.
+- `brand.material_primary` = `"fibre_de_verre_rose"` (champ structuré pour l'UI et l'IA).
 
-Route publique `/isolation-solution-royal` (slug propre, pas sous `/contractor/`) — composant `PageSignaturePartner` paramétré, premier client = Isolation Solution Royal.
+Mise à jour du composant `PageSignaturePartner.tsx` : ajout d'un **badge matériau** visible dans le hero (« Fibre de verre rose · R-51 ») pour qu'Alex et le visiteur ne confondent plus jamais.
 
-**Sections (mobile-first, premium dark + warm accents façon Memory `premium-cinematic-theme`)** :
-1. **Hero Signature** — logo, nom, badge "Partenaire Signature ⚜️", note moyenne, années d'expérience, CTA "Réserver maintenant".
-2. **Trust Strip** — RBQ vérifié, assurances, AIPP score live, badge UNPRO Signature.
-3. **Services & spécialités** — cards générées depuis scraping (uréthane giclé, cellulose, etc.) avec prix indicatifs si dispo.
-4. **Zones desservies** — carte/chips des villes couvertes.
-5. **Avis vérifiés** — pull depuis Google Reviews (via edge `verify-reviews-analysis` existante) + témoignages scrapés.
-6. **Galerie projets** — photos `Avant/Après` depuis scraping ou placeholders.
-7. **Garanties & certifications** — badges (RBQ, APCHQ, Écohabitation, garantie 10 ans…).
-8. **Prise de rendez-vous inline** — `SignaturePartnerBookingWidget` (voir §3).
-9. **Section "Pourquoi Signature ?"** — différenciation UNPRO (concierge décisif, 1 reco, pas de 3 soumissions).
-10. **FAQ + JSON-LD** (`LocalBusiness`, `Service`, `FAQPage`, `BreadcrumbList`, `AggregateRating`).
-11. **Sticky footer mobile** — "Réserver une visite" → ouvre widget.
+---
 
-**SEO** : `SeoHead` avec title `Isolation Solution Royal — Partenaire Signature UNPRO`, canonical `https://unpro.ca/isolation-solution-royal`, OG image générée depuis screenshot hero.
+## 2. Scraping réel des médias (logo + photos)
 
-### 3. Couche booking — Sync agenda
+Refonte de l'edge function `partner-scrape-enrich` pour qu'elle **ne reformule plus librement** les services et qu'elle extraie les vrais assets :
 
-- Table `partner_calendar_availability` : `partner_id`, `date`, `slots jsonb[]` (heures dispo), `synced_at`, `source` (`manual` | `google` | `outlook` | `ical`).
-- Edge `partner-calendar-sync` : pull ICS public si fourni, sinon admin saisit slots via `/admin/partners/isolation-solution-royal/calendar`.
-- Widget client `SignaturePartnerBookingWidget` :
-  - Étape 1 : type de besoin (uréthane, cellulose, entretoit, insonorisation, autre)
-  - Étape 2 : code postal + type de propriété
-  - Étape 3 : date/heure depuis `partner_calendar_availability`
-  - Étape 4 : coordonnées (ou auto-fill via `useUserMemory`)
-  - Submit → table `partner_bookings` + notification (Resend) au partenaire + confirmation client.
-- **Pas de "3 soumissions"** — un seul partenaire recommandé, conforme manifesto.
+- Firecrawl `/scrape` sur `https://isroyal.ca` avec `formats: ['html', 'links', 'branding']`
+  - `branding` → récupère logo officiel + favicon + couleurs marque
+- Firecrawl `/map` pour découvrir `/galerie`, `/realisations`, `/services/*`
+- Scrape de la page galerie → extraction de tous les `<img src>` (filtrage : largeur ≥ 600px, pas d'icônes, pas de logos tiers)
+- Téléchargement côté serveur dans le bucket Supabase Storage `partner-media/isolation-solution-royal/` :
+  - `logo.svg` (ou png)
+  - `hero.jpg` (1 photo héros choisie)
+  - `gallery/01.jpg` … `gallery/12.jpg` (max 12)
+- Persistance dans `signature_partners.media` :
+  ```json
+  { "logo_url": "...", "hero_url": "...", "gallery": ["...", "..."], "brand_colors": { "primary": "#...", "accent": "#..." } }
+  ```
+- **Garde-fou anti-hallucination** : pour les `services`, le LLM (Gemini) reçoit le markdown brut + instruction stricte « N'invente AUCUN matériau. Si non mentionné explicitement, laisse vide. Matériau autorisé pour ce partenaire : fibre de verre rose. »
 
-## Schéma DB (migration)
+Mise à jour de `PageSignaturePartner.tsx` :
+- Header : logo officiel ISR (depuis `media.logo_url`) au lieu du fallback générique
+- Nouvelle section **Galerie réalisations** (grille responsive 2 col mobile / 3 col desktop, lightbox au clic)
+- Hero : `media.hero_url` en background avec overlay sombre
 
-```sql
-CREATE TABLE public.signature_partners (
-  id uuid PK default gen_random_uuid(),
-  slug text unique not null,           -- 'isolation-solution-royal'
-  legal_name text, display_name text,
-  source_url text,                     -- 'https://isroyal.ca'
-  brand jsonb,                          -- colors, logo, fonts
-  services jsonb,                       -- array
-  coverage jsonb,                       -- cities/regions
-  certifications jsonb,
-  media jsonb,                          -- screenshots, gallery
-  reviews_summary jsonb,
-  scraped_data jsonb,                   -- raw firecrawl payload
-  enriched_at timestamptz,
-  is_active boolean default true,
-  tier text default 'signature',
-  created_at, updated_at
-);
+---
 
-CREATE TABLE public.partner_calendar_availability (
-  id uuid PK, partner_id uuid FK,
-  date date, slots jsonb, source text,
-  synced_at timestamptz, unique(partner_id, date)
-);
+## 3. Google Calendar — rendez-vous directs
 
-CREATE TABLE public.partner_bookings (
-  id uuid PK, partner_id uuid FK,
-  service_type text, postal_code text, property_type text,
-  scheduled_at timestamptz, contact jsonb,
-  status text default 'pending',
-  user_id uuid null, created_at
-);
-```
+### 3a. Connexion
+Utilisation du connecteur **Google Calendar** déjà documenté (gateway Lovable). Une connexion = le calendrier d'UNPRO côté plateforme (compte concierge). Chaque partenaire Signature reçoit un `calendar_id` dédié (sous-calendrier partagé) stocké dans `signature_partners.brand.google_calendar_id`.
 
-Avec `GRANT SELECT` à `anon` sur `signature_partners` + `partner_calendar_availability` (lecture publique), `GRANT INSERT` à `anon` sur `partner_bookings` (avec RLS limitant l'insert au format attendu), `GRANT ALL service_role`.
+> Pour ISR spécifiquement, on créera/utilisera un calendrier partagé `isolation-solution-royal@…` que ISR accepte dans son propre Google Workspace. Cela évite l'OAuth par-entrepreneur tout en synchronisant les deux côtés.
+
+### 3b. Schéma DB
+Ajout colonnes à `partner_bookings` :
+- `google_event_id TEXT`
+- `google_calendar_id TEXT`
+- `google_sync_status TEXT` (`pending`, `synced`, `failed`)
+- `google_sync_error TEXT`
+
+### 3c. Edge function `partner-booking-submit` (refonte)
+Après insertion DB :
+1. Appel gateway `POST https://connector-gateway.lovable.dev/google_calendar/calendar/v3/calendars/{calendar_id}/events`
+2. Body : `summary` (« RDV ISR · {client} »), `description` (besoin + tél + adresse + lien admin), `start`/`end` (slot choisi, fuseau `America/Toronto`, durée 60min par défaut), `attendees` (email client + email ISR), `reminders` (24h + 1h)
+3. Stocker `google_event_id` + status
+4. Si échec gateway → status `failed` + log dans `system_events`, le RDV reste valide côté DB (fallback email Resend déjà en place)
+
+### 3d. Synchronisation des disponibilités (lecture)
+Nouvelle edge function `partner-calendar-sync` (cron toutes les 15 min via `pg_cron` ou bouton manuel admin) :
+- Lit les events Google Calendar des 30 prochains jours
+- Marque les créneaux occupés dans `partner_calendar_availability` (retire le slot du tableau `slots`)
+- Garantit qu'un slot booké directement dans Google par ISR disparaît du widget public
+
+### 3e. UI
+- Widget de booking inchangé visuellement, mais après soumission : toast « Rendez-vous confirmé — ajouté à votre agenda et à celui d'ISR »
+- Section admin `/admin/partners` : indicateur de santé sync Google (dernière sync, nb events, erreurs)
+
+---
 
 ## Détails techniques
 
-- **Firecrawl** : connecteur existant à vérifier (`fetch_secrets` → `FIRECRAWL_API_KEY`). Si absent, je demanderai la clé.
-- **Voice / Alex** : bouton "Parler à Alex de ce partenaire" → préremplit le contexte avec le slug.
-- **Admin** : page `/admin/partners` liste signature_partners + bouton "Re-scrape" + éditeur slots.
-- **Tests** : jeu de données scrapé inséré une fois en seed pour rendre la page utilisable même hors-ligne.
+**Tables modifiées**
+- `signature_partners` : data correction + `media` enrichi
+- `partner_bookings` : 4 colonnes Google
+- Nouveau bucket Storage : `partner-media` (public read)
 
-## Fichiers à créer / modifier
+**Edge functions**
+- `partner-scrape-enrich` (refonte avec garde-fous + storage upload)
+- `partner-booking-submit` (ajout création event Google)
+- `partner-calendar-sync` (nouveau, lecture bidirectionnelle)
 
-**Créer**
-- `supabase/migrations/<ts>_signature_partners.sql`
-- `supabase/functions/partner-scrape-enrich/index.ts`
-- `supabase/functions/partner-calendar-sync/index.ts`
-- `supabase/functions/partner-booking-submit/index.ts`
-- `src/pages/partners/PageSignaturePartner.tsx`
-- `src/features/partners/components/HeroSignaturePartner.tsx`
-- `src/features/partners/components/PartnerServicesGrid.tsx`
-- `src/features/partners/components/PartnerCoverageMap.tsx`
-- `src/features/partners/components/PartnerReviewsBlock.tsx`
-- `src/features/partners/components/PartnerGallery.tsx`
-- `src/features/partners/components/SignaturePartnerBookingWidget.tsx`
-- `src/features/partners/hooks/useSignaturePartner.ts`
-- `src/features/partners/services/partnerService.ts`
-- `src/pages/admin/partners/PageAdminPartners.tsx`
+**Connecteurs requis**
+- Firecrawl (déjà connecté)
+- **Google Calendar** (à connecter via `standard_connectors--connect` au moment du build)
 
-**Modifier**
-- `src/app/router.tsx` — route `/isolation-solution-royal` + `/admin/partners`
-- `src/config/routesConfig.ts` — constantes
-- `mem://index.md` — ajouter reference memory `signature-partners-system`
+**Fichiers front modifiés**
+- `src/pages/partners/PageSignaturePartner.tsx` (logo dynamique, galerie, hero image, badge matériau)
+- `src/features/partners/components/SignaturePartnerBookingWidget.tsx` (toast confirmation enrichie)
+- `src/pages/admin/partners/PageAdminPartners.tsx` (santé sync Google)
 
-## Hors scope (à reporter)
+---
 
-- Sync OAuth Google/Outlook calendar bidirectionnelle complète (Phase 2)
-- Paiement de dépôt au booking (Phase 2)
-- Multi-tenant : généralisation aux autres Signature partenaires (le composant est déjà paramétré, il suffira d'ajouter des slugs en DB)
+## Critères de succès
+- La carte « Isolation d'entretoit » affiche **fibre de verre rose**, plus jamais cellulose
+- Le logo officiel ISR et au moins 6 vraies photos de réalisations apparaissent sur la page
+- Un rendez-vous pris sur `/isolation-solution-royal` apparaît dans Google Calendar en < 5 secondes
+- Un créneau bloqué directement dans Google disparaît du widget à la prochaine sync (≤ 15 min)
