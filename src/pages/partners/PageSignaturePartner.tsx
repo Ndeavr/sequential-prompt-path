@@ -29,8 +29,10 @@ export default function PageSignaturePartner({ slug: slugProp }: Props) {
   const title = `${partner.display_name} — Partenaire Signature UNPRO`;
   const description = `${partner.tagline ?? partner.display_name}. Partenaire Signature UNPRO vérifié. Réservation directe en ligne, aucune soumission requise.`;
   const screenshot = (partner.media as any)?.screenshot as string | undefined;
-  const reviewsRating = (partner.reviews_summary as any)?.average ?? 4.9;
-  const reviewsCount = (partner.reviews_summary as any)?.count ?? 127;
+  const reviewsRating = (partner.reviews_summary as any)?.average as number | undefined;
+  const reviewsCount = (partner.reviews_summary as any)?.count as number | undefined;
+  const reviewsSource = (partner.reviews_summary as any)?.source as string | undefined;
+  const rbqCert = (partner.certifications ?? []).find((c) => /RBQ/i.test(c.label));
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -53,7 +55,9 @@ export default function PageSignaturePartner({ slug: slugProp }: Props) {
           region: "QC",
           areaServed: partner.coverage,
           serviceType: (partner.services ?? []).map((s) => s.name),
-          rating: { value: reviewsRating, count: reviewsCount },
+          ...(reviewsRating && reviewsCount
+            ? { rating: { value: reviewsRating, count: reviewsCount } }
+            : {}),
         }}
       />
 
@@ -75,15 +79,21 @@ export default function PageSignaturePartner({ slug: slugProp }: Props) {
               </p>
             )}
             <div className="mt-6 flex flex-wrap items-center gap-4 text-sm">
-              <span className="flex items-center gap-1">
-                <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-                <b>{reviewsRating}</b>
-                <span className="text-muted-foreground">({reviewsCount} avis)</span>
-              </span>
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                RBQ vérifiée
-              </span>
+              {reviewsRating && reviewsCount && (
+                <span className="flex items-center gap-1">
+                  <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+                  <b>{reviewsRating}</b>
+                  <span className="text-muted-foreground">
+                    ({reviewsCount} avis{reviewsSource ? ` ${reviewsSource}` : ""})
+                  </span>
+                </span>
+              )}
+              {rbqCert && (
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                  {rbqCert.label}
+                </span>
+              )}
               {partner.coverage?.length > 0 && (
                 <span className="flex items-center gap-1 text-muted-foreground">
                   <MapPin className="h-4 w-4" />
@@ -103,23 +113,37 @@ export default function PageSignaturePartner({ slug: slugProp }: Props) {
         </div>
       </section>
 
-      {/* TRUST STRIP */}
+      {/* TRUST STRIP — only real, verified signals */}
       <section className="border-b border-border/40 bg-card/30">
-        <div className="max-w-6xl mx-auto px-4 py-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          {[
-            { icon: ShieldCheck, label: "RBQ vérifiée", value: "Licence active" },
-            { icon: Award, label: "Certifié", value: "APCHQ" },
-            { icon: Sparkles, label: "Score AIPP", value: "92 / 100" },
-            { icon: CheckCircle2, label: "UNPRO Signature", value: "Recommandé" },
-          ].map((t) => (
-            <div key={t.label} className="flex items-center gap-3">
-              <t.icon className="h-5 w-5 text-primary" />
+        <div className="max-w-6xl mx-auto px-4 py-6 grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+          {rbqCert && (
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="h-5 w-5 text-primary" />
               <div>
-                <div className="font-medium">{t.value}</div>
-                <div className="text-xs text-muted-foreground">{t.label}</div>
+                <div className="font-medium">{rbqCert.label}</div>
+                <div className="text-xs text-muted-foreground">Licence active</div>
               </div>
             </div>
-          ))}
+          )}
+          {(partner.certifications ?? [])
+            .filter((c) => !/RBQ/i.test(c.label))
+            .slice(0, 2)
+            .map((c) => (
+              <div key={c.label} className="flex items-center gap-3">
+                <Award className="h-5 w-5 text-primary" />
+                <div>
+                  <div className="font-medium">{c.label}</div>
+                  <div className="text-xs text-muted-foreground">Vérifié UNPRO</div>
+                </div>
+              </div>
+            ))}
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 text-primary" />
+            <div>
+              <div className="font-medium">Recommandé</div>
+              <div className="text-xs text-muted-foreground">UNPRO Signature</div>
+            </div>
+          </div>
         </div>
       </section>
 
