@@ -1,6 +1,7 @@
 import { useParams, Navigate } from "react-router-dom";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { ShieldCheck, Star, Sparkles, MapPin, Award, CheckCircle2, Loader2 } from "lucide-react";
+import { ShieldCheck, Star, Sparkles, MapPin, Award, CheckCircle2, Loader2, X } from "lucide-react";
 import SeoHead from "@/seo/components/SeoHead";
 import SchemaStack from "@/seo/components/SchemaStack";
 import { useSignaturePartner } from "@/features/partners/hooks/useSignaturePartner";
@@ -15,6 +16,7 @@ export default function PageSignaturePartner({ slug: slugProp }: Props) {
   const params = useParams<{ slug: string }>();
   const slug = slugProp ?? params.slug ?? "";
   const { data: partner, isLoading } = useSignaturePartner(slug);
+  const [lightbox, setLightbox] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -28,7 +30,13 @@ export default function PageSignaturePartner({ slug: slugProp }: Props) {
   const canonical = `https://unpro.ca/${partner.slug}`;
   const title = `${partner.display_name} — Partenaire Signature UNPRO`;
   const description = `${partner.tagline ?? partner.display_name}. Partenaire Signature UNPRO vérifié. Réservation directe en ligne, aucune soumission requise.`;
-  const screenshot = (partner.media as any)?.screenshot as string | undefined;
+  const media = (partner.media ?? {}) as Record<string, any>;
+  const logoUrl = media.logo_url as string | undefined;
+  const heroUrl = media.hero_url as string | undefined;
+  const gallery = (media.gallery ?? []) as string[];
+  const ogImage = heroUrl ?? logoUrl ?? (media.screenshot as string | undefined);
+  const brand = (partner.brand ?? {}) as Record<string, any>;
+  const materialLabel = brand.material_label as string | undefined;
   const reviewsRating = (partner.reviews_summary as any)?.average as number | undefined;
   const reviewsCount = (partner.reviews_summary as any)?.count as number | undefined;
   const reviewsSource = (partner.reviews_summary as any)?.source as string | undefined;
@@ -40,7 +48,7 @@ export default function PageSignaturePartner({ slug: slugProp }: Props) {
         title={title}
         description={description}
         canonical={canonical}
-        ogImage={screenshot}
+        ogImage={ogImage}
       />
       <SchemaStack
         breadcrumbs={[
@@ -63,13 +71,34 @@ export default function PageSignaturePartner({ slug: slugProp }: Props) {
 
       {/* HERO */}
       <section className="relative overflow-hidden border-b border-border/40">
-        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-background to-background" />
+        {heroUrl ? (
+          <div className="absolute inset-0 -z-10">
+            <img src={heroUrl} alt="" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/85 to-background/70" />
+          </div>
+        ) : (
+          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-background to-background" />
+        )}
         <div className="max-w-6xl mx-auto px-4 py-16 md:py-24">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <Badge className="mb-4 bg-amber-500/10 text-amber-600 border-amber-500/30 hover:bg-amber-500/15">
-              <Sparkles className="h-3 w-3 mr-1" />
-              Partenaire Signature ⚜️
-            </Badge>
+            <div className="flex items-center gap-4 mb-4 flex-wrap">
+              {logoUrl && (
+                <img
+                  src={logoUrl}
+                  alt={`Logo ${partner.display_name}`}
+                  className="h-14 w-auto object-contain bg-white rounded-[14px] p-2 border border-border/60"
+                />
+              )}
+              <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30 hover:bg-amber-500/15">
+                <Sparkles className="h-3 w-3 mr-1" />
+                Partenaire Signature ⚜️
+              </Badge>
+              {materialLabel && (
+                <Badge variant="outline" className="border-emerald-500/40 text-emerald-700 bg-emerald-500/10">
+                  {materialLabel}
+                </Badge>
+              )}
+            </div>
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4">
               {partner.display_name}
             </h1>
@@ -160,6 +189,30 @@ export default function PageSignaturePartner({ slug: slugProp }: Props) {
         </div>
       </section>
 
+      {/* GALLERY */}
+      {gallery.length > 0 && (
+        <section className="max-w-6xl mx-auto px-4 pb-16">
+          <h2 className="text-3xl font-bold tracking-tight mb-6">Réalisations récentes</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {gallery.map((src, i) => (
+              <button
+                key={src}
+                type="button"
+                onClick={() => setLightbox(src)}
+                className="group relative aspect-[4/3] overflow-hidden rounded-[18px] border border-border/60 bg-card"
+              >
+                <img
+                  src={src}
+                  alt={`Réalisation ${i + 1} ${partner.display_name}`}
+                  loading="lazy"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* COVERAGE */}
       {partner.coverage?.length > 0 && (
         <section className="max-w-6xl mx-auto px-4 pb-16">
@@ -208,6 +261,24 @@ export default function PageSignaturePartner({ slug: slugProp }: Props) {
           </p>
         </div>
       </section>
+
+      {/* LIGHTBOX */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            type="button"
+            className="absolute top-4 right-4 text-white p-2 rounded-full bg-white/10 hover:bg-white/20"
+            onClick={() => setLightbox(null)}
+            aria-label="Fermer"
+          >
+            <X className="h-6 w-6" />
+          </button>
+          <img src={lightbox} alt="" className="max-w-full max-h-full object-contain rounded-[18px]" />
+        </div>
+      )}
     </div>
   );
 }
