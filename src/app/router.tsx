@@ -13,6 +13,7 @@ import AuthOverlayPremium from "@/components/auth/AuthOverlayPremium";
 // Only eagerly load the home page and critical shared pages
 import HomeWithFeatureFlag from "@/components/home-intent/HomeWithFeatureFlag";
 import PageHomeUnicorn from "@/pages/PageHomeUnicorn";
+import PageHomeCinematic from "@/pages/PageHomeCinematic";
 import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
 import PageEmergencyReset from "@/pages/PageEmergencyReset";
