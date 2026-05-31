@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import QRCodeCard from "@/components/sharing/QRCodeCard";
 import HeroBusinessVerifySearch from "@/components/verify/HeroBusinessVerifySearch";
+import InteractiveVerificationConsole from "@/components/verify/InteractiveVerificationConsole";
 import {
   Shield, Search, ArrowRight, Upload, FileText, Building2,
   Fingerprint, Eye, Phone, Globe, CheckCircle2, AlertCircle,
@@ -123,44 +124,43 @@ export default function VerifyLandingPage() {
       <div className="min-h-screen bg-background">
 
         {/* ═══════ HERO ═══════ */}
-        <section className="relative py-20 md:py-32 overflow-hidden">
+        <section className="relative py-10 md:py-16 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-radial from-primary/8 via-transparent to-transparent opacity-60" />
           </div>
 
-          <div className="container mx-auto px-4 relative z-10 max-w-3xl">
-            <motion.div initial="hidden" animate="visible" variants={stagger} className="text-center">
-              <motion.div variants={fadeUp} custom={0} className="mb-5">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-semibold tracking-wide uppercase">
-                  <Shield className="w-4 h-4" />
-                  Outil de vérification gratuit
+          <div className="container mx-auto px-4 relative z-10 max-w-2xl">
+            <motion.div initial="hidden" animate="visible" variants={stagger} className="text-center mb-6">
+              <motion.div variants={fadeUp} custom={0} className="mb-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-[11px] font-semibold tracking-wide uppercase">
+                  <Shield className="w-3.5 h-3.5" />
+                  Vérification gratuite
                 </div>
               </motion.div>
 
-              <motion.h1 variants={fadeUp} custom={1} className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] font-bold font-display text-foreground leading-[1.12] mb-5">
+              <motion.h1 variants={fadeUp} custom={1} className="text-2xl sm:text-3xl md:text-4xl font-bold font-display text-foreground leading-[1.15] mb-3">
                 Vérifiez un entrepreneur{" "}
                 <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
                   avant de signer
                 </span>
               </motion.h1>
 
-              <motion.p variants={fadeUp} custom={2} className="text-muted-foreground text-base md:text-lg max-w-xl mx-auto mb-8 leading-relaxed">
-                RBQ, numéro de téléphone, site web, carte d'affaires ou soumission : UnPRO vous aide à relier les bonnes informations sans rien inventer.
+              <motion.p variants={fadeUp} custom={2} className="text-muted-foreground text-sm md:text-base max-w-lg mx-auto leading-relaxed">
+                Tapez le nom — on liste les entreprises probables, puis on vérifie le RBQ, le NEQ et les avis pour vous.
               </motion.p>
+            </motion.div>
 
-              {/* Search box — live autocomplete via business-lookup */}
-              <motion.div variants={fadeUp} custom={3} className="max-w-lg mx-auto">
-                <HeroBusinessVerifySearch />
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, duration: 0.4 }}>
+              <InteractiveVerificationConsole />
 
-                <motion.div variants={fadeUp} custom={4} className="flex flex-wrap justify-center gap-3 mt-5">
-                  <Button variant="outline" size="sm" className="text-xs gap-1.5 rounded-full" onClick={() => navigate("/analyser-document")}>
-                    <Upload className="w-3.5 h-3.5" /> Analyser une soumission
-                  </Button>
-                  <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-primary gap-1.5 rounded-full" onClick={() => navigate("/signup")}>
-                    <UserCheck className="w-3.5 h-3.5" /> Créer un compte
-                  </Button>
-                </motion.div>
-              </motion.div>
+              <div className="flex flex-wrap justify-center gap-3 mt-5">
+                <Button variant="outline" size="sm" className="text-xs gap-1.5 rounded-full" onClick={() => navigate("/analyser-document")}>
+                  <Upload className="w-3.5 h-3.5" /> Analyser une soumission
+                </Button>
+                <Button variant="ghost" size="sm" className="text-xs gap-1.5 rounded-full" onClick={() => navigate("/verifier-un-entrepreneur")}>
+                  <Search className="w-3.5 h-3.5" /> Vérification avancée
+                </Button>
+              </div>
             </motion.div>
           </div>
         </section>
