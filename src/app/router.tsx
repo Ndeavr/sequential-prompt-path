@@ -678,6 +678,7 @@ const DecrireMonProjetPage = lazy(() => import("@/pages/DecrireMonProjetPage"));
 const ParlerAAlexPage = lazy(() => import("@/pages/ParlerAAlexPage"));
 const Alex100MPage = lazy(() => import("@/pages/AlexPage"));
 const ProblemesMaisonPage = lazy(() => import("@/pages/ProblemesMaisonPage"));
+const PagePyriteSousSol = lazy(() => import("@/pages/problemes/PagePyriteSousSol"));
 const VillesDesserviesPage = lazy(() => import("@/pages/VillesDesserviesPage"));
 const CityServicePage = lazy(() => import("@/pages/CityServicePage"));
 const ProfessionnelsPage2 = lazy(() => import("@/pages/ProfessionnelsPage2"));
