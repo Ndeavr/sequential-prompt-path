@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { GrowthProfileWizard, type GrowthProfileInput } from "@/features/dynamicPricing/components/GrowthProfileWizard";
 import { DynamicPlanReveal } from "@/features/dynamicPricing/components/DynamicPlanReveal";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { toast } from "sonner";
 
 type Phase = "intro" | "wizard" | "analyzing" | "reveal";
