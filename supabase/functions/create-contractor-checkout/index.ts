@@ -64,6 +64,16 @@ serve(async (req) => {
       );
     }
     const plan = PLANS[planCode];
+
+    // GUARDRAIL — Un plan Fondateur ne peut JAMAIS être une réduction surprise.
+    // Tout code "founder_*" doit être one-time (paiement unique 10 ans).
+    // Tout plan mensuel doit utiliser un code régulier (recrue|pro|premium|elite|signature).
+    if (planCode.startsWith("founder_") && plan.recurring) {
+      return new Response(
+        JSON.stringify({ error: "Les plans Fondateurs sont en paiement unique uniquement." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
     logStep("Plan resolved", { planCode, amount: plan.amount, recurring: plan.recurring });
 
     // Auth — optional (guests redirected to auth on the front end usually,
