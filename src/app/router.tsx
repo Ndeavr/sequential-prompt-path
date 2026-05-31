@@ -48,6 +48,8 @@ const PageAiTrustAudit = lazy(() => import("@/pages/entrepreneur/PageAiTrustAudi
 const PageWhyResultsAreDropping = lazy(() => import("@/pages/entrepreneur/PageWhyResultsAreDropping"));
 const PageAdminAiTrustDashboard = lazy(() => import("@/pages/admin/PageAdminAiTrustDashboard"));
 const PageAdminAiTrustTerritory = lazy(() => import("@/pages/admin/PageAdminAiTrustTerritory"));
+const PageDynamicPlanGeneration = lazy(() => import("@/pages/entrepreneur/PageDynamicPlanGeneration"));
+const PageAdminDynamicPricing = lazy(() => import("@/pages/admin/PageAdminDynamicPricing"));
 // Live Activation Pipeline (isroyal.ca)
 const PageContractorJoinLive = lazy(() => import("@/pages/contractor/PageContractorJoinLive"));
 const PageContractorAnalysisLive = lazy(() => import("@/pages/contractor/PageContractorAnalysisLive"));
