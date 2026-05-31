@@ -46,6 +46,7 @@ const PageAdminCommunications = lazy(() => import("@/pages/admin/PageAdminCommun
 const PageContractorVoiceFirstLanding = lazy(() => import("@/pages/contractor-landing/PageContractorVoiceFirstLanding"));
 const PageAiTrustAudit = lazy(() => import("@/pages/entrepreneur/PageAiTrustAudit"));
 const PageWhyResultsAreDropping = lazy(() => import("@/pages/entrepreneur/PageWhyResultsAreDropping"));
+const PageBadgesConsommateur2026 = lazy(() => import("@/pages/articles/PageBadgesConsommateur2026"));
 const PageAdminAiTrustDashboard = lazy(() => import("@/pages/admin/PageAdminAiTrustDashboard"));
 const PageAdminAiTrustTerritory = lazy(() => import("@/pages/admin/PageAdminAiTrustTerritory"));
 const PageDynamicPlanGeneration = lazy(() => import("@/pages/entrepreneur/PageDynamicPlanGeneration"));
