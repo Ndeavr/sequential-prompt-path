@@ -48,6 +48,8 @@ const PageContractorVoiceFirstLanding = lazy(() => import("@/pages/contractor-la
 const PageAiTrustAudit = lazy(() => import("@/pages/entrepreneur/PageAiTrustAudit"));
 const PageWhyResultsAreDropping = lazy(() => import("@/pages/entrepreneur/PageWhyResultsAreDropping"));
 const PageBadgesConsommateur2026 = lazy(() => import("@/pages/articles/PageBadgesConsommateur2026"));
+const PageSignaturePartner = lazy(() => import("@/pages/partners/PageSignaturePartner"));
+const PageAdminPartners = lazy(() => import("@/pages/admin/partners/PageAdminPartners"));
 const PageAdminAiTrustDashboard = lazy(() => import("@/pages/admin/PageAdminAiTrustDashboard"));
 const PageAdminAiTrustTerritory = lazy(() => import("@/pages/admin/PageAdminAiTrustTerritory"));
 const PageDynamicPlanGeneration = lazy(() => import("@/pages/entrepreneur/PageDynamicPlanGeneration"));
@@ -738,6 +740,9 @@ export const AppRouter = () => (
       <Routes>
         {/* Redirects for common mismatched entry points */}
         <Route path="/index" element={<PageHomeUnicorn />} />
+        <Route path="/isolation-solution-royal" element={<Suspense fallback={<LazyFallback />}><PageSignaturePartner slug="isolation-solution-royal" /></Suspense>} />
+        <Route path="/partenaires/:slug" element={<Suspense fallback={<LazyFallback />}><PageSignaturePartner /></Suspense>} />
+        <Route path="/admin/partners" element={<Suspense fallback={<LazyFallback />}><PageAdminPartners /></Suspense>} />
         <Route path="/emergency-reset" element={<PageEmergencyReset />} />
         <Route path="/entrepreneur/aipp-analysis" element={<PageAIPPAnalysisLoading />} />
 

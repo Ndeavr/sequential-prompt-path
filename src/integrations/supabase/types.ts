@@ -49094,6 +49094,97 @@ export type Database = {
           },
         ]
       }
+      partner_bookings: {
+        Row: {
+          contact: Json
+          created_at: string
+          id: string
+          notes: string | null
+          partner_id: string
+          postal_code: string | null
+          property_type: string | null
+          scheduled_at: string | null
+          service_type: string | null
+          source: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          contact?: Json
+          created_at?: string
+          id?: string
+          notes?: string | null
+          partner_id: string
+          postal_code?: string | null
+          property_type?: string | null
+          scheduled_at?: string | null
+          service_type?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          contact?: Json
+          created_at?: string
+          id?: string
+          notes?: string | null
+          partner_id?: string
+          postal_code?: string | null
+          property_type?: string | null
+          scheduled_at?: string | null
+          service_type?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_bookings_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "signature_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_calendar_availability: {
+        Row: {
+          date: string
+          id: string
+          partner_id: string
+          slots: Json
+          source: string
+          synced_at: string
+        }
+        Insert: {
+          date: string
+          id?: string
+          partner_id: string
+          slots?: Json
+          source?: string
+          synced_at?: string
+        }
+        Update: {
+          date?: string
+          id?: string
+          partner_id?: string
+          slots?: Json
+          source?: string
+          synced_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_calendar_availability_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "signature_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_call_assignments: {
         Row: {
           called_at: string | null
@@ -62315,6 +62406,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      signature_partners: {
+        Row: {
+          address: string | null
+          brand: Json | null
+          certifications: Json | null
+          coverage: Json | null
+          created_at: string
+          display_name: string
+          email: string | null
+          enriched_at: string | null
+          id: string
+          is_active: boolean
+          legal_name: string | null
+          media: Json | null
+          phone: string | null
+          reviews_summary: Json | null
+          scraped_data: Json | null
+          services: Json | null
+          slug: string
+          source_url: string | null
+          tagline: string | null
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          brand?: Json | null
+          certifications?: Json | null
+          coverage?: Json | null
+          created_at?: string
+          display_name: string
+          email?: string | null
+          enriched_at?: string | null
+          id?: string
+          is_active?: boolean
+          legal_name?: string | null
+          media?: Json | null
+          phone?: string | null
+          reviews_summary?: Json | null
+          scraped_data?: Json | null
+          services?: Json | null
+          slug: string
+          source_url?: string | null
+          tagline?: string | null
+          tier?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          brand?: Json | null
+          certifications?: Json | null
+          coverage?: Json | null
+          created_at?: string
+          display_name?: string
+          email?: string | null
+          enriched_at?: string | null
+          id?: string
+          is_active?: boolean
+          legal_name?: string | null
+          media?: Json | null
+          phone?: string | null
+          reviews_summary?: Json | null
+          scraped_data?: Json | null
+          services?: Json | null
+          slug?: string
+          source_url?: string | null
+          tagline?: string | null
+          tier?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       signature_requests: {
         Row: {
