@@ -1,155 +1,38 @@
-A — PROMPT LOVABLE FINAL
+## 3 correctifs page Partenaire Signature (ISR)
 
-1. CONTEXT
-- Problème confirmé dans le flux entrepreneur voice-sales.
-- Le popup `ModalHeyButWaitUpgrade` affiche une offre Fondateurs à prix inférieur (`799 $/mois`) après sélection Élite.
-- `PageContractorPlanOnboarding` calcule ce downgrade avec `selectedPlan.monthly_price * 0.8`.
-- Le récapitulatif et le checkout continuent ensuite avec `planCode=elite`, donc Stripe et le pricing backend restent à `999 $`.
-- Résultat actuel: popup ≠ résumé ≠ intention pricing. Trust cassé.
-
-2. OBJECTIVE
-Implémenter un fix conversion-first:
-- Supprimer toute réduction surprise après sélection d’un plan.
-- Transformer Fondateurs en couche prestige/exclusivité, jamais en rabais caché.
-- Forcer une seule source de vérité pour le plan sélectionné entre UI, résumé, taxes et checkout.
-- Bloquer techniquement tout plan Fondateurs mensuel inférieur au plan de base.
-
-3. USERS
-- Entrepreneur en onboarding.
-- Alex conseiller UNPRO.
-- Admin / support qui doit éviter les incohérences de paiement.
-
-4. DELIVERABLES
-- Désactiver le popup downgrade `Hey, attendez!` dans le flux de sélection.
-- Remplacer la logique Fondateurs après sélection par une expérience avant ou pendant le choix du plan.
-- Ajouter une structure canonique `selectedPlan` côté frontend pour transporter:
-  - `planCode`
-  - `variantCode`
-  - `displayName`
-  - `billingInterval`
-  - `basePriceCents`
-  - `addOnPriceCents`
-  - `stripePlanCode`
-  - `isFounderPrestige`
-- Brancher le récapitulatif uniquement sur cette sélection canonique.
-- Router le checkout uniquement avec le code canonique résolu.
-- Ajouter des garde-fous pour empêcher `foundersPrice < regularPrice` dans ce contexte.
-
-5. LOGIC
-Implement Option A immédiatement.
-
-Flow cible:
-```text
-Voir les plans
-  → Afficher Pro / Premium / Élite / Signature
-  → Afficher Élite Fondateur comme prestige séparé, pas comme rabais
-  → Sélection utilisateur
-  → selectedPlan canonique
-  → Récapitulatif
-  → Taxes backend
-  → Stripe intent/session
+### 1. Nombre d'avis corrigé → 320 (4.9)
+Migration data-only sur `signature_partners` pour `slug = 'isolation-solution-royal'`:
+```sql
+UPDATE public.signature_partners
+SET reviews_summary = '{"average":4.9,"count":320,"source":"Google"}'::jsonb
+WHERE slug = 'isolation-solution-royal';
 ```
 
-Règle produit:
-```text
-Si plan sélectionné ∈ Pro, Premium, Élite, Signature:
-  Interdire popup avec prix inférieur
-  Autoriser seulement:
-    - annualisation
-    - add-on prestige
-    - statut Fondateur
-    - territoire prioritaire
-    - visibilité IA renforcée
-    - prix verrouillé 10 ans
-    - paiement unique Fondateur
+### 2. Galerie — placeholders marqués "Photos à venir"
+Modifier `src/pages/partners/PageSignaturePartner.tsx` (section GALLERY, lignes 193-214):
+- Ajouter un flag `media.gallery_verified` (booléen, défaut `false`)
+- Si `gallery_verified !== true`, afficher overlay sur chaque image:
+  - voile sombre semi-opaque
+  - badge centré "Photos à venir" (style `bg-amber-500/15 text-amber-700 border-amber-500/30`, pill 999px)
+  - désactiver le lightbox (`onClick` no-op, `cursor-default`)
+- Sous-titre de section: "Réalisations récentes" → "Réalisations récentes" + petit caption `text-xs text-muted-foreground`: "Exemples illustratifs — vraies réalisations en cours d'ajout."
+- Quand l'admin uploadera de vraies paires avant/après, il passera `media.gallery_verified = true` et les overlays disparaîtront automatiquement.
+
+Aucune migration nécessaire (clé jsonb optionnelle).
+
+### 3. Retirer le créneau 09:00 (ISR commence à 11:00)
+Migration sur `partner_calendar_availability` pour retirer "09:00" de tous les slots futurs d'ISR:
+```sql
+UPDATE public.partner_calendar_availability
+SET slots = (SELECT jsonb_agg(s) FROM jsonb_array_elements_text(slots) s WHERE s <> '09:00')
+WHERE partner_id = (SELECT id FROM public.signature_partners WHERE slug='isolation-solution-royal')
+  AND date >= CURRENT_DATE;
 ```
+Les créneaux affichés deviendront `11:00 · 13:00 · 15:00`.
 
-6. DATA
-- Ne pas créer de table au premier fix.
-- Utiliser `plan_catalog` comme source backend existante pour checkout natif.
-- Garder `CONTRACTOR_PLANS` comme fallback marketing seulement.
-- Aligner les codes Fondateurs existants:
-  - `founder_elite_10y`
-  - `founder_signature_10y`
-- Vérifier que le flux n’utilise plus de pseudo-variant `founders` avec `planCode=elite` quand le prix affiché diffère.
+> Note: tu n'as pas répondu à la question horaires précise — je retire uniquement 09:00 comme suggéré par ton message. Dis-moi si tu veux aussi modifier 13:00/15:00 ou définir une plage différente (ex. lun-ven 11:00-16:00).
 
-7. UI/UX
-- Supprimer la modal bleue “Hey, attendez!”.
-- Remplacer par un bloc prestige non intrusif avant checkout:
-  - “Statut Fondateur Élite”
-  - “Territoire prioritaire”
-  - “Visibilité IA renforcée”
-  - “Prix verrouillé 10 ans”
-  - “Badge Fondateur vérifié”
-  - “Paiement unique” ou “supplément prestige”, jamais rabais.
-- CTA:
-  - “Activer Élite — 999 $/mois”
-  - “Réserver Élite Fondateur” si disponible.
-- Texte interdit:
-  - “offre exclusive pour vous” après sélection
-  - “799 $/mois” comme downgrade
-  - prix barré inférieur/surprise après engagement.
-
-8. COMPONENTS
-Modifier:
-- `src/pages/voice-sales/PageContractorPlanOnboarding.tsx`
-  - Supprimer `showFoundersModal` comme étape post-sélection.
-  - Supprimer le calcul `monthly_price * 0.8`.
-  - Utiliser une sélection canonique.
-  - Diriger Élite/Signature directement vers lead packs ou vers choix prestige affiché avant sélection.
-
-- `src/components/voice-sales/ModalHeyButWaitUpgrade.tsx`
-  - Ne plus l’utiliser dans ce flow.
-  - Option safe: convertir en modal upsell prestige sans prix inférieur, ou laisser inutilisée.
-
-- `src/components/voice-sales/CardPlanFounders.tsx`
-  - Repositionner comme carte prestige: prix supérieur, paiement unique ou 10 ans.
-  - Supprimer savings, line-through et tout signal de rabais.
-
-- `src/components/voice-sales/PanelInlineCheckout.tsx`
-  - Remplacer les props éparpillées par `selectedPlan` canonique.
-  - Afficher uniquement le prix issu de cette sélection.
-  - Ne plus afficher “(Fondateurs)” si le `planCode` reste `elite`.
-  - Si Fondateur réel: afficher le vrai code/prix Fondateur.
-
-- `src/pages/checkout/PageCheckoutNativeScrollable.tsx`
-  - Garder le backend pricing comme source de vérité.
-  - Ajouter un état d’erreur clair si un code Fondateur one-time est envoyé au checkout subscription.
-
-- `supabase/functions/create-contractor-checkout/index.ts`
-  - Ajouter validation serveur stricte: aucun plan mensuel Fondateur à prix inférieur à son plan de base.
-  - Conserver les plans Fondateurs comme one-time uniquement.
-
-9. ACTIONS
-- Create canonical plan selection helper.
-- Refactor voice-sales selection flow.
-- Remove downgrade modal trigger.
-- Reposition founder as prestige option.
-- Sync inline summary with canonical selection.
-- Validate checkout route/code mapping.
-- Verify taxes derive from backend pricing only.
-- Add guardrails in server checkout function.
-
-10. CONSTRAINTS
-- Ne pas casser `/checkout/native/:planCode`.
-- Ne pas modifier `src/integrations/supabase/client.ts` ni `types.ts`.
-- Ne pas introduire de réduction Fondateurs implicite.
-- Ne pas recalculer Stripe price côté client.
-- Ne pas créer de checkout avec un prix client-supplied.
-- Utiliser tokens sémantiques Tailwind existants dans l’UI.
-
-11. SUCCESS
-Terminé quand:
-- Le popup `799 $/mois` ne peut plus apparaître après sélection Élite/Signature.
-- Un utilisateur qui choisit Élite voit Élite à `999 $/mois` partout.
-- Un utilisateur qui choisit Fondateur voit un vrai plan prestige distinct, jamais un rabais surprise.
-- Résumé UI, taxes, Payment Element et checkout backend utilisent le même `planCode` canonique.
-- Aucun chemin ne peut afficher `Plan Élite (Fondateurs)` tout en chargeant `elite` standard sans cohérence explicite.
-
-12. TASKS
-1. Refactor `PageContractorPlanOnboarding` pour supprimer le downgrade modal et créer une sélection canonique.
-2. Refactor `CardPlanFounders` en carte prestige sans rabais ni prix barré.
-3. Refactor `PanelInlineCheckout` pour consommer une source unique de sélection.
-4. Ajouter garde-fous dans `create-contractor-checkout` contre tout prix Fondateurs inférieur au plan de base.
-5. Vérifier les routes `create-stripe-checkout-session`, `create-subscription-intent`, `calculate-checkout-pricing` et le checkout natif pour confirmer résumé = taxes = Stripe.
-6. Ajouter un test manuel ciblé: Élite sélectionné → résumé 999 → checkout 999; Fondateur sélectionné → code/prix Fondateur distinct.
+### Fichiers / actions
+- Migration #1: `UPDATE signature_partners` (count 320)
+- Migration #2: `UPDATE partner_calendar_availability` (retire 09:00)
+- Edit: `src/pages/partners/PageSignaturePartner.tsx` (overlay "Photos à venir" + caption)
