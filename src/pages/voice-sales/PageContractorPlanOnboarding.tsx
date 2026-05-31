@@ -9,7 +9,7 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { usePlanCatalog, useLeadPacks, useVoiceSalesChat } from "@/hooks/useVoiceSales";
 import CardPlanRegular from "@/components/voice-sales/CardPlanRegular";
 import CardPlanFounders from "@/components/voice-sales/CardPlanFounders";
-import ModalHeyButWaitUpgrade from "@/components/voice-sales/ModalHeyButWaitUpgrade";
+// ModalHeyButWaitUpgrade retiré : pas de downgrade post-sélection.
 import PanelLeadPackSelector from "@/components/voice-sales/PanelLeadPackSelector";
 import PanelInlineCheckout from "@/components/voice-sales/PanelInlineCheckout";
 import PanelPlanFitCheck from "@/components/voice-sales/PanelPlanFitCheck";
@@ -49,7 +49,7 @@ export default function PageContractorPlanOnboarding() {
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<"regular" | "founders">("regular");
   const [selectedPackId, setSelectedPackId] = useState<string | null>(null);
-  const [showFoundersModal, setShowFoundersModal] = useState(false);
+  // showFoundersModal supprimé : aucun popup downgrade après sélection.
   const [sessionId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
