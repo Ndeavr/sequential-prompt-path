@@ -190,28 +190,47 @@ export default function PageSignaturePartner({ slug: slugProp }: Props) {
       </section>
 
       {/* GALLERY */}
-      {gallery.length > 0 && (
+      {gallery.length > 0 && (() => {
+        const galleryVerified = (media as any).gallery_verified === true;
+        return (
         <section className="max-w-6xl mx-auto px-4 pb-16">
-          <h2 className="text-3xl font-bold tracking-tight mb-6">Réalisations récentes</h2>
+          <h2 className="text-3xl font-bold tracking-tight mb-2">Réalisations récentes</h2>
+          {!galleryVerified && (
+            <p className="text-xs text-muted-foreground mb-6">
+              Exemples illustratifs — vraies réalisations en cours d'ajout.
+            </p>
+          )}
+          {galleryVerified && <div className="mb-6" />}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {gallery.map((src, i) => (
               <button
                 key={src}
                 type="button"
-                onClick={() => setLightbox(src)}
-                className="group relative aspect-[4/3] overflow-hidden rounded-[18px] border border-border/60 bg-card"
+                onClick={() => galleryVerified && setLightbox(src)}
+                className={`group relative aspect-[4/3] overflow-hidden rounded-[18px] border border-border/60 bg-card ${galleryVerified ? "" : "cursor-default"}`}
               >
                 <img
                   src={src}
                   alt={`Réalisation ${i + 1} ${partner.display_name}`}
                   loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className={`w-full h-full object-cover transition-transform duration-500 ${galleryVerified ? "group-hover:scale-105" : ""}`}
                 />
+                {!galleryVerified && (
+                  <>
+                    <div className="absolute inset-0 bg-black/45" />
+                    <div className="absolute inset-0 flex items-center justify-center p-2">
+                      <span className="px-3 py-1 rounded-full bg-amber-500/15 text-amber-200 border border-amber-400/40 text-xs font-medium backdrop-blur-sm">
+                        Photos à venir
+                      </span>
+                    </div>
+                  </>
+                )}
               </button>
             ))}
           </div>
         </section>
-      )}
+        );
+      })()}
 
       {/* COVERAGE */}
       {partner.coverage?.length > 0 && (
