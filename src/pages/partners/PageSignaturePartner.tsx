@@ -1,6 +1,7 @@
 import { useParams, Navigate } from "react-router-dom";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { ShieldCheck, Star, Sparkles, MapPin, Award, CheckCircle2, Loader2 } from "lucide-react";
+import { ShieldCheck, Star, Sparkles, MapPin, Award, CheckCircle2, Loader2, X } from "lucide-react";
 import SeoHead from "@/seo/components/SeoHead";
 import SchemaStack from "@/seo/components/SchemaStack";
 import { useSignaturePartner } from "@/features/partners/hooks/useSignaturePartner";
@@ -15,6 +16,7 @@ export default function PageSignaturePartner({ slug: slugProp }: Props) {
   const params = useParams<{ slug: string }>();
   const slug = slugProp ?? params.slug ?? "";
   const { data: partner, isLoading } = useSignaturePartner(slug);
+  const [lightbox, setLightbox] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -28,7 +30,13 @@ export default function PageSignaturePartner({ slug: slugProp }: Props) {
   const canonical = `https://unpro.ca/${partner.slug}`;
   const title = `${partner.display_name} — Partenaire Signature UNPRO`;
   const description = `${partner.tagline ?? partner.display_name}. Partenaire Signature UNPRO vérifié. Réservation directe en ligne, aucune soumission requise.`;
-  const screenshot = (partner.media as any)?.screenshot as string | undefined;
+  const media = (partner.media ?? {}) as Record<string, any>;
+  const logoUrl = media.logo_url as string | undefined;
+  const heroUrl = media.hero_url as string | undefined;
+  const gallery = (media.gallery ?? []) as string[];
+  const ogImage = heroUrl ?? logoUrl ?? (media.screenshot as string | undefined);
+  const brand = (partner.brand ?? {}) as Record<string, any>;
+  const materialLabel = brand.material_label as string | undefined;
   const reviewsRating = (partner.reviews_summary as any)?.average as number | undefined;
   const reviewsCount = (partner.reviews_summary as any)?.count as number | undefined;
   const reviewsSource = (partner.reviews_summary as any)?.source as string | undefined;
