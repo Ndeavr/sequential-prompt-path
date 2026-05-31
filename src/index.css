@@ -147,6 +147,61 @@
     background: hsl(var(--background));
     color: hsl(var(--foreground));
   }
+
+  /* ═══════════════════════════════════════════════
+     INTEL SCOPE — UNPRO AI Trust Layer (bronze + black + electric blue)
+     ═══════════════════════════════════════════════ */
+  .intel-theme {
+    --background: 220 30% 4%;
+    --foreground: 40 25% 92%;
+    --card: 222 25% 6%;
+    --card-foreground: 40 25% 92%;
+    --popover: 222 25% 5%;
+    --popover-foreground: 40 25% 92%;
+    --primary: 210 100% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 28 60% 45%;
+    --secondary-foreground: 0 0% 100%;
+    --accent: 28 70% 55%;
+    --accent-foreground: 0 0% 100%;
+    --muted: 222 15% 10%;
+    --muted-foreground: 40 10% 60%;
+    --border: 28 30% 18%;
+    --input: 222 20% 12%;
+    --ring: 210 100% 55%;
+    --intel-bronze: 28 60% 45%;
+    --intel-bronze-glow: 28 80% 55%;
+    --intel-electric: 210 100% 55%;
+    --intel-electric-glow: 210 100% 65%;
+    --intel-base: 220 30% 4%;
+    --intel-surface: 222 25% 7%;
+    --shadow-intel: 0 10px 40px -10px hsl(210 100% 55% / 0.25), 0 1px 0 0 hsl(28 60% 45% / 0.15) inset;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  .intel-theme .glass-intel {
+    background: linear-gradient(135deg, hsl(0 0% 100% / 0.04), hsl(0 0% 100% / 0.01));
+    border: 1px solid hsl(28 60% 45% / 0.18);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: 18px;
+  }
+
+  .intel-theme .intel-bronze-stroke { border: 1px solid hsl(var(--intel-bronze) / 0.35); }
+  .intel-theme .intel-glow { box-shadow: 0 0 40px -8px hsl(var(--intel-electric) / 0.45); }
+
+  .intel-theme .intel-headline {
+    font-family: 'Archivo Black', 'Bebas Neue', 'Inter', sans-serif;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    line-height: 0.95;
+  }
+
+  @keyframes intel-pulse-bronze {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--intel-bronze) / 0.5); }
+    50% { box-shadow: 0 0 24px 6px hsl(var(--intel-bronze) / 0.25); }
+  }
 }
 
 @layer base {
