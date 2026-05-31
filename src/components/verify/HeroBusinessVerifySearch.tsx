@@ -17,7 +17,12 @@ import type { BusinessSearchResult } from "@/components/contractor/BusinessNameS
 const MIN_CHARS = 3;
 const DEBOUNCE_MS = 300;
 
-export default function HeroBusinessVerifySearch() {
+interface HeroBusinessVerifySearchProps {
+  /** When provided, picking a result calls this instead of navigating away. */
+  onPick?: (result: BusinessSearchResult, rawQuery: string) => void;
+}
+
+export default function HeroBusinessVerifySearch({ onPick }: HeroBusinessVerifySearchProps = {}) {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<BusinessSearchResult[]>([]);
