@@ -261,6 +261,24 @@ export default function PageSignaturePartner({ slug: slugProp }: Props) {
           </p>
         </div>
       </section>
+
+      {/* LIGHTBOX */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            type="button"
+            className="absolute top-4 right-4 text-white p-2 rounded-full bg-white/10 hover:bg-white/20"
+            onClick={() => setLightbox(null)}
+            aria-label="Fermer"
+          >
+            <X className="h-6 w-6" />
+          </button>
+          <img src={lightbox} alt="" className="max-w-full max-h-full object-contain rounded-[18px]" />
+        </div>
+      )}
     </div>
   );
 }
