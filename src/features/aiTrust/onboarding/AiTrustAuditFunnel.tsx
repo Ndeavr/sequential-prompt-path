@@ -329,7 +329,7 @@ export default function AiTrustAuditFunnel() {
                 Combinaison pondérée: perception IA, alignement, sentiment, signaux publics.
               </p>
               <div className="flex flex-col sm:flex-row items-center gap-6 rounded-2xl border border-white/10 bg-white/5 p-6">
-                <TrustPositionBadge position={results.trust_position ?? "emerging"} size="lg" />
+                <TrustPositionBadge position={results.trust_position ?? "emerging"} className="text-sm px-4 py-2" />
                 <div>
                   <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
                     Score de confiance
