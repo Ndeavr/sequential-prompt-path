@@ -80,6 +80,10 @@ export default function HeroBusinessVerifySearch({ onPick }: HeroBusinessVerifyS
 
   const pick = (r: BusinessSearchResult) => {
     setOpen(false);
+    if (onPick) {
+      onPick(r, query.trim());
+      return;
+    }
     navigate(
       `/verifier-un-entrepreneur?q=${encodeURIComponent(r.business_name)}`,
       {
