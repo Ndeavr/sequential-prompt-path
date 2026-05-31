@@ -1099,6 +1099,7 @@ export const AppRouter = () => (
         <Route path="/parler-a-alex" element={<ParlerAAlexPage />} />
         <Route path="/alex-100m" element={<Alex100MPage />} />
         <Route path="/problemes-maison" element={<ProblemesMaisonPage />} />
+        <Route path="/problemes/pyrite-sous-sol" element={<PagePyriteSousSol />} />
         <Route path="/villes-desservies" element={<VillesDesserviesPage />} />
         <Route path="/ville-service/:city/:service" element={<CityServicePage />} />
         <Route path="/professionnels2" element={<ProfessionnelsPage2 />} />
