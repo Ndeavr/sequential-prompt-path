@@ -80,9 +80,9 @@ export default function SectionPlansPreviewV2({ onTrackCta }: Props) {
           size="lg"
           variant="outline"
           className="w-full h-12 rounded-xl mt-5 gap-2 border-primary/30 hover:bg-primary/5"
-          onClick={() => { onTrackCta("plans_view_all", "plans"); navigate("/entrepreneur/plans"); }}
+          onClick={() => { onTrackCta("plans_open_plan_ia", "plans"); navigate("/entrepreneur/plan-ia"); }}
         >
-          Voir tous les forfaits <ArrowRight className="w-4 h-4" />
+          Générer mon plan IA personnalisé <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
     </section>

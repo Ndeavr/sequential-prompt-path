@@ -979,9 +979,9 @@ function PlanRecommendationCard({
           <Button size="lg" onClick={onActivate} className="flex-1 gap-2">
             Activer mon profil UNPRO <ArrowRight className="w-4 h-4" />
           </Button>
-          <Link to="/entrepreneur/plans" className="flex-1">
+          <Link to="/entrepreneur/plan-ia" className="flex-1">
             <Button size="lg" variant="outline" className="w-full border-white/20 text-white/80 hover:bg-white/5">
-              Voir les autres plans
+              Voir mon plan IA personnalisé
             </Button>
           </Link>
         </div>

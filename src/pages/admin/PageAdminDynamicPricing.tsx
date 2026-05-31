@@ -142,6 +142,53 @@ export default function PageAdminDynamicPricing() {
         </Card>
 
         <Card className="bg-white/[0.03] border-white/10">
+          <CardHeader><CardTitle className="text-white">Métiers sous-desservis (gap demande – compétition)</CardTitle></CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-white/10 hover:bg-transparent">
+                  <TableHead className="text-white/60">Territoire</TableHead>
+                  <TableHead className="text-white/60">Métier</TableHead>
+                  <TableHead className="text-white/60">Gap</TableHead>
+                  <TableHead className="text-white/60">Demande</TableHead>
+                  <TableHead className="text-white/60">Compétition</TableHead>
+                  <TableHead className="text-white/60">Recommandation</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[...markets]
+                  .map((m) => ({ ...m, gap: m.demand_score - m.competition_score }))
+                  .sort((a, b) => b.gap - a.gap)
+                  .slice(0, 10)
+                  .map((m) => (
+                    <TableRow key={`gap-${m.id}`} className="border-white/5">
+                      <TableCell className="font-medium">{m.territory}</TableCell>
+                      <TableCell>{m.trade}</TableCell>
+                      <TableCell>
+                        <span className={m.gap > 30 ? "text-emerald-400 font-semibold" : m.gap > 10 ? "text-amber-400" : "text-white/50"}>
+                          {m.gap > 0 ? "+" : ""}{m.gap}
+                        </span>
+                      </TableCell>
+                      <TableCell>{m.demand_score}/100</TableCell>
+                      <TableCell>{m.competition_score}/100</TableCell>
+                      <TableCell className="text-white/70 text-xs">
+                        {m.gap > 30 ? "Recruter activement" : m.gap > 10 ? "Opportunité" : "Saturé"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white/[0.03] border-white/10">
+          <CardHeader><CardTitle className="text-white">Override prix manuel</CardTitle></CardHeader>
+          <CardContent>
+            <OverrideForm onSaved={load} />
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white/[0.03] border-white/10">
           <CardHeader><CardTitle className="text-white">Audit des recommandations (50 dernières)</CardTitle></CardHeader>
           <CardContent>
             <Table>
@@ -171,6 +218,61 @@ export default function PageAdminDynamicPricing() {
             )}
           </CardContent>
         </Card>
+      </div>
+    </div>
+  );
+}
+
+function OverrideForm({ onSaved }: { onSaved: () => void }) {
+  const [contractorId, setContractorId] = useState("");
+  const [territory, setTerritory] = useState("");
+  const [trade, setTrade] = useState("");
+  const [price, setPrice] = useState("");
+  const [planSlug, setPlanSlug] = useState("");
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    if (!reason.trim()) {
+      toast.error("Une raison est requise");
+      return;
+    }
+    if (!contractorId && (!territory || !trade)) {
+      toast.error("Spécifier un contractor_id OU (territoire + métier)");
+      return;
+    }
+    setSaving(true);
+    const payload: any = {
+      reason,
+      contractor_id: contractorId || null,
+      territory: territory || null,
+      trade: trade || null,
+      forced_price_cents: price ? Math.round(Number(price) * 100) : null,
+      forced_plan_slug: planSlug || null,
+    };
+    const { error } = await supabase.from("pricing_overrides").insert(payload);
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Override créé");
+    setContractorId(""); setTerritory(""); setTrade(""); setPrice(""); setPlanSlug(""); setReason("");
+    onSaved();
+  }
+
+  return (
+    <div className="grid md:grid-cols-3 gap-3">
+      <Input placeholder="contractor_id (uuid)" value={contractorId} onChange={(e) => setContractorId(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+      <Input placeholder="Territoire (ex: Laval)" value={territory} onChange={(e) => setTerritory(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+      <Input placeholder="Métier (ex: isolation)" value={trade} onChange={(e) => setTrade(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+      <Input placeholder="Prix forcé $ (ex: 799)" value={price} onChange={(e) => setPrice(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+      <Input placeholder="Plan forcé (recrue|pro|premium|elite|signature)" value={planSlug} onChange={(e) => setPlanSlug(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+      <Input placeholder="Raison interne" value={reason} onChange={(e) => setReason(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+      <div className="md:col-span-3 flex justify-end">
+        <Button onClick={save} disabled={saving} className="bg-[hsl(210,100%,65%)] text-black hover:bg-[hsl(210,100%,70%)]">
+          {saving ? "Enregistrement…" : "Créer l'override"}
+        </Button>
       </div>
     </div>
   );

@@ -101,9 +101,9 @@ export default function HeroV2({ onTrackCta }: Props) {
           variant="outline"
           size="lg"
           className="w-full h-12 rounded-xl text-sm border-primary/30 hover:bg-primary/5"
-          onClick={() => { onTrackCta("hero_secondary_plans", "hero"); document.getElementById("section-plans")?.scrollIntoView({ behavior: "smooth" }); }}
+          onClick={() => { onTrackCta("hero_secondary_plan_ia", "hero"); window.location.assign("/entrepreneur/plan-ia"); }}
         >
-          Voir les forfaits
+          Voir mon plan IA personnalisé
         </Button>
       </motion.div>
 

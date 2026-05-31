@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { GrowthProfileWizard, type GrowthProfileInput } from "@/features/dynamicPricing/components/GrowthProfileWizard";
 import { DynamicPlanReveal } from "@/features/dynamicPricing/components/DynamicPlanReveal";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { toast } from "sonner";
 
 type Phase = "intro" | "wizard" | "analyzing" | "reveal";
@@ -10,6 +11,14 @@ type Phase = "intro" | "wizard" | "analyzing" | "reveal";
 export default function PageDynamicPlanGeneration() {
   const [phase, setPhase] = useState<Phase>("intro");
   const [recommendation, setRecommendation] = useState<any>(null);
+  const { openAlex } = useAlexVoice();
+
+  function openCustomPlanAlex() {
+    openAlex(
+      "custom_plan_consultation",
+      "L'entrepreneur veut un plan sur mesure. Pose 3 questions courtes : objectif #1, exclusivité territoriale voulue (oui/non), contrainte budgétaire. Ensuite confirme un brouillon de plan négocié et propose de le verrouiller.",
+    );
+  }
 
   async function handleGenerate(profile: GrowthProfileInput) {
     setPhase("analyzing");
@@ -64,6 +73,14 @@ export default function PageDynamicPlanGeneration() {
               >
                 Démarrer l'analyse
               </button>
+              <div className="mt-4">
+                <button
+                  onClick={openCustomPlanAlex}
+                  className="text-sm text-white/60 hover:text-white underline-offset-4 hover:underline transition"
+                >
+                  Créer mon plan sur mesure avec Alex
+                </button>
+              </div>
             </motion.section>
           )}
 
@@ -108,14 +125,7 @@ export default function PageDynamicPlanGeneration() {
             >
               <DynamicPlanReveal
                 recommendation={recommendation}
-                onCustom={() => {
-                  // Hand off to Alex for custom plan consultation
-                  window.dispatchEvent(
-                    new CustomEvent("alex:open", {
-                      detail: { mode: "custom_plan_consultation", language: "fr" },
-                    }),
-                  );
-                }}
+                onCustom={openCustomPlanAlex}
               />
             </motion.div>
           )}
