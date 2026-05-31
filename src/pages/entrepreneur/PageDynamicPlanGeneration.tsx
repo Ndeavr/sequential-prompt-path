@@ -73,6 +73,14 @@ export default function PageDynamicPlanGeneration() {
               >
                 Démarrer l'analyse
               </button>
+              <div className="mt-4">
+                <button
+                  onClick={openCustomPlanAlex}
+                  className="text-sm text-white/60 hover:text-white underline-offset-4 hover:underline transition"
+                >
+                  Créer mon plan sur mesure avec Alex
+                </button>
+              </div>
             </motion.section>
           )}
 
