@@ -75,16 +75,15 @@ export default function PageContractorPlanOnboarding() {
     else setPhase("lead_packs");
   }, [plans, searchParams, selectedPlanId]);
 
+  // Single canonical handler — never propose a downgrade after selection.
+  // Founder prestige is shown as a distinct higher-tier option before selection,
+  // not as a discount popup post-engagement.
   const handleFitCheckConfirm = (finalCode: string) => {
     const finalPlan = plans?.find((p: any) => p.code === finalCode);
     if (finalPlan) {
       setSelectedPlanId(finalPlan.id);
-      if (finalPlan.code === "elite" || finalPlan.code === "signature") {
-        setShowFoundersModal(true);
-      } else {
-        setSelectedVariant("regular");
-        setPhase("lead_packs");
-      }
+      setSelectedVariant("regular");
+      setPhase("lead_packs");
     }
   };
 
@@ -96,25 +95,7 @@ export default function PageContractorPlanOnboarding() {
 
   const handleSelectPlan = (planId: string) => {
     setSelectedPlanId(planId);
-    const plan = plans?.find((p: any) => p.id === planId);
-    // Show Founders upsell for Élite/Signature
-    if (plan && (plan.code === "elite" || plan.code === "signature")) {
-      setShowFoundersModal(true);
-    } else {
-      setSelectedVariant("regular");
-      setPhase("lead_packs");
-    }
-  };
-
-  const handleFoundersAccept = () => {
-    setSelectedVariant("founders");
-    setShowFoundersModal(false);
-    setPhase("lead_packs");
-  };
-
-  const handleFoundersDecline = () => {
     setSelectedVariant("regular");
-    setShowFoundersModal(false);
     setPhase("lead_packs");
   };
 
