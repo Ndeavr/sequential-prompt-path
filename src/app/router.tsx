@@ -1403,6 +1403,7 @@ export const AppRouter = () => (
         <Route path="/admin/facebook-extraction" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageFacebookExtractionEngine /></Suspense></ProtectedRoute>} />
         <Route path="/admin/extraction/coverage" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminCoverageCityDomain /></Suspense></ProtectedRoute>} />
         <Route path="/admin/outbound/approvals" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOutboundApprovals /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/outbound/auto-flagging" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOutboundAutoFlagging /></Suspense></ProtectedRoute>} />
         <Route path="/admin/prospect-execution" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminProspectExecutionDashboard /></Suspense></ProtectedRoute>} />
         <Route path="/admin/prospect-execution/:runId" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminProspectExecutionRunDetail /></Suspense></ProtectedRoute>} />
         <Route path="/admin/affiliates" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAffiliateDashboard /></Suspense></ProtectedRoute>} />
