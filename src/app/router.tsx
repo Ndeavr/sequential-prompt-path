@@ -793,6 +793,8 @@ export const AppRouter = () => (
         {/* Contractor Onboarding AIPP Funnel */}
         <Route path="/entrepreneur/join" element={<PageContractorLandingAcquisition />} />
         <Route path="/entrepreneur/ai-trust-audit" element={<Suspense fallback={<LazyFallback />}><PageAiTrustAudit /></Suspense>} />
+        <Route path="/entrepreneur/pourquoi-vos-resultats-chutent" element={<Suspense fallback={<LazyFallback />}><PageWhyResultsAreDropping /></Suspense>} />
+        <Route path="/pourquoi-vos-resultats-chutent" element={<Suspense fallback={<LazyFallback />}><PageWhyResultsAreDropping /></Suspense>} />
         <Route path="/entrepreneur/onboarding-voice" element={<Suspense fallback={<LazyFallback />}><PageContractorVoiceFirstLanding /></Suspense>} />
         <Route path="/entrepreneur/plan" element={<Suspense fallback={<LazyFallback />}><PageContractorPlanOnboarding /></Suspense>} />
         <Route path="/entrepreneur/onboarding" element={<PageContractorOnboardingStart />} />
