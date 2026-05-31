@@ -77,7 +77,7 @@ export default function PanelInlineCheckout({
       <CardContent className="space-y-3">
         <div className="space-y-1.5 text-sm">
           <div className="flex justify-between">
-            <span>Plan {planName} {variant === "founders" ? "(Fondateurs)" : ""}</span>
+            <span>Plan {planName}</span>
             <span className="font-medium">{fmt(planPriceD)} $</span>
           </div>
           {packPriceD > 0 && (

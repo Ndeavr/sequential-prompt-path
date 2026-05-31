@@ -9,7 +9,7 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { usePlanCatalog, useLeadPacks, useVoiceSalesChat } from "@/hooks/useVoiceSales";
 import CardPlanRegular from "@/components/voice-sales/CardPlanRegular";
 import CardPlanFounders from "@/components/voice-sales/CardPlanFounders";
-import ModalHeyButWaitUpgrade from "@/components/voice-sales/ModalHeyButWaitUpgrade";
+// ModalHeyButWaitUpgrade retiré : pas de downgrade post-sélection.
 import PanelLeadPackSelector from "@/components/voice-sales/PanelLeadPackSelector";
 import PanelInlineCheckout from "@/components/voice-sales/PanelInlineCheckout";
 import PanelPlanFitCheck from "@/components/voice-sales/PanelPlanFitCheck";
@@ -49,7 +49,7 @@ export default function PageContractorPlanOnboarding() {
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<"regular" | "founders">("regular");
   const [selectedPackId, setSelectedPackId] = useState<string | null>(null);
-  const [showFoundersModal, setShowFoundersModal] = useState(false);
+  // showFoundersModal supprimé : aucun popup downgrade après sélection.
   const [sessionId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -75,16 +75,15 @@ export default function PageContractorPlanOnboarding() {
     else setPhase("lead_packs");
   }, [plans, searchParams, selectedPlanId]);
 
+  // Single canonical handler — never propose a downgrade after selection.
+  // Founder prestige is shown as a distinct higher-tier option before selection,
+  // not as a discount popup post-engagement.
   const handleFitCheckConfirm = (finalCode: string) => {
     const finalPlan = plans?.find((p: any) => p.code === finalCode);
     if (finalPlan) {
       setSelectedPlanId(finalPlan.id);
-      if (finalPlan.code === "elite" || finalPlan.code === "signature") {
-        setShowFoundersModal(true);
-      } else {
-        setSelectedVariant("regular");
-        setPhase("lead_packs");
-      }
+      setSelectedVariant("regular");
+      setPhase("lead_packs");
     }
   };
 
@@ -96,25 +95,7 @@ export default function PageContractorPlanOnboarding() {
 
   const handleSelectPlan = (planId: string) => {
     setSelectedPlanId(planId);
-    const plan = plans?.find((p: any) => p.id === planId);
-    // Show Founders upsell for Élite/Signature
-    if (plan && (plan.code === "elite" || plan.code === "signature")) {
-      setShowFoundersModal(true);
-    } else {
-      setSelectedVariant("regular");
-      setPhase("lead_packs");
-    }
-  };
-
-  const handleFoundersAccept = () => {
-    setSelectedVariant("founders");
-    setShowFoundersModal(false);
-    setPhase("lead_packs");
-  };
-
-  const handleFoundersDecline = () => {
     setSelectedVariant("regular");
-    setShowFoundersModal(false);
     setPhase("lead_packs");
   };
 
@@ -261,17 +242,7 @@ export default function PageContractorPlanOnboarding() {
           </div>
         )}
 
-        {/* Founders upsell modal */}
-        {selectedPlan && (
-          <ModalHeyButWaitUpgrade
-            open={showFoundersModal}
-            onClose={handleFoundersDecline}
-            planName={selectedPlan.name}
-            foundersPrice={Math.round(((selectedPlan.monthly_price ?? 0) / 100) * 0.8)}
-            regularPrice={Math.round((selectedPlan.monthly_price ?? 0) / 100)}
-            onAccept={handleFoundersAccept}
-          />
-        )}
+        {/* Downgrade popup retiré : aucune réduction surprise après sélection. */}
       </div>
     </>
   );

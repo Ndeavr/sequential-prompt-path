@@ -10,28 +10,29 @@ interface Props {
 }
 
 export default function CardPlanFounders({ plan, foundersPrice, onSelect }: Props) {
-  const savings = foundersPrice ? plan.monthly_price - foundersPrice : 0;
+  // Fondateurs = couche PRESTIGE (jamais un rabais).
+  // On n'affiche un prix Fondateur que s'il est strictement supérieur au prix régulier.
+  const regular = plan?.monthly_price ?? 0;
+  const prestigeValid = typeof foundersPrice === "number" && foundersPrice > regular;
+  const prestigePrice = prestigeValid ? foundersPrice : regular;
 
   return (
     <Card className="relative overflow-hidden ring-2 ring-primary bg-gradient-to-br from-primary/5 to-primary/10">
       <div className="absolute top-0 left-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1.5 text-center flex items-center justify-center gap-1">
-        <Crown className="w-3.5 h-3.5" /> Programme Fondateurs — Places limitées
+        <Crown className="w-3.5 h-3.5" /> Statut Fondateur — Places limitées par ville
       </div>
       <CardContent className="p-5 pt-10 space-y-3">
         <div>
           <h3 className="font-bold text-lg flex items-center gap-2">
             {plan.name}
-            <Badge className="bg-primary/20 text-primary text-xs">Founders</Badge>
+            <Badge className="bg-primary/20 text-primary text-xs">Fondateur</Badge>
           </h3>
-          <p className="text-xs text-muted-foreground">Prix gelé à vie • Bonus exclusifs</p>
+          <p className="text-xs text-muted-foreground">Territoire prioritaire • Prix verrouillé 10 ans</p>
         </div>
 
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-bold text-primary">{foundersPrice ?? plan.monthly_price}$</span>
+          <span className="text-3xl font-bold text-primary">{prestigePrice}$</span>
           <span className="text-sm text-muted-foreground">/mois</span>
-          {savings > 0 && (
-            <span className="text-sm line-through text-muted-foreground">{plan.monthly_price}$</span>
-          )}
         </div>
 
         {plan.appointments_range_min && (
@@ -41,13 +42,14 @@ export default function CardPlanFounders({ plan, foundersPrice, onSelect }: Prop
         )}
 
         <ul className="space-y-1.5 text-sm">
-          <li className="flex items-center gap-2"><Sparkles className="w-3.5 h-3.5 text-primary" /> Prix gelé à vie</li>
-          <li className="flex items-center gap-2"><Sparkles className="w-3.5 h-3.5 text-primary" /> Support prioritaire</li>
+          <li className="flex items-center gap-2"><Sparkles className="w-3.5 h-3.5 text-primary" /> Territoire prioritaire IA</li>
+          <li className="flex items-center gap-2"><Sparkles className="w-3.5 h-3.5 text-primary" /> Visibilité IA renforcée</li>
+          <li className="flex items-center gap-2"><Sparkles className="w-3.5 h-3.5 text-primary" /> Prix verrouillé 10 ans</li>
           <li className="flex items-center gap-2"><Sparkles className="w-3.5 h-3.5 text-primary" /> Badge Fondateur vérifié</li>
         </ul>
 
         <Button onClick={() => onSelect(plan.id)} className="w-full font-semibold">
-          <Crown className="w-4 h-4 mr-2" /> Devenir Fondateur
+          <Crown className="w-4 h-4 mr-2" /> Réserver mon statut Fondateur
         </Button>
       </CardContent>
     </Card>

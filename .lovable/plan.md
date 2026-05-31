@@ -1,63 +1,155 @@
-## État actuel — le système est déjà construit à 80%
+A — PROMPT LOVABLE FINAL
 
-La base existe et fonctionne :
-- **Tables** : `contractor_growth_profiles`, `territory_market_scores`, `dynamic_plan_recommendations`, `pricing_engine_coefficients` ✅
-- **Edge function** : `api_generate_dynamic_plan` (287 lignes, calcul prix dynamique + reco) ✅
-- **UI entrepreneur** : `/entrepreneur/plan-ia` → `PageDynamicPlanGeneration` (intro cinématique + `GrowthProfileWizard` 10 questions + `DynamicPlanReveal`) ✅
-- **Admin** : `/admin/dynamic-pricing` → `PageAdminDynamicPricing` (coefficients) ✅
+1. CONTEXT
+- Problème confirmé dans le flux entrepreneur voice-sales.
+- Le popup `ModalHeyButWaitUpgrade` affiche une offre Fondateurs à prix inférieur (`799 $/mois`) après sélection Élite.
+- `PageContractorPlanOnboarding` calcule ce downgrade avec `selectedPlan.monthly_price * 0.8`.
+- Le récapitulatif et le checkout continuent ensuite avec `planCode=elite`, donc Stripe et le pricing backend restent à `999 $`.
+- Résultat actuel: popup ≠ résumé ≠ intention pricing. Trust cassé.
 
-**Ce qui manque** vs. la spec : intégration au funnel, handler Alex "plan sur mesure", admin saturation/territoires, et remplacement des CTA "Choisissez un forfait" dans le reste du parcours.
+2. OBJECTIVE
+Implémenter un fix conversion-first:
+- Supprimer toute réduction surprise après sélection d’un plan.
+- Transformer Fondateurs en couche prestige/exclusivité, jamais en rabais caché.
+- Forcer une seule source de vérité pour le plan sélectionné entre UI, résumé, taxes et checkout.
+- Bloquer techniquement tout plan Fondateurs mensuel inférieur au plan de base.
 
-## Ce qu'on ajoute (5 deltas)
+3. USERS
+- Entrepreneur en onboarding.
+- Alex conseiller UNPRO.
+- Admin / support qui doit éviter les incohérences de paiement.
 
-### 1. Brancher AIPP → Plan IA (au lieu de la grille statique)
+4. DELIVERABLES
+- Désactiver le popup downgrade `Hey, attendez!` dans le flux de sélection.
+- Remplacer la logique Fondateurs après sélection par une expérience avant ou pendant le choix du plan.
+- Ajouter une structure canonique `selectedPlan` côté frontend pour transporter:
+  - `planCode`
+  - `variantCode`
+  - `displayName`
+  - `billingInterval`
+  - `basePriceCents`
+  - `addOnPriceCents`
+  - `stripePlanCode`
+  - `isFounderPrestige`
+- Brancher le récapitulatif uniquement sur cette sélection canonique.
+- Router le checkout uniquement avec le code canonique résolu.
+- Ajouter des garde-fous pour empêcher `foundersPrice < regularPrice` dans ce contexte.
 
-Dans `PageEntrepreneurDiagnosticLanding.tsx` (ligne 982) : remplacer le `Link to="/entrepreneur/plans"` (grille générique) par `Link to="/entrepreneur/plan-ia"` après que le score AIPP est révélé. Idem dans `ContractorOnboardingLanding` et le CTA post-paiement.
+5. LOGIC
+Implement Option A immédiatement.
 
-Repositionner le copy CTA : `"Voir mon plan IA personnalisé"` (au lieu de "Choisissez un forfait" / "Voir les forfaits").
+Flow cible:
+```text
+Voir les plans
+  → Afficher Pro / Premium / Élite / Signature
+  → Afficher Élite Fondateur comme prestige séparé, pas comme rabais
+  → Sélection utilisateur
+  → selectedPlan canonique
+  → Récapitulatif
+  → Taxes backend
+  → Stripe intent/session
+```
 
-### 2. Handler Alex "Plan sur mesure"
+Règle produit:
+```text
+Si plan sélectionné ∈ Pro, Premium, Élite, Signature:
+  Interdire popup avec prix inférieur
+  Autoriser seulement:
+    - annualisation
+    - add-on prestige
+    - statut Fondateur
+    - territoire prioritaire
+    - visibilité IA renforcée
+    - prix verrouillé 10 ans
+    - paiement unique Fondateur
+```
 
-Ajouter `custom_plan_consultation` comme mode Alex (`src/config/alexModes.ts` + listener sur `alex:open` dans `AlexVoiceContext`). Alex pose 3-4 questions ouvertes (objectif, exclusivité voulue, contraintes), génère un brouillon via `api_generate_dynamic_plan` avec `override_mode=custom`, puis propose un prix négocié + bouton "Verrouiller ce plan".
+6. DATA
+- Ne pas créer de table au premier fix.
+- Utiliser `plan_catalog` comme source backend existante pour checkout natif.
+- Garder `CONTRACTOR_PLANS` comme fallback marketing seulement.
+- Aligner les codes Fondateurs existants:
+  - `founder_elite_10y`
+  - `founder_signature_10y`
+- Vérifier que le flux n’utilise plus de pseudo-variant `founders` avec `planCode=elite` quand le prix affiché diffère.
 
-Ajouter sur la page principale entrepreneur un bouton tertiaire `Créer mon plan sur mesure` qui déclenche le même évènement (déjà présent dans `DynamicPlanReveal`, à hisser au niveau du parcours).
+7. UI/UX
+- Supprimer la modal bleue “Hey, attendez!”.
+- Remplacer par un bloc prestige non intrusif avant checkout:
+  - “Statut Fondateur Élite”
+  - “Territoire prioritaire”
+  - “Visibilité IA renforcée”
+  - “Prix verrouillé 10 ans”
+  - “Badge Fondateur vérifié”
+  - “Paiement unique” ou “supplément prestige”, jamais rabais.
+- CTA:
+  - “Activer Élite — 999 $/mois”
+  - “Réserver Élite Fondateur” si disponible.
+- Texte interdit:
+  - “offre exclusive pour vous” après sélection
+  - “799 $/mois” comme downgrade
+  - prix barré inférieur/surprise après engagement.
 
-### 3. Admin Dynamic Pricing — extensions
+8. COMPONENTS
+Modifier:
+- `src/pages/voice-sales/PageContractorPlanOnboarding.tsx`
+  - Supprimer `showFoundersModal` comme étape post-sélection.
+  - Supprimer le calcul `monthly_price * 0.8`.
+  - Utiliser une sélection canonique.
+  - Diriger Élite/Signature directement vers lead packs ou vers choix prestige affiché avant sélection.
 
-Étendre `PageAdminDynamicPricing` (177 lignes) avec 3 nouveaux panels lisant le data existant :
-- **Saturation marchés** : table `territory_market_scores` ordonnée par `exclusivity_slots_taken/exclusivity_slots_total DESC`, badge rouge si saturé.
-- **Métiers sous-desservis** : agrégation `demand_score - competition_score` (gap > 30 → highlight).
-- **Override prix manuel** : drawer sur ligne `dynamic_plan_recommendations` permettant d'écrire dans `pricing_overrides` (table existante).
+- `src/components/voice-sales/ModalHeyButWaitUpgrade.tsx`
+  - Ne plus l’utiliser dans ce flow.
+  - Option safe: convertir en modal upsell prestige sans prix inférieur, ou laisser inutilisée.
 
-### 4. Rafraîchir UI Reveal (positionnement premium)
+- `src/components/voice-sales/CardPlanFounders.tsx`
+  - Repositionner comme carte prestige: prix supérieur, paiement unique ou 10 ans.
+  - Supprimer savings, line-through et tout signal de rabais.
 
-`DynamicPlanReveal` : ajouter 3 ScoreRings côte à côte (marché / opportunité / compétition — données déjà retournées par l'edge function dans `recommendation_reason`), badge "Exclusivité partielle disponible" si `exclusivity_level !== 'none'`, et plage de revenus estimés en gros caractères au-dessus du prix.
+- `src/components/voice-sales/PanelInlineCheckout.tsx`
+  - Remplacer les props éparpillées par `selectedPlan` canonique.
+  - Afficher uniquement le prix issu de cette sélection.
+  - Ne plus afficher “(Fondateurs)” si le `planCode` reste `elite`.
+  - Si Fondateur réel: afficher le vrai code/prix Fondateur.
 
-Garantir le wording exigé :
-- Header : "Plan IA optimisé pour votre marché"
-- Sous-titre : "Optimisé selon votre métier, territoire et capacité"
-- Jamais "Choisissez un forfait" ni "Forfait" comme mot principal.
+- `src/pages/checkout/PageCheckoutNativeScrollable.tsx`
+  - Garder le backend pricing comme source de vérité.
+  - Ajouter un état d’erreur clair si un code Fondateur one-time est envoyé au checkout subscription.
 
-### 5. Audit + suppression points d'entrée "grille statique"
+- `supabase/functions/create-contractor-checkout/index.ts`
+  - Ajouter validation serveur stricte: aucun plan mensuel Fondateur à prix inférieur à son plan de base.
+  - Conserver les plans Fondateurs comme one-time uniquement.
 
-Recenser via `rg "Choisissez un forfait|/entrepreneur/plans"` les autres entrées qui pointent vers une grille SaaS classique et les rediriger vers `/entrepreneur/plan-ia` (ou les rendre internes/admin uniquement).
+9. ACTIONS
+- Create canonical plan selection helper.
+- Refactor voice-sales selection flow.
+- Remove downgrade modal trigger.
+- Reposition founder as prestige option.
+- Sync inline summary with canonical selection.
+- Validate checkout route/code mapping.
+- Verify taxes derive from backend pricing only.
+- Add guardrails in server checkout function.
 
-## Hors-scope (déjà fait, on ne touche pas)
+10. CONSTRAINTS
+- Ne pas casser `/checkout/native/:planCode`.
+- Ne pas modifier `src/integrations/supabase/client.ts` ni `types.ts`.
+- Ne pas introduire de réduction Fondateurs implicite.
+- Ne pas recalculer Stripe price côté client.
+- Ne pas créer de checkout avec un prix client-supplied.
+- Utiliser tokens sémantiques Tailwind existants dans l’UI.
 
-- Le moteur de calcul (`api_generate_dynamic_plan`) — la formule actuelle est conforme à la spec.
-- Les tables de base — schéma déjà aligné.
-- Le wizard 10 questions (`GrowthProfileWizard`) — couvre déjà capacité / ticket / équipes / territoires / objectif / exclusivité / services / saison / dispo / qualité-vs-volume.
+11. SUCCESS
+Terminé quand:
+- Le popup `799 $/mois` ne peut plus apparaître après sélection Élite/Signature.
+- Un utilisateur qui choisit Élite voit Élite à `999 $/mois` partout.
+- Un utilisateur qui choisit Fondateur voit un vrai plan prestige distinct, jamais un rabais surprise.
+- Résumé UI, taxes, Payment Element et checkout backend utilisent le même `planCode` canonique.
+- Aucun chemin ne peut afficher `Plan Élite (Fondateurs)` tout en chargeant `elite` standard sans cohérence explicite.
 
-## Fichiers touchés
-
-- **Édité** : `src/pages/entrepreneur/PageEntrepreneurDiagnosticLanding.tsx` (CTA → plan-ia)
-- **Édité** : `src/features/contractorProfile/...ContractorOnboardingLanding.tsx` (CTA)
-- **Édité** : `src/features/dynamicPricing/components/DynamicPlanReveal.tsx` (3 ScoreRings + badges + revenue range)
-- **Édité** : `src/config/alexModes.ts` + `src/contexts/AlexVoiceContext.tsx` (mode `custom_plan_consultation`)
-- **Édité** : `supabase/functions/api_generate_dynamic_plan/index.ts` (paramètre `override_mode`)
-- **Édité** : `src/pages/admin/PageAdminDynamicPricing.tsx` (3 panels saturation/sous-desservi/override)
-- **Édité** : `mem://index.md` + nouvelle mémoire `mem://pricing/dynamic-plan-ia-flow`
-
-## Critère de succès
-
-Un entrepreneur qui termine son scan AIPP atterrit sur `/entrepreneur/plan-ia`, complète le wizard en 60s, voit son plan personnalisé avec 3 scores marché + plage de revenus + statut exclusivité, et peut soit accepter soit lancer Alex pour un plan sur mesure. L'admin voit en temps réel quels territoires sont saturés et peut overrider un prix.
+12. TASKS
+1. Refactor `PageContractorPlanOnboarding` pour supprimer le downgrade modal et créer une sélection canonique.
+2. Refactor `CardPlanFounders` en carte prestige sans rabais ni prix barré.
+3. Refactor `PanelInlineCheckout` pour consommer une source unique de sélection.
+4. Ajouter garde-fous dans `create-contractor-checkout` contre tout prix Fondateurs inférieur au plan de base.
+5. Vérifier les routes `create-stripe-checkout-session`, `create-subscription-intent`, `calculate-checkout-pricing` et le checkout natif pour confirmer résumé = taxes = Stripe.
+6. Ajouter un test manuel ciblé: Élite sélectionné → résumé 999 → checkout 999; Fondateur sélectionné → code/prix Fondateur distinct.
