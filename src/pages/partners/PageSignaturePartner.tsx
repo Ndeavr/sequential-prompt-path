@@ -41,32 +41,20 @@ export default function PageSignaturePartner({ slug: slugProp }: Props) {
         ogImage={screenshot}
       />
       <SchemaStack
-        schemas={[
-          {
-            "@context": "https://schema.org",
-            "@type": "LocalBusiness",
-            name: partner.legal_name ?? partner.display_name,
-            url: canonical,
-            telephone: partner.phone ?? undefined,
-            email: partner.email ?? undefined,
-            address: partner.address ?? undefined,
-            areaServed: partner.coverage,
-            aggregateRating: {
-              "@type": "AggregateRating",
-              ratingValue: reviewsRating,
-              reviewCount: reviewsCount,
-            },
-          },
-          {
-            "@context": "https://schema.org",
-            "@type": "BreadcrumbList",
-            itemListElement: [
-              { "@type": "ListItem", position: 1, name: "Accueil", item: "https://unpro.ca" },
-              { "@type": "ListItem", position: 2, name: "Partenaires", item: "https://unpro.ca/partenaires" },
-              { "@type": "ListItem", position: 3, name: partner.display_name, item: canonical },
-            ],
-          },
+        breadcrumbs={[
+          { name: "Accueil", url: "https://unpro.ca" },
+          { name: "Partenaires", url: "https://unpro.ca/partenaires" },
+          { name: partner.display_name, url: canonical },
         ]}
+        localBusiness={{
+          name: partner.legal_name ?? partner.display_name,
+          url: canonical,
+          city: partner.coverage?.[0] ?? "Montréal",
+          region: "QC",
+          areaServed: partner.coverage,
+          serviceType: (partner.services ?? []).map((s) => s.name),
+          rating: { value: reviewsRating, count: reviewsCount },
+        }}
       />
 
       {/* HERO */}
