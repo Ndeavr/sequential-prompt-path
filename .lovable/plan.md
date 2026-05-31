@@ -1,108 +1,97 @@
-## Problème confirmé
-Le scrape précédent a halluciné « cellulose ». La home d'isroyal.ca dit explicitement :
-> « Spécialistes en isolation soufflée à la **fibre de verre rose**, en décontamination et en ventilation optimale. »
+## Objectif
 
-ISR n'utilise **pas** de cellulose. Il faut corriger les données, enrichir avec les vrais médias (logo + photos), et brancher Google Calendar sur les rendez-vous.
+Créer une landing page SEO premium dédiée au problème **pyrite / dalle de béton soulevée** au slug `/problemes/pyrite-sous-sol`, avec déclenchement Alex et CTA secondaire vers un expert pyrite. Mobile-first, dark cinematic, fr-CA.
 
----
+## Fichiers à créer
 
-## 1. Correction du matériau (data fix)
+1. **`src/pages/problemes/PagePyriteSousSol.tsx`** — page complète, autonome, basée sur les composants UI partagés existants (`PageHero`, `SectionHeading`, `CTAGroup`, `FAQSection`, `CTASection`, `SeoHead`, `SchemaStack`).
 
-Migration `UPDATE public.signature_partners` pour `isolation-solution-royal` :
+2. **Route** dans `src/app/router.tsx` :
+   ```tsx
+   <Route path="/problemes/pyrite-sous-sol" element={<PagePyriteSousSol />} />
+   ```
 
-- `tagline` → « Spécialistes en **isolation soufflée à la fibre de verre rose**, décontamination et ventilation optimale »
-- `services` (JSON) :
-  - « Isolation d'entretoit (R-51 soufflée) » → description : *Fibre de verre rose soufflée haute performance jusqu'à R-51 pour stopper les pertes de chaleur et l'inconfort à l'étage.*
-  - Tous les autres services revus pour retirer toute mention de cellulose.
-- `brand.material_primary` = `"fibre_de_verre_rose"` (champ structuré pour l'UI et l'IA).
+3. **Sitemap** : ajouter l'URL dans `scripts/generate-ai-sitemap.ts` (entrée statique haute priorité 0.8).
 
-Mise à jour du composant `PageSignaturePartner.tsx` : ajout d'un **badge matériau** visible dans le hero (« Fibre de verre rose · R-51 ») pour qu'Alex et le visiteur ne confondent plus jamais.
+## Structure de la page (sections)
 
----
+```text
+┌─ HERO (dark, glow rouge alerte douce)
+│  H1: Pyrite dans le sous-sol? Ne rénovez pas avant de vérifier.
+│  Sub: Dalle fissurée, soulevée ou réparée? Documentez avant d'agir.
+│  CTA primaire: [Analyser mes photos avec Alex]  → openAlex("pyrite")
+│  CTA secondaire: [Trouver un expert pyrite]     → /pros/expert-pyrite
+│  Trust strip: "Sans engagement · Réponse en 60 sec · fr-CA"
+│
+├─ SECTION "Ce que UNPRO vérifie" (grid 3x3 icônes + libellés)
+│  9 items: photos dalle, fissures, anciennes réparations, soulèvement,
+│           humidité, historique réno, risque vice caché, test pyrite,
+│           type de pro à consulter
+│
+├─ SECTION "Pourquoi agir rapidement" (alert card amber)
+│  5 erreurs à éviter (liste avec X icons)
+│
+├─ SECTION "Professionnels recommandés" (4 cards)
+│  Expert pyrite · Ingénieur · Entrepreneur spécialisé · Avocat vice caché
+│  Chaque card → CTA "Voir disponibilité" → Alex avec contexte
+│
+├─ SECTION "Coûts possibles" (split: diagnostic vs correction majeure)
+│  Diagnostic: quelques centaines $
+│  Correction: démolition · excavation · remblai · dalle · drainage · finition
+│  Punch line: "Diagnostiquer avant de rénover."
+│
+├─ SECTION "Commencez ici" (3 steps timeline)
+│  1. Téléversez photos  2. Décrivez découverte  3. Alex analyse + recommande
+│  CTA central: [Analyser mon sous-sol avec Alex]
+│
+├─ FAQ (5 items via FAQSection — déjà schema FAQPage ready)
+│
+└─ CTA FINAL (CTASection variant="accent")
+   "Une découverte récente? Le temps compte."
+   Primary: Alex · Secondary: Expert pyrite
+```
 
-## 2. Scraping réel des médias (logo + photos)
+## SEO
 
-Refonte de l'edge function `partner-scrape-enrich` pour qu'elle **ne reformule plus librement** les services et qu'elle extraie les vrais assets :
+- **Title** : `Pyrite sous-sol Québec | Vérifier une dalle soulevée avant rénovation` (60 car ✓)
+- **Description** : `Dalle fissurée, soulevée ou réparée? UNPRO vous aide à documenter le risque de pyrite, vice caché et travaux correctifs avant de rénover.` (160 car ✓)
+- **Canonical** : `https://unpro.ca/problemes/pyrite-sous-sol`
+- **hreflang** : fr-CA principal, x-default = fr
+- **JSON-LD** via `SchemaStack` :
+  - `WebPage` + `BreadcrumbList` (Accueil › Problèmes › Pyrite sous-sol)
+  - `FAQPage` (5 Q/R)
+  - `Service` (nom: "Diagnostic pyrite sous-sol", areaServed: QC)
+- H1 unique, H2 par section, alt text descriptifs, lazy images.
 
-- Firecrawl `/scrape` sur `https://isroyal.ca` avec `formats: ['html', 'links', 'branding']`
-  - `branding` → récupère logo officiel + favicon + couleurs marque
-- Firecrawl `/map` pour découvrir `/galerie`, `/realisations`, `/services/*`
-- Scrape de la page galerie → extraction de tous les `<img src>` (filtrage : largeur ≥ 600px, pas d'icônes, pas de logos tiers)
-- Téléchargement côté serveur dans le bucket Supabase Storage `partner-media/isolation-solution-royal/` :
-  - `logo.svg` (ou png)
-  - `hero.jpg` (1 photo héros choisie)
-  - `gallery/01.jpg` … `gallery/12.jpg` (max 12)
-- Persistance dans `signature_partners.media` :
-  ```json
-  { "logo_url": "...", "hero_url": "...", "gallery": ["...", "..."], "brand_colors": { "primary": "#...", "accent": "#..." } }
-  ```
-- **Garde-fou anti-hallucination** : pour les `services`, le LLM (Gemini) reçoit le markdown brut + instruction stricte « N'invente AUCUN matériau. Si non mentionné explicitement, laisse vide. Matériau autorisé pour ce partenaire : fibre de verre rose. »
+## Intégration Alex
 
-Mise à jour de `PageSignaturePartner.tsx` :
-- Header : logo officiel ISR (depuis `media.logo_url`) au lieu du fallback générique
-- Nouvelle section **Galerie réalisations** (grille responsive 2 col mobile / 3 col desktop, lightbox au clic)
-- Hero : `media.hero_url` en background avec overlay sombre
+- CTA primaire et tertiaire : `openAlex("pyrite_basement")` via `useAlexVoice()` (contexte injecté pour préfill conversation).
+- Le contexte `"pyrite_basement"` sera reconnu par le router d'intents Alex existant; sinon fallback `"general"` (à confirmer — si non reconnu, on log juste l'event et passe en general avec message d'amorce stocké dans `alexSessionState`).
 
----
+## Design tokens
 
-## 3. Google Calendar — rendez-vous directs
+- Base `bg-background` (dark cinematic `#050816`)
+- Glow d'alerte : `bg-amber-500/5` blur 80px sur section "Pourquoi agir rapidement"
+- Cards : `glass` (`rgba(255,255,255,0.04)` + backdrop-blur 24px), radius 28px
+- Boutons primary : radius 18px, hover `translateY(-2px)` easing `cubic-bezier(.22,1,.36,1)` 420ms
+- Font : Inter, H1 tracking -0.04em
+- Aucune couleur hardcodée → tokens uniquement
 
-### 3a. Connexion
-Utilisation du connecteur **Google Calendar** déjà documenté (gateway Lovable). Une connexion = le calendrier d'UNPRO côté plateforme (compte concierge). Chaque partenaire Signature reçoit un `calendar_id` dédié (sous-calendrier partagé) stocké dans `signature_partners.brand.google_calendar_id`.
+## Contraintes
 
-> Pour ISR spécifiquement, on créera/utilisera un calendrier partagé `isolation-solution-royal@…` que ISR accepte dans son propre Google Workspace. Cela évite l'OAuth par-entrepreneur tout en synchronisant les deux côtés.
+- Pas de nouveaux composants partagés — réutiliser `PageHero`, `SectionHeading`, `CTAGroup`, `FAQSection`, `CTASection`, `SeoHead`, `SchemaStack`, `Button`, `Card`.
+- Pas de backend / migration — page statique fr-CA.
+- Pas de scroll-jacking, pas de modal d'entrée.
+- Mobile-first (viewport 384px testé).
 
-### 3b. Schéma DB
-Ajout colonnes à `partner_bookings` :
-- `google_event_id TEXT`
-- `google_calendar_id TEXT`
-- `google_sync_status TEXT` (`pending`, `synced`, `failed`)
-- `google_sync_error TEXT`
+## Succès
 
-### 3c. Edge function `partner-booking-submit` (refonte)
-Après insertion DB :
-1. Appel gateway `POST https://connector-gateway.lovable.dev/google_calendar/calendar/v3/calendars/{calendar_id}/events`
-2. Body : `summary` (« RDV ISR · {client} »), `description` (besoin + tél + adresse + lien admin), `start`/`end` (slot choisi, fuseau `America/Toronto`, durée 60min par défaut), `attendees` (email client + email ISR), `reminders` (24h + 1h)
-3. Stocker `google_event_id` + status
-4. Si échec gateway → status `failed` + log dans `system_events`, le RDV reste valide côté DB (fallback email Resend déjà en place)
+- Route `/problemes/pyrite-sous-sol` rend la page sans erreur console
+- CTA Alex ouvre l'orb avec contexte
+- Lighthouse SEO ≥ 95, structured data valide
+- Page incluse au prochain sitemap build
 
-### 3d. Synchronisation des disponibilités (lecture)
-Nouvelle edge function `partner-calendar-sync` (cron toutes les 15 min via `pg_cron` ou bouton manuel admin) :
-- Lit les events Google Calendar des 30 prochains jours
-- Marque les créneaux occupés dans `partner_calendar_availability` (retire le slot du tableau `slots`)
-- Garantit qu'un slot booké directement dans Google par ISR disparaît du widget public
+## Hors scope
 
-### 3e. UI
-- Widget de booking inchangé visuellement, mais après soumission : toast « Rendez-vous confirmé — ajouté à votre agenda et à celui d'ISR »
-- Section admin `/admin/partners` : indicateur de santé sync Google (dernière sync, nb events, erreurs)
-
----
-
-## Détails techniques
-
-**Tables modifiées**
-- `signature_partners` : data correction + `media` enrichi
-- `partner_bookings` : 4 colonnes Google
-- Nouveau bucket Storage : `partner-media` (public read)
-
-**Edge functions**
-- `partner-scrape-enrich` (refonte avec garde-fous + storage upload)
-- `partner-booking-submit` (ajout création event Google)
-- `partner-calendar-sync` (nouveau, lecture bidirectionnelle)
-
-**Connecteurs requis**
-- Firecrawl (déjà connecté)
-- **Google Calendar** (à connecter via `standard_connectors--connect` au moment du build)
-
-**Fichiers front modifiés**
-- `src/pages/partners/PageSignaturePartner.tsx` (logo dynamique, galerie, hero image, badge matériau)
-- `src/features/partners/components/SignaturePartnerBookingWidget.tsx` (toast confirmation enrichie)
-- `src/pages/admin/partners/PageAdminPartners.tsx` (santé sync Google)
-
----
-
-## Critères de succès
-- La carte « Isolation d'entretoit » affiche **fibre de verre rose**, plus jamais cellulose
-- Le logo officiel ISR et au moins 6 vraies photos de réalisations apparaissent sur la page
-- Un rendez-vous pris sur `/isolation-solution-royal` apparaît dans Google Calendar en < 5 secondes
-- Un créneau bloqué directement dans Google disparaît du widget à la prochaine sync (≤ 15 min)
+- Pas de page `/pros/expert-pyrite` créée ici (CTA secondaire pointera vers la recherche de pros existante avec query `?specialite=pyrite` — fallback `/entrepreneurs?q=pyrite`).
+- Pas de variantes par ville (à faire dans une phase 2 programmatique).
