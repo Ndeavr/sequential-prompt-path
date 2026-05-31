@@ -38,6 +38,7 @@ const PageAdminQASimulationTemplates = lazy(() => import("@/pages/admin/PageAdmi
 
 // Outbound Approvals
 const PageAdminOutboundApprovals = lazy(() => import("@/pages/admin/outbound/PageAdminOutboundApprovals"));
+const PageAdminOutboundAutoFlagging = lazy(() => import("@/pages/admin/outbound/PageAdminOutboundAutoFlagging"));
 const PageSniperPipeline = lazy(() => import("@/pages/admin/outbound/PageSniperPipeline"));
 const PageSMSPipeline = lazy(() => import("@/pages/admin/outbound/PageSMSPipeline"));
 const PageAdminCommunications = lazy(() => import("@/pages/admin/PageAdminCommunications"));
