@@ -125,14 +125,7 @@ export default function PageDynamicPlanGeneration() {
             >
               <DynamicPlanReveal
                 recommendation={recommendation}
-                onCustom={() => {
-                  // Hand off to Alex for custom plan consultation
-                  window.dispatchEvent(
-                    new CustomEvent("alex:open", {
-                      detail: { mode: "custom_plan_consultation", language: "fr" },
-                    }),
-                  );
-                }}
+                onCustom={openCustomPlanAlex}
               />
             </motion.div>
           )}
