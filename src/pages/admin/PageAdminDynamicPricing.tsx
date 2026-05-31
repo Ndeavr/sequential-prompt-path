@@ -142,6 +142,53 @@ export default function PageAdminDynamicPricing() {
         </Card>
 
         <Card className="bg-white/[0.03] border-white/10">
+          <CardHeader><CardTitle className="text-white">Métiers sous-desservis (gap demande – compétition)</CardTitle></CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-white/10 hover:bg-transparent">
+                  <TableHead className="text-white/60">Territoire</TableHead>
+                  <TableHead className="text-white/60">Métier</TableHead>
+                  <TableHead className="text-white/60">Gap</TableHead>
+                  <TableHead className="text-white/60">Demande</TableHead>
+                  <TableHead className="text-white/60">Compétition</TableHead>
+                  <TableHead className="text-white/60">Recommandation</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[...markets]
+                  .map((m) => ({ ...m, gap: m.demand_score - m.competition_score }))
+                  .sort((a, b) => b.gap - a.gap)
+                  .slice(0, 10)
+                  .map((m) => (
+                    <TableRow key={`gap-${m.id}`} className="border-white/5">
+                      <TableCell className="font-medium">{m.territory}</TableCell>
+                      <TableCell>{m.trade}</TableCell>
+                      <TableCell>
+                        <span className={m.gap > 30 ? "text-emerald-400 font-semibold" : m.gap > 10 ? "text-amber-400" : "text-white/50"}>
+                          {m.gap > 0 ? "+" : ""}{m.gap}
+                        </span>
+                      </TableCell>
+                      <TableCell>{m.demand_score}/100</TableCell>
+                      <TableCell>{m.competition_score}/100</TableCell>
+                      <TableCell className="text-white/70 text-xs">
+                        {m.gap > 30 ? "Recruter activement" : m.gap > 10 ? "Opportunité" : "Saturé"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white/[0.03] border-white/10">
+          <CardHeader><CardTitle className="text-white">Override prix manuel</CardTitle></CardHeader>
+          <CardContent>
+            <OverrideForm onSaved={load} />
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white/[0.03] border-white/10">
           <CardHeader><CardTitle className="text-white">Audit des recommandations (50 dernières)</CardTitle></CardHeader>
           <CardContent>
             <Table>
