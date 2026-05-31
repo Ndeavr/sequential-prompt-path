@@ -24624,6 +24624,72 @@ export type Database = {
         }
         Relationships: []
       }
+      contractor_growth_profiles: {
+        Row: {
+          availability_score: number
+          avg_ticket_cents: number
+          contractor_id: string
+          created_at: string
+          generated_at: string | null
+          generated_plan_id: string | null
+          id: string
+          max_distance_km: number
+          monthly_capacity: number
+          preferred_job_types: string[]
+          preferred_territories: string[]
+          quality_vs_volume: number
+          response_speed_minutes: number | null
+          seasonality_notes: string | null
+          target_growth_percent: number
+          teams_count: number
+          updated_at: string
+          user_id: string
+          wants_exclusivity: boolean
+        }
+        Insert: {
+          availability_score?: number
+          avg_ticket_cents?: number
+          contractor_id: string
+          created_at?: string
+          generated_at?: string | null
+          generated_plan_id?: string | null
+          id?: string
+          max_distance_km?: number
+          monthly_capacity?: number
+          preferred_job_types?: string[]
+          preferred_territories?: string[]
+          quality_vs_volume?: number
+          response_speed_minutes?: number | null
+          seasonality_notes?: string | null
+          target_growth_percent?: number
+          teams_count?: number
+          updated_at?: string
+          user_id: string
+          wants_exclusivity?: boolean
+        }
+        Update: {
+          availability_score?: number
+          avg_ticket_cents?: number
+          contractor_id?: string
+          created_at?: string
+          generated_at?: string | null
+          generated_plan_id?: string | null
+          id?: string
+          max_distance_km?: number
+          monthly_capacity?: number
+          preferred_job_types?: string[]
+          preferred_territories?: string[]
+          quality_vs_volume?: number
+          response_speed_minutes?: number | null
+          seasonality_notes?: string | null
+          target_growth_percent?: number
+          teams_count?: number
+          updated_at?: string
+          user_id?: string
+          wants_exclusivity?: boolean
+        }
+        Relationships: []
+      }
       contractor_import_consents: {
         Row: {
           captured_at: string
@@ -32574,6 +32640,75 @@ export type Database = {
           id?: string
           issuer?: string | null
           valid?: boolean | null
+        }
+        Relationships: []
+      }
+      dynamic_plan_recommendations: {
+        Row: {
+          accepted: boolean
+          accepted_at: string | null
+          base_plan_price_cents: number
+          competition_score: number
+          contractor_id: string
+          estimated_monthly_appointments_max: number
+          estimated_monthly_appointments_min: number
+          estimated_revenue_max_cents: number
+          estimated_revenue_min_cents: number
+          exclusivity_level: string
+          generated_at: string
+          id: string
+          market_score: number
+          opportunity_score: number
+          price_modifier_pct: number
+          recommendation_reason: Json
+          recommended_plan_slug: string
+          recommended_price_cents: number
+          territory_priority: string
+          user_id: string
+        }
+        Insert: {
+          accepted?: boolean
+          accepted_at?: string | null
+          base_plan_price_cents: number
+          competition_score?: number
+          contractor_id: string
+          estimated_monthly_appointments_max?: number
+          estimated_monthly_appointments_min?: number
+          estimated_revenue_max_cents?: number
+          estimated_revenue_min_cents?: number
+          exclusivity_level?: string
+          generated_at?: string
+          id?: string
+          market_score?: number
+          opportunity_score?: number
+          price_modifier_pct?: number
+          recommendation_reason?: Json
+          recommended_plan_slug: string
+          recommended_price_cents: number
+          territory_priority?: string
+          user_id: string
+        }
+        Update: {
+          accepted?: boolean
+          accepted_at?: string | null
+          base_plan_price_cents?: number
+          competition_score?: number
+          contractor_id?: string
+          estimated_monthly_appointments_max?: number
+          estimated_monthly_appointments_min?: number
+          estimated_revenue_max_cents?: number
+          estimated_revenue_min_cents?: number
+          exclusivity_level?: string
+          generated_at?: string
+          id?: string
+          market_score?: number
+          opportunity_score?: number
+          price_modifier_pct?: number
+          recommendation_reason?: Json
+          recommended_plan_slug?: string
+          recommended_price_cents?: number
+          territory_priority?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -50858,6 +50993,36 @@ export type Database = {
           },
         ]
       }
+      pricing_engine_coefficients: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: number
+        }
+        Relationships: []
+      }
       pricing_markets: {
         Row: {
           city_name: string
@@ -50906,6 +51071,45 @@ export type Database = {
           region_name?: string | null
           slug?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      pricing_overrides: {
+        Row: {
+          contractor_id: string | null
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          forced_plan_slug: string | null
+          forced_price_cents: number | null
+          id: string
+          reason: string
+          territory: string | null
+          trade: string | null
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          forced_plan_slug?: string | null
+          forced_price_cents?: number | null
+          id?: string
+          reason: string
+          territory?: string | null
+          trade?: string | null
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          forced_plan_slug?: string | null
+          forced_price_cents?: number | null
+          id?: string
+          reason?: string
+          territory?: string | null
+          trade?: string | null
         }
         Relationships: []
       }
@@ -66805,6 +67009,60 @@ export type Database = {
           id?: string
           phone?: string | null
           requested_exclusivity?: boolean | null
+        }
+        Relationships: []
+      }
+      territory_market_scores: {
+        Row: {
+          ai_difficulty_score: number
+          avg_cpc_cents: number
+          avg_project_value_cents: number
+          competition_score: number
+          created_at: string
+          demand_score: number
+          exclusivity_slots_taken: number
+          exclusivity_slots_total: number
+          id: string
+          rarity_score: number
+          recommended_min_plan: string
+          seasonality_multiplier: number
+          territory: string
+          trade: string
+          updated_at: string
+        }
+        Insert: {
+          ai_difficulty_score?: number
+          avg_cpc_cents?: number
+          avg_project_value_cents?: number
+          competition_score?: number
+          created_at?: string
+          demand_score?: number
+          exclusivity_slots_taken?: number
+          exclusivity_slots_total?: number
+          id?: string
+          rarity_score?: number
+          recommended_min_plan?: string
+          seasonality_multiplier?: number
+          territory: string
+          trade: string
+          updated_at?: string
+        }
+        Update: {
+          ai_difficulty_score?: number
+          avg_cpc_cents?: number
+          avg_project_value_cents?: number
+          competition_score?: number
+          created_at?: string
+          demand_score?: number
+          exclusivity_slots_taken?: number
+          exclusivity_slots_total?: number
+          id?: string
+          rarity_score?: number
+          recommended_min_plan?: string
+          seasonality_multiplier?: number
+          territory?: string
+          trade?: string
+          updated_at?: string
         }
         Relationships: []
       }
