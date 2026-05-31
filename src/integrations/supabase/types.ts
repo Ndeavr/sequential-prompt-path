@@ -46443,6 +46443,79 @@ export type Database = {
         }
         Relationships: []
       }
+      outbound_priority_flags: {
+        Row: {
+          ai_incoherence_signals: Json
+          badge_signals: Json
+          company_id: string | null
+          created_at: string
+          flag_type: string
+          id: string
+          priority_score_boost: number
+          reason: string | null
+          resolution: string | null
+          resolved_at: string | null
+          routed_sequence_id: string | null
+          severity: string
+          source: string
+          target_id: string | null
+        }
+        Insert: {
+          ai_incoherence_signals?: Json
+          badge_signals?: Json
+          company_id?: string | null
+          created_at?: string
+          flag_type: string
+          id?: string
+          priority_score_boost?: number
+          reason?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          routed_sequence_id?: string | null
+          severity?: string
+          source?: string
+          target_id?: string | null
+        }
+        Update: {
+          ai_incoherence_signals?: Json
+          badge_signals?: Json
+          company_id?: string | null
+          created_at?: string
+          flag_type?: string
+          id?: string
+          priority_score_boost?: number
+          reason?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          routed_sequence_id?: string | null
+          severity?: string
+          source?: string
+          target_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_priority_flags_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_priority_flags_routed_sequence_id_fkey"
+            columns: ["routed_sequence_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_sequences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_priority_flags_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "sniper_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outbound_qualification_runs: {
         Row: {
           candidate_count: number
@@ -63950,6 +64023,10 @@ export type Database = {
       }
       sniper_targets: {
         Row: {
+          ai_incoherence_score: number | null
+          auto_flag_reason: string | null
+          auto_flagged_at: string | null
+          badge_signals: Json
           business_name: string
           category: string | null
           city: string | null
@@ -63971,6 +64048,7 @@ export type Database = {
           outreach_status: string
           pain_upside_score: number | null
           phone: string | null
+          priority_flag: string | null
           province: string | null
           rbq_number: string | null
           readiness_score: number | null
@@ -63986,6 +64064,10 @@ export type Database = {
           website_url: string | null
         }
         Insert: {
+          ai_incoherence_score?: number | null
+          auto_flag_reason?: string | null
+          auto_flagged_at?: string | null
+          badge_signals?: Json
           business_name: string
           category?: string | null
           city?: string | null
@@ -64007,6 +64089,7 @@ export type Database = {
           outreach_status?: string
           pain_upside_score?: number | null
           phone?: string | null
+          priority_flag?: string | null
           province?: string | null
           rbq_number?: string | null
           readiness_score?: number | null
@@ -64022,6 +64105,10 @@ export type Database = {
           website_url?: string | null
         }
         Update: {
+          ai_incoherence_score?: number | null
+          auto_flag_reason?: string | null
+          auto_flagged_at?: string | null
+          badge_signals?: Json
           business_name?: string
           category?: string | null
           city?: string | null
@@ -64043,6 +64130,7 @@ export type Database = {
           outreach_status?: string
           pain_upside_score?: number | null
           phone?: string | null
+          priority_flag?: string | null
           province?: string | null
           rbq_number?: string | null
           readiness_score?: number | null
@@ -71036,6 +71124,15 @@ export type Database = {
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
+      }
+      detect_badge_priority_targets: {
+        Args: { p_limit?: number }
+        Returns: {
+          ai_incoherence: number
+          badge_matches: string[]
+          business_name: string
+          target_id: string
+        }[]
       }
       detect_referral_source: {
         Args: { p_ref_code?: string; p_session_token?: string }
