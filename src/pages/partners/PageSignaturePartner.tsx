@@ -189,6 +189,30 @@ export default function PageSignaturePartner({ slug: slugProp }: Props) {
         </div>
       </section>
 
+      {/* GALLERY */}
+      {gallery.length > 0 && (
+        <section className="max-w-6xl mx-auto px-4 pb-16">
+          <h2 className="text-3xl font-bold tracking-tight mb-6">Réalisations récentes</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {gallery.map((src, i) => (
+              <button
+                key={src}
+                type="button"
+                onClick={() => setLightbox(src)}
+                className="group relative aspect-[4/3] overflow-hidden rounded-[18px] border border-border/60 bg-card"
+              >
+                <img
+                  src={src}
+                  alt={`Réalisation ${i + 1} ${partner.display_name}`}
+                  loading="lazy"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* COVERAGE */}
       {partner.coverage?.length > 0 && (
         <section className="max-w-6xl mx-auto px-4 pb-16">
