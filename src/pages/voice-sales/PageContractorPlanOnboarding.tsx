@@ -242,17 +242,7 @@ export default function PageContractorPlanOnboarding() {
           </div>
         )}
 
-        {/* Founders upsell modal */}
-        {selectedPlan && (
-          <ModalHeyButWaitUpgrade
-            open={showFoundersModal}
-            onClose={handleFoundersDecline}
-            planName={selectedPlan.name}
-            foundersPrice={Math.round(((selectedPlan.monthly_price ?? 0) / 100) * 0.8)}
-            regularPrice={Math.round((selectedPlan.monthly_price ?? 0) / 100)}
-            onAccept={handleFoundersAccept}
-          />
-        )}
+        {/* Downgrade popup retiré : aucune réduction surprise après sélection. */}
       </div>
     </>
   );
