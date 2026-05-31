@@ -48,7 +48,7 @@ export default function PageSignaturePartner({ slug: slugProp }: Props) {
         title={title}
         description={description}
         canonical={canonical}
-        ogImage={screenshot}
+        ogImage={ogImage}
       />
       <SchemaStack
         breadcrumbs={[
@@ -71,13 +71,34 @@ export default function PageSignaturePartner({ slug: slugProp }: Props) {
 
       {/* HERO */}
       <section className="relative overflow-hidden border-b border-border/40">
-        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-background to-background" />
+        {heroUrl ? (
+          <div className="absolute inset-0 -z-10">
+            <img src={heroUrl} alt="" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/85 to-background/70" />
+          </div>
+        ) : (
+          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-background to-background" />
+        )}
         <div className="max-w-6xl mx-auto px-4 py-16 md:py-24">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <Badge className="mb-4 bg-amber-500/10 text-amber-600 border-amber-500/30 hover:bg-amber-500/15">
-              <Sparkles className="h-3 w-3 mr-1" />
-              Partenaire Signature ⚜️
-            </Badge>
+            <div className="flex items-center gap-4 mb-4 flex-wrap">
+              {logoUrl && (
+                <img
+                  src={logoUrl}
+                  alt={`Logo ${partner.display_name}`}
+                  className="h-14 w-auto object-contain bg-white rounded-[14px] p-2 border border-border/60"
+                />
+              )}
+              <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30 hover:bg-amber-500/15">
+                <Sparkles className="h-3 w-3 mr-1" />
+                Partenaire Signature ⚜️
+              </Badge>
+              {materialLabel && (
+                <Badge variant="outline" className="border-emerald-500/40 text-emerald-700 bg-emerald-500/10">
+                  {materialLabel}
+                </Badge>
+              )}
+            </div>
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4">
               {partner.display_name}
             </h1>
