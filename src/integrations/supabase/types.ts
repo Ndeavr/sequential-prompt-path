@@ -3907,6 +3907,47 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_recommendation_signals: {
+        Row: {
+          citation_score: number | null
+          computed_at: string
+          contractor_id: string
+          homeowner_trust_score: number | null
+          id: string
+          local_authority_score: number | null
+          semantic_clarity_score: number | null
+          specialization_score: number | null
+        }
+        Insert: {
+          citation_score?: number | null
+          computed_at?: string
+          contractor_id: string
+          homeowner_trust_score?: number | null
+          id?: string
+          local_authority_score?: number | null
+          semantic_clarity_score?: number | null
+          specialization_score?: number | null
+        }
+        Update: {
+          citation_score?: number | null
+          computed_at?: string
+          contractor_id?: string
+          homeowner_trust_score?: number | null
+          id?: string
+          local_authority_score?: number | null
+          semantic_clarity_score?: number | null
+          specialization_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_recommendation_signals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_trust"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_recommendations: {
         Row: {
           auto_applicable: boolean | null
@@ -3966,6 +4007,59 @@ export type Database = {
           title_fr?: string
         }
         Relationships: []
+      }
+      ai_trust_onboarding_sessions: {
+        Row: {
+          ai_gap_detected: boolean | null
+          completion_percentage: number | null
+          contractor_id: string | null
+          id: string
+          last_active_at: string
+          onboarding_step: number
+          payload: Json | null
+          started_at: string
+          trust_position:
+            | Database["public"]["Enums"]["ai_trust_position"]
+            | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_gap_detected?: boolean | null
+          completion_percentage?: number | null
+          contractor_id?: string | null
+          id?: string
+          last_active_at?: string
+          onboarding_step?: number
+          payload?: Json | null
+          started_at?: string
+          trust_position?:
+            | Database["public"]["Enums"]["ai_trust_position"]
+            | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_gap_detected?: boolean | null
+          completion_percentage?: number | null
+          contractor_id?: string | null
+          id?: string
+          last_active_at?: string
+          onboarding_step?: number
+          payload?: Json | null
+          started_at?: string
+          trust_position?:
+            | Database["public"]["Enums"]["ai_trust_position"]
+            | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_trust_onboarding_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_trust"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       aipp_audit_entities: {
         Row: {
@@ -20360,6 +20454,47 @@ export type Database = {
           },
         ]
       }
+      contractor_ai_interpretation: {
+        Row: {
+          ai_summary: string | null
+          confidence_score: number | null
+          contractor_id: string
+          created_at: string
+          desired_identity: string | null
+          detected_identity: string | null
+          id: string
+          semantic_gap_score: number | null
+        }
+        Insert: {
+          ai_summary?: string | null
+          confidence_score?: number | null
+          contractor_id: string
+          created_at?: string
+          desired_identity?: string | null
+          detected_identity?: string | null
+          id?: string
+          semantic_gap_score?: number | null
+        }
+        Update: {
+          ai_summary?: string | null
+          confidence_score?: number | null
+          contractor_id?: string
+          created_at?: string
+          desired_identity?: string | null
+          detected_identity?: string | null
+          id?: string
+          semantic_gap_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_ai_interpretation_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_trust"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_ai_profiles: {
         Row: {
           best_for: Json | null
@@ -26060,6 +26195,47 @@ export type Database = {
         }
         Relationships: []
       }
+      contractor_opportunity_analysis: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          estimated_pipeline_max: number | null
+          estimated_pipeline_min: number | null
+          homeowner_trust_density: number | null
+          id: string
+          semantic_gap: number | null
+          territory_pressure: string | null
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          estimated_pipeline_max?: number | null
+          estimated_pipeline_min?: number | null
+          homeowner_trust_density?: number | null
+          id?: string
+          semantic_gap?: number | null
+          territory_pressure?: string | null
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          estimated_pipeline_max?: number | null
+          estimated_pipeline_min?: number | null
+          homeowner_trust_density?: number | null
+          id?: string
+          semantic_gap?: number | null
+          territory_pressure?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_opportunity_analysis_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_trust"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_outcomes: {
         Row: {
           actual_close_probability: number | null
@@ -27499,6 +27675,44 @@ export type Database = {
           },
         ]
       }
+      contractor_recommendation_gaps: {
+        Row: {
+          ai_confidence_impact: number | null
+          contractor_id: string
+          created_at: string
+          gap_type: string
+          id: string
+          narrative: string | null
+          severity: Database["public"]["Enums"]["recommendation_gap_severity"]
+        }
+        Insert: {
+          ai_confidence_impact?: number | null
+          contractor_id: string
+          created_at?: string
+          gap_type: string
+          id?: string
+          narrative?: string | null
+          severity?: Database["public"]["Enums"]["recommendation_gap_severity"]
+        }
+        Update: {
+          ai_confidence_impact?: number | null
+          contractor_id?: string
+          created_at?: string
+          gap_type?: string
+          id?: string
+          narrative?: string | null
+          severity?: Database["public"]["Enums"]["recommendation_gap_severity"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_recommendation_gaps_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_trust"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_recruitment_audit_logs: {
         Row: {
           actor_id: string | null
@@ -28764,6 +28978,44 @@ export type Database = {
           },
         ]
       }
+      contractor_review_entities: {
+        Row: {
+          confidence: number | null
+          contractor_id: string
+          created_at: string
+          entity_name: string
+          frequency: number | null
+          id: string
+          sentiment: Database["public"]["Enums"]["review_sentiment"]
+        }
+        Insert: {
+          confidence?: number | null
+          contractor_id: string
+          created_at?: string
+          entity_name: string
+          frequency?: number | null
+          id?: string
+          sentiment?: Database["public"]["Enums"]["review_sentiment"]
+        }
+        Update: {
+          confidence?: number | null
+          contractor_id?: string
+          created_at?: string
+          entity_name?: string
+          frequency?: number | null
+          id?: string
+          sentiment?: Database["public"]["Enums"]["review_sentiment"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_review_entities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_trust"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_review_sources: {
         Row: {
           contractor_id: string
@@ -29064,6 +29316,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      contractor_semantic_entities: {
+        Row: {
+          confidence_score: number | null
+          contractor_id: string
+          created_at: string
+          entity_name: string
+          entity_type: string | null
+          evidence_sources: Json | null
+          id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          contractor_id: string
+          created_at?: string
+          entity_name: string
+          entity_type?: string | null
+          evidence_sources?: Json | null
+          id?: string
+        }
+        Update: {
+          confidence_score?: number | null
+          contractor_id?: string
+          created_at?: string
+          entity_name?: string
+          entity_type?: string | null
+          evidence_sources?: Json | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_semantic_entities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_trust"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contractor_service_areas: {
         Row: {
@@ -30771,6 +31061,57 @@ export type Database = {
           trust_score?: number | null
           updated_at?: string
           verified_email?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
+      contractors_trust: {
+        Row: {
+          ai_trust_position:
+            | Database["public"]["Enums"]["ai_trust_position"]
+            | null
+          city: string | null
+          company_name: string
+          created_at: string
+          desired_specialty: string | null
+          id: string
+          phone: string | null
+          primary_specialty: string | null
+          source_contractor_id: string | null
+          territory_cluster: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          ai_trust_position?:
+            | Database["public"]["Enums"]["ai_trust_position"]
+            | null
+          city?: string | null
+          company_name: string
+          created_at?: string
+          desired_specialty?: string | null
+          id?: string
+          phone?: string | null
+          primary_specialty?: string | null
+          source_contractor_id?: string | null
+          territory_cluster?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          ai_trust_position?:
+            | Database["public"]["Enums"]["ai_trust_position"]
+            | null
+          city?: string | null
+          company_name?: string
+          created_at?: string
+          desired_specialty?: string | null
+          id?: string
+          phone?: string | null
+          primary_specialty?: string | null
+          source_contractor_id?: string | null
+          territory_cluster?: string | null
+          updated_at?: string
           website?: string | null
         }
         Relationships: []
@@ -49127,6 +49468,56 @@ export type Database = {
         }
         Relationships: []
       }
+      partnership_applications: {
+        Row: {
+          city: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          contractor_id: string | null
+          created_at: string
+          cta_type: string
+          id: string
+          notes: string | null
+          specialty: string | null
+          status: string | null
+        }
+        Insert: {
+          city?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          cta_type: string
+          id?: string
+          notes?: string | null
+          specialty?: string | null
+          status?: string | null
+        }
+        Update: {
+          city?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          cta_type?: string
+          id?: string
+          notes?: string | null
+          specialty?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partnership_applications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_trust"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       paywall_events: {
         Row: {
           converted: boolean | null
@@ -66417,6 +66808,45 @@ export type Database = {
         }
         Relationships: []
       }
+      territory_slots: {
+        Row: {
+          active_slots: number
+          city: string
+          demand_level: string | null
+          id: string
+          max_slots: number
+          pipeline_estimate_max: number | null
+          pipeline_estimate_min: number | null
+          specialty: string
+          updated_at: string
+          waitlist_count: number
+        }
+        Insert: {
+          active_slots?: number
+          city: string
+          demand_level?: string | null
+          id?: string
+          max_slots?: number
+          pipeline_estimate_max?: number | null
+          pipeline_estimate_min?: number | null
+          specialty: string
+          updated_at?: string
+          waitlist_count?: number
+        }
+        Update: {
+          active_slots?: number
+          city?: string
+          demand_level?: string | null
+          id?: string
+          max_slots?: number
+          pipeline_estimate_max?: number | null
+          pipeline_estimate_min?: number | null
+          specialty?: string
+          updated_at?: string
+          waitlist_count?: number
+        }
+        Relationships: []
+      }
       territory_waitlist: {
         Row: {
           activated_at: string | null
@@ -70653,6 +71083,13 @@ export type Database = {
       }
     }
     Enums: {
+      ai_trust_position:
+        | "invisible"
+        | "weak"
+        | "emerging"
+        | "trusted"
+        | "dominant"
+        | "category_authority"
       aipp_analysis_status:
         | "pending"
         | "running"
@@ -70758,6 +71195,8 @@ export type Database = {
       quote_status: "pending" | "analyzed" | "accepted" | "rejected"
       rbq_category_type: "general" | "specialty"
       rbq_status: "valid" | "expired" | "suspended" | "not_found" | "unknown"
+      recommendation_gap_severity: "low" | "medium" | "high" | "severe"
+      review_sentiment: "positive" | "neutral" | "negative"
       risk_severity: "low" | "medium" | "high"
       syndicate_member_role:
         | "owner"
@@ -70905,6 +71344,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      ai_trust_position: [
+        "invisible",
+        "weak",
+        "emerging",
+        "trusted",
+        "dominant",
+        "category_authority",
+      ],
       aipp_analysis_status: [
         "pending",
         "running",
@@ -71022,6 +71469,8 @@ export const Constants = {
       quote_status: ["pending", "analyzed", "accepted", "rejected"],
       rbq_category_type: ["general", "specialty"],
       rbq_status: ["valid", "expired", "suspended", "not_found", "unknown"],
+      recommendation_gap_severity: ["low", "medium", "high", "severe"],
+      review_sentiment: ["positive", "neutral", "negative"],
       risk_severity: ["low", "medium", "high"],
       syndicate_member_role: [
         "owner",
