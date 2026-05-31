@@ -49098,6 +49098,10 @@ export type Database = {
         Row: {
           contact: Json
           created_at: string
+          google_calendar_id: string | null
+          google_event_id: string | null
+          google_sync_error: string | null
+          google_sync_status: string | null
           id: string
           notes: string | null
           partner_id: string
@@ -49113,6 +49117,10 @@ export type Database = {
         Insert: {
           contact?: Json
           created_at?: string
+          google_calendar_id?: string | null
+          google_event_id?: string | null
+          google_sync_error?: string | null
+          google_sync_status?: string | null
           id?: string
           notes?: string | null
           partner_id: string
@@ -49128,6 +49136,10 @@ export type Database = {
         Update: {
           contact?: Json
           created_at?: string
+          google_calendar_id?: string | null
+          google_event_id?: string | null
+          google_sync_error?: string | null
+          google_sync_status?: string | null
           id?: string
           notes?: string | null
           partner_id?: string
