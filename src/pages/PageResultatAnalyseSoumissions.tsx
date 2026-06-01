@@ -16,6 +16,7 @@ import {
   getStoredAnalysisId,
   type QuoteAnalysisPayload,
 } from "@/features/quoteAnalyzer";
+import PanelQuoteIntelligenceInsights from "@/features/quoteAnalyzer/components/PanelQuoteIntelligenceInsights";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
