@@ -24690,6 +24690,113 @@ export type Database = {
         }
         Relationships: []
       }
+      contractor_import_assets: {
+        Row: {
+          address: string | null
+          before_after: Json
+          business_name: string | null
+          certifications: Json
+          contractor_id: string | null
+          created_at: string
+          description: string | null
+          email: string | null
+          emergency_mentioned: boolean
+          favicon_url: string | null
+          financing_mentioned: boolean
+          gallery: Json
+          hero_image_url: string | null
+          id: string
+          logo_url: string | null
+          neq_number: string | null
+          phone: string | null
+          raw_signals: Json
+          rbq_number: string | null
+          review_summary: Json
+          reviews: Json
+          run_id: string | null
+          service_cities: Json
+          services: Json
+          social_links: Json
+          testimonials: Json
+          trust_badges: Json
+          updated_at: string
+          videos: Json
+          years_in_business: number | null
+        }
+        Insert: {
+          address?: string | null
+          before_after?: Json
+          business_name?: string | null
+          certifications?: Json
+          contractor_id?: string | null
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          emergency_mentioned?: boolean
+          favicon_url?: string | null
+          financing_mentioned?: boolean
+          gallery?: Json
+          hero_image_url?: string | null
+          id?: string
+          logo_url?: string | null
+          neq_number?: string | null
+          phone?: string | null
+          raw_signals?: Json
+          rbq_number?: string | null
+          review_summary?: Json
+          reviews?: Json
+          run_id?: string | null
+          service_cities?: Json
+          services?: Json
+          social_links?: Json
+          testimonials?: Json
+          trust_badges?: Json
+          updated_at?: string
+          videos?: Json
+          years_in_business?: number | null
+        }
+        Update: {
+          address?: string | null
+          before_after?: Json
+          business_name?: string | null
+          certifications?: Json
+          contractor_id?: string | null
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          emergency_mentioned?: boolean
+          favicon_url?: string | null
+          financing_mentioned?: boolean
+          gallery?: Json
+          hero_image_url?: string | null
+          id?: string
+          logo_url?: string | null
+          neq_number?: string | null
+          phone?: string | null
+          raw_signals?: Json
+          rbq_number?: string | null
+          review_summary?: Json
+          reviews?: Json
+          run_id?: string | null
+          service_cities?: Json
+          services?: Json
+          social_links?: Json
+          testimonials?: Json
+          trust_badges?: Json
+          updated_at?: string
+          videos?: Json
+          years_in_business?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_import_assets_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_import_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_import_consents: {
         Row: {
           captured_at: string
@@ -24882,6 +24989,119 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_import_runs: {
+        Row: {
+          completed_at: string | null
+          contractor_id: string | null
+          created_at: string
+          current_stage: string | null
+          domain: string | null
+          error: string | null
+          id: string
+          input_payload: Json
+          progress: number
+          raw_json: Json
+          stages: Json
+          started_at: string
+          status: Database["public"]["Enums"]["import_run_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          current_stage?: string | null
+          domain?: string | null
+          error?: string | null
+          id?: string
+          input_payload?: Json
+          progress?: number
+          raw_json?: Json
+          stages?: Json
+          started_at?: string
+          status?: Database["public"]["Enums"]["import_run_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          current_stage?: string | null
+          domain?: string | null
+          error?: string | null
+          id?: string
+          input_payload?: Json
+          progress?: number
+          raw_json?: Json
+          stages?: Json
+          started_at?: string
+          status?: Database["public"]["Enums"]["import_run_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      contractor_import_scores: {
+        Row: {
+          aeo_score: number
+          ai_summary: string | null
+          breakdown: Json
+          completeness_score: number
+          computed_at: string
+          contractor_id: string | null
+          conversion_score: number
+          id: string
+          overall_score: number
+          quick_wins: Json
+          run_id: string | null
+          seo_score: number
+          social_score: number
+          trust_score: number
+        }
+        Insert: {
+          aeo_score?: number
+          ai_summary?: string | null
+          breakdown?: Json
+          completeness_score?: number
+          computed_at?: string
+          contractor_id?: string | null
+          conversion_score?: number
+          id?: string
+          overall_score?: number
+          quick_wins?: Json
+          run_id?: string | null
+          seo_score?: number
+          social_score?: number
+          trust_score?: number
+        }
+        Update: {
+          aeo_score?: number
+          ai_summary?: string | null
+          breakdown?: Json
+          completeness_score?: number
+          computed_at?: string
+          contractor_id?: string | null
+          conversion_score?: number
+          id?: string
+          overall_score?: number
+          quick_wins?: Json
+          run_id?: string | null
+          seo_score?: number
+          social_score?: number
+          trust_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_import_scores_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_import_runs"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -72182,6 +72402,13 @@ export type Database = {
         | "storefront"
         | "logo"
         | "unknown"
+      import_run_status:
+        | "draft"
+        | "crawling"
+        | "enriching"
+        | "scoring"
+        | "completed"
+        | "failed"
       ingestion_doc_type:
         | "tax_bill"
         | "contractor_quote"
@@ -72459,6 +72686,14 @@ export const Constants = {
         "storefront",
         "logo",
         "unknown",
+      ],
+      import_run_status: [
+        "draft",
+        "crawling",
+        "enriching",
+        "scoring",
+        "completed",
+        "failed",
       ],
       ingestion_doc_type: [
         "tax_bill",
