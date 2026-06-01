@@ -41779,6 +41779,39 @@ export type Database = {
         }
         Relationships: []
       }
+      maintenance_predictions: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          estimated_timeline: string | null
+          id: string
+          issue_type: string
+          property_id: string
+          recommendation: string | null
+          user_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          estimated_timeline?: string | null
+          id?: string
+          issue_type: string
+          property_id: string
+          recommendation?: string | null
+          user_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          estimated_timeline?: string | null
+          id?: string
+          issue_type?: string
+          property_id?: string
+          recommendation?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       manual_contractor_activations: {
         Row: {
           admin_user_id: string
@@ -54235,6 +54268,51 @@ export type Database = {
           },
         ]
       }
+      property_health_scores: {
+        Row: {
+          created_at: string
+          electrical_score: number | null
+          generated_at: string
+          id: string
+          insulation_score: number | null
+          moisture_score: number | null
+          overall_score: number | null
+          property_id: string
+          signals: Json
+          structural_score: number | null
+          user_id: string
+          ventilation_score: number | null
+        }
+        Insert: {
+          created_at?: string
+          electrical_score?: number | null
+          generated_at?: string
+          id?: string
+          insulation_score?: number | null
+          moisture_score?: number | null
+          overall_score?: number | null
+          property_id: string
+          signals?: Json
+          structural_score?: number | null
+          user_id: string
+          ventilation_score?: number | null
+        }
+        Update: {
+          created_at?: string
+          electrical_score?: number | null
+          generated_at?: string
+          id?: string
+          insulation_score?: number | null
+          moisture_score?: number | null
+          overall_score?: number | null
+          property_id?: string
+          signals?: Json
+          structural_score?: number | null
+          user_id?: string
+          ventilation_score?: number | null
+        }
+        Relationships: []
+      }
       property_insights: {
         Row: {
           contractor_category: string | null
@@ -55002,6 +55080,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      property_timelines: {
+        Row: {
+          ai_summary: string | null
+          contractor_id: string | null
+          created_at: string
+          documents: Json
+          event_date: string
+          event_type: string
+          id: string
+          property_id: string
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_summary?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          documents?: Json
+          event_date: string
+          event_type: string
+          id?: string
+          property_id: string
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_summary?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          documents?: Json
+          event_date?: string
+          event_type?: string
+          id?: string
+          property_id?: string
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       prospect_admin_reviews: {
         Row: {
@@ -69311,6 +69428,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      visual_analyses: {
+        Row: {
+          ai_findings: Json
+          annotations: Json
+          created_at: string
+          id: string
+          property_id: string | null
+          recommended_action: string | null
+          risk_probability: number | null
+          session_id: string | null
+          uploaded_file: string
+          urgency_level: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_findings?: Json
+          annotations?: Json
+          created_at?: string
+          id?: string
+          property_id?: string | null
+          recommended_action?: string | null
+          risk_probability?: number | null
+          session_id?: string | null
+          uploaded_file: string
+          urgency_level?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_findings?: Json
+          annotations?: Json
+          created_at?: string
+          id?: string
+          property_id?: string | null
+          recommended_action?: string | null
+          risk_probability?: number | null
+          session_id?: string | null
+          uploaded_file?: string
+          urgency_level?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       voice_agent_mappings: {
         Row: {
