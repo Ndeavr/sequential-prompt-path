@@ -46,8 +46,12 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const apiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
-    if (!apiKey) {
+    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+    const mapsConnectorKey = Deno.env.get("GOOGLE_MAPS_API_KEY");
+    const legacyApiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
+    const useConnectorGateway = Boolean(lovableKey && mapsConnectorKey);
+
+    if (!useConnectorGateway && !legacyApiKey) {
       return new Response(
         JSON.stringify({ error: "GOOGLE_PLACES_API_KEY missing" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -72,7 +76,9 @@ Deno.serve(async (req) => {
     );
 
     // Google Places API (New) - searchText
-    const url = "https://places.googleapis.com/v1/places:searchText";
+    const url = useConnectorGateway
+      ? "https://connector-gateway.lovable.dev/google_maps/places/v1/places:searchText"
+      : "https://places.googleapis.com/v1/places:searchText";
     const fieldMask = [
       "places.id",
       "places.displayName",
@@ -96,12 +102,17 @@ Deno.serve(async (req) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Goog-Api-Key": apiKey,
+          ...(useConnectorGateway
+            ? {
+                Authorization: `Bearer ${lovableKey}`,
+                "X-Connection-Api-Key": mapsConnectorKey!,
+              }
+            : { "X-Goog-Api-Key": legacyApiKey! }),
           "X-Goog-FieldMask": fieldMask + (pageToken ? "" : ",nextPageToken"),
         },
         body: JSON.stringify({
           textQuery: `${trade} ${city} Québec`,
-          languageCode: "fr",
+          languageCode: "fr-CA",
           regionCode: "CA",
           pageSize: Math.min(20, limit - allPlaces.length),
           ...(pageToken ? { pageToken } : {}),
