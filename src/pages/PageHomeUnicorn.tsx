@@ -321,15 +321,15 @@ function HomeQuickActionsGrid() {
   );
 }
 
-/* ---------------- Category chips ---------------- */
+/* ---------------- Symptom chips (intent-first) ---------------- */
 const CATEGORIES = [
-  { label: "Isolation", icon: HomeIcon, c: "#2563FF", bg: "#EFF6FF" },
-  { label: "Toiture", icon: Hammer, c: "#F97316", bg: "#FFF4E6" },
-  { label: "Thermopompe", icon: Thermometer, c: "#10B981", bg: "#ECFDF5" },
-  { label: "Humidité", icon: Droplets, c: "#8B5CF6", bg: "#F3EEFF" },
+  { label: "Maison trop chaude", icon: Thermometer, c: "#F97316", bg: "#FFF4E6" },
+  { label: "Humidité au grenier", icon: Droplets, c: "#8B5CF6", bg: "#F3EEFF" },
+  { label: "Facture Hydro élevée", icon: Zap, c: "#F59E0B", bg: "#FFFBEB" },
+  { label: "Condensation fenêtres", icon: Droplets, c: "#0EA5E9", bg: "#E0F2FE" },
+  { label: "Fissure inquiétante", icon: HomeIcon, c: "#2563FF", bg: "#EFF6FF" },
+  { label: "Moisissure suspecte", icon: Wrench, c: "#8B5CF6", bg: "#F3EEFF" },
   { label: "Condo", icon: Building2, c: "#2563FF", bg: "#EFF6FF" },
-  { label: "Électricité", icon: Zap, c: "#F59E0B", bg: "#FFFBEB" },
-  { label: "Appareils", icon: Wrench, c: "#0EA5E9", bg: "#E0F2FE" },
 ];
 
 function CategoryChipsScroll() {
