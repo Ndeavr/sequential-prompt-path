@@ -90,7 +90,7 @@ export default function NearbyContractorsCarousel() {
     <div
       role="region"
       aria-label="Entrepreneurs recommandés près de vous"
-      className="mt-4 relative"
+      className="mt-5 relative"
       onMouseEnter={() => (pausedRef.current = true)}
       onMouseLeave={() => (pausedRef.current = false)}
       onFocus={() => (pausedRef.current = true)}
@@ -113,7 +113,7 @@ export default function NearbyContractorsCarousel() {
       }}
     >
       <div
-        className="p-3 rounded-2xl relative overflow-hidden"
+        className="p-3 pt-5 rounded-2xl relative"
         style={{
           background: "linear-gradient(180deg,#FFFFFF,#F7FAFF)",
           border: "1px solid rgba(11,18,32,0.06)",
@@ -122,11 +122,12 @@ export default function NearbyContractorsCarousel() {
         }}
       >
         <div
-          className="absolute -top-2 left-3 px-2 py-0.5 rounded-md text-[9px] font-bold text-white z-10"
+          className="absolute -top-2.5 left-3 px-2 py-0.5 rounded-md text-[9px] font-bold text-white z-10"
           style={{ background: "linear-gradient(135deg,#2563FF,#3B82F6)" }}
         >
           AIPP · Près de vous
         </div>
+
 
         <AnimatePresence mode="wait">
           <motion.div
