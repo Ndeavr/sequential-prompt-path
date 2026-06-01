@@ -27851,22 +27851,30 @@ export type Database = {
           confidence_score: number | null
           contractor_id: string | null
           created_at: string
+          dedupe_confidence: number | null
+          dedupe_matched_id: string | null
+          dedupe_signals: Json
           discovery_method: string | null
           do_not_contact: boolean
           domain_status: string | null
           email: string | null
+          enrichment_count: number
           enrichment_status: string
           estimated_capacity: number | null
           estimated_monthly_value: number | null
           extraction_confidence: number | null
           google_business_url: string | null
+          google_place_id: string | null
           id: string
+          ingestion_status: string
           language_guess: string | null
           last_action_at: string | null
+          last_enriched_at: string | null
           legal_name: string | null
           needs_review: boolean
           neq: string | null
           next_action: string | null
+          normalized_domain: string | null
           onboarding_status: string
           outreach_status: string
           owner_name: string | null
@@ -27911,22 +27919,30 @@ export type Database = {
           confidence_score?: number | null
           contractor_id?: string | null
           created_at?: string
+          dedupe_confidence?: number | null
+          dedupe_matched_id?: string | null
+          dedupe_signals?: Json
           discovery_method?: string | null
           do_not_contact?: boolean
           domain_status?: string | null
           email?: string | null
+          enrichment_count?: number
           enrichment_status?: string
           estimated_capacity?: number | null
           estimated_monthly_value?: number | null
           extraction_confidence?: number | null
           google_business_url?: string | null
+          google_place_id?: string | null
           id?: string
+          ingestion_status?: string
           language_guess?: string | null
           last_action_at?: string | null
+          last_enriched_at?: string | null
           legal_name?: string | null
           needs_review?: boolean
           neq?: string | null
           next_action?: string | null
+          normalized_domain?: string | null
           onboarding_status?: string
           outreach_status?: string
           owner_name?: string | null
@@ -27971,22 +27987,30 @@ export type Database = {
           confidence_score?: number | null
           contractor_id?: string | null
           created_at?: string
+          dedupe_confidence?: number | null
+          dedupe_matched_id?: string | null
+          dedupe_signals?: Json
           discovery_method?: string | null
           do_not_contact?: boolean
           domain_status?: string | null
           email?: string | null
+          enrichment_count?: number
           enrichment_status?: string
           estimated_capacity?: number | null
           estimated_monthly_value?: number | null
           extraction_confidence?: number | null
           google_business_url?: string | null
+          google_place_id?: string | null
           id?: string
+          ingestion_status?: string
           language_guess?: string | null
           last_action_at?: string | null
+          last_enriched_at?: string | null
           legal_name?: string | null
           needs_review?: boolean
           neq?: string | null
           next_action?: string | null
+          normalized_domain?: string | null
           onboarding_status?: string
           outreach_status?: string
           owner_name?: string | null
@@ -28018,7 +28042,15 @@ export type Database = {
           updated_at?: string
           website_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contractor_prospects_dedupe_matched_id_fkey"
+            columns: ["dedupe_matched_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contractor_public_pages: {
         Row: {
@@ -56108,6 +56140,60 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_dedupe_reviews: {
+        Row: {
+          candidate_prospect_id: string | null
+          confidence: number
+          created_at: string
+          existing_prospect_id: string | null
+          id: string
+          new_payload: Json
+          reviewed_at: string | null
+          reviewed_by: string | null
+          signals: Json
+          status: string
+        }
+        Insert: {
+          candidate_prospect_id?: string | null
+          confidence: number
+          created_at?: string
+          existing_prospect_id?: string | null
+          id?: string
+          new_payload?: Json
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          signals?: Json
+          status?: string
+        }
+        Update: {
+          candidate_prospect_id?: string | null
+          confidence?: number
+          created_at?: string
+          existing_prospect_id?: string | null
+          id?: string
+          new_payload?: Json
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          signals?: Json
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_dedupe_reviews_candidate_prospect_id_fkey"
+            columns: ["candidate_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_dedupe_reviews_existing_prospect_id_fkey"
+            columns: ["existing_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
             referencedColumns: ["id"]
           },
         ]
