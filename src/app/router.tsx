@@ -12,8 +12,6 @@ import AuthOverlayPremium from "@/components/auth/AuthOverlayPremium";
 
 // Only eagerly load the home page and critical shared pages
 import HomeWithFeatureFlag from "@/components/home-intent/HomeWithFeatureFlag";
-import PageHomeIntelligence from "@/pages/home-intel/PageHomeIntelligence";
-const PageDiagnosticIntel = lazy(() => import("@/pages/diagnostic/PageDiagnosticIntel"));
 import PageHomeUnicorn from "@/pages/PageHomeUnicorn";
 import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
@@ -745,8 +743,7 @@ export const AppRouter = () => (
     <Suspense fallback={<LazyFallback />}>
       <Routes>
         {/* Redirects for common mismatched entry points */}
-        <Route path="/index" element={<PageHomeIntelligence />} />
-        <Route path="/legacy-home" element={<PageHomeUnicorn />} />
+        <Route path="/index" element={<PageHomeUnicorn />} />
         <Route path="/isolation-solution-royal" element={<Suspense fallback={<LazyFallback />}><PageSignaturePartner slug="isolation-solution-royal" /></Suspense>} />
         <Route path="/partenaires/:slug" element={<Suspense fallback={<LazyFallback />}><PageSignaturePartner /></Suspense>} />
         <Route path="/admin/partners" element={<Suspense fallback={<LazyFallback />}><PageAdminPartners /></Suspense>} />
@@ -769,8 +766,7 @@ export const AppRouter = () => (
         <Route path="/alex/demo" element={<Suspense fallback={<LazyFallback />}><PageAlexConversationAnimated /></Suspense>} />
         <Route path="/alex/analysis" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
         <Route path="/conversation" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
-        <Route path="/" element={<PageHomeIntelligence />} />
-        <Route path="/diagnostic" element={<Suspense fallback={<LazyFallback />}><PageDiagnosticIntel /></Suspense>} />
+        <Route path="/" element={<PageHomeUnicorn />} />
         <Route path="/intent" element={<Suspense fallback={<LazyFallback />}><HomeIntentRouterDynamic /></Suspense>} />
         <Route path="/homeowner" element={<Suspense fallback={<LazyFallback />}><HomeHomeownerAdaptive /></Suspense>} />
         <Route path="/contractor" element={<Suspense fallback={<LazyFallback />}><HomeContractorAdaptive /></Suspense>} />

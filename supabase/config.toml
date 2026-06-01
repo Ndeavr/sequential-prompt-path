@@ -155,5 +155,3 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = true
   [functions.resend-inbound-webhook]
     verify_jwt = false
-  [functions.visual-analysis]
-    verify_jwt = false
