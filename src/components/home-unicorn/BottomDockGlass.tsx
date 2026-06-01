@@ -1,9 +1,22 @@
 /**
  * BottomDockGlass — iOS-inspired glass dock with central glowing Alex orb.
- * Replaces MobileBottomNav globally. Mobile-only (lg:hidden).
+ * Mobile-only (lg:hidden). 4 tabs (2 left + 2 right) + centered Alex orb.
+ * Menus are role-aware: homeowner, contractor, admin.
  */
 import { Link, useLocation } from "react-router-dom";
-import { Home, TrendingUp, User, Settings, Sparkles } from "lucide-react";
+import {
+  Home,
+  TrendingUp,
+  User,
+  Sparkles,
+  Wrench,
+  FolderKanban,
+  Inbox,
+  CalendarDays,
+  Activity,
+  Settings2,
+  type LucideIcon,
+} from "lucide-react";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import "@/styles/unicorn-theme.css";
@@ -11,7 +24,47 @@ import "@/styles/unicorn-theme.css";
 interface Item {
   label: string;
   to: string;
-  icon: typeof Home;
+  icon: LucideIcon;
+}
+
+type RoleMenu = { left: [Item, Item]; right: [Item, Item] };
+
+function getMenu(role: string | undefined): RoleMenu {
+  if (role === "contractor") {
+    return {
+      left: [
+        { label: "Tableau", to: "/pro/dashboard", icon: Home },
+        { label: "Leads", to: "/pro/leads", icon: Inbox },
+      ],
+      right: [
+        { label: "Agenda", to: "/pro/calendar", icon: CalendarDays },
+        { label: "Profil", to: "/pro/account", icon: User },
+      ],
+    };
+  }
+  if (role === "admin") {
+    return {
+      left: [
+        { label: "Ops", to: "/admin/operations", icon: Activity },
+        { label: "Croissance", to: "/admin/growth", icon: TrendingUp },
+      ],
+      right: [
+        { label: "Système", to: "/admin", icon: Settings2 },
+        { label: "Profil", to: "/dashboard/account", icon: User },
+      ],
+    };
+  }
+  // homeowner (default)
+  return {
+    left: [
+      { label: "Accueil", to: "/", icon: Home },
+      { label: "Maison", to: "/dashboard", icon: Wrench },
+    ],
+    right: [
+      { label: "Projets", to: "/dashboard/projects", icon: FolderKanban },
+      { label: "Profil", to: "/dashboard/account", icon: User },
+    ],
+  };
 }
 
 export default function BottomDockGlass() {
@@ -19,25 +72,7 @@ export default function BottomDockGlass() {
   const { openAlex } = useAlexVoice();
   const { activeRole } = useNavigationContext();
 
-  // Admin is a supervisor role — primary nav points to user surfaces so admins
-  // can freely browse the app. /admin reachable via ProfileMenu.
-  const growthPath =
-    activeRole === "contractor" ? "/pro/dashboard"
-    : "/dashboard";
-  const profilePath =
-    activeRole === "contractor" ? "/pro/account"
-    : "/dashboard/account";
-  const accountPath = profilePath;
-
-  const LEFT: Item[] = [
-    { label: "Accueil", to: "/", icon: Home },
-    { label: "Croissance", to: growthPath, icon: TrendingUp },
-  ];
-  const RIGHT: Item[] = [
-    { label: "Profil", to: profilePath, icon: User },
-    { label: "Compte", to: accountPath, icon: Settings },
-  ];
-
+  const { left, right } = getMenu(activeRole);
 
   const Tab = ({ item }: { item: Item }) => {
     const active = pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to));
@@ -58,7 +93,7 @@ export default function BottomDockGlass() {
     <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none pb-[env(safe-area-inset-bottom)]">
       <div className="mx-3 mb-3 pointer-events-auto relative">
         <div
-          className="flex items-end justify-between rounded-[28px] px-2 pt-1 pb-1 relative"
+          className="grid grid-cols-5 items-end rounded-[28px] px-2 pt-1 pb-1 relative"
           style={{
             background: "rgba(255,255,255,0.78)",
             backdropFilter: "blur(24px) saturate(160%)",
@@ -68,17 +103,18 @@ export default function BottomDockGlass() {
               "0 24px 60px -20px rgba(37,99,255,0.22), 0 8px 24px -14px rgba(11,18,32,0.10)",
           }}
         >
-          {LEFT.map((it) => (
-            <Tab key={it.to} item={it} />
-          ))}
-          {/* Spacer for center orb */}
-          <div className="w-16 shrink-0" />
-          {RIGHT.map((it) => (
-            <Tab key={it.to} item={it} />
-          ))}
+          <Tab item={left[0]} />
+          <Tab item={left[1]} />
+          {/* Center slot reserved for Alex orb — keeps grid symmetric */}
+          <div className="flex flex-col items-center justify-end pb-1 pt-2">
+            <div className="w-14 h-14" aria-hidden />
+            <span className="text-[11px] font-semibold text-[#2563FF] mt-1">Alex</span>
+          </div>
+          <Tab item={right[0]} />
+          <Tab item={right[1]} />
         </div>
 
-        {/* Center glowing Alex orb */}
+        {/* Center glowing Alex orb — absolutely centered over the middle grid cell */}
         <button
           type="button"
           onClick={() => openAlex("home_dock")}
@@ -94,9 +130,6 @@ export default function BottomDockGlass() {
         >
           <Sparkles size={22} strokeWidth={2.2} />
         </button>
-        <div className="absolute left-1/2 -translate-x-1/2 top-[42px] text-[11px] font-semibold text-[#2563FF] pointer-events-none">
-          Alex
-        </div>
       </div>
     </div>
   );
