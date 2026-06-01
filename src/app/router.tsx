@@ -295,6 +295,7 @@ const PageContractorAssetsStudio = lazy(() => import("@/pages/contractor-funnel/
 const PageContractorFAQBuilder = lazy(() => import("@/pages/contractor-funnel/PageContractorFAQBuilder"));
 const PageContractorPlanRecommendation = lazy(() => import("@/pages/contractor-funnel/PageContractorPlanRecommendation"));
 const PageContractorPersonalizedPlan = lazy(() => import("@/pages/contractor-funnel/PageContractorPersonalizedPlan"));
+const PageContractorPricingIntake = lazy(() => import("@/pages/contractor-funnel/PageContractorPricingIntake"));
 const PageAdminPricingIntelligence = lazy(() => import("@/pages/admin/PageAdminPricingIntelligence"));
 const PageContractorCheckout = lazy(() => import("@/pages/contractor-funnel/PageContractorCheckout"));
 const PageContractorActivationSuccess = lazy(() => import("@/pages/contractor-funnel/PageContractorActivationSuccess"));
@@ -830,6 +831,7 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/plan" element={<PageContractorPlanRecommendation />} />
         <Route path="/entrepreneur/checkout" element={<PageContractorCheckout />} />
         <Route path="/entrepreneur/plan-personnalise/:quoteId" element={<Suspense fallback={<LazyFallback />}><PageContractorPersonalizedPlan /></Suspense>} />
+        <Route path="/entrepreneur/devis-personnalise" element={<Suspense fallback={<LazyFallback />}><PageContractorPricingIntake /></Suspense>} />
         <Route path="/entrepreneur/activation" element={<PageContractorActivationSuccess />} />
         <Route path="/entrepreneur/dashboard-post" element={<PageContractorDashboardPostActivation />} />
         <Route path="/contractor/:slug" element={<Suspense fallback={<LazyFallback />}><PageContractorPersonalizedLanding /></Suspense>} />
