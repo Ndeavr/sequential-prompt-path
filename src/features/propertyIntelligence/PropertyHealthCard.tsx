@@ -3,7 +3,8 @@
  * Minimal premium card showing overall property health + 4 sub-scores.
  * Reads from public.property_health_scores. No new design tokens.
  */
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Activity, Droplets, Wind, ShieldCheck, Layers } from "lucide-react";
