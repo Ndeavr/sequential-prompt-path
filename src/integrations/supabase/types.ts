@@ -54562,6 +54562,45 @@ export type Database = {
           },
         ]
       }
+      property_memory_events: {
+        Row: {
+          ai_summary: string | null
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          property_id: string | null
+          related_documents: Json
+          risk_level: string | null
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_summary?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          property_id?: string | null
+          related_documents?: Json
+          risk_level?: string | null
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_summary?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          property_id?: string | null
+          related_documents?: Json
+          risk_level?: string | null
+          session_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       property_merge_candidates: {
         Row: {
           created_at: string
