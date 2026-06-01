@@ -1,6 +1,7 @@
 // acq-send-outreach — sends a draft outreach message (email via Resend or SMS via Twilio)
 // Defaults to DRY-RUN; requires { live: true } to actually send.
 import { svc, startRun, finishRun, log, cors, requireService } from "../_shared/acq-logger.ts";
+import { requireSecrets, structuredError, structuredOk, jsonResponse } from "../_shared/acq-preflight.ts";
 
 const FROM_EMAIL = "alex@unpro.ca";
 const FROM_NAME = "Alex — UNPRO";
@@ -8,40 +9,102 @@ const FROM_NAME = "Alex — UNPRO";
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   const s = svc();
-  const body = await req.json().catch(() => ({}));
-  const { message_id, live, batch, pause, require_approval, limit } = body ?? {};
+  try {
+    const body = await req.json().catch(() => ({}));
+    const { message_id, live, batch, pause, require_approval, limit,
+            prospect_id, channel, dry_run, test_to_admin } = body ?? {};
 
-  // Pause mode → no-op acknowledgement (autopilot toggle handled elsewhere)
-  if (pause) {
-    return new Response(JSON.stringify({ ok: true, paused: true }), {
-      headers: { ...cors, "Content-Type": "application/json" },
-    });
-  }
+    // Pause mode → no-op acknowledgement
+    if (pause) {
+      return structuredOk("pause_campaign", { paused: true, message: "Campagne mise en pause." });
+    }
 
-  // Batch mode → fan out over pending drafts
-  if (batch) {
-    let q = s.from("outreach_messages").select("id, prospect_id").eq("message_status", "draft").limit(Number(limit ?? 25));
-    if (require_approval) q = q.eq("approved", true);
-    const { data: drafts, error } = await q;
-    if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: cors });
-    const ids = (drafts ?? []).map((d: any) => d.id);
-    if (ids.length === 0) {
-      return new Response(JSON.stringify({ ok: true, batch: true, sent: 0, message: "Aucun brouillon prêt" }), {
-        headers: { ...cors, "Content-Type": "application/json" },
+    // Test-to-admin / ad-hoc preview from a prospect_id + channel (used by the cockpit)
+    if (prospect_id && channel && !message_id) {
+      // Preflight per channel
+      const step = channel === "sms" ? "test_sms" : "test_email";
+      const required = channel === "sms"
+        ? ["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN"]
+        : ["RESEND_API_KEY"];
+      const block = requireSecrets(step, required);
+      if (block) return block;
+
+      // Pick a latest draft variant for that prospect+channel
+      const { data: variant } = await s
+        .from("contractor_outreach_tests")
+        .select("subject,body,cta")
+        .eq("prospect_id", prospect_id)
+        .eq("channel", channel)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!variant) {
+        return structuredError({
+          ok: false, step,
+          error_code: "NO_VARIANT",
+          message: `Aucune variante ${channel.toUpperCase()} générée pour ce prospect.`,
+          next_action: "Cliquer d'abord sur « Generate messages ».",
+        });
+      }
+      // In dry_run/test_to_admin we just echo the preview — no provider call.
+      if (dry_run !== false) {
+        return structuredOk(step, {
+          dry_run: true,
+          test_to_admin: !!test_to_admin,
+          preview: {
+            channel,
+            subject: variant.subject ?? null,
+            body: variant.body ?? "",
+            cta: variant.cta ?? null,
+          },
+          message: `Aperçu ${channel} prêt (mode test).`,
+        });
+      }
+      // Live path not supported via ad-hoc — require a real message_id
+      return structuredError({
+        ok: false, step,
+        error_code: "MISSING_MESSAGE",
+        message: "Envoi LIVE depuis prospect_id non supporté. Passer par un message_id approuvé.",
+        next_action: "Générer un message → approuver → Launch outreach.",
       });
     }
-    const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/acq-send-outreach`;
-    const auth = `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`;
-    const results = await Promise.allSettled(ids.map((id) =>
-      fetch(url, { method: "POST", headers: { "Content-Type": "application/json", Authorization: auth }, body: JSON.stringify({ message_id: id, live: !!live }) })
-        .then((r) => r.json().then((j) => ({ id, ok: r.ok, ...j })))
-    ));
-    return new Response(JSON.stringify({ ok: true, batch: true, total: ids.length, results: results.map((r) => r.status === "fulfilled" ? r.value : { error: String(r.reason) }) }), {
-      headers: { ...cors, "Content-Type": "application/json" },
-    });
-  }
 
-  if (!message_id) return new Response(JSON.stringify({ error: "message_id requis" }), { status: 400, headers: cors });
+    // Batch mode → fan out over pending drafts
+    if (batch) {
+      let q = s.from("outreach_messages").select("id, prospect_id").eq("message_status", "draft").limit(Number(limit ?? 25));
+      if (require_approval) q = q.eq("approved", true);
+      const { data: drafts, error } = await q;
+      if (error) {
+        return structuredError({
+          ok: false, step: "launch_outreach",
+          error_code: "DB_ERROR", message: error.message,
+          next_action: "Vérifier la table outreach_messages.",
+        });
+      }
+      const ids = (drafts ?? []).map((d: any) => d.id);
+      if (ids.length === 0) {
+        return structuredOk("launch_outreach", { batch: true, sent: 0, message: "Aucun brouillon prêt à envoyer." });
+      }
+      const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/acq-send-outreach`;
+      const auth = `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`;
+      const results = await Promise.allSettled(ids.map((id) =>
+        fetch(url, { method: "POST", headers: { "Content-Type": "application/json", Authorization: auth }, body: JSON.stringify({ message_id: id, live: !!live }) })
+          .then((r) => r.json().then((j) => ({ id, ok: r.ok, ...j })))
+      ));
+      return structuredOk("launch_outreach", {
+        batch: true, total: ids.length,
+        results: results.map((r) => r.status === "fulfilled" ? r.value : { error: String(r.reason) }),
+      });
+    }
+
+    if (!message_id) {
+      return structuredError({
+        ok: false, step: "outreach_send",
+        error_code: "MISSING_INPUT",
+        message: "message_id requis (ou utiliser prospect_id + channel pour un aperçu).",
+        next_action: "Sélectionner un prospect et générer un message d'abord.",
+      });
+    }
 
   const runId = await startRun(s, "outreach_send", { message_id, live: !!live });
   const { data: msg } = await s.from("outreach_messages").select("*").eq("id", message_id).maybeSingle();
