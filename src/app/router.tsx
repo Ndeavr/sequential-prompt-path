@@ -294,6 +294,8 @@ const PageContractorAIPPBuilder = lazy(() => import("@/pages/contractor-funnel/P
 const PageContractorAssetsStudio = lazy(() => import("@/pages/contractor-funnel/PageContractorAssetsStudio"));
 const PageContractorFAQBuilder = lazy(() => import("@/pages/contractor-funnel/PageContractorFAQBuilder"));
 const PageContractorPlanRecommendation = lazy(() => import("@/pages/contractor-funnel/PageContractorPlanRecommendation"));
+const PageContractorPersonalizedPlan = lazy(() => import("@/pages/contractor-funnel/PageContractorPersonalizedPlan"));
+const PageAdminPricingIntelligence = lazy(() => import("@/pages/admin/PageAdminPricingIntelligence"));
 const PageContractorCheckout = lazy(() => import("@/pages/contractor-funnel/PageContractorCheckout"));
 const PageContractorActivationSuccess = lazy(() => import("@/pages/contractor-funnel/PageContractorActivationSuccess"));
 const PageContractorDashboardPostActivation = lazy(() => import("@/pages/contractor-funnel/PageContractorDashboardPostActivation"));
@@ -827,6 +829,7 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/faq" element={<PageContractorFAQBuilder />} />
         <Route path="/entrepreneur/plan" element={<PageContractorPlanRecommendation />} />
         <Route path="/entrepreneur/checkout" element={<PageContractorCheckout />} />
+        <Route path="/entrepreneur/plan-personnalise/:quoteId" element={<Suspense fallback={<LazyFallback />}><PageContractorPersonalizedPlan /></Suspense>} />
         <Route path="/entrepreneur/activation" element={<PageContractorActivationSuccess />} />
         <Route path="/entrepreneur/dashboard-post" element={<PageContractorDashboardPostActivation />} />
         <Route path="/contractor/:slug" element={<Suspense fallback={<LazyFallback />}><PageContractorPersonalizedLanding /></Suspense>} />
@@ -1246,6 +1249,7 @@ export const AppRouter = () => (
         <Route path="/admin/validation" element={<ProtectedRoute requiredRole="admin"><AdminValidation /></ProtectedRoute>} />
         <Route path="/admin/answer-engine" element={<ProtectedRoute requiredRole="admin"><AdminAnswerEngine /></ProtectedRoute>} />
         <Route path="/admin/operations" element={<ProtectedRoute requiredRole="admin"><AdminOperationsHub /></ProtectedRoute>} />
+        <Route path="/admin/pricing-intelligence" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminPricingIntelligence /></Suspense></ProtectedRoute>} />
         <Route path="/admin/system-mode" element={<ProtectedRoute requiredRole="admin"><PageSystemModeControlCenter /></ProtectedRoute>} />
         <Route path="/admin/verification" element={<ProtectedRoute requiredRole="admin"><AdminVerificationRuns /></ProtectedRoute>} />
         <Route path="/admin/verification/:id" element={<ProtectedRoute requiredRole="admin"><AdminVerificationRunDetail /></ProtectedRoute>} />
