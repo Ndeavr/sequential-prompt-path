@@ -192,7 +192,7 @@ const ProBilling = () => {
       const priceId = getStripePriceId(plan, interval);
       const result = await checkout.mutateAsync({
         priceId,
-        planId: plan.id,
+        planId: plan.code,
         billingInterval: interval,
       });
       if (result.url) {
