@@ -73,6 +73,9 @@ export default function PageContractorCheckout() {
       if (error) throw error;
       if (data?.url) {
         redirectToCheckout(data.url);
+        // Release the loader after 2s in case the user stays on this tab
+        setTimeout(() => setIsLoading(false), 2000);
+        return;
       } else if (data?.activated) {
         toast.success(data.message || "Plan activé!");
         goToStep("activation");
