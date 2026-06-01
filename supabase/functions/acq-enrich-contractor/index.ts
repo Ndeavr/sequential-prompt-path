@@ -81,17 +81,34 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
 
   try {
-    const { website: rawWeb, email, company_name } = await req.json();
+    const body = await req.json();
+    let { website: rawWeb, email, company_name } = body;
+    const prospectId: string | undefined = body.prospect_id;
+
     const sb = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // Cascade mode: hydrate inputs from contractor_prospects
+    if (prospectId && !rawWeb && !email) {
+      const { data: p } = await sb
+        .from("contractor_prospects")
+        .select("website, email, company_name, normalized_domain")
+        .eq("id", prospectId)
+        .maybeSingle();
+      if (p) {
+        rawWeb = p.website || (p.normalized_domain ? `https://${p.normalized_domain}` : null);
+        email = p.email;
+        company_name = company_name || p.company_name;
+      }
+    }
+
     const isISR = ISR_OVERRIDES.match(rawWeb, email);
     const website = rawWeb || (isISR ? ISR_OVERRIDES.data.website : null);
     if (!website && !email) {
-      return new Response(JSON.stringify({ error: "website_or_email_required" }), {
-        status: 400, headers: { ...cors, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ error: "website_or_email_required", prospect_id: prospectId ?? null, skipped: true }), {
+        status: 200, headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
