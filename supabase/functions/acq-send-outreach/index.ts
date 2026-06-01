@@ -198,6 +198,23 @@ Deno.serve(async (req) => {
     }
   }
 
-  await finishRun(s, runId, { status: "failed", error_summary: `Canal inconnu: ${msg.channel_type}` });
-  return new Response(JSON.stringify({ error: "Canal inconnu" }), { status: 400, headers: cors });
+    await finishRun(s, runId, { status: "failed", error_summary: `Canal inconnu: ${msg.channel_type}` });
+    return structuredError({
+      ok: false, step: "outreach_send",
+      error_code: "UNKNOWN_CHANNEL",
+      message: `Canal inconnu: ${msg.channel_type}`,
+      next_action: "Vérifier channel_type sur le message (email|sms).",
+    });
+  } catch (e) {
+    const errMsg = e instanceof Error ? e.message : String(e);
+    const stack = e instanceof Error ? e.stack : undefined;
+    console.error("[acq-send-outreach] UNCAUGHT", errMsg, stack);
+    return structuredError({
+      ok: false, step: "outreach_send",
+      error_code: "UNEXPECTED_ERROR",
+      message: errMsg,
+      next_action: "Consulter acquisition_action_logs pour la trace complète.",
+      details: { stack: stack?.slice(0, 1200) },
+    });
+  }
 });
