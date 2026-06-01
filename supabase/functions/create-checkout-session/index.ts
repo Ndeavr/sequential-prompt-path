@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     const userId = userData.user.id;
     const userEmail = userData.user.email as string;
 
-    const { planId, billingInterval, successUrl, cancelUrl, promoCode, appointmentPack, uiMode, returnUrl } = await req.json();
+    const { planId, billingInterval, successUrl, cancelUrl, promoCode, appointmentPack, uiMode, returnUrl, quoteId } = await req.json();
     const interval: "month" | "year" = billingInterval === "year" ? "year" : "month";
 
     const serviceClient = createClient(
@@ -291,6 +291,7 @@ Deno.serve(async (req) => {
         contractor_id: contractor.id,
         plan_id: planId,
         billing_interval: interval,
+        ...(quoteId && { quote_id: String(quoteId) }),
         ...(redemptionId && { redemption_id: redemptionId }),
         ...(promoCode && { promo_code: promoCode.toUpperCase() }),
         ...(appointmentPack && {
@@ -303,6 +304,7 @@ Deno.serve(async (req) => {
           contractor_id: contractor.id,
           plan_id: planId,
           billing_interval: interval,
+          ...(quoteId && { quote_id: String(quoteId) }),
         },
       },
     };
