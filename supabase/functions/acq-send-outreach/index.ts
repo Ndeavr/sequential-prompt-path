@@ -8,7 +8,39 @@ const FROM_NAME = "Alex — UNPRO";
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   const s = svc();
-  const { message_id, live } = await req.json().catch(() => ({}));
+  const body = await req.json().catch(() => ({}));
+  const { message_id, live, batch, pause, require_approval, limit } = body ?? {};
+
+  // Pause mode → no-op acknowledgement (autopilot toggle handled elsewhere)
+  if (pause) {
+    return new Response(JSON.stringify({ ok: true, paused: true }), {
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+  }
+
+  // Batch mode → fan out over pending drafts
+  if (batch) {
+    let q = s.from("outreach_messages").select("id, prospect_id").eq("message_status", "draft").limit(Number(limit ?? 25));
+    if (require_approval) q = q.eq("approved", true);
+    const { data: drafts, error } = await q;
+    if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: cors });
+    const ids = (drafts ?? []).map((d: any) => d.id);
+    if (ids.length === 0) {
+      return new Response(JSON.stringify({ ok: true, batch: true, sent: 0, message: "Aucun brouillon prêt" }), {
+        headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
+    const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/acq-send-outreach`;
+    const auth = `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`;
+    const results = await Promise.allSettled(ids.map((id) =>
+      fetch(url, { method: "POST", headers: { "Content-Type": "application/json", Authorization: auth }, body: JSON.stringify({ message_id: id, live: !!live }) })
+        .then((r) => r.json().then((j) => ({ id, ok: r.ok, ...j })))
+    ));
+    return new Response(JSON.stringify({ ok: true, batch: true, total: ids.length, results: results.map((r) => r.status === "fulfilled" ? r.value : { error: String(r.reason) }) }), {
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+  }
+
   if (!message_id) return new Response(JSON.stringify({ error: "message_id requis" }), { status: 400, headers: cors });
 
   const runId = await startRun(s, "outreach_send", { message_id, live: !!live });
