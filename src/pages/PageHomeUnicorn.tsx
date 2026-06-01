@@ -45,54 +45,57 @@ function HeaderFloatingGlass() {
         </div>
 
         <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-          <button
-            className="uc-glass-strong rounded-xl px-2 md:px-3 py-1.5 md:py-2 flex items-center gap-0.5 text-[11px] md:text-[12px] font-semibold flex-shrink-0"
-            style={{ borderRadius: 14, color: "#0B1220" }}
-          >
-            FR <ChevronDown size={12} />
-          </button>
-          <button
-            className="uc-glass-strong rounded-xl w-9 h-9 md:w-10 md:h-10 flex items-center justify-center relative flex-shrink-0"
-            style={{ borderRadius: 14 }}
-            aria-label="Notifications"
-          >
-            <Bell size={15} color="#0B1220" />
-            <span
-              className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
-              style={{ background: "#2563FF", boxShadow: "0 0 0 2px white" }}
-            />
-          </button>
-          <button
-            onClick={() => navigate("/qr")}
-            className="uc-glass-strong rounded-xl w-9 h-9 md:w-10 md:h-10 flex items-center justify-center flex-shrink-0"
-            style={{ borderRadius: 14 }}
-            aria-label="Mon QR Code"
-          >
-            <QrCode size={15} color="#0B1220" />
-          </button>
-          <button
-            className="uc-glass-strong rounded-xl pl-1 pr-1.5 md:pr-2 py-1 flex items-center gap-0.5 md:gap-1 flex-shrink-0"
-            style={{ borderRadius: 14 }}
-            aria-label="Profil"
-          >
-            <span
-              className="w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center text-[11px] md:text-[12px] font-bold text-white"
-              style={{ background: "linear-gradient(135deg, #6366F1, #3B82F6)" }}
+          <div className="hidden md:flex items-center gap-2">
+            <button
+              className="uc-glass-strong rounded-xl px-2 md:px-3 py-1.5 md:py-2 flex items-center gap-0.5 text-[11px] md:text-[12px] font-semibold flex-shrink-0"
+              style={{ borderRadius: 14, color: "#0B1220" }}
             >
-              P
-            </span>
-            <ChevronDown size={12} color="#0B1220" />
-          </button>
+              FR <ChevronDown size={12} />
+            </button>
+            <button
+              className="uc-glass-strong rounded-xl w-9 h-9 md:w-10 md:h-10 flex items-center justify-center relative flex-shrink-0"
+              style={{ borderRadius: 14 }}
+              aria-label="Notifications"
+            >
+              <Bell size={15} color="#0B1220" />
+              <span
+                className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
+                style={{ background: "#2563FF", boxShadow: "0 0 0 2px white" }}
+              />
+            </button>
+            <button
+              onClick={() => navigate("/qr")}
+              className="uc-glass-strong rounded-xl w-9 h-9 md:w-10 md:h-10 flex items-center justify-center flex-shrink-0"
+              style={{ borderRadius: 14 }}
+              aria-label="Mon QR Code"
+            >
+              <QrCode size={15} color="#0B1220" />
+            </button>
+            <button
+              className="uc-glass-strong rounded-xl pl-1 pr-1.5 md:pr-2 py-1 flex items-center gap-0.5 md:gap-1 flex-shrink-0"
+              style={{ borderRadius: 14 }}
+              aria-label="Profil"
+            >
+              <span
+                className="w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center text-[11px] md:text-[12px] font-bold text-white"
+                style={{ background: "linear-gradient(135deg, #6366F1, #3B82F6)" }}
+              >
+                P
+              </span>
+              <ChevronDown size={12} color="#0B1220" />
+            </button>
+          </div>
           <Sheet>
             <SheetTrigger asChild>
               <button
-                className="uc-glass-strong rounded-xl w-10 h-10 hidden md:flex items-center justify-center flex-shrink-0"
+                className="uc-glass-strong rounded-xl w-10 h-10 flex items-center justify-center flex-shrink-0"
                 style={{ borderRadius: 14 }}
                 aria-label="Menu"
               >
                 <Menu size={16} color="#0B1220" />
               </button>
             </SheetTrigger>
+
             <SheetContent side="right" className="w-[82vw] max-w-[340px] p-0">
               <SheetHeader className="px-5 pt-5 pb-3">
                 <SheetTitle className="text-left text-[18px]">Menu</SheetTitle>
