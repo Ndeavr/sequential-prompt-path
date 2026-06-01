@@ -51,7 +51,7 @@ export default function PageAiIndexedProfile() {
       if (!slug) return;
       const { data: profile } = await supabase
         .from("aipp_profiles" as any)
-        .select("*")
+        .select("id, slug, company_name, legal_name, trade_name, website_url, primary_city, primary_trade, short_ai_summary, long_ai_summary, logo_url, hero_image_url, google_business_url, google_rating, google_review_count, positioning_statement, founded_year, team_size, public_status, verification_status, contractor_id, meta_title, meta_description, canonical_url, published_at, created_at, updated_at")
         .eq("slug", slug)
         .eq("public_status", "published")
         .maybeSingle();
