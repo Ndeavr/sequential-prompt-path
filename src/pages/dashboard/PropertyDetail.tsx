@@ -16,6 +16,8 @@ import PropertyDocuments from "@/components/property/PropertyDocuments";
 import AnalyzePropertyButton from "@/components/property/AnalyzePropertyButton";
 import ExportPassportButton from "@/components/property/ExportPassportButton";
 import { useQueryClient } from "@tanstack/react-query";
+import PropertyHealthCard from "@/features/propertyIntelligence/PropertyHealthCard";
+import SmartInsightsCard from "@/features/propertyIntelligence/SmartInsightsCard";
 
 const PropertyDetail = () => {
   const { id } = useParams<{ id: string }>();
