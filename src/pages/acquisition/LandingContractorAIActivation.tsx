@@ -74,26 +74,20 @@ export default function LandingContractorAIActivation() {
   const handleAnalyze = useCallback(async (data: { businessName: string; city: string; website: string }) => {
     setLoading(true);
     try {
-      // Generate score (mock — replace with real API)
-      const score = Math.floor(Math.random() * 35) + 25;
-
-      // Persist lead
-      await supabase.from("aipp_score_checks").insert({
+      const intent = { website_url: data.website, business_name: data.businessName, city: data.city };
+      sessionStorage.setItem("unpro:importIntent", JSON.stringify(intent));
+      supabase.from("aipp_score_checks").insert({
         business_name: data.businessName,
         city: data.city,
         website_url: data.website || null,
-        quick_score: score,
-        score_label: score >= 70 ? "fort" : score >= 45 ? "moyen" : "faible",
-      });
-
-      setAnalysisData({ businessName: data.businessName, city: data.city, score });
-      setStep("results");
+      }).then(() => {});
+      navigate("/entrepreneur/import/processing");
     } catch {
       toast.error("Erreur lors de l'analyse. Réessayez.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [navigate]);
 
   const handleContinueToObjectives = () => setStep("objectives");
 
