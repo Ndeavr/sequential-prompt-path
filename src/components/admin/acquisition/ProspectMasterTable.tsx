@@ -18,6 +18,8 @@ type Prospect = {
   activation_status: string;
   last_action_at: string | null;
   next_action: string | null;
+  review_count: number | null;
+  review_rating: number | null;
 };
 
 export function ProspectMasterTable({
