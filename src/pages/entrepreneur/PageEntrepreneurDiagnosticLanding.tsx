@@ -1,13 +1,9 @@
 /**
  * UNPRO — Contractor Intelligence Landing (Diagnostic).
  *
- * Single-page diagnostic that reveals an AIPP-style score, projects lost
- * revenue and recommends a plan. Two modes:
- *   - alex  → premium hero with floating orb + CTA to homepage Alex
- *   - form  → 3-step adaptive questionnaire (chips + sliders, no long forms)
- *
- * State persists in `contractor_intake_sessions`. CTAs route into the
- * existing checkout funnel (we never touch payment code here).
+ * Premium dark UI rebuild — readability, hierarchy, no card clipping.
+ * Scope: visual rebuild only. Scoring math, plan selection, intake session
+ * persistence and checkout routing are unchanged.
  */
 import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
@@ -23,22 +19,32 @@ import {
   Sparkles,
   TrendingUp,
   ShieldCheck,
-  Zap,
-  AlertTriangle,
+  Lock,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import AlexMorphingOrb, { type AlexOrbStateV2 } from "@/components/alex/AlexMorphingOrb";
 import { elevenlabsService } from "@/features/alex/services/elevenlabsService";
 import { CONTRACTOR_PLANS, type ContractorPlanSlug } from "@/config/contractorPlans";
-import { recommendPlan, getPlanLabel, getRecommendationReasons } from "@/services/planRecommendationService";
+import { recommendPlan, getRecommendationReasons } from "@/services/planRecommendationService";
 import { useContractorIntakeSession } from "@/hooks/useContractorIntakeSession";
 import { useActiveRole } from "@/contexts/ActiveRoleContext";
 import { cn } from "@/lib/utils";
+
+// ───────────────────────────── design tokens (local) ────────────────────
+
+const SURFACE =
+  "rounded-[24px] border border-white/[0.08] bg-[rgba(9,14,28,0.88)] shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl";
+const INPUT_BASE =
+  "h-14 min-h-[56px] rounded-[18px] bg-white/[0.04] border border-white/10 text-white placeholder:text-white/30 text-[15px] focus-visible:border-[#2563EB] focus-visible:ring-2 focus-visible:ring-[#2563EB]/40 focus-visible:shadow-[0_0_0_4px_rgba(37,99,235,0.18)] transition-shadow";
+const PRIMARY_CTA =
+  "inline-flex items-center justify-center gap-2 h-[58px] min-h-[58px] rounded-[18px] px-6 text-[17px] font-semibold text-white bg-[linear-gradient(90deg,#2563EB,#7C3AED)] shadow-[0_10px_30px_rgba(37,99,235,0.35)] hover:brightness-110 active:brightness-95 transition disabled:opacity-50 disabled:cursor-not-allowed";
+const GHOST_CTA =
+  "inline-flex items-center justify-center gap-2 h-[58px] min-h-[58px] rounded-[18px] px-6 text-[17px] font-semibold text-white/85 border border-white/15 bg-white/[0.03] hover:bg-white/[0.06] transition";
+
+const LABEL =
+  "text-[11px] font-medium uppercase tracking-[0.14em] text-white/55 flex items-center gap-2";
 
 // ───────────────────────────── intake state ─────────────────────────────
 
@@ -51,7 +57,7 @@ interface FormState {
   projectsPerMonth: number;
   avgTicket: number;
   quotesPerMonth: number;
-  closeRate: number; // 0-100
+  closeRate: number;
   crews: number;
   serviceRadius: number;
   emergency: boolean;
@@ -151,16 +157,13 @@ export default function PageEntrepreneurDiagnosticLanding() {
     phone: params.get("phone") ?? "",
   }));
 
-  const { sessionId, patch } = useContractorIntakeSession("form");
+  const { patch } = useContractorIntakeSession("form");
   const { setActiveRole } = useActiveRole();
 
-  // Site-wide contractor mode: triggered immediately on landing.
   useEffect(() => {
     setActiveRole("contractor");
   }, [setActiveRole]);
 
-
-  // Deep-link prefilled enough? Skip identification step.
   useEffect(() => {
     if (form.company_name && (form.website || form.phone) && step === 0) {
       setStep(1);
@@ -172,10 +175,6 @@ export default function PageEntrepreneurDiagnosticLanding() {
   const projection = useMemo(() => computeRevenueProjection(form), [form]);
   const planSlug = useMemo(() => pickRecommendedPlan(form, aipp.score), [form, aipp.score]);
   const plan = CONTRACTOR_PLANS.find((p) => p.slug === planSlug)!;
-
-  const showInstantScan = form.website.trim().length > 4 || form.phone.trim().length > 6;
-
-  // ───────── handlers ─────────
 
   const update = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((s) => ({ ...s, [k]: v }));
@@ -209,13 +208,11 @@ export default function PageEntrepreneurDiagnosticLanding() {
       });
       setStep(2);
       setRevealed(false);
-      // Stagger reveal animations
       setTimeout(() => setRevealed(true), 350);
       return;
     }
   };
 
-  // Persist final reveal once step 2 reached
   useEffect(() => {
     if (step !== 2) return;
     void patch({
@@ -232,8 +229,6 @@ export default function PageEntrepreneurDiagnosticLanding() {
     navigate(`/entrepreneur/checkout?plan=${planSlug}`);
   };
 
-  // ───────── render ─────────
-
   return (
     <>
       <Helmet>
@@ -244,21 +239,17 @@ export default function PageEntrepreneurDiagnosticLanding() {
         />
       </Helmet>
 
-      <div className="min-h-screen bg-[#060B14] text-white relative overflow-hidden">
+      <div className="min-h-screen bg-[#050816] text-white relative overflow-x-hidden">
         {/* ambient glow */}
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[80vw] h-[60vh] rounded-full bg-primary/10 blur-[120px]" />
-          <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vh] rounded-full bg-blue-500/10 blur-[120px]" />
+          <div className="absolute top-[-12%] left-1/2 -translate-x-1/2 w-[80vw] h-[60vh] rounded-full bg-[#2563EB]/10 blur-[120px]" />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[55vw] h-[55vh] rounded-full bg-[#7C3AED]/10 blur-[120px]" />
         </div>
 
-        <div className="relative z-10 max-w-5xl mx-auto px-5 pb-32 pt-10 lg:pt-16">
+        <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 pt-10 lg:pt-16 pb-40 lg:pb-32">
           <Hero />
 
-          <AlexNarrator
-            step={step}
-            orbState={orbState}
-            setOrbState={setOrbState}
-          />
+          <AlexNarrator step={step} orbState={orbState} setOrbState={setOrbState} />
 
           <VerificationFlow
             website={form.website}
@@ -286,7 +277,7 @@ export default function PageEntrepreneurDiagnosticLanding() {
                   initial={{ opacity: 0, y: 24 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.45 }}
-                  className="mt-8 space-y-6"
+                  className="mt-4 space-y-5"
                 >
                   <AippRevealSection aipp={aipp} revealed={revealed} />
                   <RevenueProjectionCard form={form} projection={projection} />
@@ -302,9 +293,10 @@ export default function PageEntrepreneurDiagnosticLanding() {
 
             {step < 2 && (
               <div className="mt-6 flex justify-end">
-                <Button onClick={goNext} size="lg" className="gap-2">
-                  {step === 0 ? "Continuer" : "Voir mon score AIPP"} <ArrowRight className="w-4 h-4" />
-                </Button>
+                <button onClick={goNext} className={PRIMARY_CTA}>
+                  {step === 0 ? "Continuer" : "Voir mon score AIPP"}
+                  <ArrowRight className="w-[18px] h-[18px]" />
+                </button>
               </div>
             )}
           </div>
@@ -314,10 +306,13 @@ export default function PageEntrepreneurDiagnosticLanding() {
 
         {/* sticky mobile CTA on reveal */}
         {step === 2 && (
-          <div className="fixed bottom-0 inset-x-0 z-40 lg:hidden border-t border-white/10 bg-[#060B14]/95 backdrop-blur p-4">
-            <Button onClick={startCheckout} className="w-full gap-2" size="lg">
-              Activer mon profil UNPRO <ArrowRight className="w-4 h-4" />
-            </Button>
+          <div
+            className="fixed bottom-0 inset-x-0 z-40 lg:hidden border-t border-white/10 bg-[#050816]/95 backdrop-blur px-4 pt-3"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
+          >
+            <button onClick={startCheckout} className={cn(PRIMARY_CTA, "w-full")}>
+              Activer mon profil UNPRO <ArrowRight className="w-[18px] h-[18px]" />
+            </button>
           </div>
         )}
       </div>
@@ -330,15 +325,15 @@ export default function PageEntrepreneurDiagnosticLanding() {
 function Hero() {
   return (
     <header className="text-center space-y-5">
-      <Badge variant="outline" className="border-primary/30 text-primary bg-primary/10">
+      <Badge variant="outline" className="border-[#2563EB]/40 text-[#93C5FD] bg-[#2563EB]/10">
         <Sparkles className="w-3 h-3 mr-1" /> Diagnostic intelligent UNPRO
       </Badge>
-      <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.05]">
+      <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05]">
         Plus de contrats.
         <br />
-        <span className="text-white/60">Moins de soumissions.</span>
+        <span className="text-white/55">Moins de soumissions.</span>
       </h1>
-      <p className="text-base sm:text-lg text-white/70 max-w-2xl mx-auto">
+      <p className="text-[15px] sm:text-[17px] text-white/72 max-w-2xl mx-auto leading-relaxed">
         UNPRO analyse votre visibilité, votre réputation et votre capacité actuelle. En moins
         de 3 minutes, obtenez votre score AIPP, votre potentiel de rendez-vous et le plan
         recommandé pour dominer votre territoire.
@@ -380,7 +375,6 @@ function AlexNarrator({
     [setOrbState],
   );
 
-  // Speak each step's narration on entry (user gesture already happened on landing).
   useEffect(() => {
     void speakNow(text);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -392,9 +386,9 @@ function AlexNarrator({
         state={orbState}
         size="lg"
         onClick={() => void speakNow(text)}
-        ariaLabel="Alex — touchez pour réécouter"
+        ariaLabel="Alex"
       />
-      <p className="mt-6 max-w-xl text-base sm:text-lg text-white/85 leading-relaxed">
+      <p className="mt-6 max-w-xl text-[15px] sm:text-[17px] text-white/85 leading-relaxed">
         « {text} »
       </p>
     </div>
@@ -402,17 +396,21 @@ function AlexNarrator({
 }
 
 function ProgressBar({ step }: { step: number }) {
+  const pct = ((step + 1) / 3) * 100;
   return (
-    <div className="flex gap-2 mb-6">
-      {[0, 1, 2].map((i) => (
-        <div
-          key={i}
-          className={cn(
-            "h-1 flex-1 rounded-full transition-colors",
-            i <= step ? "bg-primary" : "bg-white/10",
-          )}
+    <div className="mb-5">
+      <div className="h-[3px] w-full rounded-full bg-white/[0.06] overflow-hidden">
+        <motion.div
+          initial={false}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="h-full rounded-full bg-[linear-gradient(90deg,#2563EB,#7C3AED)] shadow-[0_0_18px_rgba(124,58,237,0.45)]"
         />
-      ))}
+      </div>
+      <div className="mt-2 flex justify-between text-[11px] uppercase tracking-[0.14em] text-white/40">
+        <span>Étape {step + 1} / 3</span>
+        <span>{Math.round(pct)} %</span>
+      </div>
     </div>
   );
 }
@@ -425,9 +423,7 @@ function StepCard({ children }: { children: React.ReactNode }) {
       exit={{ opacity: 0, y: -16 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="bg-white/[0.03] border-white/10 backdrop-blur p-6 lg:p-8 mt-2">
-        {children}
-      </Card>
+      <div className={cn(SURFACE, "p-6 lg:p-8")}>{children}</div>
     </motion.div>
   );
 }
@@ -445,15 +441,22 @@ function normalizePhone(v: string): string {
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
 }
 
-function Step0Identification({ form, update }: { form: FormState; update: <K extends keyof FormState>(k: K, v: FormState[K]) => void }) {
+function Step0Identification({
+  form,
+  update,
+}: {
+  form: FormState;
+  update: <K extends keyof FormState>(k: K, v: FormState[K]) => void;
+}) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold">Votre entreprise</h2>
-        <p className="text-sm text-white/60 mt-1">
+        <h2 className="text-[22px] font-black tracking-tight text-white">Votre entreprise</h2>
+        <p className="text-[15px] text-white/72 mt-1.5 leading-relaxed">
           Tout ce qui suit reste privé. Aucune carte de crédit pour voir le score.
         </p>
       </div>
+
       <FieldGroup icon={Building2} label="Nom de l'entreprise">
         <Input
           autoFocus
@@ -461,65 +464,69 @@ function Step0Identification({ form, update }: { form: FormState; update: <K ext
           onChange={(e) => update("company_name", e.target.value)}
           onBlur={(e) => update("company_name", e.target.value.trim())}
           placeholder="ex : Toiture Tremblay inc."
-          className="bg-white/5 border-white/10"
+          className={INPUT_BASE}
         />
       </FieldGroup>
-      <div className="grid sm:grid-cols-2 gap-4">
-        <FieldGroup icon={Globe} label="Site web">
-          <Input
-            value={form.website}
-            onChange={(e) => update("website", e.target.value)}
-            onBlur={(e) => update("website", normalizeWebsite(e.target.value))}
-            placeholder="toituretremblay.ca"
-            autoCapitalize="off"
-            autoCorrect="off"
-            spellCheck={false}
-            inputMode="url"
-            className="bg-white/5 border-white/10"
-          />
-        </FieldGroup>
-        <FieldGroup icon={Phone} label="Téléphone">
-          <Input
-            value={form.phone}
-            onChange={(e) => update("phone", e.target.value)}
-            onBlur={(e) => update("phone", normalizePhone(e.target.value))}
-            placeholder="(514) 555-1234"
-            inputMode="tel"
-            className="bg-white/5 border-white/10"
-          />
-        </FieldGroup>
-      </div>
+
+      <FieldGroup icon={Globe} label="Site web">
+        <Input
+          value={form.website}
+          onChange={(e) => update("website", e.target.value)}
+          onBlur={(e) => update("website", normalizeWebsite(e.target.value))}
+          placeholder="toituretremblay.ca"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+          inputMode="url"
+          className={INPUT_BASE}
+        />
+      </FieldGroup>
+
+      <FieldGroup icon={Phone} label="Téléphone">
+        <Input
+          value={form.phone}
+          onChange={(e) => update("phone", e.target.value)}
+          onBlur={(e) => update("phone", normalizePhone(e.target.value))}
+          placeholder="(514) 555-1234"
+          inputMode="tel"
+          className={INPUT_BASE}
+        />
+      </FieldGroup>
+
       <FieldGroup icon={ShieldCheck} label="RBQ (optionnel)">
         <Input
           value={form.rbq}
           onChange={(e) => update("rbq", e.target.value)}
           placeholder="5732-1234-01"
-          className="bg-white/5 border-white/10"
+          className={INPUT_BASE}
         />
       </FieldGroup>
+
+      <div className="flex items-center gap-2 pt-2 text-[12px] text-white/48">
+        <Lock className="w-3.5 h-3.5" />
+        <span>Aucune carte requise · Analyse privée · Données non partagées</span>
+      </div>
     </div>
   );
 }
 
-function Step1Situation({ form, update }: { form: FormState; update: <K extends keyof FormState>(k: K, v: FormState[K]) => void }) {
+function Step1Situation({
+  form,
+  update,
+}: {
+  form: FormState;
+  update: <K extends keyof FormState>(k: K, v: FormState[K]) => void;
+}) {
   return (
     <div className="space-y-7">
       <div>
-        <h2 className="text-xl font-semibold">Votre situation actuelle</h2>
-        <p className="text-sm text-white/60 mt-1">
+        <h2 className="text-[22px] font-black tracking-tight text-white">Votre situation actuelle</h2>
+        <p className="text-[15px] text-white/72 mt-1.5 leading-relaxed">
           Sliders rapides. Skippez ce que vous voulez — la recommandation s'adapte.
         </p>
       </div>
 
-      <SliderRow
-        label="Projets / mois"
-        value={form.projectsPerMonth}
-        min={1}
-        max={50}
-        step={1}
-        suffix=""
-        onChange={(v) => update("projectsPerMonth", v)}
-      />
+      <SliderRow label="Projets / mois" value={form.projectsPerMonth} min={1} max={50} step={1} onChange={(v) => update("projectsPerMonth", v)} />
       <SliderRow
         label="Valeur moyenne d'un contrat"
         value={form.avgTicket}
@@ -530,27 +537,11 @@ function Step1Situation({ form, update }: { form: FormState; update: <K extends 
         format={(v) => v.toLocaleString("fr-CA")}
         onChange={(v) => update("avgTicket", v)}
       />
-      <SliderRow
-        label="Taux de fermeture"
-        value={form.closeRate}
-        min={0}
-        max={100}
-        step={5}
-        suffix=" %"
-        onChange={(v) => update("closeRate", v)}
-      />
-      <SliderRow
-        label="Équipes / camions"
-        value={form.crews}
-        min={1}
-        max={20}
-        step={1}
-        suffix=""
-        onChange={(v) => update("crews", v)}
-      />
+      <SliderRow label="Taux de fermeture" value={form.closeRate} min={0} max={100} step={5} suffix=" %" onChange={(v) => update("closeRate", v)} />
+      <SliderRow label="Équipes / camions" value={form.crews} min={1} max={20} step={1} onChange={(v) => update("crews", v)} />
 
       <div>
-        <div className="text-sm font-medium text-white/80 mb-3">Sources de leads actuelles</div>
+        <div className={cn(LABEL, "mb-3")}>Sources de leads actuelles</div>
         <div className="flex flex-wrap gap-2">
           {LEAD_SOURCES.map((s) => {
             const active = form.leadSources.includes(s);
@@ -565,13 +556,13 @@ function Step1Situation({ form, update }: { form: FormState; update: <K extends 
                   )
                 }
                 className={cn(
-                  "px-3 py-1.5 rounded-full border text-sm transition",
+                  "h-9 px-4 rounded-full text-[14px] font-medium transition inline-flex items-center gap-1.5",
                   active
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "border-white/15 text-white/70 hover:border-white/30",
+                    ? "bg-[#2563EB] text-white border border-[#2563EB] shadow-[0_4px_14px_rgba(37,99,235,0.35)]"
+                    : "bg-white/[0.04] text-white/72 border border-white/12 hover:border-white/25 hover:text-white",
                 )}
               >
-                {active && <Check className="w-3 h-3 inline mr-1" />}
+                {active && <Check className="w-3 h-3" />}
                 {s}
               </button>
             );
@@ -592,8 +583,8 @@ function FieldGroup({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-2">
-      <label className="text-xs uppercase tracking-wide text-white/50 flex items-center gap-2">
+    <div className="space-y-1.5">
+      <label className={LABEL}>
         <Icon className="w-3.5 h-3.5" /> {label}
       </label>
       {children}
@@ -623,20 +614,14 @@ function SliderRow({
   const display = format ? format(value) : String(value);
   return (
     <div>
-      <div className="flex items-baseline justify-between mb-2">
-        <span className="text-sm text-white/80">{label}</span>
-        <span className="text-base font-semibold tabular-nums">
+      <div className="flex items-baseline justify-between mb-3">
+        <span className="text-[14px] text-white/72">{label}</span>
+        <span className="text-[17px] font-semibold tabular-nums text-white">
           {display}
           {suffix}
         </span>
       </div>
-      <Slider
-        value={[value]}
-        min={min}
-        max={max}
-        step={step}
-        onValueChange={(v) => onChange(v[0])}
-      />
+      <Slider value={[value]} min={min} max={max} step={step} onValueChange={(v) => onChange(v[0])} />
     </div>
   );
 }
@@ -664,7 +649,8 @@ function VerificationFlow({
     "Préparation du score AIPP…",
   ];
 
-  const canVerify = (companyName.trim().length > 1) && (website.trim().length > 3 || phone.trim().length > 6);
+  const canVerify =
+    companyName.trim().length > 1 && (website.trim().length > 3 || phone.trim().length > 6);
 
   const startVerification = () => {
     if (!canVerify || phase === "checking") return;
@@ -684,8 +670,9 @@ function VerificationFlow({
     setTimeout(tick, 550);
   };
 
-  const confidence: "Low" | "Medium" | "High" =
-    (website && phone && companyName ? "Medium" : "Low") as "Low" | "Medium" | "High";
+  const confidence: "Low" | "Medium" | "High" = (website && phone && companyName
+    ? "Medium"
+    : "Low") as "Low" | "Medium" | "High";
 
   return (
     <motion.div
@@ -694,35 +681,34 @@ function VerificationFlow({
       transition={{ duration: 0.4 }}
       className="mt-8"
     >
-      <Card className="bg-white/[0.03] border-white/10 p-5">
+      <div className={cn(SURFACE, "p-5 sm:p-6")}>
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-            <ShieldCheck className="w-6 h-6 text-primary" />
+          <div className="w-12 h-12 rounded-2xl bg-[#2563EB]/15 border border-[#2563EB]/25 flex items-center justify-center shrink-0">
+            <ShieldCheck className="w-6 h-6 text-[#93C5FD]" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs uppercase tracking-wider text-primary/80">
+            <div className="text-[11px] uppercase tracking-[0.16em] text-[#93C5FD]">
               Vérification de l'entreprise
             </div>
-            <div className="text-base font-semibold mt-0.5 truncate">
+            <div className="text-[16px] font-semibold text-white mt-1 truncate">
               {companyName || "Entrez vos informations"}
             </div>
 
             {phase === "idle" && (
               <>
-                <p className="text-sm text-white/60 mt-2">
+                <p className="text-[14px] text-white/72 mt-2 leading-relaxed">
                   Aucune analyse n'a encore été lancée. Cliquez pour vérifier votre entreprise
                   à partir de sources publiques.
                 </p>
-                <Button
-                  size="sm"
-                  className="mt-3"
+                <button
                   onClick={startVerification}
                   disabled={!canVerify}
+                  className={cn(PRIMARY_CTA, "mt-4 h-12 min-h-[48px] text-[15px] px-5")}
                 >
                   Vérifier l'entreprise
-                </Button>
+                </button>
                 {!canVerify && (
-                  <p className="text-xs text-white/40 mt-2">
+                  <p className="text-[12px] text-white/48 mt-3">
                     Entrez au moins le nom + le site web ou le téléphone pour démarrer.
                   </p>
                 )}
@@ -730,14 +716,14 @@ function VerificationFlow({
             )}
 
             {phase === "checking" && (
-              <ul className="mt-3 space-y-1.5">
+              <ul className="mt-3 space-y-2">
                 {CHECKS.map((c, i) => {
                   const status = i < stepIdx ? "done" : i === stepIdx ? "active" : "pending";
                   return (
                     <li
                       key={c}
                       className={cn(
-                        "text-sm flex items-start gap-2 transition-colors",
+                        "text-[14px] flex items-start gap-2 transition-colors",
                         status === "done" && "text-white/80",
                         status === "active" && "text-white",
                         status === "pending" && "text-white/35",
@@ -746,7 +732,7 @@ function VerificationFlow({
                       {status === "done" ? (
                         <Check className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
                       ) : status === "active" ? (
-                        <span className="w-3.5 h-3.5 mt-0.5 shrink-0 rounded-full border-2 border-primary/40 border-t-primary animate-spin" />
+                        <span className="w-3.5 h-3.5 mt-0.5 shrink-0 rounded-full border-2 border-[#2563EB]/40 border-t-[#2563EB] animate-spin" />
                       ) : (
                         <span className="w-3.5 h-3.5 mt-0.5 shrink-0 rounded-full border border-white/15" />
                       )}
@@ -759,40 +745,37 @@ function VerificationFlow({
 
             {phase === "confirm" && (
               <div className="mt-3 space-y-3">
-                <div className="text-sm font-medium text-white">
-                  Est-ce la bonne entreprise?
-                </div>
-                <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3 space-y-1.5">
+                <div className="text-[14px] font-semibold text-white">Est-ce la bonne entreprise?</div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3.5 space-y-2.5">
                   <ConfirmRow label="Nom" value={companyName} />
                   <ConfirmRow label="Site web" value={website} />
                   <ConfirmRow label="Téléphone" value={phone} />
                   <ConfirmRow label="Adresse" value="" />
                   <ConfirmRow label="RBQ" value="" />
-                  <div className="flex items-center justify-between pt-2 mt-2 border-t border-white/5">
-                    <span className="text-xs uppercase tracking-wider text-white/40">Confiance</span>
-                    <Badge
-                      variant="outline"
+                  <div className="flex items-center justify-between pt-2.5 mt-1 border-t border-white/8">
+                    <span className="text-[11px] uppercase tracking-[0.14em] text-white/48">Confiance</span>
+                    <span
                       className={cn(
-                        "text-[10px]",
-                        confidence === "High" && "border-emerald-400/40 text-emerald-300",
-                        confidence === "Medium" && "border-amber-400/40 text-amber-300",
-                        confidence === "Low" && "border-white/20 text-white/60",
+                        "text-[11px] font-semibold px-2.5 py-1 rounded-full border",
+                        confidence === "High" && "border-emerald-400/40 text-emerald-300 bg-emerald-400/10",
+                        confidence === "Medium" && "border-amber-400/40 text-amber-300 bg-amber-400/10",
+                        confidence === "Low" && "border-white/20 text-white/60 bg-white/5",
                       )}
                     >
                       {confidence}
-                    </Badge>
+                    </span>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button size="sm" onClick={() => setPhase("idle")}>
+                  <button onClick={() => setPhase("idle")} className={cn(PRIMARY_CTA, "h-11 min-h-[44px] text-[14px] px-4")}>
                     Oui, c'est mon entreprise
-                  </Button>
-                  <Button size="sm" variant="outline" className="border-white/15" onClick={() => setPhase("rejected")}>
+                  </button>
+                  <button
+                    onClick={() => setPhase("rejected")}
+                    className="h-11 px-4 rounded-[14px] border border-white/15 bg-white/[0.03] text-[14px] font-medium text-white/85 hover:bg-white/[0.06]"
+                  >
                     Non, corriger
-                  </Button>
-                  <Button size="sm" variant="ghost" className="text-white/60" onClick={() => setPhase("idle")}>
-                    Je ne sais pas
-                  </Button>
+                  </button>
                 </div>
                 <p className="text-[11px] text-white/40">
                   Résultat provisoire. Les signaux affichés sont à confirmer après l'analyse complète.
@@ -801,18 +784,21 @@ function VerificationFlow({
             )}
 
             {phase === "rejected" && (
-              <div className="mt-3 text-sm text-white/70">
+              <div className="mt-3 text-[14px] text-white/72">
                 Corrigez les informations ci-dessous puis relancez la vérification.
                 <div className="mt-3">
-                  <Button size="sm" variant="outline" className="border-white/15" onClick={() => setPhase("idle")}>
+                  <button
+                    onClick={() => setPhase("idle")}
+                    className="h-11 px-4 rounded-[14px] border border-white/15 bg-white/[0.03] text-[14px] font-medium text-white/85 hover:bg-white/[0.06]"
+                  >
                     Relancer
-                  </Button>
+                  </button>
                 </div>
               </div>
             )}
           </div>
         </div>
-      </Card>
+      </div>
     </motion.div>
   );
 }
@@ -820,14 +806,16 @@ function VerificationFlow({
 function ConfirmRow({ label, value }: { label: string; value: string }) {
   const present = value.trim().length > 0;
   return (
-    <div className="flex items-baseline justify-between gap-3 text-sm">
-      <span className="text-xs uppercase tracking-wider text-white/40">{label}</span>
+    <div className="flex items-baseline justify-between gap-3 text-[14px]">
+      <span className="text-[11px] uppercase tracking-[0.14em] text-white/48">{label}</span>
       <span className={cn("text-right truncate max-w-[60%]", present ? "text-white/90" : "text-white/35 italic")}>
         {present ? value : "Donnée non confirmée pour l'instant"}
       </span>
     </div>
   );
 }
+
+// ───────────────────────────── AIPP reveal ──────────────────────────────
 
 function AippRevealSection({
   aipp,
@@ -836,49 +824,121 @@ function AippRevealSection({
   aipp: { score: number; categories: Array<{ label: string; value: number }> };
   revealed: boolean;
 }) {
+  const status =
+    aipp.score >= 70
+      ? "Très solide — au-dessus de la moyenne."
+      : aipp.score >= 45
+        ? "Du potentiel sous-exploité."
+        : "Présence digitale fragile.";
+
+  const insight =
+    aipp.score >= 70
+      ? "Votre positionnement digital domine déjà une partie de votre marché. Optimisez la conversion."
+      : aipp.score >= 45
+        ? "Beaucoup de contrats vous échappent. Une optimisation ciblée libère une croissance rapide."
+        : "Vos compétiteurs prennent vos contrats. Une remise à niveau s'impose maintenant.";
+
   return (
-    <Card className="bg-white/[0.03] border-white/10 p-6 lg:p-8">
-      <div className="text-center">
-        <div className="text-xs uppercase tracking-[0.2em] text-primary/80">Score AIPP™</div>
-        <motion.div
-          key={aipp.score}
-          initial={{ scale: 0.6, opacity: 0 }}
-          animate={revealed ? { scale: 1, opacity: 1 } : {}}
-          transition={{ type: "spring", stiffness: 220, damping: 18 }}
-          className="text-6xl lg:text-7xl font-bold mt-2 tabular-nums"
-        >
-          {aipp.score}
-          <span className="text-2xl text-white/40 font-medium"> / 100</span>
-        </motion.div>
-        <div className="text-sm text-white/60 mt-2">
-          {aipp.score >= 70
-            ? "Très solide — votre positionnement digital est au-dessus de la moyenne."
-            : aipp.score >= 45
-              ? "Du potentiel sous-exploité. Beaucoup de contrats vous échappent."
-              : "Présence digitale fragile. Vos compétiteurs prennent vos contrats."}
+    <div className="space-y-4">
+      {/* Hero score */}
+      <div className={cn(SURFACE, "p-6 lg:p-8")}>
+        <div className="text-center">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-[#93C5FD] font-semibold">
+            Score AIPP™
+          </div>
+
+          <div className="relative mx-auto mt-5 w-[200px] h-[200px]">
+            <ScoreRing value={aipp.score} revealed={revealed} />
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <motion.div
+                key={aipp.score}
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={revealed ? { scale: 1, opacity: 1 } : {}}
+                transition={{ type: "spring", stiffness: 220, damping: 18 }}
+                className="text-[64px] leading-none font-black tabular-nums text-white"
+              >
+                {aipp.score}
+              </motion.div>
+              <div className="text-[13px] text-white/48 mt-1 tabular-nums">/ 100</div>
+            </div>
+          </div>
+
+          <div className="text-[15px] font-semibold text-white mt-5">{status}</div>
         </div>
       </div>
 
-      <div className="mt-6 grid sm:grid-cols-2 gap-3">
+      {/* Insight summary */}
+      <div className={cn(SURFACE, "p-5")}>
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-[#7C3AED]/15 border border-[#7C3AED]/25 flex items-center justify-center shrink-0">
+            <Sparkles className="w-4 h-4 text-[#C4B5FD]" />
+          </div>
+          <p className="text-[14px] text-white/80 leading-relaxed">{insight}</p>
+        </div>
+      </div>
+
+      {/* Metric stack — single column on mobile */}
+      <div className="space-y-4">
         {aipp.categories.map((c, i) => (
           <motion.div
             key={c.label}
             initial={{ opacity: 0, x: -12 }}
             animate={revealed ? { opacity: 1, x: 0 } : {}}
             transition={{ delay: 0.1 + i * 0.06 }}
-            className="bg-white/[0.02] rounded-lg p-3 border border-white/5"
+            className={cn(SURFACE, "p-4")}
           >
-            <div className="flex justify-between text-xs text-white/70 mb-1.5">
-              <span>{c.label}</span>
-              <span className="font-semibold text-white">{c.value}</span>
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-[14px] font-medium text-white/85">{c.label}</span>
+              <span className="text-[16px] font-bold tabular-nums text-white">{c.value}</span>
             </div>
-            <Progress value={c.value} className="h-1.5" />
+            <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={revealed ? { width: `${c.value}%` } : { width: 0 }}
+                transition={{ delay: 0.25 + i * 0.06, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                className="h-full rounded-full bg-[linear-gradient(90deg,#2563EB,#7C3AED)]"
+              />
+            </div>
           </motion.div>
         ))}
       </div>
-    </Card>
+    </div>
   );
 }
+
+function ScoreRing({ value, revealed }: { value: number; revealed: boolean }) {
+  const radius = 88;
+  const circ = 2 * Math.PI * radius;
+  const offset = circ * (1 - value / 100);
+  return (
+    <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90">
+      <defs>
+        <linearGradient id="aippRing" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#2563EB" />
+          <stop offset="60%" stopColor="#7C3AED" />
+          <stop offset="100%" stopColor="#22D3EE" />
+        </linearGradient>
+      </defs>
+      <circle cx="100" cy="100" r={radius} stroke="rgba(255,255,255,0.06)" strokeWidth="8" fill="none" />
+      <motion.circle
+        cx="100"
+        cy="100"
+        r={radius}
+        stroke="url(#aippRing)"
+        strokeWidth="8"
+        strokeLinecap="round"
+        fill="none"
+        strokeDasharray={circ}
+        initial={{ strokeDashoffset: circ }}
+        animate={{ strokeDashoffset: revealed ? offset : circ }}
+        transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+        style={{ filter: "drop-shadow(0 0 10px rgba(124,58,237,0.45))" }}
+      />
+    </svg>
+  );
+}
+
+// ───────────────────────────── revenue + plan ───────────────────────────
 
 function RevenueProjectionCard({
   form,
@@ -889,37 +949,51 @@ function RevenueProjectionCard({
 }) {
   const fmt = (n: number) => n.toLocaleString("fr-CA");
   return (
-    <Card className="bg-gradient-to-br from-amber-500/10 via-white/[0.03] to-white/[0.03] border-amber-500/20 p-6 lg:p-8">
+    <div
+      className="rounded-[24px] border border-white/[0.08] p-6 lg:p-8 shadow-[0_10px_40px_rgba(0,0,0,0.4)]"
+      style={{ background: "linear-gradient(160deg,#0A1736 0%,#070D22 50%,#050816 100%)" }}
+    >
       <div className="flex items-center gap-3">
-        <TrendingUp className="w-5 h-5 text-amber-400" />
-        <h3 className="text-lg font-semibold">Revenus que vous laissez sur la table</h3>
+        <div className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/25 flex items-center justify-center shrink-0">
+          <TrendingUp className="w-5 h-5 text-amber-300" />
+        </div>
+        <h3 className="text-[18px] font-bold text-white leading-tight">
+          Revenus que vous laissez sur la table
+        </h3>
       </div>
 
-      <div className="mt-5 grid sm:grid-cols-2 gap-5">
-        <div className="rounded-xl bg-white/[0.03] p-4 border border-white/5">
-          <div className="text-xs uppercase tracking-wider text-white/50">Aujourd'hui</div>
-          <div className="text-2xl font-bold mt-1">~{form.projectsPerMonth} contrats / mois</div>
-          <div className="text-sm text-white/60 mt-0.5">
+      <div className="mt-5 space-y-3">
+        <div className="rounded-2xl bg-white/[0.03] border border-white/8 p-4">
+          <div className="text-[11px] uppercase tracking-[0.14em] text-white/48">Aujourd'hui</div>
+          <div className="text-[22px] font-bold text-white mt-1 break-words">
+            ~{form.projectsPerMonth} contrats / mois
+          </div>
+          <div className="text-[14px] text-white/64 mt-0.5">
             ≈ {fmt(projection.currentMonthly)} $ / mois
           </div>
         </div>
-        <div className="rounded-xl bg-amber-500/10 p-4 border border-amber-500/20">
-          <div className="text-xs uppercase tracking-wider text-amber-400">Avec UNPRO</div>
-          <div className="text-2xl font-bold mt-1">
+
+        <div className="rounded-2xl bg-white/[0.03] border-t-2 border-amber-400/40 border-x border-b border-x-white/8 border-b-white/8 p-4">
+          <div className="text-[11px] uppercase tracking-[0.14em] text-amber-300 font-semibold">Avec UNPRO</div>
+          <div className="text-[22px] font-bold text-white mt-1 break-words">
             {projection.targetLeadsLow}–{projection.targetLeadsHigh} rendez-vous / mois
           </div>
-          <div className="text-sm text-white/80 mt-0.5">
-            Croissance estimée : <strong>+{fmt(projection.upliftLow)} à {fmt(projection.upliftHigh)} $ / mois</strong>
+          <div className="text-[14px] text-white/80 mt-1 leading-relaxed">
+            Croissance estimée :{" "}
+            <strong className="text-amber-300 font-bold">
+              +{fmt(projection.upliftLow)} à {fmt(projection.upliftHigh)} $ / mois
+            </strong>
           </div>
         </div>
       </div>
 
-      <p className="mt-4 text-sm text-white/70">
-        Vous laissez probablement entre <strong className="text-amber-300">{fmt(projection.upliftLow)} $</strong>{" "}
-        et <strong className="text-amber-300">{fmt(projection.upliftHigh)} $</strong> par mois en contrats
-        non captés à des compétiteurs mieux positionnés digitalement.
+      <p className="mt-5 text-[14px] text-white/72 leading-relaxed">
+        Vous laissez probablement entre{" "}
+        <strong className="text-amber-300 font-bold">{fmt(projection.upliftLow)} $</strong> et{" "}
+        <strong className="text-amber-300 font-bold">{fmt(projection.upliftHigh)} $</strong> par mois
+        en contrats non captés à des compétiteurs mieux positionnés digitalement.
       </p>
-    </Card>
+    </div>
   );
 }
 
@@ -936,77 +1010,94 @@ function PlanRecommendationCard({
 }) {
   const reasons = getRecommendationReasons(slug as never, score).slice(0, 3);
   return (
-    <Card className="bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border-primary/30 p-6 lg:p-8 relative overflow-hidden">
+    <div className="relative rounded-[24px] border border-[#2563EB]/30 p-6 lg:p-8 overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.45)]"
+      style={{ background: "linear-gradient(160deg,#0B132E 0%,#0A1022 60%,#050816 100%)" }}
+    >
       <motion.div
-        animate={{ opacity: [0.3, 0.6, 0.3] }}
-        transition={{ duration: 3, repeat: Infinity }}
-        className="absolute -top-20 -right-20 w-60 h-60 rounded-full bg-primary/20 blur-3xl"
+        animate={{ opacity: [0.25, 0.5, 0.25] }}
+        transition={{ duration: 4, repeat: Infinity }}
+        className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-[#2563EB]/25 blur-3xl pointer-events-none"
       />
       <div className="relative">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <div className="text-xs uppercase tracking-[0.2em] text-primary">Plan recommandé</div>
-            <div className="flex items-baseline gap-3 mt-2">
-              <h3 className="text-3xl font-bold">{plan.name}</h3>
-              <span className="text-white/60 text-sm">{plan.subtitle}</span>
-            </div>
+        {/* header — stacked */}
+        <div className="flex flex-col gap-1">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-[#93C5FD] font-semibold">
+            Plan recommandé
           </div>
-          <div className="text-right">
-            <div className="text-3xl font-bold">{plan.monthlyPrice} $</div>
-            <div className="text-xs text-white/60">/ mois CAD</div>
-          </div>
+          <h3 className="text-[32px] sm:text-[36px] font-black tracking-tight text-white leading-[1.05] mt-1 break-words">
+            {plan.name}
+          </h3>
+          {plan.subtitle && (
+            <div className="text-[14px] text-white/64 mt-1 break-words">{plan.subtitle}</div>
+          )}
         </div>
 
-        <div className="mt-5 space-y-2">
+        {/* price block */}
+        <div className="mt-5 flex items-baseline gap-2">
+          <div className="text-[40px] sm:text-[44px] font-black tabular-nums text-white leading-none">
+            {plan.monthlyPrice} $
+          </div>
+          <div className="text-[13px] text-white/56">/ mois CAD</div>
+        </div>
+
+        {/* reasons */}
+        <div className="mt-5 space-y-2.5">
           {reasons.map((r) => (
-            <div key={r} className="flex items-start gap-2 text-sm text-white/85">
-              <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-              {r}
+            <div key={r} className="flex items-start gap-2.5 text-[14px] text-white/85 leading-relaxed">
+              <Check className="w-4 h-4 text-[#93C5FD] mt-0.5 shrink-0" />
+              <span>{r}</span>
             </div>
           ))}
         </div>
 
-        <div className="mt-5 grid sm:grid-cols-2 gap-2">
-          {plan.features.slice(0, 6).map((f) => (
-            <div key={f} className="text-xs text-white/60 flex items-center gap-1.5">
-              <ChevronRight className="w-3 h-3 text-primary" />
-              {f}
-            </div>
-          ))}
-        </div>
+        {/* features */}
+        {plan.features && plan.features.length > 0 && (
+          <div className="mt-5 grid sm:grid-cols-2 gap-2">
+            {plan.features.slice(0, 6).map((f) => (
+              <div key={f} className="text-[12px] text-white/56 flex items-center gap-1.5">
+                <ChevronRight className="w-3 h-3 text-[#93C5FD] shrink-0" />
+                <span className="truncate">{f}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
+        {/* CTAs */}
         <div className="mt-7 flex flex-col sm:flex-row gap-3">
-          <Button size="lg" onClick={onActivate} className="flex-1 gap-2">
-            Activer mon profil UNPRO <ArrowRight className="w-4 h-4" />
-          </Button>
-          <Link to="/entrepreneur/plan-ia" className="flex-1">
-            <Button size="lg" variant="outline" className="w-full border-white/20 text-white/80 hover:bg-white/5">
-              Voir mon plan IA personnalisé
-            </Button>
+          <button onClick={onActivate} className={cn(PRIMARY_CTA, "w-full sm:flex-1")}>
+            Activer mon profil UNPRO <ArrowRight className="w-[18px] h-[18px]" />
+          </button>
+          <Link to="/entrepreneur/plan-ia" className="w-full sm:flex-1">
+            <span className={cn(GHOST_CTA, "w-full")}>Voir les autres plans</span>
           </Link>
         </div>
 
-        <p className="mt-3 text-xs text-white/40 text-center">
-          Places limitées par territoire — activation immédiate.
-        </p>
+        <div className="mt-5 flex items-center gap-2 text-[12px] text-white/48">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>Aucun engagement · Annulable en 1 clic</span>
+        </div>
       </div>
-    </Card>
+    </div>
   );
 }
 
+// ───────────────────────────── trust strip ──────────────────────────────
+
 function TrustStrip() {
   const items = [
-    { kpi: "+38 %", label: "Croissance moyenne" },
-    { kpi: "< 24 h", label: "Activation profil" },
-    { kpi: "0", label: "Lead partagé. Jamais." },
-    { kpi: "100 %", label: "Made in Québec ⚜️" },
+    { icon: Lock, label: "100% Confidentiel", desc: "Vos données ne sont jamais partagées." },
+    { icon: Sparkles, label: "Résultats instantanés", desc: "Analyse complète en moins de 30 secondes." },
+    { icon: ShieldCheck, label: "Résultats concrets", desc: "Des rendez-vous qualifiés, pas des promesses." },
   ];
   return (
-    <div className="mt-16 grid grid-cols-2 sm:grid-cols-4 gap-4">
-      {items.map((i) => (
-        <div key={i.label} className="text-center bg-white/[0.02] rounded-xl border border-white/5 p-4">
-          <div className="text-xl font-bold text-primary">{i.kpi}</div>
-          <div className="text-xs text-white/60 mt-1">{i.label}</div>
+    <div className="mt-12 grid sm:grid-cols-3 gap-3">
+      {items.map((it) => (
+        <div key={it.label} className={cn(SURFACE, "p-5 text-center")}>
+          <div className="mx-auto w-10 h-10 rounded-xl bg-[#2563EB]/15 border border-[#2563EB]/25 flex items-center justify-center">
+            <it.icon className="w-5 h-5 text-[#93C5FD]" />
+          </div>
+          <div className="text-[14px] font-semibold text-white mt-3">{it.label}</div>
+          <div className="text-[12px] text-white/64 mt-1 leading-relaxed">{it.desc}</div>
         </div>
       ))}
     </div>
