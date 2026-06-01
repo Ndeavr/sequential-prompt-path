@@ -37,7 +37,7 @@ function getMenu(role: string | undefined): RoleMenu {
         { label: "Leads", to: "/pro/leads", icon: Inbox },
       ],
       right: [
-        { label: "Agenda", to: "/pro/calendar", icon: CalendarDays },
+        { label: "Agenda", to: "/pro/appointments", icon: CalendarDays },
         { label: "Profil", to: "/pro/account", icon: User },
       ],
     };
