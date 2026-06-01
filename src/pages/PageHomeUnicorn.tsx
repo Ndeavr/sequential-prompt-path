@@ -24,7 +24,7 @@ import "@/styles/unicorn-theme.css";
 function HeaderFloatingGlass() {
   const navigate = useNavigate();
   return (
-    <header className="px-3 md:px-4 pt-4 pb-2 relative z-10">
+    <header className="px-3 md:px-4 pt-4 pb-2 sticky top-0 z-30">
       <div className="flex items-center justify-between gap-1.5 min-w-0">
         <div
           className="uc-glass-strong rounded-2xl pl-2 pr-2.5 md:pl-3 md:pr-4 py-1.5 md:py-2 flex items-center gap-1.5 md:gap-2 flex-shrink-0"
