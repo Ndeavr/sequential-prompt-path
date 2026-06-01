@@ -131,6 +131,7 @@ const LandingContractorAIActivation = lazy(() => import("@/pages/acquisition/Lan
 const PageAdminPipelineProspects = lazy(() => import("@/pages/admin/acquisition/PageAdminPipelineProspects"));
 const PageAdminAcquisition = lazy(() => import("@/pages/admin/acquisition/PageAdminAcquisition"));
 const PageAdminAcquisitionMachine = lazy(() => import("@/pages/admin/acquisition/PageAdminAcquisitionMachine"));
+const PageAdminAcquisitionDuplicates = lazy(() => import("@/pages/admin/acquisition/PageAdminAcquisitionDuplicates"));
 const PageContractorAIScoreLanding = lazy(() => import("@/pages/contractor-funnel/PageContractorAIScoreLanding"));
 const PageAippPublic = lazy(() => import("@/pages/aipp/PageAippPublic"));
 const PageAiIndexedProfile = lazy(() => import("@/pages/aipp/PageAiIndexedProfile"));
