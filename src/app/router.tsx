@@ -12,6 +12,8 @@ import AuthOverlayPremium from "@/components/auth/AuthOverlayPremium";
 
 // Only eagerly load the home page and critical shared pages
 import HomeWithFeatureFlag from "@/components/home-intent/HomeWithFeatureFlag";
+import PageHomeIntelligence from "@/pages/home-intel/PageHomeIntelligence";
+const PageDiagnosticIntel = lazy(() => import("@/pages/diagnostic/PageDiagnosticIntel"));
 import PageHomeUnicorn from "@/pages/PageHomeUnicorn";
 import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
