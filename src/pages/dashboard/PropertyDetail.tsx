@@ -60,9 +60,13 @@ const PropertyDetail = () => {
         <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
           <div className="space-y-5">
             <PropertyScoreCard score={score} />
+            <PropertyHealthCard propertyId={property.id} />
             <AnalyzePropertyButton propertyId={property.id} onDone={handleAnalysisDone} />
           </div>
-          <PropertyScoreGrid score={score} />
+          <div className="space-y-5">
+            <PropertyScoreGrid score={score} />
+            <SmartInsightsCard propertyId={property.id} />
+          </div>
         </div>
 
         {/* Content sections */}
