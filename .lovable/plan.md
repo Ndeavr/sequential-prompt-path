@@ -1,59 +1,28 @@
-# Contractor Intent Popup — "Parlez à un humain"
+# Remove contractor directory exposure — Alex-only entry
 
-## Objective
-When a visitor's intent is detected as "becoming a contractor", show a popup after 5 seconds inviting them to call a human at **(514) 249-9522**.
+## Problem
+UNPRO ne fournit pas de répertoire/recherche d'entrepreneurs. L'utilisateur passe uniquement par Alex. Or:
+1. **PageHomeUnicorn → ContractorAippSplit** — "Voir mon AIPP" pointe vers `/entrepreneur/aipp` (route inexistante → tombe sur `ContractorSeoPage` qui affiche "Entrepreneur non trouvé").
+2. **NearbyContractorsCarousel** — affiche un lien "Voir tous les entrepreneurs vérifiés près de {city}" → `/trouver-entrepreneur` (répertoire).
+3. **ContractorSeoPage not-found** — bouton "Voir tous les entrepreneurs" → `/entrepreneurs` (répertoire).
 
-## Trigger logic
-Show the popup once per session when ANY of the following is true:
-- Route matches contractor surfaces: `/entrepreneur/*`, `/contractor/*`, `/aipp`, `/pro/*`, `/demo/isroyal-alex-plan-test`, contractor landing (`HomeContractorAdaptive`)
-- `ActiveRoleContext` role = `contractor`
-- Alex intent classifier returns `contractor_onboarding`
-- URL has `?intent=contractor` or UTM `role=contractor`
+## Fixes (scope strictly UI/links — pas de logique métier)
 
-Delay: **5000 ms** after the trigger condition is first met on the page.
-Frequency cap: **once per tab session** (sessionStorage key `unpro:contractor_human_popup_shown`). Dismiss → no re-show this session.
+### `src/pages/PageHomeUnicorn.tsx` (ContractorAippSplit, lignes 474-492)
+- "Voir mon AIPP" → `to="/aipp"` (vraie page AIPP, pas le slug profil)
+- "Activer mon profil" → conserve `/entrepreneur/join` (route valide)
 
-## UX (premium, mobile-first)
-- Centered modal, glass card (rgba(255,255,255,0.04) + blur 24px), radius 28px, master easing `cubic-bezier(.22,1,.36,1)` 420ms fade+scale.
-- Title (FR): **"Vous voulez joindre UNPRO?"**
-- Subtitle: **"Parlez à un humain maintenant."**
-- Phone block: large tappable button **"Appeler (514) 249-9522"** → `tel:+15142499522`
-- Secondary: **"Continuer avec Alex"** (closes popup, keeps current flow)
-- Small dismiss "×" in top-right
-- Trust micro-copy: "Lun–Ven · 8h–18h (HE)"
-- No emojis. Inter font. Outcome-oriented copy. No mention of mechanics.
+### `src/components/home-unicorn/NearbyContractorsCarousel.tsx` (lignes 225-229)
+- Supprimer entièrement le lien "Voir tous les entrepreneurs vérifiés près de {city}". Remplacer par un texte sobre non cliquable: **"Recommandation faite par Alex selon votre besoin."** (ton: Concierge Décisif, aucune mention de répertoire).
 
-## Files
+### `src/pages/seo/ContractorSeoPage.tsx` (ligne 137)
+- Remplacer le bouton "Voir tous les entrepreneurs" (→ `/entrepreneurs`) par **"Parler à Alex"** → `/` (Alex orb prend le relais sur la home). Garder le titre "Entrepreneur non trouvé" + sous-texte existants.
 
-### New
-- `src/components/contractor-intent/ContractorHumanCalloutModal.tsx` — modal UI (uses existing `Dialog` from shadcn).
-- `src/hooks/useContractorHumanCallout.ts` — detects contractor intent + 5s timer + sessionStorage gate; exposes `{ isOpen, dismiss, call }`.
-- `src/config/contractorHumanCallout.ts` — constants (phone, delay, surfaces, copy).
-
-### Edited
-- `src/app/App.tsx` (or root layout already mounting global overlays) — mount `<ContractorHumanCalloutModal />` once globally so it works across all contractor surfaces without per-page wiring.
-
-## Logic detail
-```
-useEffect:
-  if (sessionStorage.has(KEY)) return;
-  if (!isContractorIntent(location, role, urlParams)) return;
-  const t = setTimeout(() => setOpen(true), 5000);
-  return () => clearTimeout(t);
-```
-On open: fire `trackCopilotEvent('contractor_human_callout_shown', { surface })`.
-On call click: `trackCopilotEvent('contractor_human_callout_call_clicked')` then navigate `tel:`.
-On dismiss: set sessionStorage, `trackCopilotEvent('contractor_human_callout_dismissed')`.
-
-## Constraints
-- No interference with Alex orb or auto-start (Alex remains the primary CTA). Popup is additive.
-- Does not block scroll on dismiss.
-- No new dependencies.
-- Phone stored in config so it's editable in one place.
-- Respects existing core rules: FR-CA, no Lovable mention, no emojis, premium tokens only.
+## Hors scope
+- Ne touche pas aux routes `/entrepreneurs*` ni `/trouver*` (utilisées ailleurs en SEO programmatique / admin). On retire seulement les CTA visibles côté utilisateur final qui exposent un répertoire.
+- Pas de changement de logique Alex ni de routing.
 
 ## Success
-- Popup appears exactly once, 5s after entering any contractor surface.
-- Click-to-call works on iOS/Android (`tel:` link).
-- Dismissal persists for the tab session.
-- Zero impact on non-contractor surfaces.
+- Sur la home, "Voir mon AIPP" ouvre la vraie page AIPP, pas une page 404.
+- Aucun lien "Voir tous les entrepreneurs" visible dans le carrousel home ni dans l'état not-found d'un profil.
+- Tout chemin de découverte d'entrepreneur passe par Alex ou par une page de profil directe (slug connu).
