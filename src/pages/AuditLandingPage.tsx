@@ -62,7 +62,7 @@ const AuditLandingPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contractors_prospects")
-        .select("id, business_name, legal_name, city, region, category, subcategory, website, domain, landing_slug, status, priority_tier, aipp_score, seo_score, reviews_score, content_score, ai_score, branding_score, trust_score, local_score, conversion_score, score_confidence, diagnostic_summary, diagnostic")
+        .select("id, business_name, legal_name, city, region, category, subcategory, website, domain, landing_slug, landing_url, status, priority_tier, aipp_score, seo_score, reviews_score, content_score, ai_score, branding_score, trust_score, local_score, conversion_score, score_confidence, diagnostic_summary, diagnostic, quick_wins, competitor_gap, estimated_monthly_loss_min, estimated_monthly_loss_max, screenshot_url, screenshot_mobile_url, is_running_ads, paid_intent_confidence, loom_script, loom_status")
         .eq("landing_slug", slug)
         .single();
       if (error) throw error;
