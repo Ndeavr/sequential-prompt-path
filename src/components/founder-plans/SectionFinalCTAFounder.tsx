@@ -6,6 +6,7 @@ import { Crown, MessageCircle, Loader2 } from "lucide-react";
 import type { FounderPlan } from "@/hooks/useFounderPlans";
 import CounterLiveSpots from "./CounterLiveSpots";
 import { supabase } from "@/integrations/supabase/client";
+import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 interface Props {
   elite?: FounderPlan;
@@ -29,7 +30,7 @@ export default function SectionFinalCTAFounder({ elite, signature }: Props) {
         if (error) throw error;
         const url = (data as { url?: string })?.url;
         if (url) {
-          window.location.href = url;
+          redirectToCheckout(url);
           return;
         }
       } catch (e) {

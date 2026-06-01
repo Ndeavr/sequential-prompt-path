@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
+import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 const PLAN_DETAILS: Record<string, { name: string; price: number; features: string[] }> = Object.fromEntries(
   CONTRACTOR_PLANS.map((p) => [p.slug, { name: p.name, price: p.monthlyPrice, features: p.features }])
@@ -71,7 +72,10 @@ export default function PageContractorCheckout() {
 
       if (error) throw error;
       if (data?.url) {
-        window.location.href = data.url;
+        redirectToCheckout(data.url);
+        // Release the loader after 2s in case the user stays on this tab
+        setTimeout(() => setIsLoading(false), 2000);
+        return;
       } else if (data?.activated) {
         toast.success(data.message || "Plan activé!");
         goToStep("activation");

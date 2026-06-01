@@ -8,6 +8,7 @@ import { X, Sparkles, Zap, Palette, ImagePlus, Crown, Loader2 } from "lucide-rea
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 interface Props {
   currentCount: number;
@@ -24,7 +25,7 @@ export default function DesignUpgradeModal({ currentCount, limit, onClose }: Pro
       const { data, error } = await supabase.functions.invoke("design-checkout");
       if (error) throw error;
       if (data?.url) {
-        window.location.href = data.url;
+        redirectToCheckout(data.url);
       }
     } catch (err) {
       console.error("Checkout error:", err);

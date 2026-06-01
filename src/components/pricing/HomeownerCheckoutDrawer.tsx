@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ArrowRight, Loader2, Tag, LogIn, Crown, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 interface HomeownerCheckoutDrawerProps {
   open: boolean;
@@ -48,7 +49,7 @@ export default function HomeownerCheckoutDrawer({
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       if (data?.url) {
-        window.location.href = data.url;
+        redirectToCheckout(data.url);
       }
     } catch (err: any) {
       toast.error(err.message || "Erreur lors du checkout");

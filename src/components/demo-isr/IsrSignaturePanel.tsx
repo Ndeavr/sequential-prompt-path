@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { redirectToCheckout } from "@/lib/redirectToCheckout";
 import {
   ISR_SIGNATURE_FEATURES,
   ISR_PROMO_CODE,
@@ -43,7 +44,7 @@ export default function IsrSignaturePanel({ demoRunId }: Props) {
       );
       if (fnError) throw fnError;
       if (!data?.url) throw new Error("Aucune URL de paiement reçue.");
-      window.location.href = data.url;
+      redirectToCheckout(data.url);
     } catch (e) {
       setError((e as Error).message ?? "Erreur lors de l'ouverture du paiement.");
       setLoading(false);

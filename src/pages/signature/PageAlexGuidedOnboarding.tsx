@@ -25,6 +25,7 @@ import StepObjectivesCapture from "@/components/onboarding-funnel/StepObjectives
 import type { ObjectivesData } from "@/components/onboarding-funnel/StepObjectivesCapture";
 import StepPlanRecommendation from "@/components/onboarding-funnel/StepPlanRecommendation";
 import StepActivationSuccess from "@/components/onboarding-funnel/StepActivationSuccess";
+import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 export type OnboardingStep =
   | "welcome" | "business_info" | "categories" | "territories"
@@ -366,7 +367,7 @@ export default function PageAlexGuidedOnboarding() {
       }
 
       // Redirect to Stripe Checkout
-      window.location.href = data.url;
+      redirectToCheckout(data.url);
     } catch (e: any) {
       toast.error("Erreur: " + (e.message || ""));
     } finally { setIsProcessing(false); }

@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import AppointmentUpsellCard from "@/components/goals/AppointmentUpsellCard";
 import { formatCents, type PackTier } from "@/lib/appointmentPricing";
 import PromoCodeInput from "@/components/checkout/PromoCodeInput";
+import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 const PLAN_ICONS: Record<string, string> = {
   recrue: "🛡️",
@@ -125,7 +126,7 @@ export default function PageCheckoutStripe() {
         return;
       }
 
-      if (data.url) window.location.href = data.url;
+      if (data.url) redirectToCheckout(data.url);
     } catch (err: any) {
       toast.error(err.message || "Erreur lors de la création du paiement");
     } finally {

@@ -16,6 +16,7 @@ import FunnelLayout from "@/components/contractor-funnel/FunnelLayout";
 import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 import { friendlyError } from "@/utils/friendlyErrors";
 import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
+import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 const PLAN_DETAILS: Record<string, { name: string; monthly: number }> = Object.fromEntries(
   CONTRACTOR_PLANS.map((p) => [p.slug, { name: p.name, monthly: p.monthlyPrice }])
@@ -56,7 +57,7 @@ export default function ScreenPayment() {
       if (error) throw error;
       if (data?.url) {
         await updateFunnel({ stripe_session_id: data.session_id });
-        window.location.href = data.url;
+        redirectToCheckout(data.url);
       } else {
         await updateFunnel({ payment_status: "paid" });
         navigate("/entrepreneur/activer/succes");

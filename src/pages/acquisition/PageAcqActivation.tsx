@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { CheckCircle2, Loader2, TicketPercent } from "lucide-react";
+import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 type Plan = {
   plan_code: string;
@@ -67,7 +68,7 @@ export default function PageAcqActivation() {
         },
       });
       if (error) throw error;
-      window.location.href = data.url;
+      redirectToCheckout(data.url);
     } catch (e: any) {
       toast.error(e.message);
       setPaying(false);
