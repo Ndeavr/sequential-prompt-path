@@ -1,169 +1,125 @@
-## Contexte
+## Objectif
 
-L'infrastructure d'acquisition entrepreneur existe déjà à 80%. Inventaire détecté :
+Remplacer le dédoublonnage binaire actuel (`source_record_id` OU `business_name+city` → skip) par un **moteur de confiance multi-signal** qui :
+- ne bloque jamais l'enrichissement,
+- distingue vrais doublons (HIGH ≥ 0.9), candidats à vérifier (MEDIUM 0.6–0.89), faux positifs (LOW < 0.6),
+- met à jour les fiches existantes au lieu de jeter les données.
 
-**Tables existantes réutilisables**
-- `contractor_prospects` (+ enrichment, scores, contacts)
-- `prospect_aipp_scores`, `prospect_aipp_factors`, `prospect_aipp_snapshots`
-- `outreach_messages`, `outreach_recipients`, `outreach_*_events` (open/click/reply/delivery)
-- `prospect_email_campaigns`, `prospect_email_sequences`, `prospect_email_messages`
-- `contractor_activation_events`, `contractor_activation_funnel`
-- `acq_contractors`, `acq_contractor_scores`, `acq_contractor_services`, `acq_contractor_media`, `acq_contractor_objectives`
-- `contractor_pricing_quotes` (pricing engine déjà branché à Stripe via `quote_id`)
+## 1. Schéma (migration unique)
 
-**Edge functions existantes**
-- `acq-scrape-contractors`, `acq-enrich-contractor`, `acq-enrich-prospect`, `acq-generate-aipp`, `acq-generate-outreach`, `acq-send-outreach`
-- `aipp-real-scan`, `aipp-recommend`, `aipp-v2-analyze`, `aipp-pipeline-run`, `aipp-verify-neq`, `aipp-verify-rbq`
-- `compute-pricing-quote`, `create-contractor-checkout`, `activate-contractor-plan`, `contractor-activation-enrich`
-- `execute-prospect-pipeline`, `enrich-prospect`, `dispatch-outreach-batch`
+**Table `contractor_prospects`** — nouveaux champs :
+- `dedupe_confidence numeric(3,2)` (0.00 → 1.00, NULL pour les nouveaux non comparés)
+- `dedupe_matched_id uuid` (référence vers le doublon HIGH si applicable)
+- `dedupe_signals jsonb default '{}'` (détail des signaux ayant matché : `{place_id, rbq, domain, phone_city, address_name, fuzzy_name}`)
+- `google_place_id text` (extrait de `source_record_id` mais explicite et indexé)
+- `normalized_domain text` (généré côté edge : `acme.ca` quel que soit `https://www.acme.ca/`)
+- `last_enriched_at timestamptz`
+- `enrichment_count int default 0`
 
-**Pages admin existantes** : `/admin/acquisition`, `/admin/sniper`, `/admin/outbound/*` (~40 pages), `/admin/pricing-intelligence`
+**Index** :
+- `idx_cp_place_id (google_place_id)`
+- `idx_cp_domain (normalized_domain)`
+- `idx_cp_rbq (rbq) WHERE rbq IS NOT NULL` (déjà partiel ? sinon on l'ajoute)
+- `idx_cp_phone_city (phone, city)`
 
-**Décisions confirmées**
-- Unifier sous `/admin/acquisition-machine` (cockpit orchestrateur, pas de duplication backend)
-- Réutiliser et étendre les tables existantes (pas de doublons)
-- Scraping cascade : Google Places (base structurée) → Firecrawl (enrichissement website)
+**Enum statut d'ingestion** (nouvelle colonne `ingestion_status text` avec CHECK) :
+- `inserted` — nouveau prospect, aucun match
+- `possible_duplicate` — match MEDIUM, flag pour review
+- `enriched_existing` — match HIGH, on a mis à jour la fiche existante
+- `skipped_duplicate` — match HIGH ET aucune donnée nouvelle à apporter
+- `failed_extraction` — payload Google/Firecrawl invalide
 
----
+**Nouvelle table `prospect_dedupe_reviews`** (file de revue admin) :
+- `id`, `new_payload jsonb`, `existing_prospect_id uuid`, `confidence numeric`, `signals jsonb`, `status text` (`pending|merged|rejected|kept_both`), `reviewed_by uuid`, `reviewed_at`, `created_at`
+- RLS : `service_role ALL`, `authenticated SELECT/UPDATE` via `has_role(auth.uid(),'admin')`
+- GRANTs explicites (anon = aucun)
 
-## Ce que je vais construire
+## 2. Edge function — nouveau module partagé inline
 
-### 1. Cockpit unifié `/admin/acquisition-machine`
+Créer **`supabase/functions/_shared/dedupeEngine.ts`** (importé par `acq-scrape-google-places` et futurs scrapers) :
 
-Nouvelle page React unique avec 4 panneaux orchestrant les fonctions existantes :
-
-- **Pipeline Control** : boutons `Force scrape` · `Extract data` · `Score AIPP` · `Generate messages` · `Send test email/SMS` · `Launch outreach` · `Pause`
-- **Prospect Table** : colonnes company, trade, city, phone, email, AIPP score, recommended plan, status, last/next action. Actions par ligne : view profile · view extracted · generate messages · send test · propose plan · checkout link · block
-- **Message Testing Panel** : 5 variants email + 5 SMS par prospect, avec angle, ton, CTA, score prédit, bouton "Approuver" et "Envoyer test à moi"
-- **Plan Proposal Panel** : plan recommandé, raison, revenu mensuel potentiel, quota RDV, territoire, bouton Stripe checkout
-
-Le cockpit s'appuie 100% sur les tables/functions existantes. Aucune logique métier n'est dupliquée.
-
-### 2. Source de scraping en cascade
-
-- **Nouvelle edge function `acq-scrape-google-places`** : appel Google Places Text Search + Place Details (nécessite `GOOGLE_PLACES_API_KEY` — je demanderai la clé avant build)
-- **Modification de `acq-scrape-contractors`** : devient orchestrateur qui appelle d'abord Google Places, puis enrichit chaque résultat via Firecrawl (website metadata, branding, RBQ/NEQ detection)
-- Dédoublonnage strict sur `(company_name, city)` + `phone` + `website_url` (déjà partiellement en place, à durcir)
-
-### 3. Extension légère du schéma
-
-Ajouter sur `contractor_prospects` les colonnes manquantes uniquement si absentes :
-- `recommended_plan`, `recommended_plan_reason`, `estimated_capacity`, `estimated_monthly_value`
-- `scrape_status`, `enrichment_status`, `outreach_status` (enum unifié pour la pipeline)
-
-Créer **une seule** nouvelle table : `contractor_outreach_tests` (variants A/B générés, scores prédits, statut admin approval) — il n'y a pas d'équivalent direct dans `outreach_messages` qui gère les envois réels.
-
-Aucune autre table créée — `contractor_plan_recommendations` est remplacée par `contractor_pricing_quotes` existante.
-
-### 4. Landing entrepreneur `/contractor/ai-score/:prospectId`
-
-Nouvelle page publique (pas d'auth requise) :
-
-```text
-┌──────────────────────────────────────┐
-│  [Logo entreprise détecté]           │
-│  AIPP Score: 67/100  ▓▓▓▓▓▓▓░░░     │
-│                                       │
-│  Top 3 forces · Top 3 faiblesses     │
-│                                       │
-│  → Quel est votre objectif ?         │
-│    ○ Plus de rendez-vous             │
-│    ○ Meilleur territoire             │
-│    ○ Remplir mon agenda              │
-│    ○ Être recommandé par l'IA        │
-│                                       │
-│  → Capacité mensuelle: [slider]      │
-│                                       │
-│  💡 Plan recommandé: Pro 349$/mo     │
-│     5 RDV exclusifs/mois             │
-│                                       │
-│  [Activer mes rendez-vous exclusifs] │
-└──────────────────────────────────────┘
+```ts
+classifyDuplicate(candidate, supabase) → {
+  confidence: number,
+  matchedId: string | null,
+  signals: Record<string, boolean>,
+  band: 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE'
+}
 ```
 
-- Pré-rempli depuis `contractor_prospects` + `prospect_aipp_scores`
-- Alex auto-démarre (Sophia FR voice config existante) avec greeting contextuel : *"Bonjour, je suis Alex d'UNPRO. J'ai analysé [Nom entreprise] et je vois une opportunité concrète…"*
-- Réutilise `compute-pricing-quote` pour la reco plan
-- Stripe checkout via `create-contractor-checkout` existant avec `prospect_id` en metadata
-- Copy 100% conforme : "rendez-vous exclusifs", "visibilité IA", "territoire", "capacité" — jamais "leads"
+**Règles de score** (max 1.0, on garde le plus haut signal HIGH s'il existe) :
+| Signal | Poids | Band |
+|---|---|---|
+| `google_place_id` égal | 1.00 | HIGH |
+| `rbq` égal (normalisé) | 1.00 | HIGH |
+| `normalized_domain` égal | 0.95 | HIGH |
+| `phone` normalisé E.164 + même `city` | 0.75 | MEDIUM |
+| Adresse normalisée + Jaro-Winkler nom ≥ 0.85 | 0.70 | MEDIUM |
+| Jaro-Winkler nom ≥ 0.92 seul | 0.45 | LOW |
 
-### 5. Garde-fous outreach
+Helpers : `normalizePhone`, `normalizeDomain` (strip www/proto/trailing slash, lowercase), `normalizeRbq` (digits only), `jaroWinkler` (implémentation ~30 lignes).
 
-- Mode `dry_run` par défaut sur `acq-send-outreach`
-- Limite quotidienne par mailbox (déjà en place dans `outreach_rate_limits`)
-- Unsubscribe + suppression (déjà géré par `outbound_suppression_center`)
-- Bouton "Admin approval required" avant tout batch live > 10 prospects
+## 3. Refactor `acq-scrape-google-places/index.ts`
 
-### 6. Alex contextuel sur la landing
+Remplacer la boucle d'insert actuelle par :
 
-Système prompt enrichi avec le contexte prospect :
-- Score AIPP réel + facteurs
-- Plan recommandé + raison
-- Règle stricte : **jamais downsell** si l'objectif sélectionné implique un plan supérieur
-- Gère objections : prix, exclusivité territoire, garantie RDV
-- Push payment via inline Stripe (pattern `voice-sales-checkout` existant)
+```text
+pour chaque place:
+  candidate = mapper(place)
+  match = classifyDuplicate(candidate, supabase)
 
----
+  si band === HIGH:
+    → enrichir la fiche existante (merge non destructif : on n'écrase
+      jamais une valeur humaine — voir Contractor Identity Resolution memo)
+    → mettre à jour review_count, review_rating, raw_data.google_place,
+      last_enriched_at, enrichment_count += 1
+    → si au moins 1 champ changé: status = 'enriched_existing', sinon 'skipped_duplicate'
 
-## Détails techniques
+  sinon si band === MEDIUM:
+    → INSERT candidate avec ingestion_status='possible_duplicate',
+      dedupe_confidence, dedupe_matched_id, dedupe_signals
+    → INSERT prospect_dedupe_reviews (status='pending')
 
-**Nouveaux fichiers**
-- `src/pages/admin/acquisition/PageAdminAcquisitionMachine.tsx` (cockpit unifié)
-- `src/pages/contractor-funnel/PageContractorAIScoreLanding.tsx` (landing /contractor/ai-score/:prospectId)
-- `src/components/admin/acquisition/PipelineControlBar.tsx`
-- `src/components/admin/acquisition/ProspectMasterTable.tsx`
-- `src/components/admin/acquisition/MessageTestingPanel.tsx`
-- `src/components/admin/acquisition/PlanProposalPanel.tsx`
-- `supabase/functions/acq-scrape-google-places/index.ts`
-- `supabase/functions/acq-cascade-scrape/index.ts` (orchestrateur Google Places → Firecrawl)
-- `supabase/functions/acq-generate-test-variants/index.ts` (5+5 variants avec score prédit Gemini)
+  sinon (LOW ou NONE):
+    → INSERT candidate avec ingestion_status='inserted',
+      dedupe_confidence (peut être NULL ou le score LOW)
+```
 
-**Modifications**
-- `src/app/router.tsx` : ajouter les 2 routes
-- `supabase/functions/acq-send-outreach/index.ts` : ajouter `dry_run` + approval gate
-- `supabase/functions/create-contractor-checkout/index.ts` : accepter `prospect_id` en metadata (en plus de `quote_id`)
+Toujours retourner par compteur dans la réponse :
+```json
+{ inserted, enriched_existing, possible_duplicate, skipped_duplicate, failed_extraction }
+```
 
-**Migration unique**
-- `ALTER TABLE contractor_prospects ADD COLUMN IF NOT EXISTS recommended_plan TEXT, recommended_plan_reason TEXT, estimated_capacity INT, estimated_monthly_value NUMERIC, outreach_status TEXT;`
-- `CREATE TABLE contractor_outreach_tests (...)` + GRANT + RLS admin-only
-- Pas de DROP. Pas de modification des tables existantes utilisées en prod.
+## 4. Cascade
 
-**Secrets requis**
-- `GOOGLE_PLACES_API_KEY` — je te demanderai de l'ajouter avant build
-- Firecrawl déjà configuré
+`acq-cascade-scrape` : pas de changement de logique de match, mais on cascade Firecrawl sur **tous les IDs touchés** (inserted + enriched_existing + possible_duplicate) — plus seulement `inserted_ids`. Champ ajouté à la réponse de `acq-scrape-google-places` : `touched_ids: string[]`.
 
----
+## 5. UI — file de revue admin
 
-## Hors scope (existe déjà, ne pas reconstruire)
+Nouvelle page **`/admin/acquisition/duplicates`** :
+- Table : nom candidat ↔ nom existant, ville, signaux qui ont matché (chips), confiance, source
+- Actions par ligne : **Fusionner** (merge dans existant, supprime le candidat), **Rejeter** (les garder séparés), **Conserver les deux** (clear flag)
+- Compteur `Possible duplicates (N)` ajouté dans la sidebar de `PageAdminAcquisitionMachine`
 
-- `/admin/sniper` reste actif (pipeline alternative)
-- `/admin/outbound/*` reste actif (gestion deliverability mailboxes)
-- AIPP scoring engine (37 signaux) — réutilisé tel quel via `aipp-real-scan`
-- Voice config Sophia + Charlotte — verrouillé
-- Stripe Payment Element + `compute-pricing-quote` — réutilisé tel quel
-- Outbound approval gate `/admin/outbound/approvals` — peut être consolidé plus tard
+Hook : `useDedupeReviewQueue()` calqué sur `useRecruitmentProspects`.
 
----
+## 6. Garde-fous
 
-## Critères de succès
+- Enrichissement **jamais bloqué** par dedupe : même `skipped_duplicate` déclenche Firecrawl si `last_enriched_at` > 7 jours.
+- Merge non destructif (cf. memo Contractor Identity Resolution) : on n'écrase ni `legal_name`, ni `owner_name`, ni `email`, ni `rbq` quand `verification_status` indique une saisie humaine validée.
+- Backfill `normalized_domain` + `google_place_id` (depuis `source_record_id`) sur les ~98 lignes existantes via un script SQL inclus dans la migration.
 
-1. Admin force scrape Google Places + Firecrawl sans intervention
-2. AIPP score réel généré par `aipp-real-scan` (jamais de mock)
-3. 5 email + 5 SMS variants visibles avec score prédit, approval admin avant batch live
-4. Landing `/contractor/ai-score/:prospectId` charge avec données réelles + Alex parle
-5. Plan recommandé dynamique via `compute-pricing-quote`, jamais de downsell
-6. Stripe checkout déclenche `activate-contractor-plan` post-paiement
-7. Aucune copy interdite ("leads partagés", "soumissions") n'apparaît côté entrepreneur
-8. Tous les échecs logués dans `contractor_activation_events` + visibles dans le cockpit
+## 7. Critères de succès
 
----
+- Pour Plombier × Laval (les 4 actuels) : 2e run → `enriched_existing: 4, inserted: 0, possible_duplicate: 0`, et `last_enriched_at` mis à jour sur les 4.
+- Insertion d'un faux concurrent (même nom, ville différente, autre téléphone) → `possible_duplicate` + apparaît dans `/admin/acquisition/duplicates`.
+- Insertion d'un homonyme parfait avec RBQ différent → `inserted` (LOW confidence, pas de blocage).
 
-## Phasing si trop gros pour un seul build
+## Tâches
 
-**Phase 1 (recommandé pour démarrer)** : Cockpit unifié + landing `/contractor/ai-score/:prospectId` + Alex contextuel + Stripe wiring (utilise les `acq-*` functions existantes telles quelles)
-
-**Phase 2** : `acq-scrape-google-places` + cascade Firecrawl + dédoublonnage durci
-
-**Phase 3** : `acq-generate-test-variants` + Message Testing Panel + approval gate
-
-Dis-moi si tu veux que je build tout d'un coup ou si on commence par Phase 1.
+1. Migration (schéma + grants + RLS + backfill)
+2. `_shared/dedupeEngine.ts`
+3. Refactor `acq-scrape-google-places`
+4. Patch `acq-cascade-scrape` (touched_ids)
+5. Hook `useDedupeReviewQueue` + page `/admin/acquisition/duplicates`
+6. Lien sidebar + compteur dans `PageAdminAcquisitionMachine`

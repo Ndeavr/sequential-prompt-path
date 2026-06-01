@@ -131,6 +131,7 @@ const LandingContractorAIActivation = lazy(() => import("@/pages/acquisition/Lan
 const PageAdminPipelineProspects = lazy(() => import("@/pages/admin/acquisition/PageAdminPipelineProspects"));
 const PageAdminAcquisition = lazy(() => import("@/pages/admin/acquisition/PageAdminAcquisition"));
 const PageAdminAcquisitionMachine = lazy(() => import("@/pages/admin/acquisition/PageAdminAcquisitionMachine"));
+const PageAdminAcquisitionDuplicates = lazy(() => import("@/pages/admin/acquisition/PageAdminAcquisitionDuplicates"));
 const PageContractorAIScoreLanding = lazy(() => import("@/pages/contractor-funnel/PageContractorAIScoreLanding"));
 const PageAippPublic = lazy(() => import("@/pages/aipp/PageAippPublic"));
 const PageAiIndexedProfile = lazy(() => import("@/pages/aipp/PageAiIndexedProfile"));
@@ -1225,6 +1226,7 @@ export const AppRouter = () => (
         <Route path="/admin/ai-trust/territory" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAiTrustTerritory /></Suspense></ProtectedRoute>} />
         <Route path="/admin/acquisition" element={<ProtectedRoute requiredRole="admin"><PageAdminAcquisition /></ProtectedRoute>} />
         <Route path="/admin/acquisition-machine" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionMachine /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/acquisition/duplicates" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionDuplicates /></Suspense></ProtectedRoute>} />
         <Route path="/contractor/ai-score/:prospectId" element={<Suspense fallback={<LazyFallback />}><PageContractorAIScoreLanding /></Suspense>} />
         <Route path="/aipp/:slug" element={<PageAippPublic />} />
         <Route path="/ai-indexed-profiles/:slug" element={<PageAiIndexedProfile />} />

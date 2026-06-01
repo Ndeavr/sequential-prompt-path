@@ -52,14 +52,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    const insertedIds: string[] = placesData.inserted_ids ?? [];
+    // Dedupe ne bloque jamais l'enrichissement : tous les IDs touchés sont cascadés
+    const touchedIds: string[] = placesData.touched_ids ?? placesData.inserted_ids ?? [];
     const enriched: Array<{ id: string; ok: boolean; error?: string }> = [];
 
-    // 2. Firecrawl enrichment cascade (best effort, in parallel batches of 3)
-    if (enrich && insertedIds.length > 0) {
+    if (enrich && touchedIds.length > 0) {
       const batchSize = 3;
-      for (let i = 0; i < insertedIds.length; i += batchSize) {
-        const batch = insertedIds.slice(i, i + batchSize);
+      for (let i = 0; i < touchedIds.length; i += batchSize) {
+        const batch = touchedIds.slice(i, i + batchSize);
         const results = await Promise.allSettled(
           batch.map((id) =>
             fetch(`${supabaseUrl}/functions/v1/acq-enrich-contractor`, {
@@ -91,7 +91,10 @@ Deno.serve(async (req) => {
         places: {
           found: placesData.found,
           inserted: placesData.inserted,
-          skipped: placesData.skipped,
+          enriched_existing: placesData.enriched_existing,
+          possible_duplicate: placesData.possible_duplicate,
+          skipped_duplicate: placesData.skipped_duplicate,
+          failed_extraction: placesData.failed_extraction,
         },
         enriched: {
           attempted: enriched.length,

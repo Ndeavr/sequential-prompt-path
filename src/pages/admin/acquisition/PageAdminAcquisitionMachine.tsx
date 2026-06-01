@@ -263,6 +263,11 @@ export default function PageAdminAcquisitionMachine() {
                 onClick={() => callEdge("acq-send-outreach", { pause: true }, "pause")}
               />
             </div>
+            <div className="mt-3 pt-3 border-t border-white/10">
+              <Link to="/admin/acquisition/duplicates" className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+                <Eye className="h-3 w-3" /> File de doublons probables →
+              </Link>
+            </div>
           </Card>
 
           {/* Tabs */}
