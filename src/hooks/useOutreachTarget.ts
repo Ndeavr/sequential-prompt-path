@@ -39,22 +39,22 @@ export function useOutreachTarget(slug: string, token: string | null) {
     async function load() {
       setLoading(true);
       try {
-        let query = supabase.from("outreach_targets" as any).select("*");
-        if (token) {
-          query = query.eq("secure_token", token);
-        } else {
-          query = query.eq("slug", slug);
-        }
-        const { data, error: err } = await query.maybeSingle();
-        const row = data as any;
+        const { data, error: err } = await supabase.rpc("get_outreach_target" as any, {
+          p_token: token,
+          p_slug: token ? null : slug,
+        } as any);
+        const row = Array.isArray(data) ? (data[0] as any) : (data as any);
         if (err || !row) {
           setError("Target introuvable");
           return;
         }
 
         // Mark first view
-        if (!row.first_viewed_at) {
-          supabase.from("outreach_targets" as any).update({ first_viewed_at: new Date().toISOString() } as any).eq("id", row.id).then(() => {});
+        if (!row.first_viewed_at && row.secure_token) {
+          supabase.rpc("mark_outreach_first_viewed" as any, {
+            p_token: row.secure_token,
+            p_id: row.id,
+          } as any).then(() => {});
         }
 
         const payload = (row.payload || {}) as OutreachLandingPayload;
@@ -97,11 +97,11 @@ export function useOutreachTarget(slug: string, token: string | null) {
   }, [model]);
 
   const confirmIdentity = useCallback(async () => {
-    if (!model) return;
-    await supabase.from("outreach_targets" as any).update({
-      claimed_at: new Date().toISOString(),
-      landing_status: "claimed",
-    } as any).eq("id", model.targetId);
+    if (!model || !model.secureToken) return;
+    await supabase.rpc("claim_outreach_target" as any, {
+      p_token: model.secureToken,
+      p_id: model.targetId,
+    } as any);
     await trackEvent("identity_confirmed");
   }, [model, trackEvent]);
 
