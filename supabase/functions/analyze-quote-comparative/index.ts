@@ -176,7 +176,43 @@ Deno.serve(async (req) => {
       best.warranty ? ` avec garantie ${best.warranty}` : ""
     }${best.amount ? ` à ${best.amount.toLocaleString("fr-CA")} $` : ""}.`;
 
-    const payload = { quotes: scored, recommendation, confidenceScore };
+    // Derive cross-quote intelligence (scope gaps, price anomalies, questions)
+    const allInclusions = new Set<string>();
+    scored.forEach((q) => q.inclusions.forEach((i) => allInclusions.add(i.toLowerCase())));
+    const scopeGaps: string[] = [];
+    scored.forEach((q) => {
+      const missing = [...allInclusions].filter(
+        (inc) => !q.inclusions.some((i) => i.toLowerCase() === inc),
+      );
+      missing.slice(0, 2).forEach((m) =>
+        scopeGaps.push(`${q.vendor} n'inclut pas: ${m}`),
+      );
+    });
+
+    const priceAnomalies: string[] = [];
+    if (median) {
+      scored.forEach((q) => {
+        if (!q.amount) return;
+        const ratio = q.amount / median;
+        if (ratio < 0.75) priceAnomalies.push(`${q.vendor} est ${Math.round((1 - ratio) * 100)}% sous la médiane — vérifier le scope.`);
+        else if (ratio > 1.25) priceAnomalies.push(`${q.vendor} est ${Math.round((ratio - 1) * 100)}% au-dessus de la médiane.`);
+      });
+    }
+
+    const homeownerQuestions: string[] = [];
+    scored.forEach((q) => {
+      if (!q.warranty) homeownerQuestions.push(`Quelle garantie offre ${q.vendor}?`);
+      if (q.exclusions.length > 0) homeownerQuestions.push(`Pourquoi ${q.vendor} exclut: ${q.exclusions[0]}?`);
+    });
+
+    const payload = {
+      quotes: scored,
+      recommendation,
+      confidenceScore,
+      scopeGaps: scopeGaps.slice(0, 5),
+      priceAnomalies: priceAnomalies.slice(0, 4),
+      homeownerQuestions: [...new Set(homeownerQuestions)].slice(0, 5),
+    };
 
     // Persist
     const supa = createClient(

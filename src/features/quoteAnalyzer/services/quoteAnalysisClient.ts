@@ -19,6 +19,9 @@ export interface QuoteAnalysisPayload {
   quotes: AnalyzedQuote[];
   recommendation: string;
   confidenceScore: number;
+  scopeGaps?: string[];
+  priceAnomalies?: string[];
+  homeownerQuestions?: string[];
 }
 
 export interface QuoteAnalysisRow {
