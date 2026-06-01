@@ -231,14 +231,22 @@ Retourne JSON: { "sms": [{ "angle": "ai_gap", "body": "...", "cta": "...", "tone
     if (insErr) throw insErr;
 
     return new Response(
-      JSON.stringify({ variants: inserted, count: inserted?.length ?? 0 }),
+      JSON.stringify({ ok: true, step: "generate_messages", variants: inserted, count: inserted?.length ?? 0 }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    console.error("[acq-generate-test-variants] ERROR", msg);
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
+    const stack = e instanceof Error ? e.stack : undefined;
+    console.error("[acq-generate-test-variants] ERROR", msg, stack);
+    return new Response(JSON.stringify({
+      ok: false,
+      step: "generate_messages",
+      error_code: "UNEXPECTED_ERROR",
+      message: msg,
+      next_action: "Vérifier le prospect sélectionné et réessayer.",
+      details: { stack: stack?.slice(0, 1200) },
+    }), {
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
