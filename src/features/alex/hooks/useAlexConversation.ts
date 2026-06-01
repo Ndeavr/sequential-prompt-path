@@ -153,29 +153,53 @@ export function useAlexConversation() {
           await speak(intro);
         }
       } else {
-        const resp = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-analyze-image`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
-            body: JSON.stringify({
-              image_base64: base64,
-              mime_type: file.type || "image/jpeg",
-              user_message: userMessage || "",
-            }),
-          }
-        );
-        const data = await resp.json();
-        if (!resp.ok || !data.response_text) {
+        // Run text analysis + visual annotation analysis in parallel
+        const imageDataUrl = `data:${file.type || "image/jpeg"};base64,${base64}`;
+        const [textRes, visualRes] = await Promise.allSettled([
+          fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-analyze-image`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              },
+              body: JSON.stringify({
+                image_base64: base64,
+                mime_type: file.type || "image/jpeg",
+                user_message: userMessage || "",
+              }),
+            }
+          ).then((r) => r.json()),
+          (await import("@/features/visualAI/visualAnalysisService"))
+            .analyzeImageVisually(file, { userMessage })
+            .catch(() => null),
+        ]);
+
+        const data =
+          textRes.status === "fulfilled" ? textRes.value : null;
+        const visual =
+          visualRes.status === "fulfilled" ? visualRes.value : null;
+
+        if (!data || !data.response_text) {
           const fallback =
             "Je n'arrive pas à analyser cette image pour l'instant. Décrivez-moi en une phrase ce qui vous inquiète et je vous oriente.";
           state.injectAssistantMessage(fallback, true);
           await speak(fallback);
         } else {
-          state.injectAssistantMessage(data.response_text, true);
+          const meta =
+            visual && (visual.annotations.length || visual.findings.length)
+              ? {
+                  visualAnalysis: {
+                    imageUrl: imageDataUrl,
+                    annotations: visual.annotations,
+                    findings: visual.findings,
+                    summary: visual.summary,
+                    urgency: visual.urgency,
+                  },
+                }
+              : undefined;
+          state.injectAssistantMessage(data.response_text, true, meta);
           if (data.intent === "property_risk_assessment") {
             state.setIntent("homeowner_problem" as AlexIntent);
           }
