@@ -53,6 +53,7 @@ function SubScore({
 }
 
 export function PropertyHealthCard({ propertyId }: Props) {
+  const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["property-health-score", propertyId],
     queryFn: async () => {
@@ -69,6 +70,25 @@ export function PropertyHealthCard({ propertyId }: Props) {
       return data as Row | null;
     },
   });
+
+  // Auto-compute on first view when no score exists yet.
+  useEffect(() => {
+    if (isLoading || data) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { error } = await supabase.functions.invoke("compute-property-health", {
+          body: { property_id: propertyId },
+        });
+        if (!error && !cancelled) qc.invalidateQueries({ queryKey: ["property-health-score", propertyId] });
+      } catch {
+        /* silent */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoading, data, propertyId, qc]);
 
   return (
     <Card className="p-4 space-y-3">
