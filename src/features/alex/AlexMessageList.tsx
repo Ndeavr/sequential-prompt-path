@@ -6,6 +6,7 @@
 import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAlexStore } from "./state/alexStore";
+import { VisualConversationPanel } from "@/features/visualAI/VisualConversationPanel";
 
 export function AlexMessageList() {
   const messages = useAlexStore((s) => s.messages);
@@ -41,6 +42,19 @@ export function AlexMessageList() {
                 </span>
               )}
               {msg.text}
+              {(() => {
+                const va = (msg.meta as { visualAnalysis?: { imageUrl: string; annotations: any[]; findings: any[]; summary?: string; urgency?: any } } | undefined)?.visualAnalysis;
+                if (!va) return null;
+                return (
+                  <VisualConversationPanel
+                    imageUrl={va.imageUrl}
+                    annotations={va.annotations}
+                    findings={va.findings}
+                    summary={va.summary}
+                    urgency={va.urgency}
+                  />
+                );
+              })()}
             </div>
           </motion.div>
         ))}

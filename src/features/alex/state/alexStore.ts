@@ -95,7 +95,7 @@ export interface AlexActions {
 
   setMode: (mode: AlexMode) => void;
 
-  injectAssistantMessage: (text: string, isSpoken?: boolean) => void;
+  injectAssistantMessage: (text: string, isSpoken?: boolean, meta?: Record<string, unknown>) => void;
   addUserMessage: (text: string, intent?: AlexIntent) => void;
 
   markUserEngaged: () => void;
@@ -255,13 +255,14 @@ export const useAlexStore = create<AlexState & AlexActions>()((set) => ({
     set({ mode });
   },
 
-  injectAssistantMessage: (text, isSpoken = false) => {
+  injectAssistantMessage: (text, isSpoken = false, meta) => {
     const msg: AlexMessage = {
       id: makeId(),
       role: "assistant",
       text,
       timestamp: now(),
       isSpoken,
+      meta,
     };
     alexLog("store:assistantMsg", { text: text.slice(0, 60) });
     set((s) => ({
