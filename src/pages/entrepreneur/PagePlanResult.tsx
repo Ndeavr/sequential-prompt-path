@@ -9,6 +9,7 @@ import { CreditCard, Shield, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { createPricingCheckout, type PricingCalcResult } from "@/services/pricingEngineService";
+import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 export default function PagePlanResult() {
   const [searchParams] = useSearchParams();
@@ -36,7 +37,7 @@ export default function PagePlanResult() {
     try {
       const { url } = await createPricingCheckout(id);
       if (url) {
-        window.location.href = url;
+        redirectToCheckout(url);
       } else {
         toast.error("Erreur lors de la création du checkout");
       }

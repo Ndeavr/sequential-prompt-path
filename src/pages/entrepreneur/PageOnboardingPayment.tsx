@@ -7,6 +7,7 @@ import { ArrowLeft, CreditCard, Lock, Shield, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CONTRACTOR_PLANS, PLAN_PRICE_MAP } from "@/config/contractorPlans";
+import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 export default function PageOnboardingPayment() {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ export default function PageOnboardingPayment() {
 
       if (error) throw error;
       if (data?.url) {
-        window.location.href = data.url;
+        redirectToCheckout(data.url);
       } else {
         throw new Error("Aucune URL de checkout reçue");
       }

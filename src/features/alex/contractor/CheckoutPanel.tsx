@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Loader2, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useContractorStore } from "./contractorStore";
+import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 const PLAN_LABELS: Record<string, { name: string; price: number }> = {
   recrue: { name: "Recrue", price: 149 },
@@ -43,7 +44,7 @@ export default function CheckoutPanel({ plan_code }: Props) {
       });
       const url = data?.url || data?.checkout_url;
       if (url) {
-        window.location.href = url;
+        redirectToCheckout(url);
       } else {
         console.error("[checkout]", error || data);
         setBusy(false);

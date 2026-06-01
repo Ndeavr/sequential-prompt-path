@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 export const useCondoSubscription = () => {
   const { user, isAuthenticated } = useAuth();
@@ -28,7 +29,7 @@ export const useCondoSubscription = () => {
     });
     if (error) throw error;
     if (data?.url) {
-      window.location.href = data.url;
+      redirectToCheckout(data.url);
     }
   };
 

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 interface Props {
   slug: string;
@@ -29,7 +30,7 @@ export default function ActivationOffer1Dollar({ slug, companyName, onTrack }: P
         setError("Activation indisponible — réessayez dans quelques secondes.");
         return;
       }
-      window.location.href = data.url;
+      redirectToCheckout(data.url);
     } catch {
       setError("Activation indisponible — réessayez dans quelques secondes.");
     } finally {

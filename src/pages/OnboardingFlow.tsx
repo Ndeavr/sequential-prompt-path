@@ -28,6 +28,7 @@ import { useOnboardingSession } from "@/hooks/useOnboardingSession";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 const TOTAL_STEPS = 10;
 
@@ -179,7 +180,7 @@ export default function OnboardingFlow() {
         console.error("Checkout error:", error);
         return;
       }
-      window.location.href = data.url;
+      redirectToCheckout(data.url);
     } catch (err) {
       console.error("Stripe checkout error:", err);
       toast.error("Erreur de paiement. Réessayez.");

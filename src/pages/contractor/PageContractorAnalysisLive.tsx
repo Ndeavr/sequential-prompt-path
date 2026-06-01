@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/formatPrice";
+import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 interface RunRow {
   id: string;
@@ -294,7 +295,7 @@ function CheckoutButton({ runId }: { runId: string }) {
       if (error) throw error;
       const url = (data as { url?: string })?.url;
       if (!url) throw new Error("Lien de paiement manquant.");
-      window.location.href = url;
+      redirectToCheckout(url);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Erreur de paiement.");
       setBusy(false);

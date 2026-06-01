@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 export interface FounderPlan {
   id: string;
@@ -78,7 +79,7 @@ export function useFounderCheckout() {
     }
 
     const { url } = await res.json();
-    window.location.href = url;
+    redirectToCheckout(url);
   };
 
   return { checkout };
