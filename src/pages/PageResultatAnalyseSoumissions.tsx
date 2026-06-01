@@ -94,7 +94,10 @@ export default function PageResultatAnalyseSoumissions() {
           )}
 
           {analysisId && payload && authed && (
-            <SectionComparaisonIA result={payload} />
+            <>
+              <SectionComparaisonIA result={payload} />
+              <PanelQuoteIntelligenceInsights payload={payload} />
+            </>
           )}
 
           {analysisId && !payload && (showGate || loading) && (
