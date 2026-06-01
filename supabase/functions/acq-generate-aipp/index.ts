@@ -84,27 +84,50 @@ async function scoreOne(s: any, prospect_id: string) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   const s = svc();
-  const body = await req.json().catch(() => ({}));
-  const { prospect_id, batch, limit } = body ?? {};
+  try {
+    const body = await req.json().catch(() => ({}));
+    const { prospect_id, batch, limit } = body ?? {};
 
-  if (batch) {
-    const lim = Math.min(Math.max(Number(limit) || 20, 1), 100);
-    const { data: prospects } = await s
-      .from("contractor_prospects")
-      .select("id")
-      .or("aipp_status.is.null,aipp_status.neq.generated")
-      .limit(lim);
-    const ids = (prospects ?? []).map((r: any) => r.id);
-    const results = [];
-    for (const id of ids) results.push(await scoreOne(s, id));
-    return new Response(JSON.stringify({ ok: true, batch: true, processed: results.length, results }), {
+    if (batch) {
+      const lim = Math.min(Math.max(Number(limit) || 20, 1), 100);
+      const { data: prospects } = await s
+        .from("contractor_prospects")
+        .select("id")
+        .or("aipp_status.is.null,aipp_status.neq.generated")
+        .limit(lim);
+      const ids = (prospects ?? []).map((r: any) => r.id);
+      const results = [];
+      for (const id of ids) results.push(await scoreOne(s, id));
+      const failed = results.filter((r) => !r.ok).length;
+      return new Response(JSON.stringify({
+        ok: true, step: "score_aipp", batch: true,
+        processed: results.length, updated: results.length - failed, failed,
+        details: results,
+      }), { headers: { ...cors, "Content-Type": "application/json" } });
+    }
+
+    if (!prospect_id) {
+      return new Response(JSON.stringify({
+        ok: false, step: "score_aipp", error_code: "MISSING_INPUT",
+        message: "prospect_id requis ou utiliser batch=true.",
+        next_action: "Passer batch=true ou sélectionner un prospect.",
+      }), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
+    }
+    const result = await scoreOne(s, prospect_id);
+    return new Response(JSON.stringify({ ok: !!result.ok, step: "score_aipp", ...result }), {
       headers: { ...cors, "Content-Type": "application/json" },
+      status: 200,
     });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    const stack = e instanceof Error ? e.stack : undefined;
+    console.error("[acq-generate-aipp] UNCAUGHT", msg, stack);
+    return new Response(JSON.stringify({
+      ok: false, step: "score_aipp", error_code: "UNEXPECTED_ERROR",
+      message: msg, next_action: "Consulter les logs et réessayer.",
+      details: { stack: stack?.slice(0, 1200) },
+    }), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
   }
-
-  if (!prospect_id) return new Response(JSON.stringify({ error: "prospect_id requis" }), { status: 400, headers: cors });
-  const result = await scoreOne(s, prospect_id);
-  return new Response(JSON.stringify(result), { headers: { ...cors, "Content-Type": "application/json" }, status: result.ok ? 200 : 404 });
 });
 
 /* legacy single-prospect inline (kept for reference, unreachable):

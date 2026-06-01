@@ -76,10 +76,27 @@ serve(async (req) => {
 
   try {
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!lovableKey) throw new Error("LOVABLE_API_KEY not configured");
+    if (!lovableKey) {
+      return new Response(JSON.stringify({
+        ok: false,
+        step: "generate_messages",
+        error_code: "MISSING_SECRET",
+        message: "LOVABLE_API_KEY manquant — génération de messages en pause.",
+        missing: ["LOVABLE_API_KEY"],
+        next_action: "LOVABLE_API_KEY est auto-provisionné. Contacter le support si absent.",
+      }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
-    const { prospect_id, force_regenerate = false } = await req.json();
-    if (!prospect_id) throw new Error("prospect_id required");
+    const { prospect_id, force_regenerate = false } = await req.json().catch(() => ({}));
+    if (!prospect_id) {
+      return new Response(JSON.stringify({
+        ok: false,
+        step: "generate_messages",
+        error_code: "MISSING_INPUT",
+        message: "prospect_id requis. Sélectionne un prospect dans la table.",
+        next_action: "Cliquer sur une ligne de prospect avant de générer.",
+      }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -214,14 +231,22 @@ Retourne JSON: { "sms": [{ "angle": "ai_gap", "body": "...", "cta": "...", "tone
     if (insErr) throw insErr;
 
     return new Response(
-      JSON.stringify({ variants: inserted, count: inserted?.length ?? 0 }),
+      JSON.stringify({ ok: true, step: "generate_messages", variants: inserted, count: inserted?.length ?? 0 }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    console.error("[acq-generate-test-variants] ERROR", msg);
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
+    const stack = e instanceof Error ? e.stack : undefined;
+    console.error("[acq-generate-test-variants] ERROR", msg, stack);
+    return new Response(JSON.stringify({
+      ok: false,
+      step: "generate_messages",
+      error_code: "UNEXPECTED_ERROR",
+      message: msg,
+      next_action: "Vérifier le prospect sélectionné et réessayer.",
+      details: { stack: stack?.slice(0, 1200) },
+    }), {
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

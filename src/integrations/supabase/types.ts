@@ -849,6 +849,42 @@ export type Database = {
         }
         Relationships: []
       }
+      acquisition_action_logs: {
+        Row: {
+          action: string
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          id: string
+          missing_secrets: string[] | null
+          request_payload: Json | null
+          response_payload: Json | null
+          status: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          missing_secrets?: string[] | null
+          request_payload?: Json | null
+          response_payload?: Json | null
+          status: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          missing_secrets?: string[] | null
+          request_payload?: Json | null
+          response_payload?: Json | null
+          status?: string
+        }
+        Relationships: []
+      }
       acquisition_pipeline_logs: {
         Row: {
           created_at: string
@@ -984,6 +1020,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      acquisition_system_health: {
+        Row: {
+          error_code: string | null
+          id: string
+          last_checked_at: string
+          message: string | null
+          missing_secrets: string[] | null
+          proposed_fix: string | null
+          status: string
+          system_name: string
+          updated_at: string
+        }
+        Insert: {
+          error_code?: string | null
+          id?: string
+          last_checked_at?: string
+          message?: string | null
+          missing_secrets?: string[] | null
+          proposed_fix?: string | null
+          status?: string
+          system_name: string
+          updated_at?: string
+        }
+        Update: {
+          error_code?: string | null
+          id?: string
+          last_checked_at?: string
+          message?: string | null
+          missing_secrets?: string[] | null
+          proposed_fix?: string | null
+          status?: string
+          system_name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       activation_pipeline_runs: {
         Row: {

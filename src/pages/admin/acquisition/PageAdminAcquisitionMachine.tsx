@@ -104,13 +104,40 @@ export default function PageAdminAcquisitionMachine() {
     setRunning(label);
     try {
       const { data, error } = await supabase.functions.invoke(fn, { body });
-      if (error) throw error;
-      toast.success(`${label} ✓`, { description: JSON.stringify(data).slice(0, 100) });
+      // Structured error returned with HTTP 200 → data.ok === false
+      if (data && data.ok === false) {
+        const missing = Array.isArray(data.missing) && data.missing.length
+          ? ` · Manquant: ${data.missing.join(", ")}`
+          : "";
+        const next = data.next_action ? ` · ${data.next_action}` : "";
+        toast.error(`${label} bloqué — ${data.error_code ?? "ERROR"}`, {
+          description: `${data.message ?? "Erreur inconnue"}${missing}${next}`,
+          duration: 12000,
+        });
+        return data;
+      }
+      // Raw non-2xx (legacy) → surface body
+      if (error) {
+        const ctx = (error as any)?.context;
+        let detail = error.message;
+        try {
+          if (ctx && typeof ctx.text === "function") {
+            const txt = await ctx.text();
+            try {
+              const j = JSON.parse(txt);
+              detail = j.message || j.error || txt.slice(0, 300);
+            } catch { detail = txt.slice(0, 300); }
+          }
+        } catch { /* ignore */ }
+        toast.error(`${label} échoué`, { description: detail, duration: 12000 });
+        return null;
+      }
+      toast.success(`${label} ✓`, { description: JSON.stringify(data).slice(0, 160) });
       await loadProspects();
       return data;
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      toast.error(`${label} échoué`, { description: msg });
+      toast.error(`${label} échoué`, { description: msg, duration: 10000 });
     } finally {
       setRunning(null);
     }
