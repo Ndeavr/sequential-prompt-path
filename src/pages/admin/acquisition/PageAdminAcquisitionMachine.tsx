@@ -181,6 +181,18 @@ export default function PageAdminAcquisitionMachine() {
                 }}
               />
               <ControlButton
+                icon={<Sparkles className="w-4 h-4" />}
+                label="Cascade (Google+Firecrawl)"
+                running={running === "cascade"}
+                onClick={() => {
+                  const trade = prompt("Métier (ex: plombier)") ?? "";
+                  const city = prompt("Ville (ex: Montréal)") ?? "";
+                  if (!trade || !city) return;
+                  const limit = Number(prompt("Nombre max (1-60)", "20") ?? 20);
+                  callEdge("acq-cascade-scrape", { trade, city, limit, enrich: true }, "cascade");
+                }}
+              />
+              <ControlButton
                 icon={<Zap className="w-4 h-4" />}
                 label="Extract data"
                 running={running === "extract"}
