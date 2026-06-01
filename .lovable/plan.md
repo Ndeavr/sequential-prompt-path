@@ -1,64 +1,47 @@
-# Fix — Checkout reste bloqué après "Payer"
+# Fix — Libellé "Annuel" affiché même pour l'abonnement mensuel
 
-## Diagnostic
+## Diagnostic confirmé
 
-Réseau confirmé : `POST /functions/v1/create-checkout-session` → **200**, réponse `{ "url": "https://checkout.stripe.com/c/pay/cs_live_..." }`. La fonction edge fonctionne.
+Le montant transmis est correct : `599 $ CAD par mois` (price ID mensuel). Ce qui est faux, c'est le **titre** affiché par Stripe Checkout : "UNPRO Plan Premium — Annuel".
 
-Le problème est côté client : après `setIsLoading(true)`, le code exécute `window.location.href = data.url`. Dans la prévisualisation Lovable (et toute intégration en iframe), Stripe Checkout renvoie `X-Frame-Options: DENY` / `frame-ancestors 'none'`, donc le navigateur refuse de charger la page dans l'iframe. Résultat : aucune navigation, le bouton reste en état "Redirection…" et l'écran reste sur les skeletons.
+Cause racine côté Stripe (pas côté code) :
+- Le price mensuel `price_1TJf6mCvZwK1QnPV9GWx7OEM` ($599/mois) et le price annuel `price_1TaZJtCvZwK1QnPV4573PwZm` ($6 110/an) sont **tous deux rattachés au même produit Stripe** `prod_UI9uGUb5D4nGUd` dont le nom est figé sur **"UNPRO Plan Premium — Annuel"** avec description "Plan Premium UNPRO — Abonnement annuel".
+
+Stripe Checkout affiche toujours le nom du produit en titre ; l'interval (`par mois` / `par an`) vient du price. D'où le mismatch visuel.
+
+Probablement le même schéma pour les 4 autres plans (Recrue / Pro / Élite / Signature) — à vérifier puis corriger en masse.
 
 ## Correctif
 
-Utiliser un helper de redirection qui :
-1. Tente `window.top.location.href = url` (sort de l'iframe quand permis).
-2. Si bloqué (cross-origin) → `window.open(url, '_blank', 'noopener')`.
-3. Fallback final : `window.location.href = url`.
+### 1. Audit Stripe (préalable)
 
-### Helper centralisé
+Récupérer le produit lié à chaque price mensuel et annuel des 5 plans pour confirmer la liste exacte des produits à renommer.
 
-Créer `src/lib/redirectToCheckout.ts` :
+### 2. Renommer les produits Stripe (neutre, sans Mensuel/Annuel)
 
-```ts
-export function redirectToCheckout(url: string) {
-  try {
-    if (window.top && window.top !== window.self) {
-      window.top.location.href = url;
-      return;
-    }
-  } catch { /* cross-origin → fallback */ }
+Mettre à jour chaque produit Stripe partagé monthly+yearly avec un nom et une description neutres :
 
-  const win = window.open(url, '_blank', 'noopener,noreferrer');
-  if (!win) window.location.href = url; // popup bloqué
-}
-```
+| code      | name                  | description                            |
+|-----------|-----------------------|----------------------------------------|
+| recrue    | UNPRO Plan Recrue     | Plan Recrue UNPRO                      |
+| pro       | UNPRO Plan Pro        | Plan Pro UNPRO                         |
+| premium   | UNPRO Plan Premium    | Plan Premium UNPRO                     |
+| elite     | UNPRO Plan Élite      | Plan Élite UNPRO                       |
+| signature | UNPRO Plan Signature  | Plan Signature UNPRO                   |
 
-### Remplacements
+Exécuté via `stripe_api_execute` (PATCH `/v1/products/{id}` `name=…&description=…`).
 
-Remplacer chaque `window.location.href = data.url` (ou `= url`) menant à Stripe Checkout par `redirectToCheckout(data.url)` dans les fichiers suivants :
+Résultat attendu côté Checkout :
+- Mensuel → "S'abonner à UNPRO Plan Premium" · "599,00 $ CA par mois"
+- Annuel  → "S'abonner à UNPRO Plan Premium" · "6 110,00 $ CA par an"
 
-- `src/pages/contractor-funnel/PageContractorCheckout.tsx` (la page bloquée du screenshot)
-- `src/pages/entrepreneur/activation/ScreenPayment.tsx`
-- `src/pages/entrepreneur/PageOnboardingPayment.tsx`
-- `src/pages/entrepreneur/PagePlanResult.tsx`
-- `src/pages/checkout/PageCheckoutStripe.tsx`
-- `src/pages/signature/PageAlexGuidedOnboarding.tsx`
-- `src/pages/OnboardingFlow.tsx`
-- `src/pages/acquisition/PageAcqActivation.tsx`
-- `src/pages/contractor/PageContractorAnalysisLive.tsx`
-- `src/hooks/useCondoSubscription.ts`
-- `src/hooks/useFounderPlans.ts`
-- `src/components/design/DesignUpgradeModal.tsx`
-- `src/components/demo-isr/IsrSignaturePanel.tsx`
-- `src/components/pro-landing/ActivationOffer1Dollar.tsx`
-- `src/components/pricing/HomeownerCheckoutDrawer.tsx`
-- `src/components/founder-plans/SectionFinalCTAFounder.tsx`
-- `src/features/alex/contractor/CheckoutPanel.tsx`
+### 3. (Optionnel, plus tard) Séparation propre des produits
 
-### Bonus UX
-
-Dans `PageContractorCheckout.handleCheckout`, après l'appel `redirectToCheckout`, ne pas garder `isLoading=true` indéfiniment : remettre à `false` après 1500 ms (au cas où l'utilisateur reste sur l'onglet).
+À terme, créer un produit Stripe distinct par couple plan×interval (`UNPRO Plan Premium · Mensuel` et `UNPRO Plan Premium · Annuel`) pour clarifier la résiliation et le reporting. Hors scope de ce fix immédiat.
 
 ## Hors scope
 
-- Aucune modification de l'edge function `create-checkout-session` (elle répond correctement).
-- Aucun changement de pricing, plans ou logique métier.
-- Aucun changement visuel global.
+- Aucun changement de prix.
+- Aucun changement de logique d'edge function `create-checkout-session` (déjà correcte : sélection du bon price_id selon `billingInterval`).
+- Aucun changement de `plan_catalog` (price IDs inchangés).
+- Aucun changement UI front.
