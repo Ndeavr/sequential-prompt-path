@@ -63,7 +63,7 @@ export default function PageContractorAnalysisLive() {
 
     const fetchRun = async () => {
       const { data, error } = await supabase
-        .from("activation_pipeline_runs")
+        .from("activation_pipeline_runs_public" as any)
         .select("*")
         .eq("id", runId)
         .maybeSingle();

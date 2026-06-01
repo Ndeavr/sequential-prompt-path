@@ -70699,6 +70699,63 @@ export type Database = {
         }
         Relationships: []
       }
+      activation_pipeline_runs_public: {
+        Row: {
+          activated_at: string | null
+          aipp_breakdown: Json | null
+          aipp_score: number | null
+          created_at: string | null
+          current_step: string | null
+          domain: string | null
+          extraction: Json | null
+          id: string | null
+          input_kind: string | null
+          partial_confidence: boolean | null
+          pipeline_status: string | null
+          recommendation: Json | null
+          recommended_plan: string | null
+          screenshot_url: string | null
+          signals: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          aipp_breakdown?: Json | null
+          aipp_score?: number | null
+          created_at?: string | null
+          current_step?: string | null
+          domain?: string | null
+          extraction?: Json | null
+          id?: string | null
+          input_kind?: string | null
+          partial_confidence?: boolean | null
+          pipeline_status?: string | null
+          recommendation?: Json | null
+          recommended_plan?: string | null
+          screenshot_url?: string | null
+          signals?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          aipp_breakdown?: Json | null
+          aipp_score?: number | null
+          created_at?: string | null
+          current_step?: string | null
+          domain?: string | null
+          extraction?: Json | null
+          id?: string | null
+          input_kind?: string | null
+          partial_confidence?: boolean | null
+          pipeline_status?: string | null
+          recommendation?: Json | null
+          recommended_plan?: string | null
+          screenshot_url?: string | null
+          signals?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       ccai_answer_matrix: {
         Row: {
           answer_code: string | null
@@ -71539,6 +71596,10 @@ export type Database = {
         Args: { _usage_id: string }
         Returns: undefined
       }
+      claim_outreach_target: {
+        Args: { p_id: string; p_token: string }
+        Returns: undefined
+      }
       compute_email_system_status: { Args: never; Returns: Json }
       compute_extra_appointment_value: {
         Args: {
@@ -71655,6 +71716,26 @@ export type Database = {
         Returns: Json
       }
       get_contractor_public_profile: { Args: { _slug: string }; Returns: Json }
+      get_outreach_target: {
+        Args: { p_slug?: string; p_token?: string }
+        Returns: {
+          business_name: string
+          category: string
+          city: string
+          claimed_at: string
+          contractor_id: string
+          first_viewed_at: string
+          id: string
+          landing_status: string
+          payload: Json
+          phone: string
+          pre_audit_id: string
+          rbq_number: string
+          secure_token: string
+          slug: string
+          website_url: string
+        }[]
+      }
       get_profile_completeness: { Args: { p_user_id: string }; Returns: Json }
       get_profile_completion: {
         Args: { _contractor_id: string }
@@ -71712,6 +71793,10 @@ export type Database = {
           _reason: string
         }
         Returns: Json
+      }
+      mark_outreach_first_viewed: {
+        Args: { p_id: string; p_token: string }
+        Returns: undefined
       }
       match_contractor_chunks: {
         Args: {
