@@ -1,39 +1,169 @@
-## Scope
+## Contexte
 
-Two small visual fixes on the homepage (`PageHomeUnicorn`, mounted at `/` and `/index`) and the shared mobile dock (`BottomDockGlass`). No business logic changes.
+L'infrastructure d'acquisition entrepreneur existe déjà à 80%. Inventaire détecté :
 
-## 1. Missing top header on scroll
+**Tables existantes réutilisables**
+- `contractor_prospects` (+ enrichment, scores, contacts)
+- `prospect_aipp_scores`, `prospect_aipp_factors`, `prospect_aipp_snapshots`
+- `outreach_messages`, `outreach_recipients`, `outreach_*_events` (open/click/reply/delivery)
+- `prospect_email_campaigns`, `prospect_email_sequences`, `prospect_email_messages`
+- `contractor_activation_events`, `contractor_activation_funnel`
+- `acq_contractors`, `acq_contractor_scores`, `acq_contractor_services`, `acq_contractor_media`, `acq_contractor_objectives`
+- `contractor_pricing_quotes` (pricing engine déjà branché à Stripe via `quote_id`)
 
-**Symptom:** Screenshot 1 shows the contractor section of the home with no UNPRO header visible. Screenshot 2 (top of page) shows the header. Root cause: `HeaderFloatingGlass` in `src/pages/PageHomeUnicorn.tsx` is rendered as a non-sticky `<header>` and scrolls out of view.
+**Edge functions existantes**
+- `acq-scrape-contractors`, `acq-enrich-contractor`, `acq-enrich-prospect`, `acq-generate-aipp`, `acq-generate-outreach`, `acq-send-outreach`
+- `aipp-real-scan`, `aipp-recommend`, `aipp-v2-analyze`, `aipp-pipeline-run`, `aipp-verify-neq`, `aipp-verify-rbq`
+- `compute-pricing-quote`, `create-contractor-checkout`, `activate-contractor-plan`, `contractor-activation-enrich`
+- `execute-prospect-pipeline`, `enrich-prospect`, `dispatch-outreach-batch`
 
-**Fix:** Make the header sticky at the top of the viewport so the brand mark + nav controls stay visible while scrolling.
+**Pages admin existantes** : `/admin/acquisition`, `/admin/sniper`, `/admin/outbound/*` (~40 pages), `/admin/pricing-intelligence`
 
-- In `src/pages/PageHomeUnicorn.tsx` → `HeaderFloatingGlass`:
-  - Wrap/replace the outer `<header>` with `sticky top-0 z-30` and preserve the glass background (the floating pill chips stay visually identical).
-  - Keep `pt-4 pb-2` so the floating pill keeps its breathing room, and ensure the sticky element has a transparent backdrop (the page already has the ambient blue gradient behind).
-  - Verify no parent in `PageHomeUnicorn` sets `overflow-hidden` on the scroll container that would defeat sticky. If it does, move sticky to the topmost scrolling wrapper instead.
+**Décisions confirmées**
+- Unifier sous `/admin/acquisition-machine` (cockpit orchestrateur, pas de duplication backend)
+- Réutiliser et étendre les tables existantes (pas de doublons)
+- Scraping cascade : Google Places (base structurée) → Firecrawl (enrichissement website)
 
-## 2. Alex orb not centered in bottom dock
+---
 
-**Symptom:** In screenshot 1 the floating Alex orb sits visually left of the "Alex" label, not over it.
+## Ce que je vais construire
 
-**Root cause:** In `src/components/home-unicorn/BottomDockGlass.tsx` the dock uses `grid grid-cols-5` and the center cell positions the orb with `absolute left-1/2 -translate-x-1/2 -top-7`. The `relative` center cell is correct, but the surrounding `Tab` components apply `flex-1` (a flex hint that grid ignores) and the cell renders `pt-2 pb-1` which shifts its inline content baseline — combined with browser rounding on a 384px viewport this can offset the orb optically by a few pixels and, in some renders, by half a cell.
+### 1. Cockpit unifié `/admin/acquisition-machine`
 
-**Fix:** Anchor the orb to the dock container (not the cell) and force exact horizontal centering relative to the dock itself, independent of grid cell rounding.
+Nouvelle page React unique avec 4 panneaux orchestrant les fonctions existantes :
 
-- In `BottomDockGlass.tsx`:
-  - Remove `absolute left-1/2 -translate-x-1/2 -top-7` from the orb button.
-  - Move the orb button OUT of the center grid cell and render it as a sibling positioned against the dock wrapper: `absolute left-1/2 -translate-x-1/2 -top-7` on a wrapper that is a direct child of the `relative` `grid` container (the grid already wraps in a `relative` div).
-  - Keep the center cell as a label-only slot containing only the placeholder spacer and the "Alex" text, so the label stays under the orb but doesn't influence orb X position.
-  - Result: the orb is anchored to the dock's exact horizontal midpoint regardless of how the 5 grid cells round.
+- **Pipeline Control** : boutons `Force scrape` · `Extract data` · `Score AIPP` · `Generate messages` · `Send test email/SMS` · `Launch outreach` · `Pause`
+- **Prospect Table** : colonnes company, trade, city, phone, email, AIPP score, recommended plan, status, last/next action. Actions par ligne : view profile · view extracted · generate messages · send test · propose plan · checkout link · block
+- **Message Testing Panel** : 5 variants email + 5 SMS par prospect, avec angle, ton, CTA, score prédit, bouton "Approuver" et "Envoyer test à moi"
+- **Plan Proposal Panel** : plan recommandé, raison, revenu mensuel potentiel, quota RDV, territoire, bouton Stripe checkout
 
-## Out of scope
+Le cockpit s'appuie 100% sur les tables/functions existantes. Aucune logique métier n'est dupliquée.
 
-- No changes to navigation config, routes, role detection, or `MobileBottomNav` (the other dock variant).
-- No copy or color changes; pure layout fixes.
+### 2. Source de scraping en cascade
 
-## Success criteria
+- **Nouvelle edge function `acq-scrape-google-places`** : appel Google Places Text Search + Place Details (nécessite `GOOGLE_PLACES_API_KEY` — je demanderai la clé avant build)
+- **Modification de `acq-scrape-contractors`** : devient orchestrateur qui appelle d'abord Google Places, puis enrichit chaque résultat via Firecrawl (website metadata, branding, RBQ/NEQ detection)
+- Dédoublonnage strict sur `(company_name, city)` + `phone` + `website_url` (déjà partiellement en place, à durcir)
 
-- Scrolling the home page keeps the UNPRO header pill visible at the top.
-- The Alex orb sits exactly above the "Alex" label and exactly centered between the two left and two right tabs at 360px, 384px, 414px viewport widths.
-- No regression on desktop (dock is `lg:hidden`, header pill already responsive).
+### 3. Extension légère du schéma
+
+Ajouter sur `contractor_prospects` les colonnes manquantes uniquement si absentes :
+- `recommended_plan`, `recommended_plan_reason`, `estimated_capacity`, `estimated_monthly_value`
+- `scrape_status`, `enrichment_status`, `outreach_status` (enum unifié pour la pipeline)
+
+Créer **une seule** nouvelle table : `contractor_outreach_tests` (variants A/B générés, scores prédits, statut admin approval) — il n'y a pas d'équivalent direct dans `outreach_messages` qui gère les envois réels.
+
+Aucune autre table créée — `contractor_plan_recommendations` est remplacée par `contractor_pricing_quotes` existante.
+
+### 4. Landing entrepreneur `/contractor/ai-score/:prospectId`
+
+Nouvelle page publique (pas d'auth requise) :
+
+```text
+┌──────────────────────────────────────┐
+│  [Logo entreprise détecté]           │
+│  AIPP Score: 67/100  ▓▓▓▓▓▓▓░░░     │
+│                                       │
+│  Top 3 forces · Top 3 faiblesses     │
+│                                       │
+│  → Quel est votre objectif ?         │
+│    ○ Plus de rendez-vous             │
+│    ○ Meilleur territoire             │
+│    ○ Remplir mon agenda              │
+│    ○ Être recommandé par l'IA        │
+│                                       │
+│  → Capacité mensuelle: [slider]      │
+│                                       │
+│  💡 Plan recommandé: Pro 349$/mo     │
+│     5 RDV exclusifs/mois             │
+│                                       │
+│  [Activer mes rendez-vous exclusifs] │
+└──────────────────────────────────────┘
+```
+
+- Pré-rempli depuis `contractor_prospects` + `prospect_aipp_scores`
+- Alex auto-démarre (Sophia FR voice config existante) avec greeting contextuel : *"Bonjour, je suis Alex d'UNPRO. J'ai analysé [Nom entreprise] et je vois une opportunité concrète…"*
+- Réutilise `compute-pricing-quote` pour la reco plan
+- Stripe checkout via `create-contractor-checkout` existant avec `prospect_id` en metadata
+- Copy 100% conforme : "rendez-vous exclusifs", "visibilité IA", "territoire", "capacité" — jamais "leads"
+
+### 5. Garde-fous outreach
+
+- Mode `dry_run` par défaut sur `acq-send-outreach`
+- Limite quotidienne par mailbox (déjà en place dans `outreach_rate_limits`)
+- Unsubscribe + suppression (déjà géré par `outbound_suppression_center`)
+- Bouton "Admin approval required" avant tout batch live > 10 prospects
+
+### 6. Alex contextuel sur la landing
+
+Système prompt enrichi avec le contexte prospect :
+- Score AIPP réel + facteurs
+- Plan recommandé + raison
+- Règle stricte : **jamais downsell** si l'objectif sélectionné implique un plan supérieur
+- Gère objections : prix, exclusivité territoire, garantie RDV
+- Push payment via inline Stripe (pattern `voice-sales-checkout` existant)
+
+---
+
+## Détails techniques
+
+**Nouveaux fichiers**
+- `src/pages/admin/acquisition/PageAdminAcquisitionMachine.tsx` (cockpit unifié)
+- `src/pages/contractor-funnel/PageContractorAIScoreLanding.tsx` (landing /contractor/ai-score/:prospectId)
+- `src/components/admin/acquisition/PipelineControlBar.tsx`
+- `src/components/admin/acquisition/ProspectMasterTable.tsx`
+- `src/components/admin/acquisition/MessageTestingPanel.tsx`
+- `src/components/admin/acquisition/PlanProposalPanel.tsx`
+- `supabase/functions/acq-scrape-google-places/index.ts`
+- `supabase/functions/acq-cascade-scrape/index.ts` (orchestrateur Google Places → Firecrawl)
+- `supabase/functions/acq-generate-test-variants/index.ts` (5+5 variants avec score prédit Gemini)
+
+**Modifications**
+- `src/app/router.tsx` : ajouter les 2 routes
+- `supabase/functions/acq-send-outreach/index.ts` : ajouter `dry_run` + approval gate
+- `supabase/functions/create-contractor-checkout/index.ts` : accepter `prospect_id` en metadata (en plus de `quote_id`)
+
+**Migration unique**
+- `ALTER TABLE contractor_prospects ADD COLUMN IF NOT EXISTS recommended_plan TEXT, recommended_plan_reason TEXT, estimated_capacity INT, estimated_monthly_value NUMERIC, outreach_status TEXT;`
+- `CREATE TABLE contractor_outreach_tests (...)` + GRANT + RLS admin-only
+- Pas de DROP. Pas de modification des tables existantes utilisées en prod.
+
+**Secrets requis**
+- `GOOGLE_PLACES_API_KEY` — je te demanderai de l'ajouter avant build
+- Firecrawl déjà configuré
+
+---
+
+## Hors scope (existe déjà, ne pas reconstruire)
+
+- `/admin/sniper` reste actif (pipeline alternative)
+- `/admin/outbound/*` reste actif (gestion deliverability mailboxes)
+- AIPP scoring engine (37 signaux) — réutilisé tel quel via `aipp-real-scan`
+- Voice config Sophia + Charlotte — verrouillé
+- Stripe Payment Element + `compute-pricing-quote` — réutilisé tel quel
+- Outbound approval gate `/admin/outbound/approvals` — peut être consolidé plus tard
+
+---
+
+## Critères de succès
+
+1. Admin force scrape Google Places + Firecrawl sans intervention
+2. AIPP score réel généré par `aipp-real-scan` (jamais de mock)
+3. 5 email + 5 SMS variants visibles avec score prédit, approval admin avant batch live
+4. Landing `/contractor/ai-score/:prospectId` charge avec données réelles + Alex parle
+5. Plan recommandé dynamique via `compute-pricing-quote`, jamais de downsell
+6. Stripe checkout déclenche `activate-contractor-plan` post-paiement
+7. Aucune copy interdite ("leads partagés", "soumissions") n'apparaît côté entrepreneur
+8. Tous les échecs logués dans `contractor_activation_events` + visibles dans le cockpit
+
+---
+
+## Phasing si trop gros pour un seul build
+
+**Phase 1 (recommandé pour démarrer)** : Cockpit unifié + landing `/contractor/ai-score/:prospectId` + Alex contextuel + Stripe wiring (utilise les `acq-*` functions existantes telles quelles)
+
+**Phase 2** : `acq-scrape-google-places` + cascade Firecrawl + dédoublonnage durci
+
+**Phase 3** : `acq-generate-test-variants` + Message Testing Panel + approval gate
+
+Dis-moi si tu veux que je build tout d'un coup ou si on commence par Phase 1.

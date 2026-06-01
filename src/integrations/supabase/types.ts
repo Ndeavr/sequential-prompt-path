@@ -26610,6 +26610,80 @@ export type Database = {
           },
         ]
       }
+      contractor_outreach_tests: {
+        Row: {
+          admin_test_sent_at: string | null
+          angle: string
+          approved_at: string | null
+          approved_by: string | null
+          body: string
+          channel: string
+          created_at: string
+          cta: string | null
+          dispatched_at: string | null
+          generated_by: string | null
+          id: string
+          metadata: Json
+          predicted_score: number | null
+          prospect_id: string
+          status: string
+          subject: string | null
+          tone: string | null
+          updated_at: string
+          variant_index: number
+        }
+        Insert: {
+          admin_test_sent_at?: string | null
+          angle: string
+          approved_at?: string | null
+          approved_by?: string | null
+          body: string
+          channel: string
+          created_at?: string
+          cta?: string | null
+          dispatched_at?: string | null
+          generated_by?: string | null
+          id?: string
+          metadata?: Json
+          predicted_score?: number | null
+          prospect_id: string
+          status?: string
+          subject?: string | null
+          tone?: string | null
+          updated_at?: string
+          variant_index: number
+        }
+        Update: {
+          admin_test_sent_at?: string | null
+          angle?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          body?: string
+          channel?: string
+          created_at?: string
+          cta?: string | null
+          dispatched_at?: string | null
+          generated_by?: string | null
+          id?: string
+          metadata?: Json
+          predicted_score?: number | null
+          prospect_id?: string
+          status?: string
+          subject?: string | null
+          tone?: string | null
+          updated_at?: string
+          variant_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_outreach_tests_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_performance_metrics: {
         Row: {
           appointment_show_rate: number | null
@@ -27782,13 +27856,17 @@ export type Database = {
           domain_status: string | null
           email: string | null
           enrichment_status: string
+          estimated_capacity: number | null
+          estimated_monthly_value: number | null
           extraction_confidence: number | null
           google_business_url: string | null
           id: string
           language_guess: string | null
+          last_action_at: string | null
           legal_name: string | null
           needs_review: boolean
           neq: string | null
+          next_action: string | null
           onboarding_status: string
           outreach_status: string
           owner_name: string | null
@@ -27803,6 +27881,8 @@ export type Database = {
           rbq: string | null
           rbq_license: string | null
           rbq_verified: boolean | null
+          recommended_plan: string | null
+          recommended_plan_reason: string | null
           region: string | null
           review_count: number | null
           review_rating: number | null
@@ -27836,13 +27916,17 @@ export type Database = {
           domain_status?: string | null
           email?: string | null
           enrichment_status?: string
+          estimated_capacity?: number | null
+          estimated_monthly_value?: number | null
           extraction_confidence?: number | null
           google_business_url?: string | null
           id?: string
           language_guess?: string | null
+          last_action_at?: string | null
           legal_name?: string | null
           needs_review?: boolean
           neq?: string | null
+          next_action?: string | null
           onboarding_status?: string
           outreach_status?: string
           owner_name?: string | null
@@ -27857,6 +27941,8 @@ export type Database = {
           rbq?: string | null
           rbq_license?: string | null
           rbq_verified?: boolean | null
+          recommended_plan?: string | null
+          recommended_plan_reason?: string | null
           region?: string | null
           review_count?: number | null
           review_rating?: number | null
@@ -27890,13 +27976,17 @@ export type Database = {
           domain_status?: string | null
           email?: string | null
           enrichment_status?: string
+          estimated_capacity?: number | null
+          estimated_monthly_value?: number | null
           extraction_confidence?: number | null
           google_business_url?: string | null
           id?: string
           language_guess?: string | null
+          last_action_at?: string | null
           legal_name?: string | null
           needs_review?: boolean
           neq?: string | null
+          next_action?: string | null
           onboarding_status?: string
           outreach_status?: string
           owner_name?: string | null
@@ -27911,6 +28001,8 @@ export type Database = {
           rbq?: string | null
           rbq_license?: string | null
           rbq_verified?: boolean | null
+          recommended_plan?: string | null
+          recommended_plan_reason?: string | null
           region?: string | null
           review_count?: number | null
           review_rating?: number | null
