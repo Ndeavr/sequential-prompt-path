@@ -31937,6 +31937,84 @@ export type Database = {
         }
         Relationships: []
       }
+      demo_contractor_plan_tests: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          demo_price_cents: number | null
+          flow_status: string
+          id: string
+          legal_name: string | null
+          metadata: Json
+          normal_price_cents: number | null
+          payment_status: string
+          phone_primary: string | null
+          phone_secondary: string | null
+          promo_code: string | null
+          promo_valid: boolean
+          raw_answers: Json
+          recommended_plan: string | null
+          selected_capacity: string | null
+          selected_objective: string | null
+          selected_project_type: string | null
+          selected_territory: string | null
+          stripe_session_id: string | null
+          updated_at: string
+          wants_ai_priority: string | null
+          website: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          demo_price_cents?: number | null
+          flow_status?: string
+          id?: string
+          legal_name?: string | null
+          metadata?: Json
+          normal_price_cents?: number | null
+          payment_status?: string
+          phone_primary?: string | null
+          phone_secondary?: string | null
+          promo_code?: string | null
+          promo_valid?: boolean
+          raw_answers?: Json
+          recommended_plan?: string | null
+          selected_capacity?: string | null
+          selected_objective?: string | null
+          selected_project_type?: string | null
+          selected_territory?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          wants_ai_priority?: string | null
+          website?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          demo_price_cents?: number | null
+          flow_status?: string
+          id?: string
+          legal_name?: string | null
+          metadata?: Json
+          normal_price_cents?: number | null
+          payment_status?: string
+          phone_primary?: string | null
+          phone_secondary?: string | null
+          promo_code?: string | null
+          promo_valid?: boolean
+          raw_answers?: Json
+          recommended_plan?: string | null
+          selected_capacity?: string | null
+          selected_objective?: string | null
+          selected_project_type?: string | null
+          selected_territory?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          wants_ai_priority?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       design_edits: {
         Row: {
           created_at: string

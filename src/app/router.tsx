@@ -50,6 +50,9 @@ const PageWhyResultsAreDropping = lazy(() => import("@/pages/entrepreneur/PageWh
 const PageBadgesConsommateur2026 = lazy(() => import("@/pages/articles/PageBadgesConsommateur2026"));
 const PageSignaturePartner = lazy(() => import("@/pages/partners/PageSignaturePartner"));
 const PageAdminPartners = lazy(() => import("@/pages/admin/partners/PageAdminPartners"));
+const PageIsrDemoPlanTest = lazy(() => import("@/pages/demo/PageIsrDemoPlanTest"));
+const PageIsrDemoSuccess = lazy(() => import("@/pages/demo/PageIsrDemoSuccess"));
+const PageIsrDemoCancel = lazy(() => import("@/pages/demo/PageIsrDemoCancel"));
 const PageAdminAiTrustDashboard = lazy(() => import("@/pages/admin/PageAdminAiTrustDashboard"));
 const PageAdminAiTrustTerritory = lazy(() => import("@/pages/admin/PageAdminAiTrustTerritory"));
 const PageDynamicPlanGeneration = lazy(() => import("@/pages/entrepreneur/PageDynamicPlanGeneration"));
@@ -746,6 +749,11 @@ export const AppRouter = () => (
         <Route path="/admin/partners" element={<Suspense fallback={<LazyFallback />}><PageAdminPartners /></Suspense>} />
         <Route path="/emergency-reset" element={<PageEmergencyReset />} />
         <Route path="/entrepreneur/aipp-analysis" element={<PageAIPPAnalysisLoading />} />
+
+        {/* ISR demo plan/checkout (private, noindex) */}
+        <Route path="/demo/isroyal-alex-plan-test" element={<Suspense fallback={<LazyFallback />}><PageIsrDemoPlanTest /></Suspense>} />
+        <Route path="/demo/isroyal-alex-plan-test/success" element={<Suspense fallback={<LazyFallback />}><PageIsrDemoSuccess /></Suspense>} />
+        <Route path="/demo/isroyal-alex-plan-test/cancel" element={<Suspense fallback={<LazyFallback />}><PageIsrDemoCancel /></Suspense>} />
 
         {/* Email-to-Booking Conversion (public, unauthenticated) */}
         <Route path="/pro/demo/:token" element={<Suspense fallback={<LazyFallback />}><PageLandingPersonalizedAIPP /></Suspense>} />
