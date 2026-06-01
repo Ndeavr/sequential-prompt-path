@@ -26877,6 +26877,135 @@ export type Database = {
           },
         ]
       }
+      contractor_pricing_quotes: {
+        Row: {
+          aipp_optimization_fee: number
+          appointment_package_fee: number
+          average_project_value: number
+          base_platform_fee: number
+          breakdown: Json
+          city: string | null
+          company_name: string | null
+          contractor_id: string | null
+          created_at: string
+          estimated_close_rate: number
+          estimated_monthly_revenue_potential: number
+          exclusivity_fee: number
+          id: string
+          input_payload: Json
+          max_monthly_price: number
+          min_monthly_price: number
+          pricing_status: Database["public"]["Enums"]["pricing_quote_status"]
+          recommended_monthly_price: number
+          recommended_plan: string
+          roi_estimate: number
+          seasonality_multiplier: number
+          stripe_checkout_session_id: string | null
+          target_monthly_appointments: number
+          territory_cluster: string | null
+          territory_competition_multiplier: number
+          trade_primary: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          aipp_optimization_fee?: number
+          appointment_package_fee?: number
+          average_project_value?: number
+          base_platform_fee?: number
+          breakdown?: Json
+          city?: string | null
+          company_name?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          estimated_close_rate?: number
+          estimated_monthly_revenue_potential?: number
+          exclusivity_fee?: number
+          id?: string
+          input_payload?: Json
+          max_monthly_price?: number
+          min_monthly_price?: number
+          pricing_status?: Database["public"]["Enums"]["pricing_quote_status"]
+          recommended_monthly_price?: number
+          recommended_plan?: string
+          roi_estimate?: number
+          seasonality_multiplier?: number
+          stripe_checkout_session_id?: string | null
+          target_monthly_appointments?: number
+          territory_cluster?: string | null
+          territory_competition_multiplier?: number
+          trade_primary?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          aipp_optimization_fee?: number
+          appointment_package_fee?: number
+          average_project_value?: number
+          base_platform_fee?: number
+          breakdown?: Json
+          city?: string | null
+          company_name?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          estimated_close_rate?: number
+          estimated_monthly_revenue_potential?: number
+          exclusivity_fee?: number
+          id?: string
+          input_payload?: Json
+          max_monthly_price?: number
+          min_monthly_price?: number
+          pricing_status?: Database["public"]["Enums"]["pricing_quote_status"]
+          recommended_monthly_price?: number
+          recommended_plan?: string
+          roi_estimate?: number
+          seasonality_multiplier?: number
+          stripe_checkout_session_id?: string | null
+          target_monthly_appointments?: number
+          territory_cluster?: string | null
+          territory_competition_multiplier?: number
+          trade_primary?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_pricing_quotes_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_pricing_quotes_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_pricing_quotes_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_pricing_quotes_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_pricing_quotes_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_probable_entities: {
         Row: {
           business_name: string | null
@@ -72080,6 +72209,13 @@ export type Database = {
       nav_menu_type: "top" | "bottom" | "hamburger"
       nav_page_status: "draft" | "fallback_only" | "published"
       neq_status: "active" | "inactive" | "struck_off" | "not_found" | "unknown"
+      pricing_quote_status:
+        | "draft"
+        | "offered"
+        | "accepted"
+        | "paid"
+        | "waitlisted"
+        | "rejected"
       project_fit: "compatible" | "partial" | "verify" | "incompatible"
       property_condition: "excellent" | "good" | "fair" | "poor" | "critical"
       qr_type: "property_plate" | "electrical_panel" | "jobsite_temporary"
@@ -72354,6 +72490,14 @@ export const Constants = {
       nav_menu_type: ["top", "bottom", "hamburger"],
       nav_page_status: ["draft", "fallback_only", "published"],
       neq_status: ["active", "inactive", "struck_off", "not_found", "unknown"],
+      pricing_quote_status: [
+        "draft",
+        "offered",
+        "accepted",
+        "paid",
+        "waitlisted",
+        "rejected",
+      ],
       project_fit: ["compatible", "partial", "verify", "incompatible"],
       property_condition: ["excellent", "good", "fair", "poor", "critical"],
       qr_type: ["property_plate", "electrical_panel", "jobsite_temporary"],
