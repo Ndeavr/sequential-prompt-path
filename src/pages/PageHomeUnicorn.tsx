@@ -473,7 +473,7 @@ function ContractorAippSplit() {
           </p>
           <div className="flex gap-2 mt-3">
             <Link
-              to="/entrepreneur/aipp"
+              to="/aipp"
               className="uc-cta px-4 py-2.5 rounded-full text-[12px] font-semibold"
             >
               Voir mon AIPP

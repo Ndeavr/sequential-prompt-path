@@ -223,9 +223,7 @@ export default function NearbyContractorsCarousel() {
       </div>
 
       <div className="text-center mt-1.5 text-[10px]" style={{ color: "#94A3B8" }}>
-        <Link to="/trouver-entrepreneur" className="font-semibold" style={{ color: "#2563FF" }}>
-          Voir tous les entrepreneurs vérifiés près de {city}
-        </Link>
+        Recommandation faite par Alex selon votre besoin.
       </div>
     </div>
   );
