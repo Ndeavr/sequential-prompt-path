@@ -16,6 +16,7 @@ import {
   getStoredAnalysisId,
   type QuoteAnalysisPayload,
 } from "@/features/quoteAnalyzer";
+import PanelQuoteIntelligenceInsights from "@/features/quoteAnalyzer/components/PanelQuoteIntelligenceInsights";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -94,7 +95,10 @@ export default function PageResultatAnalyseSoumissions() {
           )}
 
           {analysisId && payload && authed && (
-            <SectionComparaisonIA result={payload} />
+            <>
+              <SectionComparaisonIA result={payload} />
+              <PanelQuoteIntelligenceInsights payload={payload} />
+            </>
           )}
 
           {analysisId && !payload && (showGate || loading) && (

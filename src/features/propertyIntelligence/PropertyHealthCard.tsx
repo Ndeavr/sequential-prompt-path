@@ -3,7 +3,8 @@
  * Minimal premium card showing overall property health + 4 sub-scores.
  * Reads from public.property_health_scores. No new design tokens.
  */
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Activity, Droplets, Wind, ShieldCheck, Layers } from "lucide-react";
@@ -52,6 +53,7 @@ function SubScore({
 }
 
 export function PropertyHealthCard({ propertyId }: Props) {
+  const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["property-health-score", propertyId],
     queryFn: async () => {
@@ -68,6 +70,25 @@ export function PropertyHealthCard({ propertyId }: Props) {
       return data as Row | null;
     },
   });
+
+  // Auto-compute on first view when no score exists yet.
+  useEffect(() => {
+    if (isLoading || data) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { error } = await supabase.functions.invoke("compute-property-health", {
+          body: { property_id: propertyId },
+        });
+        if (!error && !cancelled) qc.invalidateQueries({ queryKey: ["property-health-score", propertyId] });
+      } catch {
+        /* silent */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoading, data, propertyId, qc]);
 
   return (
     <Card className="p-4 space-y-3">
