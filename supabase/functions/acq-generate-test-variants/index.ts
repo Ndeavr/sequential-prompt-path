@@ -76,10 +76,27 @@ serve(async (req) => {
 
   try {
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!lovableKey) throw new Error("LOVABLE_API_KEY not configured");
+    if (!lovableKey) {
+      return new Response(JSON.stringify({
+        ok: false,
+        step: "generate_messages",
+        error_code: "MISSING_SECRET",
+        message: "LOVABLE_API_KEY manquant — génération de messages en pause.",
+        missing: ["LOVABLE_API_KEY"],
+        next_action: "LOVABLE_API_KEY est auto-provisionné. Contacter le support si absent.",
+      }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
-    const { prospect_id, force_regenerate = false } = await req.json();
-    if (!prospect_id) throw new Error("prospect_id required");
+    const { prospect_id, force_regenerate = false } = await req.json().catch(() => ({}));
+    if (!prospect_id) {
+      return new Response(JSON.stringify({
+        ok: false,
+        step: "generate_messages",
+        error_code: "MISSING_INPUT",
+        message: "prospect_id requis. Sélectionne un prospect dans la table.",
+        next_action: "Cliquer sur une ligne de prospect avant de générer.",
+      }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
