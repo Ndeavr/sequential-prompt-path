@@ -191,65 +191,155 @@ export default function PageAdminAcquisitionMachine() {
             ))}
           </div>
 
-          {/* Pipeline Control Bar */}
+          {/* Pipeline Control Bar — 8 stages officielles */}
           <Card className="bg-white/5 border-white/10 p-4">
-            <div className="text-xs text-zinc-400 uppercase tracking-wider mb-3">Pipeline Control</div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-xs text-zinc-400 uppercase tracking-wider">Pipeline officiel</div>
+              <div className="text-[10px] text-zinc-500 hidden md:block">
+                Discovery → Enrichment → Scoring → Messages → Approval → Outreach → Stripe → Activation
+              </div>
+            </div>
             <div className="flex flex-wrap gap-2">
               <ControlButton
+                step={1}
                 icon={<Search className="w-4 h-4" />}
-                label="Force scrape"
-                running={running === "scrape"}
-                onClick={() => {
-                  const trade = prompt("Métier (ex: plombier)") ?? "";
-                  const city = prompt("Ville (ex: Montréal)") ?? "";
-                  if (trade && city) {
-                    callEdge("acq-scrape-contractors", { trade, city, limit: 25, dry_run: false }, "scrape");
-                  }
-                }}
-              />
-              <ControlButton
-                icon={<Sparkles className="w-4 h-4" />}
-                label="Cascade (Google+Firecrawl)"
-                running={running === "cascade"}
+                label="Discovery"
+                title="acq-cascade-scrape — Google Places + Firecrawl"
+                running={running === "discovery"}
                 onClick={() => {
                   const trade = prompt("Métier (ex: plombier)") ?? "";
                   const city = prompt("Ville (ex: Montréal)") ?? "";
                   if (!trade || !city) return;
                   const limit = Number(prompt("Nombre max (1-60)", "20") ?? 20);
-                  callEdge("acq-cascade-scrape", { trade, city, limit, enrich: true }, "cascade");
+                  callEdge("acq-cascade-scrape", { trade, city, limit, enrich: false }, "discovery");
                 }}
               />
               <ControlButton
+                step={2}
                 icon={<Zap className="w-4 h-4" />}
-                label="Extract data"
-                running={running === "extract"}
-                onClick={() => callEdge("acq-enrich-contractor", { batch: true, limit: 20 }, "extract")}
+                label="Enrichment"
+                title="acq-enrich-contractor — Firecrawl batch (website + email + RBQ/NEQ)"
+                running={running === "enrichment"}
+                onClick={() => callEdge("acq-enrich-contractor", { batch: true, limit: 20 }, "enrichment")}
               />
               <ControlButton
+                step={3}
                 icon={<Brain className="w-4 h-4" />}
-                label="Score AIPP"
-                running={running === "score"}
-                onClick={() => callEdge("acq-generate-aipp", { batch: true, limit: 20 }, "score")}
-              />
-              <ControlButton
-                icon={<Sparkles className="w-4 h-4" />}
-                label="Generate messages"
-                running={running === "generate"}
-                onClick={() => {
-                  if (!selectedProspect) {
-                    toast.error("Sélectionne un prospect d'abord");
+                label="Scoring"
+                title="acq-generate-score — déterministe 37 signaux (no LLM)"
+                running={running === "scoring"}
+                onClick={async () => {
+                  const targets = prospects.filter((p) => p.aipp_score == null).slice(0, 20);
+                  if (!targets.length) {
+                    toast.info("Aucun prospect à scorer", {
+                      description: "Tous les prospects chargés ont déjà un score AIPP.",
+                    });
                     return;
                   }
+                  setRunning("scoring");
+                  try {
+                    const results = await Promise.allSettled(
+                      targets.map((p) =>
+                        supabase.functions.invoke("acq-generate-score", { body: { contractor_id: p.id } }),
+                      ),
+                    );
+                    const ok = results.filter(
+                      (r) => r.status === "fulfilled" && !(r as any).value?.error,
+                    ).length;
+                    const ko = results.length - ok;
+                    toast.success(`Scoring ✓ ${ok}/${results.length}`, {
+                      description: ko ? `${ko} échecs (voir Logs)` : "Déterministe (37 signaux)",
+                    });
+                    await loadProspects();
+                  } finally {
+                    setRunning(null);
+                  }
+                }}
+              />
+              <ControlButton
+                step={4}
+                icon={<Sparkles className="w-4 h-4" />}
+                label="Messages"
+                title="acq-generate-test-variants — drafts email + SMS (prospect sélectionné)"
+                running={running === "messages"}
+                onClick={() => {
+                  if (!selectedProspect) return toast.error("Sélectionne un prospect d'abord");
                   callEdge(
                     "acq-generate-test-variants",
                     { prospect_id: selectedProspect.id, force_regenerate: true },
-                    "generate",
+                    "messages",
+                  );
+                }}
+              />
+              <Link
+                to="/admin/acquisition/duplicates"
+                className="inline-flex items-center gap-2 text-xs px-3 h-9 rounded-md bg-amber-600/20 border border-amber-500/30 text-amber-100 hover:bg-amber-600/30 transition-colors"
+                title="File d'approbation — doublons probables + drafts à valider"
+              >
+                <span className="font-mono text-amber-300">5.</span>
+                <Eye className="w-4 h-4" /> Approval
+              </Link>
+              <ControlButton
+                step={6}
+                icon={<Send className="w-4 h-4" />}
+                label="Outreach"
+                title="acq-send-outreach — batch LIVE (drafts approuvés uniquement)"
+                running={running === "outreach"}
+                onClick={() => {
+                  if (!confirm("Lancer l'outreach LIVE sur les drafts approuvés ?")) return;
+                  callEdge(
+                    "acq-send-outreach",
+                    { batch: true, dry_run: false, require_approval: true },
+                    "outreach",
                   );
                 }}
               />
               <ControlButton
+                step={7}
+                icon={<DollarSign className="w-4 h-4" />}
+                label="Checkout"
+                title="acq-create-checkout — Stripe Checkout pour le prospect sélectionné"
+                running={running === "checkout"}
+                onClick={async () => {
+                  if (!selectedProspect) return toast.error("Sélectionne un prospect d'abord");
+                  const plan = (
+                    prompt(
+                      "Plan (recrue / pro / premium / elite / signature)",
+                      selectedProspect.recommended_plan ?? "pro",
+                    ) ?? ""
+                  ).toLowerCase();
+                  if (!plan) return;
+                  const res = await callEdge(
+                    "acq-create-checkout",
+                    { prospect_id: selectedProspect.id, plan_id: plan },
+                    "checkout",
+                  );
+                  const url = (res as any)?.url ?? (res as any)?.checkout_url;
+                  if (url) {
+                    toast.success("Checkout prêt", {
+                      description: "Cliquer pour ouvrir Stripe",
+                      action: { label: "Ouvrir", onClick: () => window.open(url, "_blank") },
+                      duration: 15000,
+                    });
+                  }
+                }}
+              />
+              <Link
+                to="/admin/contractor-activation"
+                className="inline-flex items-center gap-2 text-xs px-3 h-9 rounded-md bg-emerald-600/20 border border-emerald-500/30 text-emerald-100 hover:bg-emerald-600/30 transition-colors"
+                title="activate-contractor-plan — validation post-paiement (admin)"
+              >
+                <span className="font-mono text-emerald-300">8.</span>
+                <ExternalLink className="w-4 h-4" /> Activation
+              </Link>
+            </div>
+
+            {/* Secondary actions: tests + pause */}
+            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-white/10">
+              <ControlButton
                 icon={<Mail className="w-4 h-4" />}
-                label="Send test email"
+                label="Test email"
+                title="acq-send-outreach — dry-run vers admin"
                 running={running === "test_email"}
                 onClick={() => {
                   if (!selectedProspect) return toast.error("Sélectionne un prospect");
@@ -262,7 +352,8 @@ export default function PageAdminAcquisitionMachine() {
               />
               <ControlButton
                 icon={<MessageSquare className="w-4 h-4" />}
-                label="Send test SMS"
+                label="Test SMS"
+                title="acq-send-outreach — dry-run vers admin"
                 running={running === "test_sms"}
                 onClick={() => {
                   if (!selectedProspect) return toast.error("Sélectionne un prospect");
@@ -274,28 +365,16 @@ export default function PageAdminAcquisitionMachine() {
                 }}
               />
               <ControlButton
-                icon={<Send className="w-4 h-4" />}
-                label="Launch outreach"
-                running={running === "launch"}
-                onClick={() => {
-                  if (!confirm("Lancer l'outreach LIVE sur tous les prospects approuvés ?")) return;
-                  callEdge("acq-send-outreach", { batch: true, dry_run: false, require_approval: true }, "launch");
-                }}
-              />
-              <ControlButton
                 icon={<Pause className="w-4 h-4" />}
                 label="Pause campagne"
+                title="acq-send-outreach — pause globale"
                 variant="destructive"
                 running={running === "pause"}
                 onClick={() => callEdge("acq-send-outreach", { pause: true }, "pause")}
               />
             </div>
-            <div className="mt-3 pt-3 border-t border-white/10">
-              <Link to="/admin/acquisition/duplicates" className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
-                <Eye className="h-3 w-3" /> File de doublons probables →
-              </Link>
-            </div>
           </Card>
+
 
           {/* Tabs */}
           <Tabs defaultValue="prospects" className="w-full">
