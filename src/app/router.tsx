@@ -19,6 +19,7 @@ import PageEmergencyReset from "@/pages/PageEmergencyReset";
 import StaticContentPage from "@/pages/static/StaticContentPage";
 const PageAdminLiveRuns = lazy(() => import("@/pages/admin/PageAdminLiveRuns"));
 const PageAdminProspectSMS = lazy(() => import("@/pages/admin/PageAdminProspectSMS"));
+const PageFounderVerification = lazy(() => import("@/pages/admin/PageFounderVerification"));
 
 // Impact Counter
 const PageImpactCounter = lazy(() => import("@/pages/PageImpactCounter"));
