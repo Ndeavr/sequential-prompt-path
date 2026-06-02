@@ -436,13 +436,15 @@ export default function PageAdminAcquisitionMachine() {
 }
 
 function ControlButton({
-  icon, label, running, onClick, variant = "default",
+  icon, label, running, onClick, variant = "default", step, title,
 }: {
   icon: React.ReactNode;
   label: string;
   running: boolean;
-  onClick: () => void;
+  onClick: () => void | Promise<unknown>;
   variant?: "default" | "destructive";
+  step?: number;
+  title?: string;
 }) {
   return (
     <Button
@@ -450,8 +452,10 @@ function ControlButton({
       variant={variant === "destructive" ? "destructive" : "secondary"}
       onClick={onClick}
       disabled={running}
+      title={title}
       className="gap-2"
     >
+      {step != null && <span className="font-mono text-[10px] opacity-60">{step}.</span>}
       {running ? <Loader2 className="w-4 h-4 animate-spin" /> : icon}
       {label}
     </Button>
