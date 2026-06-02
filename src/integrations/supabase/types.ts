@@ -13467,6 +13467,107 @@ export type Database = {
         }
         Relationships: []
       }
+      auto_fix_logs: {
+        Row: {
+          action_taken: string | null
+          after_state: Json | null
+          automatic: boolean
+          before_state: Json | null
+          classification: string | null
+          created_at: string
+          error_message: string | null
+          execution_time_ms: number | null
+          id: string
+          issue_type: string | null
+          policy_id: string | null
+          success: boolean
+          target: string | null
+          triggered_by: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          after_state?: Json | null
+          automatic?: boolean
+          before_state?: Json | null
+          classification?: string | null
+          created_at?: string
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          issue_type?: string | null
+          policy_id?: string | null
+          success?: boolean
+          target?: string | null
+          triggered_by?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          after_state?: Json | null
+          automatic?: boolean
+          before_state?: Json | null
+          classification?: string | null
+          created_at?: string
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          issue_type?: string | null
+          policy_id?: string | null
+          success?: boolean
+          target?: string | null
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_fix_logs_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "auto_fix_policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      auto_fix_policies: {
+        Row: {
+          action: string
+          auto_allowed: boolean
+          cooldown_seconds: number
+          created_at: string
+          description: string | null
+          enabled: boolean
+          id: string
+          max_retries: number
+          requires_confirmation: boolean
+          severity: string
+          system: string
+        }
+        Insert: {
+          action: string
+          auto_allowed?: boolean
+          cooldown_seconds?: number
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          max_retries?: number
+          requires_confirmation?: boolean
+          severity: string
+          system: string
+        }
+        Update: {
+          action?: string
+          auto_allowed?: boolean
+          cooldown_seconds?: number
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          max_retries?: number
+          requires_confirmation?: boolean
+          severity?: string
+          system?: string
+        }
+        Relationships: []
+      }
       automation_action_logs: {
         Row: {
           action_label: string | null
@@ -37850,6 +37951,54 @@ export type Database = {
           utm_campaign?: string | null
           utm_medium?: string | null
           utm_source?: string | null
+        }
+        Relationships: []
+      }
+      founder_health_checks: {
+        Row: {
+          auto_fixable: boolean
+          checked_at: string
+          error_code: string | null
+          error_message: string | null
+          id: string
+          latency_ms: number | null
+          metadata: Json
+          module: string
+          probable_cause: string | null
+          proposed_fix: string | null
+          quota_remaining: string | null
+          status: string
+          target: string | null
+        }
+        Insert: {
+          auto_fixable?: boolean
+          checked_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          metadata?: Json
+          module: string
+          probable_cause?: string | null
+          proposed_fix?: string | null
+          quota_remaining?: string | null
+          status: string
+          target?: string | null
+        }
+        Update: {
+          auto_fixable?: boolean
+          checked_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          metadata?: Json
+          module?: string
+          probable_cause?: string | null
+          proposed_fix?: string | null
+          quota_remaining?: string | null
+          status?: string
+          target?: string | null
         }
         Relationships: []
       }
