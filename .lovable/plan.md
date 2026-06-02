@@ -1,125 +1,71 @@
-## Objectif
+# Recâblage cockpit acquisition — 8 stages officiels
 
-Remplacer le dédoublonnage binaire actuel (`source_record_id` OU `business_name+city` → skip) par un **moteur de confiance multi-signal** qui :
-- ne bloque jamais l'enrichissement,
-- distingue vrais doublons (HIGH ≥ 0.9), candidats à vérifier (MEDIUM 0.6–0.89), faux positifs (LOW < 0.6),
-- met à jour les fiches existantes au lieu de jeter les données.
+## Contexte
 
-## 1. Schéma (migration unique)
-
-**Table `contractor_prospects`** — nouveaux champs :
-- `dedupe_confidence numeric(3,2)` (0.00 → 1.00, NULL pour les nouveaux non comparés)
-- `dedupe_matched_id uuid` (référence vers le doublon HIGH si applicable)
-- `dedupe_signals jsonb default '{}'` (détail des signaux ayant matché : `{place_id, rbq, domain, phone_city, address_name, fuzzy_name}`)
-- `google_place_id text` (extrait de `source_record_id` mais explicite et indexé)
-- `normalized_domain text` (généré côté edge : `acme.ca` quel que soit `https://www.acme.ca/`)
-- `last_enriched_at timestamptz`
-- `enrichment_count int default 0`
-
-**Index** :
-- `idx_cp_place_id (google_place_id)`
-- `idx_cp_domain (normalized_domain)`
-- `idx_cp_rbq (rbq) WHERE rbq IS NOT NULL` (déjà partiel ? sinon on l'ajoute)
-- `idx_cp_phone_city (phone, city)`
-
-**Enum statut d'ingestion** (nouvelle colonne `ingestion_status text` avec CHECK) :
-- `inserted` — nouveau prospect, aucun match
-- `possible_duplicate` — match MEDIUM, flag pour review
-- `enriched_existing` — match HIGH, on a mis à jour la fiche existante
-- `skipped_duplicate` — match HIGH ET aucune donnée nouvelle à apporter
-- `failed_extraction` — payload Google/Firecrawl invalide
-
-**Nouvelle table `prospect_dedupe_reviews`** (file de revue admin) :
-- `id`, `new_payload jsonb`, `existing_prospect_id uuid`, `confidence numeric`, `signals jsonb`, `status text` (`pending|merged|rejected|kept_both`), `reviewed_by uuid`, `reviewed_at`, `created_at`
-- RLS : `service_role ALL`, `authenticated SELECT/UPDATE` via `has_role(auth.uid(),'admin')`
-- GRANTs explicites (anon = aucun)
-
-## 2. Edge function — nouveau module partagé inline
-
-Créer **`supabase/functions/_shared/dedupeEngine.ts`** (importé par `acq-scrape-google-places` et futurs scrapers) :
-
-```ts
-classifyDuplicate(candidate, supabase) → {
-  confidence: number,
-  matchedId: string | null,
-  signals: Record<string, boolean>,
-  band: 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE'
-}
-```
-
-**Règles de score** (max 1.0, on garde le plus haut signal HIGH s'il existe) :
-| Signal | Poids | Band |
-|---|---|---|
-| `google_place_id` égal | 1.00 | HIGH |
-| `rbq` égal (normalisé) | 1.00 | HIGH |
-| `normalized_domain` égal | 0.95 | HIGH |
-| `phone` normalisé E.164 + même `city` | 0.75 | MEDIUM |
-| Adresse normalisée + Jaro-Winkler nom ≥ 0.85 | 0.70 | MEDIUM |
-| Jaro-Winkler nom ≥ 0.92 seul | 0.45 | LOW |
-
-Helpers : `normalizePhone`, `normalizeDomain` (strip www/proto/trailing slash, lowercase), `normalizeRbq` (digits only), `jaroWinkler` (implémentation ~30 lignes).
-
-## 3. Refactor `acq-scrape-google-places/index.ts`
-
-Remplacer la boucle d'insert actuelle par :
+Le cockpit `/admin/acquisition/machine` expose une rangée de boutons (`Force scrape`, `Cascade`, `Extract data`, `Score AIPP`, `Generate messages`, `Send test email/SMS`, `Launch outreach`, `Pause`) qui ne correspondent pas au pipeline officiel demandé :
 
 ```text
-pour chaque place:
-  candidate = mapper(place)
-  match = classifyDuplicate(candidate, supabase)
-
-  si band === HIGH:
-    → enrichir la fiche existante (merge non destructif : on n'écrase
-      jamais une valeur humaine — voir Contractor Identity Resolution memo)
-    → mettre à jour review_count, review_rating, raw_data.google_place,
-      last_enriched_at, enrichment_count += 1
-    → si au moins 1 champ changé: status = 'enriched_existing', sinon 'skipped_duplicate'
-
-  sinon si band === MEDIUM:
-    → INSERT candidate avec ingestion_status='possible_duplicate',
-      dedupe_confidence, dedupe_matched_id, dedupe_signals
-    → INSERT prospect_dedupe_reviews (status='pending')
-
-  sinon (LOW ou NONE):
-    → INSERT candidate avec ingestion_status='inserted',
-      dedupe_confidence (peut être NULL ou le score LOW)
+Discovery → Batch enrichment → Deterministic scoring →
+Message generation → Approval queue → Outreach → Stripe → Activation
 ```
 
-Toujours retourner par compteur dans la réponse :
-```json
-{ inserted, enriched_existing, possible_duplicate, skipped_duplicate, failed_extraction }
-```
+Aujourd'hui :
+- "Score AIPP" appelle `acq-generate-aipp` (LLM, coûteux) au lieu de `acq-generate-score` (déterministe, 37 signaux — c'est la fonction "officielle").
+- Aucune étape Stripe ni Activation visible dans la barre.
+- Pas de visualisation de la file d'approbation (déjà construite : `/admin/acquisition/duplicates`).
+- Les libellés mélangent verbes anglais et français, et n'indiquent pas la position dans le pipeline.
 
-## 4. Cascade
+## Objectif
 
-`acq-cascade-scrape` : pas de changement de logique de match, mais on cascade Firecrawl sur **tous les IDs touchés** (inserted + enriched_existing + possible_duplicate) — plus seulement `inserted_ids`. Champ ajouté à la réponse de `acq-scrape-google-places` : `touched_ids: string[]`.
+Une seule barre de contrôle horizontale numérotée 1→8, chaque bouton wire vers la edge function officielle, état actif highlight la stage courante.
 
-## 5. UI — file de revue admin
+## Mapping officiel
 
-Nouvelle page **`/admin/acquisition/duplicates`** :
-- Table : nom candidat ↔ nom existant, ville, signaux qui ont matché (chips), confiance, source
-- Actions par ligne : **Fusionner** (merge dans existant, supprime le candidat), **Rejeter** (les garder séparés), **Conserver les deux** (clear flag)
-- Compteur `Possible duplicates (N)` ajouté dans la sidebar de `PageAdminAcquisitionMachine`
+| # | Stage | Bouton | Edge function | Body |
+|---|---|---|---|---|
+| 1 | Discovery | `1. Discovery` | `acq-cascade-scrape` | `{ trade, city, limit, enrich: false }` |
+| 2 | Batch enrichment | `2. Enrichment` | `acq-enrich-contractor` | `{ batch: true, limit: 20 }` |
+| 3 | Deterministic scoring | `3. Scoring` | `acq-generate-score` (boucle sur contractors non scorés via `acq-generate-aipp` en fallback batch) | `{ batch: true, limit: 20 }` |
+| 4 | Message generation | `4. Messages` | `acq-generate-test-variants` (prospect sélectionné) ou `acq-generate-outreach` (batch) | `{ prospect_id }` ou `{ batch: true, limit }` |
+| 5 | Approval queue | `5. Approval` | Lien vers `/admin/acquisition/duplicates` + badge count | — |
+| 6 | Outreach | `6. Outreach` | `acq-send-outreach` | `{ batch: true, dry_run: false, require_approval: true }` |
+| 7 | Stripe | `7. Checkout` | `acq-create-checkout` (test link admin) | `{ prospect_id, plan: "pro", test: true }` |
+| 8 | Activation | `8. Activation` | `activate-contractor-plan` | `{ prospect_id, dry_run: true }` |
 
-Hook : `useDedupeReviewQueue()` calqué sur `useRecruitmentProspects`.
+Boutons annexes conservés en seconde ligne : `Send test email`, `Send test SMS`, `Pause campagne`.
 
-## 6. Garde-fous
+## Changements UI
 
-- Enrichissement **jamais bloqué** par dedupe : même `skipped_duplicate` déclenche Firecrawl si `last_enriched_at` > 7 jours.
-- Merge non destructif (cf. memo Contractor Identity Resolution) : on n'écrase ni `legal_name`, ni `owner_name`, ni `email`, ni `rbq` quand `verification_status` indique une saisie humaine validée.
-- Backfill `normalized_domain` + `google_place_id` (depuis `source_record_id`) sur les ~98 lignes existantes via un script SQL inclus dans la migration.
+- Une seule rangée `flex flex-wrap gap-2` numérotée, chaque bouton préfixé `1.`, `2.`, etc.
+- Tooltip sur chaque bouton décrivant la edge function appelée (debug).
+- Badge orange sur `5. Approval` avec le count de doublons en attente (query existante).
+- Stage active (`running === stageKey`) → border-primary + ring subtil.
+- Boutons stage 3/6 désactivés si la stage précédente n'a aucune donnée disponible (warning toast plutôt que blocage dur).
 
-## 7. Critères de succès
+## Changements code
 
-- Pour Plombier × Laval (les 4 actuels) : 2e run → `enriched_existing: 4, inserted: 0, possible_duplicate: 0`, et `last_enriched_at` mis à jour sur les 4.
-- Insertion d'un faux concurrent (même nom, ville différente, autre téléphone) → `possible_duplicate` + apparaît dans `/admin/acquisition/duplicates`.
-- Insertion d'un homonyme parfait avec RBQ différent → `inserted` (LOW confidence, pas de blocage).
+### Fichier modifié
+- `src/pages/admin/acquisition/PageAdminAcquisitionMachine.tsx`
+  - Refactor du bloc `Pipeline Control` (lignes ~195-298).
+  - Définir une constante `PIPELINE_STAGES` (8 entrées) pour rendre la barre via `.map()`.
+  - Mettre à jour le footer (`Edge: ...`) avec la liste exacte des 8 fonctions appelées.
+  - Conserver `callEdge` tel quel (déjà structurée pour parser `{ ok, error_code, missing, next_action }`).
 
-## Tâches
+### Aucun changement
+- Edge functions (`acq-generate-score`, `acq-create-checkout`, `activate-contractor-plan` existent déjà).
+- Schéma DB.
+- Routes.
 
-1. Migration (schéma + grants + RLS + backfill)
-2. `_shared/dedupeEngine.ts`
-3. Refactor `acq-scrape-google-places`
-4. Patch `acq-cascade-scrape` (touched_ids)
-5. Hook `useDedupeReviewQueue` + page `/admin/acquisition/duplicates`
-6. Lien sidebar + compteur dans `PageAdminAcquisitionMachine`
+## Détails techniques
+
+- `acq-generate-score` attend `{ contractor_id }` unitaire → on ajoute un mode `{ batch: true, limit }` côté edge OU on itère côté client sur les contractors non scorés (préférer côté client pour rester dans une seule passe — pas de migration). **Décision** : itération client (max 20 prospects sélectionnés via `contractor_prospects` non scorés), `Promise.allSettled`, toast récap.
+- `acq-create-checkout` en mode test : on génère un payment link et on l'affiche dans un toast cliquable (pas de redirection auto).
+- `activate-contractor-plan` en `dry_run: true` par défaut depuis le cockpit pour éviter une activation accidentelle.
+
+## Critères de succès
+
+- La barre montre exactement 8 boutons numérotés dans l'ordre du pipeline.
+- Chaque bouton appelle la fonction officielle listée dans le tableau.
+- "Approval" affiche le count en temps réel et navigue vers `/admin/acquisition/duplicates`.
+- Aucun bouton n'utilise plus `acq-generate-aipp` directement (LLM) — déterministe par défaut.
+- Footer du cockpit liste les 8 fonctions officielles.
