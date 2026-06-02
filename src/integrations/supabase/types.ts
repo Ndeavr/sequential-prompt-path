@@ -50672,6 +50672,318 @@ export type Database = {
           },
         ]
       }
+      pim_contractor_relationships: {
+        Row: {
+          contractor_id: string | null
+          contractor_name: string | null
+          created_at: string
+          data: Json
+          id: string
+          project_summary: string | null
+          property_id: string
+          rating: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contractor_id?: string | null
+          contractor_name?: string | null
+          created_at?: string
+          data?: Json
+          id?: string
+          project_summary?: string | null
+          property_id: string
+          rating?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contractor_id?: string | null
+          contractor_name?: string | null
+          created_at?: string
+          data?: Json
+          id?: string
+          project_summary?: string | null
+          property_id?: string
+          rating?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pim_contractor_relationships_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pim_contractor_relationships_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pim_grants: {
+        Row: {
+          amount: number | null
+          created_at: string
+          data: Json
+          grant_name: string | null
+          id: string
+          property_id: string
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          data?: Json
+          grant_name?: string | null
+          id?: string
+          property_id: string
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          data?: Json
+          grant_name?: string | null
+          id?: string
+          property_id?: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pim_grants_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pim_grants_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pim_inspections: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          inspection_date: string | null
+          inspector_name: string | null
+          property_id: string
+          summary: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id?: string
+          inspection_date?: string | null
+          inspector_name?: string | null
+          property_id: string
+          summary?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          inspection_date?: string | null
+          inspector_name?: string | null
+          property_id?: string
+          summary?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pim_inspections_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pim_inspections_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pim_maintenance_history: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          performed_at: string | null
+          property_id: string
+          task: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id?: string
+          performed_at?: string | null
+          property_id: string
+          task?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          performed_at?: string | null
+          property_id?: string
+          task?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pim_maintenance_history_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pim_maintenance_history_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pim_risk_signals: {
+        Row: {
+          created_at: string
+          data: Json
+          detected_at: string
+          id: string
+          property_id: string
+          resolved_at: string | null
+          severity: string | null
+          signal_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          detected_at?: string
+          id?: string
+          property_id: string
+          resolved_at?: string | null
+          severity?: string | null
+          signal_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          detected_at?: string
+          id?: string
+          property_id?: string
+          resolved_at?: string | null
+          severity?: string | null
+          signal_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pim_risk_signals_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pim_risk_signals_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pim_warranties: {
+        Row: {
+          created_at: string
+          data: Json
+          end_date: string | null
+          id: string
+          item: string | null
+          property_id: string
+          provider: string | null
+          start_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          end_date?: string | null
+          id?: string
+          item?: string | null
+          property_id: string
+          provider?: string | null
+          start_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          end_date?: string | null
+          id?: string
+          item?: string | null
+          property_id?: string
+          provider?: string | null
+          start_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pim_warranties_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pim_warranties_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pipeline_health_snapshots: {
         Row: {
           automation_health: string
