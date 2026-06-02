@@ -1258,6 +1258,7 @@ export const AppRouter = () => (
         <Route path="/admin/validation" element={<ProtectedRoute requiredRole="admin"><AdminValidation /></ProtectedRoute>} />
         <Route path="/admin/answer-engine" element={<ProtectedRoute requiredRole="admin"><AdminAnswerEngine /></ProtectedRoute>} />
         <Route path="/admin/operations" element={<ProtectedRoute requiredRole="admin"><AdminOperationsHub /></ProtectedRoute>} />
+        <Route path="/admin/founder-verification" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageFounderVerification /></Suspense></ProtectedRoute>} />
         <Route path="/admin/pricing-intelligence" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminPricingIntelligence /></Suspense></ProtectedRoute>} />
         <Route path="/admin/system-mode" element={<ProtectedRoute requiredRole="admin"><PageSystemModeControlCenter /></ProtectedRoute>} />
         <Route path="/admin/verification" element={<ProtectedRoute requiredRole="admin"><AdminVerificationRuns /></ProtectedRoute>} />
