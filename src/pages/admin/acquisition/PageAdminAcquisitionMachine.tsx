@@ -441,7 +441,7 @@ function ControlButton({
   icon: React.ReactNode;
   label: string;
   running: boolean;
-  onClick: () => void | Promise<unknown>;
+  onClick: () => unknown;
   variant?: "default" | "destructive";
   step?: number;
   title?: string;
