@@ -426,7 +426,7 @@ export default function PageAdminAcquisitionMachine() {
 
           <div className="text-xs text-zinc-500 pt-4 border-t border-white/5">
             Tables: <code>contractor_prospects</code> · <code>contractor_outreach_tests</code> · <code>contractor_pricing_quotes</code>
-            <br />Edge: acq-scrape-contractors · acq-enrich-contractor · acq-generate-aipp · acq-generate-test-variants · acq-send-outreach · compute-pricing-quote · create-contractor-checkout
+            <br />Pipeline: acq-cascade-scrape · acq-enrich-contractor · acq-generate-score · acq-generate-test-variants · /admin/acquisition/duplicates · acq-send-outreach · acq-create-checkout · /admin/contractor-activation
             <br />Liens: <Link to="/admin/sniper" className="underline">Sniper</Link> · <Link to="/admin/outbound/ops-center" className="underline">Outbound Ops</Link> · <Link to="/admin/pricing-intelligence" className="underline">Pricing Intelligence</Link>
           </div>
         </div>
