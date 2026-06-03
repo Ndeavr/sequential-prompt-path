@@ -442,6 +442,7 @@ const PageContractorAippAudit = lazy(() => import("@/pages/PageContractorAippAud
 const PageInstantAuditFunnel = lazy(() => import("@/pages/PageInstantAuditFunnel"));
 const PageOutreachLanding = lazy(() => import("@/pages/PageOutreachLanding"));
 const PageSniperCommandCenter = lazy(() => import("@/pages/admin/PageSniperCommandCenter"));
+const PageConciergeCockpit = lazy(() => import("@/pages/admin/concierge/PageConciergeCockpit"));
 const PageSmsDebug = lazy(() => import("@/pages/admin/PageSmsDebug"));
 const PageCommandCenterLeads = lazy(() => import("@/pages/admin/PageCommandCenterLeads"));
 const PageCommandCenterCampaigns = lazy(() => import("@/pages/admin/PageCommandCenterCampaigns"));
