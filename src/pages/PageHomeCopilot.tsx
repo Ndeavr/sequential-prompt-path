@@ -38,15 +38,15 @@ export default function PageHomeCopilot() {
   return (
     <MainLayout>
       <Helmet>
-        <title>UNPRO — Le Copilot des projets maison | Le bon pro, recommandé par IA</title>
+        <title>UNPRO — Votre maison, enfin comprise par l'IA</title>
         <meta
           name="description"
-          content="Décrivez votre projet à Alex. UNPRO recommande le meilleur entrepreneur vérifié et planifie le rendez-vous. Pas de 3 soumissions, juste la bonne réponse."
+          content="UNPRO est le système d'intelligence IA pour les propriétaires. Diagnostic visuel, analyse de soumission, vérification d'entrepreneur et Passeport Maison — tout au même endroit."
         />
-        <meta property="og:title" content="UNPRO — Le bon pro, recommandé par IA" />
+        <meta property="og:title" content="UNPRO — Votre maison, enfin comprise par l'IA" />
         <meta
           property="og:description"
-          content="Une question, une recommandation, un rendez-vous rapide. UNPRO trouve votre meilleur entrepreneur."
+          content="Le système d'intelligence pour comprendre votre maison, réduire les risques et trouver le bon professionnel au bon moment."
         />
         <meta property="og:type" content="website" />
         <meta name="theme-color" content="#050A12" />
@@ -56,6 +56,8 @@ export default function PageHomeCopilot() {
 
       <div className="bg-[hsl(220_50%_4%)]">
         <HeroCopilotMobile />
+        <PropertyIntelligenceTicker />
+        <HomeIntelligenceActionGrid />
         <SectionsBelowFold />
         <StickyBottomAlexCTA />
         <AlexCopilotConversation />
