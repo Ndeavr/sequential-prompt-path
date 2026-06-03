@@ -50,8 +50,8 @@ Deno.serve(async (req) => {
     const link = checkout.url as string;
     const sms = `${lead.first_name ?? lead.company_name}, votre activation UNPRO est prête (plan ${plan.slug.toUpperCase()} · ${plan.price}$/mois). Lien sécurisé: ${link}`;
 
-    await db.from("outreach_messages").insert({
-      recipient_id: lead_id, channel: "sms", body: sms, status: "pending",
+    await db.from("agent_outreach_messages").insert({
+      lead_id: lead_id, channel: "sms", body: sms, status: "pending",
       variant: "activation_link", scheduled_at: new Date().toISOString(),
     });
     await db.from("contractor_leads").update({

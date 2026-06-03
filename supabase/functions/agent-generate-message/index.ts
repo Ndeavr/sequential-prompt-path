@@ -64,8 +64,8 @@ Deno.serve(async (req) => {
         messageBody = `Bonjour ${fname}, quand un propriétaire demande à l'IA la meilleure entreprise de ${trade} à ${lead.city}, ${lead.company_name} n'apparaît pas. UNPRO ouvre 2 activations dans votre territoire. On vous montre votre score?`;
       }
 
-      await db.from("outreach_messages").insert({
-        recipient_id: lead.id,
+      await db.from("agent_outreach_messages").insert({
+        lead_id: lead.id,
         channel: "sms",
         subject: null,
         body: messageBody,

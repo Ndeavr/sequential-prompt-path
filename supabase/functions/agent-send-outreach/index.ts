@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
 
   const result = await recordAgentRun("send-outreach", async (db) => {
     const { data: msgs } = await db
-      .from("outreach_messages")
+      .from("agent_outreach_messages")
       .select("id, recipient_id, channel, body, variant")
       .eq("status", "pending")
       .lte("scheduled_at", new Date().toISOString())
@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
           });
           if (!r.ok) throw new Error(`sms ${r.status}`);
         }
-        await db.from("outreach_messages").update({
+        await db.from("agent_outreach_messages").update({
           status: "sent", sent_at: new Date().toISOString(),
         }).eq("id", m.id);
         await db.from("contractor_leads").update({
@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
         sent++;
       } catch (e) {
         failed++;
-        await db.from("outreach_messages").update({
+        await db.from("agent_outreach_messages").update({
           status: "failed", error: e instanceof Error ? e.message : String(e),
         }).eq("id", m.id);
       }
