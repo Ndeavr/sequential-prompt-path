@@ -21,6 +21,11 @@ import PanelArticleHighlightsClean from "@/components/articles/PanelArticleHighl
 import SectionArticleFAQSEO from "@/components/articles/SectionArticleFAQSEO";
 import SectionArticleInternalLinksSEO from "@/components/articles/SectionArticleInternalLinksSEO";
 import SectionArticleStructuredData from "@/components/articles/SectionArticleStructuredData";
+import {
+  ArticleIntelligenceReportHeader,
+  ArticleIntelligenceReportFooter,
+} from "@/components/articles/intelligence/ArticleIntelligenceBlocks";
+import ArticleSemanticLinksGraph from "@/components/articles/intelligence/ArticleSemanticLinksGraph";
 
 /* ── Helpers ── */
 
