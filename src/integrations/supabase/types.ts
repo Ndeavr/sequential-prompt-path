@@ -3267,6 +3267,71 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_outreach_messages: {
+        Row: {
+          activation_clicked: boolean
+          activation_completed: boolean
+          body: string
+          channel: string
+          created_at: string
+          error: string | null
+          id: string
+          lead_id: string
+          metadata: Json | null
+          opened_at: string | null
+          replied_at: string | null
+          scheduled_at: string
+          sent_at: string | null
+          status: string
+          subject: string | null
+          variant: string
+        }
+        Insert: {
+          activation_clicked?: boolean
+          activation_completed?: boolean
+          body: string
+          channel: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          lead_id: string
+          metadata?: Json | null
+          opened_at?: string | null
+          replied_at?: string | null
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          variant?: string
+        }
+        Update: {
+          activation_clicked?: boolean
+          activation_completed?: boolean
+          body?: string
+          channel?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          lead_id?: string
+          metadata?: Json | null
+          opened_at?: string | null
+          replied_at?: string | null
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          variant?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_outreach_messages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_registry: {
         Row: {
           actions: Json | null
