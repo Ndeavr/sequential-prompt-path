@@ -1,12 +1,13 @@
 /**
- * HeroV2 — Mobile-first hero. Orb + benefit headline + dual CTA + trust row.
- * Copy locked to spec: "Pas des leads partagés. Des rendez-vous avec des clients sérieux."
+ * HeroV2 — Entrepreneur hero. Strategic UNPRO language (no "leads").
+ * Copy sourced from src/lib/copy/entrepreneurs.ts.
  */
 import { motion } from "framer-motion";
 import { ArrowRight, ShieldCheck, Zap, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import UnproLogo from "@/components/brand/UnproLogo";
+import { useEntrepreneurMessaging } from "@/hooks/useEntrepreneurMessaging";
 
 interface Props {
   onTrackCta: (key: string, section: string) => void;
@@ -14,6 +15,7 @@ interface Props {
 
 export default function HeroV2({ onTrackCta }: Props) {
   const navigate = useNavigate();
+  const m = useEntrepreneurMessaging({ context: "default" });
 
   return (
     <section className="relative overflow-hidden px-5 pt-6 pb-10">
@@ -72,13 +74,15 @@ export default function HeroV2({ onTrackCta }: Props) {
         className="text-center max-w-md mx-auto"
       >
         <h1 className="font-display text-3xl sm:text-4xl font-extrabold text-foreground leading-[1.1] tracking-tight">
-          Pas des leads partagés.{" "}
           <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Des rendez-vous avec des clients sérieux.
+            {m.hero.active.title}
           </span>
         </h1>
         <p className="mt-4 text-sm sm:text-base text-muted-foreground leading-relaxed px-2">
-          UNPRO vous connecte avec des propriétaires prêts à avancer, selon votre métier, votre secteur et vos disponibilités.
+          {m.hero.active.subtitle}
+        </p>
+        <p className="mt-3 text-xs font-semibold text-primary/90">
+          {m.hero.promise}
         </p>
       </motion.div>
 
@@ -94,7 +98,7 @@ export default function HeroV2({ onTrackCta }: Props) {
           className="w-full h-14 rounded-xl text-base font-bold gap-2 shadow-[0_8px_30px_hsl(var(--primary)/0.35)]"
           onClick={() => { onTrackCta("hero_primary_book", "hero"); document.getElementById("section-form")?.scrollIntoView({ behavior: "smooth" }); }}
         >
-          Recevoir mes rendez-vous
+          {m.cta.activateAppointments}
           <ArrowRight className="w-5 h-5" />
         </Button>
         <Button
@@ -103,7 +107,7 @@ export default function HeroV2({ onTrackCta }: Props) {
           className="w-full h-12 rounded-xl text-sm border-primary/30 hover:bg-primary/5"
           onClick={() => { onTrackCta("hero_secondary_plan_ia", "hero"); window.location.assign("/entrepreneur/plan-ia"); }}
         >
-          Voir mon plan IA personnalisé
+          {m.cta.seeOpportunities}
         </Button>
       </motion.div>
 
@@ -114,9 +118,9 @@ export default function HeroV2({ onTrackCta }: Props) {
         transition={{ delay: 0.6 }}
         className="mt-7 flex flex-wrap justify-center gap-x-4 gap-y-2 text-[11px] text-muted-foreground"
       >
-        <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-success" /> Aucun contrat long terme</span>
-        <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-warning" /> Activation rapide</span>
-        <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-primary" /> Territoires limités</span>
+        <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-success" /> Recommandé par l'IA</span>
+        <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-warning" /> Visibilité IA activable</span>
+        <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-primary" /> Exclusivité territoriale</span>
       </motion.div>
     </section>
   );
