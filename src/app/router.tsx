@@ -443,6 +443,7 @@ const PageInstantAuditFunnel = lazy(() => import("@/pages/PageInstantAuditFunnel
 const PageOutreachLanding = lazy(() => import("@/pages/PageOutreachLanding"));
 const PageSniperCommandCenter = lazy(() => import("@/pages/admin/PageSniperCommandCenter"));
 const PageConciergeCockpit = lazy(() => import("@/pages/admin/concierge/PageConciergeCockpit"));
+const PageAutonomousEngine = lazy(() => import("@/pages/admin/PageAutonomousEngine"));
 const PageSmsDebug = lazy(() => import("@/pages/admin/PageSmsDebug"));
 const PageCommandCenterLeads = lazy(() => import("@/pages/admin/PageCommandCenterLeads"));
 const PageCommandCenterCampaigns = lazy(() => import("@/pages/admin/PageCommandCenterCampaigns"));
@@ -1227,6 +1228,7 @@ export const AppRouter = () => (
         <Route path="/admin/omega" element={<ProtectedRoute requiredRole="admin"><PageAdminOmega /></ProtectedRoute>} />
         <Route path="/admin/activation" element={<ProtectedRoute requiredRole="admin"><PageAdminEntrepreneurActivation /></ProtectedRoute>} />
         <Route path="/admin/concierge" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageConciergeCockpit /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/autonomous-engine" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAutonomousEngine /></Suspense></ProtectedRoute>} />
         <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><AdminUsers /></ProtectedRoute>} />
         <Route path="/admin/contractors" element={<ProtectedRoute requiredRole="admin"><AdminContractors /></ProtectedRoute>} />
         <Route path="/admin/ai-trust" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAiTrustDashboard /></Suspense></ProtectedRoute>} />
