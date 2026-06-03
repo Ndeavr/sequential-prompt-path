@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   const result = await recordAgentRun("send-outreach", async (db) => {
     const { data: msgs } = await db
       .from("agent_outreach_messages")
-      .select("id, recipient_id, channel, body, variant")
+      .select("id, lead_id, channel, body, variant")
       .eq("status", "pending")
       .lte("scheduled_at", new Date().toISOString())
       .order("scheduled_at", { ascending: true })
@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
       const { data: lead } = await db
         .from("contractor_leads")
         .select("id, phone, email, trade, category_primary, city")
-        .eq("id", m.recipient_id).maybeSingle();
+        .eq("id", m.lead_id).maybeSingle();
       if (!lead) { failed++; continue; }
 
       const tradeCity = `${lead.trade ?? lead.category_primary ?? "_"}:${lead.city ?? "_"}`;
