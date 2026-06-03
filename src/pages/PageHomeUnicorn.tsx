@@ -17,6 +17,7 @@ import AlexOrbPremium from "@/components/home-unicorn/AlexOrbPremium";
 import BottomDockGlass from "@/components/home-unicorn/BottomDockGlass";
 import NearbyContractorsCarousel from "@/components/home-unicorn/NearbyContractorsCarousel";
 import CinematicArchScenes from "@/components/home-unicorn/CinematicArchScenes";
+import PIMIntroBand from "@/components/pim/PIMIntroBand";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import "@/styles/unicorn-theme.css";
 
@@ -543,6 +544,7 @@ export default function PageHomeUnicorn() {
         <AiInputCard onTalk={onTalk} />
         <HomeQuickActionsGrid />
         <LiveStatsCard />
+        <PIMIntroBand />
         <HowItWorksCards />
         <ContractorAippSplit />
         <BottomDockGlass />
