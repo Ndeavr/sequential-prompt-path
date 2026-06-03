@@ -1,84 +1,123 @@
-# UNPRO — Homepage + Articles Intelligence Adaptation
+## UNPRO Concierge Activation Engine — First 5 Manual Closes
 
-Évolution **copy + intelligence layer** uniquement. Aucun redesign : on garde le hero actuel, la palette dark premium, le glassmorphism, l'orb Alex, les animations et la structure du layout.
+Goal: a focused cockpit to personally orchestrate 20 high-quality contractors → 5 paid activations. Reuses existing `contractor_prospects` + outbound infra. No automation-first build, no generic SaaS onboarding.
 
-## 1. Homepage (`src/pages/PageHomeCopilot.tsx` + composants `src/components/home-copilot/`)
+---
 
-### 1.1 Hero — copy uniquement
-Dans `HeroCopilotMobile.tsx` :
-- Headline → **« Votre maison. Enfin comprise par l'IA. »**
-- Subheadline → **« Décrivez un problème, importez une photo ou analysez une soumission en quelques secondes. UNPRO aide les propriétaires à comprendre leur maison, réduire les risques et trouver le bon professionnel au bon moment. »**
-- Meta `<title>` et `description` dans `PageHomeCopilot.tsx` alignés sur le nouveau positionnement.
+### What we reuse (no rebuild)
 
-### 1.2 Action Cards — 8 cards horizontales premium
-Dans `SectionsBelowFold.tsx` (ou nouveau `HomeIntelligenceActionGrid.tsx` réutilisant les styles glass existants), remplacer les cartes contractor-first par 8 cartes scroll horizontal mobile / grid desktop :
+- `contractor_prospects` table (already has business, RBQ, reviews, AIPP, status fields)
+- Existing edge functions for scraping/enrichment/AIPP scoring
+- Existing Stripe checkout + dynamic pricing engine
+- Existing contractor activation pipeline (`/admin/contractor-activation-flow`)
 
-1. Diagnostic visuel IA → `/diagnostic-photo`
-2. Vérifier une soumission → `/compare`
-3. Vérifier un entrepreneur → `/trouver-entrepreneur`
-4. Passeport Maison → `/passeport-maison` (fallback `/mes-proprietes`)
-5. Maison trop chaude? → `/probleme/maison-trop-chaude`
-6. Humidité au grenier → `/probleme/humidite-grenier`
-7. Facture Hydro trop élevée → `/probleme/facture-hydro`
-8. Condo / Loi 16 → `/condo`
+### What we add (concierge layer)
 
-Tokens existants (glass, radii 28px, easing master), aucune nouvelle couleur.
+**1. New cockpit page — `/admin/concierge`**
 
-### 1.3 Alex Orb — comportement seulement
-Dans `AlexCopilotConversation.tsx` (ou hook `useAlexHomeownerSession`) :
-- Garde le contrat event-driven (mémoire Core : pas d'autostart au mount, greet une fois par tab).
-- Si user loggé → greeting **« Bonjour [Prénom]. »** suivi d'écoute immédiate.
-- Suggestions contextuelles inline (chips déjà existantes) : « Importer une photo », « Décrire le problème », « Analyser une soumission ».
+Single-screen war room, mobile-first, dark glassmorphism. Sections:
 
-### 1.4 Intelligence Ticker (nouveau micro-composant)
-Nouveau `src/components/home-copilot/PropertyIntelligenceTicker.tsx` placé sous le hero :
-- Bandeau premium glass, hauteur compacte, defilement doux.
-- 3–6 insights dynamiques type : « Humidité en hausse à Laval », « Barrages de glace fréquents à Montréal cette semaine », « Maisons <1985 : pertes d'air importantes ».
-- Source v1 : tableau statique localisé (FR-CA) + hook `usePropertyIntelligenceFeed` prêt à brancher sur Supabase plus tard. Aucune nouvelle table dans cette itération — on prépare l'interface seulement.
+- **Today's 5** — the 5 prospects to actively work today (Kanban-lite, drag between stages)
+- **Hot pipeline** — sortable list filtered to *closable* prospects only (see filter below)
+- **Next Best Action** card per prospect (computed): "Send opener", "Send demo link", "Send close message", "Call now", "Send payment link"
+- **Live activity feed** — replies, opens, payments
+- **Today's metric strip** — Conversations / Demos / Activations vs target (5/2/1)
 
-## 2. Article System (Homeowner Intelligence Reports)
+**2. Precision targeting filter (Discovery view)**
 
-### 2.1 Template article
-Adapter le composant de rendu d'article SEO existant (utilisé par `seo_articles`, voir `PageArticlesRecentCompressedFeed.tsx` et pages `src/pages/seo/`) pour injecter — au-dessus du contenu généré — une nouvelle ossature de blocs réutilisables :
+New view in cockpit + DB view `v_concierge_targets`:
+- Trade ∈ {attic_insulation, french_drains, roofing, heat_pumps, kitchen_bath_GC}
+- Google rating ≥ 4.4 AND review_count ≥ 25
+- AIPP score < 60 (weak AI visibility)
+- Has website + active phone
+- `do_not_contact = false`, `payment_status = 'not_started'`
+- Ranked by: review_count × (100 − aipp_score) × trade_weight
 
-Nouveaux composants dans `src/components/articles/intelligence/` :
-- `AiAnswerBlock` (Réponse rapide IA — encadré top)
-- `LocalContextBlock` (quartier, ère de construction, climat QC)
-- `HomeownerObservationsBlock`
-- `CostRiskBlock` (fourchettes locales, urgence saisonnière)
-- `CommonMistakesBlock`
-- `AiInsightsBlock` (observations propriétaires-style, citables par LLM)
-- `NextActionsBlock` (inspecter, photo, analyser soumission, évaluer ventilation, réserver inspection — **jamais** « contacter 3 entrepreneurs »)
-- `HomeownerFaqBlock`
+**3. Prospect drawer (right-side, slide-in)**
 
-### 2.2 GEO / AI Search structure
-Étendre `SchemaStack` / `SeoStructuredDataInjector` pour injecter :
-- `FAQPage` (questions réelles)
-- `Article` + `about` (symptom, city, neighborhood, property type, seasonality, contractor expertise)
-- Bloc résumé structuré JSON-LD `Answer` optimisé ChatGPT/Gemini/AIO/Perplexity.
+Per-prospect command surface:
+- Header: company, trade, city, rating, reviews, AIPP score visualized
+- **Weakness card**: AI visibility gaps (no schema, generic copy, no GEO/AEO, no semantic authority) — bullet list from AIPP subscores
+- **Personalized message generator**: 3 pre-loaded templates (Opener / Reply2 / Close) auto-filled with {FirstName}, {CompanyName}, {City}, {Trade}, {ReviewCount}, {WeaknessSummary}. Edit-in-place, copy-to-clipboard, or "Open in SMS/Email" deep link.
+- **Concierge timeline**: every touch (sent, opened, replied, called, demo'd, offer sent, paid) — manual log + auto from existing channels
+- **Reserve My Territory**: generates a personalized landing link `/pro/:slug?t=:token` (existing nuclear-close infra)
+- **Custom activation offer**: pick plan, override price, generate Stripe checkout link
+- **Stage updater**: discovered → contacted → replied → interested → demo_sent → offer_sent → payment_pending → activated
 
-### 2.3 Hyperlocal pages
-Réutiliser la route existante `/probleme/:problem/:city` (mémoire AEO Domination). On ne crée pas de nouvelle route : on enrichit le template avec les nouveaux blocs et on garantit l'unicité via les variables locales (quartier, ère, climat) déjà calculées par `aeo-generate-blocks`. Ajouter un champ `local_intelligence` dans le payload AEO (frontend tolère l'absence, backend reste inchangé pour cette itération).
+**4. Schema additions to `contractor_prospects`**
 
-### 2.4 Internal linking — Quebec Housing Intelligence Graph
-Nouveau composant `ArticleSemanticLinksGraph.tsx` injecté dans le template article, alimenté par une map statique fr-CA reliant : humidité ↔ ventilation ↔ isolation ↔ moisissure ↔ Hydro ↔ pertes chaleur ↔ barrages de glace ↔ étanchéité à l'air. Données dans `src/data/housingIntelligenceGraph.ts`.
+Migration adds (only what's missing):
+- `concierge_owner_id uuid` — who's working it
+- `concierge_priority smallint` — manual 1-5 star
+- `next_action text` — computed/cached
+- `next_action_due_at timestamptz`
+- `concierge_notes text`
+- `custom_offer jsonb` (plan, price_override, expires_at, stripe_session_id)
 
-## 3. Hors scope (cette itération)
-- Pas de nouvelles tables Supabase, pas de migrations.
-- Pas de modifications backend des edge functions AEO/SEO.
-- Pas de refactor des moteurs métier (matching, booking, pricing).
-- Pas de redesign : tokens, layout, animations conservés à l'identique.
+New table `concierge_touches`:
+- prospect_id, channel (sms|email|call|voicemail|inperson), direction (out|in), body, occurred_at, created_by
 
-## 4. Détails techniques
-- Fichiers édités : `PageHomeCopilot.tsx`, `HeroCopilotMobile.tsx`, `SectionsBelowFold.tsx`, `AlexCopilotConversation.tsx`, `SchemaStack.tsx`, template de rendu article SEO.
-- Fichiers créés : `PropertyIntelligenceTicker.tsx`, `usePropertyIntelligenceFeed.ts`, 8 composants `articles/intelligence/*`, `ArticleSemanticLinksGraph.tsx`, `src/data/housingIntelligenceGraph.ts`, `src/data/homeIntelligenceTicker.ts`.
-- Respect mémoires Core : FR-CA, Cinematic Dark, glass tokens, Alex event-driven greet-once, no UI mechanics leak (« Touchez l'orb » interdit).
-- A11y : `aria-live="polite"` sur le ticker, focus visible sur cards, prefers-reduced-motion respecté.
+**5. Activation trigger on payment**
 
-## 5. Critères de succès
-- Homepage projette « système IA qui comprend les maisons » dès le hero.
-- 8 cartes premium remplacent l'orientation contractor-first sans casser le visuel.
-- Ticker intelligence visible et crédible.
-- Articles deviennent des « rapports d'intelligence » avec blocs AI Answer + Insights + Next Actions homeowner-first.
-- Schemas JSON-LD prêts pour AIO / Perplexity / ChatGPT.
-- Aucune régression visuelle ni de routing.
+When `payment_status` flips to `paid` (via existing Stripe webhook), edge function `concierge-activate-prospect`:
+- Creates/links `contractors` row from prospect data
+- Triggers existing AI page generation, semantic structure, territory pages, appointment routing, trust profile (all already-built systems — just chain the calls)
+- Sets `activation_status = 'activated'`, emits `system_event`
+
+**6. Positioning copy (UI strings)**
+
+All concierge UI labels enforce the new wedge:
+- "Become one of the contractors AI recommends first"
+- "Exclusive guaranteed appointments. Not shared leads."
+- "UNPRO structures your company so AI systems understand and recommend it."
+
+No "subscription", no "marketing", no "leads".
+
+---
+
+### Out of scope (explicitly NOT building this round)
+
+- Mass scraping pipeline (use what's already in `/admin/outbound`)
+- Automated multi-step sequences (concierge = human-sent)
+- New payment system (reuse dynamic-pricing + Stripe)
+- New contractor onboarding flow (reuse activation funnel)
+- Analytics dashboards beyond Today's metric strip
+
+---
+
+### Technical layout
+
+```
+src/pages/admin/concierge/
+  PageConciergeCockpit.tsx          (main war room)
+  PageConciergeDiscovery.tsx        (precision targeting list)
+src/components/admin/concierge/
+  TodayFiveBoard.tsx
+  ProspectDrawer.tsx
+  WeaknessCard.tsx
+  MessageComposer.tsx                (3 templates + variable injection)
+  CustomOfferBuilder.tsx
+  ConciergeTimeline.tsx
+  NextActionChip.tsx
+  MetricStrip.tsx
+src/hooks/
+  useConciergeTargets.ts
+  useConciergeProspect.ts
+  useConciergeTouches.ts
+supabase/functions/
+  concierge-activate-prospect/      (chain existing activation calls)
+  concierge-generate-message/       (Lovable AI Gateway — personalize 3 templates)
+supabase/migrations/
+  <ts>_concierge_layer.sql           (cols on contractor_prospects + concierge_touches + v_concierge_targets view)
+```
+
+Route registered at `/admin/concierge` (admin-only via existing `RoleGuard`).
+
+---
+
+### Success criteria
+
+- 20 targeted contractors loaded in cockpit on day 1
+- Operator can: see Next Best Action, generate personalized message, log touch, send custom Stripe offer, mark paid → contractor page auto-goes live
+- 5 paid activations close end-to-end through the cockpit
+- Every touch + objection captured in `concierge_touches` (the moat dataset)
