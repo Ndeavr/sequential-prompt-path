@@ -821,28 +821,37 @@ export type Database = {
       }
       acq_territory_slots: {
         Row: {
+          auto_locked_at: string | null
           city: string
           created_at: string
           id: string
+          lock_status: string
           max_slots: number
+          saturation_percent: number | null
           trade: string
           updated_at: string
           used_slots: number
         }
         Insert: {
+          auto_locked_at?: string | null
           city: string
           created_at?: string
           id?: string
+          lock_status?: string
           max_slots?: number
+          saturation_percent?: number | null
           trade: string
           updated_at?: string
           used_slots?: number
         }
         Update: {
+          auto_locked_at?: string | null
           city?: string
           created_at?: string
           id?: string
+          lock_status?: string
           max_slots?: number
+          saturation_percent?: number | null
           trade?: string
           updated_at?: string
           used_slots?: number
@@ -1129,6 +1138,45 @@ export type Database = {
           stripe_session_id?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      activation_quotas: {
+        Row: {
+          channel: string
+          created_at: string
+          id: string
+          last_used_at: string | null
+          limit_count: number
+          period_date: string
+          scope: string
+          scope_key: string
+          updated_at: string
+          used_count: number
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          limit_count?: number
+          period_date?: string
+          scope: string
+          scope_key?: string
+          updated_at?: string
+          used_count?: number
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          limit_count?: number
+          period_date?: string
+          scope?: string
+          scope_key?: string
+          updated_at?: string
+          used_count?: number
         }
         Relationships: []
       }
@@ -3302,6 +3350,84 @@ export type Database = {
           },
         ]
       }
+      agent_runs: {
+        Row: {
+          agent_name: string
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          input: Json | null
+          output: Json | null
+          started_at: string
+          status: string
+          triggered_by: string | null
+        }
+        Insert: {
+          agent_name: string
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          input?: Json | null
+          output?: Json | null
+          started_at?: string
+          status?: string
+          triggered_by?: string | null
+        }
+        Update: {
+          agent_name?: string
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          input?: Json | null
+          output?: Json | null
+          started_at?: string
+          status?: string
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
+      agent_safety_events: {
+        Row: {
+          agent_name: string | null
+          auto_paused: boolean
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          resolved_at: string | null
+          scope_key: string | null
+          severity: string
+        }
+        Insert: {
+          agent_name?: string | null
+          auto_paused?: boolean
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          resolved_at?: string | null
+          scope_key?: string | null
+          severity?: string
+        }
+        Update: {
+          agent_name?: string | null
+          auto_paused?: boolean
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          resolved_at?: string | null
+          scope_key?: string | null
+          severity?: string
+        }
+        Relationships: []
+      }
       agent_target_items: {
         Row: {
           approval_status: string
@@ -4129,6 +4255,106 @@ export type Database = {
             columns: ["contractor_id"]
             isOneToOne: false
             referencedRelation: "contractors_trust"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_visibility_reports: {
+        Row: {
+          ai_citation_probability: number | null
+          ai_summary: string | null
+          city: string | null
+          competitors: Json | null
+          contractor_id: string | null
+          created_at: string
+          generated_at: string
+          id: string
+          lead_id: string | null
+          missing_entities: Json | null
+          semantic_clarity: number | null
+          strengths: Json | null
+          trade: string | null
+          trust_signal: number | null
+          visibility_score: number | null
+          weaknesses: Json | null
+        }
+        Insert: {
+          ai_citation_probability?: number | null
+          ai_summary?: string | null
+          city?: string | null
+          competitors?: Json | null
+          contractor_id?: string | null
+          created_at?: string
+          generated_at?: string
+          id?: string
+          lead_id?: string | null
+          missing_entities?: Json | null
+          semantic_clarity?: number | null
+          strengths?: Json | null
+          trade?: string | null
+          trust_signal?: number | null
+          visibility_score?: number | null
+          weaknesses?: Json | null
+        }
+        Update: {
+          ai_citation_probability?: number | null
+          ai_summary?: string | null
+          city?: string | null
+          competitors?: Json | null
+          contractor_id?: string | null
+          created_at?: string
+          generated_at?: string
+          id?: string
+          lead_id?: string | null
+          missing_entities?: Json | null
+          semantic_clarity?: number | null
+          strengths?: Json | null
+          trade?: string | null
+          trust_signal?: number | null
+          visibility_score?: number | null
+          weaknesses?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_visibility_reports_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_visibility_reports_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_visibility_reports_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_visibility_reports_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "ai_visibility_reports_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "ai_visibility_reports_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
             referencedColumns: ["id"]
           },
         ]
@@ -25716,6 +25942,8 @@ export type Database = {
       contractor_leads: {
         Row: {
           activation_status: string
+          agent_paused_at: string | null
+          ai_visibility_score: number | null
           assigned_admin_id: string | null
           attributed_user_id: string | null
           attribution_type: string | null
@@ -25733,6 +25961,7 @@ export type Database = {
           full_name: string | null
           id: string
           language_primary: string | null
+          last_agent_run_at: string | null
           last_name: string | null
           lead_status: string
           metadata_json: Json | null
@@ -25753,11 +25982,14 @@ export type Database = {
           source_query_id: string | null
           source_type: string
           street_address: string | null
+          trade: string | null
           updated_at: string
           website_url: string | null
         }
         Insert: {
           activation_status?: string
+          agent_paused_at?: string | null
+          ai_visibility_score?: number | null
           assigned_admin_id?: string | null
           attributed_user_id?: string | null
           attribution_type?: string | null
@@ -25775,6 +26007,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           language_primary?: string | null
+          last_agent_run_at?: string | null
           last_name?: string | null
           lead_status?: string
           metadata_json?: Json | null
@@ -25795,11 +26028,14 @@ export type Database = {
           source_query_id?: string | null
           source_type?: string
           street_address?: string | null
+          trade?: string | null
           updated_at?: string
           website_url?: string | null
         }
         Update: {
           activation_status?: string
+          agent_paused_at?: string | null
+          ai_visibility_score?: number | null
           assigned_admin_id?: string | null
           attributed_user_id?: string | null
           attribution_type?: string | null
@@ -25817,6 +26053,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           language_primary?: string | null
+          last_agent_run_at?: string | null
           last_name?: string | null
           lead_status?: string
           metadata_json?: Json | null
@@ -25837,6 +26074,7 @@ export type Database = {
           source_query_id?: string | null
           source_type?: string
           street_address?: string | null
+          trade?: string | null
           updated_at?: string
           website_url?: string | null
         }
