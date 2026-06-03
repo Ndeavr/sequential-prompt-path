@@ -23,7 +23,8 @@ export type CopilotEventName =
   | "quick_reply_clicked"
   | "pim_landing_viewed"
   | "pim_cta_create_clicked"
-  | "pim_cta_alex_clicked";
+  | "pim_cta_alex_clicked"
+  | "intelligence_card_clicked";
 
 const SESSION_KEY = "unpro_copilot_session_id";
 

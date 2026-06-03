@@ -86,9 +86,9 @@ export default function HeroCopilotMobile() {
           transition={{ delay: 0.1, duration: 0.5 }}
           className="mt-6 text-[28px] sm:text-[34px] font-bold leading-[1.15] tracking-tight max-w-md"
         >
-          Quel est votre projet{" "}
+          Votre maison.{" "}
           <span className="bg-gradient-to-r from-[hsl(207_100%_70%)] to-[hsl(198_100%_78%)] bg-clip-text text-transparent">
-            aujourd'hui?
+            Enfin comprise par l'IA.
           </span>
         </motion.h1>
 
@@ -98,7 +98,7 @@ export default function HeroCopilotMobile() {
           transition={{ delay: 0.2, duration: 0.5 }}
           className="mt-3 text-[14px] text-white/70 max-w-sm leading-relaxed"
         >
-          Décrivez votre situation. Alex s'occupe du reste.
+          Décrivez un problème, importez une photo ou analysez une soumission en quelques secondes. UNPRO comprend votre maison, réduit les risques et trouve le bon professionnel au bon moment.
         </motion.p>
 
         {/* Primary CTA — Parler à Alex (voice-first, no keyboard) */}

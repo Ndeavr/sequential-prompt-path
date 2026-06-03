@@ -21,6 +21,11 @@ import PanelArticleHighlightsClean from "@/components/articles/PanelArticleHighl
 import SectionArticleFAQSEO from "@/components/articles/SectionArticleFAQSEO";
 import SectionArticleInternalLinksSEO from "@/components/articles/SectionArticleInternalLinksSEO";
 import SectionArticleStructuredData from "@/components/articles/SectionArticleStructuredData";
+import {
+  ArticleIntelligenceReportHeader,
+  ArticleIntelligenceReportFooter,
+} from "@/components/articles/intelligence/ArticleIntelligenceBlocks";
+import ArticleSemanticLinksGraph from "@/components/articles/intelligence/ArticleSemanticLinksGraph";
 
 /* ── Helpers ── */
 
@@ -257,6 +262,12 @@ export default function SeoArticlePage() {
           </div>
         </motion.header>
 
+        {/* ── Intelligence Report Header (AI Answer + Local Context) ── */}
+        <ArticleIntelligenceReportHeader
+          answer={aeoIntro}
+          city={article.city}
+        />
+
         {/* ── Key Takeaways (deduplicated, no author) ── */}
         <PanelArticleHighlightsClean takeaways={takeaways} authorName="UNPRO" />
 
@@ -271,6 +282,12 @@ export default function SeoArticlePage() {
             <BlockArticleParagraphReadable html={chunk} />
           </motion.section>
         ))}
+
+        {/* ── Intelligence Report Footer (Observations + Cost/Risk + Mistakes + AI Insights + Next Actions) ── */}
+        <ArticleIntelligenceReportFooter />
+
+        {/* ── Semantic links (Quebec Housing Intelligence Graph) ── */}
+        <ArticleSemanticLinksGraph title={article.title} category={article.service_category} city={article.city} />
 
         {/* ── Inline CTA (mid-article) ── */}
         {chunks.length > 3 && (
