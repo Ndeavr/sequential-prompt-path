@@ -46,10 +46,11 @@ function HeaderFloatingGlass() {
         </div>
 
         <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-          <div className="hidden md:flex items-center gap-2">
+          <div className="flex items-center gap-1 md:gap-2">
             <button
               className="uc-glass-strong rounded-xl px-2 md:px-3 py-1.5 md:py-2 flex items-center gap-0.5 text-[11px] md:text-[12px] font-semibold flex-shrink-0"
               style={{ borderRadius: 14, color: "#0B1220" }}
+              aria-label="Langue"
             >
               FR <ChevronDown size={12} />
             </button>
@@ -66,7 +67,7 @@ function HeaderFloatingGlass() {
             </button>
             <button
               onClick={() => navigate("/qr")}
-              className="uc-glass-strong rounded-xl w-9 h-9 md:w-10 md:h-10 flex items-center justify-center flex-shrink-0"
+              className="uc-glass-strong rounded-xl w-9 h-9 md:w-10 md:h-10 hidden sm:flex items-center justify-center flex-shrink-0"
               style={{ borderRadius: 14 }}
               aria-label="Mon QR Code"
             >
