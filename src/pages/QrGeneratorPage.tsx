@@ -29,13 +29,22 @@ interface QrTypeDef {
 }
 
 const QR_TYPES: QrTypeDef[] = [
-  { id: "contractor_booking", label: "Rendez-vous", description: "Prise de rendez-vous trackable", buildDestination: (uid) => `/pro/${uid}/book` },
-  { id: "home_passport_gold", label: "Passeport Maison", description: "Carte d'identité de la maison", buildDestination: () => `/dashboard/passport` },
-  { id: "diagnostic_photo", label: "Diagnostic photo", description: "Analyse IA instantanée", buildDestination: (_, s) => `/diagnostic-photo?ref=${s}` },
-  { id: "quote_analyzer", label: "Soumission", description: "Évaluation de soumission", buildDestination: (_, s) => `/analyser-soumissions?ref=${s}` },
-  { id: "contractor_profile", label: "Profil pro", description: "Page profil entrepreneur", buildDestination: (uid) => `/pro/${uid}` },
-  { id: "affiliate", label: "Affiliation", description: "Lien de référence générique", buildDestination: (_, s) => `/?ref=${s}` },
+  { id: "contractor_booking", label: "Trouver un pro", description: "Aider quelqu'un à démarrer un projet.", buildDestination: (uid) => `/pro/${uid}/book` },
+  { id: "home_passport_gold", label: "Passeport Maison", description: "Créer la fiche intelligente d'une maison.", buildDestination: () => `/dashboard/passport` },
+  { id: "diagnostic_photo", label: "Diagnostic IA", description: "Analyser un problème avec une photo.", buildDestination: (_, s) => `/diagnostic-photo?ref=${s}` },
+  { id: "quote_analyzer", label: "Analyser une soumission", description: "Comparer ou comprendre une soumission.", buildDestination: (_, s) => `/analyser-soumissions?ref=${s}` },
+  { id: "contractor_profile", label: "Inviter un entrepreneur", description: "Faire découvrir UNPRO à un professionnel.", buildDestination: (uid) => `/pro/${uid}` },
+  { id: "affiliate", label: "Partager UNPRO", description: "Inviter quelqu'un à découvrir UNPRO.", buildDestination: (_, s) => `/?ref=${s}` },
 ];
+
+const POST_GEN_SUBTITLES: Record<string, string> = {
+  contractor_booking: "Décrivez votre projet et trouvez le bon professionnel.",
+  contractor_profile: "Créez votre profil et développez votre visibilité.",
+  home_passport_gold: "Centralisez l'intelligence de votre propriété.",
+  diagnostic_photo: "Analysez un problème avec une simple photo.",
+  quote_analyzer: "Comparez et comprenez vos soumissions.",
+  affiliate: "Découvrez UNPRO — l'intelligence résidentielle.",
+};
 
 interface UserLink {
   id: string;
