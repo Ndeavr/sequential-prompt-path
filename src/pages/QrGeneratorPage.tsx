@@ -188,19 +188,18 @@ export default function QrGeneratorPage() {
 
   return (
     <MainLayout>
-      <Helmet><title>Mon QR Code — UNPRO</title></Helmet>
+      <Helmet><title>Partager UNPRO</title></Helmet>
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         <header className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><QrIcon className="w-5 h-5 text-primary" /></div>
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight">Mon QR Code</h1>
-            <p className="text-sm text-muted-foreground">Générez un code unique pour suivre vos partages.</p>
+            <h1 className="text-2xl font-extrabold tracking-tight">Partager UNPRO</h1>
+            <p className="text-sm text-muted-foreground">Invitez quelqu'un à découvrir UNPRO.</p>
           </div>
         </header>
 
         <Card className="p-4 space-y-4">
           <div>
-            <div className="text-sm font-semibold mb-2">Type de QR</div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {QR_TYPES.map((t) => (
                 <button
@@ -217,14 +216,17 @@ export default function QrGeneratorPage() {
             </div>
           </div>
           <Button onClick={handleGenerate} disabled={generating} className="w-full h-12 rounded-xl">
-            {generating ? "Génération…" : "Générer mon QR"}
+            {generating ? "Création…" : "Créer mon QR"}
           </Button>
         </Card>
 
         {activeQrSvg && activeShort && (
-          <Card className="p-4 flex flex-col items-center gap-3">
+          <Card className="p-6 flex flex-col items-center gap-4 rounded-2xl">
+            <div className="text-center space-y-1">
+              <h2 className="text-lg font-bold tracking-tight">Scannez pour découvrir UNPRO</h2>
+              <p className="text-sm text-muted-foreground">{POST_GEN_SUBTITLES[selectedType]}</p>
+            </div>
             <div dangerouslySetInnerHTML={{ __html: activeQrSvg }} className="bg-white p-3 rounded-xl" />
-            <div className="text-xs text-muted-foreground break-all text-center">{trackingBase}{activeShort}</div>
             <div className="flex gap-2 w-full">
               <Button variant="outline" className="flex-1" onClick={() => copyLink(activeShort)}><Copy className="w-4 h-4 mr-1" />Copier</Button>
               <Button variant="outline" className="flex-1" onClick={() => downloadPng(activeShort)}><Download className="w-4 h-4 mr-1" />PNG</Button>
@@ -234,20 +236,15 @@ export default function QrGeneratorPage() {
         )}
 
         <section>
-          <h2 className="text-lg font-bold mb-3">Mes QR</h2>
+          <h2 className="text-lg font-bold mb-3">Mes partages</h2>
           {links.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aucun QR pour l'instant.</p>
+            <p className="text-sm text-muted-foreground">Vos partages apparaîtront ici.</p>
           ) : (
             <div className="space-y-2">
               {links.map((l) => (
                 <Card key={l.id} className="p-3 flex items-center gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold truncate">{l.label || l.qr_type || "QR"}</div>
-                    <div className="text-[11px] text-muted-foreground truncate">{trackingBase}{l.short_code}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-sm font-bold">{l.scans}</div>
-                    <div className="text-[10px] text-muted-foreground">scans</div>
+                    <div className="text-sm font-semibold truncate">{l.label || "Partage UNPRO"}</div>
                   </div>
                   <Button size="sm" variant="ghost" onClick={() => copyLink(l.short_code)} aria-label="Copier"><Copy className="w-4 h-4" /></Button>
                   <Button size="sm" variant="ghost" onClick={() => toggleActive(l)} aria-label="Activer/Désactiver">
