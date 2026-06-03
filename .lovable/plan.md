@@ -1,123 +1,129 @@
-## UNPRO Concierge Activation Engine — First 5 Manual Closes
+# Autonomous Contractor Activation Engine
 
-Goal: a focused cockpit to personally orchestrate 20 high-quality contractors → 5 paid activations. Reuses existing `contractor_prospects` + outbound infra. No automation-first build, no generic SaaS onboarding.
+## Principe directeur
 
----
+Tu as déjà 80% de l'infra: `contractor_prospects`, `outbound_*` (45+ tables), `sniper-*`, `acq-*`, `war-prospecting-engine`, AIPP scoring, Stripe checkout, concierge cockpit. **On n'en reconstruit rien.** On bâtit la **couche d'orchestration multi-agents** qui les fait fonctionner ensemble sans clic humain, plus l'UI cockpit pour observer le système.
 
-### What we reuse (no rebuild)
+## Architecture — 8 agents autonomes
 
-- `contractor_prospects` table (already has business, RBQ, reviews, AIPP, status fields)
-- Existing edge functions for scraping/enrichment/AIPP scoring
-- Existing Stripe checkout + dynamic pricing engine
-- Existing contractor activation pipeline (`/admin/contractor-activation-flow`)
+Chaque agent = edge function idempotente + entrée cron + état dans `agent_runs`. Orchestrateur central (`agent-orchestrator` existe) déclenche selon priorité.
 
-### What we add (concierge layer)
-
-**1. New cockpit page — `/admin/concierge`**
-
-Single-screen war room, mobile-first, dark glassmorphism. Sections:
-
-- **Today's 5** — the 5 prospects to actively work today (Kanban-lite, drag between stages)
-- **Hot pipeline** — sortable list filtered to *closable* prospects only (see filter below)
-- **Next Best Action** card per prospect (computed): "Send opener", "Send demo link", "Send close message", "Call now", "Send payment link"
-- **Live activity feed** — replies, opens, payments
-- **Today's metric strip** — Conversations / Demos / Activations vs target (5/2/1)
-
-**2. Precision targeting filter (Discovery view)**
-
-New view in cockpit + DB view `v_concierge_targets`:
-- Trade ∈ {attic_insulation, french_drains, roofing, heat_pumps, kitchen_bath_GC}
-- Google rating ≥ 4.4 AND review_count ≥ 25
-- AIPP score < 60 (weak AI visibility)
-- Has website + active phone
-- `do_not_contact = false`, `payment_status = 'not_started'`
-- Ranked by: review_count × (100 − aipp_score) × trade_weight
-
-**3. Prospect drawer (right-side, slide-in)**
-
-Per-prospect command surface:
-- Header: company, trade, city, rating, reviews, AIPP score visualized
-- **Weakness card**: AI visibility gaps (no schema, generic copy, no GEO/AEO, no semantic authority) — bullet list from AIPP subscores
-- **Personalized message generator**: 3 pre-loaded templates (Opener / Reply2 / Close) auto-filled with {FirstName}, {CompanyName}, {City}, {Trade}, {ReviewCount}, {WeaknessSummary}. Edit-in-place, copy-to-clipboard, or "Open in SMS/Email" deep link.
-- **Concierge timeline**: every touch (sent, opened, replied, called, demo'd, offer sent, paid) — manual log + auto from existing channels
-- **Reserve My Territory**: generates a personalized landing link `/pro/:slug?t=:token` (existing nuclear-close infra)
-- **Custom activation offer**: pick plan, override price, generate Stripe checkout link
-- **Stage updater**: discovered → contacted → replied → interested → demo_sent → offer_sent → payment_pending → activated
-
-**4. Schema additions to `contractor_prospects`**
-
-Migration adds (only what's missing):
-- `concierge_owner_id uuid` — who's working it
-- `concierge_priority smallint` — manual 1-5 star
-- `next_action text` — computed/cached
-- `next_action_due_at timestamptz`
-- `concierge_notes text`
-- `custom_offer jsonb` (plan, price_override, expires_at, stripe_session_id)
-
-New table `concierge_touches`:
-- prospect_id, channel (sms|email|call|voicemail|inperson), direction (out|in), body, occurred_at, created_by
-
-**5. Activation trigger on payment**
-
-When `payment_status` flips to `paid` (via existing Stripe webhook), edge function `concierge-activate-prospect`:
-- Creates/links `contractors` row from prospect data
-- Triggers existing AI page generation, semantic structure, territory pages, appointment routing, trust profile (all already-built systems — just chain the calls)
-- Sets `activation_status = 'activated'`, emits `system_event`
-
-**6. Positioning copy (UI strings)**
-
-All concierge UI labels enforce the new wedge:
-- "Become one of the contractors AI recommends first"
-- "Exclusive guaranteed appointments. Not shared leads."
-- "UNPRO structures your company so AI systems understand and recommend it."
-
-No "subscription", no "marketing", no "leads".
-
----
-
-### Out of scope (explicitly NOT building this round)
-
-- Mass scraping pipeline (use what's already in `/admin/outbound`)
-- Automated multi-step sequences (concierge = human-sent)
-- New payment system (reuse dynamic-pricing + Stripe)
-- New contractor onboarding flow (reuse activation funnel)
-- Analytics dashboards beyond Today's metric strip
-
----
-
-### Technical layout
-
-```
-src/pages/admin/concierge/
-  PageConciergeCockpit.tsx          (main war room)
-  PageConciergeDiscovery.tsx        (precision targeting list)
-src/components/admin/concierge/
-  TodayFiveBoard.tsx
-  ProspectDrawer.tsx
-  WeaknessCard.tsx
-  MessageComposer.tsx                (3 templates + variable injection)
-  CustomOfferBuilder.tsx
-  ConciergeTimeline.tsx
-  NextActionChip.tsx
-  MetricStrip.tsx
-src/hooks/
-  useConciergeTargets.ts
-  useConciergeProspect.ts
-  useConciergeTouches.ts
-supabase/functions/
-  concierge-activate-prospect/      (chain existing activation calls)
-  concierge-generate-message/       (Lovable AI Gateway — personalize 3 templates)
-supabase/migrations/
-  <ts>_concierge_layer.sql           (cols on contractor_prospects + concierge_touches + v_concierge_targets view)
+```text
+Scout ─► Enrichment ─► AI Visibility ─► Messaging ─► Activation
+   ▲                                          │           │
+   └── Territory Saturation ◄─────────────────┘           ▼
+                                              Follow-up ◄─┘
+                                              ▲
+                                   Performance Optimizer
 ```
 
-Route registered at `/admin/concierge` (admin-only via existing `RoleGuard`).
+| Agent | Edge function | Réutilise | Ajout |
+|---|---|---|---|
+| Scout | `agent-scout-leads` (nouveau) | `acq-scrape-google-places`, `acq-scrape-contractors` | boucle multi-cités/trades, dédup, écrit `contractor_leads` |
+| Enrichment | `agent-enrich-leads` (nouveau) | `acq-enrich-prospect`, `aipp-real-scan` | fan-out batch + retry |
+| AI Visibility | `agent-ai-visibility` (nouveau) | AIPP real scoring engine | génère `ai_visibility_reports` + insight FR |
+| Messaging | `agent-generate-message` (nouveau) | `concierge-generate-message`, `outbound_ai_personalizations` | choisit variant gagnant via Optimizer |
+| Activation | `agent-activation-dispatch` (nouveau) | `concierge-create-offer`, `activation-create-checkout`, dynamic pricing engine | sélectionne plan auto selon territoire, génère lien, log `outreach_messages.activation_clicked` |
+| Follow-up | `agent-followup` (nouveau) | `process-outbound-queue`, `send-sms-prospect` | séquence J1/J3/J5/J7, stop conditions |
+| Territory Saturation | `agent-territory-monitor` (nouveau) | `acq_territory_slots` (existant) | recalcule, lock auto >90% |
+| Performance Optimizer | `agent-optimizer` (nouveau, daily) | `outbound_ai_scores`, `outreach_messages` | A/B variants, send times, plan pricing |
+
+## Base de données (migration unique)
+
+Nouvelles tables (les autres réutilisées telles quelles):
+
+- **`agent_runs`** — id, agent_name, started_at, finished_at, status (running/ok/error/paused), input jsonb, output jsonb, error text. Source de vérité du monitoring.
+- **`outreach_messages`** — extension/vue sur `campaign_send_log` + `outbound_contacts` pour exposer le schéma demandé (contractor_id, channel, variant, opened_at, replied_at, activation_clicked, activation_completed). Si schéma actuel diverge, créer table dédiée et migrer les nouveaux envois ici.
+- **`ai_visibility_reports`** — contractor_id, visibility_score, competitors jsonb, missing_entities jsonb, ai_summary text, generated_at. Une ligne par scan.
+- **`activation_quotas`** — global/trade/city/phone, period (day), limit, used. Atomique via UPSERT + CHECK trigger.
+- **`agent_safety_events`** — bounce_rate, sms_fail, stripe_error, complaint → pause campagne automatique.
+
+Étendre `acq_territory_slots`: ajouter `saturation_percent` (generated), `lock_status` (auto/manual/open), `auto_locked_at`.
+
+`contractor_leads` existe déjà — on aligne les statuts (`discovered → enriched → scored → contacted → opened → replied → interested → activation_sent → activated → paused → rejected`) via une enum dédiée et migration des valeurs existantes.
+
+GRANT + RLS sur toutes les nouvelles tables (admin only via `has_role('admin')`).
+
+## Edge functions à créer
+
+1. `agent-scout-leads` — cron 15 min, respecte quotas, écrit leads bruts.
+2. `agent-enrich-leads` — cron 1h, prend `status=discovered`, écrit `enriched`.
+3. `agent-ai-visibility` — cron 1h, écrit `ai_visibility_reports` + `ai_visibility_score` sur lead.
+4. `agent-generate-message` — déclenché par scoring, écrit `outreach_messages` (status=pending).
+5. `agent-send-outreach` — cron 2h, drain pending → SMS/email via `send-sms-prospect`/email existant, respecte `activation_quotas`.
+6. `agent-followup` — cron 6h, détecte non-réponses, génère J3/J5/J7 avec ton escaladé.
+7. `agent-activation-dispatch` — déclenché sur `status=interested` ou clic, sélectionne plan dynamique, génère lien via `activation-create-checkout`, envoie.
+8. `agent-territory-monitor` — cron 30 min, recompute saturation, lock >90%, déclenche `agent-safety-pause`.
+9. `agent-optimizer` — cron daily, recalcule meilleur variant/heure/prix.
+10. `agent-safety-pause` — déclenché par seuils, pause campagne, écrit `agent_safety_events`.
+
+Toutes utilisent `import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1"` (kernel memory).
+
+## Pricing dynamique (Activation Agent)
+
+```text
+base_price = match(trade_demand, territory_saturation)
+  saturation < 30% AND competitors < 3  → 149 (Recrue)
+  saturation 30–70%                     → 349 (Pro)
+  saturation > 70% OR top_3_city        → 599 (Premium)
+```
+
+Respecte `CONTRACTOR_PLANS` (`src/config/contractorPlans.ts`) — interdit toute valeur hors catalogue.
+
+## UI — Cockpit Autonome (admin)
+
+Route: `/admin/autonomous-engine` (rajoutée à `src/app/router.tsx`, admin-only).
+
+Pages/composants (premium dark, glass, blue glow — pas de redesign):
+
+- `PageAutonomousEngine.tsx` — header KPI live (leads/j, sent/j, replies, activations, MRR added), grid 8 agents.
+- `AgentCard.tsx` — par agent: status pill, dernière exécution, throughput, bouton pause/resume, erreurs récentes.
+- `QuotaStrip.tsx` — barres SMS/email/activations vs daily caps, codes couleur.
+- `TerritoryHeatmap.tsx` — table trade×ville avec saturation %, lock status, places restantes.
+- `LeadTimelineDrawer.tsx` — clic sur lead → timeline complète (scraped → analyzed → message → sent → opened → clicked → replied → activated) avec UI sniper-style existante.
+- `AIVisibilityReportView.tsx` — page publique `/rapport-ia/:contractorId` (le lead reçoit ce lien dans le SMS), CTA "Activer ma visibilité IA" qui dispatch l'Activation Agent.
+- `SafetyAlertsPanel.tsx` — événements pause auto, bounce, Stripe errors.
+
+L'écran de la capture (ProspectDrawer du concierge) reste — il devient **lecture seule + override admin** ("Forcer l'envoi"), tout le reste est piloté par les agents.
+
+## Cron Supabase (via supabase--insert SQL avec pg_cron)
+
+```text
+*/15 * * * *  → agent-scout-leads
+0 * * * *     → agent-enrich-leads, agent-ai-visibility
+0 */2 * * *   → agent-send-outreach
+0 */6 * * *   → agent-followup
+*/30 * * * *  → agent-territory-monitor
+0 4 * * *     → agent-optimizer
+```
+
+## Safety systems (obligatoires)
+
+Pause auto si: bounce_rate > 8%, SMS fail > 15%, Stripe error rate > 5%, saturation atteinte, quota global dépassé, API key épuisée. Écrit `agent_safety_events`, notifie via `outbound_admin_alerts`.
+
+## Hors scope (intentionnel)
+
+- Pas de refonte du concierge cockpit, AIPP, Stripe, ou contractor activation flow.
+- Pas de nouveaux fournisseurs SMS/email — réutilise l'existant.
+- Pas de scraping de nouvelles sources (RBQ/Facebook au-delà de ce qui est déjà branché dans `acq-scrape-*` et `facebook_extraction_campaigns`).
+- Pas de changement aux pricing catalogues.
+
+## Livraison en 3 phases
+
+**Phase 1 — Foundation (cette session)**
+- Migration: `agent_runs`, `ai_visibility_reports`, `activation_quotas`, `agent_safety_events`, enum statuts, extension `acq_territory_slots`.
+- Edge functions: `agent-scout-leads`, `agent-enrich-leads`, `agent-ai-visibility`, `agent-generate-message`, `agent-send-outreach`, `agent-activation-dispatch`.
+- Cron entries via supabase--insert.
+- Route admin `/admin/autonomous-engine` + `PageAutonomousEngine` + `AgentCard` + `QuotaStrip`.
+
+**Phase 2** — `agent-followup`, `agent-territory-monitor`, `agent-optimizer`, `agent-safety-pause`, `TerritoryHeatmap`, `SafetyAlertsPanel`.
+
+**Phase 3** — Page publique `/rapport-ia/:slug`, A/B variants automatiques, dashboard MRR added.
+
+## Critère de succès
+
+À la fin de la Phase 1, depuis `/admin/autonomous-engine`: bouton **"Démarrer le moteur"** → 24h plus tard, sans intervention, on observe leads scrapés, scorés, messages envoyés, premiers liens d'activation cliqués, et les quotas respectés. Aucun bouton "Générer le lien" cliqué manuellement.
 
 ---
 
-### Success criteria
-
-- 20 targeted contractors loaded in cockpit on day 1
-- Operator can: see Next Best Action, generate personalized message, log touch, send custom Stripe offer, mark paid → contractor page auto-goes live
-- 5 paid activations close end-to-end through the cockpit
-- Every touch + objection captured in `concierge_touches` (the moat dataset)
+**Confirme et je lance la Phase 1.**
