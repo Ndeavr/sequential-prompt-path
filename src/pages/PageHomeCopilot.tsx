@@ -11,6 +11,8 @@ import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import MainLayout from "@/layouts/MainLayout";
 import HeroCopilotMobile from "@/components/home-copilot/HeroCopilotMobile";
+import PropertyIntelligenceTicker from "@/components/home-copilot/PropertyIntelligenceTicker";
+import HomeIntelligenceActionGrid from "@/components/home-copilot/HomeIntelligenceActionGrid";
 import SectionsBelowFold from "@/components/home-copilot/SectionsBelowFold";
 import StickyBottomAlexCTA from "@/components/home-copilot/StickyBottomAlexCTA";
 import AlexCopilotConversation from "@/components/alex-copilot/AlexCopilotConversation";
