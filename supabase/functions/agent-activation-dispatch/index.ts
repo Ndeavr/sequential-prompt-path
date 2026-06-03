@@ -4,6 +4,7 @@
  * appelle activation-create-checkout et envoie le lien.
  */
 import { corsHeaders, recordAgentRun } from "../_shared/agentRun.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 function pickPlan(saturation: number, competitors: number): { slug: string; price: number } {
   if (saturation < 30 && competitors < 3) return { slug: "recrue", price: 149 };
@@ -11,12 +12,8 @@ function pickPlan(saturation: number, competitors: number): { slug: string; pric
   return { slug: "pro", price: 349 };
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  const { lead_id, triggered_by = "manual" } = await req.json().catch(() => ({}));
-  if (!lead_id) return new Response(JSON.stringify({ error: "lead_id required" }), { status: 400, headers: corsHeaders });
-
-  const result = await recordAgentRun("activation-dispatch", async (db) => {
+async function dispatchOne(lead_id: string, triggered_by: string) {
+  return await recordAgentRun("activation-dispatch", async (db) => {
     const { data: lead } = await db.from("contractor_leads").select("*").eq("id", lead_id).maybeSingle();
     if (!lead) throw new Error("lead not found");
 
@@ -32,7 +29,6 @@ Deno.serve(async (req) => {
     const competitors = Number(slot?.used_slots ?? 0);
     const plan = pickPlan(saturation, competitors);
 
-    // Reuse existing checkout function
     const r = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/activation-create-checkout`, {
       method: "POST",
       headers: {
@@ -61,9 +57,37 @@ Deno.serve(async (req) => {
 
     return { lead_id, plan: plan.slug, price: plan.price, checkout_url: link };
   }, triggered_by, { lead_id });
+}
 
-  return new Response(JSON.stringify(result), {
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const payload = await req.json().catch(() => ({}));
+  const { lead_id, triggered_by = "manual", max_batch = 10 } = payload;
+
+  if (lead_id) {
+    const result = await dispatchOne(lead_id, triggered_by);
+    return new Response(JSON.stringify(result), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: result.ok ? 200 : 500,
+    });
+  }
+
+  // Batch mode (cron): pick interested leads not yet dispatched
+  const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const { data: leads } = await db.from("contractor_leads")
+    .select("id")
+    .in("lead_status", ["interested", "ready_to_activate"])
+    .neq("outreach_status", "activation_sent")
+    .limit(Number(max_batch));
+
+  const ids = (leads ?? []).map((l: any) => l.id);
+  const results = [];
+  for (const id of ids) {
+    try { results.push(await dispatchOne(id, triggered_by)); }
+    catch (e) { results.push({ ok: false, lead_id: id, error: String(e) }); }
+  }
+  return new Response(JSON.stringify({ ok: true, processed: results.length, results }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
-    status: result.ok ? 200 : 500,
+    status: 200,
   });
 });
