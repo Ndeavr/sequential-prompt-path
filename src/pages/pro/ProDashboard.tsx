@@ -84,8 +84,8 @@ const ProDashboard = () => {
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }}
           className="text-center py-6 space-y-1"
         >
-          <p className="text-sm font-bold text-foreground">Recevez des rendez-vous exclusifs</p>
-          <p className="text-xs text-muted-foreground">Pas des leads partagés.</p>
+          <p className="text-sm font-bold text-foreground">Soyez recommandé aux bons propriétaires.</p>
+          <p className="text-xs text-muted-foreground">Des rendez-vous exclusifs. Pas des leads partagés.</p>
         </motion.div>
 
         {/* Mobile sticky CTA */}
@@ -95,7 +95,7 @@ const ProDashboard = () => {
             className="w-full py-3 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-sm shadow-[var(--shadow-glow)]"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           >
-            Compléter mon profil
+            Activer ma visibilité IA
           </motion.button>
         </div>
       </div>
