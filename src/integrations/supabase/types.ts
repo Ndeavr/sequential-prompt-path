@@ -17396,6 +17396,13 @@ export type Database = {
             referencedRelation: "contractor_prospects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "campaign_contacts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
         ]
       }
       campaign_generations: {
@@ -19594,6 +19601,57 @@ export type Database = {
             columns: ["source_connector_id"]
             isOneToOne: false
             referencedRelation: "source_connectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      concierge_touches: {
+        Row: {
+          body: string | null
+          channel: string
+          created_at: string
+          created_by: string | null
+          direction: string
+          id: string
+          metadata: Json
+          occurred_at: string
+          prospect_id: string
+        }
+        Insert: {
+          body?: string | null
+          channel: string
+          created_at?: string
+          created_by?: string | null
+          direction: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          prospect_id: string
+        }
+        Update: {
+          body?: string | null
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          direction?: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          prospect_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concierge_touches_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concierge_touches_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
         ]
@@ -23250,6 +23308,13 @@ export type Database = {
             referencedRelation: "contractor_prospects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_conversions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
         ]
       }
       contractor_credentials: {
@@ -26855,6 +26920,13 @@ export type Database = {
             referencedRelation: "contractor_prospects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_outreach_tests_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
         ]
       }
       contractor_performance_metrics: {
@@ -27839,6 +27911,13 @@ export type Database = {
             referencedRelation: "contractor_prospects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_profiles_draft_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
         ]
       }
       contractor_prospect_contacts: {
@@ -27884,6 +27963,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prospect_contacts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
         ]
@@ -27943,6 +28029,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: true
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prospect_enrichment_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: true
+            referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
         ]
@@ -28008,6 +28101,13 @@ export type Database = {
             referencedRelation: "contractor_prospects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_prospect_scores_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
         ]
       }
       contractor_prospects: {
@@ -28021,9 +28121,14 @@ export type Database = {
           business_name: string
           category_slug: string | null
           city: string | null
+          concierge_notes: string | null
+          concierge_owner_id: string | null
+          concierge_priority: number | null
+          concierge_stage: string | null
           confidence_score: number | null
           contractor_id: string | null
           created_at: string
+          custom_offer: Json
           dedupe_confidence: number | null
           dedupe_matched_id: string | null
           dedupe_signals: Json
@@ -28047,6 +28152,7 @@ export type Database = {
           needs_review: boolean
           neq: string | null
           next_action: string | null
+          next_action_due_at: string | null
           normalized_domain: string | null
           onboarding_status: string
           outreach_status: string
@@ -28089,9 +28195,14 @@ export type Database = {
           business_name: string
           category_slug?: string | null
           city?: string | null
+          concierge_notes?: string | null
+          concierge_owner_id?: string | null
+          concierge_priority?: number | null
+          concierge_stage?: string | null
           confidence_score?: number | null
           contractor_id?: string | null
           created_at?: string
+          custom_offer?: Json
           dedupe_confidence?: number | null
           dedupe_matched_id?: string | null
           dedupe_signals?: Json
@@ -28115,6 +28226,7 @@ export type Database = {
           needs_review?: boolean
           neq?: string | null
           next_action?: string | null
+          next_action_due_at?: string | null
           normalized_domain?: string | null
           onboarding_status?: string
           outreach_status?: string
@@ -28157,9 +28269,14 @@ export type Database = {
           business_name?: string
           category_slug?: string | null
           city?: string | null
+          concierge_notes?: string | null
+          concierge_owner_id?: string | null
+          concierge_priority?: number | null
+          concierge_stage?: string | null
           confidence_score?: number | null
           contractor_id?: string | null
           created_at?: string
+          custom_offer?: Json
           dedupe_confidence?: number | null
           dedupe_matched_id?: string | null
           dedupe_signals?: Json
@@ -28183,6 +28300,7 @@ export type Database = {
           needs_review?: boolean
           neq?: string | null
           next_action?: string | null
+          next_action_due_at?: string | null
           normalized_domain?: string | null
           onboarding_status?: string
           outreach_status?: string
@@ -28221,6 +28339,13 @@ export type Database = {
             columns: ["dedupe_matched_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prospects_dedupe_matched_id_fkey"
+            columns: ["dedupe_matched_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
         ]
@@ -28575,6 +28700,13 @@ export type Database = {
             referencedRelation: "contractor_prospects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_recruitment_checkout_sessions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
         ]
       }
       contractor_recruitment_conversions: {
@@ -28651,6 +28783,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_conversions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
         ]
@@ -28740,6 +28879,13 @@ export type Database = {
             referencedRelation: "contractor_prospects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_recruitment_exceptions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
         ]
       }
       contractor_recruitment_messages: {
@@ -28822,6 +28968,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_messages_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
           {
@@ -28912,6 +29065,13 @@ export type Database = {
             referencedRelation: "contractor_prospects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_recruitment_offers_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
         ]
       }
       contractor_recruitment_payments: {
@@ -28979,6 +29139,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_payments_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
         ]
@@ -29049,6 +29216,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_replies_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
         ]
@@ -29232,6 +29406,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_tasks_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
         ]
@@ -42435,6 +42616,13 @@ export type Database = {
             referencedRelation: "contractor_prospects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "live_outreach_drafts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
         ]
       }
       login_interstitial_content: {
@@ -48510,6 +48698,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_messages_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
           {
@@ -56723,10 +56918,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "prospect_dedupe_reviews_candidate_prospect_id_fkey"
+            columns: ["candidate_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "prospect_dedupe_reviews_existing_prospect_id_fkey"
             columns: ["existing_prospect_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_dedupe_reviews_existing_prospect_id_fkey"
+            columns: ["existing_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
         ]
@@ -72039,6 +72248,87 @@ export type Database = {
           saturation_score: number | null
           snapshot_date: string | null
           trade_slug: string | null
+        }
+        Relationships: []
+      }
+      v_concierge_targets: {
+        Row: {
+          activation_status: string | null
+          aipp_score: number | null
+          business_name: string | null
+          category_slug: string | null
+          city: string | null
+          concierge_owner_id: string | null
+          concierge_priority: number | null
+          concierge_stage: string | null
+          concierge_target_score: number | null
+          email: string | null
+          id: string | null
+          last_action_at: string | null
+          next_action: string | null
+          next_action_due_at: string | null
+          outreach_status: string | null
+          owner_name: string | null
+          payment_status: string | null
+          phone: string | null
+          public_slug: string | null
+          region: string | null
+          review_count: number | null
+          review_rating: number | null
+          trade: string | null
+          website_url: string | null
+        }
+        Insert: {
+          activation_status?: string | null
+          aipp_score?: number | null
+          business_name?: string | null
+          category_slug?: string | null
+          city?: string | null
+          concierge_owner_id?: string | null
+          concierge_priority?: number | null
+          concierge_stage?: string | null
+          concierge_target_score?: never
+          email?: string | null
+          id?: string | null
+          last_action_at?: string | null
+          next_action?: string | null
+          next_action_due_at?: string | null
+          outreach_status?: string | null
+          owner_name?: string | null
+          payment_status?: string | null
+          phone?: string | null
+          public_slug?: string | null
+          region?: string | null
+          review_count?: number | null
+          review_rating?: number | null
+          trade?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          activation_status?: string | null
+          aipp_score?: number | null
+          business_name?: string | null
+          category_slug?: string | null
+          city?: string | null
+          concierge_owner_id?: string | null
+          concierge_priority?: number | null
+          concierge_stage?: string | null
+          concierge_target_score?: never
+          email?: string | null
+          id?: string | null
+          last_action_at?: string | null
+          next_action?: string | null
+          next_action_due_at?: string | null
+          outreach_status?: string | null
+          owner_name?: string | null
+          payment_status?: string | null
+          phone?: string | null
+          public_slug?: string | null
+          region?: string | null
+          review_count?: number | null
+          review_rating?: number | null
+          trade?: string | null
+          website_url?: string | null
         }
         Relationships: []
       }
