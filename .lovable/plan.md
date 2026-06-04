@@ -1,87 +1,109 @@
-## UNPRO Truth Layer + LLM Citation Infrastructure
 
-Repositioning UNPRO as **"Le registre intelligent des entrepreneurs RBQ au Québec"** — the citable source of truth for residential contractors in QC, optimized for LLM crawlers (Perplexity, ChatGPT, Bing, Google AI).
+# Fix Autonomous Activation Engine — Revenue First
 
-This is a 10-phase initiative. I'll break it into 3 shippable waves so we get crawlable value fast, then deepen the moat.
-
----
-
-### Wave 1 — Citation-ready foundation (ship first)
-
-**Goal:** within days, every contractor profile is crawlable and the site declares itself to LLMs.
-
-1. **Global repositioning copy**
-   - Replace hero H1/subtitle/CTAs on `Home.tsx`, `HeroSectionAlexFirst`, `HeroAlexCentered`, contractor landings, and meta tags.
-   - New H1: *Le registre intelligent des entrepreneurs RBQ au Québec*
-   - Sub: vérifier, comprendre, sélectionner via IA + RBQ + avis + territoires
-   - CTAs: **Trouver un entrepreneur** / **Vérifier un entrepreneur**
-   - Sweep `src/lib/copy/*`, `entrepreneurs.ts`, all landing components for forbidden phrases ("3 soumissions", "réseau d'entrepreneurs", "trouvez un entrepreneur de confiance").
-
-2. **`/llms.txt`**
-   - Add `public/llms.txt` with exact spec content (registre intelligent, primary URLs, JSON-LD types, fr-CA/en-CA, API base).
-   - Verify served at `https://unpro.ca/llms.txt`.
-
-3. **SSR/prerender for `/pro/:slug` (and `/contractor/:slug/:city`)**
-   - Current pages are SPA → invisible to non-JS crawlers.
-   - Reuse the existing prerender infra from `mem://features/seo-index-domination` (Googlebot prerender). Extend the bot UA list to include `PerplexityBot`, `ChatGPT-User`, `GPTBot`, `ClaudeBot`, `Google-Extended`, `Bingbot`, `Applebot-Extended`, `CCBot`.
-   - Server-rendered HTML must include: business_name (H1), RBQ #, territory list, services, description, reviews, photo URLs, availability summary, UNPRO score.
-   - Inject `Contractor` JSON-LD with `identifier: "RBQ XXXXX"`, `areaServed[]`, `aggregateRating`, `telephone`, `url`.
-
-4. **PIM rename**
-   - Global rename "Passeport Maison" → **PIM™ — Passeport Intelligence Maison** with sub "Le système de mémoire permanent de votre propriété".
-   - Update `PagePIMLanding.tsx`, nav, copy.
+Goal: turn the pipeline from `sent=0, paid=0` into `Lead → SMS → Reply → Stripe → Activation` with zero manual steps. The current block is the SMS quota lock + a missing Activation Agent. Everything below targets that.
 
 ---
 
-### Wave 2 — Structured data + public API
+## Wave 1 — Unblock SEND (highest ROI, ship first)
 
-5. **`contractor_entities` knowledge graph table** (migration)
-   - Columns: `contractor_id`, `rbq_number`, `specialties[]`, `cities[]`, `regions[]`, `service_radius`, `years_experience`, `licenses jsonb`, `certifications[]`, `brands[]`, `materials[]`, `review_summary text`, `pros[]`, `cons[]`, `faq jsonb`.
-   - RLS: public SELECT (anon + authenticated), service_role full.
-   - Backfill script from existing `contractors` + `brand_catalog` + reviews aggregation.
+### 1.1 Quota system (replace "998 blocages / quota atteint")
+New table `outreach_quota_state` (singleton row per channel):
+- `channel` (`sms` | `email` | `activation`)
+- `daily_limit`, `used_today`, `last_reset_at`, `next_reset_at`
+- `founder_override boolean default false`
 
-6. **Public read-only API — `/api/v1/contractors`**
-   - Edge function `public-contractors-api` (verify_jwt=false, rate-limited).
-   - `GET /api/v1/contractors?city=&trade=&rbq=&service=` → paginated list with score, specialties, service_areas.
-   - `GET /api/v1/contractors/:id` → contractor + score + service_areas + specialties + reviews + certifications.
-   - Cache-Control headers + CORS open. Document in `/llms.txt`.
+New edge function `get-outreach-quota-status` → returns the exact JSON the user specified (limit / used / remaining / reset / founder_override) for all 3 channels in one call.
 
-7. **Alex system prompt update**
-   - When user asks "trouve-moi un entrepreneur", Alex replies: *"Je vais rechercher dans le registre intelligent des entrepreneurs RBQ du Québec. Quel type de travaux souhaitez-vous réaliser ?"*
-   - Update `mem://ai/alex/system-prompt-active` + DB prompt rule.
+### 1.2 `outreach_delivery_logs` table
+Columns: `lead_id`, `channel`, `status` (`sent|failed|blocked`), `block_reason`, `quota_name`, `quota_value`, `quota_used`, `provider_message_id`, `provider_response jsonb`, `error_code`, `phone_raw`, `phone_normalized`, `attempt`, `created_at`.
 
----
+Block reason enum:
+`SMS_QUOTA_REACHED`, `EMAIL_QUOTA_REACHED`, `INVALID_PHONE`, `TWILIO_ERROR`, `RESEND_ERROR`, `OPT_OUT`, `DUPLICATE_CONTACT`, `NO_MESSAGE_GENERATED`, `MISSING_SECRET`.
 
-### Wave 3 — Content moat + property graph
+### 1.3 Queue states on `outreach_queue` (or `agent_outreach_messages`)
+Add/normalize: `status` (`PENDING|READY|SENDING|SENT|FAILED|BLOCKED`), `attempts int default 0`, `last_attempt_at`, `next_attempt_at`.
 
-8. **AI-citable articles (100 seed)**
-   - Categories: RBQ verification, permis (toiture Laval, etc.), fondation/drain français, isolation (épaisseur QC), toiture, électricité (maître électricien).
-   - Use existing Intelligence Journal infra (`mem://features/intelligence-journal`) — Gemini 2.5 Pro generation, fr-CA, JSON-LD `Article` + `FAQPage`, internal linking to `/pro/:slug` and contractor city pages.
-   - Admin cockpit batch generator with approval queue.
+### 1.4 Rewrite `agent-send-outreach`
+- Single transaction per message: load → check quota → check dedupe → send → log to `outreach_delivery_logs` → update queue row + quota counter.
+- Quota counter increments **only on real `sent`** (not on `blocked` or `failed`).
+- If SMS blocked/failed and `email` is present → automatic fallback to email (and log both attempts).
+- Auto-retry on Twilio `429 / 500 / timeout`: schedule `next_attempt_at` at +5m, +30m, +2h (max 3 attempts), then mark `FAILED`.
+- `founder_override=true` bypasses quota checks entirely.
 
-9. **`property_graph` table — Homeowner Data Moat**
-   - Linked to `property_id`. Stores: documents, factures, soumissions, photos, garanties, inspections, sinistres, entrepreneurs, AI recommendations, detected risks, chronologie.
-   - RLS: owner-only via `auth.uid()`. Service_role full for ingestion functions.
-   - Wire PIM UI to read/write this graph; expose summarized view to Alex.
+### 1.5 Founder mode + reset buttons (admin only)
+`PageAutonomousEngine` additions:
+- Toggle **Founder Mode** (admin-gated, calls edge fn to set `founder_override`).
+- Buttons: **Reset SMS Quota**, **Reset Email Quota**, **Reset Activation Quota**, **Reset All** → call `reset-outreach-quotas` edge fn with channel param.
+- **Send Test SMS to my number** + **Send Test Email** + **Run Full Pipeline Test** (Lead → Enrich → Score → SMS → Checkout, returns diagnostic JSON with raw provider response).
 
-10. **"Pourquoi UNPRO" page** — `/pourquoi-unpro`
-    - Sections: Données RBQ structurées · Entrepreneurs vérifiés · Corpus résidentiel QC · PIM · API publique · Données propriétaires exclusives · Recommandations IA explicables.
-    - Internal links to API docs, /pro listing, /pim, /journal.
-
----
-
-### Technical notes
-
-- **Prerender extension**: locate the existing edge function/middleware from `seo-index-domination`. Add LLM bot UAs and ensure JSON-LD blocks are server-rendered (not Helmet-only) for `/pro/:slug`, `/contractor/:slug/:city`, `/articles/*`, `/pim`.
-- **Forbidden-copy guard**: add a vitest snapshot test that fails if "3 soumissions", "réseau d'entrepreneurs", "trouvez un entrepreneur de confiance" appear in `src/`.
-- **No business-logic regression**: matching, booking, pricing, Alex voice config untouched. Only copy, SSR surface, public API, schema additions.
-- **Memories to update after ship**: positioning core rule (replace "3 quotes rejection" with "registre intelligent" framing), add `mem://features/truth-layer-llm-citation` referencing API + llms.txt + prerender bot list.
+### 1.6 Daily cron
+Schedule `reset-outreach-quotas` via `pg_cron` at `0 0 * * *` (resets `used_today`, sets `last_reset_at`/`next_reset_at`).
 
 ---
 
-### Decisions I need from you before building
+## Wave 2 — Activation Engine V2
 
-1. **Scope confirmation** — ship all 3 waves, or only Wave 1 (copy + llms.txt + SSR + PIM rename) first to validate impact?
-2. **Article generation** — auto-publish the 100 articles, or generate as drafts in admin queue for manual approval?
-3. **Public API auth** — fully open (anon, rate-limited by IP) or require a free API key for analytics?
-4. **`property_graph`** — net-new table, or extend existing `properties` + related tables? (I'd need to inspect current schema to confirm — happy to do this in build mode.)
+### 2.1 Reply ingestion
+Twilio inbound SMS webhook → `twilio-inbound-sms` edge fn → writes to `outreach_replies` and triggers Activation Agent.
+
+### 2.2 `activation-agent` edge fn
+Flow:
+1. Classify reply intent via Lovable AI (`interested | not_interested | question | stop`).
+2. If interested → pick plan from existing `contractor_plan_definitions` based on AIPP score + objective.
+3. Call existing `create-contractor-checkout` with `prefill` (email/phone/business_name) → get Stripe URL.
+4. Send checkout URL via SMS (or email fallback), log to `outreach_delivery_logs`.
+5. Persist state in new `activation_sessions` table (`lead_id`, `reply_id`, `intent`, `plan_code`, `checkout_url`, `checkout_session_id`, `status`, timestamps).
+
+### 2.3 Stripe webhook hardening
+Extend existing Stripe webhook handler: on `checkout.session.completed` for a contractor checkout →
+- update `contractor_prospects` → create/upgrade `contractors` row
+- create `contractor_subscriptions`
+- assign plan, set `profile_status = active`
+- enqueue `aipp-real-scan` for fresh score
+- emit `system_events` row `contractor_activated`
+
+### 2.4 Conversion funnel statuses
+Add `pipeline_status` enum to leads/prospects:
+`Discovered → Enriched → Scored → Messaged → Delivered → Opened → Replied → Qualified → CheckoutSent → Paid → Activated`.
+Update each step (send engine, webhook handlers, activation agent) to advance the status.
+
+---
+
+## Wave 3 — Revenue Dashboard
+
+New tab on `PageAutonomousEngine` (or new `/admin/revenue`):
+- KPI row: **Revenue Today**, **Revenue MTD**, **Activated Contractors**, **Pending Payments (checkout sent, not paid)**, **Checkout Links Sent**, **Conversion Rate (paid / replied)**.
+- Funnel widget: counts at each of the 11 pipeline statuses.
+- Live tail of `outreach_delivery_logs` + `activation_sessions`.
+- Backed by new edge fn `get-revenue-dashboard`.
+
+---
+
+## Technical notes
+
+- All new tables: `GRANT` to `authenticated` + `service_role`, RLS `has_role('admin')` for read, service_role for write.
+- All edge fns use existing CORS + Lovable AI Gateway pattern; deno-compatible `esm.sh/@supabase/supabase-js@2.49.1`.
+- Quota check is a single SQL function `public.check_and_consume_quota(channel, count)` (security definer) used by send engine — atomic, no race.
+- Reuse existing `create-contractor-checkout` and Stripe webhook — do not duplicate.
+- Founder Mode is per-environment, persisted in `outreach_quota_state.founder_override`; no env var.
+
+---
+
+## Success criteria
+
+After deploy, running the **Full Pipeline Test** on 1 lead returns:
+```
+sent: 1, failed: 0, provider_message_id: "SM…"
+checkout_url: "https://checkout.stripe.com/…"
+```
+And `blocked=0, sent>0` appears in the dashboard. Once a real reply arrives, activation runs end-to-end without admin input.
+
+---
+
+## Decisions needed before build
+
+1. **Scope** — Ship all 3 waves in one go, or only Wave 1 (unblock send) first so you can validate revenue flow before building the dashboard?
+2. **SMS quota default** — keep 50/day or raise (you'll likely hit it again instantly with 238 leads queued)?
+3. **Email fallback** — auto-send via Resend if SMS blocked, or only when SMS hard-fails (invalid phone)?
+4. **Reply ingestion** — confirm Twilio inbound webhook is already pointed at the project, or do I need to add the webhook URL to your Twilio console as part of this work?
