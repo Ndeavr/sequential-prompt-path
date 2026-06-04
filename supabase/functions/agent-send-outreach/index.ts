@@ -23,14 +23,20 @@ async function logDelivery(db: SupabaseClient, row: Record<string, unknown>) {
   try { await db.from("outreach_delivery_logs").insert(row); } catch (_) { /* ignore */ }
 }
 
-async function checkQuota(db: SupabaseClient, channel: Channel, scope: string, scopeKey: string, defaultLimit: number) {
+async function getFounderOverride(db: SupabaseClient): Promise<boolean> {
+  const { data } = await db.from("outreach_settings").select("founder_override").eq("id", true).maybeSingle();
+  return !!data?.founder_override;
+}
+
+async function checkQuota(db: SupabaseClient, channel: Channel, scope: string, scopeKey: string, defaultLimit: number, founder: boolean) {
+  if (founder) return { ok: true, id: null as string | null, used: 0, limit: defaultLimit, founder: true };
   const today = new Date().toISOString().slice(0, 10);
   const { data } = await db.from("activation_quotas")
     .select("id, used_count, limit_count")
     .eq("scope", scope).eq("scope_key", scopeKey).eq("channel", channel).eq("period_date", today)
     .maybeSingle();
-  if (!data) return { ok: true, id: null as string | null, used: 0, limit: defaultLimit };
-  return { ok: data.used_count < data.limit_count, id: data.id as string, used: data.used_count, limit: data.limit_count };
+  if (!data) return { ok: true, id: null as string | null, used: 0, limit: defaultLimit, founder: false };
+  return { ok: data.used_count < data.limit_count, id: data.id as string, used: data.used_count, limit: data.limit_count, founder: false };
 }
 
 async function consumeQuota(db: SupabaseClient, channel: Channel, scope: string, scopeKey: string, defaultLimit: number) {
