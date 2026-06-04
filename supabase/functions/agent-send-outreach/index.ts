@@ -112,18 +112,26 @@ Deno.serve(async (req) => {
     .select("id").single();
   const runId = run!.id as string;
   const t0 = Date.now();
+  const founder = await getFounderOverride(db);
+  const RETRY_DELAYS_MIN = [5, 30, 120];
+  const MAX_ATTEMPTS = 3;
 
-  const reasons = { missing_secret: 0, invalid_phone: 0, provider_rejected: 0, quota: 0, no_contact: 0, opt_out: 0, cooldown: 0 };
+  const reasons = { missing_secret: 0, invalid_phone: 0, provider_rejected: 0, quota: 0, no_contact: 0, opt_out: 0, cooldown: 0, retry_scheduled: 0 };
   let sent = 0, failed = 0, blocked = 0, smsSent = 0, emailSent = 0;
   const lastIds: { provider_message_id?: string; channel?: Channel }[] = [];
 
   try {
-    const { data: msgs } = await db.from("agent_outreach_messages")
-      .select("id, lead_id, channel, body, subject, variant")
+    const nowIso = new Date().toISOString();
+    const leadFilter = body.lead_id ? { lead_id: String(body.lead_id) } : null;
+    let q = db.from("agent_outreach_messages")
+      .select("id, lead_id, channel, body, subject, variant, attempts")
       .eq("status", "pending")
-      .lte("scheduled_at", new Date().toISOString())
+      .or(`next_attempt_at.is.null,next_attempt_at.lte.${nowIso}`)
+      .lte("scheduled_at", nowIso)
       .order("scheduled_at", { ascending: true })
       .limit(limit);
+    if (leadFilter) q = q.eq("lead_id", leadFilter.lead_id);
+    const { data: msgs } = await q;
 
     for (const m of msgs ?? []) {
       const { data: lead } = await db.from("contractor_leads")
