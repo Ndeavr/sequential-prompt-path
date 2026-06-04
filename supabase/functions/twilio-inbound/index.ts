@@ -57,8 +57,32 @@ serve(async (req) => {
       provider: "twilio",
     });
 
-    if (intent === "stop") return twiml(); // STOP: silence (carrier handles)
+    // Resolve lead by phone (last 10 digits)
+    const tail = From.replace(/\D/g, "").slice(-10);
+    let leadId: string | null = null;
+    if (tail) {
+      const { data: lead } = await sb.from("contractor_leads")
+        .select("id").or(`phone.ilike.%${tail},mobile_phone.ilike.%${tail}`)
+        .limit(1).maybeSingle();
+      leadId = lead?.id ?? null;
+    }
+
+    const { data: reply } = await sb.from("outreach_replies").insert({
+      lead_id: leadId, channel: "sms", provider: "twilio", provider_message_id: MessageSid,
+      from_address: From, body: Body, intent,
+    }).select("id").single();
+
+    if (leadId) {
+      await sb.from("contractor_leads").update({ pipeline_status: "Replied" }).eq("id", leadId);
+    }
+
+    if (intent === "stop") return twiml();
     if (intent === "help") return twiml("UNPRO: Aide au 1-800-UNPRO. Répondez STOP pour vous désabonner.");
+
+    // Fire-and-forget activation agent
+    if (reply?.id) {
+      sb.functions.invoke("agent-activation-reply", { body: { reply_id: reply.id } }).catch(() => {});
+    }
     return twiml();
   } catch (e) {
     console.error("twilio-inbound", e);

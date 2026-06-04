@@ -1180,6 +1180,75 @@ export type Database = {
         }
         Relationships: []
       }
+      activation_sessions: {
+        Row: {
+          activated_at: string | null
+          amount_paid_cents: number | null
+          checkout_session_id: string | null
+          checkout_url: string | null
+          created_at: string
+          id: string
+          intent: string | null
+          intent_confidence: number | null
+          lead_id: string | null
+          metadata: Json
+          paid_at: string | null
+          recommended_plan: string | null
+          reply_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          amount_paid_cents?: number | null
+          checkout_session_id?: string | null
+          checkout_url?: string | null
+          created_at?: string
+          id?: string
+          intent?: string | null
+          intent_confidence?: number | null
+          lead_id?: string | null
+          metadata?: Json
+          paid_at?: string | null
+          recommended_plan?: string | null
+          reply_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          amount_paid_cents?: number | null
+          checkout_session_id?: string | null
+          checkout_url?: string | null
+          created_at?: string
+          id?: string
+          intent?: string | null
+          intent_confidence?: number | null
+          lead_id?: string | null
+          metadata?: Json
+          paid_at?: string | null
+          recommended_plan?: string | null
+          reply_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activation_sessions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activation_sessions_reply_id_fkey"
+            columns: ["reply_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_replies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activation_steps: {
         Row: {
           contractor_id: string
@@ -3271,15 +3340,19 @@ export type Database = {
         Row: {
           activation_clicked: boolean
           activation_completed: boolean
+          attempts: number
           body: string
           channel: string
           created_at: string
           error: string | null
           id: string
+          last_attempt_at: string | null
           lead_id: string
           metadata: Json | null
+          next_attempt_at: string | null
           opened_at: string | null
           replied_at: string | null
+          retry_reason: string | null
           scheduled_at: string
           sent_at: string | null
           status: string
@@ -3289,15 +3362,19 @@ export type Database = {
         Insert: {
           activation_clicked?: boolean
           activation_completed?: boolean
+          attempts?: number
           body: string
           channel: string
           created_at?: string
           error?: string | null
           id?: string
+          last_attempt_at?: string | null
           lead_id: string
           metadata?: Json | null
+          next_attempt_at?: string | null
           opened_at?: string | null
           replied_at?: string | null
+          retry_reason?: string | null
           scheduled_at?: string
           sent_at?: string | null
           status?: string
@@ -3307,15 +3384,19 @@ export type Database = {
         Update: {
           activation_clicked?: boolean
           activation_completed?: boolean
+          attempts?: number
           body?: string
           channel?: string
           created_at?: string
           error?: string | null
           id?: string
+          last_attempt_at?: string | null
           lead_id?: string
           metadata?: Json | null
+          next_attempt_at?: string | null
           opened_at?: string | null
           replied_at?: string | null
+          retry_reason?: string | null
           scheduled_at?: string
           sent_at?: string | null
           status?: string
@@ -26136,6 +26217,7 @@ export type Database = {
           outreach_status: string
           payment_status: string
           phone: string | null
+          pipeline_status: string | null
           postal_code: string | null
           priority_level: string | null
           priority_score: number | null
@@ -26182,6 +26264,7 @@ export type Database = {
           outreach_status?: string
           payment_status?: string
           phone?: string | null
+          pipeline_status?: string | null
           postal_code?: string | null
           priority_level?: string | null
           priority_score?: number | null
@@ -26228,6 +26311,7 @@ export type Database = {
           outreach_status?: string
           payment_status?: string
           phone?: string | null
+          pipeline_status?: string | null
           postal_code?: string | null
           priority_level?: string | null
           priority_score?: number | null
@@ -49406,6 +49490,56 @@ export type Database = {
           },
         ]
       }
+      outreach_replies: {
+        Row: {
+          body: string | null
+          channel: string
+          created_at: string
+          from_address: string | null
+          id: string
+          intent: string | null
+          lead_id: string | null
+          metadata: Json
+          processed: boolean
+          provider: string | null
+          provider_message_id: string | null
+        }
+        Insert: {
+          body?: string | null
+          channel?: string
+          created_at?: string
+          from_address?: string | null
+          id?: string
+          intent?: string | null
+          lead_id?: string | null
+          metadata?: Json
+          processed?: boolean
+          provider?: string | null
+          provider_message_id?: string | null
+        }
+        Update: {
+          body?: string | null
+          channel?: string
+          created_at?: string
+          from_address?: string | null
+          id?: string
+          intent?: string | null
+          lead_id?: string | null
+          metadata?: Json
+          processed?: boolean
+          provider?: string | null
+          provider_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_replies_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outreach_reply_events: {
         Row: {
           campaign_id: string | null
@@ -49581,6 +49715,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      outreach_settings: {
+        Row: {
+          activation_daily_limit: number
+          email_daily_limit: number
+          founder_override: boolean
+          id: boolean
+          sms_daily_limit: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          activation_daily_limit?: number
+          email_daily_limit?: number
+          founder_override?: boolean
+          id?: boolean
+          sms_daily_limit?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          activation_daily_limit?: number
+          email_daily_limit?: number
+          founder_override?: boolean
+          id?: boolean
+          sms_daily_limit?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       outreach_suppressions: {
         Row: {
@@ -73899,6 +74063,10 @@ export type Database = {
       }
       set_current_contractor_aipp_score: {
         Args: { _contractor_id: string; _score_id: string }
+        Returns: undefined
+      }
+      set_lead_pipeline_status: {
+        Args: { p_lead_id: string; p_status: string }
         Returns: undefined
       }
       track_affiliate_conversion: {

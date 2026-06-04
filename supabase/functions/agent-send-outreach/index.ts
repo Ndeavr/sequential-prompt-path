@@ -23,14 +23,20 @@ async function logDelivery(db: SupabaseClient, row: Record<string, unknown>) {
   try { await db.from("outreach_delivery_logs").insert(row); } catch (_) { /* ignore */ }
 }
 
-async function checkQuota(db: SupabaseClient, channel: Channel, scope: string, scopeKey: string, defaultLimit: number) {
+async function getFounderOverride(db: SupabaseClient): Promise<boolean> {
+  const { data } = await db.from("outreach_settings").select("founder_override").eq("id", true).maybeSingle();
+  return !!data?.founder_override;
+}
+
+async function checkQuota(db: SupabaseClient, channel: Channel, scope: string, scopeKey: string, defaultLimit: number, founder: boolean) {
+  if (founder) return { ok: true, id: null as string | null, used: 0, limit: defaultLimit, founder: true };
   const today = new Date().toISOString().slice(0, 10);
   const { data } = await db.from("activation_quotas")
     .select("id, used_count, limit_count")
     .eq("scope", scope).eq("scope_key", scopeKey).eq("channel", channel).eq("period_date", today)
     .maybeSingle();
-  if (!data) return { ok: true, id: null as string | null, used: 0, limit: defaultLimit };
-  return { ok: data.used_count < data.limit_count, id: data.id as string, used: data.used_count, limit: data.limit_count };
+  if (!data) return { ok: true, id: null as string | null, used: 0, limit: defaultLimit, founder: false };
+  return { ok: data.used_count < data.limit_count, id: data.id as string, used: data.used_count, limit: data.limit_count, founder: false };
 }
 
 async function consumeQuota(db: SupabaseClient, channel: Channel, scope: string, scopeKey: string, defaultLimit: number) {
@@ -106,18 +112,26 @@ Deno.serve(async (req) => {
     .select("id").single();
   const runId = run!.id as string;
   const t0 = Date.now();
+  const founder = await getFounderOverride(db);
+  const RETRY_DELAYS_MIN = [5, 30, 120];
+  const MAX_ATTEMPTS = 3;
 
-  const reasons = { missing_secret: 0, invalid_phone: 0, provider_rejected: 0, quota: 0, no_contact: 0, opt_out: 0, cooldown: 0 };
+  const reasons = { missing_secret: 0, invalid_phone: 0, provider_rejected: 0, quota: 0, no_contact: 0, opt_out: 0, cooldown: 0, retry_scheduled: 0 };
   let sent = 0, failed = 0, blocked = 0, smsSent = 0, emailSent = 0;
   const lastIds: { provider_message_id?: string; channel?: Channel }[] = [];
 
   try {
-    const { data: msgs } = await db.from("agent_outreach_messages")
-      .select("id, lead_id, channel, body, subject, variant")
+    const nowIso = new Date().toISOString();
+    const leadFilter = body.lead_id ? { lead_id: String(body.lead_id) } : null;
+    let q = db.from("agent_outreach_messages")
+      .select("id, lead_id, channel, body, subject, variant, attempts")
       .eq("status", "pending")
-      .lte("scheduled_at", new Date().toISOString())
+      .or(`next_attempt_at.is.null,next_attempt_at.lte.${nowIso}`)
+      .lte("scheduled_at", nowIso)
       .order("scheduled_at", { ascending: true })
       .limit(limit);
+    if (leadFilter) q = q.eq("lead_id", leadFilter.lead_id);
+    const { data: msgs } = await q;
 
     for (const m of msgs ?? []) {
       const { data: lead } = await db.from("contractor_leads")
@@ -159,16 +173,16 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Quota CHECK (no consume yet)
+      // Quota CHECK (no consume yet) — bypassed when founder_override is on
       const limitDefault = useChannel === "sms" ? 50 : 25;
-      const q = await checkQuota(db, useChannel, "global", "*", limitDefault);
-      if (!q.ok) {
+      const qc = await checkQuota(db, useChannel, "global", "*", limitDefault, founder);
+      if (!qc.ok) {
         blocked++; reasons.quota++;
         await logDelivery(db, {
           lead_id: lead.id, message_id: m.id, channel: useChannel,
-          status: "blocked", error_code: "quota_exceeded",
+          status: "blocked", error_code: `${useChannel.toUpperCase()}_QUOTA_REACHED`,
           recipient_raw: rawPhone ?? lead.email, recipient_normalized: normalized,
-          message_body: m.body, metadata: { used: q.used, limit: q.limit },
+          message_body: m.body, metadata: { used: qc.used, limit: qc.limit, quota_name: `${useChannel}_daily`, quota_value: qc.limit, quota_used: qc.used },
         });
         continue;
       }
@@ -194,40 +208,55 @@ Deno.serve(async (req) => {
       }
 
       const errorCode = !attempt.ok
-        ? ((attempt as any).code === "missing_secret" ? "missing_secret" : `provider_${attempt.status}`)
+        ? ((attempt as any).code === "missing_secret" ? "MISSING_SECRET" : `PROVIDER_${attempt.status}`)
         : null;
 
+      const currentAttempt = ((m as any).attempts ?? 0) + 1;
       await logDelivery(db, {
         lead_id: lead.id, message_id: m.id, channel: useChannel, provider,
         recipient_raw: rawPhone ?? lead.email, recipient_normalized: recipient,
-        message_body: m.body,
+        message_body: m.body, attempt: currentAttempt,
         status: attempt.ok ? "sent" : "failed",
         error_code: errorCode,
         error_message: attempt.ok ? null : (attempt.message ?? null),
         provider_message_id: providerMessageId ?? null,
         sent_at: attempt.ok ? new Date().toISOString() : null,
-        metadata: { http_status: attempt.status, raw: attempt.raw },
+        metadata: { http_status: attempt.status, raw: attempt.raw, founder_override: founder },
       });
 
       if (attempt.ok) {
         sent++;
         if (useChannel === "sms") smsSent++; else emailSent++;
         lastIds.push({ provider_message_id: providerMessageId, channel: useChannel });
-        await consumeQuota(db, useChannel, "global", "*", limitDefault);
+        if (!founder) await consumeQuota(db, useChannel, "global", "*", limitDefault);
         await db.from("agent_outreach_messages").update({
-          status: "sent", sent_at: new Date().toISOString(),
+          status: "sent", sent_at: new Date().toISOString(), attempts: currentAttempt,
+          last_attempt_at: new Date().toISOString(), next_attempt_at: null,
           metadata: { provider, provider_message_id: providerMessageId, channel_used: useChannel },
         }).eq("id", m.id);
         await db.from("contractor_leads").update({
-          outreach_status: "contacted", lead_status: "contacted",
+          outreach_status: "contacted", lead_status: "contacted", pipeline_status: "Messaged",
           last_agent_run_at: new Date().toISOString(),
         }).eq("id", lead.id);
         continue;
       }
 
-      // SMS failed → try email fallback once
+      // Retry on transient Twilio/Resend errors (429/500/timeout)
+      const isTransient = attempt.status === 429 || attempt.status >= 500 || attempt.status === 0;
+      if (isTransient && currentAttempt < MAX_ATTEMPTS) {
+        const delayMin = RETRY_DELAYS_MIN[Math.min(currentAttempt - 1, RETRY_DELAYS_MIN.length - 1)];
+        const nextAt = new Date(Date.now() + delayMin * 60_000).toISOString();
+        reasons.retry_scheduled++;
+        await db.from("agent_outreach_messages").update({
+          status: "pending", attempts: currentAttempt, last_attempt_at: new Date().toISOString(),
+          next_attempt_at: nextAt, retry_reason: `http_${attempt.status}`,
+        }).eq("id", m.id);
+        continue;
+      }
+
+      // SMS hard-failed → try email fallback once
       if (useChannel === "sms" && canEmail) {
-        const eq = await checkQuota(db, "email", "global", "*", 25);
+        const eq = await checkQuota(db, "email", "global", "*", 25, founder);
         if (eq.ok) {
           const subject = `${lead.first_name || lead.company_name || "Bonjour"} — UNPRO`;
           const html = `<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.55;color:#0F172A">${m.body.replace(/\n/g, "<br/>")}</div>`;
@@ -235,24 +264,24 @@ Deno.serve(async (req) => {
           await logDelivery(db, {
             lead_id: lead.id, message_id: m.id, channel: "email", provider: "resend",
             recipient_raw: lead.email, recipient_normalized: lead.email,
-            message_body: m.body, attempt: 2,
+            message_body: m.body, attempt: currentAttempt + 1,
             status: fb.ok ? "sent" : "failed",
-            error_code: fb.ok ? null : `provider_${fb.status}`,
+            error_code: fb.ok ? null : `PROVIDER_${fb.status}`,
             error_message: fb.ok ? null : (fb.message ?? null),
             provider_message_id: fb.id ?? null,
             sent_at: fb.ok ? new Date().toISOString() : null,
-            metadata: { fallback_from: "sms", http_status: fb.status, raw: fb.raw },
+            metadata: { fallback_from: "sms", http_status: fb.status, raw: fb.raw, founder_override: founder },
           });
           if (fb.ok) {
             sent++; emailSent++;
             lastIds.push({ provider_message_id: fb.id, channel: "email" });
-            await consumeQuota(db, "email", "global", "*", 25);
+            if (!founder) await consumeQuota(db, "email", "global", "*", 25);
             await db.from("agent_outreach_messages").update({
-              status: "sent", sent_at: new Date().toISOString(),
+              status: "sent", sent_at: new Date().toISOString(), attempts: currentAttempt + 1,
               metadata: { provider: "resend", provider_message_id: fb.id, channel_used: "email", fallback_from: "sms" },
             }).eq("id", m.id);
             await db.from("contractor_leads").update({
-              outreach_status: "contacted", lead_status: "contacted",
+              outreach_status: "contacted", lead_status: "contacted", pipeline_status: "Messaged",
               last_agent_run_at: new Date().toISOString(),
             }).eq("id", lead.id);
             continue;
@@ -265,7 +294,7 @@ Deno.serve(async (req) => {
       if ((attempt as any).code === "missing_secret") reasons.missing_secret++;
       else reasons.provider_rejected++;
       await db.from("agent_outreach_messages").update({
-        status: "failed",
+        status: "failed", attempts: currentAttempt, last_attempt_at: new Date().toISOString(),
         error: JSON.stringify({
           provider, recipient,
           http_status: attempt.status,
