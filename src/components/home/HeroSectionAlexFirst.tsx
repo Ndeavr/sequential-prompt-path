@@ -37,9 +37,9 @@ const cinematicBgWebm = "/images/hero-bg.webm";
 const CHIPS: AlexIntent[] = listIntents(HERO_CHIP_INTENTS);
 
 const TRUST = [
-  { icon: ShieldCheck, label: "Entrepreneurs vérifiés", color: "text-emerald-400/80" },
-  { icon: UserCheck,   label: "Pas de leads partagés", color: "text-amber-400/80" },
-  { icon: Sparkles,    label: "Analyse IA impartiale",  color: "text-violet-400/80" },
+  { icon: ShieldCheck, label: "Registre RBQ vérifié", color: "text-emerald-400/80" },
+  { icon: UserCheck,   label: "Recommandation IA", color: "text-amber-400/80" },
+  { icon: Sparkles,    label: "Données structurées",  color: "text-violet-400/80" },
   { icon: MapPin,      label: "Service québécois",      color: "text-sky-400/80" },
 ];
 
