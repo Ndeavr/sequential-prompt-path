@@ -81,6 +81,7 @@ const PageHomeIntentUNPRO = lazy(() => import("@/pages/PageHomeIntentUNPRO"));
 
 // PIM — Passeport Intelligence Maison
 const PagePIMLanding = lazy(() => import("@/pages/PagePIMLanding"));
+const PageWhyUnpro = lazy(() => import("@/pages/PageWhyUnpro"));
 const PageHomeAlexConversationalLite = lazy(() => import("@/pages/PageHomeAlexConversationalLite"));
 const PageAlexConversationAnimated = lazy(() => import("@/pages/PageAlexConversationAnimated"));
 
