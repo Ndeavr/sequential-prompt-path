@@ -48812,6 +48812,78 @@ export type Database = {
           },
         ]
       }
+      outreach_delivery_logs: {
+        Row: {
+          attempt: number
+          channel: string
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          id: string
+          lead_id: string | null
+          message_body: string | null
+          message_id: string | null
+          metadata: Json | null
+          provider: string | null
+          provider_message_id: string | null
+          recipient_normalized: string | null
+          recipient_raw: string | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          attempt?: number
+          channel: string
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          lead_id?: string | null
+          message_body?: string | null
+          message_id?: string | null
+          metadata?: Json | null
+          provider?: string | null
+          provider_message_id?: string | null
+          recipient_normalized?: string | null
+          recipient_raw?: string | null
+          sent_at?: string | null
+          status: string
+        }
+        Update: {
+          attempt?: number
+          channel?: string
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          lead_id?: string | null
+          message_body?: string | null
+          message_id?: string | null
+          metadata?: Json | null
+          provider?: string | null
+          provider_message_id?: string | null
+          recipient_normalized?: string | null
+          recipient_raw?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_delivery_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_delivery_logs_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "agent_outreach_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outreach_domain_health_checks: {
         Row: {
           bounce_rate: number | null
