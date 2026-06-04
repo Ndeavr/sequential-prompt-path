@@ -1,109 +1,77 @@
+# UNPRO Production Reliability Framework — Permanent Standard
 
-# Fix Autonomous Activation Engine — Revenue First
+Codify the 12 rules you defined as a **non-negotiable platform-wide engineering contract** that every future agent, workflow, dashboard, edge function, cron, and integration must comply with before deployment.
 
-Goal: turn the pipeline from `sent=0, paid=0` into `Lead → SMS → Reply → Stripe → Activation` with zero manual steps. The current block is the SMS quota lock + a missing Activation Agent. Everything below targets that.
+## 1. Persist as Core Memory (highest priority)
 
----
+Save to `mem://standards/production-reliability-framework` and add a Core one-liner to `mem://index.md` so it auto-applies to every future build action — no agent can ignore it.
 
-## Wave 1 — Unblock SEND (highest ROI, ship first)
+**Core line (always in context):**
+> Production Reliability Framework is mandatory. Never report success unless the business outcome occurred. No silent failures, explicit state machines, real-success metrics only, actionable blocks, founder override, auto-retry, revenue = P0. See `mem://standards/production-reliability-framework`.
 
-### 1.1 Quota system (replace "998 blocages / quota atteint")
-New table `outreach_quota_state` (singleton row per channel):
-- `channel` (`sms` | `email` | `activation`)
-- `daily_limit`, `used_today`, `last_reset_at`, `next_reset_at`
-- `founder_override boolean default false`
+**Full memory file** captures all 12 rules verbatim + a deployment compliance checklist (every PR/feature must answer: state machine? failure codes? real-success counter? founder override? retry policy? dashboard reflects reality? revenue alert wired?).
 
-New edge function `get-outreach-quota-status` → returns the exact JSON the user specified (limit / used / remaining / reset / founder_override) for all 3 channels in one call.
+## 2. Create a Shared Contract in Code
 
-### 1.2 `outreach_delivery_logs` table
-Columns: `lead_id`, `channel`, `status` (`sent|failed|blocked`), `block_reason`, `quota_name`, `quota_value`, `quota_used`, `provider_message_id`, `provider_response jsonb`, `error_code`, `phone_raw`, `phone_normalized`, `attempt`, `created_at`.
+A single source of truth that all engines import — so the rules are enforced mechanically, not just by convention.
 
-Block reason enum:
-`SMS_QUOTA_REACHED`, `EMAIL_QUOTA_REACHED`, `INVALID_PHONE`, `TWILIO_ERROR`, `RESEND_ERROR`, `OPT_OUT`, `DUPLICATE_CONTACT`, `NO_MESSAGE_GENERATED`, `MISSING_SECRET`.
+- `src/lib/reliability/types.ts` — `BusinessOutcome<T>`, `OperationStatus = 'success'|'blocked'|'failed'|'pending'|'partial'`, canonical `BlockReason` and `FailureCode` enums (SMS_QUOTA_REACHED, TWILIO_AUTH_ERROR, STRIPE_WEBHOOK_FAILED, SUPABASE_TIMEOUT, INVALID_PHONE, DUPLICATE_LEAD, PAYMENT_DECLINED, CONTRACTOR_ALREADY_ACTIVATED, …).
+- `src/lib/reliability/withRetry.ts` — standard backoff (5m, 30m, 2h, 12h, configurable max) for Twilio/Resend/Stripe/Google/OpenAI/Anthropic/Gemini.
+- `src/lib/reliability/stateMachine.ts` — helper to declare explicit states + forbid silent transitions.
+- `src/lib/reliability/diagnostics.ts` — `reportOutcome({ intent, achieved, reason, nextAction })` — every agent run must call it.
+- `supabase/functions/_shared/reliability.ts` — same contract for edge functions (Deno).
 
-### 1.3 Queue states on `outreach_queue` (or `agent_outreach_messages`)
-Add/normalize: `status` (`PENDING|READY|SENDING|SENT|FAILED|BLOCKED`), `attempts int default 0`, `last_attempt_at`, `next_attempt_at`.
+## 3. Canonical Diagnostics Table
 
-### 1.4 Rewrite `agent-send-outreach`
-- Single transaction per message: load → check quota → check dedupe → send → log to `outreach_delivery_logs` → update queue row + quota counter.
-- Quota counter increments **only on real `sent`** (not on `blocked` or `failed`).
-- If SMS blocked/failed and `email` is present → automatic fallback to email (and log both attempts).
-- Auto-retry on Twilio `429 / 500 / timeout`: schedule `next_attempt_at` at +5m, +30m, +2h (max 3 attempts), then mark `FAILED`.
-- `founder_override=true` bypasses quota checks entirely.
+`platform_operation_outcomes` (singular log of every business operation):
+- `operation` (sms.send, stripe.checkout, contractor.activate, …)
+- `intent` (what we were trying to do)
+- `business_outcome` (`achieved` | `blocked` | `failed` | `partial`)
+- `failure_code`, `block_reason`, `affected_record`, `service`, `attempt`, `next_retry_at`
+- `revenue_impact_cents` (when applicable)
 
-### 1.5 Founder mode + reset buttons (admin only)
-`PageAutonomousEngine` additions:
-- Toggle **Founder Mode** (admin-gated, calls edge fn to set `founder_override`).
-- Buttons: **Reset SMS Quota**, **Reset Email Quota**, **Reset Activation Quota**, **Reset All** → call `reset-outreach-quotas` edge fn with channel param.
-- **Send Test SMS to my number** + **Send Test Email** + **Run Full Pipeline Test** (Lead → Enrich → Score → SMS → Checkout, returns diagnostic JSON with raw provider response).
+All quota counters (`outreach_quota_state`, `activation_quotas`, etc.) increment **only on provider-confirmed success**, never on generation/queue.
 
-### 1.6 Daily cron
-Schedule `reset-outreach-quotas` via `pg_cron` at `0 0 * * *` (resets `used_today`, sets `last_reset_at`/`next_reset_at`).
+## 4. Dashboard Compliance
 
----
+Every health card in `/admin/operations`, `/admin/dispatch-center`, `/admin/outbound/*`, Pipeline CC, Revenue Dashboard must expose the 6 metrics: Generated · Sent · Delivered · Failed · Blocked · Revenue Impact. A shared `<OperationHealthCard>` component enforces the shape so no future dashboard can hide a blocked state behind a green checkmark.
 
-## Wave 2 — Activation Engine V2
+## 5. Revenue = Priority Zero
 
-### 2.1 Reply ingestion
-Twilio inbound SMS webhook → `twilio-inbound-sms` edge fn → writes to `outreach_replies` and triggers Activation Agent.
+Any failure on payments, lead delivery, contractor activation, booking, checkout, or matching auto-creates:
+- `admin_notifications` row (severity=critical)
+- `automation_alerts` row
+- dashboard banner via `AlertCriticalBlocker`
+- `system_events` entry
 
-### 2.2 `activation-agent` edge fn
-Flow:
-1. Classify reply intent via Lovable AI (`interested | not_interested | question | stop`).
-2. If interested → pick plan from existing `contractor_plan_definitions` based on AIPP score + objective.
-3. Call existing `create-contractor-checkout` with `prefill` (email/phone/business_name) → get Stripe URL.
-4. Send checkout URL via SMS (or email fallback), log to `outreach_delivery_logs`.
-5. Persist state in new `activation_sessions` table (`lead_id`, `reply_id`, `intent`, `plan_code`, `checkout_url`, `checkout_session_id`, `status`, timestamps).
+## 6. Founder Override Everywhere
 
-### 2.3 Stripe webhook hardening
-Extend existing Stripe webhook handler: on `checkout.session.completed` for a contractor checkout →
-- update `contractor_prospects` → create/upgrade `contractors` row
-- create `contractor_subscriptions`
-- assign plan, set `profile_status = active`
-- enqueue `aipp-real-scan` for fresh score
-- emit `system_events` row `contractor_activated`
+Every revenue-critical engine reads from `outreach_settings`-style override table: bypass quota, force retry, reset counter, restart workflow, requeue, manual activation. Wired into a single `/admin/founder-override` control panel.
 
-### 2.4 Conversion funnel statuses
-Add `pipeline_status` enum to leads/prospects:
-`Discovered → Enriched → Scored → Messaged → Delivered → Opened → Replied → Qualified → CheckoutSent → Paid → Activated`.
-Update each step (send engine, webhook handlers, activation agent) to advance the status.
+## 7. Pre-Deploy Compliance Check
 
----
+Add `docs/standards/PRODUCTION_RELIABILITY.md` (human-readable rules) + `scripts/check-reliability-compliance.ts` heuristic that scans new edge functions for: imports `reliability.ts`, has explicit states, calls `reportOutcome`, defines retry. Surfaces warnings in PR.
 
-## Wave 3 — Revenue Dashboard
+## Technical Details
 
-New tab on `PageAutonomousEngine` (or new `/admin/revenue`):
-- KPI row: **Revenue Today**, **Revenue MTD**, **Activated Contractors**, **Pending Payments (checkout sent, not paid)**, **Checkout Links Sent**, **Conversion Rate (paid / replied)**.
-- Funnel widget: counts at each of the 11 pipeline statuses.
-- Live tail of `outreach_delivery_logs` + `activation_sessions`.
-- Backed by new edge fn `get-revenue-dashboard`.
+**Files created**
+- `mem://standards/production-reliability-framework` (memory)
+- `mem://index.md` (Core line added)
+- `docs/standards/PRODUCTION_RELIABILITY.md`
+- `src/lib/reliability/{types,withRetry,stateMachine,diagnostics}.ts`
+- `src/components/admin/OperationHealthCard.tsx`
+- `supabase/functions/_shared/reliability.ts`
+- `scripts/check-reliability-compliance.ts`
 
----
+**Migration**
+- `platform_operation_outcomes` table (+ RLS: admin read, service_role write, GRANT block)
+- enum `platform_business_outcome` (`achieved|blocked|failed|partial|pending`)
 
-## Technical notes
+**Retrofit (incremental, not blocking the standard adoption)**
+- Wave A: SMS/Twilio (`agent-send-outreach`), Stripe webhook, activation agent — these are the immediate hot path from the previous turn.
+- Wave B: every other agent, on next touch.
 
-- All new tables: `GRANT` to `authenticated` + `service_role`, RLS `has_role('admin')` for read, service_role for write.
-- All edge fns use existing CORS + Lovable AI Gateway pattern; deno-compatible `esm.sh/@supabase/supabase-js@2.49.1`.
-- Quota check is a single SQL function `public.check_and_consume_quota(channel, count)` (security definer) used by send engine — atomic, no race.
-- Reuse existing `create-contractor-checkout` and Stripe webhook — do not duplicate.
-- Founder Mode is per-environment, persisted in `outreach_quota_state.founder_override`; no env var.
+## Out of scope for this plan
+- Rewriting all existing agents now — they retrofit as they're touched. The standard, contract code, and memory rule land immediately so **all future work** complies from line 1.
 
----
-
-## Success criteria
-
-After deploy, running the **Full Pipeline Test** on 1 lead returns:
-```
-sent: 1, failed: 0, provider_message_id: "SM…"
-checkout_url: "https://checkout.stripe.com/…"
-```
-And `blocked=0, sent>0` appears in the dashboard. Once a real reply arrives, activation runs end-to-end without admin input.
-
----
-
-## Decisions needed before build
-
-1. **Scope** — Ship all 3 waves in one go, or only Wave 1 (unblock send) first so you can validate revenue flow before building the dashboard?
-2. **SMS quota default** — keep 50/day or raise (you'll likely hit it again instantly with 238 leads queued)?
-3. **Email fallback** — auto-send via Resend if SMS blocked, or only when SMS hard-fails (invalid phone)?
-4. **Reply ingestion** — confirm Twilio inbound webhook is already pointed at the project, or do I need to add the webhook URL to your Twilio console as part of this work?
+Approve to ship, or tell me to narrow (e.g. memory + docs only, defer the shared lib).
