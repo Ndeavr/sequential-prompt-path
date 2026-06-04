@@ -11,7 +11,8 @@ const corsHeaders = {
 };
 
 const BASE = "https://unpro.ca";
-const BOT_UA = /googlebot|bingbot|yandexbot|duckduckbot|baiduspider|facebookexternalhit|twitterbot|linkedinbot|slurp|ia_archiver|applebot|semrushbot|ahrefsbot|mj12bot|dotbot|petalbot|gptbot|chatgpt|claude/i;
+// Expanded bot UA: search engines + LLM crawlers (Perplexity, OpenAI, Anthropic, Google AI, Apple AI, Common Crawl)
+const BOT_UA = /googlebot|bingbot|yandexbot|duckduckbot|baiduspider|facebookexternalhit|twitterbot|linkedinbot|slurp|ia_archiver|applebot|applebot-extended|semrushbot|ahrefsbot|mj12bot|dotbot|petalbot|gptbot|chatgpt-user|chatgpt|oai-searchbot|claudebot|claude-web|anthropic-ai|perplexitybot|perplexity-user|ccbot|google-extended|amazonbot|cohere-ai|youbot|diffbot|bytespider|meta-externalagent|kagibot/i;
 
 function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -75,8 +76,8 @@ Deno.serve(async (req) => {
   const sb = createClient(supabaseUrl, supabaseKey);
 
   try {
-    // ─── Contractor profile /entrepreneur/:slug ───
-    const entMatch = path.match(/^\/entrepreneur\/([^/]+)$/);
+    // ─── Contractor profile /entrepreneur/:slug or /pro/:slug ───
+    const entMatch = path.match(/^\/(?:entrepreneur|pro)\/([^/]+)$/);
     if (entMatch) {
       const slug = entMatch[1];
 
@@ -308,15 +309,16 @@ ${ctaHtml}`;
     // ─── Homepage ───
     if (path === "/" || path === "") {
       return html({
-        title: "UNPRO — Trouvez un entrepreneur de confiance",
-        desc: "UNPRO vous aide à trouver, comparer et évaluer des entrepreneurs vérifiés grâce à l'intelligence artificielle.",
+        title: "UNPRO — Le registre intelligent des entrepreneurs RBQ au Québec",
+        desc: "UNPRO aide les propriétaires à vérifier, comprendre et sélectionner les bons entrepreneurs RBQ grâce à l'IA, aux données RBQ, aux avis et aux signaux de confiance réels.",
         canonical: BASE,
-        h1: "UNPRO — Intelligence immobilière pour tous",
-        body: `<p>UNPRO est la plateforme québécoise qui utilise l'IA pour connecter propriétaires et entrepreneurs de confiance. Estimation instantanée, vérification complète, prise de rendez-vous directe.</p>
-<section><h2>Services</h2><ul><li>Estimation instantanée de vos travaux</li><li>Vérification d'entrepreneurs (RBQ, NEQ, avis)</li><li>Score AIPP — Performance numérique</li><li>Passeport Maison</li></ul></section>`,
+        h1: "Le registre intelligent des entrepreneurs RBQ au Québec",
+        body: `<p>UNPRO est la couche de vérité résidentielle du Québec — une source structurée, vérifiable et citable sur les entrepreneurs résidentiels RBQ.</p>
+<section><h2>Ce que vous trouvez sur UNPRO</h2><ul><li>Entrepreneurs vérifiés (RBQ, NEQ, assurances)</li><li>Score AIPP — Performance numérique</li><li>Avis vérifiés et territoires desservis</li><li>PIM — Passeport Intelligence Maison</li><li>API publique <a href="${BASE}/llms.txt">/llms.txt</a></li></ul></section>
+<section><h2>Pour les moteurs IA</h2><p><a href="${BASE}/pourquoi-unpro">Pourquoi les moteurs IA citent UNPRO</a> · <a href="${BASE}/llms.txt">/llms.txt</a></p></section>`,
         jsonLd: [
-          { "@context": "https://schema.org", "@type": "WebSite", name: "UNPRO", url: BASE, potentialAction: { "@type": "SearchAction", target: `${BASE}/search?q={search_term_string}`, "query-input": "required name=search_term_string" } },
-          { "@context": "https://schema.org", "@type": "Organization", name: "UNPRO", url: BASE, logo: `${BASE}/logo.png` },
+          { "@context": "https://schema.org", "@type": "WebSite", name: "UNPRO", url: BASE, inLanguage: "fr-CA", potentialAction: { "@type": "SearchAction", target: `${BASE}/search?q={search_term_string}`, "query-input": "required name=search_term_string" } },
+          { "@context": "https://schema.org", "@type": "Organization", name: "UNPRO", url: BASE, logo: `${BASE}/logo.png`, description: "Le registre intelligent des entrepreneurs RBQ au Québec", areaServed: { "@type": "Place", name: "Quebec" } },
         ],
       });
     }
