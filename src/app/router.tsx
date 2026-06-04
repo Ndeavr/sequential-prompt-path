@@ -81,6 +81,7 @@ const PageHomeIntentUNPRO = lazy(() => import("@/pages/PageHomeIntentUNPRO"));
 
 // PIM — Passeport Intelligence Maison
 const PagePIMLanding = lazy(() => import("@/pages/PagePIMLanding"));
+const PageWhyUnpro = lazy(() => import("@/pages/PageWhyUnpro"));
 const PageHomeAlexConversationalLite = lazy(() => import("@/pages/PageHomeAlexConversationalLite"));
 const PageAlexConversationAnimated = lazy(() => import("@/pages/PageAlexConversationAnimated"));
 
@@ -780,6 +781,7 @@ export const AppRouter = () => (
         <Route path="/conversation" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
         <Route path="/" element={<PageHomeUnicorn />} />
         <Route path="/pim" element={<Suspense fallback={<LazyFallback />}><PagePIMLanding /></Suspense>} />
+        <Route path="/pourquoi-unpro" element={<Suspense fallback={<LazyFallback />}><PageWhyUnpro /></Suspense>} />
         <Route path="/intent" element={<Suspense fallback={<LazyFallback />}><HomeIntentRouterDynamic /></Suspense>} />
         <Route path="/homeowner" element={<Suspense fallback={<LazyFallback />}><HomeHomeownerAdaptive /></Suspense>} />
         <Route path="/contractor" element={<Suspense fallback={<LazyFallback />}><HomeContractorAdaptive /></Suspense>} />

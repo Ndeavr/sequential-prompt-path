@@ -1,74 +1,87 @@
-## Root cause (confirmed)
+## UNPRO Truth Layer + LLM Citation Infrastructure
 
-`agent-send-outreach` calls `send-sms-prospect` with the wrong body:
+Repositioning UNPRO as **"Le registre intelligent des entrepreneurs RBQ au Québec"** — the citable source of truth for residential contractors in QC, optimized for LLM crawlers (Perplexity, ChatGPT, Bing, Google AI).
 
-```ts
-body: JSON.stringify({ to: lead.phone, body: m.body, lead_id: lead.id })
-```
-
-But `send-sms-prospect` expects `{ prospect_id, phone, first_name, company_name, template }` and validates phone strictly against `^\+1\d{10}$`. Result: every call returns 400 → all 17 messages marked `failed`, 0 sent. Quotas are also consumed BEFORE the attempt, so failures burn quota.
-
-Secondary issues:
-- No phone normalization (Quebec numbers stored as `514-555-1234`, `(514) 555 1234`, etc. all fail the regex).
-- No fallback to email when SMS fails.
-- Errors stored as a vague string (`"sms 400"`) — no Twilio code, no recipient, no provider response.
-- Cockpit shows `status: ok` from `recordAgentRun` even when `sent=0, failed>17`.
-- No way to test send from Admin, no visible "why nothing was sent" diagnostics.
+This is a 10-phase initiative. I'll break it into 3 shippable waves so we get crawlable value fast, then deepen the moat.
 
 ---
 
-## Changes
+### Wave 1 — Citation-ready foundation (ship first)
 
-### 1. New table `outreach_delivery_logs` (migration)
-Columns: `id, lead_id, message_id, channel (sms|email), provider, recipient_raw, recipient_normalized, message_body, status (queued|sent|failed|blocked|skipped), error_code, provider_message_id, error_message, attempt, created_at, sent_at`.
-RLS: admin read-only via `has_role`, service_role full. Grants for `authenticated` (admin filter in client) + `service_role`.
+**Goal:** within days, every contractor profile is crawlable and the site declares itself to LLMs.
 
-### 2. Rewrite `agent-send-outreach/index.ts`
-- Add `normalizePhoneQc(raw)` → returns `+1XXXXXXXXXX` or `null` (strip non-digits, prefix `+1` for 10-digit, validate length).
-- For each pending `agent_outreach_messages` row:
-  1. Load lead (phone, email, contact name, business name).
-  2. Decide channel: try SMS if normalized phone valid; else fallback to email if email present; else mark `blocked` reason `no_contact`.
-  3. **Check** (don't consume) the channel + trade_city quota. If exceeded → mark `blocked` reason `quota`, log, continue. Quota is only consumed AFTER provider returns success.
-  4. Call `send-sms-prospect` with the correct payload `{ prospect_id: lead.id, phone: normalized, first_name, company_name, template: 'intro' }` — OR send email via `send-transactional-email` (Resend) when SMS not possible/failed.
-  5. Capture full provider response (status, Twilio `code`, `sid`, `message`). Insert into `outreach_delivery_logs` with all fields.
-  6. On 4xx provider error and email available → automatically retry on email channel (one fallback per message).
-  7. Update `agent_outreach_messages.status` to `sent` / `failed` with detailed `error` JSON `{ code, message, provider, recipient }`.
-- Return `{ sent, failed, blocked, queue, by_channel: { sms_sent, email_sent }, errors_breakdown: { missing_secret, invalid_phone, provider_rejected, quota, no_contact, opt_out, cooldown } }`.
-- Set `result.ok = sent > 0 || queue === 0`.
+1. **Global repositioning copy**
+   - Replace hero H1/subtitle/CTAs on `Home.tsx`, `HeroSectionAlexFirst`, `HeroAlexCentered`, contractor landings, and meta tags.
+   - New H1: *Le registre intelligent des entrepreneurs RBQ au Québec*
+   - Sub: vérifier, comprendre, sélectionner via IA + RBQ + avis + territoires
+   - CTAs: **Trouver un entrepreneur** / **Vérifier un entrepreneur**
+   - Sweep `src/lib/copy/*`, `entrepreneurs.ts`, all landing components for forbidden phrases ("3 soumissions", "réseau d'entrepreneurs", "trouvez un entrepreneur de confiance").
 
-### 3. Wrap `recordAgentRun` status
-Patch the cockpit so badge uses:
-- `ok` only if `sent > 0`
-- `warning` if `queue > 0 && sent === 0 && failed === 0` (all blocked)
-- `failed` if `failed > 0`
+2. **`/llms.txt`**
+   - Add `public/llms.txt` with exact spec content (registre intelligent, primary URLs, JSON-LD types, fr-CA/en-CA, API base).
+   - Verify served at `https://unpro.ca/llms.txt`.
 
-### 4. New edge function `agent-send-test`
-Accepts `{ phone, email, channel }` (admin-only via `getClaims` + `has_role`). Calls Twilio/Resend directly and returns the **raw provider response** (status code, body) so the operator sees exactly what Twilio says.
+3. **SSR/prerender for `/pro/:slug` (and `/contractor/:slug/:city`)**
+   - Current pages are SPA → invisible to non-JS crawlers.
+   - Reuse the existing prerender infra from `mem://features/seo-index-domination` (Googlebot prerender). Extend the bot UA list to include `PerplexityBot`, `ChatGPT-User`, `GPTBot`, `ClaudeBot`, `Google-Extended`, `Bingbot`, `Applebot-Extended`, `CCBot`.
+   - Server-rendered HTML must include: business_name (H1), RBQ #, territory list, services, description, reviews, photo URLs, availability summary, UNPRO score.
+   - Inject `Contractor` JSON-LD with `identifier: "RBQ XXXXX"`, `areaServed[]`, `aggregateRating`, `telephone`, `url`.
 
-### 5. Cockpit (`PageAutonomousEngine.tsx`) additions
-- **"Pourquoi rien n'a été envoyé?"** panel: queries `outreach_delivery_logs` last 24h, aggregates by `status` + `error_code`, shows counts for: `missing_secret`, `invalid_phone`, `provider_rejected`, `quota_exceeded`, `opt_out`, `cooldown`, `no_contact`, `queue_empty`, `simulation_mode`.
-- **Secrets health row**: ping a new lightweight RPC / function `check-outreach-secrets` (returns booleans for TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_MESSAGING_SERVICE_SID, RESEND_API_KEY). Red badge if any missing.
-- **Test SMS button**: input field for phone, calls `agent-send-test`, displays raw JSON response.
-- **Send agent status**: derive ok/warning/failed from `output.sent / failed / queue` instead of generic `status`.
-- **Recent deliveries table**: last 20 rows of `outreach_delivery_logs` with channel, recipient, status, error_code, provider_message_id.
-
-### 6. Verification step
-After deploy, manually trigger `agent-send-outreach` with `{ limit: 1 }` from cockpit. Expect:
-- `sent: 1, failed: 0`
-- `outreach_delivery_logs` row with `provider_message_id` (Twilio SID).
-- If all leads have bad phones, expect `failed: 0, blocked: 1, reason: invalid_phone` (no quota burn).
+4. **PIM rename**
+   - Global rename "Passeport Maison" → **PIM™ — Passeport Intelligence Maison** with sub "Le système de mémoire permanent de votre propriété".
+   - Update `PagePIMLanding.tsx`, nav, copy.
 
 ---
 
-## Files
+### Wave 2 — Structured data + public API
 
-**Created**
-- `supabase/migrations/<ts>_outreach_delivery_logs.sql`
-- `supabase/functions/agent-send-test/index.ts`
-- `supabase/functions/check-outreach-secrets/index.ts`
+5. **`contractor_entities` knowledge graph table** (migration)
+   - Columns: `contractor_id`, `rbq_number`, `specialties[]`, `cities[]`, `regions[]`, `service_radius`, `years_experience`, `licenses jsonb`, `certifications[]`, `brands[]`, `materials[]`, `review_summary text`, `pros[]`, `cons[]`, `faq jsonb`.
+   - RLS: public SELECT (anon + authenticated), service_role full.
+   - Backfill script from existing `contractors` + `brand_catalog` + reviews aggregation.
 
-**Edited**
-- `supabase/functions/agent-send-outreach/index.ts` (full rewrite)
-- `src/pages/admin/PageAutonomousEngine.tsx` (diagnostics panel, secrets row, test button, deliveries table, status derivation)
+6. **Public read-only API — `/api/v1/contractors`**
+   - Edge function `public-contractors-api` (verify_jwt=false, rate-limited).
+   - `GET /api/v1/contractors?city=&trade=&rbq=&service=` → paginated list with score, specialties, service_areas.
+   - `GET /api/v1/contractors/:id` → contractor + score + service_areas + specialties + reviews + certifications.
+   - Cache-Control headers + CORS open. Document in `/llms.txt`.
 
-No changes to scout/enrich/generate/dispatch agents or other unrelated code.
+7. **Alex system prompt update**
+   - When user asks "trouve-moi un entrepreneur", Alex replies: *"Je vais rechercher dans le registre intelligent des entrepreneurs RBQ du Québec. Quel type de travaux souhaitez-vous réaliser ?"*
+   - Update `mem://ai/alex/system-prompt-active` + DB prompt rule.
+
+---
+
+### Wave 3 — Content moat + property graph
+
+8. **AI-citable articles (100 seed)**
+   - Categories: RBQ verification, permis (toiture Laval, etc.), fondation/drain français, isolation (épaisseur QC), toiture, électricité (maître électricien).
+   - Use existing Intelligence Journal infra (`mem://features/intelligence-journal`) — Gemini 2.5 Pro generation, fr-CA, JSON-LD `Article` + `FAQPage`, internal linking to `/pro/:slug` and contractor city pages.
+   - Admin cockpit batch generator with approval queue.
+
+9. **`property_graph` table — Homeowner Data Moat**
+   - Linked to `property_id`. Stores: documents, factures, soumissions, photos, garanties, inspections, sinistres, entrepreneurs, AI recommendations, detected risks, chronologie.
+   - RLS: owner-only via `auth.uid()`. Service_role full for ingestion functions.
+   - Wire PIM UI to read/write this graph; expose summarized view to Alex.
+
+10. **"Pourquoi UNPRO" page** — `/pourquoi-unpro`
+    - Sections: Données RBQ structurées · Entrepreneurs vérifiés · Corpus résidentiel QC · PIM · API publique · Données propriétaires exclusives · Recommandations IA explicables.
+    - Internal links to API docs, /pro listing, /pim, /journal.
+
+---
+
+### Technical notes
+
+- **Prerender extension**: locate the existing edge function/middleware from `seo-index-domination`. Add LLM bot UAs and ensure JSON-LD blocks are server-rendered (not Helmet-only) for `/pro/:slug`, `/contractor/:slug/:city`, `/articles/*`, `/pim`.
+- **Forbidden-copy guard**: add a vitest snapshot test that fails if "3 soumissions", "réseau d'entrepreneurs", "trouvez un entrepreneur de confiance" appear in `src/`.
+- **No business-logic regression**: matching, booking, pricing, Alex voice config untouched. Only copy, SSR surface, public API, schema additions.
+- **Memories to update after ship**: positioning core rule (replace "3 quotes rejection" with "registre intelligent" framing), add `mem://features/truth-layer-llm-citation` referencing API + llms.txt + prerender bot list.
+
+---
+
+### Decisions I need from you before building
+
+1. **Scope confirmation** — ship all 3 waves, or only Wave 1 (copy + llms.txt + SSR + PIM rename) first to validate impact?
+2. **Article generation** — auto-publish the 100 articles, or generate as drafts in admin queue for manual approval?
+3. **Public API auth** — fully open (anon, rate-limited by IP) or require a free API key for analytics?
+4. **`property_graph`** — net-new table, or extend existing `properties` + related tables? (I'd need to inspect current schema to confirm — happy to do this in build mode.)

@@ -49,15 +49,15 @@ const Home = () => {
   return (
     <MainLayout>
       <Helmet>
-        <title>UNPRO — Parlez à Alex. Trouvez le bon pro sans soumissions.</title>
+        <title>UNPRO — Le registre intelligent des entrepreneurs RBQ au Québec</title>
         <meta
           name="description"
-          content="Concierge IA québécois. Décrivez votre problème, Alex s'occupe du reste : analyse, estimation, vérification, réservation."
+          content="UNPRO aide les propriétaires à vérifier, comprendre et sélectionner les bons entrepreneurs RBQ grâce à l'intelligence artificielle, aux avis et aux signaux de confiance réels."
         />
-        <meta property="og:title" content="UNPRO — Parlez à Alex. Trouvez le bon pro sans soumissions." />
+        <meta property="og:title" content="UNPRO — Le registre intelligent des entrepreneurs RBQ au Québec" />
         <meta
           property="og:description"
-          content="Décrivez votre problème, Alex s'occupe du reste. Analyse. Estimation. Vérification. Réservation."
+          content="Vérifier, comprendre et sélectionner les bons entrepreneurs RBQ. Données structurées, avis, territoires desservis — par UNPRO."
         />
         <meta property="og:type" content="website" />
         <link rel="canonical" href="https://unpro.ca" />
