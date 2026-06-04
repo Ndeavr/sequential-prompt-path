@@ -24537,6 +24537,108 @@ export type Database = {
           },
         ]
       }
+      contractor_entities: {
+        Row: {
+          brands: string[] | null
+          certifications: string[] | null
+          cities: string[] | null
+          cons: string[] | null
+          contractor_id: string | null
+          created_at: string
+          faq: Json | null
+          id: string
+          licenses: Json | null
+          materials: string[] | null
+          pros: string[] | null
+          rbq_number: string | null
+          regions: string[] | null
+          review_summary: string | null
+          service_radius_km: number | null
+          source_metadata: Json | null
+          specialties: string[] | null
+          updated_at: string
+          years_experience: number | null
+        }
+        Insert: {
+          brands?: string[] | null
+          certifications?: string[] | null
+          cities?: string[] | null
+          cons?: string[] | null
+          contractor_id?: string | null
+          created_at?: string
+          faq?: Json | null
+          id?: string
+          licenses?: Json | null
+          materials?: string[] | null
+          pros?: string[] | null
+          rbq_number?: string | null
+          regions?: string[] | null
+          review_summary?: string | null
+          service_radius_km?: number | null
+          source_metadata?: Json | null
+          specialties?: string[] | null
+          updated_at?: string
+          years_experience?: number | null
+        }
+        Update: {
+          brands?: string[] | null
+          certifications?: string[] | null
+          cities?: string[] | null
+          cons?: string[] | null
+          contractor_id?: string | null
+          created_at?: string
+          faq?: Json | null
+          id?: string
+          licenses?: Json | null
+          materials?: string[] | null
+          pros?: string[] | null
+          rbq_number?: string | null
+          regions?: string[] | null
+          review_summary?: string | null
+          service_radius_km?: number | null
+          source_metadata?: Json | null
+          specialties?: string[] | null
+          updated_at?: string
+          years_experience?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_entities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_entities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_entities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_entities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_entities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_entity_flags: {
         Row: {
           contractor_id: string
@@ -55844,6 +55946,98 @@ export type Database = {
           },
         ]
       }
+      property_graph: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          node_type: string
+          occurred_at: string | null
+          owner_user_id: string
+          payload: Json | null
+          property_id: string
+          related_contractor_id: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          node_type: string
+          occurred_at?: string | null
+          owner_user_id: string
+          payload?: Json | null
+          property_id: string
+          related_contractor_id?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          node_type?: string
+          occurred_at?: string | null
+          owner_user_id?: string
+          payload?: Json | null
+          property_id?: string
+          related_contractor_id?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_graph_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_graph_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_graph_related_contractor_id_fkey"
+            columns: ["related_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_graph_related_contractor_id_fkey"
+            columns: ["related_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_graph_related_contractor_id_fkey"
+            columns: ["related_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_graph_related_contractor_id_fkey"
+            columns: ["related_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "property_graph_related_contractor_id_fkey"
+            columns: ["related_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       property_health_scores: {
         Row: {
           created_at: string
@@ -69546,6 +69740,48 @@ export type Database = {
           source?: string
           tier?: string
           trade_slug?: string
+        }
+        Relationships: []
+      }
+      truth_layer_article_topics: {
+        Row: {
+          category: string
+          city: string | null
+          created_at: string
+          generated_article_id: string | null
+          id: string
+          intent: string | null
+          slug: string
+          status: string
+          target_keywords: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          city?: string | null
+          created_at?: string
+          generated_article_id?: string | null
+          id?: string
+          intent?: string | null
+          slug: string
+          status?: string
+          target_keywords?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          city?: string | null
+          created_at?: string
+          generated_article_id?: string | null
+          id?: string
+          intent?: string | null
+          slug?: string
+          status?: string
+          target_keywords?: string[] | null
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
