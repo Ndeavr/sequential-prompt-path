@@ -52597,6 +52597,57 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_operation_outcomes: {
+        Row: {
+          affected_record: string | null
+          attempt: number
+          block_reason: string | null
+          business_outcome: Database["public"]["Enums"]["platform_business_outcome"]
+          created_at: string
+          failure_code: string | null
+          id: string
+          intent: string | null
+          next_action: string | null
+          next_retry_at: string | null
+          operation: string
+          payload: Json | null
+          revenue_impact_cents: number | null
+          service: string | null
+        }
+        Insert: {
+          affected_record?: string | null
+          attempt?: number
+          block_reason?: string | null
+          business_outcome: Database["public"]["Enums"]["platform_business_outcome"]
+          created_at?: string
+          failure_code?: string | null
+          id?: string
+          intent?: string | null
+          next_action?: string | null
+          next_retry_at?: string | null
+          operation: string
+          payload?: Json | null
+          revenue_impact_cents?: number | null
+          service?: string | null
+        }
+        Update: {
+          affected_record?: string | null
+          attempt?: number
+          block_reason?: string | null
+          business_outcome?: Database["public"]["Enums"]["platform_business_outcome"]
+          created_at?: string
+          failure_code?: string | null
+          id?: string
+          intent?: string | null
+          next_action?: string | null
+          next_retry_at?: string | null
+          operation?: string
+          payload?: Json | null
+          revenue_impact_cents?: number | null
+          service?: string | null
+        }
+        Relationships: []
+      }
       plumber_leads: {
         Row: {
           category: string
@@ -74216,6 +74267,12 @@ export type Database = {
       nav_menu_type: "top" | "bottom" | "hamburger"
       nav_page_status: "draft" | "fallback_only" | "published"
       neq_status: "active" | "inactive" | "struck_off" | "not_found" | "unknown"
+      platform_business_outcome:
+        | "achieved"
+        | "blocked"
+        | "failed"
+        | "partial"
+        | "pending"
       pricing_quote_status:
         | "draft"
         | "offered"
@@ -74505,6 +74562,13 @@ export const Constants = {
       nav_menu_type: ["top", "bottom", "hamburger"],
       nav_page_status: ["draft", "fallback_only", "published"],
       neq_status: ["active", "inactive", "struck_off", "not_found", "unknown"],
+      platform_business_outcome: [
+        "achieved",
+        "blocked",
+        "failed",
+        "partial",
+        "pending",
+      ],
       pricing_quote_status: [
         "draft",
         "offered",
