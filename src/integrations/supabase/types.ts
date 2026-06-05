@@ -42149,6 +42149,211 @@ export type Database = {
         }
         Relationships: []
       }
+      launch_followup_schedule: {
+        Row: {
+          attempt_number: number
+          created_at: string
+          due_at: string
+          id: string
+          lead_id: string
+          sent_at: string | null
+          skipped_reason: string | null
+        }
+        Insert: {
+          attempt_number: number
+          created_at?: string
+          due_at: string
+          id?: string
+          lead_id: string
+          sent_at?: string | null
+          skipped_reason?: string | null
+        }
+        Update: {
+          attempt_number?: number
+          created_at?: string
+          due_at?: string
+          id?: string
+          lead_id?: string
+          sent_at?: string | null
+          skipped_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "launch_followup_schedule_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "launch_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      launch_leads: {
+        Row: {
+          attempts: number
+          block_reason: string | null
+          city: string | null
+          company_name: string | null
+          contractor_id: string | null
+          created_at: string
+          email: string | null
+          external_ref: string | null
+          failure_code: string | null
+          id: string
+          last_event_at: string
+          lead_status: string
+          next_retry_at: string | null
+          payload: Json
+          phone: string | null
+          reply_classification: string | null
+          revenue_impact_cents: number | null
+          source_agent: string | null
+          trade: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          block_reason?: string | null
+          city?: string | null
+          company_name?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          email?: string | null
+          external_ref?: string | null
+          failure_code?: string | null
+          id?: string
+          last_event_at?: string
+          lead_status?: string
+          next_retry_at?: string | null
+          payload?: Json
+          phone?: string | null
+          reply_classification?: string | null
+          revenue_impact_cents?: number | null
+          source_agent?: string | null
+          trade?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          block_reason?: string | null
+          city?: string | null
+          company_name?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          email?: string | null
+          external_ref?: string | null
+          failure_code?: string | null
+          id?: string
+          last_event_at?: string
+          lead_status?: string
+          next_retry_at?: string | null
+          payload?: Json
+          phone?: string | null
+          reply_classification?: string | null
+          revenue_impact_cents?: number | null
+          source_agent?: string | null
+          trade?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      launch_mode_state: {
+        Row: {
+          first_customer_acquired_at: string | null
+          first_customer_contractor_id: string | null
+          first_customer_message_template: string | null
+          first_customer_plan: string | null
+          first_customer_revenue_cents: number | null
+          first_customer_source: string | null
+          founder_mode_enabled: boolean
+          id: boolean
+          mode: string
+          notes: string | null
+          paused_at: string | null
+          started_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          first_customer_acquired_at?: string | null
+          first_customer_contractor_id?: string | null
+          first_customer_message_template?: string | null
+          first_customer_plan?: string | null
+          first_customer_revenue_cents?: number | null
+          first_customer_source?: string | null
+          founder_mode_enabled?: boolean
+          id?: boolean
+          mode?: string
+          notes?: string | null
+          paused_at?: string | null
+          started_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          first_customer_acquired_at?: string | null
+          first_customer_contractor_id?: string | null
+          first_customer_message_template?: string | null
+          first_customer_plan?: string | null
+          first_customer_revenue_cents?: number | null
+          first_customer_source?: string | null
+          founder_mode_enabled?: boolean
+          id?: boolean
+          mode?: string
+          notes?: string | null
+          paused_at?: string | null
+          started_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      launch_pipeline_events: {
+        Row: {
+          agent: string
+          contractor_id: string | null
+          created_at: string
+          event: string
+          from_state: string | null
+          id: string
+          lead_id: string | null
+          message: string | null
+          payload: Json
+          success: boolean
+          to_state: string | null
+        }
+        Insert: {
+          agent: string
+          contractor_id?: string | null
+          created_at?: string
+          event: string
+          from_state?: string | null
+          id?: string
+          lead_id?: string | null
+          message?: string | null
+          payload?: Json
+          success?: boolean
+          to_state?: string | null
+        }
+        Update: {
+          agent?: string
+          contractor_id?: string | null
+          created_at?: string
+          event?: string
+          from_state?: string | null
+          id?: string
+          lead_id?: string | null
+          message?: string | null
+          payload?: Json
+          success?: boolean
+          to_state?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "launch_pipeline_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "launch_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_capture_sessions: {
         Row: {
           campaign_name: string | null
