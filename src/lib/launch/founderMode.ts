@@ -18,7 +18,7 @@ export interface LaunchModeState {
 
 export async function getLaunchModeState(): Promise<LaunchModeState | null> {
   const { data } = await supabase.from("launch_mode_state" as any).select("*").eq("id", true).maybeSingle();
-  return (data as LaunchModeState | null) ?? null;
+  return (data as unknown as LaunchModeState | null) ?? null;
 }
 
 export async function isFounderModeActive(): Promise<boolean> {
