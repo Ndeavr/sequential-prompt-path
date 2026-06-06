@@ -118,10 +118,21 @@
     --popover: 222 40% 6%;
     --popover-foreground: 216 30% 95%;
     --muted: 222 25% 11%;
-    --muted-foreground: 218 18% 52%;
+    /* Readability rule — dark scope: muted text floor 70% lightness (WCAG AA on #060B14) */
+    --muted-foreground: 220 14% 72%;
     --border: 222 20% 14%;
     --input: 222 20% 15%;
     --ring: 222 100% 60%;
+
+    /* ─── UNPRO Readability tokens (dark) ─── */
+    --text-primary: 0 0% 98%;
+    --text-body: 220 16% 92%;
+    --text-secondary: 220 14% 82%;
+    --text-muted: 220 14% 72%;
+    --text-disabled: 220 10% 55%;
+    --surface-primary: 222 47% 5%;
+    --surface-secondary: 222 40% 8%;
+
     --shadow-xs: 0 1px 2px 0 hsl(222 50% 2% / 0.6);
     --shadow-sm: 0 2px 4px -1px hsl(222 50% 2% / 0.7), 0 1px 2px -1px hsl(222 50% 2% / 0.5);
     --shadow-md: 0 6px 12px -2px hsl(222 50% 2% / 0.7), 0 3px 6px -3px hsl(222 50% 2% / 0.5);
@@ -132,12 +143,13 @@
     --shadow-glow-lg: 0 0 48px -8px hsl(222 100% 60% / 0.25), 0 0 20px -4px hsl(222 100% 60% / 0.15);
     --shadow-inner-glow: inset 0 1px 0 0 hsl(0 0% 100% / 0.04);
     --shadow-metal: 0 1px 0 0 hsl(0 0% 100% / 0.04), 0 -1px 0 0 hsl(222 50% 2% / 0.6);
-    --glass-bg: hsl(0 0% 100% / 0.04);
-    --glass-border: hsl(0 0% 100% / 0.06);
+    /* Glass — dark scope: raise opacity so text never fuses with background */
+    --glass-bg: hsl(222 35% 10% / 0.85);
+    --glass-border: hsl(0 0% 100% / 0.10);
     --glass-highlight: linear-gradient(180deg, hsl(0 0% 100% / 0.05) 0%, transparent 40%);
     --glass-blur: 24px;
-    --glass-metal-bg: linear-gradient(135deg, hsl(0 0% 100% / 0.05), hsl(0 0% 100% / 0.02));
-    --glass-metal-border: hsl(0 0% 100% / 0.07);
+    --glass-metal-bg: linear-gradient(135deg, hsl(222 35% 12% / 0.85), hsl(222 40% 8% / 0.80));
+    --glass-metal-border: hsl(0 0% 100% / 0.10);
     --glass-metal-shine: linear-gradient(135deg, hsl(0 0% 100% / 0.04) 0%, transparent 50%, hsl(0 0% 100% / 0.02) 100%);
     --sidebar-background: 222 40% 5%;
     --sidebar-foreground: 216 30% 95%;
