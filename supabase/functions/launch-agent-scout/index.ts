@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
   // Pass 1 — read pool
   const fetchPool = async () => sb
     .from("outbound_companies")
-    .select("id, company_name, city, trade, specialty, phone, email, contractor_id, region")
+    .select("id, company_name, city, trade, specialty, phone, email, region")
     .order("created_at", { ascending: false })
     .limit(500);
 
