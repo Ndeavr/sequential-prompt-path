@@ -105,30 +105,30 @@ export default function BottomDockGlass() {
         >
           <Tab item={left[0]} />
           <Tab item={left[1]} />
-          {/* Center label-only slot (orb is positioned against dock wrapper below) */}
-          <div className="flex flex-col items-center justify-end pb-1 pt-2">
-            <div className="w-14 h-8" aria-hidden />
-            <span className="text-[11px] font-semibold text-[#2563FF] mt-1">Alex</span>
+          {/* Center Alex slot — orb is absolutely anchored to this cell */}
+          <div className="relative flex flex-col items-center justify-end pb-1 pt-2">
+            <button
+              type="button"
+              onClick={() => openAlex("home_dock")}
+              aria-label="Parler à Alex"
+              className="absolute left-1/2 -translate-x-1/2 -top-5 w-12 h-12 rounded-full flex items-center justify-center text-white pointer-events-auto transition-transform duration-200 ease-out active:scale-[0.92] hover:scale-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#3B82F6]/40"
+              style={{
+                background:
+                  "radial-gradient(circle at 35% 30%, #BDE7FF 0%, #3B82F6 45%, #1E40AF 100%)",
+                boxShadow:
+                  "0 10px 24px -6px rgba(37,99,255,0.55), 0 0 28px rgba(59,130,246,0.45), inset 0 -5px 12px rgba(11,18,60,0.4), inset 0 3px 8px rgba(255,255,255,0.5)",
+                animation: "uc-breathe 4.2s ease-in-out infinite",
+                WebkitTapHighlightColor: "transparent",
+              }}
+            >
+              <Sparkles size={18} strokeWidth={2.2} />
+            </button>
+            <div className="w-12 h-7" aria-hidden />
+            <span className="text-[11px] font-semibold text-[#2563FF] mt-0.5">Alex</span>
           </div>
           <Tab item={right[0]} />
           <Tab item={right[1]} />
         </div>
-        {/* Alex orb — anchored to dock midpoint, independent of grid cell rounding */}
-        <button
-          type="button"
-          onClick={() => openAlex("home_dock")}
-          className="absolute left-1/2 -translate-x-1/2 -top-7 w-14 h-14 rounded-full flex items-center justify-center text-white pointer-events-auto"
-          style={{
-            background:
-              "radial-gradient(circle at 35% 30%, #BDE7FF 0%, #3B82F6 45%, #1E40AF 100%)",
-            boxShadow:
-              "0 12px 30px -6px rgba(37,99,255,0.65), 0 0 40px rgba(59,130,246,0.55), inset 0 -6px 16px rgba(11,18,60,0.4), inset 0 4px 10px rgba(255,255,255,0.5)",
-            animation: "uc-breathe 4.2s ease-in-out infinite",
-          }}
-          aria-label="Alex"
-        >
-          <Sparkles size={22} strokeWidth={2.2} />
-        </button>
       </div>
     </div>
   );
