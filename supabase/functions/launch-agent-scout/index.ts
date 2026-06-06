@@ -208,7 +208,7 @@ Deno.serve(async (req) => {
   const now = new Date().toISOString();
   const rows = candidates.map((c: any) => ({
     external_ref: c.id,
-    contractor_id: c.contractor_id ?? null,
+    contractor_id: null,
     company_name: c.company_name,
     city: c.city,
     trade: c.trade ?? c.specialty,
