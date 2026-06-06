@@ -42195,6 +42195,9 @@ export type Database = {
           company_name: string | null
           contractor_id: string | null
           created_at: string
+          current_stage_heartbeat_at: string | null
+          current_stage_started_at: string | null
+          current_stage_timeout_seconds: number | null
           email: string | null
           external_ref: string | null
           failure_code: string | null
@@ -42205,6 +42208,7 @@ export type Database = {
           payload: Json
           phone: string | null
           reply_classification: string | null
+          retry_count: number
           revenue_impact_cents: number | null
           source_agent: string | null
           trade: string | null
@@ -42217,6 +42221,9 @@ export type Database = {
           company_name?: string | null
           contractor_id?: string | null
           created_at?: string
+          current_stage_heartbeat_at?: string | null
+          current_stage_started_at?: string | null
+          current_stage_timeout_seconds?: number | null
           email?: string | null
           external_ref?: string | null
           failure_code?: string | null
@@ -42227,6 +42234,7 @@ export type Database = {
           payload?: Json
           phone?: string | null
           reply_classification?: string | null
+          retry_count?: number
           revenue_impact_cents?: number | null
           source_agent?: string | null
           trade?: string | null
@@ -42239,6 +42247,9 @@ export type Database = {
           company_name?: string | null
           contractor_id?: string | null
           created_at?: string
+          current_stage_heartbeat_at?: string | null
+          current_stage_started_at?: string | null
+          current_stage_timeout_seconds?: number | null
           email?: string | null
           external_ref?: string | null
           failure_code?: string | null
@@ -42249,6 +42260,7 @@ export type Database = {
           payload?: Json
           phone?: string | null
           reply_classification?: string | null
+          retry_count?: number
           revenue_impact_cents?: number | null
           source_agent?: string | null
           trade?: string | null
@@ -42258,6 +42270,12 @@ export type Database = {
       }
       launch_mode_state: {
         Row: {
+          current_city: string | null
+          current_objective_label: string | null
+          current_stage_label: string | null
+          current_trade: string | null
+          daily_email_cap: number
+          daily_sms_cap: number
           first_customer_acquired_at: string | null
           first_customer_contractor_id: string | null
           first_customer_message_template: string | null
@@ -42266,13 +42284,25 @@ export type Database = {
           first_customer_source: string | null
           founder_mode_enabled: boolean
           id: boolean
+          last_blocker_agent: string | null
+          last_blocker_at: string | null
+          last_blocker_reason: string | null
+          last_success_at: string | null
+          last_success_description: string | null
           mode: string
           notes: string | null
           paused_at: string | null
+          scout_cursor: Json | null
           started_at: string | null
           updated_at: string
         }
         Insert: {
+          current_city?: string | null
+          current_objective_label?: string | null
+          current_stage_label?: string | null
+          current_trade?: string | null
+          daily_email_cap?: number
+          daily_sms_cap?: number
           first_customer_acquired_at?: string | null
           first_customer_contractor_id?: string | null
           first_customer_message_template?: string | null
@@ -42281,13 +42311,25 @@ export type Database = {
           first_customer_source?: string | null
           founder_mode_enabled?: boolean
           id?: boolean
+          last_blocker_agent?: string | null
+          last_blocker_at?: string | null
+          last_blocker_reason?: string | null
+          last_success_at?: string | null
+          last_success_description?: string | null
           mode?: string
           notes?: string | null
           paused_at?: string | null
+          scout_cursor?: Json | null
           started_at?: string | null
           updated_at?: string
         }
         Update: {
+          current_city?: string | null
+          current_objective_label?: string | null
+          current_stage_label?: string | null
+          current_trade?: string | null
+          daily_email_cap?: number
+          daily_sms_cap?: number
           first_customer_acquired_at?: string | null
           first_customer_contractor_id?: string | null
           first_customer_message_template?: string | null
@@ -42296,9 +42338,15 @@ export type Database = {
           first_customer_source?: string | null
           founder_mode_enabled?: boolean
           id?: boolean
+          last_blocker_agent?: string | null
+          last_blocker_at?: string | null
+          last_blocker_reason?: string | null
+          last_success_at?: string | null
+          last_success_description?: string | null
           mode?: string
           notes?: string | null
           paused_at?: string | null
+          scout_cursor?: Json | null
           started_at?: string | null
           updated_at?: string
         }
@@ -74239,6 +74287,7 @@ export type Database = {
         Args: { p_id: string; p_token: string }
         Returns: undefined
       }
+      mark_stale_launch_leads: { Args: never; Returns: number }
       match_contractor_chunks: {
         Args: {
           filter_contractor_id?: string
