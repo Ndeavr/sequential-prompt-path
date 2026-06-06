@@ -132,7 +132,7 @@ function HeaderFloatingGlass() {
 }
 
 /* ---------------- Hero ---------------- */
-function HeroAlexOrb() {
+function HeroAlexOrb({ onTalk }: { onTalk: (hint?: string) => void }) {
   return (
     <section className="px-4 pt-3 pb-2 grid grid-cols-[1.05fr_1fr] gap-2 items-center relative z-10 uc-fade-up">
       <div>
@@ -151,8 +151,23 @@ function HeroAlexOrb() {
           professionnels.
         </p>
       </div>
-      <div className="flex justify-end pr-1">
-        <AlexOrbPremium size={170} />
+      <div className="flex flex-col items-center justify-end pr-1 gap-2">
+        <button
+          type="button"
+          onClick={() => onTalk()}
+          aria-label="Touchez pour parler à Alex"
+          className="group relative rounded-full transition-transform duration-200 ease-out active:scale-[0.96] hover:scale-[1.04] cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-[#3B82F6]/40"
+          style={{ WebkitTapHighlightColor: "transparent" }}
+        >
+          <AlexOrbPremium size={170} />
+          <span
+            className="pointer-events-none absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity"
+            style={{ boxShadow: "0 0 60px 8px rgba(59,130,246,0.45)" }}
+          />
+        </button>
+        <span className="text-[11px] font-semibold text-[#2563FF] sm:hidden">
+          Touchez pour parler à Alex
+        </span>
       </div>
     </section>
   );
