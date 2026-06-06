@@ -1,149 +1,92 @@
 
+# UNPRO — Lisibilité Absolue (Règle Système)
 
-# UNPRO — Mode Lancement Autonome
+Objectif : la lisibilité devient une contrainte système. Aucun texte sous WCAG AA, aucune opacité < 70% sur du texte, aucun gris faible sur fond sombre.
 
-Activer le **Launch Commander** : un cron qui s'exécute chaque minute, orchestre 9 agents (Scout → Activation) et ne s'arrête qu'au premier contractor payant. Aligné sur le Production Reliability Framework existant (`reportOutcome`, `FailureCode`, `withRetry`, state machines).
+## 1. Correctif immédiat (capture jointe)
 
-## Objectif unique
+La carte « Aperçu de votre analyse » + sections « Être trouvé / Pourquoi cela compte » utilisent `text-muted-foreground` (~45%) sur surface glass sombre → quasi invisible.
 
-`first_paying_contractor_acquired = true` — toute autre métrique est secondaire.
+- Localiser la page concernée (AIPP / outreach landing — probablement `PageAuditAIPPv2.tsx`, `PageInstantAuditFunnel.tsx` ou `src/pages/outbound/*`) et corriger les classes fautives en une passe.
+- Remplacer `text-gray-400/500`, `text-muted-foreground/60`, `opacity-50/60` sur du texte par les nouveaux tokens `text-body` / `text-body-strong`.
+- Augmenter opacité des surfaces glass de la page : `bg-white/5` → `bg-slate-900/85` + `backdrop-blur-xl`.
 
-## Architecture
+## 2. Design tokens globaux (source unique)
 
-```text
-┌─────────────────────────────────────────────────┐
-│ launch-commander (pg_cron, every 1 min)         │
-│  ├─ check launch_mode_state                     │
-│  ├─ enforce founder_mode (bypass quotas)        │
-│  └─ dispatch → agents selon lead_status         │
-└─────────────────────────────────────────────────┘
-              │
-   ┌──────────┴───────────────────────────┐
-   ▼                                       ▼
-agent-scout      agent-enrich   agent-ai-visibility
-agent-outreach   agent-delivery-monitor
-agent-reply-detector  agent-sales-closer
-agent-payment-monitor agent-activation
-              │
-              ▼
-   platform_operation_outcomes (Rule 10)
-   launch_pipeline_events (timeline)
-```
-
-## Pipeline d'état (state machine canonique)
-
-Réutilise `LeadPipelineStates` existant + nouveau wrapper `LaunchPipelineState`:
+Ajouter dans `src/index.css` (HSL, dark theme UNPRO `#050816`) :
 
 ```text
-DISCOVERED → ENRICHED → SCORED → MESSAGED → DELIVERED
-  → REPLIED(INTERESTED|CURIOUS|NOT_NOW|REMOVE|BOOK_CALL)
-  → CHECKOUT_SENT → PAID → ACTIVATED ✅
-                          └→ FAILED / BLOCKED (avec retry)
+--text-primary       : 0 0% 98%   (titres, body important)
+--text-body          : 0 0% 92%   (paragraphes)
+--text-secondary     : 0 0% 80%   (labels, sous-titres)
+--text-muted         : 0 0% 70%   (meta, captions — plancher absolu)
+--text-disabled      : 0 0% 55%   (uniquement état disabled, jamais contenu)
+
+--surface-primary    : 222 47% 5%
+--surface-secondary  : 222 40% 8%
+--surface-glass      : 222 30% 12% / 0.85   (jamais < 0.80)
+
+--border-primary     : 0 0% 100% / 0.10
+--border-secondary   : 0 0% 100% / 0.06
 ```
 
-Transitions interdites silencieusement (throw via `createStateMachine`).
+Étendre `tailwind.config.ts` :
+- `textColor`: `primary`, `body`, `secondary`, `muted`, `disabled`
+- `backgroundColor`: `surface`, `surface-2`, `surface-glass`
+- `borderColor`: `line`, `line-soft`
 
-## Tables (migration)
+Lint (ESLint plugin custom léger ou règle `no-restricted-syntax`) bloquant :
+- `text-gray-*`, `text-slate-300/400/500` en classe directe
+- `opacity-[10-69]` appliquée à un nœud texte
+- `text-xs` sur `<p>` / contenu non-meta
 
-1. `launch_mode_state` (singleton row)
-   - `mode` enum (`idle` | `launching` | `first_customer_acquired`)
-   - `founder_mode_enabled boolean default true`
-   - `started_at`, `first_customer_acquired_at`, `first_customer_contractor_id`
-   - `first_customer_source`, `first_customer_message_template`, `first_customer_plan`
-2. `launch_leads` (vue ou nouvelle table légère agrégeant le funnel : `contractor_id`, `lead_status`, `last_event_at`, `attempts`, `failure_code`, `block_reason`, `next_retry_at`, `revenue_impact_cents`)
-3. `launch_pipeline_events` (timeline append-only par contractor : `event`, `agent`, `from_state`, `to_state`, `payload jsonb`, `created_at`)
-4. `launch_followup_schedule` (`contractor_id`, `attempt_number 1..3`, `due_at`, `sent_at`)
+## 3. Helper composant `<Text>`
 
-Toutes avec `GRANT` aux rôles requis + RLS (admin-only read, service_role write).
+`src/components/ui/text.tsx` — variantes `display | h1 | h2 | body | bodyStrong | label | meta` → mappent vers les tokens. Encouragé pour tout nouveau code ; ESLint signale `<p className="text-...">` non token.
 
-## Edge functions (créer)
+## 4. Glassmorphism safe
 
-| Function | Rôle |
-|---|---|
-| `launch-commander` | Orchestrateur cron, dispatch par état, `reportOutcome` à chaque sortie |
-| `launch-agent-scout` | Découvre contractors (réutilise `acq-scrape-google-places` + `agent-scout-leads`), cible 50/jour, industries + villes prioritaires |
-| `launch-agent-enrich` | Wrap `acq-enrich-contractor` |
-| `launch-agent-visibility` | Wrap `agent-ai-visibility` + `acq-generate-score` |
-| `launch-agent-outreach` | Wrap `agent-generate-message` + `agent-send-outreach` avec template SMS personnalisé spécifié |
-| `launch-agent-delivery-monitor` | Vérifie statuts Twilio/Resend, transitions SENT → DELIVERED/FAILED/BLOCKED |
-| `launch-agent-reply-detector` | Scanne `outbound_replies` + `twilio-inbound`, classifie via Lovable AI (`INTERESTED/CURIOUS/NOT_NOW/REMOVE/BOOK_CALL`) |
-| `launch-agent-sales-closer` | Sur INTERESTED/BOOK_CALL : recommande plan (Recrue/Pro/Premium/Élite/Signature selon scoring) + génère Stripe checkout |
-| `launch-agent-payment-monitor` | Réagit aux webhooks Stripe `checkout.session.completed` (réutilise webhook existant) |
-| `launch-agent-activation` | Wrap `activate-contractor-plan` + déclenche audit AIPP + débloque territoire + marque `first_customer_acquired` |
-| `launch-followup-engine` | Planifie J+2, J+5, J+10 si pas de réponse, stop à 3 tentatives |
+Token unique `.glass-card` dans `index.css` :
 
-Chaque fonction utilise `withRetry`, `FailureCode`, `BlockReason`, `reportOutcome` du framework existant. **Aucun "OK" silencieux**.
-
-## Cron (pg_cron via supabase--insert)
-
-```sql
-select cron.schedule('launch-commander-1m', '* * * * *',
-  $$ select net.http_post(url:='.../launch-commander', ...) $$);
-select cron.schedule('launch-followup-engine-15m', '*/15 * * * *', ...);
+```css
+.glass-card {
+  background: hsl(var(--surface-glass));
+  backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid hsl(var(--border-primary));
+}
 ```
 
-## Founder Mode (bypass quotas)
+Remplacement progressif des `bg-white/5 backdrop-blur-*` ad-hoc.
 
-`launch_mode_state.founder_mode_enabled = true` →
-- `outreach_quota_status` retourne `unlimited`
-- toutes les guards de send vérifient `isFounderModeActive()` avant `BlockReason.SMS_QUOTA_REACHED / EMAIL_QUOTA_REACHED`
-- expose toutes les erreurs (jamais d'absorption)
-Désactivé automatiquement après `first_customer_acquired`.
+## 5. UI Health Monitor (admin)
 
-## UI — Revenue War Room
+Backend (Lovable Cloud) :
+- Table `ui_accessibility_audit` (route, component, issue_type, severity `info|warn|critical`, contrast_ratio, fg, bg, viewport, detected_at, resolved_at, screenshot_url)
+- Edge function `ui-health-scan` : Puppeteer (via Browserless) → liste des routes (depuis `routesConfig.ts`) → screenshots desktop 1280 + mobile 390 → parse DOM, calcule contraste WCAG (axe-core) sur chaque nœud texte visible → insère findings.
+- Cron `pg_cron` quotidien 04:00 ET.
 
-Nouvelle page **`/admin/launch-war-room`** (Cinematic Dark, premium):
+Frontend :
+- Page `/admin/ui-health` (`AdminUIHealthMonitor.tsx`)
+- KPI globaux 🟢🟡🔴, tableau findings filtrable, drawer détail avec screenshot + sélecteur + ratio + suggestion (token recommandé).
+- Lien dans sidebar admin (cluster Operations).
 
-- Bandeau d'état : `IDLE` / `🚀 LAUNCHING` / `🎉 FIRST CUSTOMER ACQUIRED`
-- KPI strip (réutilise `KpiStrip` pattern) : Revenue Today/Week/Month, Discovered, Contacted, Replies, Checkouts Sent, Payments, Activations, Conversion Rate
-- Funnel pipeline vertical : compte par état + clic = liste contractors bloqués
-- Timeline live `launch_pipeline_events` (50 derniers, auto-refresh 5s)
-- Agent health grid : 9 cartes `<OperationHealthCard>` (réutilise composant existant) — montre succès réels, blockers, retries planifiés
-- Bouton **START LAUNCH** / **PAUSE** / **RESET**
-- Modal de célébration plein écran au moment de `first_customer_acquired`
+Reliability : suit le standard (`reportOutcome`, FailureCode `UI_SCAN_FAILED`).
 
-## Suivi de conformité Production Reliability
+## 6. Mobile-first guard
 
-- Chaque agent : `reportOutcome({ operation, outcome, failure_code, block_reason, revenue_impact_cents })`
-- State machine throw si transition invalide
-- `withRetry` (backoff 5/30/120/720 min) sur tous les appels Stripe/Twilio/Resend/scraping
-- `OperationHealthCard` lit `platform_operation_outcomes` pour santé réelle
-- Pas de `success: true` si l'objectif business n'est pas atteint
+Token CSS `html { -webkit-text-size-adjust: 100% }`, base body 16px / line-height 1.55. Composant `<Text variant="meta">` = 13px **uniquement** pour timestamps/badges.
 
-## Hors périmètre (intentionnel)
+## 7. Rollout
 
-- Pas de redesign UI publique
-- Pas de refonte voix Alex
-- Pas de modification du flow homeowner/condo
-- Pas de nouveau provider d'email/SMS — réutilise infra existante
+1. Tokens + tailwind config + classe `.glass-card`
+2. Correctif page capture (immédiat, manuel)
+3. ESLint règle (warn d'abord, error après nettoyage initial)
+4. Migration + edge function + page admin UI Health
+5. Première passe de scan + correctifs batch sur les 10 pires routes
 
-## Détails techniques
+## Hors scope
 
-**Fichiers à créer**
-- `supabase/migrations/<ts>_launch_mode.sql` (4 tables + GRANT + RLS + cron schedule via `supabase--insert` séparé)
-- 11 edge functions sous `supabase/functions/launch-*/index.ts`
-- `src/lib/launch/stateMachine.ts` (extends `LeadPipelineStates`)
-- `src/lib/launch/founderMode.ts` (helper `isFounderModeActive`)
-- `src/hooks/useLaunchWarRoom.ts`
-- `src/pages/admin/AdminLaunchWarRoom.tsx`
-- `src/components/launch/{PipelineFunnel,AgentHealthGrid,LaunchKpiStrip,FirstCustomerModal}.tsx`
-- Route dans `src/config/routesConfig.ts` (admin-only)
+- Refactor complet de tous les composants existants (fait progressivement, piloté par le rapport Health Monitor).
+- Mode clair (l'app reste dark-only).
 
-**Fichiers à éditer**
-- `src/lib/reliability/types.ts` — ajouter `FailureCode.SCOUT_NO_RESULTS`, `BlockReason.LAUNCH_PAUSED`
-- `supabase/functions/_shared/reliability.ts` — idem côté Deno
-- Sidebar admin pour pointer vers `/admin/launch-war-room`
-
-**Garde-fous**
-- Mode `idle` par défaut — démarrage explicite via bouton UI
-- RLS : tables `launch_*` lisibles seulement par `has_role('admin')`
-- Webhook Stripe existant déclenche `launch-agent-payment-monitor` (pas de duplication)
-- Idempotence : tout `launch-*` accepte `contractor_id` + `attempt`, dédupe sur `platform_operation_outcomes`
-
-## Définition de succès
-
-1. `START LAUNCH` cliqué → cron actif, Scout produit ≥ 50 contractors/jour
-2. Pipeline visible en temps réel sans intervention manuelle
-3. Échec d'un agent ⇒ retry auto + visible dans war room (jamais silencieux)
-4. Premier `checkout.session.completed` ⇒ activation auto < 60s ⇒ modal 🎉 ⇒ snapshot `first_customer_*` enregistré ⇒ Founder Mode désactivé
-
+Confirmez et je passe en build.
