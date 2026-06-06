@@ -157,6 +157,7 @@ const PageAcqActivation = lazy(() => import("@/pages/acquisition/PageAcqActivati
 const PageActivationSuccess = lazy(() => import("@/pages/acquisition/PageActivationSuccess"));
 const PageAdminWarRoom = lazy(() => import("@/pages/admin/acquisition/PageAdminWarRoom"));
 const AdminLaunchWarRoom = lazy(() => import("@/pages/admin/AdminLaunchWarRoom"));
+const AdminUIHealthMonitor = lazy(() => import("@/pages/admin/AdminUIHealthMonitor"));
 const Search = lazy(() => import("@/pages/Search"));
 const ContractorProfile = lazy(() => import("@/pages/ContractorProfile"));
 const Login = lazy(() => import("@/pages/Login"));
