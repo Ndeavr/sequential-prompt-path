@@ -164,7 +164,7 @@ Deno.serve(async (req) => {
       await reportOutcome({
         operation: "launch.scout.run",
         outcome: "blocked",
-        block_reason: BlockReason.MISSING_INTEGRATION,
+        block_reason: BlockReason.MISSING_SECRET,
         next_action: `Google Places refill failed: ${refill.error}`,
       });
       await logLaunchEvent({
