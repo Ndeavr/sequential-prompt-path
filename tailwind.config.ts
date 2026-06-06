@@ -91,6 +91,11 @@ export default {
           warm: "var(--section-glow-warm)",
           neutral: "var(--section-glow-neutral)",
         },
+        // UNPRO readability tokens (work in both light + dark scopes)
+        "text-strong": "hsl(var(--text-primary, var(--foreground)))",
+        "text-body": "hsl(var(--text-body, var(--foreground)))",
+        "text-secondary": "hsl(var(--text-secondary, var(--muted-foreground)))",
+        "text-muted-2": "hsl(var(--text-muted, var(--muted-foreground)))",
       },
       borderRadius: {
         lg: "var(--radius)",

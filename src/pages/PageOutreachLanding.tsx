@@ -20,13 +20,13 @@ export default function PageOutreachLanding() {
   const [confirmed, setConfirmed] = useState(false);
 
   if (loading) return (
-    <div className="min-h-screen bg-[#060B14] flex items-center justify-center">
-      <div className="animate-pulse text-muted-foreground">Chargement de votre analyse…</div>
+    <div className="alex-immersive min-h-screen bg-[#060B14] flex items-center justify-center">
+      <div className="animate-pulse text-foreground/80">Chargement de votre analyse…</div>
     </div>
   );
 
   if (error || !model) return (
-    <div className="min-h-screen bg-[#060B14] flex items-center justify-center text-muted-foreground">
+    <div className="alex-immersive min-h-screen bg-[#060B14] flex items-center justify-center text-foreground/80">
       <p>Cette analyse n'est plus disponible.</p>
     </div>
   );
@@ -47,7 +47,7 @@ export default function PageOutreachLanding() {
   };
 
   return (
-    <div className="min-h-screen bg-[#060B14] text-foreground">
+    <div className="alex-immersive min-h-screen bg-[#060B14] text-foreground">
       {/* Hero */}
       <motion.section className="relative px-4 pt-16 pb-12 md:pt-24 md:pb-16 max-w-4xl mx-auto text-center" {...fadeUp}>
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none rounded-3xl" />

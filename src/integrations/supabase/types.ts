@@ -70205,6 +70205,66 @@ export type Database = {
         }
         Relationships: []
       }
+      ui_accessibility_audit: {
+        Row: {
+          bg_color: string | null
+          component: string | null
+          contrast_ratio: number | null
+          created_at: string
+          detected_at: string
+          fg_color: string | null
+          id: string
+          issue_type: string
+          metadata: Json
+          resolved_at: string | null
+          resolved_by: string | null
+          route: string
+          screenshot_url: string | null
+          selector: string | null
+          severity: string
+          text_sample: string | null
+          viewport: string
+        }
+        Insert: {
+          bg_color?: string | null
+          component?: string | null
+          contrast_ratio?: number | null
+          created_at?: string
+          detected_at?: string
+          fg_color?: string | null
+          id?: string
+          issue_type: string
+          metadata?: Json
+          resolved_at?: string | null
+          resolved_by?: string | null
+          route: string
+          screenshot_url?: string | null
+          selector?: string | null
+          severity: string
+          text_sample?: string | null
+          viewport?: string
+        }
+        Update: {
+          bg_color?: string | null
+          component?: string | null
+          contrast_ratio?: number | null
+          created_at?: string
+          detected_at?: string
+          fg_color?: string | null
+          id?: string
+          issue_type?: string
+          metadata?: Json
+          resolved_at?: string | null
+          resolved_by?: string | null
+          route?: string
+          screenshot_url?: string | null
+          selector?: string | null
+          severity?: string
+          text_sample?: string | null
+          viewport?: string
+        }
+        Relationships: []
+      }
       ui_block_registry: {
         Row: {
           block_key: string
