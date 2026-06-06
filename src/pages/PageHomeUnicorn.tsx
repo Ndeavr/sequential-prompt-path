@@ -556,7 +556,7 @@ export default function PageHomeUnicorn() {
       <div className="unicorn-theme min-h-screen pb-28 relative overflow-x-hidden">
         <CinematicArchScenes />
         <HeaderFloatingGlass />
-        <HeroAlexOrb />
+        <HeroAlexOrb onTalk={onTalk} />
         <AiInputCard onTalk={onTalk} />
         <HomeQuickActionsGrid />
         <LiveStatsCard />
