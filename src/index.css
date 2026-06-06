@@ -1006,3 +1006,30 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* ═══════════════════════════════════════════════
+   UNPRO READABILITY UTILITIES (Règle: lisibilité ≥ WCAG AA)
+   ═══════════════════════════════════════════════ */
+
+/* Strong glass — use on dark surfaces when text must remain readable.
+   Higher opacity floor (0.80+) so glassmorphism never erases body text. */
+.glass-strong {
+  background: hsl(var(--surface-secondary, 222 35% 10%) / 0.88);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid hsl(0 0% 100% / 0.10);
+  border-radius: var(--radius-card);
+}
+
+/* Semantic text classes — prefer these over arbitrary text-gray-* */
+.text-readable        { color: hsl(var(--text-body, var(--foreground))); }
+.text-readable-strong { color: hsl(var(--text-primary, var(--foreground))); font-weight: 500; }
+.text-readable-soft   { color: hsl(var(--text-secondary, var(--muted-foreground))); }
+.text-readable-meta   { color: hsl(var(--text-muted, var(--muted-foreground))); font-size: 0.8125rem; }
+
+/* Mobile-first sizing: prevent iOS auto-zoom + enforce 16px body minimum */
+html { -webkit-text-size-adjust: 100%; }
+@media (max-width: 640px) {
+  body { font-size: 16px; line-height: 1.55; }
+}
+
