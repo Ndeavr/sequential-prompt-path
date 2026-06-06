@@ -10,6 +10,38 @@ interface State {
   error?: Error;
 }
 
+const CHUNK_RELOAD_FLAG = "unpro_chunk_reload";
+
+export function isChunkLoadError(error: unknown): boolean {
+  const msg = String((error as any)?.message ?? error ?? "");
+  const name = String((error as any)?.name ?? "");
+  return (
+    name === "ChunkLoadError" ||
+    /Failed to fetch dynamically imported module/i.test(msg) ||
+    /Importing a module script failed/i.test(msg) ||
+    /Loading chunk [\w-]+ failed/i.test(msg) ||
+    /error loading dynamically imported module/i.test(msg)
+  );
+}
+
+export function tryRecoverFromChunkError(error: unknown): boolean {
+  if (!isChunkLoadError(error)) return false;
+  try {
+    if (sessionStorage.getItem(CHUNK_RELOAD_FLAG) === "1") return false;
+    sessionStorage.setItem(CHUNK_RELOAD_FLAG, "1");
+  } catch {
+    /* sessionStorage unavailable — bail */
+    return false;
+  }
+  console.warn("[AppErrorBoundary] stale chunk detected — reloading once", error);
+  window.location.reload();
+  return true;
+}
+
+export function clearChunkReloadFlag() {
+  try { sessionStorage.removeItem(CHUNK_RELOAD_FLAG); } catch { /* noop */ }
+}
+
 export default class AppErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -17,10 +49,14 @@ export default class AppErrorBoundary extends React.Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
+    if (tryRecoverFromChunkError(error)) {
+      return { hasError: false };
+    }
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
+    if (tryRecoverFromChunkError(error)) return;
     console.error("[AppErrorBoundary]", error, info.componentStack);
   }
 
