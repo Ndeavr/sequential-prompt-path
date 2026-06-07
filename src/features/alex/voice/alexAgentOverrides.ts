@@ -9,8 +9,14 @@
  */
 import { buildAlexFirstMessage } from "./alexSystemPromptV2";
 import { ALEX_CORE_PROMPT } from "./alexCorePrompt";
-import { getVoiceConfigFor, ALEX_VOICE_BASE, type AlexVoiceMode } from "@/config/alexVoiceConfig";
+import {
+  getVoiceConfigFor,
+  ALEX_VOICE_BASE,
+  ALEX_TTS_PROVIDER,
+  type AlexVoiceMode,
+} from "@/config/alexVoiceConfig";
 import { prepareAlexSpeechText } from "@/lib/prepareAlexSpeechText";
+import { useAlexVoiceLockedStore } from "@/stores/alexVoiceLockedStore";
 
 export type AlexLanguage = "fr" | "en";
 
