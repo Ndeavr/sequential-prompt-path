@@ -253,6 +253,11 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
       errorType: null,
       stabilizationEnd: null,
       heartbeatFailures: 0,
+      sessionVoiceId: null,
+      sessionVoiceProvider: null,
+      sessionLanguage: null,
+      sessionMode: null,
+      voiceLockedAt: null,
     });
 
     // Log close
