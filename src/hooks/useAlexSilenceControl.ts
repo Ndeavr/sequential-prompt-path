@@ -166,6 +166,7 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
 
   /** Call on every user activity */
   const recordActivity = useCallback(() => {
+    if (terminalReasonRef.current) return; // conversation closed → no re-arm
     clearTimers();
     // NOTE: do NOT reset promptSentRef or sessionPromptUsedRef — single-prompt
     // is enforced for the entire session, not per cycle.
@@ -186,6 +187,20 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
         .then(() => {});
     }
   }, [status, sessionId, clearTimers, startIdleTimer]);
+
+  /**
+   * Mark conversation terminal — booking, recommendation, summary, thanks
+   * or goodbye. Cancels all silence prompts for the rest of the session.
+   */
+  const markClosed = useCallback(
+    (reason: AlexSilenceTerminalReason) => {
+      terminalReasonRef.current = reason;
+      clearTimers();
+      setStatus("closed");
+      logEvent("conversation_closed", { reason });
+    },
+    [clearTimers, logEvent]
+  );
 
   /** Persist snapshot for resume */
   const persistSnapshot = useCallback(
