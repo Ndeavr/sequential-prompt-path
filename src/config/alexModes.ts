@@ -97,25 +97,12 @@ export function resolveAlexMode(ctx: AlexModeContext): AlexModeDescriptor {
 
   // Intent fallback — only when no contractor/condo signal exists.
   if (ctx.lastUserText) {
-    // Lazy import to avoid circular deps with feature-layer modules.
-    // detectPersona is a pure function, safe to import at module top.
-    const persona = detectPersonaSafe(ctx.lastUserText);
+    const persona = detectPersona(ctx.lastUserText);
     if (persona === "CONTRACTOR") return CONTRACTOR_DESCRIPTOR;
     if (persona === "PROPERTY_MANAGER") return CONDO_DESCRIPTOR;
   }
 
   return HOMEOWNER_DESCRIPTOR;
-}
-
-// Local wrapper kept resilient to bundler edge cases.
-function detectPersonaSafe(text: string): string {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const mod = require("@/features/alex/intent/alexPersonaRouter");
-    return mod.detectPersona(text);
-  } catch {
-    return "UNKNOWN";
-  }
 }
 
 /** Convenience: true if Alex must run in contractor mode for this context. */
