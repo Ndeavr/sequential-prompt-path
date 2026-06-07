@@ -141,6 +141,45 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
   lastHeartbeatAt: null,
   stabilizationEnd: null,
   transcriptsForFallback: [],
+  sessionVoiceId: null,
+  sessionVoiceProvider: null,
+  sessionLanguage: null,
+  sessionMode: null,
+  voiceLockedAt: null,
+
+  lockVoiceForSession: ({ voiceId, provider, language, mode, force }) => {
+    const state = get();
+    if (state.sessionVoiceId && !force) return; // idempotent — never drift
+    set({
+      sessionVoiceId: voiceId,
+      sessionVoiceProvider: provider ?? "elevenlabs",
+      sessionLanguage: language ?? state.sessionLanguage ?? "fr",
+      sessionMode: mode ?? state.sessionMode ?? "general",
+      voiceLockedAt: Date.now(),
+    });
+  },
+
+  assertVoice: (currentVoiceId) => {
+    const expected = get().sessionVoiceId;
+    const got = currentVoiceId ?? null;
+    const ok = !expected || expected === got;
+    if (!ok) {
+      console.warn(
+        `[AlexVoiceLock] Voice drift blocked. expected=${expected} got=${got}`,
+      );
+    }
+    return { ok, expected, got };
+  },
+
+  unlockVoice: () => {
+    set({
+      sessionVoiceId: null,
+      sessionVoiceProvider: null,
+      sessionLanguage: null,
+      sessionMode: null,
+      voiceLockedAt: null,
+    });
+  },
 
   openVoiceSession: (feature = "general", openReason = "user_initiated", contextHint?: string) => {
     const sessionId = crypto.randomUUID();
