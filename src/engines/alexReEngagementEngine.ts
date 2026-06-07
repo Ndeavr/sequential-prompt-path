@@ -44,6 +44,7 @@ export class AlexReEngagementControlEngine {
   private timers: ReturnType<typeof setTimeout>[] = [];
   private count = 0;
   private state: ConversationActivityState = "active";
+  private terminal = false;
   private onReEngage: ReEngagementCallback;
   private onPassive: PassiveCallback;
 
@@ -54,6 +55,7 @@ export class AlexReEngagementControlEngine {
 
   /** Call on every user action (message, tap, voice input) */
   trackActivity(): void {
+    if (this.terminal) return;
     this.clearTimers();
     this.count = 0;
     this.state = "active";
@@ -62,6 +64,7 @@ export class AlexReEngagementControlEngine {
 
   /** Start monitoring (call once when conversation begins) */
   start(): void {
+    if (this.terminal) return;
     this.count = 0;
     this.state = "active";
     this.scheduleReEngagements();
@@ -69,6 +72,16 @@ export class AlexReEngagementControlEngine {
 
   /** Full stop — no more timers */
   stop(): void {
+    this.clearTimers();
+    this.state = "passive";
+  }
+
+  /**
+   * Mark the conversation as terminal (booking confirmed, recommendation
+   * delivered, user said thanks/goodbye). NO more re-engagement pings.
+   */
+  markTerminal(): void {
+    this.terminal = true;
     this.clearTimers();
     this.state = "passive";
   }
@@ -81,11 +94,17 @@ export class AlexReEngagementControlEngine {
     return this.count;
   }
 
+  isTerminal(): boolean {
+    return this.terminal;
+  }
+
   private scheduleReEngagements(): void {
     this.clearTimers();
+    if (this.terminal) return;
 
     for (const msg of RE_ENGAGEMENT_MESSAGES) {
       const timer = setTimeout(() => {
+        if (this.terminal) return;
         if (this.state === "passive" || this.count >= MAX_REENGAGEMENTS) return;
         this.count++;
         this.onReEngage(msg);
@@ -95,6 +114,7 @@ export class AlexReEngagementControlEngine {
 
     // Passive threshold
     const passiveTimer = setTimeout(() => {
+      if (this.terminal) return;
       if (this.count >= MAX_REENGAGEMENTS) {
         this.state = "passive";
         this.onPassive();
