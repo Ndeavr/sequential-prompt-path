@@ -130,12 +130,15 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
   // Start idle detection — single prompt PER SESSION then immediate pause
   const startIdleTimer = useCallback(() => {
     clearTimers();
+    // Terminal? Never schedule another presence prompt.
+    if (terminalReasonRef.current) return;
     // If the single per-session prompt was already used, never re-arm.
     if (sessionPromptUsedRef.current) return;
     promptSentRef.current = false;
 
     idleTimerRef.current = setTimeout(() => {
       if (!mountedRef.current) return;
+      if (terminalReasonRef.current) return;
       if (promptSentRef.current) return;
       if (sessionPromptUsedRef.current) return;
 
