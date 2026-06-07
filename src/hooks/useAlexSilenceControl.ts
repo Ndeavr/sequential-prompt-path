@@ -303,7 +303,9 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
     resumeFromOrb,
     startMonitoring,
     forceClose,
+    markClosed,
     isPaused: status === "paused",
     isIdle: status === "idle_prompted",
+    isClosed: terminalReasonRef.current !== null,
   };
 }
