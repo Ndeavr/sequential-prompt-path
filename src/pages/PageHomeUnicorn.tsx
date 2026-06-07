@@ -490,24 +490,42 @@ function ContractorAippSplit() {
   ];
   return (
     <section className="px-4 mt-6 mb-8 relative z-10">
+      {/* Section eyebrow header (outside card) */}
+      <div className="mb-3 flex items-center gap-2">
+        <span
+          className="text-[11px] font-bold tracking-[0.18em] uppercase"
+          style={{ color: "#3B82F6" }}
+        >
+          Espace entrepreneurs
+        </span>
+        <span
+          aria-hidden
+          className="flex-1 h-px"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(59,130,246,0.45) 0%, rgba(59,130,246,0) 100%)",
+          }}
+        />
+      </div>
+
       <div
         className="relative overflow-hidden p-5"
         style={{
           borderRadius: 24,
           background:
             "linear-gradient(135deg, #0B1430 0%, #131B3D 55%, #1B1F4A 100%)",
-          border: "1px solid rgba(99,130,255,0.22)",
+          border: "1px solid rgba(99,130,255,0.35)",
           boxShadow:
-            "0 30px 60px -28px rgba(37,99,255,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
+            "0 0 0 1px rgba(99,130,255,0.25), 0 30px 80px -30px rgba(59,130,246,0.65), inset 0 1px 0 rgba(255,255,255,0.08)",
         }}
       >
         {/* radial glow */}
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-16 -right-16 w-56 h-56 rounded-full"
+          className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full"
           style={{
             background:
-              "radial-gradient(circle, rgba(59,130,246,0.30) 0%, rgba(59,130,246,0) 70%)",
+              "radial-gradient(circle, rgba(59,130,246,0.45) 0%, rgba(59,130,246,0) 70%)",
           }}
         />
 
@@ -547,24 +565,13 @@ function ContractorAippSplit() {
             Ils demandent à l'IA qui elle recommande.
           </p>
 
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-2 mt-4">
+          {/* Single primary CTA */}
+          <div className="mt-4">
             <Link
               to="/entrepreneur/join"
-              className="uc-cta px-5 py-3 rounded-full text-[13px] font-bold text-center"
+              className="uc-cta block w-full sm:w-auto sm:inline-block px-6 py-3 rounded-full text-[13px] font-bold text-center"
             >
               Activer mon profil
-            </Link>
-            <Link
-              to="/aipp"
-              className="px-5 py-3 rounded-full text-[13px] font-semibold text-center transition-colors"
-              style={{
-                background: "rgba(255,255,255,0.08)",
-                color: "#FFFFFF",
-                border: "1px solid rgba(255,255,255,0.20)",
-              }}
-            >
-              Voir mon score IA
             </Link>
           </div>
 
