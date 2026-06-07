@@ -68,10 +68,56 @@ export function buildAlexAgentOverrides(input: BuildOverridesInput) {
 
   // Voice tuning is LOCKED in alexVoiceConfig — ignore caller overrides
   // for stability/similarity/style/speakerBoost so it never drifts mid-session.
-  const voiceId = input.voiceId ?? ALEX_VOICE_BASE.voiceId;
+  // Session voice id is locked on first call and reused for every subsequent
+  // turn (prevents voice flips between sentences).
+  const store = useAlexVoiceLockedStore.getState();
+  const candidateVoiceId = input.voiceId ?? ALEX_VOICE_BASE.voiceId;
+  store.lockVoiceForSession({
+    voiceId: candidateVoiceId,
+    provider: ALEX_TTS_PROVIDER,
+    language,
+    mode,
+  });
+  const voiceId = store.sessionVoiceId ?? candidateVoiceId;
+  const assertion = store.assertVoice(voiceId);
+  if (!assertion.ok && assertion.expected) {
+    // Drift detected — force locked voice, do NOT honor the caller override.
+    return buildPayload(
+      assertion.expected,
+      prompt,
+      firstMessage,
+      language,
+      tuning,
+    );
+  }
 
+  return buildPayload(voiceId, prompt, firstMessage, language, tuning);
+}
+
+function buildPayload(
+  voiceId: string,
+  prompt: string,
+  firstMessage: string,
+  language: AlexLanguage,
+  tuning: ReturnType<typeof getVoiceConfigFor>,
+) {
   return {
     agent: {
+      prompt: { prompt },
+      firstMessage,
+      language,
+    },
+    tts: {
+      voiceId,
+      modelId: ALEX_VOICE_BASE.modelId,
+      stability: tuning.stability,
+      similarity_boost: tuning.similarity_boost,
+      style: tuning.style,
+      use_speaker_boost: tuning.use_speaker_boost,
+      speed: tuning.speed,
+    },
+  };
+}
       prompt: { prompt },
       firstMessage,
       language,
