@@ -118,18 +118,3 @@ function buildPayload(
     },
   };
 }
-      prompt: { prompt },
-      firstMessage,
-      language,
-    },
-    tts: {
-      voiceId,
-      modelId: ALEX_VOICE_BASE.modelId,
-      stability: tuning.stability,
-      similarity_boost: tuning.similarity_boost,
-      style: tuning.style,
-      use_speaker_boost: tuning.use_speaker_boost,
-      speed: tuning.speed,
-    },
-  };
-}
