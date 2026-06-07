@@ -482,38 +482,135 @@ function HowItWorksCards() {
 
 /* ---------------- Contractor split ---------------- */
 function ContractorAippSplit() {
+  const benefits = [
+    "Rendez-vous exclusifs",
+    "Recommandations IA",
+    "Visibilité locale",
+    "Profil optimisé IA",
+  ];
   return (
     <section className="px-4 mt-6 mb-8 relative z-10">
-      <div className="uc-glass-strong p-4" style={{ borderRadius: 24 }}>
-        <div>
-          <h3 className="text-[18px] font-extrabold leading-tight tracking-tight" style={{ color: "#0B1220" }}>
-            Transformez votre expertise en machine de croissance IA.
+      <div
+        className="relative overflow-hidden p-5"
+        style={{
+          borderRadius: 24,
+          background:
+            "linear-gradient(135deg, #0B1430 0%, #131B3D 55%, #1B1F4A 100%)",
+          border: "1px solid rgba(99,130,255,0.22)",
+          boxShadow:
+            "0 30px 60px -28px rgba(37,99,255,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
+        }}
+      >
+        {/* radial glow */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-16 -right-16 w-56 h-56 rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(59,130,246,0.30) 0%, rgba(59,130,246,0) 70%)",
+          }}
+        />
+
+        <div className="relative">
+          {/* Badge */}
+          <div
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-[0.14em] uppercase"
+            style={{
+              background: "rgba(99,130,255,0.16)",
+              border: "1px solid rgba(147,170,255,0.30)",
+              color: "rgba(255,255,255,0.92)",
+            }}
+          >
+            <Sparkles size={11} /> Espace entrepreneurs
+          </div>
+
+          <h3
+            className="text-[18px] font-extrabold leading-tight tracking-tight mt-3"
+            style={{ color: "#FFFFFF" }}
+          >
+            Faites partie des entrepreneurs recommandés.
           </h3>
-          <p className="text-[12px] mt-2" style={{ color: "#667085" }}>
-            Rejoignez les entrepreneurs qui reçoivent des rendez-vous qualifiés 24/7.
+
+          <p className="text-[12px] mt-2 leading-relaxed" style={{ color: "#C6CFEE" }}>
+            UNPRO recommande les professionnels selon leur expertise, leurs résultats
+            et leur compatibilité avec chaque projet.
           </p>
-          <div className="flex gap-2 mt-3">
-            <Link
-              to="/aipp"
-              className="uc-cta px-4 py-2.5 rounded-full text-[12px] font-semibold"
-            >
-              Voir mon AIPP
-            </Link>
+          <p className="text-[12px] mt-1 font-medium" style={{ color: "#A6B0D8" }}>
+            Pas de leads partagés. Pas de course aux soumissions.
+          </p>
+
+          <p
+            className="text-[11px] mt-3 italic leading-snug"
+            style={{ color: "#93A4D9" }}
+          >
+            Les propriétaires ne recherchent plus seulement des entrepreneurs.
+            Ils demandent à l'IA qui elle recommande.
+          </p>
+
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row gap-2 mt-4">
             <Link
               to="/entrepreneur/join"
-              className="px-4 py-2.5 rounded-full text-[12px] font-semibold"
-              style={{
-                background: "white",
-                color: "#2563FF",
-                border: "1px solid rgba(37,99,255,0.30)",
-              }}
+              className="uc-cta px-5 py-3 rounded-full text-[13px] font-bold text-center"
             >
               Activer mon profil
             </Link>
+            <Link
+              to="/aipp"
+              className="px-5 py-3 rounded-full text-[13px] font-semibold text-center transition-colors"
+              style={{
+                background: "rgba(255,255,255,0.08)",
+                color: "#FFFFFF",
+                border: "1px solid rgba(255,255,255,0.20)",
+              }}
+            >
+              Voir mon score IA
+            </Link>
+          </div>
+
+          {/* Micro benefits */}
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-4">
+            {benefits.map((b) => (
+              <div
+                key={b}
+                className="flex items-center gap-1.5 text-[11px]"
+                style={{ color: "rgba(255,255,255,0.82)" }}
+              >
+                <CheckCircle2 size={13} color="#7CF0B8" strokeWidth={2.4} />
+                {b}
+              </div>
+            ))}
+          </div>
+
+          {/* Recommended preview wrapper */}
+          <div
+            className="mt-5 p-2.5 rounded-2xl"
+            style={{
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.10)",
+            }}
+          >
+            <div className="flex items-center justify-between px-1 pb-2">
+              <span
+                className="text-[10px] font-semibold uppercase tracking-[0.12em]"
+                style={{ color: "rgba(255,255,255,0.70)" }}
+              >
+                Exemple d'entrepreneur recommandé
+              </span>
+              <span
+                className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                style={{
+                  background: "rgba(59,130,246,0.20)",
+                  border: "1px solid rgba(147,170,255,0.35)",
+                  color: "#DCE6FF",
+                }}
+              >
+                <Sparkles size={10} /> Recommandé par Alex
+              </span>
+            </div>
+            <NearbyContractorsCarousel />
           </div>
         </div>
-
-        <NearbyContractorsCarousel />
       </div>
     </section>
   );
