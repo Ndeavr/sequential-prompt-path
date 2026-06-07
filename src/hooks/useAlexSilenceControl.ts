@@ -16,7 +16,16 @@ export type AlexSilenceStatus =
   | "idle_prompted"
   | "pausing"
   | "paused"
-  | "resuming";
+  | "resuming"
+  | "closed";
+
+export type AlexSilenceTerminalReason =
+  | "booked"
+  | "recommended"
+  | "summary"
+  | "thanks"
+  | "goodbye"
+  | "manual";
 
 export interface AlexSilenceSnapshot {
   routePath: string;
