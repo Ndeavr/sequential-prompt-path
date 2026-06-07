@@ -1,10 +1,14 @@
 /**
  * VoiceEngineAlexController — Central controller for Alex voice persona.
  * Manages voice profile, language detection, playback state, and identity guardrails.
+ *
+ * Adds: terminal-state detection. When the user thanks Alex or says goodbye,
+ * the conversation is marked closed and the silence engine STOPS prompting.
  */
 import { useEffect, useCallback } from "react";
 import { useAlexVoicePersona, type VoiceLanguage } from "@/hooks/useAlexVoicePersona";
 import { useAlexConversationControl, getReminders } from "@/hooks/useAlexConversationControl";
+import { detectTerminalIntent } from "@/lib/alexTerminalIntents";
 import PlayerVoiceResponse from "./PlayerVoiceResponse";
 import GuardrailVoiceConsistency from "./GuardrailVoiceConsistency";
 
@@ -28,6 +32,14 @@ export default function VoiceEngineAlexController({ onReminderMessage, onAutoClo
   const handleUserInput = useCallback((text: string) => {
     const detectedLang = persona.autoDetectAndSwitch(text);
     conversation.recordActivity();
+
+    // Terminal intent — user said thanks / goodbye. Stop all follow-ups.
+    const terminal = detectTerminalIntent(text);
+    if (terminal) {
+      conversation.markClosed(terminal);
+      return;
+    }
+
     if (detectedLang !== persona.activeLanguage) {
       onLanguageSwitch?.(detectedLang);
     }
