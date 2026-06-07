@@ -9,7 +9,20 @@
  */
 import { useState, useEffect, useRef, useCallback } from "react";
 
-export type ConversationStatus = "active" | "idle" | "closing" | "closed";
+export type ConversationStatus =
+  | "active"
+  | "idle"
+  | "closing"
+  | "closed"
+  | "abandoned";
+
+export type TerminalReason =
+  | "booked"
+  | "recommended"
+  | "summary"
+  | "thanks"
+  | "goodbye"
+  | "manual";
 
 interface ConversationControlConfig {
   silenceThreshold1Ms?: number; // 15s default
@@ -21,12 +34,14 @@ interface ConversationControlConfig {
   onStatusChange?: (status: ConversationStatus) => void;
 }
 
-// ALEX FEMALE-ONLY: one calm, premium silence line. No "êtes-vous encore là?".
-// No auto-close question — Alex stays available and silent.
-const REMINDER_1_FR = "Je reste disponible quand vous êtes prêt.";
-const REMINDER_2_FR = "";
-const REMINDER_1_EN = "I'm here whenever you're ready.";
-const REMINDER_2_EN = "";
+// Two-attempt ladder per UNPRO production rules.
+// #1 = compassionate presence check, #2 = soft close, then STOP.
+const REMINDER_1_FR = "Êtes-vous toujours là ?";
+const REMINDER_2_FR =
+  "Je vais fermer cette conversation pour le moment. Revenez quand vous voulez.";
+const REMINDER_1_EN = "Are you still there?";
+const REMINDER_2_EN =
+  "I'll close this conversation for now. Come back whenever you'd like.";
 
 export function getReminders(lang: "fr" | "en" = "fr") {
   return lang === "fr"
