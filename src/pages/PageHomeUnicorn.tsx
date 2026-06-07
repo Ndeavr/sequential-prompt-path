@@ -430,7 +430,8 @@ function HowItWorksCards() {
   const steps = [
     { n: 1, title: "Détection IA", desc: "Vous décrivez, envoyez une photo ou parlez. Alex détecte le problème." },
     { n: 2, title: "Analyse intelligente", desc: "Alex comprend, analyse et estime les coûts avec précision." },
-    { n: 3, title: "Recommandation instantanée", desc: "UNPRO vous connecte aux meilleurs professionnels disponibles." },
+    { n: 3, title: "Recommandation", desc: "Alex recommande les meilleures actions selon votre propriété." },
+    { n: 4, title: "Solution", desc: "Recevez une recommandation personnalisée ou prenez rendez-vous avec le professionnel le mieux adapté." },
   ];
   return (
     <section className="px-4 mt-6 relative z-10">
