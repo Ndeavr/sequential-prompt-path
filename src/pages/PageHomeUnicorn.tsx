@@ -10,7 +10,7 @@ import {
   Bell, ChevronDown, Mic, Image as ImageIcon, FileText, ChevronRight, RefreshCw,
   Home as HomeIcon, Hammer, Thermometer, Droplets, Building2, Zap, Wrench,
   BarChart3, ShieldCheck, Users, Clock, BadgeCheck, Star, ArrowRight,
-  QrCode, Menu, TrendingUp, User as UserIcon, Settings, LogOut, Sparkles,
+  QrCode, Menu, TrendingUp, User as UserIcon, Settings, LogOut, Sparkles, CheckCircle2,
 } from "lucide-react";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import AlexOrbPremium from "@/components/home-unicorn/AlexOrbPremium";
