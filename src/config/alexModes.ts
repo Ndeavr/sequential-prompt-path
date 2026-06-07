@@ -9,8 +9,12 @@
  *   - If user_role = "contractor" OR a contractor profile exists,
  *     Alex is locked into CONTRACTOR_MODE. No homeowner fallback.
  *   - Admins viewing impersonation always see CONTRACTOR_MODE.
- *   - Otherwise, Alex defaults to HOMEOWNER_MODE.
+ *   - Otherwise, persona detection runs on the latest user utterance
+ *     so contractor-intent visitors get the contractor framing instead
+ *     of the homeowner default.
  */
+
+import { detectPersona } from "@/features/alex/intent/alexPersonaRouter";
 
 export type AlexMode = "contractor" | "homeowner" | "condo_manager" | "admin_preview";
 
