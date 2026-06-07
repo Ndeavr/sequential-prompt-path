@@ -276,6 +276,7 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
     setStatus("active");
     promptSentRef.current = false;
     sessionPromptUsedRef.current = false; // fresh session — re-arm
+    terminalReasonRef.current = null;
     setSilenceCycle(0);
     startIdleTimer();
   }, [startIdleTimer]);
