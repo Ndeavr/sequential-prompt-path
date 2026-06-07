@@ -9,8 +9,12 @@
  *   - If user_role = "contractor" OR a contractor profile exists,
  *     Alex is locked into CONTRACTOR_MODE. No homeowner fallback.
  *   - Admins viewing impersonation always see CONTRACTOR_MODE.
- *   - Otherwise, Alex defaults to HOMEOWNER_MODE.
+ *   - Otherwise, persona detection runs on the latest user utterance
+ *     so contractor-intent visitors get the contractor framing instead
+ *     of the homeowner default.
  */
+
+import { detectPersona } from "@/features/alex/intent/alexPersonaRouter";
 
 export type AlexMode = "contractor" | "homeowner" | "condo_manager" | "admin_preview";
 
@@ -23,6 +27,9 @@ export interface AlexModeContext {
   hasCondoProfile?: boolean;
   /** Admin previewing another contractor's view. */
   isAdminPreview?: boolean;
+  /** Latest user utterance — used for intent-based persona detection when
+   *  there is no explicit role (logged-out or generic homeowner). */
+  lastUserText?: string | null;
 }
 
 export interface AlexModeDescriptor {
@@ -40,7 +47,8 @@ export interface AlexModeDescriptor {
 const CONTRACTOR_DESCRIPTOR: AlexModeDescriptor = {
   mode: "contractor",
   panelKey: "PanelContractorAdvisorAlex",
-  greetingFr: "Bonjour. Donnez-moi votre site web ou RBQ et je lance l'analyse instantanée.",
+  greetingFr:
+    "Bonjour. Comment puis-je vous aider à développer votre entreprise aujourd'hui ?",
   allowHomeownerFallback: false,
   allowOnboardingRestart: false,
 };
@@ -48,7 +56,8 @@ const CONTRACTOR_DESCRIPTOR: AlexModeDescriptor = {
 const HOMEOWNER_DESCRIPTOR: AlexModeDescriptor = {
   mode: "homeowner",
   panelKey: "PanelAlexHomeownerFlow",
-  greetingFr: "Bonjour. Décrivez votre situation ou envoyez une photo.",
+  greetingFr:
+    "Bonjour. Quel problème ou projet souhaitez-vous régler aujourd'hui ?",
   allowHomeownerFallback: true,
   allowOnboardingRestart: true,
 };
@@ -71,9 +80,13 @@ const ADMIN_PREVIEW_DESCRIPTOR: AlexModeDescriptor = {
  *
  * Order of precedence:
  *   1. Admin preview (always contractor view).
- *   2. Contractor role OR contractor profile → CONTRACTOR.
+ *   2. Explicit contractor role OR contractor profile → CONTRACTOR.
  *   3. Condo manager profile → CONDO.
- *   4. Default → HOMEOWNER.
+ *   4. Intent-based persona detection on `lastUserText` (only when there is
+ *      no explicit non-homeowner role) — contractor signals win over
+ *      homeowner default so an unauthenticated visitor saying "je veux plus
+ *      de clients" gets the contractor framing.
+ *   5. Default → HOMEOWNER.
  */
 export function resolveAlexMode(ctx: AlexModeContext): AlexModeDescriptor {
   if (ctx.isAdminPreview) return ADMIN_PREVIEW_DESCRIPTOR;
@@ -81,6 +94,14 @@ export function resolveAlexMode(ctx: AlexModeContext): AlexModeDescriptor {
     return CONTRACTOR_DESCRIPTOR;
   }
   if (ctx.hasCondoProfile) return CONDO_DESCRIPTOR;
+
+  // Intent fallback — only when no contractor/condo signal exists.
+  if (ctx.lastUserText) {
+    const persona = detectPersona(ctx.lastUserText);
+    if (persona === "CONTRACTOR") return CONTRACTOR_DESCRIPTOR;
+    if (persona === "PROPERTY_MANAGER") return CONDO_DESCRIPTOR;
+  }
+
   return HOMEOWNER_DESCRIPTOR;
 }
 

@@ -17,6 +17,8 @@ import { resolveAlexMode, type AlexModeContext, type AlexModeDescriptor } from "
 export interface UseContractorModeOptions {
   /** Set true on admin preview surfaces. */
   isAdminPreview?: boolean;
+  /** Optional latest user utterance for intent-based persona detection. */
+  lastUserText?: string | null;
 }
 
 export interface UseContractorModeResult {
@@ -35,8 +37,9 @@ export function useContractorMode(opts: UseContractorModeOptions = {}): UseContr
       role,
       hasContractorProfile: !!profile,
       isAdminPreview: !!opts.isAdminPreview,
+      lastUserText: opts.lastUserText ?? null,
     }),
-    [role, profile, opts.isAdminPreview],
+    [role, profile, opts.isAdminPreview, opts.lastUserText],
   );
 
   const descriptor = useMemo(() => resolveAlexMode(context), [context]);

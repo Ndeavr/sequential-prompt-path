@@ -9,8 +9,14 @@
  */
 import { buildAlexFirstMessage } from "./alexSystemPromptV2";
 import { ALEX_CORE_PROMPT } from "./alexCorePrompt";
-import { getVoiceConfigFor, ALEX_VOICE_BASE, type AlexVoiceMode } from "@/config/alexVoiceConfig";
+import {
+  getVoiceConfigFor,
+  ALEX_VOICE_BASE,
+  ALEX_TTS_PROVIDER,
+  type AlexVoiceMode,
+} from "@/config/alexVoiceConfig";
 import { prepareAlexSpeechText } from "@/lib/prepareAlexSpeechText";
+import { useAlexVoiceLockedStore } from "@/stores/alexVoiceLockedStore";
 
 export type AlexLanguage = "fr" | "en";
 
@@ -62,8 +68,39 @@ export function buildAlexAgentOverrides(input: BuildOverridesInput) {
 
   // Voice tuning is LOCKED in alexVoiceConfig — ignore caller overrides
   // for stability/similarity/style/speakerBoost so it never drifts mid-session.
-  const voiceId = input.voiceId ?? ALEX_VOICE_BASE.voiceId;
+  // Session voice id is locked on first call and reused for every subsequent
+  // turn (prevents voice flips between sentences).
+  const store = useAlexVoiceLockedStore.getState();
+  const candidateVoiceId = input.voiceId ?? ALEX_VOICE_BASE.voiceId;
+  store.lockVoiceForSession({
+    voiceId: candidateVoiceId,
+    provider: ALEX_TTS_PROVIDER,
+    language,
+    mode,
+  });
+  const voiceId = store.sessionVoiceId ?? candidateVoiceId;
+  const assertion = store.assertVoice(voiceId);
+  if (!assertion.ok && assertion.expected) {
+    // Drift detected — force locked voice, do NOT honor the caller override.
+    return buildPayload(
+      assertion.expected,
+      prompt,
+      firstMessage,
+      language,
+      tuning,
+    );
+  }
 
+  return buildPayload(voiceId, prompt, firstMessage, language, tuning);
+}
+
+function buildPayload(
+  voiceId: string,
+  prompt: string,
+  firstMessage: string,
+  language: AlexLanguage,
+  tuning: ReturnType<typeof getVoiceConfigFor>,
+) {
   return {
     agent: {
       prompt: { prompt },

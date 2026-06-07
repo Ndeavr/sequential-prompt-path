@@ -9,7 +9,20 @@
  */
 import { useState, useEffect, useRef, useCallback } from "react";
 
-export type ConversationStatus = "active" | "idle" | "closing" | "closed";
+export type ConversationStatus =
+  | "active"
+  | "idle"
+  | "closing"
+  | "closed"
+  | "abandoned";
+
+export type TerminalReason =
+  | "booked"
+  | "recommended"
+  | "summary"
+  | "thanks"
+  | "goodbye"
+  | "manual";
 
 interface ConversationControlConfig {
   silenceThreshold1Ms?: number; // 15s default
@@ -21,12 +34,14 @@ interface ConversationControlConfig {
   onStatusChange?: (status: ConversationStatus) => void;
 }
 
-// ALEX FEMALE-ONLY: one calm, premium silence line. No "êtes-vous encore là?".
-// No auto-close question — Alex stays available and silent.
-const REMINDER_1_FR = "Je reste disponible quand vous êtes prêt.";
-const REMINDER_2_FR = "";
-const REMINDER_1_EN = "I'm here whenever you're ready.";
-const REMINDER_2_EN = "";
+// Two-attempt ladder per UNPRO production rules.
+// #1 = compassionate presence check, #2 = soft close, then STOP.
+const REMINDER_1_FR = "Êtes-vous toujours là ?";
+const REMINDER_2_FR =
+  "Je vais fermer cette conversation pour le moment. Revenez quand vous voulez.";
+const REMINDER_1_EN = "Are you still there?";
+const REMINDER_2_EN =
+  "I'll close this conversation for now. Come back whenever you'd like.";
 
 export function getReminders(lang: "fr" | "en" = "fr") {
   return lang === "fr"
@@ -50,6 +65,8 @@ export function useAlexConversationControl(config: ConversationControlConfig = {
   const lastActivityRef = useRef(Date.now());
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Terminal lock: once flipped, NO more follow-ups, ever.
+  const terminalRef = useRef<TerminalReason | null>(null);
 
   const updateStatus = useCallback((s: ConversationStatus) => {
     setStatus(s);
@@ -61,8 +78,61 @@ export function useAlexConversationControl(config: ConversationControlConfig = {
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
   }, []);
 
+  const isTerminal = useCallback(
+    () => terminalRef.current !== null,
+    [],
+  );
+
+  const startSilenceTimer = useCallback(() => {
+    clearTimers();
+    if (isTerminal()) return; // never re-arm after terminal
+
+    // Attempt #1 after silenceThreshold1Ms
+    timerRef.current = setTimeout(() => {
+      if (isTerminal()) return;
+      setSilenceCount((prev) => {
+        const next = prev + 1;
+        if (next === 1) {
+          updateStatus("idle");
+          onReminder1?.();
+
+          // Schedule attempt #2 after silenceThreshold2Ms - silenceThreshold1Ms
+          const gap = Math.max(
+            (silenceThreshold2Ms ?? 30_000) - (silenceThreshold1Ms ?? 15_000),
+            5_000,
+          );
+          closeTimerRef.current = setTimeout(() => {
+            if (isTerminal()) return;
+            setSilenceCount((p) => p + 1);
+            updateStatus("closing");
+            onReminder2?.();
+
+            // After attempt #2 → mark abandoned and auto-close. NO third message.
+            setTimeout(() => {
+              terminalRef.current = "manual";
+              updateStatus("abandoned");
+              onAutoClose?.();
+            }, autoCloseDelayMs ?? 5_000);
+          }, gap);
+        }
+        return next;
+      });
+    }, silenceThreshold1Ms);
+  }, [
+    silenceThreshold1Ms,
+    silenceThreshold2Ms,
+    autoCloseDelayMs,
+    onReminder1,
+    onReminder2,
+    onAutoClose,
+    clearTimers,
+    isTerminal,
+    updateStatus,
+  ]);
+
   /** Call on every user interaction (message, click, voice) */
   const recordActivity = useCallback(() => {
+    if (isTerminal()) return; // closed → never re-engage
     lastActivityRef.current = Date.now();
     clearTimers();
     setSilenceCount(0);
@@ -70,46 +140,47 @@ export function useAlexConversationControl(config: ConversationControlConfig = {
       updateStatus("active");
     }
     startSilenceTimer();
-  }, [status]);
-
-  const startSilenceTimer = useCallback(() => {
-    clearTimers();
-    // ALEX FEMALE-ONLY: a single calm reminder, then passive listening forever.
-    // No second nag, no auto-close — Alex never says "êtes-vous encore là?".
-    timerRef.current = setTimeout(() => {
-      setSilenceCount((prev) => {
-        const next = prev + 1;
-        if (next === 1) {
-          updateStatus("idle");
-          onReminder1?.();
-        }
-        return next;
-      });
-    }, silenceThreshold1Ms);
-  }, [silenceThreshold1Ms, onReminder1]);
+  }, [status, isTerminal, clearTimers, startSilenceTimer, updateStatus]);
 
   /** Start monitoring */
   const startSession = useCallback(() => {
+    terminalRef.current = null;
     updateStatus("active");
     setSilenceCount(0);
     lastActivityRef.current = Date.now();
     startSilenceTimer();
-  }, [startSilenceTimer]);
+  }, [startSilenceTimer, updateStatus]);
 
-  /** Force close */
+  /** Force close (user closed overlay, navigation, etc.) */
   const closeSession = useCallback(() => {
     clearTimers();
+    terminalRef.current = terminalRef.current ?? "manual";
     updateStatus("closed");
-  }, [clearTimers]);
+  }, [clearTimers, updateStatus]);
+
+  /**
+   * Mark the conversation as TERMINAL — booking confirmed, recommendation
+   * delivered, user said thanks/goodbye, or summary complete. After this,
+   * NO follow-up ("Êtes-vous toujours là ?") is allowed.
+   */
+  const markClosed = useCallback(
+    (reason: TerminalReason) => {
+      clearTimers();
+      terminalRef.current = reason;
+      updateStatus("closed");
+    },
+    [clearTimers, updateStatus],
+  );
 
   /** Reset for new session */
   const resetSession = useCallback(() => {
     clearTimers();
+    terminalRef.current = null;
     setSilenceCount(0);
     updateStatus("active");
     lastActivityRef.current = Date.now();
     startSilenceTimer();
-  }, [clearTimers, startSilenceTimer]);
+  }, [clearTimers, startSilenceTimer, updateStatus]);
 
   useEffect(() => {
     return () => clearTimers();
@@ -121,6 +192,8 @@ export function useAlexConversationControl(config: ConversationControlConfig = {
     recordActivity,
     startSession,
     closeSession,
+    markClosed,
     resetSession,
+    isTerminal: terminalRef.current !== null,
   };
 }

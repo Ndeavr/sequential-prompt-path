@@ -83,6 +83,18 @@ interface AlexVoiceLockedState {
   // Transcripts for fallback
   transcriptsForFallback: Array<{ role: "user" | "alex"; text: string }>;
 
+  // ── Voice lock (one voice id locked for the entire session) ───────────
+  /** Locked TTS voice id for the active session. Never changes mid-session. */
+  sessionVoiceId: string | null;
+  /** Locked provider (always "elevenlabs" today). */
+  sessionVoiceProvider: string | null;
+  /** Locked language for the session ("fr" | "en"). */
+  sessionLanguage: "fr" | "en" | null;
+  /** Locked persona mode at session start. */
+  sessionMode: string | null;
+  /** When the lock was set (ms epoch). */
+  voiceLockedAt: number | null;
+
   // Actions
   openVoiceSession: (feature?: string, openReason?: string, contextHint?: string) => void;
   closeVoiceSession: (closeReason: string) => void;
@@ -92,6 +104,23 @@ interface AlexVoiceLockedState {
   incrementHeartbeatFailure: () => void;
   resetHeartbeat: () => void;
   addTranscript: (role: "user" | "alex", text: string) => void;
+
+  /** Lock voice for the session. Idempotent: ignored once locked unless `force`. */
+  lockVoiceForSession: (input: {
+    voiceId: string;
+    provider?: string;
+    language?: "fr" | "en";
+    mode?: string;
+    force?: boolean;
+  }) => void;
+  /** Returns expected vs got. Use BEFORE every TTS request to prevent drift. */
+  assertVoice: (currentVoiceId: string | null | undefined) => {
+    ok: boolean;
+    expected: string | null;
+    got: string | null;
+  };
+  /** Clear lock (on session end / explicit reset). */
+  unlockVoice: () => void;
   
   // Guards
   canAutoClose: () => boolean;
@@ -112,6 +141,45 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
   lastHeartbeatAt: null,
   stabilizationEnd: null,
   transcriptsForFallback: [],
+  sessionVoiceId: null,
+  sessionVoiceProvider: null,
+  sessionLanguage: null,
+  sessionMode: null,
+  voiceLockedAt: null,
+
+  lockVoiceForSession: ({ voiceId, provider, language, mode, force }) => {
+    const state = get();
+    if (state.sessionVoiceId && !force) return; // idempotent — never drift
+    set({
+      sessionVoiceId: voiceId,
+      sessionVoiceProvider: provider ?? "elevenlabs",
+      sessionLanguage: language ?? state.sessionLanguage ?? "fr",
+      sessionMode: mode ?? state.sessionMode ?? "general",
+      voiceLockedAt: Date.now(),
+    });
+  },
+
+  assertVoice: (currentVoiceId) => {
+    const expected = get().sessionVoiceId;
+    const got = currentVoiceId ?? null;
+    const ok = !expected || expected === got;
+    if (!ok) {
+      console.warn(
+        `[AlexVoiceLock] Voice drift blocked. expected=${expected} got=${got}`,
+      );
+    }
+    return { ok, expected, got };
+  },
+
+  unlockVoice: () => {
+    set({
+      sessionVoiceId: null,
+      sessionVoiceProvider: null,
+      sessionLanguage: null,
+      sessionMode: null,
+      voiceLockedAt: null,
+    });
+  },
 
   openVoiceSession: (feature = "general", openReason = "user_initiated", contextHint?: string) => {
     const sessionId = crypto.randomUUID();
@@ -185,6 +253,11 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
       errorType: null,
       stabilizationEnd: null,
       heartbeatFailures: 0,
+      sessionVoiceId: null,
+      sessionVoiceProvider: null,
+      sessionLanguage: null,
+      sessionMode: null,
+      voiceLockedAt: null,
     });
 
     // Log close
