@@ -82,6 +82,9 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
   // session, never ask again — not after activity, not after resume.
   // Only `startMonitoring` (fresh session) resets it.
   const sessionPromptUsedRef = useRef(false);
+  // Terminal lock — set when conversation reaches a final outcome
+  // (booking, recommendation, thanks, goodbye). Blocks ALL idle prompts.
+  const terminalReasonRef = useRef<AlexSilenceTerminalReason | null>(null);
   const mountedRef = useRef(true);
 
   const clearTimers = useCallback(() => {
