@@ -19,6 +19,14 @@ import NearbyContractorsCarousel from "@/components/home-unicorn/NearbyContracto
 import CinematicArchScenes from "@/components/home-unicorn/CinematicArchScenes";
 import PIMIntroBand from "@/components/pim/PIMIntroBand";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import "@/styles/unicorn-theme.css";
 
 /* ---------------- Header ---------------- */
@@ -47,14 +55,15 @@ function HeaderFloatingGlass() {
 
         <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
           <div className="flex items-center gap-1 md:gap-2">
-            <button
-              className="uc-glass-strong rounded-xl px-2 md:px-3 py-1.5 md:py-2 flex items-center gap-0.5 text-[11px] md:text-[12px] font-semibold flex-shrink-0"
+            <span
+              className="uc-glass-strong rounded-xl px-2 md:px-3 py-1.5 md:py-2 flex items-center text-[11px] md:text-[12px] font-semibold flex-shrink-0 select-none"
               style={{ borderRadius: 14, color: "#0B1220" }}
               aria-label="Langue"
             >
-              FR <ChevronDown size={12} />
-            </button>
+              FR
+            </span>
             <button
+              onClick={() => navigate("/memory")}
               className="uc-glass-strong rounded-xl w-9 h-9 md:w-10 md:h-10 flex items-center justify-center relative flex-shrink-0"
               style={{ borderRadius: 14 }}
               aria-label="Notifications"
@@ -73,19 +82,40 @@ function HeaderFloatingGlass() {
             >
               <QrCode size={15} color="#0B1220" />
             </button>
-            <button
-              className="uc-glass-strong rounded-xl pl-1 pr-1.5 md:pr-2 py-1 flex items-center gap-0.5 md:gap-1 flex-shrink-0"
-              style={{ borderRadius: 14 }}
-              aria-label="Profil"
-            >
-              <span
-                className="w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center text-[11px] md:text-[12px] font-bold text-white"
-                style={{ background: "linear-gradient(135deg, #6366F1, #3B82F6)" }}
-              >
-                P
-              </span>
-              <ChevronDown size={12} color="#0B1220" />
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="uc-glass-strong rounded-xl pl-1 pr-1.5 md:pr-2 py-1 flex items-center gap-0.5 md:gap-1 flex-shrink-0"
+                  style={{ borderRadius: 14 }}
+                  aria-label="Profil"
+                >
+                  <span
+                    className="w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center text-[11px] md:text-[12px] font-bold text-white"
+                    style={{ background: "linear-gradient(135deg, #6366F1, #3B82F6)" }}
+                  >
+                    P
+                  </span>
+                  <ChevronDown size={12} color="#0B1220" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Mon espace</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/profile")}>
+                  <UserIcon size={15} className="mr-2" /> Mon profil
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/account")}>
+                  <Settings size={15} className="mr-2" /> Mon compte
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/qr")}>
+                  <QrCode size={15} className="mr-2" /> Mon QR Code
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/logout")}>
+                  <LogOut size={15} className="mr-2" /> Déconnexion
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <Sheet>
             <SheetTrigger asChild>
@@ -490,24 +520,6 @@ function ContractorAippSplit() {
   ];
   return (
     <section className="px-4 mt-6 mb-8 relative z-10">
-      {/* Section eyebrow header (outside card) */}
-      <div className="mb-3 flex items-center gap-2">
-        <span
-          className="text-[11px] font-bold tracking-[0.18em] uppercase"
-          style={{ color: "#3B82F6" }}
-        >
-          Espace entrepreneurs
-        </span>
-        <span
-          aria-hidden
-          className="flex-1 h-px"
-          style={{
-            background:
-              "linear-gradient(90deg, rgba(59,130,246,0.45) 0%, rgba(59,130,246,0) 100%)",
-          }}
-        />
-      </div>
-
       <div
         className="relative overflow-hidden p-5"
         style={{
