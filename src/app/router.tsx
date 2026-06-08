@@ -604,6 +604,7 @@ const AdminHomeGraph = lazy(() => import("@/pages/admin/AdminHomeGraph"));
 const AdminUOS = lazy(() => import("@/pages/admin/AdminUOS"));
 const AdminGrowthEngine = lazy(() => import("@/pages/admin/AdminGrowthEngine"));
 const AdminGrowthOS = lazy(() => import("@/pages/admin/AdminGrowthOS"));
+const AdminGrowthLiveMonitor = lazy(() => import("@/pages/admin/AdminGrowthLiveMonitor"));
 const ContractorGrowth = lazy(() => import("@/pages/contractor/ContractorGrowth"));
 const AdminPricingPage = lazy(() => import("@/pages/admin/AdminPricingPage"));
 const AdminCoupons = lazy(() => import("@/pages/admin/AdminCoupons"));
