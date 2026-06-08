@@ -19,6 +19,14 @@ import NearbyContractorsCarousel from "@/components/home-unicorn/NearbyContracto
 import CinematicArchScenes from "@/components/home-unicorn/CinematicArchScenes";
 import PIMIntroBand from "@/components/pim/PIMIntroBand";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import "@/styles/unicorn-theme.css";
 
 /* ---------------- Header ---------------- */
