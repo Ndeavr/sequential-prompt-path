@@ -106,12 +106,12 @@ export default function BottomDockGlass() {
           <Tab item={left[0]} />
           <Tab item={left[1]} />
           {/* Center Alex slot — orb is absolutely anchored to this cell */}
-          <div className="relative flex flex-col items-center justify-end pb-1 pt-2">
+          <div className="relative flex flex-col items-center justify-center">
             <button
               type="button"
               onClick={() => openAlex("home_dock")}
               aria-label="Parler à Alex"
-              className="absolute left-1/2 -translate-x-1/2 -top-5 w-12 h-12 rounded-full flex items-center justify-center text-white pointer-events-auto transition-transform duration-200 ease-out active:scale-[0.92] hover:scale-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#3B82F6]/40"
+              className="w-11 h-11 rounded-full flex items-center justify-center text-white pointer-events-auto transition-transform duration-200 ease-out active:scale-[0.92] hover:scale-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#3B82F6]/40"
               style={{
                 background:
                   "radial-gradient(circle at 35% 30%, #BDE7FF 0%, #3B82F6 45%, #1E40AF 100%)",
@@ -123,9 +123,9 @@ export default function BottomDockGlass() {
             >
               <Sparkles size={18} strokeWidth={2.2} />
             </button>
-            <div className="w-12 h-7" aria-hidden />
             <span className="text-[11px] font-semibold text-[#2563FF] mt-0.5">Alex</span>
           </div>
+
           <Tab item={right[0]} />
           <Tab item={right[1]} />
         </div>
