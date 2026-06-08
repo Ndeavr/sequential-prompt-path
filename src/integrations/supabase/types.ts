@@ -40300,6 +40300,57 @@ export type Database = {
           },
         ]
       }
+      growth_agent_logs: {
+        Row: {
+          agent_name: string
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          failed_count: number
+          generated_count: number
+          id: string
+          input_count: number
+          job_id: string | null
+          payload: Json
+          processed_count: number
+          sent_count: number
+          started_at: string
+          status: string
+        }
+        Insert: {
+          agent_name: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          failed_count?: number
+          generated_count?: number
+          id?: string
+          input_count?: number
+          job_id?: string | null
+          payload?: Json
+          processed_count?: number
+          sent_count?: number
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          agent_name?: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          failed_count?: number
+          generated_count?: number
+          id?: string
+          input_count?: number
+          job_id?: string | null
+          payload?: Json
+          processed_count?: number
+          sent_count?: number
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
       growth_diagnostic_bubbles: {
         Row: {
           category: string
@@ -40526,6 +40577,54 @@ export type Database = {
           source_engine?: string
           status?: string
           title?: string | null
+        }
+        Relationships: []
+      }
+      growth_outbound_messages: {
+        Row: {
+          channel: string
+          contractor_id: string | null
+          created_at: string
+          delivered_at: string | null
+          error_message: string | null
+          id: string
+          message_body: string | null
+          provider_message_id: string | null
+          recipient: string
+          replied_at: string | null
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          contractor_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          message_body?: string | null
+          provider_message_id?: string | null
+          recipient: string
+          replied_at?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          contractor_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          message_body?: string | null
+          provider_message_id?: string | null
+          recipient?: string
+          replied_at?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -75009,6 +75108,21 @@ export type Database = {
           slot_class: string | null
           status: string | null
           trade_slug: string | null
+        }
+        Relationships: []
+      }
+      v_growth_engine_today: {
+        Row: {
+          activations_today: number | null
+          blocked_today: number | null
+          bookings_today: number | null
+          contractors_contacted_today: number | null
+          email_sent_today: number | null
+          failed_today: number | null
+          is_production_live: boolean | null
+          replies_today: number | null
+          sms_sent_today: number | null
+          waiting_approval_today: number | null
         }
         Relationships: []
       }
