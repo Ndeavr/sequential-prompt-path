@@ -520,24 +520,6 @@ function ContractorAippSplit() {
   ];
   return (
     <section className="px-4 mt-6 mb-8 relative z-10">
-      {/* Section eyebrow header (outside card) */}
-      <div className="mb-3 flex items-center gap-2">
-        <span
-          className="text-[11px] font-bold tracking-[0.18em] uppercase"
-          style={{ color: "#3B82F6" }}
-        >
-          Espace entrepreneurs
-        </span>
-        <span
-          aria-hidden
-          className="flex-1 h-px"
-          style={{
-            background:
-              "linear-gradient(90deg, rgba(59,130,246,0.45) 0%, rgba(59,130,246,0) 100%)",
-          }}
-        />
-      </div>
-
       <div
         className="relative overflow-hidden p-5"
         style={{
