@@ -17,7 +17,7 @@ export default function AlexBottomSheetLauncherUNPRO() {
       aria-label="Alex"
     >
       <motion.div
-        className="w-12 h-12 -mt-6 rounded-full flex items-center justify-center relative"
+        className="w-10 h-10 rounded-full flex items-center justify-center relative"
         style={{
           background: "linear-gradient(135deg, hsl(222 100% 55%), hsl(252 100% 60%), hsl(195 100% 48%))",
           boxShadow: "0 4px 20px -2px hsl(222 100% 60% / 0.5), inset 0 1px 0 hsl(0 0% 100% / 0.15)",
