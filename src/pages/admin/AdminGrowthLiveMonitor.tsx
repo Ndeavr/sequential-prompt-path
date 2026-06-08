@@ -168,7 +168,7 @@ const AdminGrowthLiveMonitor = () => {
         <PageHeader
           title="Growth Engine — Live Monitor"
           description="Vérité opérationnelle des agents Growth. Rien n'est marqué SUCCÈS sans envoi réel."
-          actions={
+          action={
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={load} disabled={loading}>
                 <RefreshCw className="h-4 w-4 mr-2" /> Rafraîchir
