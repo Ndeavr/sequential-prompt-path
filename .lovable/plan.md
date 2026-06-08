@@ -1,95 +1,72 @@
+# Growth Engine — Live Monitor & Truth Audit
 
-# UNPRO Growth Operating System — v1
+Goal: stop reporting "success" when nothing was actually sent. Make the real state of every agent visible in one place, with a hard rule: `sms_sent = 0 AND email_sent = 0 → BLOCKED`.
 
-Objectif: moteur de croissance autonome bi-faces. Chaque entrepreneur activé devient source de revenus, données, croissance et recommandations. Métrique nord: **EAG** (Exclusive Appointments Generated par entrepreneur actif par mois).
+## 1. New tables (migration)
 
-L'ampleur est trop large pour un seul build. Je propose 4 phases livrables incrémentalement. Phase 1 est le socle obligatoire avant tout.
+**`growth_agent_logs`** — one row per agent execution
+- `agent_name`, `job_id`, `status` (`running|success|partial|blocked|failed`)
+- `input_count`, `processed_count`, `generated_count`, `sent_count`, `failed_count`
+- `error_message`, `payload jsonb`, `started_at`, `completed_at`
+- RLS: admin read, service_role write
 
----
+**`outbound_messages`** — one row per real outbound attempt
+- `contractor_id`, `channel` (`sms|email`), `recipient`, `message_body`
+- `status` enum: `queued | generated | waiting_approval | approved | sending | sent | delivered | failed | blocked | replied | booked | activated`
+- `provider_message_id`, `error_message`
+- `sent_at`, `delivered_at`, `replied_at`
+- RLS: admin read, service_role write
+- Indexes on `(status, created_at)`, `(contractor_id)`
 
-## Phase 1 — Socle (à livrer en premier)
+Backfill: wire existing `growth-outreach-agent`, `growth-expansion-agent`, `growth-task-dispatcher` to write to both tables. No more silent "completed" — they must record `sent_count` from the real Twilio/email response or mark `blocked`.
 
-### 1.1 Base de données (migration unique)
-4 tables avec GRANT + RLS:
-- `contractor_growth_campaigns` (id, contractor_id, trade, city, status, targets_found, emails_sent, sms_sent, replies, appointments, activations, timestamps)
-- `contractor_competitors` (id, contractor_id, competitor_name, trade, city, website, phone, email, google_rating, review_count, aipp_score, status, created_at)
-- `homeowner_intents` (id, city, problem, service, source, intent_score, status, recommended_contractor_id, created_at)
-- `growth_tasks` (id, type, priority, status, payload jsonb, started_at, completed_at)
+## 2. Instrumentation changes to existing edge functions
 
-Statuts strictement contrôlés: `queued | running | waiting_review | approved | sent | replied | booked | activated | failed`. Pas de `completed` sauf action réelle.
+- `growth-expansion-agent`: insert `growth_agent_logs` row at start (`running`), update with counts at end. If Google Maps key missing → `blocked` with root cause.
+- `growth-outreach-agent`: for every recipient, create `outbound_messages` row in `generated` → flip to `waiting_approval` (default) or `sending`. Only mark `sent` after Twilio/email provider returns a `provider_message_id`. On failure → `failed` + `error_message`. Update `growth_agent_logs.sent_count` from actual sent rows.
+- `growth-task-dispatcher`: log every dispatch + result.
 
-### 1.2 Trigger d'activation → Expansion Agent
-Edge function `growth-expansion-agent`:
-- Déclenchée quand `contractors.status` passe à `active` (DB trigger → `growth_tasks` queue)
-- Scan Google Maps + RBQ + NEQ + site → ~50 concurrents même métier/ville
-- Calcule score AIPP par concurrent (réutilise le moteur AIPP existant)
-- Insère dans `contractor_competitors`
-- Crée page d'audit privée `/ai-score/:slug`
+## 3. New edge function: `growth-health-check`
+Returns JSON `{ component, status: WORKING|BLOCKED|PARTIAL, root_cause, affected, fix }[]` for:
+1. Supabase connection (select 1)
+2. Required edge functions deployed (probe each)
+3. Twilio creds (`fetch_secrets` + verify_credentials gateway call)
+4. Email provider creds (Lovable email domain status)
+5. Gemini / Lovable AI key present
+6. Quota limits (read `activation_quotas` + outbound caps)
+7. RLS / GRANTs on the 4 growth tables + new 2
+8. Cron jobs present (`pg_cron.job` for dispatcher + outreach)
+9. Webhook delivery (last 24h `outbound_messages.delivered_at` ratio)
+10. Contractors available (`contractors where status='active'` count)
+11. Message templates available (Visibilité IA sequences active)
 
-### 1.3 Outreach Agent (limites quotidiennes)
-Edge function `growth-outreach-agent` (cron toutes les 15 min):
-- Quotas globaux admin-configurables: 50 SMS / 25 emails / 5 activations par jour
-- Réutilise la séquence SMS "Visibilité IA" déjà active
-- File `waiting_review` → admin approuve dans `/admin/growth-engine`
-- Met à jour `contractor_growth_campaigns` à chaque envoi/réponse/booking
+## 4. New page: `/admin/growth-live-monitor`
 
-### 1.4 Cockpits
-- `/admin/growth-engine` — cards: Contractors Active, Expansion Jobs Running, Pages Generated Today, Appointments Created, Revenue Influenced, Conversion Rate, Activation Rate
-- `/entrepreneur/growth` — cards: Competitors Discovered, AI Visibility Score, Pages Generated, Leads Qualified, Appointments Booked, Revenue Generated, Ranking Position
+Sections (live, 10s refresh):
+- **Status banner**: green only if `sent_count_today > 0`; otherwise red `BLOCKED — 0 messages sent`.
+- **Agents running now**: from `growth_agent_logs where completed_at is null`.
+- **Today's counters**: contractors contacted, SMS sent, emails sent, replies, bookings, activations, failures, blocked, waiting approval, quota remaining.
+- **Last run per agent**: name, started_at, duration, status, counts.
+- **Recent outbound messages** table (last 50) with status pill + error.
+- **Health check panel**: button `Run Growth Engine Health Check` → calls `growth-health-check`, renders per-component WORKING/BLOCKED/PARTIAL with root cause + fix + Retry button.
+- **Blocked jobs** list with one-click retry (calls dispatcher with job_id).
 
-### 1.5 EAG metric
-Vue SQL `v_contractor_eag_monthly` agrégeant rendez-vous exclusifs / entrepreneur actif / mois. Exposée dans les deux cockpits.
+Route added to `src/app/router.tsx` under admin guard.
 
----
+## 5. Truth rules (enforced in code, not just UI)
+- Agent functions never write `status='success'` unless `sent_count > 0` OR the agent had legitimately zero work (input_count=0 → `idle`, not success).
+- Cron summary view `v_growth_engine_today` exposes `is_production_live` boolean: `(sms_sent_today + email_sent_today) > 0`.
+- Monitor reads that view; the banner is driven by it.
 
-## Phase 2 — Homeowner Demand Engine
-- Générateur nocturne (cron) de pages `/probleme/:problem/:city` (réutilise `aeo_problem_pages` existant)
-- Intent Detection Agent: agrège signaux (GSC, forms, Alex, uploads, articles vus, quote comparisons) → `homeowner_intents.intent_score` (0-100)
-- Auto Match Engine: déclenché quand `intent_score > 60`, ranking 30/10/15/10/15/20 (trade/distance/availability/reviews/AIPP/specialization)
-
-## Phase 3 — Appointment + Referral
-- Flow appointment-first explicite (jamais "lead"), branché sur le booking engine existant
-- Referral Engine post-projet: QR code personnel, tracking visits/signups/bookings/revenue
-
-## Phase 4 — Ad & AEO Agents (priorité 70% AEO / 20% acquisition / 10% Ads)
-- Campaign Builder, Landing Page Generator, Performance Analyzer, Ad Asset Generator
-- Renforcement AEO/GEO du graphe entrepreneur pour citation ChatGPT/Gemini/Claude/Perplexity
-
----
-
-## Détails techniques (Phase 1)
-
-Fichiers:
-- `supabase/migrations/<ts>_growth_os_phase1.sql` (4 tables + GRANT + RLS + trigger + vue EAG)
+## Files to touch
+- migration: tables, view, GRANTs, RLS
 - `supabase/functions/growth-expansion-agent/index.ts`
 - `supabase/functions/growth-outreach-agent/index.ts`
-- `supabase/functions/growth-task-dispatcher/index.ts` (cron */5min, lit `growth_tasks`)
-- Cron via `pg_cron` + `pg_net` (insert tool, pas migration)
-- `src/pages/admin/AdminGrowthEngine.tsx`
-- `src/pages/entrepreneur/EntrepreneurGrowth.tsx`
-- Routes ajoutées dans le router admin/entrepreneur existant
-- Composants `CardGrowthMetric`, `TableGrowthCampaigns`, `TableCompetitors`, `DrawerCampaignDetail`
+- `supabase/functions/growth-task-dispatcher/index.ts`
+- `supabase/functions/growth-health-check/index.ts` (new)
+- `src/pages/admin/AdminGrowthLiveMonitor.tsx` (new)
+- `src/app/router.tsx`
 
-Réutilise:
-- AIPP scoring engine (`compute-aipp-score`)
-- Séquence SMS "Visibilité IA" déjà active (memory: outbound)
-- Système de quotas/autopilot existant
-- Pages AEO `aeo_problem_pages`
-
-Conformité memory:
-- `production-reliability-framework`: chaque agent appelle `reportOutcome()` + `FailureCode` canonique
-- `ui-readability-rule`: cockpits wrappés `.admin-theme`, tokens `--text-*`
-- Edge functions: import `https://esm.sh/@supabase/supabase-js@2.49.1`
-- Pas de "completed" sauf succès business réel
-
----
-
-## Questions de cadrage avant build
-
-1. **Portée du premier livrable** — confirmes-tu qu'on commence par **Phase 1 uniquement** (socle DB + Expansion Agent + Outreach Agent + cockpits + EAG) et qu'on planifie Phases 2/3/4 ensuite? Ou tu veux que je tente plus dans cette itération (risque: rien de stable)?
-
-2. **Source de vérité "contractor actif"** — `contractors.status = 'active'` est-il le bon trigger, ou tu préfères `contractor_subscriptions.status = 'active'` (paiement réel reçu)?
-
-3. **Approbation outreach** — par défaut `waiting_review` (admin approuve chaque envoi) OU auto-approve dans les quotas avec opt-out manuel?
-
-Dis-moi et je passe en build sur la Phase 1.
+## Questions before I build
+1. **Outreach default state** — keep `waiting_approval` (nothing goes out without admin click) or flip default to `auto-approve` so SMS actually ship today? You said "Contactés = 0 means not in production" — I read that as: switch to auto-approve with quotas. Confirm?
+2. **Twilio**: I don't see a Twilio connection linked. Health check will report it BLOCKED. Do you want me to also surface a "Connect Twilio" CTA on the monitor, or assume you'll link it separately?
