@@ -603,6 +603,8 @@ const PageAdminAutomationCommandCenter = lazy(() => import("@/pages/admin/PageAd
 const AdminHomeGraph = lazy(() => import("@/pages/admin/AdminHomeGraph"));
 const AdminUOS = lazy(() => import("@/pages/admin/AdminUOS"));
 const AdminGrowthEngine = lazy(() => import("@/pages/admin/AdminGrowthEngine"));
+const AdminGrowthOS = lazy(() => import("@/pages/admin/AdminGrowthOS"));
+const ContractorGrowth = lazy(() => import("@/pages/contractor/ContractorGrowth"));
 const AdminPricingPage = lazy(() => import("@/pages/admin/AdminPricingPage"));
 const AdminCoupons = lazy(() => import("@/pages/admin/AdminCoupons"));
 const PageAdminPlanDistribution = lazy(() => import("@/pages/admin/PageAdminPlanDistribution"));
@@ -1299,6 +1301,8 @@ export const AppRouter = () => (
         <Route path="/admin/qa-simulation/run/:runId" element={<ProtectedRoute requiredRole="admin"><PageAdminQASimulationRun /></ProtectedRoute>} />
         <Route path="/admin/qa-simulation/templates" element={<ProtectedRoute requiredRole="admin"><PageAdminQASimulationTemplates /></ProtectedRoute>} />
         <Route path="/admin/growth-engine" element={<ProtectedRoute requiredRole="admin"><AdminGrowthEngine /></ProtectedRoute>} />
+        <Route path="/admin/growth-os" element={<ProtectedRoute requiredRole="admin"><AdminGrowthOS /></ProtectedRoute>} />
+        <Route path="/pro/growth" element={<ProtectedRoute><ContractorGrowth /></ProtectedRoute>} />
         <Route path="/admin/pricing" element={<ProtectedRoute requiredRole="admin"><AdminPricingPage /></ProtectedRoute>} />
         <Route path="/admin/coupons" element={<ProtectedRoute requiredRole="admin"><AdminCoupons /></ProtectedRoute>} />
         <Route path="/admin/plan-distribution" element={<ProtectedRoute requiredRole="admin"><PageAdminPlanDistribution /></ProtectedRoute>} />

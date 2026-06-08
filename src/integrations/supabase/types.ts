@@ -1289,6 +1289,13 @@ export type Database = {
             foreignKeyName: "activation_steps_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "activation_steps_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -1675,6 +1682,13 @@ export type Database = {
             foreignKeyName: "admin_action_logs_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "admin_action_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -1754,6 +1768,13 @@ export type Database = {
             foreignKeyName: "admin_activation_checklists_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "admin_activation_checklists_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -1812,6 +1833,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_activation_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "admin_activation_events_contractor_id_fkey"
@@ -1890,6 +1918,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_activation_overrides_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "admin_activation_overrides_contractor_id_fkey"
@@ -1991,6 +2026,13 @@ export type Database = {
             foreignKeyName: "admin_appointment_readiness_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: true
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "admin_appointment_readiness_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -2061,6 +2103,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_company_import_jobs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "admin_company_import_jobs_contractor_id_fkey"
@@ -2227,6 +2276,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_notifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "admin_notifications_contractor_id_fkey"
@@ -4472,6 +4528,13 @@ export type Database = {
             foreignKeyName: "ai_visibility_reports_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "ai_visibility_reports_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -4790,6 +4853,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aipp_geo_pages_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "aipp_geo_pages_contractor_id_fkey"
@@ -5956,6 +6026,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alex_booking_drafts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "alex_booking_drafts_contractor_id_fkey"
@@ -7833,6 +7910,13 @@ export type Database = {
             foreignKeyName: "alex_match_notifications_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "alex_match_notifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -8448,6 +8532,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alex_predictive_matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "alex_predictive_matches_contractor_id_fkey"
@@ -12252,6 +12343,13 @@ export type Database = {
             foreignKeyName: "appointment_billing_events_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "appointment_billing_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -12335,6 +12433,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_credits_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "appointment_credits_contractor_id_fkey"
@@ -12430,6 +12535,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_feedback_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "appointment_feedback_contractor_id_fkey"
@@ -12536,6 +12648,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_packs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "appointment_packs_contractor_id_fkey"
@@ -12681,6 +12800,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_price_calculations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "appointment_price_calculations_contractor_id_fkey"
@@ -13017,6 +13143,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "appointments_contractor_id_fkey"
@@ -13404,6 +13537,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_intake_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "audit_intake_sessions_contractor_id_fkey"
@@ -15003,6 +15143,13 @@ export type Database = {
             foreignKeyName: "billing_checkout_sessions_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "billing_checkout_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -15516,6 +15663,13 @@ export type Database = {
             foreignKeyName: "booking_appointment_types_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "booking_appointment_types_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -15582,6 +15736,13 @@ export type Database = {
             foreignKeyName: "booking_availability_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "booking_availability_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -15643,6 +15804,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_blackouts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "booking_blackouts_contractor_id_fkey"
@@ -15718,6 +15886,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_calendar_integrations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "booking_calendar_integrations_contractor_id_fkey"
@@ -15906,6 +16081,13 @@ export type Database = {
             foreignKeyName: "booking_intents_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "booking_intents_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -15995,6 +16177,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_links_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "booking_links_contractor_id_fkey"
@@ -16100,6 +16289,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_requests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "booking_requests_contractor_id_fkey"
@@ -16282,6 +16478,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_slot_snapshots_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "booking_slot_snapshots_contractor_id_fkey"
@@ -18483,6 +18686,13 @@ export type Database = {
             foreignKeyName: "checkout_sessions_contractor_profile_id_fkey"
             columns: ["contractor_profile_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "checkout_sessions_contractor_profile_id_fkey"
+            columns: ["contractor_profile_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -18561,6 +18771,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "churn_signals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "churn_signals_contractor_id_fkey"
@@ -20812,6 +21029,13 @@ export type Database = {
             foreignKeyName: "contractor_activation_checklists_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_activation_checklists_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -20870,6 +21094,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_activation_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_activation_events_contractor_id_fkey"
@@ -21031,6 +21262,13 @@ export type Database = {
             foreignKeyName: "contractor_ai_indexing_snapshots_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_ai_indexing_snapshots_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -21159,6 +21397,13 @@ export type Database = {
             foreignKeyName: "contractor_ai_profiles_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_ai_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -21276,6 +21521,13 @@ export type Database = {
             foreignKeyName: "contractor_aipp_audits_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_aipp_audits_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -21362,6 +21614,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_aipp_jobs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_aipp_jobs_contractor_id_fkey"
@@ -21454,6 +21713,13 @@ export type Database = {
             foreignKeyName: "contractor_aipp_scores_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_aipp_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -21537,6 +21803,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_aipp_signal_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_aipp_signal_logs_contractor_id_fkey"
@@ -21643,6 +21916,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_animation_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_animation_events_contractor_id_fkey"
@@ -21790,6 +22070,13 @@ export type Database = {
             foreignKeyName: "contractor_animation_sessions_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_animation_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -21927,6 +22214,13 @@ export type Database = {
             foreignKeyName: "contractor_authority_events_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_authority_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -22029,6 +22323,13 @@ export type Database = {
             foreignKeyName: "contractor_authority_scores_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_authority_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -22096,6 +22397,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_auto_accept_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_auto_accept_events_contractor_id_fkey"
@@ -22202,6 +22510,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_auto_accept_settings_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_auto_accept_settings_contractor_id_fkey"
@@ -22329,6 +22644,13 @@ export type Database = {
             foreignKeyName: "contractor_budgets_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_budgets_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -22416,6 +22738,13 @@ export type Database = {
             foreignKeyName: "contractor_businesses_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: true
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_businesses_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -22495,6 +22824,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_capabilities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_capabilities_contractor_id_fkey"
@@ -22617,6 +22953,13 @@ export type Database = {
             foreignKeyName: "contractor_capacity_state_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: true
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_capacity_state_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -22699,6 +23042,13 @@ export type Database = {
             foreignKeyName: "contractor_category_assignments_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_category_assignments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -22763,6 +23113,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_certifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_certifications_contractor_id_fkey"
@@ -22838,6 +23195,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_checkout_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_checkout_sessions_contractor_id_fkey"
@@ -22985,6 +23349,13 @@ export type Database = {
             foreignKeyName: "contractor_coach_insights_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_insights_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -23040,6 +23411,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_memory_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_coach_memory_contractor_id_fkey"
@@ -23155,6 +23533,13 @@ export type Database = {
             foreignKeyName: "contractor_coach_nudges_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_nudges_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -23242,6 +23627,13 @@ export type Database = {
             foreignKeyName: "contractor_coach_recommendations_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_recommendations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -23300,6 +23692,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_coach_sessions_contractor_id_fkey"
@@ -23371,6 +23770,13 @@ export type Database = {
             foreignKeyName: "contractor_comparables_comparable_contractor_id_fkey"
             columns: ["comparable_contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_comparables_comparable_contractor_id_fkey"
+            columns: ["comparable_contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -23406,6 +23812,13 @@ export type Database = {
             foreignKeyName: "contractor_comparables_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_comparables_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -23431,6 +23844,54 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      contractor_competitors: {
+        Row: {
+          aipp_score: number | null
+          city: string | null
+          competitor_name: string
+          contractor_id: string
+          created_at: string
+          email: string | null
+          google_rating: number | null
+          id: string
+          phone: string | null
+          review_count: number | null
+          status: string
+          trade: string | null
+          website: string | null
+        }
+        Insert: {
+          aipp_score?: number | null
+          city?: string | null
+          competitor_name: string
+          contractor_id: string
+          created_at?: string
+          email?: string | null
+          google_rating?: number | null
+          id?: string
+          phone?: string | null
+          review_count?: number | null
+          status?: string
+          trade?: string | null
+          website?: string | null
+        }
+        Update: {
+          aipp_score?: number | null
+          city?: string | null
+          competitor_name?: string
+          contractor_id?: string
+          created_at?: string
+          email?: string | null
+          google_rating?: number | null
+          id?: string
+          phone?: string | null
+          review_count?: number | null
+          status?: string
+          trade?: string | null
+          website?: string | null
+        }
+        Relationships: []
       }
       contractor_contact_clicks: {
         Row: {
@@ -23467,6 +23928,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_contact_clicks_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_contact_clicks_contractor_id_fkey"
@@ -23575,6 +24043,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_contributions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_contributions_contractor_id_fkey"
@@ -23750,6 +24225,13 @@ export type Database = {
             foreignKeyName: "contractor_credentials_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_credentials_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -23843,6 +24325,13 @@ export type Database = {
             foreignKeyName: "contractor_dispatch_stats_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: true
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_dispatch_stats_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -23921,6 +24410,13 @@ export type Database = {
             foreignKeyName: "contractor_dna_profiles_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_dna_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -23985,6 +24481,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_documents_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_documents_contractor_id_fkey"
@@ -24336,6 +24839,13 @@ export type Database = {
             foreignKeyName: "contractor_domains_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_domains_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -24423,6 +24933,13 @@ export type Database = {
             foreignKeyName: "contractor_duplicate_candidates_candidate_contractor_id_fkey"
             columns: ["candidate_contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_duplicate_candidates_candidate_contractor_id_fkey"
+            columns: ["candidate_contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -24453,6 +24970,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_duplicate_candidates_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_duplicate_candidates_contractor_id_fkey"
@@ -24522,6 +25046,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_embeddings_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_embeddings_contractor_id_fkey"
@@ -24694,6 +25225,13 @@ export type Database = {
             foreignKeyName: "contractor_entities_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_entities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -24767,6 +25305,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_entity_flags_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_entity_flags_contractor_id_fkey"
@@ -24856,6 +25401,13 @@ export type Database = {
             foreignKeyName: "contractor_exclusions_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_exclusions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -24926,6 +25478,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_execution_models_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_execution_models_contractor_id_fkey"
@@ -25004,6 +25563,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_faqs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_faqs_contractor_id_fkey"
@@ -25280,6 +25846,13 @@ export type Database = {
             foreignKeyName: "contractor_gmb_profiles_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_gmb_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -25332,6 +25905,54 @@ export type Database = {
           created_at?: string
           primary_goal?: string
           secondary_goals?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      contractor_growth_campaigns: {
+        Row: {
+          activations: number
+          appointments: number
+          city: string | null
+          contractor_id: string
+          created_at: string
+          emails_sent: number
+          id: string
+          replies: number
+          sms_sent: number
+          status: string
+          targets_found: number
+          trade: string | null
+          updated_at: string
+        }
+        Insert: {
+          activations?: number
+          appointments?: number
+          city?: string | null
+          contractor_id: string
+          created_at?: string
+          emails_sent?: number
+          id?: string
+          replies?: number
+          sms_sent?: number
+          status?: string
+          targets_found?: number
+          trade?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activations?: number
+          appointments?: number
+          city?: string | null
+          contractor_id?: string
+          created_at?: string
+          emails_sent?: number
+          id?: string
+          replies?: number
+          sms_sent?: number
+          status?: string
+          targets_found?: number
+          trade?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -25673,6 +26294,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_import_jobs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_import_jobs_contractor_id_fkey"
@@ -26026,6 +26654,13 @@ export type Database = {
             foreignKeyName: "contractor_import_sources_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_import_sources_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -26090,6 +26725,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_insurances_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_insurances_contractor_id_fkey"
@@ -26341,6 +26983,13 @@ export type Database = {
             foreignKeyName: "contractor_leads_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -26475,6 +27124,13 @@ export type Database = {
             foreignKeyName: "contractor_licenses_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_licenses_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -26568,6 +27224,13 @@ export type Database = {
             foreignKeyName: "contractor_live_scores_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: true
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_live_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -26638,6 +27301,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_locations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_locations_contractor_id_fkey"
@@ -26721,6 +27391,13 @@ export type Database = {
             foreignKeyName: "contractor_match_metrics_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_match_metrics_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -26791,6 +27468,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_matches_contractor_id_fkey"
@@ -26887,6 +27571,13 @@ export type Database = {
             foreignKeyName: "contractor_media_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_media_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -26945,6 +27636,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_members_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_members_contractor_id_fkey"
@@ -27032,6 +27730,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_merge_suggestions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_merge_suggestions_contractor_id_fkey"
@@ -27129,6 +27834,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_objectives_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_objectives_contractor_id_fkey"
@@ -27304,6 +28016,13 @@ export type Database = {
             foreignKeyName: "contractor_outcomes_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_outcomes_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -27473,6 +28192,13 @@ export type Database = {
             foreignKeyName: "contractor_performance_metrics_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_performance_metrics_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -27629,6 +28355,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_plan_fits_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_plan_fits_contractor_id_fkey"
@@ -27879,6 +28612,13 @@ export type Database = {
             foreignKeyName: "contractor_portfolio_projects_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_portfolio_projects_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -28008,6 +28748,13 @@ export type Database = {
             foreignKeyName: "contractor_pricing_quotes_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_pricing_quotes_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -28130,6 +28877,13 @@ export type Database = {
             foreignKeyName: "contractor_problem_links_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_problem_links_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -28204,6 +28958,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_profile_gaps_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_profile_gaps_contractor_id_fkey"
@@ -28306,6 +29067,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_profiles_contractor_id_fkey"
@@ -28903,6 +29671,13 @@ export type Database = {
             foreignKeyName: "contractor_public_pages_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: true
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_public_pages_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -28970,6 +29745,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_public_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_public_scores_contractor_id_fkey"
@@ -29970,6 +30752,13 @@ export type Database = {
             foreignKeyName: "contractor_refusal_signals_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_refusal_signals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -30107,6 +30896,13 @@ export type Database = {
             foreignKeyName: "contractor_relationships_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_relationships_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -30137,6 +30933,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_relationships_partner_contractor_id_fkey"
+            columns: ["partner_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_relationships_partner_contractor_id_fkey"
@@ -30247,6 +31050,13 @@ export type Database = {
             foreignKeyName: "contractor_review_aggregates_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_review_aggregates_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -30329,6 +31139,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_review_dimension_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_review_dimension_scores_contractor_id_fkey"
@@ -30433,6 +31250,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_review_sources_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_review_sources_contractor_id_fkey"
@@ -30602,6 +31426,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_scores_contractor_id_fkey"
@@ -30792,6 +31623,13 @@ export type Database = {
             foreignKeyName: "contractor_service_areas_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_service_areas_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -30880,6 +31718,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_services_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_services_contractor_id_fkey"
@@ -31028,6 +31873,13 @@ export type Database = {
             foreignKeyName: "contractor_solution_links_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_solution_links_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -31096,6 +31948,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_specialties_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_specialties_contractor_id_fkey"
@@ -31173,6 +32032,13 @@ export type Database = {
             foreignKeyName: "contractor_subcontract_network_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_subcontract_network_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -31203,6 +32069,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_subcontract_network_partner_contractor_id_fkey"
+            columns: ["partner_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_subcontract_network_partner_contractor_id_fkey"
@@ -31287,6 +32160,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_subscriptions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_subscriptions_contractor_id_fkey"
@@ -31424,6 +32304,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_verification_evidence_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_verification_evidence_contractor_id_fkey"
@@ -31595,6 +32482,13 @@ export type Database = {
             foreignKeyName: "contractor_verification_runs_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_verification_runs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -31715,6 +32609,13 @@ export type Database = {
             foreignKeyName: "contractor_verification_searches_detected_contractor_id_fkey"
             columns: ["detected_contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_verification_searches_detected_contractor_id_fkey"
+            columns: ["detected_contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -31815,6 +32716,13 @@ export type Database = {
             foreignKeyName: "contractor_verification_snapshots_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_verification_snapshots_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -31889,6 +32797,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_visibility_metrics_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_visibility_metrics_contractor_id_fkey"
@@ -32023,6 +32938,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_wallet_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_wallet_contractor_id_fkey"
@@ -32965,6 +33887,13 @@ export type Database = {
             foreignKeyName: "data_sources_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "data_sources_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -33737,6 +34666,13 @@ export type Database = {
             foreignKeyName: "dna_fit_results_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "dna_fit_results_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -34219,6 +35155,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dynamic_pricing_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "dynamic_pricing_logs_contractor_id_fkey"
@@ -35693,6 +36636,13 @@ export type Database = {
             foreignKeyName: "emergency_assignments_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "emergency_assignments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -35856,6 +36806,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emergency_matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "emergency_matches_contractor_id_fkey"
@@ -36137,6 +37094,13 @@ export type Database = {
             foreignKeyName: "entrepreneur_activation_events_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_activation_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -36322,6 +37286,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_extra_appointments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "entrepreneur_extra_appointments_contractor_id_fkey"
@@ -36539,6 +37510,13 @@ export type Database = {
             foreignKeyName: "entrepreneur_monthly_appointment_summary_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_monthly_appointment_summary_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -36680,6 +37658,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_plan_usage_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "entrepreneur_plan_usage_contractor_id_fkey"
@@ -36885,6 +37870,13 @@ export type Database = {
             foreignKeyName: "entrepreneur_profiles_draft_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_profiles_draft_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -36968,6 +37960,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_recommendations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "entrepreneur_recommendations_contractor_id_fkey"
@@ -37780,6 +38779,13 @@ export type Database = {
             foreignKeyName: "expansion_opportunities_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "expansion_opportunities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -38045,6 +39051,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extraction_jobs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "extraction_jobs_contractor_id_fkey"
@@ -38439,6 +39452,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_validations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "field_validations_contractor_id_fkey"
@@ -39509,6 +40529,48 @@ export type Database = {
         }
         Relationships: []
       }
+      growth_tasks: {
+        Row: {
+          attempts: number
+          completed_at: string | null
+          created_at: string
+          id: string
+          last_error: string | null
+          payload: Json
+          priority: number
+          started_at: string | null
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          payload?: Json
+          priority?: number
+          started_at?: string | null
+          status?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          payload?: Json
+          priority?: number
+          started_at?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       guides_content: {
         Row: {
           category: string | null
@@ -40310,6 +41372,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      homeowner_intents: {
+        Row: {
+          city: string | null
+          created_at: string
+          id: string
+          intent_score: number
+          problem: string | null
+          recommended_contractor_id: string | null
+          service: string | null
+          source: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          id?: string
+          intent_score?: number
+          problem?: string | null
+          recommended_contractor_id?: string | null
+          service?: string | null
+          source?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          id?: string
+          intent_score?: number
+          problem?: string | null
+          recommended_contractor_id?: string | null
+          service?: string | null
+          source?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       homeowner_match_recommendations: {
         Row: {
@@ -42869,6 +43970,13 @@ export type Database = {
             foreignKeyName: "lead_qualifications_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "lead_qualifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -43042,6 +44150,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_assigned_contractor_id_fkey"
+            columns: ["assigned_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "leads_assigned_contractor_id_fkey"
@@ -44217,6 +45332,13 @@ export type Database = {
             foreignKeyName: "market_zone_exclusivity_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "market_zone_exclusivity_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -44356,6 +45478,13 @@ export type Database = {
             foreignKeyName: "match_decisions_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "match_decisions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -44484,6 +45613,13 @@ export type Database = {
             foreignKeyName: "match_evaluations_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "match_evaluations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -44566,6 +45702,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "match_scores_contractor_id_fkey"
@@ -44661,6 +45804,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "matches_contractor_id_fkey"
@@ -44792,6 +45942,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matchmaking_results_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "matchmaking_results_contractor_id_fkey"
@@ -46017,6 +47174,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_allocations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "opportunity_allocations_contractor_id_fkey"
@@ -50109,6 +51273,13 @@ export type Database = {
             foreignKeyName: "outreach_targets_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "outreach_targets_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -50428,6 +51599,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_match_recommendations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "owner_match_recommendations_contractor_id_fkey"
@@ -52351,6 +53529,13 @@ export type Database = {
             foreignKeyName: "plan_activations_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "plan_activations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -53393,6 +54578,13 @@ export type Database = {
             foreignKeyName: "pricing_decisions_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "pricing_decisions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -53998,6 +55190,13 @@ export type Database = {
             foreignKeyName: "pricing_transactions_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "pricing_transactions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -54436,6 +55635,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_alignment_answers_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "profile_alignment_answers_contractor_id_fkey"
@@ -54998,6 +56204,13 @@ export type Database = {
             foreignKeyName: "project_matches_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "project_matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -55291,6 +56504,13 @@ export type Database = {
             foreignKeyName: "project_team_members_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "project_team_members_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -55375,6 +56595,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_teams_lead_contractor_id_fkey"
+            columns: ["lead_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "project_teams_lead_contractor_id_fkey"
@@ -55665,6 +56892,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_code_redemptions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "promo_code_redemptions_contractor_id_fkey"
@@ -56301,6 +57535,13 @@ export type Database = {
             foreignKeyName: "property_events_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "property_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -56475,6 +57716,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_graph_related_contractor_id_fkey"
+            columns: ["related_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "property_graph_related_contractor_id_fkey"
@@ -57080,6 +58328,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_qr_codes_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "property_qr_codes_contractor_id_fkey"
@@ -60546,6 +61801,13 @@ export type Database = {
             foreignKeyName: "quotes_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "quotes_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -61702,6 +62964,13 @@ export type Database = {
             foreignKeyName: "review_insights_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "review_insights_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -61814,6 +63083,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_items_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "review_items_contractor_id_fkey"
@@ -61952,6 +63228,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "reviews_contractor_id_fkey"
@@ -62750,6 +64033,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scanner_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "scanner_sessions_contractor_id_fkey"
@@ -65095,6 +66385,13 @@ export type Database = {
             foreignKeyName: "signature_requests_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "signature_requests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -65856,6 +67153,13 @@ export type Database = {
             foreignKeyName: "smart_bookings_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "smart_bookings_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -65998,6 +67302,13 @@ export type Database = {
             foreignKeyName: "smart_decline_logs_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "smart_decline_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -66028,6 +67339,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_decline_logs_redirect_contractor_id_fkey"
+            columns: ["redirect_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "smart_decline_logs_redirect_contractor_id_fkey"
@@ -66872,6 +68190,13 @@ export type Database = {
             foreignKeyName: "sniper_targets_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "sniper_targets_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -67367,6 +68692,13 @@ export type Database = {
             foreignKeyName: "subcontract_requests_matched_contractor_id_fkey"
             columns: ["matched_contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "subcontract_requests_matched_contractor_id_fkey"
+            columns: ["matched_contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -67397,6 +68729,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_requests_requesting_contractor_id_fkey"
+            columns: ["requesting_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "subcontract_requests_requesting_contractor_id_fkey"
@@ -68334,6 +69673,13 @@ export type Database = {
             foreignKeyName: "syndicate_maintenance_items_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "syndicate_maintenance_items_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -68736,6 +70082,13 @@ export type Database = {
             foreignKeyName: "syndicate_project_interests_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "syndicate_project_interests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -68846,6 +70199,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndicate_projects_actual_contractor_id_fkey"
+            columns: ["actual_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "syndicate_projects_actual_contractor_id_fkey"
@@ -69649,6 +71009,13 @@ export type Database = {
             foreignKeyName: "territory_assignments_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "territory_assignments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -69975,6 +71342,13 @@ export type Database = {
             foreignKeyName: "territory_waitlist_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "territory_waitlist_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -70005,6 +71379,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "territory_waitlist_replaced_contractor_id_fkey"
+            columns: ["replaced_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "territory_waitlist_replaced_contractor_id_fkey"
@@ -70522,6 +71903,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_flow_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "user_flow_sessions_contractor_id_fkey"
@@ -71701,6 +73089,13 @@ export type Database = {
             foreignKeyName: "verification_reports_matched_contractor_id_fkey"
             columns: ["matched_contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "verification_reports_matched_contractor_id_fkey"
+            columns: ["matched_contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -72730,6 +74125,13 @@ export type Database = {
             foreignKeyName: "waitlist_replacements_activated_contractor_id_fkey"
             columns: ["activated_contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "waitlist_replacements_activated_contractor_id_fkey"
+            columns: ["activated_contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -72767,6 +74169,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_replacements_removed_contractor_id_fkey"
+            columns: ["removed_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "waitlist_replacements_removed_contractor_id_fkey"
@@ -73193,6 +74602,13 @@ export type Database = {
             foreignKeyName: "profile_alignment_answers_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "profile_alignment_answers_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_full_public"
             referencedColumns: ["id"]
           },
@@ -73471,6 +74887,15 @@ export type Database = {
         }
         Relationships: []
       }
+      v_contractor_eag_monthly: {
+        Row: {
+          business_name: string | null
+          contractor_id: string | null
+          exclusive_appointments: number | null
+          month: string | null
+        }
+        Relationships: []
+      }
       v_contractor_full_public: {
         Row: {
           aipp_score: number | null
@@ -73626,6 +75051,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_evaluations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "match_evaluations_contractor_id_fkey"
