@@ -1303,6 +1303,7 @@ export const AppRouter = () => (
         <Route path="/admin/qa-simulation/templates" element={<ProtectedRoute requiredRole="admin"><PageAdminQASimulationTemplates /></ProtectedRoute>} />
         <Route path="/admin/growth-engine" element={<ProtectedRoute requiredRole="admin"><AdminGrowthEngine /></ProtectedRoute>} />
         <Route path="/admin/growth-os" element={<ProtectedRoute requiredRole="admin"><AdminGrowthOS /></ProtectedRoute>} />
+        <Route path="/admin/growth-live-monitor" element={<ProtectedRoute requiredRole="admin"><AdminGrowthLiveMonitor /></ProtectedRoute>} />
         <Route path="/pro/growth" element={<ProtectedRoute><ContractorGrowth /></ProtectedRoute>} />
         <Route path="/admin/pricing" element={<ProtectedRoute requiredRole="admin"><AdminPricingPage /></ProtectedRoute>} />
         <Route path="/admin/coupons" element={<ProtectedRoute requiredRole="admin"><AdminCoupons /></ProtectedRoute>} />
