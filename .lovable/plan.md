@@ -1,70 +1,67 @@
-## Problem
 
-Three architectural bugs in Alex:
+# Remplacement de la séquence outbound active — Approche "Visibilité IA"
 
-1. **"Êtes-vous toujours là ?" fires after the conversation is effectively over** (booking done, recommendation delivered, user said merci/au revoir). The silence hook only knows "user activity"; it has no terminal state.
-2. **Persona is auth-derived only.** `resolveAlexMode` (`src/config/alexModes.ts`) picks contractor vs. homeowner from `user_role` / contractor profile. A logged-out (or homeowner-logged-in) visitor typing "je veux plus de clients" stays in HOMEOWNER mode and gets the "projets résidentiels" answer from `alexCorePrompt.ts`.
-3. **Voice can drift between sentences.** `ALEX_VOICE_BASE` is locked in code, but there is no per-session lock and no pre-TTS assertion. A reconnection, mode swap mid-session, or any caller passing a custom `voiceId` can change voice.
+## Objectif
+Remplacer la séquence email actuellement par défaut (`Séquence Entrepreneur FR — ChatGPT`, 4 étapes email) par la nouvelle approche basée sur la curiosité IA, en **SMS principal** + **email backup**.
 
-## Scope (3 surgical fixes, no UX redesign)
+## État actuel
+- Séquence active par défaut: `b0000001-0000-0000-0000-000000000001` — channel `email`, 4 steps (J0/J3/J7/J12).
+- Tables utilisées: `outbound_sequences` (champ `channel` unique par séquence) + `outbound_sequence_steps` (`subject_template`, `body_template`, `delay_days`).
+- Variables disponibles dans le moteur de rendu: `{{first_name}}`, `{{company_name}}`, `{{city}}`, `{{specialty}}` (déjà câblées dans le sender courant).
+- Infra Twilio SMS et email queue déjà actives (cf. mem://outbound/email-scheduling et Outbound Execution Pipeline).
 
-### Fix 1 — Terminal conversation state (silence engine)
+## Migration (1 seule migration SQL)
 
-- File: `src/hooks/useAlexSilenceControl.ts`
-  - Add a `conversation_status` ref: `"active" | "closed" | "abandoned"`.
-  - Public API additions: `markClosed(reason: "booked"|"recommended"|"summary"|"thanks"|"goodbye"|"manual")`, `markActive()`.
-  - `startIdleTimer()` returns immediately if `conversation_status !== "active"`.
-  - `recordActivity()` does NOT re-arm the timer if status is `closed`/`abandoned`.
-  - Replace the single hard-coded prompt + immediate pause with **2-attempt** ladder per spec:
-    - Attempt #1 (`PROMPT_TEXT[language]`): "Êtes-vous toujours là ?"
-    - Attempt #2: "Je vais fermer cette conversation pour le moment. Revenez quand vous voulez."
-    - Attempt #3 = STOP, mark `abandoned`, persist, no message.
-  - Keep `sessionPromptUsedRef` semantics intact for paused/resume.
-- File: `src/engines/alexReEngagementEngine.ts`
-  - Add `markTerminal()` that stops timers and flips internal state to `passive`.
-  - `scheduleReEngagements()` early-returns if terminal.
-- Wire the markers (single integration point — keep blast radius minimal):
-  - `src/components/alex-voice-persona/VoiceEngineAlexController.tsx` — call `markClosed("booked")` / `markClosed("recommended")` when its existing handlers detect booking confirmation / recommendation delivered events from the message stream.
-  - Detect goodbye/thanks in user transcript via a tiny pure helper `src/lib/alexTerminalIntents.ts`:
-    - `detectTerminalIntent(text): "thanks"|"goodbye"|null` matching FR/EN: `merci`, `merci beaucoup`, `bye`, `salut`, `au revoir`, `bonne journée`, `thanks`, `thank you`, `goodbye`.
-  - Same controller calls `markClosed("thanks"|"goodbye")` on match.
+1. **Désactiver l'ancienne séquence**
+   - `UPDATE outbound_sequences SET is_default=false, is_active=false WHERE id='b0000001-0000-0000-0000-000000000001'`.
+   - Aucune purge — les messages déjà envoyés gardent leur FK.
 
-### Fix 2 — Intent Router runs BEFORE response (persona detection)
+2. **Créer la nouvelle séquence SMS principale**
+   - `sequence_name`: `Visibilité IA — SMS J1/J3/J7`
+   - `channel`: `sms`, `sequence_type`: `entrepreneur`, `language`: `fr`, `is_default`: `true`, `is_active`: `true`.
+   - 3 steps (subject_template `NULL` car SMS):
 
-- New file: `src/features/alex/intent/alexPersonaRouter.ts`
-  - Pure function `detectPersona(text: string): "HOMEOWNER" | "CONTRACTOR" | "PROPERTY_MANAGER" | "PARTNER" | "UNKNOWN"`.
-  - Contractor triggers (FR): `plus de clients`, `visibilité`, `référencement`, `RBQ`, `NEQ`, `soumissions`, `leads`, `appels`, `rendez-vous`, `entreprise`, `employés`, `chiffre d'affaires`, `marketing`, `publicité`, `Google`, `développer mon entreprise`, `obtenir des contrats`.
-  - Property manager triggers: `copropriété`, `condo`, `syndicat`, `Loi 16`, `gestionnaire`, `immeuble`, `unités`.
-  - Homeowner triggers: `ma maison`, `mon condo personnel`, `j'ai un problème de`, `infiltration`, `chauffage`, `humidité`, `rénovation`, `je veux rénover`.
-- Integrate in TWO spots (both already mode-aware):
-  1. `src/config/alexModes.ts` — add optional `lastUserText` to `AlexModeContext`. In `resolveAlexMode`, if `role` is `null`/`homeowner` AND `lastUserText` matches CONTRACTOR, return `CONTRACTOR_DESCRIPTOR`. If matches PROPERTY_MANAGER, return `CONDO_DESCRIPTOR`. Explicit auth role still wins for logged-in users (homeowners don't get hijacked into contractor flow unless they were already contractors).
-  2. `src/hooks/useContractorMode.ts` — accept `lastUserText` option, forward to `resolveAlexMode`.
-- Update default greetings in `src/config/alexModes.ts` to spec:
-  - Homeowner: `"Bonjour [Prénom]. Quel problème ou projet souhaitez-vous régler aujourd'hui ?"`
-  - Contractor: `"Bonjour [Prénom]. Comment puis-je vous aider à développer votre entreprise aujourd'hui ?"`
-- Update `src/features/alex/voice/alexCorePrompt.ts` to add a hard CONTRACTOR-detection rule at the top: "Si l'utilisateur parle de plus de clients, visibilité, leads, RBQ, soumissions, marketing, entreprise → bascule immédiatement en mode entrepreneur. NE JAMAIS répondre 'projets résidentiels' à un entrepreneur."
+   ```
+   J1  Direct      — "Bonjour {{first_name}}, aimeriez-vous que {{company_name}} soit recommandée
+                      quand un propriétaire demande à ChatGPT, Google Gemini ou UNPRO
+                      « Quel est le meilleur entrepreneur en {{specialty}} à {{city}} ? »
+                      Répondez OUI et je vous montre votre visibilité actuelle gratuitement."
+   J3  Curiosité   — "Question rapide. Si quelqu'un demande aujourd'hui à ChatGPT « Qui recommandez-vous
+                      pour {{specialty}} à {{city}} ? », est-ce que {{company_name}} apparaît parmi
+                      les recommandations ? Je peux vérifier gratuitement pour vous."
+   J7  FOMO        — "L'IA influence déjà les décisions de milliers de propriétaires. Aimeriez-vous
+                      savoir si {{company_name}} est visible quand des clients demandent un
+                      entrepreneur en {{specialty}} dans votre région ? Répondez OUI."
+   ```
 
-### Fix 3 — Session voice lock + pre-TTS guard
+3. **Créer la séquence email backup**
+   - `sequence_name`: `Visibilité IA — Email Backup`
+   - `channel`: `email`, `is_default`: `false`, `is_active`: `true`.
+   - 3 steps (J1/J3/J7) reprenant les corps SMS adaptés en email court, rotation des 5 objets fournis:
+     - J1: « Votre entreprise est-elle visible sur ChatGPT? »
+     - J3: « L'IA recommande-t-elle {{company_name}}? »
+     - J7: « Les futurs clients vous trouvent-ils via l'IA? »
+   - Les 2 objets restants stockés comme alternates (champ `subject_template` accepte une seule valeur — on les place en commentaire JSON dans `step_name` pour A/B futur, hors scope).
 
-- File: `src/stores/alexVoiceLockedStore.ts` (already exists per repo listing)
-  - Add fields: `sessionVoiceId`, `sessionVoiceProvider`, `sessionLanguage`, `sessionMode`, `lockedAt`.
-  - Actions: `lockForSession(input)`, `assertVoice(currentVoiceId)`, `unlock()`.
-  - `assertVoice` returns `{ ok, expected, got }`; on mismatch consumers must force the correct voice (no provider swap).
-- File: `src/features/alex/voice/alexAgentOverrides.ts`
-  - On `buildAlexAgentOverrides`, if `alexVoiceLockedStore.sessionVoiceId` is set, IGNORE `input.voiceId` and use the locked one. If unset, lock it now with `ALEX_VOICE_ID` + current mode.
-- File: `src/contexts/AlexVoiceContext.tsx` (or the closest single entry point that starts sessions — to confirm with quick read at edit time)
-  - On session start: `lockForSession({ voiceId: ALEX_VOICE_ID, provider: ALEX_TTS_PROVIDER, language, mode })`.
-  - On session end: `unlock()`.
-- File: `src/services/alexVoiceService.ts` (and any other surface that calls TTS)
-  - Before each TTS request, call `assertVoice(currentVoiceId)`. On mismatch, log to `alex-voice-log-error` (existing edge fn) and use the locked voice id.
+4. **Câblage SMS→Email fallback**
+   - Conforme à la mémoire `Outbound SMS Fallback`: déjà en place. Une fois la séquence SMS marquée `is_default`, le dispatcher SMS la sélectionne; le fallback email est déclenché par l'engine existant après échec/2 non-réponses (aucun changement code requis).
+
+## Variables et garde-fous
+- Rendu identique au sender actuel: `{{first_name}}`, `{{company_name}}`, `{{city}}`, `{{specialty}}`.
+- Aucun lien `/analyse/:slug` injecté (choix utilisateur).
+- Aucun score AIPP pré-calculé (choix utilisateur).
+- Respect du Brand Identity Enforcement (filtres edge existants) — aucun changement.
+
+## Hors scope
+- Pas de nouvel edge function.
+- Pas d'UI admin nouvelle (les nouvelles séquences apparaissent automatiquement dans `/admin/outbound/campaigns` et l'éditeur de templates).
+- Pas de changement aux fenêtres d'envoi, quotas, suppression list.
+- Pas de modification du moteur de personalization Gemini (les corps SMS sont déjà serrés et personnalisés via merge tags).
 
 ## Validation
+- `select sequence_name, channel, is_default, is_active from outbound_sequences where is_active` → la nouvelle SMS est la seule `is_default=true`.
+- Test send via `/admin/outbound/test-center` sur un numéro/email interne pour J1 (SMS) et J1 (email backup) — vérifier rendu des 4 variables.
+- Smoke test dispatcher en `dry_run` pour confirmer que la séquence SMS est sélectionnée comme principale.
 
-- Manual: trigger silence after a booking confirmation message → no "Êtes-vous toujours là ?". Type "je veux plus de clients" unauthenticated → contractor greeting + contractor framing. Force a voice override attempt mid-session via debug panel → assertion blocks the swap, voice stays locked.
-- Tests: extend `src/__tests__/pricingAndContractorMode.test.ts` with `resolveAlexMode` + `lastUserText` cases (contractor signals override homeowner default; explicit contractor role still wins; homeowner-authenticated user with contractor signals does NOT switch).
-- Lighthouse-style smoke: `src/lib/voiceSmokeTest.ts` already inspects mode transitions — add `assertVoice` integrity check.
-
-## Out of scope
-
-- No UI redesign, no new admin cockpit, no new tables.
-- No changes to ElevenLabs agent config (the in-dashboard overrides already accept `voiceId`).
+## Livrable
+1 fichier de migration SQL (`supabase/migrations/<ts>_outbound_visibility_ia_sequence.sql`) contenant l'UPDATE + 2 INSERT séquences + 6 INSERT steps.
