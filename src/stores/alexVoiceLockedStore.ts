@@ -207,7 +207,7 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
       sessionLog: { sessionId, openedAt: now, openReason },
     });
 
-  setDisplayMode: (mode) => set({ displayMode: mode }),
+
 
     // Log to DB (fire and forget). Include user_id when authenticated to satisfy RLS.
     supabase.auth.getUser().then(({ data }) => {
@@ -222,6 +222,9 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
     // Log state transition
     logTransition(sessionId, "idle", "requesting_permission", openReason);
   },
+
+  setDisplayMode: (mode) => set({ displayMode: mode }),
+
 
   closeVoiceSession: (closeReason: string) => {
     const state = get();
