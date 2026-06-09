@@ -11,6 +11,8 @@
  */
 
 import type { AlexLanguage, AlexUserRole } from "../types/alex.types";
+import { buildAlexOpening } from "@/services/alexOpeningTemplates";
+
 
 // ─── Greetings (first visit) ──────────────────────────────────────
 // Single canonical opening per Alex System Prompt (FR only).
