@@ -223,6 +223,10 @@ export default function AlexOrbPremium({
           />
         ))}
       </div>
+      </div>
+      {showLabel && <span className="uc-orb-label">Parler à Alex</span>}
+      {showCaption && <span className="uc-orb-caption" />}
     </div>
   );
 }
+
