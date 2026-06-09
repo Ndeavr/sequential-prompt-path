@@ -268,7 +268,7 @@ const PROMPT_LIBRARY: AlexContextPrompt[] = [
     contextKey: "general",
     roleType: "condo_manager",
     locale: "fr",
-    greetingText: "Je peux vous aider pour un enjeu de copropriété.",
+    greetingText: "Je vais regarder ça avec vous pour la copropriété.",
     primaryQuestion: "C'est pour un problème urgent, des travaux à planifier ou une question liée au syndicat ?",
     quickReplies: ["Problème urgent", "Travaux à planifier", "Question syndicat", "Passeport Condo"],
     nextFlow: "condo",
