@@ -454,6 +454,7 @@ const PageCommandCenterTerritories = lazy(() => import("@/pages/admin/PageComman
 
 // SEO Index Domination
 const ContractorSeoPage = lazy(() => import("@/pages/seo/ContractorSeoPage"));
+const PageContractorPublicProfileISR = lazy(() => import("@/pages/entrepreneur/PageContractorPublicProfileISR"));
 const SolutionServiceCityPage = lazy(() => import("@/pages/seo/SolutionServiceCityPage"));
 const SolutionServicePage = lazy(() => import("@/pages/seo/SolutionServicePage"));
 const ContractorCityPage = lazy(() => import("@/pages/seo/ContractorCityPage"));
