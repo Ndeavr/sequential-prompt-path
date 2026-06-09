@@ -180,7 +180,7 @@ const PROMPT_LIBRARY: AlexContextPrompt[] = [
     contextKey: "general",
     roleType: "homeowner",
     locale: "fr",
-    greetingText: "Bonjour. Je peux vous aider à trouver le bon entrepreneur.",
+    greetingText: "Bonjour. Je vais vous trouver le bon entrepreneur.",
     primaryQuestion: "Vous cherchez surtout quelqu'un de disponible rapidement, de très bien noté, ou spécialisé ?",
     quickReplies: ["Disponible rapidement", "Très bien noté", "Spécialisé", "Comparer mes options"],
     nextFlow: "matching",
