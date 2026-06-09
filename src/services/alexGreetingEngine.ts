@@ -3,7 +3,10 @@
  * Bonjour (5h-11h), Bon après-midi (12h-17h), Bonsoir (18h-4h).
  */
 
+import { buildAlexOpening, type AlexIntent } from "@/services/alexOpeningTemplates";
+
 export type GreetingPeriod = 'morning' | 'afternoon' | 'evening';
+
 
 export function getGreetingPeriod(hour?: number | null): GreetingPeriod {
   const h = hour ?? new Date().getHours();
