@@ -92,13 +92,12 @@ export function getToneConfig(role: AlexUserRole): AlexToneConfig {
 }
 
 export function getGreetingForRole(role: AlexUserRole, firstName?: string): string {
-  if (firstName) {
-    const greetings: Record<AlexUserRole, string> = {
-      homeowner: `Bonjour ${firstName}. Comment je peux vous aider ?`,
-      entrepreneur: `Bonjour ${firstName}. Parlons de votre croissance.`,
-      condo_manager: `Bonjour ${firstName}. Comment va votre copropriété ?`,
-    };
-    return greetings[role];
-  }
-  return TONE_CONFIGS[role].greeting;
+  const { buildAlexOpening } =
+    require("@/services/alexOpeningTemplates") as typeof import("@/services/alexOpeningTemplates");
+  const r =
+    role === "entrepreneur" ? "contractor"
+    : role === "condo_manager" ? "condo_manager"
+    : "homeowner";
+  return buildAlexOpening({ firstName: firstName ?? null, role: r });
 }
+
