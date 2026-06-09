@@ -16,6 +16,7 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import AlexOrbPremium from "@/components/home-unicorn/AlexOrbPremium";
 import BottomDockGlass from "@/components/home-unicorn/BottomDockGlass";
 import NearbyContractorsCarousel from "@/components/home-unicorn/NearbyContractorsCarousel";
+import AlexCapabilitiesStrip from "@/components/home-unicorn/AlexCapabilitiesStrip";
 import CinematicArchScenes from "@/components/home-unicorn/CinematicArchScenes";
 import PIMIntroBand from "@/components/pim/PIMIntroBand";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -660,10 +661,11 @@ export default function PageHomeUnicorn() {
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
       </Helmet>
 
-      <div className="unicorn-theme min-h-screen pb-28 relative overflow-x-hidden">
+      <div className="unicorn-theme min-h-screen pb-36 relative overflow-x-hidden">
         <CinematicArchScenes />
         <HeaderFloatingGlass />
         <HeroAlexOrb onTalk={onTalk} />
+        <AlexCapabilitiesStrip />
         <AiInputCard onTalk={onTalk} />
         <HomeQuickActionsGrid />
         <LiveStatsCard />
