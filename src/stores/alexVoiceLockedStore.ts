@@ -69,6 +69,10 @@ interface AlexVoiceLockedState {
   // Feature context
   feature: string;
   contextHint: string | null;
+  /** Outcome intent (orchestrator-style). Drives Alex's opening template. */
+  intent: import("@/services/alexOpeningTemplates").AlexIntent | null;
+
+
 
   
   // Error
