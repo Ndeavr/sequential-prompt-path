@@ -25343,6 +25343,51 @@ export type Database = {
           },
         ]
       }
+      contractor_evaluation_requests: {
+        Row: {
+          contact_name: string
+          contractor_slug: string
+          created_at: string
+          email: string
+          id: string
+          message: string | null
+          metadata: Json
+          phone: string | null
+          preferred_slot: string | null
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          contact_name: string
+          contractor_slug: string
+          created_at?: string
+          email: string
+          id?: string
+          message?: string | null
+          metadata?: Json
+          phone?: string | null
+          preferred_slot?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          contact_name?: string
+          contractor_slug?: string
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string | null
+          metadata?: Json
+          phone?: string | null
+          preferred_slot?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contractor_exclusions: {
         Row: {
           building_type: string | null
@@ -26826,6 +26871,39 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           website?: string | null
+        }
+        Relationships: []
+      }
+      contractor_intel_snapshots: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          fetched_at: string
+          id: string
+          payload: Json
+          slug: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          payload?: Json
+          slug: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          payload?: Json
+          slug?: string
+          source?: string
+          updated_at?: string
         }
         Relationships: []
       }
