@@ -18,9 +18,17 @@ interface Props {
   className?: string;
   /** When false, render the static idle preset regardless of voice state. */
   reactive?: boolean;
+  /** Adds idle float + hover scale + cursor pointer affordance. */
+  interactive?: boolean;
+  /** Show glass "Parler à Alex" pill below the orb (hover/focus, or always when forced). */
+  showLabel?: boolean;
+  /** Show state caption ("Alex réfléchit…", "Alex est temporairement indisponible."). */
+  showCaption?: boolean;
+  /** Force a visual state regardless of the store (e.g. "error" from overlay). */
+  forceState?: OrbVisualState | "error";
 }
 
-type OrbVisualState = "idle" | "listening" | "thinking" | "speaking" | "processing";
+type OrbVisualState = "idle" | "listening" | "thinking" | "speaking" | "processing" | "error";
 
 function mapMachineToOrb(state: LockedVoiceState): OrbVisualState {
   switch (state) {
@@ -37,6 +45,9 @@ function mapMachineToOrb(state: LockedVoiceState): OrbVisualState {
     case "requesting_permission":
     case "stabilizing":
       return "processing";
+    case "error_recoverable":
+    case "error_fatal":
+      return "error";
     default:
       return "idle";
   }
@@ -52,15 +63,25 @@ const STATE_TUNING: Record<OrbVisualState, {
   particleBoost: number;
 }> = {
   idle:       { breatheSec: 4.2, haloOpacity: 0.55, haloSpinSec: 18, auraScale: 1.35, glow: "rgba(37,99,255,0.45)",  swirlSec: 22, particleBoost: 1 },
-  listening:  { breatheSec: 2.4, haloOpacity: 0.85, haloSpinSec: 9,  auraScale: 1.55, glow: "rgba(56,189,248,0.70)", swirlSec: 14, particleBoost: 1.25 },
+  listening:  { breatheSec: 2.4, haloOpacity: 0.85, haloSpinSec: 9,  auraScale: 1.55, glow: "rgba(34,211,238,0.72)", swirlSec: 14, particleBoost: 1.25 },
   thinking:   { breatheSec: 3.0, haloOpacity: 0.75, haloSpinSec: 5,  auraScale: 1.42, glow: "rgba(139,92,246,0.65)", swirlSec: 9,  particleBoost: 1.4 },
   speaking:   { breatheSec: 1.6, haloOpacity: 0.95, haloSpinSec: 7,  auraScale: 1.62, glow: "rgba(99,102,241,0.78)", swirlSec: 12, particleBoost: 1.35 },
   processing: { breatheSec: 3.6, haloOpacity: 0.70, haloSpinSec: 6,  auraScale: 1.40, glow: "rgba(189,231,255,0.65)", swirlSec: 11, particleBoost: 1.2 },
+  error:      { breatheSec: 6.0, haloOpacity: 0.30, haloSpinSec: 24, auraScale: 1.20, glow: "rgba(180,83,9,0.35)",   swirlSec: 26, particleBoost: 0.6 },
 };
 
-export default function AlexOrbPremium({ size = 200, className = "", reactive = true }: Props) {
+export default function AlexOrbPremium({
+  size = 200,
+  className = "",
+  reactive = true,
+  interactive = false,
+  showLabel = false,
+  showCaption = false,
+  forceState,
+}: Props) {
   const machineState = useAlexVoiceLockedStore((s) => s.machineState);
-  const visualState: OrbVisualState = reactive ? mapMachineToOrb(machineState) : "idle";
+  const mappedState: OrbVisualState = reactive ? mapMachineToOrb(machineState) : "idle";
+  const visualState: OrbVisualState = (forceState as OrbVisualState | undefined) ?? mappedState;
   const t = STATE_TUNING[visualState];
 
   const particles = useMemo(
@@ -77,16 +98,21 @@ export default function AlexOrbPremium({ size = 200, className = "", reactive = 
 
   return (
     <div
-      className={`relative inline-block ${className}`}
-      style={{
-        width: size,
-        height: size,
-        transition: "filter 600ms cubic-bezier(.22,1,.36,1)",
-        filter: visualState === "speaking" ? "saturate(115%)" : "saturate(100%)",
-      }}
-      aria-hidden
+      className={`uc-orb-shell ${className}`}
       data-orb-state={visualState}
+      data-interactive={interactive ? "true" : "false"}
+      data-show-label={showLabel ? "true" : "false"}
     >
+      <div
+        className="uc-orb-floater relative inline-block"
+        style={{
+          width: size,
+          height: size,
+          transition: "filter 600ms cubic-bezier(.22,1,.36,1)",
+          filter: visualState === "speaking" ? "saturate(115%)" : "saturate(100%)",
+        }}
+        aria-hidden
+      >
       {/* Outer atmospheric aura — scales up when listening / speaking */}
       <div
         className="absolute inset-0 rounded-full"
