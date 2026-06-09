@@ -32,6 +32,8 @@ import {
 } from "@/services/voiceRuntimeSingleton";
 import { elevenlabsService } from "@/features/alex/services/elevenlabsService";
 import { hasGreeted, markGreeted, markVoiceStarted } from "@/lib/alexSessionState";
+import { buildAlexOpening } from "@/services/alexOpeningTemplates";
+
 
 // ChatGPT-Voice style: keep one realtime session alive; only fallback after a true connect failure.
 const STABILIZATION_MS = 1500;
