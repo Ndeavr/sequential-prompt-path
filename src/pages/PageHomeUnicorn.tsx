@@ -414,10 +414,10 @@ function CategoryChipsScroll() {
 /* ---------------- Live stats ---------------- */
 function LiveStatsCard() {
   const stats = [
-    { icon: BarChart3, c: "#2563FF", bg: "#EFF6FF", value: "4 238", label: "analyses aujourd'hui", delta: "+12%" },
-    { icon: ShieldCheck, c: "#10B981", bg: "#ECFDF5", value: "312", label: "entrepreneurs certifiés", delta: "+8%" },
-    { icon: Users, c: "#8B5CF6", bg: "#F3EEFF", value: "98%", label: "satisfaction clients", delta: "+3%" },
-    { icon: Clock, c: "#F59E0B", bg: "#FFFBEB", value: "24/7", label: "assistance IA disponible", delta: "En ligne", online: true },
+    { icon: BarChart3, c: "#2563FF", bg: "#EFF6FF", label: "Problèmes analysés" },
+    { icon: ShieldCheck, c: "#10B981", bg: "#ECFDF5", label: "Projets accompagnés" },
+    { icon: Users, c: "#8B5CF6", bg: "#F3EEFF", label: "Entrepreneurs vérifiés" },
+    { icon: Clock, c: "#F59E0B", bg: "#FFFBEB", label: "Assistance 24/7" },
   ];
   return (
     <section className="px-4 mt-4 relative z-10">
