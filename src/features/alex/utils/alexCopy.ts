@@ -82,13 +82,13 @@ function pick<T>(arr: readonly T[]): T {
 
 export function getGreeting(lang: AlexLanguage, role?: AlexUserRole): string {
   if (lang !== "fr-CA") return pick(GREETINGS_EN);
-  // Route through canonical Alex Opening Templates (orchestrator-style).
-  // Dynamic import keeps this util free of cycles.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { buildAlexOpening } = require("@/services/alexOpeningTemplates") as typeof import("@/services/alexOpeningTemplates");
-  const r = role === "contractor" || role === "condo_manager" || role === "homeowner" ? role : null;
+  const r =
+    role === "contractor" || role === "condo_manager" || role === "homeowner"
+      ? role
+      : null;
   return buildAlexOpening({ role: r });
 }
+
 
 
 export function getRestoredGreeting(lang: AlexLanguage): string {
