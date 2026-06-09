@@ -58,7 +58,7 @@ export function AlexVoiceProvider({ children }: { children: ReactNode }) {
   const [feature, setFeature] = useState("general");
   const [voiceActive, setVoiceActive] = useState(false);
 
-  const openAlex = useCallback((feat = "general", contextHint?: string, displayMode?: "fullscreen" | "floating") => {
+  const openAlex = useCallback((feat = "general", contextHint?: string, displayMode?: "fullscreen" | "floating", intent?: AlexIntent) => {
     const lockedStore = useAlexVoiceLockedStore.getState();
 
     if (lockedStore.isOverlayOpen) {
@@ -72,10 +72,11 @@ export function AlexVoiceProvider({ children }: { children: ReactNode }) {
     const resolvedMode = displayMode ?? defaultDisplayModeFor(feat);
 
     // Open the overlay synchronously (UX), then lazy-kill any other audio.
-    lockedStore.openVoiceSession(feat, "user_openAlex", contextHint, resolvedMode);
+    lockedStore.openVoiceSession(feat, "user_openAlex", contextHint, resolvedMode, intent ?? null);
     setFeature(feat);
     void killAllAudioSources().catch(() => {});
   }, []);
+
 
 
   const closeAlex = useCallback(() => {
