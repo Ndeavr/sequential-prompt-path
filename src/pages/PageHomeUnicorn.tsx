@@ -187,14 +187,10 @@ function HeroAlexOrb({ onTalk }: { onTalk: (hint?: string) => void }) {
           type="button"
           onClick={() => onTalk()}
           aria-label="Parler à Alex"
-          className="group relative rounded-full transition-transform duration-200 ease-out active:scale-[0.96] hover:scale-[1.04] cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-[#3B82F6]/40"
+          className="group relative rounded-full cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-[#3B82F6]/40 active:scale-[0.97] transition-transform duration-200 ease-out"
           style={{ WebkitTapHighlightColor: "transparent" }}
         >
-          <AlexOrbPremium size={144} />
-          <span
-            className="pointer-events-none absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity"
-            style={{ boxShadow: "0 0 60px 8px rgba(59,130,246,0.45)" }}
-          />
+          <AlexOrbPremium size={144} interactive showLabel showCaption />
         </button>
       </div>
     </section>
