@@ -54402,6 +54402,57 @@ export type Database = {
           },
         ]
       }
+      popular_question_blocklist: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          normalized_label: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          normalized_label: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          normalized_label?: string
+        }
+        Relationships: []
+      }
+      popular_question_events: {
+        Row: {
+          created_at: string
+          id: string
+          intent: string | null
+          lang: string | null
+          normalized_label: string
+          role: string | null
+          source: string | null
+          topic: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          intent?: string | null
+          lang?: string | null
+          normalized_label: string
+          role?: string | null
+          source?: string | null
+          topic?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          intent?: string | null
+          lang?: string | null
+          normalized_label?: string
+          role?: string | null
+          source?: string | null
+          topic?: string | null
+        }
+        Relationships: []
+      }
       portfolio_properties: {
         Row: {
           added_at: string
@@ -75549,6 +75600,18 @@ export type Database = {
           stage_key: string | null
           success_count: number | null
           total_count: number | null
+        }
+        Relationships: []
+      }
+      v_popular_questions_7d: {
+        Row: {
+          intent: string | null
+          last_seen_at: string | null
+          normalized_label: string | null
+          recent_count: number | null
+          topic: string | null
+          total_count: number | null
+          weighted_score: number | null
         }
         Relationships: []
       }
