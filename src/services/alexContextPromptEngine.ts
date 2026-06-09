@@ -205,7 +205,7 @@ const PROMPT_LIBRARY: AlexContextPrompt[] = [
     contextKey: "no_document",
     roleType: "homeowner",
     locale: "fr",
-    greetingText: "Je peux vous aider à démêler tout ça.",
+    greetingText: "Je vais démêler tout ça avec vous.",
     primaryQuestion: "Vous voulez comparer des prix, repérer les oublis ou vérifier les différences entre les soumissions ?",
     quickReplies: ["Comparer les prix", "Repérer les oublis", "Comprendre les différences", "Téléverser mes soumissions"],
     nextFlow: "quote_analysis",
