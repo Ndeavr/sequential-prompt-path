@@ -11,6 +11,8 @@
  */
 
 import type { AlexLanguage, AlexUserRole } from "../types/alex.types";
+import { buildAlexOpening } from "@/services/alexOpeningTemplates";
+
 
 // ─── Greetings (first visit) ──────────────────────────────────────
 // Single canonical opening per Alex System Prompt (FR only).
@@ -78,9 +80,16 @@ function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-export function getGreeting(lang: AlexLanguage, _role?: AlexUserRole): string {
-  return lang === "fr-CA" ? pick(GREETINGS_FR) : pick(GREETINGS_EN);
+export function getGreeting(lang: AlexLanguage, role?: AlexUserRole): string {
+  if (lang !== "fr-CA") return pick(GREETINGS_EN);
+  const r =
+    role === "contractor" || role === "condo_manager" || role === "homeowner"
+      ? role
+      : null;
+  return buildAlexOpening({ role: r });
 }
+
+
 
 export function getRestoredGreeting(lang: AlexLanguage): string {
   return lang === "fr-CA" ? pick(RESTORED_FR) : pick(RESTORED_EN);

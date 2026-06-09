@@ -1,86 +1,96 @@
-# Alex Orb V2 — Copilot-style + Floating Glass Panel
+## Goal
 
-Two coordinated changes, scoped to the homepage Alex experience (hero orb + bottom dock orb). The locked voice runtime, recovery engine, session machine and ElevenLabs pipeline stay untouched — only the **visual orb** and the **overlay shell** change.
+Replace every Alex opening line with role + intent-aware templates. Alex stops sounding like a chatbot ("Je peux vous aider avec {sujet}") and sounds like a Home Project Orchestrator helping the user reach an outcome.
 
----
+## 1. New shared module
 
-## Part 1 — Living Orb (Copilot-grade)
+Create `src/services/alexOpeningTemplates.ts` exporting:
 
-**File:** `src/components/home-unicorn/AlexOrbPremium.tsx` (extend, do not replace)
+```ts
+type AlexIntent = "renovation" | "repair" | "emergency" | "comparison" | "contractor" | "generic";
 
-Add state-driven CSS-only animations on top of the existing 5 visual states (`idle | listening | thinking | speaking | processing`), plus an `error` mapping.
+export function detectAlexIntent(hint?: string | null, feature?: string | null): AlexIntent
+export function buildAlexOpening(args: {
+  firstName?: string | null;
+  role?: "homeowner" | "contractor" | "condo_manager" | null;
+  intent?: AlexIntent;
+  hint?: string | null;
+  feature?: string | null;
+}): string
+```
 
-| State | Behavior |
-|---|---|
-| Idle | Vertical float 6px (`uc-orb-float` 5.5s ease-in-out), breathing scale 0.98↔1.04 (already), inner glow pulse |
-| Hover/focus | Scale 1.08, halo opacity +0.15, glass tooltip "Parler à Alex" fades in (desktop hover, mobile after 1.5s idle on first visit) |
-| Listening | Existing pulse rings kept; intensity raised; hue shift to cyan `#22D3EE` |
-| Speaking | Add ring waveform (6 bars in a circle, `uc-orb-wave` 0.9s) |
-| Thinking | Slow rotation 12s + particle shimmer boost + caption "Alex réfléchit…" under orb |
-| Error | Reduce glow to 30%, stop rings, caption "Alex est temporairement indisponible." (no infinite pulse) |
+Templates exactly as specified by the user:
 
-**New keyframes** in `src/styles/unicorn-theme.css`:
-- `uc-orb-float` (translateY 0 ↔ -6px, 5.5s)
-- `uc-orb-wave` (scaleY bars)
-- `uc-orb-shimmer` (particle opacity)
-- Wrap all new animations in `@media (prefers-reduced-motion: reduce) { * { animation: none !important } }` scoped to `[data-orb-state]`.
+- Generic homeowner — `Bonjour {first_name}. Je vais vous aider à comprendre votre situation et à trouver le bon professionnel si nécessaire. Que se passe-t-il ?`
+- Renovation — `…évaluer votre projet et à trouver le bon entrepreneur pour ce type de travaux. Que souhaitez-vous réaliser ?`
+- Repair — `…comprendre le problème et à déterminer la meilleure marche à suivre. Que remarquez-vous exactement ?`
+- Emergency — `…évaluer rapidement la situation et à trouver le bon professionnel. Que se passe-t-il ?`
+- Comparison — `…analyser les options avec vous et vous aider à prendre une décision éclairée. Expliquez-moi votre situation.`
+- Contractor — `…développer votre visibilité et à être recommandé aux bons propriétaires. Comment puis-je vous aider aujourd'hui ?`
 
-**New props** on `AlexOrbPremium`:
-- `showLabel?: boolean` (renders glass "Parler à Alex" pill below orb)
-- `showCaption?: boolean` (renders state caption: thinking/error)
-- `interactive?: boolean` (enables float + hover scale)
+Without `firstName` → drop the name token but keep punctuation.
 
-**Hero usage** (`src/pages/PageHomeUnicorn.tsx` `HeroAlexOrb`): pass `interactive showLabel showCaption`.
-**Dock usage** (`BottomDockGlass.tsx`): keep small 44px orb but adopt the same float+breathe and a tiny glow pulse synced with the same `machineState` — so the dock orb visibly mirrors the hero orb. No label on dock.
+`detectAlexIntent` keyword map (FR, accent/case-insensitive):
+- emergency: `urgent`, `urgence`, `inondation`, `fuite majeure`, `gaz`, `feu`, `dégât`, `panne chauffage`
+- renovation: `rénov`, `refaire`, `transformer`, `projet`, `réaliser`, `agrandir`, `cuisine`, `salle de bain`
+- repair: `problème`, `réparer`, `brisé`, `ne fonctionne`, `bruit`, `fuite`, `thermopompe`, `chauffe-eau`
+- comparison: `comparer`, `soumission`, `devis`, `options`, `analyser une soumission`
+- contractor: feature starts with `contractor_`, `pro_`, or role === contractor
+- else generic
 
----
+## 2. Plumb `intent` through the open-Alex chain
 
-## Part 2 — Floating Glass Conversation Panel (replaces full-screen takeover for homepage entries)
+- `src/contexts/AlexVoiceContext.tsx` — extend `openAlex(feature?, contextHint?, displayMode?, intent?)`.
+- `src/stores/alexVoiceLockedStore.ts` — add `intent: AlexIntent | null` (+ setter on `openVoiceSession`, cleared on close/reset).
+- Backward compatible: when `intent` omitted, it is inferred from `feature` + `contextHint` inside `buildAlexOpening`.
 
-Goal: when user taps the orb, the page stays visible; a compact glass panel appears anchored near the orb and streams Alex/user messages live.
+## 3. Rewrite every opening site to use `buildAlexOpening`
 
-**New file:** `src/components/voice/OverlayAlexFloatingPanel.tsx`
+Greeting builders (replace inline opening strings):
+- `src/components/voice/OverlayAlexVoiceFullScreen.tsx` — replace `buildGreeting` (lines 98–121).
+- `src/hooks/useAlexVoiceBootstrap.ts` — `buildGreeting` (line 71).
+- `src/components/alex/AlexVoiceMode.tsx` — `buildGreeting` (line 64).
+- `src/features/alex/hooks/useAlexBootstrap.ts` — internal `buildGreeting` (line 52).
+- `src/features/alex/services/alexWelcomeManager.ts` — `buildGreeting` method.
+- `src/services/alexGreetingEngine.ts` — opener line 59.
+- `src/services/alexRoleDetector.ts` — `homeowner` greeting (line 97) and any sibling role greetings → route through `buildAlexOpening({ role })`.
+- `src/services/alexContextPromptEngine.ts` — replace forbidden `greetingText` values (lines 170, 183, 208, 271) with intent-appropriate templates.
+- `src/stores/copilotConversationStore.ts` — chat fallback opener (lines 222, 249) → generic homeowner template.
+- `src/components/alex/AlexConcierge.tsx` — subtitle line 337 → outcome-oriented copy ("Votre orchestrateur de projets résidentiels.").
+- `src/components/booking/AlexBookingBubble.tsx` — default copy line 39 → outcome-oriented helper text (no "Je peux vous aider").
+- `src/pages/PublicBookingPage.tsx` — `alexHints.types` (line 273) rewritten to outcome-style.
 
-Reuses the **same** `useAlexVoiceLockedStore`, `useLiveVoice`, recovery and session machinery as `OverlayAlexVoiceFullScreen` — extracted into a small shared hook `useAlexVoiceSession()` (split from the existing overlay's body) so we don't fork the voice runtime.
+## 4. Update entry points to pass intent
 
-**Visual:**
-- Fixed position. Desktop: `bottom-24 right-6`, max-width 420px. Mobile: `bottom-[88px] left-4 right-4` (above the dock, never covers it).
-- Glass: `rgba(10,18,40,0.55)` + `backdrop-blur(22px) saturate(160%)`, border `rgba(255,255,255,0.14)`, radius 24px, soft cyan glow shadow.
-- Header row: tiny orb mirror (32px `AlexOrbPremium reactive`), state label ("Je vous écoute…" / "Alex réfléchit…" / "Alex parle…"), expand icon, close (×) icon.
-- Body: last 4 messages, alex left / user right, small premium bubbles, auto-scroll, max-height ~240px.
-- Footer: typed input fallback (always available); mic indicator (live partial transcript shown inline above input while user speaks).
+- `src/components/home-unicorn/AlexCapabilitiesStrip.tsx` — replace `topic` field with `intent` + short outcome `hint`. Each tile maps to a precise intent:
+  - "Comprendre un problème" → `repair`
+  - "Analyser une photo" → `repair` (hint: "ce que vous voyez sur la photo")
+  - "Estimer un coût" → `renovation`
+  - "Comparer une soumission" → `comparison`
+  - "Trouver des subventions" → `renovation`
+  - "Recommander un professionnel" → `generic`
+  - Call: `openAlex("home_capability", hint, undefined, intent)`.
+- `src/pages/PageHomeUnicorn.tsx` — `QUICK_CHIPS` items get `intent` and pass it through `openAlex`.
+- `src/pages/seo/SeoArticlePage.tsx` — pass `intent` derived from the article topic (default `repair`).
+- `src/components/intent-pages/OrbAlexPrimaryEntry.tsx` — accept and forward optional `intent` prop.
 
-**Behavior:**
-- Click outside → collapse panel (does NOT end voice session); orb keeps pulsing if still listening.
-- × button → collapse only.
-- "Voir conversation" link or expand icon → opens existing `OverlayAlexVoiceFullScreen` (kept for power use, accessibility, contractor/condo flows that already depend on it).
-- After Alex's final answer + 1 follow-up with no user input → auto-collapse (per existing reengagement control memory: 3 attempts max already enforced; we cap to 1 here for the floating panel).
+## 5. Forbidden-phrase guard (lightweight)
 
-**Routing the two overlays:**
-`AlexVoiceContext.openAlex(feature, hint)` learns a new `mode: "floating" | "fullscreen"` (default `floating` for `home_*` features, `fullscreen` for contractor/condo onboarding, signature, recruitment).
-- Render `<OverlayAlexFloatingPanel />` when `mode === "floating"`.
-- Render existing `<OverlayAlexVoiceFullScreen />` when `mode === "fullscreen"` or when user taps Expand.
+Add a `assertNoForbiddenOpening(text)` helper in `alexOpeningTemplates.ts` that throws in dev only when the produced string contains any of:
+- `Je peux vous aider avec`
+- `Je peux définitivement vous aider avec`
+- `Je peux vous assister avec`
+- `Dites-m'en plus sur ce sujet`
 
----
+Call it inside `buildAlexOpening` so any future regression is caught immediately in dev/preview.
 
-## Out of scope (explicitly)
-- No changes to ElevenLabs config, voice IDs, prompt, session state machine, recovery engine, or `useLiveVoice`.
-- No changes to backend, edge functions, DB, or system prompt.
-- Full-screen overlay file is **kept as-is** (still used by contractor/condo/signature flows and as the Expand target).
+## 6. Out of scope
 
-## Technical details
-- Shared session hook: move the side-effect bodies (heartbeat, stabilization timer, first-audio timer, slow-token timer, lockRuntime/unlockRuntime, greeting trigger, transcript bridging) from `OverlayAlexVoiceFullScreen` into `src/hooks/useAlexVoiceSession.ts`. The fullscreen overlay re-renders identically by consuming the hook. The floating panel consumes the same hook → guaranteed parity, zero runtime fork.
-- `data-orb-state` already present on the orb root; CSS hooks attach via `[data-orb-state="thinking"] .uc-orb-caption::before { content: "Alex réfléchit…" }` etc.
-- All new animations: GPU-friendly (transform/opacity only), `will-change: transform`, total cost < 1% CPU on mid-range mobile.
-- Respect `prefers-reduced-motion: reduce` — orb stays static at idle preset; panel uses instant fade.
+- ElevenLabs voice/agent config, recovery engine, session state machine.
+- Example dialogue inside `src/features/alex/voice/alexCorePrompt.ts` and admin reference copy in `PanelVoiceToneControl.tsx` (these are model coaching examples, not user-facing openings) — leave untouched.
+- Any backend/SQL changes.
 
-## Files touched
-- Edit: `src/components/home-unicorn/AlexOrbPremium.tsx`
-- Edit: `src/styles/unicorn-theme.css`
-- Edit: `src/pages/PageHomeUnicorn.tsx` (pass new props)
-- Edit: `src/components/home-unicorn/BottomDockGlass.tsx` (sync small orb to machineState)
-- Edit: `src/contexts/AlexVoiceContext.tsx` (add `mode`)
-- Edit: `src/components/voice/OverlayAlexVoiceFullScreen.tsx` (consume shared hook)
-- New: `src/hooks/useAlexVoiceSession.ts`
-- New: `src/components/voice/OverlayAlexFloatingPanel.tsx`
-- Edit: `src/app/providers.tsx` (mount the floating panel alongside the fullscreen one)
+## Files
+
+Create: `src/services/alexOpeningTemplates.ts`
+Edit: `src/contexts/AlexVoiceContext.tsx`, `src/stores/alexVoiceLockedStore.ts`, `src/components/voice/OverlayAlexVoiceFullScreen.tsx`, `src/hooks/useAlexVoiceBootstrap.ts`, `src/components/alex/AlexVoiceMode.tsx`, `src/features/alex/hooks/useAlexBootstrap.ts`, `src/features/alex/services/alexWelcomeManager.ts`, `src/services/alexGreetingEngine.ts`, `src/services/alexRoleDetector.ts`, `src/services/alexContextPromptEngine.ts`, `src/stores/copilotConversationStore.ts`, `src/components/alex/AlexConcierge.tsx`, `src/components/booking/AlexBookingBubble.tsx`, `src/pages/PublicBookingPage.tsx`, `src/components/home-unicorn/AlexCapabilitiesStrip.tsx`, `src/pages/PageHomeUnicorn.tsx`, `src/pages/seo/SeoArticlePage.tsx`, `src/components/intent-pages/OrbAlexPrimaryEntry.tsx`

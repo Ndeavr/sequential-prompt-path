@@ -10,6 +10,8 @@ import { DEFAULT_ALEX_QUICK_ACTIONS, useAlexStore } from "../state/alexStore";
 import { elevenlabsService } from "../services/elevenlabsService";
 import { sttService } from "../services/sttService";
 import { supabase } from "@/integrations/supabase/client";
+import { buildAlexOpening } from "@/services/alexOpeningTemplates";
+
 import { alexLog } from "../utils/alexDebug";
 
 const VOICE_ATTEMPT_DELAY_MS = 200;
@@ -50,9 +52,9 @@ async function getVerifiedGreetingName(): Promise<string | null> {
 }
 
 function buildGreeting(firstName: string | null): string {
-  if (firstName) return `Bonjour ${firstName}.`;
-  return "Bonjour.";
+  return buildAlexOpening({ firstName, intent: "generic" });
 }
+
 
 export function useAlexBootstrap() {
   const booted = useRef(false);
@@ -78,8 +80,9 @@ export function useAlexBootstrap() {
 
       const sessionId = store.sessionId || crypto.randomUUID();
 
-      // Inject "Bonjour." immediately — will update with name if auth resolves
-      const defaultGreeting = "Bonjour.";
+      // Inject the canonical generic opening immediately — updated with name once auth resolves.
+      const defaultGreeting = buildAlexOpening({ intent: "generic" });
+
 
       useAlexStore.setState({
         sessionId,
@@ -113,9 +116,11 @@ export function useAlexBootstrap() {
 
         // Update the displayed greeting message if it was the default
         const state = useAlexStore.getState();
+        const defaultText = buildAlexOpening({ intent: "generic" });
         const lastAssistant = state.messages.findIndex(
-          (m) => m.role === "assistant" && m.text === "Bonjour."
+          (m) => m.role === "assistant" && m.text === defaultText
         );
+
         if (lastAssistant >= 0) {
           const updatedMessages = [...state.messages];
           updatedMessages[lastAssistant] = {

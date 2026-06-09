@@ -9,7 +9,7 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 interface Capability {
   icon: LucideIcon;
   label: string;
-  /** Phrase used in Alex's opening: "Je peux définitivement vous aider avec {topic}." */
+  /** Short outcome hint passed to Alex's opening engine. */
   topic: string;
 }
 

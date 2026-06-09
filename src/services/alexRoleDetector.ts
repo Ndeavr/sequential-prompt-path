@@ -5,6 +5,8 @@
 
 import { detectEntrepreneurIntent, ENTREPRENEUR_SIGNALS } from "@/services/alexEntrepreneurGuidanceEngine";
 import { detectCondoManagerIntent, CONDO_SIGNALS } from "@/services/alexCondoManagerGuidanceEngine";
+import { buildAlexOpening } from "@/services/alexOpeningTemplates";
+
 
 export type AlexUserRole = "homeowner" | "entrepreneur" | "condo_manager";
 
@@ -92,13 +94,11 @@ export function getToneConfig(role: AlexUserRole): AlexToneConfig {
 }
 
 export function getGreetingForRole(role: AlexUserRole, firstName?: string): string {
-  if (firstName) {
-    const greetings: Record<AlexUserRole, string> = {
-      homeowner: `Bonjour ${firstName}. Comment je peux vous aider ?`,
-      entrepreneur: `Bonjour ${firstName}. Parlons de votre croissance.`,
-      condo_manager: `Bonjour ${firstName}. Comment va votre copropriété ?`,
-    };
-    return greetings[role];
-  }
-  return TONE_CONFIGS[role].greeting;
+  const r =
+    role === "entrepreneur" ? "contractor"
+    : role === "condo_manager" ? "condo_manager"
+    : "homeowner";
+  return buildAlexOpening({ firstName: firstName ?? null, role: r });
 }
+
+

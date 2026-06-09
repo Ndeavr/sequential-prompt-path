@@ -69,6 +69,10 @@ interface AlexVoiceLockedState {
   // Feature context
   feature: string;
   contextHint: string | null;
+  /** Outcome intent (orchestrator-style). Drives Alex's opening template. */
+  intent: import("@/services/alexOpeningTemplates").AlexIntent | null;
+
+
 
   
   // Error
@@ -99,7 +103,7 @@ interface AlexVoiceLockedState {
   voiceLockedAt: number | null;
 
   // Actions
-  openVoiceSession: (feature?: string, openReason?: string, contextHint?: string, displayMode?: "fullscreen" | "floating") => void;
+  openVoiceSession: (feature?: string, openReason?: string, contextHint?: string, displayMode?: "fullscreen" | "floating", intent?: import("@/services/alexOpeningTemplates").AlexIntent | null) => void;
   setDisplayMode: (mode: "fullscreen" | "floating") => void;
   closeVoiceSession: (closeReason: string) => void;
   transitionTo: (newState: LockedVoiceState, reason?: string) => boolean;
@@ -139,6 +143,8 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
   sessionLog: null,
   feature: "general",
   contextHint: null,
+  intent: null,
+
   errorMessage: null,
   errorType: null,
   recoveryAttempts: 0,
@@ -186,7 +192,7 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
     });
   },
 
-  openVoiceSession: (feature = "general", openReason = "user_initiated", contextHint?: string, displayMode: "fullscreen" | "floating" = "fullscreen") => {
+  openVoiceSession: (feature = "general", openReason = "user_initiated", contextHint?: string, displayMode: "fullscreen" | "floating" = "fullscreen", intent?: import("@/services/alexOpeningTemplates").AlexIntent | null) => {
     const sessionId = crypto.randomUUID();
     const now = new Date().toISOString();
     
@@ -196,9 +202,11 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
       sessionId,
       feature,
       contextHint: contextHint || null,
+      intent: intent ?? null,
       machineState: "requesting_permission",
       errorMessage: null,
       errorType: null,
+
       recoveryAttempts: 0,
       heartbeatFailures: 0,
       lastHeartbeatAt: Date.now(),
@@ -261,6 +269,8 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
       machineState: "idle",
       sessionId: null,
       contextHint: null,
+      intent: null,
+
       errorMessage: null,
       errorType: null,
       stabilizationEnd: null,
