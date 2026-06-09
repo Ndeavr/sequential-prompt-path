@@ -57,10 +57,7 @@ export function buildAlexInitialGreeting(options: {
   hour?: number | null;
 }): string {
   const { firstName, intent } = options;
-  // Lazy require to avoid circular import risk in legacy callers.
-  const { buildAlexOpening } =
-    require("@/services/alexOpeningTemplates") as typeof import("@/services/alexOpeningTemplates");
-  const intentMap: Record<string, import("@/services/alexOpeningTemplates").AlexIntent> = {
+  const intentMap: Record<string, AlexIntent> = {
     probleme: "repair",
     projet: "renovation",
     avis: "comparison",
@@ -71,4 +68,5 @@ export function buildAlexInitialGreeting(options: {
     intent: intent ? intentMap[intent] : undefined,
   });
 }
+
 
