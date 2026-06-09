@@ -198,15 +198,6 @@ function HeroAlexOrb({ onTalk }: { onTalk: (hint?: string) => void }) {
 }
 
 /* ---------------- AI Input Card ---------------- */
-const QUICK_CHIPS: Array<{ label: string; topic: string }> = [
-  { label: "Mon sous-sol sent l'humidité", topic: "l'humidité de votre sous-sol" },
-  { label: "Est-ce un problème de fondation?", topic: "votre fondation" },
-  { label: "Je veux rénover ma cuisine", topic: "la rénovation de votre cuisine" },
-  { label: "Ma thermopompe fait du bruit", topic: "votre thermopompe" },
-  { label: "J'ai reçu une soumission", topic: "l'analyse de votre soumission" },
-  { label: "Ai-je droit à une subvention?", topic: "vos subventions" },
-];
-
 function WaveformMini() {
   return (
     <span className="inline-flex items-end gap-[2px] h-4">
@@ -227,7 +218,12 @@ function WaveformMini() {
 }
 
 function AiInputCard({ onTalk }: { onTalk: (hint?: string) => void }) {
-  const [activeChip, setActiveChip] = useState(0);
+  const { items, source, isLoading, refresh } = usePopularQuestions(6);
+  const [activeChip, setActiveChip] = useState<number | null>(null);
+
+  const sectionLabel =
+    source === "trending" ? "Questions populaires en ce moment" : "Suggestions de saison";
+
   return (
     <section className="px-4 mt-4 relative z-10 uc-fade-up" style={{ animationDelay: "60ms" }}>
       <div
@@ -242,37 +238,67 @@ function AiInputCard({ onTalk }: { onTalk: (hint?: string) => void }) {
           />
         </div>
 
-        <div className="text-[14px] mb-3" style={{ color: "#94A3B8" }}>
-          Posez votre question ou décrivez votre situation…
+        {/* Section label */}
+        <div className="flex items-center justify-between mb-2">
+          <div
+            className="text-[11px] font-bold tracking-[0.08em] uppercase"
+            style={{ color: "#2563FF" }}
+          >
+            {sectionLabel}
+          </div>
+          <button
+            onClick={() => refresh()}
+            className="w-7 h-7 rounded-full flex items-center justify-center transition-transform active:scale-90"
+            style={{ background: "white", border: "1px solid rgba(11,18,32,0.08)" }}
+            aria-label="Actualiser les questions populaires"
+          >
+            <RefreshCw
+              size={12}
+              color="#475467"
+              className={isLoading ? "animate-spin" : ""}
+            />
+          </button>
         </div>
 
         {/* Chips row */}
         <div className="flex items-center gap-2 mb-3 overflow-x-auto uc-no-scrollbar -mx-1 px-1">
-          {QUICK_CHIPS.map((c, i) => (
-            <button
-              key={c.label}
-              onClick={() => {
-                setActiveChip(i);
-                onTalk(c.topic);
-              }}
-              className="shrink-0 px-3 py-2 rounded-full text-[12px] font-semibold whitespace-nowrap transition-all"
-              style={{
-                background: i === activeChip ? "rgba(37,99,255,0.10)" : "rgba(247,250,255,0.9)",
-                color: i === activeChip ? "#2563FF" : "#475467",
-                border:
-                  i === activeChip ? "1px solid rgba(37,99,255,0.35)" : "1px solid rgba(11,18,32,0.06)",
-              }}
-            >
-              {c.label}
-            </button>
-          ))}
-          <button
-            className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center ml-auto"
-            style={{ background: "white", border: "1px solid rgba(11,18,32,0.08)" }}
-            aria-label="Régénérer"
-          >
-            <RefreshCw size={14} color="#475467" />
-          </button>
+          {isLoading && items.length === 0
+            ? Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="shrink-0 h-8 rounded-full animate-pulse"
+                  style={{
+                    width: 120,
+                    background: "rgba(37,99,255,0.06)",
+                  }}
+                />
+              ))
+            : items.map((c, i) => (
+                <button
+                  key={`${c.label}-${i}`}
+                  onClick={() => {
+                    setActiveChip(i);
+                    logQuestion(c.label, {
+                      source: "home_chip_tap",
+                      topic: c.topic,
+                      intent: c.intent,
+                    });
+                    onTalk(c.topic);
+                  }}
+                  className="shrink-0 px-3 py-2 rounded-full text-[12px] font-semibold whitespace-nowrap transition-all"
+                  style={{
+                    background:
+                      i === activeChip ? "rgba(37,99,255,0.10)" : "rgba(247,250,255,0.9)",
+                    color: i === activeChip ? "#2563FF" : "#475467",
+                    border:
+                      i === activeChip
+                        ? "1px solid rgba(37,99,255,0.35)"
+                        : "1px solid rgba(11,18,32,0.06)",
+                  }}
+                >
+                  {c.label}
+                </button>
+              ))}
         </div>
 
         {/* Primary CTA */}
