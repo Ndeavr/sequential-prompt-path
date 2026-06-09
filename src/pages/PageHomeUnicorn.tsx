@@ -164,40 +164,37 @@ function HeaderFloatingGlass() {
 /* ---------------- Hero ---------------- */
 function HeroAlexOrb({ onTalk }: { onTalk: (hint?: string) => void }) {
   return (
-    <section className="px-4 pt-3 pb-2 grid grid-cols-[1.05fr_1fr] gap-2 items-center relative z-10 uc-fade-up">
+    <section className="px-4 pt-3 pb-6 grid grid-cols-[1.05fr_1fr] gap-2 items-center relative z-10 uc-fade-up">
       <div>
         <h1
-          className="font-extrabold leading-[0.98] text-[34px] sm:text-[44px] tracking-[-0.035em]"
+          className="font-extrabold leading-[0.98] text-[30px] sm:text-[40px] tracking-[-0.035em]"
           style={{ color: "#0B1220" }}
         >
-          Décrivez votre situation.{" "}
-          <span className="uc-gradient-text">Alex s'occupe du reste.</span>
+          L'intelligence de votre propriété{" "}
+          <span className="uc-gradient-text">commence ici.</span>
         </h1>
         <p
-          className="mt-3 text-[13px] sm:text-[14px] leading-snug max-w-[26ch]"
+          className="mt-3 text-[13px] sm:text-[14px] leading-snug max-w-[32ch]"
           style={{ color: "#475467" }}
         >
-          UNPRO détecte les problèmes, estime les coûts et recommande les meilleurs
-          professionnels.
+          Alex vous aide à comprendre les problèmes, les coûts, les risques et les
+          solutions possibles avant de prendre une décision.
         </p>
       </div>
-      <div className="flex flex-col items-center justify-end pr-1 gap-2">
+      <div className="flex flex-col items-center justify-center pr-1 -mt-2">
         <button
           type="button"
           onClick={() => onTalk()}
-          aria-label="Touchez pour parler à Alex"
+          aria-label="Parler à Alex"
           className="group relative rounded-full transition-transform duration-200 ease-out active:scale-[0.96] hover:scale-[1.04] cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-[#3B82F6]/40"
           style={{ WebkitTapHighlightColor: "transparent" }}
         >
-          <AlexOrbPremium size={170} />
+          <AlexOrbPremium size={144} />
           <span
             className="pointer-events-none absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity"
             style={{ boxShadow: "0 0 60px 8px rgba(59,130,246,0.45)" }}
           />
         </button>
-        <span className="text-[11px] font-semibold text-[#2563FF] sm:hidden">
-          Touchez pour parler à Alex
-        </span>
       </div>
     </section>
   );
@@ -205,9 +202,12 @@ function HeroAlexOrb({ onTalk }: { onTalk: (hint?: string) => void }) {
 
 /* ---------------- AI Input Card ---------------- */
 const QUICK_CHIPS = [
-  "Mon entretoit est trop froid",
-  "Je veux refaire ma toiture",
-  "Analyser mes soumissions",
+  "Mon sous-sol sent l'humidité",
+  "Est-ce un problème de fondation?",
+  "Je veux rénover ma cuisine",
+  "Ma thermopompe fait du bruit",
+  "J'ai reçu une soumission",
+  "Ai-je droit à une subvention?",
 ];
 
 function WaveformMini() {
@@ -246,7 +246,7 @@ function AiInputCard({ onTalk }: { onTalk: (hint?: string) => void }) {
         </div>
 
         <div className="text-[14px] mb-3" style={{ color: "#94A3B8" }}>
-          Décrivez votre situation…
+          Posez votre question ou décrivez votre situation…
         </div>
 
         {/* Chips row */}
