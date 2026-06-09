@@ -5,6 +5,8 @@
 
 import { detectEntrepreneurIntent, ENTREPRENEUR_SIGNALS } from "@/services/alexEntrepreneurGuidanceEngine";
 import { detectCondoManagerIntent, CONDO_SIGNALS } from "@/services/alexCondoManagerGuidanceEngine";
+import { buildAlexOpening } from "@/services/alexOpeningTemplates";
+
 
 export type AlexUserRole = "homeowner" | "entrepreneur" | "condo_manager";
 
