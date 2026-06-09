@@ -1,29 +1,71 @@
-# Fixes — Homepage (`PageHomeUnicorn`)
 
-## 1. Top menu (header buttons) — actuellement inertes
+# Page ISR — `/entrepreneur/isolation-solution-royal`
 
-Dans `src/pages/PageHomeUnicorn.tsx` → `HeaderFloatingGlass`, les boutons n'ont aucun `onClick` (sauf QR et le burger). Résultat: rien ne se passe au tap.
+Page profil publique haute fidélité pour **Isolation Solution Royal** (isroyal.ca), avec données réelles scrappées en live et une couche admin cachée (cockpit de vente). CTA principal : planifier une évaluation 15 min avec l'équipe UNPRO.
 
-Branchements à ajouter:
+## 1. Route + accès
 
-- **FR / Langue** → bouton désactivé visuellement pour l'instant (FR-only, conforme à la politique fr-CA). On retire le `ChevronDown` et le `aria-haspopup`, ou on le transforme en pastille statique non cliquable. *(Choix par défaut: pastille statique.)*
-- **Bell / Notifications** → `navigate("/notifications")` si la route existe, sinon ouvrir le centre de mémoire `/memory` (déjà présent). Confirme la destination ci-dessous.
-- **QR** → déjà branché sur `/qr` (OK).
-- **Profil (avatar P + chevron)** → ouvrir un menu (shadcn `DropdownMenu`) avec: *Mon profil* (`/profile`), *Mon compte* (`/account`), *Mon QR* (`/qr`), *Déconnexion* (`/logout`). Mêmes liens que le burger pour cohérence.
-- **Burger (Menu)** → déjà OK via `Sheet`.
+- Route publique : `/entrepreneur/isolation-solution-royal` (indexable, SEO `SeoHead` + JSON-LD `LocalBusiness`).
+- Cockpit admin caché sur la même page :
+  - Affiché uniquement si `?admin=1` + session admin (`adminGuard`), OU bouton flottant si `has_role(auth.uid(),'admin')`.
+  - Tout est sur la même URL — pas de page séparée.
 
-## 2. Doublon "Espace entrepreneurs"
+## 2. Données réelles (live Firecrawl, cache 24h)
 
-Dans `ContractorAippSplit` (lignes ~492-543), la mention apparaît **deux fois**:
-- Eyebrow externe au-dessus de la carte (ligne 499).
-- Badge interne en haut de la carte (ligne 542).
+Nouvelle table `contractor_intel_snapshots` (slug, source, payload jsonb, fetched_at) + edge function `fetch-contractor-intel` :
 
-→ **Retirer l'eyebrow externe** (lignes 493-509). On garde uniquement le badge interne `✦ ESPACE ENTREPRENEURS` qui est dans le contexte premium dark de la carte.
+1. `firecrawlScrape('https://isroyal.ca', { formats:['markdown','links','branding','summary'] })` → identité, services, ton, couleurs, logo.
+2. `firecrawlSearch('Isolation Solution Royal avis Google', { tbs:'qdr:y', limit:10 })` → avis + note moyenne.
+3. `firecrawlScrape` ciblé sur la fiche Google Business et le profil RBQ pour licence + années d'expérience.
+4. Cache 24h dans `contractor_intel_snapshots`; refresh manuel via bouton admin.
 
-## Questions
+Edge function expose `GET /fetch-contractor-intel?slug=isolation-solution-royal` → renvoie le snapshot agrégé.
 
-1. **Bell** → destination préférée: `/notifications` (à créer plus tard), ou réutiliser `/memory` (Centre de mémoire existant) pour l'instant?
-2. **Bouton FR** → on le rend statique (pas de menu) ou on le retire complètement du header mobile pour gagner de l'espace?
+## 3. UI publique (theme Cinematic Dark, alex-immersive)
 
-## Fichiers touchés
-- `src/pages/PageHomeUnicorn.tsx` — header buttons + suppression eyebrow doublon.
+Sections, dans l'ordre :
+
+1. **Hero** — logo ISR (depuis branding Firecrawl), nom légal *9480-0976 Québec inc.*, RBQ, badge "Spécialiste de l'entretoit", note Google + nombre d'avis, territoires (Laval, Montréal, Rive-Nord, Lanaudière), CTA principal **« Planifier une évaluation 15 min »**.
+2. **À propos** — résumé Firecrawl (`summary`) réécrit fr-CA.
+3. **Services** — pills issus de `ISR_BRAND.services` + tout service détecté en plus via scrape.
+4. **Avis récents** — 3-5 cartes, citation + auteur + date + étoiles, source Google.
+5. **Couverture territoire** — carte simple (liste de villes desservies, badges).
+6. **Coordonnées** — téléphones cliquables (514-249-9522 / 514-941-3141), site `isroyal.ca`.
+7. **CTA final** — bloc booking 15 min.
+
+Conformité readability rule : wrap `.alex-immersive`, tokens `--text-*`, aucune opacité <70% sur le texte.
+
+## 4. Évaluation 15 min (CTA principal)
+
+- Composant `EvaluationBookingPanel` : intro courte + sélecteur de créneau (réutilise la logique de `bookings`/`availability_slots`; sinon fallback formulaire simple → table `contractor_evaluation_requests`).
+- Nouvelle table `contractor_evaluation_requests` (contractor_slug, contact_name, email, phone, preferred_slot, message, status `pending|booked|completed`, source). RLS : insert ouvert (anon+auth), select admin only.
+- Submit → edge function `book-contractor-evaluation` : crée la ligne, notifie Alex/équipe (log `system_events`), retourne confirmation.
+- Confirmation inline + lien iCal optionnel (phase 2).
+
+## 5. Cockpit admin caché (même page, gated)
+
+Drawer latéral `IsrAdminCockpit` (visible admin seulement), 4 onglets :
+
+1. **Score AIPP + analyse concurrentielle** — appelle `aipp-real-scoring-engine` sur `isroyal.ca` (réutilise existant), affiche score /100, breakdown 5 piliers, gaps SEO vs top 3 concurrents (Semrush si dispo, sinon Firecrawl SERP).
+2. **Estimation revenu / manque à gagner** — réutilise `outbound-aipp-revenue-loss` logique : volume estimé × ticket moyen × gap conversion = $ perdus/mois + delta Signature.
+3. **Notes Alex / CRM** — historique contact (`launch_pipeline_events` filtré par contractor), status deal, prochaine action, champ note libre persisté dans `contractor_intel_snapshots.notes`.
+4. **Plan reco + scarcity territoire** — appelle `recommendPlan()` (Signature) + `FounderAvailabilityChecker` pour Laval/Signature, affiche slots restants, bouton "Générer lien checkout Signature 1$" (réutilise edge `create-isr-demo-checkout`).
+
+Bouton "Refresh intel" en haut du cockpit → invoque `fetch-contractor-intel?force=1`.
+
+## 6. Détails techniques
+
+- **Nouveau fichier** : `src/pages/entrepreneur/PageContractorPublicProfileISR.tsx` (page assemblage).
+- **Nouveaux composants** : `IsrPublicHero`, `IsrServicesGrid`, `IsrReviewsStrip`, `IsrTerritoryCoverage`, `EvaluationBookingPanel`, `IsrAdminCockpit` (+ 4 sous-panels) dans `src/components/entrepreneur/isr/`.
+- **Hook** : `useContractorIntel(slug)` (React Query, 5 min stale).
+- **Routes** : ajouter route dans `src/app/App.tsx` (publique).
+- **Edge functions** : `fetch-contractor-intel`, `book-contractor-evaluation` (npm:@supabase/supabase-js@2/cors, esm.sh import, `verify_jwt=false` pour la lecture publique).
+- **Migrations** : `contractor_intel_snapshots`, `contractor_evaluation_requests` avec GRANTs + RLS.
+- **Secrets requis** : `FIRECRAWL_API_KEY` (vérifier connecteur ; si absent, demander en build).
+- **SEO** : `<title>Isolation Solution Royal — Spécialiste de l'entretoit · UNPRO</title>`, meta desc <160 char, JSON-LD `LocalBusiness` + `AggregateRating`, canonical absolu.
+
+## 7. Hors scope (à confirmer si on doit l'inclure)
+
+- Authentification Google Business officielle (on lit via Firecrawl, pas l'API Google).
+- Synchronisation calendrier ICS bidirectionnelle (phase 2).
+- Génération automatique de pages pour d'autres entrepreneurs (ce build est ISR-spécifique mais structuré pour devenir générique via `:slug` plus tard).
