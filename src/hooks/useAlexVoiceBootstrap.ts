@@ -22,6 +22,8 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
 import { audioEngine } from "@/services/audioEngineUNPRO";
 import { useAuth } from "@/hooks/useAuth";
+import { buildAlexOpening, type AlexIntent } from "@/services/alexOpeningTemplates";
+
 
 export type VoiceBootState =
   | "idle"
