@@ -94,12 +94,11 @@ export function getToneConfig(role: AlexUserRole): AlexToneConfig {
 }
 
 export function getGreetingForRole(role: AlexUserRole, firstName?: string): string {
-  const { buildAlexOpening } =
-    require("@/services/alexOpeningTemplates") as typeof import("@/services/alexOpeningTemplates");
   const r =
     role === "entrepreneur" ? "contractor"
     : role === "condo_manager" ? "condo_manager"
     : "homeowner";
   return buildAlexOpening({ firstName: firstName ?? null, role: r });
 }
+
 
