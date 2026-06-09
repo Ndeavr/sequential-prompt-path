@@ -26,13 +26,16 @@ async function killAllAudioSources() {
   return { alexAudioChannel };
 }
 
+import type { AlexIntent } from "@/services/alexOpeningTemplates";
+
 interface AlexVoiceContextType {
   isOpen: boolean;
   feature: string;
   voiceActive: boolean;
-  openAlex: (feature?: string, contextHint?: string, displayMode?: "fullscreen" | "floating") => void;
+  openAlex: (feature?: string, contextHint?: string, displayMode?: "fullscreen" | "floating", intent?: AlexIntent) => void;
   closeAlex: () => void;
 }
+
 
 const AlexVoiceContext = createContext<AlexVoiceContextType>({
   isOpen: false,
