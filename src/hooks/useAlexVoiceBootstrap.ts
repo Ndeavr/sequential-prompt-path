@@ -67,25 +67,22 @@ export function useAlexVoiceBootstrap(options: UseAlexVoiceBootstrapOptions = {}
     || user?.user_metadata?.full_name?.split(" ")[0] 
     || null;
 
-  // Build greeting based on context
+  // Build greeting via canonical Alex Opening Templates engine.
   const buildGreeting = useCallback(() => {
-    const hour = new Date().getHours();
-    const timeGreeting = hour >= 5 && hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
-    const name = firstName ? `${timeGreeting} ${firstName}.` : `${timeGreeting}.`;
-
-    switch (feature) {
-      case "probleme":
-        return `${name} Décrivez-moi votre problème, je m'en occupe.`;
-      case "projet":
-        return `${name} Un nouveau projet? Dites-moi de quoi il s'agit.`;
-      case "avis":
-        return `${name} Vous souhaitez que j'analyse vos soumissions? Décrivez-moi ce que vous avez reçu.`;
-      case "conversation":
-      case "general":
-      default:
-        return `${name} Que puis-je faire pour vous?`;
-    }
+    const { buildAlexOpening } = require("@/services/alexOpeningTemplates") as typeof import("@/services/alexOpeningTemplates");
+    const intentMap: Record<string, import("@/services/alexOpeningTemplates").AlexIntent> = {
+      probleme: "repair",
+      projet: "renovation",
+      avis: "comparison",
+      urgence: "emergency",
+    };
+    return buildAlexOpening({
+      firstName,
+      intent: intentMap[feature],
+      feature,
+    });
   }, [firstName, feature]);
+
 
   const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
     onTranscript: (text) => {
