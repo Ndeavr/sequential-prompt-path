@@ -192,7 +192,7 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
     });
   },
 
-  openVoiceSession: (feature = "general", openReason = "user_initiated", contextHint?: string, displayMode: "fullscreen" | "floating" = "fullscreen") => {
+  openVoiceSession: (feature = "general", openReason = "user_initiated", contextHint?: string, displayMode: "fullscreen" | "floating" = "fullscreen", intent?: import("@/services/alexOpeningTemplates").AlexIntent | null) => {
     const sessionId = crypto.randomUUID();
     const now = new Date().toISOString();
     
@@ -202,9 +202,11 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
       sessionId,
       feature,
       contextHint: contextHint || null,
+      intent: intent ?? null,
       machineState: "requesting_permission",
       errorMessage: null,
       errorType: null,
+
       recoveryAttempts: 0,
       heartbeatFailures: 0,
       lastHeartbeatAt: Date.now(),
