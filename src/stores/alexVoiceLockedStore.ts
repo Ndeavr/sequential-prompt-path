@@ -257,6 +257,7 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
     
     set({
       isOverlayOpen: false,
+      displayMode: "fullscreen",
       machineState: "idle",
       sessionId: null,
       contextHint: null,

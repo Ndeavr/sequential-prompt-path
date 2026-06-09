@@ -30,7 +30,7 @@ interface AlexVoiceContextType {
   isOpen: boolean;
   feature: string;
   voiceActive: boolean;
-  openAlex: (feature?: string, contextHint?: string) => void;
+  openAlex: (feature?: string, contextHint?: string, displayMode?: "fullscreen" | "floating") => void;
   closeAlex: () => void;
 }
 
@@ -42,12 +42,20 @@ const AlexVoiceContext = createContext<AlexVoiceContextType>({
   closeAlex: () => {},
 });
 
+/** Features that should open Alex as a compact floating glass panel instead of a full-screen takeover. */
+const FLOATING_FEATURE_PREFIXES = ["home_", "intent_", "capability_", "discovery_"];
+
+function defaultDisplayModeFor(feature: string): "fullscreen" | "floating" {
+  const f = (feature || "").toLowerCase();
+  return FLOATING_FEATURE_PREFIXES.some((p) => f.startsWith(p)) ? "floating" : "fullscreen";
+}
+
 export function AlexVoiceProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [feature, setFeature] = useState("general");
   const [voiceActive, setVoiceActive] = useState(false);
 
-  const openAlex = useCallback((feat = "general", contextHint?: string) => {
+  const openAlex = useCallback((feat = "general", contextHint?: string, displayMode?: "fullscreen" | "floating") => {
     const lockedStore = useAlexVoiceLockedStore.getState();
 
     if (lockedStore.isOverlayOpen) {
@@ -58,11 +66,14 @@ export function AlexVoiceProvider({ children }: { children: ReactNode }) {
     // Prime mobile playback synchronously from the user tap before any async boot.
     elevenlabsService.unlockPlayback();
 
+    const resolvedMode = displayMode ?? defaultDisplayModeFor(feat);
+
     // Open the overlay synchronously (UX), then lazy-kill any other audio.
-    lockedStore.openVoiceSession(feat, "user_openAlex", contextHint);
+    lockedStore.openVoiceSession(feat, "user_openAlex", contextHint, resolvedMode);
     setFeature(feat);
     void killAllAudioSources().catch(() => {});
   }, []);
+
 
   const closeAlex = useCallback(() => {
     const lockedStore = useAlexVoiceLockedStore.getState();
