@@ -5,11 +5,13 @@
  *   1. Pull eligible rows from the existing `outbound_companies` pool (priority trades + cities).
  *   2. If the resulting candidate batch is < batch / 2, refill the pool with a Google Places Text
  *      Search call for the next (trade, city) pair stored in launch_mode_state.scout_cursor.
+ *      Uses resolvePlacesKey() so a referrer-restricted browser key never blocks us.
  *   3. Insert deduped rows into launch_leads as DISCOVERED with stage timeout metadata.
  *
  * Never silently fails: every exit path either reports inserted > 0 OR a precise BlockReason.
  */
 import { corsHeaders, adminClient, logLaunchEvent } from "../_shared/launch.ts";
+import { resolvePlacesKey } from "../_shared/launchKeys.ts";
 import { reportOutcome, BlockReason, FailureCode } from "../_shared/reliability.ts";
 
 const PRIORITY_TRADES = [
@@ -47,8 +49,9 @@ async function googlePlacesRefill(sb: ReturnType<typeof adminClient>): Promise<{
   city: string;
   error?: string;
 }> {
-  const key = Deno.env.get("GOOGLE_PLACES_API_KEY");
-  if (!key) return { inserted_into_pool: 0, query: "", trade: "", city: "", error: "GOOGLE_PLACES_API_KEY missing" };
+  const resolved = resolvePlacesKey();
+  if (!resolved) return { inserted_into_pool: 0, query: "", trade: "", city: "", error: "no_places_key (tried GOOGLE_PLACES_SERVER_KEY, GOOGLE_MAPS_API_KEY, GOOGLE_PLACES_API_KEY)" };
+  const key = resolved.key;
 
   // Round-robin cursor
   const { data: state } = await sb.from("launch_mode_state").select("scout_cursor").eq("id", true).maybeSingle();
