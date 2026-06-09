@@ -116,9 +116,11 @@ export function useAlexBootstrap() {
 
         // Update the displayed greeting message if it was the default
         const state = useAlexStore.getState();
+        const defaultText = buildAlexOpening({ intent: "generic" });
         const lastAssistant = state.messages.findIndex(
-          (m) => m.role === "assistant" && m.text === "Bonjour."
+          (m) => m.role === "assistant" && m.text === defaultText
         );
+
         if (lastAssistant >= 0) {
           const updatedMessages = [...state.messages];
           updatedMessages[lastAssistant] = {
