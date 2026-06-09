@@ -49,8 +49,9 @@ async function googlePlacesRefill(sb: ReturnType<typeof adminClient>): Promise<{
   city: string;
   error?: string;
 }> {
-  const key = Deno.env.get("GOOGLE_PLACES_API_KEY");
-  if (!key) return { inserted_into_pool: 0, query: "", trade: "", city: "", error: "GOOGLE_PLACES_API_KEY missing" };
+  const resolved = resolvePlacesKey();
+  if (!resolved) return { inserted_into_pool: 0, query: "", trade: "", city: "", error: "no_places_key (tried GOOGLE_PLACES_SERVER_KEY, GOOGLE_MAPS_API_KEY, GOOGLE_PLACES_API_KEY)" };
+  const key = resolved.key;
 
   // Round-robin cursor
   const { data: state } = await sb.from("launch_mode_state").select("scout_cursor").eq("id", true).maybeSingle();
