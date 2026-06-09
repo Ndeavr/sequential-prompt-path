@@ -16,6 +16,7 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import AlexOrbPremium from "@/components/home-unicorn/AlexOrbPremium";
 import BottomDockGlass from "@/components/home-unicorn/BottomDockGlass";
 import NearbyContractorsCarousel from "@/components/home-unicorn/NearbyContractorsCarousel";
+import AlexCapabilitiesStrip from "@/components/home-unicorn/AlexCapabilitiesStrip";
 import CinematicArchScenes from "@/components/home-unicorn/CinematicArchScenes";
 import PIMIntroBand from "@/components/pim/PIMIntroBand";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -164,40 +165,37 @@ function HeaderFloatingGlass() {
 /* ---------------- Hero ---------------- */
 function HeroAlexOrb({ onTalk }: { onTalk: (hint?: string) => void }) {
   return (
-    <section className="px-4 pt-3 pb-2 grid grid-cols-[1.05fr_1fr] gap-2 items-center relative z-10 uc-fade-up">
+    <section className="px-4 pt-3 pb-6 grid grid-cols-[1.05fr_1fr] gap-2 items-center relative z-10 uc-fade-up">
       <div>
         <h1
-          className="font-extrabold leading-[0.98] text-[34px] sm:text-[44px] tracking-[-0.035em]"
+          className="font-extrabold leading-[0.98] text-[30px] sm:text-[40px] tracking-[-0.035em]"
           style={{ color: "#0B1220" }}
         >
-          Décrivez votre situation.{" "}
-          <span className="uc-gradient-text">Alex s'occupe du reste.</span>
+          L'intelligence de votre propriété{" "}
+          <span className="uc-gradient-text">commence ici.</span>
         </h1>
         <p
-          className="mt-3 text-[13px] sm:text-[14px] leading-snug max-w-[26ch]"
+          className="mt-3 text-[13px] sm:text-[14px] leading-snug max-w-[32ch]"
           style={{ color: "#475467" }}
         >
-          UNPRO détecte les problèmes, estime les coûts et recommande les meilleurs
-          professionnels.
+          Alex vous aide à comprendre les problèmes, les coûts, les risques et les
+          solutions possibles avant de prendre une décision.
         </p>
       </div>
-      <div className="flex flex-col items-center justify-end pr-1 gap-2">
+      <div className="flex flex-col items-center justify-center pr-1 -mt-2">
         <button
           type="button"
           onClick={() => onTalk()}
-          aria-label="Touchez pour parler à Alex"
+          aria-label="Parler à Alex"
           className="group relative rounded-full transition-transform duration-200 ease-out active:scale-[0.96] hover:scale-[1.04] cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-[#3B82F6]/40"
           style={{ WebkitTapHighlightColor: "transparent" }}
         >
-          <AlexOrbPremium size={170} />
+          <AlexOrbPremium size={144} />
           <span
             className="pointer-events-none absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity"
             style={{ boxShadow: "0 0 60px 8px rgba(59,130,246,0.45)" }}
           />
         </button>
-        <span className="text-[11px] font-semibold text-[#2563FF] sm:hidden">
-          Touchez pour parler à Alex
-        </span>
       </div>
     </section>
   );
@@ -205,9 +203,12 @@ function HeroAlexOrb({ onTalk }: { onTalk: (hint?: string) => void }) {
 
 /* ---------------- AI Input Card ---------------- */
 const QUICK_CHIPS = [
-  "Mon entretoit est trop froid",
-  "Je veux refaire ma toiture",
-  "Analyser mes soumissions",
+  "Mon sous-sol sent l'humidité",
+  "Est-ce un problème de fondation?",
+  "Je veux rénover ma cuisine",
+  "Ma thermopompe fait du bruit",
+  "J'ai reçu une soumission",
+  "Ai-je droit à une subvention?",
 ];
 
 function WaveformMini() {
@@ -246,7 +247,7 @@ function AiInputCard({ onTalk }: { onTalk: (hint?: string) => void }) {
         </div>
 
         <div className="text-[14px] mb-3" style={{ color: "#94A3B8" }}>
-          Décrivez votre situation…
+          Posez votre question ou décrivez votre situation…
         </div>
 
         {/* Chips row */}
@@ -414,10 +415,10 @@ function CategoryChipsScroll() {
 /* ---------------- Live stats ---------------- */
 function LiveStatsCard() {
   const stats = [
-    { icon: BarChart3, c: "#2563FF", bg: "#EFF6FF", value: "4 238", label: "analyses aujourd'hui", delta: "+12%" },
-    { icon: ShieldCheck, c: "#10B981", bg: "#ECFDF5", value: "312", label: "entrepreneurs certifiés", delta: "+8%" },
-    { icon: Users, c: "#8B5CF6", bg: "#F3EEFF", value: "98%", label: "satisfaction clients", delta: "+3%" },
-    { icon: Clock, c: "#F59E0B", bg: "#FFFBEB", value: "24/7", label: "assistance IA disponible", delta: "En ligne", online: true },
+    { icon: BarChart3, c: "#2563FF", bg: "#EFF6FF", label: "Problèmes analysés" },
+    { icon: ShieldCheck, c: "#10B981", bg: "#ECFDF5", label: "Projets accompagnés" },
+    { icon: Users, c: "#8B5CF6", bg: "#F3EEFF", label: "Entrepreneurs vérifiés" },
+    { icon: Clock, c: "#F59E0B", bg: "#FFFBEB", label: "Assistance 24/7" },
   ];
   return (
     <section className="px-4 mt-4 relative z-10">
@@ -433,18 +434,8 @@ function LiveStatsCard() {
                 <Icon size={16} color={s.c} strokeWidth={2.2} />
               </div>
               <div className="min-w-0">
-                <div className="text-[18px] font-extrabold leading-tight" style={{ color: "#0B1220" }}>
-                  {s.value}
-                </div>
-                <div className="text-[10px] leading-tight" style={{ color: "#667085" }}>
+                <div className="text-[13px] font-bold leading-tight" style={{ color: "#0B1220" }}>
                   {s.label}
-                </div>
-                <div
-                  className="text-[10px] font-semibold mt-0.5 flex items-center gap-1"
-                  style={{ color: s.online ? "#10B981" : "#10B981" }}
-                >
-                  {s.online && <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#10B981" }} />}
-                  {s.delta}
                 </div>
               </div>
             </div>
@@ -458,10 +449,10 @@ function LiveStatsCard() {
 /* ---------------- How it works ---------------- */
 function HowItWorksCards() {
   const steps = [
-    { n: 1, title: "Détection IA", desc: "Vous décrivez, envoyez une photo ou parlez. Alex détecte le problème." },
-    { n: 2, title: "Analyse intelligente", desc: "Alex comprend, analyse et estime les coûts avec précision." },
-    { n: 3, title: "Recommandation", desc: "Alex recommande les meilleures actions selon votre propriété." },
-    { n: 4, title: "Solution", desc: "Recevez une recommandation personnalisée ou prenez rendez-vous avec le professionnel le mieux adapté." },
+    { n: 1, title: "Décrivez la situation", desc: "Voix, texte ou photo — racontez ce qui se passe avec votre propriété." },
+    { n: 2, title: "Alex analyse", desc: "Alex comprend le contexte, identifie les risques et estime les coûts." },
+    { n: 3, title: "Recevez un plan d'action", desc: "Étapes claires, priorités et options expliquées avant toute décision." },
+    { n: 4, title: "Obtenez la bonne recommandation", desc: "Le professionnel le plus adapté à votre projet, au bon moment." },
   ];
   return (
     <section className="px-4 mt-6 relative z-10">
@@ -573,8 +564,8 @@ function ContractorAippSplit() {
             className="text-[11px] mt-3 italic leading-snug"
             style={{ color: "#93A4D9" }}
           >
-            Les propriétaires ne recherchent plus seulement des entrepreneurs.
-            Ils demandent à l'IA qui elle recommande.
+            Les moteurs IA commencent à influencer les décisions des propriétaires.
+            Assurez-vous que votre entreprise fasse partie des recommandations.
           </p>
 
           {/* Single primary CTA */}
@@ -670,10 +661,11 @@ export default function PageHomeUnicorn() {
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
       </Helmet>
 
-      <div className="unicorn-theme min-h-screen pb-28 relative overflow-x-hidden">
+      <div className="unicorn-theme min-h-screen pb-36 relative overflow-x-hidden">
         <CinematicArchScenes />
         <HeaderFloatingGlass />
         <HeroAlexOrb onTalk={onTalk} />
+        <AlexCapabilitiesStrip />
         <AiInputCard onTalk={onTalk} />
         <HomeQuickActionsGrid />
         <LiveStatsCard />
