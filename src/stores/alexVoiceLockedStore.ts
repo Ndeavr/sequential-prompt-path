@@ -61,12 +61,15 @@ interface AlexVoiceLockedState {
   // Core state
   machineState: LockedVoiceState;
   isOverlayOpen: boolean;
+  /** Display mode for the overlay: full-screen takeover (default) or compact floating glass panel. */
+  displayMode: "fullscreen" | "floating";
   sessionId: string | null;
   sessionLog: VoiceSessionLog | null;
   
   // Feature context
   feature: string;
   contextHint: string | null;
+
   
   // Error
   errorMessage: string | null;
@@ -96,7 +99,8 @@ interface AlexVoiceLockedState {
   voiceLockedAt: number | null;
 
   // Actions
-  openVoiceSession: (feature?: string, openReason?: string, contextHint?: string) => void;
+  openVoiceSession: (feature?: string, openReason?: string, contextHint?: string, displayMode?: "fullscreen" | "floating") => void;
+  setDisplayMode: (mode: "fullscreen" | "floating") => void;
   closeVoiceSession: (closeReason: string) => void;
   transitionTo: (newState: LockedVoiceState, reason?: string) => boolean;
   setError: (type: string, message: string, recoverable: boolean) => void;
@@ -130,6 +134,7 @@ interface AlexVoiceLockedState {
 export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) => ({
   machineState: "idle",
   isOverlayOpen: false,
+  displayMode: "fullscreen",
   sessionId: null,
   sessionLog: null,
   feature: "general",
@@ -181,12 +186,13 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
     });
   },
 
-  openVoiceSession: (feature = "general", openReason = "user_initiated", contextHint?: string) => {
+  openVoiceSession: (feature = "general", openReason = "user_initiated", contextHint?: string, displayMode: "fullscreen" | "floating" = "fullscreen") => {
     const sessionId = crypto.randomUUID();
     const now = new Date().toISOString();
     
     set({
       isOverlayOpen: true,
+      displayMode,
       sessionId,
       feature,
       contextHint: contextHint || null,
@@ -201,6 +207,8 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
       sessionLog: { sessionId, openedAt: now, openReason },
     });
 
+
+
     // Log to DB (fire and forget). Include user_id when authenticated to satisfy RLS.
     supabase.auth.getUser().then(({ data }) => {
       supabase.from("voice_session_logs").insert({
@@ -214,6 +222,9 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
     // Log state transition
     logTransition(sessionId, "idle", "requesting_permission", openReason);
   },
+
+  setDisplayMode: (mode) => set({ displayMode: mode }),
+
 
   closeVoiceSession: (closeReason: string) => {
     const state = get();
@@ -246,6 +257,7 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
     
     set({
       isOverlayOpen: false,
+      displayMode: "fullscreen",
       machineState: "idle",
       sessionId: null,
       contextHint: null,

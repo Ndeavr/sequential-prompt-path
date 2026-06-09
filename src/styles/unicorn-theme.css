@@ -101,6 +101,13 @@
   80%  { transform: scale(1.35); opacity: 0;    }
   100% { transform: scale(1.45); opacity: 0;    }
 }
+@keyframes uc-orb-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+@keyframes uc-orb-spin-slow {
+  to { transform: rotate(360deg); }
+}
 @keyframes uc-fade-up {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -109,8 +116,119 @@
   0%   { transform: translate3d(0, 0, 0) scale(1); }
   100% { transform: translate3d(-1.5%, -1%, 0) scale(1.03); }
 }
+@keyframes uc-glass-panel-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Living orb shell — float idle, hover/focus scale, label/caption */
+.uc-orb-shell {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  isolation: isolate;
+}
+.uc-orb-shell[data-interactive="true"] .uc-orb-floater {
+  animation: uc-orb-float 5.5s ease-in-out infinite;
+  will-change: transform;
+}
+.uc-orb-shell[data-interactive="true"]:hover .uc-orb-floater,
+.uc-orb-shell[data-interactive="true"]:focus-within .uc-orb-floater {
+  transform: scale(1.06);
+  transition: transform 320ms cubic-bezier(.22,1,.36,1);
+}
+.uc-orb-shell .uc-orb-label {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  white-space: nowrap;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #0B1220;
+  background: rgba(255,255,255,0.78);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.9);
+  box-shadow: 0 10px 24px -10px rgba(37,99,255,0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 280ms ease, transform 320ms cubic-bezier(.22,1,.36,1);
+}
+.uc-orb-shell:hover .uc-orb-label,
+.uc-orb-shell:focus-within .uc-orb-label,
+.uc-orb-shell[data-show-label="true"] .uc-orb-label {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.uc-orb-shell .uc-orb-caption {
+  margin-top: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #475467;
+  text-align: center;
+  min-height: 16px;
+  opacity: 0;
+  transition: opacity 320ms ease;
+}
+.uc-orb-shell[data-orb-state="thinking"] .uc-orb-caption,
+.uc-orb-shell[data-orb-state="error"] .uc-orb-caption { opacity: 1; }
+.uc-orb-shell[data-orb-state="thinking"] .uc-orb-caption::before { content: "Alex réfléchit…"; }
+.uc-orb-shell[data-orb-state="error"] .uc-orb-caption::before {
+  content: "Alex est temporairement indisponible.";
+  color: #B45309;
+}
+.uc-orb-shell[data-orb-state="thinking"] .uc-orb-core-spin {
+  animation: uc-orb-spin-slow 12s linear infinite;
+}
+.uc-orb-shell[data-orb-state="error"] .uc-orb-core { filter: saturate(60%) brightness(0.88); }
+
+/* Floating glass conversation panel (compact Alex overlay) */
+.uc-alex-floating-panel {
+  position: fixed;
+  z-index: 9999;
+  left: 16px;
+  right: 16px;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  max-width: 100%;
+  border-radius: 24px;
+  background: rgba(10, 18, 40, 0.62);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow:
+    0 30px 80px -20px rgba(11,18,60,0.55),
+    0 0 60px rgba(59,130,246,0.25),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+  color: #E6EEFF;
+  animation: uc-glass-panel-in 380ms cubic-bezier(.22,1,.36,1) both;
+  overflow: hidden;
+}
+@media (min-width: 768px) {
+  .uc-alex-floating-panel {
+    left: auto;
+    right: 24px;
+    bottom: 24px;
+    width: 420px;
+    max-width: 420px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .uc-orb-shell[data-interactive="true"] .uc-orb-floater,
+  .uc-orb-shell .uc-orb-core-spin,
+  .uc-alex-floating-panel {
+    animation: none !important;
+  }
+}
 
 .unicorn-theme .uc-fade-up { animation: uc-fade-up .55s var(--uc-ease) both; }
+
 
 /* Scrollbar removal for chip rows */
 .unicorn-theme .uc-no-scrollbar::-webkit-scrollbar { display: none; }
