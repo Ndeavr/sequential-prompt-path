@@ -102,7 +102,6 @@ export default function OverlayAlexVoiceFullScreen() {
   const contextHint = store.contextHint;
   const intent = store.intent;
   const buildGreeting = useCallback(() => {
-    const { buildAlexOpening } = require("@/services/alexOpeningTemplates") as typeof import("@/services/alexOpeningTemplates");
     return buildAlexOpening({
       firstName,
       intent: intent ?? undefined,
@@ -110,6 +109,7 @@ export default function OverlayAlexVoiceFullScreen() {
       feature: store.feature,
     });
   }, [firstName, contextHint, intent, store.feature]);
+
 
 
   // ElevenLabs voice
