@@ -71,8 +71,7 @@ export function useAlexVoiceBootstrap(options: UseAlexVoiceBootstrapOptions = {}
 
   // Build greeting via canonical Alex Opening Templates engine.
   const buildGreeting = useCallback(() => {
-    const { buildAlexOpening } = require("@/services/alexOpeningTemplates") as typeof import("@/services/alexOpeningTemplates");
-    const intentMap: Record<string, import("@/services/alexOpeningTemplates").AlexIntent> = {
+    const intentMap: Record<string, AlexIntent> = {
       probleme: "repair",
       projet: "renovation",
       avis: "comparison",
@@ -84,6 +83,7 @@ export function useAlexVoiceBootstrap(options: UseAlexVoiceBootstrapOptions = {}
       feature,
     });
   }, [firstName, feature]);
+
 
 
   const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
