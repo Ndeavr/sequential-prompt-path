@@ -114,12 +114,12 @@ export default function NearbyContractorsCarousel() {
       }}
     >
       <div
-        className="p-3 pt-5 rounded-2xl relative"
+        className="p-3 pt-5 rounded-2xl relative overflow-hidden"
         style={{
           background: "linear-gradient(180deg,#FFFFFF,#F7FAFF)",
           border: "1px solid rgba(11,18,32,0.06)",
           boxShadow: "0 12px 30px -16px rgba(37,99,255,0.25)",
-          minHeight: 168,
+          minHeight: 196,
         }}
       >
         <div
@@ -130,14 +130,15 @@ export default function NearbyContractorsCarousel() {
         </div>
 
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={current.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-          >
+        <motion.div
+          key={current.id}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {(() => {
+            const inner = (
+              <>
             <div className="flex items-start gap-3">
               <div
                 className="w-12 h-12 rounded-full shrink-0 flex items-center justify-center text-white font-bold"
@@ -203,9 +204,15 @@ export default function NearbyContractorsCarousel() {
                 </div>
               </div>
             </div>
-          </motion.div>
-        </AnimatePresence>
+              </>
+            );
+            return current.href ? (
+              <Link to={current.href} className="block">{inner}</Link>
+            ) : inner;
+          })()}
+        </motion.div>
       </div>
+
 
       {/* Dots */}
       <div className="flex items-center justify-center gap-1.5 mt-2.5">
