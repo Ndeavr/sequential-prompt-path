@@ -433,18 +433,8 @@ function LiveStatsCard() {
                 <Icon size={16} color={s.c} strokeWidth={2.2} />
               </div>
               <div className="min-w-0">
-                <div className="text-[18px] font-extrabold leading-tight" style={{ color: "#0B1220" }}>
-                  {s.value}
-                </div>
-                <div className="text-[10px] leading-tight" style={{ color: "#667085" }}>
+                <div className="text-[13px] font-bold leading-tight" style={{ color: "#0B1220" }}>
                   {s.label}
-                </div>
-                <div
-                  className="text-[10px] font-semibold mt-0.5 flex items-center gap-1"
-                  style={{ color: s.online ? "#10B981" : "#10B981" }}
-                >
-                  {s.online && <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#10B981" }} />}
-                  {s.delta}
                 </div>
               </div>
             </div>
@@ -458,10 +448,10 @@ function LiveStatsCard() {
 /* ---------------- How it works ---------------- */
 function HowItWorksCards() {
   const steps = [
-    { n: 1, title: "Détection IA", desc: "Vous décrivez, envoyez une photo ou parlez. Alex détecte le problème." },
-    { n: 2, title: "Analyse intelligente", desc: "Alex comprend, analyse et estime les coûts avec précision." },
-    { n: 3, title: "Recommandation", desc: "Alex recommande les meilleures actions selon votre propriété." },
-    { n: 4, title: "Solution", desc: "Recevez une recommandation personnalisée ou prenez rendez-vous avec le professionnel le mieux adapté." },
+    { n: 1, title: "Décrivez la situation", desc: "Voix, texte ou photo — racontez ce qui se passe avec votre propriété." },
+    { n: 2, title: "Alex analyse", desc: "Alex comprend le contexte, identifie les risques et estime les coûts." },
+    { n: 3, title: "Recevez un plan d'action", desc: "Étapes claires, priorités et options expliquées avant toute décision." },
+    { n: 4, title: "Obtenez la bonne recommandation", desc: "Le professionnel le plus adapté à votre projet, au bon moment." },
   ];
   return (
     <section className="px-4 mt-6 relative z-10">
@@ -573,8 +563,8 @@ function ContractorAippSplit() {
             className="text-[11px] mt-3 italic leading-snug"
             style={{ color: "#93A4D9" }}
           >
-            Les propriétaires ne recherchent plus seulement des entrepreneurs.
-            Ils demandent à l'IA qui elle recommande.
+            Les moteurs IA commencent à influencer les décisions des propriétaires.
+            Assurez-vous que votre entreprise fasse partie des recommandations.
           </p>
 
           {/* Single primary CTA */}

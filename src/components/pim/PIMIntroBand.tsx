@@ -53,7 +53,7 @@ export default function PIMIntroBand() {
               className="text-[11.5px] sm:text-[12.5px] mt-0.5 leading-snug line-clamp-2"
               style={{ color: "#64748B" }}
             >
-              Le Passeport Intelligence Maison — une infrastructure d'intelligence pour votre propriété.
+              Conservez rénovations, garanties, inspections, soumissions et documents importants au même endroit.
             </div>
           </div>
 
