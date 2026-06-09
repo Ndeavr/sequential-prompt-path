@@ -65,24 +65,21 @@ export default function AlexVoiceMode({ feature, onFlowComplete, onDismiss, inli
   // Build greeting text
   const buildGreeting = useCallback(() => {
     const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || null;
-    const hour = new Date().getHours();
-    const timeGreeting = hour >= 5 && hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
-    const name = firstName ? `${timeGreeting} ${firstName}.` : `${timeGreeting}.`;
-
-    switch (feature) {
-      case "probleme":
-        return `${name} Décrivez-moi votre problème, je m'en occupe.`;
-      case "projet":
-        return `${name} Un nouveau projet? Dites-moi de quoi il s'agit.`;
-      case "avis":
-        return `${name} Vous souhaitez que j'analyse vos soumissions? Décrivez-moi ce que vous avez reçu.`;
-      case "intent":
-      case "diagnostic":
-        return `${name} Décrivez-moi votre besoin, je vous trouve le bon professionnel.`;
-      default:
-        return `${name} Que puis-je faire pour vous aujourd'hui?`;
-    }
+    const intentMap: Record<string, AlexIntent> = {
+      probleme: "repair",
+      projet: "renovation",
+      avis: "comparison",
+      intent: "generic",
+      diagnostic: "repair",
+      urgence: "emergency",
+    };
+    return buildAlexOpening({
+      firstName,
+      intent: intentMap[feature],
+      feature,
+    });
   }, [user, feature]);
+
 
   // Auto-start: unlock audio (we're in gesture context from button click),
   // play intro chime, WAIT for it to finish, then start Gemini with greeting.
