@@ -202,13 +202,13 @@ function HeroAlexOrb({ onTalk }: { onTalk: (hint?: string) => void }) {
 }
 
 /* ---------------- AI Input Card ---------------- */
-const QUICK_CHIPS = [
-  "Mon sous-sol sent l'humidité",
-  "Est-ce un problème de fondation?",
-  "Je veux rénover ma cuisine",
-  "Ma thermopompe fait du bruit",
-  "J'ai reçu une soumission",
-  "Ai-je droit à une subvention?",
+const QUICK_CHIPS: Array<{ label: string; topic: string }> = [
+  { label: "Mon sous-sol sent l'humidité", topic: "l'humidité de votre sous-sol" },
+  { label: "Est-ce un problème de fondation?", topic: "votre fondation" },
+  { label: "Je veux rénover ma cuisine", topic: "la rénovation de votre cuisine" },
+  { label: "Ma thermopompe fait du bruit", topic: "votre thermopompe" },
+  { label: "J'ai reçu une soumission", topic: "l'analyse de votre soumission" },
+  { label: "Ai-je droit à une subvention?", topic: "vos subventions" },
 ];
 
 function WaveformMini() {
@@ -254,10 +254,10 @@ function AiInputCard({ onTalk }: { onTalk: (hint?: string) => void }) {
         <div className="flex items-center gap-2 mb-3 overflow-x-auto uc-no-scrollbar -mx-1 px-1">
           {QUICK_CHIPS.map((c, i) => (
             <button
-              key={c}
+              key={c.label}
               onClick={() => {
                 setActiveChip(i);
-                onTalk(c);
+                onTalk(c.topic);
               }}
               className="shrink-0 px-3 py-2 rounded-full text-[12px] font-semibold whitespace-nowrap transition-all"
               style={{
@@ -267,7 +267,7 @@ function AiInputCard({ onTalk }: { onTalk: (hint?: string) => void }) {
                   i === activeChip ? "1px solid rgba(37,99,255,0.35)" : "1px solid rgba(11,18,32,0.06)",
               }}
             >
-              {c}
+              {c.label}
             </button>
           ))}
           <button

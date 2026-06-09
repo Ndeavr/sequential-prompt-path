@@ -95,17 +95,30 @@ export default function OverlayAlexVoiceFullScreen() {
     || user?.user_metadata?.full_name?.split(" ")[0]
     || null;
 
-  // Build greeting — personality-driven, energetic premium concierge
+  // Build greeting — personality-driven, energetic premium concierge.
+  // If a topical contextHint was passed when opening (e.g. via a capability tile
+  // or a suggestion chip), Alex opens with a contextual, decisive sentence.
+  const contextHint = store.contextHint;
   const buildGreeting = useCallback(() => {
     const hour = new Date().getHours();
     const time = hour >= 5 && hour < 18 ? "Bonjour" : "Bonsoir";
-    // Greeting is intentionally short, human, and never exposes internal route
-    // names or context hints (no "Accueil UNPRO", "Navigation mobile", etc.).
+    const hint = contextHint?.trim();
+    // Only treat as a spoken topic if it looks like a short natural-language
+    // phrase (no internal route names, no slugs, no long sentences).
+    const isSpeakableTopic =
+      !!hint &&
+      hint.length <= 80 &&
+      !/[_/]/.test(hint) &&
+      !/^(home|page|route|nav|accueil|navigation)/i.test(hint);
+    if (isSpeakableTopic) {
+      const namePart = firstName ? ` ${firstName}` : "";
+      return `${time}${namePart}. Je peux définitivement vous aider avec ${hint}. Dites-m'en plus.`;
+    }
     if (firstName) {
       return `${time} ${firstName}. Je vous écoute.`;
     }
     return `${time}. Décrivez-moi votre besoin en quelques mots.`;
-  }, [firstName]);
+  }, [firstName, contextHint]);
 
   // ElevenLabs voice
   const nudgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

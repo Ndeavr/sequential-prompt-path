@@ -1,25 +1,29 @@
 /**
  * AlexCapabilitiesStrip — 6 compact tiles communicating what Alex can do.
  * Sits directly under the hero to make the breadth of UNPRO immediately legible.
- * Light glass tiles matching the unicorn-theme. No CTA noise.
+ * Tapping a tile opens Alex with a contextual opening line.
  */
 import { HelpCircle, Camera, Calculator, FileCheck, BadgePercent, UserCheck, type LucideIcon } from "lucide-react";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 interface Capability {
   icon: LucideIcon;
   label: string;
+  /** Phrase used in Alex's opening: "Je peux définitivement vous aider avec {topic}." */
+  topic: string;
 }
 
 const CAPABILITIES: Capability[] = [
-  { icon: HelpCircle, label: "Comprendre un problème" },
-  { icon: Camera, label: "Analyser une photo" },
-  { icon: Calculator, label: "Estimer un coût" },
-  { icon: FileCheck, label: "Comparer une soumission" },
-  { icon: BadgePercent, label: "Trouver des subventions" },
-  { icon: UserCheck, label: "Recommander un professionnel" },
+  { icon: HelpCircle, label: "Comprendre un problème", topic: "comprendre votre problème" },
+  { icon: Camera, label: "Analyser une photo", topic: "l'analyse d'une photo" },
+  { icon: Calculator, label: "Estimer un coût", topic: "estimer un coût" },
+  { icon: FileCheck, label: "Comparer une soumission", topic: "comparer votre soumission" },
+  { icon: BadgePercent, label: "Trouver des subventions", topic: "trouver vos subventions" },
+  { icon: UserCheck, label: "Recommander un professionnel", topic: "vous recommander le bon professionnel" },
 ];
 
 export default function AlexCapabilitiesStrip() {
+  const { openAlex } = useAlexVoice();
   return (
     <section
       aria-label="Ce qu'Alex peut faire"
@@ -36,10 +40,13 @@ export default function AlexCapabilitiesStrip() {
         {CAPABILITIES.map((c) => {
           const Icon = c.icon;
           return (
-            <div
+            <button
               key={c.label}
-              className="uc-glass-strong flex flex-col items-center justify-center text-center gap-1.5 px-2 py-3"
+              type="button"
+              onClick={() => openAlex("home_capability", c.topic)}
+              className="uc-glass-strong flex flex-col items-center justify-center text-center gap-1.5 px-2 py-3 transition-transform active:scale-[0.97] cursor-pointer"
               style={{ borderRadius: 18 }}
+              aria-label={`Parler à Alex pour ${c.label.toLowerCase()}`}
             >
               <div
                 className="w-9 h-9 rounded-xl flex items-center justify-center"
@@ -53,7 +60,7 @@ export default function AlexCapabilitiesStrip() {
               >
                 {c.label}
               </span>
-            </div>
+            </button>
           );
         })}
       </div>
