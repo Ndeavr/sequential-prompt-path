@@ -9,6 +9,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mic, MicOff, MessageSquare, X, Loader2, Volume2, Square } from "lucide-react";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
 import { useAuth } from "@/hooks/useAuth";
+import { buildAlexOpening, type AlexIntent } from "@/services/alexOpeningTemplates";
+
 import { smartConcatChunk, formatAlexTranscriptForDisplay } from "@/lib/alexTextFormatter";
 import { audioEngine } from "@/services/audioEngineUNPRO";
 
