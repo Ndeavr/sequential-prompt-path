@@ -167,7 +167,7 @@ const PROMPT_LIBRARY: AlexContextPrompt[] = [
     issueType: "gouttiere",
     roleType: "homeowner",
     locale: "fr",
-    greetingText: "Je peux vous aider à valider ça.",
+    greetingText: "Je vais valider ça avec vous.",
     primaryQuestion: "Vous voulez vérifier un blocage, un débordement ou un problème de ventilation ?",
     quickReplies: ["Blocage", "Débordement", "Ventilation", "Besoin d'un avis"],
     nextFlow: "diagnostic",
