@@ -5,11 +5,13 @@
  *   1. Pull eligible rows from the existing `outbound_companies` pool (priority trades + cities).
  *   2. If the resulting candidate batch is < batch / 2, refill the pool with a Google Places Text
  *      Search call for the next (trade, city) pair stored in launch_mode_state.scout_cursor.
+ *      Uses resolvePlacesKey() so a referrer-restricted browser key never blocks us.
  *   3. Insert deduped rows into launch_leads as DISCOVERED with stage timeout metadata.
  *
  * Never silently fails: every exit path either reports inserted > 0 OR a precise BlockReason.
  */
 import { corsHeaders, adminClient, logLaunchEvent } from "../_shared/launch.ts";
+import { resolvePlacesKey } from "../_shared/launchKeys.ts";
 import { reportOutcome, BlockReason, FailureCode } from "../_shared/reliability.ts";
 
 const PRIORITY_TRADES = [
