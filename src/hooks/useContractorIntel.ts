@@ -41,17 +41,25 @@ export interface ContractorIntelResult {
   cached: boolean;
 }
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+
+export async function fetchContractorIntel(
+  slug: string,
+  opts?: { force?: boolean },
+): Promise<ContractorIntelResult> {
+  const url = `${SUPABASE_URL}/functions/v1/fetch-contractor-intel?slug=${encodeURIComponent(slug)}${opts?.force ? "&force=1" : ""}`;
+  const r = await fetch(url, {
+    headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` },
+  });
+  if (!r.ok) throw new Error(`intel_fetch_failed_${r.status}`);
+  return (await r.json()) as ContractorIntelResult;
+}
+
 export function useContractorIntel(slug: string, opts?: { force?: boolean }) {
   return useQuery<ContractorIntelResult>({
     queryKey: ["contractor-intel", slug, opts?.force ? "force" : "cache"],
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke(
-        `fetch-contractor-intel?slug=${encodeURIComponent(slug)}${opts?.force ? "&force=1" : ""}`,
-        { method: "GET" },
-      );
-      if (error) throw error;
-      return data as ContractorIntelResult;
-    },
+    queryFn: () => fetchContractorIntel(slug, opts),
     staleTime: 5 * 60 * 1000,
     enabled: !!slug,
   });
