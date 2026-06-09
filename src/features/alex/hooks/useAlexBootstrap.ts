@@ -80,8 +80,9 @@ export function useAlexBootstrap() {
 
       const sessionId = store.sessionId || crypto.randomUUID();
 
-      // Inject "Bonjour." immediately — will update with name if auth resolves
-      const defaultGreeting = "Bonjour.";
+      // Inject the canonical generic opening immediately — updated with name once auth resolves.
+      const defaultGreeting = buildAlexOpening({ intent: "generic" });
+
 
       useAlexStore.setState({
         sessionId,
