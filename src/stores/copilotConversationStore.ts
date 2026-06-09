@@ -219,7 +219,8 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
             id: uid(),
             role: "alex",
             text:
-              "Bonjour. Je peux vous aider à analyser un projet, vérifier un entrepreneur, comparer des soumissions ou démarrer une fiche pro.",
+              "Bonjour. Je vais vous aider à comprendre votre situation et à trouver le bon professionnel si nécessaire. Que se passe-t-il ?",
+
             createdAt: Date.now(),
           },
         ],
