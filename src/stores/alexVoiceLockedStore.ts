@@ -103,7 +103,7 @@ interface AlexVoiceLockedState {
   voiceLockedAt: number | null;
 
   // Actions
-  openVoiceSession: (feature?: string, openReason?: string, contextHint?: string, displayMode?: "fullscreen" | "floating") => void;
+  openVoiceSession: (feature?: string, openReason?: string, contextHint?: string, displayMode?: "fullscreen" | "floating", intent?: import("@/services/alexOpeningTemplates").AlexIntent | null) => void;
   setDisplayMode: (mode: "fullscreen" | "floating") => void;
   closeVoiceSession: (closeReason: string) => void;
   transitionTo: (newState: LockedVoiceState, reason?: string) => boolean;
