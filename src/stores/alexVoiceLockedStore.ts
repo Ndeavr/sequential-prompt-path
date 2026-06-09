@@ -269,6 +269,8 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
       machineState: "idle",
       sessionId: null,
       contextHint: null,
+      intent: null,
+
       errorMessage: null,
       errorType: null,
       stabilizationEnd: null,
