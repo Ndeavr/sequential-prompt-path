@@ -10,6 +10,8 @@ import { DEFAULT_ALEX_QUICK_ACTIONS, useAlexStore } from "../state/alexStore";
 import { elevenlabsService } from "../services/elevenlabsService";
 import { sttService } from "../services/sttService";
 import { supabase } from "@/integrations/supabase/client";
+import { buildAlexOpening } from "@/services/alexOpeningTemplates";
+
 import { alexLog } from "../utils/alexDebug";
 
 const VOICE_ATTEMPT_DELAY_MS = 200;
