@@ -52,9 +52,9 @@ async function getVerifiedGreetingName(): Promise<string | null> {
 }
 
 function buildGreeting(firstName: string | null): string {
-  if (firstName) return `Bonjour ${firstName}.`;
-  return "Bonjour.";
+  return buildAlexOpening({ firstName, intent: "generic" });
 }
+
 
 export function useAlexBootstrap() {
   const booted = useRef(false);
