@@ -709,6 +709,110 @@ export default function OverlayAlexVoiceFullScreen() {
     : state === "speaking" ? "Alex parle…"
     : "Session vocale";
 
+  const isFloating = store.displayMode === "floating";
+
+  // ── FLOATING (compact glass panel) rendering ───────────────────────────────
+  if (isFloating) {
+    const recentTranscripts = transcripts.slice(-4);
+    const expandToFullscreen = () => store.setDisplayMode("fullscreen");
+
+    return (
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 16 }}
+          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+          className="uc-alex-floating-panel"
+          role="dialog"
+          aria-label="Alex — conversation en cours"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+            <div className="flex items-center gap-3 min-w-0">
+              <AlexMorphingOrb state={deriveOrbStateV2(state, isSpeaking)} size="sm" ariaLabel="Alex" />
+              <div className="min-w-0">
+                <p className="text-[13px] font-semibold leading-tight truncate">Alex</p>
+                <p className="text-[11px] text-white/65 leading-tight truncate">{statusText}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={expandToFullscreen}
+                aria-label="Agrandir la conversation"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <MessageSquare className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={handleClose}
+                aria-label="Fermer Alex"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Transcripts — compact, last 4 only */}
+          <div ref={scrollRef} className="max-h-[240px] overflow-y-auto px-4 py-3">
+            <div className="flex flex-col gap-2">
+              {recentTranscripts.length === 0 && !isError && (
+                <p className="text-[12px] text-white/60 text-center py-3">
+                  {isStabilizing ? "Alex démarre…" : "Je vous écoute…"}
+                </p>
+              )}
+              {recentTranscripts.map((entry) => (
+                <motion.div
+                  key={entry.id}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`rounded-2xl px-3 py-2 max-w-[88%] text-[13px] leading-snug ${
+                    entry.role === "user"
+                      ? "self-end bg-[#3B82F6] text-white"
+                      : "self-start bg-white/10 text-white border border-white/10"
+                  }`}
+                >
+                  {entry.text}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Error banner (compact) */}
+          {isError && store.errorMessage && (
+            <div className="mx-3 mb-2 flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/15 text-amber-200 text-[11px]">
+              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="flex-1">{store.errorMessage}</span>
+            </div>
+          )}
+
+          {/* Footer controls */}
+          <div className="px-3 pb-3 pt-2 flex items-center justify-between gap-2 border-t border-white/10">
+            <button
+              type="button"
+              onClick={handleFallbackChat}
+              className="text-[11px] text-white/70 hover:text-white transition-colors px-2 py-1.5"
+            >
+              Passer au chat
+            </button>
+            <Button
+              onClick={handleClose}
+              variant="destructive"
+              size="sm"
+              className="rounded-full gap-1.5 px-3 h-8 text-[11px]"
+            >
+              <PhoneOff className="w-3.5 h-3.5" /> Raccrocher
+            </Button>
+          </div>
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
+
+  // ── FULLSCREEN (legacy takeover) rendering ─────────────────────────────────
   return (
     <AnimatePresence>
       <motion.div
@@ -720,6 +824,7 @@ export default function OverlayAlexVoiceFullScreen() {
         <div className="absolute inset-0 bg-background/95 backdrop-blur-xl" />
         
         <div className="relative flex flex-col h-full z-10">
+
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/20">
             <div className="flex items-center gap-3">
