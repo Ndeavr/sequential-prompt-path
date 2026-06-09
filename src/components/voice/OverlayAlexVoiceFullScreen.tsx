@@ -95,30 +95,20 @@ export default function OverlayAlexVoiceFullScreen() {
     || user?.user_metadata?.full_name?.split(" ")[0]
     || null;
 
-  // Build greeting — personality-driven, energetic premium concierge.
-  // If a topical contextHint was passed when opening (e.g. via a capability tile
-  // or a suggestion chip), Alex opens with a contextual, decisive sentence.
+  // Build greeting via the canonical Alex Opening Templates engine.
+  // Alex is a Home Project Orchestrator — never "Je peux vous aider avec {sujet}".
   const contextHint = store.contextHint;
+  const intent = store.intent;
   const buildGreeting = useCallback(() => {
-    const hour = new Date().getHours();
-    const time = hour >= 5 && hour < 18 ? "Bonjour" : "Bonsoir";
-    const hint = contextHint?.trim();
-    // Only treat as a spoken topic if it looks like a short natural-language
-    // phrase (no internal route names, no slugs, no long sentences).
-    const isSpeakableTopic =
-      !!hint &&
-      hint.length <= 80 &&
-      !/[_/]/.test(hint) &&
-      !/^(home|page|route|nav|accueil|navigation)/i.test(hint);
-    if (isSpeakableTopic) {
-      const namePart = firstName ? ` ${firstName}` : "";
-      return `${time}${namePart}. Je peux définitivement vous aider avec ${hint}. Dites-m'en plus.`;
-    }
-    if (firstName) {
-      return `${time} ${firstName}. Je vous écoute.`;
-    }
-    return `${time}. Décrivez-moi votre besoin en quelques mots.`;
-  }, [firstName, contextHint]);
+    const { buildAlexOpening } = require("@/services/alexOpeningTemplates") as typeof import("@/services/alexOpeningTemplates");
+    return buildAlexOpening({
+      firstName,
+      intent: intent ?? undefined,
+      hint: contextHint,
+      feature: store.feature,
+    });
+  }, [firstName, contextHint, intent, store.feature]);
+
 
   // ElevenLabs voice
   const nudgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
