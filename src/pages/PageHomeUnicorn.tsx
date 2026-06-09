@@ -29,6 +29,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import "@/styles/unicorn-theme.css";
+import { usePopularQuestions } from "@/hooks/usePopularQuestions";
+import { logQuestion } from "@/services/popularQuestions";
 
 /* ---------------- Header ---------------- */
 function HeaderFloatingGlass() {
