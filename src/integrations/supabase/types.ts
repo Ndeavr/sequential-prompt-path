@@ -43465,8 +43465,45 @@ export type Database = {
           },
         ]
       }
+      launch_funnel_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          agent: string | null
+          created_at: string
+          id: string
+          metric_count: number | null
+          payload: Json
+          reason: string
+          severity: string
+          stage: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          agent?: string | null
+          created_at?: string
+          id?: string
+          metric_count?: number | null
+          payload?: Json
+          reason: string
+          severity?: string
+          stage: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          agent?: string | null
+          created_at?: string
+          id?: string
+          metric_count?: number | null
+          payload?: Json
+          reason?: string
+          severity?: string
+          stage?: string
+        }
+        Relationships: []
+      }
       launch_leads: {
         Row: {
+          activated_at: string | null
           attempts: number
           block_reason: string | null
           city: string | null
@@ -43482,17 +43519,22 @@ export type Database = {
           id: string
           last_event_at: string
           lead_status: string
+          mrr_cents: number | null
           next_retry_at: string | null
           payload: Json
           phone: string | null
+          recommended_plan: string | null
+          recommended_plan_cents: number | null
           reply_classification: string | null
           retry_count: number
           revenue_impact_cents: number | null
           source_agent: string | null
+          stripe_session_id: string | null
           trade: string | null
           updated_at: string
         }
         Insert: {
+          activated_at?: string | null
           attempts?: number
           block_reason?: string | null
           city?: string | null
@@ -43508,17 +43550,22 @@ export type Database = {
           id?: string
           last_event_at?: string
           lead_status?: string
+          mrr_cents?: number | null
           next_retry_at?: string | null
           payload?: Json
           phone?: string | null
+          recommended_plan?: string | null
+          recommended_plan_cents?: number | null
           reply_classification?: string | null
           retry_count?: number
           revenue_impact_cents?: number | null
           source_agent?: string | null
+          stripe_session_id?: string | null
           trade?: string | null
           updated_at?: string
         }
         Update: {
+          activated_at?: string | null
           attempts?: number
           block_reason?: string | null
           city?: string | null
@@ -43534,13 +43581,17 @@ export type Database = {
           id?: string
           last_event_at?: string
           lead_status?: string
+          mrr_cents?: number | null
           next_retry_at?: string | null
           payload?: Json
           phone?: string | null
+          recommended_plan?: string | null
+          recommended_plan_cents?: number | null
           reply_classification?: string | null
           retry_count?: number
           revenue_impact_cents?: number | null
           source_agent?: string | null
+          stripe_session_id?: string | null
           trade?: string | null
           updated_at?: string
         }
@@ -43552,6 +43603,7 @@ export type Database = {
           current_objective_label: string | null
           current_stage_label: string | null
           current_trade: string | null
+          daily_activation_cap: number
           daily_email_cap: number
           daily_sms_cap: number
           first_customer_acquired_at: string | null
@@ -43572,6 +43624,8 @@ export type Database = {
           paused_at: string | null
           scout_cursor: Json | null
           started_at: string | null
+          target_cities: string[]
+          target_trades: string[]
           updated_at: string
         }
         Insert: {
@@ -43579,6 +43633,7 @@ export type Database = {
           current_objective_label?: string | null
           current_stage_label?: string | null
           current_trade?: string | null
+          daily_activation_cap?: number
           daily_email_cap?: number
           daily_sms_cap?: number
           first_customer_acquired_at?: string | null
@@ -43599,6 +43654,8 @@ export type Database = {
           paused_at?: string | null
           scout_cursor?: Json | null
           started_at?: string | null
+          target_cities?: string[]
+          target_trades?: string[]
           updated_at?: string
         }
         Update: {
@@ -43606,6 +43663,7 @@ export type Database = {
           current_objective_label?: string | null
           current_stage_label?: string | null
           current_trade?: string | null
+          daily_activation_cap?: number
           daily_email_cap?: number
           daily_sms_cap?: number
           first_customer_acquired_at?: string | null
@@ -43626,6 +43684,8 @@ export type Database = {
           paused_at?: string | null
           scout_cursor?: Json | null
           started_at?: string | null
+          target_cities?: string[]
+          target_trades?: string[]
           updated_at?: string
         }
         Relationships: []
@@ -75201,6 +75261,43 @@ export type Database = {
           replies_today: number | null
           sms_sent_today: number | null
           waiting_approval_today: number | null
+        }
+        Relationships: []
+      }
+      v_launch_agent_health: {
+        Row: {
+          agent: string | null
+          failures_24h: number | null
+          last_error: string | null
+          last_run_at: string | null
+          runs_24h: number | null
+          success_24h: number | null
+          success_pct: number | null
+        }
+        Relationships: []
+      }
+      v_launch_funnel: {
+        Row: {
+          activations_today: number | null
+          checkouts_today: number | null
+          email_sent_today: number | null
+          last_activation_at: string | null
+          mrr_today_cents: number | null
+          mrr_total_cents: number | null
+          payments_today: number | null
+          pipeline_value_cents: number | null
+          sms_sent_today: number | null
+          stage_activated: number | null
+          stage_blocked: number | null
+          stage_checkout_started: number | null
+          stage_delivered: number | null
+          stage_discovered: number | null
+          stage_enriched: number | null
+          stage_failed: number | null
+          stage_messaged: number | null
+          stage_opened_or_replied: number | null
+          stage_paid: number | null
+          total_leads: number | null
         }
         Relationships: []
       }
