@@ -5,7 +5,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { BadgeCheck, Star, MapPin } from "lucide-react";
 import { usePublicContractorSearch } from "@/hooks/usePublicContractors";
 import { useNearbyCity } from "@/hooks/useNearbyCity";
@@ -21,17 +21,18 @@ interface Card {
   satisfaction: number;
   response: string;
   city: string;
+  href?: string;
 }
 
 const FALLBACK: Card[] = [
+  { id: "isr", name: "Isolation Solution Royal", initials: "IR", specialty: "Spécialiste entretoit & isolation", rating: 4.9, reviewCount: 142, projects: 318, satisfaction: 98, response: "2h", city: "Laval", href: "/entrepreneur/isolation-solution-royal" },
   { id: "f1", name: "Toitures LB inc.", initials: "LB", specialty: "Spécialiste toiture", rating: 4.9, reviewCount: 128, projects: 289, satisfaction: 98, response: "2h", city: "Montréal" },
   { id: "f2", name: "Isolation BioVert", initials: "IB", specialty: "Isolation écologique", rating: 4.8, reviewCount: 94, projects: 212, satisfaction: 96, response: "3h", city: "Laval" },
   { id: "f3", name: "Plomberie Express", initials: "PE", specialty: "Plomberie résidentielle", rating: 4.7, reviewCount: 156, projects: 341, satisfaction: 95, response: "1h", city: "Longueuil" },
   { id: "f4", name: "Thermo Confort Pro", initials: "TC", specialty: "Thermopompes certifiées", rating: 4.9, reviewCount: 88, projects: 174, satisfaction: 99, response: "2h", city: "Brossard" },
-  { id: "f5", name: "Électrik Maître", initials: "EM", specialty: "Électricité résidentielle", rating: 4.8, reviewCount: 112, projects: 256, satisfaction: 97, response: "2h", city: "Terrebonne" },
 ];
 
-const ROTATE_MS = 4000;
+const ROTATE_MS = 5000;
 
 function pseudoResponse(id: string): string {
   // deterministic per-id "X h" between 1-4
