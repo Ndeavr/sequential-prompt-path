@@ -143,6 +143,8 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
   sessionLog: null,
   feature: "general",
   contextHint: null,
+  intent: null,
+
   errorMessage: null,
   errorType: null,
   recoveryAttempts: 0,
