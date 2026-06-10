@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Play, Pause, Trophy, Rocket, AlertOctagon, CheckCircle2, XCircle, Copy } from "lucide-react";
+import { TruthPanel } from "@/components/admin/launch/TruthPanel";
+import { AgentHealthTable } from "@/components/admin/launch/AgentHealthTable";
 
 function fmtCents(c?: number) {
   return new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format((c ?? 0) / 100);
