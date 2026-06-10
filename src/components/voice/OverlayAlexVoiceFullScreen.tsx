@@ -612,6 +612,22 @@ export default function OverlayAlexVoiceFullScreen() {
     return () => window.removeEventListener("alex-voice-cleanup", handler, true);
   }, []);
 
+  // ─── Toggle page-level background blur while overlay is open ───
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (store.isOverlayOpen) {
+      document.documentElement.classList.add("alex-overlay-active");
+      document.body.dataset.alexOverlayOpen = "true";
+    } else {
+      document.documentElement.classList.remove("alex-overlay-active");
+      delete document.body.dataset.alexOverlayOpen;
+    }
+    return () => {
+      document.documentElement.classList.remove("alex-overlay-active");
+      if (document.body.dataset.alexOverlayOpen) delete document.body.dataset.alexOverlayOpen;
+    };
+  }, [store.isOverlayOpen]);
+
   // Auto-scroll
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
