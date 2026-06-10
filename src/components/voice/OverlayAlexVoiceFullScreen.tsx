@@ -696,9 +696,18 @@ export default function OverlayAlexVoiceFullScreen() {
   const isSessionActive = ["session_ready", "listening", "capturing_voice", "processing_stt", "processing_response", "speaking", "awaiting_user"].includes(state);
   const isRecoveringNow = recovery.isRecovering;
 
+  // Calm, single-line state caption — never echo error copy in the panel header.
+  const calmCaption =
+    isStabilizing ? "Alex démarre…"
+    : state === "speaking" ? "Alex répond…"
+    : state === "processing_stt" || state === "processing_response" ? "Alex réfléchit…"
+    : state === "capturing_voice" ? "Alex écoute…"
+    : state === "listening" || state === "awaiting_user" || state === "session_ready" ? "Alex écoute…"
+    : "Alex est là.";
+
   const statusText =
     isRecoveringNow ? recovery.phaseLabel
-    : isError ? (store.errorMessage || "Erreur")
+    : isError ? "Alex est là."
     : slowToken && isStabilizing ? "Connexion d'Alex…"
     : isStabilizing ? getBootStepLabel(bootStep)
     : state === "listening" || state === "awaiting_user" ? "Alex écoute…"
