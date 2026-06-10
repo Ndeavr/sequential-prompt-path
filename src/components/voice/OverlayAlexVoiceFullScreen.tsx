@@ -305,7 +305,13 @@ export default function OverlayAlexVoiceFullScreen() {
       const timeSinceBoot = Date.now() - bootTimeRef.current;
       const hadAudio = (alexVoiceService.getSnapshot().retryCount === 0) && wasConnected && timeSinceBoot > 2000;
       if (s.isOverlayOpen && hadAudio) {
-        s.setError("connection_lost", "Je continue ici avec vous.", true);
+        // Silent degrade — never show a banner while the panel is alive and usable.
+        // Land back in listening so the user can keep talking; recovery handles
+        // any deeper failure via the explicit Réinitialiser / Passer au chat controls.
+        const allowed = ["speaking", "awaiting_user", "listening", "capturing_voice", "session_ready"];
+        if (allowed.includes(s.machineState)) {
+          if (s.machineState !== "listening") s.transitionTo("listening", "disconnect_silent_recover");
+        }
       } else if (s.isOverlayOpen) {
         // Live conversation never delivered audio → speak greeting via TTS fallback
         // so Alex actually talks, then surface user-initiated Retry/Chat controls.
@@ -344,13 +350,13 @@ export default function OverlayAlexVoiceFullScreen() {
         return;
       }
 
-      // Mid-conversation error → recoverable banner (user can still use Réinit/Chat).
-      const rawMessage = (error as any)?.message || "Je continue ici avec vous.";
-      const msg = rawMessage.includes("moteur vocal") || rawMessage.includes("serveur vocal")
-        ? rawMessage
-        : "Je continue ici avec vous.";
-      alexVoiceService.setError(msg, "voice_error");
-      s.setError("voice_error", msg, true);
+      // Mid-conversation error → silent degrade, no banner. The user keeps
+      // the chat panel and can tap Réinitialiser or Passer au chat manually.
+      alexVoiceService.setError("", "voice_error_silent");
+      const allowed = ["speaking", "awaiting_user", "listening", "capturing_voice", "session_ready"];
+      if (allowed.includes(s.machineState) && s.machineState !== "listening") {
+        s.transitionTo("listening", "voice_error_silent_recover");
+      }
     },
   });
 
