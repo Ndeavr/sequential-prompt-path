@@ -43506,6 +43506,7 @@ export type Database = {
           activated_at: string | null
           attempts: number
           block_reason: string | null
+          checkout_url: string | null
           city: string | null
           company_name: string | null
           contractor_id: string | null
@@ -43521,6 +43522,7 @@ export type Database = {
           lead_status: string
           mrr_cents: number | null
           next_retry_at: string | null
+          paid_at: string | null
           payload: Json
           phone: string | null
           recommended_plan: string | null
@@ -43530,6 +43532,7 @@ export type Database = {
           revenue_impact_cents: number | null
           source_agent: string | null
           stripe_session_id: string | null
+          subscription_id: string | null
           trade: string | null
           updated_at: string
         }
@@ -43537,6 +43540,7 @@ export type Database = {
           activated_at?: string | null
           attempts?: number
           block_reason?: string | null
+          checkout_url?: string | null
           city?: string | null
           company_name?: string | null
           contractor_id?: string | null
@@ -43552,6 +43556,7 @@ export type Database = {
           lead_status?: string
           mrr_cents?: number | null
           next_retry_at?: string | null
+          paid_at?: string | null
           payload?: Json
           phone?: string | null
           recommended_plan?: string | null
@@ -43561,6 +43566,7 @@ export type Database = {
           revenue_impact_cents?: number | null
           source_agent?: string | null
           stripe_session_id?: string | null
+          subscription_id?: string | null
           trade?: string | null
           updated_at?: string
         }
@@ -43568,6 +43574,7 @@ export type Database = {
           activated_at?: string | null
           attempts?: number
           block_reason?: string | null
+          checkout_url?: string | null
           city?: string | null
           company_name?: string | null
           contractor_id?: string | null
@@ -43583,6 +43590,7 @@ export type Database = {
           lead_status?: string
           mrr_cents?: number | null
           next_retry_at?: string | null
+          paid_at?: string | null
           payload?: Json
           phone?: string | null
           recommended_plan?: string | null
@@ -43592,6 +43600,7 @@ export type Database = {
           revenue_impact_cents?: number | null
           source_agent?: string | null
           stripe_session_id?: string | null
+          subscription_id?: string | null
           trade?: string | null
           updated_at?: string
         }
