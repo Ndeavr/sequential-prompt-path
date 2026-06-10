@@ -726,6 +726,16 @@ export default function OverlayAlexVoiceFullScreen() {
     return (
       <AnimatePresence>
         <motion.div
+          key="alex-overlay-backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+          className="uc-alex-overlay-backdrop"
+          aria-hidden
+        />
+        <motion.div
+          key="alex-floating-panel"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 16 }}
@@ -740,7 +750,7 @@ export default function OverlayAlexVoiceFullScreen() {
               <AlexMorphingOrb state={deriveOrbStateV2(state, isSpeaking)} size="sm" ariaLabel="Alex" />
               <div className="min-w-0">
                 <p className="text-[13px] font-semibold leading-tight truncate">Alex</p>
-                <p className="text-[11px] text-white/65 leading-tight truncate">{statusText}</p>
+                <p className="text-[11px] text-white/70 leading-tight truncate">{calmCaption}</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -766,8 +776,8 @@ export default function OverlayAlexVoiceFullScreen() {
           {/* Transcripts — compact, last 4 only */}
           <div ref={scrollRef} className="max-h-[240px] overflow-y-auto px-4 py-3">
             <div className="flex flex-col gap-2">
-              {recentTranscripts.length === 0 && !isError && (
-                <p className="text-[12px] text-white/60 text-center py-3">
+              {recentTranscripts.length === 0 && (
+                <p className="text-[12px] text-white/65 text-center py-3">
                   {isStabilizing ? "Alex démarre…" : "Je vous écoute…"}
                 </p>
               )}
@@ -788,20 +798,14 @@ export default function OverlayAlexVoiceFullScreen() {
             </div>
           </div>
 
-          {/* Error banner (compact) */}
-          {isError && store.errorMessage && (
-            <div className="mx-3 mb-2 flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/15 text-amber-200 text-[11px]">
-              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-              <span className="flex-1">{store.errorMessage}</span>
-            </div>
-          )}
+          {/* No inline error banner in the floating panel — fallback is silent. */}
 
           {/* Footer controls */}
           <div className="px-3 pb-3 pt-2 flex items-center justify-between gap-2 border-t border-white/10">
             <button
               type="button"
               onClick={handleFallbackChat}
-              className="text-[11px] text-white/70 hover:text-white transition-colors px-2 py-1.5"
+              className="text-[11px] text-white/75 hover:text-white transition-colors px-2 py-1.5"
             >
               Passer au chat
             </button>
