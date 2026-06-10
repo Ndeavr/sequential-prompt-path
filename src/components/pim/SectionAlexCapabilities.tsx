@@ -1,13 +1,20 @@
 import { motion } from "framer-motion";
-import { FileSearch, AlertCircle, FolderTree, Calculator, ShieldAlert, Sparkles } from "lucide-react";
+import {
+  Hammer, Receipt, ShieldCheck, FileText, ClipboardCheck,
+  Wrench, Cpu, Award, HardHat, FolderArchive,
+} from "lucide-react";
 
-const ALEX_HELPS = [
-  { Icon: FileSearch,  title: "Analyse vos soumissions",   body: "Ligne par ligne. Identifie ce qui manque, ce qui est gonflé, ce qui ne tient pas." },
-  { Icon: AlertCircle, title: "Comprend les risques",      body: "Lit votre historique et vous prévient avant que ça coûte cher." },
-  { Icon: FolderTree,  title: "Organise vos documents",    body: "Tout est classé, daté, contextualisé — accessible quand vous en avez besoin." },
-  { Icon: Calculator,  title: "Estime vos projets",        body: "Coûts ancrés sur votre propriété, votre ville et votre situation réelle." },
-  { Icon: ShieldAlert, title: "Détecte les signaux",       body: "Humidité, infiltration, vieillissement — l'IA les voit avant qu'ils s'aggravent." },
-  { Icon: Sparkles,    title: "Simplifie les décisions",   body: "Vous restez en contrôle. Alex enlève le bruit." },
+const ITEMS = [
+  { Icon: Hammer,         title: "Rénovations",              body: "Chaque projet conservé avec dates, montants et avant/après." },
+  { Icon: Receipt,        title: "Factures",                 body: "Toutes vos preuves d'achat réunies, prêtes à être retrouvées." },
+  { Icon: ShieldCheck,    title: "Garanties",                body: "Les durées et conditions restent claires, même des années plus tard." },
+  { Icon: FileText,       title: "Soumissions",              body: "Comparées, classées et conservées pour référence future." },
+  { Icon: ClipboardCheck, title: "Inspections",              body: "Rapports d'inspection accessibles à tout moment." },
+  { Icon: Wrench,         title: "Entretiens",               body: "Ce qui a été fait, quand, par qui — sans rien chercher." },
+  { Icon: Cpu,            title: "Équipements",              body: "Modèles, numéros de série et dates d'installation conservés." },
+  { Icon: Award,          title: "Subventions",              body: "Programmes utilisés et montants reçus pour votre propriété." },
+  { Icon: HardHat,        title: "Entrepreneurs recommandés", body: "Ceux qui ont déjà fait du bon travail chez vous, accessibles d'un clic." },
+  { Icon: FolderArchive,  title: "Documents importants",     body: "Plans, contrats, certificats — tout au même endroit." },
 ];
 
 export default function SectionAlexCapabilities() {
@@ -22,16 +29,16 @@ export default function SectionAlexCapabilities() {
           className="max-w-3xl"
         >
           <span className="inline-block text-[11px] tracking-[0.18em] uppercase text-cyan-300/80 mb-4">
-            Alex × PIM
+            Mémoire de la maison
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-[-0.04em] text-white leading-[1.1]">
-            Alex lit votre PIM{" "}
-            <span className="text-white/50">et travaille pour vous.</span>
+            Votre maison se souvient{" "}
+            <span className="text-white/50">de tout ce qui compte.</span>
           </h2>
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mt-10 sm:mt-14">
-          {ALEX_HELPS.map((h, i) => {
+          {ITEMS.map((h, i) => {
             const Icon = h.Icon;
             return (
               <motion.div
@@ -39,7 +46,7 @@ export default function SectionAlexCapabilities() {
                 initial={{ opacity: 0, y: 14 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-40px" }}
-                transition={{ duration: 0.5, delay: i * 0.05 }}
+                transition={{ duration: 0.5, delay: i * 0.04 }}
                 className="rounded-[28px] p-5 sm:p-6 transition-transform duration-[420ms]"
                 style={{
                   background: "rgba(255,255,255,0.04)",

@@ -1,13 +1,13 @@
 import { motion } from "framer-motion";
-import { Receipt, FileQuestion, CalendarX, History, UserX, Brain } from "lucide-react";
+import { Receipt, FileQuestion, CalendarX, History, UserX, BookOpen } from "lucide-react";
 
 const PROBLEMS = [
-  { Icon: Receipt,      title: "Factures perdues",              body: "Reçus, devis, contrats — éparpillés dans des emails, photos, papiers." },
+  { Icon: Receipt,      title: "Factures perdues",              body: "Reçus, devis, contrats — éparpillés dans des courriels, des photos et des papiers." },
   { Icon: FileQuestion, title: "Soumissions floues",            body: "Impossible de comparer ce qui est réellement inclus, ni de juger le prix." },
   { Icon: CalendarX,    title: "Entretien oublié",              body: "Aucun rappel, aucune trace de ce qui a déjà été fait — ni de ce qui s'en vient." },
   { Icon: History,      title: "Pas d'historique",              body: "Une décennie de rénovations qui s'efface à chaque déménagement ou revente." },
-  { Icon: UserX,        title: "Entrepreneurs non imputables",  body: "Aucune mémoire centralisée de qui a fait quoi, avec quelle qualité." },
-  { Icon: Brain,        title: "Zéro intelligence long terme",  body: "Chaque décision repart de zéro. Aucune lecture du risque ou des opportunités." },
+  { Icon: UserX,        title: "Entrepreneurs non imputables",  body: "Aucune trace centralisée de qui a fait quoi, avec quelle qualité." },
+  { Icon: BookOpen,     title: "Aucune mémoire à long terme",   body: "Chaque décision repart de zéro. Aucune continuité d'une rénovation à l'autre." },
 ];
 
 export default function SectionFragmentedProblem() {

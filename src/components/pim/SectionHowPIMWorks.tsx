@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
 
 const STEPS = [
-  { n: "01", title: "Créez votre profil propriété",     body: "Adresse, type, année, superficie. PIM amorce la mémoire de votre maison en moins d'une minute." },
-  { n: "02", title: "Uploadez documents et photos",     body: "Factures, inspections, garanties, soumissions, photos. PIM lit, classe, comprend." },
-  { n: "03", title: "L'IA analyse votre propriété",     body: "Lecture longitudinale : âge des composants, risques émergents, soumissions trompeuses, opportunités de subventions." },
-  { n: "04", title: "Recommandations et intelligence",  body: "Risques priorisés, subventions identifiées, entrepreneurs imputables, décisions appuyées par votre historique réel." },
+  { n: "01", title: "Créez votre dossier propriété",     body: "Adresse, type, année, superficie. Vous amorcez la mémoire de votre maison en moins d'une minute." },
+  { n: "02", title: "Ajoutez documents et photos",       body: "Factures, inspections, garanties, soumissions, photos — classés automatiquement au même endroit." },
+  { n: "03", title: "Votre maison conserve son histoire", body: "Travaux, garanties, inspections et équipements s'ajoutent automatiquement à un historique clair et durable." },
+  { n: "04", title: "Continuité et tranquillité d'esprit", body: "Vous retrouvez en un instant ce qui a été fait, quand, par qui et avec quelles garanties." },
 ];
 
 export default function SectionHowPIMWorks() {
@@ -22,8 +22,8 @@ export default function SectionHowPIMWorks() {
             Comment PIM fonctionne
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-[-0.04em] text-white leading-[1.1]">
-            Quatre étapes pour transformer votre maison{" "}
-            <span className="text-white/50">en intelligence vivante.</span>
+            Quatre étapes pour donner à votre maison{" "}
+            <span className="text-white/50">une mémoire vivante.</span>
           </h2>
         </motion.div>
 

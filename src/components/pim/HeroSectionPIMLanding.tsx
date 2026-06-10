@@ -33,7 +33,7 @@ export default function HeroSectionPIMLanding() {
             }}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-300 animate-pulse" />
-            PIM · Passeport Intelligence Maison
+            PIM · Le carnet de vie de votre maison
           </motion.span>
 
           <motion.h1
@@ -42,7 +42,7 @@ export default function HeroSectionPIMLanding() {
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             className="text-4xl sm:text-5xl md:text-6xl lg:text-[64px] font-bold tracking-[-0.04em] text-white leading-[1.02]"
           >
-            Votre maison devrait{" "}
+            Votre maison possède désormais sa propre{" "}
             <span
               style={{
                 background: "linear-gradient(135deg, #7DD3FC, #A78BFA)",
@@ -50,7 +50,7 @@ export default function HeroSectionPIMLanding() {
                 WebkitTextFillColor: "transparent",
               }}
             >
-              tout se souvenir.
+              mémoire.
             </span>
           </motion.h1>
 
@@ -60,9 +60,10 @@ export default function HeroSectionPIMLanding() {
             transition={{ duration: 0.6, delay: 0.15 }}
             className="mt-6 text-base sm:text-lg text-white/65 leading-relaxed max-w-xl"
           >
-            PIM (Passeport Intelligence Maison) transforme votre propriété en profil
-            intelligent lisible par l'IA. Rénovations, soumissions, inspections, subventions,
-            garanties, risques — au même endroit, vivants, connectés.
+            Chaque intervention, document et décision importante est conservé
+            automatiquement dans un dossier unique qui évolue avec votre propriété —
+            rénovations, garanties, inspections, factures et équipements, réunis pour
+            aujourd'hui et pour les années à venir.
           </motion.p>
 
           <motion.div
@@ -80,7 +81,7 @@ export default function HeroSectionPIMLanding() {
                 boxShadow: "0 12px 36px -10px rgba(56,189,248,0.6)",
               }}
             >
-              Créer mon PIM
+              Créer mon Passeport Maison
               <ArrowRight size={18} />
             </button>
 
@@ -111,7 +112,7 @@ export default function HeroSectionPIMLanding() {
           </motion.div>
         </div>
 
-        {/* Graphe d'intelligence */}
+        {/* Graphe mémoire */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}

@@ -27,11 +27,11 @@ export default function SectionNotCloudStorage() {
             PIM n'est pas un coffre à documents.
           </h2>
           <p className="mt-5 text-xl sm:text-2xl text-white/70 font-light leading-relaxed tracking-[-0.02em]">
-            C'est une <span className="text-white font-medium">infrastructure d'intelligence résidentielle</span> —
-            un système vivant qui relie, comprend et anticipe.
+            C'est le <span className="text-white font-medium">dossier vivant de votre propriété</span> —
+            un historique qui s'enrichit naturellement avec chaque intervention.
           </p>
           <div className="mt-8 flex flex-wrap gap-2">
-            {["Factures", "Inspections", "Garanties", "Énergie", "Subventions", "Entrepreneurs", "Diagnostics IA"].map((tag) => (
+            {["Factures", "Inspections", "Garanties", "Énergie", "Subventions", "Entrepreneurs", "Équipements"].map((tag) => (
               <span
                 key={tag}
                 className="px-3 py-1.5 rounded-full text-[12px] font-medium"

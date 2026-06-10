@@ -21,7 +21,7 @@ export default function SectionPIMFinalCTA({ onCreate }: Props) {
           transition={{ duration: 0.7 }}
           className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-[-0.04em] text-white leading-[1.05]"
         >
-          Donnez à votre maison{" "}
+          Commencez à bâtir{" "}
           <span
             style={{
               background: "linear-gradient(135deg, #7DD3FC, #A78BFA)",
@@ -29,7 +29,7 @@ export default function SectionPIMFinalCTA({ onCreate }: Props) {
               WebkitTextFillColor: "transparent",
             }}
           >
-            une mémoire et une intelligence.
+            la mémoire de votre maison.
           </span>
         </motion.h2>
 
@@ -40,7 +40,7 @@ export default function SectionPIMFinalCTA({ onCreate }: Props) {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="mt-5 text-white/60 text-base sm:text-lg leading-relaxed"
         >
-          Créez votre PIM en moins de 30 secondes. Aucun engagement.
+          Gratuit. Moins de 30 secondes. Aucun engagement.
         </motion.p>
 
         <motion.div
@@ -59,7 +59,7 @@ export default function SectionPIMFinalCTA({ onCreate }: Props) {
               boxShadow: "0 12px 36px -10px rgba(56,189,248,0.6)",
             }}
           >
-            Créer mon PIM
+            Créer mon Passeport Maison
             <ArrowRight size={18} />
           </button>
 
