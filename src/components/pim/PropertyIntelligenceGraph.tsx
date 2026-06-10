@@ -1,14 +1,14 @@
 /**
- * PropertyIntelligenceGraph — SVG animé d'un graphe de propriété intelligent.
+ * PropertyIntelligenceGraph — SVG animé du carnet de vie de la maison.
  * Maison centrale + nœuds en orbite (factures, inspections, garanties, subventions,
- * contractors, risques, entretien, diagnostics IA) reliés par des lignes d'énergie.
+ * entrepreneurs, équipements, entretien, rénovations) reliés par des lignes douces.
  *
  * Pas de Three.js / WebGL — SVG pur + Framer Motion.
  */
 import { motion } from "framer-motion";
 import {
   FileText, ClipboardCheck, ShieldCheck, Award, HardHat,
-  AlertTriangle, Wrench, Sparkles, Home as HomeIcon,
+  Hammer, Wrench, Cpu, Home as HomeIcon,
 } from "lucide-react";
 
 interface Props {
@@ -17,14 +17,14 @@ interface Props {
 }
 
 const NODES = [
-  { Icon: FileText,       label: "Factures",     angle: -90,  color: "#7DD3FC" },
-  { Icon: ClipboardCheck, label: "Inspections",  angle: -45,  color: "#A78BFA" },
-  { Icon: ShieldCheck,    label: "Garanties",    angle: 0,    color: "#34D399" },
-  { Icon: Award,          label: "Subventions",  angle: 45,   color: "#FBBF24" },
-  { Icon: HardHat,        label: "Entrepreneurs",angle: 90,   color: "#60A5FA" },
-  { Icon: AlertTriangle,  label: "Risques",      angle: 135,  color: "#F87171" },
-  { Icon: Wrench,         label: "Entretien",    angle: 180,  color: "#22D3EE" },
-  { Icon: Sparkles,       label: "Diagnostics",  angle: 225,  color: "#C084FC" },
+  { Icon: FileText,       label: "Factures",      angle: -90,  color: "#7DD3FC" },
+  { Icon: ClipboardCheck, label: "Inspections",   angle: -45,  color: "#A78BFA" },
+  { Icon: ShieldCheck,    label: "Garanties",     angle: 0,    color: "#34D399" },
+  { Icon: Award,          label: "Subventions",   angle: 45,   color: "#FBBF24" },
+  { Icon: HardHat,        label: "Entrepreneurs", angle: 90,   color: "#60A5FA" },
+  { Icon: Hammer,         label: "Rénovations",   angle: 135,  color: "#F472B6" },
+  { Icon: Wrench,         label: "Entretien",     angle: 180,  color: "#22D3EE" },
+  { Icon: Cpu,            label: "Équipements",   angle: 225,  color: "#C084FC" },
 ];
 
 export default function PropertyIntelligenceGraph({ variant = "hero", className = "" }: Props) {

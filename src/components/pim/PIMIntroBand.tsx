@@ -41,13 +41,13 @@ export default function PIMIntroBand() {
               className="text-[10px] font-semibold tracking-[0.14em] uppercase mb-0.5"
               style={{ color: "#2563FF" }}
             >
-              Nouveau · PIM
+              Nouveau · Passeport Maison
             </div>
             <div
               className="text-[14px] sm:text-[15px] font-bold leading-tight"
               style={{ color: "#0B1220" }}
             >
-              Votre maison devrait tout se souvenir.
+              Votre maison possède désormais sa propre mémoire.
             </div>
             <div
               className="text-[11.5px] sm:text-[12.5px] mt-0.5 leading-snug line-clamp-2"
