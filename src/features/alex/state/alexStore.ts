@@ -393,19 +393,11 @@ export const useAlexStore = create<AlexState & AlexActions>()((set) => ({
       // Never surface a generic "unavailable" notice while the locked voice
       // overlay is open — the chat panel is fully usable and an inline warning
       // duplicates the panel UI. Notice is only shown for standalone surfaces.
-      let overlayOpen = false;
-      try {
-        // Lazy require to avoid circular dep at module init time.
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const mod = require("@/stores/alexVoiceLockedStore");
-        overlayOpen = !!mod?.useAlexVoiceLockedStore?.getState?.().isOverlayOpen;
-      } catch {
-        overlayOpen = false;
-      }
+      const overlayOpen =
+        typeof document !== "undefined" &&
+        document.documentElement?.classList?.contains("alex-overlay-active");
       return {
         voiceUnavailableReason: reason,
-        // Only set a user-visible notice if an explicit message is provided
-        // AND the locked overlay is not currently driving the UX.
         recoveryNotice: overlayOpen ? null : (message ?? s.recoveryNotice ?? null),
         mode: s.mode === "speaking" || s.mode === "connecting_voice" ? "ready" : s.mode,
         hasActivePlayback: false,
