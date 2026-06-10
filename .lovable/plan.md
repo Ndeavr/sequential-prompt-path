@@ -1,86 +1,99 @@
 
-## Goal
+# Truth Panel UI + Stripe Activation Wiring
 
-Replace the static `QUICK_CHIPS` under the Alex input on `PageHomeUnicorn` with a live "Questions populaires en ce moment" rail driven by what users have actually asked Alex over the last 7 days. Falls back gracefully when traffic is too low.
+Goal: prove the autonomous acquisition engine reaches **paid + activated contractors**, not just "agents ran". Surface the truth in `/admin/launch-war-room`, and close the loop from outreach → Stripe checkout → activation.
 
-## UX changes (PageHomeUnicorn AiInputCard)
+## 1. Truth Panel UI (`/admin/launch-war-room`)
 
-- Add a small section label above the chip row: **"Questions populaires en ce moment"** (uppercase 11px, muted blue) + a tiny "↻" refresh button replacing the existing standalone one.
-- Chips become the top 6 normalized questions returned by the API, sorted by 7d frequency with a recency boost (last 48h weighted 2×).
-- Each chip carries `{ label, topic, intent }`. Clicking still calls `onTalk(topic)` → opens Alex with the right intent (reuses `detectAlexIntent`).
-- Loading: render 6 skeleton chips (shimmer).
-- Empty/low-signal (<3 questions in 7d): fall back to a **curated seasonal set** (June → humidity, AC, toiture, drain français…) so the UI is never empty. A `source: "trending" | "seasonal"` flag drives the label ("Questions populaires" vs "Suggestions de saison").
-- Auto-refresh every 5 min while page is visible.
+New top section `<TruthPanel />` that reads `v_launch_funnel` + `v_launch_agent_health` + `launch_funnel_alerts` via `useLaunchWarRoom`.
 
-## Data + backend
+### Hero strip — 6 truth tiles
+- **Contractors activated** (green if ≥1, red if 0)
+- **MRR added today** (sum of `mrr_cents` where `activated_at::date = today`)
+- **Pipeline value** (sum of `recommended_plan_cents` for non-paid, non-blocked leads)
+- **Payments pending** (count of `CHECKOUT_SENT` w/ `stripe_session_id`)
+- **Next expected activation** (oldest `CHECKOUT_SENT` lead + age)
+- **Days since last activation** (now() − max(`activated_at`))
 
-New lightweight aggregation, no heavy schema churn:
+### Red banner
+If activated count = 0 across all time:
+> "Aucun revenu généré. Le moteur d'acquisition est incomplet — enquêter sur le pipeline."
 
-1. **Migration** `popular_questions_*`:
-   - `popular_question_events` (id, raw_text, normalized_label, topic, intent, role, lang, source, created_at). Insert-only.
-     - RLS: `INSERT` allowed to `anon` + `authenticated` (no PII stored — only short normalized strings, max 120 chars, no emails/phones, sanitized server-side); `SELECT` to `service_role` only.
-     - GRANTs per project rule.
-   - `v_popular_questions_7d` view: aggregates `popular_question_events` over last 7 days, groups by `normalized_label`, counts, computes recency-weighted score, returns top 20. `SECURITY INVOKER`, `SELECT` granted to `anon`+`authenticated`.
+With one-click drill-down: "Voir le dernier blocage" → opens `launch_funnel_alerts` drawer filtered to most recent unresolved.
 
-2. **Capture points** (write to `popular_question_events` via fire-and-forget):
-   - When user submits free text in the Alex input / chat composer.
-   - When user taps a chip (so chip popularity reinforces itself but capped).
-   - When a voice transcript first-user-utterance is finalized.
-   - All go through one helper `src/services/popularQuestions.ts → logQuestion(raw, {role, lang, source})` that:
-     - trims, lowercases, strips PII patterns (emails, phones, postal codes, addresses), truncates 120 chars
-     - drops if <6 chars or matches a profanity/blocklist
-     - derives `intent` via existing `detectAlexIntent`
-     - upserts asynchronously (no await on UI path).
+### Funnel waterfall
+Single horizontal bar: DISCOVERED → ENRICHED → SCORED → MESSAGED → DELIVERED → REPLIED → CHECKOUT_SENT → PAID → ACTIVATED, with conversion % between each step. Red badge on any step where drop > 80%.
 
-3. **Read path**: edge function `popular-questions` (public, no auth) returns:
-   ```json
-   { "source": "trending" | "seasonal", "items": [{ "label", "topic", "intent", "score" }] }
-   ```
-   - Reads `v_popular_questions_7d`. If fewer than 3 rows with score ≥ threshold → returns seasonal fallback for the current month (FR-CA).
-   - Edge cached 60s (`Cache-Control: public, max-age=60`).
-   - Maps each `normalized_label` to a `topic` string (used to seed Alex) via a small normalization table — falls back to the label itself.
+### Agent health table
+From `v_launch_agent_health`: agent name, 24h runs, success rate, last error. Row turns red if success rate < 50% AND runs > 0.
 
-4. **Seasonal fallback** lives in `src/data/seasonalPopularQuestions.ts` (12 months × 6 items, FR-CA), reused both client-side as last-resort and server-side.
+## 2. Stripe Activation Wiring
 
-## Frontend wiring
+### New edge function: `launch-agent-checkout-sender`
+Picks `REPLIED` (or `SCORED` if `auto_send_checkout=true` in `launch_mode_state`) leads with `recommended_plan` set. For each:
+1. Calls existing `create-contractor-checkout` (reused — no new Stripe code) with `plan_code: recommended_plan` and metadata `{ launch_lead_id, source: 'launch_mode' }`.
+2. Stores `stripe_session_id` + checkout URL on `launch_leads`.
+3. Sends the URL via existing outreach channel (SMS/email reused from current sender).
+4. Transitions lead → `CHECKOUT_SENT`, logs `launch_pipeline_events` row `{ agent, event:'checkout_sent', payload:{ session_id, plan } }`.
+5. Calls `reportOutcome()` (production reliability framework) with success/failure code.
 
-- New hook `src/hooks/usePopularQuestions.ts`:
-  - Calls the edge function (`supabase.functions.invoke('popular-questions')`).
-  - 5-min stale time, refresh on `visibilitychange`.
-  - Returns `{ items, source, isLoading, refresh }`.
-- `PageHomeUnicorn.tsx`:
-  - Remove static `QUICK_CHIPS` constant.
-  - `AiInputCard` consumes the hook; renders section header + chips + refresh button.
-  - On chip click + on free-text submit, call `logQuestion(...)`.
+### New edge function: `launch-stripe-webhook`
+Public, no JWT. Verifies Stripe signature (`STRIPE_WEBHOOK_SECRET`).
+- On `checkout.session.completed` with `metadata.launch_lead_id`: update lead → `PAID`, set `mrr_cents` from line items, emit event.
+- On `customer.subscription.created`: trigger activation (next step).
 
-## Admin (minimal, no new page)
+### New edge function: `launch-agent-activator`
+On `PAID` lead: ensure a `contractors` row exists (link via `contractor_id` already on lead, else create from enriched data), set `is_active=true`, attach `subscription_id`, mark lead `activated_at = now()`, transition → `ACTIVATED`. Emits `activated` event and `notification` to admin.
 
-- Add a tiny block to `/admin/alex-management` showing top 20 from `v_popular_questions_7d` with a "Hide" toggle that writes to a new `popular_question_blocklist` table (admin-only). The edge function excludes blocklisted labels. This keeps the surface safe without building a full cockpit.
+### Cron updates
+Add to existing `pg_cron` job 45 (every minute): also call `launch-agent-checkout-sender` and `launch-agent-activator`. Webhook is push-based — no cron.
 
-## Files
+## 3. Migration
 
-Created
-- `supabase/migrations/<ts>_popular_questions.sql`
-- `supabase/functions/popular-questions/index.ts`
-- `src/services/popularQuestions.ts`
-- `src/hooks/usePopularQuestions.ts`
-- `src/data/seasonalPopularQuestions.ts`
+```sql
+-- Idempotent: column likely missing
+alter table public.launch_leads
+  add column if not exists checkout_url text,
+  add column if not exists subscription_id text;
 
-Edited
-- `src/pages/PageHomeUnicorn.tsx` (AiInputCard chip rail + section label + logging on submit)
-- `src/components/alex/...` (or wherever Alex chat composer sends user text) → call `logQuestion`
-- `src/components/voice/OverlayAlexVoiceFullScreen.tsx` → log first user utterance
-- `src/pages/admin/PageAlexManagement.tsx` (small "Top questions 7j" panel + blocklist)
+-- Trigger: on launch_leads.lead_status = 'ACTIVATED', insert notification
+create or replace function public.notify_launch_activation() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if new.lead_status = 'ACTIVATED' and (old.lead_status is distinct from 'ACTIVATED') then
+    insert into admin_notifications(kind, title, body, payload)
+    values('launch_activation', 'Contractor activé', new.business_name, jsonb_build_object('lead_id', new.id, 'mrr_cents', new.mrr_cents));
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists trg_notify_launch_activation on public.launch_leads;
+create trigger trg_notify_launch_activation
+  after update on public.launch_leads
+  for each row execute function public.notify_launch_activation();
+```
+
+## 4. Files
+
+**Create**
+- `src/components/admin/launch/TruthPanel.tsx`
+- `src/components/admin/launch/FunnelWaterfall.tsx`
+- `src/components/admin/launch/AgentHealthTable.tsx`
+- `supabase/functions/launch-agent-checkout-sender/index.ts`
+- `supabase/functions/launch-stripe-webhook/index.ts`
+- `supabase/functions/launch-agent-activator/index.ts`
+- migration `*_launch_activation_wiring.sql`
+
+**Edit**
+- `src/pages/admin/PageLaunchWarRoom.tsx` — mount `<TruthPanel />` at top
+- `src/hooks/useLaunchWarRoom.ts` — also fetch `v_launch_funnel`, `v_launch_agent_health`, `launch_funnel_alerts` (top 5 unresolved)
+- `supabase/config.toml` — `verify_jwt = false` for `launch-stripe-webhook` only
 
 ## Non-goals
+- No new Stripe products/prices (reuse existing contractor plans).
+- No changes to `create-contractor-checkout` internals.
+- No changes to scout/enrich/score/message agents (Phase A is done).
+- No homeowner flow changes.
 
-- No personalization per user yet (global trending only).
-- No multilingual aggregation — fr-CA only for v1; en-CA bucket prepared in schema but not surfaced.
-- No reliability/agents work, no changes to launch engine.
-
-## Acceptance
-
-- With <3 real questions logged: chips show seasonal fallback labelled "Suggestions de saison".
-- After logging ≥3 distinct questions in last 7d: chips switch to "Questions populaires en ce moment" using real data, top by weighted frequency.
-- Refreshing the rail shows updated counts within ≤60s of new submissions.
-- No PII ever stored in `popular_question_events` (verified by sanitizer unit test).
+## Open question
+Confirm: should `launch-agent-checkout-sender` send checkout **after REPLIED only** (safer, human signaled interest) or **also auto-send on SCORED** when `launch_mode_state.auto_send_checkout=true` (more aggressive, true autonomous)? Default in plan: gated by `auto_send_checkout` flag, default `false`.
