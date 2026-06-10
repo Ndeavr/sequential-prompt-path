@@ -125,6 +125,14 @@ export default function AdminLaunchWarRoom() {
           </Card>
         )}
 
+        <TruthPanel
+          funnel={data?.funnel ?? null}
+          pendingCheckouts={data?.pendingCheckouts ?? 0}
+          oldestPendingAgeMin={data?.oldestPendingAgeMin ?? null}
+        />
+
+        <AgentHealthTable rows={data?.agentHealth ?? []} />
+
         {acquired && s && (
           <Card className="border-emerald-500/40 bg-emerald-500/5">
             <CardHeader>
