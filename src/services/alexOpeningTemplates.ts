@@ -146,7 +146,7 @@ export function buildAlexOpening(args: OpeningArgs = {}): string {
       break;
     case "contractor":
       body =
-        "Je vais vous aider à développer votre visibilité et à être recommandé aux bons propriétaires. Comment puis-je vous aider aujourd'hui ?";
+        "Je peux vous aider à activer votre profil UNPRO et à recevoir de meilleurs rendez-vous. Où voulez-vous commencer ?";
       break;
     case "generic":
     default:

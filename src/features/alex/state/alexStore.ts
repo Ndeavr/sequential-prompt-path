@@ -389,16 +389,24 @@ export const useAlexStore = create<AlexState & AlexActions>()((set) => ({
   markTTSActivity: () => set({ lastTTSActivityAt: now() }),
 
   markVoiceUnavailable: (reason, message) =>
-    set((s) => ({
-      voiceUnavailableReason: reason,
-      recoveryNotice: message ?? s.recoveryNotice ?? "Je continue ici avec vous.",
-      mode: s.mode === "speaking" || s.mode === "connecting_voice" ? "ready" : s.mode,
-      hasActivePlayback: false,
-      hasActiveTTSRequest: false,
-      isAutoplayAllowed: false,
-      audioUnlockRequired: false,
-      shouldSpeakGreetingOnUnlock: false,
-    })),
+    set((s) => {
+      // Never surface a generic "unavailable" notice while the locked voice
+      // overlay is open — the chat panel is fully usable and an inline warning
+      // duplicates the panel UI. Notice is only shown for standalone surfaces.
+      const overlayOpen =
+        typeof document !== "undefined" &&
+        document.documentElement?.classList?.contains("alex-overlay-active");
+      return {
+        voiceUnavailableReason: reason,
+        recoveryNotice: overlayOpen ? null : (message ?? s.recoveryNotice ?? null),
+        mode: s.mode === "speaking" || s.mode === "connecting_voice" ? "ready" : s.mode,
+        hasActivePlayback: false,
+        hasActiveTTSRequest: false,
+        isAutoplayAllowed: false,
+        audioUnlockRequired: false,
+        shouldSpeakGreetingOnUnlock: false,
+      };
+    }),
 
   recordVoiceFailure: () =>
     set((s) => {

@@ -22,7 +22,7 @@ interface Props {
   interactive?: boolean;
   /** Show glass "Parler à Alex" pill below the orb (hover/focus, or always when forced). */
   showLabel?: boolean;
-  /** Show state caption ("Alex réfléchit…", "Alex est temporairement indisponible."). */
+  /** Show state caption ("Alex réfléchit…"). Error captions are intentionally not surfaced. */
   showCaption?: boolean;
   /** Force a visual state regardless of the store (e.g. "error" from overlay). */
   forceState?: OrbVisualState | "error";

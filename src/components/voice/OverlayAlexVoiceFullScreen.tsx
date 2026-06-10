@@ -305,7 +305,13 @@ export default function OverlayAlexVoiceFullScreen() {
       const timeSinceBoot = Date.now() - bootTimeRef.current;
       const hadAudio = (alexVoiceService.getSnapshot().retryCount === 0) && wasConnected && timeSinceBoot > 2000;
       if (s.isOverlayOpen && hadAudio) {
-        s.setError("connection_lost", "Je continue ici avec vous.", true);
+        // Silent degrade — never show a banner while the panel is alive and usable.
+        // Land back in listening so the user can keep talking; recovery handles
+        // any deeper failure via the explicit Réinitialiser / Passer au chat controls.
+        const allowed = ["speaking", "awaiting_user", "listening", "capturing_voice", "session_ready"];
+        if (allowed.includes(s.machineState)) {
+          if (s.machineState !== "listening") s.transitionTo("listening", "disconnect_silent_recover");
+        }
       } else if (s.isOverlayOpen) {
         // Live conversation never delivered audio → speak greeting via TTS fallback
         // so Alex actually talks, then surface user-initiated Retry/Chat controls.
@@ -344,13 +350,13 @@ export default function OverlayAlexVoiceFullScreen() {
         return;
       }
 
-      // Mid-conversation error → recoverable banner (user can still use Réinit/Chat).
-      const rawMessage = (error as any)?.message || "Je continue ici avec vous.";
-      const msg = rawMessage.includes("moteur vocal") || rawMessage.includes("serveur vocal")
-        ? rawMessage
-        : "Je continue ici avec vous.";
-      alexVoiceService.setError(msg, "voice_error");
-      s.setError("voice_error", msg, true);
+      // Mid-conversation error → silent degrade, no banner. The user keeps
+      // the chat panel and can tap Réinitialiser or Passer au chat manually.
+      alexVoiceService.setError("", "voice_error_silent");
+      const allowed = ["speaking", "awaiting_user", "listening", "capturing_voice", "session_ready"];
+      if (allowed.includes(s.machineState) && s.machineState !== "listening") {
+        s.transitionTo("listening", "voice_error_silent_recover");
+      }
     },
   });
 
@@ -606,6 +612,22 @@ export default function OverlayAlexVoiceFullScreen() {
     return () => window.removeEventListener("alex-voice-cleanup", handler, true);
   }, []);
 
+  // ─── Toggle page-level background blur while overlay is open ───
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (store.isOverlayOpen) {
+      document.documentElement.classList.add("alex-overlay-active");
+      document.body.dataset.alexOverlayOpen = "true";
+    } else {
+      document.documentElement.classList.remove("alex-overlay-active");
+      delete document.body.dataset.alexOverlayOpen;
+    }
+    return () => {
+      document.documentElement.classList.remove("alex-overlay-active");
+      if (document.body.dataset.alexOverlayOpen) delete document.body.dataset.alexOverlayOpen;
+    };
+  }, [store.isOverlayOpen]);
+
   // Auto-scroll
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -690,9 +712,18 @@ export default function OverlayAlexVoiceFullScreen() {
   const isSessionActive = ["session_ready", "listening", "capturing_voice", "processing_stt", "processing_response", "speaking", "awaiting_user"].includes(state);
   const isRecoveringNow = recovery.isRecovering;
 
+  // Calm, single-line state caption — never echo error copy in the panel header.
+  const calmCaption =
+    isStabilizing ? "Alex démarre…"
+    : state === "speaking" ? "Alex répond…"
+    : state === "processing_stt" || state === "processing_response" ? "Alex réfléchit…"
+    : state === "capturing_voice" ? "Alex écoute…"
+    : state === "listening" || state === "awaiting_user" || state === "session_ready" ? "Alex écoute…"
+    : "Alex est là.";
+
   const statusText =
     isRecoveringNow ? recovery.phaseLabel
-    : isError ? (store.errorMessage || "Erreur")
+    : isError ? "Alex est là."
     : slowToken && isStabilizing ? "Connexion d'Alex…"
     : isStabilizing ? getBootStepLabel(bootStep)
     : state === "listening" || state === "awaiting_user" ? "Alex écoute…"
@@ -711,6 +742,16 @@ export default function OverlayAlexVoiceFullScreen() {
     return (
       <AnimatePresence>
         <motion.div
+          key="alex-overlay-backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+          className="uc-alex-overlay-backdrop"
+          aria-hidden
+        />
+        <motion.div
+          key="alex-floating-panel"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 16 }}
@@ -725,7 +766,7 @@ export default function OverlayAlexVoiceFullScreen() {
               <AlexMorphingOrb state={deriveOrbStateV2(state, isSpeaking)} size="sm" ariaLabel="Alex" />
               <div className="min-w-0">
                 <p className="text-[13px] font-semibold leading-tight truncate">Alex</p>
-                <p className="text-[11px] text-white/65 leading-tight truncate">{statusText}</p>
+                <p className="text-[11px] text-white/70 leading-tight truncate">{calmCaption}</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -751,8 +792,8 @@ export default function OverlayAlexVoiceFullScreen() {
           {/* Transcripts — compact, last 4 only */}
           <div ref={scrollRef} className="max-h-[240px] overflow-y-auto px-4 py-3">
             <div className="flex flex-col gap-2">
-              {recentTranscripts.length === 0 && !isError && (
-                <p className="text-[12px] text-white/60 text-center py-3">
+              {recentTranscripts.length === 0 && (
+                <p className="text-[12px] text-white/65 text-center py-3">
                   {isStabilizing ? "Alex démarre…" : "Je vous écoute…"}
                 </p>
               )}
@@ -773,20 +814,14 @@ export default function OverlayAlexVoiceFullScreen() {
             </div>
           </div>
 
-          {/* Error banner (compact) */}
-          {isError && store.errorMessage && (
-            <div className="mx-3 mb-2 flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/15 text-amber-200 text-[11px]">
-              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-              <span className="flex-1">{store.errorMessage}</span>
-            </div>
-          )}
+          {/* No inline error banner in the floating panel — fallback is silent. */}
 
           {/* Footer controls */}
           <div className="px-3 pb-3 pt-2 flex items-center justify-between gap-2 border-t border-white/10">
             <button
               type="button"
               onClick={handleFallbackChat}
-              className="text-[11px] text-white/70 hover:text-white transition-colors px-2 py-1.5"
+              className="text-[11px] text-white/75 hover:text-white transition-colors px-2 py-1.5"
             >
               Passer au chat
             </button>
