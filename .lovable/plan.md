@@ -1,33 +1,48 @@
-## Diagnostic
+## Objectif
 
-Le calibrage précédent a bien été appliqué aux couches `IntelligenceBackground`, mais il était invisible : le wrapper de la page (`.unicorn-theme` dans `src/styles/unicorn-theme.css`) peint **son propre fond bleu saturé** par-dessus, qui domine tout :
+Aligner la home sur la référence (image 1) :
+- 6 cartes égales en grille 3×2, blanches, avec **"Trouver un pro"** ET **"Recommander un professionnel"** côte à côte (pas de carte vedette bleue pleine largeur).
+- Background blanc/glace premium MAIS avec maison blueprint + knowledge graph **clairement perceptibles** derrière l'orb (actuellement quasi invisibles).
 
-```css
-radial-gradient(1100px 700px at 80% -10%, rgba(59,130,246,0.18), ...)   ← halo bleu massif en haut
-radial-gradient(900px 600px at -10% 30%, rgba(189,231,255,0.35), ...)   ← voile cyan 35%
-radial-gradient(800px 900px at 50% 110%, rgba(99,102,241,0.10), ...)
-```
+## 1. `AlexCapabilitiesStrip.tsx` — retour à la grille 3×2
 
-C'est ce fond-là que vous voyez — pas les couches calibrées.
+Supprimer la carte vedette bleue pleine largeur. Définir 6 capabilities dans un seul array, rendues en `grid-cols-3 gap-2` (sur mobile small : `grid-cols-2` fallback si overflow — référence montre 3 colonnes même sur mobile étroit).
 
-## Correction
+Ordre (image 1) :
+1. Comprendre un problème (HelpCircle)
+2. Analyser une photo (Camera)
+3. Estimer un coût (Calculator)
+4. Comparer une soumission (FileCheck)
+5. Trouver des subventions (BadgePercent)
+6. Recommander un professionnel (UserCheck)
 
-### 1. `src/styles/unicorn-theme.css` — désaturer le fond du thème
-- Halo top-right : `0.18` → **0.06**
-- Voile cyan : `0.35` → **0.12**
-- Halo bas : `0.10` → **0.04**
-- Base : garder `#FFFFFF → #F7FAFF → #EEF4FF` (blanc/glace)
+Carte type : fond blanc `#FFFFFF`, radius 18, ombre douce, icône bleue 22px dans un cercle `#EFF6FF`, titre 2 lignes `#0B1220` bold 12.5px, flèche `→` bleue alignée en bas à droite. Toutes identiques — aucune n'est mise en avant.
 
-Résultat : 80% blanc, le bleu redevient un filigrane et les couches IntelligenceBackground (mesh, blueprint, knowledge graph) deviennent enfin perceptibles au lieu d'être noyées.
+Ajouter au-dessus le gros CTA "Parler à Alex" (déjà présent dans le hero — vérifier qu'il existe, sinon le garder tel quel ; ce n'est pas dans le scope de ce composant).
 
-### 2. Halo derrière l'orb (hero)
-Le halo `LayerNeuralGlow` + le radial du thème se superposent au même endroit (top-right) → tache bleue derrière l'orb trop forte. Avec le thème désaturé, garder LayerNeuralGlow tel quel (0.22) — il redevient un accent local correct.
+## 2. Background — rendre la maison + knowledge graph visibles
 
-### 3. Validation
-Screenshot mobile avant/après : le haut de page doit paraître blanc cassé avec un accent bleu doux derrière l'orb, jamais un dégradé bleu plein.
+Le problème actuel : après désaturation du thème, les couches `LayerHouseBlueprintGhost` (opacity 0.06) et `HousingKnowledgeGraph` (opacity 0.07) sont trop faibles pour être perçues. La référence montre une maison ligne fine bien lisible et un réseau de nœuds derrière l'orb.
 
-## Note
-La carte "Trouver un pro" prépondérante est déjà visible et fonctionnelle (badge Recommandé, pleine largeur, gradient) — confirmé par screenshot.
+Calibrer **uniquement les overlays hero** (pas les orbes flous) :
+
+- `LayerHouseBlueprintGhost.tsx` : opacity `0.06` → **0.14**, stroke `#3B82F6` (garder), strokeWidth +20%. Positionné derrière l'orb (right side).
+- `overlays/HousingKnowledgeGraph.tsx` : opacity `0.07` → **0.18**, nœuds r légèrement plus gros, lignes plus contrastées (`rgba(59,130,246,0.35)` au lieu de 0.20).
+- `LayerDotIntelligenceField.tsx` : opacity `0.08` → **0.12** (le pointillé en coin doit se voir).
+- `LayerHousingMesh.tsx` : opacity `0.05` → **0.09**.
+- `LayerNeuralGlow.tsx` : halo derrière l'orb `0.22` → **0.30** (plus présent mais reste local).
+- `LayerGradientField` + `unicorn-theme.css` : **inchangés** (la base reste blanche/glace).
+- `LayerFloatingDataOrbs` : **inchangés** (déjà calibrés bas).
+
+Règle : le fond GLOBAL reste blanc 80%, mais la **zone hero droite** (autour de l'orb) doit raconter visuellement maison → réseau → intelligence. Test : screenshot sans texte/orb → la maison blueprint et le knowledge graph doivent être perceptibles sans effort, sans dominer la page.
+
+## 3. Validation
+
+Screenshot mobile 384px : 
+- 6 cartes égales 3×2 visibles, "Trouver un pro" et "Recommander un professionnel" présents.
+- Background blanc cassé avec maison blueprint + nodes visibles derrière l'orb.
+- Texte noir parfaitement lisible.
 
 ## Hors scope
-Aucun changement de contenu, de logique ou des couches déjà calibrées.
+
+Pas de changement de copy, de logique, du gros CTA "Parler à Alex", ni de la navigation/header.
