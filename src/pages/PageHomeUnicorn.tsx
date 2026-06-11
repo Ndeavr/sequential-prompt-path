@@ -20,6 +20,8 @@ import AlexCapabilitiesStrip from "@/components/home-unicorn/AlexCapabilitiesStr
 import CinematicArchScenes from "@/components/home-unicorn/CinematicArchScenes";
 import PIMIntroBand from "@/components/pim/PIMIntroBand";
 import IntelligenceBackground from "@/components/visual/intelligence-bg/IntelligenceBackground";
+import BannerFirstCustomer48h from "@/components/first-customer-48h/BannerFirstCustomer48h";
+import SocialProofContractorBlock from "@/components/first-customer-48h/SocialProofContractorBlock";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
   DropdownMenu,
