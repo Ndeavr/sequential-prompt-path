@@ -1,86 +1,124 @@
 
-## Fix flickering of `IntelligenceBackground` on `/index` (mobile + desktop)
+# Module « Vision IA 5 Ans » — Onboarding Entrepreneurs UNPRO
 
-Keep the premium look. Remove the patterns that force full-viewport repaints on Android Chrome / iOS Safari and that re-render whenever Alex's voice/chat state changes.
+Nouveau bloc émotionnel et différenciateur inséré dans le flow d'onboarding entrepreneur, juste après l'import Google Business Profile et avant le score AIPP. Inclut un système d'A/B testing pour mesurer l'impact sur la conversion.
 
-### Root causes (confirmed by reading the code)
+## Position dans le funnel
 
-1. **Animated huge blurred blobs.** `LayerFloatingDataOrbs` renders 4 divs sized 440–620 px with `filter: blur(110px)` (85 px on mobile) and animates `transform` + `scale` via `ub-orb-drift-*`. Moving a blurred surface that is larger than the mobile viewport forces a full-screen repaint every frame → visible flicker.
-2. **Opacity animations on full-page overlays.** `ub-blueprint-drift`, `ub-archive-drift`, `ub-breath`, `ub-neural-glow` all animate `opacity` (not just transform) on absolutely-positioned full-size layers.
-3. **`PassportArchiveDrift`** blurs cards with `filter: blur(40px)` and animates both transform *and* opacity → second source of moving-blur flicker behind the PIM band.
-4. **High-frequency SVG opacity / dashoffset animations.** `HousingKnowledgeGraph`, `NeuralHomeIntelligenceField`, `FooterConstellation` apply per-element `ub-twinkle` (opacity) and `ub-draw` (stroke-dashoffset) on dozens of nodes/links → continuous compositor invalidation.
-5. **`BlueprintOverlay`** in `CinematicArchScenes` runs `uc-blueprint-drift 24s` that animates both transform *and* opacity.
-6. **Re-mount on parent state changes.** `PageHomeUnicorn` mounts `<IntelligenceBackground variant="hero" />` (and 3 other instances) directly in a tree that re-renders whenever Alex voice / chat / orb state updates. The component is not memoized, so every render rebuilds the 6 layer subtrees (and their `useMemo` arrays in `LayerDotIntelligenceField` survive, but the SVG/DOM is re-diffed and `style={{ animation: ... }}` re-applied → restart flashes).
-7. **Stacked full-screen `backdrop-filter` panels.** Multiple `.uc-glass*` layers + animated blur orbs compound paint cost on mobile.
+```text
+Import GBP → Analyse IA → [Vision IA 5 Ans] → Score AIPP → Compatibilité UNPRO → Recommandation plan
+```
 
-### Fix plan — surgical, visual identity preserved
+## Livrables
 
-#### A. `src/components/visual/intelligence-bg/LayerFloatingDataOrbs.tsx`
-- Keep the orbs (color + position + blur) — they are the premium glow.
-- **Desktop (≥ 768 px):** keep the existing `ub-orb-drift-*` transform animation, but slow it (≥ 60 s) and remove the `scale()` component (scale on a blurred layer is the worst case). Translate only, ≤ 4 % range.
-- **Mobile (< 768 px):** disable the transform animation entirely (orbs stay static), keep blur + color + opacity. Implemented via a `.ub-orb` `@media (max-width: 767px) { animation: none; }` rule in `intelligence-bg.css`.
-- Remove the per-orb inline `animation` string and move it onto class names (`ub-orb-1 … ub-orb-4`) so React never re-applies the inline style on re-render.
+### Pages / routes
+- `/entrepreneur/vision-5-ans/:companyId` — écran cinématique standalone (accessible aussi via SMS)
+- Intégration inline dans `ProSetupWizard` comme nouvelle étape entre import et AIPP
 
-#### B. `src/components/visual/intelligence-bg/intelligence-bg.css`
-- Rewrite the offending keyframes to be **transform-only** with **stable opacity**:
-  - `ub-orb-drift-1..6`: keep `translate3d`, drop `scale`.
-  - `ub-breath`: remove `opacity` change, keep a tiny `scale(1 → 1.04)`.
-  - `ub-neural-glow`: same — transform only, fixed opacity.
-  - `ub-blueprint-drift`: transform only, fixed opacity 0.09.
-  - `ub-archive-drift`: transform only, fixed opacity 0.08.
-  - `ub-twinkle`: replace with a much slower (12 s) opacity range of 0.45 → 0.55 (barely visible delta) **or** drop entirely on mobile via `@media`.
-- Add a global mobile guard: under `@media (max-width: 767px)` disable `ub-mesh-shift`, `ub-blueprint-drift`, `ub-archive-drift`, `ub-orb-drift-*`, keep only `ub-neural-glow` and `ub-twinkle` at reduced amplitude.
-- Add `will-change: transform` (already on `.ub-orb`/`.ub-neural-glow`) and `transform: translateZ(0)` on `.ub-blueprint` to promote to its own layer (avoids invalidating siblings).
+### Composants (`src/features/visionIA/`)
+- `VisionIAModule.tsx` — orchestrateur principal
+- `VisionIAHero.tsx` — titre + sous-texte
+- `VisionTimeline.tsx` — timeline horizontale Aujourd'hui → 1 an → 3 ans → 5 ans avec animations
+- `ScenarioCard.tsx` — 3 cartes (No Change / Croissance Naturelle / Optimisé UNPRO)
+- `AIObservationsCard.tsx` — Forces ✅ / Opportunités ⚠
+- `CTAReportFull.tsx` — bouton "Voir mon rapport complet"
+- `VisionLoadingState.tsx` — état génération IA (premium, narratif)
 
-#### C. `src/components/visual/intelligence-bg/IntelligenceBackground.tsx`
-- Wrap the component in `React.memo` so parent (Alex state) re-renders do not re-diff the entire background subtree.
-- Same for each `Layer*` and overlay component (`React.memo` default export) — they take no props that change.
+### Edge Functions
+- `future-analysis-agent` — déclenchée sur event `company_imported`
+  - Lit signaux (avis, site, SEO, social, ancienneté, territoire, concurrence)
+  - Appelle Lovable AI (`google/gemini-3-flash-preview`) avec prompt structuré → 3 scénarios + forces/faiblesses
+  - Écrit dans `company_future_analysis`
+  - Déclenche envoi SMS via pipeline outbound existant
+- `vision-5-ans-generate` — endpoint synchrone pour régénération manuelle admin
 
-#### D. `src/components/visual/intelligence-bg/overlays/HousingKnowledgeGraph.tsx`
-- Keep the graph visual. Remove the per-line `ub-draw` animation (stroke-dashoffset on 40+ lines is the heaviest cost). Render the lines fully drawn (static).
-- Reduce `ub-twinkle` to **5 nodes max**, picked deterministically, with a 10 s cycle. Other nodes stay static at fixed opacity.
-- Memoize the component.
+### Table Supabase
+`company_future_analysis` :
+- `company_id`, `contractor_id`
+- `current_score`, `current_visibility`, `current_authority`
+- `scenario_no_change`, `scenario_growth`, `scenario_unpro` (jsonb)
+- `strengths`, `weaknesses`, `opportunities` (jsonb)
+- `timeline_data` (jsonb : projections 1/3/5 ans)
+- `ab_variant` (text : copy variant utilisée)
+- `generated_at`, `ai_model_used`, `confidence_score`
 
-#### E. `src/components/visual/intelligence-bg/overlays/NeuralHomeIntelligenceField.tsx` + `FooterConstellation.tsx`
-- Drop per-element opacity animation (`ub-twinkle`) on mobile; keep on desktop only via a `.ub-anim-desktop-only` class gated by media query.
-- Keep the central halo but with the new transform-only `ub-breath`.
+### SMS — 3 variants A/B
+Branchés sur `dynamic-sms-personalization` existant, avec rotation via `ab_test_variants` :
+1. « Nous avons demandé à l'IA d'analyser… »
+2. « Si ChatGPT analysait votre entreprise aujourd'hui… »
+3. « L'IA a identifié plusieurs signaux de croissance… »
 
-#### F. `src/components/visual/intelligence-bg/overlays/PassportArchiveDrift.tsx`
-- Replace `filter: blur(40px)` cards with static SVG-mask soft shapes (no blur filter) or keep blur but set animation to `none` on mobile and to transform-only/stable-opacity on desktop.
+## A/B Testing
 
-#### G. `src/components/home-unicorn/BlueprintOverlay.tsx`
-- Change inline `animation: "uc-blueprint-drift 24s …"` to a CSS class (so it isn't re-applied on every React render). Animation itself already becomes transform-only via fix (B).
+### Variants testés
+1. **Copy hero** — 3 versions du titre/sous-texte (émotionnel vs analytique vs urgence)
+2. **Ordre scénarios** — Pire→Meilleur vs Meilleur→Pire vs UNPRO en premier
+3. **CTA principal** — « Voir mon rapport complet » vs « Activer ma trajectoire IA » vs « Découvrir mon plan »
+4. **SMS** — 3 versions (ci-dessus)
 
-#### H. `src/pages/PageHomeUnicorn.tsx`
-- Extract the four `<IntelligenceBackground variant="…" />` calls into a memoized sibling (e.g. `<HomeIntelligenceBackdrops />` wrapped in `React.memo`) mounted once, so Alex voice/chat state never causes them to re-render.
-- No layout/visual change, no removed variants.
+### Infra
+- Réutilise `ab_test_variants` + `experiment_assignments` + `experiment_events` (tables existantes)
+- Helper `useVisionIAVariant(companyId)` qui assigne déterministiquement et logge l'exposure
+- Métriques trackées : view, scenario_hover, cta_click, sms_link_click, conversion vers plan
 
-#### I. Z-index / layering audit
-- Ensure single stacking: `IntelligenceBackground` z=0, `CinematicArchScenes` z=1, content z=10, `BottomDockGlass` z=40, Alex orb z=50. Remove redundant `position: fixed` from any layer that doesn't need it (only `fixed=false` variant is used on home → already absolute, good).
-- Do not stack two `backdrop-filter` panels over the orbs simultaneously.
+### Dashboard admin
+- Nouvelle section dans `/admin/operations` : « Vision IA — A/B Performance »
+  - Conversion par variant (copy, ordre, CTA, SMS)
+  - Significativité statistique
+  - Bouton "Promote winner"
 
-### Out of scope (do not touch)
-- Alex orb visuals (`AlexOrbPremium`) — keep its existing animations.
-- Floating Alex panel positioning (already fixed in previous turn).
-- Any business logic, routing, content, copy, or non-background components.
-- Hero, capabilities strip, quick actions, PIM band, contractor split, footer copy.
+## Logique IA (prompt structuré)
 
-### Files touched
-- `src/components/visual/intelligence-bg/intelligence-bg.css`
-- `src/components/visual/intelligence-bg/IntelligenceBackground.tsx`
-- `src/components/visual/intelligence-bg/LayerFloatingDataOrbs.tsx`
-- `src/components/visual/intelligence-bg/LayerNeuralGlow.tsx`
-- `src/components/visual/intelligence-bg/LayerHouseBlueprintGhost.tsx`
-- `src/components/visual/intelligence-bg/overlays/HousingKnowledgeGraph.tsx`
-- `src/components/visual/intelligence-bg/overlays/NeuralHomeIntelligenceField.tsx`
-- `src/components/visual/intelligence-bg/overlays/PassportArchiveDrift.tsx`
-- `src/components/visual/intelligence-bg/overlays/FooterConstellation.tsx`
-- `src/components/home-unicorn/BlueprintOverlay.tsx`
-- `src/pages/PageHomeUnicorn.tsx` (memoized backdrops wrapper only)
+Input signaux : `reviews_count`, `reviews_avg`, `reviews_frequency`, `reviews_response_rate`, `website_quality`, `seo_local_score`, `ai_visibility_score`, `social_signals`, `years_in_business`, `territory_density`, `local_competition`.
 
-### Verification
-- Reload `/index` on the current 384 px viewport — confirm background still shows orbs, blueprint ghost, dot field, knowledge graph; no flickering during idle scroll.
-- Tap Alex orb → open voice → speak → close. Background must not flash or restart animations.
-- Toggle Alex chat fullscreen overlay and back — background remains stable underneath.
-- Desktop ≥ 1024 px: confirm orbs still drift subtly (translate only), blueprint still breathes.
-- `prefers-reduced-motion`: all animations still stop (existing guard preserved).
+Output Zod schema :
+```ts
+{
+  current: { score, visibility, authority },
+  scenarios: {
+    no_change: { summary, risks[], projections_5y },
+    natural_growth: { summary, gains[], projections_5y },
+    unpro_optimized: { summary, gains[], projections_5y }
+  },
+  strengths: string[],
+  opportunities: string[],
+  timeline: { y1, y3, y5 }
+}
+```
+
+## UI/UX
+
+- Mobile-first, fond cinematic dark (`#050816`), tokens existants
+- Timeline animation : Framer Motion stagger, transform-only (respect mémoire flicker)
+- 3 cartes scénarios : glass-strong, hover translateY(-2px)
+- Pas de chime audio (respect Alex sonic identity)
+- Loading state narratif : « Analyse de votre territoire… », « Projection 5 ans en cours… »
+
+## Contraintes respectées
+
+- French-first (fr-CA)
+- Pas de « 3 soumissions », pas de « réseau d'entrepreneurs »
+- Positionnement registre intelligent / source citable
+- Production Reliability : `reportOutcome()` sur tous les agents, `FailureCode` canonique
+- Pas de leak technique (erreurs IA → fallback narratif)
+- Reliability state machine pour `future-analysis-agent`
+
+## Tâches
+
+1. Migration `company_future_analysis` + grants + RLS
+2. Edge function `future-analysis-agent` (Lovable AI + reliability wrapper)
+3. Composants React `src/features/visionIA/*`
+4. Intégration `ProSetupWizard` (nouvelle étape)
+5. Route `/entrepreneur/vision-5-ans/:companyId` (landing SMS)
+6. Hook `useVisionIAVariant` + tracking events
+7. Migration : 3 variants SMS dans `ab_test_variants`
+8. Section admin `/admin/operations` — Vision IA A/B
+9. Trigger sur `company_imported` event → enqueue agent
+
+## Hors scope
+
+- Refonte score AIPP existant
+- Pricing
+- Alex voice script (utilise infra existante)
+
+Confirmer pour passer en build mode.
