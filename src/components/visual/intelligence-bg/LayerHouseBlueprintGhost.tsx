@@ -8,7 +8,7 @@ interface Props {
 }
 
 export default function LayerHouseBlueprintGhost({
-  opacity = 0.06,
+  opacity = 0.14,
   color = "#3B82F6",
 }: Props) {
   return (
@@ -23,7 +23,7 @@ export default function LayerHouseBlueprintGhost({
         transform="translate(900 540) scale(1.05)"
         fill="none"
         stroke={color}
-        strokeWidth="1.6"
+        strokeWidth="1.9"
         strokeLinecap="round"
         strokeLinejoin="round"
       >

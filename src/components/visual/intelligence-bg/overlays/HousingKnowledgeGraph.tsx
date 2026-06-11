@@ -70,9 +70,9 @@ export default function HousingKnowledgeGraph() {
       className="absolute inset-0 w-full h-full pointer-events-none"
       viewBox="0 0 1600 1000"
       preserveAspectRatio="xMidYMid slice"
-      style={{ opacity: 0.07 }}
+      style={{ opacity: 0.18 }}
     >
-      <g stroke="#2563EB" strokeWidth="1.0" fill="none" strokeLinecap="round">
+      <g stroke="#2563EB" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.55">
         {links.map(([a, b], i) => (
           <line
             key={i}
@@ -92,7 +92,7 @@ export default function HousingKnowledgeGraph() {
         {nodes.map((n, i) => (
           <circle
             key={i}
-            cx={n.x} cy={n.y} r="3.2"
+            cx={n.x} cy={n.y} r="3.8"
             style={{ animation: `ub-twinkle 6s ease-in-out ${i * 0.2}s infinite` }}
           />
         ))}
