@@ -21,7 +21,7 @@ export default function LayerNeuralGlow({
           width: size,
           height: size,
           borderRadius: "9999px",
-          background: `radial-gradient(circle, ${color} 0%, rgba(59,130,246,0.18) 45%, transparent 75%)`,
+          background: `radial-gradient(circle, ${color} 0%, rgba(59,130,246,0.08) 45%, transparent 75%)`,
         }}
       />
       <div
