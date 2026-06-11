@@ -4,7 +4,7 @@ export const CONTRACTOR_HUMAN_CALLOUT = {
   delayMs: 5000,
   storageKey: "unpro:contractor_human_popup_shown",
   hours: "Lun–Ven · 8h–18h (HE)",
-  title: "Vous voulez joindre UNPRO?",
+  title: "Vous voulez être recommandé par l'IA?",
   subtitle: "Parlez à un humain maintenant.",
   primaryCta: "Appeler",
   secondaryCta: "Continuer avec Alex",

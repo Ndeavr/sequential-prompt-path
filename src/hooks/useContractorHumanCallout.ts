@@ -1,6 +1,17 @@
 import { useEffect, useState } from "react";
 import { CONTRACTOR_HUMAN_CALLOUT, isContractorSurface } from "@/config/contractorHumanCallout";
 
+const INPUT_SELECTOR = 'input, textarea, select, [contenteditable="true"]';
+const INPUT_IDLE_MS = 8000;
+const RECHECK_MS = 5000;
+
+function isUserTyping(): boolean {
+  if (typeof document === "undefined") return false;
+  const el = document.activeElement;
+  if (el && el.matches?.(INPUT_SELECTOR)) return true;
+  return false;
+}
+
 export function useContractorHumanCallout() {
   const [isOpen, setIsOpen] = useState(false);
   const [pathKey, setPathKey] = useState(0);
@@ -9,7 +20,6 @@ export function useContractorHumanCallout() {
     if (typeof window === "undefined") return;
     const onChange = () => setPathKey((k) => k + 1);
     window.addEventListener("popstate", onChange);
-    // Patch pushState/replaceState to detect SPA navigation
     const origPush = history.pushState;
     const origReplace = history.replaceState;
     history.pushState = function (...args) {
@@ -37,8 +47,35 @@ export function useContractorHumanCallout() {
 
     if (!isContractorSurface(window.location.pathname, window.location.search)) return;
 
-    const t = window.setTimeout(() => setIsOpen(true), CONTRACTOR_HUMAN_CALLOUT.delayMs);
-    return () => window.clearTimeout(t);
+    let lastInputAt = 0;
+    let timer: number | null = null;
+    let cancelled = false;
+
+    const onInput = () => {
+      lastInputAt = Date.now();
+    };
+    document.addEventListener("focusin", onInput, true);
+    document.addEventListener("input", onInput, true);
+    document.addEventListener("keydown", onInput, true);
+
+    const tryOpen = () => {
+      if (cancelled) return;
+      if (isUserTyping() || Date.now() - lastInputAt < INPUT_IDLE_MS) {
+        timer = window.setTimeout(tryOpen, RECHECK_MS);
+        return;
+      }
+      setIsOpen(true);
+    };
+
+    timer = window.setTimeout(tryOpen, CONTRACTOR_HUMAN_CALLOUT.delayMs);
+
+    return () => {
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
+      document.removeEventListener("focusin", onInput, true);
+      document.removeEventListener("input", onInput, true);
+      document.removeEventListener("keydown", onInput, true);
+    };
   }, [pathKey]);
 
   const dismiss = () => {
