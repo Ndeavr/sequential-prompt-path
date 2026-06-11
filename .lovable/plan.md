@@ -1,64 +1,94 @@
-## Repositionnement PIM — Mémoire de la maison
+## Objectif
 
-Objectif: retirer toute formulation "IA/analysé/lisible par l'IA/intelligence" des surfaces publiques PIM et la remplacer par mémoire, historique, continuité, patrimoine, valeur, tranquillité d'esprit. L'IA reste en arrière-plan.
+Créer un système de backgrounds premium UNPRO — texture légère, profondeur, intelligence invisible — utilisable derrière Hero, Alex, Passeport Maison, "Comment ça fonctionne", Entrepreneurs et Footer. Aucun trombone, aucun motif crypto/circuit. SVG + CSS + Framer Motion uniquement.
 
-Hero retenu (principal): « Votre maison possède désormais sa propre mémoire. » + sous-titre Variante A. (Décision rapide, pas de blocage — peut être ajustée après revue.)
+## Architecture
 
-### Fichiers à modifier (UI/contenu uniquement)
+Un composant racine `IntelligenceBackground` qui compose 4 couches indépendantes, et expose une prop `variant` pour adapter le mix par section.
 
-1. `src/components/pim/HeroSectionPIMLanding.tsx`
-   - Pill: `PIM · Passeport Intelligence Maison` → `PIM · Le carnet de vie de votre maison`
-   - H1: « Votre maison possède désormais sa propre mémoire. » (mot final en gradient: « mémoire »)
-   - Sous-titre: « Chaque intervention, document et décision importante est conservé automatiquement dans un dossier unique qui évolue avec votre propriété. »
-   - Commentaire `Graphe d'intelligence` → `Graphe mémoire`.
+```
+src/components/visual/intelligence-bg/
+  IntelligenceBackground.tsx        // orchestrateur (variant)
+  LayerGradientField.tsx            // Layer 1
+  LayerHousingMesh.tsx              // Layer 2 (SVG)
+  LayerDotIntelligenceField.tsx     // Layer 3 (SVG)
+  LayerFloatingDataOrbs.tsx         // Layer 4 (blurred divs + framer)
+  overlays/
+    HousingKnowledgeGraph.tsx       // hero overlay
+    PassportArchiveDrift.tsx        // PIM overlay
+    NeuralHomeIntelligenceField.tsx // Alex overlay
+    TerritoryRecommendationMesh.tsx // entrepreneurs overlay
+    FooterConstellation.tsx         // footer overlay
+  intelligence-bg.css               // keyframes + reduced-motion
+```
 
-2. `src/components/pim/SectionFragmentedProblem.tsx`
-   - Carte « Zéro intelligence long terme » → titre « Aucune mémoire à long terme », body « Chaque décision repart de zéro. Aucune trace du passé, aucune continuité d'une rénovation à l'autre. »
-   - Purger toute occurrence "IA" dans les autres cartes (revue rapide, reformulation neutre si présente).
+`variant`: `"hero" | "passport" | "alex" | "contractors" | "footer" | "default"`. Chaque variante choisit son overlay et ajuste l'opacité/teinte des couches.
 
-3. `src/components/pim/SectionHowPIMWorks.tsx`
-   - Étape 03 « L'IA analyse votre propriété » → « Votre maison conserve son histoire » — body: « Travaux, garanties, inspections et équipements s'ajoutent automatiquement à un historique clair et durable. »
-   - Étape 04 « Recommandations et intelligence » → « Continuité et tranquillité d'esprit » — body: « Vous retrouvez en un instant ce qui a été fait, quand, par qui et avec quelles garanties. »
-   - Phrase « en intelligence vivante » → « en mémoire vivante ».
+## Détails des couches (tokens fixés)
 
-4. `src/components/pim/SectionNotCloudStorage.tsx`
-   - « infrastructure d'intelligence résidentielle » → « dossier vivant de votre propriété ».
-   - Tag « Diagnostics IA » → « Équipements ».
-   - Reformuler corps pour parler de mémoire/historique vs stockage.
+**Layer 1 — Gradient principal** (light surfaces)
+```
+radial-gradient(circle at 20% 20%, rgba(59,130,246,.12), transparent 40%),
+radial-gradient(circle at 80% 30%, rgba(14,165,233,.08), transparent 35%),
+radial-gradient(circle at 50% 80%, rgba(99,102,241,.08), transparent 40%),
+linear-gradient(180deg, #ffffff 0%, #f8fbff 35%, #f2f7ff 100%);
+```
+Footer override : `linear-gradient(180deg,#071120 0%,#0b1730 100%)`.
 
-5. `src/components/pim/SectionAlexCapabilities.tsx`
-   - Repositionner la section comme « Votre maison se souvient de » avec liste demandée (Rénovations, Factures, Garanties, Soumissions, Inspections, Entretiens, Équipements, Subventions, Entrepreneurs recommandés, Documents importants).
-   - Supprimer mention « l'IA les voit ». Reformuler en bénéfice humain (« Vous retrouvez immédiatement… »).
+**Layer 2 — Housing Intelligence Mesh** (SVG inline, opacity 0.04)
+Courbes Bézier douces évoquant plans de maison + nœuds de connexion (intersections aux jointures). Pas de grille rigide. Stroke 0.6, `stroke="#2563EB"`, `stroke-linecap="round"`.
 
-6. `src/components/pim/SectionPIMFinalCTA.tsx`
-   - Titre: « Commencez à bâtir la mémoire de votre maison. »
-   - Sous-titre: « Gratuit. Moins de 30 secondes. Aucun engagement. »
-   - Bouton: « Créer mon Passeport Maison ».
-   - Retirer « mémoire et intelligence » → « mémoire et continuité ».
+**Layer 3 — Dotted Intelligence Field** (SVG, opacity 0.08)
+Nuages de points concentrés top-right + bottom-left, suggérant silhouettes de toiture (pente 30°) et contour de parcelle (rectangle déformé). Cercles r=1.2, fill `#3B82F6`.
 
-7. Nouvelle section émotionnelle `src/components/pim/SectionPIMEmotional.tsx` (ajoutée à `PagePIMLanding.tsx` entre `SectionNotCloudStorage` et `SectionAlexCapabilities`):
-   - « Une maison accumule des souvenirs. Mais les documents se perdent. Les garanties disparaissent. Les rénovations sont oubliées. Le Passeport Intelligence Maison conserve l'histoire complète de votre propriété afin que rien d'important ne soit perdu. »
+**Layer 4 — Floating Data Orbs** (4 divs absolus)
+`filter: blur(90px)`, `opacity: .22`, dimensions 320–520px. Couleurs : `#3B82F6`, `#0EA5E9`, `#6366F1`. Animation `translate3d` 25–40s `ease-in-out infinite alternate`. Respecte `prefers-reduced-motion`.
 
-8. Nouvelle section bénéfices `src/components/pim/SectionPIMBenefits.tsx` (4 cartes: Mémoire permanente, Historique complet, Valeur protégée, Documents organisés) injectée après le Hero.
+## Overlays par section
 
-9. `src/pages/PagePIMLanding.tsx`
-   - Meta description, OG, JSON-LD (Service.description, FAQ Q1/Q2/Q3, serviceType) réécrits sans « IA / lisible par l'IA / infrastructure d'intelligence ». Nouveau wording: « dossier vivant », « mémoire numérique », « historique de votre propriété ».
-   - Importer et ordonner les nouvelles sections: Hero → Benefits → FragmentedProblem → HowPIMWorks → NotCloudStorage → Emotional → AlexCapabilities (renommée « Votre maison se souvient de ») → ForOrganizations → FinalCTA.
+- **HousingKnowledgeGraph** (Hero) — SVG animé : points + liens reliant petites icônes abstraites (maison, doc, bouclier garantie, loupe inspection). Stroke 0.05 opacity, draw-on animation lente 30s.
+- **PassportArchiveDrift** (PIM) — silhouettes très floues (blur 40px, opacity 0.06) de cartes/factures/photos qui dérivent verticalement à 60s.
+- **NeuralHomeIntelligenceField** (Alex) — particules SVG lentes + halo respirant centré sur l'orb (scale 1 → 1.06, 6s). L'orb semble alimenter le réseau (lignes qui partent de son centre vers les nœuds périphériques).
+- **TerritoryRecommendationMesh** (Entrepreneurs) — visualisation abstraite Ville → Projet → Compatibilité → Entrepreneur, opacity max 0.05.
+- **FooterConstellation** — constellation de points + quelques lignes connectées sur fond `#071120 → #0b1730`.
 
-10. `src/components/pim/PIMIntroBand.tsx` (bandeau homepage)
-    - Titre: « Votre maison possède désormais sa propre mémoire. »
-    - Sous-titre: « Conservez rénovations, garanties, inspections, soumissions et documents importants au même endroit. » (déjà proche — ajuster.)
-    - Label pill: « Nouveau · Passeport Maison ».
+## Intégration (sites d'utilisation)
 
-11. `src/components/pim/PropertyIntelligenceGraph.tsx`
-    - Commentaire/legend interne: remplacer « diagnostics IA » par « équipements / entretiens ». Aucun changement visuel structurel.
+Surface unique d'utilisation = pages publiques (Warm/Cinematic). Câblage minimal :
+1. `src/pages/Home.tsx` (ou la home active selon `HomeIntentRouterDynamic`) → wrap Hero avec `<IntelligenceBackground variant="hero">`.
+2. `src/pages/PagePIMLanding.tsx` → ajouter `<IntelligenceBackground variant="passport" />` en absolute derrière `HeroSectionPIMLanding` (remplace le gradient radial local).
+3. `src/components/home-simple/HeroAlexCentered.tsx` → remplacer (ou superposer derrière) `AlexTradesAura` par overlay Alex pour les routes premium concernées.
+4. Section "Entrepreneurs" de la home (composant existant) → wrapper avec variant `contractors`.
+5. Footer global (`MainLayout` footer) → ajouter overlay `footer`.
 
-### Hors scope
-- Pas de modification logique ni backend.
-- `SectionForOrganizations` conservée; revue ciblée pour purger « IA » si trouvée.
-- Autres pages listées par le grep (PageWhyUnpro, ad-landing, etc.) ne sont PAS touchées — seul le contexte PIM est demandé.
+Composant utilisé en `absolute inset-0 -z-10 pointer-events-none` sous le contenu. Le contenu reste inchangé.
 
-### Critères de succès
-- Aucune occurrence de « IA », « intelligence artificielle », « lisible par l'IA », « analysé par l'IA », « infrastructure d'intelligence » dans `src/components/pim/**` et `src/pages/PagePIMLanding.tsx`.
-- Hero, sections, CTA, meta, JSON-LD alignés sur le lexique mémoire/historique/patrimoine/tranquillité.
-- Nouvelle section émotionnelle et liste « Votre maison se souvient de » présentes.
+## Performance & accessibilité
+
+- 100% SVG + CSS + Framer Motion. Pas de canvas, pas de Three, pas de Lottie, pas de vidéo.
+- `will-change: transform, opacity` uniquement sur orbes + overlays animés.
+- `prefers-reduced-motion: reduce` → désactive toutes les animations (keyframes neutralisées via CSS).
+- Mobile : Layer 4 réduit à 3 orbes, blur 70px (perf paint).
+- Aucun rerender React (animations CSS pures sur Layers 1–3).
+- `aria-hidden="true"` sur tout le composant.
+
+## Garde-fous d'identité
+
+- Vocabulaire visuel autorisé uniquement : maison, mémoire, réseau invisible, historique, parcelle, toiture, document, garantie.
+- Vocabulaire interdit hardcodé dans une liste de revue (commentaire en tête de fichier) : trombones, cadenas, engrenages, circuits, blockchain, crypto, chains.
+- Couleurs limitées à : `#3B82F6` (UNPRO Blue), `#0EA5E9` (Cyan), `#6366F1` (Indigo), `#7DD3FC` (highlight). Aucune teinte hors palette.
+
+## Critères de succès
+
+- Composant `IntelligenceBackground` rendu sans erreur sur Home, /pim, section Alex, section Entrepreneurs, Footer.
+- 4 couches visibles, opacités respectées, animations lentes (≥ 20s).
+- Aucune référence visuelle à un trombone/chaîne/circuit.
+- Mobile fluide (pas de jank au scroll), Lighthouse ≥ 90.
+- `prefers-reduced-motion` coupe les animations.
+
+## Hors scope
+
+- Pas de refonte de la typographie, des CTA, ni du contenu.
+- Pas de modification des dashboards admin ni des pages SaaS authentifiées.
+- Pas de nouvelle dépendance npm.
+- Pas de migration DB.
