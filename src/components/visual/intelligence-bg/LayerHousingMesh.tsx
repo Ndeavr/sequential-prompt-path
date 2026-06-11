@@ -7,7 +7,7 @@ interface Props {
   stroke?: string;
 }
 
-export default function LayerHousingMesh({ opacity = 0.14, stroke = "#2563EB" }: Props) {
+export default function LayerHousingMesh({ opacity = 0.05, stroke = "#2563EB" }: Props) {
   return (
     <svg
       aria-hidden
@@ -16,7 +16,7 @@ export default function LayerHousingMesh({ opacity = 0.14, stroke = "#2563EB" }:
       preserveAspectRatio="xMidYMid slice"
       style={{ opacity }}
     >
-      <g fill="none" stroke={stroke} strokeWidth="1.1" strokeLinecap="round">
+      <g fill="none" stroke={stroke} strokeWidth="0.7" strokeLinecap="round">
         {/* Courbes horizontales — plans de maison */}
         <path d="M -50 180 C 280 140, 520 280, 820 220 S 1380 160, 1700 240" />
         <path d="M -50 320 C 240 280, 560 420, 880 370 S 1420 320, 1700 380" />
@@ -49,7 +49,7 @@ export default function LayerHousingMesh({ opacity = 0.14, stroke = "#2563EB" }:
           [180, 740], [440, 780], [720, 780], [980, 770], [1240, 760], [1460, 780],
           [180, 880], [440, 920], [720, 920], [980, 910], [1240, 900], [1460, 900],
         ].map(([cx, cy], i) => (
-          <circle key={i} cx={cx} cy={cy} r="3.2" opacity="0.85" />
+          <circle key={i} cx={cx} cy={cy} r="2.2" opacity="0.35" />
         ))}
       </g>
     </svg>

@@ -55,11 +55,11 @@ export default function IntelligenceBackground({
     >
       <LayerGradientField tone={tone} />
       {variant !== "footer" && (
-        <LayerHousingMesh opacity={variant === "alex" ? 0.10 : 0.14} />
+        <LayerHousingMesh opacity={variant === "alex" ? 0.04 : 0.05} />
       )}
       {variant !== "footer" && (
         <LayerDotIntelligenceField
-          opacity={variant === "contractors" ? 0.16 : 0.20}
+          opacity={variant === "contractors" ? 0.06 : 0.08}
         />
       )}
       {showBlueprint && <LayerHouseBlueprintGhost />}

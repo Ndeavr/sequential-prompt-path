@@ -7,7 +7,7 @@ interface Props {
 }
 
 export default function LayerNeuralGlow({
-  color = "rgba(59,130,246,0.55)",
+  color = "rgba(59,130,246,0.22)",
   size = 620,
 }: Props) {
   return (
@@ -21,7 +21,7 @@ export default function LayerNeuralGlow({
           width: size,
           height: size,
           borderRadius: "9999px",
-          background: `radial-gradient(circle, ${color} 0%, rgba(59,130,246,0.18) 45%, transparent 75%)`,
+          background: `radial-gradient(circle, ${color} 0%, rgba(59,130,246,0.08) 45%, transparent 75%)`,
         }}
       />
       <div
@@ -33,7 +33,7 @@ export default function LayerNeuralGlow({
           width: size * 0.55,
           height: size * 0.55,
           borderRadius: "9999px",
-          background: `radial-gradient(circle, rgba(125,211,252,0.6) 0%, transparent 70%)`,
+          background: `radial-gradient(circle, rgba(125,211,252,0.25) 0%, transparent 70%)`,
           animationDelay: "2s",
         }}
       />
