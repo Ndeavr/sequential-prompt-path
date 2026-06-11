@@ -1,0 +1,74 @@
+/**
+ * IntelligenceBackground — keyframes & reduced-motion guards.
+ * UNPRO visual vocabulary: maison, mémoire, réseau invisible, historique, parcelle.
+ * FORBIDDEN visual references: trombones, cadenas, engrenages, circuits, blockchain, crypto, chains.
+ */
+
+@keyframes ub-orb-drift-1 {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(6%, -4%, 0) scale(1.08); }
+}
+@keyframes ub-orb-drift-2 {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(-5%, 5%, 0) scale(1.05); }
+}
+@keyframes ub-orb-drift-3 {
+  0%   { transform: translate3d(0, 0, 0) scale(1.02); }
+  100% { transform: translate3d(4%, 6%, 0) scale(0.97); }
+}
+@keyframes ub-orb-drift-4 {
+  0%   { transform: translate3d(0, 0, 0) scale(0.98); }
+  100% { transform: translate3d(-7%, -3%, 0) scale(1.04); }
+}
+
+@keyframes ub-breath {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.06); }
+}
+
+@keyframes ub-mesh-shift {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-1.5%, -1%, 0); }
+}
+
+@keyframes ub-archive-drift {
+  0%   { transform: translate3d(0, 0, 0); opacity: 0.06; }
+  50%  { opacity: 0.10; }
+  100% { transform: translate3d(0, -6%, 0); opacity: 0.06; }
+}
+
+@keyframes ub-twinkle {
+  0%, 100% { opacity: 0.25; }
+  50%      { opacity: 0.75; }
+}
+
+@keyframes ub-draw {
+  from { stroke-dashoffset: 1200; }
+  to   { stroke-dashoffset: 0; }
+}
+
+.ub-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+.ub-mesh-shift {
+  animation: ub-mesh-shift 60s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@media (max-width: 640px) {
+  .ub-orb { filter: blur(70px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ub-orb,
+  .ub-mesh-shift,
+  [class*="ub-anim-"] {
+    animation: none !important;
+    transition: none !important;
+  }
+}
