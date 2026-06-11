@@ -8,8 +8,8 @@ interface Props {
 }
 
 export default function LayerHouseBlueprintGhost({
-  opacity = 0.09,
-  color = "#1E40AF",
+  opacity = 0.06,
+  color = "#3B82F6",
 }: Props) {
   return (
     <svg
