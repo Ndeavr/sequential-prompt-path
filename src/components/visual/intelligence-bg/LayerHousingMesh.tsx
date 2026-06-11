@@ -7,7 +7,7 @@ interface Props {
   stroke?: string;
 }
 
-export default function LayerHousingMesh({ opacity = 0.14, stroke = "#2563EB" }: Props) {
+export default function LayerHousingMesh({ opacity = 0.05, stroke = "#2563EB" }: Props) {
   return (
     <svg
       aria-hidden
