@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { trackFirstCustomerEvent } from "@/utils/trackFirstCustomerEvent";
 import ScoreRevealCard from "@/components/first-customer-48h/ScoreRevealCard";
+import LiveScoreReveal from "@/components/first-customer-48h/LiveScoreReveal";
 
 interface Scores {
   visibility: number;
@@ -17,9 +18,12 @@ interface Scores {
   growth: number;
 }
 
+type Phase = "form" | "revealing" | "done";
+
 export default function PageProScoreInstant() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [phase, setPhase] = useState<Phase>("form");
+  const [revealComplete, setRevealComplete] = useState(false);
   const [form, setForm] = useState({
     company: "",
     website: "",
@@ -38,13 +42,23 @@ export default function PageProScoreInstant() {
     trackFirstCustomerEvent("score_started");
   }, []);
 
+  // Switch to final card once both reveal animation finished AND data is loaded.
+  useEffect(() => {
+    if (phase === "revealing" && revealComplete && result) {
+      const t = setTimeout(() => setPhase("done"), 250);
+      return () => clearTimeout(t);
+    }
+  }, [phase, revealComplete, result]);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.company || !form.email) {
       toast.error("Entreprise et courriel requis");
       return;
     }
-    setLoading(true);
+    setPhase("revealing");
+    setRevealComplete(false);
+    setResult(null);
     try {
       const { data, error } = await supabase.functions.invoke("pro-score-instant", {
         body: form,
@@ -55,8 +69,7 @@ export default function PageProScoreInstant() {
       trackFirstCustomerEvent("score_completed", { trade: form.trade, city: form.city });
     } catch (err: any) {
       toast.error(err.message ?? "Une erreur est survenue");
-    } finally {
-      setLoading(false);
+      setPhase("form");
     }
   };
 
@@ -101,7 +114,7 @@ export default function PageProScoreInstant() {
             Analyse instantanée. Aucune carte de crédit requise.
           </p>
 
-          {!result ? (
+          {phase === "form" && (
             <form
               onSubmit={submit}
               className="rounded-3xl p-5 md:p-6 border bg-white space-y-3"
@@ -138,18 +151,26 @@ export default function PageProScoreInstant() {
               ))}
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full px-5 py-3.5 rounded-2xl font-bold text-[14.5px] transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+                className="w-full px-5 py-3.5 rounded-2xl font-bold text-[14.5px] transition-transform hover:-translate-y-0.5"
                 style={{
                   background: "linear-gradient(135deg, #2563FF 0%, #3B82F6 100%)",
                   color: "#fff",
                   boxShadow: "0 12px 24px -8px rgba(37,99,255,0.45)",
                 }}
               >
-                {loading ? "Analyse en cours…" : "Analyser mon entreprise"}
+                Analyser mon entreprise
               </button>
             </form>
-          ) : (
+          )}
+
+          {phase === "revealing" && (
+            <LiveScoreReveal
+              targets={result?.scores ?? null}
+              onComplete={() => setRevealComplete(true)}
+            />
+          )}
+
+          {phase === "done" && result && (
             <ScoreRevealCard
               scores={result.scores}
               opportunities={result.opportunities}
