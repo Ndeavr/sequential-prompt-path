@@ -21,10 +21,10 @@
   --uc-ease: cubic-bezier(.22, 1, .36, 1);
 
   background:
-    radial-gradient(1100px 700px at 80% -10%, rgba(59, 130, 246, 0.18), transparent 60%),
-    radial-gradient(900px 600px at -10% 30%, rgba(189, 231, 255, 0.35), transparent 65%),
-    radial-gradient(800px 900px at 50% 110%, rgba(99, 102, 241, 0.10), transparent 70%),
-    linear-gradient(180deg, #FFFFFF 0%, var(--uc-bg) 40%, var(--uc-bg-2) 100%);
+    radial-gradient(1100px 700px at 80% -10%, rgba(59, 130, 246, 0.06), transparent 60%),
+    radial-gradient(900px 600px at -10% 30%, rgba(189, 231, 255, 0.12), transparent 65%),
+    radial-gradient(800px 900px at 50% 110%, rgba(99, 102, 241, 0.04), transparent 70%),
+    linear-gradient(180deg, #FFFFFF 0%, #FAFCFF 50%, #F5F8FD 100%);
   color: var(--uc-text);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
