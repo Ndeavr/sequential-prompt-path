@@ -1,7 +1,7 @@
 /**
  * PIM overlay — silhouettes ultra floues qui dérivent.
- * Stable: transform-only animation via CSS class (disabled on mobile),
- * fixed opacity, memoized.
+ * Stable: transform-only animation via CSS class on inner div (rotation kept on
+ * outer wrapper so the keyframe translate doesn't override it). Disabled on mobile.
  */
 import { memo } from "react";
 
@@ -19,18 +19,23 @@ function PassportArchiveDrift() {
       {CARDS.map((c, i) => (
         <div
           key={i}
-          className="absolute rounded-2xl ub-archive-card"
+          className="absolute"
           style={{
             top: c.top, bottom: c.bottom, left: c.left, right: c.right,
             width: c.w, height: c.h,
-            background: "linear-gradient(135deg, rgba(125,211,252,0.45), rgba(167,139,250,0.35))",
-            filter: "blur(40px)",
-            // rotate baked into transform; CSS animation translates on top via composited transform
-            // We keep rotate stable by applying it as a separate wrapper-style via `--rot`.
             transform: `rotate(${c.rot}deg)`,
-            animationDelay: c.delay,
           }}
-        />
+        >
+          <div
+            className="ub-archive-card rounded-2xl w-full h-full"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(125,211,252,0.45), rgba(167,139,250,0.35))",
+              filter: "blur(40px)",
+              animationDelay: c.delay,
+            }}
+          />
+        </div>
       ))}
     </div>
   );
