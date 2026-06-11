@@ -1,66 +1,75 @@
-## Plan — Amplifier IntelligenceBackground (×5 intensité visuelle)
 
-Le système est en place mais ses opacités (0.03–0.08) le rendent invisible. Objectif : couches clairement perceptibles type ClothLink/Arc/Vision Pro, sans distraire du contenu.
+## Objectif
+Revenir à un fond **blanc premium** avec intelligence bleue **en filigrane** (pas un aplat bleu), et rendre la carte **"Trouver un pro"** prépondérante.
 
-### 1. `intelligence-bg.css` — keyframes additionnelles
-- `ub-pulse` (twinkle plus marqué 0.4 → 0.95)
-- `ub-blueprint-drift` (translation lente forme fantôme)
-- Augmenter blur orbes : 110px desktop, 85px mobile
+## Règle visuelle imposée
+80% blanc/glace · 15% bleu très pâle · 5% bleu accent.
+Le bleu doit **éclairer** la page, pas la remplir.
 
-### 2. `LayerGradientField.tsx` — gradients plus saturés
-- Bleu TL 0.12 → **0.22**, Cyan 0.08 → **0.18**, Indigo 0.08 → **0.16**
-- Ajouter un 4e radial bleu profond bottom-right `rgba(37,99,235,0.14)`
-- Base linear : `#f0f5ff → #e8f0fe` (au lieu de `#f8fbff`)
+---
 
-### 3. `LayerHousingMesh.tsx` — densifier mesh
-- Opacité par défaut 0.05 → **0.14**
-- strokeWidth 0.6 → **1.1**
-- Ajouter 6 courbes diagonales supplémentaires
-- Nœuds : r 2.2 → **3.2**, opacity 0.55 → **0.85**
+## 1. IntelligenceBackground — calibrage
 
-### 4. `LayerDotIntelligenceField.tsx` — champ plus dense
-- Opacité 0.08 → **0.20**
-- r 1.3 → **2.0**
-- Doubler densité (step 16 → 10) + ajouter cluster top-left (silhouette pignon)
-- Couleur : ajout halo via filter `url(#dot-glow)` Gaussian blur
+### `LayerGradientField.tsx` (tone=light)
+Remplacer par fond quasi-blanc + halos très localisés :
+```
+radial-gradient(circle at 15% 12%, rgba(59,130,246,0.08), transparent 28%),
+radial-gradient(circle at 88% 25%, rgba(14,165,233,0.06), transparent 25%),
+radial-gradient(circle at 50% 88%, rgba(99,102,241,0.05), transparent 30%),
+linear-gradient(180deg, #fdfdff 0%, #f7f9fc 50%, #f2f5fa 100%)
+```
+(supprimer le 4e radial bleu saturé)
 
-### 5. `LayerFloatingDataOrbs.tsx` — orbes ×2
-- Opacités 0.16–0.22 → **0.35–0.48**
-- Tailles +20%
-- Ajouter 2 orbes additionnels (ambre soft + violet) pour profondeur
+### `LayerFloatingDataOrbs.tsx`
+- Réduire opacités ×0.4 (0.42→0.17, 0.38→0.15, 0.40→0.16, 0.35→0.14, 0.22→0.10, 0.28→0.12).
+- Supprimer 2 orbes centrales (garder 4 aux coins seulement → coins texturés ClothLink).
 
-### 6. **NOUVEAU** `LayerHouseBlueprintGhost.tsx`
-Couche 5 — Grande maison filaire fantôme derrière le hero :
-- SVG plein-écran, viewBox 1600×1000
-- Silhouette maison + toiture + fenêtres + porte + cheminée en stroke 1.5
-- Opacité **0.07**, couleur `#1E40AF`
-- Position décalée (right -10%, scale 1.4)
-- Animation `ub-blueprint-drift` 60s
-- Légères annotations "blueprint" : cotes, axes
-- Wired automatiquement dans `IntelligenceBackground` pour variants `hero`, `passport`, `default`
+### `LayerHousingMesh.tsx`
+- opacity prop default 0.14 → **0.05**
+- strokeWidth 1.1 → 0.7
+- Nœuds opacity 0.85 → 0.35, r 3.2 → 2.2
 
-### 7. **NOUVEAU** `LayerNeuralGlow.tsx`
-Couche 6 — Halo radial intelligent derrière l'orb Alex :
-- Cercle blurry `rgba(59,130,246,0.35)` 600px, blur 80px
-- Animation `ub-breath` 8s
-- Variants `hero` + `alex` uniquement
-- Positionné droite ~30% top
+### `LayerDotIntelligenceField.tsx`
+- opacity default 0.20 → **0.08**
 
-### 8. `HousingKnowledgeGraph.tsx` — graphe géant
-- Nœuds 11 → **38** (générés sur grille jitter)
-- Liens 15 → ~**55** (chaque nœud relié à 2-3 voisins)
-- Opacité 0.06 → **0.14**
-- strokeWidth 0.7 → **1.0**
-- Glyphes nœuds plus visibles (r 2 → 3.5, twinkle 0.4 → 0.95)
+### `HousingKnowledgeGraph.tsx`
+- opacity globale → **0.07** (entre 0.06 et 0.10)
+- twinkle 0.40–0.95 → 0.25–0.55
 
-### 9. `IntelligenceBackground.tsx` — orchestration
-- Monter z-index par défaut de `-10` à `-1` quand le parent est `relative` (rester derrière contenu mais devant background blanc)
-- Brancher `LayerHouseBlueprintGhost` sur `hero`/`passport`/`default`
-- Brancher `LayerNeuralGlow` sur `hero`/`alex`
-- Garder respect `prefers-reduced-motion`
+### `LayerHouseBlueprintGhost.tsx`
+- Garder le blueprint (c'est ce qu'on veut derrière l'orb) mais opacity 0.09 → **0.06**
+- Grille blueprint opacity 0.35 → 0.18
+- Couleur stroke `#1E40AF` → `#3B82F6` (plus doux)
 
-### 10. Test visuel
-Critère : capturer hero, masquer texte+orb mentalement → le fond doit rester riche (gradient saturé + mesh visible + blueprint maison + graph + orbes colorés).
+### `LayerNeuralGlow.tsx`
+- Halo principal : rgba(59,130,246,0.55) → **rgba(59,130,246,0.22)**
+- 2e halo cyan 0.6 → 0.25
+- Reste localisé derrière l'orb uniquement (déjà le cas)
 
-### Hors scope
-Pas de changement de typo, contenu, CTA, ni de nouveau composant produit. Vocabulaire visuel inchangé (maison/mémoire/réseau — jamais circuits/crypto/cadenas).
+### `IntelligenceBackground.tsx`
+- Pour `hero` : passer `LayerHousingMesh opacity={0.05}` et `LayerDotIntelligenceField opacity={0.08}` explicitement.
+
+### Test de validation
+Screenshot mobile sans contenu : le fond doit paraître **blanc cassé avec accents bleus diffus**, jamais un aplat bleu. Si dominante bleue > 20%, baisser encore.
+
+---
+
+## 2. Carte "Trouver un pro" prépondérante
+
+Dans le grid "Ce qu'Alex peut faire" du hero PIM (`HeroSectionPIMLanding.tsx` ou composant grid actions) :
+
+- Carte **"Trouver un pro"** devient :
+  - `col-span-2` sur mobile (pleine largeur), au-dessus des autres
+  - Fond gradient primary (`from-primary to-primary/85`) avec texte blanc
+  - Icône plus grande (h-7 w-7), badge "Recommandé" en haut à droite
+  - Hauteur +30%, ombre `shadow-glow`
+  - CTA explicite "Trouver maintenant →"
+- Les autres cartes restent en grid 2 colonnes en dessous, style actuel (blanc, neutre).
+- Supprimer la carte "Recommander un pro" barrée dans la capture (doublon).
+
+---
+
+## Hors scope
+- Pas de changement de contenu/texte hero
+- Pas de modif du composant orb Alex
+- Pas de logique métier
