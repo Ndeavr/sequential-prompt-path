@@ -107,8 +107,8 @@ export default function PageOnboardingAnalyse() {
       </Card>
 
       {/* CTA */}
-      <Button className="w-full" size="lg" onClick={() => navigate("/entrepreneur/onboarding/plan")}>
-        Voir mon plan recommandé
+      <Button className="w-full" size="lg" onClick={() => navigate("/entrepreneur/onboarding/vision-5-ans")}>
+        Voir ma projection IA sur 5 ans
         <ArrowRight className="ml-2 h-4 w-4" />
       </Button>
     </div>

@@ -1118,7 +1118,9 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/onboarding/payment" element={<PageOnboardingPayment />} />
         <Route path="/entrepreneur/onboarding/success" element={<PageOnboardingSuccess />} />
         <Route path="/entrepreneur/vision-5-ans/:companyId" element={<PageVision5Ans />} />
+        <Route path="/entrepreneur/vision-5-ans" element={<PageVision5Ans />} />
         <Route path="/entrepreneur/onboarding/vision-5-ans/:companyId" element={<PageVision5Ans />} />
+        <Route path="/entrepreneur/onboarding/vision-5-ans" element={<PageVision5Ans />} />
 
         {/* New V3 public pages */}
         <Route path="/mes-proprietes" element={<MesProprietesPage />} />
