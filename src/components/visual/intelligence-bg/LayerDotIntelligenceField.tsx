@@ -1,6 +1,6 @@
 /**
- * Layer 3 — Dotted Intelligence Field.
- * Points concentrés top-right (silhouette toiture) + bottom-left (contour parcelle).
+ * Layer 3 — Dotted Intelligence Field (densifié).
+ * Toiture top-right + parcelle bottom-left + pignon top-left.
  */
 import { useMemo } from "react";
 
@@ -10,15 +10,30 @@ interface Props {
 }
 
 function buildRoofDots(): Array<[number, number]> {
-  // Silhouette toiture (triangle pente ~30°) au coin top-right
   const dots: Array<[number, number]> = [];
-  const baseX = 1080;
-  const baseY = 80;
-  for (let row = 0; row < 22; row++) {
-    const rowY = baseY + row * 14;
-    const halfWidth = row * 12;
+  const baseX = 1060;
+  const baseY = 60;
+  for (let row = 0; row < 28; row++) {
+    const rowY = baseY + row * 12;
+    const halfWidth = row * 11;
     for (let i = 0; i <= row; i++) {
-      const x = baseX + 240 - halfWidth + i * 22;
+      const x = baseX + 260 - halfWidth + i * 20;
+      dots.push([x, rowY]);
+    }
+  }
+  return dots;
+}
+
+function buildGableDots(): Array<[number, number]> {
+  // Pignon (triangle inversé) top-left
+  const dots: Array<[number, number]> = [];
+  const baseX = 80;
+  const baseY = 80;
+  for (let row = 0; row < 20; row++) {
+    const rowY = baseY + row * 12;
+    const halfWidth = row * 10;
+    for (let i = 0; i <= row; i++) {
+      const x = baseX + halfWidth - row * 5 + i * 18;
       dots.push([x, rowY]);
     }
   }
@@ -26,25 +41,22 @@ function buildRoofDots(): Array<[number, number]> {
 }
 
 function buildParcelDots(): Array<[number, number]> {
-  // Contour de parcelle (rectangle déformé) bottom-left
   const dots: Array<[number, number]> = [];
-  const left = 60;
-  const top = 620;
-  const right = 520;
-  const bottom = 940;
-  // Side perturbation pour effet "main libre"
-  for (let x = left; x <= right; x += 16) {
-    const wobble = Math.sin(x / 90) * 6;
+  const left = 40;
+  const top = 580;
+  const right = 600;
+  const bottom = 960;
+  for (let x = left; x <= right; x += 10) {
+    const wobble = Math.sin(x / 90) * 7;
     dots.push([x, top + wobble]);
     dots.push([x, bottom - wobble]);
   }
-  for (let y = top; y <= bottom; y += 16) {
-    const wobble = Math.cos(y / 80) * 6;
+  for (let y = top; y <= bottom; y += 10) {
+    const wobble = Math.cos(y / 80) * 7;
     dots.push([left + wobble, y]);
     dots.push([right - wobble, y]);
   }
-  // Remplissage diagonal léger
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 140; i++) {
     const x = left + ((i * 37) % (right - left));
     const y = top + ((i * 53) % (bottom - top));
     dots.push([x, y]);
@@ -53,10 +65,13 @@ function buildParcelDots(): Array<[number, number]> {
 }
 
 export default function LayerDotIntelligenceField({
-  opacity = 0.08,
+  opacity = 0.20,
   color = "#3B82F6",
 }: Props) {
-  const dots = useMemo(() => [...buildRoofDots(), ...buildParcelDots()], []);
+  const dots = useMemo(
+    () => [...buildRoofDots(), ...buildGableDots(), ...buildParcelDots()],
+    []
+  );
   return (
     <svg
       aria-hidden
@@ -65,9 +80,14 @@ export default function LayerDotIntelligenceField({
       preserveAspectRatio="xMidYMid slice"
       style={{ opacity }}
     >
-      <g fill={color}>
+      <defs>
+        <filter id="ub-dot-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="0.6" />
+        </filter>
+      </defs>
+      <g fill={color} filter="url(#ub-dot-glow)">
         {dots.map(([cx, cy], i) => (
-          <circle key={i} cx={cx} cy={cy} r="1.3" />
+          <circle key={i} cx={cx} cy={cy} r="2.0" />
         ))}
       </g>
     </svg>

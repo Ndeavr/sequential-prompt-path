@@ -6,40 +6,58 @@
 
 @keyframes ub-orb-drift-1 {
   0%   { transform: translate3d(0, 0, 0) scale(1); }
-  100% { transform: translate3d(6%, -4%, 0) scale(1.08); }
+  100% { transform: translate3d(8%, -6%, 0) scale(1.12); }
 }
 @keyframes ub-orb-drift-2 {
   0%   { transform: translate3d(0, 0, 0) scale(1); }
-  100% { transform: translate3d(-5%, 5%, 0) scale(1.05); }
+  100% { transform: translate3d(-7%, 7%, 0) scale(1.08); }
 }
 @keyframes ub-orb-drift-3 {
-  0%   { transform: translate3d(0, 0, 0) scale(1.02); }
-  100% { transform: translate3d(4%, 6%, 0) scale(0.97); }
+  0%   { transform: translate3d(0, 0, 0) scale(1.04); }
+  100% { transform: translate3d(6%, 8%, 0) scale(0.94); }
 }
 @keyframes ub-orb-drift-4 {
-  0%   { transform: translate3d(0, 0, 0) scale(0.98); }
-  100% { transform: translate3d(-7%, -3%, 0) scale(1.04); }
+  0%   { transform: translate3d(0, 0, 0) scale(0.96); }
+  100% { transform: translate3d(-9%, -4%, 0) scale(1.06); }
+}
+@keyframes ub-orb-drift-5 {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(5%, -7%, 0) scale(1.10); }
+}
+@keyframes ub-orb-drift-6 {
+  0%   { transform: translate3d(0, 0, 0) scale(1.02); }
+  100% { transform: translate3d(-6%, 6%, 0) scale(0.96); }
 }
 
 @keyframes ub-breath {
   0%, 100% { opacity: 0.55; transform: scale(1); }
-  50%      { opacity: 0.85; transform: scale(1.06); }
+  50%      { opacity: 0.95; transform: scale(1.08); }
+}
+
+@keyframes ub-neural-glow {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.12); }
 }
 
 @keyframes ub-mesh-shift {
   0%   { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(-1.5%, -1%, 0); }
+  100% { transform: translate3d(-2%, -1.5%, 0); }
+}
+
+@keyframes ub-blueprint-drift {
+  0%, 100% { transform: translate3d(0, 0, 0); opacity: 0.07; }
+  50%      { transform: translate3d(-1.2%, -0.8%, 0); opacity: 0.10; }
 }
 
 @keyframes ub-archive-drift {
   0%   { transform: translate3d(0, 0, 0); opacity: 0.06; }
-  50%  { opacity: 0.10; }
+  50%  { opacity: 0.12; }
   100% { transform: translate3d(0, -6%, 0); opacity: 0.06; }
 }
 
 @keyframes ub-twinkle {
-  0%, 100% { opacity: 0.25; }
-  50%      { opacity: 0.75; }
+  0%, 100% { opacity: 0.40; }
+  50%      { opacity: 0.95; }
 }
 
 @keyframes ub-draw {
@@ -50,7 +68,7 @@
 .ub-orb {
   position: absolute;
   border-radius: 9999px;
-  filter: blur(90px);
+  filter: blur(110px);
   will-change: transform, opacity;
   pointer-events: none;
 }
@@ -60,13 +78,27 @@
   will-change: transform;
 }
 
+.ub-blueprint {
+  animation: ub-blueprint-drift 70s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.ub-neural-glow {
+  animation: ub-neural-glow 8s ease-in-out infinite;
+  filter: blur(60px);
+  will-change: transform, opacity;
+}
+
 @media (max-width: 640px) {
-  .ub-orb { filter: blur(70px); }
+  .ub-orb { filter: blur(85px); }
+  .ub-neural-glow { filter: blur(50px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .ub-orb,
   .ub-mesh-shift,
+  .ub-blueprint,
+  .ub-neural-glow,
   [class*="ub-anim-"] {
     animation: none !important;
     transition: none !important;

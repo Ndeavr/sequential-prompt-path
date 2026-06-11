@@ -1,76 +1,99 @@
 /**
- * Hero overlay — Housing Knowledge Graph.
- * Nœuds abstraits (maison, document, garantie, inspection) reliés par traits doux.
+ * Hero overlay — Housing Knowledge Graph (densifié, 38 nœuds).
  */
-const NODES = [
-  { x: 200, y: 180, label: "home" },
-  { x: 520, y: 120, label: "doc" },
-  { x: 860, y: 220, label: "shield" },
-  { x: 1200, y: 160, label: "lens" },
-  { x: 320, y: 480, label: "doc" },
-  { x: 720, y: 540, label: "home" },
-  { x: 1080, y: 460, label: "shield" },
-  { x: 1380, y: 540, label: "lens" },
-  { x: 260, y: 780, label: "home" },
-  { x: 640, y: 820, label: "doc" },
-  { x: 1020, y: 760, label: "shield" },
-];
+import { useMemo } from "react";
 
-const LINKS: Array<[number, number]> = [
-  [0,1],[1,2],[2,3],[0,4],[1,5],[2,6],[3,7],
-  [4,5],[5,6],[6,7],[4,8],[5,9],[6,10],[8,9],[9,10],
-];
+type NodeKind = "home" | "doc" | "shield" | "lens";
 
-function NodeGlyph({ x, y, label }: { x: number; y: number; label: string }) {
+const KINDS: NodeKind[] = ["home", "doc", "shield", "lens"];
+
+function buildNodes() {
+  // Grille 8 × 5 avec jitter déterministe
+  const nodes: Array<{ x: number; y: number; label: NodeKind }> = [];
+  let seed = 0;
+  const rand = () => {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  };
+  for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 8; col++) {
+      const baseX = 120 + col * 200;
+      const baseY = 140 + row * 170;
+      nodes.push({
+        x: baseX + (rand() - 0.5) * 80,
+        y: baseY + (rand() - 0.5) * 60,
+        label: KINDS[(row * 8 + col) % KINDS.length],
+      });
+    }
+  }
+  return nodes;
+}
+
+function buildLinks(n: number) {
+  // Chaque nœud relié à 2-3 voisins proches déterministes
+  const links: Array<[number, number]> = [];
+  for (let i = 0; i < n; i++) {
+    if (i + 1 < n) links.push([i, i + 1]);
+    if (i + 8 < n) links.push([i, i + 8]);
+    if (i % 3 === 0 && i + 9 < n) links.push([i, i + 9]);
+    if (i % 5 === 0 && i + 7 < n) links.push([i, i + 7]);
+  }
+  return links;
+}
+
+function NodeGlyph({ x, y, label }: { x: number; y: number; label: NodeKind }) {
   switch (label) {
     case "home":
-      return <path d={`M ${x-8} ${y+6} L ${x} ${y-8} L ${x+8} ${y+6} L ${x+8} ${y+10} L ${x-8} ${y+10} Z`} />;
+      return <path d={`M ${x-10} ${y+7} L ${x} ${y-10} L ${x+10} ${y+7} L ${x+10} ${y+12} L ${x-10} ${y+12} Z`} />;
     case "doc":
-      return <rect x={x-6} y={y-8} width="12" height="16" rx="1.5" />;
+      return <rect x={x-7} y={y-10} width="14" height="20" rx="1.8" />;
     case "shield":
-      return <path d={`M ${x} ${y-9} L ${x+8} ${y-5} L ${x+8} ${y+3} Q ${x} ${y+11} ${x-8} ${y+3} L ${x-8} ${y-5} Z`} />;
+      return <path d={`M ${x} ${y-11} L ${x+10} ${y-6} L ${x+10} ${y+4} Q ${x} ${y+13} ${x-10} ${y+4} L ${x-10} ${y-6} Z`} />;
     case "lens":
     default:
       return (
         <g>
-          <circle cx={x-2} cy={y-2} r="6" />
-          <line x1={x+3} y1={y+3} x2={x+8} y2={y+8} />
+          <circle cx={x-2} cy={y-2} r="7" />
+          <line x1={x+4} y1={y+4} x2={x+10} y2={y+10} />
         </g>
       );
   }
 }
 
 export default function HousingKnowledgeGraph() {
+  const nodes = useMemo(buildNodes, []);
+  const links = useMemo(() => buildLinks(nodes.length), [nodes.length]);
+
   return (
     <svg
       aria-hidden
       className="absolute inset-0 w-full h-full pointer-events-none"
       viewBox="0 0 1600 1000"
       preserveAspectRatio="xMidYMid slice"
-      style={{ opacity: 0.06 }}
+      style={{ opacity: 0.16 }}
     >
-      <g stroke="#2563EB" strokeWidth="0.7" fill="none" strokeLinecap="round">
-        {LINKS.map(([a, b], i) => (
+      <g stroke="#2563EB" strokeWidth="1.0" fill="none" strokeLinecap="round">
+        {links.map(([a, b], i) => (
           <line
             key={i}
-            x1={NODES[a].x} y1={NODES[a].y}
-            x2={NODES[b].x} y2={NODES[b].y}
+            x1={nodes[a].x} y1={nodes[a].y}
+            x2={nodes[b].x} y2={nodes[b].y}
             strokeDasharray="1200"
-            style={{ animation: `ub-draw 30s ease-in-out ${i * 0.8}s infinite alternate` }}
+            style={{ animation: `ub-draw 30s ease-in-out ${i * 0.4}s infinite alternate` }}
           />
         ))}
       </g>
-      <g stroke="#2563EB" strokeWidth="0.9" fill="none" strokeLinecap="round">
-        {NODES.map((n, i) => (
+      <g stroke="#2563EB" strokeWidth="1.1" fill="none" strokeLinecap="round">
+        {nodes.map((n, i) => (
           <NodeGlyph key={i} x={n.x} y={n.y} label={n.label} />
         ))}
       </g>
       <g fill="#3B82F6">
-        {NODES.map((n, i) => (
+        {nodes.map((n, i) => (
           <circle
             key={i}
-            cx={n.x} cy={n.y} r="2"
-            style={{ animation: `ub-twinkle 6s ease-in-out ${i * 0.4}s infinite` }}
+            cx={n.x} cy={n.y} r="3.2"
+            style={{ animation: `ub-twinkle 6s ease-in-out ${i * 0.2}s infinite` }}
           />
         ))}
       </g>
