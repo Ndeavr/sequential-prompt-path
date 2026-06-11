@@ -33,7 +33,7 @@ export default function LayerNeuralGlow({
           width: size * 0.55,
           height: size * 0.55,
           borderRadius: "9999px",
-          background: `radial-gradient(circle, rgba(125,211,252,0.6) 0%, transparent 70%)`,
+          background: `radial-gradient(circle, rgba(125,211,252,0.25) 0%, transparent 70%)`,
           animationDelay: "2s",
         }}
       />
