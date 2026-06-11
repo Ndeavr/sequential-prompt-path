@@ -1,17 +1,15 @@
 /**
  * BlueprintOverlay — Subtle drifting architectural grid + drafting marks.
- * Pure SVG, very low opacity, GPU-only transform.
+ * Stable: transform-only drift via .ub-blueprint class, fixed opacity, memoized.
  */
-export default function BlueprintOverlay() {
+import { memo } from "react";
+
+function BlueprintOverlay() {
   return (
     <svg
       aria-hidden
-      className="absolute inset-0 w-full h-full"
-      style={{
-        opacity: 0.14,
-        mixBlendMode: "multiply",
-        animation: "uc-blueprint-drift 24s ease-in-out infinite alternate",
-      }}
+      className="absolute inset-0 w-full h-full ub-blueprint pointer-events-none"
+      style={{ mixBlendMode: "multiply" }}
       preserveAspectRatio="xMidYMid slice"
       viewBox="0 0 1600 900"
     >
@@ -37,7 +35,6 @@ export default function BlueprintOverlay() {
       </defs>
       <rect width="100%" height="100%" fill="url(#bp-grid)" />
       <rect width="100%" height="100%" fill="url(#bp-grid-major)" />
-      {/* Drafting marks */}
       <g stroke="#1E40AF" strokeWidth="0.8" fill="none" opacity="0.5">
         <circle cx="240" cy="220" r="42" />
         <line x1="198" y1="220" x2="282" y2="220" />
@@ -49,3 +46,5 @@ export default function BlueprintOverlay() {
     </svg>
   );
 }
+
+export default memo(BlueprintOverlay);

@@ -1,14 +1,15 @@
 /**
- * Hero overlay — Housing Knowledge Graph (densifié, 38 nœuds).
+ * Hero overlay — Housing Knowledge Graph (38 nœuds).
+ * Stable: lines are statically drawn (no stroke-dashoffset animation),
+ * only 5 nodes twinkle (desktop only), memoized to prevent re-renders.
  */
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 
 type NodeKind = "home" | "doc" | "shield" | "lens";
 
 const KINDS: NodeKind[] = ["home", "doc", "shield", "lens"];
 
 function buildNodes() {
-  // Grille 8 × 5 avec jitter déterministe
   const nodes: Array<{ x: number; y: number; label: NodeKind }> = [];
   let seed = 0;
   const rand = () => {
@@ -30,7 +31,6 @@ function buildNodes() {
 }
 
 function buildLinks(n: number) {
-  // Chaque nœud relié à 2-3 voisins proches déterministes
   const links: Array<[number, number]> = [];
   for (let i = 0; i < n; i++) {
     if (i + 1 < n) links.push([i, i + 1]);
@@ -60,7 +60,10 @@ function NodeGlyph({ x, y, label }: { x: number; y: number; label: NodeKind }) {
   }
 }
 
-export default function HousingKnowledgeGraph() {
+// Deterministic indices that twinkle (desktop only)
+const TWINKLE_INDICES = [3, 11, 18, 27, 34];
+
+function HousingKnowledgeGraph() {
   const nodes = useMemo(buildNodes, []);
   const links = useMemo(() => buildLinks(nodes.length), [nodes.length]);
 
@@ -78,8 +81,6 @@ export default function HousingKnowledgeGraph() {
             key={i}
             x1={nodes[a].x} y1={nodes[a].y}
             x2={nodes[b].x} y2={nodes[b].y}
-            strokeDasharray="1200"
-            style={{ animation: `ub-draw 30s ease-in-out ${i * 0.4}s infinite alternate` }}
           />
         ))}
       </g>
@@ -89,14 +90,22 @@ export default function HousingKnowledgeGraph() {
         ))}
       </g>
       <g fill="#3B82F6">
-        {nodes.map((n, i) => (
-          <circle
-            key={i}
-            cx={n.x} cy={n.y} r="3.8"
-            style={{ animation: `ub-twinkle 6s ease-in-out ${i * 0.2}s infinite` }}
-          />
-        ))}
+        {nodes.map((n, i) => {
+          const twinkle = TWINKLE_INDICES.includes(i);
+          return (
+            <circle
+              key={i}
+              cx={n.x}
+              cy={n.y}
+              r="3.8"
+              className={twinkle ? "ub-twinkle-desktop" : undefined}
+              style={twinkle ? { animationDelay: `${i * 0.7}s` } : undefined}
+            />
+          );
+        })}
       </g>
     </svg>
   );
 }
+
+export default memo(HousingKnowledgeGraph);

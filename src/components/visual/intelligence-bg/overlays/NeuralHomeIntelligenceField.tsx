@@ -1,7 +1,10 @@
 /**
  * Alex overlay — Neural Home Intelligence Field.
- * L'orb (au centre) semble alimenter le réseau périphérique.
+ * Stable: central halo uses transform-only ub-breath. Peripheral nodes static on mobile,
+ * subtle twinkle on desktop. Memoized.
  */
+import { memo } from "react";
+
 const CENTER = { x: 800, y: 500 };
 const PERIPH = [
   { x: 280, y: 200 }, { x: 1320, y: 220 },
@@ -10,10 +13,9 @@ const PERIPH = [
   { x: 800, y: 140 }, { x: 800, y: 880 },
 ];
 
-export default function NeuralHomeIntelligenceField() {
+function NeuralHomeIntelligenceField() {
   return (
     <div aria-hidden className="absolute inset-0 pointer-events-none">
-      {/* Halo respirant */}
       <div
         className="absolute left-1/2 top-1/2 rounded-full"
         style={{
@@ -22,7 +24,8 @@ export default function NeuralHomeIntelligenceField() {
           transform: "translate(-50%, -50%)",
           background:
             "radial-gradient(circle, rgba(59,130,246,0.28) 0%, rgba(59,130,246,0) 70%)",
-          animation: "ub-breath 6s ease-in-out infinite",
+          animation: "ub-breath 8s ease-in-out infinite",
+          willChange: "transform",
         }}
       />
       <svg
@@ -38,7 +41,6 @@ export default function NeuralHomeIntelligenceField() {
               x1={CENTER.x} y1={CENTER.y}
               x2={p.x} y2={p.y}
               strokeDasharray="6 10"
-              style={{ animation: `ub-twinkle 5s ease-in-out ${i * 0.3}s infinite` }}
             />
           ))}
         </g>
@@ -46,8 +48,11 @@ export default function NeuralHomeIntelligenceField() {
           {PERIPH.map((p, i) => (
             <circle
               key={i}
-              cx={p.x} cy={p.y} r="3"
-              style={{ animation: `ub-twinkle 4s ease-in-out ${i * 0.4}s infinite` }}
+              cx={p.x}
+              cy={p.y}
+              r="3"
+              className="ub-twinkle-desktop"
+              style={{ animationDelay: `${i * 1.2}s` }}
             />
           ))}
         </g>
@@ -55,3 +60,5 @@ export default function NeuralHomeIntelligenceField() {
     </div>
   );
 }
+
+export default memo(NeuralHomeIntelligenceField);
