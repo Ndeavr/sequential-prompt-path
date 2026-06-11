@@ -80,6 +80,12 @@ const PageRadonLanding = lazy(() => import("@/pages/PageRadonLanding"));
 // Intent homepage (direct route for testing)
 const PageHomeIntentUNPRO = lazy(() => import("@/pages/PageHomeIntentUNPRO"));
 
+// Mission 48H — First Customer
+const PageProScoreInstant = lazy(() => import("@/pages/pro/PageProScoreInstant"));
+const PageProActivate = lazy(() => import("@/pages/pro/PageProActivate"));
+const PageProWelcome = lazy(() => import("@/pages/pro/PageProWelcome"));
+const PageAdminFounders = lazy(() => import("@/pages/admin/PageAdminFounders"));
+
 // PIM — Passeport Intelligence Maison
 const PagePIMLanding = lazy(() => import("@/pages/PagePIMLanding"));
 const PageWhyUnpro = lazy(() => import("@/pages/PageWhyUnpro"));
