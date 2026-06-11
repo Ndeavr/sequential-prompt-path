@@ -2,103 +2,137 @@
  * IntelligenceBackground — keyframes & reduced-motion guards.
  * UNPRO visual vocabulary: maison, mémoire, réseau invisible, historique, parcelle.
  * FORBIDDEN visual references: trombones, cadenas, engrenages, circuits, blockchain, crypto, chains.
+ *
+ * STABILITY RULES (no flicker):
+ *  - Keyframes animate transform ONLY (no opacity, no filter, no background-position).
+ *  - Large blurred surfaces use translate-only animations (no scale) at slow durations.
+ *  - Mobile (< 768px) disables transform animation on blurred blobs entirely.
+ *  - SVG twinkle is kept subtle (delta < 0.15) and gated by a desktop-only class.
  */
 
 @keyframes ub-orb-drift-1 {
-  0%   { transform: translate3d(0, 0, 0) scale(1); }
-  100% { transform: translate3d(8%, -6%, 0) scale(1.12); }
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(3%, -2%, 0); }
 }
 @keyframes ub-orb-drift-2 {
-  0%   { transform: translate3d(0, 0, 0) scale(1); }
-  100% { transform: translate3d(-7%, 7%, 0) scale(1.08); }
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-3%, 2%, 0); }
 }
 @keyframes ub-orb-drift-3 {
-  0%   { transform: translate3d(0, 0, 0) scale(1.04); }
-  100% { transform: translate3d(6%, 8%, 0) scale(0.94); }
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(2%, 3%, 0); }
 }
 @keyframes ub-orb-drift-4 {
-  0%   { transform: translate3d(0, 0, 0) scale(0.96); }
-  100% { transform: translate3d(-9%, -4%, 0) scale(1.06); }
-}
-@keyframes ub-orb-drift-5 {
-  0%   { transform: translate3d(0, 0, 0) scale(1); }
-  100% { transform: translate3d(5%, -7%, 0) scale(1.10); }
-}
-@keyframes ub-orb-drift-6 {
-  0%   { transform: translate3d(0, 0, 0) scale(1.02); }
-  100% { transform: translate3d(-6%, 6%, 0) scale(0.96); }
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-3%, -2%, 0); }
 }
 
 @keyframes ub-breath {
-  0%, 100% { opacity: 0.55; transform: scale(1); }
-  50%      { opacity: 0.95; transform: scale(1.08); }
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50%      { transform: translate(-50%, -50%) scale(1.04); }
 }
 
 @keyframes ub-neural-glow {
-  0%, 100% { opacity: 0.45; transform: scale(1); }
-  50%      { opacity: 0.85; transform: scale(1.12); }
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(0, 0, 0) scale(1.06); }
 }
 
 @keyframes ub-mesh-shift {
   0%   { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(-2%, -1.5%, 0); }
+  100% { transform: translate3d(-1.5%, -1%, 0); }
 }
 
 @keyframes ub-blueprint-drift {
-  0%, 100% { transform: translate3d(0, 0, 0); opacity: 0.07; }
-  50%      { transform: translate3d(-1.2%, -0.8%, 0); opacity: 0.10; }
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(-0.8%, -0.5%, 0); }
 }
 
 @keyframes ub-archive-drift {
-  0%   { transform: translate3d(0, 0, 0); opacity: 0.06; }
-  50%  { opacity: 0.12; }
-  100% { transform: translate3d(0, -6%, 0); opacity: 0.06; }
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(0, -4%, 0); }
 }
 
 @keyframes ub-twinkle {
-  0%, 100% { opacity: 0.25; }
-  50%      { opacity: 0.55; }
-}
-
-@keyframes ub-draw {
-  from { stroke-dashoffset: 1200; }
-  to   { stroke-dashoffset: 0; }
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 0.6; }
 }
 
 .ub-orb {
   position: absolute;
   border-radius: 9999px;
   filter: blur(110px);
-  will-change: transform, opacity;
+  will-change: transform;
   pointer-events: none;
+  transform: translateZ(0);
 }
+.ub-orb-1 { animation: ub-orb-drift-1 80s ease-in-out infinite alternate; }
+.ub-orb-2 { animation: ub-orb-drift-2 90s ease-in-out infinite alternate; }
+.ub-orb-3 { animation: ub-orb-drift-3 100s ease-in-out infinite alternate; }
+.ub-orb-4 { animation: ub-orb-drift-4 85s ease-in-out infinite alternate; }
 
 .ub-mesh-shift {
-  animation: ub-mesh-shift 60s ease-in-out infinite alternate;
+  animation: ub-mesh-shift 90s ease-in-out infinite alternate;
   will-change: transform;
+  transform: translateZ(0);
 }
 
 .ub-blueprint {
-  animation: ub-blueprint-drift 70s ease-in-out infinite;
-  will-change: transform, opacity;
+  animation: ub-blueprint-drift 90s ease-in-out infinite;
+  will-change: transform;
+  transform: translateZ(0);
+  opacity: 0.14;
 }
 
 .ub-neural-glow {
-  animation: ub-neural-glow 8s ease-in-out infinite;
+  animation: ub-neural-glow 10s ease-in-out infinite;
   filter: blur(60px);
-  will-change: transform, opacity;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
-@media (max-width: 640px) {
-  .ub-orb { filter: blur(85px); }
-  .ub-neural-glow { filter: blur(50px); }
+.ub-archive-card {
+  animation: ub-archive-drift 90s ease-in-out infinite alternate;
+  will-change: transform;
+  transform: translateZ(0);
+  opacity: 0.08;
+}
+
+.ub-twinkle-desktop {
+  animation: ub-twinkle 12s ease-in-out infinite;
+}
+
+/* Mobile: kill all moving blurred surfaces + opacity twinkle. Keep static look. */
+@media (max-width: 767px) {
+  .ub-orb,
+  .ub-orb-1,
+  .ub-orb-2,
+  .ub-orb-3,
+  .ub-orb-4 {
+    animation: none !important;
+    filter: blur(70px);
+  }
+  .ub-mesh-shift,
+  .ub-blueprint,
+  .ub-archive-card,
+  .ub-neural-glow {
+    animation: none !important;
+  }
+  .ub-twinkle-desktop {
+    animation: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .ub-orb,
+  .ub-orb-1,
+  .ub-orb-2,
+  .ub-orb-3,
+  .ub-orb-4,
   .ub-mesh-shift,
   .ub-blueprint,
   .ub-neural-glow,
+  .ub-archive-card,
+  .ub-twinkle-desktop,
   [class*="ub-anim-"] {
     animation: none !important;
     transition: none !important;

@@ -4,12 +4,10 @@
  * Évoque : maison, mémoire, réseau invisible, historique, confiance.
  * Interdit : trombones, cadenas, engrenages, circuits, blockchain, crypto, chains.
  *
- * Usage :
- *   <section className="relative">
- *     <IntelligenceBackground variant="hero" />
- *     ... contenu ...
- *   </section>
+ * Memoized: re-renders of the parent (Alex voice/chat state, etc.) never
+ * re-diff this subtree.
  */
+import { memo } from "react";
 import "./intelligence-bg.css";
 import LayerGradientField from "./LayerGradientField";
 import LayerHousingMesh from "./LayerHousingMesh";
@@ -37,7 +35,7 @@ interface Props {
   fixed?: boolean;
 }
 
-export default function IntelligenceBackground({
+function IntelligenceBackground({
   variant = "default",
   zIndex = 0,
   fixed = false,
@@ -74,3 +72,5 @@ export default function IntelligenceBackground({
     </div>
   );
 }
+
+export default memo(IntelligenceBackground);

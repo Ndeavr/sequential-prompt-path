@@ -3,7 +3,7 @@
  * Light-blue glassmorphism theme scoped via .unicorn-theme (does NOT leak to global tokens).
  * Mobile-first, mounted at "/" and "/index" via router.
  */
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -32,6 +32,12 @@ import {
 import "@/styles/unicorn-theme.css";
 import { usePopularQuestions } from "@/hooks/usePopularQuestions";
 import { logQuestion } from "@/services/popularQuestions";
+
+/* ---------------- Memoized backdrops (never re-render on Alex state) ---------------- */
+const HeroBackdrop = memo(() => <IntelligenceBackground variant="hero" />);
+const PassportBackdrop = memo(() => <IntelligenceBackground variant="passport" />);
+const ContractorsBackdrop = memo(() => <IntelligenceBackground variant="contractors" />);
+const FooterBackdrop = memo(() => <IntelligenceBackground variant="footer" />);
 
 /* ---------------- Header ---------------- */
 function HeaderFloatingGlass() {
@@ -687,8 +693,9 @@ export default function PageHomeUnicorn() {
       </Helmet>
 
       <div className="unicorn-theme min-h-screen pb-36 relative overflow-x-hidden">
-        {/* Base intelligence background — full-page, sits behind every section */}
-        <IntelligenceBackground variant="hero" />
+        {/* Base intelligence background — full-page, sits behind every section.
+            Memoized hero backdrop: never re-renders on Alex voice/chat state. */}
+        <HeroBackdrop />
         <CinematicArchScenes />
         <HeaderFloatingGlass />
         <HeroAlexOrb onTalk={onTalk} />
@@ -697,17 +704,17 @@ export default function PageHomeUnicorn() {
         <HomeQuickActionsGrid />
         <LiveStatsCard />
         <section className="relative">
-          <IntelligenceBackground variant="passport" />
+          <PassportBackdrop />
           <PIMIntroBand />
         </section>
         <HowItWorksCards />
         <section className="relative">
-          <IntelligenceBackground variant="contractors" />
+          <ContractorsBackdrop />
           <ContractorAippSplit />
         </section>
         <BottomDockGlass />
         <footer className="relative mt-12 py-10 px-4 text-center">
-          <IntelligenceBackground variant="footer" />
+          <FooterBackdrop />
           <p className="relative z-10 text-[12px] text-white/70">
             UNPRO continue de travailler même lorsque vous quittez le site.
           </p>

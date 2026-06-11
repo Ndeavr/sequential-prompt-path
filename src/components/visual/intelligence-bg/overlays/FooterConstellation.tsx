@@ -1,7 +1,9 @@
 /**
  * Footer overlay — constellation de données + quelques lignes connectées.
- * Évoque : "UNPRO continue de travailler même lorsque vous quittez le site."
+ * Stable: only 8 stars twinkle (desktop only). Memoized.
  */
+import { memo } from "react";
+
 const STARS = Array.from({ length: 40 }, (_, i) => ({
   x: (i * 137) % 1600,
   y: (i * 73) % 1000,
@@ -14,7 +16,9 @@ const LINKS: Array<[number, number]> = [
   [24, 31], [26, 33], [29, 36], [32, 37], [34, 38], [35, 39],
 ];
 
-export default function FooterConstellation() {
+const TWINKLE_INDICES = new Set([2, 7, 14, 19, 23, 28, 33, 38]);
+
+function FooterConstellation() {
   return (
     <svg
       aria-hidden
@@ -33,14 +37,22 @@ export default function FooterConstellation() {
         ))}
       </g>
       <g fill="#BAE6FD">
-        {STARS.map((s, i) => (
-          <circle
-            key={i}
-            cx={s.x} cy={s.y} r={s.r}
-            style={{ animation: `ub-twinkle 5s ease-in-out ${(i * 0.2) % 5}s infinite` }}
-          />
-        ))}
+        {STARS.map((s, i) => {
+          const twinkle = TWINKLE_INDICES.has(i);
+          return (
+            <circle
+              key={i}
+              cx={s.x}
+              cy={s.y}
+              r={s.r}
+              className={twinkle ? "ub-twinkle-desktop" : undefined}
+              style={twinkle ? { animationDelay: `${(i * 0.5) % 6}s` } : undefined}
+            />
+          );
+        })}
       </g>
     </svg>
   );
 }
+
+export default memo(FooterConstellation);
