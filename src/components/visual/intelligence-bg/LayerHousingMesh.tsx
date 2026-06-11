@@ -16,7 +16,7 @@ export default function LayerHousingMesh({ opacity = 0.05, stroke = "#2563EB" }:
       preserveAspectRatio="xMidYMid slice"
       style={{ opacity }}
     >
-      <g fill="none" stroke={stroke} strokeWidth="1.1" strokeLinecap="round">
+      <g fill="none" stroke={stroke} strokeWidth="0.7" strokeLinecap="round">
         {/* Courbes horizontales — plans de maison */}
         <path d="M -50 180 C 280 140, 520 280, 820 220 S 1380 160, 1700 240" />
         <path d="M -50 320 C 240 280, 560 420, 880 370 S 1420 320, 1700 380" />
