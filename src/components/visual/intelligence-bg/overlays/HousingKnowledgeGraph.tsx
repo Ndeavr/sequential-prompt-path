@@ -70,7 +70,7 @@ export default function HousingKnowledgeGraph() {
       className="absolute inset-0 w-full h-full pointer-events-none"
       viewBox="0 0 1600 1000"
       preserveAspectRatio="xMidYMid slice"
-      style={{ opacity: 0.16 }}
+      style={{ opacity: 0.07 }}
     >
       <g stroke="#2563EB" strokeWidth="1.0" fill="none" strokeLinecap="round">
         {links.map(([a, b], i) => (
