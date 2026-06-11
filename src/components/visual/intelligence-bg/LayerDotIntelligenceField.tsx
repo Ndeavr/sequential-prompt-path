@@ -65,7 +65,7 @@ function buildParcelDots(): Array<[number, number]> {
 }
 
 export default function LayerDotIntelligenceField({
-  opacity = 0.20,
+  opacity = 0.08,
   color = "#3B82F6",
 }: Props) {
   const dots = useMemo(
