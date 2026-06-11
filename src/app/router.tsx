@@ -80,6 +80,12 @@ const PageRadonLanding = lazy(() => import("@/pages/PageRadonLanding"));
 // Intent homepage (direct route for testing)
 const PageHomeIntentUNPRO = lazy(() => import("@/pages/PageHomeIntentUNPRO"));
 
+// Mission 48H — First Customer
+const PageProScoreInstant = lazy(() => import("@/pages/pro/PageProScoreInstant"));
+const PageProActivate = lazy(() => import("@/pages/pro/PageProActivate"));
+const PageProWelcome = lazy(() => import("@/pages/pro/PageProWelcome"));
+const PageAdminFounders = lazy(() => import("@/pages/admin/PageAdminFounders"));
+
 // PIM — Passeport Intelligence Maison
 const PagePIMLanding = lazy(() => import("@/pages/PagePIMLanding"));
 const PageWhyUnpro = lazy(() => import("@/pages/PageWhyUnpro"));
@@ -791,6 +797,10 @@ export const AppRouter = () => (
         <Route path="/alex/analysis" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
         <Route path="/conversation" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
         <Route path="/" element={<PageHomeUnicorn />} />
+        <Route path="/pro/score" element={<Suspense fallback={<LazyFallback />}><PageProScoreInstant /></Suspense>} />
+        <Route path="/pro/activate" element={<Suspense fallback={<LazyFallback />}><PageProActivate /></Suspense>} />
+        <Route path="/pro/welcome" element={<Suspense fallback={<LazyFallback />}><PageProWelcome /></Suspense>} />
+        <Route path="/admin/founders" element={<Suspense fallback={<LazyFallback />}><PageAdminFounders /></Suspense>} />
         <Route path="/pim" element={<Suspense fallback={<LazyFallback />}><PagePIMLanding /></Suspense>} />
         <Route path="/pourquoi-unpro" element={<Suspense fallback={<LazyFallback />}><PageWhyUnpro /></Suspense>} />
         <Route path="/intent" element={<Suspense fallback={<LazyFallback />}><HomeIntentRouterDynamic /></Suspense>} />

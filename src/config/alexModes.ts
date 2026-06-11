@@ -48,7 +48,7 @@ const CONTRACTOR_DESCRIPTOR: AlexModeDescriptor = {
   mode: "contractor",
   panelKey: "PanelContractorAdvisorAlex",
   greetingFr:
-    "Bonjour. Comment puis-je vous aider à développer votre entreprise aujourd'hui ?",
+    "Bonjour. J'ai analysé votre présence numérique. Puis-je vous montrer ce que les moteurs IA comprennent actuellement de votre entreprise ?",
   allowHomeownerFallback: false,
   allowOnboardingRestart: false,
 };
