@@ -1,124 +1,105 @@
+## Objectif
 
-# Module « Vision IA 5 Ans » — Onboarding Entrepreneurs UNPRO
+Éliminer les pages « Cette fonctionnalité arrive bientôt » sur les destinations du menu utilisateur (`Mon profil`, `Mon compte`, `Mon QR Code`, `Déconnexion`) et livrer en vague 1 des pages réellement fonctionnelles. Vagues 2 et 3 ajoutées ensuite.
 
-Nouveau bloc émotionnel et différenciateur inséré dans le flow d'onboarding entrepreneur, juste après l'import Google Business Profile et avant le score AIPP. Inclut un système d'A/B testing pour mesurer l'impact sur la conversion.
+## Diagnostic
 
-## Position dans le funnel
+Le dropdown « Mon espace » de `PageHomeUnicorn.tsx` (et la version footer) pointe vers :
+- `/profile` → **n'existe pas** → fallback placeholder
+- `/account` → redirige vers `/dashboard/account` (page existe mais protégée `homeowner`)
+- `/qr` → `QrGeneratorPage` (existe)
+- `/logout` → **n'existe pas** → fallback placeholder
 
-```text
-Import GBP → Analyse IA → [Vision IA 5 Ans] → Score AIPP → Compatibilité UNPRO → Recommandation plan
-```
+Donc même `Déconnexion` ne déconnecte pas — c'est la priorité absolue.
 
-## Livrables
+---
 
-### Pages / routes
-- `/entrepreneur/vision-5-ans/:companyId` — écran cinématique standalone (accessible aussi via SMS)
-- Intégration inline dans `ProSetupWizard` comme nouvelle étape entre import et AIPP
+## Vague 1 — Priorité absolue (livrée immédiatement)
 
-### Composants (`src/features/visionIA/`)
-- `VisionIAModule.tsx` — orchestrateur principal
-- `VisionIAHero.tsx` — titre + sous-texte
-- `VisionTimeline.tsx` — timeline horizontale Aujourd'hui → 1 an → 3 ans → 5 ans avec animations
-- `ScenarioCard.tsx` — 3 cartes (No Change / Croissance Naturelle / Optimisé UNPRO)
-- `AIObservationsCard.tsx` — Forces ✅ / Opportunités ⚠
-- `CTAReportFull.tsx` — bouton "Voir mon rapport complet"
-- `VisionLoadingState.tsx` — état génération IA (premium, narratif)
+### 1. Déconnexion réelle (`/logout`)
 
-### Edge Functions
-- `future-analysis-agent` — déclenchée sur event `company_imported`
-  - Lit signaux (avis, site, SEO, social, ancienneté, territoire, concurrence)
-  - Appelle Lovable AI (`google/gemini-3-flash-preview`) avec prompt structuré → 3 scénarios + forces/faiblesses
-  - Écrit dans `company_future_analysis`
-  - Déclenche envoi SMS via pipeline outbound existant
-- `vision-5-ans-generate` — endpoint synchrone pour régénération manuelle admin
+- Nouvelle route publique `/logout` → `PageLogout.tsx`
+- Au mount : `await supabase.auth.signOut()` (via `useAuth().signOut`)
+- Toast succès : « Vous avez été déconnecté »
+- Toast erreur : « Impossible de fermer votre session »
+- Redirection `/` après 600ms
+- Aussi : remplacer `navigate("/logout")` du dropdown par appel direct `signOut()` pour fallback instantané
 
-### Table Supabase
-`company_future_analysis` :
-- `company_id`, `contractor_id`
-- `current_score`, `current_visibility`, `current_authority`
-- `scenario_no_change`, `scenario_growth`, `scenario_unpro` (jsonb)
-- `strengths`, `weaknesses`, `opportunities` (jsonb)
-- `timeline_data` (jsonb : projections 1/3/5 ans)
-- `ab_variant` (text : copy variant utilisée)
-- `generated_at`, `ai_model_used`, `confidence_score`
+### 2. `/profile` — Mon profil (homeowner + contractor)
 
-### SMS — 3 variants A/B
-Branchés sur `dynamic-sms-personalization` existant, avec rotation via `ab_test_variants` :
-1. « Nous avons demandé à l'IA d'analyser… »
-2. « Si ChatGPT analysait votre entreprise aujourd'hui… »
-3. « L'IA a identifié plusieurs signaux de croissance… »
+Nouvelle page `src/pages/PageMonProfil.tsx` (route publique mais protégée auth) :
+- En-tête : avatar (upload via Supabase storage `avatars` bucket si présent, sinon initiales), nom, email, type de compte
+- Champs éditables (inline + bouton « Modifier ») : prénom, nom, téléphone, langue (FR/EN)
+- Si `activeRole === "homeowner"` : nb propriétés (count `properties`), liste adresses, lien « Voir mon Passeport Maison »
+- Si `activeRole === "contractor"` : nom entreprise, RBQ, région, services (lecture depuis `contractors`)
+- Sauvegarde via `useUpdateProfile`
+- Réutilise `useProfile`, `useNavigationContext`
 
-## A/B Testing
+### 3. `/account` — Mon compte
 
-### Variants testés
-1. **Copy hero** — 3 versions du titre/sous-texte (émotionnel vs analytique vs urgence)
-2. **Ordre scénarios** — Pire→Meilleur vs Meilleur→Pire vs UNPRO en premier
-3. **CTA principal** — « Voir mon rapport complet » vs « Activer ma trajectoire IA » vs « Découvrir mon plan »
-4. **SMS** — 3 versions (ci-dessus)
+Refonte `src/pages/dashboard/AccountPage.tsx` (et route `/account` directe, non plus redirect) avec 3 sections :
+- **Sécurité** : changer email (`supabase.auth.updateUser`), changer téléphone, statut connexions Google/Apple (lecture `user.app_metadata.providers`)
+- **Notifications** : toggles SMS / Email / Push (table `notification_preferences` si existe, sinon `profiles.notification_*`)
+- **Confidentialité** : bouton « Exporter mes données » (téléchargement JSON via edge function existante ou client-side dump des tables user), bouton « Supprimer mon compte » (modal confirmation → edge function `delete-account` si existe, sinon RPC `request_account_deletion`)
 
-### Infra
-- Réutilise `ab_test_variants` + `experiment_assignments` + `experiment_events` (tables existantes)
-- Helper `useVisionIAVariant(companyId)` qui assigne déterministiquement et logge l'exposure
-- Métriques trackées : view, scenario_hover, cta_click, sms_link_click, conversion vers plan
+Route `/account` désormais accessible aux 2 rôles (homeowner + contractor), pas seulement homeowner.
 
-### Dashboard admin
-- Nouvelle section dans `/admin/operations` : « Vision IA — A/B Performance »
-  - Conversion par variant (copy, ordre, CTA, SMS)
-  - Significativité statistique
-  - Bouton "Promote winner"
+### 4. `/qr-code` — Mon QR Code
 
-## Logique IA (prompt structuré)
+Nouvelle page `src/pages/PageMonQRCode.tsx` (route `/qr-code`, garder `/qr` comme alias) :
+- Titre : « Mon Passeport UNPRO »
+- QR Code centré (lib `qrcode.react` déjà présente sinon `qrcode`) pointant vers `https://unpro.ca/u/{referral_code}` depuis `useReferralProfile`
+- Boutons : Télécharger PNG (canvas → blob), Télécharger PDF (`jspdf`), Partager (`navigator.share` avec fallback copy), Imprimer (`window.print()`)
+- Section secondaire « Bientôt » : QR panneau électrique, QR immeuble, QR condo (cartes désactivées, pas de placeholder plein écran)
 
-Input signaux : `reviews_count`, `reviews_avg`, `reviews_frequency`, `reviews_response_rate`, `website_quality`, `seo_local_score`, `ai_visibility_score`, `social_signals`, `years_in_business`, `territory_density`, `local_competition`.
+### Mise à jour du menu
 
-Output Zod schema :
-```ts
-{
-  current: { score, visibility, authority },
-  scenarios: {
-    no_change: { summary, risks[], projections_5y },
-    natural_growth: { summary, gains[], projections_5y },
-    unpro_optimized: { summary, gains[], projections_5y }
-  },
-  strengths: string[],
-  opportunities: string[],
-  timeline: { y1, y3, y5 }
-}
-```
+Dans `src/pages/PageHomeUnicorn.tsx` :
+- `/profile` reste mais résout maintenant
+- `/account` reste
+- `/qr` → `/qr-code`
+- Déconnexion : remplacer `navigate("/logout")` par `signOut()` direct + toast (le `/logout` reste comme route de secours)
 
-## UI/UX
+---
 
-- Mobile-first, fond cinematic dark (`#050816`), tokens existants
-- Timeline animation : Framer Motion stagger, transform-only (respect mémoire flicker)
-- 3 cartes scénarios : glass-strong, hover translateY(-2px)
-- Pas de chime audio (respect Alex sonic identity)
-- Loading state narratif : « Analyse de votre territoire… », « Projection 5 ans en cours… »
+## Vague 2 (suivante, pas dans ce build)
 
-## Contraintes respectées
+- `/agenda` : calendrier rendez-vous (réutilise `HomeownerAppointments` et `pro/appointments`)
+- Refonte tableau de bord en « Mon centre de contrôle »
 
-- French-first (fr-CA)
-- Pas de « 3 soumissions », pas de « réseau d'entrepreneurs »
-- Positionnement registre intelligent / source citable
-- Production Reliability : `reportOutcome()` sur tous les agents, `FailureCode` canonique
-- Pas de leak technique (erreurs IA → fallback narratif)
-- Reliability state machine pour `future-analysis-agent`
+## Vague 3 (suivante)
 
-## Tâches
+- `/mes-proprietes` (Passeport Intelligence détaillé)
+- `/documents` (coffre documentaire)
+- `/historique-alex` (conversations + recommandations)
 
-1. Migration `company_future_analysis` + grants + RLS
-2. Edge function `future-analysis-agent` (Lovable AI + reliability wrapper)
-3. Composants React `src/features/visionIA/*`
-4. Intégration `ProSetupWizard` (nouvelle étape)
-5. Route `/entrepreneur/vision-5-ans/:companyId` (landing SMS)
-6. Hook `useVisionIAVariant` + tracking events
-7. Migration : 3 variants SMS dans `ab_test_variants`
-8. Section admin `/admin/operations` — Vision IA A/B
-9. Trigger sur `company_imported` event → enqueue agent
+---
 
-## Hors scope
+## Détails techniques
 
-- Refonte score AIPP existant
-- Pricing
-- Alex voice script (utilise infra existante)
+**Fichiers créés**
+- `src/pages/PageLogout.tsx`
+- `src/pages/PageMonProfil.tsx`
+- `src/pages/PageMonQRCode.tsx`
 
-Confirmer pour passer en build mode.
+**Fichiers modifiés**
+- `src/app/router.tsx` : ajouter `/logout`, `/profile`, `/qr-code`, élargir `/account` à `authenticated` (pas seulement homeowner)
+- `src/pages/dashboard/AccountPage.tsx` : refonte 3 sections
+- `src/pages/PageHomeUnicorn.tsx` : remettre Déconnexion sur `signOut()` direct + mise à jour des liens
+
+**Dépendances**
+- `qrcode.react` (vérifier sinon ajouter), `jspdf` (vérifier sinon ajouter)
+
+**Contraintes respectées**
+- FR-CA, design Cinematic Dark sur surfaces dashboard / Warm Neutral si page publique
+- `useProfileCompletionGate` non touché
+- Aucune mention « bientôt » sur ces 4 routes
+- Lisibilité tokens `--text-*`, pas de `text-gray-*`
+- `permissionManager` non sollicité (pas de mic/cam ici)
+
+## Succès
+
+- Cliquer `Mon profil` / `Mon compte` / `Mon QR Code` / `Déconnexion` depuis le dropdown affiche une page fonctionnelle, jamais le placeholder.
+- Déconnexion ferme réellement la session Supabase et redirige vers `/`.
+- QR Code téléchargeable PNG + PDF + partageable.
+- Profil et compte éditables et persistés.

@@ -517,6 +517,9 @@ const QuoteDetail = lazy(() => import("@/pages/dashboard/QuoteDetail"));
 const HomeScorePage = lazy(() => import("@/pages/dashboard/HomeScorePage"));
 const PropertyInsightsPage = lazy(() => import("@/pages/dashboard/PropertyInsightsPage"));
 const AccountPage = lazy(() => import("@/pages/dashboard/AccountPage"));
+const PageLogout = lazy(() => import("@/pages/PageLogout"));
+const PageMonProfil = lazy(() => import("@/pages/PageMonProfil"));
+const PageMonCompte = lazy(() => import("@/pages/PageMonCompte"));
 const HomeownerAppointments = lazy(() => import("@/pages/dashboard/HomeownerAppointments"));
 const BookingPage = lazy(() => import("@/pages/dashboard/BookingPage"));
 const DocumentUploadPage = lazy(() => import("@/pages/dashboard/DocumentUploadPage"));
@@ -1609,8 +1612,11 @@ export const AppRouter = () => (
           <Route path="/admin/lead-empire" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><LeadPipePageAdminEmpire /></Suspense></UniversalRouteGuard>} />
 
           {/* Legacy/orphan link redirects — keeps old CTAs working */}
-          <Route path="/account" element={<Navigate to="/dashboard/account" replace />} />
-          <Route path="/settings" element={<Navigate to="/dashboard/account" replace />} />
+          <Route path="/logout" element={<Suspense fallback={<LazyFallback />}><PageLogout /></Suspense>} />
+          <Route path="/profile" element={<Suspense fallback={<LazyFallback />}><PageMonProfil /></Suspense>} />
+          <Route path="/account" element={<Suspense fallback={<LazyFallback />}><PageMonCompte /></Suspense>} />
+          <Route path="/qr-code" element={<Navigate to="/qr" replace />} />
+          <Route path="/settings" element={<Navigate to="/account" replace />} />
           <Route path="/aipp" element={<Navigate to="/entrepreneur" replace />} />
           <Route path="/auth" element={<Navigate to="/role" replace />} />
           <Route path="/inscription" element={<Navigate to="/role" replace />} />
