@@ -49,7 +49,7 @@ export default function LayerHousingMesh({ opacity = 0.05, stroke = "#2563EB" }:
           [180, 740], [440, 780], [720, 780], [980, 770], [1240, 760], [1460, 780],
           [180, 880], [440, 920], [720, 920], [980, 910], [1240, 900], [1460, 900],
         ].map(([cx, cy], i) => (
-          <circle key={i} cx={cx} cy={cy} r="3.2" opacity="0.85" />
+          <circle key={i} cx={cx} cy={cy} r="2.2" opacity="0.35" />
         ))}
       </g>
     </svg>
