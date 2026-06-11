@@ -62,7 +62,7 @@ export default function LayerHouseBlueprintGhost({
       </g>
 
       {/* Grille blueprint très subtile */}
-      <g stroke={color} strokeWidth="0.3" opacity="0.35">
+      <g stroke={color} strokeWidth="0.3" opacity="0.18">
         {Array.from({ length: 16 }).map((_, i) => (
           <line key={`v${i}`} x1={i * 100} y1="0" x2={i * 100} y2="1000" />
         ))}
