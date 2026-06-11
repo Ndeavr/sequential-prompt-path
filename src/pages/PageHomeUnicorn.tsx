@@ -33,6 +33,12 @@ import "@/styles/unicorn-theme.css";
 import { usePopularQuestions } from "@/hooks/usePopularQuestions";
 import { logQuestion } from "@/services/popularQuestions";
 
+/* ---------------- Memoized backdrops (never re-render on Alex state) ---------------- */
+const HeroBackdrop = memo(() => <IntelligenceBackground variant="hero" />);
+const PassportBackdrop = memo(() => <IntelligenceBackground variant="passport" />);
+const ContractorsBackdrop = memo(() => <IntelligenceBackground variant="contractors" />);
+const FooterBackdrop = memo(() => <IntelligenceBackground variant="footer" />);
+
 /* ---------------- Header ---------------- */
 function HeaderFloatingGlass() {
   const navigate = useNavigate();
