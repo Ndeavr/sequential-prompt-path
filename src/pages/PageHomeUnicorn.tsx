@@ -19,6 +19,7 @@ import NearbyContractorsCarousel from "@/components/home-unicorn/NearbyContracto
 import AlexCapabilitiesStrip from "@/components/home-unicorn/AlexCapabilitiesStrip";
 import CinematicArchScenes from "@/components/home-unicorn/CinematicArchScenes";
 import PIMIntroBand from "@/components/pim/PIMIntroBand";
+import IntelligenceBackground from "@/components/visual/intelligence-bg/IntelligenceBackground";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -686,6 +687,8 @@ export default function PageHomeUnicorn() {
       </Helmet>
 
       <div className="unicorn-theme min-h-screen pb-36 relative overflow-x-hidden">
+        {/* Base intelligence background — full-page, sits behind every section */}
+        <IntelligenceBackground variant="hero" />
         <CinematicArchScenes />
         <HeaderFloatingGlass />
         <HeroAlexOrb onTalk={onTalk} />
@@ -693,10 +696,25 @@ export default function PageHomeUnicorn() {
         <AiInputCard onTalk={onTalk} />
         <HomeQuickActionsGrid />
         <LiveStatsCard />
-        <PIMIntroBand />
+        <section className="relative">
+          <IntelligenceBackground variant="passport" />
+          <PIMIntroBand />
+        </section>
         <HowItWorksCards />
-        <ContractorAippSplit />
+        <section className="relative">
+          <IntelligenceBackground variant="contractors" />
+          <ContractorAippSplit />
+        </section>
         <BottomDockGlass />
+        <footer className="relative mt-12 py-10 px-4 text-center">
+          <IntelligenceBackground variant="footer" />
+          <p className="relative z-10 text-[12px] text-white/70">
+            UNPRO continue de travailler même lorsque vous quittez le site.
+          </p>
+          <p className="relative z-10 text-[11px] text-white/40 mt-1">
+            Conçu au Québec · fr-CA
+          </p>
+        </footer>
       </div>
     </>
   );

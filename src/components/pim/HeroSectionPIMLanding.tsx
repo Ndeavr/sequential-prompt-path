@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight, Mic } from "lucide-react";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import PropertyIntelligenceGraph from "./PropertyIntelligenceGraph";
+import IntelligenceBackground from "@/components/visual/intelligence-bg/IntelligenceBackground";
 
 export default function HeroSectionPIMLanding() {
   const navigate = useNavigate();
@@ -10,14 +11,9 @@ export default function HeroSectionPIMLanding() {
 
   return (
     <section className="relative min-h-[88vh] flex items-center px-4 sm:px-6 pt-12 pb-16 overflow-hidden">
-      {/* Glow signature */}
-      <div
-        className="absolute inset-0 -z-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(circle at 20% 25%, rgba(56,189,248,0.22), transparent 45%), radial-gradient(circle at 80% 75%, rgba(99,102,241,0.18), transparent 50%)",
-        }}
-      />
+      {/* Intelligence background — Passport variant (archive drift) */}
+      <IntelligenceBackground variant="passport" />
+
 
       <div className="relative max-w-6xl mx-auto w-full grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-16 items-center">
         <div>
