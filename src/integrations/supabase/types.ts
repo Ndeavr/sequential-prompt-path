@@ -40015,6 +40015,72 @@ export type Database = {
           },
         ]
       }
+      founder_score_prospects: {
+        Row: {
+          city: string | null
+          company: string
+          created_at: string
+          email: string
+          id: string
+          opportunities: Json | null
+          paid_at: string | null
+          phone: string | null
+          score_authority: number | null
+          score_growth: number | null
+          score_profile: number | null
+          score_trust: number | null
+          score_visibility: number | null
+          source: string | null
+          status: string
+          stripe_session_id: string | null
+          trade: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          city?: string | null
+          company: string
+          created_at?: string
+          email: string
+          id?: string
+          opportunities?: Json | null
+          paid_at?: string | null
+          phone?: string | null
+          score_authority?: number | null
+          score_growth?: number | null
+          score_profile?: number | null
+          score_trust?: number | null
+          score_visibility?: number | null
+          source?: string | null
+          status?: string
+          stripe_session_id?: string | null
+          trade?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          city?: string | null
+          company?: string
+          created_at?: string
+          email?: string
+          id?: string
+          opportunities?: Json | null
+          paid_at?: string | null
+          phone?: string | null
+          score_authority?: number | null
+          score_growth?: number | null
+          score_profile?: number | null
+          score_trust?: number | null
+          score_visibility?: number | null
+          source?: string | null
+          status?: string
+          stripe_session_id?: string | null
+          trade?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       founder_spots: {
         Row: {
           created_at: string
