@@ -20080,6 +20080,81 @@ export type Database = {
           },
         ]
       }
+      company_future_analysis: {
+        Row: {
+          ab_variant_copy: string | null
+          ab_variant_cta: string | null
+          ab_variant_order: string | null
+          ab_variant_sms: string | null
+          ai_model_used: string | null
+          company_id: string | null
+          confidence_score: number | null
+          contractor_id: string | null
+          created_at: string
+          current_authority: number | null
+          current_score: number | null
+          current_visibility: number | null
+          generated_at: string
+          id: string
+          opportunities: Json
+          scenario_growth: Json
+          scenario_no_change: Json
+          scenario_unpro: Json
+          strengths: Json
+          timeline_data: Json
+          updated_at: string
+          weaknesses: Json
+        }
+        Insert: {
+          ab_variant_copy?: string | null
+          ab_variant_cta?: string | null
+          ab_variant_order?: string | null
+          ab_variant_sms?: string | null
+          ai_model_used?: string | null
+          company_id?: string | null
+          confidence_score?: number | null
+          contractor_id?: string | null
+          created_at?: string
+          current_authority?: number | null
+          current_score?: number | null
+          current_visibility?: number | null
+          generated_at?: string
+          id?: string
+          opportunities?: Json
+          scenario_growth?: Json
+          scenario_no_change?: Json
+          scenario_unpro?: Json
+          strengths?: Json
+          timeline_data?: Json
+          updated_at?: string
+          weaknesses?: Json
+        }
+        Update: {
+          ab_variant_copy?: string | null
+          ab_variant_cta?: string | null
+          ab_variant_order?: string | null
+          ab_variant_sms?: string | null
+          ai_model_used?: string | null
+          company_id?: string | null
+          confidence_score?: number | null
+          contractor_id?: string | null
+          created_at?: string
+          current_authority?: number | null
+          current_score?: number | null
+          current_visibility?: number | null
+          generated_at?: string
+          id?: string
+          opportunities?: Json
+          scenario_growth?: Json
+          scenario_no_change?: Json
+          scenario_unpro?: Json
+          strengths?: Json
+          timeline_data?: Json
+          updated_at?: string
+          weaknesses?: Json
+        }
+        Relationships: []
+      }
       company_raw_records: {
         Row: {
           city_guess: string | null

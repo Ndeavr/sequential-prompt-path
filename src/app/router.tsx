@@ -468,6 +468,7 @@ const PageOnboardingAnalyse = lazy(() => import("@/pages/entrepreneur/PageOnboar
 const PageOnboardingPlan = lazy(() => import("@/pages/entrepreneur/PageOnboardingPlan"));
 const PageOnboardingPayment = lazy(() => import("@/pages/entrepreneur/PageOnboardingPayment"));
 const PageOnboardingSuccess = lazy(() => import("@/pages/entrepreneur/PageOnboardingSuccess"));
+const PageVision5Ans = lazy(() => import("@/pages/entrepreneur/PageVision5Ans"));
 
 // Blog
 const BlogIndexPage = lazy(() => import("@/pages/blog/BlogIndexPage"));
@@ -1116,6 +1117,10 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/onboarding/plan" element={<PageOnboardingPlan />} />
         <Route path="/entrepreneur/onboarding/payment" element={<PageOnboardingPayment />} />
         <Route path="/entrepreneur/onboarding/success" element={<PageOnboardingSuccess />} />
+        <Route path="/entrepreneur/vision-5-ans/:companyId" element={<PageVision5Ans />} />
+        <Route path="/entrepreneur/vision-5-ans" element={<PageVision5Ans />} />
+        <Route path="/entrepreneur/onboarding/vision-5-ans/:companyId" element={<PageVision5Ans />} />
+        <Route path="/entrepreneur/onboarding/vision-5-ans" element={<PageVision5Ans />} />
 
         {/* New V3 public pages */}
         <Route path="/mes-proprietes" element={<MesProprietesPage />} />
