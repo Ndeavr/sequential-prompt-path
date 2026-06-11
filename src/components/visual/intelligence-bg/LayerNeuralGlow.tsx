@@ -7,7 +7,7 @@ interface Props {
 }
 
 export default function LayerNeuralGlow({
-  color = "rgba(59,130,246,0.55)",
+  color = "rgba(59,130,246,0.22)",
   size = 620,
 }: Props) {
   return (
