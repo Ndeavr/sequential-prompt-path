@@ -1,5 +1,5 @@
 /**
- * AlexCapabilitiesStrip — featured "Trouver un pro" + secondary 2-col grid.
+ * AlexCapabilitiesStrip — 6 capabilities en grille 3×2, toutes égales.
  */
 import { HelpCircle, Camera, Calculator, FileCheck, BadgePercent, UserCheck, ArrowRight, type LucideIcon } from "lucide-react";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
@@ -10,12 +10,13 @@ interface Capability {
   topic: string;
 }
 
-const SECONDARY: Capability[] = [
+const CAPS: Capability[] = [
   { icon: HelpCircle, label: "Comprendre un problème", topic: "comprendre votre problème" },
   { icon: Camera, label: "Analyser une photo", topic: "l'analyse d'une photo" },
   { icon: Calculator, label: "Estimer un coût", topic: "estimer un coût" },
   { icon: FileCheck, label: "Comparer une soumission", topic: "comparer votre soumission" },
   { icon: BadgePercent, label: "Trouver des subventions", topic: "trouver vos subventions" },
+  { icon: UserCheck, label: "Recommander un professionnel", topic: "vous recommander le bon professionnel" },
 ];
 
 export default function AlexCapabilitiesStrip() {
@@ -33,66 +34,42 @@ export default function AlexCapabilitiesStrip() {
         Ce qu'Alex peut faire
       </div>
 
-      {/* Featured — Trouver un pro */}
-      <button
-        type="button"
-        onClick={() => openAlex("home_capability", "vous recommander le bon professionnel")}
-        className="w-full mb-2 flex items-center gap-3 text-left px-4 py-4 transition-transform active:scale-[0.98] cursor-pointer relative overflow-hidden"
-        style={{
-          borderRadius: 22,
-          background: "linear-gradient(135deg, #2563FF 0%, #1D4ED8 100%)",
-          boxShadow: "0 14px 38px -12px rgba(37,99,255,0.55), 0 2px 6px rgba(37,99,255,0.18)",
-        }}
-        aria-label="Parler à Alex pour trouver un pro"
-      >
-        <div
-          className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
-          style={{ background: "rgba(255,255,255,0.18)" }}
-        >
-          <UserCheck size={22} color="#FFFFFF" strokeWidth={2.2} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div
-            className="text-[10px] font-semibold tracking-[0.14em] uppercase mb-0.5"
-            style={{ color: "rgba(255,255,255,0.78)" }}
-          >
-            Recommandé
-          </div>
-          <div className="text-[15px] font-bold leading-tight text-white">
-            Trouver un pro
-          </div>
-          <div className="text-[11.5px] leading-snug mt-0.5" style={{ color: "rgba(255,255,255,0.82)" }}>
-            Alex vous recommande le bon professionnel selon votre besoin.
-          </div>
-        </div>
-        <ArrowRight size={18} color="#FFFFFF" strokeWidth={2.4} className="shrink-0" />
-      </button>
-
-      {/* Secondary grid */}
-      <div className="grid grid-cols-2 gap-2">
-        {SECONDARY.map((c) => {
+      <div className="grid grid-cols-3 gap-2">
+        {CAPS.map((c) => {
           const Icon = c.icon;
           return (
             <button
               key={c.label}
               type="button"
               onClick={() => openAlex("home_capability", c.topic)}
-              className="uc-glass-strong flex items-center gap-2 text-left px-3 py-3 transition-transform active:scale-[0.97] cursor-pointer"
-              style={{ borderRadius: 16 }}
+              className="flex flex-col text-left px-3 py-3 transition-transform active:scale-[0.97] cursor-pointer relative"
+              style={{
+                borderRadius: 18,
+                background: "#FFFFFF",
+                border: "1px solid rgba(15,23,42,0.06)",
+                boxShadow: "0 4px 14px -8px rgba(15,23,42,0.10), 0 1px 2px rgba(15,23,42,0.04)",
+                minHeight: 118,
+              }}
               aria-label={`Parler à Alex pour ${c.label.toLowerCase()}`}
             >
               <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                className="w-9 h-9 rounded-full flex items-center justify-center mb-2"
                 style={{ background: "#EFF6FF" }}
               >
-                <Icon size={16} color="#2563FF" strokeWidth={2.2} />
+                <Icon size={18} color="#2563FF" strokeWidth={2.2} />
               </div>
               <span
-                className="text-[11.5px] font-semibold leading-tight"
+                className="text-[12.5px] font-bold leading-tight"
                 style={{ color: "#0B1220" }}
               >
                 {c.label}
               </span>
+              <ArrowRight
+                size={16}
+                color="#2563FF"
+                strokeWidth={2.4}
+                className="mt-auto self-end"
+              />
             </button>
           );
         })}
