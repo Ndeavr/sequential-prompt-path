@@ -700,10 +700,12 @@ export default function PageHomeUnicorn() {
         <HeroBackdrop />
         <CinematicArchScenes />
         <HeaderFloatingGlass />
+        <BannerFirstCustomer48h />
         <HeroAlexOrb onTalk={onTalk} />
         <AlexCapabilitiesStrip />
         <AiInputCard onTalk={onTalk} />
         <HomeQuickActionsGrid />
+        <SocialProofContractorBlock />
         <LiveStatsCard />
         <section className="relative">
           <PassportBackdrop />
