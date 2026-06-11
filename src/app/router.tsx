@@ -49,6 +49,7 @@ const PageContractorVoiceFirstLanding = lazy(() => import("@/pages/contractor-la
 const PageAiTrustAudit = lazy(() => import("@/pages/entrepreneur/PageAiTrustAudit"));
 const PageWhyResultsAreDropping = lazy(() => import("@/pages/entrepreneur/PageWhyResultsAreDropping"));
 const PageBadgesConsommateur2026 = lazy(() => import("@/pages/articles/PageBadgesConsommateur2026"));
+const PageVerifierGrenierAvantFenetresThermopompe = lazy(() => import("@/pages/articles/PageVerifierGrenierAvantFenetresThermopompe"));
 const PageSignaturePartner = lazy(() => import("@/pages/partners/PageSignaturePartner"));
 const PageAdminPartners = lazy(() => import("@/pages/admin/partners/PageAdminPartners"));
 const PageIsrDemoPlanTest = lazy(() => import("@/pages/demo/PageIsrDemoPlanTest"));
@@ -837,6 +838,7 @@ export const AppRouter = () => (
         <Route path="/pourquoi-vos-resultats-chutent" element={<Suspense fallback={<LazyFallback />}><PageWhyResultsAreDropping /></Suspense>} />
         <Route path="/articles/badges-choix-consommateur-2026" element={<Suspense fallback={<LazyFallback />}><PageBadgesConsommateur2026 /></Suspense>} />
         <Route path="/badges-choix-consommateur-2026" element={<Suspense fallback={<LazyFallback />}><PageBadgesConsommateur2026 /></Suspense>} />
+        <Route path="/articles/verifier-grenier-avant-fenetres-thermopompe" element={<Suspense fallback={<LazyFallback />}><PageVerifierGrenierAvantFenetresThermopompe /></Suspense>} />
         <Route path="/entrepreneur/plan-ia" element={<Suspense fallback={<LazyFallback />}><PageDynamicPlanGeneration /></Suspense>} />
         <Route path="/admin/dynamic-pricing" element={<Suspense fallback={<LazyFallback />}><PageAdminDynamicPricing /></Suspense>} />
         <Route path="/entrepreneur/onboarding-voice" element={<Suspense fallback={<LazyFallback />}><PageContractorVoiceFirstLanding /></Suspense>} />
