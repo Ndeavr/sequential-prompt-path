@@ -205,12 +205,13 @@ html.alex-overlay-active .uc-orb-shell .uc-orb-caption { opacity: 0 !important; 
 .uc-alex-floating-panel {
   position: fixed;
   z-index: 9999;
-  left: 50%;
-  right: auto;
-  transform: translateX(-50%);
+  left: 12px;
+  right: 12px;
+  transform: none;
   bottom: calc(96px + env(safe-area-inset-bottom));
-  width: min(92vw, 480px);
-  max-width: 92vw;
+  width: auto;
+  max-width: 100%;
+  box-sizing: border-box;
   border-radius: 24px;
   background: rgba(10, 18, 40, 0.48);
   backdrop-filter: blur(28px) saturate(170%);

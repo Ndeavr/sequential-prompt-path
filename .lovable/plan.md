@@ -1,26 +1,23 @@
-## Restore "Trouver un pro" as prominent featured card
+## Fix: Floating Alex panel off-screen on mobile
 
-Revert `AlexCapabilitiesStrip.tsx` to a hierarchical layout matching the screenshot:
+**Root cause** — `.uc-alex-floating-panel` mobile rule uses `left: 50%` + `transform: translateX(-50%)` to center. Framer Motion injects its own inline `transform` on the wrapper for entry/exit animations, which overrides the CSS transform. Result: the panel anchors to `left: 50%` with no counter-translate and drifts off the right edge.
 
-**Structure:**
-1. Section label "CE QU'ALEX PEUT FAIRE" (unchanged)
-2. **Featured card** — full-width blue card "Trouver un pro"
-   - Background: solid `#2563FF` (brand blue)
-   - Top label: "RECOMMANDÉ" (white/80, tracking-wide, 10px)
-   - Title: "Trouver un pro" (white, bold, 18px)
-   - Subtitle: "Alex vous recommande le bon professionnel selon votre besoin." (white/85, 13px)
-   - Icon: `UserCheck` in soft white circle (left)
-   - `ArrowRight` (white) on right
-   - Radius 20, shadow blue glow
-   - Topic: "vous recommander le bon professionnel"
-3. **Grid 2×? below** — 5 remaining capabilities as smaller white cards (`grid-cols-2 gap-2`):
-   - Comprendre un problème (HelpCircle)
-   - Analyser une photo (Camera)
-   - Estimer un coût (Calculator)
-   - Comparer une soumission (FileCheck)
-   - Trouver des subventions (BadgePercent)
-   - White bg, `#EFF6FF` icon circle, `#0B1220` text, same shadow/border tokens as current
+**Fix — CSS only, `src/styles/unicorn-theme.css` (lines 205–236):**
 
-**Out of scope:** background layers, hero, orb, nav, copy elsewhere.
+Mobile (base rule):
+- Replace `left: 50%` + `transform: translateX(-50%)` with `left: 12px; right: 12px; transform: none;`
+- Replace `width: min(92vw, 480px); max-width: 92vw;` with `width: auto; max-width: 100%;`
+- Add `box-sizing: border-box`
+- Keep `bottom: calc(96px + env(safe-area-inset-bottom))`, radius, glass background, shadow, animation unchanged
 
-**File:** `src/components/home-unicorn/AlexCapabilitiesStrip.tsx` only.
+Desktop (`@media (min-width: 768px)`):
+- Keep `left: auto; right: 24px; bottom: 24px; width: 420px; max-width: 420px; transform: none;` (already correct)
+
+**Verification:**
+- Reload `/index` on mobile viewport (384px), confirm panel sits inside viewport with 12px gutters on both sides
+- Toggle fullscreen overlay — confirm the floating panel (when not in fullscreen) remains centered with equal gutters and never escapes the right edge
+- Desktop ≥768px unchanged: anchored bottom-right at 24px
+
+**Out of scope:** panel content, header, transcripts, fullscreen overlay (`OverlayAlexVoiceFullScreen`), orb, hero, capabilities strip.
+
+**Files touched:** `src/styles/unicorn-theme.css` only.
