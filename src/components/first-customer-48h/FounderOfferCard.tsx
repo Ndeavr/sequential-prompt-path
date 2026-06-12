@@ -9,6 +9,7 @@ interface Props {
   onActivate: () => void;
   ctaLabel?: string;
   loading?: boolean;
+  checkoutUrl?: string | null;
 }
 
 const FEATURES = [
