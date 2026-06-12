@@ -22,7 +22,7 @@ const FEATURES = [
   "Annulation en tout temps",
 ];
 
-export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon profil", loading, checkoutUrl }: Props) {
+export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon profil pour 1 $", loading, checkoutUrl }: Props) {
   const spots = useFounderSpotsRemaining("fondateur-149");
   return (
     <div
