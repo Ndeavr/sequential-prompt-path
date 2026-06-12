@@ -22,6 +22,7 @@ const OverlayAlexVoiceFullScreen = lazy(() => import("@/components/voice/Overlay
 const AlexChatFallbackPanel = lazy(() => import("@/components/voice/AlexChatFallbackPanel"));
 const AlexVoiceDebugPanel = lazy(() => import("@/components/voice/AlexVoiceDebugPanel"));
 const AlexVoiceDiagnosticsPanel = lazy(() => import("@/components/voice/AlexVoiceDiagnosticsPanel"));
+const AuthGateMount = lazy(() => import("@/components/auth/AuthGateMount"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
