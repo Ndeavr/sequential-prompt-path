@@ -60,7 +60,7 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon p
               className="text-[10.5px] font-semibold uppercase tracking-wider"
               style={{ color: "#F5C85A" }}
             >
-              {spots} / 25 places
+              {spots > 0 ? `${spots} ${spots === 1 ? "place restante" : "places restantes"}` : "Complet"}
             </div>
           )}
         </div>
