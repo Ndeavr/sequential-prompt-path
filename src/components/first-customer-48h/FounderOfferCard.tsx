@@ -75,11 +75,24 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon p
             className="text-[34px] md:text-[40px] font-extrabold leading-none"
             style={{ color: "#F5C85A" }}
           >
-            149$
+            1 $
           </span>
           <span className="text-[13px] font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>
-            /mois
+            premier mois
           </span>
+        </div>
+        <p className="text-[12px] mt-1.5" style={{ color: "rgba(255,255,255,0.7)" }}>
+          puis <span className="font-semibold" style={{ color: "rgba(255,255,255,0.92)" }}>149 $/mois</span> · annulable en tout temps
+        </p>
+        <div
+          className="inline-flex items-center gap-1 mt-3 px-2.5 py-1 rounded-full text-[10.5px] font-bold uppercase tracking-wider"
+          style={{
+            background: "rgba(245,200,90,0.10)",
+            color: "#F5C85A",
+            border: "1px solid rgba(245,200,90,0.28)",
+          }}
+        >
+          Essai Fondateur · 148 $ de rabais le 1er mois
         </div>
 
         <ul className="mt-4 space-y-2">
