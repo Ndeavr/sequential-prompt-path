@@ -837,16 +837,27 @@ export default function OverlayAlexVoiceFullScreen() {
 
   // ── FULLSCREEN (legacy takeover) rendering ─────────────────────────────────
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[9999] flex flex-col bg-background"
-      >
-        <div className="absolute inset-0 bg-background/95 backdrop-blur-xl" />
-        
-        <div className="relative flex flex-col h-full z-10">
+    <motion.div
+      key="alex-fullscreen"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+      className="fixed inset-0 z-[9999] flex flex-col"
+      style={{ willChange: "opacity" }}
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(59,130,246,0.22) 0%, rgba(14,30,72,0.55) 55%, rgba(6,14,40,0.72) 100%), rgba(10,22,55,0.35)",
+          backdropFilter: "blur(40px) saturate(180%)",
+          WebkitBackdropFilter: "blur(40px) saturate(180%)",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10), inset 0 0 120px rgba(59,130,246,0.18)",
+        }}
+      />
+
+      <div className="relative flex flex-col h-full z-10 text-white">
+
 
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/20">
