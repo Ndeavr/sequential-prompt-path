@@ -1,23 +1,20 @@
-## Changes
+## Goal
+Show a "1 $ le premier mois, puis 149 $/mois" offer on the Fondateur card and apply that discount automatically at Stripe checkout — no coupon code required.
 
-### 1. Title + subtitle copy (`src/config/contractorHumanCallout.ts`)
-- `title`: `"Vous voulez être recommandé par l'IA?"`
-- `subtitle`: `"Parlez à un humain maintenant."` (kept) — or update if needed.
+## UI changes — `src/components/first-customer-48h/FounderOfferCard.tsx`
+- Replace the price block:
+  - Big gold price: `1 $` with small `premier mois`
+  - Below, smaller muted line: `puis 149 $/mois · annulable en tout temps`
+- Add a subtle gold ribbon under the badges: `Essai Fondateur · 148 $ de rabais le 1er mois`
+- Keep CTA label "Activer mon profil" but update microcopy under the button:
+  `Paiement sécurisé via Stripe · 1 $ aujourd'hui, puis 149 $/mois`
 
-### 2. Suppress modal while user is typing (`src/hooks/useContractorHumanCallout.ts`)
+## Checkout changes — `supabase/functions/pro-founder-checkout-guest/index.ts`
+- Create (once, idempotent via lookup) a Stripe coupon `fondateur-first-month-1` = `amount_off: 14800, currency: cad, duration: once`.
+  - On each invocation: `stripe.coupons.retrieve('fondateur-first-month-1')`; if 404, `stripe.coupons.create({ id: 'fondateur-first-month-1', amount_off: 14800, currency: 'cad', duration: 'once', name: 'Fondateur — 1$ premier mois' })`.
+- Pass `discounts: [{ coupon: 'fondateur-first-month-1' }]` on the Checkout Session.
+- Remove `allow_promotion_codes: true` (Stripe forbids combining `discounts` with promo codes). Keep everything else identical (subscription mode, tax, metadata, success/cancel URLs).
 
-Add input-activity guard before opening, and defer reopening:
-
-- Before firing the `setTimeout` open, listen globally for `focusin` / `input` on `input, textarea, select, [contenteditable="true"]`.
-- Track `lastInputAt` timestamp.
-- When the 5s timer fires:
-  - If an input is currently focused → skip (don't show).
-  - If `Date.now() - lastInputAt < 8000` → reschedule timer for another 5s.
-  - Else → open.
-- Also: if modal is *about* to open and user starts typing in the meantime, cancel.
-- After modal is opened, if user starts typing (shouldn't happen since modal is modal) — no-op.
-
-This keeps the modal completely out of the way during active form entry on `/contractor/join`, `/aipp`, `/pro/*`, etc., but still surfaces it during idle browsing.
-
-### 3. No other changes
-No edge function, schema, or pricing touched. Frontend-only.
+## Out of scope
+- No DB/schema changes, no plan-price changes, no new edge functions, no analytics changes.
+- Renewal price stays 149 $/mo; only the first invoice is discounted to 1 $.
