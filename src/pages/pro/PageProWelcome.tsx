@@ -60,7 +60,7 @@ export default function PageProWelcome() {
         if (error) throw error;
         const res = data as any;
         if (res?.paid) {
-          trackFirstCustomerEvent("founder_paid_confirmed", {
+          trackFirstCustomerEvent("founder_paid", {
             session_id: sessionId,
             prospect_id: prospectId,
           });
