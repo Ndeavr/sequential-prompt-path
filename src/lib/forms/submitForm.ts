@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { FormType, FormPayloadBase, SubmitResult } from './types';
 import { captureAttribution } from './utm';
+import { normalizeInput, normalizeFormRecord } from '@/utils/normalizeInput';
 
 export class FormValidationError extends Error {
   constructor(message: string) { super(message); this.name = 'FormValidationError'; }
