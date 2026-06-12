@@ -84,6 +84,7 @@ const PageHomeIntentUNPRO = lazy(() => import("@/pages/PageHomeIntentUNPRO"));
 const PageProScoreInstant = lazy(() => import("@/pages/pro/PageProScoreInstant"));
 const PageProActivate = lazy(() => import("@/pages/pro/PageProActivate"));
 const PageProWelcome = lazy(() => import("@/pages/pro/PageProWelcome"));
+const PageProPublicProfile = lazy(() => import("@/pages/pro/PageProPublicProfile"));
 const PageAdminFounders = lazy(() => import("@/pages/admin/PageAdminFounders"));
 
 // PIM — Passeport Intelligence Maison
