@@ -60,6 +60,11 @@ export const Providers = ({ children }: ProvidersProps) => (
                     <AlexChatFallbackPanel />
                   </Suspense>
                 </DeferredAfterInteractive>
+                <DeferredAfterInteractive timeoutMs={3000}>
+                  <Suspense fallback={null}>
+                    <AuthGateMount />
+                  </Suspense>
+                </DeferredAfterInteractive>
                 {import.meta.env.DEV && (
                   <DeferredAfterInteractive timeoutMs={6000}>
                     <Suspense fallback={null}>
