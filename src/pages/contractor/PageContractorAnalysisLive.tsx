@@ -38,17 +38,23 @@ const STEPS: Array<{ key: string; label: string }> = [
 ];
 
 const PLAN_LABEL: Record<string, string> = {
+  recrue: "Recrue",
   pro: "Pro",
   premium: "Premium",
   elite: "Élite",
   signature: "Signature",
 };
 const PLAN_PRICE: Record<string, number> = {
+  recrue: 149,
   pro: 349,
   premium: 599,
   elite: 999,
   signature: 1799,
 };
+
+function planLabel(slug: string): string {
+  return PLAN_LABEL[slug] ?? (slug.charAt(0).toUpperCase() + slug.slice(1));
+}
 
 export default function PageContractorAnalysisLive() {
   const [params] = useSearchParams();
