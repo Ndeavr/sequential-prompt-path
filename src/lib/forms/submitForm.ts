@@ -23,16 +23,18 @@ export async function submitForm(
 
   const attr = captureAttribution();
 
-  const { first_name, last_name, salutation, email, phone, company, message, ...rest } = data;
+  // Normalize all string fields in the payload (silently cleans formatting).
+  const { normalized } = normalizeFormRecord(data as Record<string, unknown>);
+  const { first_name, last_name, salutation, email, phone, company, message, ...rest } = normalized as FormPayloadBase;
 
   const insertRow: any = {
     form_type: formType,
     status: 'received',
-    first_name: first_name?.trim() || null,
-    last_name: last_name?.trim() || null,
-    email: email?.trim().toLowerCase() || null,
-    phone: phone?.trim() || null,
-    company: company?.trim() || null,
+    first_name: first_name ? normalizeInput(first_name, 'name').value : null,
+    last_name: last_name ? normalizeInput(last_name, 'name').value : null,
+    email: email ? normalizeInput(email, 'email').value : null,
+    phone: phone ? (normalizeInput(phone, 'phone').valid ? normalizeInput(phone, 'phone').value : phone) : null,
+    company: company ? normalizeInput(company, 'company').value : null,
     payload: { salutation, message, ...rest },
     source_page: attr.source_page || null,
     utm_source: attr.utm_source || null,
