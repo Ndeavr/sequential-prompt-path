@@ -740,28 +740,26 @@ export default function OverlayAlexVoiceFullScreen() {
     const expandToFullscreen = () => store.setDisplayMode("fullscreen");
 
     return (
-      <AnimatePresence>
+      <>
         <motion.div
           key="alex-overlay-backdrop"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
           transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
           className="uc-alex-overlay-backdrop"
           aria-hidden
         />
         <motion.div
-          key="alex-floating-panel"
-          initial={{ opacity: 0, y: 16 }}
+          key="alex-panel"
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 16 }}
           transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-          className="uc-alex-floating-panel"
+          className="uc-alex-floating-panel flex flex-col"
           role="dialog"
           aria-label="Alex — conversation en cours"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10" style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top))" }}>
             <div className="flex items-center gap-3 min-w-0">
               <AlexMorphingOrb state={deriveOrbStateV2(state, isSpeaking)} size="sm" ariaLabel="Alex" />
               <div className="min-w-0">
@@ -774,7 +772,7 @@ export default function OverlayAlexVoiceFullScreen() {
                 type="button"
                 onClick={expandToFullscreen}
                 aria-label="Agrandir la conversation"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                className="hidden md:flex w-8 h-8 rounded-full items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
               >
                 <MessageSquare className="w-4 h-4" />
               </button>
@@ -789,8 +787,8 @@ export default function OverlayAlexVoiceFullScreen() {
             </div>
           </div>
 
-          {/* Transcripts — compact, last 4 only */}
-          <div ref={scrollRef} className="max-h-[240px] overflow-y-auto px-4 py-3">
+          {/* Transcripts */}
+          <div ref={scrollRef} className="flex-1 md:max-h-[240px] overflow-y-auto px-4 py-3">
             <div className="flex flex-col gap-2">
               {recentTranscripts.length === 0 && (
                 <p className="text-[12px] text-white/65 text-center py-3">
@@ -814,10 +812,8 @@ export default function OverlayAlexVoiceFullScreen() {
             </div>
           </div>
 
-          {/* No inline error banner in the floating panel — fallback is silent. */}
-
           {/* Footer controls */}
-          <div className="px-3 pb-3 pt-2 flex items-center justify-between gap-2 border-t border-white/10">
+          <div className="px-3 pb-3 pt-2 flex items-center justify-between gap-2 border-t border-white/10" style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}>
             <button
               type="button"
               onClick={handleFallbackChat}
@@ -835,22 +831,33 @@ export default function OverlayAlexVoiceFullScreen() {
             </Button>
           </div>
         </motion.div>
-      </AnimatePresence>
+      </>
     );
   }
 
   // ── FULLSCREEN (legacy takeover) rendering ─────────────────────────────────
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[9999] flex flex-col bg-background"
-      >
-        <div className="absolute inset-0 bg-background/95 backdrop-blur-xl" />
-        
-        <div className="relative flex flex-col h-full z-10">
+    <motion.div
+      key="alex-fullscreen"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+      className="fixed inset-0 z-[9999] flex flex-col"
+      style={{ willChange: "opacity" }}
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(59,130,246,0.22) 0%, rgba(14,30,72,0.55) 55%, rgba(6,14,40,0.72) 100%), rgba(10,22,55,0.35)",
+          backdropFilter: "blur(40px) saturate(180%)",
+          WebkitBackdropFilter: "blur(40px) saturate(180%)",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10), inset 0 0 120px rgba(59,130,246,0.18)",
+        }}
+      />
+
+      <div className="relative flex flex-col h-full z-10 text-white">
+
 
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/20">
@@ -966,7 +973,6 @@ export default function OverlayAlexVoiceFullScreen() {
           </div>
         </div>
       </motion.div>
-    </AnimatePresence>
   );
 }
 

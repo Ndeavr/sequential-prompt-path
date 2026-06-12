@@ -50,6 +50,8 @@ const FLOATING_FEATURE_PREFIXES = ["home_", "intent_", "capability_", "discovery
 
 function defaultDisplayModeFor(feature: string): "fullscreen" | "floating" {
   const f = (feature || "").toLowerCase();
+  // Mobile is always fullscreen — floating compact panel is a desktop-only treatment.
+  if (typeof window !== "undefined" && window.innerWidth < 768) return "fullscreen";
   return FLOATING_FEATURE_PREFIXES.some((p) => f.startsWith(p)) ? "floating" : "fullscreen";
 }
 
