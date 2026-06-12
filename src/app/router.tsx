@@ -801,6 +801,8 @@ export const AppRouter = () => (
         <Route path="/pro/score" element={<Suspense fallback={<LazyFallback />}><PageProScoreInstant /></Suspense>} />
         <Route path="/pro/activate" element={<Suspense fallback={<LazyFallback />}><PageProActivate /></Suspense>} />
         <Route path="/pro/welcome" element={<Suspense fallback={<LazyFallback />}><PageProWelcome /></Suspense>} />
+        <Route path="/pro/profile/public/:contractorId" element={<Suspense fallback={<LazyFallback />}><PageProPublicProfile /></Suspense>} />
+
         <Route path="/admin/founders" element={<Suspense fallback={<LazyFallback />}><PageAdminFounders /></Suspense>} />
         <Route path="/pim" element={<Suspense fallback={<LazyFallback />}><PagePIMLanding /></Suspense>} />
         <Route path="/pourquoi-unpro" element={<Suspense fallback={<LazyFallback />}><PageWhyUnpro /></Suspense>} />
