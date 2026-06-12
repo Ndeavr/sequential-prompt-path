@@ -246,7 +246,7 @@ export default function PageContractorAnalysisLive() {
               Plan recommandé
             </p>
             <p className="mt-1 text-2xl font-semibold text-white">
-              UNPRO {PLAN_LABEL[plan]}
+              UNPRO {planLabel(plan)}
             </p>
             <p className="mt-2 text-sm text-white/70 leading-snug">
               {run?.recommendation?.reason}
