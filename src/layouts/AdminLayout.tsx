@@ -23,52 +23,65 @@ import type { LucideIcon } from "lucide-react";
 interface NavLeaf { to: string; label: string; icon: LucideIcon }
 interface NavGroup { key: string; label: string; icon: LucideIcon; items: NavLeaf[] }
 
+// ═══════════════════════════════════════════════════════════════
+// Admin navigation — 5 sections orientées revenu + Laboratoire
+// Objectif: répondre en <5s à "trouvés / en onboarding / payants".
+// Aucune route supprimée — tout le reste vit dans Laboratoire.
+// ═══════════════════════════════════════════════════════════════
 const navGroups: NavGroup[] = [
   {
-    key: "cockpit", label: "Cockpit", icon: Sparkles,
+    key: "dashboard", label: "Dashboard", icon: LayoutDashboard,
     items: [
-      { to: "/admin", label: "Tableau de bord", icon: LayoutDashboard },
-      { to: "/admin/omega", label: "Omega Cockpit", icon: Sparkles },
-      { to: "/admin/operations", label: "Operations Hub", icon: Activity },
+      { to: "/admin", label: "Vue générale", icon: LayoutDashboard },
       { to: "/admin/alerts", label: "Alertes", icon: Bell },
     ],
   },
   {
-    key: "people", label: "People", icon: Users,
+    key: "entrepreneurs", label: "Entrepreneurs", icon: Briefcase,
     items: [
-      { to: "/admin/users", label: "Utilisateurs", icon: Users },
-      { to: "/admin/contractors", label: "Entrepreneurs", icon: Briefcase },
-      { to: "/admin/verification", label: "Vérifications", icon: SearchCheck },
-      { to: "/admin/validation", label: "Validation", icon: ShieldCheck },
-      { to: "/admin/verified-contractors", label: "Entrepreneurs vérifiés", icon: Shield },
+      { to: "/admin/contractors", label: "Tous", icon: Briefcase },
+      { to: "/admin/users", label: "Prospects", icon: Users },
+      { to: "/admin/verification", label: "Qualification", icon: SearchCheck },
+      { to: "/admin/validation", label: "Activation", icon: ShieldCheck },
+      { to: "/admin/verified-contractors", label: "Membres actifs", icon: Shield },
     ],
   },
   {
-    key: "revenue", label: "Revenue", icon: DollarSign,
-    items: [
-      { to: "/admin/leads", label: "Leads", icon: TrendingUp },
-      { to: "/admin/appointments", label: "Rendez-vous", icon: CalendarDays },
-      { to: "/admin/quotes", label: "Soumissions", icon: FileText },
-      { to: "/admin/reviews", label: "Avis", icon: Star },
-      { to: "/admin/coupons", label: "Coupons", icon: Tag },
-      { to: "/admin/pricing", label: "Pricing", icon: DollarSign },
-    ],
-  },
-  {
-    key: "intelligence", label: "Intelligence", icon: Brain,
+    key: "alex", label: "Alex", icon: Sparkles,
     items: [
       { to: "/admin/agents", label: "Agents IA", icon: Brain },
-      { to: "/admin/optimization", label: "Optimisation IA", icon: Wand2 },
+      { to: "/admin/answer", label: "Knowledge / Prompts", icon: Cpu },
+      { to: "/admin/optimization", label: "Optimisation", icon: Wand2 },
+    ],
+  },
+  {
+    key: "acquisition", label: "Acquisition", icon: TrendingUp,
+    items: [
+      { to: "/admin/outbound", label: "Campagnes", icon: Rocket },
+      { to: "/admin/outbound/sequences", label: "Emails", icon: Mail },
+      { to: "/admin/outbound/sms-fallback", label: "SMS", icon: Smartphone },
+      { to: "/admin/outbound/analytics", label: "Performance", icon: BarChart3 },
+      { to: "/admin/outbound/ops", label: "Pipeline live", icon: Activity },
+    ],
+  },
+  {
+    key: "revenus", label: "Revenus", icon: DollarSign,
+    items: [
+      { to: "/admin/pricing", label: "MRR & Pricing", icon: DollarSign },
+      { to: "/admin/appointments", label: "Rendez-vous", icon: CalendarDays },
+      { to: "/admin/coupons", label: "Coupons", icon: Tag },
+      { to: "/admin/quotes", label: "Soumissions", icon: FileText },
+    ],
+  },
+  {
+    key: "labo", label: "Laboratoire", icon: TestTube,
+    items: [
+      { to: "/admin/omega", label: "Omega Cockpit", icon: Sparkles },
+      { to: "/admin/operations", label: "Operations Hub", icon: Activity },
       { to: "/admin/predictive-leads", label: "Predictive Leads", icon: Brain },
       { to: "/admin/predictive-market-board", label: "Centre Prédictif", icon: Zap },
       { to: "/admin/home-graph", label: "Problem Graph", icon: Network },
-      { to: "/admin/answer", label: "Answer Engine", icon: Cpu },
-    ],
-  },
-  {
-    key: "growth", label: "Growth", icon: TrendingUp,
-    items: [
-      { to: "/admin/growth", label: "Croissance", icon: BarChart3 },
+      { to: "/admin/growth", label: "Growth", icon: BarChart3 },
       { to: "/admin/growth-engine", label: "Growth Engine", icon: TrendingUp },
       { to: "/admin/dynamic-pricing-market", label: "Prix Dynamique", icon: TrendingUp },
       { to: "/admin/zone-value", label: "Zones & Exclusivité", icon: MapPin },
@@ -78,71 +91,33 @@ const navGroups: NavGroup[] = [
       { to: "/admin/services-secondaires", label: "Services Quotidiens", icon: Zap },
       { to: "/admin/screenshot-analytics", label: "Screenshot Intel", icon: Camera },
       { to: "/admin/local-seo", label: "Local SEO", icon: SearchCheck },
-    ],
-  },
-  {
-    key: "outbound-city", label: "Outbound · City-First", icon: MapPin,
-    items: [
-      { to: "/admin/outbound/cities", label: "Villes cibles", icon: MapPin },
-      { to: "/admin/outbound/diagnostics", label: "Diagnostics", icon: Activity },
-    ],
-  },
-  {
-    key: "outbound-auto", label: "Outbound · Autopilot", icon: Rocket,
-    items: [
-      { to: "/admin/outbound/targets", label: "Marchés Cibles", icon: Target },
-      { to: "/admin/outbound/autopilot/runs", label: "Autopilot Runs", icon: Rocket },
-    ],
-  },
-  {
-    key: "outbound-core", label: "Outbound · Core", icon: Send,
-    items: [
-      { to: "/admin/outbound", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/admin/outbound/campaigns", label: "Campagnes", icon: Rocket },
-      { to: "/admin/outbound/campaigns/new", label: "Nouvelle campagne", icon: Zap },
-      { to: "/admin/outbound/leads", label: "Prospects", icon: Users },
-      { to: "/admin/outbound/runs", label: "Pipeline Live", icon: Activity },
-    ],
-  },
-  {
-    key: "outbound-ops", label: "Outbound · Pipeline & Ops", icon: Activity,
-    items: [
-      { to: "/admin/outbound/ops", label: "Centre Ops", icon: Activity },
-      { to: "/admin/outbound/verification", label: "Vérification", icon: ShieldCheck },
-      { to: "/admin/outbound/tests", label: "Tests manuels", icon: TestTube },
-      { to: "/admin/outbound/automations", label: "Automatisations", icon: Bot },
-      { to: "/admin/outbound/logs", label: "Logs", icon: ScrollText },
-    ],
-  },
-  {
-    key: "outbound-email", label: "Outbound · Email", icon: Mail,
-    items: [
-      { to: "/admin/outbound/sequences", label: "Séquences", icon: Mail },
+      { to: "/admin/outbound/cities", label: "Outbound · Villes", icon: MapPin },
+      { to: "/admin/outbound/diagnostics", label: "Outbound · Diagnostics", icon: Activity },
+      { to: "/admin/outbound/targets", label: "Outbound · Marchés", icon: Target },
+      { to: "/admin/outbound/autopilot/runs", label: "Outbound · Autopilot", icon: Rocket },
+      { to: "/admin/outbound/campaigns", label: "Outbound · Campagnes", icon: Rocket },
+      { to: "/admin/outbound/campaigns/new", label: "Outbound · Nouvelle", icon: Zap },
+      { to: "/admin/outbound/leads", label: "Outbound · Prospects", icon: Users },
+      { to: "/admin/outbound/runs", label: "Outbound · Runs", icon: Activity },
+      { to: "/admin/outbound/verification", label: "Outbound · Vérif", icon: ShieldCheck },
+      { to: "/admin/outbound/tests", label: "Outbound · Tests", icon: TestTube },
+      { to: "/admin/outbound/automations", label: "Outbound · Automations", icon: Bot },
+      { to: "/admin/outbound/logs", label: "Outbound · Logs", icon: ScrollText },
       { to: "/admin/outbound/sequences-elite", label: "Séquences AIPP", icon: Send },
       { to: "/admin/outbound/mailboxes", label: "Boîtes d'envoi", icon: Inbox },
       { to: "/admin/outbound/sending-architecture", label: "Architecture", icon: Server },
       { to: "/admin/outbound/email-health", label: "Santé Email", icon: Heart },
       { to: "/admin/outbound/deliverability", label: "Délivrabilité", icon: Activity },
-    ],
-  },
-  {
-    key: "outbound-intel", label: "Outbound · Intelligence", icon: Cpu,
-    items: [
       { to: "/admin/outbound/ai-rewrite", label: "Personnalisation IA", icon: Cpu },
       { to: "/admin/outbound/revenue", label: "Revenue Loss", icon: DollarSign },
-      { to: "/admin/outbound/sms-fallback", label: "SMS Fallback", icon: Smartphone },
       { to: "/admin/sms-images", label: "Images SMS", icon: ImageIcon },
       { to: "/admin/brand", label: "Brand Engine", icon: Shield },
       { to: "/admin/brand-intelligence/logos", label: "Brand Logos", icon: ImageIcon },
-      { to: "/admin/outbound/analytics", label: "Analytics", icon: BarChart3 },
       { to: "/admin/outbound/suppressions", label: "Suppressions", icon: Ban },
-      { to: "/admin/outbound/settings", label: "Settings", icon: Settings },
+      { to: "/admin/outbound/settings", label: "Outbound · Settings", icon: Settings },
       { to: "/admin/outbound/settings-lite", label: "Settings (legacy)", icon: LayoutList },
-    ],
-  },
-  {
-    key: "ops", label: "Ops", icon: Settings,
-    items: [
+      { to: "/admin/leads", label: "Leads", icon: TrendingUp },
+      { to: "/admin/reviews", label: "Avis", icon: Star },
       { to: "/admin/automation", label: "Automatisation", icon: Bot },
       { to: "/admin/documents", label: "Documents", icon: FolderOpen },
       { to: "/admin/media", label: "Média IA", icon: Palette },
