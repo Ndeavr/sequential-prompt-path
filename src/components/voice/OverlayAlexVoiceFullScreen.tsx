@@ -973,7 +973,6 @@ export default function OverlayAlexVoiceFullScreen() {
           </div>
         </div>
       </motion.div>
-    </AnimatePresence>
   );
 }
 
