@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/formatPrice";
-import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 interface RunRow {
   id: string;
@@ -38,17 +37,23 @@ const STEPS: Array<{ key: string; label: string }> = [
 ];
 
 const PLAN_LABEL: Record<string, string> = {
+  recrue: "Recrue",
   pro: "Pro",
   premium: "Premium",
   elite: "Élite",
   signature: "Signature",
 };
 const PLAN_PRICE: Record<string, number> = {
+  recrue: 149,
   pro: 349,
   premium: 599,
   elite: 999,
   signature: 1799,
 };
+
+function planLabel(slug: string): string {
+  return PLAN_LABEL[slug] ?? (slug.charAt(0).toUpperCase() + slug.slice(1));
+}
 
 export default function PageContractorAnalysisLive() {
   const [params] = useSearchParams();
@@ -240,7 +245,7 @@ export default function PageContractorAnalysisLive() {
               Plan recommandé
             </p>
             <p className="mt-1 text-2xl font-semibold text-white">
-              UNPRO {PLAN_LABEL[plan]}
+              UNPRO {planLabel(plan)}
             </p>
             <p className="mt-2 text-sm text-white/70 leading-snug">
               {run?.recommendation?.reason}
@@ -282,37 +287,80 @@ export default function PageContractorAnalysisLive() {
 }
 
 function CheckoutButton({ runId }: { runId: string }) {
-  const [busy, setBusy] = useState(false);
+  const [url, setUrl] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const handle = async () => {
-    setBusy(true);
-    setErr(null);
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        "activation-create-checkout",
-        { body: { run_id: runId } },
-      );
-      if (error) throw error;
-      const url = (data as { url?: string })?.url;
-      if (!url) throw new Error("Lien de paiement manquant.");
-      redirectToCheckout(url);
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Erreur de paiement.");
-      setBusy(false);
-    }
-  };
+  const [loading, setLoading] = useState(true);
+
+  const prepare = useMemo(
+    () => async () => {
+      setLoading(true);
+      setErr(null);
+      try {
+        const { data, error } = await supabase.functions.invoke(
+          "activation-create-checkout",
+          { body: { run_id: runId } },
+        );
+        if (error) throw error;
+        const u = (data as { url?: string })?.url;
+        if (!u) throw new Error("Lien de paiement manquant.");
+        setUrl(u);
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : "Erreur de paiement.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [runId],
+  );
+
+  useEffect(() => {
+    prepare();
+  }, [prepare]);
+
+  if (err && !url) {
+    return (
+      <>
+        <p className="mb-2 text-center text-xs text-red-400">{err}</p>
+        <button
+          onClick={prepare}
+          className="w-full rounded-2xl bg-amber-400 text-[#060B14] py-4 text-base font-semibold flex items-center justify-center gap-2 active:scale-[0.99] transition"
+        >
+          Réessayer
+        </button>
+      </>
+    );
+  }
+
+  if (loading || !url) {
+    return (
+      <button
+        disabled
+        className="w-full rounded-2xl bg-amber-400/60 text-[#060B14] py-4 text-base font-semibold flex items-center justify-center gap-2 cursor-wait"
+      >
+        <Loader2 className="w-4 h-4 animate-spin" />
+        Préparation du paiement sécurisé…
+      </button>
+    );
+  }
+
   return (
     <>
-      <button
-        onClick={handle}
-        disabled={busy}
-        className="w-full rounded-2xl bg-amber-400 text-[#060B14] py-4 text-base font-semibold flex items-center justify-center gap-2 active:scale-[0.99] transition disabled:opacity-60"
+      <a
+        href={url}
+        target="_top"
+        rel="noopener"
+        className="w-full rounded-2xl bg-amber-400 text-[#060B14] py-4 text-base font-semibold flex items-center justify-center gap-2 active:scale-[0.99] transition"
       >
-        {busy
-          ? <><Loader2 className="w-4 h-4 animate-spin" />Redirection vers le paiement…</>
-          : <>Activer mon profil — 1,00 $ aujourd'hui <ArrowRight className="w-4 h-4" /></>}
-      </button>
-      {err && <p className="mt-2 text-center text-xs text-red-400">{err}</p>}
+        Activer mon profil — 1,00 $ aujourd'hui <ArrowRight className="w-4 h-4" />
+      </a>
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-2 block text-center text-[11px] text-white/60 underline"
+      >
+        Ouvrir le paiement dans un nouvel onglet →
+      </a>
     </>
   );
 }

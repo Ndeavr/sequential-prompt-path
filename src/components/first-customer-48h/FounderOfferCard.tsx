@@ -9,6 +9,7 @@ interface Props {
   onActivate: () => void;
   ctaLabel?: string;
   loading?: boolean;
+  checkoutUrl?: string | null;
 }
 
 const FEATURES = [
@@ -21,7 +22,7 @@ const FEATURES = [
   "Annulation en tout temps",
 ];
 
-export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon profil", loading }: Props) {
+export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon profil", loading, checkoutUrl }: Props) {
   const spots = useFounderSpotsRemaining("fondateur-149");
   return (
     <div
@@ -106,19 +107,46 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon p
           ))}
         </ul>
 
-        <button
-          onClick={onActivate}
-          disabled={loading || (spots !== null && spots <= 0)}
-          className="mt-5 w-full px-5 py-3.5 rounded-2xl font-bold text-[14.5px] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{
-            background:
-              "linear-gradient(135deg, #F5C85A 0%, #D4AF37 100%)",
-            color: "#0B1220",
-            boxShadow: "0 10px 24px -8px rgba(245,200,90,0.6)",
-          }}
-        >
-          {loading ? "Redirection…" : spots !== null && spots <= 0 ? "Complet" : ctaLabel}
-        </button>
+        {checkoutUrl ? (
+          <>
+            <a
+              href={checkoutUrl}
+              target="_top"
+              rel="noopener"
+              className="mt-5 w-full px-5 py-3.5 rounded-2xl font-bold text-[14.5px] transition-transform hover:-translate-y-0.5 flex items-center justify-center"
+              style={{
+                background: "linear-gradient(135deg, #F5C85A 0%, #D4AF37 100%)",
+                color: "#0B1220",
+                boxShadow: "0 10px 24px -8px rgba(245,200,90,0.6)",
+              }}
+            >
+              Continuer vers le paiement sécurisé →
+            </a>
+            <a
+              href={checkoutUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-center text-[11px] mt-2 underline"
+              style={{ color: "rgba(255,255,255,0.7)" }}
+            >
+              Ouvrir le paiement dans un nouvel onglet →
+            </a>
+          </>
+        ) : (
+          <button
+            onClick={onActivate}
+            disabled={loading || (spots !== null && spots <= 0)}
+            className="mt-5 w-full px-5 py-3.5 rounded-2xl font-bold text-[14.5px] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              background:
+                "linear-gradient(135deg, #F5C85A 0%, #D4AF37 100%)",
+              color: "#0B1220",
+              boxShadow: "0 10px 24px -8px rgba(245,200,90,0.6)",
+            }}
+          >
+            {loading ? "Préparation du paiement…" : spots !== null && spots <= 0 ? "Complet" : ctaLabel}
+          </button>
+        )}
         <p
           className="text-[10.5px] text-center mt-2"
           style={{ color: "rgba(255,255,255,0.55)" }}

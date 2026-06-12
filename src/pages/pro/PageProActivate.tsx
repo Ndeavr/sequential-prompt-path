@@ -14,6 +14,7 @@ export default function PageProActivate() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const [loading, setLoading] = useState(false);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [form, setForm] = useState({
     company: params.get("company") ?? "",
     name: "",
@@ -35,10 +36,10 @@ export default function PageProActivate() {
       return;
     }
     setLoading(true);
+    setCheckoutUrl(null);
     try {
       let pid = prospectId;
       if (!pid) {
-        // Create a lightweight prospect first so we can track lifecycle.
         const { data } = await supabase.functions.invoke("pro-score-instant", {
           body: form,
         });
@@ -55,9 +56,20 @@ export default function PageProActivate() {
       if ((c as any)?.error) throw new Error((c as any).error);
       const url = (c as any)?.url;
       if (!url) throw new Error("Aucune URL de paiement reçue");
-      window.location.assign(url);
+      setCheckoutUrl(url);
+      // Best-effort auto-redirect for environments without iframes.
+      try {
+        if (window.top && window.top !== window.self) {
+          window.top.location.href = url;
+        } else {
+          window.location.href = url;
+        }
+      } catch {
+        // cross-origin top → user clicks the visible link below.
+      }
     } catch (err: any) {
       toast.error(err.message ?? "Impossible de démarrer le paiement");
+    } finally {
       setLoading(false);
     }
   };
@@ -135,7 +147,7 @@ export default function PageProActivate() {
             ))}
           </div>
 
-          <FounderOfferCard onActivate={startCheckout} loading={loading} />
+          <FounderOfferCard onActivate={startCheckout} loading={loading} checkoutUrl={checkoutUrl} />
         </div>
       </div>
     </>
