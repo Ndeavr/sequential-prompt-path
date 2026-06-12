@@ -220,11 +220,11 @@ export const mobileTabsByRole: Record<UserRole | "guest", NavItem[]> = {
     { to: "/dashboard/account", label: "Compte", labelEn: "Account", icon: "User" },
   ],
   admin: [
-    { to: "/admin", label: "KPIs", icon: "BarChart3" },
-    { to: "/admin/contractors", label: "Alertes", labelEn: "Alerts", icon: "AlertTriangle" },
+    { to: "/admin", label: "Dashboard", labelEn: "Dashboard", icon: "LayoutDashboard" },
+    { to: "/admin/contractors", label: "Entrepreneurs", labelEn: "Contractors", icon: "Briefcase" },
     { to: "/alex", label: "Alex", icon: "Sparkles" },
-    { to: "/admin/users", label: "Admin", icon: "LayoutDashboard" },
-    { to: "/admin/agents", label: "Compte", labelEn: "Account", icon: "User" },
+    { to: "/admin/outbound", label: "Acquisition", labelEn: "Acquisition", icon: "TrendingUp" },
+    { to: "/dashboard/account", label: "Compte", labelEn: "Account", icon: "User" },
   ],
 };
 
