@@ -22,7 +22,7 @@ const FEATURES = [
   "Annulation en tout temps",
 ];
 
-export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon profil", loading, checkoutUrl }: Props) {
+export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon profil pour 1 $", loading, checkoutUrl }: Props) {
   const spots = useFounderSpotsRemaining("fondateur-149");
   return (
     <div
@@ -60,7 +60,7 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon p
               className="text-[10.5px] font-semibold uppercase tracking-wider"
               style={{ color: "#F5C85A" }}
             >
-              {spots} / 25 places
+              {spots > 0 ? `${spots} ${spots === 1 ? "place restante" : "places restantes"}` : "Complet"}
             </div>
           )}
         </div>
@@ -120,7 +120,7 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon p
                 boxShadow: "0 10px 24px -8px rgba(245,200,90,0.6)",
               }}
             >
-              Continuer vers le paiement sécurisé →
+              Activer mon profil pour 1 $ →
             </a>
             <a
               href={checkoutUrl}
@@ -129,7 +129,7 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon p
               className="block text-center text-[11px] mt-2 underline"
               style={{ color: "rgba(255,255,255,0.7)" }}
             >
-              Ouvrir le paiement dans un nouvel onglet →
+              Ouvrir le paiement sécurisé →
             </a>
           </>
         ) : (

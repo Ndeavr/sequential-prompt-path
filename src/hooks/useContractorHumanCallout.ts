@@ -45,7 +45,11 @@ export function useContractorHumanCallout() {
       if (sessionStorage.getItem(CONTRACTOR_HUMAN_CALLOUT.storageKey)) return;
     } catch {}
 
-    if (!isContractorSurface(window.location.pathname, window.location.search)) return;
+    const path = window.location.pathname;
+    // Never show the human callout on post-payment / profile surfaces.
+    const EXCLUDED_PREFIXES = ["/pro/welcome", "/pro/profile", "/pro/onboarding", "/contractor/activated"];
+    if (EXCLUDED_PREFIXES.some((p) => path === p || path.startsWith(p + "/") || path.startsWith(p))) return;
+    if (!isContractorSurface(path, window.location.search)) return;
 
     let lastInputAt = 0;
     let timer: number | null = null;
