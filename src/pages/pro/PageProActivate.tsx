@@ -147,7 +147,7 @@ export default function PageProActivate() {
             ))}
           </div>
 
-          <FounderOfferCard onActivate={startCheckout} loading={loading} />
+          <FounderOfferCard onActivate={startCheckout} loading={loading} checkoutUrl={checkoutUrl} />
         </div>
       </div>
     </>
