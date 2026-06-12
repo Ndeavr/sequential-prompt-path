@@ -22,6 +22,7 @@ const OverlayAlexVoiceFullScreen = lazy(() => import("@/components/voice/Overlay
 const AlexChatFallbackPanel = lazy(() => import("@/components/voice/AlexChatFallbackPanel"));
 const AlexVoiceDebugPanel = lazy(() => import("@/components/voice/AlexVoiceDebugPanel"));
 const AlexVoiceDiagnosticsPanel = lazy(() => import("@/components/voice/AlexVoiceDiagnosticsPanel"));
+const AuthGateMount = lazy(() => import("@/components/auth/AuthGateMount"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,6 +59,11 @@ export const Providers = ({ children }: ProvidersProps) => (
                 <DeferredAfterInteractive timeoutMs={4000}>
                   <Suspense fallback={null}>
                     <AlexChatFallbackPanel />
+                  </Suspense>
+                </DeferredAfterInteractive>
+                <DeferredAfterInteractive timeoutMs={3000}>
+                  <Suspense fallback={null}>
+                    <AuthGateMount />
                   </Suspense>
                 </DeferredAfterInteractive>
                 {import.meta.env.DEV && (

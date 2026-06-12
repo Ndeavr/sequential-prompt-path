@@ -13614,6 +13614,33 @@ export type Database = {
           },
         ]
       }
+      auth_otp_attempts: {
+        Row: {
+          channel: string
+          created_at: string
+          id: string
+          identifier: string
+          ip: unknown
+          user_agent: string | null
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          id?: string
+          identifier: string
+          ip?: unknown
+          user_agent?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          id?: string
+          identifier?: string
+          ip?: unknown
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       authority_articles: {
         Row: {
           aeo_score: number | null

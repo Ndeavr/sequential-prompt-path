@@ -1,42 +1,104 @@
-## Problem
+## Objectif
 
-Sur mobile, Alex s'ouvre en mode "floating" (compact panel) sur les surfaces `home_/intent_/capability_/discovery_`. Résultat :
-- Panneau mi-écran (pas plein écran), pas au-dessus de la page
-- Fond gris-bleu sombre `rgba(10,18,40,0.48)` → lecture grise au lieu d'Apple blue
-- Flicker = montage/démontage AnimatePresence + key change quand `displayMode` bascule, plus animation `uc-glass-panel-in` qui rejoue à chaque re-render parent
+Alex propose la connexion (ou la création de compte) **après la 1ʳᵉ intention captée**, via une **carte glass inline + voix**, et **rappelle avant chaque action engageante** (booking, devis, sauvegarde dossier, recommandation perso). Méthodes : **Magic Link courriel** + **SMS OTP**. Couvre les 3 rôles : propriétaire, entrepreneur, gestionnaire condo.
 
-## Fix (3 changements ciblés)
+## Architecture
 
-### 1. Forcer plein écran sur mobile
-`src/contexts/AlexVoiceContext.tsx` → `defaultDisplayModeFor()` : retourner `"fullscreen"` quand `window.innerWidth < 768`, même pour les préfixes `home_/intent_/capability_/discovery_`. Garder floating uniquement desktop ≥ 768px.
+### 1. Hook central `useAuthGate`
+`src/hooks/useAuthGate.ts` — source unique de vérité :
+- `isAuthenticated`, `userRole`
+- `requestLoginPrompt(reason: AuthGateReason)` → ouvre la carte/sheet
+- `requireAuth(action: () => void, reason)` → si connecté exécute, sinon ouvre la carte avec callback de reprise
+- `dismissCount` persisté en `sessionStorage` (1 « plus tard » silencieux, re-prompt seulement aux actions engageantes ensuite)
+- `AuthGateReason` : `first_intent | book | quote | save_project | personalized_reco | save_lead`
 
-### 2. Glassmorphisme Apple blue
-`src/styles/unicorn-theme.css` `.uc-alex-floating-panel` (utilisé desktop) ET le fullscreen wrapper :
+### 2. Store `authGateStore` (zustand)
+`src/stores/authGateStore.ts` — `isOpen`, `reason`, `pendingAction`, `open()`, `close()`, `setMethod('email'|'sms')`.
 
-- Remplacer le fond gris foncé par un dégradé bleu translucide Apple-like :
-  ```
-  background:
-    linear-gradient(180deg, rgba(59,130,246,0.18) 0%, rgba(14,30,72,0.42) 100%),
-    rgba(10,22,55,0.32);
-  backdrop-filter: blur(40px) saturate(180%);
-  border: 1px solid rgba(255,255,255,0.22);
-  ```
-- Ajouter une `inset` highlight bleue subtile et un glow `0 0 80px rgba(59,130,246,0.28)`.
-- Pour le fullscreen (ligne 849-851) : remplacer `bg-background` + `bg-background/95 backdrop-blur-xl` par la même surface verre bleue, avec `inset: 0; z-index: 9999`.
+### 3. Composant `AuthGateCard`
+`src/components/auth/AuthGateCard.tsx` — carte glass bleue (réutilise `.glass-strong` et tokens cinematic dark) montée :
+- **Inline dans la conversation Alex** : nouvelle `chat-card` rendue par `OverlayAlexVoiceFullScreen` quand `authGateStore.isOpen && reason === 'first_intent'`.
+- **Modal bottom-sheet** pour les actions engageantes (`book/quote/...`) — même composant, prop `variant="sheet"`.
 
-### 3. Éliminer le flicker
-Dans `src/components/voice/OverlayAlexVoiceFullScreen.tsx` :
-- Retirer `AnimatePresence` autour d'un seul enfant systématiquement présent (les blocs floating et fullscreen). Garder uniquement un `motion.div` avec `initial`/`animate`, sans `exit`, monté une seule fois.
-- Stabiliser la `key` : utiliser une clé constante (`"alex-panel"`) au lieu de basculer entre floating/fullscreen → si l'utilisateur reste en fullscreen, pas de remount.
-- CSS : retirer `animation: uc-glass-panel-in 380ms ... both` (joué à chaque re-render). L'apparition est gérée par framer-motion uniquement.
-- Le backdrop : passer `pointer-events:none` + `will-change: opacity` pour éviter le repaint flash.
+UI :
+- Titre : « Pour vous offrir une meilleure expérience »
+- Sous-titre rôle-aware (FR-CA) :
+  - propriétaire : « Sauvegardez votre dossier propriété et vos rendez-vous. »
+  - entrepreneur : « Activez votre profil et vos opportunités. »
+  - gestionnaire : « Conservez vos dossiers d'immeuble et l'historique. »
+- 2 onglets : « Courriel » (magic link) / « SMS » (OTP)
+- Champ unique (email *ou* téléphone) avec `normalizeInput` (déjà en place)
+- CTA primaire « M'envoyer le lien / le code »
+- Lien discret « Plus tard » (ne ferme que la carte courante, ne bloque pas la conversation)
+- Petit lien : « Pas encore de compte? On en crée un automatiquement. » (les deux méthodes créent le compte si inconnu)
 
-## Hors scope
-- Pas de changement à `alexVoiceLockedStore` ni à la logique vocale/Eleven Labs.
-- Pas de retrait du bouton "Agrandir" (utile desktop).
-- Pas de modif des controls / bouton Raccrocher.
+### 4. Edge function `auth-otp-dispatch`
+`supabase/functions/auth-otp-dispatch/index.ts` :
+- POST `{ channel: 'email'|'sms', identifier, role?, returnUrl? }`
+- Email → `supabase.auth.signInWithOtp({ email, options: { emailRedirectTo, shouldCreateUser: true, data: { role } } })`
+- SMS → `supabase.auth.signInWithOtp({ phone, options: { shouldCreateUser: true, data: { role } } })` (utilise Twilio connector côté Supabase Phone Auth)
+- Anti-abus : rate-limit 3 envois / 10 min / identifiant (`auth_otp_attempts` table).
+- Retourne `{ sent: true, channel, masked_identifier }` pour la confirmation à l'écran.
 
-## Validation
-- Mobile 384px : Alex ouvre en plein écran (inset 0), z-index au-dessus de tout, verre bleu Apple lisible, aucun clignotement à l'apparition ni pendant les changements d'état (listening → speaking).
-- Desktop ≥ 768px : panneau flottant bas-droit conserve son comportement actuel, mais en bleu Apple.
-- `prefers-reduced-motion` toujours respecté.
+### 5. Confirmation OTP SMS
+Quand channel = sms, après envoi : la carte affiche 6 cases OTP. Soumission via `supabase.auth.verifyOtp({ phone, token, type: 'sms' })`. À succès → `pendingAction()` est rejoué.
+
+### 6. Magic link courriel
+Email envoyé via le système Lovable Auth Email Templates existant. Au retour sur l'app, `onAuthStateChange` détecte la session → on rejoue `pendingAction` si stockée en `sessionStorage`.
+
+### 7. Branchements dans Alex
+`src/lib/alexSessionState.ts` + `OverlayAlexVoiceFullScreen.tsx` :
+- Après la 1ʳᵉ intention captée (event `alex:intent_captured` déjà émis par le brain) → `requestLoginPrompt('first_intent')` **si non connecté** ET `dismissCount === 0`.
+- Voix d'Alex (variante FR-CA, 1 phrase) : « Pour mieux vous aider, je vous propose une connexion rapide. Sinon on continue, vous me le direz. » — déclenchée via prompt addendum contextuel, **pas** d'ajout au system prompt.
+
+### 8. Branchements des actions engageantes
+Wrap les CTA existants avec `requireAuth(...)` :
+- Booking : `BookingPaymentSuccess` / panneaux de prise de RV → `requireAuth(book, 'book')`
+- Devis : `PageAnalyseTroisSoumissions`, `PageAjouterSoumissionAuDossier`
+- Sauvegarde dossier propriété : `PageMesPropriétés`, `PIM landing`
+- Recommandation perso : carte de recommandation contractor (homeowner)
+- Activation entrepreneur : `PageContractorJoinLive`, checkout fondateur
+
+### 9. Méthode SMS — Twilio
+SMS OTP via Supabase Phone Auth. Vérifier la connexion Twilio app-connector ; sinon prompter l'utilisateur pour la connecter (`standard_connectors--connect twilio`). Sans Twilio actif, désactiver l'onglet SMS avec un message inline « Bientôt disponible » (pas d'erreur exposée).
+
+## Data
+
+### Table `auth_otp_attempts`
+```
+id uuid pk default gen_random_uuid()
+identifier text not null            -- email ou phone E.164
+channel text not null check (channel in ('email','sms'))
+ip inet
+created_at timestamptz default now()
+```
++ index `(identifier, created_at desc)`. RLS : insert/select **service_role only**. Pas de grant anon/authenticated.
+
+### `user_roles` existant
+Au verifyOtp success, si `data.role` présent et pas de row → insert dans `user_roles` (via trigger `handle_new_user` déjà en place, à étendre si nécessaire).
+
+## Constraints
+- Aucune fuite technique (« erreur réseau », « SMS échoué ») → libellés UX-safe : « Lien envoyé », « Code envoyé », « Impossible pour le moment, essayons par courriel ».
+- Respect `mem://standards/ui-readability-rule` : carte sur fond verre bleu Apple-like déjà défini, texte token `--text-primary`.
+- Respect `mem://ai/alex/behavioral-kernel` : Alex n'insiste pas, n'expose pas d'erreur.
+- Aucune écriture dans `auth.*` ni `src/integrations/supabase/client.ts`.
+- Pas d'auto-confirm email (Magic Link gère le retour de session naturellement).
+- `sessionStorage` clé `unpro_auth_gate_dismissed` empêche la re-proposition initiale.
+
+## Success
+- Sur les 3 rôles, après 1ʳᵉ intention : la carte glass bleue s'affiche **dans le chat**, Alex la mentionne 1 fois.
+- L'utilisateur entre courriel → reçoit magic link → revient dans l'app connecté → l'action en attente reprend.
+- L'utilisateur entre téléphone → reçoit code SMS → entre les 6 chiffres → connecté → action reprend.
+- Si « Plus tard » → conversation continue sans re-prompt. Re-prompt **seulement** au prochain « book/quote/save/reco ».
+- 0 fuite technique, 0 flicker, 0 prompt sur page load.
+
+## Tasks
+1. Migration `auth_otp_attempts` + RLS + grants
+2. Edge function `auth-otp-dispatch` (+ déploiement)
+3. Store + hook (`authGateStore`, `useAuthGate`)
+4. `AuthGateCard` (variants inline + sheet) + onglets email/SMS + OTP input
+5. Branchement Alex `first_intent` (event listener + voix addendum)
+6. Wrappers `requireAuth` sur les 5 actions engageantes listées
+7. Toast UX-safe (réutiliser `friendlyErrors.ts`)
+8. Vérification Twilio connector ; fallback désactivation onglet SMS
+9. Tests : 3 rôles × 2 canaux × reprise pendingAction
