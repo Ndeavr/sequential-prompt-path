@@ -35,6 +35,20 @@ Deno.serve(async (req) => {
 
     const origin = req.headers.get("origin") ?? "https://unpro.ca";
 
+    // Idempotent first-month $1 coupon ($148 off once)
+    const COUPON_ID = "fondateur-first-month-1";
+    try {
+      await stripe.coupons.retrieve(COUPON_ID);
+    } catch (_) {
+      await stripe.coupons.create({
+        id: COUPON_ID,
+        amount_off: 14800,
+        currency: "cad",
+        duration: "once",
+        name: "Fondateur — 1$ premier mois",
+      });
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer_email: email || undefined,
@@ -53,7 +67,7 @@ Deno.serve(async (req) => {
           quantity: 1,
         },
       ],
-      allow_promotion_codes: true,
+      discounts: [{ coupon: COUPON_ID }],
       automatic_tax: { enabled: true },
       tax_id_collection: { enabled: true },
       success_url: `${origin}/pro/welcome?session_id={CHECKOUT_SESSION_ID}&prospect=${prospectId ?? ""}`,
@@ -63,6 +77,7 @@ Deno.serve(async (req) => {
         plan_id: plan.id,
         prospect_id: prospectId ?? "",
         source: "first_customer_48h",
+        first_month_promo: "1cad",
       },
     });
 
