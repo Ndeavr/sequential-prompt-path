@@ -131,15 +131,6 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon p
             >
               Ouvrir le paiement sécurisé →
             </a>
-            <a
-              href={checkoutUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block text-center text-[11px] mt-2 underline"
-              style={{ color: "rgba(255,255,255,0.7)" }}
-            >
-              Ouvrir le paiement dans un nouvel onglet →
-            </a>
           </>
         ) : (
           <button
