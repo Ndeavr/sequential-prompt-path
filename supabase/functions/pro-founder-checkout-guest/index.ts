@@ -35,8 +35,8 @@ Deno.serve(async (req) => {
 
     const origin = req.headers.get("origin") ?? "https://unpro.ca";
 
-    // Idempotent first-month $1 coupon ($148 off once)
-    const COUPON_ID = "fondateur-first-month-1";
+    // Idempotent $1 trial coupon ($148 off once → first charge = $1 today)
+    const COUPON_ID = "fondateur-trial-7d-1";
     try {
       await stripe.coupons.retrieve(COUPON_ID);
     } catch (_) {
@@ -45,9 +45,12 @@ Deno.serve(async (req) => {
         amount_off: 14800,
         currency: "cad",
         duration: "once",
-        name: "Fondateur — 1$ premier mois",
+        name: "Fondateur — 1 $ pour 7 jours",
       });
     }
+
+    // Next full charge in 7 days (today: $149 - $148 coupon = $1)
+    const trialAnchor = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60;
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -59,7 +62,7 @@ Deno.serve(async (req) => {
             product_data: {
               name: plan.name,
               description:
-                "Profil IA optimisé · Recommandations propriétaires · Accès Alex · Jusqu'à 3 rendez-vous exclusifs · Annulation en tout temps",
+                "Essai 7 jours pour 1 $ · Profil IA optimisé · Recommandations propriétaires · Accès Alex · Jusqu'à 3 rendez-vous exclusifs · Annulation en tout temps",
             },
             unit_amount: plan.price,
             recurring: { interval: "month" },
@@ -68,6 +71,10 @@ Deno.serve(async (req) => {
         },
       ],
       discounts: [{ coupon: COUPON_ID }],
+      subscription_data: {
+        billing_cycle_anchor: trialAnchor,
+        proration_behavior: "none",
+      },
       automatic_tax: { enabled: true },
       tax_id_collection: { enabled: true },
       success_url: `${origin}/pro/welcome?session_id={CHECKOUT_SESSION_ID}&prospect=${prospectId ?? ""}`,
@@ -77,7 +84,7 @@ Deno.serve(async (req) => {
         plan_id: plan.id,
         prospect_id: prospectId ?? "",
         source: "first_customer_48h",
-        first_month_promo: "1cad",
+        trial_promo: "1cad_7d",
       },
     });
 
