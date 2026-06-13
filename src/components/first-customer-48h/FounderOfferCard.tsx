@@ -151,7 +151,7 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon p
           className="text-[10.5px] text-center mt-2"
           style={{ color: "rgba(255,255,255,0.55)" }}
         >
-          Paiement sécurisé via Stripe · 1 $ aujourd'hui, puis 149 $/mois
+          Paiement sécurisé via Stripe · 1 $ pour 7 jours, puis 149 $/mois
         </p>
       </div>
     </div>
