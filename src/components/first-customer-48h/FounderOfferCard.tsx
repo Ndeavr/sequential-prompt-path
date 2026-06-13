@@ -79,7 +79,7 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon p
             1 $
           </span>
           <span className="text-[13px] font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>
-            premier mois
+            pour 7 jours
           </span>
         </div>
         <p className="text-[12px] mt-1.5" style={{ color: "rgba(255,255,255,0.7)" }}>
@@ -93,7 +93,7 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon p
             border: "1px solid rgba(245,200,90,0.28)",
           }}
         >
-          Essai Fondateur · 148 $ de rabais le 1er mois
+          Essai Fondateur · 7 jours pour 1 $
         </div>
 
         <ul className="mt-4 space-y-2">
@@ -151,7 +151,7 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon p
           className="text-[10.5px] text-center mt-2"
           style={{ color: "rgba(255,255,255,0.55)" }}
         >
-          Paiement sécurisé via Stripe · 1 $ aujourd'hui, puis 149 $/mois
+          Paiement sécurisé via Stripe · 1 $ pour 7 jours, puis 149 $/mois
         </p>
       </div>
     </div>
