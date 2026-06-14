@@ -804,6 +804,9 @@ export const AppRouter = () => (
         <Route path="/pro/activate" element={<Suspense fallback={<LazyFallback />}><PageProActivate /></Suspense>} />
         <Route path="/pro/welcome" element={<Suspense fallback={<LazyFallback />}><PageProWelcome /></Suspense>} />
         <Route path="/pro/profile/public/:contractorId" element={<Suspense fallback={<LazyFallback />}><PageProPublicProfile /></Suspense>} />
+        <Route path="/pro/onboarding/:token" element={<Suspense fallback={<LazyFallback />}><PageProPrivateOnboarding /></Suspense>} />
+        <Route path="/admin/acquisition-autopilot" element={<Suspense fallback={<LazyFallback />}><PageAdminAcquisitionAutopilot /></Suspense>} />
+
 
         <Route path="/admin/founders" element={<Suspense fallback={<LazyFallback />}><PageAdminFounders /></Suspense>} />
         <Route path="/pim" element={<Suspense fallback={<LazyFallback />}><PagePIMLanding /></Suspense>} />
