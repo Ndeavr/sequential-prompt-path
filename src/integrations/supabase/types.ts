@@ -894,6 +894,47 @@ export type Database = {
         }
         Relationships: []
       }
+      acquisition_followup_queue: {
+        Row: {
+          channel: string
+          created_at: string
+          error_message: string | null
+          id: string
+          lead_id: string
+          scheduled_at: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          lead_id: string
+          scheduled_at: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          lead_id?: string
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acquisition_followup_queue_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       acquisition_pipeline_logs: {
         Row: {
           created_at: string
@@ -27020,6 +27061,7 @@ export type Database = {
           category_primary: string | null
           category_secondary: string | null
           city: string | null
+          clicked_at: string | null
           company_name: string | null
           contractor_id: string | null
           created_at: string
@@ -27027,24 +27069,36 @@ export type Database = {
           created_by_role_code: string | null
           email: string | null
           enrichment_status: string
+          failure_code: string | null
           first_name: string | null
+          fit_reasons: Json | null
+          fit_score: number | null
           full_name: string | null
           id: string
           language_primary: string | null
           last_agent_run_at: string | null
+          last_email_at: string | null
           last_name: string | null
+          last_sms_at: string | null
           lead_status: string
           metadata_json: Json | null
           mobile_phone: string | null
+          onboarding_started_at: string | null
+          onboarding_token: string | null
+          opened_at: string | null
           outreach_status: string
+          paid_at: string | null
+          payment_started_at: string | null
           payment_status: string
           phone: string | null
           pipeline_status: string | null
           postal_code: string | null
           priority_level: string | null
           priority_score: number | null
+          profile_active_at: string | null
           profile_status: string
           province: string | null
+          recommended_plan_slug: string | null
           role_title: string | null
           scanner_session_id: string | null
           score_status: string
@@ -27067,6 +27121,7 @@ export type Database = {
           category_primary?: string | null
           category_secondary?: string | null
           city?: string | null
+          clicked_at?: string | null
           company_name?: string | null
           contractor_id?: string | null
           created_at?: string
@@ -27074,24 +27129,36 @@ export type Database = {
           created_by_role_code?: string | null
           email?: string | null
           enrichment_status?: string
+          failure_code?: string | null
           first_name?: string | null
+          fit_reasons?: Json | null
+          fit_score?: number | null
           full_name?: string | null
           id?: string
           language_primary?: string | null
           last_agent_run_at?: string | null
+          last_email_at?: string | null
           last_name?: string | null
+          last_sms_at?: string | null
           lead_status?: string
           metadata_json?: Json | null
           mobile_phone?: string | null
+          onboarding_started_at?: string | null
+          onboarding_token?: string | null
+          opened_at?: string | null
           outreach_status?: string
+          paid_at?: string | null
+          payment_started_at?: string | null
           payment_status?: string
           phone?: string | null
           pipeline_status?: string | null
           postal_code?: string | null
           priority_level?: string | null
           priority_score?: number | null
+          profile_active_at?: string | null
           profile_status?: string
           province?: string | null
+          recommended_plan_slug?: string | null
           role_title?: string | null
           scanner_session_id?: string | null
           score_status?: string
@@ -27114,6 +27181,7 @@ export type Database = {
           category_primary?: string | null
           category_secondary?: string | null
           city?: string | null
+          clicked_at?: string | null
           company_name?: string | null
           contractor_id?: string | null
           created_at?: string
@@ -27121,24 +27189,36 @@ export type Database = {
           created_by_role_code?: string | null
           email?: string | null
           enrichment_status?: string
+          failure_code?: string | null
           first_name?: string | null
+          fit_reasons?: Json | null
+          fit_score?: number | null
           full_name?: string | null
           id?: string
           language_primary?: string | null
           last_agent_run_at?: string | null
+          last_email_at?: string | null
           last_name?: string | null
+          last_sms_at?: string | null
           lead_status?: string
           metadata_json?: Json | null
           mobile_phone?: string | null
+          onboarding_started_at?: string | null
+          onboarding_token?: string | null
+          opened_at?: string | null
           outreach_status?: string
+          paid_at?: string | null
+          payment_started_at?: string | null
           payment_status?: string
           phone?: string | null
           pipeline_status?: string | null
           postal_code?: string | null
           priority_level?: string | null
           priority_score?: number | null
+          profile_active_at?: string | null
           profile_status?: string
           province?: string | null
+          recommended_plan_slug?: string | null
           role_title?: string | null
           scanner_session_id?: string | null
           score_status?: string
@@ -28232,6 +28312,71 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "market_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_outreach_logs: {
+        Row: {
+          channel: string
+          clicked_at: string | null
+          contractor_id: string | null
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          id: string
+          lead_id: string
+          message_body: string
+          message_subject: string | null
+          opened_at: string | null
+          provider_response: Json | null
+          sent_at: string
+          status: string
+          template_key: string
+          to_address: string
+        }
+        Insert: {
+          channel: string
+          clicked_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          lead_id: string
+          message_body: string
+          message_subject?: string | null
+          opened_at?: string | null
+          provider_response?: Json | null
+          sent_at?: string
+          status?: string
+          template_key: string
+          to_address: string
+        }
+        Update: {
+          channel?: string
+          clicked_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          lead_id?: string
+          message_body?: string
+          message_subject?: string | null
+          opened_at?: string | null
+          provider_response?: Json | null
+          sent_at?: string
+          status?: string
+          template_key?: string
+          to_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_outreach_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
             referencedColumns: ["id"]
           },
         ]
