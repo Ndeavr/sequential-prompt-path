@@ -1,50 +1,107 @@
-## Contexte
+# Autonomous Contractor Acquisition Flow
 
-Flow concerné : `/contractor/join` → `/contractor/analysis?run=…` → checkout Stripe à 1 $ (Activation Fondateur) → `/contractor/activated`.
+Goal: a contractor lead, once discovered, walks itself all the way to `profile_active` without any admin button. Admin sees real counters only — never a fake "done".
 
-Symptôme rapporté : après sélection du forfait Recrue (149 $/mois, 1 $ aujourd'hui), la page de paiement s'ouvre blanche.
+## 1. Pipeline status model
 
-Trois causes identifiées dans le code actuel :
+Single source of truth on `contractor_leads` (or `outbound_leads`, picking the existing canonical table during build):
 
-1. **Plan `recrue` absent des maps** dans `src/pages/contractor/PageContractorAnalysisLive.tsx` (`PLAN_LABEL` et `PLAN_PRICE` ne contiennent que pro/premium/elite/signature). Quand le backend recommande `recrue`, la carte plan affiche « UNPRO undefined » et un tarif à 0 $, ce qui casse la confiance et déclenche des warnings React.
-2. **Redirection Stripe fragile** dans `src/lib/redirectToCheckout.ts` : appelée après un `await` (perte du « user gesture »), `window.open(url, '_blank')` est bloqué sur iOS Safari + iframe preview ; le fallback `window.location.href` peut aussi laisser un onglet vide à cause de `X-Frame-Options: DENY` côté Stripe quand on est dans une iframe.
-3. **Aucun lien de secours visible** : si la redirection échoue, l'utilisateur ne voit qu'un bouton désactivé et un éventuel toast → perception « page blanche ».
+`pipeline_status` enum:
+`discovered → enriched → scored → message_ready → sms_sent → email_sent → opened → clicked → onboarding_started → payment_started → paid → profile_active`
+Plus terminal: `failed` (with `failure_code`, e.g. `MISSING_CONTACT`, `SMS_QUOTA_REACHED`, `EMAIL_QUOTA_REACHED`, `PROVIDER_ERROR`).
 
-## Objectif
+Uses canonical `FailureCode` / `BlockReason` and `platform_operation_outcomes` per the Production Reliability Framework.
 
-Éliminer la page blanche après clic sur « Activer mon profil — 1,00 $ aujourd'hui » et garantir qu'un lien de paiement cliquable reste toujours visible.
+## 2. New table: `contractor_outreach_logs`
 
-## Modifications
+Fields: `id, contractor_id, lead_id, channel ('sms'|'email'), template_key, message_body, status, provider_response jsonb, sent_at, opened_at, clicked_at, error_code, error_message, created_at`.
+RLS: service_role full; admins SELECT via `has_role`. No anon.
 
-### 1. `src/pages/contractor/PageContractorAnalysisLive.tsx`
-- Ajouter `recrue: "Recrue"` à `PLAN_LABEL` et `recrue: 149` à `PLAN_PRICE`.
-- Renforcer le rendu : si `PLAN_LABEL[plan]` est indéfini, afficher le slug capitalisé en fallback.
-- Dans `CheckoutButton` :
-  - Garder le `setBusy(true)` mais ne plus appeler `redirectToCheckout` après un long `await`. Pré-créer la session côté composant : appel à `activation-create-checkout` au moment où `ready && plan` devient vrai, stocker `checkoutUrl` dans un state.
-  - Le bouton devient un `<a href={checkoutUrl} target="_top" rel="noopener">` quand l'URL est prête (préserve le user-gesture, échappe à l'iframe via `_top`).
-  - Tant que l'URL n'est pas prête : afficher « Préparation du paiement sécurisé… » avec spinner.
-  - En cas d'erreur d'invocation : afficher un message d'erreur + bouton « Réessayer ».
-  - Toujours afficher en dessous un lien texte secondaire « Ouvrir le paiement dans un nouvel onglet → » (`target="_blank"`) comme filet de sécurité.
+## 3. Edge functions
 
-### 2. `src/lib/redirectToCheckout.ts`
-- Conserver la fonction pour les autres usages, mais ajouter un export `buildTopLevelHref(url)` qui retourne `url` (utilisé comme `href` d'ancre). Ne plus dépendre de `window.open` pour ce flow critique.
+**`acquisition-autopilot`** (cron every 15 min via pg_cron)
+- Picks leads in `discovered/enriched/scored/message_ready` that have no outreach yet today.
+- Enforces daily limits per UTC day from `contractor_outreach_logs` counts:
+  SMS ≤ 50, Email ≤ 100, new activation attempts ≤ 25.
+- For each eligible lead:
+  1. If not `enriched`, call existing enrichment (Firecrawl/NEQ/RBQ) → `enriched`.
+  2. Compute fit score → `scored`.
+  3. Generate private onboarding token + URL `/pro/onboarding/:token` → `message_ready`.
+  4. Routing rules:
+     - phone + email → SMS now, schedule email +10 min (queued row).
+     - phone only → SMS.
+     - email only → email.
+     - neither → `failed` with `MISSING_CONTACT`.
+  5. Send via existing Twilio + Resend wrappers, log every attempt in `contractor_outreach_logs`, advance status to `sms_sent` / `email_sent`.
+- Reports outcome via `reportOutcome()` — never returns success unless ≥1 message actually sent.
 
-### 3. `src/components/first-customer-48h/FounderOfferCard.tsx` (`/pro/activate`)
-- Même pattern : exposer un `<a>` cliquable dès que l'URL Stripe est obtenue (déjà déclenchée par `onActivate`). Si la prop `onActivate` reste asynchrone, ajouter un état `checkoutUrl` injecté par le parent (`PageProActivate`) et rendu en lien `target="_top"` plutôt qu'un `window.location.assign` post-await.
+**`acquisition-followup-tick`** (same cron, second pass)
+- Sends the scheduled +10 min email rows.
+- Marks `opened` / `clicked` from webhook events.
 
-### 4. `src/pages/pro/PageProActivate.tsx`
-- Refactor `startCheckout` : stocker `setCheckoutUrl(url)` dans le state au lieu de `window.location.assign(url)` ; passer `checkoutUrl` à `FounderOfferCard`. Le composant rend une ancre `_top` dès que l'URL existe, et déclenche aussi `window.top.location.href = url` en best-effort pour redirection auto.
+**`pro-onboarding-token`** (public, no auth)
+- Resolves the private token → returns lead snapshot (name, category, city, Google rating, RBQ/NEQ, fit score, why-selected reasons, recommended plan).
 
-## Hors scope
+**`pro-onboarding-checkout`**
+- Creates Stripe Checkout for the recommended plan (existing `pro-founder-checkout-guest` reused). Sets `payment_started`.
 
-- Pas de modification de l'edge function `activation-create-checkout` (elle fonctionne, retourne `{ url }`).
-- Pas de changement de prix, ni de logique de matching de plan.
-- Pas de refonte UI au-delà du bouton/lien de paiement.
+**`pro-onboarding-webhook`** (Stripe)
+- On `checkout.session.completed`: status → `paid` → publish contractor profile (`is_published=true`, matching enabled) → `profile_active`.
+- Trigger confirmation SMS + email to contractor and admin notification row.
 
-## Vérification
+## 4. Webhooks for engagement
 
-1. `/contractor/join` → soumettre `isroyal.ca` → arriver sur `/contractor/analysis?run=…`.
-2. Vérifier que la carte plan affiche correctement « UNPRO Recrue · 149 $/mois » quand le backend recommande `recrue`.
-3. CTA sticky : confirmer qu'il devient un lien actif avec URL Stripe (inspecter `href`), que cliquer ouvre Stripe Checkout dans le top-level (pas l'iframe preview).
-4. Couper le réseau avant clic → message d'erreur visible + bouton « Réessayer », pas de blanc.
-5. Idem `/pro/activate` : remplir le formulaire, cliquer « Activer », vérifier qu'un lien cliquable mène à Stripe sans page blanche.
+Twilio + Resend webhooks update `contractor_outreach_logs.opened_at` / `clicked_at` and bump lead to `opened` / `clicked`.
+
+## 5. Messages (locked copy)
+
+SMS:
+> Bonjour {Prénom}, UNPRO peut recommander {BusinessName} à des propriétaires qualifiés dans votre secteur. Pas des leads partagés: rendez-vous exclusifs garantis. Activez votre profil ici: {private_link}
+
+Email subject:
+> {BusinessName} peut maintenant être recommandé par UNPRO
+
+Email body: exact text from request, `{private_link}` injected, brand identity filter applied (existing layer).
+
+## 6. Private onboarding page `/pro/onboarding/:token`
+
+New `PageProPrivateOnboarding.tsx`. Sections: business identity, category, city, Google rating (if any), RBQ/NEQ, UNPRO Fit Score ring, "Pourquoi vous avez été sélectionné" bullets, recommended plan card, single Stripe activation CTA (reuses `FounderOfferCard` checkoutUrl pattern). No human-callout popup (already excluded prefix).
+
+## 7. Admin dashboard `/admin/acquisition-autopilot`
+
+Replaces any "Start outreach" button. Cards driven by real SQL counts (today, UTC):
+- Leads discovered (24h)
+- Messages sent today (SMS / Email split, vs caps 50 / 100)
+- Replies / Opens / Clicks
+- Onboarding started
+- Payments (count + revenue)
+- Failures grouped by `failure_code` with last error sample
+
+Empty/zero states display "0 envois aujourd'hui — raison: {BlockReason}" — never "Terminé".
+
+## 8. Removals
+
+- Delete/disable any "Approve & send" admin gate in current outbound approval flow for this autopilot stream (keep manual queue available behind a feature flag for non-autopilot campaigns).
+- Remove the "manual start" CTA on contractor onboarding admin views.
+
+## 9. Reliability rules applied
+
+- `withRetry` on Twilio/Resend/Stripe calls.
+- Explicit state machine on `pipeline_status` (no silent jumps).
+- `reportOutcome` on every edge function with `revenue_impact_cents` on paid.
+- Auto-retry schedule 5m / 30m / 2h / 12h on transient failures via existing reliability backoff.
+
+## 10. Migrations needed
+
+1. `contractor_outreach_logs` table + grants + RLS + indexes (`contractor_id`, `sent_at`, `status`).
+2. `pipeline_status` enum + columns on canonical leads table; backfill `discovered` for nulls.
+3. `acquisition_followup_queue` (lead_id, channel, scheduled_at, sent_at).
+4. pg_cron job `*/15 * * * *` → `acquisition-autopilot`, `*/5 * * * *` → `acquisition-followup-tick`.
+
+## 11. Open questions before build
+
+- Canonical leads table to attach pipeline_status to: `contractor_leads`, `outbound_leads`, or `launch_leads`? (will inspect and pick one — won't create a parallel one)
+- Use existing Twilio + Resend wrappers, or the in-house contact-router? Default: contact-router so suppression + brand filter are respected.
+- Reuse `pro-founder-checkout-guest` Stripe coupon (1 $ / 7 d) for autopilot, or full price? Default: same Founder $1/7d while founder spots remain, else full plan price.
+
+I'll confirm these three during build unless you answer now.
