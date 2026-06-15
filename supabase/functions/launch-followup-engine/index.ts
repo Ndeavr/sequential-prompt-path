@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
     }
     const tpl = FOLLOWUPS[((row as any).attempt_number ?? 1) - 1] ?? FOLLOWUPS[0];
     const msg = tpl((lead.company_name ?? "").split(/\s+/)[0] || "Bonjour", lead.city ?? "votre région");
-    const ok = await sendSms(lead.phone, msg);
+    const ok = await sendSms(lead.phone, msg, lead.id, (row as any).attempt_number ?? 1);
     await sb.from("launch_followup_schedule").update({
       sent_at: now, skipped_reason: ok ? null : "send_failed",
     }).eq("id", (row as any).id);
