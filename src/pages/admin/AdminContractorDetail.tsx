@@ -209,6 +209,9 @@ const AdminContractorDetail = () => {
         {/* Verification History */}
         <VerificationHistoryTable runs={verificationHistory as any} />
 
+        {/* Communications Timeline */}
+        <ContractorCommsTimeline contractorId={contractor.id} />
+
         {/* Documents */}
         <Card>
           <CardHeader><CardTitle className="text-base">Documents ({docs?.length ?? 0})</CardTitle></CardHeader>

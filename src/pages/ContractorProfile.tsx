@@ -814,6 +814,11 @@ const ContractorProfile = () => {
             <ContractorEcosystemSection contractorId={contractorId} />
           )}
 
+          {/* ═══ 8c. COMMUNICATIONS TIMELINE ═══ */}
+          {contractorId && (
+            <ContractorCommsTimeline contractorId={contractorId} />
+          )}
+
           {/* ═══ 9. AIPP SCORE ═══ */}
           {aippValidated && effectiveAippBreakdown && (
             <motion.div variants={fadeUp}>
