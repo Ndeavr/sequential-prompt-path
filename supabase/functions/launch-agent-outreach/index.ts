@@ -5,6 +5,7 @@
  */
 import { corsHeaders, adminClient, transitionLead, logLaunchEvent, isFounderModeActive } from "../_shared/launch.ts";
 import { reportOutcome, FailureCode, BlockReason } from "../_shared/reliability.ts";
+import { sendSms as sendSmsCanonical } from "../_shared/twilioSend.ts";
 
 function firstName(name?: string | null): string {
   if (!name) return "Bonjour";
@@ -19,24 +20,10 @@ function buildSms(lead: any): string {
   return `${fn}, êtes-vous certain que ChatGPT, Gemini et Google AI recommandent ${company} lorsqu'un propriétaire cherche un expert en ${trade} à ${city}? — UNPRO`;
 }
 
-async function sendSms(to: string, body: string): Promise<{ ok: boolean; sid?: string; error?: string }> {
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-  const twilioKey = Deno.env.get("TWILIO_API_KEY");
-  const from = Deno.env.get("TWILIO_FROM_NUMBER") ?? Deno.env.get("TWILIO_PHONE_NUMBER");
-  if (!lovableKey || !twilioKey || !from) return { ok: false, error: "Missing Twilio secrets" };
-
-  const r = await fetch("https://connector-gateway.lovable.dev/twilio/Messages.json", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${lovableKey}`,
-      "X-Connection-Api-Key": twilioKey,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({ To: to, From: from, Body: body }),
-  });
-  const data = await r.json().catch(() => ({}));
-  if (!r.ok) return { ok: false, error: JSON.stringify(data) };
-  return { ok: true, sid: data.sid };
+async function sendSms(to: string, body: string, lead_id?: string): Promise<{ ok: boolean; sid?: string; error?: string }> {
+  const r = await sendSmsCanonical({ to, body, message_type: "outreach", template_key: "launch_outreach_v1", lead_id });
+  const ok = r.status === "sending" || r.status === "queued";
+  return { ok, sid: r.twilio_sid ?? undefined, error: ok ? undefined : (r.error_message ?? r.status) };
 }
 
 Deno.serve(async (req) => {
@@ -67,7 +54,7 @@ Deno.serve(async (req) => {
     try {
       await transitionLead((lead as any).id, "MESSAGING", {}, "launch-agent-outreach");
       const sms = buildSms(lead);
-      const r = await sendSms(phone, sms);
+      const r = await sendSms(phone, sms, (lead as any).id);
       if (r.ok) {
         await transitionLead((lead as any).id, "MESSAGED", {
           attempts: ((lead as any).attempts ?? 0) + 1,

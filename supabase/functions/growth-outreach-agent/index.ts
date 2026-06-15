@@ -8,12 +8,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { reportOutcome, BlockReason } from "../_shared/reliability.ts";
+import { sendSms as sendSmsCanonical } from "../_shared/twilioSend.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const LOVABLE_KEY = Deno.env.get("LOVABLE_API_KEY");
-const TWILIO_KEY = Deno.env.get("TWILIO_API_KEY");
-const TWILIO_FROM = Deno.env.get("TWILIO_FROM_NUMBER");
 
 const DAILY_SMS = parseInt(Deno.env.get("GROWTH_DAILY_SMS") ?? "50", 10);
 const DAILY_EMAIL = parseInt(Deno.env.get("GROWTH_DAILY_EMAIL") ?? "25", 10);
@@ -21,26 +19,10 @@ const DAILY_EMAIL = parseInt(Deno.env.get("GROWTH_DAILY_EMAIL") ?? "25", 10);
 const SMS_TEMPLATE = (firstName: string, company: string, city: string, specialty: string) =>
   `Bonjour ${firstName}, aimeriez-vous que ${company} soit recommandée quand un propriétaire demande à ChatGPT, Gemini ou UNPRO « Quel est le meilleur entrepreneur en ${specialty} à ${city}? » Répondez OUI et je vous montre votre visibilité actuelle gratuitement. — Alex, UNPRO`;
 
-async function sendTwilioSms(to: string, body: string): Promise<{ ok: boolean; sid?: string; error?: string }> {
-  if (!LOVABLE_KEY || !TWILIO_KEY || !TWILIO_FROM) {
-    return { ok: false, error: "missing_twilio_credentials" };
-  }
-  try {
-    const r = await fetch("https://connector-gateway.lovable.dev/twilio/Messages.json", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_KEY}`,
-        "X-Connection-Api-Key": TWILIO_KEY,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({ To: to, From: TWILIO_FROM, Body: body }),
-    });
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) return { ok: false, error: `twilio_${r.status}: ${JSON.stringify(data).slice(0, 300)}` };
-    return { ok: true, sid: (data as { sid?: string }).sid };
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) };
-  }
+async function sendTwilioSms(to: string, body: string, contractor_id?: string): Promise<{ ok: boolean; sid?: string; error?: string }> {
+  const r = await sendSmsCanonical({ to, body, message_type: "outreach", template_key: "growth_outreach_v1", contractor_id });
+  const ok = r.status === "sending" || r.status === "queued";
+  return { ok, sid: r.twilio_sid ?? undefined, error: ok ? undefined : (r.error_message ?? r.status) };
 }
 
 Deno.serve(async (req) => {
@@ -120,7 +102,7 @@ Deno.serve(async (req) => {
         message_body: body, status: "sending",
       }).select("id").single();
       generated++;
-      const send = await sendTwilioSms(c.phone, body);
+      const send = await sendTwilioSms(c.phone, body, c.contractor_id);
       if (send.ok) {
         await sb.from("growth_outbound_messages").update({
           status: "sent", provider_message_id: send.sid ?? null, sent_at: new Date().toISOString(),

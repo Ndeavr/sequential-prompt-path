@@ -223,22 +223,19 @@ async function dispatch(supa: any, channel: Channel, contact: any, body: Body):
 }
 
 async function sendSms(contact: any, body: Body) {
-  const SID = Deno.env.get("TWILIO_ACCOUNT_SID");
-  const TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
-  const MSID = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
-  if (!SID || !TOKEN || !MSID) return { ok: false, provider: "twilio", error: "twilio_not_configured" };
-
+  const { sendSms: sendSmsCanonical } = await import("../_shared/twilioSend.ts");
   const text = body.sms_body ?? defaultSms(body.template_key, contact, body.template_data);
-  const form = new URLSearchParams({ To: contact.phone_e164, MessagingServiceSid: MSID, Body: text });
-
-  const resp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json`, {
-    method: "POST",
-    headers: { Authorization: `Basic ${btoa(`${SID}:${TOKEN}`)}`, "Content-Type": "application/x-www-form-urlencoded" },
-    body: form,
+  const r = await sendSmsCanonical({
+    to: contact.phone_e164,
+    body: text,
+    message_type: "outreach",
+    template_key: body.template_key,
+    contractor_id: contact.contractor_id ?? undefined,
   });
-  const data = await resp.json();
-  if (!resp.ok) return { ok: false, provider: "twilio", error: data?.message ?? `HTTP ${resp.status}` };
-  return { ok: true, provider: "twilio", providerMessageId: data.sid };
+  const ok = r.status === "sending" || r.status === "queued";
+  return ok
+    ? { ok: true, provider: "twilio", providerMessageId: r.twilio_sid ?? undefined }
+    : { ok: false, provider: "twilio", error: r.error_message ?? r.status };
 }
 
 async function sendEmail(supa: any, contact: any, body: Body) {
