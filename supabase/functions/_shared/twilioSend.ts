@@ -10,6 +10,10 @@ const TWILIO_MESSAGING_SERVICE_SID = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID"
 const TWILIO_FROM_NUMBER = Deno.env.get("TWILIO_FROM_NUMBER") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+// Lovable connector-gateway fallback (used when direct creds absent)
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? "";
+const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY") ?? "";
+const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 
 const STATUS_CALLBACK_URL = `${SUPABASE_URL.replace("supabase.co", "functions.supabase.co")}/functions/v1/twilio-status-v2`;
 
