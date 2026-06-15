@@ -43,6 +43,7 @@ import { useState, useCallback } from "react";
 import heroHouse from "@/assets/hero-house.jpg";
 import WhyThisContractorIsRecommended from "@/components/contractor/WhyThisContractorIsRecommended";
 import { ContractorEcosystemSection } from "@/features/brandEngine";
+import ContractorCommsTimeline from "@/components/contractor/ContractorCommsTimeline";
 
 /* ── Demo / fallback contractor data for carousel "Voir profil" ── */
 const DEMO_CONTRACTORS: Record<string, any> = {

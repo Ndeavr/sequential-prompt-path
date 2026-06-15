@@ -19,6 +19,7 @@ import { getContractorCompleteness } from "@/services/contractorCompletenessServ
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle, XCircle, RefreshCw, Eye, EyeOff, ExternalLink } from "lucide-react";
+import ContractorCommsTimeline from "@/components/contractor/ContractorCommsTimeline";
 
 const statusLabels: Record<string, string> = {
   unverified: "Non vérifié",
