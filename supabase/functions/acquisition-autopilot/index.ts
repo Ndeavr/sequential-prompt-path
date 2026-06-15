@@ -124,25 +124,10 @@ function fitScore(lead: any): { score: number; reasons: string[] } {
   return { score: Math.min(99, score), reasons: reasons.slice(0, 5) };
 }
 
-async function sendSms(to: string, body: string): Promise<{ ok: boolean; sid?: string; error?: string; raw?: unknown }> {
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-  const twilioKey = Deno.env.get("TWILIO_API_KEY");
-  const from = Deno.env.get("TWILIO_FROM_NUMBER") ?? Deno.env.get("TWILIO_PHONE_NUMBER");
-  if (!lovableKey || !twilioKey || !from) {
-    return { ok: false, error: "MISSING_SECRET" };
-  }
-  const r = await fetch("https://connector-gateway.lovable.dev/twilio/Messages.json", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${lovableKey}`,
-      "X-Connection-Api-Key": twilioKey,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({ To: to, From: from, Body: body }),
-  });
-  const data = await r.json().catch(() => ({}));
-  if (!r.ok) return { ok: false, error: data?.message ?? `HTTP ${r.status}`, raw: data };
-  return { ok: true, sid: data?.sid, raw: data };
+async function sendSms(to: string, body: string, lead_id?: string, contractor_id?: string): Promise<{ ok: boolean; sid?: string; error?: string; raw?: unknown }> {
+  const r = await sendSmsCanonical({ to, body, message_type: "outreach", template_key: "autopilot_invite_v1", lead_id, contractor_id });
+  const ok = r.status === "sending" || r.status === "queued";
+  return { ok, sid: r.twilio_sid ?? undefined, error: ok ? undefined : (r.error_message ?? r.status), raw: r };
 }
 
 async function sendEmail(to: string, subject: string, html: string, text: string): Promise<{ ok: boolean; id?: string; error?: string; raw?: unknown }> {
