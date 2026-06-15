@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     try {
       await transitionLead((lead as any).id, "MESSAGING", {}, "launch-agent-outreach");
       const sms = buildSms(lead);
-      const r = await sendSms(phone, sms);
+      const r = await sendSms(phone, sms, (lead as any).id);
       if (r.ok) {
         await transitionLead((lead as any).id, "MESSAGED", {
           attempts: ((lead as any).attempts ?? 0) + 1,
