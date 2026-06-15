@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
         if (dryRun) {
           providerResult = { ok: true, id: `dry-${crypto.randomUUID()}` };
         } else {
-          providerResult = await sendSms({ to: destination, body: variant.message_body });
+          providerResult = await sendSms({ to: destination, body: variant.message_body, targetId: tid });
         }
       } else {
         results.push({ tid, skipped: `unknown_channel:${variant.channel}` });
