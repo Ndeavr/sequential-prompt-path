@@ -4,6 +4,7 @@
  */
 import { corsHeaders, adminClient, transitionLead, logLaunchEvent } from "../_shared/launch.ts";
 import { reportOutcome, FailureCode } from "../_shared/reliability.ts";
+import { sendSms as sendSmsCanonical } from "../_shared/twilioSend.ts";
 
 const PLANS = {
   Recrue:    { amount: 14900, label: "Recrue" },
