@@ -48,23 +48,11 @@ async function createCheckout(lead: any, planKey: keyof typeof PLANS): Promise<s
   return data.url ?? null;
 }
 
-async function sendCheckoutSms(phone: string, url: string, name?: string | null): Promise<boolean> {
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-  const twilioKey = Deno.env.get("TWILIO_API_KEY");
-  const from = Deno.env.get("TWILIO_FROM_NUMBER") ?? Deno.env.get("TWILIO_PHONE_NUMBER");
-  if (!lovableKey || !twilioKey || !from) return false;
+async function sendCheckoutSms(phone: string, url: string, name?: string | null, lead_id?: string): Promise<boolean> {
   const fn = (name ?? "").split(/\s+/)[0] || "Bonjour";
   const body = `${fn}, voici votre lien d'activation UNPRO sécurisé: ${url}`;
-  const r = await fetch("https://connector-gateway.lovable.dev/twilio/Messages.json", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${lovableKey}`,
-      "X-Connection-Api-Key": twilioKey,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({ To: phone, From: from, Body: body }),
-  });
-  return r.ok;
+  const r = await sendSmsCanonical({ to: phone, body, message_type: "outreach", template_key: "launch_closer_checkout", lead_id });
+  return r.status === "sending" || r.status === "queued";
 }
 
 Deno.serve(async (req) => {
