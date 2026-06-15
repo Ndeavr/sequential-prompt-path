@@ -20,6 +20,7 @@ import StaticContentPage from "@/pages/static/StaticContentPage";
 const PageAdminLiveRuns = lazy(() => import("@/pages/admin/PageAdminLiveRuns"));
 const PageAdminProspectSMS = lazy(() => import("@/pages/admin/PageAdminProspectSMS"));
 const PageFounderVerification = lazy(() => import("@/pages/admin/PageFounderVerification"));
+const PageSmsHealth = lazy(() => import("@/pages/admin/PageSmsHealth"));
 
 // Impact Counter
 const PageImpactCounter = lazy(() => import("@/pages/PageImpactCounter"));
@@ -1395,6 +1396,7 @@ export const AppRouter = () => (
         <Route path="/admin/alex/analytics" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexAnalytics /></ProtectedRoute>} />
         <Route path="/admin/alex/fallbacks" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexVoice /></ProtectedRoute>} />
         <Route path="/admin/voice-health" element={<ProtectedRoute requiredRole="admin"><PageVoiceHealth /></ProtectedRoute>} />
+        <Route path="/admin/sms-health" element={<ProtectedRoute requiredRole="admin"><PageSmsHealth /></ProtectedRoute>} />
         <Route path="/admin/system-health/alex-voice" element={<ProtectedRoute requiredRole="admin"><PageVoiceHealth /></ProtectedRoute>} />
         <Route path="/admin/no-match-monitoring" element={<ProtectedRoute requiredRole="admin"><PageAdminNoMatchMonitoring /></ProtectedRoute>} />
         <Route path="/admin/sales-analytics" element={<ProtectedRoute requiredRole="admin"><AdminSalesAnalyticsPage /></ProtectedRoute>} />
