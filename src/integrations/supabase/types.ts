@@ -53498,6 +53498,33 @@ export type Database = {
           },
         ]
       }
+      phone_carrier_cache: {
+        Row: {
+          carrier: string | null
+          country_code: string | null
+          fetched_at: string
+          line_type: string | null
+          normalized_phone: string
+          raw_payload: Json | null
+        }
+        Insert: {
+          carrier?: string | null
+          country_code?: string | null
+          fetched_at?: string
+          line_type?: string | null
+          normalized_phone: string
+          raw_payload?: Json | null
+        }
+        Update: {
+          carrier?: string | null
+          country_code?: string | null
+          fetched_at?: string
+          line_type?: string | null
+          normalized_phone?: string
+          raw_payload?: Json | null
+        }
+        Relationships: []
+      }
       pim_contractor_relationships: {
         Row: {
           contractor_id: string | null
@@ -68229,6 +68256,96 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_events_v2: {
+        Row: {
+          area_code: string | null
+          attempt_number: number
+          body_hash: string | null
+          campaign_id: string | null
+          carrier: string | null
+          contractor_id: string | null
+          country_code: string | null
+          created_at: string
+          delivered_at: string | null
+          error_code: string | null
+          error_message: string | null
+          failed_at: string | null
+          from_number: string | null
+          id: string
+          lead_id: string | null
+          message_preview: string | null
+          message_type: string
+          metadata: Json
+          next_retry_at: string | null
+          normalized_phone: string | null
+          raw_phone: string | null
+          sent_at: string | null
+          status: string
+          template_key: string | null
+          twilio_sid: string | null
+          updated_at: string
+          webhook_received_at: string | null
+        }
+        Insert: {
+          area_code?: string | null
+          attempt_number?: number
+          body_hash?: string | null
+          campaign_id?: string | null
+          carrier?: string | null
+          contractor_id?: string | null
+          country_code?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          from_number?: string | null
+          id?: string
+          lead_id?: string | null
+          message_preview?: string | null
+          message_type?: string
+          metadata?: Json
+          next_retry_at?: string | null
+          normalized_phone?: string | null
+          raw_phone?: string | null
+          sent_at?: string | null
+          status?: string
+          template_key?: string | null
+          twilio_sid?: string | null
+          updated_at?: string
+          webhook_received_at?: string | null
+        }
+        Update: {
+          area_code?: string | null
+          attempt_number?: number
+          body_hash?: string | null
+          campaign_id?: string | null
+          carrier?: string | null
+          contractor_id?: string | null
+          country_code?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          from_number?: string | null
+          id?: string
+          lead_id?: string | null
+          message_preview?: string | null
+          message_type?: string
+          metadata?: Json
+          next_retry_at?: string | null
+          normalized_phone?: string | null
+          raw_phone?: string | null
+          sent_at?: string | null
+          status?: string
+          template_key?: string | null
+          twilio_sid?: string | null
+          updated_at?: string
+          webhook_received_at?: string | null
+        }
+        Relationships: []
+      }
       sms_fallback_sequences: {
         Row: {
           created_at: string
@@ -68459,6 +68576,71 @@ export type Database = {
             columns: ["sequence_id"]
             isOneToOne: false
             referencedRelation: "sms_fallback_sequences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_opt_outs: {
+        Row: {
+          id: string
+          normalized_phone: string
+          opted_out_at: string
+          reason: string | null
+          source: string | null
+        }
+        Insert: {
+          id?: string
+          normalized_phone: string
+          opted_out_at?: string
+          reason?: string | null
+          source?: string | null
+        }
+        Update: {
+          id?: string
+          normalized_phone?: string
+          opted_out_at?: string
+          reason?: string | null
+          source?: string | null
+        }
+        Relationships: []
+      }
+      sms_retry_queue: {
+        Row: {
+          attempt: number
+          created_at: string
+          event_id: string
+          id: string
+          processed_at: string | null
+          result_event_id: string | null
+          scheduled_at: string
+          status: string
+        }
+        Insert: {
+          attempt: number
+          created_at?: string
+          event_id: string
+          id?: string
+          processed_at?: string | null
+          result_event_id?: string | null
+          scheduled_at: string
+          status?: string
+        }
+        Update: {
+          attempt?: number
+          created_at?: string
+          event_id?: string
+          id?: string
+          processed_at?: string | null
+          result_event_id?: string | null
+          scheduled_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_retry_queue_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "sms_events_v2"
             referencedColumns: ["id"]
           },
         ]
@@ -76003,6 +76185,24 @@ export type Database = {
         }
         Relationships: []
       }
+      v_sms_failure_reasons_7d: {
+        Row: {
+          count: number | null
+          error_code: string | null
+        }
+        Relationships: []
+      }
+      v_sms_health_24h: {
+        Row: {
+          delivered: number | null
+          failed: number | null
+          invalid: number | null
+          queued: number | null
+          total: number | null
+          undelivered: number | null
+        }
+        Relationships: []
+      }
       v_territories: {
         Row: {
           available_elite: number | null
@@ -76306,6 +76506,16 @@ export type Database = {
         }[]
       }
       get_city_limit: { Args: { plan_code: string }; Returns: number }
+      get_contractor_comms_timeline: {
+        Args: { p_contractor_id: string }
+        Returns: {
+          detail: string
+          kind: string
+          occurred_at: string
+          reference: string
+          status: string
+        }[]
+      }
       get_contractor_dashboard: {
         Args: { _contractor_id: string }
         Returns: Json
