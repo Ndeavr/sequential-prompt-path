@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
         message_body: body, status: "sending",
       }).select("id").single();
       generated++;
-      const send = await sendTwilioSms(c.phone, body);
+      const send = await sendTwilioSms(c.phone, body, c.contractor_id);
       if (send.ok) {
         await sb.from("growth_outbound_messages").update({
           status: "sent", provider_message_id: send.sid ?? null, sent_at: new Date().toISOString(),
