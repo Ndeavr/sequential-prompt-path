@@ -30,11 +30,14 @@ export default function OrbAlexPrimaryEntry({
     <button
       onClick={() => openAlex(intentFeature, contextHint)}
       className={cn("relative flex items-center justify-center group", className)}
+      style={{ isolation: "isolate" }}
       aria-label="Parler à Alex"
     >
-      {/* Halo ring — very slow spin */}
+      {/* Halo ring — very slow spin (decorative) */}
       <motion.div
-        className="absolute rounded-full"
+        aria-hidden
+        data-decor
+        className="absolute rounded-full decorative-layer gpu-stable"
         style={{
           width: haloMap[size],
           height: haloMap[size],
@@ -45,9 +48,11 @@ export default function OrbAlexPrimaryEntry({
         transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
       />
 
-      {/* Breathing glow */}
+      {/* Breathing glow (decorative) */}
       <motion.div
-        className="absolute rounded-full"
+        aria-hidden
+        data-decor
+        className="absolute rounded-full decorative-layer gpu-stable"
         style={{
           width: "130%",
           height: "130%",
@@ -57,10 +62,10 @@ export default function OrbAlexPrimaryEntry({
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      {/* Main orb — slow breathing */}
+      {/* Main orb — slow breathing (transform + opacity only, never box-shadow) */}
       <motion.div
         className={cn(
-          "relative rounded-full flex items-center justify-center overflow-hidden cursor-pointer",
+          "relative rounded-full flex items-center justify-center overflow-hidden cursor-pointer gpu-stable",
           sizeMap[size]
         )}
         style={{
@@ -70,15 +75,14 @@ export default function OrbAlexPrimaryEntry({
         }}
         animate={{ scale: [1, 1.03, 1] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        whileHover={{
-          scale: 1.04,
-          boxShadow: "0 12px 48px -4px hsl(222 100% 61% / 0.5), 0 0 32px -4px hsl(195 100% 50% / 0.3)",
-        }}
+        whileHover={{ scale: 1.04 }}
         whileTap={{ scale: 0.97 }}
       >
-        {/* Internal shine */}
+        {/* Internal shine (decorative) */}
         <motion.div
-          className="absolute inset-0 rounded-full"
+          aria-hidden
+          data-decor
+          className="absolute inset-0 rounded-full decorative-layer"
           style={{
             background: "radial-gradient(circle at 35% 28%, hsl(0 0% 100% / 0.22), transparent 55%)",
           }}
