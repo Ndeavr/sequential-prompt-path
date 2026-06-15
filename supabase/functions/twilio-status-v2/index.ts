@@ -73,12 +73,15 @@ Deno.serve(async (req) => {
         await supabase.from("sms_events_v2").update({ status: "retry_scheduled", next_retry_at: next }).eq("id", ev.id);
       } else if (ev) {
         await supabase.from("sms_events_v2").update({ status: "contact_required" }).eq("id", ev.id);
-        await supabase.from("admin_notifications").insert({
-          title: "SMS contact required",
-          body: `Message ${sid} failed 3× — manual follow-up needed.`,
-          severity: "warning",
-          payload: { event_id: ev.id, twilio_sid: sid },
-        }).then(() => {}, () => {});
+        try {
+          await supabase.from("admin_notifications").insert({
+            type: "sms_contact_required",
+            title: "SMS contact required",
+            body: `Message ${sid} failed 3× — manual follow-up needed.`,
+            severity: "warning",
+            payload_json: { event_id: ev.id, twilio_sid: sid },
+          });
+        } catch (_) { /* swallow */ }
       }
     }
 

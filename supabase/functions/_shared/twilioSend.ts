@@ -69,13 +69,16 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
       .insert({ ...baseRow, status: guard.reason, error_message: guard.detail, failed_at: new Date().toISOString() })
       .select("id")
       .single();
-    // Admin alert
-    await supabase.from("admin_notifications").insert({
-      title: "SMS blocked",
-      body: `Phone ${input.to} → ${guard.reason} (${guard.detail})`,
-      severity: "warning",
-      payload: { event_id: row?.id, reason: guard.reason },
-    }).select().maybeSingle().then(() => {}, () => {}); // best-effort
+    // Admin alert (best-effort)
+    try {
+      await supabase.from("admin_notifications").insert({
+        type: "sms_blocked",
+        title: "SMS blocked",
+        body: `Phone ${input.to} → ${guard.reason} (${guard.detail})`,
+        severity: "warning",
+        payload_json: { event_id: row?.id, reason: guard.reason, phone: input.to },
+      });
+    } catch (_) { /* swallow */ }
     return { event_id: row?.id ?? "", status: guard.reason, twilio_sid: null, error_message: guard.detail };
   }
 
