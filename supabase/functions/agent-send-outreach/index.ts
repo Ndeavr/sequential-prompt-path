@@ -194,7 +194,7 @@ Deno.serve(async (req) => {
       if (useChannel === "sms") {
         provider = "twilio";
         recipient = normalized!;
-        attempt = await sendTwilioSms(normalized!, m.body);
+        attempt = await sendTwilioSms(normalized!, m.body, { lead_id: lead.id });
         providerMessageId = (attempt as any).sid;
       } else {
         provider = "resend";

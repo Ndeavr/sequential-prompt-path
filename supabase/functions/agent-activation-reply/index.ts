@@ -48,21 +48,15 @@ async function classifyIntent(reply: string): Promise<{ intent: string; confiden
   }
 }
 
-async function sendSms(to: string, body: string) {
-  const sid = Deno.env.get("TWILIO_ACCOUNT_SID");
-  const token = Deno.env.get("TWILIO_AUTH_TOKEN");
-  const mss = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
-  const from = Deno.env.get("TWILIO_PHONE_NUMBER");
-  if (!sid || !token || (!mss && !from)) return { ok: false, error: "missing_twilio" };
-  const params = new URLSearchParams({ To: to, Body: body });
-  if (mss) params.set("MessagingServiceSid", mss); else params.set("From", from!);
-  const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
-    method: "POST",
-    headers: { Authorization: `Basic ${btoa(`${sid}:${token}`)}`, "Content-Type": "application/x-www-form-urlencoded" },
-    body: params,
+import { sendSms as sharedSendSms } from "../_shared/twilioSend.ts";
+
+async function sendSms(to: string, body: string, ctx?: { lead_id?: string }) {
+  const res = await sharedSendSms({
+    to, body, message_type: "onboarding", template_key: "activation_checkout_link",
+    lead_id: ctx?.lead_id, metadata: { source: "agent-activation-reply" },
   });
-  const data = await r.json().catch(() => ({}));
-  return { ok: r.ok, sid: data?.sid, raw: data };
+  const ok = res.status === "sending" || res.status === "sent" || res.status === "delivered";
+  return { ok, sid: res.twilio_sid ?? undefined, raw: { event_id: res.event_id, status: res.status, error: res.error_message } };
 }
 
 Deno.serve(async (req) => {
