@@ -5,6 +5,7 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { reportOutcome, FailureCode, BlockReason } from "../_shared/reliability.ts";
+import { sendSms as sendSmsCanonical } from "../_shared/twilioSend.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
