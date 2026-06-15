@@ -1,92 +1,101 @@
 ## Goal
-Eliminate flicker (background flash, orb blink, glass repaint, route-change re-init) while preserving every existing layer: cinematic background, noise, gradient auras, glass cards, orbs, SVG overlays.
+Move SMS from "fire and forget" to guaranteed delivery intelligence: every message tracked end-to-end, test numbers blocked at the edge, Twilio callbacks closing the loop, automatic retry on failure, and a clean admin cockpit. Unify the fragmented stack (`sms_events`, `sms_messages`, `acq_sms_logs`, ~10 send functions, 2 webhooks) behind a single send-and-track contract.
 
-## Root causes identified
-1. `MainLayout` declares the 4-layer background inline → it remounts on route changes (layout is rendered per page).
-2. Many components stack `backdrop-filter` on top of each other (page bg + section + glass-card + orb halo), which iOS/Safari repaints on every scroll/animation tick.
-3. Several animations target `filter`, `box-shadow`, or `backdrop-filter` (heavy repaints).
-4. No `contain` / `isolation` boundaries → animated layers invalidate sibling layers.
-5. Orbs use `whileHover` boxShadow transitions → triggers compositor reset.
-6. Decorative layers don't carry `pointer-events:none` consistently and lack `prefers-reduced-motion` fallback.
+## Current state (audited)
+- **Tables**: `sms_events` (lean — missing `lead_id`, `contractor_id`, `error_code`, `normalized_phone`), `sms_messages` (rich, has `message_sid`/status), `acq_sms_logs`, `evenements_sms`. No unified audit table.
+- **Send paths** (10+ edge functions, none share a sender): `send-sms-prospect`, `acq-sms-send`, `agent-send-outreach`, `live-agent-outreach-send`, `sniper-queue-send`, `sms-prospect-send`, `launch-agent-checkout-sender`, `alex-reengage-send`, `approve-isr-sms`, `acq-followup-send`. Each calls Twilio directly with its own validation (or none).
+- **Webhooks**: `twilio-status` (updates `sms_messages`) + `twilio-status-webhook` (updates `communication_logs`). Two callbacks, two tables — Twilio is configured to hit only one, so half the records never close.
+- **Test-number leaks**: `5141234567` not found in DB; `+15145551234` only appears as input *placeholder* (safe). Suspect: user-entered prospect rows or seed scripts. Need a guard at send time regardless.
+- **No retry engine**, **no normalization layer**, **no carrier/area-code breakdown**, **no contractor timeline view**.
 
 ## Plan
 
-### 1. Global anti-flicker utilities (`src/index.css`)
-Add a new `@layer utilities` block with:
-- `.gpu-stable` → `transform: translateZ(0); backface-visibility: hidden; -webkit-backface-visibility: hidden; will-change: transform, opacity;`
-- `.no-flicker-layer` → `contain: layout paint style; isolation: isolate; transform: translateZ(0);`
-- `.stable-transform` → `will-change: transform; transform: translateZ(0);`
-- `.decorative-layer` → `pointer-events: none; user-select: none;` + gpu-stable
-- `@media (prefers-reduced-motion: reduce)` → freeze keyframes on decorative layers (animation-play-state: paused, opacity locked), keep layers visible.
+### PHASE 1 — Unified audit table `sms_events_v2`
+Migration (one transaction, with GRANT + RLS + trigger):
 
-### 2. Stable background shell (new files)
-Create `src/components/system/background/`:
-- `StableBackgroundLayer.tsx` — `React.memo`, fixed inset-0, `-z-50`, hosts the 4 sub-layers, `no-flicker-layer`.
-- `NoiseLayer.tsx` — memoized, static SVG noise, no animation.
-- `GradientAuraLayer.tsx` — memoized; replace any animated `background-position` with two pseudo-elements animating only `opacity` + `transform: translate3d`. No filter/blur animation.
-- `AlexOrbLayer.tsx` — wrapper that mounts the global Alex orb once at root; decorative aura split from interactive button (aura = `pointer-events:none`, button stays clickable).
-- `PageShell.tsx` — slot for `<ContentLayer>` only; background mounted above the router so route changes never unmount it.
+Columns: `id`, `lead_id` (nullable FK → `contractor_leads`), `contractor_id` (nullable FK → `contractors`), `campaign_id`, `template_key`, `message_type` (`onboarding|reengagement|outreach|otp|founder|test|other`), `raw_phone`, `normalized_phone`, `country_code`, `area_code`, `carrier` (set by lookup), `from_number`, `message_preview` (first 160 chars), `body_hash`, `twilio_sid`, `status` (enum below), `error_code` (Twilio code), `error_message`, `attempt_number` (1..3), `next_retry_at`, `delivered_at`, `failed_at`, `webhook_received_at`, `created_at`, `updated_at`, `metadata jsonb`.
 
-Mount order in `src/app/App.tsx` (above `<AppRouter />`):
-```
-<StableBackgroundLayer />   // fixed, decorative, memoized
-<AppRouter />               // ContentLayer per route
-<AlexOrbLayer />            // fixed, memoized, mounted once
-```
-Remove the inline background `<div className="fixed inset-0 -z-10 noise-overlay">…</div>` block from `src/layouts/MainLayout.tsx` (and equivalents in `ContractorLayout`, `DashboardLayout`, `home-unicorn/CinematicArchScenes` usage where it duplicates) — they become pass-throughs that only render `<main>`.
+Status enum: `queued | sending | sent | delivered | undelivered | failed | invalid_phone | blocked | opted_out | retry_scheduled | contact_required`.
 
-### 3. Glass stabilization (`src/index.css`, `src/styles/unicorn-theme.css`)
-- Audit `.glass-card`, `.glass-card-elevated`, `.glass-strong`, unicorn `.glass-*` classes.
-- Ensure each has an **opaque-ish fallback** `background-color` (e.g. `hsl(var(--card) / 0.85)`) behind the translucent rgba so Safari doesn't flash transparent during repaint.
-- Add `transform: translateZ(0); isolation: isolate; contain: paint;` to every backdrop-filter class.
-- Hover states: remove `backdrop-filter` changes on `:hover` (keep blur constant, only animate `transform` + `box-shadow` via pre-rendered shadow swap, not transition on `backdrop-filter`).
-- Replace any `transition: backdrop-filter` / `transition: filter` / `transition: box-shadow` on large surfaces with `transition: transform, opacity`.
+Indexes: `(status)`, `(twilio_sid) unique`, `(normalized_phone, created_at desc)`, `(contractor_id, created_at desc)`, `(lead_id)`, `(next_retry_at) where status='retry_scheduled'`.
 
-### 4. Orb & floating layers
-- `OrbAlexPrimaryEntry.tsx`, `AlexNavOrb.tsx`, `WidgetRevealPulseRing.tsx`, unicorn orbs: keep visuals but
-  - drop `whileHover={{ boxShadow: ... }}` → pre-bake the hover shadow as a sibling `::after` whose opacity animates.
-  - constrain animations to `transform` + `opacity`.
-  - add `gpu-stable` + `decorative-layer` to aura/halo rings (pointer-events none).
-  - wrap interactive button in its own stacking context (`isolation: isolate`) so aura animations don't invalidate sibling glass cards.
+RLS: `service_role` all; `authenticated` read only when `has_role(uid,'admin')`. Append-only (no DELETE policy).
 
-### 5. Animated background fixes
-- Search for `background-position` keyframes / `animate-pulse-soft` on full-screen gradients → convert to dual-pseudo-element opacity crossfade (already the pattern in `CinematicArchScenes`; apply same pattern to `MainLayout` aura and unicorn theme aura).
-- Lock all `filter:` values; never animate them. Where `blur()` exists in keyframes, freeze blur and animate `opacity` instead.
+Backfill: copy existing `sms_messages` + `sms_events` rows into `sms_events_v2` with best-effort field mapping; keep legacy tables read-only.
 
-### 6. React stability
-- `React.memo` every new background subcomponent; `useMemo` for inline style objects that currently allocate per render (the radial-gradient style strings in `MainLayout`, `FlywheelSection`, `OrbAlexPrimaryEntry`).
-- Ensure no parent passes a changing `key` to background layers.
-- `CinematicArchScenes` interval: keep but guard against double-mount in StrictMode with a ref; ensure component is only mounted from `StableBackgroundLayer`, not per-page.
-- Remove any conditional remount of background based on route (current `MainLayout` is rendered per-route — moving to `App.tsx` fixes this).
+### PHASE 2 — Test-number guard + opt-out check (shared module)
+New `supabase/functions/_shared/smsGuard.ts`:
+- `BLOCKED_PATTERNS = [/^\+?1?514123 ?4567$/, /^\+?1?1234567890$/, /^\+?1?555\d{7}$/, /^\+?1?000/, /^\+?1?(\d)\1{9}$/]`
+- `isBlocked(phone)`, `isOptedOut(phone)` (checks `outbound_suppressions` + new `sms_opt_outs`), `validateBeforeSend({ phone, lead_id, contractor_id })` returns `{ ok, normalized, reason }`.
+- On block: insert `sms_events_v2` row with `status='invalid_phone'|'blocked'|'opted_out'`, push `admin_notifications` row, return early.
+Codebase sweep: replace all direct Twilio calls in the 10 send functions to import a new `_shared/twilioSend.ts` (see Phase 4) which calls `validateBeforeSend` first.
 
-### 7. Reduced motion
-Global rule in `index.css`:
-```css
-@media (prefers-reduced-motion: reduce) {
-  .decorative-layer, .gpu-stable, [data-decor] {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-```
-Layers stay visible; only motion stops.
+### PHASE 3 — Phone normalization engine
+New `supabase/functions/_shared/normalizePhone.ts`:
+- Strip non-digits, infer country (default CA `+1`), validate length, build E.164.
+- Reject if area code not in valid NANP set or starts with `0`/`1` per NANP rules.
+- Returns `{ raw, normalized, area_code, country_code, valid }`.
+Mirror as `src/lib/normalizePhone.ts` so the frontend can pre-validate at form entry.
 
-### 8. Verification
-After build, drive Playwright (Chromium, viewport 384×705 to match user) across:
-- `/` (home), `/entrepreneur`, `/proprietaire`, `/alex`, `/admin/operations`, a contractor profile.
-For each: screenshot at load, scroll halfway, screenshot, trigger route change to another page, screenshot back — confirm no background remount (use a `data-mounted-at` timestamp attribute on `StableBackgroundLayer` and assert it doesn't change between routes).
-Also load `?prefers-reduced-motion` emulation and confirm layers still visible.
+### PHASE 4 — Single sender `_shared/twilioSend.ts`
+One canonical function: `sendSms({ to, body, message_type, lead_id?, contractor_id?, campaign_id?, template_key, idempotency_key? })`.
+Flow: normalize → guard → insert `sms_events_v2` (`queued`) → POST Twilio Messaging Service with `StatusCallback=https://<project>.functions.supabase.co/twilio-status-v2` → update row (`sending` + `twilio_sid`) → on Twilio 4xx/5xx update (`failed` + error_code) → return `{ event_id, status, twilio_sid }`.
+Refactor all 10 send functions to use it. Delete duplicated Twilio fetch blocks.
 
-## Files touched
-- `src/index.css` — add utilities, reduced-motion rule, stabilize glass classes.
-- `src/styles/unicorn-theme.css` — stabilize glass + orb.
-- `src/styles/alex-overlays.css` — same audit.
-- `src/app/App.tsx` — mount StableBackgroundLayer + AlexOrbLayer once.
-- `src/layouts/MainLayout.tsx`, `ContractorLayout.tsx`, `DashboardLayout.tsx` — remove duplicated background divs.
-- New: `src/components/system/background/{StableBackgroundLayer,NoiseLayer,GradientAuraLayer,AlexOrbLayer,PageShell}.tsx`.
-- `src/components/intent-pages/OrbAlexPrimaryEntry.tsx`, `src/components/navigation/AlexNavOrb.tsx`, `src/components/score-reveal/WidgetRevealPulseRing.tsx`, `src/components/home-unicorn/CinematicArchScenes.tsx` — animation property cleanup + pointer-events on aura.
-- `src/components/flywheel/FlywheelSection.tsx` — memoize gradient style objects.
+### PHASE 5 — Unified Twilio callback `twilio-status-v2`
+New edge function with `verify_jwt = false`. Validates `X-Twilio-Signature` HMAC against `TWILIO_AUTH_TOKEN`. Parses form body, updates the matching `sms_events_v2` row by `twilio_sid`: status mapping, `delivered_at`/`failed_at`, `error_code`, `error_message`, `webhook_received_at`. Deprecate `twilio-status` and `twilio-status-webhook` (keep them as thin shims that also write to `sms_events_v2` for legacy traffic). Update Twilio Messaging Service status callback URL to the new function.
+
+### PHASE 6 — Autonomous retry engine
+New table `sms_retry_queue` (event_id, attempt, scheduled_at, status). Edge function `sms-retry-scheduler` (cron every 5 min) picks rows where `status in ('failed','undelivered')` and `attempt_number < 3`, schedules retry at +15min / +24h / +72h. On 3rd failure: `status='contact_required'` + `admin_notifications` insert + Slack/email alert to ops.
+pg_cron entry inserted via insert tool (not migration — contains URL/anon key).
+
+### PHASE 7 — Admin SMS Health cockpit
+New route `/admin/sms-health` + page `PageSmsHealth.tsx`:
+- KPI strip: Delivered / Failed / Undelivered / Queued / Invalid — for Today, 24h, 7d, 30d. Success rate %.
+- Top failure reasons grid: groups by `error_code` (30003 Unreachable, 30004 Blocked, 30005 Unknown destination, 21610 Unsubscribed, 21614 Invalid 'To'), with human FR labels from a static dict.
+- "Why SMS fail" breakdown panels: by area code, by carrier (from `twilio-lookup-phone` enrichment), by trade, by city, by campaign.
+- Live event stream (last 100, polls every 10s via lightweight RPC).
+- Anomaly badge: if any group's failure rate > 2× rolling avg → red flag.
+SQL view `v_sms_health_24h` etc. powers the KPIs with security_invoker.
+
+### PHASE 8 — Contractor Communication Timeline
+On contractor profile page: new `<ContractorCommsTimeline contractorId={...} />`.
+Queries `sms_events_v2` + existing `email_send_log` + `pro_landing_views` + `contractor_activation_events` + `pricing_checkout_sessions`, merges by timestamp into a single vertical timeline:
+- ✓ SMS sent → Delivered (with carrier) → Link clicked → Landing viewed → Onboarding started → Checkout opened → Activated.
+- Each entry shows time + status + Twilio SID on hover.
+Expose RPC `get_contractor_comms_timeline(contractor_id uuid)` (security_invoker) so Alex can call it: "Votre invitation UNPRO a bien été reçue hier à 14h32."
+
+### PHASE 9 — Carrier enrichment
+After every successful send, enqueue a one-shot `twilio-lookup-phone` call for the normalized number (cached 30 days in new `phone_carrier_cache` table). Backfill `sms_events_v2.carrier` so Phase 7 grouping works.
+
+### PHASE 10 — Verification
+- Unit: `normalizePhone.test.ts` (8 input variants → E.164), `smsGuard.test.ts` (test numbers blocked, valid passes).
+- Integration: `curl_edge_functions` POST to refactored `send-sms-prospect` with `+15141234567` → expect 200 with `status='invalid_phone'`, no Twilio call, admin_notifications row created.
+- Webhook: simulate Twilio callback (`MessageStatus=delivered&MessageSid=...`) → row transitions to `delivered`, `webhook_received_at` set.
+- Retry: insert a `failed` row dated 16min ago → run scheduler manually → confirm `retry_scheduled` row created and second send attempted.
+- UI: load `/admin/sms-health`, screenshot via Playwright, confirm KPI numbers match a `read_query` cross-check.
+
+## Files / artifacts
+**Migrations** (1): create `sms_events_v2`, `sms_opt_outs`, `sms_retry_queue`, `phone_carrier_cache`, views, RPCs, GRANT/RLS/triggers.
+**Shared edge modules** (3): `_shared/normalizePhone.ts`, `_shared/smsGuard.ts`, `_shared/twilioSend.ts`.
+**New edge functions** (2): `twilio-status-v2`, `sms-retry-scheduler`.
+**Refactored edge functions** (10): all listed senders now route through `twilioSend`.
+**Frontend**: `src/lib/normalizePhone.ts`, `src/pages/admin/PageSmsHealth.tsx`, route registration, `src/components/contractor/ContractorCommsTimeline.tsx`.
+**pg_cron** (via insert tool): 5-min schedule hitting `sms-retry-scheduler`.
 
 ## Non-goals
-- No design simplification, no layer removal, no token/color changes, no business logic.
-- Alex behavior, voice config, routing, and data flows untouched.
+- No change to email pipeline.
+- No new Alex behavior beyond reading the timeline RPC.
+- No change to checkout/payment flows.
+
+## Out-of-band
+- Twilio Console: update Messaging Service status-callback URL to `twilio-status-v2` once deployed. Enable SMS Pumping Protection + Geo Permissions (CA only). I'll spell out the exact 3 clicks for you after Phase 5 ships.
+
+## Success criteria (mirrors your brief)
+✓ 100% visibility on every SMS (single table + closed-loop webhook)
+✓ Test numbers blocked at send time, never reach Twilio
+✓ Real-time status from Twilio, not polling
+✓ Failed messages auto-categorized by error code + carrier
+✓ Retry engine never blocks a campaign batch
+✓ Contractor timeline traceable, Alex-readable
+✓ Admin sees per-campaign / per-carrier / per-area-code failure heatmap
