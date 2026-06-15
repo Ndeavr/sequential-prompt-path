@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
         continue;
       }
       const phone = (lead as any).phone;
-      if (phone) await sendCheckoutSms(phone, url, (lead as any).company_name);
+      if (phone) await sendCheckoutSms(phone, url, (lead as any).company_name, (lead as any).id);
 
       await transitionLead((lead as any).id, "CHECKOUT_SENT", {
         payload: {
