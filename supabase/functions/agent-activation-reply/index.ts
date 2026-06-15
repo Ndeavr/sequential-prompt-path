@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
 
     let providerId: string | undefined;
     if (phone) {
-      const sms = await sendSms(phone, msg);
+      const sms = await sendSms(phone, msg, { lead_id: lead.id });
       providerId = sms.sid;
       await sb.from("outreach_delivery_logs").insert({
         lead_id: lead.id, channel: "sms", provider: "twilio",
