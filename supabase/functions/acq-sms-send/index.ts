@@ -1,5 +1,7 @@
-// Sends an SMS via Twilio connector. Logs to acq_sms_logs.
+// Sends an SMS via the unified twilioSend pipeline (logs to sms_events_v2 + acq_sms_logs).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { sendSms } from "../_shared/twilioSend.ts";
+
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
 
 Deno.serve(async (req) => {
@@ -14,46 +16,28 @@ Deno.serve(async (req) => {
     }
     if (!recipient) throw new Error("no_phone");
 
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    const twilioKey = Deno.env.get("TWILIO_API_KEY");
-    const fromNumber = Deno.env.get("TWILIO_FROM_NUMBER");
-    let status = "queued";
-    let providerId: string | null = null;
-    let error: string | null = null;
+    const result = await sendSms({
+      to: recipient,
+      body,
+      message_type: "outreach",
+      template_key: "acq_sms_send",
+      contractor_id: contractor_id || undefined,
+      metadata: { source: "acq-sms-send" },
+    });
 
-    if (apiKey && twilioKey && fromNumber) {
-      try {
-        const r = await fetch("https://connector-gateway.lovable.dev/twilio/Messages.json", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "X-Connection-Api-Key": twilioKey,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams({ To: recipient, From: fromNumber, Body: body }),
-        });
-        const j = await r.json();
-        if (!r.ok) { status = "failed"; error = JSON.stringify(j); }
-        else { status = "sent"; providerId = j.sid || null; }
-      } catch (e: any) {
-        status = "failed"; error = String(e?.message ?? e);
-      }
-    } else {
-      error = "twilio_not_configured";
-    }
-
+    const ok = result.status === "sending" || result.status === "sent" || result.status === "delivered";
     await sb.from("acq_sms_logs").insert({
       contractor_id: contractor_id || null,
       recipient_phone: recipient,
       body,
-      status,
-      provider_message_id: providerId,
-      error,
-      sent_at: status === "sent" ? new Date().toISOString() : null,
+      status: ok ? "sent" : result.status,
+      provider_message_id: result.twilio_sid,
+      error: result.error_message ?? null,
+      sent_at: ok ? new Date().toISOString() : null,
     });
 
-    return new Response(JSON.stringify({ ok: status === "sent", status, error }), {
-      headers: { ...cors, "Content-Type": "application/json" }
+    return new Response(JSON.stringify({ ok, status: result.status, event_id: result.event_id, error: result.error_message }), {
+      headers: { ...cors, "Content-Type": "application/json" },
     });
   } catch (e: any) {
     return new Response(JSON.stringify({ error: String(e?.message ?? e) }), { status: 500, headers: { ...cors, "Content-Type": "application/json" } });
