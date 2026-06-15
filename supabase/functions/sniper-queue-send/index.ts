@@ -56,30 +56,18 @@ async function sendEmail(params: {
   return { ok: true, id: messageId };
 }
 
-async function sendSms(params: { to: string; body: string }): Promise<{ ok: boolean; id?: string; error?: string }> {
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-  const twilioKey = Deno.env.get("TWILIO_API_KEY");
-  const messagingServiceSid = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
-  if (!lovableKey || !twilioKey) return { ok: false, error: "Missing LOVABLE_API_KEY or TWILIO_API_KEY" };
-  if (!messagingServiceSid) return { ok: false, error: "Missing TWILIO_MESSAGING_SERVICE_SID" };
+import { sendSms as sharedSendSms } from "../_shared/twilioSend.ts";
 
-  const body = new URLSearchParams({
-    To: params.to,
-    MessagingServiceSid: messagingServiceSid,
-    Body: params.body,
+async function sendSms(params: { to: string; body: string; targetId?: string }): Promise<{ ok: boolean; id?: string; error?: string }> {
+  const res = await sharedSendSms({
+    to: params.to,
+    body: params.body,
+    message_type: "outreach",
+    template_key: "sniper_outreach",
+    metadata: { source: "sniper-queue-send", sniper_target_id: params.targetId },
   });
-  const res = await fetch(`${GATEWAY}/twilio/Messages.json`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${lovableKey}`,
-      "X-Connection-Api-Key": twilioKey,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body,
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) return { ok: false, error: `Twilio ${res.status}: ${JSON.stringify(data).slice(0, 300)}` };
-  return { ok: true, id: data?.sid };
+  const ok = res.status === "sending" || res.status === "sent" || res.status === "delivered";
+  return ok ? { ok: true, id: res.twilio_sid ?? undefined } : { ok: false, error: res.error_message ?? res.status };
 }
 
 function normalizePhoneE164(raw: string): string | null {
