@@ -1033,3 +1033,80 @@ html { -webkit-text-size-adjust: 100%; }
   body { font-size: 16px; line-height: 1.55; }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   GLOBAL ANTI-FLICKER RENDERING SYSTEM
+   ─────────────────────────────────────────────────────────────────────
+   Stabilizes decorative layers (background, noise, gradients, orbs,
+   glass) without removing them. Promotes compositor layers, isolates
+   stacking contexts, and prevents repaint cascades on iOS Safari /
+   Chrome Android. Layers stay visible; only motion is constrained.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.gpu-stable {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+.no-flicker-layer {
+  contain: layout paint style;
+  isolation: isolate;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.stable-transform {
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+.decorative-layer {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Stabilize every backdrop-filter surface: opaque-ish fallback, GPU layer,
+   own stacking context, contained paint. Prevents Safari "transparent
+   flash" between repaints and stops sibling repaints from cascading. */
+.glass-card,
+.glass-card-elevated,
+.glass-surface,
+.glass-strong,
+.surface-metal-glass {
+  background-color: hsl(var(--card) / 0.85);
+  isolation: isolate;
+  contain: paint;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Never animate blur / filter / backdrop-filter / box-shadow on large
+   surfaces — they trigger full-layer repaints. Hover stays via transform. */
+.glass-card,
+.glass-card-elevated,
+.glass-surface,
+.glass-strong {
+  transition-property: transform, opacity, border-color !important;
+}
+
+/* Reduced motion: freeze decorative animation, keep layers visible. */
+@media (prefers-reduced-motion: reduce) {
+  .decorative-layer,
+  .gpu-stable,
+  [data-decor],
+  [data-decor] * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+

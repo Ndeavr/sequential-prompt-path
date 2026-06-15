@@ -41,27 +41,10 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-x-hidden">
-      {/* Cinematic 4-layer background — fixed, never repaints on route change */}
-      <div className="fixed inset-0 -z-10 noise-overlay pointer-events-none">
-        {/* Layer 1: base */}
-        <div className="absolute inset-0" style={{ background: "#050816" }} />
-        {/* Layer 2: blue glow top-left */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(circle at top left, rgba(0,132,255,0.22), transparent 40%)",
-          }}
-        />
-        {/* Layer 3: cyan glow bottom-right */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(circle at bottom right, rgba(0,255,255,0.10), transparent 45%)",
-          }}
-        />
-      </div>
+      {/* Cinematic background now lives in src/app/App.tsx (StableBackgroundLayer)
+          — mounted once above the router so route changes never remount it. */}
+
+
 
       <SmartHeader />
       <main className="flex-1 pb-20 lg:pb-0 relative z-0">{children}</main>

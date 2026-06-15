@@ -6,6 +6,7 @@ import AlexRouterDebugHUD from "@/components/alex-copilot/AlexRouterDebugHUD";
 import AuthDebugHud from "@/components/auth/AuthDebugHud";
 import BootDebugButton from "@/components/dev/BootDebugButton";
 import ContractorHumanCalloutModal from "@/components/contractor-intent/ContractorHumanCalloutModal";
+import StableBackgroundLayer from "@/components/system/background/StableBackgroundLayer";
 
 const App = () => {
   useEffect(() => {
@@ -15,6 +16,9 @@ const App = () => {
 
   return (
     <AppErrorBoundary>
+      {/* Cinematic background — mounted ONCE above the router so route
+          changes never remount or re-init decorative layers. */}
+      <StableBackgroundLayer />
       <Providers>
         <AppRouter />
         <AlexRouterDebugHUD />
