@@ -253,7 +253,7 @@ Deno.serve(async (req) => {
         quotaBlocked++;
       } else {
         const body = buildSms(lead, link);
-        const r = await sendSms(phone, body);
+        const r = await sendSms(phone, body, lead.id, lead.contractor_id);
         await sb.from("contractor_outreach_logs").insert({
           lead_id: lead.id,
           contractor_id: lead.contractor_id,
