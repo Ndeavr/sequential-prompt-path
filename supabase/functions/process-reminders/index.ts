@@ -48,12 +48,7 @@ Deno.serve(async (req) => {
 
     let processed = 0;
     let smsAttempted = 0;
-
-    const TWILIO_GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
-    const TWILIO_FROM_NUMBER = Deno.env.get("TWILIO_FROM_NUMBER");
-    const hasTwilio = !!(LOVABLE_API_KEY && TWILIO_API_KEY && TWILIO_FROM_NUMBER);
+    const { sendSms } = await import("../_shared/twilioSend.ts");
 
     for (const reminder of dueReminders) {
       const appointment = reminder.appointments as Record<string, unknown> | null;
@@ -91,46 +86,34 @@ Deno.serve(async (req) => {
         .select("id")
         .single();
 
-      // Try SMS if Twilio is configured and user has SMS preference
-      if (hasTwilio) {
-        const { data: pref } = await svc
-          .from("notification_preferences")
-          .select("phone_number, is_enabled")
-          .eq("profile_id", reminder.profile_id)
-          .eq("channel", "sms")
-          .eq("is_enabled", true)
-          .maybeSingle();
+      const { data: pref } = await svc
+        .from("notification_preferences")
+        .select("phone_number, is_enabled")
+        .eq("profile_id", reminder.profile_id)
+        .eq("channel", "sms")
+        .eq("is_enabled", true)
+        .maybeSingle();
 
-        if (pref?.phone_number) {
-          try {
-            const smsBody = `[UNPRO] ${title}\n${body}`;
-            const smsResp = await fetch(`${TWILIO_GATEWAY_URL}/Messages.json`, {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${LOVABLE_API_KEY}`,
-                "X-Connection-Api-Key": TWILIO_API_KEY!,
-                "Content-Type": "application/x-www-form-urlencoded",
-              },
-              body: new URLSearchParams({
-                To: pref.phone_number,
-                From: TWILIO_FROM_NUMBER!,
-                Body: smsBody,
-              }),
-            });
-
-            if (smsResp.ok) {
-              smsAttempted++;
-              if (notif?.id) {
-                await svc
-                  .from("notifications")
-                  .update({ sms_sent_at: now, sms_status: "sent" })
-                  .eq("id", notif.id);
-              }
+      if (pref?.phone_number) {
+        try {
+          const smsBody = `[UNPRO] ${title}\n${body}`;
+          const res = await sendSms({
+            to: pref.phone_number,
+            body: smsBody,
+            message_type: "other",
+            template_key: `reminder_${reminder.reminder_type}`,
+            metadata: { source: "process-reminders", reminder_id: reminder.id, appointment_id: reminder.appointment_id },
+          });
+          const ok = res.status === "sending" || res.status === "sent" || res.status === "delivered";
+          if (ok) {
+            smsAttempted++;
+            if (notif?.id) {
+              await svc.from("notifications")
+                .update({ sms_sent_at: now, sms_status: "sent" })
+                .eq("id", notif.id);
             }
-          } catch (_) {
-            // SMS failure is non-blocking
           }
-        }
+        } catch (_) { /* non-blocking */ }
       }
 
       // Mark reminder as sent

@@ -1,19 +1,14 @@
 /**
  * agent-send-test — admin-only test send. Returns raw provider response.
+ * Routes SMS through the unified twilioSend pipeline (sms_events_v2 audit).
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { sendSms } from "../_shared/twilioSend.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-function normalizePhoneQc(raw: string): string | null {
-  const digits = String(raw || "").replace(/\D/g, "");
-  if (digits.length === 10) return `+1${digits}`;
-  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
-  return null;
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -40,30 +35,25 @@ Deno.serve(async (req) => {
     const message = body || "Test UNPRO — si vous recevez ceci, l'envoi fonctionne.";
 
     if (channel === "sms") {
-      const normalized = normalizePhoneQc(phone);
-      if (!normalized) return new Response(JSON.stringify({ ok: false, error: "invalid_phone", phone_raw: phone }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      const sid = Deno.env.get("TWILIO_ACCOUNT_SID"); const tok = Deno.env.get("TWILIO_AUTH_TOKEN");
-      const msgSid = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID"); const from = Deno.env.get("TWILIO_PHONE_NUMBER");
-      if (!sid || !tok || (!msgSid && !from)) {
-        return new Response(JSON.stringify({ ok: false, error: "missing_secret", details: { sid: !!sid, token: !!tok, msgSid: !!msgSid, from: !!from } }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      const params = new URLSearchParams({ To: normalized, Body: message });
-      if (msgSid) params.set("MessagingServiceSid", msgSid); else params.set("From", from!);
-      const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
-        method: "POST",
-        headers: { Authorization: `Basic ${btoa(`${sid}:${tok}`)}`, "Content-Type": "application/x-www-form-urlencoded" },
-        body: params,
+      const res = await sendSms({
+        to: phone,
+        body: message,
+        message_type: "test",
+        template_key: "agent_send_test",
+        metadata: { source: "agent-send-test", admin_user_id: userData.user.id },
       });
-      const data = await r.json().catch(() => ({}));
-      return new Response(JSON.stringify({ ok: r.ok, status: r.status, recipient: normalized, provider_response: data }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const ok = res.status === "sending" || res.status === "sent" || res.status === "delivered";
+      return new Response(JSON.stringify({ ok, status: res.status, event_id: res.event_id, twilio_sid: res.twilio_sid, error: res.error_message }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     if (channel === "email") {
-      const lov = Deno.env.get("LOVABLE_API_KEY"); const res = Deno.env.get("RESEND_API_KEY");
-      if (!lov || !res) return new Response(JSON.stringify({ ok: false, error: "missing_secret" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const lov = Deno.env.get("LOVABLE_API_KEY"); const rk = Deno.env.get("RESEND_API_KEY");
+      if (!lov || !rk) return new Response(JSON.stringify({ ok: false, error: "missing_secret" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       const r = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${lov}`, "X-Connection-Api-Key": res },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${lov}`, "X-Connection-Api-Key": rk },
         body: JSON.stringify({ from: "Alex d'UNPRO <alex@mail.unpro.ca>", to: [email], subject: subject || "Test UNPRO", html: `<p>${message}</p>` }),
       });
       const data = await r.json().catch(() => ({}));

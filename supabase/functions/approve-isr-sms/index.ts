@@ -61,30 +61,18 @@ Deno.serve(async (req) => {
       targetPhone = prospectPhone;
     }
 
-    // Send via Twilio (LOVABLE_API_KEY gateway). NEVER silently simulate.
-    const twilioApiKey = Deno.env.get("TWILIO_API_KEY");
-    const twilioFrom = Deno.env.get("TWILIO_PHONE_NUMBER") || Deno.env.get("TWILIO_FROM");
-    const messagingSid = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
-    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-
-    if (!twilioApiKey || !lovableKey) throw new Error("twilio_not_configured: TWILIO_API_KEY or LOVABLE_API_KEY missing");
-    if (!messagingSid && !twilioFrom) throw new Error("twilio_not_configured: set TWILIO_MESSAGING_SERVICE_SID or TWILIO_PHONE_NUMBER");
-
-    const params: Record<string, string> = { To: targetPhone, Body: smsBody };
-    if (messagingSid) params.MessagingServiceSid = messagingSid;
-    else if (twilioFrom) params.From = twilioFrom;
-
-    const resp = await fetch(`https://connector-gateway.lovable.dev/twilio/Messages.json`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": twilioApiKey,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams(params),
+    // Send via unified pipeline (logs to sms_events_v2)
+    const { sendSms } = await import("../_shared/twilioSend.ts");
+    const send = await sendSms({
+      to: targetPhone,
+      body: smsBody,
+      message_type: dry_run ? "test" : "outreach",
+      template_key: "isr_approval",
+      metadata: { source: "approve-isr-sms", run_id, dry_run, admin_user_id: userData.user.id },
     });
-    const sendResult: any = await resp.json();
-    if (!resp.ok) throw new Error(`twilio_send_failed:${JSON.stringify(sendResult)}`);
+    const sendOk = send.status === "sending" || send.status === "sent" || send.status === "delivered";
+    if (!sendOk) throw new Error(`twilio_send_failed:${send.status}:${send.error_message ?? ""}`);
+    const sendResult: any = { sid: send.twilio_sid, event_id: send.event_id };
 
     // Update step rows
     if (!dry_run) {

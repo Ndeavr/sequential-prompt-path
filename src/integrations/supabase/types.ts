@@ -68643,6 +68643,13 @@ export type Database = {
             referencedRelation: "sms_events_v2"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sms_retry_queue_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_callback_gap"
+            referencedColumns: ["id"]
+          },
         ]
       }
       sms_templates: {
@@ -76185,6 +76192,45 @@ export type Database = {
         }
         Relationships: []
       }
+      v_sms_callback_gap: {
+        Row: {
+          from_number: string | null
+          id: string | null
+          message_type: string | null
+          minutes_since_send: number | null
+          normalized_phone: string | null
+          sent_at: string | null
+          status: string | null
+          template_key: string | null
+          twilio_sid: string | null
+          webhook_received_at: string | null
+        }
+        Insert: {
+          from_number?: string | null
+          id?: string | null
+          message_type?: string | null
+          minutes_since_send?: never
+          normalized_phone?: string | null
+          sent_at?: string | null
+          status?: string | null
+          template_key?: string | null
+          twilio_sid?: string | null
+          webhook_received_at?: string | null
+        }
+        Update: {
+          from_number?: string | null
+          id?: string | null
+          message_type?: string | null
+          minutes_since_send?: never
+          normalized_phone?: string | null
+          sent_at?: string | null
+          status?: string | null
+          template_key?: string | null
+          twilio_sid?: string | null
+          webhook_received_at?: string | null
+        }
+        Relationships: []
+      }
       v_sms_failure_reasons_7d: {
         Row: {
           count: number | null
@@ -76200,6 +76246,16 @@ export type Database = {
           queued: number | null
           total: number | null
           undelivered: number | null
+        }
+        Relationships: []
+      }
+      v_sms_sender_usage_24h: {
+        Row: {
+          delivered: number | null
+          failed: number | null
+          message_type: string | null
+          sender: string | null
+          total: number | null
         }
         Relationships: []
       }

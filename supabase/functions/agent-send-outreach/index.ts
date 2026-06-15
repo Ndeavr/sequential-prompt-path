@@ -56,24 +56,22 @@ async function consumeQuota(db: SupabaseClient, channel: Channel, scope: string,
   }
 }
 
-async function sendTwilioSms(to: string, body: string): Promise<{ ok: boolean; status: number; sid?: string; code?: string | number; message?: string; raw: unknown }> {
-  const sid = Deno.env.get("TWILIO_ACCOUNT_SID");
-  const token = Deno.env.get("TWILIO_AUTH_TOKEN");
-  const msgSid = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
-  const fromNumber = Deno.env.get("TWILIO_PHONE_NUMBER");
-  if (!sid || !token || (!msgSid && !fromNumber)) {
-    return { ok: false, status: 0, code: "missing_secret", message: "Twilio credentials not configured", raw: null };
-  }
-  const params = new URLSearchParams({ To: to, Body: body });
-  if (msgSid) params.set("MessagingServiceSid", msgSid);
-  else params.set("From", fromNumber!);
-  const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
-    method: "POST",
-    headers: { Authorization: `Basic ${btoa(`${sid}:${token}`)}`, "Content-Type": "application/x-www-form-urlencoded" },
-    body: params,
+import { sendSms as sharedSendSms } from "../_shared/twilioSend.ts";
+
+async function sendTwilioSms(to: string, body: string, ctx?: { lead_id?: string }): Promise<{ ok: boolean; status: number; sid?: string; code?: string | number; message?: string; raw: unknown }> {
+  const res = await sharedSendSms({
+    to, body, message_type: "outreach", template_key: "agent_send_outreach",
+    lead_id: ctx?.lead_id, metadata: { source: "agent-send-outreach" },
   });
-  const data = await r.json().catch(() => ({}));
-  return { ok: r.ok, status: r.status, sid: data?.sid, code: data?.code, message: data?.message, raw: data };
+  const ok = res.status === "sending" || res.status === "sent" || res.status === "delivered";
+  return {
+    ok,
+    status: ok ? 201 : (res.error_code === "config" ? 0 : 502),
+    sid: res.twilio_sid ?? undefined,
+    code: res.error_code ?? (ok ? undefined : "provider_rejected"),
+    message: res.error_message,
+    raw: { event_id: res.event_id, status: res.status },
+  };
 }
 
 async function sendResendEmail(to: string, subject: string, html: string): Promise<{ ok: boolean; status: number; id?: string; message?: string; raw: unknown }> {
@@ -196,7 +194,7 @@ Deno.serve(async (req) => {
       if (useChannel === "sms") {
         provider = "twilio";
         recipient = normalized!;
-        attempt = await sendTwilioSms(normalized!, m.body);
+        attempt = await sendTwilioSms(normalized!, m.body, { lead_id: lead.id });
         providerMessageId = (attempt as any).sid;
       } else {
         provider = "resend";

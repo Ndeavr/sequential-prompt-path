@@ -161,35 +161,24 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: false, error: String(e) }), { status: 500, headers: cors });
     }
   } else if (msg.channel_type === "sms") {
-    const h = await requireService(s, "twilio");
-    if (!h.ok) {
-      await s.from("outreach_messages").update({ message_status: "failed", error_message: h.reason, failed_at: new Date().toISOString() }).eq("id", message_id);
-      await log(s, runId, "outreach_send.health", "blocked", h.reason, msg.prospect_id);
-      await finishRun(s, runId, { status: "failed", error_summary: h.reason });
-      return new Response(JSON.stringify({ ok: false, blocked: true, reason: h.reason }), { headers: cors });
-    }
-    const sid = Deno.env.get("TWILIO_ACCOUNT_SID")!;
-    const tok = Deno.env.get("TWILIO_AUTH_TOKEN")!;
-    const msvc = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
     try {
-      const params = new URLSearchParams({ To: msg.to_value, Body: msg.body_rendered });
-      if (msvc) params.set("MessagingServiceSid", msvc);
-      const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
-        method: "POST",
-        headers: { Authorization: "Basic " + btoa(`${sid}:${tok}`), "Content-Type": "application/x-www-form-urlencoded" },
-        body: params,
+      const { sendSms } = await import("../_shared/twilioSend.ts");
+      const send = await sendSms({
+        to: msg.to_value, body: msg.body_rendered,
+        message_type: "outreach", template_key: "acq_send_outreach",
+        metadata: { source: "acq-send-outreach", message_id, prospect_id: msg.prospect_id },
       });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j?.message || JSON.stringify(j));
+      const ok = send.status === "sending" || send.status === "sent" || send.status === "delivered";
+      if (!ok) throw new Error(send.error_message ?? send.status);
       await s.from("outreach_messages").update({
-        message_status: "sent", provider_message_id: j.sid, sent_at: new Date().toISOString(),
+        message_status: "sent", provider_message_id: send.twilio_sid, sent_at: new Date().toISOString(),
       }).eq("id", message_id);
       if (msg.prospect_id) {
         await s.from("contractor_prospects").update({ outreach_status: "sent", updated_at: new Date().toISOString() }).eq("id", msg.prospect_id);
       }
-      await log(s, runId, "outreach_send.sms", "success", `Envoyé via Twilio ${j.sid}`, msg.prospect_id);
+      await log(s, runId, "outreach_send.sms", "success", `Envoyé via Twilio ${send.twilio_sid}`, msg.prospect_id);
       await finishRun(s, runId, { status: "succeeded", total_items: 1, succeeded_count: 1 });
-      return new Response(JSON.stringify({ ok: true, provider_id: j.sid }), { headers: cors });
+      return new Response(JSON.stringify({ ok: true, provider_id: send.twilio_sid, event_id: send.event_id }), { headers: cors });
     } catch (e) {
       await s.from("outreach_messages").update({ message_status: "failed", error_message: String(e), failed_at: new Date().toISOString() }).eq("id", message_id);
       await log(s, runId, "outreach_send.sms", "error", String(e), msg.prospect_id);

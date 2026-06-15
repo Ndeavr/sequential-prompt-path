@@ -138,29 +138,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Send via Twilio REST API
-    const sid = Deno.env.get("TWILIO_ACCOUNT_SID")!;
-    const token = Deno.env.get("TWILIO_AUTH_TOKEN")!;
-    const msgSid = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
-
-    const params = new URLSearchParams({
-      To: phone,
-      Body: smsBody,
+    // Send via unified pipeline (sms_events_v2)
+    const { sendSms } = await import("../_shared/twilioSend.ts");
+    const result = await sendSms({
+      to: phone,
+      body: smsBody,
+      message_type: "outreach",
+      template_key: `prospect_variant_${variant}`,
+      metadata: { prospect_page_id: prospect.id, variant, short_link: linkSlug },
     });
-    if (msgSid) params.set("MessagingServiceSid", msgSid);
-
-    const auth64 = btoa(`${sid}:${token}`);
-    const resp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${auth64}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: params,
-    });
-
-    const twData = await resp.json();
-    const ok = resp.ok && twData.sid;
+    const ok = result.status === "sending" || result.status === "sent" || result.status === "delivered";
 
     await supabase.from("sms_campaigns").insert({
       prospect_page_id: prospect.id,
@@ -169,12 +156,12 @@ Deno.serve(async (req) => {
       sms_variant: variant,
       sms_body: smsBody,
       short_link: linkSlug,
-      twilio_sid: twData.sid ?? null,
+      twilio_sid: result.twilio_sid,
       conversion_status: ok ? "sent" : "failed",
-      error: ok ? null : JSON.stringify(twData),
+      error: ok ? null : (result.error_message ?? null),
     });
 
-    return new Response(JSON.stringify({ ok, variant, twilio: twData }), {
+    return new Response(JSON.stringify({ ok, variant, event_id: result.event_id, status: result.status, twilio_sid: result.twilio_sid, error: result.error_message }), {
       status: ok ? 200 : 502,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
