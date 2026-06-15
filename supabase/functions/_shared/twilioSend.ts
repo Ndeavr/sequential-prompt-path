@@ -95,7 +95,8 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     return { event_id: "", status: "failed", twilio_sid: null, error_message: `audit_insert_failed: ${qErr?.message}` };
   }
 
-  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
+  const useGateway = (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) && LOVABLE_API_KEY && TWILIO_API_KEY;
+  if (!TWILIO_ACCOUNT_SID && !useGateway) {
     await supabase.from("sms_events_v2").update({
       status: "failed", error_code: "config", error_message: "twilio_not_configured", failed_at: new Date().toISOString(),
     }).eq("id", queued.id);
@@ -106,14 +107,16 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
   if (TWILIO_MESSAGING_SERVICE_SID) form.set("MessagingServiceSid", TWILIO_MESSAGING_SERVICE_SID);
   else if (TWILIO_FROM_NUMBER) form.set("From", TWILIO_FROM_NUMBER);
 
-  const auth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
+  const url = useGateway
+    ? `${GATEWAY_URL}/Messages.json`
+    : `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
+  const headers: Record<string, string> = useGateway
+    ? { Authorization: `Bearer ${LOVABLE_API_KEY}`, "X-Connection-Api-Key": TWILIO_API_KEY, "Content-Type": "application/x-www-form-urlencoded" }
+    : { Authorization: `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`, "Content-Type": "application/x-www-form-urlencoded" };
+
   let twResp: Response;
   try {
-    twResp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`, {
-      method: "POST",
-      headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/x-www-form-urlencoded" },
-      body: form.toString(),
-    });
+    twResp = await fetch(url, { method: "POST", headers, body: form.toString() });
   } catch (e) {
     await supabase.from("sms_events_v2").update({
       status: "failed", error_code: "network", error_message: String(e), failed_at: new Date().toISOString(),
