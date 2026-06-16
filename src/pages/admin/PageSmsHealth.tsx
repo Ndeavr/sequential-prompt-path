@@ -125,6 +125,7 @@ export default function PageSmsHealth() {
         <AutonomousOutreachCard />
 
         <CuriosityFunnelCard />
+        <PhonePipelineCard />
 
 
 
