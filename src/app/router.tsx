@@ -21,6 +21,7 @@ const PageAdminLiveRuns = lazy(() => import("@/pages/admin/PageAdminLiveRuns"));
 const PageAdminProspectSMS = lazy(() => import("@/pages/admin/PageAdminProspectSMS"));
 const PageFounderVerification = lazy(() => import("@/pages/admin/PageFounderVerification"));
 const PageSmsHealth = lazy(() => import("@/pages/admin/PageSmsHealth"));
+const PageSendWindowPolicy = lazy(() => import("@/pages/admin/PageSendWindowPolicy"));
 
 // Impact Counter
 const PageImpactCounter = lazy(() => import("@/pages/PageImpactCounter"));
