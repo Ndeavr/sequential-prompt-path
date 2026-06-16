@@ -3,6 +3,25 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { validateBeforeSend } from "./smsGuard.ts";
+import { assertSendAllowed, isFounderModeActive, type MessageClass } from "./sendWindow.ts";
+
+// Map sendSms message_type to the central send-window MessageClass.
+function classifyMessage(type: string): MessageClass {
+  switch (type) {
+    case "otp":
+    case "test":
+      return "transactional";
+    case "founder":
+      return "system_alert";
+    case "reengagement":
+    case "onboarding":
+      return "followup";
+    case "outreach":
+    default:
+      return "prospection";
+  }
+}
+
 
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
@@ -45,9 +64,50 @@ async function hashBody(body: string): Promise<string> {
 export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+  // Send-window gate (skipped for transactional, OTP, founder bypass).
+  const messageClass = classifyMessage(input.message_type);
+  const founderBypass = await isFounderModeActive();
+  const windowCheck = await assertSendAllowed({
+    channel: "sms",
+    messageClass,
+    founderBypass,
+  });
+  if (!windowCheck.ok) {
+    const body_hash_block = await hashBody(input.body);
+    const { data: blocked } = await supabase
+      .from("sms_events_v2")
+      .insert({
+        lead_id: input.lead_id ?? null,
+        contractor_id: input.contractor_id ?? null,
+        campaign_id: input.campaign_id ?? null,
+        template_key: input.template_key ?? null,
+        message_type: input.message_type,
+        raw_phone: input.to,
+        normalized_phone: input.to,
+        from_number: TWILIO_FROM_NUMBER || null,
+        message_preview: input.body.slice(0, 160),
+        body_hash: body_hash_block,
+        attempt_number: input.attempt_number ?? 1,
+        status: "deferred_window",
+        error_code: "OUT_OF_WINDOW",
+        error_message: `Hors fenêtre — reprise prévue ${windowCheck.next_send_at}`,
+        metadata: { ...(input.metadata ?? {}), next_send_at: windowCheck.next_send_at, send_window_blocked: true },
+      })
+      .select("id")
+      .single();
+    return {
+      event_id: blocked?.id ?? "",
+      status: "deferred_window",
+      twilio_sid: null,
+      error_code: "OUT_OF_WINDOW",
+      error_message: `next_send_at=${windowCheck.next_send_at}`,
+    };
+  }
+
   const guard = await validateBeforeSend({ supabase, phone: input.to });
   const body_hash = await hashBody(input.body);
   const message_preview = input.body.slice(0, 160);
+
 
   // Insert audit row up-front so we always have a trace.
   const baseRow = {
