@@ -73,11 +73,31 @@ serve(async (req) => {
     }).select("id").single();
 
     if (leadId) {
-      await sb.from("contractor_leads").update({ pipeline_status: "Replied" }).eq("id", leadId);
+      const newStatus = intent === "stop" ? "unsubscribed" : "replied";
+      const patch: Record<string, unknown> = { pipeline_status: newStatus };
+      if (intent === "stop") patch.unsubscribed_at = new Date().toISOString();
+      await sb.from("contractor_leads").update(patch).eq("id", leadId);
+
+      if (intent === "stop") {
+        await sb.from("onboarding_sequences").update({
+          status: "completed_unsubscribed",
+          stopped_reason: "sms_stop",
+        }).eq("contractor_lead_id", leadId).in("status", ["active", "waiting", "paused"]);
+        await sb.from("contractor_onboarding_messages").update({
+          status: "skipped",
+          skip_reason: "unsubscribed",
+        }).eq("contractor_lead_id", leadId).eq("status", "queued");
+      } else {
+        await sb.from("onboarding_sequences").update({
+          status: "paused",
+          stopped_reason: "reply_received",
+        }).eq("contractor_lead_id", leadId).eq("status", "active");
+      }
     }
 
     if (intent === "stop") return twiml();
     if (intent === "help") return twiml("UNPRO: Aide au 1-800-UNPRO. Répondez STOP pour vous désabonner.");
+
 
     // Fire-and-forget activation agent
     if (reply?.id) {

@@ -63,6 +63,21 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // Mirror to contractor_onboarding_messages by twilio_message_sid
+    const comUpdate: Record<string, unknown> = { status: mapped };
+    if (mapped === "delivered") comUpdate.delivered_at = now;
+    if (errorCode) comUpdate.error_message = `${errorCode}: ${errorMessage ?? ""}`.trim();
+    await supabase.from("contractor_onboarding_messages").update(comUpdate).eq("twilio_message_sid", sid);
+    const { data: comRow } = await supabase
+      .from("contractor_onboarding_messages")
+      .select("contractor_lead_id")
+      .eq("twilio_message_sid", sid)
+      .maybeSingle();
+    if (comRow?.contractor_lead_id) {
+      await supabase.from("contractor_leads").update({ last_sms_status: mapped }).eq("id", comRow.contractor_lead_id);
+    }
+
+
     // Mirror to sms_test_runs if this SID belongs to a test run
     const testRunUpdate: Record<string, unknown> = {
       callback_received: true,

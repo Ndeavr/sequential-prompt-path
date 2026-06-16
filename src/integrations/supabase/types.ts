@@ -27080,6 +27080,7 @@ export type Database = {
           last_email_at: string | null
           last_name: string | null
           last_sms_at: string | null
+          last_sms_status: string | null
           lead_status: string
           metadata_json: Json | null
           mobile_phone: string | null
@@ -27108,6 +27109,7 @@ export type Database = {
           source_type: string
           street_address: string | null
           trade: string | null
+          unsubscribed_at: string | null
           updated_at: string
           website_url: string | null
         }
@@ -27140,6 +27142,7 @@ export type Database = {
           last_email_at?: string | null
           last_name?: string | null
           last_sms_at?: string | null
+          last_sms_status?: string | null
           lead_status?: string
           metadata_json?: Json | null
           mobile_phone?: string | null
@@ -27168,6 +27171,7 @@ export type Database = {
           source_type?: string
           street_address?: string | null
           trade?: string | null
+          unsubscribed_at?: string | null
           updated_at?: string
           website_url?: string | null
         }
@@ -27200,6 +27204,7 @@ export type Database = {
           last_email_at?: string | null
           last_name?: string | null
           last_sms_at?: string | null
+          last_sms_status?: string | null
           lead_status?: string
           metadata_json?: Json | null
           mobile_phone?: string | null
@@ -27228,6 +27233,7 @@ export type Database = {
           source_type?: string
           street_address?: string | null
           trade?: string | null
+          unsubscribed_at?: string | null
           updated_at?: string
           website_url?: string | null
         }
@@ -28129,6 +28135,78 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_onboarding_messages: {
+        Row: {
+          body: string
+          body_hash: string
+          channel: string
+          contractor_lead_id: string | null
+          created_at: string
+          delivered_at: string | null
+          error_message: string | null
+          id: string
+          scheduled_at: string
+          sent_at: string | null
+          sequence_id: string | null
+          skip_reason: string | null
+          status: string
+          step: number | null
+          to_phone: string | null
+          twilio_message_sid: string | null
+        }
+        Insert: {
+          body: string
+          body_hash: string
+          channel?: string
+          contractor_lead_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          scheduled_at?: string
+          sent_at?: string | null
+          sequence_id?: string | null
+          skip_reason?: string | null
+          status?: string
+          step?: number | null
+          to_phone?: string | null
+          twilio_message_sid?: string | null
+        }
+        Update: {
+          body?: string
+          body_hash?: string
+          channel?: string
+          contractor_lead_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          scheduled_at?: string
+          sent_at?: string | null
+          sequence_id?: string | null
+          skip_reason?: string | null
+          status?: string
+          step?: number | null
+          to_phone?: string | null
+          twilio_message_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_onboarding_messages_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_onboarding_messages_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "onboarding_sequences"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -47689,6 +47767,50 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_sequences: {
+        Row: {
+          contractor_lead_id: string
+          created_at: string
+          current_step: number
+          id: string
+          last_sent_at: string | null
+          next_send_at: string
+          status: string
+          stopped_reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          contractor_lead_id: string
+          created_at?: string
+          current_step?: number
+          id?: string
+          last_sent_at?: string | null
+          next_send_at?: string
+          status?: string
+          stopped_reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contractor_lead_id?: string
+          created_at?: string
+          current_step?: number
+          id?: string
+          last_sent_at?: string | null
+          next_send_at?: string
+          status?: string
+          stopped_reason?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_sequences_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       opportunity_allocations: {
         Row: {
           allocation_mode: string | null
@@ -49104,6 +49226,7 @@ export type Database = {
           id: string
           max_daily_per_mailbox: number | null
           max_hourly_per_mailbox: number | null
+          outreach_paused: boolean
           pause_bounce_threshold: number | null
           pause_spam_threshold: number | null
           updated_at: string | null
@@ -49116,6 +49239,7 @@ export type Database = {
           id?: string
           max_daily_per_mailbox?: number | null
           max_hourly_per_mailbox?: number | null
+          outreach_paused?: boolean
           pause_bounce_threshold?: number | null
           pause_spam_threshold?: number | null
           updated_at?: string | null
@@ -49128,6 +49252,7 @@ export type Database = {
           id?: string
           max_daily_per_mailbox?: number | null
           max_hourly_per_mailbox?: number | null
+          outreach_paused?: boolean
           pause_bounce_threshold?: number | null
           pause_spam_threshold?: number | null
           updated_at?: string | null
@@ -76604,6 +76729,10 @@ export type Database = {
       calculate_waitlist_score: {
         Args: { p_waitlist_id: string }
         Returns: Json
+      }
+      cancel_onboarding_on_paid: {
+        Args: { p_contractor_id: string }
+        Returns: undefined
       }
       check_generation_quota: {
         Args: {
