@@ -165,3 +165,5 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.sms-admin-test]
     verify_jwt = false
+  [functions.run-contractor-onboarding-worker]
+    verify_jwt = false
