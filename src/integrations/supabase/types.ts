@@ -27067,6 +27067,8 @@ export type Database = {
           created_at: string
           created_by: string | null
           created_by_role_code: string | null
+          curiosity_slug: string | null
+          curiosity_token: string | null
           email: string | null
           enrichment_status: string
           failure_code: string | null
@@ -27074,6 +27076,7 @@ export type Database = {
           fit_reasons: Json | null
           fit_score: number | null
           full_name: string | null
+          funnel_type: string
           id: string
           language_primary: string | null
           last_agent_run_at: string | null
@@ -27129,6 +27132,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           created_by_role_code?: string | null
+          curiosity_slug?: string | null
+          curiosity_token?: string | null
           email?: string | null
           enrichment_status?: string
           failure_code?: string | null
@@ -27136,6 +27141,7 @@ export type Database = {
           fit_reasons?: Json | null
           fit_score?: number | null
           full_name?: string | null
+          funnel_type?: string
           id?: string
           language_primary?: string | null
           last_agent_run_at?: string | null
@@ -27191,6 +27197,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           created_by_role_code?: string | null
+          curiosity_slug?: string | null
+          curiosity_token?: string | null
           email?: string | null
           enrichment_status?: string
           failure_code?: string | null
@@ -27198,6 +27206,7 @@ export type Database = {
           fit_reasons?: Json | null
           fit_score?: number | null
           full_name?: string | null
+          funnel_type?: string
           id?: string
           language_primary?: string | null
           last_agent_run_at?: string | null
@@ -34237,6 +34246,94 @@ export type Database = {
           user_role?: string | null
         }
         Relationships: []
+      }
+      curiosity_funnel_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          lead_id: string | null
+          metadata: Json
+          slug: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          lead_id?: string | null
+          metadata?: Json
+          slug?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          lead_id?: string | null
+          metadata?: Json
+          slug?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curiosity_funnel_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curiosity_sequences: {
+        Row: {
+          activated_at: string | null
+          clicked_at: string | null
+          created_at: string
+          current_step: number
+          failure_code: string | null
+          id: string
+          last_sent_at: string | null
+          lead_id: string
+          next_send_at: string
+          revealed_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          current_step?: number
+          failure_code?: string | null
+          id?: string
+          last_sent_at?: string | null
+          lead_id: string
+          next_send_at?: string
+          revealed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          current_step?: number
+          failure_code?: string | null
+          id?: string
+          last_sent_at?: string | null
+          lead_id?: string
+          next_send_at?: string
+          revealed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curiosity_sequences_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       data_sources: {
         Row: {
@@ -76730,6 +76827,14 @@ export type Database = {
         Args: { p_waitlist_id: string }
         Returns: Json
       }
+      cancel_curiosity_on_paid: {
+        Args: { _lead_id: string }
+        Returns: undefined
+      }
+      cancel_curiosity_on_unsubscribed: {
+        Args: { _lead_id: string }
+        Returns: undefined
+      }
       cancel_onboarding_on_paid: {
         Args: { p_contractor_id: string }
         Returns: undefined
@@ -76827,6 +76932,10 @@ export type Database = {
       fn_alex_promote_guest_session: {
         Args: { _session_token: string; _user_id: string }
         Returns: Json
+      }
+      generate_curiosity_slug: {
+        Args: { _business_name: string; _lead_id: string }
+        Returns: string
       }
       generate_territories: {
         Args: {
@@ -77061,6 +77170,10 @@ export type Database = {
           p_normalized_phone?: string
           p_user_id: string
         }
+        Returns: Json
+      }
+      resolve_curiosity_slug: {
+        Args: { _slug: string; _token: string }
         Returns: Json
       }
       resolve_qr_token: { Args: { _token: string }; Returns: Json }
