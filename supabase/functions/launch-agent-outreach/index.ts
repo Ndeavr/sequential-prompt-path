@@ -3,6 +3,7 @@
  * Generates personalized SMS using template + lead data, sends via existing Twilio path.
  * Founder Mode bypasses quota guards.
  */
+import { assertSmsHealthy } from "../_shared/smsHealth.ts";
 import { corsHeaders, adminClient, transitionLead, logLaunchEvent, isFounderModeActive } from "../_shared/launch.ts";
 import { reportOutcome, FailureCode, BlockReason } from "../_shared/reliability.ts";
 import { sendSms as sendSmsCanonical } from "../_shared/twilioSend.ts";
@@ -28,6 +29,8 @@ async function sendSms(to: string, body: string, lead_id?: string): Promise<{ ok
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const __health = await assertSmsHealthy();
+  if (!__health.ok) return new Response(JSON.stringify({ ok: false, blocked: true, reason: __health.reason, health: __health.health }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   const body = await req.json().catch(() => ({}));
   const batch = Math.min(Number(body.batch ?? 30), 50);
   const sb = adminClient();

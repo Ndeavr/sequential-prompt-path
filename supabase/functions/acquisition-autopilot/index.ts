@@ -3,6 +3,7 @@
  * Walks contractor_leads from `discovered` → `sms_sent`/`email_sent` automatically.
  * No admin approval. Respects daily caps. Reports outcome.
  */
+import { assertSmsHealthy } from "../_shared/smsHealth.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { reportOutcome, FailureCode, BlockReason } from "../_shared/reliability.ts";
 import { sendSms as sendSmsCanonical } from "../_shared/twilioSend.ts";
@@ -174,6 +175,8 @@ async function countActivationsToday(sb: ReturnType<typeof admin>): Promise<numb
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const __health = await assertSmsHealthy();
+  if (!__health.ok) return new Response(JSON.stringify({ ok: false, blocked: true, reason: __health.reason, health: __health.health }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   const sb = admin();
   const startedAt = Date.now();

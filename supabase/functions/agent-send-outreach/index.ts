@@ -6,6 +6,7 @@
  * - Logs every attempt in outreach_delivery_logs
  * - Only consumes quota on real success
  */
+import { assertSmsHealthy } from "../_shared/smsHealth.ts";
 import { corsHeaders, adminClient } from "../_shared/agentRun.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
@@ -100,6 +101,8 @@ async function sendResendEmail(to: string, subject: string, html: string): Promi
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const __health = await assertSmsHealthy();
+  if (!__health.ok) return new Response(JSON.stringify({ ok: false, blocked: true, reason: __health.reason, health: __health.health }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   const body = await req.json().catch(() => ({}));
   const limit = Math.min(body.limit ?? 25, 50);
   const triggeredBy = body.triggered_by ?? "cron";

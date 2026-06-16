@@ -1,115 +1,95 @@
-# SMS Reliability — Final Sweep & Verification
+# SMS Infrastructure — Observable, Verifiable, Self-Diagnosed
 
 ## Goal
-Zero legacy Twilio paths. Every outbound SMS goes through `_shared/twilioSend.ts`, every delivery callback hits `twilio-status-v2`, every contractor surface shows the comms timeline, and an end-to-end test proves `queued → sent → delivered`.
+No "migration complete" claim until a real SMS traverses the full chain: queued → sent → delivered → callback → timeline → dashboard. The system must be observable, auto-diagnosed, and gate outbound agents on health.
 
-## Scope of legacy senders to refactor
-Direct Twilio calls still live in these functions (confirmed by scan):
+## 7 phases
 
-1. `acq-sms-send`
-2. `sms-prospect-send`
-3. `agent-send-outreach`
-4. `agent-activation-reply`
-5. `agent-send-test`
-6. `live-agent-outreach-send` (re-verify)
-7. `launch-agent-checkout-sender` (re-verify)
-8. `alex-reengage-send` (re-verify)
-9. `approve-isr-sms`
-10. `process-reminders`
-11. `sniper-queue-send`
-12. `dispatch-outreach-batch`
-13. `acq-send-outreach`
-14. `send-otp` (keep direct — Twilio Verify API, NOT Messages.json; only normalize logging)
+### Phase 1 — Global status (block false positives)
+Add `SMS Infrastructure Status` resolver (DB view + edge function) returning `HEALTHY | WARNING | ERROR` with reasons:
+- HEALTHY: callback URL set + test SMS <24h + callback received + delivery received
+- WARNING: callback set but no real test in 24h
+- ERROR: no callback ever / missing URL / delivery rate below threshold
 
-Intentionally untouched: `twilio-lookup-phone`, `twilio-verify`, `twilio-inbound`, `_shared/acq-preflight`, health-check probes — these don't send marketing/transactional SMS.
+Surface as banner at top of admin dashboard (`AdminDashboard` shell).
 
-## Refactor pattern (applied uniformly)
-Each sender becomes a thin orchestrator:
-```ts
-import { sendSms } from "../_shared/twilioSend.ts";
-const result = await sendSms({
-  to, body, templateKey, leadId, contractorId, campaignId, metadata
-});
-// result: { ok, status, sid?, blocked_reason?, error_code?, event_id }
-```
-Removes: hardcoded `From`, raw `fetch(twilio.com)`, custom `StatusCallback`, inline `messagingServiceSid`. The shared sender already:
-- normalizes phone → guard → inserts `sms_events_v2` row (`queued`)
-- POSTs Twilio with `StatusCallback=https://clmaqdnphbndvmmqvpff.supabase.co/functions/v1/twilio-status-v2`
-- updates row to `sent`/`failed` with `twilio_sid` + `error_code`
-- on webhook: `twilio-status-v2` flips to `delivered`/`undelivered` and enqueues retries
+### Phase 2 — `/admin/sms-health` upgrades
+Already exists — extend with cards:
+- Twilio Messaging Service SID (from env probe)
+- Active callback URL (env-derived)
+- Last callback received / delivered / failed (`sms_events_v2`)
+- Avg delivery time, 24h delivery rate, reply rate
+- Callback Status traffic light (green <1h, orange <24h, red none)
 
-## Legacy webhook deprecation
-- `twilio-status/index.ts` and `twilio-status-webhook/index.ts` → reduced to a thin shim that 301-forwards body to `twilio-status-v2` for any Twilio account still pointing at the old URL. Logged with a deprecation warning so we can detect callers.
-- Documented manual action: update Twilio Console Messaging Service → Status Callback URL to `twilio-status-v2`.
+### Phase 3 — E2E automatic test
+`sms-admin-test` already exists. Add:
+- `sms_test_runs` table (id, phone, message_sid, queued_at, sent_at, delivered_at, callback_received, success, error)
+- Update edge function to insert/update this row at each stage
+- UI button "Tester l'infrastructure SMS" with live status streaming via realtime / polling
+- Persist last successful test for status calculation
 
-## SMS Health cockpit upgrade (`/admin/sms-health`)
-Existing page extended with:
-- KPI row: **queued / sent today / delivered today / failed today / callback received / callback missing (sent >10min ago with no terminal status)**
-- Twilio error code grid (code, count, FR explanation, suggested fix)
-- "Sender used" + "Messaging Service used" breakdown columns
-- Live tail (last 50 `sms_events_v2` rows, auto-refresh 10s)
-- "Send test SMS" button → invokes new `sms-admin-test` edge function (admin-only, JWT-verified) that sends to a configured admin number and returns the `event_id` to poll.
+### Phase 4 — Unified timeline
+- New `timeline_events` table (entity_type, entity_id, kind, payload, occurred_at) — generic
+- Trigger on `sms_events_v2` status changes → insert into `timeline_events` with kinds: `sms_queued|sms_sent|sms_delivered|sms_failed|sms_replied`
+- `ContractorCommsTimeline` already mounted — extend the RPC `get_contractor_comms_timeline` to merge `timeline_events`
 
-New SQL views feeding the cockpit:
-- `v_sms_callback_gap` — rows in `sent` for >10min without webhook
-- `v_sms_sender_usage_24h` — group by `from_number`, `messaging_service_sid`
+### Phase 5 — Autodiagnostic
+Edge function `sms-infrastructure-audit`:
+- Twilio SID present, Auth Token present, Messaging Service present
+- Callback URL configured (probe Twilio service)
+- `twilio-status-v2` edge fn reachable (HEAD)
+- `sms_events_v2` insert smoke test
+- Last callback <24h, 24h delivery rate >90%
+Returns `score 0–100` + checklist. Display on `/admin/sms-health`.
 
-## Timeline auto-mount
-`ContractorCommsTimeline` mounted on:
-- `src/pages/contractor/...` profile page (find canonical contractor profile route)
-- contractor onboarding profile page
-- `src/pages/admin/.../ContractorDetail*` admin contractor detail
+### Phase 6 — Gate autonomous outbound agents
+Shared helper `assertSmsHealthy()` in `_shared/smsHealth.ts`. Inject at entry of:
+- `agent-send-outreach`
+- `acquisition-autopilot`
+- `growth-outreach-agent`
+- `launch-agent-outreach`
+If status ≠ HEALTHY → abort with structured response: `"Outbound bloqué. Aucun test SMS valide dans les dernières 24 heures."` + log to `platform_operation_outcomes`.
 
-Each mount passes `contractorId` from existing route params; no new props or context required.
+### Phase 7 — Real KPIs
+Today + 7-day chart on `/admin/sms-health`:
+- Sent, delivered, failed, replies, reply rate
+- Twilio cost (price from `sms_events_v2.price` if present, else estimate $0.0079/SMS)
+- Cost per reply, cost per activated contractor (join `contractor_activation_events`)
+Use Recharts line chart.
 
-## End-to-end test workflow
-1. New edge function `sms-admin-test` (admin JWT required) sends a templated SMS to `ADMIN_TEST_PHONE` secret via `sendSms()`.
-2. Returns `{ event_id, twilio_sid }`.
-3. Admin UI polls `sms_events_v2` for that `event_id`, displays progression: `queued → sending → sent → delivered`.
-4. Pass criteria: terminal status `delivered` within 60s; webhook timestamp populated; timeline shows the event.
+## Production-ready badge
+Computed status component `<SmsProductionReadyBadge />`:
+- Renders ✅ "SMS Infrastructure Production Ready — validé le {timestamp}" only when all 7 conditions pass (callback configured, last test success, queued/sent/delivered timestamps recorded, timeline event exists, dashboard refreshed within 5m).
+- Otherwise renders the failing checklist.
 
 ## Files
 
-### Edge functions (refactor to `sendSms`)
-- `supabase/functions/acq-sms-send/index.ts`
-- `supabase/functions/sms-prospect-send/index.ts`
-- `supabase/functions/agent-send-outreach/index.ts`
-- `supabase/functions/agent-activation-reply/index.ts`
-- `supabase/functions/agent-send-test/index.ts`
-- `supabase/functions/approve-isr-sms/index.ts`
-- `supabase/functions/process-reminders/index.ts`
-- `supabase/functions/sniper-queue-send/index.ts`
-- `supabase/functions/dispatch-outreach-batch/index.ts`
-- `supabase/functions/acq-send-outreach/index.ts`
-- (verify already-refactored) `live-agent-outreach-send`, `launch-agent-checkout-sender`, `alex-reengage-send`
+### Migration (single)
+- `sms_test_runs` table + grants + RLS (admin only) + service_role insert
+- `timeline_events` table + grants + RLS + indexes (entity_type, entity_id, occurred_at)
+- Trigger `sms_events_v2_to_timeline` on insert/update
+- View `v_sms_infrastructure_status` returning `status, reason, last_test_at, last_callback_at, delivery_rate_24h, reply_rate_24h`
+- View `v_sms_kpi_today`, `v_sms_kpi_7d`
+- Function `sms_infrastructure_score()` returning jsonb checklist + score
 
-### Edge functions (deprecation shims)
-- `supabase/functions/twilio-status/index.ts`
-- `supabase/functions/twilio-status-webhook/index.ts`
-
-### New edge function
-- `supabase/functions/sms-admin-test/index.ts`
-
-### SQL (migration)
-- `v_sms_callback_gap` view
-- `v_sms_sender_usage_24h` view
+### Edge functions
+- `sms-admin-test/index.ts` — extend to write `sms_test_runs`
+- `sms-infrastructure-audit/index.ts` — new
+- `_shared/smsHealth.ts` — new (`assertSmsHealthy`, `getSmsStatus`)
+- 4 agents above — inject gate
 
 ### Frontend
-- `src/pages/admin/PageSmsHealth.tsx` — extend KPIs, error grid, live tail, test button
-- Mount `ContractorCommsTimeline` in:
-  - contractor profile page
-  - contractor onboarding profile page
-  - admin contractor detail page
+- `src/pages/admin/PageSmsHealth.tsx` — add cards, audit, KPI charts, test runner with live progression
+- `src/components/admin/SmsInfrastructureBanner.tsx` — new, mount in admin layout
+- `src/components/admin/SmsProductionReadyBadge.tsx` — new
+- `src/components/admin/SmsAuditChecklist.tsx` — new
+- Extend `ContractorCommsTimeline` source to merge `timeline_events`
 
-### Secret
-- `ADMIN_TEST_PHONE` (E.164) — request via `add_secret` before deploying `sms-admin-test`.
+## Constraints
+- No "migration complete" until live test passes all 7 steps; badge gates the claim.
+- All new DB objects get GRANTs + RLS in the same migration.
+- Edge functions go through `_shared/twilioSend.ts` only.
+- Charts: shadcn + recharts.
 
-## Deliverable on completion
-A report containing:
-- **Functions fixed:** N (target: 10 + verification of 3)
-- **Legacy paths remaining:** 0 direct `twilio.com/Messages.json` calls outside `_shared/twilioSend.ts`
-- **SMS health status:** snapshot of KPIs after test
-- **End-to-end test:** PASS/FAIL with event_id and full status progression
-
-## Open question before build
-I need the **admin test phone number** to wire `ADMIN_TEST_PHONE` and run the E2E test. Want me to request it as a secret now, or hardcode it temporarily for one test cycle?
+## Open question
+The plan is large (1 migration + 1 new edge fn + 4 agent edits + ~6 UI files). I'll execute it as one batch (migration first, then code). Confirm and I ship.

@@ -5,6 +5,7 @@
 //  - Each recipient creates a growth_outbound_messages row.
 //  - status='sent' ONLY when Twilio (or email provider) returned a provider_message_id.
 //  - On failure: status='failed' + error_message. Never fakes success.
+import { assertSmsHealthy } from "../_shared/smsHealth.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { reportOutcome, BlockReason } from "../_shared/reliability.ts";
@@ -27,6 +28,8 @@ async function sendTwilioSms(to: string, body: string, contractor_id?: string): 
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const __health = await assertSmsHealthy();
+  if (!__health.ok) return new Response(JSON.stringify({ ok: false, blocked: true, reason: __health.reason, health: __health.health }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   const sb = createClient(SUPABASE_URL, SERVICE_KEY);
 
   const { data: logRow } = await sb.from("growth_agent_logs").insert({

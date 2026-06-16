@@ -63,6 +63,22 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // Mirror to sms_test_runs if this SID belongs to a test run
+    const testRunUpdate: Record<string, unknown> = {
+      callback_received: true,
+      callback_received_at: now,
+      updated_at: now,
+    };
+    if (mapped === "delivered") {
+      testRunUpdate.delivered_at = now;
+      testRunUpdate.success = true;
+    }
+    if (mapped === "failed" || mapped === "undelivered") {
+      testRunUpdate.failed_at = now;
+      testRunUpdate.error = errorMessage || `twilio_${mapped}`;
+    }
+    await supabase.from("sms_test_runs").update(testRunUpdate).eq("message_sid", sid);
+
     // Auto-enqueue retry on failure
     if (mapped === "failed" || mapped === "undelivered") {
       const { data: ev } = await supabase.from("sms_events_v2").select("id, attempt_number").eq("twilio_sid", sid).maybeSingle();
