@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import BannerSystemEnvironmentStatus from "@/components/admin/system/BannerSystemEnvironmentStatus";
+import SmsInfrastructureBanner from "@/components/admin/SmsInfrastructureBanner";
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
