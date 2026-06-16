@@ -19,8 +19,8 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } },
     );
     const token = authHeader.replace("Bearer ", "");
-    const { data: claims } = await supabase.auth.getClaims(token);
-    const uid = claims?.claims?.sub as string | undefined;
+    const { data: userData } = await supabase.auth.getUser(token);
+    const uid = userData?.user?.id;
     if (!uid) return json({ error: "unauthorized" }, 401);
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: role } = await admin.from("user_roles").select("role").eq("user_id", uid).eq("role", "admin").maybeSingle();
