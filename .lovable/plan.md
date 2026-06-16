@@ -1,199 +1,137 @@
+## Objective
 
-# SMS Curiosity Funnel → AI Score → Activation
+Stop wasting Twilio sends. No SMS enters the queue until the phone is normalized, NANP-valid, QC-flagged, and Lookup-confirmed as `mobile` (or `voip` with caution). Replace "unknown" diagnostics in the SMS health dashboard with actionable reason codes.
 
-Production-ready parallel funnel. Existing 4-SMS onboarding stays untouched. New funnel activates only for leads tagged `funnel_type='ai_score_curiosity'`.
+## Current state (already in repo)
 
-## 1. Objective
+- `supabase/functions/_shared/normalizePhone.ts` — strips junk, NANP regex, returns `valid` + `reason`.
+- `supabase/functions/_shared/smsGuard.ts` — `validateBeforeSend()` checks normalized + blocked patterns + `sms_opt_outs`.
+- `supabase/functions/twilio-lookup-phone/index.ts` — Twilio Lookup v2 `line_type_intelligence`, 90-day cache on `contacts` (NOT on `contractor_leads`).
+- `contractor_leads` has `phone`, `mobile_phone`, but no `e164_phone`, `phone_type`, `phone_validation_status`, `phone_lookup_at`, `phone_failure_reason`.
+- `run-curiosity-sms-worker` and other senders read `phone` directly; lookup is not enforced before send.
 
-Convert cold contractors into paid UNPRO subscriptions through a 2-step commitment cascade:
+## What to build
+
+### 1. Migration — phone validation columns + statuses
+
+Add to `contractor_leads`:
+- `phone_e164 text` (canonical +1XXXXXXXXXX)
+- `phone_type text` — `mobile | landline | voip | unknown`
+- `phone_validation_status text` default `pending_validation` — enum-like: `pending_validation | valid_mobile | valid_voip | landline | invalid_phone | outside_quebec | do_not_contact | lookup_failed`
+- `phone_failure_reason text` — granular: `invalid_format | bad_length | invalid_nanp | blocked_pattern | landline | carrier_rejected | opt_out | outside_quebec | missing_country_code | lookup_failed`
+- `phone_lookup_at timestamptz`
+- `phone_carrier text`
+- `phone_area_code text`
+
+Index: `(phone_validation_status)`, `(phone_e164)`.
+
+Backfill: run `normalizePhone` over existing rows (best-effort: mark `invalid_phone` for bad ones, `pending_validation` for valid ones so the worker re-validates with Lookup).
+
+### 2. Shared module — `_shared/phoneValidation.ts`
+
+Single source of truth. Exports:
+
+```ts
+QC_AREA_CODES = ['418','438','450','468','514','579','581','819','873','354','367','263']
+classifyPhone(raw): { e164, area_code, status, reason }
+   // Step 1: normalizePhone (clean + NANP)
+   // Step 2: if not NANP → invalid_phone / missing_country_code
+   // Step 3: if area not in QC_AREA_CODES → outside_quebec (still stored, just flagged)
+   // Step 4: returns pending_validation if format passes, ready for Lookup
+runLookupAndPersist(supabase, lead_id, e164): updates phone_type + phone_validation_status
+   // mobile → valid_mobile
+   // voip → valid_voip
+   // landline → landline (block SMS)
+   // invalid/null → lookup_failed
+```
+
+Reuses existing `normalizePhone.ts` and the Twilio call from `twilio-lookup-phone/index.ts` (refactor into shared helper).
+
+### 3. Hard gate in SMS queue
+
+Update `validateBeforeSend()` in `_shared/smsGuard.ts` to also require:
+- lead has `phone_validation_status IN ('valid_mobile','valid_voip')`
+- if `pending_validation` → trigger Lookup inline (or return `needs_lookup` so worker handles it, never sends)
+- if any other status → return blocked with the existing `phone_failure_reason`
+
+Update `run-curiosity-sms-worker` (and `run-contractor-onboarding-worker`, `process-outbound-queue`, `acq-sms-send`, `sms-prospect-send`) to:
+1. Skip leads where `phone_validation_status NOT IN ('valid_mobile','valid_voip')`.
+2. For `pending_validation`, call Lookup first, then re-evaluate.
+
+### 4. Enrollment-time validation
+
+Update `enroll_curiosity_sequence` trigger (and contractor onboarding trigger) so a lead is only enrolled when `phone_validation_status` is terminal-valid. Otherwise enqueue a `phone-validation-queue` job.
+
+New edge function `validate-lead-phones` (cron `*/5 * * * *`):
+- Picks leads with `phone_validation_status = 'pending_validation'` (cap 100/run).
+- Runs `classifyPhone` + Twilio Lookup, persists results.
+- Re-fires curiosity enrollment for newly-`valid_mobile` leads.
+
+### 5. Dashboard — actionable diagnostics
+
+Update `src/components/admin/CuriosityFunnelCard.tsx` and `src/pages/admin/PageSmsHealth.tsx`:
+- New "Phone Pipeline" tile showing counts per `phone_validation_status` (pending, valid_mobile, valid_voip, landline, invalid_phone, outside_quebec, lookup_failed, do_not_contact).
+- Replace the "unknown 103" bucket with the granular `phone_failure_reason` breakdown sourced from leads + `curiosity_funnel_events` failure rows.
+- Show success rate = `delivered / valid_mobile_targeted` (not `delivered / attempted`).
+
+### 6. KPI redefinition
+
+Surface the real funnel KPI in the admin card:
+- Leads imported
+- → Valid QC mobile discovered
+- → SMS delivered
+- → Page viewed
+- → Score revealed
+- → Activated contractor (paid)
+
+## Technical details
+
+**Files to create**
+- `supabase/migrations/<ts>_phone_validation_pipeline.sql`
+- `supabase/functions/_shared/phoneValidation.ts`
+- `supabase/functions/validate-lead-phones/index.ts` + cron entry in `supabase/config.toml`
+- `src/components/admin/PhonePipelineCard.tsx`
+
+**Files to edit**
+- `supabase/functions/_shared/smsGuard.ts` — add status check + return granular failure reason
+- `supabase/functions/twilio-lookup-phone/index.ts` — extract Twilio call into shared helper, also persist to `contractor_leads` when `lead_id` passed
+- `supabase/functions/run-curiosity-sms-worker/index.ts` — pre-check status, skip non-valid
+- `supabase/functions/run-contractor-onboarding-worker/index.ts` — same gate
+- `supabase/functions/process-outbound-queue/index.ts`, `acq-sms-send/index.ts`, `sms-prospect-send/index.ts` — same gate
+- `src/components/admin/CuriosityFunnelCard.tsx`, `src/pages/admin/PageSmsHealth.tsx` — new breakdown
+- `src/lib/normalizePhone.ts` mirror untouched (already correct)
+
+**Status state machine**
 
 ```text
-SMS curiosity → /ia/:slug curiosity page → CTA "Révéler mon score"
-  → live analysis animation (6–10s) → score reveal
-  → missed-opportunities reveal → "Activer mon profil" → /entrepreneur/join → Stripe
+pending_validation
+  ├─ classifyPhone fails       → invalid_phone (+ reason)
+  ├─ outside QC area           → outside_quebec
+  └─ format ok → Lookup
+        ├─ mobile              → valid_mobile     [SMS allowed]
+        ├─ voip                → valid_voip       [SMS allowed, flagged]
+        ├─ landline            → landline         [SMS blocked]
+        ├─ invalid/no result   → lookup_failed    [SMS blocked, retry 1x/24h up to 3x]
+opt-out reply / STOP           → do_not_contact   [terminal]
 ```
 
-Each step is logged and measurable. Real success = paid subscription, per Production Reliability Framework.
+**Cost guard**: Lookup is ~$0.008/number. Cap `validate-lead-phones` at 100/run = ~$2/run. Cache on lead row (no re-lookup unless `phone_e164` changes or 90d stale).
 
-## 2. Funnel architecture
+## Tasks
 
-### 2.1 SMS sequence (parallel — 3 messages, 24h cadence)
+1. Migration: columns + indexes + backfill + status enum check.
+2. `_shared/phoneValidation.ts` with QC area codes + `classifyPhone` + `runLookupAndPersist`.
+3. Refactor `twilio-lookup-phone` to use shared helper and also write to `contractor_leads` when `lead_id` provided.
+4. New `validate-lead-phones` edge function + cron `*/5`.
+5. Tighten `smsGuard.validateBeforeSend()`.
+6. Add gate in every SMS sender (curiosity, onboarding, outbound, acq, prospect).
+7. Update curiosity/onboarding enrollment triggers to require valid status.
+8. `PhonePipelineCard` + dashboard breakdown swap.
+9. Verify: select counts per status, replay 10 prior failed sends, confirm none reach Twilio.
 
-New template file `_shared/curiosityTemplates.ts`. URL shape: `https://app.unpro.ca/ia/:slug?t=:token`.
+## Success
 
-- **SMS #1 — Curiosity** (T+0): "Bonjour {prenom}, si un propriétaire demandait aujourd'hui à ChatGPT quel entrepreneur choisir dans votre domaine, votre entreprise serait-elle recommandée? Analyse gratuite: {url} — Alex, UNPRO"
-- **SMS #2 — Competitor angle** (T+24h, only if SMS #1 status != delivered+clicked): "Vos concurrents commencent à apparaître dans les réponses de ChatGPT et Gemini. Voyez où votre entreprise se situe: {url}"
-- **SMS #3 — Small contractor advantage** (T+48h, only if no click): "Une entreprise de 3 employés peut maintenant rivaliser avec une de 100. L'IA ne mesure plus le budget. Votre analyse: {url}"
-
-Cadence + window rules reuse existing `_shared/sendWindow.ts` + `_shared/twilioSend.ts`. Stops on: click → activation, reply, STOP, paid.
-
-### 2.2 Landing page `/ia/:slug` (public, dark cinematic)
-
-Single React route. Resolves slug → `contractor_leads` row + token. Sections per user spec:
-
-1. **Hero** — "Votre entreprise serait-elle recommandée par l'IA aujourd'hui?" + `[Voir mon analyse IA gratuite]` (primary CTA, scrolls to live analysis OR triggers it inline).
-2. **Section 1** — "Le plus grand changement depuis Google" (4 questions homeowners now ask AI directly).
-3. **Section 2** — "Les règles changent" (signals AI observes; small vs big).
-4. **Section 3** — "Votre Score de Recommandation IA" (what we analyze, 7 checkmarks).
-5. **Section 4** — "Pourquoi agir maintenant?" (early-mover advantage).
-6. **CTA final** — "Découvrez comment l'IA voit votre entreprise".
-
-Sticky bottom CTA on mobile. Click → `RevealOrchestrator` mounts in place of CTA (no page change, no scroll loss).
-
-### 2.3 Reveal orchestrator (`/ia/:slug` inline + `/ia/:slug/score`)
-
-Three phases, single component:
-
-**Phase A — Live analysis** (6–10s, real progress, not fake):
-```text
-✓ Avis clients analysés
-✓ Site web analysé
-✓ Présence locale analysée
-✓ Signaux de confiance analysés
-✓ Comparaison concurrentielle analysée
-✓ Probabilité de recommandation calculée
-```
-Driven by `aipp-real-scan` (already exists). Each tick = real edge function step. Failures degrade gracefully (skip ✓ → grey) — never error toast.
-
-**Phase B — Score reveal**: "Votre Score de Recommandation IA — 72/100" with ScoreRing, deterministic from `aipp-real-scoring-engine` (already in `mem://features/aipp-real-scoring-engine`).
-
-**Phase C — Diagnostic narrative**:
-- "Si un propriétaire demandait : 'Qui choisir pour {service} à {ville}?', votre entreprise pourrait ne pas figurer parmi les recommandations les plus fortes."
-- **Plus grandes opportunités**: +14 Avis · +9 Couverture · +11 Expertise · +6 Documentation (computed from real signal gaps).
-- **Opportunités mensuelles manquées** (deterministic from city demand × gap): "12 conversations · 7 demandes de soumissions · 3–5 rendez-vous".
-- CTA → `[Activer mon profil et améliorer mon score]` → `/entrepreneur/join?lead={id}&t={token}&src=ia_curiosity` → existing Stripe checkout.
-
-## 3. Data schema (single migration)
-
-```sql
--- Funnel tagging on existing leads
-ALTER TABLE public.contractor_leads
-  ADD COLUMN IF NOT EXISTS funnel_type text DEFAULT 'standard_onboarding'
-    CHECK (funnel_type IN ('standard_onboarding','ai_score_curiosity')),
-  ADD COLUMN IF NOT EXISTS curiosity_slug text UNIQUE,
-  ADD COLUMN IF NOT EXISTS curiosity_token text;
-
--- Curiosity sequence (mirrors onboarding_sequences shape)
-CREATE TABLE public.curiosity_sequences (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  lead_id uuid NOT NULL REFERENCES contractor_leads(id) ON DELETE CASCADE,
-  status text NOT NULL DEFAULT 'active'
-    CHECK (status IN ('active','waiting','completed_clicked','completed_paid',
-                      'completed_unsubscribed','failed','paused')),
-  current_step int NOT NULL DEFAULT 1,
-  next_send_at timestamptz NOT NULL DEFAULT now(),
-  last_sent_at timestamptz,
-  clicked_at timestamptz,
-  revealed_at timestamptz,
-  activated_at timestamptz,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-GRANT SELECT,INSERT,UPDATE ON public.curiosity_sequences TO authenticated;
-GRANT ALL ON public.curiosity_sequences TO service_role;
-ALTER TABLE public.curiosity_sequences ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "admin_only" ON public.curiosity_sequences FOR ALL
-  USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
-
--- Event log for the funnel (page view, CTA click, reveal start/end, activation)
-CREATE TABLE public.curiosity_funnel_events (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  lead_id uuid REFERENCES contractor_leads(id) ON DELETE CASCADE,
-  slug text,
-  event_type text NOT NULL
-    CHECK (event_type IN ('sms_sent','sms_delivered','page_view','cta_revealed',
-                          'analysis_started','analysis_completed','score_revealed',
-                          'cta_activate_clicked','checkout_started','paid','unsubscribed')),
-  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-GRANT SELECT ON public.curiosity_funnel_events TO authenticated;
-GRANT ALL ON public.curiosity_funnel_events TO service_role;
-ALTER TABLE public.curiosity_funnel_events ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "admin_read" ON public.curiosity_funnel_events FOR SELECT
-  USING (public.has_role(auth.uid(),'admin'));
-
--- Public RPC to log page views & resolve slug (anon-safe)
-CREATE OR REPLACE FUNCTION public.resolve_curiosity_slug(_slug text, _token text)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ ... $$;
-
--- Auto-enroll trigger: when pipeline_status='ready_for_outreach' AND funnel_type='ai_score_curiosity'
-CREATE OR REPLACE FUNCTION public.enroll_curiosity_sequence() ...
-CREATE TRIGGER trg_enroll_curiosity AFTER UPDATE ON contractor_leads ...
-```
-
-## 4. Edge functions
-
-| Function | Purpose | Cron |
-|---|---|---|
-| `run-curiosity-sms-worker` | Same shape as onboarding worker. Reads `curiosity_sequences` due, validates window+dedupe+50/day cap, calls `_shared/twilioSend.ts`, logs `curiosity_funnel_events`, advances state. | `*/5 * * * *` |
-| `curiosity-page-resolve` | Public (verify_jwt=false). Resolves `slug + token` → safe lead summary (business_name, city, service). Logs `page_view`. Rate-limited by IP. |
-| `curiosity-analyze` | Public. Wraps `aipp-real-scan` + `aipp-recalc-score`. Streams progress via SSE OR returns ordered milestones for client polling. Logs `analysis_started/completed/score_revealed`. |
-| `curiosity-checkout-start` | Logs `cta_activate_clicked` + `checkout_started`, returns existing `create-checkout-session` URL with `quote_id` and `src=ia_curiosity` metadata for attribution. |
-
-Stripe webhook already updates leads → `paid`; add `cancel_curiosity_on_paid` SQL function mirrored on `cancel_onboarding_on_paid`.
-
-## 5. Frontend
-
-```text
-src/pages/curiosity/
-├── PageCuriosityLanding.tsx       # /ia/:slug — Hero + 4 sections + sticky CTA
-└── components/
-    ├── CuriosityHero.tsx
-    ├── ChangeSinceGoogleSection.tsx
-    ├── NewRulesSection.tsx
-    ├── ScoreSignalsSection.tsx
-    ├── WhyNowSection.tsx
-    ├── RevealOrchestrator.tsx     # phases A/B/C inline
-    ├── LiveAnalysisChecklist.tsx  # 6 animated ticks
-    ├── ScoreRevealCard.tsx        # uses existing ScoreRing
-    ├── MissedOpportunitiesCard.tsx
-    └── ActivationCta.tsx
-```
-
-Route registered in `src/app/router.tsx` as `/ia/:slug` (public, no auth guard). Wrapped in `.alex-immersive` for readability tokens.
-
-Mobile-first. Sticky bottom CTA. Premium dark cinematic per memory tokens. Heading H1 only on hero. SEO: noindex (private funnel).
-
-## 6. Admin
-
-- New tab in `/admin/sms-health` → "Funnel Curiosité IA" with `<OperationHealthCard>` exposing: SMS sent, page views, CTA reveals, scores revealed, activations, paid. Revenue impact = $349 × paid count.
-- Lead detail drawer shows funnel timeline from `curiosity_funnel_events`.
-
-## 7. Reliability (mandatory)
-
-Every edge function:
-- Uses `withRetry()` from `_shared/reliability.ts` around Twilio/Firecrawl/Gemini calls.
-- Calls `reportOutcome()` with canonical `FailureCode` / `BlockReason`.
-- State machine: `pending → analyzing → score_ready → activated → paid`.
-- Real success = `paid` event in `curiosity_funnel_events`. Counters never increment on intermediate states.
-- Founder Mode bypass: when active, ignores send window for curiosity SMS test.
-
-## 8. What does NOT change
-
-- Existing onboarding sequence (`onboarding_sequences`) untouched.
-- Existing `/aipp/*`, `/entrepreneur/*`, `/pro/:slug` routes untouched.
-- Existing Stripe checkout untouched (only attribution metadata added).
-- Existing send-window policy enforced as-is.
-
-## 9. Tasks
-
-1. Migration — `contractor_leads` columns, `curiosity_sequences`, `curiosity_funnel_events`, triggers, RPCs.
-2. `_shared/curiosityTemplates.ts` — 3 SMS bodies, URL builder.
-3. Edge function `run-curiosity-sms-worker` + cron `*/5 * * * *`.
-4. Edge function `curiosity-page-resolve` (public).
-5. Edge function `curiosity-analyze` (wraps real scan, streams milestones).
-6. Edge function `curiosity-checkout-start`.
-7. Stripe webhook hook → `cancel_curiosity_on_paid`.
-8. React routes + 9 components above.
-9. Admin tab on `/admin/sms-health` with funnel health card.
-10. Memory file `mem://features/curiosity-funnel-ai-score` + index update.
-
-## 10. Success criteria
-
-- Cold lead with `funnel_type='ai_score_curiosity'` + `ready_for_outreach` receives SMS #1 within 5 min, in send window.
-- Click → `/ia/:slug` loads in <1.5s, logs page_view.
-- CTA → live analysis runs in 6–10s on real data; never throws.
-- Score reveals deterministically; missed-opportunities computed from real city × service demand.
-- Activation CTA → Stripe checkout → on payment, sequence completes `completed_paid` and SMS chain stops within 60s.
-- Admin sees every event in funnel health card.
+- 0 sends to landlines or `invalid_nanp` numbers in 24h.
+- "unknown" bucket eliminated — every failure has a named reason.
+- Delivery rate on `valid_mobile` cohort ≥ 90%.
+- Admin sees: imported → valid_mobile → delivered → clicked → activated.
