@@ -3,6 +3,25 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { validateBeforeSend } from "./smsGuard.ts";
+import { assertSendAllowed, isFounderModeActive, type MessageClass } from "./sendWindow.ts";
+
+// Map sendSms message_type to the central send-window MessageClass.
+function classifyMessage(type: string): MessageClass {
+  switch (type) {
+    case "otp":
+    case "test":
+      return "transactional";
+    case "founder":
+      return "system_alert";
+    case "reengagement":
+    case "onboarding":
+      return "followup";
+    case "outreach":
+    default:
+      return "prospection";
+  }
+}
+
 
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
