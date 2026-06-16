@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+
 
 const ERROR_LABELS_FR: Record<string, string> = {
   "30003": "Téléphone hors-service ou éteint",
@@ -31,6 +34,9 @@ export default function PageSmsHealth() {
   const [reasons, setReasons] = useState<Reason[]>([]);
   const [recent, setRecent] = useState<EventRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [testing, setTesting] = useState(false);
+  const [testEventId, setTestEventId] = useState<string | null>(null);
+  const [testStatus, setTestStatus] = useState<string | null>(null);
 
   async function load() {
     const [a, b, c] = await Promise.all([
@@ -46,14 +52,62 @@ export default function PageSmsHealth() {
 
   useEffect(() => { load(); const t = setInterval(load, 10000); return () => clearInterval(t); }, []);
 
+  useEffect(() => {
+    if (!testEventId) return;
+    let cancelled = false;
+    const poll = async () => {
+      const { data } = await supabase.from("sms_events_v2").select("status,error_code").eq("id", testEventId).maybeSingle();
+      if (cancelled || !data) return;
+      setTestStatus(data.status);
+      if (["delivered", "failed", "undelivered", "blocked", "invalid_phone"].includes(data.status)) {
+        toast[data.status === "delivered" ? "success" : "error"](`Test SMS: ${data.status}${data.error_code ? ` (${data.error_code})` : ""}`);
+        return;
+      }
+      setTimeout(poll, 2000);
+    };
+    poll();
+    return () => { cancelled = true; };
+  }, [testEventId]);
+
+  async function runTest() {
+    setTesting(true);
+    setTestEventId(null);
+    setTestStatus(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("sms-admin-test", { body: {} });
+      if (error) throw error;
+      if (!data?.event_id) throw new Error(data?.error || "Aucun event_id retourné");
+      setTestEventId(data.event_id);
+      setTestStatus(data.status);
+      toast.success(`Test envoyé · ${data.status}`);
+    } catch (e: any) {
+      toast.error(`Échec du test: ${e?.message ?? e}`);
+    } finally {
+      setTesting(false);
+      load();
+    }
+  }
+
   const successRate = h24 && h24.total > 0 ? Math.round((h24.delivered / h24.total) * 1000) / 10 : 0;
 
   return (
     <div className="admin-theme min-h-screen p-6 bg-background text-foreground">
       <div className="max-w-7xl mx-auto space-y-6">
-        <header>
-          <h1 className="text-3xl font-semibold tracking-tight">SMS Health</h1>
-          <p className="text-readable-secondary text-sm mt-1">Surveillance en temps réel de chaque SMS envoyé par UNPRO.</p>
+        <header className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight">SMS Health</h1>
+            <p className="text-readable-secondary text-sm mt-1">Surveillance en temps réel de chaque SMS envoyé par UNPRO.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {testEventId && (
+              <span className="text-xs text-readable-secondary font-mono">
+                event {testEventId.slice(0, 8)} · {testStatus ?? "…"}
+              </span>
+            )}
+            <Button onClick={runTest} disabled={testing} size="sm">
+              {testing ? "Envoi…" : "Envoyer un SMS de test"}
+            </Button>
+          </div>
         </header>
 
         <section className="grid grid-cols-2 md:grid-cols-6 gap-3">
