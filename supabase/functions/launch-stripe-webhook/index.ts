@@ -57,7 +57,17 @@ serve(async (req) => {
           payload: { session_id: session.id, amount_cents: amount, plan: session.metadata?.plan_code },
         });
       }
+      // Curiosity funnel attribution: stop sequence on paid checkout
+      const curiosityLeadId = session.metadata?.lead_id || session.metadata?.contractor_lead_id;
+      const src = session.metadata?.src;
+      if (curiosityLeadId && src === "ia_curiosity") {
+        await sb.rpc("cancel_curiosity_on_paid", { _lead_id: curiosityLeadId });
+        await sb.from("contractor_leads").update({
+          paid_at: new Date().toISOString(), pipeline_status: "paid",
+        }).eq("id", curiosityLeadId);
+      }
     }
+
 
     if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated") {
       const sub = event.data.object as Stripe.Subscription;
