@@ -68,8 +68,6 @@ Deno.serve(async (req) => {
     if (mapped === "delivered") comUpdate.delivered_at = now;
     if (errorCode) comUpdate.error_message = `${errorCode}: ${errorMessage ?? ""}`.trim();
     await supabase.from("contractor_onboarding_messages").update(comUpdate).eq("twilio_message_sid", sid);
-    // Mirror last_sms_status onto the lead
-    await supabase.rpc("noop_safe", {}).catch(() => {});
     const { data: comRow } = await supabase
       .from("contractor_onboarding_messages")
       .select("contractor_lead_id")
