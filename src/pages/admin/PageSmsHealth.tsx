@@ -103,7 +103,9 @@ export default function PageSmsHealth() {
             <h1 className="text-3xl font-semibold tracking-tight">SMS Health</h1>
             <p className="text-readable-secondary text-sm mt-1">Surveillance en temps réel de chaque SMS envoyé par UNPRO.</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <SendWindowBadge channel="sms" />
+            <Link to="/admin/outbound/send-windows" className="text-xs underline text-readable-secondary">Configurer fenêtres</Link>
             {testEventId && (
               <span className="text-xs text-readable-secondary font-mono">
                 event {testEventId.slice(0, 8)} · {testStatus ?? "…"}
