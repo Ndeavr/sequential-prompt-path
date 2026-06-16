@@ -68685,6 +68685,75 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_test_runs: {
+        Row: {
+          callback_received: boolean
+          callback_received_at: string | null
+          created_at: string
+          delivered_at: string | null
+          error: string | null
+          event_id: string | null
+          failed_at: string | null
+          id: string
+          message_sid: string | null
+          phone: string
+          queued_at: string | null
+          sent_at: string | null
+          success: boolean
+          triggered_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          callback_received?: boolean
+          callback_received_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          error?: string | null
+          event_id?: string | null
+          failed_at?: string | null
+          id?: string
+          message_sid?: string | null
+          phone: string
+          queued_at?: string | null
+          sent_at?: string | null
+          success?: boolean
+          triggered_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          callback_received?: boolean
+          callback_received_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          error?: string | null
+          event_id?: string | null
+          failed_at?: string | null
+          id?: string
+          message_sid?: string | null
+          phone?: string
+          queued_at?: string | null
+          sent_at?: string | null
+          success?: boolean
+          triggered_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_test_runs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "sms_events_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_test_runs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_callback_gap"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sniper_engagement_events: {
         Row: {
           created_at: string
@@ -72229,6 +72298,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      timeline_events: {
+        Row: {
+          created_at: string
+          detail: string | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          kind: string
+          occurred_at: string
+          payload: Json
+          reference: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          kind: string
+          occurred_at?: string
+          payload?: Json
+          reference?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          kind?: string
+          occurred_at?: string
+          payload?: Json
+          reference?: string | null
+          status?: string | null
+        }
+        Relationships: []
       }
       title_tests: {
         Row: {
@@ -76249,6 +76357,36 @@ export type Database = {
         }
         Relationships: []
       }
+      v_sms_infrastructure_status: {
+        Row: {
+          delivered_24h: number | null
+          delivery_rate_24h: number | null
+          failed_24h: number | null
+          last_callback_at: string | null
+          last_test_success_at: string | null
+          sent_24h: number | null
+          status: string | null
+        }
+        Relationships: []
+      }
+      v_sms_kpi_7d: {
+        Row: {
+          day: string | null
+          delivered: number | null
+          failed: number | null
+          sent: number | null
+        }
+        Relationships: []
+      }
+      v_sms_kpi_today: {
+        Row: {
+          delivered: number | null
+          failed: number | null
+          replies: number | null
+          sent: number | null
+        }
+        Relationships: []
+      }
       v_sms_sender_usage_24h: {
         Row: {
           delivered: number | null
@@ -76806,6 +76944,7 @@ export type Database = {
         Args: { p_lead_id: string; p_status: string }
         Returns: undefined
       }
+      sms_infrastructure_score: { Args: never; Returns: Json }
       track_affiliate_conversion: {
         Args: {
           p_conversion_type: string
