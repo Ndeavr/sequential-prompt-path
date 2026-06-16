@@ -190,7 +190,7 @@ Deno.serve(async (req) => {
         const remaining = cap - (sentToday ?? 0);
         const { data: due, error: dueErr } = await sb
           .from("curiosity_sequences")
-          .select("id,current_step,next_send_at,status,clicked_at,contractor_leads(id,first_name,company_name,phone,mobile_phone,paid_at,unsubscribed_at,curiosity_slug,curiosity_token)")
+          .select("id,current_step,next_send_at,status,clicked_at,contractor_leads(id,first_name,company_name,phone,mobile_phone,phone_e164,phone_validation_status,phone_failure_reason,paid_at,unsubscribed_at,curiosity_slug,curiosity_token)")
           .eq("status", "active")
           .lte("next_send_at", new Date().toISOString())
           .order("next_send_at", { ascending: true })
