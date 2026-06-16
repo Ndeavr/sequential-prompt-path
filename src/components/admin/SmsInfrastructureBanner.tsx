@@ -9,7 +9,7 @@ export default function SmsInfrastructureBanner() {
   const [s, setS] = useState<Status | null>(null);
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase.from("v_sms_infrastructure_status" as any).select("*").maybeSingle();
+      const { data } = await (supabase as any).from("v_sms_infrastructure_status").select("*").maybeSingle();
       if (data) setS(data as Status);
     };
     load();
