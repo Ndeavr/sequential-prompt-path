@@ -112,9 +112,8 @@ export default function PageSmsHealth() {
           </div>
         </header>
 
-        <SmsHealthHeader />
-
         <SmsAuditChecklist />
+
 
 
         <section className="grid grid-cols-2 md:grid-cols-6 gap-3">
