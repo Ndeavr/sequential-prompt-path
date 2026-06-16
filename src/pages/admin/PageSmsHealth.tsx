@@ -8,6 +8,7 @@ import SmsAuditChecklist from "@/components/admin/SmsAuditChecklist";
 import { SendWindowBadge } from "@/components/admin/SendWindowBadge";
 import { AutonomousOutreachCard } from "@/components/admin/AutonomousOutreachCard";
 import { CuriosityFunnelCard } from "@/components/admin/CuriosityFunnelCard";
+import { PhonePipelineCard } from "@/components/admin/PhonePipelineCard";
 import { Link } from "react-router-dom";
 // SmsProductionReadyBadge available for future header use
 import "@/components/admin/SmsInfrastructureBanner";
