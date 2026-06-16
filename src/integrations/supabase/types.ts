@@ -50408,6 +50408,42 @@ export type Database = {
           },
         ]
       }
+      outbound_send_window_policy: {
+        Row: {
+          channel: string
+          created_at: string
+          enabled: boolean
+          end_minute: number
+          id: string
+          notes: string | null
+          start_minute: number
+          updated_at: string
+          weekday: number
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          enabled?: boolean
+          end_minute: number
+          id?: string
+          notes?: string | null
+          start_minute: number
+          updated_at?: string
+          weekday: number
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          enabled?: boolean
+          end_minute?: number
+          id?: string
+          notes?: string | null
+          start_minute?: number
+          updated_at?: string
+          weekday?: number
+        }
+        Relationships: []
+      }
       outbound_sending_runs: {
         Row: {
           campaign_id: string
@@ -76784,6 +76820,10 @@ export type Database = {
         Returns: boolean
       }
       is_system_live: { Args: never; Returns: boolean }
+      is_within_send_window: {
+        Args: { _at?: string; _channel: string }
+        Returns: boolean
+      }
       manual_override_appointment_quota: {
         Args: {
           _contractor_id: string
@@ -76844,6 +76884,10 @@ export type Database = {
           source_queue: string
         }
         Returns: number
+      }
+      next_send_window_open: {
+        Args: { _channel: string; _from?: string }
+        Returns: string
       }
       outbound_resolve_landing: {
         Args: { p_slug: string; p_token: string }
