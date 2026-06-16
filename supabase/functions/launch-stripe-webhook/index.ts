@@ -59,13 +59,21 @@ serve(async (req) => {
       }
     }
 
-    if (event.type === "customer.subscription.created") {
+    if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated") {
       const sub = event.data.object as Stripe.Subscription;
       const leadId = sub.metadata?.launch_lead_id;
       if (leadId) {
         await sb.from("launch_leads").update({ subscription_id: sub.id }).eq("id", leadId);
       }
+      // Autonomous onboarding stop: if subscription is active, cancel queued SMS for this contractor.
+      if (["active", "trialing", "past_due"].includes(sub.status)) {
+        const contractorId = sub.metadata?.contractor_id;
+        if (contractorId) {
+          await sb.rpc("cancel_onboarding_on_paid", { p_contractor_id: contractorId });
+        }
+      }
     }
+
 
     return new Response(JSON.stringify({ received: true }), {
       status: 200, headers: { "Content-Type": "application/json" },
