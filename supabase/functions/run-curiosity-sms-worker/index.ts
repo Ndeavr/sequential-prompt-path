@@ -55,11 +55,23 @@ async function processOne(sb: ReturnType<typeof createClient>, seq: any, c: Coun
     c.messages_skipped++; return;
   }
 
-  const phoneRaw = lead.mobile_phone || lead.phone || "";
-  if (phoneRaw.replace(/\D/g, "").length < 10) {
-    await sb.from("curiosity_sequences").update({ status: "failed", failure_code: "invalid_phone" }).eq("id", seq.id);
+  // HARD GATE: phone must be Lookup-confirmed valid_mobile / valid_voip
+  const validStatus = lead.phone_validation_status;
+  if (validStatus !== "valid_mobile" && validStatus !== "valid_voip") {
+    await sb.from("curiosity_sequences").update({
+      status: "failed",
+      failure_code: lead.phone_failure_reason || validStatus || "phone_not_validated",
+    }).eq("id", seq.id);
+    await sb.from("curiosity_funnel_events").insert({
+      lead_id: lead.id,
+      slug: lead.curiosity_slug,
+      event_type: "sms_blocked",
+      metadata: { reason: lead.phone_failure_reason || validStatus || "phone_not_validated", stage: "pre_queue" },
+    });
     c.messages_skipped++; return;
   }
+
+  const phoneRaw = lead.phone_e164 || lead.mobile_phone || lead.phone || "";
 
   if (!lead.curiosity_slug || !lead.curiosity_token) {
     await sb.from("curiosity_sequences").update({ status: "failed", failure_code: "missing_slug" }).eq("id", seq.id);
