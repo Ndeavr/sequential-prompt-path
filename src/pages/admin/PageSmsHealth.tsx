@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import SmsAuditChecklist from "@/components/admin/SmsAuditChecklist";
 import { SendWindowBadge } from "@/components/admin/SendWindowBadge";
 import { AutonomousOutreachCard } from "@/components/admin/AutonomousOutreachCard";
+import { CuriosityFunnelCard } from "@/components/admin/CuriosityFunnelCard";
 import { Link } from "react-router-dom";
 // SmsProductionReadyBadge available for future header use
 import "@/components/admin/SmsInfrastructureBanner";
@@ -121,6 +122,8 @@ export default function PageSmsHealth() {
         <SmsAuditChecklist />
 
         <AutonomousOutreachCard />
+
+        <CuriosityFunnelCard />
 
 
 

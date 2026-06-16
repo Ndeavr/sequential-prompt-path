@@ -87,11 +87,22 @@ serve(async (req) => {
           status: "skipped",
           skip_reason: "unsubscribed",
         }).eq("contractor_lead_id", leadId).eq("status", "queued");
+        await sb.from("curiosity_sequences").update({
+          status: "completed_unsubscribed",
+          stopped_reason: "sms_stop",
+        }).eq("contractor_lead_id", leadId).in("status", ["active", "waiting", "paused"]);
+        await sb.from("curiosity_funnel_events").insert({
+          contractor_lead_id: leadId, event_type: "unsubscribed", metadata: { via: "sms_stop" },
+        });
       } else {
         await sb.from("onboarding_sequences").update({
           status: "paused",
           stopped_reason: "reply_received",
         }).eq("contractor_lead_id", leadId).eq("status", "active");
+        await sb.from("curiosity_sequences").update({
+          status: "completed_replied",
+          stopped_reason: "reply_received",
+        }).eq("contractor_lead_id", leadId).in("status", ["active", "waiting"]);
       }
     }
 
