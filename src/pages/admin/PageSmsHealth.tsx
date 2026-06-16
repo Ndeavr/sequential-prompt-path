@@ -120,6 +120,10 @@ export default function PageSmsHealth() {
 
         <SmsAuditChecklist />
 
+        <AutonomousOutreachCard />
+
+
+
 
 
         <section className="grid grid-cols-2 md:grid-cols-6 gap-3">
