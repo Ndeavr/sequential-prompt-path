@@ -27095,6 +27095,13 @@ export type Database = {
           payment_started_at: string | null
           payment_status: string
           phone: string | null
+          phone_area_code: string | null
+          phone_carrier: string | null
+          phone_e164: string | null
+          phone_failure_reason: string | null
+          phone_lookup_at: string | null
+          phone_type: string | null
+          phone_validation_status: string
           pipeline_status: string | null
           postal_code: string | null
           priority_level: string | null
@@ -27160,6 +27167,13 @@ export type Database = {
           payment_started_at?: string | null
           payment_status?: string
           phone?: string | null
+          phone_area_code?: string | null
+          phone_carrier?: string | null
+          phone_e164?: string | null
+          phone_failure_reason?: string | null
+          phone_lookup_at?: string | null
+          phone_type?: string | null
+          phone_validation_status?: string
           pipeline_status?: string | null
           postal_code?: string | null
           priority_level?: string | null
@@ -27225,6 +27239,13 @@ export type Database = {
           payment_started_at?: string | null
           payment_status?: string
           phone?: string | null
+          phone_area_code?: string | null
+          phone_carrier?: string | null
+          phone_e164?: string | null
+          phone_failure_reason?: string | null
+          phone_lookup_at?: string | null
+          phone_type?: string | null
+          phone_validation_status?: string
           pipeline_status?: string | null
           postal_code?: string | null
           priority_level?: string | null
