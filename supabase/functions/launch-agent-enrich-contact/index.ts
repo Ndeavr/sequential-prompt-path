@@ -15,6 +15,7 @@
 import { corsHeaders, adminClient, logLaunchEvent } from "../_shared/launch.ts";
 import { resolvePlacesKey } from "../_shared/launchKeys.ts";
 import { reportOutcome, BlockReason, FailureCode } from "../_shared/reliability.ts";
+import { enqueueContactVerification } from "../_shared/autoVerifyContact.ts";
 
 interface PoolRow {
   id: string;
