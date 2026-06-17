@@ -1,117 +1,117 @@
-## Alex V3 — Universal Qualification Engine
+## UNPRO — Phone Validation + Manual Contact Verification
 
-Transform Alex from a contractor-recommender into a Home Project Orchestrator that qualifies before it recommends. Recommendations are hard-gated behind a qualification score ≥ 70.
+Two connected modules: (1) global SMS→Email fallback driven by line-type validation, (2) admin queue to manually verify and contact ambiguous leads.
 
 ---
 
-### 1. Qualification Engine (core)
+### Module 1 — Global Phone Validation + SMS/Email Fallback
 
-New module `src/lib/alexQualification/` (and Deno mirror `supabase/functions/_shared/alexQualification/`):
+**Goal:** Zero SMS attempts on landlines. Every outbound contact attempt picks the right channel automatically.
 
-- `qualificationGraph.ts` — universal state object:
-  ```
-  { homeowner, property, problem, urgency, budget,
-    quotes, photos, compatibility, project_context,
-    score, missing_dimensions, ready_for_match,
-    matching_confidence }
-  ```
-- `scoringEngine.ts` — deterministic 0-100 score:
-  - Property identified (address validated) → 25
-  - Problem category + sub-type → 20
-  - Timeline / urgency → 15
-  - Property type → 10
-  - Photos → 10
-  - Quotes uploaded → 10
-  - Budget signal → 5
-  - Compatibility signals → 5
-  - Hard gate: `ready_for_match = (property && problem && urgency && score ≥ 70)`
-- `categoryDecisionTrees.ts` — per-trade question trees (roofing, foundation, electrical, plumbing, HVAC/heat pump, insulation, mold, windows, kitchen reno, landscaping). Each tree returns the next single question based on current graph state.
-- `nextQuestionSelector.ts` — picks ONE question at a time, in this priority: property address → problem sub-type → urgency → quotes-if-relevant → photos-if-relevant → budget → compatibility.
-- `serviceSpecialtyValidator.ts` — `validateContractorMatch(category, contractor)`; blocks display + logs `alex_runtime_conflicts` on mismatch.
+**1.1 Twilio Lookup connector**
+Use the existing Twilio connection (Lookup v2 endpoint `/Lookup/v2/PhoneNumbers/{e164}?Fields=line_type_intelligence`). Returns `mobile | landline | voip | fixedVoip | nonFixedVoip`.
 
-### 2. Edge function: `alex-qualify-turn`
+**1.2 New edge function `phone-validate`**
+- Input: `phone` (raw or E.164), optional `contact_id`
+- Steps: `normalizePhone()` → if invalid → return `invalid`; else cache lookup in `phone_carrier_cache` (already exists, extend); call Twilio Lookup; persist `phone_type`, `carrier`, `validated_at`
+- Output: `{ phone_e164, phone_type, channel_preference, valid }`
+- Cache TTL: 90 days (line type rarely changes)
 
-New function replacing the recommendation path in `alex-process-turn` for any "find a pro" intent. Flow per turn:
-
-1. Load/create `alex_qualification_sessions` row (guest-safe, same pattern as the recent guest-session fix).
-2. Merge new user input into qualification graph (LLM extraction via `google/gemini-2.5-flash` with structured schema).
-3. Compute score + missing dimensions.
-4. If `score < 70` or required fields missing → return `{ next_question, why_this_question, progress }`.
-5. If `score ≥ 70` → call internal `unified-matching` with strict `service_category` filter, run `serviceSpecialtyValidator`, require `matching_confidence ≥ 0.70`, return single best match with evidence.
-6. Persist every turn to `alex_qualification_turns` for the Homeowner Qualification Graph moat.
-
-### 3. Database (one migration)
-
+**1.3 Shared decision helper `_shared/contactChannel.ts`**
 ```
-alex_qualification_sessions (
-  id, session_token, user_id nullable, property_id nullable,
-  graph jsonb, score int, ready_for_match bool,
-  service_category text, created_at, updated_at
-)
-alex_qualification_turns (
-  id, session_id, question_asked, user_answer,
-  extracted jsonb, score_delta int, created_at
-)
-homeowner_qualification_graph (
-  id, property_id, problem_category, symptoms jsonb,
-  budget_band, urgency, quotes_count, contractor_id nullable,
-  outcome text, satisfaction int, created_at
-)
+pickChannel({phone_type, email, sms_consent, email_consent}) →
+  mobile + sms_consent → "sms"
+  landline → "email"
+  voip → "sms_then_email"
+  invalid/none + email → "email"
+  none → "invalid"
 ```
-All public-schema tables get full GRANT block (authenticated + service_role; no anon). RLS: user_id = auth.uid() OR session_token cookie match for guests.
 
-### 4. Property identification
+**1.4 Wire into `contact-router` (existing `src/lib/communications/router.ts`)**
+Before any send: call `phone-validate` if `phone_type` missing on the contact, then apply `pickChannel`. `channel_override` still wins. Log channel decision + reason to `communication_logs`.
 
-- Replace any "city first" prompt with `AddressAutocompleteInput` (existing `src/components/AutocompleteInput` + Google Maps connector via gateway). Required before STEP 4.
-- After address validation → upsert `properties` row, trigger PIM creation (existing flow) and offer "Créer votre Passeport Intelligence Maison" inline card (non-blocking).
+**1.5 Auto-fallback on failure**
+- VOIP SMS failure (Twilio error codes 30003/30004/30005/30006) → automatically enqueue email send with same `template_key`
+- Add `fallback_chain` JSON column to `communication_logs` to record the cascade
 
-### 5. Quote & photo intelligence cards (inline in chat)
+**1.6 Apply everywhere**
+Audit and route through `sendViaRouter`:
+- Onboarding contractor invites
+- Secondary OTP (when primary email fails)
+- Outbound prospecting (`outbound_messages`, `growth_outbound_messages`, `agent_outreach_messages`)
+- Reminders (`contractor_followup_queue`, `acquisition_followup_queue`, `launch_followup_schedule`)
+- Autonomous agents (`launch-commander`, `outbound-autopilot-*`)
 
-New conversation UI cards rendered from `metadata.type`:
-- `QuoteUploadInviteCard` — appears when category ∈ {reno, repair, insulation, roofing, foundation, HVAC, electrical, plumbing}. Reuses existing quote analyzer service.
-- `PhotoUploadInviteCard` — appears for roofing, foundation, exterior, mold, landscaping, renovation.
-- `WhyThisQuestionTooltip` — internal-facing badge on every Alex question explaining what dimension it unlocks.
+**1.7 Sequence rules (new `outbound_send_window_policy` entries)**
+- `mobile`: SMS T0 → Email T+1d
+- `landline`: Email T0 → Email T+3d → Contact form T+5d
+- `voip`: SMS T0 → on fail Email T+0 → Email T+3d
 
-### 6. Recommendation card (replaces current)
+**1.8 Dashboard `/admin/outreach` cards (extend existing analytics page)**
+SMS Sent · SMS Failed · Landlines Detected · Emails Sent · Email Fallback Success · Missed SMS-on-Landline Prevented
 
-`RecommendationCardQualified.tsx`:
-- Headline: "Après analyse de votre projet, voici le professionnel qui correspond le mieux à votre situation."
-- Shows compatibility score, UNPRO score, availability, distance, credentials, relevant experience, evidence bullets (which qualification answers drove the match).
-- CTA: "Réserver un rendez-vous exclusif".
-- Never rendered if `serviceSpecialtyValidator` fails.
+---
 
-### 7. Wiring
+### Module 2 — `/admin/contact-verification`
 
-- `useAlexConversation` + `useAlexHomeownerSession`: route homeowner "find a pro" intents to `alex-qualify-turn` instead of the legacy recommendation branch. Keep legacy path behind feature flag `alex_v3_qualification_engine` (default ON) in `alexFeatureFlags.ts` for instant revert.
-- `alexMemoryEngine.ts`: extend `AlexSessionMemory` with `qualification_score`, `ready_for_match`, `matching_confidence`.
-- Behavioral kernel update (`mem://ai/alex/behavioral-kernel`): add the NEVER/ALWAYS rules and the 9-step universal flow as hard constraints.
+**2.1 Tables**
 
-### 8. Out of scope (explicit)
+`contact_verification_queue` — fields per spec (business_name, contact_person_name, role, email, phone, phone_type, website, google_business_url, rbq_number, rbq_business_name, rbq_status, neq_number, neq_business_name, neq_status, match_confidence, match_reasons jsonb, verification_status, best_contact_method, manual_contact_priority_score, last_contacted_at, next_followup_at, notes, assigned_to, source_lead_id, source_table, created_at, updated_at).
 
-- Contractor-side Alex (Growth Advisor) — untouched.
-- Voice config, Stripe, condo flow, outbound — untouched.
-- No redesign of public landing pages.
-- Existing `alex-process-turn` kept for non-matching intents (Q&A, diagnostics, etc.).
+`contact_verification_notes` — id, contact_verification_id, admin_id, note, created_at.
 
-### 9. Files
+GRANTs to `authenticated` + `service_role`; RLS: admin-only via `has_role(auth.uid(),'admin')`.
+
+**2.2 Enrichment trigger**
+New edge function `contact-verification-enqueue` invoked when a lead is enriched (called from existing enrichment functions and from a backfill batch). Logic:
+- Compare `business_name` vs `rbq_business_name`, `neq_business_name`, website domain, GBP name (Jaro-Winkler ≥ 0.92 = match)
+- Compare `contact_person_name` vs RBQ officer / NEQ admin / website contact / email username
+- Compute `match_confidence` (high/medium/low/conflict) per the rules in the spec
+- Call `phone-validate` to set `phone_type`
+- Compute `best_contact_method` via `pickChannel`
+- Compute `manual_contact_priority_score`: +30 verified RBQ, +20 verified NEQ, +20 email present, +15 landline-with-email, +10 strong Google reviews (≥4.3 & ≥20), +15 priority trade (roofing/insulation/plumbing/electrical/HVAC/mold/foundation/windows/landscaping/reno), +10 priority region (Mtl/Laval/Rive-Nord/Rive-Sud/Lanaudière/Laurentides), -50 duplicate exists
+
+**2.3 Admin page `src/pages/admin/AdminContactVerification.tsx`**
+- Route `/admin/contact-verification` (add to `routesConfig.ts` + router)
+- Top cards: Total · Needs Review · Verified · Contacted · Replied · Landline+Email · No Email · Conflicts · High-Priority
+- Filter pills: All / New / Needs Review / Verified / Contacted / Replied / Landline Only / Email Available / No Email / Conflict / High / Medium / Low
+- Table: Company · Contact · Email · Phone (badge=type) · RBQ · NEQ · Confidence badge · Recommended channel · Status · Last contacted · Next follow-up
+- Click row → side `Sheet` with Identity, Verification, Actions (Mark Verified/Conflict/Wrong Contact/Replied/Reject; Send Email via router; Call manually [hidden if `phone_type=landline` → "Call landline"]; Open Website/GBP/RBQ/NEQ links; Add Note; Schedule Follow-Up)
+- Note thread chronological
+
+**2.4 Status automation**
+Send Email → `verification_status='contacted'`, `last_contacted_at=now()`, `next_followup_at=now()+3d`. Other actions per spec. Never auto-delete uncertain contacts — always route conflicts to manual review.
+
+**2.5 Channel guards in UI**
+- `phone_type=landline` → hide SMS button, show "Call manually", prioritize Email CTA
+- `phone_type=mobile` → SMS + Email enabled
+- No email → show "Contact form" / "Phone call" only
+
+---
+
+### Files
 
 **Created**
-- `src/lib/alexQualification/{qualificationGraph,scoringEngine,categoryDecisionTrees,nextQuestionSelector,serviceSpecialtyValidator}.ts`
-- `src/components/alex/{QuoteUploadInviteCard,PhotoUploadInviteCard,WhyThisQuestionTooltip,RecommendationCardQualified}.tsx`
-- `supabase/functions/alex-qualify-turn/index.ts`
-- `supabase/functions/_shared/alexQualification/*` (mirror)
-- Migration for the 3 new tables + GRANTs + RLS
+- `supabase/functions/phone-validate/index.ts`
+- `supabase/functions/contact-verification-enqueue/index.ts`
+- `supabase/functions/_shared/contactChannel.ts`
+- `supabase/migrations/<ts>_phone_validation_and_contact_verification.sql` (extend `phone_carrier_cache`, extend `communication_logs.fallback_chain`, create the 2 verification tables + GRANTs + RLS + trigger for `updated_at`, seed `outbound_send_window_policy` sequences)
+- `src/pages/admin/AdminContactVerification.tsx`
+- `src/components/admin/contactVerification/{QueueTable,RowDetailSheet,NotesThread,PriorityCards,FilterPills}.tsx`
+- `src/hooks/useContactVerificationQueue.ts`
 
 **Edited**
-- `src/hooks/useAlexConversation.ts`, `src/hooks/useAlexHomeownerSession.ts`
-- `src/services/alexMemoryEngine.ts`
-- `src/lib/alexFeatureFlags.ts`
-- `supabase/functions/alex-process-turn/index.ts` (delegate matching intents)
-- Memory: `mem://ai/alex/behavioral-kernel`, new `mem://features/alex-v3-qualification-engine`
+- `src/lib/communications/router.ts` — auto-validate, apply `pickChannel`, log fallback chain
+- `supabase/functions/contact-router/index.ts` — same on server side; VOIP-fail → email fallback
+- `src/config/routesConfig.ts` + `src/app/router.tsx` — register `/admin/contact-verification`
+- `src/pages/admin/AdminOutreachAnalytics.tsx` — add 6 new cards
+- Enrichment functions (`outbound-*-enrich*`, `aipp-import-*`) — call `contact-verification-enqueue` after writing leads
+- Memory: new `mem://features/phone-validation-channel-routing.md` + index entry
 
-### Success criteria
+### Out of scope
+- Building a new contact-form auto-submit (T+5 step logs as task only)
+- LinkedIn scraping (use existing data if already enriched)
+- Re-validating numbers older than 90 days (handled by cache TTL expiry naturally)
 
-- 0 recommendations rendered with `score < 70` or `matching_confidence < 0.70`.
-- 0 contractor displays with `service_category !== contractor.specialty` (enforced + logged).
-- Avg 5-8 qualification questions per homeowner session.
-- 100% of "find a pro" sessions persist to `homeowner_qualification_graph` for the moat.
+### Secrets
+Twilio is already connected — no new secret required.
