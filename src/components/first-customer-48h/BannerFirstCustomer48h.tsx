@@ -83,14 +83,27 @@ export default function BannerFirstCustomer48h() {
               UNPRO analyse les besoins du propriétaire et recommande le
               professionnel le plus compatible.
             </p>
-            <p
-              className="mt-1 text-[11.5px] font-semibold"
-              style={{ color: "#F5C85A" }}
-            >
-              {spots !== null
-                ? `${spots} places fondatrices restantes sur 25`
-                : "Places fondatrices limitées"}
-            </p>
+            {(() => {
+              let label = "Places fondatrices disponibles";
+              let color = "#F5C85A";
+              if (spots !== null) {
+                if (spots <= 0) {
+                  label = "Places fondatrices complètes";
+                  color = "#F87171";
+                } else if (spots >= 25) {
+                  label = "Places fondatrices disponibles";
+                } else {
+                  label = `${spots} places fondatrices restantes`;
+                  if (spots <= 5) color = "#F87171";
+                  else if (spots <= 10) color = "#F59E0B";
+                }
+              }
+              return (
+                <p className="mt-1 text-[11.5px] font-semibold" style={{ color }}>
+                  {label}
+                </p>
+              );
+            })()}
           </div>
 
           <div className="flex flex-col sm:flex-row md:flex-col gap-2 md:min-w-[200px]">
