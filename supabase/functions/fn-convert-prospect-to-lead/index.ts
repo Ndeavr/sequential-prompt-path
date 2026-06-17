@@ -53,6 +53,17 @@ Deno.serve(async (req) => {
 
     if (error) throw error;
 
+    // 🔒 Auto-validate the new lead's contact info before any outreach is fired.
+    await enqueueContactVerification({
+      business_name: company_name,
+      email,
+      phone,
+      city,
+      category,
+      source_lead_id: newLead.id,
+      source_table: "contractor_leads",
+    });
+
     return new Response(JSON.stringify({ success: true, lead_id: newLead.id, action: "created" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
