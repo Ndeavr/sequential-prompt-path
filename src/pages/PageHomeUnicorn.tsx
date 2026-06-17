@@ -628,10 +628,11 @@ function ContractorAippSplit() {
 
           {/* Recommended preview wrapper */}
           <div
-            className="mt-5 p-2.5 rounded-2xl"
+            className="mt-5 p-2.5 rounded-2xl w-full max-w-full"
             style={{
               background: "rgba(255,255,255,0.06)",
               border: "1px solid rgba(255,255,255,0.10)",
+              boxSizing: "border-box",
             }}
           >
             <div className="flex items-center justify-between px-1 pb-2">
