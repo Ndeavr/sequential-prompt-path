@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
+import { enqueueContactVerification } from "../_shared/autoVerifyContact.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
