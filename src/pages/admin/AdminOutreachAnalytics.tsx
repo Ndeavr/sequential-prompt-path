@@ -23,6 +23,21 @@ export default function AdminOutreachAnalytics() {
     ]);
     setCampaigns(campRes.data || []);
     setMessages(msgRes.data || []);
+    // Channel-routing prevention metrics from communication_logs + contacts
+    try {
+      const [landlinesRes, fallbackRes, commLogsRes] = await Promise.all([
+        (supabase.from as any)("contacts").select("id", { count: "exact", head: true }).eq("phone_type", "landline"),
+        (supabase.from as any)("communication_logs").select("id", { count: "exact", head: true }).eq("fallback_triggered", true).eq("channel", "email"),
+        (supabase.from as any)("communication_logs").select("channel, delivery_status").limit(2000),
+      ]);
+      setExtraMetrics({
+        landlines_detected: landlinesRes.count ?? 0,
+        email_fallback_success: fallbackRes.count ?? 0,
+        sms_sent: (commLogsRes.data || []).filter((r: any) => r.channel === "sms" && ["sent", "delivered"].includes(r.delivery_status)).length,
+        sms_failed: (commLogsRes.data || []).filter((r: any) => r.channel === "sms" && ["failed", "undelivered"].includes(r.delivery_status)).length,
+        emails_sent: (commLogsRes.data || []).filter((r: any) => r.channel === "email" && ["sent", "delivered"].includes(r.delivery_status)).length,
+      });
+    } catch { /* non-blocking */ }
     setLoading(false);
   }
 
