@@ -89,6 +89,29 @@ export default function AdminOutreachAnalytics() {
         ))}
       </div>
 
+      {extraMetrics && (
+        <div>
+          <h2 className="font-display text-sm font-semibold text-muted-foreground uppercase mb-2">Channel routing</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {[
+              { label: "SMS Sent", value: extraMetrics.sms_sent },
+              { label: "SMS Failed", value: extraMetrics.sms_failed },
+              { label: "Landlines Detected", value: extraMetrics.landlines_detected },
+              { label: "Emails Sent", value: extraMetrics.emails_sent },
+              { label: "Email Fallback Success", value: extraMetrics.email_fallback_success },
+              { label: "Landline SMS Prevented", value: extraMetrics.landlines_detected },
+            ].map(c => (
+              <Card key={c.label}>
+                <CardContent className="p-4 text-center">
+                  <div className="text-2xl font-bold">{c.value}</div>
+                  <div className="text-xs text-muted-foreground">{c.label}</div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
       <Card>
         <CardHeader><CardTitle className="text-base">Performance par campagne</CardTitle></CardHeader>
         <CardContent>
