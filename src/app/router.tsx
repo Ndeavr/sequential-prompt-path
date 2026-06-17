@@ -770,6 +770,22 @@ const HomeContractorAdaptive = lazy(() => import("@/pages/contractor-landing/Hom
 const HomeCondoAdaptive = lazy(() => import("@/pages/condos/HomeCondoAdaptive"));
 const HomeProfessionalAdaptive = lazy(() => import("@/pages/HomeProfessionalAdaptive"));
 
+// IA Maison — Home Intelligence SEO cluster
+const PageIaMaisonHub = lazy(() => import("@/pages/ia-maison/PageIaMaisonHub"));
+const PageIaMaisonArticle = lazy(() => import("@/pages/ia-maison/PageIaMaisonArticle"));
+const IA_MAISON_SLUGS = [
+  "ia-peut-elle-detecter-fissure-fondation",
+  "ia-peut-elle-detecter-infiltration-eau",
+  "ia-peut-elle-detecter-moisissure",
+  "ia-peut-elle-analyser-soumission",
+  "ia-peut-elle-estimer-cout-renovation",
+  "ia-peut-elle-detecter-probleme-isolation",
+  "ia-peut-elle-identifier-risque-toiture",
+  "ia-peut-elle-recommander-entrepreneur",
+  "ia-maison-quebec",
+  "quest-ce-que-lintelligence-residentielle",
+] as const;
+
 export const AppRouter = () => (
   <BrowserRouter>
     <ScrollRestoration />
@@ -803,6 +819,17 @@ export const AppRouter = () => (
         <Route path="/alex/analysis" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
         <Route path="/conversation" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
         <Route path="/" element={<PageHomeUnicorn />} />
+
+        {/* IA Maison — Home Intelligence cluster */}
+        <Route path="/ia-maison" element={<Suspense fallback={<LazyFallback />}><PageIaMaisonHub /></Suspense>} />
+        {IA_MAISON_SLUGS.map((slug) => (
+          <Route
+            key={slug}
+            path={`/${slug}`}
+            element={<Suspense fallback={<LazyFallback />}><PageIaMaisonArticle slug={slug} /></Suspense>}
+          />
+        ))}
+
         <Route path="/pro/score" element={<Suspense fallback={<LazyFallback />}><PageProScoreInstant /></Suspense>} />
         <Route path="/pro/activate" element={<Suspense fallback={<LazyFallback />}><PageProActivate /></Suspense>} />
         <Route path="/pro/welcome" element={<Suspense fallback={<LazyFallback />}><PageProWelcome /></Suspense>} />
