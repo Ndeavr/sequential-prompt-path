@@ -696,7 +696,7 @@ export default function PageHomeUnicorn() {
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
       </Helmet>
 
-      <div className="unicorn-theme min-h-screen pb-36 relative overflow-x-hidden">
+      <div className="unicorn-theme min-h-screen pb-[calc(9rem+env(safe-area-inset-bottom))] relative overflow-x-hidden">
         {/* Base intelligence background — full-page, sits behind every section.
             Memoized hero backdrop: never re-renders on Alex voice/chat state. */}
         <HeroBackdrop />
