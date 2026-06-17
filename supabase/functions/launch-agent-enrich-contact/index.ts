@@ -15,6 +15,7 @@
 import { corsHeaders, adminClient, logLaunchEvent } from "../_shared/launch.ts";
 import { resolvePlacesKey } from "../_shared/launchKeys.ts";
 import { reportOutcome, BlockReason, FailureCode } from "../_shared/reliability.ts";
+import { enqueueContactVerification } from "../_shared/autoVerifyContact.ts";
 
 interface PoolRow {
   id: string;
@@ -173,6 +174,17 @@ Deno.serve(async (req) => {
       continue;
     }
     enriched++;
+
+    // 🔒 Validate this enriched contact (line-type + RBQ/NEQ match) before any outreach.
+    await enqueueContactVerification({
+      business_name: row.company_name,
+      email: email,
+      phone: phone,
+      website: website,
+      city: row.city,
+      source_lead_id: row.id,
+      source_table: "outbound_companies",
+    });
   }
 
   await logLaunchEvent({

@@ -124,13 +124,43 @@ serve(async (req) => {
 
     let primary: Channel = body.channel_override ?? (rule.primary_channel as Channel);
     let fallback: Channel | null = rule.fallback_channel as Channel | null;
+    let landlineBlocked = false;
+
+    // 🚫 HARD BLOCK — never send SMS to landlines. Auto-cascade to email or manual call.
+    const isLandlineLike = contact.phone_type === "landline" || contact.phone_type === "fixedVoip";
+    if (isLandlineLike && primary === "sms") {
+      landlineBlocked = true;
+      primary = contact.email ? "email" : "email"; // forced email, will fail-soft below if no email
+    }
+    if (isLandlineLike && fallback === "sms") fallback = null;
 
     // hard overrides
     if (primary === "sms" && (!contact.phone_e164 || !contact.sms_consent)) primary = "email";
-    if (primary === "email" && !contact.email && contact.phone_e164 && contact.sms_consent) primary = "sms";
+    if (primary === "email" && !contact.email && contact.phone_e164 && contact.sms_consent && !isLandlineLike) primary = "sms";
     if (fallback === "sms" && (!contact.phone_e164 || !contact.sms_consent)) fallback = null;
     if (fallback === "email" && !contact.email) fallback = null;
     if (primary === fallback) fallback = null;
+
+    // If landline + no email → route to manual-call queue and stop.
+    if (landlineBlocked && !contact.email) {
+      await supa.from("communication_logs").insert({
+        contact_id: contact.id, channel: "sms", template_key: body.template_key,
+        delivery_status: "blocked",
+        error_message: "landline_no_email_manual_call_required",
+        channel_decision_reason: "landline_sms_blocked",
+        fallback_chain: [{ blocked: "sms", reason: "landline", queued: "manual_call" }],
+        idempotency_key: body.idempotency_key ?? null,
+      });
+      // Mark in verification queue if a row exists for this contact's phone
+      if (contact.phone_e164) {
+        await supa.from("contact_verification_queue").update({
+          verification_status: "needs_manual_review",
+          best_contact_method: "phone_call",
+          notes: "Auto-routed: landline detected, no email on file. Call manually.",
+        }).eq("phone", contact.phone_e164).neq("verification_status", "contacted");
+      }
+      return json({ ok: false, reason: "landline_no_email_manual_call", phone_type: contact.phone_type });
+    }
 
     const canSendPrimary =
       (primary === "sms" && contact.phone_e164 && contact.sms_consent) ||

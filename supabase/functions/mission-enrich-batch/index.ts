@@ -3,6 +3,7 @@
 // extracting trust signals, weaknesses, AI visibility gaps. Writes to outbound_lead_enrichment.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { corsHeaders, jsonResponse } from "../_shared/mission-cors.ts";
+import { enqueueContactVerification } from "../_shared/autoVerifyContact.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -89,6 +90,15 @@ Deno.serve(async (req) => {
       await supabase.from("outbound_leads").update({
         pipeline_stage: "enriched", updated_at: new Date().toISOString(),
       }).eq("id", lead.id);
+
+      // 🔒 Auto-enqueue for verification before any outreach is fired.
+      await enqueueContactVerification({
+        business_name: lead.company_name,
+        website: lead.website_url,
+        source_lead_id: lead.id,
+        source_table: "outbound_leads",
+      });
+
       enriched++;
     }
 

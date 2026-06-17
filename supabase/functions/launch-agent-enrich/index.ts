@@ -4,6 +4,7 @@
  */
 import { corsHeaders, adminClient, transitionLead, logLaunchEvent } from "../_shared/launch.ts";
 import { reportOutcome, FailureCode } from "../_shared/reliability.ts";
+import { enqueueContactVerification } from "../_shared/autoVerifyContact.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -44,6 +45,21 @@ Deno.serve(async (req) => {
       if ((company as any)?.phone) patch.phone = (company as any).phone;
 
       await transitionLead((lead as any).id, "ENRICHED", patch, "launch-agent-enrich");
+
+      // 🔒 Auto-enqueue this launch lead for contact verification.
+      await enqueueContactVerification({
+        business_name: (lead as any).company_name ?? (company as any)?.company_name ?? null,
+        email: (company as any)?.email ?? (lead as any).email ?? null,
+        phone: (company as any)?.phone ?? (lead as any).phone ?? null,
+        website: (company as any)?.website ?? null,
+        google_rating: (company as any)?.rating ?? null,
+        google_reviews_count: (company as any)?.review_count ?? null,
+        city: (lead as any).city ?? null,
+        category: (lead as any).category ?? null,
+        source_lead_id: (lead as any).id,
+        source_table: "launch_leads",
+      });
+
       enriched++;
     } catch (e) {
       failed++;

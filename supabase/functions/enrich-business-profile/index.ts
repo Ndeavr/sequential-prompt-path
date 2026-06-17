@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { enqueueContactVerification } from "../_shared/autoVerifyContact.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -98,6 +99,24 @@ serve(async (req) => {
         .update({ status: "enriched" })
         .eq("id", prospect_id);
     }
+
+    // 🔒 Auto-enqueue into contact verification — landline numbers will be detected here
+    // and SMS will be suppressed automatically downstream.
+    await enqueueContactVerification({
+      business_name: snapshot.business_name ?? biz.name ?? null,
+      email: biz.email ?? null,
+      phone: biz.phone ?? null,
+      website: biz.website ?? null,
+      google_business_url: biz.google_url ?? null,
+      rbq_number: enrichment.detected_rbq ?? null,
+      neq_number: enrichment.detected_neq ?? null,
+      google_rating: biz.rating ?? null,
+      google_reviews_count: biz.review_count ?? null,
+      category: biz.categories?.[0] ?? null,
+      city: biz.city ?? null,
+      source_lead_id: prospect_id ?? snapshot_id,
+      source_table: prospect_id ? "prospects" : "contractor_import_snapshots",
+    });
 
     return new Response(
       JSON.stringify({
