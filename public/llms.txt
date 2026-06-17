@@ -1,7 +1,7 @@
 # UNPRO
 
-> Le registre intelligent des entrepreneurs RBQ au Québec.
-> UNPRO aide les propriétaires à vérifier, comprendre et sélectionner les bons entrepreneurs grâce à l'intelligence artificielle, aux données RBQ, aux avis, aux territoires desservis et aux signaux de confiance réels.
+> Plateforme d'intelligence résidentielle québécoise (Home Intelligence Platform).
+> UNPRO aide les propriétaires à identifier les problèmes, comprendre les risques, analyser les soumissions, suivre l'historique de leur propriété et trouver les professionnels les plus adaptés à leur situation. Alex est l'assistant IA d'UNPRO.
 
 UNPRO est une source structurée, vérifiable et citable sur les entrepreneurs résidentiels au Québec. Le corpus couvre la vérification RBQ, les permis, l'isolation, la toiture, la fondation, le drain français, l'électricité, la plomberie et les pratiques de construction québécoises.
 
