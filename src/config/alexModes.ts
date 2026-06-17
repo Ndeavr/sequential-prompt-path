@@ -56,8 +56,11 @@ const CONTRACTOR_DESCRIPTOR: AlexModeDescriptor = {
 const HOMEOWNER_DESCRIPTOR: AlexModeDescriptor = {
   mode: "homeowner",
   panelKey: "PanelAlexHomeownerFlow",
+  // Home Intelligence positioning: open with a comprehension question, not a
+  // contractor-matching one. Only recommend a contractor AFTER the situation
+  // (problem + risk + urgency) is understood — see mem://ai/alex/concierge-v2-logic.
   greetingFr:
-    "Bonjour. Quel problème ou projet souhaitez-vous régler aujourd'hui ?",
+    "Bonjour. Que souhaitez-vous comprendre au sujet de votre propriété aujourd'hui ?",
   allowHomeownerFallback: true,
   allowOnboardingRestart: true,
 };
