@@ -656,6 +656,7 @@ const AdminOutreachCampaignNew = lazy(() => import("@/pages/admin/AdminOutreachC
 const AdminOutreachCampaignDetail = lazy(() => import("@/pages/admin/AdminOutreachCampaignDetail"));
 const AdminOutreachTemplates = lazy(() => import("@/pages/admin/AdminOutreachTemplates"));
 const AdminOutreachAnalytics = lazy(() => import("@/pages/admin/AdminOutreachAnalytics"));
+const AdminContactVerification = lazy(() => import("@/pages/admin/AdminContactVerification"));
 const PageOutboundDashboard = lazy(() => import("@/pages/admin/outbound/PageOutboundDashboard"));
 const PageOutreachLive = lazy(() => import("@/pages/admin/outbound/PageOutreachLive"));
 const PageOutboundCampaigns = lazy(() => import("@/pages/admin/outbound/PageOutboundCampaigns"));
