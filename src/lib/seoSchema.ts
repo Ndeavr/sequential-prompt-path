@@ -22,8 +22,22 @@ export function organizationSchema() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "UNPRO",
+    alternateName: ["UNPRO Quebec", "UNPRO Home Intelligence", "Alex Home Assistant"],
     url: "https://unpro.ca",
     logo: "https://unpro.ca/logo.png",
+    description:
+      "AI-powered residential intelligence platform helping homeowners identify property issues, understand risks, analyze renovation projects, and connect with verified professionals.",
+    additionalType: "https://schema.org/SoftwareApplication",
+    category: "Home Intelligence Platform",
+    knowsAbout: [
+      "Home intelligence",
+      "Residential diagnostics",
+      "Property risk analysis",
+      "Renovation quote analysis",
+      "RBQ contractor verification",
+      "Quebec residential construction",
+    ],
+    areaServed: { "@type": "AdministrativeArea", name: "Quebec" },
     sameAs: [],
     contactPoint: { "@type": "ContactPoint", contactType: "customer service", availableLanguage: ["French", "English"] },
   };
