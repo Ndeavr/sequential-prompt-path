@@ -16,11 +16,12 @@ const BLOCKED_PATTERNS: RegExp[] = [
 
 export type GuardOutcome =
   | { ok: true; normalized: string; area_code: string | null; country_code: string | null }
-  | { ok: false; reason: "invalid_phone" | "blocked" | "opted_out"; detail: string; normalized: string | null };
+  | { ok: false; reason: "invalid_phone" | "blocked" | "opted_out" | "not_mobile" | "sms_disabled" | "max_failures"; detail: string; normalized: string | null };
 
 export async function validateBeforeSend(opts: {
   supabase: ReturnType<typeof createClient>;
   phone: string | null | undefined;
+  lead_id?: string | null;
 }): Promise<GuardOutcome> {
   const norm = normalizePhone(opts.phone);
   if (!norm.valid || !norm.normalized) {
