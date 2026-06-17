@@ -543,9 +543,9 @@ function ContractorAippSplit() {
     "Profil optimisé IA",
   ];
   return (
-    <section className="px-4 mt-6 mb-8 relative z-10">
+    <section className="px-4 mt-6 mb-8 relative z-10 w-full max-w-full overflow-x-clip">
       <div
-        className="relative overflow-hidden p-5"
+        className="relative p-5 w-full max-w-full"
         style={{
           borderRadius: 24,
           background:
@@ -553,6 +553,7 @@ function ContractorAippSplit() {
           border: "1px solid rgba(99,130,255,0.35)",
           boxShadow:
             "0 0 0 1px rgba(99,130,255,0.25), 0 30px 80px -30px rgba(59,130,246,0.65), inset 0 1px 0 rgba(255,255,255,0.08)",
+          boxSizing: "border-box",
         }}
       >
         {/* radial glow */}
@@ -627,10 +628,11 @@ function ContractorAippSplit() {
 
           {/* Recommended preview wrapper */}
           <div
-            className="mt-5 p-2.5 rounded-2xl"
+            className="mt-5 p-2.5 rounded-2xl w-full max-w-full"
             style={{
               background: "rgba(255,255,255,0.06)",
               border: "1px solid rgba(255,255,255,0.10)",
+              boxSizing: "border-box",
             }}
           >
             <div className="flex items-center justify-between px-1 pb-2">
@@ -694,7 +696,7 @@ export default function PageHomeUnicorn() {
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
       </Helmet>
 
-      <div className="unicorn-theme min-h-screen pb-36 relative overflow-x-hidden">
+      <div className="unicorn-theme min-h-screen pb-[calc(9rem+env(safe-area-inset-bottom))] relative overflow-x-hidden">
         {/* Base intelligence background — full-page, sits behind every section.
             Memoized hero backdrop: never re-renders on Alex voice/chat state. */}
         <HeroBackdrop />

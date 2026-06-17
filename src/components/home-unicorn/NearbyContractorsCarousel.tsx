@@ -91,7 +91,8 @@ export default function NearbyContractorsCarousel() {
     <div
       role="region"
       aria-label="Entrepreneurs recommandés près de vous"
-      className="mt-5 relative"
+      className="mt-5 relative w-full max-w-full"
+      style={{ boxSizing: "border-box" }}
       onMouseEnter={() => (pausedRef.current = true)}
       onMouseLeave={() => (pausedRef.current = false)}
       onFocus={() => (pausedRef.current = true)}
@@ -114,12 +115,12 @@ export default function NearbyContractorsCarousel() {
       }}
     >
       <div
-        className="p-3 pt-5 rounded-2xl relative overflow-hidden"
+        className="p-3 pt-5 rounded-2xl relative w-full max-w-full"
         style={{
           background: "linear-gradient(180deg,#FFFFFF,#F7FAFF)",
           border: "1px solid rgba(11,18,32,0.06)",
           boxShadow: "0 12px 30px -16px rgba(37,99,255,0.25)",
-          minHeight: 196,
+          boxSizing: "border-box",
         }}
       >
         <div
@@ -167,11 +168,11 @@ export default function NearbyContractorsCarousel() {
                     ({current.reviewCount})
                   </span>
                 </div>
-                <div className="text-[10px] flex items-center gap-1 mt-0.5 truncate" style={{ color: "#667085" }}>
-                  {current.specialty}
-                  <span className="mx-1">·</span>
+                <div className="text-[10px] flex flex-wrap items-center gap-x-1 gap-y-0.5 mt-0.5" style={{ color: "#667085" }}>
+                  <span>{current.specialty}</span>
+                  <span>·</span>
                   <MapPin size={9} color="#94A3B8" />
-                  {current.city}
+                  <span>{current.city}</span>
                 </div>
               </div>
             </div>
