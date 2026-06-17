@@ -74,7 +74,55 @@ Deno.serve(async (req) => {
       .eq("twilio_message_sid", sid)
       .maybeSingle();
     if (comRow?.contractor_lead_id) {
-      await supabase.from("contractor_leads").update({ last_sms_status: mapped }).eq("id", comRow.contractor_lead_id);
+      const leadId = comRow.contractor_lead_id;
+      const leadUpdate: Record<string, unknown> = { last_sms_status: mapped, sms_status: mapped };
+      if (mapped === "delivered") {
+        leadUpdate.sms_attempts = (await supabase.rpc as any) ? undefined : undefined;
+      }
+      // Use increment via raw SQL through a small read-modify-write
+      if (mapped === "delivered") {
+        const { data: cur } = await supabase.from("contractor_leads")
+          .select("sms_attempts").eq("id", leadId).maybeSingle();
+        leadUpdate.sms_attempts = ((cur as any)?.sms_attempts ?? 0) + 1;
+        leadUpdate.last_sms_attempt_at = now;
+      }
+      if (mapped === "failed" || mapped === "undelivered") {
+        const { data: cur } = await supabase.from("contractor_leads")
+          .select("sms_failed_attempts, sms_attempts").eq("id", leadId).maybeSingle();
+        const failed = ((cur as any)?.sms_failed_attempts ?? 0) + 1;
+        leadUpdate.sms_failed_attempts = failed;
+        leadUpdate.sms_attempts = ((cur as any)?.sms_attempts ?? 0) + 1;
+        leadUpdate.last_sms_error_code = errorCode ?? null;
+        leadUpdate.last_sms_attempt_at = now;
+        if (failed >= 2) {
+          leadUpdate.sms_disabled = true;
+          leadUpdate.contact_method = "email";
+          leadUpdate.sms_suppressed_at = now;
+          leadUpdate.sms_suppressed_reason = failed >= 5 ? "permanent_suppression" : "failure_threshold";
+        }
+        // Fire email fallback (idempotent) after 2nd failure
+        if (failed >= 2) {
+          try {
+            await fetch(`${SUPABASE_URL}/functions/v1/email-fallback-dispatch`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
+              body: JSON.stringify({ lead_id: leadId, reason: `sms_failures_${failed}` }),
+            }).catch(() => {});
+          } catch (_) { /* swallow */ }
+        }
+        if (failed >= 5) {
+          try {
+            await supabase.from("admin_notifications").insert({
+              type: "sms_permanent_suppression",
+              title: "SMS permanently suppressed",
+              body: `Lead ${leadId} hit 5 SMS failures — SMS permanently suppressed.`,
+              severity: "warning",
+              payload_json: { lead_id: leadId, failed_attempts: failed },
+            });
+          } catch (_) { /* swallow */ }
+        }
+      }
+      await supabase.from("contractor_leads").update(leadUpdate).eq("id", leadId);
     }
 
 
