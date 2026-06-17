@@ -767,11 +767,12 @@ export default function PageHomeUnicorn() {
         <BottomDockGlass />
         <footer className="relative mt-12 py-10 px-4 text-center">
           <FooterBackdrop />
-          <p className="relative z-10 text-[12px] text-white/70">
-            UNPRO continue de travailler même lorsque vous quittez le site.
+          <p className="relative z-10 text-[13px] text-white/80 max-w-xl mx-auto leading-relaxed">
+            Votre maison devrait se souvenir de tout. UNPRO conserve l'historique
+            des rénovations, garanties, inspections et décisions importantes.
           </p>
-          <p className="relative z-10 text-[11px] text-white/40 mt-1">
-            Conçu au Québec · fr-CA
+          <p className="relative z-10 text-[11px] text-white/40 mt-2">
+            Intelligence résidentielle · Québec · fr-CA
           </p>
         </footer>
       </div>
