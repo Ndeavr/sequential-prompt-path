@@ -76,10 +76,7 @@ Deno.serve(async (req) => {
     if (comRow?.contractor_lead_id) {
       const leadId = comRow.contractor_lead_id;
       const leadUpdate: Record<string, unknown> = { last_sms_status: mapped, sms_status: mapped };
-      if (mapped === "delivered") {
-        leadUpdate.sms_attempts = (await supabase.rpc as any) ? undefined : undefined;
-      }
-      // Use increment via raw SQL through a small read-modify-write
+      // Use read-modify-write to increment counters atomically enough for our scale.
       if (mapped === "delivered") {
         const { data: cur } = await supabase.from("contractor_leads")
           .select("sms_attempts").eq("id", leadId).maybeSingle();
