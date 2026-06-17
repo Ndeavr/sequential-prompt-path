@@ -1,9 +1,9 @@
-// UNPRO — validate-lead-phones worker.
-// Runs every 5 minutes. Picks leads with phone_validation_status='pending_validation',
-// runs Twilio Lookup, persists results. Caps cost at 100 lookups/run (~$0.80).
+// UNPRO — validate-lead-phones (full lead validation gate).
+// Runs every 5 minutes. Picks leads in pending_validation, runs
+// company + phone + dedupe validation, persists canonical statuses.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { validateAndPersistLeadPhone } from "../_shared/phoneValidation.ts";
+import { validateLead } from "../_shared/leadValidation.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -18,14 +18,22 @@ const BATCH = 100;
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   const sb = createClient(SUPABASE_URL, SERVICE_KEY);
-  const out = { checked: 0, valid_mobile: 0, valid_voip: 0, landline: 0, invalid: 0, outside_qc: 0, lookup_failed: 0, errors: [] as string[] };
+  const out = {
+    checked: 0,
+    valid: 0,
+    invalid_phone: 0,
+    invalid_company: 0,
+    outside_quebec: 0,
+    duplicate: 0,
+    needs_review: 0,
+    errors: [] as string[],
+  };
 
   try {
     const { data: leads, error } = await sb
       .from("contractor_leads")
-      .select("id,phone,mobile_phone,phone_validation_status,phone_e164")
-      .eq("phone_validation_status", "pending_validation")
-      .or("phone.not.is.null,mobile_phone.not.is.null")
+      .select("id,company_name,phone,mobile_phone,do_not_contact")
+      .eq("validation_status", "pending_validation")
       .order("created_at", { ascending: true })
       .limit(BATCH);
     if (error) throw new Error(error.message);
@@ -33,16 +41,17 @@ Deno.serve(async (req) => {
     for (const lead of leads ?? []) {
       out.checked++;
       try {
-        const r = await validateAndPersistLeadPhone(sb, lead as any);
-        if (r.status === "valid_mobile") out.valid_mobile++;
-        else if (r.status === "valid_voip") out.valid_voip++;
-        else if (r.status === "landline") out.landline++;
-        else if (r.status === "invalid_phone") out.invalid++;
-        else if (r.status === "outside_quebec") out.outside_qc++;
-        else out.lookup_failed++;
-
+        const r = await validateLead(sb, lead as any);
+        switch (r.validation_status) {
+          case "valid": out.valid++; break;
+          case "invalid_phone": out.invalid_phone++; break;
+          case "invalid_company": out.invalid_company++; break;
+          case "outside_quebec": out.outside_quebec++; break;
+          case "duplicate": out.duplicate++; break;
+          case "needs_review": out.needs_review++; break;
+        }
         // Re-fire curiosity enrollment for newly-valid leads
-        if ((r.status === "valid_mobile" || r.status === "valid_voip")) {
+        if (r.validation_status === "valid") {
           await sb.from("contractor_leads")
             .update({ updated_at: new Date().toISOString() })
             .eq("id", lead.id)
@@ -50,7 +59,7 @@ Deno.serve(async (req) => {
             .eq("funnel_type", "ai_score_curiosity");
         }
       } catch (e) {
-        out.errors.push(`${lead.id}: ${(e as Error).message}`);
+        out.errors.push(`${(lead as any).id}: ${(e as Error).message}`);
       }
     }
   } catch (e) {
