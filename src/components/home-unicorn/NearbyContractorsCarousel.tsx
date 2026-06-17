@@ -91,7 +91,8 @@ export default function NearbyContractorsCarousel() {
     <div
       role="region"
       aria-label="Entrepreneurs recommandés près de vous"
-      className="mt-5 relative"
+      className="mt-5 relative w-full max-w-full"
+      style={{ boxSizing: "border-box" }}
       onMouseEnter={() => (pausedRef.current = true)}
       onMouseLeave={() => (pausedRef.current = false)}
       onFocus={() => (pausedRef.current = true)}
@@ -114,12 +115,12 @@ export default function NearbyContractorsCarousel() {
       }}
     >
       <div
-        className="p-3 pt-5 rounded-2xl relative overflow-hidden"
+        className="p-3 pt-5 rounded-2xl relative w-full max-w-full"
         style={{
           background: "linear-gradient(180deg,#FFFFFF,#F7FAFF)",
           border: "1px solid rgba(11,18,32,0.06)",
           boxShadow: "0 12px 30px -16px rgba(37,99,255,0.25)",
-          minHeight: 196,
+          boxSizing: "border-box",
         }}
       >
         <div
