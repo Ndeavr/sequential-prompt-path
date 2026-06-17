@@ -4,6 +4,7 @@
 import { useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { isQualificationEngineEnabled } from "@/lib/alexFeatureFlags";
 
 const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
@@ -90,32 +91,56 @@ export function useAlexHomeownerSession() {
 
     try {
       const token = await getToken();
-      const resp = await fetch(`${FUNCTIONS_BASE}/alex-homeowner-process-turn`, {
+      const useV3 = isQualificationEngineEnabled();
+      const endpoint = useV3 ? "alex-qualify-turn" : "alex-homeowner-process-turn";
+      const payload = useV3
+        ? { session_token: sessionToken, user_message: text }
+        : { homeowner_session_id: sessionToken, user_message: text, message_mode: "text" };
+
+      const resp = await fetch(`${FUNCTIONS_BASE}/${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          homeowner_session_id: sessionToken,
-          user_message: text,
-          message_mode: "text",
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await resp.json();
 
-      if (data.alex_response_chunks?.length) {
-        const alexMsg: HomeownerMessage = {
-          id: crypto.randomUUID(),
-          sender: "alex",
-          text: data.alex_response_chunks[0].text,
-          timestamp: new Date(),
-          metadata: { next_action: data.next_action, scores: data.scores },
-        };
-        setMessages((prev) => [...prev, alexMsg]);
+      if (useV3) {
+        const alexText = data.status === "qualified"
+          ? (data.summary_fr ?? data.recommendation_headline_fr ?? "")
+          : (data.next_question?.q ?? "");
+        if (alexText) {
+          setMessages((prev) => [...prev, {
+            id: crypto.randomUUID(),
+            sender: "alex",
+            text: alexText,
+            timestamp: new Date(),
+            metadata: {
+              status: data.status,
+              score: data.score,
+              next_question: data.next_question,
+              graph_summary: data.graph_summary ?? data.graph,
+              ready_for_match: data.ready_for_match,
+              recommendation_headline_fr: data.recommendation_headline_fr,
+            },
+          }]);
+        }
+        if (data.status === "qualified") setCurrentStep("matching");
+      } else {
+        if (data.alex_response_chunks?.length) {
+          const alexMsg: HomeownerMessage = {
+            id: crypto.randomUUID(),
+            sender: "alex",
+            text: data.alex_response_chunks[0].text,
+            timestamp: new Date(),
+            metadata: { next_action: data.next_action, scores: data.scores },
+          };
+          setMessages((prev) => [...prev, alexMsg]);
+        }
+        if (data.diagnosis) setDiagnosis(data.diagnosis);
+        if (data.next_action) setNextAction(data.next_action);
+        if (data.language) setLanguage(data.language);
       }
-
-      if (data.diagnosis) setDiagnosis(data.diagnosis);
-      if (data.next_action) setNextAction(data.next_action);
-      if (data.language) setLanguage(data.language);
     } catch (err) {
       console.error("Homeowner process turn error:", err);
       setMessages((prev) => [
