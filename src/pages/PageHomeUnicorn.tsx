@@ -543,9 +543,9 @@ function ContractorAippSplit() {
     "Profil optimisé IA",
   ];
   return (
-    <section className="px-4 mt-6 mb-8 relative z-10">
+    <section className="px-4 mt-6 mb-8 relative z-10 w-full max-w-full overflow-x-clip">
       <div
-        className="relative overflow-hidden p-5"
+        className="relative p-5 w-full max-w-full"
         style={{
           borderRadius: 24,
           background:
@@ -553,6 +553,7 @@ function ContractorAippSplit() {
           border: "1px solid rgba(99,130,255,0.35)",
           boxShadow:
             "0 0 0 1px rgba(99,130,255,0.25), 0 30px 80px -30px rgba(59,130,246,0.65), inset 0 1px 0 rgba(255,255,255,0.08)",
+          boxSizing: "border-box",
         }}
       >
         {/* radial glow */}
