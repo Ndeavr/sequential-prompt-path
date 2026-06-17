@@ -1,9 +1,17 @@
 ---
 name: Phone Validation & Manual Contact Verification
-description: Twilio Lookup-driven phone line-type routing with automatic SMS→Email fallback, plus /admin/contact-verification queue for manually verifying ambiguous leads against RBQ/NEQ
+description: Twilio Lookup-driven phone line-type routing with automatic SMS→Email fallback, hard landline SMS block, and auto-enqueue from every acquisition pipeline into /admin/contact-verification
 type: feature
 ---
 # Phone Validation + Contact Verification
+
+## Auto-enqueue (no admin action required)
+Every enrichment edge function calls `_shared/autoVerifyContact.ts::enqueueContactVerification()`:
+- `enrich-business-profile`, `edge-enrich-prospect`, `mission-enrich-batch`, `launch-agent-enrich`, `launch-agent-enrich-contact`, `fn-convert-prospect-to-lead`, `import-business-intelligence`.
+- DB safety net: trigger `trg_auto_enqueue_contact_verification` on `contractor_enriched_profiles` (covers `autonomous-acquisition-engine` and any direct writers) → calls `contact-verification-enqueue` via `pg_net`.
+- Idempotent via unique index `uniq_cvq_source` on `(source_table, source_lead_id)`.
+
+
 
 ## Channel routing (Module 1)
 - `twilio-lookup-phone` edge function caches line type in `phone_carrier_cache` (90d TTL) and writes back to `contacts.phone_type` + `phone_verified`.
