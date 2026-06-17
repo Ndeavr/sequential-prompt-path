@@ -27065,6 +27065,7 @@ export type Database = {
           company_confidence_score: number | null
           company_failure_reason: string | null
           company_name: string | null
+          contact_method: string
           contractor_id: string | null
           created_at: string
           created_by: string | null
@@ -27073,6 +27074,8 @@ export type Database = {
           curiosity_token: string | null
           do_not_contact: boolean
           email: string | null
+          email_fallback_enabled: boolean
+          email_status: string | null
           enrichment_status: string
           failure_code: string | null
           first_name: string | null
@@ -27086,6 +27089,8 @@ export type Database = {
           last_email_at: string | null
           last_name: string | null
           last_sms_at: string | null
+          last_sms_attempt_at: string | null
+          last_sms_error_code: string | null
           last_sms_status: string | null
           lead_status: string
           metadata_json: Json | null
@@ -27118,6 +27123,12 @@ export type Database = {
           role_title: string | null
           scanner_session_id: string | null
           score_status: string
+          sms_attempts: number
+          sms_disabled: boolean
+          sms_failed_attempts: number
+          sms_status: string | null
+          sms_suppressed_at: string | null
+          sms_suppressed_reason: string | null
           source_job_id: string | null
           source_label: string | null
           source_query_id: string | null
@@ -27143,6 +27154,7 @@ export type Database = {
           company_confidence_score?: number | null
           company_failure_reason?: string | null
           company_name?: string | null
+          contact_method?: string
           contractor_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -27151,6 +27163,8 @@ export type Database = {
           curiosity_token?: string | null
           do_not_contact?: boolean
           email?: string | null
+          email_fallback_enabled?: boolean
+          email_status?: string | null
           enrichment_status?: string
           failure_code?: string | null
           first_name?: string | null
@@ -27164,6 +27178,8 @@ export type Database = {
           last_email_at?: string | null
           last_name?: string | null
           last_sms_at?: string | null
+          last_sms_attempt_at?: string | null
+          last_sms_error_code?: string | null
           last_sms_status?: string | null
           lead_status?: string
           metadata_json?: Json | null
@@ -27196,6 +27212,12 @@ export type Database = {
           role_title?: string | null
           scanner_session_id?: string | null
           score_status?: string
+          sms_attempts?: number
+          sms_disabled?: boolean
+          sms_failed_attempts?: number
+          sms_status?: string | null
+          sms_suppressed_at?: string | null
+          sms_suppressed_reason?: string | null
           source_job_id?: string | null
           source_label?: string | null
           source_query_id?: string | null
@@ -27221,6 +27243,7 @@ export type Database = {
           company_confidence_score?: number | null
           company_failure_reason?: string | null
           company_name?: string | null
+          contact_method?: string
           contractor_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -27229,6 +27252,8 @@ export type Database = {
           curiosity_token?: string | null
           do_not_contact?: boolean
           email?: string | null
+          email_fallback_enabled?: boolean
+          email_status?: string | null
           enrichment_status?: string
           failure_code?: string | null
           first_name?: string | null
@@ -27242,6 +27267,8 @@ export type Database = {
           last_email_at?: string | null
           last_name?: string | null
           last_sms_at?: string | null
+          last_sms_attempt_at?: string | null
+          last_sms_error_code?: string | null
           last_sms_status?: string | null
           lead_status?: string
           metadata_json?: Json | null
@@ -27274,6 +27301,12 @@ export type Database = {
           role_title?: string | null
           scanner_session_id?: string | null
           score_status?: string
+          sms_attempts?: number
+          sms_disabled?: boolean
+          sms_failed_attempts?: number
+          sms_status?: string | null
+          sms_suppressed_at?: string | null
+          sms_suppressed_reason?: string | null
           source_job_id?: string | null
           source_label?: string | null
           source_query_id?: string | null
