@@ -12,6 +12,7 @@ export default function AdminOutreachAnalytics() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [extraMetrics, setExtraMetrics] = useState<{ landlines_detected: number; email_fallback_success: number; sms_sent: number; sms_failed: number; emails_sent: number } | null>(null);
 
   useEffect(() => { loadData(); }, []);
 
