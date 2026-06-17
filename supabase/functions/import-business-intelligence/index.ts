@@ -290,6 +290,19 @@ Deno.serve(async (req) => {
           stages, completed_at: new Date().toISOString(),
           raw_json: { scores, has_extracted: !!extracted },
         }).eq("id", runId);
+
+        // 🔒 Auto-enqueue this imported contractor for contact verification.
+        await enqueueContactVerification({
+          business_name: assetsRow.business_name,
+          email: assetsRow.email,
+          phone: assetsRow.phone,
+          website: domain ? `https://${domain}` : null,
+          rbq_number: assetsRow.rbq_number,
+          neq_number: assetsRow.neq_number,
+          city,
+          source_lead_id: runId,
+          source_table: "contractor_import_runs",
+        });
       } catch (e: any) {
         console.error("pipeline error", e);
         await sb.from("contractor_import_runs").update({
