@@ -3,6 +3,7 @@
 // extracting trust signals, weaknesses, AI visibility gaps. Writes to outbound_lead_enrichment.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { corsHeaders, jsonResponse } from "../_shared/mission-cors.ts";
+import { enqueueContactVerification } from "../_shared/autoVerifyContact.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
