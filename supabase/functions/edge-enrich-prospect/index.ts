@@ -160,6 +160,20 @@ Deno.serve(async (req) => {
       }
     }
 
+    // 🔒 Auto-enqueue every enriched prospect into contact verification.
+    await enqueueContactVerification({
+      business_name: company.company_name ?? company.business_name ?? null,
+      email: company.email ?? null,
+      phone: company.phone ?? null,
+      website: company.website_url ?? null,
+      category: company.category ?? null,
+      city: company.city ?? null,
+      google_rating: company.google_rating ?? null,
+      google_reviews_count: company.review_count ?? null,
+      source_lead_id: company_id,
+      source_table: "outbound_companies",
+    });
+
     return new Response(JSON.stringify({ success: true, enrichment, screenshot_url: screenshotUrl }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
