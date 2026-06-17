@@ -22,6 +22,8 @@ import PIMIntroBand from "@/components/pim/PIMIntroBand";
 import IntelligenceBackground from "@/components/visual/intelligence-bg/IntelligenceBackground";
 import BannerFirstCustomer48h from "@/components/first-customer-48h/BannerFirstCustomer48h";
 import SocialProofContractorBlock from "@/components/first-customer-48h/SocialProofContractorBlock";
+import SectionAIHomeIntelligence from "@/components/home-intelligence/SectionAIHomeIntelligence";
+import EntityDefinitionBlock from "@/components/home-intelligence/EntityDefinitionBlock";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -179,19 +181,40 @@ function HeroAlexOrb({ onTalk }: { onTalk: (hint?: string) => void }) {
     <section className="px-4 pt-3 pb-6 grid grid-cols-[1.05fr_1fr] gap-2 items-center relative z-10 uc-fade-up">
       <div>
         <h1
-          className="font-extrabold leading-[0.98] text-[30px] sm:text-[40px] tracking-[-0.035em]"
+          className="font-extrabold leading-[0.98] text-[28px] sm:text-[38px] tracking-[-0.035em]"
           style={{ color: "#0B1220" }}
         >
-          L'intelligence de votre propriété{" "}
-          <span className="uc-gradient-text">commence ici.</span>
+          Votre maison a une question.{" "}
+          <span className="uc-gradient-text">Alex trouve la réponse.</span>
         </h1>
         <p
-          className="mt-3 text-[13px] sm:text-[14px] leading-snug max-w-[32ch]"
+          className="mt-3 text-[13px] sm:text-[14px] leading-snug max-w-[34ch]"
           style={{ color: "#475467" }}
         >
-          Alex vous aide à comprendre les problèmes, les coûts, les risques et les
-          solutions possibles avant de prendre une décision.
+          Téléversez une photo ou décrivez votre situation. Alex identifie les problèmes
+          potentiels, explique les risques, estime les coûts et recommande les prochaines
+          étapes.
         </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => onTalk()}
+            className="rounded-2xl px-4 py-2.5 text-white text-[13px] font-semibold"
+            style={{
+              background: "linear-gradient(135deg, #2563FF, #3B82F6)",
+              boxShadow: "0 8px 18px -6px rgba(37,99,255,0.55)",
+            }}
+          >
+            Analyser ma situation
+          </button>
+          <a
+            href="/ia-maison"
+            className="rounded-2xl px-4 py-2.5 text-[13px] font-semibold uc-glass-strong"
+            style={{ color: "#0B1220" }}
+          >
+            Voir un exemple
+          </a>
+        </div>
       </div>
       <div className="flex flex-col items-center justify-center pr-1 -mt-2">
         <button
@@ -666,34 +689,55 @@ export default function PageHomeUnicorn() {
   const { openAlex } = useAlexVoice();
   const onTalk = (hint?: string) => openAlex("home_intent", hint);
 
-  const jsonLd = {
+  const serviceSchema = {
     "@context": "https://schema.org",
     "@type": "Service",
     name: "UNPRO",
     description:
-      "Concierge IA québécois. UNPRO détecte les problèmes, estime les coûts et recommande les meilleurs professionnels.",
+      "UNPRO aide les propriétaires québécois à identifier les problèmes, comprendre les risques, analyser les soumissions et prendre de meilleures décisions pour leur propriété grâce à Alex, l'assistant IA résidentiel.",
     url: "https://unpro.ca",
     areaServed: { "@type": "Place", name: "Quebec" },
     provider: { "@type": "Organization", name: "UNPRO", url: "https://unpro.ca" },
-    serviceType: "Concierge IA résidentiel",
+    serviceType: "Home Intelligence Platform",
+  };
+
+  const orgSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "UNPRO",
+    alternateName: ["UNPRO Quebec", "UNPRO Home Intelligence", "Alex Home Assistant"],
+    url: "https://unpro.ca",
+    logo: "https://unpro.ca/unpro-logo-master.png",
+    description:
+      "AI-powered residential intelligence platform helping homeowners identify property issues, understand risks, analyze renovation projects, and connect with verified professionals.",
+    category: "Home Intelligence Platform",
+    knowsAbout: [
+      "Home intelligence",
+      "Residential diagnostics",
+      "Property risk analysis",
+      "Renovation quote analysis",
+      "RBQ contractor verification",
+    ],
+    areaServed: { "@type": "AdministrativeArea", name: "Quebec" },
   };
 
   return (
     <>
       <Helmet>
-        <title>UNPRO — Décrivez votre situation. Alex s'occupe du reste.</title>
+        <title>UNPRO — L'intelligence artificielle pour votre maison</title>
         <meta
           name="description"
-          content="UNPRO détecte les problèmes, estime les coûts et recommande les meilleurs professionnels au Québec. Parlez à Alex."
+          content="UNPRO aide les propriétaires québécois à identifier les problèmes, comprendre les risques, analyser les soumissions et prendre de meilleures décisions pour leur propriété grâce à Alex, l'assistant IA résidentiel."
         />
-        <meta property="og:title" content="UNPRO — Alex s'occupe du reste" />
+        <meta property="og:title" content="UNPRO — L'intelligence artificielle pour votre maison" />
         <meta
           property="og:description"
-          content="Concierge IA québécois. Décrivez votre situation, Alex analyse et recommande."
+          content="Identifier les problèmes, comprendre les risques et prendre de meilleures décisions pour votre propriété."
         />
         <meta name="theme-color" content="#F7FAFF" />
         <link rel="canonical" href="https://unpro.ca" />
-        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+        <script type="application/ld+json">{JSON.stringify(serviceSchema)}</script>
+        <script type="application/ld+json">{JSON.stringify(orgSchema)}</script>
       </Helmet>
 
       <div className="unicorn-theme min-h-screen pb-[calc(9rem+env(safe-area-inset-bottom))] relative overflow-x-hidden">
@@ -706,6 +750,7 @@ export default function PageHomeUnicorn() {
         <HeroAlexOrb onTalk={onTalk} />
         <AlexCapabilitiesStrip />
         <AiInputCard onTalk={onTalk} />
+        <SectionAIHomeIntelligence />
         <HomeQuickActionsGrid />
         <SocialProofContractorBlock />
         <LiveStatsCard />
@@ -718,6 +763,7 @@ export default function PageHomeUnicorn() {
           <ContractorsBackdrop />
           <ContractorAippSplit />
         </section>
+        <EntityDefinitionBlock />
         <BottomDockGlass />
         <footer className="relative mt-12 py-10 px-4 text-center">
           <FooterBackdrop />
