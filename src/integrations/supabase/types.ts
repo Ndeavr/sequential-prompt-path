@@ -8843,6 +8843,86 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_qualification_sessions: {
+        Row: {
+          created_at: string
+          graph: Json
+          id: string
+          matching_confidence: number | null
+          property_id: string | null
+          ready_for_match: boolean
+          score: number
+          service_category: string | null
+          session_token: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          graph?: Json
+          id?: string
+          matching_confidence?: number | null
+          property_id?: string | null
+          ready_for_match?: boolean
+          score?: number
+          service_category?: string | null
+          session_token: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          graph?: Json
+          id?: string
+          matching_confidence?: number | null
+          property_id?: string | null
+          ready_for_match?: boolean
+          score?: number
+          service_category?: string | null
+          session_token?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      alex_qualification_turns: {
+        Row: {
+          created_at: string
+          extracted: Json
+          id: string
+          question_asked: string | null
+          score_delta: number
+          session_id: string
+          user_answer: string | null
+        }
+        Insert: {
+          created_at?: string
+          extracted?: Json
+          id?: string
+          question_asked?: string | null
+          score_delta?: number
+          session_id: string
+          user_answer?: string | null
+        }
+        Update: {
+          created_at?: string
+          extracted?: Json
+          id?: string
+          question_asked?: string | null
+          score_delta?: number
+          session_id?: string
+          user_answer?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_qualification_turns_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_qualification_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alex_realtime_sessions: {
         Row: {
           device_type: string | null
@@ -42352,6 +42432,59 @@ export type Database = {
             columns: ["homeowner_session_id"]
             isOneToOne: false
             referencedRelation: "alex_homeowner_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      homeowner_qualification_graph: {
+        Row: {
+          budget_band: string | null
+          contractor_id: string | null
+          created_at: string
+          id: string
+          outcome: string | null
+          problem_category: string | null
+          property_id: string | null
+          quotes_count: number | null
+          satisfaction: number | null
+          session_id: string | null
+          symptoms: Json
+          urgency: string | null
+        }
+        Insert: {
+          budget_band?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          outcome?: string | null
+          problem_category?: string | null
+          property_id?: string | null
+          quotes_count?: number | null
+          satisfaction?: number | null
+          session_id?: string | null
+          symptoms?: Json
+          urgency?: string | null
+        }
+        Update: {
+          budget_band?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          outcome?: string | null
+          problem_category?: string | null
+          property_id?: string | null
+          quotes_count?: number | null
+          satisfaction?: number | null
+          session_id?: string | null
+          symptoms?: Json
+          urgency?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homeowner_qualification_graph_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_qualification_sessions"
             referencedColumns: ["id"]
           },
         ]
