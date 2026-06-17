@@ -4,6 +4,7 @@
  */
 import { corsHeaders, adminClient, transitionLead, logLaunchEvent } from "../_shared/launch.ts";
 import { reportOutcome, FailureCode } from "../_shared/reliability.ts";
+import { enqueueContactVerification } from "../_shared/autoVerifyContact.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
