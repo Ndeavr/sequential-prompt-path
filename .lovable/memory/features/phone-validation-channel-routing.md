@@ -23,6 +23,7 @@ Every enrichment edge function calls `_shared/autoVerifyContact.ts::enqueueConta
 - Auto-fallback to email triggered when primary SMS fails; logged in `communication_logs` with `fallback_triggered=true` and `parent_log_id`.
 - Frontend entry point: `src/lib/communications/router.ts` → `sendViaRouter()`. All outbound flows must use this — never call Twilio/email functions directly.
 - Schema extensions: `communication_logs.fallback_chain jsonb`, `communication_logs.channel_decision_reason text`, `phone_carrier_cache.validated_at`.
+- **HARD landline block (in `contact-router`)**: when `phone_type IN ('landline','fixedVoip')`, SMS is forcibly converted to email; if no email exists, the send is short-circuited (`delivery_status='blocked'`, `channel_decision_reason='landline_sms_blocked'`) and the matching `contact_verification_queue` row is flipped to `verification_status='needs_manual_review'` + `best_contact_method='phone_call'`.
 
 ## Manual verification queue (Module 2)
 - Route: `/admin/contact-verification` (admin only). Page: `src/pages/admin/AdminContactVerification.tsx`.
