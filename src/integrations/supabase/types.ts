@@ -19971,12 +19971,14 @@ export type Database = {
       communication_logs: {
         Row: {
           channel: string
+          channel_decision_reason: string | null
           contact_id: string | null
           created_at: string
           delivered_at: string | null
           delivery_status: string
           direction: string
           error_message: string | null
+          fallback_chain: Json
           fallback_triggered: boolean
           id: string
           idempotency_key: string | null
@@ -19989,12 +19991,14 @@ export type Database = {
         }
         Insert: {
           channel: string
+          channel_decision_reason?: string | null
           contact_id?: string | null
           created_at?: string
           delivered_at?: string | null
           delivery_status?: string
           direction?: string
           error_message?: string | null
+          fallback_chain?: Json
           fallback_triggered?: boolean
           id?: string
           idempotency_key?: string | null
@@ -20007,12 +20011,14 @@ export type Database = {
         }
         Update: {
           channel?: string
+          channel_decision_reason?: string | null
           contact_id?: string | null
           created_at?: string
           delivered_at?: string | null
           delivery_status?: string
           direction?: string
           error_message?: string | null
+          fallback_chain?: Json
           fallback_triggered?: boolean
           id?: string
           idempotency_key?: string | null
@@ -20973,6 +20979,131 @@ export type Database = {
           role_type?: string | null
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      contact_verification_notes: {
+        Row: {
+          admin_id: string | null
+          contact_verification_id: string
+          created_at: string
+          id: string
+          note: string
+        }
+        Insert: {
+          admin_id?: string | null
+          contact_verification_id: string
+          created_at?: string
+          id?: string
+          note: string
+        }
+        Update: {
+          admin_id?: string | null
+          contact_verification_id?: string
+          created_at?: string
+          id?: string
+          note?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_verification_notes_contact_verification_id_fkey"
+            columns: ["contact_verification_id"]
+            isOneToOne: false
+            referencedRelation: "contact_verification_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_verification_queue: {
+        Row: {
+          assigned_to: string | null
+          best_contact_method: string | null
+          business_name: string
+          contact_person_name: string | null
+          created_at: string
+          email: string | null
+          google_business_url: string | null
+          id: string
+          last_contacted_at: string | null
+          manual_contact_priority_score: number
+          match_confidence: string
+          match_reasons: Json
+          neq_business_name: string | null
+          neq_number: string | null
+          neq_status: string | null
+          next_followup_at: string | null
+          notes: string | null
+          phone: string | null
+          phone_type: string | null
+          rbq_business_name: string | null
+          rbq_number: string | null
+          rbq_status: string | null
+          role: string | null
+          source_lead_id: string | null
+          source_table: string | null
+          updated_at: string
+          verification_status: string
+          website: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          best_contact_method?: string | null
+          business_name: string
+          contact_person_name?: string | null
+          created_at?: string
+          email?: string | null
+          google_business_url?: string | null
+          id?: string
+          last_contacted_at?: string | null
+          manual_contact_priority_score?: number
+          match_confidence?: string
+          match_reasons?: Json
+          neq_business_name?: string | null
+          neq_number?: string | null
+          neq_status?: string | null
+          next_followup_at?: string | null
+          notes?: string | null
+          phone?: string | null
+          phone_type?: string | null
+          rbq_business_name?: string | null
+          rbq_number?: string | null
+          rbq_status?: string | null
+          role?: string | null
+          source_lead_id?: string | null
+          source_table?: string | null
+          updated_at?: string
+          verification_status?: string
+          website?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          best_contact_method?: string | null
+          business_name?: string
+          contact_person_name?: string | null
+          created_at?: string
+          email?: string | null
+          google_business_url?: string | null
+          id?: string
+          last_contacted_at?: string | null
+          manual_contact_priority_score?: number
+          match_confidence?: string
+          match_reasons?: Json
+          neq_business_name?: string | null
+          neq_number?: string | null
+          neq_status?: string | null
+          next_followup_at?: string | null
+          notes?: string | null
+          phone?: string | null
+          phone_type?: string | null
+          rbq_business_name?: string | null
+          rbq_number?: string | null
+          rbq_status?: string | null
+          role?: string | null
+          source_lead_id?: string | null
+          source_table?: string | null
+          updated_at?: string
+          verification_status?: string
+          website?: string | null
         }
         Relationships: []
       }
@@ -53969,6 +54100,7 @@ export type Database = {
           line_type: string | null
           normalized_phone: string
           raw_payload: Json | null
+          validated_at: string
         }
         Insert: {
           carrier?: string | null
@@ -53977,6 +54109,7 @@ export type Database = {
           line_type?: string | null
           normalized_phone: string
           raw_payload?: Json | null
+          validated_at?: string
         }
         Update: {
           carrier?: string | null
@@ -53985,6 +54118,7 @@ export type Database = {
           line_type?: string | null
           normalized_phone?: string
           raw_payload?: Json | null
+          validated_at?: string
         }
         Relationships: []
       }

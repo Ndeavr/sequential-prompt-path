@@ -12,6 +12,7 @@ export default function AdminOutreachAnalytics() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [extraMetrics, setExtraMetrics] = useState<{ landlines_detected: number; email_fallback_success: number; sms_sent: number; sms_failed: number; emails_sent: number } | null>(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -23,6 +24,21 @@ export default function AdminOutreachAnalytics() {
     ]);
     setCampaigns(campRes.data || []);
     setMessages(msgRes.data || []);
+    // Channel-routing prevention metrics from communication_logs + contacts
+    try {
+      const [landlinesRes, fallbackRes, commLogsRes] = await Promise.all([
+        (supabase.from as any)("contacts").select("id", { count: "exact", head: true }).eq("phone_type", "landline"),
+        (supabase.from as any)("communication_logs").select("id", { count: "exact", head: true }).eq("fallback_triggered", true).eq("channel", "email"),
+        (supabase.from as any)("communication_logs").select("channel, delivery_status").limit(2000),
+      ]);
+      setExtraMetrics({
+        landlines_detected: landlinesRes.count ?? 0,
+        email_fallback_success: fallbackRes.count ?? 0,
+        sms_sent: (commLogsRes.data || []).filter((r: any) => r.channel === "sms" && ["sent", "delivered"].includes(r.delivery_status)).length,
+        sms_failed: (commLogsRes.data || []).filter((r: any) => r.channel === "sms" && ["failed", "undelivered"].includes(r.delivery_status)).length,
+        emails_sent: (commLogsRes.data || []).filter((r: any) => r.channel === "email" && ["sent", "delivered"].includes(r.delivery_status)).length,
+      });
+    } catch { /* non-blocking */ }
     setLoading(false);
   }
 
@@ -72,6 +88,29 @@ export default function AdminOutreachAnalytics() {
           </Card>
         ))}
       </div>
+
+      {extraMetrics && (
+        <div>
+          <h2 className="font-display text-sm font-semibold text-muted-foreground uppercase mb-2">Channel routing</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {[
+              { label: "SMS Sent", value: extraMetrics.sms_sent },
+              { label: "SMS Failed", value: extraMetrics.sms_failed },
+              { label: "Landlines Detected", value: extraMetrics.landlines_detected },
+              { label: "Emails Sent", value: extraMetrics.emails_sent },
+              { label: "Email Fallback Success", value: extraMetrics.email_fallback_success },
+              { label: "Landline SMS Prevented", value: extraMetrics.landlines_detected },
+            ].map(c => (
+              <Card key={c.label}>
+                <CardContent className="p-4 text-center">
+                  <div className="text-2xl font-bold">{c.value}</div>
+                  <div className="text-xs text-muted-foreground">{c.label}</div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Card>
         <CardHeader><CardTitle className="text-base">Performance par campagne</CardTitle></CardHeader>
