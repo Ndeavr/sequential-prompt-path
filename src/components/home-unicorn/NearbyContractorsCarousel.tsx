@@ -168,11 +168,11 @@ export default function NearbyContractorsCarousel() {
                     ({current.reviewCount})
                   </span>
                 </div>
-                <div className="text-[10px] flex items-center gap-1 mt-0.5 truncate" style={{ color: "#667085" }}>
-                  {current.specialty}
-                  <span className="mx-1">·</span>
+                <div className="text-[10px] flex flex-wrap items-center gap-x-1 gap-y-0.5 mt-0.5" style={{ color: "#667085" }}>
+                  <span>{current.specialty}</span>
+                  <span>·</span>
                   <MapPin size={9} color="#94A3B8" />
-                  {current.city}
+                  <span>{current.city}</span>
                 </div>
               </div>
             </div>
