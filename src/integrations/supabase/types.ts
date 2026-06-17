@@ -27062,6 +27062,8 @@ export type Database = {
           category_secondary: string | null
           city: string | null
           clicked_at: string | null
+          company_confidence_score: number | null
+          company_failure_reason: string | null
           company_name: string | null
           contractor_id: string | null
           created_at: string
@@ -27069,6 +27071,7 @@ export type Database = {
           created_by_role_code: string | null
           curiosity_slug: string | null
           curiosity_token: string | null
+          do_not_contact: boolean
           email: string | null
           enrichment_status: string
           failure_code: string | null
@@ -27091,12 +27094,14 @@ export type Database = {
           onboarding_token: string | null
           opened_at: string | null
           outreach_status: string
+          overall_contact_confidence_score: number | null
           paid_at: string | null
           payment_started_at: string | null
           payment_status: string
           phone: string | null
           phone_area_code: string | null
           phone_carrier: string | null
+          phone_confidence_score: number | null
           phone_e164: string | null
           phone_failure_reason: string | null
           phone_lookup_at: string | null
@@ -27121,6 +27126,7 @@ export type Database = {
           trade: string | null
           unsubscribed_at: string | null
           updated_at: string
+          validation_status: string
           website_url: string | null
         }
         Insert: {
@@ -27134,6 +27140,8 @@ export type Database = {
           category_secondary?: string | null
           city?: string | null
           clicked_at?: string | null
+          company_confidence_score?: number | null
+          company_failure_reason?: string | null
           company_name?: string | null
           contractor_id?: string | null
           created_at?: string
@@ -27141,6 +27149,7 @@ export type Database = {
           created_by_role_code?: string | null
           curiosity_slug?: string | null
           curiosity_token?: string | null
+          do_not_contact?: boolean
           email?: string | null
           enrichment_status?: string
           failure_code?: string | null
@@ -27163,12 +27172,14 @@ export type Database = {
           onboarding_token?: string | null
           opened_at?: string | null
           outreach_status?: string
+          overall_contact_confidence_score?: number | null
           paid_at?: string | null
           payment_started_at?: string | null
           payment_status?: string
           phone?: string | null
           phone_area_code?: string | null
           phone_carrier?: string | null
+          phone_confidence_score?: number | null
           phone_e164?: string | null
           phone_failure_reason?: string | null
           phone_lookup_at?: string | null
@@ -27193,6 +27204,7 @@ export type Database = {
           trade?: string | null
           unsubscribed_at?: string | null
           updated_at?: string
+          validation_status?: string
           website_url?: string | null
         }
         Update: {
@@ -27206,6 +27218,8 @@ export type Database = {
           category_secondary?: string | null
           city?: string | null
           clicked_at?: string | null
+          company_confidence_score?: number | null
+          company_failure_reason?: string | null
           company_name?: string | null
           contractor_id?: string | null
           created_at?: string
@@ -27213,6 +27227,7 @@ export type Database = {
           created_by_role_code?: string | null
           curiosity_slug?: string | null
           curiosity_token?: string | null
+          do_not_contact?: boolean
           email?: string | null
           enrichment_status?: string
           failure_code?: string | null
@@ -27235,12 +27250,14 @@ export type Database = {
           onboarding_token?: string | null
           opened_at?: string | null
           outreach_status?: string
+          overall_contact_confidence_score?: number | null
           paid_at?: string | null
           payment_started_at?: string | null
           payment_status?: string
           phone?: string | null
           phone_area_code?: string | null
           phone_carrier?: string | null
+          phone_confidence_score?: number | null
           phone_e164?: string | null
           phone_failure_reason?: string | null
           phone_lookup_at?: string | null
@@ -27265,6 +27282,7 @@ export type Database = {
           trade?: string | null
           unsubscribed_at?: string | null
           updated_at?: string
+          validation_status?: string
           website_url?: string | null
         }
         Relationships: [
