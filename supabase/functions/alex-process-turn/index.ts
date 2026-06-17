@@ -22,8 +22,15 @@ Deno.serve(async (req) => {
 
     const token = session_token || session_id;
 
-    // 1. Get session
-    const { data: session } = await supabase
+    // 1. Get or auto-create session (guest-safe)
+    if (!token) {
+      return new Response(JSON.stringify({ error: "Missing session_token" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    let { data: session } = await supabase
       .from("alex_sessions")
       .select("*")
       .eq("session_token", token)
@@ -32,10 +39,27 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!session) {
-      return new Response(JSON.stringify({ error: "Session not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const { data: created, error: createErr } = await supabase
+        .from("alex_sessions")
+        .insert({
+          session_token: token,
+          session_type: "general",
+          auth_state: "guest",
+          language: "fr",
+          voice_locale: "fr-QC",
+          current_step: "listening",
+        })
+        .select("*")
+        .single();
+
+      if (createErr || !created) {
+        console.error("alex-process-turn: failed to auto-create session", createErr);
+        return new Response(JSON.stringify({ error: "Failed to start session" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      session = created;
     }
 
     // 2. Clean transcript before processing
