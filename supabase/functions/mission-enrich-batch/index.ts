@@ -90,6 +90,15 @@ Deno.serve(async (req) => {
       await supabase.from("outbound_leads").update({
         pipeline_stage: "enriched", updated_at: new Date().toISOString(),
       }).eq("id", lead.id);
+
+      // 🔒 Auto-enqueue for verification before any outreach is fired.
+      await enqueueContactVerification({
+        business_name: lead.company_name,
+        website: lead.website_url,
+        source_lead_id: lead.id,
+        source_table: "outbound_leads",
+      });
+
       enriched++;
     }
 
