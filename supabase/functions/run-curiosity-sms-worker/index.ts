@@ -5,6 +5,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { sendSms } from "../_shared/twilioSend.ts";
 import { CURIOSITY_STEPS, CURIOSITY_TOTAL_STEPS, buildCuriosityUrl } from "../_shared/curiosityTemplates.ts";
+import { gateLeadForOutreach } from "../_shared/leadValidation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -55,18 +56,26 @@ async function processOne(sb: ReturnType<typeof createClient>, seq: any, c: Coun
     c.messages_skipped++; return;
   }
 
-  // HARD GATE: phone must be Lookup-confirmed valid_mobile / valid_voip
-  const validStatus = lead.phone_validation_status;
-  if (validStatus !== "valid_mobile" && validStatus !== "valid_voip") {
+  // HARD GATE: unified validation (company + phone + dedupe + confidence)
+  const blockReason = gateLeadForOutreach(lead);
+  if (blockReason) {
     await sb.from("curiosity_sequences").update({
       status: "failed",
-      failure_code: lead.phone_failure_reason || validStatus || "phone_not_validated",
+      failure_code: blockReason,
     }).eq("id", seq.id);
     await sb.from("curiosity_funnel_events").insert({
       lead_id: lead.id,
       slug: lead.curiosity_slug,
       event_type: "sms_blocked",
-      metadata: { reason: lead.phone_failure_reason || validStatus || "phone_not_validated", stage: "pre_queue" },
+      metadata: {
+        reason: blockReason,
+        stage: "pre_queue",
+        validation_status: lead.validation_status,
+        phone_failure_reason: lead.phone_failure_reason,
+        company_failure_reason: lead.company_failure_reason,
+        phone_score: lead.phone_confidence_score,
+        company_score: lead.company_confidence_score,
+      },
     });
     c.messages_skipped++; return;
   }
@@ -190,7 +199,7 @@ Deno.serve(async (req) => {
         const remaining = cap - (sentToday ?? 0);
         const { data: due, error: dueErr } = await sb
           .from("curiosity_sequences")
-          .select("id,current_step,next_send_at,status,clicked_at,contractor_leads(id,first_name,company_name,phone,mobile_phone,phone_e164,phone_validation_status,phone_failure_reason,paid_at,unsubscribed_at,curiosity_slug,curiosity_token)")
+          .select("id,current_step,next_send_at,status,clicked_at,contractor_leads(id,first_name,company_name,phone,mobile_phone,phone_e164,phone_validation_status,phone_failure_reason,validation_status,company_failure_reason,company_confidence_score,phone_confidence_score,do_not_contact,paid_at,unsubscribed_at,curiosity_slug,curiosity_token)")
           .eq("status", "active")
           .lte("next_send_at", new Date().toISOString())
           .order("next_send_at", { ascending: true })
