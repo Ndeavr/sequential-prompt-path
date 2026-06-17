@@ -16,11 +16,12 @@ const BLOCKED_PATTERNS: RegExp[] = [
 
 export type GuardOutcome =
   | { ok: true; normalized: string; area_code: string | null; country_code: string | null }
-  | { ok: false; reason: "invalid_phone" | "blocked" | "opted_out"; detail: string; normalized: string | null };
+  | { ok: false; reason: "invalid_phone" | "blocked" | "opted_out" | "not_mobile" | "sms_disabled" | "max_failures"; detail: string; normalized: string | null };
 
 export async function validateBeforeSend(opts: {
   supabase: ReturnType<typeof createClient>;
   phone: string | null | undefined;
+  lead_id?: string | null;
 }): Promise<GuardOutcome> {
   const norm = normalizePhone(opts.phone);
   if (!norm.valid || !norm.normalized) {
@@ -40,6 +41,37 @@ export async function validateBeforeSend(opts: {
   if (opt) {
     return { ok: false, reason: "opted_out", detail: "in sms_opt_outs", normalized: norm.normalized };
   }
+
+  // Mobile-only + failure-threshold guard. Looks up the lead row (when id provided)
+  // and rejects landlines, VoIP, unknown, sms_disabled, or >=2 failed attempts.
+  if (opts.lead_id) {
+    const { data: lead } = await opts.supabase
+      .from("contractor_leads")
+      .select("phone_type, sms_disabled, sms_failed_attempts")
+      .eq("id", opts.lead_id)
+      .maybeSingle();
+    if (lead) {
+      const failed = (lead as any).sms_failed_attempts ?? 0;
+      if ((lead as any).sms_disabled === true) {
+        return { ok: false, reason: "sms_disabled", detail: "lead.sms_disabled=true", normalized: norm.normalized };
+      }
+      if (failed >= 2) {
+        // Auto-flip so future agents don't re-check
+        await opts.supabase.from("contractor_leads").update({
+          sms_disabled: true,
+          contact_method: "email",
+          sms_suppressed_at: new Date().toISOString(),
+          sms_suppressed_reason: failed >= 5 ? "permanent_suppression" : "failure_threshold",
+        }).eq("id", opts.lead_id);
+        return { ok: false, reason: "max_failures", detail: `sms_failed_attempts=${failed}`, normalized: norm.normalized };
+      }
+      const pt = (lead as any).phone_type;
+      if (pt && pt !== "mobile") {
+        return { ok: false, reason: "not_mobile", detail: `phone_type=${pt}`, normalized: norm.normalized };
+      }
+    }
+  }
+
   return { ok: true, normalized: norm.normalized, area_code: norm.area_code, country_code: norm.country_code };
 }
 

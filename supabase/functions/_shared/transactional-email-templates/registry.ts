@@ -23,6 +23,7 @@ import { template as manualLiveTest } from './manual-live-test.tsx'
 import { template as formUserConfirmation } from './form-user-confirmation.tsx'
 import { template as formAdminNotification } from './form-admin-notification.tsx'
 import { template as routerSmokeTest } from './router-smoke-test.tsx'
+import { template as contractorFallbackAnalysis } from './contractor-fallback-analysis.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'form-user-confirmation': formUserConfirmation,
@@ -39,4 +40,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'prospect-outreach': prospectOutreach,
   'manual-live-test': manualLiveTest,
   'router-smoke-test': routerSmokeTest,
+  'contractor-fallback-analysis': contractorFallbackAnalysis,
 }

@@ -14,6 +14,7 @@ import {
   ShieldCheck, Home, Wrench, Award, BarChart3, Eye,
   FileCheck, AlertTriangle, CheckCircle2, Clock,
 } from "lucide-react";
+import ContactHealthPanel from "@/components/admin/ContactHealthPanel";
 
 function useOperationsData() {
   return useQuery({
@@ -124,14 +125,20 @@ const AdminOperationsHub = () => {
       </div>
 
       <Tabs defaultValue="claims" className="w-full">
-        <TabsList className="w-full grid grid-cols-3 sm:grid-cols-6 h-9 rounded-xl">
+        <TabsList className="w-full grid grid-cols-3 sm:grid-cols-7 h-9 rounded-xl">
           <TabsTrigger value="claims" className="text-xs">Réclamations</TabsTrigger>
           <TabsTrigger value="verifications" className="text-xs">Vérifications</TabsTrigger>
           <TabsTrigger value="contributions" className="text-xs">Contributions</TabsTrigger>
           <TabsTrigger value="certifications" className="text-xs">Certifications</TabsTrigger>
           <TabsTrigger value="agents" className="text-xs">Agents</TabsTrigger>
+          <TabsTrigger value="contact" className="text-xs">Contact</TabsTrigger>
           <TabsTrigger value="events" className="text-xs">Événements</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="contact" className="mt-4">
+          <ContactHealthPanel />
+        </TabsContent>
+
 
         {/* Claims */}
         <TabsContent value="claims" className="mt-4 space-y-2">

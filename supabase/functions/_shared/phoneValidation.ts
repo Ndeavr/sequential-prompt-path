@@ -113,25 +113,38 @@ export async function lookupPhone(e164: string): Promise<LookupResult> {
  */
 export async function validateAndPersistLeadPhone(
   sb: ReturnType<typeof createClient>,
-  lead: { id: string; phone?: string | null; mobile_phone?: string | null; phone_validation_status?: string | null },
-): Promise<ClassifyResult & { phone_type?: string; carrier?: string | null }> {
+  lead: { id: string; phone?: string | null; mobile_phone?: string | null; email?: string | null; phone_validation_status?: string | null; do_not_contact?: boolean | null },
+): Promise<ClassifyResult & { phone_type?: string; carrier?: string | null; contact_method?: string }> {
   const raw = lead.mobile_phone || lead.phone || "";
   const c = classifyPhone(raw);
+  const email = (lead.email ?? "").trim();
+  const hasEmail = email.length > 0 && /@/.test(email);
+
+  const deriveMethod = (phoneType: string | null): string => {
+    if (lead.do_not_contact) return "skip";
+    if (phoneType === "mobile") return "mobile_sms";
+    if (hasEmail) return "email";
+    if (phoneType === "landline" || phoneType === "voip" || phoneType === "unknown") return "manual";
+    return "unknown";
+  };
 
   // Format-invalid → persist and stop
   if (c.status === "invalid_phone" || c.status === "outside_quebec") {
+    const contact_method = hasEmail ? "email" : "skip";
     await sb.from("contractor_leads").update({
       phone_e164: c.e164,
       phone_area_code: c.area_code,
       phone_validation_status: c.status,
       phone_failure_reason: c.reason,
       phone_lookup_at: new Date().toISOString(),
+      contact_method,
     }).eq("id", lead.id);
-    return c;
+    return { ...c, contact_method };
   }
 
   // Format ok → Twilio Lookup
   const lk = await lookupPhone(c.e164!);
+  const contact_method = deriveMethod(lk.phone_type);
   await sb.from("contractor_leads").update({
     phone_e164: c.e164,
     phone_area_code: c.area_code,
@@ -140,14 +153,25 @@ export async function validateAndPersistLeadPhone(
     phone_validation_status: lk.status,
     phone_failure_reason: lk.reason,
     phone_lookup_at: new Date().toISOString(),
+    contact_method,
   }).eq("id", lead.id);
 
-  // If now valid, re-fire curiosity enrollment if applicable
-  if (lk.status === "valid_mobile" || lk.status === "valid_voip") {
-    await sb.rpc("noop", {}).catch(() => {}); // placeholder; trigger re-fires on next pipeline_status update
+  // Trigger email fallback dispatch when not mobile + has email (fire-and-forget)
+  if (lk.phone_type !== "mobile" && hasEmail) {
+    try {
+      const SUPA_URL = Deno.env.get("SUPABASE_URL");
+      const SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (SUPA_URL && SRK) {
+        await fetch(`${SUPA_URL}/functions/v1/email-fallback-dispatch`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${SRK}` },
+          body: JSON.stringify({ lead_id: lead.id, reason: "non_mobile_validation" }),
+        }).catch(() => {});
+      }
+    } catch (_) { /* swallow */ }
   }
 
-  return { ...c, status: lk.status, reason: lk.reason, phone_type: lk.phone_type, carrier: lk.carrier };
+  return { ...c, status: lk.status, reason: lk.reason, phone_type: lk.phone_type, carrier: lk.carrier, contact_method };
 }
 
 export const SMS_ALLOWED_STATUSES: PhoneValidationStatus[] = ["valid_mobile", "valid_voip"];
