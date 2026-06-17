@@ -14,6 +14,7 @@ import {
   ShieldCheck, Home, Wrench, Award, BarChart3, Eye,
   FileCheck, AlertTriangle, CheckCircle2, Clock,
 } from "lucide-react";
+import ContactHealthPanel from "@/components/admin/ContactHealthPanel";
 
 function useOperationsData() {
   return useQuery({
