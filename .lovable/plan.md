@@ -1,117 +1,61 @@
-## UNPRO — Phone Validation + Manual Contact Verification
+# Auto-Wire Contact Verification Across All Acquisition Pipelines
 
-Two connected modules: (1) global SMS→Email fallback driven by line-type validation, (2) admin queue to manually verify and contact ambiguous leads.
+## Goal
+Every newly discovered/enriched contractor flows through `contact-verification-enqueue` before any outreach. Landlines never receive SMS — routed to email or manual call automatically, with zero admin action.
 
----
+## Strategy
+Two enforcement layers so nothing slips through:
 
-### Module 1 — Global Phone Validation + SMS/Email Fallback
+1. **Source-level hook** — fire `contact-verification-enqueue` at every enrichment exit point.
+2. **DB-level safety net** — a trigger on `contractor_enriched_profiles` (and equivalent prospect tables) that auto-enqueues any new/updated row missing a verification record.
+3. **Router hard gate** — `contact-router` refuses SMS for `phone_type='landline'` regardless of caller intent, and auto-substitutes email or marks as manual-call.
 
-**Goal:** Zero SMS attempts on landlines. Every outbound contact attempt picks the right channel automatically.
+## Changes
 
-**1.1 Twilio Lookup connector**
-Use the existing Twilio connection (Lookup v2 endpoint `/Lookup/v2/PhoneNumbers/{e164}?Fields=line_type_intelligence`). Returns `mobile | landline | voip | fixedVoip | nonFixedVoip`.
+### 1. New shared helper `supabase/functions/_shared/autoVerifyContact.ts`
+- `enqueueVerification(payload)` — fire-and-forget POST to `contact-verification-enqueue` with retries, idempotency key = `source_table:source_lead_id`.
+- All callers below import this helper instead of duplicating invoke logic.
 
-**1.2 New edge function `phone-validate`**
-- Input: `phone` (raw or E.164), optional `contact_id`
-- Steps: `normalizePhone()` → if invalid → return `invalid`; else cache lookup in `phone_carrier_cache` (already exists, extend); call Twilio Lookup; persist `phone_type`, `carrier`, `validated_at`
-- Output: `{ phone_e164, phone_type, channel_preference, valid }`
-- Cache TTL: 90 days (line type rarely changes)
+### 2. Wire into existing enrichment edge functions (call helper after successful enrichment)
+- `enrich-business-profile/index.ts`
+- `autonomous-acquisition-engine/index.ts` (after each `run_pipeline` enrich step)
+- `edge-enrich-prospect/index.ts`
+- `mission-enrich-batch/index.ts`
+- `launch-agent-enrich/index.ts` and `launch-agent-enrich-contact/index.ts`
+- `sniper-enrich` (sniper outreach engine)
+- `import-business-intelligence/index.ts` (contractor import runs)
+- `fn-convert-prospect-to-lead/index.ts`
 
-**1.3 Shared decision helper `_shared/contactChannel.ts`**
-```
-pickChannel({phone_type, email, sms_consent, email_consent}) →
-  mobile + sms_consent → "sms"
-  landline → "email"
-  voip → "sms_then_email"
-  invalid/none + email → "email"
-  none → "invalid"
-```
+Each call passes the canonical payload (business_name, phone, email, website, rbq/neq, google_*, category, city, source_lead_id, source_table).
 
-**1.4 Wire into `contact-router` (existing `src/lib/communications/router.ts`)**
-Before any send: call `phone-validate` if `phone_type` missing on the contact, then apply `pickChannel`. `channel_override` still wins. Log channel decision + reason to `communication_logs`.
+### 3. DB safety-net trigger (migration)
+- New trigger `auto_enqueue_contact_verification` on INSERT/UPDATE of `contractor_enriched_profiles`, `outbound_prospects`, `launch_leads`, `sniper_leads`, `companies` (when `status` transitions to enriched/approved).
+- Trigger uses `pg_net` to call the edge function with service role JWT.
+- Skips if a `contact_verification_queue` row already exists for the same `source_table+source_lead_id`.
+- Idempotent — safe to re-fire.
 
-**1.5 Auto-fallback on failure**
-- VOIP SMS failure (Twilio error codes 30003/30004/30005/30006) → automatically enqueue email send with same `template_key`
-- Add `fallback_chain` JSON column to `communication_logs` to record the cascade
+### 4. Harden `contact-router` against landline SMS
+- Before any SMS send: if `phone_type IN ('landline','fixedVoip')` → never send SMS. Auto-cascade to:
+  - Email if `email` present and valid.
+  - Else mark `verification_status='needs_manual_call'` in `contact_verification_queue` and log `communication_logs.channel_decision_reason='landline_no_email_manual_call'`.
+- Add explicit `landline_sms_blocked` metric to `communication_logs.fallback_chain`.
+- Pre-flight: if no `phone_type` cached, synchronously call `twilio-lookup-phone` first.
 
-**1.6 Apply everywhere**
-Audit and route through `sendViaRouter`:
-- Onboarding contractor invites
-- Secondary OTP (when primary email fails)
-- Outbound prospecting (`outbound_messages`, `growth_outbound_messages`, `agent_outreach_messages`)
-- Reminders (`contractor_followup_queue`, `acquisition_followup_queue`, `launch_followup_schedule`)
-- Autonomous agents (`launch-commander`, `outbound-autopilot-*`)
+### 5. Manual-call workflow
+- Surface `needs_manual_call` rows at top of `/admin/contact-verification` (new pinned filter) with "Call Landline" CTA — already supported by the existing UI's channel guard; just add the auto-set status path and a notification badge counter.
 
-**1.7 Sequence rules (new `outbound_send_window_policy` entries)**
-- `mobile`: SMS T0 → Email T+1d
-- `landline`: Email T0 → Email T+3d → Contact form T+5d
-- `voip`: SMS T0 → on fail Email T+0 → Email T+3d
+### 6. Observability
+- New cards in `AdminOutreachAnalytics.tsx`:
+  - "Auto-verifications enqueued (24h)"
+  - "Landline SMS attempts blocked (24h)"
+  - "Awaiting manual call" (count of `needs_manual_call`)
+- Backfill job (one-shot edge function `backfill-contact-verification`) that walks existing `contractor_enriched_profiles` without a queue row and enqueues them in batches of 100.
 
-**1.8 Dashboard `/admin/outreach` cards (extend existing analytics page)**
-SMS Sent · SMS Failed · Landlines Detected · Emails Sent · Email Fallback Success · Missed SMS-on-Landline Prevented
+## Out of scope
+- Changing the verification scoring algorithm.
+- New UI screens beyond the existing `/admin/contact-verification` page.
+- Twilio Lookup cache TTL changes (stays 90d).
 
----
-
-### Module 2 — `/admin/contact-verification`
-
-**2.1 Tables**
-
-`contact_verification_queue` — fields per spec (business_name, contact_person_name, role, email, phone, phone_type, website, google_business_url, rbq_number, rbq_business_name, rbq_status, neq_number, neq_business_name, neq_status, match_confidence, match_reasons jsonb, verification_status, best_contact_method, manual_contact_priority_score, last_contacted_at, next_followup_at, notes, assigned_to, source_lead_id, source_table, created_at, updated_at).
-
-`contact_verification_notes` — id, contact_verification_id, admin_id, note, created_at.
-
-GRANTs to `authenticated` + `service_role`; RLS: admin-only via `has_role(auth.uid(),'admin')`.
-
-**2.2 Enrichment trigger**
-New edge function `contact-verification-enqueue` invoked when a lead is enriched (called from existing enrichment functions and from a backfill batch). Logic:
-- Compare `business_name` vs `rbq_business_name`, `neq_business_name`, website domain, GBP name (Jaro-Winkler ≥ 0.92 = match)
-- Compare `contact_person_name` vs RBQ officer / NEQ admin / website contact / email username
-- Compute `match_confidence` (high/medium/low/conflict) per the rules in the spec
-- Call `phone-validate` to set `phone_type`
-- Compute `best_contact_method` via `pickChannel`
-- Compute `manual_contact_priority_score`: +30 verified RBQ, +20 verified NEQ, +20 email present, +15 landline-with-email, +10 strong Google reviews (≥4.3 & ≥20), +15 priority trade (roofing/insulation/plumbing/electrical/HVAC/mold/foundation/windows/landscaping/reno), +10 priority region (Mtl/Laval/Rive-Nord/Rive-Sud/Lanaudière/Laurentides), -50 duplicate exists
-
-**2.3 Admin page `src/pages/admin/AdminContactVerification.tsx`**
-- Route `/admin/contact-verification` (add to `routesConfig.ts` + router)
-- Top cards: Total · Needs Review · Verified · Contacted · Replied · Landline+Email · No Email · Conflicts · High-Priority
-- Filter pills: All / New / Needs Review / Verified / Contacted / Replied / Landline Only / Email Available / No Email / Conflict / High / Medium / Low
-- Table: Company · Contact · Email · Phone (badge=type) · RBQ · NEQ · Confidence badge · Recommended channel · Status · Last contacted · Next follow-up
-- Click row → side `Sheet` with Identity, Verification, Actions (Mark Verified/Conflict/Wrong Contact/Replied/Reject; Send Email via router; Call manually [hidden if `phone_type=landline` → "Call landline"]; Open Website/GBP/RBQ/NEQ links; Add Note; Schedule Follow-Up)
-- Note thread chronological
-
-**2.4 Status automation**
-Send Email → `verification_status='contacted'`, `last_contacted_at=now()`, `next_followup_at=now()+3d`. Other actions per spec. Never auto-delete uncertain contacts — always route conflicts to manual review.
-
-**2.5 Channel guards in UI**
-- `phone_type=landline` → hide SMS button, show "Call manually", prioritize Email CTA
-- `phone_type=mobile` → SMS + Email enabled
-- No email → show "Contact form" / "Phone call" only
-
----
-
-### Files
-
-**Created**
-- `supabase/functions/phone-validate/index.ts`
-- `supabase/functions/contact-verification-enqueue/index.ts`
-- `supabase/functions/_shared/contactChannel.ts`
-- `supabase/migrations/<ts>_phone_validation_and_contact_verification.sql` (extend `phone_carrier_cache`, extend `communication_logs.fallback_chain`, create the 2 verification tables + GRANTs + RLS + trigger for `updated_at`, seed `outbound_send_window_policy` sequences)
-- `src/pages/admin/AdminContactVerification.tsx`
-- `src/components/admin/contactVerification/{QueueTable,RowDetailSheet,NotesThread,PriorityCards,FilterPills}.tsx`
-- `src/hooks/useContactVerificationQueue.ts`
-
-**Edited**
-- `src/lib/communications/router.ts` — auto-validate, apply `pickChannel`, log fallback chain
-- `supabase/functions/contact-router/index.ts` — same on server side; VOIP-fail → email fallback
-- `src/config/routesConfig.ts` + `src/app/router.tsx` — register `/admin/contact-verification`
-- `src/pages/admin/AdminOutreachAnalytics.tsx` — add 6 new cards
-- Enrichment functions (`outbound-*-enrich*`, `aipp-import-*`) — call `contact-verification-enqueue` after writing leads
-- Memory: new `mem://features/phone-validation-channel-routing.md` + index entry
-
-### Out of scope
-- Building a new contact-form auto-submit (T+5 step logs as task only)
-- LinkedIn scraping (use existing data if already enriched)
-- Re-validating numbers older than 90 days (handled by cache TTL expiry naturally)
-
-### Secrets
-Twilio is already connected — no new secret required.
+## Files
+- **New:** `supabase/functions/_shared/autoVerifyContact.ts`, `supabase/functions/backfill-contact-verification/index.ts`, migration with trigger.
+- **Edited:** 8 enrichment edge functions listed above, `supabase/functions/contact-router/index.ts`, `src/pages/admin/AdminOutreachAnalytics.tsx`, `src/pages/admin/AdminContactVerification.tsx` (pinned manual-call filter), `.lovable/memory/features/phone-validation-channel-routing.md`.
