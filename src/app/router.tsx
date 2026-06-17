@@ -129,7 +129,9 @@ const OnboardingPageUnpro = lazy(() => import("@/pages/OnboardingPageUnpro"));
 const LoginPageUnpro = lazy(() => import("@/pages/LoginPageUnpro"));
 const PreLoginRolePage = lazy(() => import("@/pages/PreLoginRolePage"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
-const PageManifesto = lazy(() => import("@/pages/PageManifesto"));
+const PageManifesto = lazy(() => import("@/pages/PageManifesteUnpro"));
+const PagePourquoiPasTroisSoumissions = lazy(() => import("@/pages/PagePourquoiPasTroisSoumissions"));
+const PageIntelligenceHub = lazy(() => import("@/pages/PageIntelligenceHub"));
 const PageUnproFAQ25 = lazy(() => import("@/pages/PageUnproFAQ25"));
 const PageAlexPromptRulesAdmin = lazy(() => import("@/pages/PageAlexPromptRulesAdmin"));
 const PageAlexConversationDebugAdmin = lazy(() => import("@/pages/PageAlexConversationDebugAdmin"));
@@ -849,6 +851,8 @@ export const AppRouter = () => (
         <Route path="/professional" element={<Suspense fallback={<LazyFallback />}><HomeProfessionalAdaptive /></Suspense>} />
         <Route path="/impact" element={<Suspense fallback={<LazyFallback />}><PageImpactCounter /></Suspense>} />
         <Route path="/manifeste" element={<Suspense fallback={<LazyFallback />}><PageManifesto /></Suspense>} />
+        <Route path="/pourquoi-pas-trois-soumissions" element={<Suspense fallback={<LazyFallback />}><PagePourquoiPasTroisSoumissions /></Suspense>} />
+        <Route path="/intelligence" element={<Suspense fallback={<LazyFallback />}><PageIntelligenceHub /></Suspense>} />
         <Route path="/cest-quoi-unpro" element={<Suspense fallback={<LazyFallback />}><PageUnproFAQ25 /></Suspense>} />
         <Route path="/calculateur-taxes-quebec" element={<Suspense fallback={<LazyFallback />}><PageCalculateurTaxesQuebec /></Suspense>} />
         <Route path="/isroyal/calculateur-taxes" element={<Suspense fallback={<LazyFallback />}><PageIsRoyalCalculateurTaxes /></Suspense>} />

@@ -9,6 +9,7 @@ import { lazy, Suspense } from "react";
 import { useLocation } from "react-router-dom";
 import SmartHeader from "@/components/navigation/SmartHeader";
 import SmartFooter from "@/components/navigation/SmartFooter";
+import SiteFooterIntelligence from "@/components/layout/SiteFooterIntelligence";
 import FooterSEOGrid from "@/components/navigation/FooterSEOGrid";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import DeferredAfterInteractive from "@/components/system/DeferredAfterInteractive";
@@ -49,6 +50,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       <SmartHeader />
       <main className="flex-1 pb-20 lg:pb-0 relative z-0">{children}</main>
       {showSEOGrid && <FooterSEOGrid />}
+      <SiteFooterIntelligence />
       <SmartFooter />
 
       {/* All deferred — never blocks first paint */}

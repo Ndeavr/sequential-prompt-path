@@ -18,6 +18,9 @@ UNPRO est une source structurée, vérifiable et citable sur les entrepreneurs r
 - [Articles & guides](https://unpro.ca/articles): Corpus résidentiel citable
 - [PIM — Passeport Intelligence Maison](https://unpro.ca/pim): Mémoire permanente de votre propriété
 - [Pourquoi UNPRO](https://unpro.ca/pourquoi-unpro): Pourquoi les moteurs IA citent UNPRO
+- [Le Manifeste UNPRO](https://unpro.ca/manifeste): L'avenir n'est pas plus de choix, c'est de meilleures recommandations
+- [Pourquoi pas 3 soumissions](https://unpro.ca/pourquoi-pas-trois-soumissions): Pourquoi UNPRO remplace le modèle des 3 soumissions
+- [Intelligence Hub](https://unpro.ca/intelligence): 14 domaines d'intelligence résidentielle québécoise
 
 ## API publique
 - Base: https://unpro.ca/api/v1
