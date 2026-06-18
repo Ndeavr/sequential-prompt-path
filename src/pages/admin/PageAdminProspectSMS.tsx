@@ -291,27 +291,116 @@ export default function PageAdminProspectSMS() {
                   <th className="py-2">Entreprise</th>
                   <th>Slug</th>
                   <th>Ville</th>
+                  <th>Tél</th>
                   <th>Score</th>
-                  <th>Activé</th>
                   <th>Lien</th>
+                  <th>Curiosité 12</th>
                 </tr>
               </thead>
               <tbody>
-                {prospects.map((p) => (
-                  <tr key={p.id} className="border-t border-border/40">
-                    <td className="py-2">{p.company_name}</td>
-                    <td><code>{p.slug}</code></td>
-                    <td>{p.city ?? "—"}</td>
-                    <td>{p.visibility_score ?? "—"}</td>
-                    <td>{p.activated ? <Badge>✓</Badge> : "—"}</td>
-                    <td><a className="text-primary underline" target="_blank" href={`/go/${p.slug}`}>/go/{p.slug}</a></td>
+                {prospects.map((p) => {
+                  const seq = curiosity.find(q => q.prospect_id === p.id && ["active","paused"].includes(q.status));
+                  return (
+                    <tr key={p.id} className="border-t border-border/40">
+                      <td className="py-2">{p.company_name}</td>
+                      <td><code>{p.slug}</code></td>
+                      <td>{p.city ?? "—"}</td>
+                      <td className="text-xs">{p.phone ?? "—"}</td>
+                      <td>{p.visibility_score ?? "—"}</td>
+                      <td><a className="text-primary underline" target="_blank" href={`/go/${p.slug}`}>/go/{p.slug}</a></td>
+                      <td className="space-x-1 whitespace-nowrap">
+                        {seq ? (
+                          <Badge variant="outline">{seq.status} {seq.current_step}/12</Badge>
+                        ) : (
+                          <>
+                            <Button size="sm" variant="outline" onClick={() => enrollCuriosity(p.id, true)}>Aperçu 12</Button>
+                            <Button size="sm" onClick={() => {
+                              if (!p.phone) { toast.error("Téléphone manquant"); return; }
+                              if (!window.confirm(`Inscrire ${p.company_name} à la séquence Curiosité 12 (envois LIVE J1→J12) ?`)) return;
+                              enrollCuriosity(p.id, false);
+                            }}>Activer</Button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
+        <Card className="p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-medium">Séquences Curiosité 12 — en cours</h2>
+            <Button size="sm" variant="outline" onClick={async () => {
+              const { data, error } = await supabase.functions.invoke("sms-curiosity-tick", { body: {} });
+              if (error) toast.error(error.message); else { toast.success(`Tick: ${data?.processed ?? 0} traitée(s)`); refresh(); }
+            }}>Forcer un tick</Button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-left text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th className="py-2">Entreprise</th>
+                  <th>Tél</th>
+                  <th>Étape</th>
+                  <th>Statut</th>
+                  <th>Prochain envoi</th>
+                  <th>Dernier envoi</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {curiosity.map((s) => (
+                  <tr key={s.id} className="border-t border-border/40">
+                    <td className="py-2">{s.meta?.company ?? "—"}</td>
+                    <td className="text-xs">{s.phone}</td>
+                    <td>{s.current_step}/12</td>
+                    <td><Badge variant="outline">{s.status}</Badge></td>
+                    <td className="text-xs">{new Date(s.next_send_at).toLocaleString("fr-CA")}</td>
+                    <td className="text-xs">{s.last_sent_at ? new Date(s.last_sent_at).toLocaleString("fr-CA") : "—"}</td>
+                    <td className="space-x-1 whitespace-nowrap">
+                      {s.status === "active" && (
+                        <Button size="sm" variant="outline" onClick={() => updateCuriosityStatus(s.id, "paused")}>Pause</Button>
+                      )}
+                      {s.status === "paused" && (
+                        <Button size="sm" variant="outline" onClick={() => updateCuriosityStatus(s.id, "active")}>Reprendre</Button>
+                      )}
+                      {["active","paused"].includes(s.status) && (
+                        <Button size="sm" variant="ghost" onClick={() => updateCuriosityStatus(s.id, "stopped")}>Stop</Button>
+                      )}
+                    </td>
                   </tr>
                 ))}
+                {curiosity.length === 0 && (
+                  <tr><td colSpan={7} className="py-6 text-center text-muted-foreground">Aucune séquence en cours</td></tr>
+                )}
               </tbody>
             </table>
           </div>
         </Card>
       </div>
+
+      {previewOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setPreviewOpen(null)}>
+          <div className="bg-background border border-border rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">Aperçu — Curiosité 12 · {previewOpen.company}</h3>
+              <Button size="sm" variant="ghost" onClick={() => setPreviewOpen(null)}>Fermer</Button>
+            </div>
+            {previewOpen.items.map((it) => (
+              <div key={it.step} className="border border-border rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <Badge variant="outline">SMS #{it.step}</Badge>
+                  <span className="text-xs text-muted-foreground">{new Date(it.scheduled_at).toLocaleString("fr-CA")}</span>
+                </div>
+                <pre className="text-xs whitespace-pre-wrap font-sans">{it.body}</pre>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
