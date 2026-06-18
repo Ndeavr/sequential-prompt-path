@@ -1,61 +1,71 @@
-# Auto-Wire Contact Verification Across All Acquisition Pipelines
+# Admin Navigation Simplification v1
 
-## Goal
-Every newly discovered/enriched contractor flows through `contact-verification-enqueue` before any outreach. Landlines never receive SMS — routed to email or manual call automatically, with zero admin action.
+Today `src/layouts/AdminLayout.tsx` exposes ~60 admin links across 6 groups (Dashboard, Entrepreneurs, Alex, Acquisition, Revenus, Laboratoire). We'll restructure to the 6-section spec, default-collapse everything, hide engineering/experimental routes behind `System` and `Labs`, and add page-visit analytics that auto-recommend hiding low-traffic pages.
 
-## Strategy
-Two enforcement layers so nothing slips through:
+## 1. New top-level structure (6 sections, all collapsed by default)
 
-1. **Source-level hook** — fire `contact-verification-enqueue` at every enrichment exit point.
-2. **DB-level safety net** — a trigger on `contractor_enriched_profiles` (and equivalent prospect tables) that auto-enqueues any new/updated row missing a verification record.
-3. **Router hard gate** — `contact-router` refuses SMS for `phone_type='landline'` regardless of caller intent, and auto-substitutes email or marks as manual-call.
+Replace `navGroups` in `src/layouts/AdminLayout.tsx`:
 
-## Changes
+1. **Business** — `Dashboard` (`/admin`), `Revenue` (`/admin/pricing`), `Appointments` (`/admin/appointments`)
+2. **Contractors** — `Prospects` (`/admin/users`), `Qualification` (`/admin/verification`), `Activation` (`/admin/validation`), `Active Members` (`/admin/verified-contractors`), `All` (`/admin/contractors`)
+3. **Growth** — `Campaigns` (`/admin/outbound`), `Emails` (`/admin/outbound/sequences`), `SMS` (`/admin/outbound/sms-fallback`), `Pipeline` (`/admin/outbound/ops`)
+4. **Alex** — `AI Agents` (`/admin/agents`), `Knowledge Base` (`/admin/answer`)
+5. **System** — `Alerts` (`/admin/alerts`), `Health` (`/admin/operations`), `Logs` (`/admin/outbound/logs`), `Settings` (`/admin/outbound/settings`), `Kill Switch` (`/admin/automation` — toggle to pause automations)
+6. **Labs** (hidden, opt-in toggle) — every remaining `/admin/*` route, auto-collected from `routesConfig.ts` so nothing is lost
 
-### 1. New shared helper `supabase/functions/_shared/autoVerifyContact.ts`
-- `enqueueVerification(payload)` — fire-and-forget POST to `contact-verification-enqueue` with retries, idempotency key = `source_table:source_lead_id`.
-- All callers below import this helper instead of duplicating invoke logic.
+Verifies success criteria: revenue, activation, system status each reachable in ≤2 taps (section → item).
 
-### 2. Wire into existing enrichment edge functions (call helper after successful enrichment)
-- `enrich-business-profile/index.ts`
-- `autonomous-acquisition-engine/index.ts` (after each `run_pipeline` enrich step)
-- `edge-enrich-prospect/index.ts`
-- `mission-enrich-batch/index.ts`
-- `launch-agent-enrich/index.ts` and `launch-agent-enrich-contact/index.ts`
-- `sniper-enrich` (sniper outreach engine)
-- `import-business-intelligence/index.ts` (contractor import runs)
-- `fn-convert-prospect-to-lead/index.ts`
+## 2. Default-collapsed + persistent state
 
-Each call passes the canonical payload (business_name, phone, email, website, rbq/neq, google_*, category, city, source_lead_id, source_table).
+- `NavGroupItem` already supports `open` state; change initial value to `false` for every group except the one matching the current `pathname`.
+- Persist last-opened group in `localStorage("admin.nav.openGroup")` so power users keep their preferred section.
+- Keep the existing search box — it filters across all sections including Labs.
 
-### 3. DB safety-net trigger (migration)
-- New trigger `auto_enqueue_contact_verification` on INSERT/UPDATE of `contractor_enriched_profiles`, `outbound_prospects`, `launch_leads`, `sniper_leads`, `companies` (when `status` transitions to enriched/approved).
-- Trigger uses `pg_net` to call the edge function with service role JWT.
-- Skips if a `contact_verification_queue` row already exists for the same `source_table+source_lead_id`.
-- Idempotent — safe to re-fire.
+## 3. Labs visibility toggle
 
-### 4. Harden `contact-router` against landline SMS
-- Before any SMS send: if `phone_type IN ('landline','fixedVoip')` → never send SMS. Auto-cascade to:
-  - Email if `email` present and valid.
-  - Else mark `verification_status='needs_manual_call'` in `contact_verification_queue` and log `communication_logs.channel_decision_reason='landline_no_email_manual_call'`.
-- Add explicit `landline_sms_blocked` metric to `communication_logs.fallback_chain`.
-- Pre-flight: if no `phone_type` cached, synchronously call `twilio-lookup-phone` first.
+- Add a small `Show Labs` switch at the bottom of the nav, stored in `localStorage("admin.nav.showLabs")`, default `false`.
+- When off, the Labs group is completely hidden from the sidebar (still routable by direct URL).
 
-### 5. Manual-call workflow
-- Surface `needs_manual_call` rows at top of `/admin/contact-verification` (new pinned filter) with "Call Landline" CTA — already supported by the existing UI's channel guard; just add the auto-set status path and a notification badge counter.
+## 4. Mobile-first layout
 
-### 6. Observability
-- New cards in `AdminOutreachAnalytics.tsx`:
-  - "Auto-verifications enqueued (24h)"
-  - "Landline SMS attempts blocked (24h)"
-  - "Awaiting manual call" (count of `needs_manual_call`)
-- Backfill job (one-shot edge function `backfill-contact-verification`) that walks existing `contractor_enriched_profiles` without a queue row and enqueues them in batches of 100.
+- Sidebar already collapses into a sheet on `<md`. Tighten so the 6 collapsed headers fit one screen: reduce row height to `h-9`, remove descriptions, ensure scroll only kicks in when a group is expanded.
+- Bottom safe-area padding for iOS notch.
 
-## Out of scope
-- Changing the verification scoring algorithm.
-- New UI screens beyond the existing `/admin/contact-verification` page.
-- Twilio Lookup cache TTL changes (stays 90d).
+## 5. Page-visit analytics
 
-## Files
-- **New:** `supabase/functions/_shared/autoVerifyContact.ts`, `supabase/functions/backfill-contact-verification/index.ts`, migration with trigger.
-- **Edited:** 8 enrichment edge functions listed above, `supabase/functions/contact-router/index.ts`, `src/pages/admin/AdminOutreachAnalytics.tsx`, `src/pages/admin/AdminContactVerification.tsx` (pinned manual-call filter), `.lovable/memory/features/phone-validation-channel-routing.md`.
+**New table** (migration):
+```
+public.admin_page_visits(
+  id uuid pk default gen_random_uuid(),
+  admin_user_id uuid not null,
+  path text not null,
+  visited_at timestamptz default now()
+)
+```
+- GRANT INSERT to `authenticated`, SELECT to `service_role`; RLS: admins only (`has_role(auth.uid(),'admin')`).
+- Index on `(path, visited_at desc)`.
+
+**Tracking hook** `src/hooks/useAdminPageTracking.ts`: mounted once in `AdminLayout`, fires an insert on every `pathname` change (debounced, only when path starts with `/admin`).
+
+**New page** `/admin/nav-analytics` (added to System group):
+- Read-only RPC `get_admin_page_stats(days int)` returning `path, visits_30d, last_visited`.
+- Cards: **Top 10 most-used pages**, **Pages with <5 visits (recommend hiding)** with a one-click "Move to Labs" action that stores the override in `localStorage("admin.nav.hidden")` (client-side overlay, not a destructive change).
+
+## 6. Files touched
+
+- Edit `src/layouts/AdminLayout.tsx` — new `navGroups`, collapsed defaults, Labs toggle, mobile tightening.
+- New `src/config/adminNav.ts` — exports the 6-section structure + auto-derived Labs list from `routesConfig.ts` to keep nav and routes in sync.
+- New `src/hooks/useAdminPageTracking.ts`.
+- New `src/pages/admin/AdminNavAnalytics.tsx` + route registration in `src/app/router.tsx` and `routesConfig.ts`.
+- New migration `supabase/migrations/<ts>_admin_page_visits.sql`.
+
+## 7. Out of scope
+
+- No backend changes to existing admin pages.
+- No deletion of routes — Labs preserves every existing path.
+- No role/permission changes.
+
+## Success check
+- Visible top-level items reduced from ~60 to 6 collapsed headers (≥90% reduction).
+- Activation, Revenue, Health all reachable in 2 taps.
+- Mobile sheet shows all 6 sections without scrolling on a 384×720 viewport.

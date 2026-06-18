@@ -1,168 +1,70 @@
 /**
- * UNPRO — Admin Layout (Grouped Navigation + Search)
+ * UNPRO — Admin Layout (Simplified v1)
+ * 6 top-level sections, collapsed by default, Labs hidden by default.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
-  LayoutDashboard, Users, Briefcase, FileText, Star, FolderOpen,
-  CalendarDays, TrendingUp, LogOut, MapPin, BarChart3, Sparkles,
-  Brain, Palette, Menu, X, ShieldCheck, Shield, Bell, SearchCheck,
-  Bot, Network, Camera, Wand2, Zap, Tag, Rocket, Grid3X3,
-  ChevronDown, ChevronRight, Mail, Send, Activity, Settings,
-  ScrollText, Inbox, Heart, DollarSign, Smartphone, Ban, LayoutList,
-  Server, Cpu, Target, ImageIcon, TestTube, Search,
+  LogOut, Menu, X, Sparkles, ChevronDown, ChevronRight, Search,
 } from "lucide-react";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import BannerSystemEnvironmentStatus from "@/components/admin/system/BannerSystemEnvironmentStatus";
 import SmsInfrastructureBanner from "@/components/admin/SmsInfrastructureBanner";
+import { adminNavGroups, type NavGroup, type NavLeaf } from "@/config/adminNav";
+import { useAdminPageTracking } from "@/hooks/useAdminPageTracking";
 import type { ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
 
-interface NavLeaf { to: string; label: string; icon: LucideIcon }
-interface NavGroup { key: string; label: string; icon: LucideIcon; items: NavLeaf[] }
+const OPEN_KEY = "admin.nav.openGroup";
+const LABS_KEY = "admin.nav.showLabs";
+const HIDDEN_KEY = "admin.nav.hidden";
 
-// ═══════════════════════════════════════════════════════════════
-// Admin navigation — 5 sections orientées revenu + Laboratoire
-// Objectif: répondre en <5s à "trouvés / en onboarding / payants".
-// Aucune route supprimée — tout le reste vit dans Laboratoire.
-// ═══════════════════════════════════════════════════════════════
-const navGroups: NavGroup[] = [
-  {
-    key: "dashboard", label: "Dashboard", icon: LayoutDashboard,
-    items: [
-      { to: "/admin", label: "Vue générale", icon: LayoutDashboard },
-      { to: "/admin/alerts", label: "Alertes", icon: Bell },
-    ],
-  },
-  {
-    key: "entrepreneurs", label: "Entrepreneurs", icon: Briefcase,
-    items: [
-      { to: "/admin/contractors", label: "Tous", icon: Briefcase },
-      { to: "/admin/users", label: "Prospects", icon: Users },
-      { to: "/admin/verification", label: "Qualification", icon: SearchCheck },
-      { to: "/admin/validation", label: "Activation", icon: ShieldCheck },
-      { to: "/admin/verified-contractors", label: "Membres actifs", icon: Shield },
-    ],
-  },
-  {
-    key: "alex", label: "Alex", icon: Sparkles,
-    items: [
-      { to: "/admin/agents", label: "Agents IA", icon: Brain },
-      { to: "/admin/answer", label: "Knowledge / Prompts", icon: Cpu },
-      { to: "/admin/optimization", label: "Optimisation", icon: Wand2 },
-    ],
-  },
-  {
-    key: "acquisition", label: "Acquisition", icon: TrendingUp,
-    items: [
-      { to: "/admin/outbound", label: "Campagnes", icon: Rocket },
-      { to: "/admin/outbound/sequences", label: "Emails", icon: Mail },
-      { to: "/admin/outbound/sms-fallback", label: "SMS", icon: Smartphone },
-      { to: "/admin/outbound/analytics", label: "Performance", icon: BarChart3 },
-      { to: "/admin/outbound/ops", label: "Pipeline live", icon: Activity },
-    ],
-  },
-  {
-    key: "revenus", label: "Revenus", icon: DollarSign,
-    items: [
-      { to: "/admin/pricing", label: "MRR & Pricing", icon: DollarSign },
-      { to: "/admin/appointments", label: "Rendez-vous", icon: CalendarDays },
-      { to: "/admin/coupons", label: "Coupons", icon: Tag },
-      { to: "/admin/quotes", label: "Soumissions", icon: FileText },
-    ],
-  },
-  {
-    key: "labo", label: "Laboratoire", icon: TestTube,
-    items: [
-      { to: "/admin/omega", label: "Omega Cockpit", icon: Sparkles },
-      { to: "/admin/operations", label: "Operations Hub", icon: Activity },
-      { to: "/admin/predictive-leads", label: "Predictive Leads", icon: Brain },
-      { to: "/admin/predictive-market-board", label: "Centre Prédictif", icon: Zap },
-      { to: "/admin/home-graph", label: "Problem Graph", icon: Network },
-      { to: "/admin/growth", label: "Growth", icon: BarChart3 },
-      { to: "/admin/growth-engine", label: "Growth Engine", icon: TrendingUp },
-      { to: "/admin/dynamic-pricing-market", label: "Prix Dynamique", icon: TrendingUp },
-      { to: "/admin/zone-value", label: "Zones & Exclusivité", icon: MapPin },
-      { to: "/admin/capacity-framework", label: "Capacity Framework", icon: Grid3X3 },
-      { to: "/admin/territories", label: "Territoires", icon: MapPin },
-      { to: "/admin/city-activity-matrix", label: "Matrice Ville×Activité", icon: Grid3X3 },
-      { to: "/admin/services-secondaires", label: "Services Quotidiens", icon: Zap },
-      { to: "/admin/screenshot-analytics", label: "Screenshot Intel", icon: Camera },
-      { to: "/admin/local-seo", label: "Local SEO", icon: SearchCheck },
-      { to: "/admin/outbound/cities", label: "Outbound · Villes", icon: MapPin },
-      { to: "/admin/outbound/diagnostics", label: "Outbound · Diagnostics", icon: Activity },
-      { to: "/admin/outbound/targets", label: "Outbound · Marchés", icon: Target },
-      { to: "/admin/outbound/autopilot/runs", label: "Outbound · Autopilot", icon: Rocket },
-      { to: "/admin/outbound/campaigns", label: "Outbound · Campagnes", icon: Rocket },
-      { to: "/admin/outbound/campaigns/new", label: "Outbound · Nouvelle", icon: Zap },
-      { to: "/admin/outbound/leads", label: "Outbound · Prospects", icon: Users },
-      { to: "/admin/outbound/runs", label: "Outbound · Runs", icon: Activity },
-      { to: "/admin/outbound/verification", label: "Outbound · Vérif", icon: ShieldCheck },
-      { to: "/admin/outbound/tests", label: "Outbound · Tests", icon: TestTube },
-      { to: "/admin/outbound/automations", label: "Outbound · Automations", icon: Bot },
-      { to: "/admin/outbound/logs", label: "Outbound · Logs", icon: ScrollText },
-      { to: "/admin/outbound/sequences-elite", label: "Séquences AIPP", icon: Send },
-      { to: "/admin/outbound/mailboxes", label: "Boîtes d'envoi", icon: Inbox },
-      { to: "/admin/outbound/sending-architecture", label: "Architecture", icon: Server },
-      { to: "/admin/outbound/email-health", label: "Santé Email", icon: Heart },
-      { to: "/admin/outbound/deliverability", label: "Délivrabilité", icon: Activity },
-      { to: "/admin/outbound/ai-rewrite", label: "Personnalisation IA", icon: Cpu },
-      { to: "/admin/outbound/revenue", label: "Revenue Loss", icon: DollarSign },
-      { to: "/admin/sms-images", label: "Images SMS", icon: ImageIcon },
-      { to: "/admin/brand", label: "Brand Engine", icon: Shield },
-      { to: "/admin/brand-intelligence/logos", label: "Brand Logos", icon: ImageIcon },
-      { to: "/admin/outbound/suppressions", label: "Suppressions", icon: Ban },
-      { to: "/admin/outbound/settings", label: "Outbound · Settings", icon: Settings },
-      { to: "/admin/outbound/settings-lite", label: "Settings (legacy)", icon: LayoutList },
-      { to: "/admin/leads", label: "Leads", icon: TrendingUp },
-      { to: "/admin/reviews", label: "Avis", icon: Star },
-      { to: "/admin/automation", label: "Automatisation", icon: Bot },
-      { to: "/admin/documents", label: "Documents", icon: FolderOpen },
-      { to: "/admin/media", label: "Média IA", icon: Palette },
-      { to: "/admin/prospection-engine", label: "Prospection Engine", icon: Rocket },
-      { to: "/admin/uos", label: "UNPRO OS", icon: Sparkles },
-    ],
-  },
-];
+function readHidden(): Set<string> {
+  try { return new Set(JSON.parse(localStorage.getItem(HIDDEN_KEY) || "[]")); }
+  catch { return new Set(); }
+}
 
 const NavLink = ({ to, label, icon: Icon, pathname, onNavigate }: NavLeaf & { pathname: string; onNavigate?: () => void }) => {
-  const active = pathname === to || (to !== "/admin" && to !== "/admin/outbound" && pathname.startsWith(to + "/"));
+  const active = pathname === to || (to !== "/admin" && pathname.startsWith(to + "/"));
   return (
     <Link
       to={to}
       onClick={onNavigate}
-      className={`flex items-center gap-3 rounded-lg px-3 py-2 pl-7 text-[13px] font-medium transition ${
+      className={`flex items-center gap-2.5 rounded-lg px-3 py-2 pl-8 text-[13px] font-medium transition min-h-[36px] ${
         active
           ? "bg-primary text-primary-foreground"
           : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
       }`}
     >
       <Icon className="h-3.5 w-3.5 shrink-0" />
-      {label}
+      <span className="truncate">{label}</span>
     </Link>
   );
 };
 
-const NavGroupItem = ({ group, pathname, onNavigate, forceOpen }: {
-  group: NavGroup; pathname: string; onNavigate?: () => void; forceOpen?: boolean;
+const NavGroupItem = ({
+  group, pathname, onNavigate, forceOpen, openKey, setOpenKey,
+}: {
+  group: NavGroup; pathname: string; onNavigate?: () => void;
+  forceOpen?: boolean; openKey: string | null; setOpenKey: (k: string | null) => void;
 }) => {
   const isOnGroup = group.items.some(i => pathname === i.to || (i.to !== "/admin" && pathname.startsWith(i.to + "/")));
-  const [open, setOpen] = useState(isOnGroup);
-  const expanded = forceOpen || open;
+  const expanded = forceOpen || openKey === group.key || isOnGroup;
 
   return (
     <div>
       <button
-        onClick={() => setOpen(v => !v)}
-        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-semibold transition ${
-          isOnGroup ? "text-primary" : "text-foreground/80 hover:bg-muted/40"
+        onClick={() => setOpenKey(expanded && !isOnGroup ? null : group.key)}
+        className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-semibold transition min-h-[40px] ${
+          isOnGroup ? "text-primary bg-primary/5" : "text-foreground/90 hover:bg-muted/40"
         }`}
       >
         <group.icon className="h-4 w-4 shrink-0" />
         <span className="flex-1 text-left">{group.label}</span>
+        <span className="text-[10px] text-muted-foreground">{group.items.length}</span>
         {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
       </button>
       {expanded && (
@@ -176,32 +78,68 @@ const NavGroupItem = ({ group, pathname, onNavigate, forceOpen }: {
 
 const Nav = ({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) => {
   const [query, setQuery] = useState("");
+  const [openKey, setOpenKey] = useState<string | null>(() => localStorage.getItem(OPEN_KEY));
+  const [showLabs, setShowLabs] = useState<boolean>(() => localStorage.getItem(LABS_KEY) === "1");
+  const [hidden, setHidden] = useState<Set<string>>(readHidden);
+
+  useEffect(() => {
+    const onChange = () => setHidden(readHidden());
+    window.addEventListener("admin.nav.hidden.changed", onChange);
+    window.addEventListener("storage", onChange);
+    return () => {
+      window.removeEventListener("admin.nav.hidden.changed", onChange);
+      window.removeEventListener("storage", onChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (openKey) localStorage.setItem(OPEN_KEY, openKey);
+    else localStorage.removeItem(OPEN_KEY);
+  }, [openKey]);
+
+  useEffect(() => {
+    localStorage.setItem(LABS_KEY, showLabs ? "1" : "0");
+  }, [showLabs]);
+
   const q = query.trim().toLowerCase();
 
   const filtered = useMemo(() => {
-    if (!q) return navGroups;
-    return navGroups
+    const groups = adminNavGroups
+      .filter(g => showLabs || !g.defaultHidden)
+      .map(g => ({ ...g, items: g.items.filter(i => !hidden.has(i.to)) }))
+      .filter(g => g.items.length > 0);
+    if (!q) return groups;
+    return groups
       .map(g => ({ ...g, items: g.items.filter(i => i.label.toLowerCase().includes(q)) }))
       .filter(g => g.items.length > 0);
-  }, [q]);
+  }, [q, showLabs, hidden]);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <div className="relative px-1 mb-2 sticky top-0 bg-card/80 backdrop-blur-sm pt-1 pb-2 z-10">
         <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
         <Input
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Rechercher…"
+          placeholder="Search…"
           className="h-8 pl-8 text-xs rounded-lg bg-muted/30 border-border/40"
         />
       </div>
       {filtered.map(group => (
-        <NavGroupItem key={group.key} group={group} pathname={pathname} onNavigate={onNavigate} forceOpen={!!q} />
+        <NavGroupItem
+          key={group.key} group={group} pathname={pathname} onNavigate={onNavigate}
+          forceOpen={!!q} openKey={openKey} setOpenKey={setOpenKey}
+        />
       ))}
       {filtered.length === 0 && (
-        <p className="text-xs text-muted-foreground px-3 py-4 text-center">Aucun résultat.</p>
+        <p className="text-xs text-muted-foreground px-3 py-4 text-center">No results.</p>
       )}
+      <div className="flex items-center justify-between px-3 pt-3 mt-2 border-t border-border/30">
+        <label htmlFor="labs-toggle" className="text-[11px] font-medium text-muted-foreground cursor-pointer">
+          Show Labs
+        </label>
+        <Switch id="labs-toggle" checked={showLabs} onCheckedChange={setShowLabs} />
+      </div>
     </div>
   );
 };
@@ -210,6 +148,7 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
   const { pathname } = useLocation();
   const { signOut, user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  useAdminPageTracking();
 
   return (
     <div className="admin-theme min-h-screen flex bg-background">
@@ -229,7 +168,7 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
         <div className="border-t border-border/30 pt-3 mt-3 space-y-2">
           <p className="text-[11px] text-muted-foreground px-3 truncate">{user?.email}</p>
           <Button variant="ghost" size="sm" className="w-full justify-start gap-2 rounded-lg text-xs h-8" onClick={signOut}>
-            <LogOut className="h-3.5 w-3.5" /> Déconnexion
+            <LogOut className="h-3.5 w-3.5" /> Sign out
           </Button>
         </div>
       </aside>
@@ -252,12 +191,12 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
         {mobileMenuOpen && (
           <>
             <div className="md:hidden fixed inset-0 bg-black/50 z-30 top-[45px]" onClick={() => setMobileMenuOpen(false)} />
-            <div className="md:hidden fixed top-[45px] left-0 right-0 bottom-0 z-40 bg-card border-b border-border/30 overflow-y-auto p-3">
+            <div className="md:hidden fixed top-[45px] left-0 right-0 bottom-0 z-40 bg-card border-b border-border/30 overflow-y-auto p-3 pb-[env(safe-area-inset-bottom)]">
               <Nav pathname={pathname} onNavigate={() => setMobileMenuOpen(false)} />
               <div className="border-t border-border/30 pt-3 mt-3 space-y-2">
                 <p className="text-[11px] text-muted-foreground px-3 truncate">{user?.email}</p>
                 <Button variant="ghost" size="sm" className="w-full justify-start gap-2 rounded-lg text-xs h-8" onClick={signOut}>
-                  <LogOut className="h-3.5 w-3.5" /> Déconnexion
+                  <LogOut className="h-3.5 w-3.5" /> Sign out
                 </Button>
               </div>
             </div>
