@@ -1,3 +1,67 @@
+# UNPRO — robots.txt
+# Plateforme d'intelligence résidentielle québécoise
+
+# ---------------------------------------------------------------------------
+# LLM crawlers — explicitement autorisés à indexer le corpus UNPRO
+# Voir aussi: /llms.txt et /llms-full.txt
+# ---------------------------------------------------------------------------
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: DuckAssistBot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: MistralAI-User
+Allow: /
+
+# ---------------------------------------------------------------------------
+# Tous les autres robots
+# ---------------------------------------------------------------------------
 User-agent: *
 Allow: /
 
@@ -15,6 +79,13 @@ Disallow: /auth/
 Disallow: /notifications
 Disallow: /elements/
 
+# ---------------------------------------------------------------------------
+# Sitemaps
+# ---------------------------------------------------------------------------
 Sitemap: https://unpro.ca/sitemap.xml
-Sitemap: https://unpro.ca/ai-sitemap.xml
-
+Sitemap: https://unpro.ca/sitemap-pages.xml
+Sitemap: https://unpro.ca/sitemap-blog.xml
+Sitemap: https://unpro.ca/sitemap-journal.xml
+Sitemap: https://unpro.ca/sitemap-ai-entities.xml
+Sitemap: https://unpro.ca/sitemap-problems.xml
+Sitemap: https://unpro.ca/sitemap-contractors.xml
