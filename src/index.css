@@ -226,23 +226,64 @@
 }
 
 @layer base {
+  /* ─── Mobile stability tokens ─── */
+  :root {
+    --bottom-nav-h: 64px;
+    --bottom-nav-gap: 12px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --bottom-stack: calc(var(--bottom-nav-h) + var(--bottom-nav-gap) + var(--safe-bottom));
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
   * {
     @apply border-border;
+  }
+
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
   }
 
   body {
     @apply text-foreground font-sans antialiased;
     background: var(--gradient-bg);
     background-attachment: fixed;
-    min-height: 100vh;
+    min-height: 100svh;
+    overscroll-behavior-y: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  /* Global bottom padding so fixed bottom nav never covers content */
+  main {
+    padding-bottom: calc(var(--bottom-stack) + 24px);
+  }
+  @media (min-width: 1024px) {
+    main { padding-bottom: 0; }
+  }
+
+  section, main > div {
+    max-width: 100%;
+  }
+
+  img, video, canvas, svg {
+    max-width: 100%;
+  }
+
+  /* Full-viewport overlays only */
+  .h-dvh-overlay { height: 100dvh; }
+  .min-h-svh { min-height: 100svh; }
+
   .admin-theme,
   .alex-immersive {
     background: hsl(var(--background)) !important;
   }
+
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
