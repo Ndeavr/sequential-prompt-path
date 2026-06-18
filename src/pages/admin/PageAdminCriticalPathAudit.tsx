@@ -99,8 +99,17 @@ export default function PageAdminCriticalPathAudit() {
   const stages = snapshot.data?.stages || [];
 
   return (
-    <div className="admin-theme min-h-screen bg-background text-foreground p-4 md:p-6 pb-32">
-      <div className="max-w-5xl mx-auto space-y-6 pb-[env(safe-area-inset-bottom)]">
+    <div
+      className="admin-theme bg-background text-foreground"
+      style={{
+        minHeight: "100dvh",
+        overflowY: "auto",
+        WebkitOverflowScrolling: "touch",
+        overscrollBehaviorY: "contain",
+        paddingBottom: "calc(env(safe-area-inset-bottom) + 160px)",
+      }}
+    >
+      <div className="max-w-5xl mx-auto space-y-6 p-4 md:p-6">
         <header className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Critical Path Audit</h1>
@@ -123,20 +132,23 @@ export default function PageAdminCriticalPathAudit() {
           <div className="text-xs uppercase tracking-wide text-muted-foreground mb-3">
             Conversion globale {snapshot.data?.captured_at && `· ${new Date(snapshot.data.captured_at).toLocaleTimeString("fr-CA")}`}
           </div>
-          <div className="flex items-center gap-1 overflow-x-auto" style={{ touchAction: "pan-y pan-x" }}>
-            {stages.map((s, i) => (
-              <div key={s.stage} className="flex items-center gap-1 shrink-0">
-                <div className="text-center px-2">
-                  <div className="text-2xl font-semibold">{s.value}</div>
-                  <div className="text-[10px] text-muted-foreground max-w-[80px] leading-tight">{s.label}</div>
-                </div>
-                {i < stages.length - 1 && (
-                  <div className={`text-xs font-mono ${stageColor(stages[i + 1].conversion_rate)}`}>
-                    →{stages[i + 1].conversion_rate ?? 0}%
+          {/* Wrapper keeps native vertical pan; only the inner row captures horizontal pan. */}
+          <div style={{ touchAction: "pan-y" }}>
+            <div className="flex items-center gap-1 overflow-x-auto" style={{ touchAction: "pan-x" }}>
+              {stages.map((s, i) => (
+                <div key={s.stage} className="flex items-center gap-1 shrink-0">
+                  <div className="text-center px-2">
+                    <div className="text-2xl font-semibold">{s.value}</div>
+                    <div className="text-[10px] text-muted-foreground max-w-[80px] leading-tight">{s.label}</div>
                   </div>
-                )}
-              </div>
-            ))}
+                  {i < stages.length - 1 && (
+                    <div className={`text-xs font-mono ${stageColor(stages[i + 1].conversion_rate)}`}>
+                      →{stages[i + 1].conversion_rate ?? 0}%
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </Card>
 
