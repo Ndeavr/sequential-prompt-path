@@ -251,13 +251,18 @@
   body {
     @apply text-foreground font-sans antialiased;
     background: var(--gradient-bg);
-    background-attachment: fixed;
+    /* fixed bg causes flicker on mobile Chrome when URL bar collapses */
+    background-attachment: scroll;
     min-height: 100svh;
     overscroll-behavior-y: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+  @media (min-width: 1024px) {
+    body { background-attachment: fixed; }
+  }
+
 
   /* Global bottom padding so fixed bottom nav never covers content */
   main {
