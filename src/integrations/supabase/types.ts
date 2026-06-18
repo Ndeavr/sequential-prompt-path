@@ -34645,6 +34645,93 @@ export type Database = {
         }
         Relationships: []
       }
+      critical_path_metrics_snapshot: {
+        Row: {
+          captured_at: string
+          conversion_rate: number | null
+          id: string
+          meta: Json | null
+          previous_stage_value: number | null
+          stage: string
+          stage_order: number
+          top_failures: Json | null
+          value: number
+        }
+        Insert: {
+          captured_at?: string
+          conversion_rate?: number | null
+          id?: string
+          meta?: Json | null
+          previous_stage_value?: number | null
+          stage: string
+          stage_order: number
+          top_failures?: Json | null
+          value?: number
+        }
+        Update: {
+          captured_at?: string
+          conversion_rate?: number | null
+          id?: string
+          meta?: Json | null
+          previous_stage_value?: number | null
+          stage?: string
+          stage_order?: number
+          top_failures?: Json | null
+          value?: number
+        }
+        Relationships: []
+      }
+      critical_path_test_runs: {
+        Row: {
+          completed_at: string | null
+          created_by: string | null
+          current_stage: string
+          errors: Json
+          final_status: string
+          id: string
+          meta: Json
+          stage_status: Json
+          stage_timestamps: Json
+          started_at: string
+          tester_business_name: string | null
+          tester_email: string
+          tester_phone: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_by?: string | null
+          current_stage?: string
+          errors?: Json
+          final_status?: string
+          id?: string
+          meta?: Json
+          stage_status?: Json
+          stage_timestamps?: Json
+          started_at?: string
+          tester_business_name?: string | null
+          tester_email: string
+          tester_phone: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_by?: string | null
+          current_stage?: string
+          errors?: Json
+          final_status?: string
+          id?: string
+          meta?: Json
+          stage_status?: Json
+          stage_timestamps?: Json
+          started_at?: string
+          tester_business_name?: string | null
+          tester_email?: string
+          tester_phone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cta_events: {
         Row: {
           created_at: string
