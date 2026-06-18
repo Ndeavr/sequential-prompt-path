@@ -1,14 +1,14 @@
 /**
- * useHomeAbTest — Deterministic 50/50 split for homepage variant test.
+ * useHomeAbTest — Deterministic 33/33/33 split for homepage variant test (A/B/C).
  * - Persists bucket per visitor in localStorage.
- * - Allows `?variant=a|b` override for QA.
+ * - Allows `?variant=a|b|c` override for QA.
  * - Logs assignment once per visitor to ab_test_assignments.
  */
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type HomeBucket = "a" | "b";
-const TEST_KEY = "home_v1_vs_v2";
+export type HomeBucket = "a" | "b" | "c";
+const TEST_KEY = "home_v1_v2_v3";
 const BUCKET_KEY = "unpro_home_ab";
 const VISITOR_KEY = "unpro_visitor_id";
 const LOGGED_KEY = "unpro_home_ab_logged";
@@ -22,12 +22,17 @@ function getVisitorId(): string {
   return v;
 }
 
+function isBucket(v: string | null): v is HomeBucket {
+  return v === "a" || v === "b" || v === "c";
+}
+
 function assignBucket(): HomeBucket {
   const override = new URLSearchParams(window.location.search).get("variant");
-  if (override === "a" || override === "b") return override;
+  if (isBucket(override)) return override;
   const existing = localStorage.getItem(BUCKET_KEY);
-  if (existing === "a" || existing === "b") return existing as HomeBucket;
-  const bucket: HomeBucket = Math.random() < 0.5 ? "a" : "b";
+  if (isBucket(existing)) return existing;
+  const r = Math.random();
+  const bucket: HomeBucket = r < 1 / 3 ? "a" : r < 2 / 3 ? "b" : "c";
   localStorage.setItem(BUCKET_KEY, bucket);
   return bucket;
 }

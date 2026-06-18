@@ -15,6 +15,7 @@ import HomeWithFeatureFlag from "@/components/home-intent/HomeWithFeatureFlag";
 import PageHomeUnicorn from "@/pages/PageHomeUnicorn";
 import HomeAbSwitch from "@/components/home-ab/HomeAbSwitch";
 const PageHomeVariantB = lazy(() => import("@/pages/home/PageHomeVariantB"));
+const PageHomeVariantC = lazy(() => import("@/pages/home/PageHomeVariantC"));
 import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
 import PageEmergencyReset from "@/pages/PageEmergencyReset";
@@ -826,6 +827,7 @@ export const AppRouter = () => (
         <Route path="/conversation" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
         <Route path="/" element={<HomeAbSwitch />} />
         <Route path="/v2" element={<Suspense fallback={<LazyFallback />}><PageHomeVariantB /></Suspense>} />
+        <Route path="/v3" element={<Suspense fallback={<LazyFallback />}><PageHomeVariantC /></Suspense>} />
 
         {/* IA Maison — Home Intelligence cluster */}
         <Route path="/ia-maison" element={<Suspense fallback={<LazyFallback />}><PageIaMaisonHub /></Suspense>} />
