@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { listIntents, HERO_CHIP_INTENTS, type AlexIntent, type AlexIntentId } from "@/services/alexIntentRouter";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
-import TypewriterCycle from "./TypewriterCycle";
+
 
 const CHIP_ICONS: Record<AlexIntentId, typeof Calculator> = {
   project_estimate:   Calculator,
