@@ -24,6 +24,17 @@ export default function HeroOrbMockup() {
   const { openAlex } = useAlexVoice();
   const isContractor = activeRole === "contractor";
 
+  const [philosophyAccepted, setPhilosophyAccepted] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("unpro_philosophy_accepted") === "true";
+  });
+
+  useEffect(() => {
+    const onAccepted = () => setPhilosophyAccepted(true);
+    window.addEventListener("unpro:philosophy-accepted", onAccepted);
+    return () => window.removeEventListener("unpro:philosophy-accepted", onAccepted);
+  }, []);
+
   const isIdle = alexState === "idle";
   const orbState: AlexOrbStateV2 =
     alexState === "speaking"
