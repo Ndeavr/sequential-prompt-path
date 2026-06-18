@@ -1,48 +1,98 @@
-## Diagnostic
+# UNPRO Brand, Alex Positioning & Compatibility Engine Overhaul
 
-Looking at the screenshot + DB:
+Goal: eliminate ambiguity around UNPRO (pronunciation, meaning, moat), reposition Alex as the AI Matchmaker, and surface the DNA Matching system as the visible moat — for humans, crawlers, and LLMs.
 
-| Stage | Affiché | Réalité |
-|---|---|---|
-| 1. Prospect trouvé | 10 (0 RBQ, 0 email, 10 phone) | OK — 10 prospects en 7j, mais qualité faible (0 RBQ, 0 email) |
-| 2. SMS / Email envoyés | 85 (label "email_sent: 85") | **Bug d'étiquette** : ce sont des **SMS** dans `contractor_outreach_logs` (channel='sms'), pas des emails. Aussi : la valeur additionne `contractor_curiosity_sms_events` + `contractor_outreach_logs` → **risque de double-comptage** (curiosity sms = 0 ici, donc pas visible mais fragile). |
-| 3. Lien cliqué | 0 | **Tracking cassé** : 0 ligne dans `outreach_click_events` jamais (total = 0). Les SMS envoyés ne contiennent pas de lien tracké qui écrit dans cette table. |
-| 4. Alex démarre | 0 | Conséquence directe de #3 : si personne n'atterrit, Alex ne démarre pas. Aussi : le compteur lit `alex_conversation_sessions` sans filtrer par contexte « depuis lien SMS ». |
-| Scroll | Bloqué avant le bas | `admin-theme` + `min-h-screen` sur la page interne, combiné au funnel horizontal `overflow-x-auto` qui capte le geste vertical. |
+Scope is intentionally **presentation + schema + copy + one new component**, plus a single new public page that explains the DNA system. Existing DNA engines (`src/services/dnaEngine`, `homeowner_dna_profiles`, `contractor_dna_profiles`, `dna_fit_results`, match engine) already exist — we surface them, we don't rebuild them.
 
-## Plan
+## 1. New reusable component
 
-### 1 — Réparer l'instrumentation Lien Cliqué (vraie cause des 0)
-- **Edge function `track-outreach-click`** : ajouter une route `GET ?token=…&to=…` qui (a) insère dans `outreach_click_events` (b) 302 vers l'URL finale. Idempotent par `(token, ip_hash, minute)`.
-- **SMS sender (`dispatch-outreach-batch` + `sms-curiosity-tick`)** : remplacer le lien direct `https://unpro.ca/pro/:slug` par `https://api.unpro.ca/functions/v1/track-outreach-click?token=…` (token = `tracking_token` du prospect).
-- **`pro-landing-resolve`** : doublon de sécurité — insérer aussi une ligne `outreach_click_events` quand un `token` est présent (filet si le redirect saute).
+`src/components/brand/BrandPronunciation.tsx`
+- Props: `variant: "inline" | "card" | "footer"`, `lang?: "fr" | "en"`
+- Renders: `UNPRO` + "Prononcé : « Un Pro » (FR) / « Hun Pro » (EN)" + "Signifie : Le #1 Professionnel"
+- Used on: Home, Footer, About, `/pourquoi-unpro`, contractor + homeowner landings, new `/comment-ca-marche` page.
 
-### 2 — Corriger les étiquettes & doubles comptages dans `critical-path-snapshot`
-- Stage 2 : `value = max(sms_logs, sms_events) + email_logs` (jamais d'addition naïve). Méta renommée : `sms_sent`, `sms_failed`, `email_sent` lus des bonnes sources (`contractor_outreach_logs` filtré par `channel`).
-- Stage 3 : `value = outreach_click_events` (les `pro_landing_views` deviennent meta, pas additionnés).
-- Stage 4 : ajouter filtre `alex_conversation_sessions.metadata->>'source' IN ('outreach','pro_landing','curiosity')` pour ne compter QUE les sessions issues du funnel.
-- Ajouter `meta.quality_alert` sur Stage 1 si `with_email/scraped < 0.3` ou `with_rbq/scraped < 0.3` → affiché en rouge dans l'UI.
+## 2. Homepage hero rewrite (FR-first, EN secondary)
 
-### 3 — Corriger le scroll mobile sur `/admin/critical-path-audit`
-Dans `PageAdminCriticalPathAudit.tsx` :
-- Remplacer le wrapper racine `min-h-screen … pb-32` par `min-h-dvh overflow-y-auto pb-40` (utilise dynamic viewport, évite la barre Chrome qui mange le bas).
-- Ajouter `overscroll-behavior-y: contain` sur le wrapper.
-- Sur le funnel horizontal : retirer le `style={{ touchAction: "pan-y pan-x" }}` (il capture le geste) et utiliser à la place `touch-action: pan-x` SEULEMENT sur l'élément `overflow-x-auto` interne, avec un wrapper extérieur qui garde le pan-y natif.
-- Vérifier qu'aucun parent (App layout) ne pose `overflow: hidden` sur `body` quand `admin-theme` est actif.
+Edit `src/components/home/HeroSectionAlexFirst.tsx` (and any sub-copy file it pulls from):
+- H1: **« Trouvez votre Pro. »**
+- Sub: « Alex analyse votre projet, vos préférences, votre budget, votre urgence et votre compatibilité pour identifier l'entrepreneur le plus susceptible de réussir. »
+- Support: « Pas trois soumissions. Pas dix appels. Une seule recommandation intelligente. »
+- Primary CTA: **Parler à Alex** → `/alex`
+- Secondary CTA: **Comment fonctionne le matching** → `/comment-ca-marche`
 
-### 4 — Vérification (post-build)
-- Exécuter un test Playwright sur `/admin/critical-path-audit` viewport 384×706 : scroll jusqu'au bas, screenshot du dernier Card "Test live prospect réel".
-- Déployer les 3 edge functions modifiées, puis appeler manuellement `track-outreach-click?token=<existant>` et vérifier `SELECT count(*) FROM outreach_click_events` = 1.
-- Relancer `critical-path-snapshot` et confirmer : Stage 2 label correct, Stage 3 ≥ 1.
+Keep all existing visual system (Cinematic Dark, orb, glass tokens) — copy-only change.
 
-## Détails techniques
+## 3. Global copy sweep (find/replace, FR + EN)
 
-- Fichiers touchés :
-  - `supabase/functions/track-outreach-click/index.ts` (étendre)
-  - `supabase/functions/dispatch-outreach-batch/index.ts` (remplacer URL SMS)
-  - `supabase/functions/sms-curiosity-tick/index.ts` (remplacer URL SMS)
-  - `supabase/functions/pro-landing-resolve/index.ts` (ajouter click event si token)
-  - `supabase/functions/critical-path-snapshot/index.ts` (corriger labels + dédoublonnage + filtre Alex)
-  - `src/pages/admin/PageAdminCriticalPathAudit.tsx` (scroll mobile + badge quality_alert)
-- Pas de migration SQL : `outreach_click_events` existe déjà.
-- Pas de changement de messaging — uniquement instrumentation et UI.
+Replace across `src/pages/**`, `src/components/**`, `src/seo/**`, `public/llms*.txt`:
+- « Comparer des entrepreneurs » → « Trouver votre meilleur match »
+- « Demander des soumissions » → « Démarrer le matching »
+- « Obtenir plusieurs soumissions » → « Découvrir votre score de compatibilité »
+- "Compare contractors" → "Find your best match" (EN)
+- "Request quotes" / "Get multiple bids" → "Start matching" / "Discover your compatibility score"
+
+Will use `rg` to enumerate hits before editing; only touch user-facing strings, never variable names or DB columns.
+
+## 4. Alex repositioning copy
+
+- `src/config/alexModes.ts` + Alex intro lines: tag Alex as **« Le Matchmaker IA d'UNPRO »** (alt: Conseiller Habitation IA, Guide d'Intelligence Résidentielle).
+- One-line definition surfaced on Home, `/alex` empty state, footer, schema: *« Alex aide les propriétaires à découvrir l'entrepreneur le plus susceptible de réussir sur leur projet précis. »*
+- Do **not** touch the voice kernel, prompts, or session state — copy/labels only.
+
+## 5. New public page: `/comment-ca-marche`
+
+`src/pages/PageHowMatchingWorks.tsx` + route in `src/app/router.tsx`. Explains the 6 DNA layers as the visible moat:
+
+```text
+Homeowner DNA → Project DNA → Contractor DNA
+       ↓             ↓             ↓
+        → Trust DNA + Availability DNA + Success DNA →
+                        ↓
+              Compatibility Score (0-100)
+                        ↓
+            Recommandation + Projets similaires
+```
+
+Sections:
+1. Hero: « Le Score de Compatibilité » + example 96 %
+2. The 6 DNAs (cards, plain-language bullet list per memory)
+3. "Projets similaires aux vôtres" sample block (3 stat cards)
+4. Pronunciation + meaning block (`BrandPronunciation` card variant)
+5. CTA: « Parler à Alex »
+
+Reuses existing `MainLayout`, glass tokens, `landing-warm` for public visibility consistency.
+
+## 6. Contractor & Homeowner landing copy
+
+- Contractor landings (`src/pages/contractor/*` hero blocks): H1 **« Devenez le professionnel que l'IA recommande. »** + « UNPRO ne recommande pas l'entrepreneur avec le plus gros budget pub. UNPRO recommande celui le plus susceptible de réussir. »
+- Homeowner landing variants: H1 **« Le meilleur entrepreneur n'est pas celui qui a le plus d'avis. »** + « C'est celui qui correspond le mieux à votre projet. Alex identifie ce match. »
+
+## 7. Schema + LLM corpus
+
+- `index.html` Organization JSON-LD: add `alternateName: ["Un Pro", "Hun Pro", "The #1 Professional"]`; rewrite `description` to the official compatibility-engine definition.
+- `src/components/home-intelligence/EntityDefinitionBlock.tsx`: update copy to match (Compatibility Engine framing, Alex = AI Matchmaker).
+- `public/llms.txt` + `public/llms-full.txt`: add **Pronunciation**, **Meaning**, **Alex role**, **Knowledge Graph** (entities + relationships from the request), **Compatibility Score**, **Similar Project Intelligence** sections. Add `/comment-ca-marche` to `public/sitemap.xml` and `public/sitemap-pages.xml`.
+- `src/seo/components/SchemaStack.tsx` (or wherever Organization schema is centralized): same `alternateName` + description update so per-route schema stays consistent.
+
+## 8. Knowledge graph asset
+
+`public/knowledge-graph.json` — static JSON-LD `@graph` with the 11 entities and 6 relationships from the brief, linked from `llms.txt` and from a `<link rel="alternate" type="application/ld+json" href="/knowledge-graph.json">` on Home and `/comment-ca-marche`.
+
+## Out of scope (explicitly not touched)
+
+- Voice kernel, Alex prompts, voice config (`alexVoiceConfig.ts`).
+- DNA engine logic, matching engine, scoring weights, DB schema.
+- Pricing, checkout, outbound, admin cockpits.
+- Critical Path Audit work from previous turns.
+
+## Technical notes
+
+- All new copy is fr-CA first per Core memory; EN strings live only where the page already has an EN variant.
+- No DB migration. No edge function changes.
+- Public pages stay on `landing-warm`; app surfaces stay on `alex-immersive` — wrap new page root accordingly to respect the UI Readability rule.
+- Verification: `rg` audit that "3 soumissions" / "comparer des entrepreneurs" / "Get 3 quotes" no longer appear in user-facing strings, plus a Playwright pass on `/`, `/comment-ca-marche`, contractor landing at 384×706 to confirm hero copy and pronunciation block render.
+
+## Files touched (estimate)
+
+- Created: `src/components/brand/BrandPronunciation.tsx`, `src/pages/PageHowMatchingWorks.tsx`, `public/knowledge-graph.json`
+- Edited: `src/components/home/HeroSectionAlexFirst.tsx`, `src/components/home-intelligence/EntityDefinitionBlock.tsx`, `src/app/router.tsx`, `index.html`, `src/seo/components/SchemaStack.tsx`, `public/llms.txt`, `public/llms-full.txt`, `public/sitemap.xml`, `public/sitemap-pages.xml`, `src/config/alexModes.ts`, contractor + homeowner landing hero files, MainLayout footer.
