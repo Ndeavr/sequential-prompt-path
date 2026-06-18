@@ -1,97 +1,98 @@
-# Stabilité mobile UNPRO — Fix global flickering / layout jumps / bottom nav
+# Séquence SMS Curiosité 12 (Entrepreneurs)
 
-## Objectif
-Éliminer flickering, sauts de scroll, bandes blanches/bleues et chevauchement de la bottom nav sur Chrome Android, sans casser l'existant. Construire une base mobile stable pour TOUTES les pages.
+Objectif: planter l'idée "les 3 soumissions ne suffisent plus" chez l'entrepreneur via 12 SMS sur 12 jours, avec reveal UNPRO au SMS #11 et CTA au #12.
 
-## Diagnostic
-- `body` en `min-height: 100vh` dans `src/index.css` → cause les jumps quand la barre d'adresse Chrome apparaît/disparaît.
-- `MainLayout` en `min-h-screen` → même problème.
-- ~417 fichiers utilisent `h-screen` / `min-h-screen` / `100vh`. Beaucoup sont des sections de page qui devraient être en `min-h-svh` (ou supprimées) ; seuls les overlays plein écran doivent rester en `100dvh`.
-- Multiples bottom nav / sticky CTA (`MobileBottomNav`, `BottomBarMobileUniversal`, `BottomNavAlexPrimary`, `StickyMobileCTA*`, `BottomDockGlass`) sans padding-bottom global du `main` → recouvrement du contenu.
-- Aucun token CSS partagé pour la hauteur de la bottom nav → impossible de compenser proprement.
+Le moteur SMS existe déjà (`sms-prospect-send` via Twilio gateway, `/admin/prospect-sms`, tables `sms_campaigns`, `sms_messages`, `sms_templates`, `prospect_pages`). On ajoute UNE nouvelle séquence multi-touches branchée sur le cockpit existant. Aucun nouveau moteur SMS, aucun nouveau provider.
 
-## Plan d'exécution (Phase 1 — base globale)
+## 1. Migration (DB)
 
-### 1. Tokens CSS globaux (`src/index.css`)
-Ajouter en `:root`:
+Nouvelle table dédiée pour ne pas polluer `curiosity_sequences` (déjà utilisée pour un autre flux):
+
+```text
+contractor_curiosity_sms_sequences
+  id uuid pk
+  prospect_id uuid fk prospect_pages(id) on delete cascade
+  phone text not null
+  status text  -- active | paused | completed | stopped | failed
+  current_step int default 0   -- 0 = pas encore envoyé, max 12
+  next_send_at timestamptz default now()
+  last_sent_at timestamptz
+  unsubscribed_at timestamptz
+  enrolled_by uuid (admin)
+  meta jsonb (company, city, service, link)
+  created_at, updated_at
+
+contractor_curiosity_sms_events
+  id uuid pk
+  sequence_id uuid fk
+  step int (1..12)
+  template_key text  -- 'curiosity_01' ... 'curiosity_12'
+  status text  -- queued | sent | failed | skipped_stop
+  twilio_sid text
+  error text
+  sent_at timestamptz default now()
 ```
---bottom-nav-h: 64px;
---bottom-nav-gap: 12px;
---safe-bottom: env(safe-area-inset-bottom, 0px);
---bottom-stack: calc(var(--bottom-nav-h) + var(--bottom-nav-gap) + var(--safe-bottom));
-```
 
-### 2. Reset mobile global (`src/index.css`)
-```
-html, body { overflow-x: hidden; width: 100%; }
-*, *::before, *::after { box-sizing: border-box; }
-body {
-  min-height: 100svh;          /* remplace 100vh */
-  overscroll-behavior-y: none;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-main { padding-bottom: calc(var(--bottom-stack) + 48px); }
-section, main > div { max-width: 100%; }
-img, video, canvas, svg { max-width: 100%; height: auto; }
-```
-Garder les classes utilitaires `.h-dvh-overlay { height: 100dvh }` pour overlays.
+GRANTS standards (`authenticated` SELECT/INSERT/UPDATE/DELETE, `service_role` ALL), RLS admin-only (`has_role(auth.uid(),'admin')`), service_role bypass.
 
-### 3. `MainLayout.tsx`
-- Remplacer `min-h-screen` par `min-h-svh` (classe Tailwind via arbitrary value `min-h-[100svh]`).
-- Confirmer `overflow-x-hidden` au root.
-- Garantir que `<main>` n'a pas de hauteur forcée et hérite du padding-bottom global.
+Seed des 12 templates dans `sms_templates` avec `template_key = curiosity_01..12`, `audience_type='contractor'`, body avec placeholders `{{company}}`, `{{link}}`. Contenu = texte exact fourni par l'utilisateur (12 messages).
 
-### 4. Bottom nav unifiée
-Standard appliqué à `MobileBottomNav`, `BottomBarMobileUniversal`, `BottomNavAlexPrimary`, `BottomDockGlass`, `StickyMobileCTA*`, `StickyTrustFooter`, `FloatingMobileCTA`, `StickyMobileCTAEntrepreneur`, `StickyMobileCTAV2`, `StickyFooterPrimaryCTA`, `CTAStickyApply`, `BookingStickySummary`:
-```
-position: fixed;
-left: 16px; right: 16px;
-bottom: calc(12px + env(safe-area-inset-bottom));
-max-width: calc(100vw - 32px);
-z-index: 50;
-height: var(--bottom-nav-h);
-will-change: auto;            /* pas de transform/scale animé */
-```
-- Retirer tout `backdrop-filter` animé pendant le scroll (garder statique).
-- Aucune bottom nav ne pousse le flow (toutes en `fixed`).
+Planning J1/J3/J5/J7/J10/J12 → on déclenche les 12 SMS sur ces 6 jours actifs (les autres jours servent de respiration). Mapping retenu:
+- J1 → #1
+- J2 → #2
+- J3 → #3
+- J4 → #4
+- J5 → #5
+- J7 → #6, #7, #8
+- J10 → #9, #10, #11
+- J12 → #12
 
-### 5. Sections de page — règles
-- Remplacer `h-screen` par `min-h-svh` ou rien (hauteur naturelle).
-- Remplacer `min-h-screen` interne (sous le layout) par `min-h-svh` quand nécessaire, sinon supprimer.
-- Pattern recommandé pour les sections:
-  ```
-  <section className="relative w-full px-5 py-10 md:py-16 overflow-hidden">
-  ```
-- Sections sombres (ex: entrepreneur): wrapper en `overflow-visible rounded-[32px]` autour de la carte recommandée pour ne pas couper.
+(Cadence "puissante" demandée: les 6 jours-clés contiennent les SMS les plus importants; reveal #11 à J10, CTA #12 à J12.) Si tu préfères 1 SMS par jour je peux ajuster.
 
-### 6. Backgrounds décoratifs
-Règle appliquée aux blobs/glows: `absolute inset-0 -z-0 pointer-events-none` + contenu en `relative z-10`. Aucun bloc décoratif ne doit consommer de hauteur dans le flow.
+## 2. Edge functions
 
-### 7. Anti-jitter scroll
-- Auditer hooks scroll qui mutent `height/minHeight/top/bottom/transform/opacity` sur conteneurs principaux → supprimer ou déplacer sur éléments isolés (`will-change: transform`, jamais sur wrappers parents).
-- Retirer `position: sticky` non testé sur mobile (garder uniquement header validé).
+- `sms-curiosity-enroll` (admin POST): crée la séquence pour un `prospect_id`, vérifie le numéro, refuse les opt-outs (`sms_opt_outs`), inscrit avec `next_send_at = now()` step 0.
+- `sms-curiosity-tick` (CRON `*/15 * * * *` via pg_cron): lit toutes les séquences `status='active' AND next_send_at <= now()`, pour chaque: calcule prochain step selon planning J1→J12, rend le template (`{{company}}`, `{{link}}`), envoie via Twilio gateway (réutilise `connector-gateway.lovable.dev/twilio/Messages.json`), log dans `contractor_curiosity_sms_events` + `sms_messages`, MAJ `current_step` et `next_send_at`. Termine à step 12. Idempotent par `(sequence_id, step)`.
+- `sms-curiosity-unsubscribe` (webhook STOP existant ou réutilise handler actuel): set `status='stopped'`.
 
-### 8. Couverture cible (Phase 1)
-- `src/index.css`, `src/layouts/MainLayout.tsx`
-- Toutes les bottom-nav listées ci-dessus
-- Page actuelle problématique: route `/index` (PageHomeVariantC + sections entrepreneur)
-- Sweep grep ciblé sur pages homeowner principales:
-  `PageHomeVariantC`, `PageHomeVariantB`, `PageHomeCopilot`, `HomeAbSwitch`, `MainLayout`, `ContractorProfile`, `DiscoveryFeedPage`, `OnboardingPageUnpro`.
+Sécurité: validation Zod sur l'enroll, JWT admin, throttle, suppression check, hard cap 12.
 
-Les 400+ autres fichiers ne sont PAS modifiés un par un : ils bénéficient automatiquement du reset global + padding-bottom + tokens. Un audit par page sera fait en Phase 2 uniquement si un bug visible persiste.
+## 3. Cron
 
-## Validation
-1. `bun run build` (auto)
-2. Playwright headless Chromium viewport `390x844`:
-   - charger `/`, `/index`, scroll lent + rapide, screenshots avant/après
-   - vérifier qu'aucune section ne saute, pas de bande blanche, bottom nav stable
-3. Vérifier console (aucune erreur ResizeObserver loop)
+`select cron.schedule('sms-curiosity-tick','*/15 * * * *', $$ select net.http_post(...) $$);` posé via `supabase--insert` (pas migration).
 
-## Hors scope
-- Refonte des contenus / hiérarchie visuelle
-- Changement de logique business
-- Migration Supabase
+## 4. UI — Admin (réutilise `/admin/prospect-sms`)
 
-## Livrable
-Base mobile stable réutilisable. Toute nouvelle page qui utilise `MainLayout` + classes standard hérite automatiquement de la stabilité (svh, safe-area, padding-bottom, anti-overflow).
+Ajout dans `PageAdminProspectSMS.tsx`:
+- Nouvelle section "Séquence Curiosité 12" en haut du panneau prospect:
+  - Bouton "Inscrire à la séquence Curiosité 12" sur chaque prospect (action: `sms-curiosity-enroll`).
+  - Toggle `dryRun` (preview-only: rend les 12 SMS dans un Drawer avec date d'envoi, sans envoi réel).
+  - Badge état séquence par prospect (step X/12, prochain envoi).
+- Nouvel onglet "Curiosité 12" listant `contractor_curiosity_sms_sequences` avec colonnes: company, phone, step, next_send_at, status, dernier event, bouton Pause/Resume/Stop.
+- Drawer "Aperçu 12 SMS" rendant chaque template avec placeholders résolus.
+
+## 5. Anti-spam / conformité
+
+- Mention STOP dans chaque SMS (déjà standard projet).
+- Respect `sms_opt_outs` à chaque tick.
+- Fenêtre d'envoi 9h–20h America/Toronto (réutilise `outbound_send_window_policy` si dispo, sinon check inline). Si hors fenêtre → reporter `next_send_at` à 9h.
+- Cap quotidien sender hérité de `outbound_global_settings`.
+
+## 6. Hors scope
+
+- Pas de modification du moteur prospect_sms existant.
+- Pas de variante A/B sur cette séquence (texte verrouillé par toi).
+- Pas de séquence propriétaire (audience contractor only, confirmé).
+
+## 7. Validation
+
+- Test dry-run sur 1 prospect: les 12 SMS rendus correctement.
+- `supabase--curl_edge_functions` sur `sms-curiosity-enroll` puis `sms-curiosity-tick` (forçant `next_send_at=now()`) → vérifier 1 envoi réel sur ton numéro de test.
+- Vérifier event loggé dans `contractor_curiosity_sms_events` + `sms_messages`.
+
+## Détails techniques
+
+- Twilio: même gateway que `sms-prospect-send`. `From` = `TWILIO_FROM_NUMBER` env. `Body` rendu côté edge.
+- Phone E.164 validation (libphonenumber-style regex `^\+[1-9]\d{7,14}$`).
+- Idempotence: `UNIQUE(sequence_id, step)` sur `contractor_curiosity_sms_events`.
+- Compteur step pilote le planning (table de mapping en TS dans la function, pas en DB pour rester ajustable).

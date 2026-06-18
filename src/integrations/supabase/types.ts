@@ -24663,6 +24663,103 @@ export type Database = {
           },
         ]
       }
+      contractor_curiosity_sms_events: {
+        Row: {
+          error: string | null
+          id: string
+          rendered_body: string | null
+          sent_at: string
+          sequence_id: string
+          status: string
+          step: number
+          template_key: string
+          twilio_sid: string | null
+        }
+        Insert: {
+          error?: string | null
+          id?: string
+          rendered_body?: string | null
+          sent_at?: string
+          sequence_id: string
+          status?: string
+          step: number
+          template_key: string
+          twilio_sid?: string | null
+        }
+        Update: {
+          error?: string | null
+          id?: string
+          rendered_body?: string | null
+          sent_at?: string
+          sequence_id?: string
+          status?: string
+          step?: number
+          template_key?: string
+          twilio_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_curiosity_sms_events_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_curiosity_sms_sequences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_curiosity_sms_sequences: {
+        Row: {
+          created_at: string
+          current_step: number
+          enrolled_by: string | null
+          id: string
+          last_sent_at: string | null
+          meta: Json
+          next_send_at: string
+          phone: string
+          prospect_id: string
+          status: string
+          unsubscribed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_step?: number
+          enrolled_by?: string | null
+          id?: string
+          last_sent_at?: string | null
+          meta?: Json
+          next_send_at?: string
+          phone: string
+          prospect_id: string
+          status?: string
+          unsubscribed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_step?: number
+          enrolled_by?: string | null
+          id?: string
+          last_sent_at?: string | null
+          meta?: Json
+          next_send_at?: string
+          phone?: string
+          prospect_id?: string
+          status?: string
+          unsubscribed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_curiosity_sms_sequences_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_dispatch_stats: {
         Row: {
           acceptance_rate: number | null
