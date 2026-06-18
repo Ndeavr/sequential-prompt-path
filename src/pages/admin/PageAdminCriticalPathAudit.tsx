@@ -123,7 +123,7 @@ export default function PageAdminCriticalPathAudit() {
           <div className="text-xs uppercase tracking-wide text-muted-foreground mb-3">
             Conversion globale {snapshot.data?.captured_at && `· ${new Date(snapshot.data.captured_at).toLocaleTimeString("fr-CA")}`}
           </div>
-          <div className="flex items-center gap-1 overflow-x-auto">
+          <div className="flex items-center gap-1 overflow-x-auto" style={{ touchAction: "pan-y pan-x" }}>
             {stages.map((s, i) => (
               <div key={s.stage} className="flex items-center gap-1 shrink-0">
                 <div className="text-center px-2">
