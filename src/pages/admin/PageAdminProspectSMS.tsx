@@ -46,10 +46,23 @@ interface SmsRow {
   short_link: string | null;
 }
 
+interface CuriositySeq {
+  id: string;
+  prospect_id: string;
+  phone: string;
+  status: string;
+  current_step: number;
+  next_send_at: string;
+  last_sent_at: string | null;
+  meta: any;
+}
+
 export default function PageAdminProspectSMS() {
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [campaigns, setCampaigns] = useState<SmsRow[]>([]);
+  const [curiosity, setCuriosity] = useState<CuriositySeq[]>([]);
   const [loading, setLoading] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState<{ company: string; items: any[] } | null>(null);
 
   // form
   const [companyName, setCompanyName] = useState("");
