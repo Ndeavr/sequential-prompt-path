@@ -1,71 +1,59 @@
-# Admin Navigation Simplification v1
+# Note du fondateur + Consentement philosophie UNPRO
 
-Today `src/layouts/AdminLayout.tsx` exposes ~60 admin links across 6 groups (Dashboard, Entrepreneurs, Alex, Acquisition, Revenus, Laboratoire). We'll restructure to the 6-section spec, default-collapse everything, hide engineering/experimental routes behind `System` and `Labs`, and add page-visit analytics that auto-recommend hiding low-traffic pages.
+## Emplacement
+La homepage active = `src/pages/PageHomeSimple.tsx` → `HeroOrbMockup`. Il n'existe pas encore de section "Comment ça fonctionne" séparée ; tout ce qui suit le bloc orb+greeting (tagline, quick actions, feature strip) jouera le rôle de "sections suivantes" à bloquer tant que l'utilisateur n'a pas choisi.
 
-## 1. New top-level structure (6 sections, all collapsed by default)
+Insertion : juste après le bloc Orb/Greeting et **avant** `tagline + quickActions + feature strip` dans `HeroOrbMockup.tsx`.
 
-Replace `navGroups` in `src/layouts/AdminLayout.tsx`:
+## Nouveau composant
+`src/components/home-orb/FounderNoteConsent.tsx`
 
-1. **Business** — `Dashboard` (`/admin`), `Revenue` (`/admin/pricing`), `Appointments` (`/admin/appointments`)
-2. **Contractors** — `Prospects` (`/admin/users`), `Qualification` (`/admin/verification`), `Activation` (`/admin/validation`), `Active Members` (`/admin/verified-contractors`), `All` (`/admin/contractors`)
-3. **Growth** — `Campaigns` (`/admin/outbound`), `Emails` (`/admin/outbound/sequences`), `SMS` (`/admin/outbound/sms-fallback`), `Pipeline` (`/admin/outbound/ops`)
-4. **Alex** — `AI Agents` (`/admin/agents`), `Knowledge Base` (`/admin/answer`)
-5. **System** — `Alerts` (`/admin/alerts`), `Health` (`/admin/operations`), `Logs` (`/admin/outbound/logs`), `Settings` (`/admin/outbound/settings`), `Kill Switch` (`/admin/automation` — toggle to pause automations)
-6. **Labs** (hidden, opt-in toggle) — every remaining `/admin/*` route, auto-collected from `routesConfig.ts` so nothing is lost
+Contenu visuel :
+- Fond transparent, aucun cadre / carte / bordure.
+- Largeur desktop 900px, mobile 90%, centré, rotation `-0.6deg`.
+- Police manuscrite élégante via Google Fonts `Caveat` (chargée dans `index.html`) — fallback `cursive`.
+- Texte (exact) :
+  > Nous n'avons qu'une seule vie à vivre.
+  > Nous croyons que les propriétaires méritent de meilleurs conseils.
+  > Nous croyons que les bons entrepreneurs méritent d'être reconnus.
+  > C'est pourquoi nous avons créé UNPRO.
+- Signature « — L'équipe UNPRO » à 70% opacité, taille réduite.
+- Tailles : desktop 32–40px, mobile 20–24px, signature ~70% de cette taille.
+- Animation d'apparition "écriture" : reveal ligne par ligne via `framer-motion` (mask-clip ou opacity+y), durée totale ~2s, déclenchée une seule fois par visite (sentinel `sessionStorage["unpro_founder_note_played"]`). `prefers-reduced-motion` → apparition simple.
 
-Verifies success criteria: revenue, activation, system status each reachable in ≤2 taps (section → item).
+Bloc de choix sous la note (visible uniquement si non encore accepté) :
+- Deux gros boutons radio tactiles (min 56px) côte à côte sur desktop, empilés sur mobile :
+  - « Je suis d'accord avec cette philosophie »
+  - « Je n'adhère pas à cette philosophie »
+- Ton doux, sans alerte. Si l'utilisateur tente de scroller/cliquer plus bas sans choisir, afficher sous les boutons un message subtil : « Veuillez choisir une option pour continuer. »
 
-## 2. Default-collapsed + persistent state
+Comportement :
+- Accepter → `localStorage.setItem("unpro_philosophy_accepted", "true")` + déclenche un `window.dispatchEvent(new Event("unpro:philosophy-accepted"))` + masque le bloc de choix avec fondu, garde la note visible. Les sections suivantes apparaissent (fondu doux). Plus jamais redemandé tant que le flag est en localStorage.
+- Refuser → `window.location.replace("https://www.google.com")`.
 
-- `NavGroupItem` already supports `open` state; change initial value to `false` for every group except the one matching the current `pathname`.
-- Persist last-opened group in `localStorage("admin.nav.openGroup")` so power users keep their preferred section.
-- Keep the existing search box — it filters across all sections including Labs.
+Universel : aucune mention de leads/marketing/SEO/pub/algorithmes. Même affichage pour homeowner et contractor (pas de branche sur `activeRole`).
 
-## 3. Labs visibility toggle
+## Gating dans HeroOrbMockup
+- Nouvel état `accepted` lu depuis `localStorage` au mount + écoute de l'event `unpro:philosophy-accepted`.
+- `<FounderNoteConsent />` inséré après le bloc Orb.
+- Les blocs suivants (`tagline`, `quickActions`, `feature strip`) wrappés dans un conteneur :
+  - Si `!accepted` : `aria-hidden`, `pointer-events-none`, `opacity-0`, `max-h-0 overflow-hidden`, `inert`.
+  - Si `accepted` : fade-in 400ms.
+- Bloque uniquement la portion homepage ; ne bloque pas la navigation header/routes (par contrainte UX raisonnable, sinon l'utilisateur ne peut plus aller nulle part).
 
-- Add a small `Show Labs` switch at the bottom of the nav, stored in `localStorage("admin.nav.showLabs")`, default `false`.
-- When off, the Labs group is completely hidden from the sidebar (still routable by direct URL).
+## Fichiers
+- Créer : `src/components/home-orb/FounderNoteConsent.tsx`
+- Modifier : `src/components/home-orb/HeroOrbMockup.tsx` (insertion + gating)
+- Modifier : `index.html` (preconnect + lien Google Fonts `Caveat` 500/700)
 
-## 4. Mobile-first layout
+## Hors scope
+- Pas de backend, pas de tracking Supabase de la décision (localStorage uniquement, conformément à la spec).
+- Pas de modification des autres pages ni du header global.
+- Pas de popup / modal.
 
-- Sidebar already collapses into a sheet on `<md`. Tighten so the 6 collapsed headers fit one screen: reduce row height to `h-9`, remove descriptions, ensure scroll only kicks in when a group is expanded.
-- Bottom safe-area padding for iOS notch.
-
-## 5. Page-visit analytics
-
-**New table** (migration):
-```
-public.admin_page_visits(
-  id uuid pk default gen_random_uuid(),
-  admin_user_id uuid not null,
-  path text not null,
-  visited_at timestamptz default now()
-)
-```
-- GRANT INSERT to `authenticated`, SELECT to `service_role`; RLS: admins only (`has_role(auth.uid(),'admin')`).
-- Index on `(path, visited_at desc)`.
-
-**Tracking hook** `src/hooks/useAdminPageTracking.ts`: mounted once in `AdminLayout`, fires an insert on every `pathname` change (debounced, only when path starts with `/admin`).
-
-**New page** `/admin/nav-analytics` (added to System group):
-- Read-only RPC `get_admin_page_stats(days int)` returning `path, visits_30d, last_visited`.
-- Cards: **Top 10 most-used pages**, **Pages with <5 visits (recommend hiding)** with a one-click "Move to Labs" action that stores the override in `localStorage("admin.nav.hidden")` (client-side overlay, not a destructive change).
-
-## 6. Files touched
-
-- Edit `src/layouts/AdminLayout.tsx` — new `navGroups`, collapsed defaults, Labs toggle, mobile tightening.
-- New `src/config/adminNav.ts` — exports the 6-section structure + auto-derived Labs list from `routesConfig.ts` to keep nav and routes in sync.
-- New `src/hooks/useAdminPageTracking.ts`.
-- New `src/pages/admin/AdminNavAnalytics.tsx` + route registration in `src/app/router.tsx` and `routesConfig.ts`.
-- New migration `supabase/migrations/<ts>_admin_page_visits.sql`.
-
-## 7. Out of scope
-
-- No backend changes to existing admin pages.
-- No deletion of routes — Labs preserves every existing path.
-- No role/permission changes.
-
-## Success check
-- Visible top-level items reduced from ~60 to 6 collapsed headers (≥90% reduction).
-- Activation, Revenue, Health all reachable in 2 taps.
-- Mobile sheet shows all 6 sections without scrolling on a 384×720 viewport.
+## Critères de succès
+- Visiteur ne peut pas scroller/cliquer les CTA d'en bas du hero sans avoir choisi.
+- « Je suis d'accord » → débloque immédiatement + persistant entre visites.
+- « Je n'adhère pas » → redirection `google.com`.
+- Animation d'écriture jouée une seule fois par session.
+- Mobile-first, cibles tactiles ≥ 56px, aucun ton agressif.
