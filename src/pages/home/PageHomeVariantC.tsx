@@ -37,7 +37,7 @@ export default function PageHomeVariantC() {
         <meta name="robots" content="noindex,nofollow" />
       </Helmet>
 
-      <div className="min-h-screen bg-background">
+      <div className="bg-background w-full max-w-full overflow-x-hidden">
         <HeroLeBon onTrackCta={trackCta} />
         <SectionWhyThisContractor />
         <SectionWhyCompare3Quotes />

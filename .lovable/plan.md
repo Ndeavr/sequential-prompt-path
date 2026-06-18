@@ -1,130 +1,97 @@
-## Refonte sitemaps LLM-first
+# Stabilité mobile UNPRO — Fix global flickering / layout jumps / bottom nav
 
-Remplacer le `public/sitemap.xml` statique de 2393 lignes et le script `generate-ai-sitemap.ts` par un système dynamique généré depuis Supabase, optimisé pour les crawlers IA (GPTBot, ClaudeBot, PerplexityBot, Google-Extended) ET les moteurs classiques.
+## Objectif
+Éliminer flickering, sauts de scroll, bandes blanches/bleues et chevauchement de la bottom nav sur Chrome Android, sans casser l'existant. Construire une base mobile stable pour TOUTES les pages.
 
-### Architecture
+## Diagnostic
+- `body` en `min-height: 100vh` dans `src/index.css` → cause les jumps quand la barre d'adresse Chrome apparaît/disparaît.
+- `MainLayout` en `min-h-screen` → même problème.
+- ~417 fichiers utilisent `h-screen` / `min-h-screen` / `100vh`. Beaucoup sont des sections de page qui devraient être en `min-h-svh` (ou supprimées) ; seuls les overlays plein écran doivent rester en `100dvh`.
+- Multiples bottom nav / sticky CTA (`MobileBottomNav`, `BottomBarMobileUniversal`, `BottomNavAlexPrimary`, `StickyMobileCTA*`, `BottomDockGlass`) sans padding-bottom global du `main` → recouvrement du contenu.
+- Aucun token CSS partagé pour la hauteur de la bottom nav → impossible de compenser proprement.
 
-```text
-public/sitemap.xml              → sitemap index (pointeur vers les 6 enfants)
-public/sitemap-pages.xml        → routes statiques publiques (~60 pages piliers)
-public/sitemap-blog.xml         → blog_articles WHERE status='published'
-public/sitemap-journal.xml      → journal_articles WHERE published=true
-public/sitemap-ai-entities.xml  → ai_entities WHERE published=true (remplace ai-sitemap.xml)
-public/sitemap-problems.xml     → home_problems + home_problem_city_pages
-public/sitemap-contractors.xml  → contractor_profiles publics
+## Plan d'exécution (Phase 1 — base globale)
 
-public/llms.txt                 → index court (nettoyé, format llmstxt.org)
-public/llms-full.txt            → corpus complet (markdown) : piliers + blog + journal + ai-entities
+### 1. Tokens CSS globaux (`src/index.css`)
+Ajouter en `:root`:
+```
+--bottom-nav-h: 64px;
+--bottom-nav-gap: 12px;
+--safe-bottom: env(safe-area-inset-bottom, 0px);
+--bottom-stack: calc(var(--bottom-nav-h) + var(--bottom-nav-gap) + var(--safe-bottom));
 ```
 
-### Génération
-
-Un seul script `scripts/generate-sitemaps.ts` (remplace `generate-ai-sitemap.ts`) lancé via `predev` + `prebuild` :
-
-- Lit `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY` (anon, lecture publique)
-- Récupère en parallèle : `blog_articles`, `journal_articles`, `ai_entities`, `home_problems`, `home_problem_city_pages`, `contractor_profiles` (publics)
-- Écrit les 6 sitemaps enfants + le sitemap index + `llms-full.txt`
-- Fail-soft : si Supabase est down, écrit des sitemaps vides plutôt que de bloquer le build
-- Garde `BASE_URL = "https://unpro.ca"`
-
-### llms.txt nettoyé
-
-Garde structure llmstxt.org actuelle mais ajoute :
-- Lien explicite vers `llms-full.txt`
-- Bloc `## API publique` avec exemples curl
-- Section `## Sitemaps` listant les 6 sitemaps
-- Citation préférée enrichie (auteur UNPRO, licence)
-
-### llms-full.txt (nouveau)
-
-Corpus markdown concaténé, format :
+### 2. Reset mobile global (`src/index.css`)
 ```
-# UNPRO — Corpus complet
-
-## Pages piliers
-[manifeste, pourquoi-unpro, intelligence, pim, cest-quoi-unpro, pourquoi-pas-trois-soumissions]
-→ contenu markdown extrait
-
-## Articles blog (N)
-### {title}
-URL: {url} | Publié: {date}
-{content_markdown}
----
-
-## Journal d'autorité (N)
-### {title}
-{content}
----
-
-## AI Entities (N)
-### {name}
-{description + services + zones}
----
+html, body { overflow-x: hidden; width: 100%; }
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  min-height: 100svh;          /* remplace 100vh */
+  overscroll-behavior-y: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+main { padding-bottom: calc(var(--bottom-stack) + 48px); }
+section, main > div { max-width: 100%; }
+img, video, canvas, svg { max-width: 100%; height: auto; }
 ```
+Garder les classes utilitaires `.h-dvh-overlay { height: 100dvh }` pour overlays.
 
-### robots.txt — autorisations LLM explicites
+### 3. `MainLayout.tsx`
+- Remplacer `min-h-screen` par `min-h-svh` (classe Tailwind via arbitrary value `min-h-[100svh]`).
+- Confirmer `overflow-x-hidden` au root.
+- Garantir que `<main>` n'a pas de hauteur forcée et hérite du padding-bottom global.
 
-Ajoute en tête, AVANT le `User-agent: *` existant :
+### 4. Bottom nav unifiée
+Standard appliqué à `MobileBottomNav`, `BottomBarMobileUniversal`, `BottomNavAlexPrimary`, `BottomDockGlass`, `StickyMobileCTA*`, `StickyTrustFooter`, `FloatingMobileCTA`, `StickyMobileCTAEntrepreneur`, `StickyMobileCTAV2`, `StickyFooterPrimaryCTA`, `CTAStickyApply`, `BookingStickySummary`:
 ```
-# LLM crawlers — explicitement autorisés
-User-agent: GPTBot
-Allow: /
-User-agent: ChatGPT-User
-Allow: /
-User-agent: OAI-SearchBot
-Allow: /
-User-agent: ClaudeBot
-Allow: /
-User-agent: Claude-Web
-Allow: /
-User-agent: anthropic-ai
-Allow: /
-User-agent: PerplexityBot
-Allow: /
-User-agent: Perplexity-User
-Allow: /
-User-agent: Google-Extended
-Allow: /
-User-agent: CCBot
-Allow: /
-User-agent: Applebot-Extended
-Allow: /
-User-agent: Bytespider
-Allow: /
-User-agent: meta-externalagent
-Allow: /
+position: fixed;
+left: 16px; right: 16px;
+bottom: calc(12px + env(safe-area-inset-bottom));
+max-width: calc(100vw - 32px);
+z-index: 50;
+height: var(--bottom-nav-h);
+will-change: auto;            /* pas de transform/scale animé */
 ```
+- Retirer tout `backdrop-filter` animé pendant le scroll (garder statique).
+- Aucune bottom nav ne pousse le flow (toutes en `fixed`).
 
-Garde les `Disallow` existants (admin/, dashboard/, etc.) sous `User-agent: *`.
-Met à jour les directives `Sitemap:` pour pointer vers tous les sitemaps enfants + l'index.
+### 5. Sections de page — règles
+- Remplacer `h-screen` par `min-h-svh` ou rien (hauteur naturelle).
+- Remplacer `min-h-screen` interne (sous le layout) par `min-h-svh` quand nécessaire, sinon supprimer.
+- Pattern recommandé pour les sections:
+  ```
+  <section className="relative w-full px-5 py-10 md:py-16 overflow-hidden">
+  ```
+- Sections sombres (ex: entrepreneur): wrapper en `overflow-visible rounded-[32px]` autour de la carte recommandée pour ne pas couper.
 
-### Fichiers touchés
+### 6. Backgrounds décoratifs
+Règle appliquée aux blobs/glows: `absolute inset-0 -z-0 pointer-events-none` + contenu en `relative z-10`. Aucun bloc décoratif ne doit consommer de hauteur dans le flow.
 
-**Créés**
-- `scripts/generate-sitemaps.ts` (consolide + remplace `generate-ai-sitemap.ts`)
-- `public/llms-full.txt` (sortie générée, versionnée vide au départ)
+### 7. Anti-jitter scroll
+- Auditer hooks scroll qui mutent `height/minHeight/top/bottom/transform/opacity` sur conteneurs principaux → supprimer ou déplacer sur éléments isolés (`will-change: transform`, jamais sur wrappers parents).
+- Retirer `position: sticky` non testé sur mobile (garder uniquement header validé).
 
-**Modifiés**
-- `public/sitemap.xml` → devient sitemap index
-- `public/llms.txt` → refonte format llmstxt.org strict
-- `public/robots.txt` → ajout blocs LLM-friendly
-- `package.json` → `predev` + `prebuild` invoquent `generate-sitemaps.ts`
+### 8. Couverture cible (Phase 1)
+- `src/index.css`, `src/layouts/MainLayout.tsx`
+- Toutes les bottom-nav listées ci-dessus
+- Page actuelle problématique: route `/index` (PageHomeVariantC + sections entrepreneur)
+- Sweep grep ciblé sur pages homeowner principales:
+  `PageHomeVariantC`, `PageHomeVariantB`, `PageHomeCopilot`, `HomeAbSwitch`, `MainLayout`, `ContractorProfile`, `DiscoveryFeedPage`, `OnboardingPageUnpro`.
 
-**Supprimés**
-- `scripts/generate-ai-sitemap.ts` (remplacé)
-- `public/ai-sitemap.xml` (remplacé par `sitemap-ai-entities.xml`)
+Les 400+ autres fichiers ne sont PAS modifiés un par un : ils bénéficient automatiquement du reset global + padding-bottom + tokens. Un audit par page sera fait en Phase 2 uniquement si un bug visible persiste.
 
-### Hors scope
+## Validation
+1. `bun run build` (auto)
+2. Playwright headless Chromium viewport `390x844`:
+   - charger `/`, `/index`, scroll lent + rapide, screenshots avant/après
+   - vérifier qu'aucune section ne saute, pas de bande blanche, bottom nav stable
+3. Vérifier console (aucune erreur ResizeObserver loop)
 
-- Pas d'edge function temps réel (script build-time uniquement)
-- Pas de changement de routes ou de pages
-- Pas de modification du contenu des articles (extraction read-only)
-- Pas de schema DB
+## Hors scope
+- Refonte des contenus / hiérarchie visuelle
+- Changement de logique business
+- Migration Supabase
 
-### Succès
-
-- `https://unpro.ca/sitemap.xml` retourne un sitemap index valide
-- Les 6 sitemaps enfants reflètent l'état Supabase à chaque build
-- `llms-full.txt` < 5MB, contient ≥ 100 articles/entités
-- GPTBot/ClaudeBot/PerplexityBot/Google-Extended explicitement autorisés
-- Aucun lien mort dans les sitemaps (URLs canoniques uniquement)
+## Livrable
+Base mobile stable réutilisable. Toute nouvelle page qui utilise `MainLayout` + classes standard hérite automatiquement de la stabilité (svh, safe-area, padding-bottom, anti-overflow).

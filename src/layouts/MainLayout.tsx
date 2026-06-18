@@ -41,14 +41,15 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   );
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-x-hidden">
+    <div className="min-h-[100svh] flex flex-col relative overflow-x-hidden w-full max-w-full">
       {/* Cinematic background now lives in src/app/App.tsx (StableBackgroundLayer)
           — mounted once above the router so route changes never remount it. */}
 
 
 
       <SmartHeader />
-      <main className="flex-1 pb-20 lg:pb-0 relative z-0">{children}</main>
+      <main className="flex-1 relative z-0 w-full max-w-full">{children}</main>
+
       {showSEOGrid && <FooterSEOGrid />}
       <SiteFooterIntelligence />
       <SmartFooter />
