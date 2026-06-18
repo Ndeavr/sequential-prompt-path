@@ -53,25 +53,34 @@ Deno.serve(async (req) => {
     q.gte("created_at", since7d).not("email", "is", null)
   );
 
-  // Stage 2 — SMS/Email Sent (24h)
-  const smsSent = await safeCount(supabase, "contractor_curiosity_sms_events", (q) =>
+  // Stage 2 — SMS/Email Sent (24h) — read each channel from its canonical source.
+  const curiositySmsSent = await safeCount(supabase, "contractor_curiosity_sms_events", (q) =>
     q.eq("status", "sent").gte("sent_at", since24h)
   );
   const smsFailed = await safeCount(supabase, "contractor_curiosity_sms_events", (q) =>
     q.eq("status", "failed").gte("sent_at", since24h)
   );
-  const outreachSent = await safeCount(supabase, "contractor_outreach_logs", (q) =>
-    q.gte("sent_at", since24h)
+  const outreachLogsSms = await safeCount(supabase, "contractor_outreach_logs", (q) =>
+    q.gte("sent_at", since24h).eq("channel", "sms")
   );
+  const outreachLogsEmail = await safeCount(supabase, "contractor_outreach_logs", (q) =>
+    q.gte("sent_at", since24h).eq("channel", "email")
+  );
+  // De-dup: a curiosity SMS may also be mirrored in outreach_logs. Use the max
+  // of both sources for SMS and add the email count once.
+  const smsSent = Math.max(curiositySmsSent, outreachLogsSms);
+  const emailSent = outreachLogsEmail;
+  const messagesSent = smsSent + emailSent;
 
-  // Stage 3 — Link Clicked
+  // Stage 3 — Link Clicked (canonical source: outreach_click_events; pro_landing_views is informational)
+  const clickEvents = await safeCount(supabase, "outreach_click_events", (q) =>
+    q.gte("clicked_at", since24h)
+  );
   const landingViews = await safeCount(supabase, "pro_landing_views", (q) => q.gte("created_at", since24h));
-  const outreachClicks = await safeCount(supabase, "outreach_click_events", (q) =>
-    q.gte("created_at", since24h)
-  );
 
-  // Stage 4 — Alex auto-start
+  // Stage 4 — Alex auto-start (only count sessions seeded by the outreach funnel)
   let alexStarted = 0;
+  let alexFromOutreach = 0;
   try {
     const { count } = await supabase
       .from("alex_conversation_sessions")
@@ -79,6 +88,14 @@ Deno.serve(async (req) => {
       .gte("created_at", since24h);
     alexStarted = count ?? 0;
   } catch { /* ignore */ }
+  try {
+    const { count } = await supabase
+      .from("alex_conversation_sessions")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", since24h)
+      .in("source", ["outreach", "pro_landing", "curiosity", "sms"]);
+    alexFromOutreach = count ?? 0;
+  } catch { /* column may not exist — fall back to total */ alexFromOutreach = alexStarted; }
 
   // Stage 5 — Analysis 100%
   const analysisTotal = await safeCount(supabase, "contractor_aipp_jobs", (q) => q.gte("created_at", since24h));
@@ -119,26 +136,30 @@ Deno.serve(async (req) => {
       .map(([code, count]) => ({ code, count }));
   } catch { /* ignore */ }
 
+  const qualityAlert =
+    scraped > 0 &&
+    ((withEmail / scraped < 0.3) || (withRbq / scraped < 0.3));
+
   const stages: Stage[] = [
     {
       stage: "prospect_found", label: "1. Prospect Trouvé", order: 1,
       value: scraped, top_failures: [],
-      meta: { with_rbq: withRbq, with_phone: withPhone, with_email: withEmail, window: "7d" },
+      meta: { with_rbq: withRbq, with_phone: withPhone, with_email: withEmail, window: "7d", quality_alert: qualityAlert },
     },
     {
       stage: "messages_sent", label: "2. SMS / Email Envoyés", order: 2,
-      value: smsSent + outreachSent, top_failures: [],
-      meta: { sms_sent: smsSent, sms_failed: smsFailed, email_sent: outreachSent, window: "24h" },
+      value: messagesSent, top_failures: [],
+      meta: { sms_sent: smsSent, sms_failed: smsFailed, email_sent: emailSent, window: "24h" },
     },
     {
       stage: "link_clicked", label: "3. Lien Cliqué", order: 3,
-      value: outreachClicks + landingViews, top_failures: [],
-      meta: { clicks: outreachClicks, landing_views: landingViews, window: "24h" },
+      value: clickEvents, top_failures: [],
+      meta: { clicks: clickEvents, landing_views: landingViews, window: "24h" },
     },
     {
       stage: "alex_started", label: "4. Alex Démarre", order: 4,
-      value: alexStarted, top_failures: [],
-      meta: { sessions: alexStarted, window: "24h" },
+      value: alexFromOutreach, top_failures: [],
+      meta: { from_outreach: alexFromOutreach, total_sessions: alexStarted, window: "24h" },
     },
     {
       stage: "analysis_complete", label: "5. Analyse 100%", order: 5,

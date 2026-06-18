@@ -88,11 +88,23 @@ Deno.serve(async (req) => {
       }
 
       const meta = (seq.meta ?? {}) as Record<string, string>;
-      const body = renderTemplate(templateBody, {
+      // Wrap the destination link through the click tracker so Stage 3 of the
+      // Critical Path Audit ("Lien Cliqué") gets real events instead of zeros.
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const rawLink = meta.link ?? "";
+      const trackedLink = rawLink
+        ? `${supabaseUrl}/functions/v1/track-outreach-click?url=${encodeURIComponent(rawLink)}${seq.prospect_id ? `&pid=${seq.prospect_id}` : ""}`
+        : "";
+      let body = renderTemplate(templateBody, {
         company: meta.company ?? "",
         city: meta.city ?? "",
         service: meta.service ?? "",
-        link: meta.link ?? "",
+        link: trackedLink,
+      });
+      // Belt-and-suspenders: rewrite any remaining bare https URLs in the body too.
+      body = body.replace(/\bhttps?:\/\/[^\s<"]+/g, (u: string) => {
+        if (u.includes("/track-outreach-click")) return u;
+        return `${supabaseUrl}/functions/v1/track-outreach-click?url=${encodeURIComponent(u)}${seq.prospect_id ? `&pid=${seq.prospect_id}` : ""}`;
       });
 
       try {

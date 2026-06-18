@@ -99,8 +99,17 @@ export default function PageAdminCriticalPathAudit() {
   const stages = snapshot.data?.stages || [];
 
   return (
-    <div className="admin-theme min-h-screen bg-background text-foreground p-4 md:p-6 pb-32">
-      <div className="max-w-5xl mx-auto space-y-6 pb-[env(safe-area-inset-bottom)]">
+    <div
+      className="admin-theme bg-background text-foreground"
+      style={{
+        minHeight: "100dvh",
+        overflowY: "auto",
+        WebkitOverflowScrolling: "touch",
+        overscrollBehaviorY: "contain",
+        paddingBottom: "calc(env(safe-area-inset-bottom) + 160px)",
+      }}
+    >
+      <div className="max-w-5xl mx-auto space-y-6 p-4 md:p-6">
         <header className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Critical Path Audit</h1>
@@ -123,20 +132,23 @@ export default function PageAdminCriticalPathAudit() {
           <div className="text-xs uppercase tracking-wide text-muted-foreground mb-3">
             Conversion globale {snapshot.data?.captured_at && `· ${new Date(snapshot.data.captured_at).toLocaleTimeString("fr-CA")}`}
           </div>
-          <div className="flex items-center gap-1 overflow-x-auto" style={{ touchAction: "pan-y pan-x" }}>
-            {stages.map((s, i) => (
-              <div key={s.stage} className="flex items-center gap-1 shrink-0">
-                <div className="text-center px-2">
-                  <div className="text-2xl font-semibold">{s.value}</div>
-                  <div className="text-[10px] text-muted-foreground max-w-[80px] leading-tight">{s.label}</div>
-                </div>
-                {i < stages.length - 1 && (
-                  <div className={`text-xs font-mono ${stageColor(stages[i + 1].conversion_rate)}`}>
-                    →{stages[i + 1].conversion_rate ?? 0}%
+          {/* Wrapper keeps native vertical pan; only the inner row captures horizontal pan. */}
+          <div style={{ touchAction: "pan-y" }}>
+            <div className="flex items-center gap-1 overflow-x-auto" style={{ touchAction: "pan-x" }}>
+              {stages.map((s, i) => (
+                <div key={s.stage} className="flex items-center gap-1 shrink-0">
+                  <div className="text-center px-2">
+                    <div className="text-2xl font-semibold">{s.value}</div>
+                    <div className="text-[10px] text-muted-foreground max-w-[80px] leading-tight">{s.label}</div>
                   </div>
-                )}
-              </div>
-            ))}
+                  {i < stages.length - 1 && (
+                    <div className={`text-xs font-mono ${stageColor(stages[i + 1].conversion_rate)}`}>
+                      →{stages[i + 1].conversion_rate ?? 0}%
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </Card>
 
@@ -149,13 +161,19 @@ export default function PageAdminCriticalPathAudit() {
           )}
           {stages.map((s) => {
             const rate = s.conversion_rate;
-            const alert = rate !== undefined && rate < 50;
+            const qualityAlert = (s.meta as any)?.quality_alert === true;
+            const alert = (rate !== undefined && rate < 50) || qualityAlert;
             return (
               <Card key={s.stage} className={`p-4 ${alert ? "border-red-500/50" : ""}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="text-xs uppercase tracking-wide text-muted-foreground">{s.label}</div>
                     <div className="text-3xl font-semibold mt-1">{s.value}</div>
+                    {qualityAlert && (
+                      <div className="mt-1 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-red-400 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded">
+                        <AlertTriangle className="h-3 w-3" /> Qualité faible (RBQ/email manquants)
+                      </div>
+                    )}
                   </div>
                   {rate !== undefined && (
                     <div className={`text-right ${stageColor(rate)}`}>
@@ -163,15 +181,17 @@ export default function PageAdminCriticalPathAudit() {
                       <div className="text-[10px] text-muted-foreground">vs étape précédente</div>
                     </div>
                   )}
-                  {alert && <AlertTriangle className="h-5 w-5 text-red-400" />}
+                  {alert && !qualityAlert && <AlertTriangle className="h-5 w-5 text-red-400" />}
                 </div>
                 {s.meta && (
                   <div className="mt-3 text-xs text-muted-foreground space-y-0.5">
-                    {Object.entries(s.meta).map(([k, v]) => (
-                      <div key={k} className="flex justify-between">
-                        <span>{k}</span><span className="text-foreground/80 font-mono">{String(v)}</span>
-                      </div>
-                    ))}
+                    {Object.entries(s.meta)
+                      .filter(([k]) => k !== "quality_alert")
+                      .map(([k, v]) => (
+                        <div key={k} className="flex justify-between">
+                          <span>{k}</span><span className="text-foreground/80 font-mono">{String(v)}</span>
+                        </div>
+                      ))}
                   </div>
                 )}
                 {s.top_failures.length > 0 && (
