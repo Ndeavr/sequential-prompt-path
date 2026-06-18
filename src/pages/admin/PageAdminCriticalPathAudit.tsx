@@ -161,13 +161,19 @@ export default function PageAdminCriticalPathAudit() {
           )}
           {stages.map((s) => {
             const rate = s.conversion_rate;
-            const alert = rate !== undefined && rate < 50;
+            const qualityAlert = (s.meta as any)?.quality_alert === true;
+            const alert = (rate !== undefined && rate < 50) || qualityAlert;
             return (
               <Card key={s.stage} className={`p-4 ${alert ? "border-red-500/50" : ""}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="text-xs uppercase tracking-wide text-muted-foreground">{s.label}</div>
                     <div className="text-3xl font-semibold mt-1">{s.value}</div>
+                    {qualityAlert && (
+                      <div className="mt-1 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-red-400 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded">
+                        <AlertTriangle className="h-3 w-3" /> Qualité faible (RBQ/email manquants)
+                      </div>
+                    )}
                   </div>
                   {rate !== undefined && (
                     <div className={`text-right ${stageColor(rate)}`}>
@@ -175,15 +181,17 @@ export default function PageAdminCriticalPathAudit() {
                       <div className="text-[10px] text-muted-foreground">vs étape précédente</div>
                     </div>
                   )}
-                  {alert && <AlertTriangle className="h-5 w-5 text-red-400" />}
+                  {alert && !qualityAlert && <AlertTriangle className="h-5 w-5 text-red-400" />}
                 </div>
                 {s.meta && (
                   <div className="mt-3 text-xs text-muted-foreground space-y-0.5">
-                    {Object.entries(s.meta).map(([k, v]) => (
-                      <div key={k} className="flex justify-between">
-                        <span>{k}</span><span className="text-foreground/80 font-mono">{String(v)}</span>
-                      </div>
-                    ))}
+                    {Object.entries(s.meta)
+                      .filter(([k]) => k !== "quality_alert")
+                      .map(([k, v]) => (
+                        <div key={k} className="flex justify-between">
+                          <span>{k}</span><span className="text-foreground/80 font-mono">{String(v)}</span>
+                        </div>
+                      ))}
                   </div>
                 )}
                 {s.top_failures.length > 0 && (
