@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      ab_test_assignments: {
+        Row: {
+          bucket: string
+          created_at: string
+          id: string
+          path: string | null
+          test_key: string
+          user_agent: string | null
+          visitor_id: string
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          id?: string
+          path?: string | null
+          test_key: string
+          user_agent?: string | null
+          visitor_id: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          id?: string
+          path?: string | null
+          test_key?: string
+          user_agent?: string | null
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       ab_test_variants: {
         Row: {
           config_json: Json
