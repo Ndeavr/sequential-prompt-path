@@ -5,7 +5,7 @@
  * CTAs and quick actions all switch to the entrepreneur narrative — without
  * leaving the homepage.
  */
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Cpu, ShieldCheck, Sparkles, Users } from "lucide-react";
 import AlexMorphingOrb, { type AlexOrbStateV2 } from "@/components/alex/AlexMorphingOrb";
 import AlexHomepageConversation, {
@@ -13,6 +13,7 @@ import AlexHomepageConversation, {
   type AlexState,
 } from "./AlexHomepageConversation";
 import { useActiveRole } from "@/contexts/ActiveRoleContext";
+import FounderNoteConsent from "./FounderNoteConsent";
 
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
