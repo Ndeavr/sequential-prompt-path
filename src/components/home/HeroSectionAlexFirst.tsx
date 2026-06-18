@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { listIntents, HERO_CHIP_INTENTS, type AlexIntent, type AlexIntentId } from "@/services/alexIntentRouter";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
-import TypewriterCycle from "./TypewriterCycle";
+
 
 const CHIP_ICONS: Record<AlexIntentId, typeof Calculator> = {
   project_estimate:   Calculator,
@@ -166,25 +166,22 @@ export default function HeroSectionAlexFirst() {
             }}
           >
             <Sparkles className="h-3 w-3" />
-            <span>ALEX · VOTRE EXPERT IA</span>
+            <span>ALEX · LE MATCHMAKER IA D'UNPRO</span>
           </div>
 
           {/* H1 — instant LCP, no animation */}
           <header className="flex flex-col items-center gap-3">
-            <h1 className="font-display font-bold text-white leading-[1.05] tracking-tight text-[34px] sm:text-[46px] md:text-[54px]">
-              Décrivez votre{" "}
-              <TypewriterCycle
-                words={["problème", "projet", "besoin", "urgence", "rénovation"]}
-                className="inline-block"
-              />
-              .
-              <br />
+            <h1 className="font-display font-bold text-white leading-[1.05] tracking-tight text-[40px] sm:text-[52px] md:text-[62px]">
+              Trouvez votre{" "}
               <span className="bg-gradient-to-r from-[hsl(222,100%,72%)] via-[hsl(195,100%,62%)] to-[hsl(252,100%,74%)] bg-clip-text text-transparent">
-                Alex s'occupe du reste.
+                Pro.
               </span>
             </h1>
-            <p className="text-sm sm:text-base text-white/55 max-w-md leading-relaxed">
-              Analyse. Estimation. Vérification. Réservation.
+            <p className="text-[15px] sm:text-base text-white/75 max-w-md leading-relaxed">
+              Alex analyse votre projet, vos préférences, votre budget, votre urgence et votre compatibilité pour identifier l'entrepreneur le plus susceptible de réussir.
+            </p>
+            <p className="text-[13px] sm:text-sm text-white/55 max-w-md leading-relaxed">
+              Pas trois soumissions. Pas dix appels. Une seule recommandation intelligente.
             </p>
           </header>
 
