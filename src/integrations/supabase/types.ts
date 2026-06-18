@@ -2362,6 +2362,27 @@ export type Database = {
           },
         ]
       }
+      admin_page_visits: {
+        Row: {
+          admin_user_id: string
+          id: string
+          path: string
+          visited_at: string
+        }
+        Insert: {
+          admin_user_id: string
+          id?: string
+          path: string
+          visited_at?: string
+        }
+        Update: {
+          admin_user_id?: string
+          id?: string
+          path?: string
+          visited_at?: string
+        }
+        Relationships: []
+      }
       aeo_building_types: {
         Row: {
           created_at: string
@@ -77286,6 +77307,14 @@ export type Database = {
           p_overwrite_existing_capacities?: boolean
         }
         Returns: Json
+      }
+      get_admin_page_stats: {
+        Args: { days?: number }
+        Returns: {
+          last_visited: string
+          path: string
+          visits: number
+        }[]
       }
       get_avg_job_value: {
         Args: {
