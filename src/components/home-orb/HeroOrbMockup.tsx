@@ -150,42 +150,56 @@ export default function HeroOrbMockup() {
         </div>
       </div>
 
-      {/* Tagline only — orb is the unique Alex entry */}
-      <div className="relative z-10 mt-6 px-5 max-w-md mx-auto pb-2">
-        <p className="text-white/55 text-sm text-center">{tagline}</p>
-      </div>
+      {/* Founder note + philosophy consent gate */}
+      <FounderNoteConsent />
 
-      {/* Quick actions */}
-      <div className="relative z-10 px-5 max-w-2xl mx-auto pb-8 grid grid-cols-2 gap-3">
-        {quickActions.map((q) => (
-          <a
-            key={q.label}
-            href={q.href}
-            className="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] backdrop-blur-sm px-4 py-4 text-left text-white/90 text-sm font-medium transition"
-          >
-            {q.label}
-          </a>
-        ))}
-      </div>
+      {/* Gated content — hidden until philosophy accepted */}
+      <div
+        aria-hidden={!philosophyAccepted}
+        {...(!philosophyAccepted ? { inert: "" as unknown as boolean } : {})}
+        className={
+          philosophyAccepted
+            ? "opacity-100 transition-opacity duration-500"
+            : "opacity-0 max-h-0 overflow-hidden pointer-events-none select-none"
+        }
+      >
+        {/* Tagline only — orb is the unique Alex entry */}
+        <div className="relative z-10 mt-6 px-5 max-w-md mx-auto pb-2">
+          <p className="text-white/55 text-sm text-center">{tagline}</p>
+        </div>
 
-      {/* Feature strip */}
-      <div className="relative z-10 px-5 max-w-2xl mx-auto pb-12 grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[
-          { icon: Cpu, title: "AI-POWERED", body: "Solutions intelligentes pour chaque projet." },
-          { icon: ShieldCheck, title: "SÉCURISÉ", body: "Conçu avec la sécurité à chaque couche." },
-          { icon: Sparkles, title: "AUTOMATION", body: "Automatisez, gérez, gagnez du temps." },
-          { icon: Users, title: "HUMAIN + IA", body: "Alex travaille avec vous, à chaque étape." },
-        ].map(({ icon: Icon, title, body }) => (
-          <div key={title} className="text-center">
-            <div className="mx-auto mb-2 w-10 h-10 rounded-xl flex items-center justify-center border border-blue-400/25 bg-blue-500/5">
-              <Icon className="w-5 h-5 text-blue-300" />
+        {/* Quick actions */}
+        <div className="relative z-10 px-5 max-w-2xl mx-auto pb-8 grid grid-cols-2 gap-3">
+          {quickActions.map((q) => (
+            <a
+              key={q.label}
+              href={q.href}
+              className="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] backdrop-blur-sm px-4 py-4 text-left text-white/90 text-sm font-medium transition"
+            >
+              {q.label}
+            </a>
+          ))}
+        </div>
+
+        {/* Feature strip */}
+        <div className="relative z-10 px-5 max-w-2xl mx-auto pb-12 grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[
+            { icon: Cpu, title: "AI-POWERED", body: "Solutions intelligentes pour chaque projet." },
+            { icon: ShieldCheck, title: "SÉCURISÉ", body: "Conçu avec la sécurité à chaque couche." },
+            { icon: Sparkles, title: "AUTOMATION", body: "Automatisez, gérez, gagnez du temps." },
+            { icon: Users, title: "HUMAIN + IA", body: "Alex travaille avec vous, à chaque étape." },
+          ].map(({ icon: Icon, title, body }) => (
+            <div key={title} className="text-center">
+              <div className="mx-auto mb-2 w-10 h-10 rounded-xl flex items-center justify-center border border-blue-400/25 bg-blue-500/5">
+                <Icon className="w-5 h-5 text-blue-300" />
+              </div>
+              <div className="text-[10px] font-bold tracking-widest text-blue-300">
+                {title}
+              </div>
+              <p className="text-white/60 text-xs mt-1 leading-snug">{body}</p>
             </div>
-            <div className="text-[10px] font-bold tracking-widest text-blue-300">
-              {title}
-            </div>
-            <p className="text-white/60 text-xs mt-1 leading-snug">{body}</p>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   );
