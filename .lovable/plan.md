@@ -1,98 +1,116 @@
-# Séquence SMS Curiosité 12 (Entrepreneurs)
+## Acquisition Machine — End-to-End Critical Path Audit
 
-Objectif: planter l'idée "les 3 soumissions ne suffisent plus" chez l'entrepreneur via 12 SMS sur 12 jours, avec reveal UNPRO au SMS #11 et CTA au #12.
+Objectif: valider chaque étape du tunnel d'acquisition entrepreneur avec des **chiffres réels**, identifier les fuites, et exécuter un test live "prospect réel" de bout en bout. Aucun changement de messaging tant que la machine n'est pas prouvée fonctionnelle.
 
-Le moteur SMS existe déjà (`sms-prospect-send` via Twilio gateway, `/admin/prospect-sms`, tables `sms_campaigns`, `sms_messages`, `sms_templates`, `prospect_pages`). On ajoute UNE nouvelle séquence multi-touches branchée sur le cockpit existant. Aucun nouveau moteur SMS, aucun nouveau provider.
+---
 
-## 1. Migration (DB)
+### Phase 1 — Audit Données (lecture seule, ~10 min)
 
-Nouvelle table dédiée pour ne pas polluer `curiosity_sequences` (déjà utilisée pour un autre flux):
+Pour chaque étape, requête SQL réelle sur la prod + capture du chiffre dans un nouveau cockpit admin `/admin/critical-path-audit`.
 
-```text
-contractor_curiosity_sms_sequences
-  id uuid pk
-  prospect_id uuid fk prospect_pages(id) on delete cascade
-  phone text not null
-  status text  -- active | paused | completed | stopped | failed
-  current_step int default 0   -- 0 = pas encore envoyé, max 12
-  next_send_at timestamptz default now()
-  last_sent_at timestamptz
-  unsubscribed_at timestamptz
-  enrolled_by uuid (admin)
-  meta jsonb (company, city, service, link)
-  created_at, updated_at
+**Étape 1 — Prospect Found**
+- `contractor_prospects` 7j: total scrappés, % avec RBQ valide, NEQ valide, téléphone valide (mobile vs fixe via `phone_carrier_cache`), email valide, % déjà contactés (`contractor_outreach_logs`).
+- Sortie: tableau `scraped → enriched → validated → contactable`.
 
-contractor_curiosity_sms_events
-  id uuid pk
-  sequence_id uuid fk
-  step int (1..12)
-  template_key text  -- 'curiosity_01' ... 'curiosity_12'
-  status text  -- queued | sent | failed | skipped_stop
-  twilio_sid text
-  error text
-  sent_at timestamptz default now()
+**Étape 2 — SMS / Email Sent (24h)**
+- `contractor_outreach_logs` + `contractor_curiosity_sms_events` + `evenements_sms`: queued / sent / delivered / failed / landline_detected / email_fallback_sent.
+- Identifier les SMS partis vers des fixes (Twilio error 30006).
+
+**Étape 3 — Link Clicked**
+- `outreach_open_events`, `outreach_click_events`, `pro_landing_views`, `landing_visits`: ratio délivré → ouvert → cliqué → page vue.
+- Diagnostic: si clics ~0 → problème message. Si clics OK mais pas de "Alex started" → problème landing.
+
+**Étape 4 — Alex Auto-Start**
+- `alex_conversation_sessions` filtrés par `entry_surface = contractor_landing`: % sessions démarrées dans les 2s après `pro_landing_views`.
+- Vérifier dans le code `src/pages/pro/...` que `auto_start_enabled` est ON pour le slug landing.
+
+**Étape 5 — Analysis Completes (100%)**
+- `contractor_aipp_jobs`: % terminés à 100% vs 95/90/échec silencieux par sous-étape (company_search, website, reviews, RBQ, profile_generation).
+- Lister les `failure_code` les plus fréquents via `platform_operation_outcomes`.
+
+**Étape 6 — Payment Works**
+- `pricing_checkout_sessions` + `pricing_payment_events` + `contractor_profiles.is_active`: pour chaque `paid`, vérifier (a) profile activated (b) status changé (c) email envoyé (d) dashboard accessible.
+- Lister les paiements "orphelins" (payé mais non activé).
+
+**Étape 7 — Immediate Reward (60s)**
+- `contractor_aipp_scores`: % de profils payés ayant un score affiché < 60s après activation.
+- Vérifier que la page post-paiement montre score + blocage principal + estimation rendez-vous.
+
+---
+
+### Phase 2 — Cockpit `/admin/critical-path-audit`
+
+Page admin unique, mobile-first, dark theme, 7 cartes verticales (une par étape). Chaque carte:
+- Chiffre principal (ex: 92/100 délivrés)
+- Conversion vers l'étape suivante (%)
+- Top 3 raisons d'échec (failure_code)
+- Bouton "Drill down" → drawer avec 20 derniers événements
+
+En-tête: funnel global compact `Scrapés → Validés → Envoyés → Cliqués → Alex → Analyse 100% → Payés → Activés` avec taux de conversion entre chaque.
+
+Alerte rouge automatique si une étape < 50% de conversion.
+
+---
+
+### Phase 3 — Live Walkthrough (test prospect réel)
+
+Edge function `critical-path-live-test` qui exécute et logue chaque étape avec timestamps:
+
+1. Crée un prospect de test (RBQ + NEQ + mon numéro mobile réel fourni)
+2. Déclenche l'envoi SMS via la séquence Curiosité (step 1 uniquement)
+3. Capture: `sent_at`, `delivered_at` (webhook Twilio), URL générée
+4. Attend le clic réel (humain) → logue `clicked_at`, `landing_viewed_at`
+5. Vérifie Alex auto-start dans les 2s → `alex_started_at`
+6. Suit l'analyse → `analysis_completed_at` + % atteint
+7. Stripe test mode $1 → `paid_at`, `activated_at`, `dashboard_unlocked_at`, `email_sent_at`
+8. Vérifie score affiché < 60s
+
+Résultat stocké dans nouvelle table `critical_path_test_runs` (timestamps + status par étape + screenshots des erreurs).
+
+UI: bouton **"Lancer un test live"** sur le cockpit, qui demande téléphone + email du testeur, puis affiche la timeline en temps réel.
+
+---
+
+### Phase 4 — Rapport & Décisions
+
+À la fin du test, le cockpit affiche:
+- ✅ / ❌ par étape avec latence mesurée
+- Liste priorisée des **bloqueurs critiques** (toute étape < 100% pour le test live)
+- Recommandation: corriger bloqueurs avant de toucher au messaging
+
+---
+
+### Détails techniques
+
+**Nouvelles tables**
+```sql
+critical_path_metrics_snapshot (id, captured_at, stage, value, conversion_rate, top_failures jsonb)
+critical_path_test_runs (id, tester_phone, tester_email, started_at, current_stage, stage_timestamps jsonb, errors jsonb, final_status)
 ```
 
-GRANTS standards (`authenticated` SELECT/INSERT/UPDATE/DELETE, `service_role` ALL), RLS admin-only (`has_role(auth.uid(),'admin')`), service_role bypass.
+**Nouvelles edge functions**
+- `critical-path-snapshot` (cron 15min): agrège les 7 étapes dans `critical_path_metrics_snapshot`
+- `critical-path-live-test`: orchestre le test live, écoute webhooks Twilio/Stripe pour mettre à jour la run
 
-Seed des 12 templates dans `sms_templates` avec `template_key = curiosity_01..12`, `audience_type='contractor'`, body avec placeholders `{{company}}`, `{{link}}`. Contenu = texte exact fourni par l'utilisateur (12 messages).
+**Nouveaux fichiers UI**
+- `src/pages/admin/PageAdminCriticalPathAudit.tsx`
+- `src/features/criticalPath/components/StageCard.tsx`
+- `src/features/criticalPath/components/FunnelHeader.tsx`
+- `src/features/criticalPath/components/LiveTestRunner.tsx`
+- `src/features/criticalPath/hooks/useCriticalPathSnapshot.ts`
+- `src/features/criticalPath/hooks/useLiveTestRun.ts`
 
-Planning J1/J3/J5/J7/J10/J12 → on déclenche les 12 SMS sur ces 6 jours actifs (les autres jours servent de respiration). Mapping retenu:
-- J1 → #1
-- J2 → #2
-- J3 → #3
-- J4 → #4
-- J5 → #5
-- J7 → #6, #7, #8
-- J10 → #9, #10, #11
-- J12 → #12
+**Webhooks vérifiés**
+- Twilio status callback déjà branché? Sinon ajouter dans `sms-curiosity-tick` la mise à jour de `delivered_at`.
+- Stripe webhook → `pricing_payment_events` → trigger d'activation déjà en place? À auditer.
 
-(Cadence "puissante" demandée: les 6 jours-clés contiennent les SMS les plus importants; reveal #11 à J10, CTA #12 à J12.) Si tu préfères 1 SMS par jour je peux ajuster.
+**Sécurité**: admin only, RLS via `has_role(auth.uid(),'admin')`, GRANT explicites sur les 2 nouvelles tables.
 
-## 2. Edge functions
+---
 
-- `sms-curiosity-enroll` (admin POST): crée la séquence pour un `prospect_id`, vérifie le numéro, refuse les opt-outs (`sms_opt_outs`), inscrit avec `next_send_at = now()` step 0.
-- `sms-curiosity-tick` (CRON `*/15 * * * *` via pg_cron): lit toutes les séquences `status='active' AND next_send_at <= now()`, pour chaque: calcule prochain step selon planning J1→J12, rend le template (`{{company}}`, `{{link}}`), envoie via Twilio gateway (réutilise `connector-gateway.lovable.dev/twilio/Messages.json`), log dans `contractor_curiosity_sms_events` + `sms_messages`, MAJ `current_step` et `next_send_at`. Termine à step 12. Idempotent par `(sequence_id, step)`.
-- `sms-curiosity-unsubscribe` (webhook STOP existant ou réutilise handler actuel): set `status='stopped'`.
+### Hors scope (pour l'instant)
+- Aucun changement aux templates SMS Curiosité 12
+- Aucun changement aux landing pages ou à Alex
+- Aucun changement au pricing ou à Stripe
 
-Sécurité: validation Zod sur l'enroll, JWT admin, throttle, suppression check, hard cap 12.
-
-## 3. Cron
-
-`select cron.schedule('sms-curiosity-tick','*/15 * * * *', $$ select net.http_post(...) $$);` posé via `supabase--insert` (pas migration).
-
-## 4. UI — Admin (réutilise `/admin/prospect-sms`)
-
-Ajout dans `PageAdminProspectSMS.tsx`:
-- Nouvelle section "Séquence Curiosité 12" en haut du panneau prospect:
-  - Bouton "Inscrire à la séquence Curiosité 12" sur chaque prospect (action: `sms-curiosity-enroll`).
-  - Toggle `dryRun` (preview-only: rend les 12 SMS dans un Drawer avec date d'envoi, sans envoi réel).
-  - Badge état séquence par prospect (step X/12, prochain envoi).
-- Nouvel onglet "Curiosité 12" listant `contractor_curiosity_sms_sequences` avec colonnes: company, phone, step, next_send_at, status, dernier event, bouton Pause/Resume/Stop.
-- Drawer "Aperçu 12 SMS" rendant chaque template avec placeholders résolus.
-
-## 5. Anti-spam / conformité
-
-- Mention STOP dans chaque SMS (déjà standard projet).
-- Respect `sms_opt_outs` à chaque tick.
-- Fenêtre d'envoi 9h–20h America/Toronto (réutilise `outbound_send_window_policy` si dispo, sinon check inline). Si hors fenêtre → reporter `next_send_at` à 9h.
-- Cap quotidien sender hérité de `outbound_global_settings`.
-
-## 6. Hors scope
-
-- Pas de modification du moteur prospect_sms existant.
-- Pas de variante A/B sur cette séquence (texte verrouillé par toi).
-- Pas de séquence propriétaire (audience contractor only, confirmé).
-
-## 7. Validation
-
-- Test dry-run sur 1 prospect: les 12 SMS rendus correctement.
-- `supabase--curl_edge_functions` sur `sms-curiosity-enroll` puis `sms-curiosity-tick` (forçant `next_send_at=now()`) → vérifier 1 envoi réel sur ton numéro de test.
-- Vérifier event loggé dans `contractor_curiosity_sms_events` + `sms_messages`.
-
-## Détails techniques
-
-- Twilio: même gateway que `sms-prospect-send`. `From` = `TWILIO_FROM_NUMBER` env. `Body` rendu côté edge.
-- Phone E.164 validation (libphonenumber-style regex `^\+[1-9]\d{7,14}$`).
-- Idempotence: `UNIQUE(sequence_id, step)` sur `contractor_curiosity_sms_events`.
-- Compteur step pilote le planning (table de mapping en TS dans la function, pas en DB pour rester ajustable).
+Le but est de **mesurer avant de modifier**. Toute correction sera proposée dans un plan séparé une fois les fuites identifiées.

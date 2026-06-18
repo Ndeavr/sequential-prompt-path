@@ -175,6 +175,7 @@ const PageAcqActivation = lazy(() => import("@/pages/acquisition/PageAcqActivati
 const PageActivationSuccess = lazy(() => import("@/pages/acquisition/PageActivationSuccess"));
 const PageAdminWarRoom = lazy(() => import("@/pages/admin/acquisition/PageAdminWarRoom"));
 const AdminLaunchWarRoom = lazy(() => import("@/pages/admin/AdminLaunchWarRoom"));
+const PageAdminCriticalPathAudit = lazy(() => import("@/pages/admin/PageAdminCriticalPathAudit"));
 const AdminUIHealthMonitor = lazy(() => import("@/pages/admin/AdminUIHealthMonitor"));
 const Search = lazy(() => import("@/pages/Search"));
 const ContractorProfile = lazy(() => import("@/pages/ContractorProfile"));
@@ -1303,6 +1304,7 @@ export const AppRouter = () => (
         <Route path="/admin/alex/voice-lab" element={<ProtectedRoute requiredRole="admin"><PageVoiceLab /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
         <Route path="/admin/launch-war-room" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><AdminLaunchWarRoom /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/critical-path-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminCriticalPathAudit /></Suspense></ProtectedRoute>} />
         <Route path="/admin/ui-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><AdminUIHealthMonitor /></Suspense></ProtectedRoute>} />
         <Route path="/admin/google-project-audit" element={<ProtectedRoute requiredRole="admin"><PageGoogleProjectUsageAudit /></ProtectedRoute>} />
         <Route path="/admin/omega" element={<ProtectedRoute requiredRole="admin"><PageAdminOmega /></ProtectedRoute>} />
