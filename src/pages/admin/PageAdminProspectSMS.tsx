@@ -75,13 +75,40 @@ export default function PageAdminProspectSMS() {
   const [dryRun, setDryRun] = useState(true);
 
   const refresh = useCallback(async () => {
-    const [{ data: p }, { data: c }] = await Promise.all([
+    const [{ data: p }, { data: c }, { data: q }] = await Promise.all([
       supabase.from("prospect_pages").select("*").order("created_at", { ascending: false }).limit(50),
       supabase.from("sms_campaigns").select("*").order("sent_at", { ascending: false }).limit(50),
+      supabase.from("contractor_curiosity_sms_sequences").select("*").order("created_at", { ascending: false }).limit(50),
     ]);
     setProspects((p ?? []) as Prospect[]);
     setCampaigns((c ?? []) as SmsRow[]);
+    setCuriosity((q ?? []) as CuriositySeq[]);
   }, []);
+
+  async function enrollCuriosity(prospectId: string, preview: boolean) {
+    try {
+      const { data, error } = await supabase.functions.invoke("sms-curiosity-enroll", {
+        body: { prospect_id: prospectId, dry_run: preview },
+      });
+      if (error) throw error;
+      if (preview) {
+        const company = prospects.find(p => p.id === prospectId)?.company_name ?? "";
+        setPreviewOpen({ company, items: data?.preview ?? [] });
+      } else {
+        toast.success("Séquence Curiosité 12 active ✓");
+        await refresh();
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Erreur enrôlement");
+    }
+  }
+
+  async function updateCuriosityStatus(id: string, status: string) {
+    const patch: any = { status };
+    if (status === "active") patch.next_send_at = new Date().toISOString();
+    const { error } = await supabase.from("contractor_curiosity_sms_sequences").update(patch).eq("id", id);
+    if (error) toast.error(error.message); else { toast.success("Mis à jour"); refresh(); }
+  }
 
   useEffect(() => { refresh(); }, [refresh]);
 
