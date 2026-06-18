@@ -161,10 +161,15 @@ Deno.serve(async (req) => {
           body += `\n<img src="${pixelUrl}" width="1" height="1" style="display:none" />`
         }
 
-        // Rewrite links for click tracking
-        if (nextStep.channel_type === 'email' && nextStep.track_clicks) {
+        // Rewrite links for click tracking (email AND sms — Stage 3 of the funnel
+        // depends on outreach_click_events being populated for every channel).
+        const shouldTrackClicks =
+          nextStep.channel_type === 'sms' ||
+          (nextStep.channel_type === 'email' && nextStep.track_clicks)
+        if (shouldTrackClicks) {
           const linkRegex = /\bhttps?:\/\/[^\s<"]+/g
           body = body.replace(linkRegex, (url: string) => {
+            if (url.includes('/track-outreach-click') || url.includes('/track-outreach-open') || url.includes('/outreach-unsubscribe')) return url
             const encoded = encodeURIComponent(url)
             return `${supabaseUrl}/functions/v1/track-outreach-click?mid=${messageId}&url=${encoded}`
           })

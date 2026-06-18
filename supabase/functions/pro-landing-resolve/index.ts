@@ -152,6 +152,20 @@ Deno.serve(async (req: Request) => {
       referrer: referrer ?? null,
     });
 
+    // Safety net for Stage 3 of the Critical Path Audit: if the user reached
+    // this landing via a tokenized share/SMS, also record a click event so the
+    // funnel doesn't show 0 when the /r/ redirect was bypassed.
+    if (token) {
+      try {
+        await supabase.from("outreach_click_events").insert({
+          clicked_url: `pro_landing:${prospect.slug}`,
+          resolved_url: referrer ?? `pro_landing:${prospect.slug}`,
+        });
+      } catch (e) {
+        console.warn("[pro-landing-resolve] click event insert failed", e);
+      }
+    }
+
     // Increment view counter (non-blocking semantics ok)
     await supabase
       .from("war_prospects")
