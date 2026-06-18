@@ -1,59 +1,101 @@
-# Note du fondateur + Consentement philosophie UNPRO
 
-## Emplacement
-La homepage active = `src/pages/PageHomeSimple.tsx` → `HeroOrbMockup`. Il n'existe pas encore de section "Comment ça fonctionne" séparée ; tout ce qui suit le bloc orb+greeting (tagline, quick actions, feature strip) jouera le rôle de "sections suivantes" à bloquer tant que l'utilisateur n'a pas choisi.
+# Homepage A/B — Variante "Recommandation intelligente"
 
-Insertion : juste après le bloc Orb/Greeting et **avant** `tagline + quickActions + feature strip` dans `HeroOrbMockup.tsx`.
+## Objectif
+Créer une **deuxième page d'accueil** complète, indépendante de la home actuelle, avec un **A/B test** déterministe (50/50) pour mesurer la conversion vs la home actuelle. Reprend mot-à-mot le contenu fourni et le visuel de référence (dark hero + sections claires en dessous).
 
-## Nouveau composant
-`src/components/home-orb/FounderNoteConsent.tsx`
+## Routing & A/B test
 
-Contenu visuel :
-- Fond transparent, aucun cadre / carte / bordure.
-- Largeur desktop 900px, mobile 90%, centré, rotation `-0.6deg`.
-- Police manuscrite élégante via Google Fonts `Caveat` (chargée dans `index.html`) — fallback `cursive`.
-- Texte (exact) :
-  > Nous n'avons qu'une seule vie à vivre.
-  > Nous croyons que les propriétaires méritent de meilleurs conseils.
-  > Nous croyons que les bons entrepreneurs méritent d'être reconnus.
-  > C'est pourquoi nous avons créé UNPRO.
-- Signature « — L'équipe UNPRO » à 70% opacité, taille réduite.
-- Tailles : desktop 32–40px, mobile 20–24px, signature ~70% de cette taille.
-- Animation d'apparition "écriture" : reveal ligne par ligne via `framer-motion` (mask-clip ou opacity+y), durée totale ~2s, déclenchée une seule fois par visite (sentinel `sessionStorage["unpro_founder_note_played"]`). `prefers-reduced-motion` → apparition simple.
+- Nouvelle route publique `/v2` → `PageHomeVariantB.tsx` (toujours accessible directement, utile pour previews internes & lien d'audit).
+- Sur `/` (la home actuelle, `PageHomeSimple`) :
+  - Au premier hit, un hook `useHomeAbTest()` assigne un bucket `A` ou `B` (50/50) basé sur `crypto.randomUUID()`, persiste dans `localStorage["unpro_home_ab"]` + cookie 90 j, lit `?variant=a|b` pour forcer un bucket (QA).
+  - Bucket A → rend la home actuelle telle quelle.
+  - Bucket B → rend `<PageHomeVariantB />` inline (pas de redirect, l'URL reste `/`, donc pas de pollution SEO ni de cassure de partage).
+- Logging : `supabase.from("ab_test_assignments").insert({ test_key: "home_v1_vs_v2", bucket, visitor_id, path })` au premier mount, idempotent par visiteur. Réutilise la pattern `entrepreneur_cta_events` (insert fire-and-forget).
+- Tous les CTA de la variante B taggent un `cta_key` préfixé `home_b_*` dans la même table d'events que la home actuelle utilise, pour comparer les taux.
 
-Bloc de choix sous la note (visible uniquement si non encore accepté) :
-- Deux gros boutons radio tactiles (min 56px) côte à côte sur desktop, empilés sur mobile :
-  - « Je suis d'accord avec cette philosophie »
-  - « Je n'adhère pas à cette philosophie »
-- Ton doux, sans alerte. Si l'utilisateur tente de scroller/cliquer plus bas sans choisir, afficher sous les boutons un message subtil : « Veuillez choisir une option pour continuer. »
+## Structure de la variante B (mobile-first, fidèle à l'image)
 
-Comportement :
-- Accepter → `localStorage.setItem("unpro_philosophy_accepted", "true")` + déclenche un `window.dispatchEvent(new Event("unpro:philosophy-accepted"))` + masque le bloc de choix avec fondu, garde la note visible. Les sections suivantes apparaissent (fondu doux). Plus jamais redemandé tant que le flag est en localStorage.
-- Refuser → `window.location.replace("https://www.google.com")`.
+Page = stack vertical, sections pleine largeur :
 
-Universel : aucune mention de leads/marketing/SEO/pub/algorithmes. Même affichage pour homeowner et contractor (pas de branche sur `activeRole`).
+```
+┌──────────────────────────────────────────────┐
+│ HERO (dark, fond #050816 + glow bleu)        │
+│  • H1: "Le meilleur entrepreneur n'est pas   │
+│        toujours le plus visible."            │
+│  • Sous-titre bleu + paragraphe              │
+│  • CTAs: [Parler à Alex] [Créer mon          │
+│          Passeport Maison]                   │
+│  • Trust row: Gratuit · 100% confidentiel ·  │
+│               Experts vérifiés               │
+│  • Visuel droite (desktop): mosaïque         │
+│    d'entrepreneurs floutés + carte           │
+│    "Correspondance 96%" en avant             │
+├──────────────────────────────────────────────┤
+│ COMPARATEUR "NE RECOMMANDE PAS / RECOMMANDE" │
+│  fond clair, 2 colonnes d'icônes ❌ vs ✅    │
+├──────────────────────────────────────────────┤
+│ "Comment UNPRO fonctionne" — 4 étapes        │
+│  numérotées (1→2→3→4), cards claires         │
+├──────────────────────────────────────────────┤
+│ "Déjà reçu des soumissions ?" — dropzone     │
+│  visuelle + 6 bullets en 2 colonnes          │
+├──────────────────────────────────────────────┤
+│ "Ce qui rend UNPRO différent" — 3 cards :    │
+│  Annuaires / Plateformes / UNPRO (carte      │
+│  dark mise en avant)                         │
+├──────────────────────────────────────────────┤
+│ "Un réseau d'entrepreneurs vérifiés" —       │
+│  8 pastilles icônes (RBQ, assurances, …)     │
+├──────────────────────────────────────────────┤
+│ FAQ accordion (4 questions du brief)         │
+├──────────────────────────────────────────────┤
+│ CTA FINAL dark — photo maison nuit + cadre   │
+│  bleu, CTA "Parler à Alex"                   │
+└──────────────────────────────────────────────┘
+```
 
-## Gating dans HeroOrbMockup
-- Nouvel état `accepted` lu depuis `localStorage` au mount + écoute de l'event `unpro:philosophy-accepted`.
-- `<FounderNoteConsent />` inséré après le bloc Orb.
-- Les blocs suivants (`tagline`, `quickActions`, `feature strip`) wrappés dans un conteneur :
-  - Si `!accepted` : `aria-hidden`, `pointer-events-none`, `opacity-0`, `max-h-0 overflow-hidden`, `inert`.
-  - Si `accepted` : fade-in 400ms.
-- Bloque uniquement la portion homepage ; ne bloque pas la navigation header/routes (par contrainte UX raisonnable, sinon l'utilisateur ne peut plus aller nulle part).
+Le contenu textuel est repris **mot-à-mot** depuis le brief utilisateur.
 
-## Fichiers
-- Créer : `src/components/home-orb/FounderNoteConsent.tsx`
-- Modifier : `src/components/home-orb/HeroOrbMockup.tsx` (insertion + gating)
-- Modifier : `index.html` (preconnect + lien Google Fonts `Caveat` 500/700)
+## Design
+
+- Réutilise les tokens existants (`hero-gradient`, `text-gradient`, `shadow-glow`, `bg-primary/8`, `glass-strong`). Aucun hardcode couleur.
+- Hero : section `dark` (wrapper `.alex-immersive` pour respecter la règle de lisibilité absolue) — fond cinematic, texte primary readable.
+- Sections intermédiaires : fond clair `bg-background` (warm landing), respect du contraste WCAG AA.
+- Carte "UNPRO" dans la section "Ce qui rend UNPRO différent" : variante dark avec ring `--primary` et glow.
+- Animations : `framer-motion` léger (fade-up échelonné), respect `prefers-reduced-motion`. Pas d'effets agressifs.
+- Mobile : sections empilées, CTAs pleine largeur, sticky bottom CTA bar réutilisable (réutilise pattern de `StickyMobileCTAV2`).
+
+## Garde-fous mémoire / produit
+
+- **Note du fondateur** : la variante B doit aussi respecter le gating philosophie (FounderNoteConsent) — placée entre hero et comparateur, comme sur la home actuelle. Confirmé via la mémoire.
+- **Positionnement** : on évite les formules interdites ("marketplace d'entrepreneurs", "trouvez un entrepreneur de confiance"). Le contenu fourni est déjà aligné ("recommande le meilleur entrepreneur pour votre situation"), je le garde tel quel.
+- **Pas de model "3 soumissions"** : le contenu fourni *critique* le modèle 3 soumissions, donc cohérent avec la doctrine.
+- **fr-CA** : ponctuation, espaces avant `?` `!` `:`, pas d'apostrophes droites dans la copy.
+- **Lisibilité** : wrap dark sections dans `.alex-immersive`, jamais `text-gray-*` direct, opacités ≥ 70 % sur texte.
+
+## Fichiers à créer
+
+- `src/pages/home/PageHomeVariantB.tsx` — page complète.
+- `src/components/home-variant-b/HeroVariantB.tsx`
+- `src/components/home-variant-b/SectionContrastVariantB.tsx` (NE RECOMMANDE PAS / RECOMMANDE)
+- `src/components/home-variant-b/SectionHowItWorksVariantB.tsx`
+- `src/components/home-variant-b/SectionQuoteAnalysisVariantB.tsx`
+- `src/components/home-variant-b/SectionDifferentiationVariantB.tsx`
+- `src/components/home-variant-b/SectionVerifiedNetworkVariantB.tsx`
+- `src/components/home-variant-b/SectionFaqVariantB.tsx`
+- `src/components/home-variant-b/SectionFinalCtaVariantB.tsx`
+- `src/components/home-variant-b/StickyMobileCtaVariantB.tsx`
+- `src/hooks/useHomeAbTest.ts` — assignation + persistance + logging.
+- `supabase/migrations/<ts>_home_ab_test_assignments.sql` — table `ab_test_assignments` (visitor_id, test_key, bucket, path, created_at) + GRANTs + RLS (insert anon OK, select restreint au service_role/admin).
+
+## Fichiers modifiés
+
+- `src/pages/home/PageHomeSimple.tsx` (ou équivalent monté sur `/`) — wrap dans `useHomeAbTest()` et switch A/B.
+- `src/app/router.tsx` + `src/config/routesConfig.ts` — enregistrer `/v2` lazy-loaded, public, SEO `noindex` (juste pour le QA direct, le test live se fait sur `/`).
 
 ## Hors scope
-- Pas de backend, pas de tracking Supabase de la décision (localStorage uniquement, conformément à la spec).
-- Pas de modification des autres pages ni du header global.
-- Pas de popup / modal.
 
-## Critères de succès
-- Visiteur ne peut pas scroller/cliquer les CTA d'en bas du hero sans avoir choisi.
-- « Je suis d'accord » → débloque immédiatement + persistant entre visites.
-- « Je n'adhère pas » → redirection `google.com`.
-- Animation d'écriture jouée une seule fois par session.
-- Mobile-first, cibles tactiles ≥ 56px, aucun ton agressif.
+- Pas de dashboard admin pour le test (les events sont déjà queryables via `/admin/operations` ou Supabase SQL).
+- Pas de modification de la home actuelle au-delà du switch A/B.
+- Pas de nouvelle logique Alex / backend / matching.

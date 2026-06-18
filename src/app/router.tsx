@@ -13,6 +13,8 @@ import AuthOverlayPremium from "@/components/auth/AuthOverlayPremium";
 // Only eagerly load the home page and critical shared pages
 import HomeWithFeatureFlag from "@/components/home-intent/HomeWithFeatureFlag";
 import PageHomeUnicorn from "@/pages/PageHomeUnicorn";
+import HomeAbSwitch from "@/components/home-ab/HomeAbSwitch";
+const PageHomeVariantB = lazy(() => import("@/pages/home/PageHomeVariantB"));
 import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
 import PageEmergencyReset from "@/pages/PageEmergencyReset";
@@ -822,7 +824,8 @@ export const AppRouter = () => (
         <Route path="/alex/demo" element={<Suspense fallback={<LazyFallback />}><PageAlexConversationAnimated /></Suspense>} />
         <Route path="/alex/analysis" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
         <Route path="/conversation" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
-        <Route path="/" element={<PageHomeUnicorn />} />
+        <Route path="/" element={<HomeAbSwitch />} />
+        <Route path="/v2" element={<Suspense fallback={<LazyFallback />}><PageHomeVariantB /></Suspense>} />
 
         {/* IA Maison — Home Intelligence cluster */}
         <Route path="/ia-maison" element={<Suspense fallback={<LazyFallback />}><PageIaMaisonHub /></Suspense>} />
