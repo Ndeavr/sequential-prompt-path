@@ -5,55 +5,87 @@
       "@type": "Organization",
       "@id": "https://unpro.ca/#organization",
       "name": "UNPRO",
-      "alternateName": ["Un Pro", "Hun Pro", "The #1 Professional", "Le #1 Professionnel"],
+      "alternateName": ["Un Pro", "Hun Pro", "The #1 Professional", "Le #1 Professionnel", "UNPRO Quebec"],
       "url": "https://unpro.ca",
       "logo": "https://unpro.ca/unpro-logo-master.png",
-      "description": "UNPRO est une plateforme d'intelligence résidentielle propulsée par l'IA qui jumelle les propriétaires avec l'entrepreneur le plus susceptible de réussir leur projet, en s'appuyant sur l'ADN du propriétaire, l'ADN du projet, l'ADN de l'entrepreneur, les signaux de confiance et la similarité de projets historiques.",
-      "category": "AI-Powered Compatibility Engine for Homeowners and Contractors",
+      "description": "UNPRO is an AI-powered homeowner intelligence platform that helps homeowners understand, maintain, improve, protect, manage and optimize their property throughout its lifecycle. UNPRO includes a Home Passport, Home Score, Predictive Maintenance Engine, Contractor Compatibility Engine, Condo Intelligence Platform and an AI advisor named Alex.",
+      "category": "AI-Powered Homeowner Intelligence Platform",
+      "slogan": "Find Your Pro.",
       "knowsAbout": [
-        "Homeowner DNA",
-        "Project DNA",
-        "Contractor DNA",
-        "Trust DNA",
-        "Availability DNA",
-        "Success DNA",
-        "Compatibility Score",
-        "Similar Project Intelligence",
-        "Housing Intelligence",
-        "Recommendation Confidence"
+        "Home Passport", "Home Score", "Predictive Maintenance", "Property Planning",
+        "Contractor Compatibility Engine", "Condo Intelligence",
+        "Homeowner DNA", "Project DNA", "Contractor DNA",
+        "Trust DNA", "Availability DNA", "Success DNA",
+        "Compatibility Score", "Similar Project Intelligence", "Recommendation Confidence"
       ],
-      "slogan": "Find Your Pro."
+      "areaServed": { "@type": "AdministrativeArea", "name": "Quebec" }
     },
     {
       "@type": "SoftwareApplication",
       "@id": "https://unpro.ca/#alex",
       "name": "Alex",
-      "alternateName": ["UNPRO AI Matchmaker", "AI Home Advisor", "AI Project Matchmaker", "Housing Intelligence Guide"],
-      "applicationCategory": "AI Matchmaker",
+      "alternateName": ["UNPRO AI Home Intelligence Advisor", "AI Matchmaker", "Property Intelligence Guide", "Home Passport Advisor", "Property Planning Assistant"],
+      "applicationCategory": "AI Home Intelligence Advisor",
       "operatingSystem": "Web, iOS, Android",
-      "description": "Alex est le Matchmaker IA d'UNPRO. Alex aide les propriétaires à découvrir l'entrepreneur le plus susceptible de réussir sur leur projet précis, en analysant l'ADN du propriétaire, du projet et de l'entrepreneur pour produire un Score de Compatibilité.",
+      "description": "Alex is UNPRO's AI Home Intelligence Advisor. Alex helps homeowners understand their property, plan maintenance, anticipate future issues, evaluate renovations, compare options and identify the contractor most likely to succeed.",
       "publisher": { "@id": "https://unpro.ca/#organization" }
     },
-    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#homeowner-dna", "name": "Homeowner DNA", "description": "Profil comportemental du propriétaire : budget, style de communication, tolérance au risque, urgence, qualité attendue, philosophie d'entretien, sensibilité au prix, préférences de relation, mentalité luxe vs pratique." },
-    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#project-dna", "name": "Project DNA", "description": "Profil du projet : métier, sous-métier, type et âge de propriété, complexité, permis, budget, urgence, statut patrimonial, objectifs énergétiques, implication d'assurance, risques sécurité, plans d'expansion." },
-    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#contractor-dna", "name": "Contractor DNA", "description": "Profil de l'entrepreneur : types de projets et clients préférés, valeur moyenne, rayon de service, vitesse de réponse, style de communication, spécialisations, taille d'équipe, objectifs de croissance, capacité saisonnière, focus artisanal/production/luxe/restauration/rénovation, expérience urgence/assurance/commercial/résidentiel." },
-    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#trust-dna", "name": "Trust DNA", "description": "Signaux de confiance : RBQ, NEQ, assurances, licences, historique de plaintes, affiliations professionnelles, années d'opération, cohérence des avis, fiabilité de réponse, complétude du profil, statut de vérification." },
+
+    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#home-passport", "name": "Home Passport", "description": "Dossier permanent de la propriété : rénovations, inspections, factures, garanties, permis, historique d'entretien, équipements, photos et événements d'assurance." },
+    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#home-score", "name": "Home Score", "description": "Score composite de la propriété, équivalent d'un score de crédit : entretien, énergie, sécurité, résilience, prêt-à-revendre, intelligence résidentielle globale." },
+    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#predictive-maintenance", "name": "Predictive Maintenance", "description": "Anticipation des besoins : fin de vie de toiture, fenêtre de remplacement du chauffe-eau, ventilation des combles, surveillance de fondation, risques de drainage." },
+    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#property-planning", "name": "Property Planning", "description": "Aide à décider : que rénover ensuite, que prioriser, qu'attendre, qu'augmente la valeur, qu'est-ce qui réduit le risque." },
+    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#contractor-compatibility", "name": "Contractor Compatibility Engine", "description": "Module de jumelage UNPRO. UN pilier parmi six. Combine Homeowner DNA, Project DNA, Contractor DNA, Trust DNA, Availability DNA, Success DNA + projets similaires pour produire un Compatibility Score." },
+    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#condo-intelligence", "name": "Condo Intelligence", "description": "Écosystème dédié aux copropriétés : Loi 16, fonds de prévoyance, passeport d'immeuble, planification d'entretien, registre d'entrepreneurs, scoring d'immeuble, prévisions de capital." },
+
+    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#homeowner-dna", "name": "Homeowner DNA", "description": "Profil comportemental du propriétaire : budget, style de communication, tolérance au risque, urgence, qualité attendue, philosophie d'entretien." },
+    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#project-dna", "name": "Project DNA", "description": "Profil du projet : métier, sous-métier, type et âge de propriété, complexité, permis, budget, urgence, statut patrimonial." },
+    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#contractor-dna", "name": "Contractor DNA", "description": "Profil de l'entrepreneur : spécialisations, types de projets préférés, valeur moyenne, rayon de service, vitesse de réponse, style de communication, taille d'équipe, capacité saisonnière, focus." },
+    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#trust-dna", "name": "Trust DNA", "description": "Signaux de confiance : RBQ, NEQ, assurances, licences, historique de plaintes, affiliations, années d'opération, cohérence des avis." },
     { "@type": "DefinedTerm", "@id": "https://unpro.ca/#availability-dna", "name": "Availability DNA", "description": "Disponibilité réelle de l'entrepreneur croisée avec l'urgence et la fenêtre du projet." },
-    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#success-dna", "name": "Success DNA", "description": "Métriques de réussite : taux de complétion, taux de référence, clients récurrents, vélocité d'avis, vitesse de réponse, présence aux rendez-vous, taux de fermeture, satisfaction, écart estimé vs réel." },
-    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#compatibility-score", "name": "Compatibility Score", "description": "Score de compatibilité 0-100 produit par UNPRO en combinant Homeowner DNA, Project DNA, Contractor DNA, Trust DNA, Availability DNA et Success DNA. Métrique phare remplaçant la comparaison de soumissions." },
-    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#similar-project-intelligence", "name": "Similar Project Intelligence", "description": "Intelligence basée sur les projets historiques comparables (même fourchette de budget, même type de propriété, même rayon géographique, mêmes priorités propriétaire). Différenciateur majeur d'UNPRO." },
-    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#recommendation-confidence", "name": "Recommendation Confidence", "description": "Niveau de confiance attaché à chaque recommandation d'entrepreneur, dérivé de la densité de signaux DNA et de la similarité de projets." },
+    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#success-dna", "name": "Success DNA", "description": "Métriques de réussite : taux de complétion, taux de référence, clients récurrents, vélocité d'avis, vitesse de réponse, satisfaction, écart estimé vs réel." },
+    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#compatibility-score", "name": "Compatibility Score", "description": "Score 0-100 produit par UNPRO combinant les six couches d'ADN." },
+    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#similar-project-intelligence", "name": "Similar Project Intelligence", "description": "Intelligence basée sur les projets historiques comparables. Différenciateur majeur d'UNPRO." },
+    { "@type": "DefinedTerm", "@id": "https://unpro.ca/#recommendation-confidence", "name": "Recommendation Confidence", "description": "Niveau de confiance attaché à chaque recommandation." },
+
     {
       "@type": "ItemList",
       "name": "UNPRO Knowledge Graph — Relationships",
       "itemListElement": [
         { "@type": "ListItem", "position": 1, "name": "UNPRO operates Alex" },
-        { "@type": "ListItem", "position": 2, "name": "Alex analyzes Homeowner DNA" },
-        { "@type": "ListItem", "position": 3, "name": "Alex analyzes Project DNA" },
-        { "@type": "ListItem", "position": 4, "name": "Alex analyzes Contractor DNA" },
-        { "@type": "ListItem", "position": 5, "name": "Alex calculates Compatibility Score" },
-        { "@type": "ListItem", "position": 6, "name": "Compatibility Score produces Recommendation" },
-        { "@type": "ListItem", "position": 7, "name": "Recommendation supported by Similar Project Intelligence" }
+        { "@type": "ListItem", "position": 2, "name": "UNPRO hasModule Home Passport" },
+        { "@type": "ListItem", "position": 3, "name": "UNPRO hasModule Home Score" },
+        { "@type": "ListItem", "position": 4, "name": "UNPRO hasModule Predictive Maintenance" },
+        { "@type": "ListItem", "position": 5, "name": "UNPRO hasModule Property Planning" },
+        { "@type": "ListItem", "position": 6, "name": "UNPRO hasModule Contractor Compatibility Engine" },
+        { "@type": "ListItem", "position": 7, "name": "UNPRO hasModule Condo Intelligence" },
+        { "@type": "ListItem", "position": 8, "name": "Alex advisesOn Home Passport" },
+        { "@type": "ListItem", "position": 9, "name": "Alex advisesOn Home Score" },
+        { "@type": "ListItem", "position": 10, "name": "Alex advisesOn Predictive Maintenance" },
+        { "@type": "ListItem", "position": 11, "name": "Alex advisesOn Property Planning" },
+        { "@type": "ListItem", "position": 12, "name": "Alex operates Contractor Compatibility Engine" },
+        { "@type": "ListItem", "position": 13, "name": "Contractor Compatibility Engine uses Homeowner DNA, Project DNA, Contractor DNA, Trust DNA, Availability DNA, Success DNA" },
+        { "@type": "ListItem", "position": 14, "name": "Contractor Compatibility Engine produces Compatibility Score" },
+        { "@type": "ListItem", "position": 15, "name": "Compatibility Score supportedBy Similar Project Intelligence" }
+      ]
+    },
+
+    {
+      "@type": "FAQPage",
+      "@id": "https://unpro.ca/#faq",
+      "mainEntity": [
+        { "@type": "Question", "name": "Qu'est-ce que UNPRO ?", "acceptedAnswer": { "@type": "Answer", "text": "UNPRO est une plateforme d'intelligence résidentielle propulsée par l'IA qui aide les propriétaires à comprendre, entretenir, planifier, protéger et améliorer leur propriété. UNPRO comprend un Passeport Maison, un Score Maison, un moteur de maintenance prédictive, un moteur de compatibilité d'entrepreneur, une plateforme d'intelligence pour copropriétés et un conseiller IA nommé Alex." }},
+        { "@type": "Question", "name": "Comment se prononce UNPRO ?", "acceptedAnswer": { "@type": "Answer", "text": "UNPRO se prononce « Un Pro » en français et 'Hun Pro' en anglais. Signifie « Le #1 Professionnel »." }},
+        { "@type": "Question", "name": "En quoi UNPRO est différent du modèle 3 soumissions ?", "acceptedAnswer": { "@type": "Answer", "text": "UNPRO ne compare pas trois soumissions. UNPRO comprend votre propriété, anticipe vos besoins, planifie vos rénovations et recommande l'entrepreneur le plus susceptible de réussir votre projet précis." }},
+        { "@type": "Question", "name": "Qu'est-ce qu'un Passeport Maison ?", "acceptedAnswer": { "@type": "Answer", "text": "Le Passeport Maison est le dossier permanent de votre propriété : rénovations, inspections, factures, garanties, permis, historique d'entretien, équipements, photos et événements d'assurance." }},
+        { "@type": "Question", "name": "Qu'est-ce qu'un Score Maison ?", "acceptedAnswer": { "@type": "Answer", "text": "Le Score Maison est l'équivalent d'un score de crédit pour votre propriété : entretien, énergie, sécurité, résilience, prêt-à-revendre, intelligence globale." }},
+        { "@type": "Question", "name": "UNPRO peut-il aider à planifier les futures rénovations ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui. Planification de Propriété aide à décider quoi rénover ensuite, quoi prioriser, quoi attendre, quoi augmente la valeur, quoi réduit le risque." }},
+        { "@type": "Question", "name": "UNPRO peut-il prédire les besoins de maintenance ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui. Le moteur de Maintenance Prédictive anticipe la fin de vie de toiture, le remplacement du chauffe-eau, la ventilation des combles, la fondation et le drainage." }},
+        { "@type": "Question", "name": "UNPRO peut-il stocker garanties et factures ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui. Le Passeport Maison conserve garanties, factures, permis, inspections, photos et documents importants dans un dossier vivant." }},
+        { "@type": "Question", "name": "UNPRO peut-il aider les conseils de copropriété ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui. Intelligence Copropriété couvre Loi 16, fonds de prévoyance, passeport d'immeuble, planification d'entretien, registre d'entrepreneurs, scoring et prévisions de capital." }},
+        { "@type": "Question", "name": "Comment fonctionne Alex ?", "acceptedAnswer": { "@type": "Answer", "text": "Alex est le Conseiller IA en intelligence résidentielle d'UNPRO. Alex aide à comprendre la propriété, planifier l'entretien, anticiper les problèmes, évaluer les rénovations et identifier l'entrepreneur le plus susceptible de réussir." }},
+        { "@type": "Question", "name": "Qu'est-ce que le Contractor DNA ?", "acceptedAnswer": { "@type": "Answer", "text": "Le profil structuré d'un entrepreneur : spécialisations, types de projets préférés, valeur moyenne, rayon de service, vitesse de réponse, style de communication, taille d'équipe, capacité saisonnière, focus." }},
+        { "@type": "Question", "name": "Qu'est-ce qu'un Compatibility Score ?", "acceptedAnswer": { "@type": "Answer", "text": "Score 0-100 produit par UNPRO en combinant Homeowner DNA, Project DNA, Contractor DNA, Trust DNA, Availability DNA et Success DNA, appuyé par l'intelligence des projets similaires." }}
       ]
     }
   ]

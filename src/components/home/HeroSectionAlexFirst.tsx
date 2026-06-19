@@ -166,22 +166,22 @@ export default function HeroSectionAlexFirst() {
             }}
           >
             <Sparkles className="h-3 w-3" />
-            <span>ALEX · LE MATCHMAKER IA D'UNPRO</span>
+            <span>ALEX · CONSEILLER IA D'INTELLIGENCE RÉSIDENTIELLE</span>
           </div>
 
           {/* H1 — instant LCP, no animation */}
           <header className="flex flex-col items-center gap-3">
             <h1 className="font-display font-bold text-white leading-[1.05] tracking-tight text-[40px] sm:text-[52px] md:text-[62px]">
-              Trouvez votre{" "}
+              Votre maison,{" "}
               <span className="bg-gradient-to-r from-[hsl(222,100%,72%)] via-[hsl(195,100%,62%)] to-[hsl(252,100%,74%)] bg-clip-text text-transparent">
-                Pro.
+                comprise.
               </span>
             </h1>
             <p className="text-[15px] sm:text-base text-white/75 max-w-md leading-relaxed">
-              Alex analyse votre projet, vos préférences, votre budget, votre urgence et votre compatibilité pour identifier l'entrepreneur le plus susceptible de réussir.
+              UNPRO est votre plateforme d'intelligence résidentielle : Passeport Maison, Score Maison, maintenance prédictive, planification de rénovations et jumelage d'entrepreneur — guidé par Alex.
             </p>
             <p className="text-[13px] sm:text-sm text-white/55 max-w-md leading-relaxed">
-              Pas trois soumissions. Pas dix appels. Une seule recommandation intelligente.
+              Pas trois soumissions. Pas dix appels. Une intelligence complète pour votre propriété.
             </p>
           </header>
 
