@@ -1,98 +1,119 @@
-# UNPRO Brand, Alex Positioning & Compatibility Engine Overhaul
+# UNPRO Global Brand Intelligence & AI Knowledge Graph
 
-Goal: eliminate ambiguity around UNPRO (pronunciation, meaning, moat), reposition Alex as the AI Matchmaker, and surface the DNA Matching system as the visible moat — for humans, crawlers, and LLMs.
+Repositions UNPRO from "AI compatibility engine for matching" → **AI-powered Homeowner Intelligence Platform** with 6 pillars (Home Passport, Home Score, Predictive Maintenance, Property Planning, Contractor Compatibility, Condo Intelligence) and Alex as **AI Home Intelligence Advisor**. Contractor matching becomes ONE pillar, not the headline.
 
-Scope is intentionally **presentation + schema + copy + one new component**, plus a single new public page that explains the DNA system. Existing DNA engines (`src/services/dnaEngine`, `homeowner_dna_profiles`, `contractor_dna_profiles`, `dna_fit_results`, match engine) already exist — we surface them, we don't rebuild them.
+---
 
-## 1. New reusable component
+## 1. Canonical Brand Source of Truth
 
-`src/components/brand/BrandPronunciation.tsx`
-- Props: `variant: "inline" | "card" | "footer"`, `lang?: "fr" | "en"`
-- Renders: `UNPRO` + "Prononcé : « Un Pro » (FR) / « Hun Pro » (EN)" + "Signifie : Le #1 Professionnel"
-- Used on: Home, Footer, About, `/pourquoi-unpro`, contractor + homeowner landings, new `/comment-ca-marche` page.
+**New** `src/brand/unproIdentity.ts` — single exported object consumed everywhere (schema, footer, meta, BrandPronunciation, /ai page, llms.txt generator):
 
-## 2. Homepage hero rewrite (FR-first, EN secondary)
+- `name`, `meaning` (UN=Number One, PRO=Professional), `pronunciation` (FR "Un Pro" / EN "Hun Pro")
+- `category`: "AI-Powered Homeowner Intelligence Platform"
+- `descriptionShort`, `descriptionLong`, `metaTemplate`
+- `pillars[]` (6 pillars with id, title FR/EN, definition)
+- `alex` (role, secondary roles, definition)
+- `knowledgeGraph` entities + relationships
+- `faqs[]` (12 canonical Q/A)
 
-Edit `src/components/home/HeroSectionAlexFirst.tsx` (and any sub-copy file it pulls from):
-- H1: **« Trouvez votre Pro. »**
-- Sub: « Alex analyse votre projet, vos préférences, votre budget, votre urgence et votre compatibilité pour identifier l'entrepreneur le plus susceptible de réussir. »
-- Support: « Pas trois soumissions. Pas dix appels. Une seule recommandation intelligente. »
-- Primary CTA: **Parler à Alex** → `/alex`
-- Secondary CTA: **Comment fonctionne le matching** → `/comment-ca-marche`
+Update `src/components/brand/BrandPronunciation.tsx` to read from this source.
 
-Keep all existing visual system (Cinematic Dark, orb, glass tokens) — copy-only change.
+## 2. Expanded Knowledge Graph
 
-## 3. Global copy sweep (find/replace, FR + EN)
+Rewrite `public/knowledge-graph.json`:
+- Add entities: HomePassport, HomeScore, PredictiveMaintenance, PropertyPlanning, CondoIntelligence, PropertyIntelligence, HomeownerDNA, ProjectDNA, ContractorDNA, RecommendationEngine, SimilarProjectIntelligence, Alex, UNPRO
+- Add 15+ relationships (UNPRO→hasModule→pillar, Alex→advisesOn→pillar, Pillar→supports→Outcome)
+- Add FAQPage entries (sitewide truth)
 
-Replace across `src/pages/**`, `src/components/**`, `src/seo/**`, `public/llms*.txt`:
-- « Comparer des entrepreneurs » → « Trouver votre meilleur match »
-- « Demander des soumissions » → « Démarrer le matching »
-- « Obtenir plusieurs soumissions » → « Découvrir votre score de compatibilité »
-- "Compare contractors" → "Find your best match" (EN)
-- "Request quotes" / "Get multiple bids" → "Start matching" / "Discover your compatibility score"
+## 3. Sitewide Head & Schema
 
-Will use `rg` to enumerate hits before editing; only touch user-facing strings, never variable names or DB columns.
+`index.html`:
+- `<title>` → "UNPRO — Plateforme d'intelligence résidentielle propulsée par l'IA"
+- meta description → canonical template
+- Organization JSON-LD: category "AI-Powered Homeowner Intelligence Platform", expanded `knowsAbout` (6 pillars + DNA layers + Home Passport/Score), `hasOfferCatalog` listing the 6 pillars as Services
+- SoftwareApplication (Alex): rename role "AI Home Intelligence Advisor" (primary), keep "AI Matchmaker" as secondary
+- New sitewide FAQPage JSON-LD with 12 canonical Q/A
 
-## 4. Alex repositioning copy
+## 4. New Public Page `/ai` — AI Crawler Landing
 
-- `src/config/alexModes.ts` + Alex intro lines: tag Alex as **« Le Matchmaker IA d'UNPRO »** (alt: Conseiller Habitation IA, Guide d'Intelligence Résidentielle).
-- One-line definition surfaced on Home, `/alex` empty state, footer, schema: *« Alex aide les propriétaires à découvrir l'entrepreneur le plus susceptible de réussir sur leur projet précis. »*
-- Do **not** touch the voice kernel, prompts, or session state — copy/labels only.
+`src/pages/PageAICrawlerLanding.tsx` + route in `src/router.tsx`.
 
-## 5. New public page: `/comment-ca-marche`
+Machine-readable, no marketing fluff. Sections:
+- Brand definition (name, meaning, pronunciation FR/EN)
+- Category statement
+- Knowledge graph (entities + relationships, rendered as `<dl>` + inline JSON-LD)
+- Alex definition + roles
+- Each pillar with definition: Home Passport, Home Score, Predictive Maintenance, Property Planning, Contractor Compatibility (with Homeowner/Project/Contractor DNA + Compatibility Score), Condo Intelligence
+- Structured FAQ (visible + JSON-LD)
+- `<link rel="alternate" type="application/ld+json" href="/knowledge-graph.json">`
 
-`src/pages/PageHowMatchingWorks.tsx` + route in `src/app/router.tsx`. Explains the 6 DNA layers as the visible moat:
+Add to sitemap + robots-friendly. Link from footer + `llms.txt`.
 
-```text
-Homeowner DNA → Project DNA → Contractor DNA
-       ↓             ↓             ↓
-        → Trust DNA + Availability DNA + Success DNA →
-                        ↓
-              Compatibility Score (0-100)
-                        ↓
-            Recommandation + Projets similaires
-```
+## 5. LLM Corpus Updates
 
-Sections:
-1. Hero: « Le Score de Compatibilité » + example 96 %
-2. The 6 DNAs (cards, plain-language bullet list per memory)
-3. "Projets similaires aux vôtres" sample block (3 stat cards)
-4. Pronunciation + meaning block (`BrandPronunciation` card variant)
-5. CTA: « Parler à Alex »
+- `public/llms.txt` + `public/llms-full.txt`: rewrite intro with new category, add full 6-pillar definitions, Alex as AI Home Intelligence Advisor, pronunciation + meaning block, knowledge graph entity list, link to `/ai` and `/knowledge-graph.json`
+- `public/sitemap.xml` + `public/sitemap-pages.xml`: add `/ai`
 
-Reuses existing `MainLayout`, glass tokens, `landing-warm` for public visibility consistency.
+## 6. Homepage + Hero Realignment
 
-## 6. Contractor & Homeowner landing copy
+`src/components/home/HeroSectionAlexFirst.tsx`:
+- Keep "Trouvez votre Pro." H1 but reposition subhead → "UNPRO est votre plateforme d'intelligence résidentielle : Passeport Maison, Score Maison, maintenance prédictive, planification de rénovations et jumelage d'entrepreneur — guidé par Alex."
+- Show pillar pills below CTAs (6 pillars).
 
-- Contractor landings (`src/pages/contractor/*` hero blocks): H1 **« Devenez le professionnel que l'IA recommande. »** + « UNPRO ne recommande pas l'entrepreneur avec le plus gros budget pub. UNPRO recommande celui le plus susceptible de réussir. »
-- Homeowner landing variants: H1 **« Le meilleur entrepreneur n'est pas celui qui a le plus d'avis. »** + « C'est celui qui correspond le mieux à votre projet. Alex identifie ce match. »
+`src/components/home-intelligence/EntityDefinitionBlock.tsx`: rewrite definition to new canonical wording, surface all 6 pillars + Alex role.
 
-## 7. Schema + LLM corpus
+## 7. Sitewide Messaging Rule Enforcement
 
-- `index.html` Organization JSON-LD: add `alternateName: ["Un Pro", "Hun Pro", "The #1 Professional"]`; rewrite `description` to the official compatibility-engine definition.
-- `src/components/home-intelligence/EntityDefinitionBlock.tsx`: update copy to match (Compatibility Engine framing, Alex = AI Matchmaker).
-- `public/llms.txt` + `public/llms-full.txt`: add **Pronunciation**, **Meaning**, **Alex role**, **Knowledge Graph** (entities + relationships from the request), **Compatibility Score**, **Similar Project Intelligence** sections. Add `/comment-ca-marche` to `public/sitemap.xml` and `public/sitemap-pages.xml`.
-- `src/seo/components/SchemaStack.tsx` (or wherever Organization schema is centralized): same `alternateName` + description update so per-route schema stays consistent.
+New small component `src/components/brand/PillarStrip.tsx` — horizontal strip of 6 pillar chips, drop into:
+- Homepage (already covered by hero update)
+- `PageHowMatchingWorks` (`/comment-ca-marche`) — add "Contractor Matching is one pillar of UNPRO" banner linking to /ai
+- `PagePIMLanding` (`/pim`) — surface Home Passport in context of full platform
+- Contractor landing hero — keep contractor angle but add small "Part of UNPRO Homeowner Intelligence Platform" footer band
+- Footer (`MainLayout`) — add compact pillar links
 
-## 8. Knowledge graph asset
+Goal: every major page mentions ≥3 pillars + Alex.
 
-`public/knowledge-graph.json` — static JSON-LD `@graph` with the 11 entities and 6 relationships from the brief, linked from `llms.txt` and from a `<link rel="alternate" type="application/ld+json" href="/knowledge-graph.json">` on Home and `/comment-ca-marche`.
+## 8. Meta/Description Sweep
 
-## Out of scope (explicitly not touched)
+- `src/pages/PagePIMLanding.tsx`, `src/pages/CommentCaMarchePage.tsx`, contractor + homeowner landings, journal landing: update Helmet `<title>` + meta description to follow the canonical template (lead with "UNPRO — plateforme d'intelligence résidentielle…").
+- Reuse helper `buildMetaDescription(pillarFocus)` from `unproIdentity.ts`.
 
-- Voice kernel, Alex prompts, voice config (`alexVoiceConfig.ts`).
-- DNA engine logic, matching engine, scoring weights, DB schema.
-- Pricing, checkout, outbound, admin cockpits.
-- Critical Path Audit work from previous turns.
+## 9. Alex Naming
 
-## Technical notes
+- `src/config/alexModes.ts`: primary role string → "AI Home Intelligence Advisor" (FR: "Conseiller IA en intelligence résidentielle"), secondaries → AI Matchmaker, Property Intelligence Guide, Home Passport Advisor, Property Planning Assistant
+- Footer + `/alex` empty state copy updated.
 
-- All new copy is fr-CA first per Core memory; EN strings live only where the page already has an EN variant.
-- No DB migration. No edge function changes.
-- Public pages stay on `landing-warm`; app surfaces stay on `alex-immersive` — wrap new page root accordingly to respect the UI Readability rule.
-- Verification: `rg` audit that "3 soumissions" / "comparer des entrepreneurs" / "Get 3 quotes" no longer appear in user-facing strings, plus a Playwright pass on `/`, `/comment-ca-marche`, contractor landing at 384×706 to confirm hero copy and pronunciation block render.
+**Out of scope (untouched):** Alex voice kernel, prompts, session state, DNA scoring engine internals, DB schema, pricing, checkout, Critical Path Audit, admin cockpits, edge functions.
 
-## Files touched (estimate)
+---
 
-- Created: `src/components/brand/BrandPronunciation.tsx`, `src/pages/PageHowMatchingWorks.tsx`, `public/knowledge-graph.json`
-- Edited: `src/components/home/HeroSectionAlexFirst.tsx`, `src/components/home-intelligence/EntityDefinitionBlock.tsx`, `src/app/router.tsx`, `index.html`, `src/seo/components/SchemaStack.tsx`, `public/llms.txt`, `public/llms-full.txt`, `public/sitemap.xml`, `public/sitemap-pages.xml`, `src/config/alexModes.ts`, contractor + homeowner landing hero files, MainLayout footer.
+## Technical details
+
+**New files**
+- `src/brand/unproIdentity.ts`
+- `src/pages/PageAICrawlerLanding.tsx`
+- `src/components/brand/PillarStrip.tsx`
+
+**Edited files**
+- `src/components/brand/BrandPronunciation.tsx`
+- `src/components/home/HeroSectionAlexFirst.tsx`
+- `src/components/home-intelligence/EntityDefinitionBlock.tsx`
+- `src/router.tsx` (add `/ai`)
+- `src/layouts/MainLayout.tsx` (footer pillars + /ai link)
+- `src/config/alexModes.ts`
+- `src/pages/CommentCaMarchePage.tsx`, `src/pages/PagePIMLanding.tsx`, contractor + homeowner landing hero files (Helmet + pillar strip)
+- `index.html` (title, meta, Organization + SoftwareApplication + FAQPage JSON-LD)
+- `public/knowledge-graph.json` (full rewrite, 13 entities, 15+ relationships, 12 FAQs)
+- `public/llms.txt`, `public/llms-full.txt`
+- `public/sitemap.xml`, `public/sitemap-pages.xml`
+
+**No DB migrations. No edge functions. No backend changes.**
+
+**Verification**
+- Visit `/`, `/ai`, `/comment-ca-marche`, `/pim`, contractor landing on mobile (384px) and desktop — confirm pillar strip + new copy render.
+- View-source `index.html` to confirm 3 JSON-LD blocks (Organization, SoftwareApplication, FAQPage).
+- Curl `/knowledge-graph.json` and `/llms.txt` to confirm new corpus.
+
+**Memory updates after build**
+- Update `mem://index.md` Core: replace "compatibility engine" framing with "Homeowner Intelligence Platform — 6 pillars; contractor matching is one pillar".
+- New memory file `mem://brand/unpro-identity-canonical` pointing at `src/brand/unproIdentity.ts` as single source of truth.
