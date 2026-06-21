@@ -47,7 +47,7 @@ export default function PageAdminContentGuard() {
         .order("severity", { ascending: true })
         .order("category", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as Rule[];
+      return ((data ?? []) as unknown) as Rule[];
     },
   });
 
@@ -60,7 +60,7 @@ export default function PageAdminContentGuard() {
         .order("ran_at", { ascending: false })
         .limit(10);
       if (error) throw error;
-      return (data ?? []) as Run[];
+      return ((data ?? []) as unknown) as Run[];
     },
   });
 

@@ -58,6 +58,7 @@ const PageBadgesConsommateur2026 = lazy(() => import("@/pages/articles/PageBadge
 const PageVerifierGrenierAvantFenetresThermopompe = lazy(() => import("@/pages/articles/PageVerifierGrenierAvantFenetresThermopompe"));
 const PageSignaturePartner = lazy(() => import("@/pages/partners/PageSignaturePartner"));
 const PageAdminPartners = lazy(() => import("@/pages/admin/partners/PageAdminPartners"));
+const PageAdminContentGuard = lazy(() => import("@/pages/admin/PageAdminContentGuard"));
 const PageIsrDemoPlanTest = lazy(() => import("@/pages/demo/PageIsrDemoPlanTest"));
 const PageIsrDemoSuccess = lazy(() => import("@/pages/demo/PageIsrDemoSuccess"));
 const PageIsrDemoCancel = lazy(() => import("@/pages/demo/PageIsrDemoCancel"));
@@ -1446,6 +1447,7 @@ export const AppRouter = () => (
         <Route path="/admin/outbound/send-windows" element={<ProtectedRoute requiredRole="admin"><PageSendWindowPolicy /></ProtectedRoute>} />
         <Route path="/admin/system-health/alex-voice" element={<ProtectedRoute requiredRole="admin"><PageVoiceHealth /></ProtectedRoute>} />
         <Route path="/admin/no-match-monitoring" element={<ProtectedRoute requiredRole="admin"><PageAdminNoMatchMonitoring /></ProtectedRoute>} />
+        <Route path="/admin/content-guard" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminContentGuard /></Suspense></ProtectedRoute>} />
         <Route path="/admin/sales-analytics" element={<ProtectedRoute requiredRole="admin"><AdminSalesAnalyticsPage /></ProtectedRoute>} />
         <Route path="/entrepreneur/sales" element={<EntrepreneurVoiceSalesPage />} />
         <Route path="/homeowner/voice" element={<HomeownerVoiceEntryPage />} />
