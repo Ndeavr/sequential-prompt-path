@@ -740,7 +740,7 @@ export default function PageHomeUnicorn() {
         <script type="application/ld+json">{JSON.stringify(orgSchema)}</script>
       </Helmet>
 
-      <div className="unicorn-theme min-h-screen pb-[calc(9rem+env(safe-area-inset-bottom))] relative overflow-x-hidden">
+      <div className="unicorn-theme min-h-[100svh] pb-[calc(9rem+env(safe-area-inset-bottom))] relative overflow-x-clip overflow-y-visible">
         {/* Base intelligence background — full-page, sits behind every section.
             Memoized hero backdrop: never re-renders on Alex voice/chat state. */}
         <HeroBackdrop />
