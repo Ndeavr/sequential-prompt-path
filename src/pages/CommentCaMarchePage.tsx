@@ -11,7 +11,7 @@ import {
   User, Hammer, Briefcase, ShieldCheck, CalendarClock, TrendingUp, Sparkles,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import BrandPronunciation from "@/components/brand/BrandPronunciation";
+// BrandPronunciation removed from public surfaces — see Internal Content Guard.
 
 const DNA_LAYERS = [
   { icon: User, title: "Homeowner DNA", desc: "Budget, style de communication, tolérance au risque, urgence, qualité attendue, philosophie d'entretien, mentalité luxe vs pratique." },
@@ -153,10 +153,7 @@ export default function CommentCaMarchePage() {
             ))}
           </div>
 
-          {/* Pronunciation block */}
-          <div className="mb-16">
-            <BrandPronunciation variant="card" />
-          </div>
+          {/* Pronunciation block removed — internal-only content (see /admin/content-guard). */}
 
           {/* FAQ */}
           <h2 className="font-display font-bold text-[24px] sm:text-[28px] tracking-[-0.03em] mb-5" style={{ color: "#0B1220" }}>
