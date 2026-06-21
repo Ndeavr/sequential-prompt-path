@@ -242,10 +242,12 @@
     @apply border-border;
   }
 
-  html, body {
-    overflow-x: hidden;
+  html, body, #root {
     width: 100%;
     max-width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   body {
@@ -254,7 +256,9 @@
     /* fixed bg causes flicker on mobile Chrome when URL bar collapses */
     background-attachment: scroll;
     min-height: 100svh;
-    overscroll-behavior-y: none;
+    position: relative;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -1115,6 +1119,13 @@ html { -webkit-text-size-adjust: 100%; }
   pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* Emergency scroll safety — decorative full-screen layers must never trap touches. */
+[data-decor],
+[data-decor] *,
+[aria-hidden="true"].decorative-layer {
+  pointer-events: none !important;
 }
 
 /* Stabilize every backdrop-filter surface: opaque-ish fallback, GPU layer,
