@@ -1,69 +1,137 @@
-## EMERGENCY — Restore Sitewide Scroll
 
-### Root cause hypotheses (confirmed by grep)
-1. `body { overscroll-behavior-y: none }` in `src/index.css` (line 257) — does not block scroll itself, but combined with iOS quirks + the global fixed background can defeat momentum scrolling.
-2. No explicit `overflow-y: auto` / `touch-action: pan-y` on `html, body, #root` — only `overflow-x: hidden` is set. Some mobile browsers then inherit `overflow: hidden` from a wrapper.
-3. Decorative full-screen layers exist (`StableBackgroundLayer`, `CinematicArchScenes`, `.unicorn-theme::before`) — all already `pointer-events: none`, but we must add a defensive global rule guaranteeing it for `[data-decor]` and `aria-hidden` background siblings so a future regression can't trap touches.
-4. `useScrollLock` (auth overlay) writes `body.style.overflow = "hidden"` and restores via a captured `original`. If the overlay unmounts while a second instance is open, `original` ("hidden") is re-applied permanently. Needs to read `original` at lock time and always reset to `""`.
-5. Page wrappers using `min-h-screen` + `overflow-x-hidden` are fine, but we'll standardize on `min-h-[100svh]` and forbid `h-screen overflow-hidden` on any page root (audit only — no offender on `/index` today, but `AdminLayout`/`DashboardLayout`/`CondoLayout`/`ContractorLayout` flagged for review).
+# Internal Content Guard — Purge + Audit Automatisé
 
-### Files to change
+## Problème
+La carte "Qu'est-ce que UNPRO ?" affiche aux propriétaires des instructions de branding LLM (« Un Pro » / "Hun Pro" / "Le #1 Professionnel"). Ces phrases ciblent ChatGPT, Gemini, Perplexity, NotebookLM, Alex — pas un humain qui cherche de l'aide pour sa maison. Risque : d'autres fuites similaires dans Alex, onboarding, FAQ, emails, SMS.
 
-**1. `src/index.css`** — harden the global scroll contract
-- Replace the `html, body` block (lines 245-264) with:
-  ```css
-  html, body, #root {
-    width: 100%;
-    min-height: 100%;
-    overflow-x: hidden;
-    overflow-y: auto;
-  }
-  body {
-    @apply text-foreground font-sans antialiased;
-    background: var(--gradient-bg);
-    background-attachment: scroll;
-    min-height: 100svh;
-    position: relative;
-    touch-action: pan-y;
-    -webkit-overflow-scrolling: touch;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-  ```
-- Remove `overscroll-behavior-y: none`.
-- Append a defensive rule near the bottom:
-  ```css
-  [data-decor], [aria-hidden="true"].decorative-layer, .noise-overlay::after {
-    pointer-events: none !important;
-  }
-  ```
+## Objectif
+1. Retirer immédiatement la fuite visible sur la homepage.
+2. Réécrire le bloc "Qu'est-ce que UNPRO ?" en valeur propriétaire pure.
+3. Déployer un **Internal Content Guard** qui scanne tout le contenu user-facing à chaque build et bloque les fuites futures.
 
-**2. `src/hooks/useScrollLock.ts`** — make unlock idempotent
-- On lock: `document.body.style.overflow = "hidden"`.
-- On unlock: always set back to `""` (never re-apply captured "hidden"). Also clear `touch-action` if we add it.
+---
 
-**3. `src/layouts/MainLayout.tsx`** — guarantee the page shell never traps scroll
-- Replace `min-h-[100svh] flex flex-col relative overflow-x-hidden w-full max-w-full` on the root with `min-h-[100svh] flex flex-col relative w-full overflow-visible` and move `overflow-x-hidden` to the `<main>` only.
-- Add `pb-[calc(96px+env(safe-area-inset-bottom))]` on `<main>` so the fixed bottom dock never sits on top of last content.
+## Phase 1 — Purge immédiate (UI propriétaire)
 
-**4. `src/pages/PageHomeUnicorn.tsx`** (the `/index` page the user reported)
-- Change wrapper `min-h-screen ... overflow-x-hidden` → `min-h-[100svh] overflow-visible overflow-x-clip`.
-- Keep existing pb for dock.
+**`src/components/home-intelligence/EntityDefinitionBlock.tsx`**
+- Supprimer le paragraphe prononciation (« Un Pro » / "Hun Pro" / Le #1 Professionnel).
+- Supprimer la mention "Alex est le Conseiller IA en intelligence résidentielle d'UNPRO..." (jargon interne).
+- Garder uniquement : titre + 1 phrase de valeur propriétaire + 6 piliers reformulés bénéfice-first.
+- Nouveau texte d'ouverture :
+  > « UNPRO vous aide à comprendre votre maison, anticiper les problèmes, et prendre les bonnes décisions au bon moment — avec l'aide d'une IA conçue pour les propriétaires québécois. »
 
-**5. Audit pass (no logic change, just CSS class swap)**
-- `src/layouts/AdminLayout.tsx`, `DashboardLayout.tsx`, `CondoLayout.tsx`, `ContractorLayout.tsx`, `ContractorFunnel/FunnelLayout.tsx`: replace any `h-screen overflow-hidden` on the outermost wrapper with `min-h-[100svh] overflow-visible`. Inner scrollable panes keep their own `overflow-auto`.
+**`src/components/brand/BrandPronunciation.tsx`**
+- Marquer le composant comme **internal-only** : ne plus l'importer dans aucune page user-facing.
+- Conserver uniquement pour `/ai` (page LLM crawler) et `<head>` schema.org metadata.
+- Ajouter commentaire `@internal — ne jamais rendre dans une surface propriétaire/entrepreneur`.
 
-**6. `src/components/home-unicorn/BottomDockGlass.tsx`** — already correct (outer `fixed ... pointer-events-none`, inner pill `pointer-events-auto`). No change.
+**Audit ponctuel des surfaces user-facing** (recherche + retrait des fuites trouvées) :
+- Homepage, /comment-ca-marche, /passeport-maison, /score-maison, /alex, FAQ, /entrepreneurs, /tarifs, onboarding homeowner/contractor, templates email/SMS, modals, tooltips.
 
-**7. Verify**
-- Open `/`, `/index`, `/alex`, `/dashboard` in Playwright at 384×706, scroll-to-bottom, assert `window.scrollY > 0` and that the bottom dock receives clicks while the page still scrolls behind it.
-- Tail console for `body.style.overflow` mutations during navigation.
+---
 
-### Out of scope
-- No business-logic changes, no router changes, no Alex/voice changes, no auth-overlay behavior changes beyond the idempotent unlock fix.
+## Phase 2 — Internal Content Guard (système permanent)
 
-### Success
-- Vertical scroll works on `/`, `/index`, every authenticated layout, on iOS Safari + Android Chrome.
-- Bottom dock + Alex orb remain tappable.
-- No regression in auth overlay (open locks scroll; close fully restores it, even after rapid open/close).
+### 2.1 Table Supabase `content_visibility_rules`
+```
+id uuid pk
+pattern text                -- regex ou plain
+match_type text             -- 'plain' | 'regex'
+severity text               -- 'block' | 'warn'
+category text               -- 'llm_instruction' | 'pronunciation' | 'prompt_leak' | 'dev_note' | 'seo_internal'
+enabled boolean default true
+description text
+created_at timestamptz
+```
++ GRANT authenticated SELECT, service_role ALL. RLS : lecture authenticated, écriture admin via `has_role`.
+
+Seeds initiaux (patterns à bloquer dans le contenu user-facing) :
+- `Hun Pro`, `« Un Pro »` (hors composant interne whitelisted)
+- `Alex doit`, `l'IA doit`, `le système doit`
+- `prompt:`, `instruction:`, `LLM`, `AI-readable`, `GEO`, `AEO`, `NotebookLM`
+- `internal note`, `debug`, `thinking`, `chain of thought`
+- `Conseiller IA en intelligence résidentielle` (jargon)
+- `prononce`, `prononciation` (sur surfaces user)
+
+### 2.2 Scanner `scripts/content-audit.ts`
+Commande : `npm run content-audit` (ajoutée à `package.json`).
+
+Le scanner :
+1. Charge les règles depuis `content_visibility_rules` (+ fallback local `src/content-guard/rules.ts` pour offline/CI).
+2. Parcourt :
+   - `src/pages/**/*.tsx`, `src/components/**/*.tsx`
+   - `public/llms.txt`, `public/knowledge-graph.json` → **whitelistés** (destinés aux IA)
+   - `supabase/functions/**` templates email/SMS
+   - Tables CMS : `faq_entries`, `blog_posts`, `landing_copy`, `email_templates`, `sms_templates`, `alex_prompts` (lecture en dry-run via service role en CI seulement)
+3. Ignore les fichiers marqués `// @content-guard:internal` en tête.
+4. Classe chaque match : `USER_SAFE` vs `INTERNAL_ONLY`.
+5. Sortie :
+   - Console : tableau `file:line — pattern — severity — snippet`
+   - JSON : `.lovable/content-audit-report.json`
+6. Exit code 1 si au moins un `severity=block` détecté dans une surface user-facing.
+
+### 2.3 Whitelisting explicite
+Fichiers/surfaces autorisés à contenir des instructions LLM :
+- `public/llms.txt`, `public/llms-full.txt`, `public/knowledge-graph.json`
+- `src/pages/PageAICrawlerLanding.tsx` (`/ai`)
+- `src/brand/unproIdentity.ts` (source canonique)
+- `index.html` (JSON-LD)
+- `src/components/brand/BrandPronunciation.tsx` (à ne plus monter sur surfaces user)
+
+Tout fichier whitelisté porte un header :
+```
+// @content-guard:internal
+// Surface destinée aux moteurs IA / LLM crawlers — ne jamais monter dans une UI propriétaire.
+```
+
+### 2.4 Cockpit admin `/admin/content-guard`
+- Liste des règles (toggle enabled, edit pattern, severity).
+- Dernier rapport d'audit (date, # violations, fichiers).
+- Bouton "Rescan now" → appelle edge function `content-audit-run`.
+- Filtres par catégorie / sévérité.
+
+### 2.5 Edge function `content-audit-run`
+- Exécute scan sur snapshots CMS (FAQ, blog, email/SMS templates, Alex prompts DB).
+- Persiste résultats dans `content_audit_runs (id, ran_at, violations_count, report jsonb, status)`.
+- Appelable manuellement depuis le cockpit + cron quotidien.
+
+---
+
+## Phase 3 — Hook CI / build
+- Ajouter `"content-audit": "tsx scripts/content-audit.ts"` à `package.json`.
+- Documenter dans `docs/standards/CONTENT_GUARD.md` :
+  - Patterns interdits
+  - Comment whitelister un fichier
+  - Comment ajouter une règle
+  - Catégories USER_SAFE vs INTERNAL_ONLY
+
+---
+
+## Fichiers touchés
+
+**Édités**
+- `src/components/home-intelligence/EntityDefinitionBlock.tsx` (purge prononciation)
+- `src/components/brand/BrandPronunciation.tsx` (header `@internal`, retiré des surfaces user)
+- `src/pages/CommentCaMarchePage.tsx`, `src/pages/PageHomeUnicorn.tsx`, autres surfaces où `BrandPronunciation` apparaît
+- `package.json` (script `content-audit`)
+- `index.html` (vérif que prononciation reste en JSON-LD uniquement)
+
+**Créés**
+- `scripts/content-audit.ts`
+- `src/content-guard/rules.ts` (fallback local)
+- `src/content-guard/scanner.ts`
+- `src/pages/admin/PageAdminContentGuard.tsx` + route `/admin/content-guard`
+- `supabase/functions/content-audit-run/index.ts`
+- Migration : `content_visibility_rules` + `content_audit_runs` + GRANT + RLS + seeds
+- `docs/standards/CONTENT_GUARD.md`
+
+## Hors scope
+- Refonte des 6 piliers (déjà validés ailleurs).
+- Modification du voice prompt d'Alex (couvert par `alex/voice-config-active`).
+- Changement de la page `/ai` LLM-facing (volontairement instructionnelle).
+
+## Succès
+- La carte homepage n'affiche plus aucune mention de prononciation / "Le #1 Professionnel" / "Conseiller IA".
+- `npm run content-audit` retourne 0 violation sur les surfaces user-facing.
+- `/admin/content-guard` liste règles, rapports et permet rescan.
+- Tout build futur bloque automatiquement si une fuite réapparaît.

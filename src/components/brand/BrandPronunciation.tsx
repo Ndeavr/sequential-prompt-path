@@ -1,13 +1,7 @@
-/**
- * BrandPronunciation — Canonical UNPRO pronunciation + meaning block.
- *
- * Used to disambiguate UNPRO for humans, screen readers, search engines,
- * LLMs and voice assistants (NotebookLM, ChatGPT, Gemini, Claude, Perplexity).
- *
- * UNPRO = UN (Number One / Numéro Un, FR) + PRO (Professionnel)
- * Pronounced: « Un Pro » (FR) / "Hun Pro" (EN)
- * Meaning: Le #1 Professionnel — The #1 Professional
- */
+// @content-guard:internal
+// BrandPronunciation — UNPRO pronunciation block for AI engines ONLY.
+// Allowed surfaces: /ai (LLM crawler landing), <head> JSON-LD, internal admin docs.
+// NEVER mount this component in a homeowner, contractor or condo-manager surface.
 type Variant = "inline" | "card" | "footer";
 
 interface Props {

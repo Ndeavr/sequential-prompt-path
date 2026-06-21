@@ -21263,6 +21263,39 @@ export type Database = {
           },
         ]
       }
+      content_audit_runs: {
+        Row: {
+          blocking_count: number
+          created_at: string
+          id: string
+          ran_at: string
+          report: Json
+          source: string
+          status: string
+          violations_count: number
+        }
+        Insert: {
+          blocking_count?: number
+          created_at?: string
+          id?: string
+          ran_at?: string
+          report?: Json
+          source?: string
+          status?: string
+          violations_count?: number
+        }
+        Update: {
+          blocking_count?: number
+          created_at?: string
+          id?: string
+          ran_at?: string
+          report?: Json
+          source?: string
+          status?: string
+          violations_count?: number
+        }
+        Relationships: []
+      }
       content_generation_runs: {
         Row: {
           article_id: string | null
@@ -21390,6 +21423,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      content_visibility_rules: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          enabled: boolean
+          id: string
+          match_type: string
+          pattern: string
+          severity: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          match_type?: string
+          pattern: string
+          severity?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          match_type?: string
+          pattern?: string
+          severity?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       contractor_activation_checklists: {
         Row: {
