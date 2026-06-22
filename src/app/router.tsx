@@ -60,6 +60,7 @@ const PageSignaturePartner = lazy(() => import("@/pages/partners/PageSignaturePa
 const PageAdminPartners = lazy(() => import("@/pages/admin/partners/PageAdminPartners"));
 const PageAdminContentGuard = lazy(() => import("@/pages/admin/PageAdminContentGuard"));
 const PageAdminAiVisibilityAudit = lazy(() => import("@/pages/admin/PageAdminAiVisibilityAudit"));
+const PageAdminAcquisitionFunnel = lazy(() => import("@/pages/admin/PageAdminAcquisitionFunnel"));
 const PageIsrDemoPlanTest = lazy(() => import("@/pages/demo/PageIsrDemoPlanTest"));
 const PageIsrDemoSuccess = lazy(() => import("@/pages/demo/PageIsrDemoSuccess"));
 const PageIsrDemoCancel = lazy(() => import("@/pages/demo/PageIsrDemoCancel"));
@@ -1454,6 +1455,7 @@ export const AppRouter = () => (
         <Route path="/admin/no-match-monitoring" element={<ProtectedRoute requiredRole="admin"><PageAdminNoMatchMonitoring /></ProtectedRoute>} />
         <Route path="/admin/content-guard" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminContentGuard /></Suspense></ProtectedRoute>} />
         <Route path="/admin/ai-visibility-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAiVisibilityAudit /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/acquisition-funnel" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionFunnel /></Suspense></ProtectedRoute>} />
         <Route path="/admin/sales-analytics" element={<ProtectedRoute requiredRole="admin"><AdminSalesAnalyticsPage /></ProtectedRoute>} />
         <Route path="/entrepreneur/sales" element={<EntrepreneurVoiceSalesPage />} />
         <Route path="/homeowner/voice" element={<HomeownerVoiceEntryPage />} />
