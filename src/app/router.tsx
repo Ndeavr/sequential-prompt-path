@@ -60,6 +60,7 @@ const PageSignaturePartner = lazy(() => import("@/pages/partners/PageSignaturePa
 const PageAdminPartners = lazy(() => import("@/pages/admin/partners/PageAdminPartners"));
 const PageAdminContentGuard = lazy(() => import("@/pages/admin/PageAdminContentGuard"));
 const PageAdminAiVisibilityAudit = lazy(() => import("@/pages/admin/PageAdminAiVisibilityAudit"));
+const PageAdminAcquisitionFunnel = lazy(() => import("@/pages/admin/PageAdminAcquisitionFunnel"));
 const PageIsrDemoPlanTest = lazy(() => import("@/pages/demo/PageIsrDemoPlanTest"));
 const PageIsrDemoSuccess = lazy(() => import("@/pages/demo/PageIsrDemoSuccess"));
 const PageIsrDemoCancel = lazy(() => import("@/pages/demo/PageIsrDemoCancel"));
