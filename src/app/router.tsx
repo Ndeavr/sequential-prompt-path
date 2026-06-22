@@ -59,6 +59,7 @@ const PageVerifierGrenierAvantFenetresThermopompe = lazy(() => import("@/pages/a
 const PageSignaturePartner = lazy(() => import("@/pages/partners/PageSignaturePartner"));
 const PageAdminPartners = lazy(() => import("@/pages/admin/partners/PageAdminPartners"));
 const PageAdminContentGuard = lazy(() => import("@/pages/admin/PageAdminContentGuard"));
+const PageAdminAiVisibilityAudit = lazy(() => import("@/pages/admin/PageAdminAiVisibilityAudit"));
 const PageIsrDemoPlanTest = lazy(() => import("@/pages/demo/PageIsrDemoPlanTest"));
 const PageIsrDemoSuccess = lazy(() => import("@/pages/demo/PageIsrDemoSuccess"));
 const PageIsrDemoCancel = lazy(() => import("@/pages/demo/PageIsrDemoCancel"));
@@ -1452,6 +1453,7 @@ export const AppRouter = () => (
         <Route path="/admin/system-health/alex-voice" element={<ProtectedRoute requiredRole="admin"><PageVoiceHealth /></ProtectedRoute>} />
         <Route path="/admin/no-match-monitoring" element={<ProtectedRoute requiredRole="admin"><PageAdminNoMatchMonitoring /></ProtectedRoute>} />
         <Route path="/admin/content-guard" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminContentGuard /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/ai-visibility-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAiVisibilityAudit /></Suspense></ProtectedRoute>} />
         <Route path="/admin/sales-analytics" element={<ProtectedRoute requiredRole="admin"><AdminSalesAnalyticsPage /></ProtectedRoute>} />
         <Route path="/entrepreneur/sales" element={<EntrepreneurVoiceSalesPage />} />
         <Route path="/homeowner/voice" element={<HomeownerVoiceEntryPage />} />
