@@ -3926,6 +3926,36 @@ export type Database = {
           },
         ]
       }
+      ai_citation_scores: {
+        Row: {
+          created_at: string
+          engine: string
+          factors: Json
+          id: string
+          route: string
+          scanned_at: string
+          score: number
+        }
+        Insert: {
+          created_at?: string
+          engine: string
+          factors?: Json
+          id?: string
+          route: string
+          scanned_at?: string
+          score?: number
+        }
+        Update: {
+          created_at?: string
+          engine?: string
+          factors?: Json
+          id?: string
+          route?: string
+          scanned_at?: string
+          score?: number
+        }
+        Relationships: []
+      }
       ai_entities: {
         Row: {
           ai_summary: string | null
@@ -4553,6 +4583,74 @@ export type Database = {
           },
         ]
       }
+      ai_visibility_findings: {
+        Row: {
+          auto_repairable: boolean
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          estimated_conversion_lift_pct: number | null
+          estimated_revenue_impact_cad: number | null
+          id: string
+          payload: Json
+          phase: string
+          recommended_action: string | null
+          repair_difficulty: number | null
+          repair_status: string
+          route: string | null
+          run_id: string | null
+          score: number | null
+          severity: string
+          updated_at: string
+        }
+        Insert: {
+          auto_repairable?: boolean
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          estimated_conversion_lift_pct?: number | null
+          estimated_revenue_impact_cad?: number | null
+          id?: string
+          payload?: Json
+          phase: string
+          recommended_action?: string | null
+          repair_difficulty?: number | null
+          repair_status?: string
+          route?: string | null
+          run_id?: string | null
+          score?: number | null
+          severity?: string
+          updated_at?: string
+        }
+        Update: {
+          auto_repairable?: boolean
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          estimated_conversion_lift_pct?: number | null
+          estimated_revenue_impact_cad?: number | null
+          id?: string
+          payload?: Json
+          phase?: string
+          recommended_action?: string | null
+          repair_difficulty?: number | null
+          repair_status?: string
+          route?: string | null
+          run_id?: string | null
+          score?: number | null
+          severity?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_visibility_findings_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_visibility_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_visibility_reports: {
         Row: {
           ai_citation_probability: number | null
@@ -4659,6 +4757,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ai_visibility_runs: {
+        Row: {
+          created_at: string
+          finished_at: string | null
+          id: string
+          phase: string
+          started_at: string
+          status: string
+          summary: Json
+          triggered_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          phase: string
+          started_at?: string
+          status?: string
+          summary?: Json
+          triggered_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          phase?: string
+          started_at?: string
+          status?: string
+          summary?: Json
+          triggered_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_visibility_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
       }
       aipp_audit_entities: {
         Row: {
@@ -26216,6 +26377,45 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      contractor_fit_blocks: {
+        Row: {
+          best_for: string[] | null
+          contractor_id: string
+          created_at: string
+          expires_at: string
+          generated_at: string
+          id: string
+          model: string | null
+          not_ideal_for: string[] | null
+          updated_at: string
+          why_recommended: string | null
+        }
+        Insert: {
+          best_for?: string[] | null
+          contractor_id: string
+          created_at?: string
+          expires_at?: string
+          generated_at?: string
+          id?: string
+          model?: string | null
+          not_ideal_for?: string[] | null
+          updated_at?: string
+          why_recommended?: string | null
+        }
+        Update: {
+          best_for?: string[] | null
+          contractor_id?: string
+          created_at?: string
+          expires_at?: string
+          generated_at?: string
+          id?: string
+          model?: string | null
+          not_ideal_for?: string[] | null
+          updated_at?: string
+          why_recommended?: string | null
+        }
+        Relationships: []
       }
       contractor_followup_queue: {
         Row: {
