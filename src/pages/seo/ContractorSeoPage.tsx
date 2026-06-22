@@ -194,11 +194,13 @@ export default function ContractorSeoPage() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Button size="lg" asChild>
-              <a href="#contact">Obtenir une soumission <ArrowRight className="w-4 h-4 ml-2" /></a>
+            <Button size="lg" asChild className="bg-amber-400 text-black hover:bg-amber-300">
+              <Link to={`/entrepreneur/${slug}/reclamer`}>
+                Réclamer ce profil — 1 $ <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <a href="#projets">Voir les projets</a>
+              <a href="#contact">Obtenir une soumission</a>
             </Button>
           </div>
         </header>
