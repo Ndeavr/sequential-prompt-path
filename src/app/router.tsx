@@ -1455,6 +1455,7 @@ export const AppRouter = () => (
         <Route path="/admin/no-match-monitoring" element={<ProtectedRoute requiredRole="admin"><PageAdminNoMatchMonitoring /></ProtectedRoute>} />
         <Route path="/admin/content-guard" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminContentGuard /></Suspense></ProtectedRoute>} />
         <Route path="/admin/ai-visibility-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAiVisibilityAudit /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/acquisition-funnel" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionFunnel /></Suspense></ProtectedRoute>} />
         <Route path="/admin/sales-analytics" element={<ProtectedRoute requiredRole="admin"><AdminSalesAnalyticsPage /></ProtectedRoute>} />
         <Route path="/entrepreneur/sales" element={<EntrepreneurVoiceSalesPage />} />
         <Route path="/homeowner/voice" element={<HomeownerVoiceEntryPage />} />
