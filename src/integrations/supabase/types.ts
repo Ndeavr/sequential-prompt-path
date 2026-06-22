@@ -924,6 +924,117 @@ export type Database = {
         }
         Relationships: []
       }
+      acquisition_audit_runs: {
+        Row: {
+          auto_repairs: number | null
+          completed_at: string | null
+          contractors_audited: number | null
+          error: string | null
+          findings_created: number | null
+          id: string
+          phases_completed: Json | null
+          recovery_enqueued: number | null
+          started_at: string
+          status: string
+          total_lost_revenue_cad: number | null
+          total_recoverable_cad: number | null
+        }
+        Insert: {
+          auto_repairs?: number | null
+          completed_at?: string | null
+          contractors_audited?: number | null
+          error?: string | null
+          findings_created?: number | null
+          id?: string
+          phases_completed?: Json | null
+          recovery_enqueued?: number | null
+          started_at?: string
+          status?: string
+          total_lost_revenue_cad?: number | null
+          total_recoverable_cad?: number | null
+        }
+        Update: {
+          auto_repairs?: number | null
+          completed_at?: string | null
+          contractors_audited?: number | null
+          error?: string | null
+          findings_created?: number | null
+          id?: string
+          phases_completed?: Json | null
+          recovery_enqueued?: number | null
+          started_at?: string
+          status?: string
+          total_lost_revenue_cad?: number | null
+          total_recoverable_cad?: number | null
+        }
+        Relationships: []
+      }
+      acquisition_findings: {
+        Row: {
+          auto_repairable: boolean | null
+          contractor_id: string | null
+          conversion_lift_pct: number | null
+          created_at: string
+          id: string
+          issue_code: string
+          issue_description: string | null
+          lost_revenue_cad: number | null
+          metadata: Json | null
+          phase: string
+          recoverable_revenue_cad: number | null
+          repair_action: string | null
+          repair_difficulty: number | null
+          resolved_at: string | null
+          run_id: string | null
+          severity: string
+          stage_from: string | null
+          stage_to: string | null
+          status: string
+        }
+        Insert: {
+          auto_repairable?: boolean | null
+          contractor_id?: string | null
+          conversion_lift_pct?: number | null
+          created_at?: string
+          id?: string
+          issue_code: string
+          issue_description?: string | null
+          lost_revenue_cad?: number | null
+          metadata?: Json | null
+          phase: string
+          recoverable_revenue_cad?: number | null
+          repair_action?: string | null
+          repair_difficulty?: number | null
+          resolved_at?: string | null
+          run_id?: string | null
+          severity?: string
+          stage_from?: string | null
+          stage_to?: string | null
+          status?: string
+        }
+        Update: {
+          auto_repairable?: boolean | null
+          contractor_id?: string | null
+          conversion_lift_pct?: number | null
+          created_at?: string
+          id?: string
+          issue_code?: string
+          issue_description?: string | null
+          lost_revenue_cad?: number | null
+          metadata?: Json | null
+          phase?: string
+          recoverable_revenue_cad?: number | null
+          repair_action?: string | null
+          repair_difficulty?: number | null
+          resolved_at?: string | null
+          run_id?: string | null
+          severity?: string
+          stage_from?: string | null
+          stage_to?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       acquisition_followup_queue: {
         Row: {
           channel: string
@@ -964,6 +1075,96 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      acquisition_funnel_state: {
+        Row: {
+          activated_at: string | null
+          business_name: string | null
+          city: string | null
+          clicked_at: string | null
+          contacted_at: string | null
+          contractor_id: string
+          created_at: string
+          current_stage: string
+          data_quality_score: number | null
+          decision_maker_confidence: number | null
+          decision_maker_name: string | null
+          decision_maker_role: string | null
+          delivered_at: string | null
+          drop_off_reason: string | null
+          email_quality_score: number | null
+          email_role: string | null
+          estimated_mrr_cad: number | null
+          last_audited_at: string | null
+          lead_readiness_score: number | null
+          onboarded_at: string | null
+          opened_at: string | null
+          paid_at: string | null
+          profile_completion_pct: number | null
+          registered_at: string | null
+          scraped_at: string | null
+          sms_eligible: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          business_name?: string | null
+          city?: string | null
+          clicked_at?: string | null
+          contacted_at?: string | null
+          contractor_id: string
+          created_at?: string
+          current_stage?: string
+          data_quality_score?: number | null
+          decision_maker_confidence?: number | null
+          decision_maker_name?: string | null
+          decision_maker_role?: string | null
+          delivered_at?: string | null
+          drop_off_reason?: string | null
+          email_quality_score?: number | null
+          email_role?: string | null
+          estimated_mrr_cad?: number | null
+          last_audited_at?: string | null
+          lead_readiness_score?: number | null
+          onboarded_at?: string | null
+          opened_at?: string | null
+          paid_at?: string | null
+          profile_completion_pct?: number | null
+          registered_at?: string | null
+          scraped_at?: string | null
+          sms_eligible?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          business_name?: string | null
+          city?: string | null
+          clicked_at?: string | null
+          contacted_at?: string | null
+          contractor_id?: string
+          created_at?: string
+          current_stage?: string
+          data_quality_score?: number | null
+          decision_maker_confidence?: number | null
+          decision_maker_name?: string | null
+          decision_maker_role?: string | null
+          delivered_at?: string | null
+          drop_off_reason?: string | null
+          email_quality_score?: number | null
+          email_role?: string | null
+          estimated_mrr_cad?: number | null
+          last_audited_at?: string | null
+          lead_readiness_score?: number | null
+          onboarded_at?: string | null
+          opened_at?: string | null
+          paid_at?: string | null
+          profile_completion_pct?: number | null
+          registered_at?: string | null
+          scraped_at?: string | null
+          sms_eligible?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       acquisition_pipeline_logs: {
         Row: {
@@ -1054,6 +1255,48 @@ export type Database = {
           total_items?: number
           triggered_by?: string | null
           triggered_by_label?: string | null
+        }
+        Relationships: []
+      }
+      acquisition_recovery_queue: {
+        Row: {
+          attempts: number
+          campaign_type: string
+          channel: string
+          contractor_id: string
+          created_at: string
+          id: string
+          last_error: string | null
+          payload: Json | null
+          scheduled_at: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          campaign_type: string
+          channel?: string
+          contractor_id: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          payload?: Json | null
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          campaign_type?: string
+          channel?: string
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          payload?: Json | null
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: string
         }
         Relationships: []
       }
@@ -44719,6 +44962,39 @@ export type Database = {
           },
         ]
       }
+      landing_page_health: {
+        Row: {
+          bounce_rate: number | null
+          cls: number | null
+          health_score: number | null
+          id: string
+          issues: Json | null
+          last_audited_at: string
+          lcp_ms: number | null
+          route: string
+        }
+        Insert: {
+          bounce_rate?: number | null
+          cls?: number | null
+          health_score?: number | null
+          id?: string
+          issues?: Json | null
+          last_audited_at?: string
+          lcp_ms?: number | null
+          route: string
+        }
+        Update: {
+          bounce_rate?: number | null
+          cls?: number | null
+          health_score?: number | null
+          id?: string
+          issues?: Json | null
+          last_audited_at?: string
+          lcp_ms?: number | null
+          route?: string
+        }
+        Relationships: []
+      }
       landing_visits: {
         Row: {
           device_type: string | null
@@ -72801,6 +73077,33 @@ export type Database = {
           tax_order?: number
           tax_rate?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      template_quality_scores: {
+        Row: {
+          id: string
+          issues: Json | null
+          last_audited_at: string
+          score: number
+          template_id: string
+          template_kind: string
+        }
+        Insert: {
+          id?: string
+          issues?: Json | null
+          last_audited_at?: string
+          score?: number
+          template_id: string
+          template_kind: string
+        }
+        Update: {
+          id?: string
+          issues?: Json | null
+          last_audited_at?: string
+          score?: number
+          template_id?: string
+          template_kind?: string
         }
         Relationships: []
       }
