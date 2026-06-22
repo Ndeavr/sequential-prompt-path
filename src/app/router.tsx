@@ -59,6 +59,7 @@ const PageVerifierGrenierAvantFenetresThermopompe = lazy(() => import("@/pages/a
 const PageSignaturePartner = lazy(() => import("@/pages/partners/PageSignaturePartner"));
 const PageAdminPartners = lazy(() => import("@/pages/admin/partners/PageAdminPartners"));
 const PageAdminContentGuard = lazy(() => import("@/pages/admin/PageAdminContentGuard"));
+const PageAdminAiVisibilityAudit = lazy(() => import("@/pages/admin/PageAdminAiVisibilityAudit"));
 const PageIsrDemoPlanTest = lazy(() => import("@/pages/demo/PageIsrDemoPlanTest"));
 const PageIsrDemoSuccess = lazy(() => import("@/pages/demo/PageIsrDemoSuccess"));
 const PageIsrDemoCancel = lazy(() => import("@/pages/demo/PageIsrDemoCancel"));
