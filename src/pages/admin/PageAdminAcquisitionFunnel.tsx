@@ -37,29 +37,44 @@ const errToMsg = (e: any): string => {
   return e.message ?? JSON.stringify(e);
 };
 
+type FunnelLive = {
+  mode: "state" | "fallback";
+  state_rows: number;
+  counts: Record<string, number>;
+  sources: Record<string, { value: number; table: string }>;
+};
+
 export default function PageAdminAcquisitionFunnel() {
   const [running, setRunning] = useState(false);
-  const [funnelQ, setFunnelQ] = useState<QueryState<Record<string, number>>>({ data: {}, error: null, loading: true });
+  const [syncing, setSyncing] = useState(false);
+  const [funnelQ, setFunnelQ] = useState<QueryState<FunnelLive | null>>({ data: null, error: null, loading: true });
   const [findingsQ, setFindingsQ] = useState<QueryState<Finding[]>>({ data: [], error: null, loading: true });
   const [runQ, setRunQ] = useState<QueryState<any | null>>({ data: null, error: null, loading: true });
 
   const loadFunnel = useCallback(async () => {
     setFunnelQ((s) => ({ ...s, loading: true, error: null }));
     try {
-      const { data, error } = await (supabase as any)
-        .from("acquisition_funnel_state")
-        .select("current_stage")
-        .limit(5000);
+      const { data, error } = await supabase.functions.invoke("acquisition-funnel-live", { body: {} });
       if (error) throw error;
-      const counts: Record<string, number> = {};
-      (data ?? []).forEach((r: any) => {
-        if (r?.current_stage) counts[r.current_stage] = (counts[r.current_stage] ?? 0) + 1;
-      });
-      setFunnelQ({ data: counts, error: null, loading: false });
+      setFunnelQ({ data: data as FunnelLive, error: null, loading: false });
     } catch (e: any) {
-      setFunnelQ({ data: {}, error: errToMsg(e), loading: false });
+      setFunnelQ({ data: null, error: errToMsg(e), loading: false });
     }
   }, []);
+
+  const syncFunnelState = useCallback(async (silent = false) => {
+    setSyncing(true);
+    try {
+      const { error } = await supabase.functions.invoke("sync-acquisition-funnel-state", { body: {} });
+      if (error) throw error;
+      if (!silent) toast.success("Synchronisation terminée");
+      await loadFunnel();
+    } catch (e: any) {
+      if (!silent) toast.error(errToMsg(e));
+    } finally {
+      setSyncing(false);
+    }
+  }, [loadFunnel]);
 
   const loadFindings = useCallback(async () => {
     setFindingsQ((s) => ({ ...s, loading: true, error: null }));
@@ -100,6 +115,15 @@ export default function PageAdminAcquisitionFunnel() {
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
+  // Auto-trigger sync once if the state table is empty
+  const autoSyncedRef = useState({ done: false })[0];
+  useEffect(() => {
+    if (funnelQ.data?.mode === "fallback" && !autoSyncedRef.done) {
+      autoSyncedRef.done = true;
+      void syncFunnelState(true);
+    }
+  }, [funnelQ.data, syncFunnelState, autoSyncedRef]);
+
   const runAudit = async () => {
     setRunning(true);
     try {
@@ -115,12 +139,15 @@ export default function PageAdminAcquisitionFunnel() {
     }
   };
 
-  const funnel = funnelQ.data;
+  const funnel = funnelQ.data?.counts ?? {};
+  const sources = funnelQ.data?.sources ?? {};
+  const mode = funnelQ.data?.mode ?? "state";
   const latestRun = runQ.data;
   const findings = findingsQ.data;
-  const total = STAGES.reduce((s, st) => s + (funnel[st] ?? 0), 0);
+  const top = funnel.scraped ?? 0;
   const stageCount = (s: string) => funnel[s] ?? 0;
-  const pct = (s: string) => total ? Math.round((stageCount(s) / total) * 100) : 0;
+  const pct = (s: string) => top ? Math.round((stageCount(s) / top) * 100) : 0;
+
 
   const ErrorCard = ({ label, msg, onRetry }: { label: string; msg: string; onRetry: () => void }) => (
     <Card className="p-4 border-amber-500/40 bg-amber-500/5">
