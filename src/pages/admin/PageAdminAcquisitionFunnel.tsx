@@ -359,7 +359,7 @@ export default function PageAdminAcquisitionFunnel() {
                       </div>
                       {src && (
                         <div className="text-[10px] text-muted-foreground pl-28 font-mono">
-                          {src.value} from {src.table}
+                          {src.events ?? 0} events · {src.raw != null ? `${src.raw} from ${src.raw_source ?? "raw"}` : "no raw cross-check"}{src.trust === "events_only" ? " · events only" : ""}
                         </div>
                       )}
                     </div>
