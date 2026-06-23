@@ -1,64 +1,72 @@
-## Problème
+## Root cause analysis
 
-L'auditeur actuel conclut "Aucune fuite détectée" alors qu'il n'y a aucune donnée. Logiquement faux : *absence de données ≠ absence de fuites*. On doit basculer vers un modèle de **confiance + télémétrie**.
+Le crash visible n'est **pas** dans la logique de `PageAdminAcquisitionFunnel` (la page `/admin/revenue-intelligence`). Les logs console le prouvent :
 
-## Refonte — 3 livrables
-
-### 1. Edge function `acquisition-pipeline-audit` v2
-
-Avant d'évaluer les fuites, exécuter une **Data Availability Check** :
-
-- Compter les rows + `MAX(created_at)`/`updated_at` sur : `contractors`, `contractor_leads`, `contractor_prospects`, `companies`, `contractor_outreach_logs`, `campaign_send_log`, `outreach_campaigns`, `profiles`, `acquisition_funnel_state`.
-- Compter les événements par stage : SCRAPED, CONTACTED, DELIVERED, OPENED, CLICKED, REGISTERED, ONBOARDED, PAID, ACTIVE (via `contractor_leads.pipeline_status` + `contractor_outreach_logs.status` + `campaign_send_log.status`).
-- Calculer un **confidence_score 0-100** :
-  - 0 contractors + 0 events → score 0 → statut `UNKNOWN / CRITICAL`
-  - Données partielles → 50-94 → `PARTIAL`
-  - Données complètes + activité → 95-100 → `VERIFIED`
-- Détecter **silent failures** :
-  - `SCRAPER_STALLED` — 0 contractors ajoutés en 24h
-  - `SMS_DELIVERY_FAILURE` — sms_queued > 0 ET delivered = 0
-  - `EMAIL_DELIVERY_FAILURE` — email sent > 0 ET delivered = 0
-  - `TRACKING_PIPELINE_FAILURE` — outreach sent > 0 ET clicks = 0
-  - `STRIPE_WEBHOOK_FAILURE` — payments > 0 ET active subscriptions = 0 (skip si tables absentes)
-- Toujours produire au moins 1 finding quand `confidence < 50` : `acquisition_telemetry_unavailable` (severity critical, action recommandée explicite).
-- Étendre `acquisition_audit_runs` avec : `confidence_score`, `data_availability` (jsonb), `system_status` (`healthy|warning|critical|unknown`), `silent_failures` (jsonb[]).
-
-### 2. Migration DB
-
-```sql
-ALTER TABLE public.acquisition_audit_runs
-  ADD COLUMN IF NOT EXISTS confidence_score int,
-  ADD COLUMN IF NOT EXISTS system_status text,
-  ADD COLUMN IF NOT EXISTS data_availability jsonb DEFAULT '{}'::jsonb,
-  ADD COLUMN IF NOT EXISTS silent_failures jsonb DEFAULT '[]'::jsonb,
-  ADD COLUMN IF NOT EXISTS event_counts jsonb DEFAULT '{}'::jsonb;
+```
+[AppErrorBoundary] stale chunk detected — reloading once
+TypeError: Failed to fetch dynamically imported module:
+  https://…/assets/PropertyTypeCityPage-DHtpAA7T.js
 ```
 
-Pas de nouvelle table — on réutilise `acquisition_findings` pour les findings télémétrie.
+- Le navigateur tente de charger un **chunk Vite obsolète** (`PropertyTypeCityPage-DHtpAA7T.js`) qui n'existe plus après le dernier déploiement.
+- `AppErrorBoundary` recharge une fois via sessionStorage, mais si le second fetch échoue aussi → écran « Une erreur est survenue ».
+- L'utilisateur perçoit que `/admin/revenue-intelligence` crash, alors que c'est un import dynamique périmé déclenché par préchargement / cache.
 
-### 3. UI — page `/admin/revenue-intelligence` (nouvelle) + upgrade `/admin/acquisition-funnel`
+Les requêtes Supabase de la page sont déjà tolérantes (`(supabase as any).from(...)` + `?? []`) — pas la source du crash, mais la robustesse globale est faible : une exception future dans n'importe quelle carte ferait sauter toute la page.
 
-**Bannière de statut en haut** (couleur dynamique) :
-- `VERIFIED` vert · `PARTIAL` ambre · `CRITICAL/UNKNOWN` rouge
-- Affiche `confidence_score %` + phrase explicite ("Acquisition telemetry unavailable — …")
+## Plan
 
-**Section "Funnel Integrity"** :
-- Cards Data Sources : Contractors / Twilio / Stripe / Resend / Lead Events / Tracking — chacune `✓ Connected` ou `✗ No Events Detected`.
-- Table "Event Validation" : 9 stages × (Total Events · Last Event · Status).
-- Table "Data Availability" : rows + last update + status par table.
-- Section "Silent Failures" : liste des alertes détectées.
-- Section "Findings" inchangée mais inclut les nouveaux findings télémétrie.
+### 1. Corriger la cause réelle — stale chunk recovery (permanent)
 
-Nouvelle route `/admin/revenue-intelligence` ajoutée au router admin, lien depuis `/admin/acquisition-funnel`.
+Créer `src/lib/lazyWithRetry.ts` :
 
-## Hors scope
+- Wrapper autour de `lazy(() => import(...))`.
+- Si le `import()` échoue avec `Failed to fetch dynamically imported module` ou `Importing a module script failed`, on retry une fois avec un cache-buster (`?v=<timestamp>`).
+- Si le retry échoue, on force `window.location.reload()` **une seule fois** par session (sessionStorage flag `__lazy_reload_<chunk>`), puis on rejette proprement.
+- Remplace tous les `lazy(() => import(...))` de `src/app/router.tsx` par `lazyWithRetry(() => import(...))` (un seul `sed` ciblé).
 
-- Pas d'intégration directe Twilio/Stripe/Resend API live (on lit l'état via tables internes existantes) — les statuts "Connected" reflètent la présence de secrets + rows récentes, pas un ping API live. Phase 2 si demandé.
-- Pas de modification de la logique de scraping/outreach existante.
+Effet : plus jamais d'écran « Une erreur est survenue » sur stale chunk — la page se recharge silencieusement avec les nouveaux hashes.
 
-## Détails techniques
+### 2. Ajouter des Error Boundaries par section (ce que le user a demandé)
 
-- Edge function reste publique (`verify_jwt = false` par défaut Lovable).
-- Tous les comptages dans une seule passe SQL via `Promise.all` pour rester < 1s.
-- Le toast d'erreur frontend déjà amélioré au tour précédent reste en place.
-- Migration ALTER additive only → zéro risque pour les runs existants.
+Créer `src/components/admin/SectionErrorBoundary.tsx` :
+
+- Petit class component React qui catch les erreurs.
+- UI fallback compacte : icône ⚠, titre « Composant indisponible », message d'erreur tronqué, bouton « Réessayer » qui reset l'état.
+- Props : `title`, `onRetry?`, children.
+
+### 3. Refactor `src/pages/admin/PageAdminAcquisitionFunnel.tsx`
+
+- Splitter `load()` en 3 requêtes indépendantes (`loadFunnel`, `loadFindings`, `loadLatestRun`) chacune avec son propre try/catch et état `{ data, error, loading }`.
+- Wrapper chaque `<Card>` avec `<SectionErrorBoundary title="…">`.
+- Sections wrappées : Status banner, Audit summary, Silent failures, Data availability, Event validation, Funnel, Top fuites.
+- Garde-fous null :
+  - `latestRun.started_at` peut être null → `new Date(... ?? Date.now())` + fallback « — ».
+  - `data_availability` / `event_counts` : vérifier `typeof v === "object" && v !== null` avant `v.rows` / `v.status` / `v.total`.
+  - `silent_failures` : déjà guard `Array.isArray`.
+- Si une requête échoue avec un code Postgres `42P01` (table absente) ou `42501` (permission), afficher dans la section un état « Source indisponible » + détail, **sans** propager.
+
+### 4. Vérifier les tables référencées
+
+Lancer une lecture rapide (`information_schema.tables`) pour confirmer que `acquisition_funnel_state`, `acquisition_findings`, `acquisition_audit_runs` existent bien (la dernière migration les a étendues mais on revalide). Si l'une manque, on ajoute la migration correspondante — sinon, pas de changement DB.
+
+## Files touched
+
+```
+NEW  src/lib/lazyWithRetry.ts
+NEW  src/components/admin/SectionErrorBoundary.tsx
+EDIT src/app/router.tsx                          (lazy → lazyWithRetry)
+EDIT src/pages/admin/PageAdminAcquisitionFunnel.tsx
+```
+
+## Out of scope
+
+- Pas de changement à la logique de l'edge function `acquisition-pipeline-audit` (déjà v2 télémétrique).
+- Pas de refonte UI du dashboard.
+- Pas d'autres pages admin (les error boundaries arrivent ici en premier, on étend ensuite si la pattern est validée).
+
+## Success criteria
+
+- `/admin/revenue-intelligence` ne crash plus, même quand le navigateur a un chunk périmé en cache.
+- Si `acquisition_funnel_state` retourne 0 rows ou une erreur, seule la carte concernée affiche « Composant indisponible · Réessayer » — le reste du dashboard reste vivant.
+- Stack trace exact + cause précise tracés dans la console de chaque SectionErrorBoundary (`console.error("[SectionErrorBoundary]", title, error, errorInfo)`).
