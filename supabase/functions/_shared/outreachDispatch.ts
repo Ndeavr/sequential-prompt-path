@@ -166,7 +166,9 @@ export async function sendOutreach(input: DispatchInput): Promise<DispatchResult
     // Guard blocked → try email fallback if available
     if (guard.reason === "not_mobile" || guard.reason === "invalid_phone" || guard.reason === "max_failures" || guard.reason === "sms_disabled") {
       if (hasValidEmail && input.email_subject && input.email_html) {
-        const r = await sendEmailViaResend(input.email!, input.email_subject, input.email_html);
+        const r = await sendEmailViaResend(input.email!, input.email_subject, input.email_html, {
+          lead_id: input.lead_id, contractor_id: input.contractor_id, template_key: input.template_key, campaign: input.campaign_id,
+        });
         await logEvent(supabase, {
           event_type: r.ok ? "sent" : "failed",
           channel: "email",
@@ -179,7 +181,9 @@ export async function sendOutreach(input: DispatchInput): Promise<DispatchResult
             template_key: input.template_key,
             fallback_from: "sms",
             sms_block_reason: guard.reason,
-            ...(r.ok ? {} : { failure_class: "provider_error", error_message: r.error }),
+            cta_urls: r.cta_urls ?? [],
+            has_tracked_cta: !!r.has_tracked_cta,
+            ...(r.ok ? {} : { failure_class: r.error === "missing_cta" ? "missing_cta" : "provider_error", error_message: r.error }),
           },
         });
         return {
