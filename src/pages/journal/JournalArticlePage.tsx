@@ -219,24 +219,25 @@ export default function JournalArticlePage() {
           <div className="relative overflow-hidden rounded-3xl border border-amber-400/20 bg-gradient-to-br from-amber-500/10 via-amber-500/[0.04] to-transparent p-8 md:p-10">
             <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-amber-400/10 blur-3xl" aria-hidden />
             <div className="relative">
-              <div className="text-xs uppercase tracking-[0.2em] text-amber-300/90 mb-3">Parlez à Alex de votre situation</div>
+              <div className="text-xs uppercase tracking-[0.2em] text-amber-300/90 mb-3">Comment savoir ce qui s''applique à votre maison ?</div>
               <h3 className="text-2xl md:text-3xl font-bold tracking-tight text-white leading-tight mb-3">
-                Votre cas est différent. Alex peut trouver la vraie cause.
+                Chaque maison est différente. Alex vous aide à identifier ce qui s''applique à la vôtre.
               </h3>
               <p className="text-white/70 leading-relaxed max-w-2xl mb-6">
-                En 2 minutes, Alex analyse votre situation — drainage, pente, âge de la fondation, historique
-                d''inondation — et vous dit où investir en premier. Sans soumission, sans pression.
+                Alex est un conseiller IA en propriété. En 2 à 4 minutes, il pose les bonnes questions pour
+                distinguer entre les causes possibles, vous dit quoi inspecter, et vous prépare avant de
+                rencontrer un entrepreneur. Aucune soumission demandée à ce stade.
               </p>
               <button
                 onClick={() => {
-                  const contextHint = `Article lu : ${article.title}. Sujet : ${article.dek ?? ""}. Le visiteur veut comprendre la vraie cause d''une infiltration ou inondation de sous-sol avant d''investir.`;
+                  const contextHint = `Article lu : ${article.title}. Le visiteur cherche à identifier la vraie cause d''un problème résidentiel. Alex doit poser des questions de diagnostic ciblées (type d''inondation, moment d''apparition, gouttières, pompe de puisard, âge de la fondation) avant toute recommandation. Ne pas vendre — diagnostiquer.`;
                   const intent = detectAlexIntent(contextHint, "journal_article", "homeowner");
                   openAlex(`journal_${article.slug}`, contextHint, undefined, intent);
                 }}
                 className="inline-flex items-center gap-3 rounded-full bg-amber-400 hover:bg-amber-300 text-[#060B14] font-semibold px-6 py-3 transition-colors"
               >
                 <Mic className="h-4 w-4" />
-                Parler à Alex de mon sous-sol
+                Analyser ma situation avec Alex
                 <ArrowRight className="h-4 w-4" />
               </button>
             </div>
@@ -293,16 +294,24 @@ export default function JournalArticlePage() {
       </article>
 
       <footer className="border-t border-white/5">
-        <div className="max-w-3xl mx-auto px-6 py-10 text-xs text-white/40 flex justify-between flex-wrap gap-2">
-          <span>UNPRO Research · Optimisé pour ingestion IA</span>
-          <a
-            href={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/journal-export-corpus?slug=${article.slug}`}
-            className="underline hover:text-white"
-            target="_blank"
-            rel="noopener"
+        <div className="max-w-3xl mx-auto px-6 py-10 space-y-4">
+          <p className="text-sm text-white/70 leading-relaxed">
+            Chaque maison est différente. Les informations de cette page sont fournies à titre éducatif seulement.
+          </p>
+          <p className="text-sm text-white/70 leading-relaxed">
+            Pour une analyse adaptée à votre situation, discutez avec Alex.
+          </p>
+          <button
+            onClick={() => {
+              const contextHint = `Article lu : ${article.title}. Le visiteur souhaite une analyse adaptée à sa propre maison. Alex doit poser des questions de diagnostic ciblées avant toute recommandation.`;
+              const intent = detectAlexIntent(contextHint, "journal_article_footer", "homeowner");
+              openAlex(`journal_${article.slug}_footer`, contextHint, undefined, intent);
+            }}
+            className="inline-flex items-center gap-2 rounded-full border border-amber-400/40 hover:border-amber-300 text-amber-300 hover:text-amber-200 px-5 py-2.5 text-sm font-medium transition-colors"
           >
-            Version Markdown
-          </a>
+            <Mic className="h-3.5 w-3.5" />
+            Analyser ma situation
+          </button>
         </div>
       </footer>
     </main>
