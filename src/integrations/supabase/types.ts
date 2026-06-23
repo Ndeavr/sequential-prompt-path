@@ -928,42 +928,57 @@ export type Database = {
         Row: {
           auto_repairs: number | null
           completed_at: string | null
+          confidence_score: number | null
           contractors_audited: number | null
+          data_availability: Json | null
           error: string | null
+          event_counts: Json | null
           findings_created: number | null
           id: string
           phases_completed: Json | null
           recovery_enqueued: number | null
+          silent_failures: Json | null
           started_at: string
           status: string
+          system_status: string | null
           total_lost_revenue_cad: number | null
           total_recoverable_cad: number | null
         }
         Insert: {
           auto_repairs?: number | null
           completed_at?: string | null
+          confidence_score?: number | null
           contractors_audited?: number | null
+          data_availability?: Json | null
           error?: string | null
+          event_counts?: Json | null
           findings_created?: number | null
           id?: string
           phases_completed?: Json | null
           recovery_enqueued?: number | null
+          silent_failures?: Json | null
           started_at?: string
           status?: string
+          system_status?: string | null
           total_lost_revenue_cad?: number | null
           total_recoverable_cad?: number | null
         }
         Update: {
           auto_repairs?: number | null
           completed_at?: string | null
+          confidence_score?: number | null
           contractors_audited?: number | null
+          data_availability?: Json | null
           error?: string | null
+          event_counts?: Json | null
           findings_created?: number | null
           id?: string
           phases_completed?: Json | null
           recovery_enqueued?: number | null
+          silent_failures?: Json | null
           started_at?: string
           status?: string
+          system_status?: string | null
           total_lost_revenue_cad?: number | null
           total_recoverable_cad?: number | null
         }
