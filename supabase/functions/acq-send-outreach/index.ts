@@ -133,6 +133,22 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: false, blocked: true, reason: h.reason }), { headers: cors });
     }
     try {
+      const { wrapAllUrls, validateCta } = await import("../_shared/ctaTracker.ts");
+      const wrapped = await wrapAllUrls(msg.body_rendered ?? "", {
+        prospect_id: msg.prospect_id, campaign: "outreach_messages", channel: "email",
+      });
+      const cta = validateCta(wrapped.body);
+      if (!cta.ok) {
+        await s.from("outreach_messages").update({
+          message_status: "failed", error_message: "Email has no CTA link.",
+          failed_at: new Date().toISOString(),
+          cta_urls: wrapped.cta_urls, has_tracked_cta: wrapped.has_tracked_cta, rendered_html: wrapped.body,
+        }).eq("id", message_id);
+        await log(s, runId, "outreach_send.email", "blocked", "missing_cta", msg.prospect_id);
+        await finishRun(s, runId, { status: "failed", error_summary: "missing_cta" });
+        return new Response(JSON.stringify({ ok: false, blocked: true, reason: "missing_cta", error: "Email has no CTA link." }), { status: 422, headers: cors });
+      }
+
       const r = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: { Authorization: `Bearer ${Deno.env.get("RESEND_API_KEY")}`, "Content-Type": "application/json" },
@@ -140,20 +156,21 @@ Deno.serve(async (req) => {
           from: `${FROM_NAME} <${FROM_EMAIL}>`,
           to: [msg.to_value],
           subject: msg.subject_rendered,
-          text: msg.body_rendered,
+          text: wrapped.body,
         }),
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j?.message || JSON.stringify(j));
       await s.from("outreach_messages").update({
         message_status: "sent", provider_message_id: j.id, sent_at: new Date().toISOString(),
+        cta_urls: wrapped.cta_urls, has_tracked_cta: wrapped.has_tracked_cta, rendered_html: wrapped.body,
       }).eq("id", message_id);
       if (msg.prospect_id) {
         await s.from("contractor_prospects").update({ outreach_status: "sent", updated_at: new Date().toISOString() }).eq("id", msg.prospect_id);
       }
       await log(s, runId, "outreach_send.email", "success", `Envoyé via Resend ${j.id}`, msg.prospect_id);
       await finishRun(s, runId, { status: "succeeded", total_items: 1, succeeded_count: 1 });
-      return new Response(JSON.stringify({ ok: true, provider_id: j.id }), { headers: cors });
+      return new Response(JSON.stringify({ ok: true, provider_id: j.id, cta_urls: wrapped.cta_urls, has_tracked_cta: wrapped.has_tracked_cta }), { headers: cors });
     } catch (e) {
       await s.from("outreach_messages").update({ message_status: "failed", error_message: String(e), failed_at: new Date().toISOString() }).eq("id", message_id);
       await log(s, runId, "outreach_send.email", "error", String(e), msg.prospect_id);
