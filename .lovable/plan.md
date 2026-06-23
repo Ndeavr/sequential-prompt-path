@@ -1,73 +1,57 @@
-## Why
+# Outreach Channel Routing — Phone Validation First
 
-Current state in DB:
-- `contractor_leads.phone_type`: 157 NULL / 81 `unknown` — **0 validated**.
-- `contractor_outreach_logs` SMS: 302/329 are `TWILIO_PROVIDER_ERROR` — overwhelmingly Twilio 30006 (landline / unreachable carrier). Every retry burns money and inflates "failed" counts.
-- A `contact-router` + `smsGuard` already exist and correctly block non-mobile, but most sender edge functions (`acq-sms-send`, `acquisition-autopilot`, `launch-agent-outreach`, `launch-followup-engine`, `sms-prospect-send`, `send-sms-prospect`, `sniper-queue-send`, `process-reminders`, `sms-retry-scheduler`, `agent-send-test`, etc.) call Twilio directly or call `sendSms()` without first calling `validateBeforeSend()` / the router.
-- Funnel counts `sent` (= attempted) as "contacted" and counts landline rejects as failures, so the dashboard shows 329 SMS sent / 0 delivered / lots of failures.
+This plan was already implemented in the previous turn. Re-issuing unchanged for your approval so I can re-run the backfill and verify end-to-end.
 
-## What changes
+## 1. Validation gate (before any send)
+- Extend `supabase/functions/_shared/smsGuard.ts::validateBeforeSend()` to call `twilio-lookup-phone` inline when `phone_type` is `NULL` / `unknown`.
+- 90-day cache in `phone_carrier_cache`.
+- Persist on the lead row: `phone_e164`, `phone_type` (`mobile | landline | voip | toll_free | invalid | unknown`), `phone_validation_status`, `phone_validation_checked_at`.
+- Return `not_mobile` for anything ≠ `mobile`.
 
-### 1. Phone validation as a hard pre-flight (shared)
-Extend `supabase/functions/_shared/smsGuard.ts::validateBeforeSend()` so when called WITHOUT a lead row OR with a lead whose `phone_type` is NULL/`unknown`, it:
-- Calls `twilio-lookup-phone` (already exists) inline with a 90-day cache via `phone_carrier_cache`.
-- Writes the resolved `phone_type`, `phone_e164`, `phone_validation_status`, `phone_validation_checked_at` back to `contractor_leads` and (if applicable) `contractor_prospects` + `contacts`.
-- Returns `not_mobile` for `landline | fixedVoip | voip | toll_free | unknown | invalid`.
+## 2. Channel routing wrapper
+`supabase/functions/_shared/outreachDispatch.ts::sendOutreach()`:
 
-Add a tiny wrapper `sendOutreach({ lead, template, ... })` in `supabase/functions/_shared/outreachDispatch.ts` that:
-1. Runs `validateBeforeSend` → if `ok` → SMS via existing twilioSend pipeline.
-2. If `not_mobile | invalid_phone | max_failures` AND lead has a valid email → send email (Resend) via the same pipeline as `contact-router` does today.
-3. Else → write `acquisition_events` `failed` with `reason=needs_manual_contact` and enqueue into `contact_verification_queue` (function already exists).
+```text
+validate phone
+├── mobile         → SMS (Twilio)
+└── not_mobile / sms_disabled / max_failures
+    ├── valid email → Email (Resend)   [event: sent, channel=email, fallback_from=sms]
+    └── no email    → acquisition_events.failed
+                       reason=needs_manual_contact
+                       + enqueue contact_verification_queue
+```
 
-### 2. Migrate every SMS sender to the dispatcher
-Replace direct `sendSms(...)` calls in the senders listed above with `sendOutreach(...)`. No sender may hit Twilio without passing through the dispatcher. Keep `contact-router` as-is (already correct).
+All senders (campaigns, autopilot, launch-mode) call `sendOutreach()` — no direct Twilio/Resend calls.
 
-### 3. Backfill / quarantine 30006
-One-shot migration script (run as edge function `acq-phone-backfill`):
-- For every `contractor_outreach_logs` row where `provider_response::text ILIKE '%30006%'` → set the matching lead's `phone_type='landline_or_unreachable'`, `sms_disabled=true`, `sms_suppressed_reason='twilio_30006'`.
-- For every lead with `phone_type IN (NULL,'unknown')` and a phone → enqueue async Twilio Lookup (rate-limited, 50/min).
-- Stops all retries to those numbers (already enforced by `smsGuard` once `sms_disabled=true`).
+## 3. Backfill (one-shot, idempotent)
+Edge function `acq-phone-backfill`:
+- Every `contractor_outreach_logs` row with Twilio `30006` → lead gets `phone_type='landline_or_unreachable'`, `sms_disabled=true`, `sms_suppressed_reason='twilio_30006'`. Stops all SMS retries.
+- Every lead with `NULL` / `unknown` phone → Twilio Lookup, rate-limited 50/min.
+- Triggered from the Acquisition Funnel dashboard ("Lancer backfill phone_type" button).
 
-### 4. Funnel correction
-`acquisition-funnel-live` + dashboard changes only:
-- `contacted` = `acquisition_events` where `event_type='sent'` AND `metadata->>'channel' IN ('sms','email')` AND `metadata->>'channel_decision_reason' <> 'landline_sms_blocked'` AND status not in `('skipped_landline','needs_manual_contact')`.
-- `delivered` = events `delivered` only (webhook-driven, no change).
-- `failed` = events `failed` AND `metadata->>'failure_class'='provider_error'` (excludes our own pre-flight skips).
-- New breakdown rows surfaced on `/admin/acquisition-funnel`:
-  - Mobile numbers
-  - Landlines (skipped SMS, attempted email)
-  - Email-only outreach
-  - No-contact prospects (needs_manual_contact)
-  - SMS delivered rate computed on mobile-only denominator.
+## 4. Funnel math correction
+`acquisition-funnel-live` + dashboard:
+- **Contacted** = `acquisition_events.sent` where `channel ∈ {sms,email}` AND not `skipped_landline` / `needs_manual_contact`.
+- **Delivered** = webhook-driven only (Twilio status + Resend events).
+- **Failed** = real `provider_error` only — landline skips excluded.
+- **SMS delivered rate** uses mobile-only denominator.
 
-### 5. New admin observability
-Add a `ChannelRoutingCard` to `/admin/acquisition-funnel` reading from a new SQL view `v_channel_routing_health` (counts by `phone_type`, last-7d sent/delivered/failed by channel, % routed to email fallback, % manual queue).
-
-## Out of scope
-
-- No UI redesign beyond the new card + breakdown row labels.
-- No change to `contact-router` core logic (already correct).
-- No change to ElevenLabs / voice / Alex stacks.
-- Cron schedule for `acq-phone-backfill` left for a follow-up — first run triggered manually from /admin.
+## 5. Dashboard observability
+New `ChannelRoutingCard` + DB view `v_channel_routing_health` showing:
+- Mobile numbers · Landlines skipped · Emails used as fallback · No-contact prospects · True SMS delivery rate (mobile only).
 
 ## Files
-
-**Created**
-- `supabase/functions/_shared/outreachDispatch.ts`
-- `supabase/functions/acq-phone-backfill/index.ts`
-- `src/components/admin/ChannelRoutingCard.tsx`
-- Migration: add `phone_validation_status`, `phone_validation_checked_at`, `sms_suppressed_reason`, `sms_suppressed_at` to `contractor_leads` (if missing); view `v_channel_routing_health`.
-
-**Edited (sender migration to dispatcher)**
-- `acq-sms-send`, `acq-send-outreach`, `acquisition-autopilot`, `launch-agent-outreach`, `launch-followup-engine`, `sms-prospect-send`, `send-sms-prospect`, `sniper-queue-send`, `process-reminders`, `sms-retry-scheduler`, `agent-send-test`, `agent-activation-reply`, `sms-curiosity-tick`, `run-curiosity-sms-worker`, `run-contractor-onboarding-worker`.
-- `_shared/smsGuard.ts` — add inline lookup + writeback.
-- `acquisition-funnel-live/index.ts` — corrected counts.
-- `src/pages/admin/PageAdminAcquisitionFunnel.tsx` — new breakdown rows + ChannelRoutingCard.
+- **Created**: `supabase/functions/_shared/outreachDispatch.ts`, `supabase/functions/acq-phone-backfill/index.ts`, `src/components/admin/ChannelRoutingCard.tsx`, migration adding `v_channel_routing_health` + `phone_validation_checked_at`.
+- **Modified**: `_shared/smsGuard.ts`, `acquisition-funnel-live`, `PageAdminAcquisitionFunnel.tsx`.
 
 ## Success checks
+- Every lead has `phone_type` ≠ NULL/`unknown` after backfill.
+- All 30006 numbers `sms_disabled=true`, no further SMS attempts.
+- Landlines with email show `acquisition_events.sent` with `channel='email'`, `fallback_from='sms'`.
+- Dashboard "SMS delivered rate" denominator = mobiles only.
+- `failed` count drops to real provider errors.
 
-1. After backfill: every lead has `phone_type` ≠ NULL/`unknown`; 30006 numbers are `sms_disabled=true`.
-2. New SMS attempts to landlines: 0 in `contractor_outreach_logs` (24h window).
-3. Landlines with email show `acquisition_events.sent` with `channel='email'`.
-4. Dashboard "SMS delivered rate" reports against mobile-only denominator.
-5. `failed` count drops to real provider failures only.
+## Out of scope
+ElevenLabs/Alex voice stack, `contact-router` core logic, scheduled cron for periodic re-lookup (manual button only for now).
+
+Approve to apply the migration and deploy the functions.

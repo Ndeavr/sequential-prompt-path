@@ -28,6 +28,7 @@ Deno.serve(async (req) => {
 
   const result = {
     quarantined_30006: 0,
+    quarantined_21211: 0,
     looked_up: 0,
     mobile: 0,
     landline: 0,
@@ -36,6 +37,7 @@ Deno.serve(async (req) => {
     skipped: 0,
     errors: [] as string[],
   };
+
 
   // ── Phase 1: quarantine 30006 (landline_or_unreachable) ──
   try {
@@ -69,6 +71,40 @@ Deno.serve(async (req) => {
   } catch (e) {
     result.errors.push(`phase1: ${e instanceof Error ? e.message : String(e)}`);
   }
+
+  // ── Phase 1b: quarantine 21211 (Invalid 'To' Phone Number) ──
+  try {
+    const { data: failedLogs } = await supabase
+      .from("contractor_outreach_logs")
+      .select("lead_id")
+      .eq("channel", "sms")
+      .or("error_code.eq.21211,error_message.ilike.%21211%,error_message.ilike.%Invalid%To%Phone%")
+      .not("lead_id", "is", null);
+
+    const leadIds = new Set<string>();
+    for (const row of failedLogs ?? []) {
+      if ((row as any).lead_id) leadIds.add((row as any).lead_id);
+    }
+    if (leadIds.size > 0 && !dry_run) {
+      const { error } = await supabase
+        .from("contractor_leads")
+        .update({
+          phone_type: "invalid",
+          sms_disabled: true,
+          sms_suppressed_at: new Date().toISOString(),
+          sms_suppressed_reason: "twilio_21211_invalid_format",
+          contact_method: "email",
+          phone_validation_status: "invalid_format",
+          phone_validation_checked_at: new Date().toISOString(),
+        })
+        .in("id", Array.from(leadIds));
+      if (error) result.errors.push(`quarantine_21211: ${error.message}`);
+    }
+    result.quarantined_21211 = leadIds.size;
+  } catch (e) {
+    result.errors.push(`phase1b: ${e instanceof Error ? e.message : String(e)}`);
+  }
+
 
   // ── Phase 2: lookup unknown numbers ──
   try {
