@@ -318,22 +318,46 @@ export default function PageAdminAcquisitionFunnel() {
             <ErrorCard label="Funnel state" msg={funnelQ.error} onRetry={loadFunnel} />
           ) : (
             <Card className="p-4">
-              <h2 className="text-sm font-semibold mb-4">Entonnoir — {total} entrepreneurs</h2>
-              <div className="space-y-2">
+              <div className="flex items-center justify-between mb-2 gap-3 flex-wrap">
+                <h2 className="text-sm font-semibold">Entonnoir — {top} entrepreneurs</h2>
+                <Badge variant={mode === "fallback" ? "default" : "secondary"} className="text-xs">
+                  {mode === "fallback" ? "Calcul en direct" : "Funnel state"}
+                </Badge>
+              </div>
+              {mode === "fallback" && (
+                <div className="mb-3 p-3 rounded-md border border-amber-500/40 bg-amber-500/10 text-xs text-amber-200">
+                  Table d'état du funnel vide — calcul en direct à partir des logs opérationnels.
+                  {syncing ? " Synchronisation en cours…" : (
+                    <Button size="sm" variant="link" className="h-auto p-0 ml-1 text-amber-200 underline"
+                            onClick={() => syncFunnelState(false)}>
+                      Lancer la synchronisation
+                    </Button>
+                  )}
+                </div>
+              )}
+              <div className="space-y-3">
                 {STAGES.map((s, i) => {
                   const prev = i > 0 ? stageCount(STAGES[i - 1]) : stageCount(s);
                   const drop = i > 0 && prev > 0 ? Math.round(((prev - stageCount(s)) / prev) * 100) : 0;
+                  const src = sources[s];
                   return (
-                    <div key={s} className="flex items-center gap-3">
-                      <div className="w-28 text-xs uppercase tracking-wide text-muted-foreground">{s}</div>
-                      <div className="flex-1 h-7 bg-muted rounded-md overflow-hidden">
-                        <div className="h-full bg-primary/80 flex items-center px-2 text-xs text-primary-foreground transition-all"
-                             style={{ width: `${Math.max(pct(s), 2)}%` }}>
-                          {stageCount(s)} ({pct(s)}%)
+                    <div key={s} className="space-y-1">
+                      <div className="flex items-center gap-3">
+                        <div className="w-28 text-xs uppercase tracking-wide text-muted-foreground">{s}</div>
+                        <div className="flex-1 h-7 bg-muted rounded-md overflow-hidden">
+                          <div className="h-full bg-primary/80 flex items-center px-2 text-xs text-primary-foreground transition-all"
+                               style={{ width: `${Math.max(pct(s), 2)}%` }}>
+                            {stageCount(s)} ({pct(s)}%)
+                          </div>
                         </div>
+                        {i > 0 && drop > 0 && (
+                          <Badge variant="destructive" className="text-xs">-{drop}%</Badge>
+                        )}
                       </div>
-                      {i > 0 && drop > 0 && (
-                        <Badge variant="destructive" className="text-xs">-{drop}%</Badge>
+                      {src && (
+                        <div className="text-[10px] text-muted-foreground pl-28 font-mono">
+                          {src.value} from {src.table}
+                        </div>
                       )}
                     </div>
                   );
@@ -342,6 +366,7 @@ export default function PageAdminAcquisitionFunnel() {
             </Card>
           )}
         </SectionErrorBoundary>
+
 
         {/* ── Findings ─────────────────────────────────────── */}
         <SectionErrorBoundary title="Top fuites" onRetry={loadFindings}>
