@@ -234,7 +234,9 @@ export async function sendOutreach(input: DispatchInput): Promise<DispatchResult
 
   // No phone — try email primary
   if (hasValidEmail && input.email_subject && input.email_html) {
-    const r = await sendEmailViaResend(input.email!, input.email_subject, input.email_html);
+    const r = await sendEmailViaResend(input.email!, input.email_subject, input.email_html, {
+      lead_id: input.lead_id, contractor_id: input.contractor_id, template_key: input.template_key, campaign: input.campaign_id,
+    });
     await logEvent(supabase, {
       event_type: r.ok ? "sent" : "failed",
       channel: "email",
@@ -245,7 +247,9 @@ export async function sendOutreach(input: DispatchInput): Promise<DispatchResult
       metadata: {
         channel: "email",
         template_key: input.template_key,
-        ...(r.ok ? {} : { failure_class: "provider_error", error_message: r.error }),
+        cta_urls: r.cta_urls ?? [],
+        has_tracked_cta: !!r.has_tracked_cta,
+        ...(r.ok ? {} : { failure_class: r.error === "missing_cta" ? "missing_cta" : "provider_error", error_message: r.error }),
       },
     });
     return {
