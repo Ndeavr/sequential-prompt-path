@@ -102,3 +102,57 @@ export async function validateBeforeSend(opts: {
 export function isBlockedSync(normalizedPhone: string): boolean {
   return BLOCKED_PATTERNS.some((re) => re.test(normalizedPhone));
 }
+
+// Inline Twilio Lookup v2 with 90d cache in phone_carrier_cache.
+// Returns: "mobile" | "landline" | "voip" | "unknown" | null (on hard failure)
+export async function lookupPhoneTypeCached(
+  supabase: ReturnType<typeof createClient>,
+  e164: string,
+): Promise<"mobile" | "landline" | "voip" | "unknown" | null> {
+  try {
+    const { data: cached } = await supabase
+      .from("phone_carrier_cache")
+      .select("line_type, validated_at")
+      .eq("normalized_phone", e164)
+      .maybeSingle();
+    if (cached?.line_type && cached.validated_at) {
+      const ageDays = (Date.now() - new Date(cached.validated_at as string).getTime()) / 86400000;
+      if (ageDays < 90) return normalizeLineType(cached.line_type as string);
+    }
+
+    const SID = Deno.env.get("TWILIO_ACCOUNT_SID");
+    const TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
+    if (!SID || !TOKEN) return null;
+
+    const url = `https://lookups.twilio.com/v2/PhoneNumbers/${encodeURIComponent(e164)}?Fields=line_type_intelligence`;
+    const resp = await fetch(url, { headers: { Authorization: `Basic ${btoa(`${SID}:${TOKEN}`)}` } });
+    const body = await resp.json().catch(() => ({}));
+    if (!resp.ok) return null;
+
+    const lti = body?.line_type_intelligence ?? {};
+    const rawType = String(lti.type ?? "").toLowerCase();
+    const normalized = normalizeLineType(rawType);
+
+    await supabase.from("phone_carrier_cache").upsert({
+      normalized_phone: e164,
+      line_type: rawType || "unknown",
+      carrier: lti.carrier_name ?? null,
+      country_code: body?.country_code ?? null,
+      raw_payload: body,
+      fetched_at: new Date().toISOString(),
+      validated_at: new Date().toISOString(),
+    }, { onConflict: "normalized_phone" });
+
+    return normalized;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeLineType(raw: string): "mobile" | "landline" | "voip" | "unknown" {
+  const r = (raw ?? "").toLowerCase();
+  if (r === "mobile") return "mobile";
+  if (r === "landline") return "landline";
+  if (r.includes("voip")) return "voip";
+  return "unknown";
+}
