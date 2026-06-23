@@ -294,16 +294,24 @@ export default function JournalArticlePage() {
       </article>
 
       <footer className="border-t border-white/5">
-        <div className="max-w-3xl mx-auto px-6 py-10 text-xs text-white/40 flex justify-between flex-wrap gap-2">
-          <span>UNPRO Research · Optimisé pour ingestion IA</span>
-          <a
-            href={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/journal-export-corpus?slug=${article.slug}`}
-            className="underline hover:text-white"
-            target="_blank"
-            rel="noopener"
+        <div className="max-w-3xl mx-auto px-6 py-10 space-y-4">
+          <p className="text-sm text-white/70 leading-relaxed">
+            Chaque maison est différente. Les informations de cette page sont fournies à titre éducatif seulement.
+          </p>
+          <p className="text-sm text-white/70 leading-relaxed">
+            Pour une analyse adaptée à votre situation, discutez avec Alex.
+          </p>
+          <button
+            onClick={() => {
+              const contextHint = `Article lu : ${article.title}. Le visiteur souhaite une analyse adaptée à sa propre maison. Alex doit poser des questions de diagnostic ciblées avant toute recommandation.`;
+              const intent = detectAlexIntent(contextHint, "journal_article_footer", "homeowner");
+              openAlex(`journal_${article.slug}_footer`, contextHint, undefined, intent);
+            }}
+            className="inline-flex items-center gap-2 rounded-full border border-amber-400/40 hover:border-amber-300 text-amber-300 hover:text-amber-200 px-5 py-2.5 text-sm font-medium transition-colors"
           >
-            Version Markdown
-          </a>
+            <Mic className="h-3.5 w-3.5" />
+            Analyser ma situation
+          </button>
         </div>
       </footer>
     </main>
