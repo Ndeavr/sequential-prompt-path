@@ -28,6 +28,7 @@ Deno.serve(async (req) => {
 
   const result = {
     quarantined_30006: 0,
+    quarantined_21211: 0,
     looked_up: 0,
     mobile: 0,
     landline: 0,
@@ -36,6 +37,7 @@ Deno.serve(async (req) => {
     skipped: 0,
     errors: [] as string[],
   };
+
 
   // ── Phase 1: quarantine 30006 (landline_or_unreachable) ──
   try {
