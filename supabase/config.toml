@@ -167,3 +167,7 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.run-contractor-onboarding-worker]
     verify_jwt = false
+  [functions.acquisition-funnel-live]
+    verify_jwt = false
+  [functions.sync-acquisition-funnel-state]
+    verify_jwt = false
