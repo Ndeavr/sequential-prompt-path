@@ -333,8 +333,8 @@ export default function PageAdminAcquisitionFunnel() {
             <Card className="p-4">
               <div className="flex items-center justify-between mb-2 gap-3 flex-wrap">
                 <h2 className="text-sm font-semibold">Entonnoir — {top} entrepreneurs</h2>
-                <Badge variant={mode === "fallback" ? "default" : "secondary"} className="text-xs">
-                  {mode === "fallback" ? "Calcul en direct" : "Funnel state"}
+                <Badge variant="secondary" className="text-xs">
+                  Source : acquisition_events
                 </Badge>
               </div>
               {mode === "fallback" && (
