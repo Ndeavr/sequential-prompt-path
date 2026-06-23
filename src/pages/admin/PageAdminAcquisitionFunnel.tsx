@@ -190,6 +190,11 @@ export default function PageAdminAcquisitionFunnel() {
           <AcquisitionHealthPanel />
         </SectionErrorBoundary>
 
+        {/* ── Channel routing health ──────────────────────── */}
+        <SectionErrorBoundary title="Routage canal" onRetry={() => window.location.reload()}>
+          <ChannelRoutingCard />
+        </SectionErrorBoundary>
+
         {/* ── Status banner ────────────────────────────────── */}
         <SectionErrorBoundary title="Statut système" onRetry={loadRun}>
           {runQ.error ? (
