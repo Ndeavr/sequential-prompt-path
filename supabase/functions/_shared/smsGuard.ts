@@ -44,6 +44,7 @@ export async function validateBeforeSend(opts: {
 
   // Mobile-only + failure-threshold guard. Looks up the lead row (when id provided)
   // and rejects landlines, VoIP, unknown, sms_disabled, or >=2 failed attempts.
+  let resolvedPhoneType: string | null = null;
   if (opts.lead_id) {
     const { data: lead } = await opts.supabase
       .from("contractor_leads")
@@ -56,7 +57,6 @@ export async function validateBeforeSend(opts: {
         return { ok: false, reason: "sms_disabled", detail: "lead.sms_disabled=true", normalized: norm.normalized };
       }
       if (failed >= 2) {
-        // Auto-flip so future agents don't re-check
         await opts.supabase.from("contractor_leads").update({
           sms_disabled: true,
           contact_method: "email",
@@ -65,11 +65,35 @@ export async function validateBeforeSend(opts: {
         }).eq("id", opts.lead_id);
         return { ok: false, reason: "max_failures", detail: `sms_failed_attempts=${failed}`, normalized: norm.normalized };
       }
-      const pt = (lead as any).phone_type;
-      if (pt && pt !== "mobile") {
-        return { ok: false, reason: "not_mobile", detail: `phone_type=${pt}`, normalized: norm.normalized };
+      resolvedPhoneType = (lead as any).phone_type ?? null;
+    }
+  }
+
+  // If phone_type unknown/missing, attempt inline Twilio Lookup (cached 90d).
+  if (!resolvedPhoneType || resolvedPhoneType === "unknown") {
+    const looked = await lookupPhoneTypeCached(opts.supabase, norm.normalized);
+    if (looked) {
+      resolvedPhoneType = looked;
+      if (opts.lead_id) {
+        await opts.supabase.from("contractor_leads").update({
+          phone_type: looked,
+          phone_e164: norm.normalized,
+          phone_validation_status: looked === "mobile" ? "verified_mobile" : "verified_not_mobile",
+          phone_validation_checked_at: new Date().toISOString(),
+          phone_lookup_at: new Date().toISOString(),
+          ...(looked !== "mobile" ? {
+            sms_disabled: true,
+            sms_suppressed_at: new Date().toISOString(),
+            sms_suppressed_reason: `twilio_lookup_${looked}`,
+            contact_method: "email",
+          } : {}),
+        }).eq("id", opts.lead_id);
       }
     }
+  }
+
+  if (resolvedPhoneType && resolvedPhoneType !== "mobile") {
+    return { ok: false, reason: "not_mobile", detail: `phone_type=${resolvedPhoneType}`, normalized: norm.normalized };
   }
 
   return { ok: true, normalized: norm.normalized, area_code: norm.area_code, country_code: norm.country_code };
