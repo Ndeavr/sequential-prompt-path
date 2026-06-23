@@ -2,10 +2,13 @@ import { useEffect, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Copy, ArrowLeft, Quote } from "lucide-react";
+import { Copy, ArrowLeft, Quote, Mic, ArrowRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
+import { detectAlexIntent } from "@/services/alexOpeningTemplates";
 
 export default function JournalArticlePage() {
+  const { openAlex } = useAlexVoice();
   const { slug } = useParams<{ slug: string }>();
 
   const { data, isLoading } = useQuery({
