@@ -58,6 +58,17 @@ UNPRO envoie des rendez-vous qualifiés, pas des leads partagés.
 À bientôt,
 UNPRO`;
 
+    // Wrap every URL through /r/ tracker
+    const wrapped = await wrapAllUrls(body, {
+      contractor_id, campaign: "acq_invite_aipp", channel: "email",
+    });
+    const cta = validateCta(wrapped.body);
+    if (!cta.ok) {
+      return new Response(JSON.stringify({ error: "Email has no CTA link.", blocked_reason: "missing_cta" }), {
+        status: 422, headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
+
     let sent = false;
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (resendKey && !draft_only) {
@@ -69,7 +80,7 @@ UNPRO`;
             from: "UNPRO <notify@unpro.ca>",
             to: [invite.email],
             subject,
-            text: body,
+            text: wrapped.body,
           }),
         });
         sent = r.ok;
@@ -78,12 +89,31 @@ UNPRO`;
 
     await sb.from("acq_invites").update({
       rendered_subject: subject,
-      rendered_body: body,
+      rendered_body: wrapped.body,
       sent_at: sent ? new Date().toISOString() : null,
       status: sent ? "sent" : (draft_only ? "draft" : "pending"),
     }).eq("id", invite.id);
 
-    return new Response(JSON.stringify({ success: true, sent, draft: !sent, subject, body, url: aippUrl }), {
+    // Audit log — surfaces in /admin/email-cta-audit
+    try {
+      await sb.from("contractor_outreach_logs").insert({
+        lead_id: contractor_id,
+        contractor_id,
+        channel: "email",
+        template_key: "acq_invite_aipp",
+        to_address: invite.email,
+        message_subject: subject,
+        message_body: wrapped.body,
+        rendered_text: wrapped.body,
+        rendered_html: wrapped.body.replace(/\n/g, "<br/>"),
+        raw_template: { aippUrl, contractor_id },
+        cta_urls: wrapped.cta_urls,
+        has_tracked_cta: wrapped.has_tracked_cta,
+        status: sent ? "sent" : (draft_only ? "draft" : "pending"),
+      });
+    } catch (_) { /* swallow */ }
+
+    return new Response(JSON.stringify({ success: true, sent, draft: !sent, subject, body: wrapped.body, url: aippUrl, cta_urls: wrapped.cta_urls, has_tracked_cta: wrapped.has_tracked_cta }), {
       headers: { ...cors, "Content-Type": "application/json" },
     });
   } catch (e) {
