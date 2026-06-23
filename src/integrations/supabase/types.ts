@@ -984,6 +984,57 @@ export type Database = {
         }
         Relationships: []
       }
+      acquisition_events: {
+        Row: {
+          channel: string
+          contractor_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          occurred_at: string
+          profile_id: string | null
+          prospect_id: string | null
+          provider: string | null
+          provider_event_id: string | null
+          source_row_id: string | null
+          source_table: string | null
+          tracking_id: string | null
+        }
+        Insert: {
+          channel: string
+          contractor_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          profile_id?: string | null
+          prospect_id?: string | null
+          provider?: string | null
+          provider_event_id?: string | null
+          source_row_id?: string | null
+          source_table?: string | null
+          tracking_id?: string | null
+        }
+        Update: {
+          channel?: string
+          contractor_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          profile_id?: string | null
+          prospect_id?: string | null
+          provider?: string | null
+          provider_event_id?: string | null
+          source_row_id?: string | null
+          source_table?: string | null
+          tracking_id?: string | null
+        }
+        Relationships: []
+      }
       acquisition_findings: {
         Row: {
           auto_repairable: boolean | null
@@ -1392,6 +1443,51 @@ export type Database = {
           status?: string
           system_name?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      acquisition_tracking_links: {
+        Row: {
+          campaign: string | null
+          channel: string | null
+          click_count: number
+          contractor_id: string | null
+          created_at: string
+          destination_url: string
+          first_click_at: string | null
+          id: string
+          last_click_at: string | null
+          metadata: Json
+          profile_id: string | null
+          prospect_id: string | null
+        }
+        Insert: {
+          campaign?: string | null
+          channel?: string | null
+          click_count?: number
+          contractor_id?: string | null
+          created_at?: string
+          destination_url: string
+          first_click_at?: string | null
+          id: string
+          last_click_at?: string | null
+          metadata?: Json
+          profile_id?: string | null
+          prospect_id?: string | null
+        }
+        Update: {
+          campaign?: string | null
+          channel?: string | null
+          click_count?: number
+          contractor_id?: string | null
+          created_at?: string
+          destination_url?: string
+          first_click_at?: string | null
+          id?: string
+          last_click_at?: string | null
+          metadata?: Json
+          profile_id?: string | null
+          prospect_id?: string | null
         }
         Relationships: []
       }

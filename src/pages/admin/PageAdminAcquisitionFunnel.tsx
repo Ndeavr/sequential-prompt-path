@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import SectionErrorBoundary from "@/components/admin/SectionErrorBoundary";
+import { AcquisitionHealthPanel } from "@/components/admin/AcquisitionHealthPanel";
+import { Link } from "react-router-dom";
 
 type Finding = {
   id: string;
@@ -37,11 +39,12 @@ const errToMsg = (e: any): string => {
   return e.message ?? JSON.stringify(e);
 };
 
+type FunnelSource = { events?: number; raw?: number | null; raw_source?: string | null; trust?: string };
 type FunnelLive = {
-  mode: "state" | "fallback";
-  state_rows: number;
+  mode: "events" | "state" | "fallback";
+  state_rows?: number;
   counts: Record<string, number>;
-  sources: Record<string, { value: number; table: string }>;
+  sources: Record<string, FunnelSource>;
 };
 
 export default function PageAdminAcquisitionFunnel() {
@@ -164,17 +167,27 @@ export default function PageAdminAcquisitionFunnel() {
   return (
     <div className="admin-theme min-h-screen bg-background text-foreground p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <header className="flex items-center justify-between">
+        <header className="flex items-center justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Funnel d'acquisition</h1>
             <p className="text-sm text-muted-foreground mt-1">
               Scraping → Contact → Click → Inscription → Paiement → Activation
             </p>
           </div>
-          <Button onClick={runAudit} disabled={running}>
-            {running ? "Audit en cours…" : "Lancer l'audit"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link to="/admin/acquisition-tests">
+              <Button variant="outline" size="sm">Tests pipeline</Button>
+            </Link>
+            <Button onClick={runAudit} disabled={running}>
+              {running ? "Audit en cours…" : "Lancer l'audit"}
+            </Button>
+          </div>
         </header>
+
+        {/* ── Provider health ─────────────────────────────── */}
+        <SectionErrorBoundary title="Santé providers" onRetry={() => window.location.reload()}>
+          <AcquisitionHealthPanel />
+        </SectionErrorBoundary>
 
         {/* ── Status banner ────────────────────────────────── */}
         <SectionErrorBoundary title="Statut système" onRetry={loadRun}>
@@ -320,8 +333,8 @@ export default function PageAdminAcquisitionFunnel() {
             <Card className="p-4">
               <div className="flex items-center justify-between mb-2 gap-3 flex-wrap">
                 <h2 className="text-sm font-semibold">Entonnoir — {top} entrepreneurs</h2>
-                <Badge variant={mode === "fallback" ? "default" : "secondary"} className="text-xs">
-                  {mode === "fallback" ? "Calcul en direct" : "Funnel state"}
+                <Badge variant="secondary" className="text-xs">
+                  Source : acquisition_events
                 </Badge>
               </div>
               {mode === "fallback" && (
@@ -356,7 +369,7 @@ export default function PageAdminAcquisitionFunnel() {
                       </div>
                       {src && (
                         <div className="text-[10px] text-muted-foreground pl-28 font-mono">
-                          {src.value} from {src.table}
+                          {src.events ?? 0} events · {src.raw != null ? `${src.raw} from ${src.raw_source ?? "raw"}` : "no raw cross-check"}{src.trust === "events_only" ? " · events only" : ""}
                         </div>
                       )}
                     </div>

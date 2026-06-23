@@ -1,6 +1,5 @@
-// Acquisition Funnel — Live calculation from raw operational tables
-// Returns counts + provenance so the UI never shows "0 entrepreneurs" when
-// source data exists. Falls back to acquisition_funnel_state metadata only.
+// Acquisition Funnel — Event-source-of-truth + raw cross-check.
+// Reads from acquisition_events as primary; raw tables shown as secondary.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
@@ -8,20 +7,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-async function countRows(
-  supabase: any,
-  table: string,
-  build?: (q: any) => any,
-): Promise<number> {
+async function countRows(supabase: any, table: string, build?: (q: any) => any): Promise<number> {
   try {
     let q = supabase.from(table).select("*", { count: "exact", head: true });
     if (build) q = build(q);
     const { count, error } = await q;
     if (error) return 0;
     return count ?? 0;
-  } catch {
-    return 0;
-  }
+  } catch { return 0; }
+}
+
+async function eventCount(supabase: any, eventType: string): Promise<number> {
+  return await countRows(supabase, "acquisition_events", (q) => q.eq("event_type", eventType));
 }
 
 Deno.serve(async (req) => {
@@ -33,104 +30,69 @@ Deno.serve(async (req) => {
   );
 
   try {
-    // ── Sources ───────────────────────────────────────────
-    const prospects   = await countRows(supabase, "contractor_prospects");
-    const leads       = await countRows(supabase, "contractor_leads");
-    const contractors = await countRows(supabase, "contractors");
+    // ── Event-source counts (canonical) ────────────────────
+    const [evScraped, evSent, evDelivered, evOpened, evClicked, evRegistered, evOnboarded, evPaid, evActive, evFailed] = await Promise.all([
+      eventCount(supabase, "scraped"),
+      eventCount(supabase, "sent"),
+      eventCount(supabase, "delivered"),
+      eventCount(supabase, "opened"),
+      eventCount(supabase, "clicked"),
+      eventCount(supabase, "registered"),
+      eventCount(supabase, "onboarded"),
+      eventCount(supabase, "paid"),
+      eventCount(supabase, "active"),
+      eventCount(supabase, "failed"),
+    ]);
 
-    // scraped = best signal of how many entities we know about
-    const scrapedValue = Math.max(prospects, leads, contractors);
-    const scrapedTable =
-      scrapedValue === prospects ? "contractor_prospects" :
-      scrapedValue === leads     ? "contractor_leads"     :
-                                   "contractors";
+    // ── Raw cross-check tables ─────────────────────────────
+    const [prospects, leads, contractors, profilesCount, contractorsWithUser,
+           rawContacted, rawDelivered, rawOnboarded, rawPaid, rawActive] = await Promise.all([
+      countRows(supabase, "contractor_prospects"),
+      countRows(supabase, "contractor_leads"),
+      countRows(supabase, "contractors"),
+      countRows(supabase, "profiles"),
+      countRows(supabase, "contractors", (q) => q.not("user_id", "is", null)),
+      countRows(supabase, "contractor_outreach_logs", (q) => q.in("status", ["sent","queued","contacted","sms_sent","email_sent","delivered"])),
+      countRows(supabase, "contractor_outreach_logs", (q) => q.in("status", ["delivered","sms_delivered","email_delivered"])),
+      countRows(supabase, "contractors", (q) => q.in("onboarding_status", ["completed","complete","onboarded"])),
+      countRows(supabase, "contractor_subscriptions", (q) => q.in("status", ["active","trialing"])),
+      countRows(supabase, "contractors", (q) => q.eq("is_published", true)),
+    ]);
 
-    // ── Outreach telemetry ────────────────────────────────
-    const contactedStatuses = ["sent", "queued", "contacted", "sms_sent", "email_sent"];
-    const deliveredStatuses = ["delivered", "sms_delivered", "email_delivered"];
-
-    const contacted = await countRows(supabase, "contractor_outreach_logs",
-      (q) => q.in("status", contactedStatuses));
-    const delivered = await countRows(supabase, "contractor_outreach_logs",
-      (q) => q.in("status", deliveredStatuses));
-    // No event_type column → use timestamp columns
-    const opened    = await countRows(supabase, "contractor_outreach_logs",
-      (q) => q.not("opened_at", "is", null));
-    const clicked   = await countRows(supabase, "contractor_outreach_logs",
-      (q) => q.not("clicked_at", "is", null));
-
-    // Fallback: if status enum doesn't use our keys, count by sent_at
-    let contactedFinal = contacted;
-    let contactedTable = "contractor_outreach_logs (status)";
-    if (contactedFinal === 0) {
-      const bySent = await countRows(supabase, "contractor_outreach_logs",
-        (q) => q.not("sent_at", "is", null));
-      if (bySent > 0) {
-        contactedFinal = bySent;
-        contactedTable = "contractor_outreach_logs (sent_at)";
-      }
-    }
-
-    // ── Registered ────────────────────────────────────────
-    const profilesCount = await countRows(supabase, "profiles");
-    const contractorsWithUser = await countRows(supabase, "contractors",
-      (q) => q.not("user_id", "is", null));
-    const registeredValue = Math.max(profilesCount, contractorsWithUser);
-    const registeredTable = registeredValue === contractorsWithUser
-      ? "contractors (user_id)"
-      : "profiles";
-
-    // ── Onboarded ─────────────────────────────────────────
-    const onboarded = await countRows(supabase, "contractors",
-      (q) => q.in("onboarding_status", ["completed", "complete", "onboarded"]));
-
-    // ── Paid ──────────────────────────────────────────────
-    const paid = await countRows(supabase, "contractor_subscriptions",
-      (q) => q.in("status", ["active", "trialing"]));
-
-    // ── Active ────────────────────────────────────────────
-    const active = await countRows(supabase, "contractors",
-      (q) => q.eq("is_published", true));
-
-    // ── Funnel state availability ─────────────────────────
-    const stateRows = await countRows(supabase, "acquisition_funnel_state");
-    const mode = stateRows > 0 ? "state" : "fallback";
+    const scrapedRaw = Math.max(prospects, leads, contractors);
+    const registeredRaw = Math.max(profilesCount, contractorsWithUser);
 
     const counts = {
-      scraped:    scrapedValue,
-      contacted:  contactedFinal,
-      delivered,
-      opened,
-      clicked,
-      registered: registeredValue,
-      onboarded,
-      paid,
-      active,
+      scraped:    Math.max(evScraped, scrapedRaw),
+      contacted:  Math.max(evSent, rawContacted),
+      delivered:  evDelivered, // ONLY trust webhook events
+      opened:     evOpened,
+      clicked:    evClicked,
+      registered: Math.max(evRegistered, registeredRaw),
+      onboarded:  Math.max(evOnboarded, rawOnboarded),
+      paid:       Math.max(evPaid, rawPaid),
+      active:     Math.max(evActive, rawActive),
+      failed:     evFailed,
     };
 
     const sources = {
-      scraped:    { value: scrapedValue,    table: scrapedTable },
-      contacted:  { value: contactedFinal,  table: contactedTable },
-      delivered:  { value: delivered,       table: "contractor_outreach_logs (status)" },
-      opened:     { value: opened,          table: "contractor_outreach_logs (opened_at)" },
-      clicked:    { value: clicked,         table: "contractor_outreach_logs (clicked_at)" },
-      registered: { value: registeredValue, table: registeredTable },
-      onboarded:  { value: onboarded,       table: "contractors (onboarding_status)" },
-      paid:       { value: paid,            table: "contractor_subscriptions (status)" },
-      active:     { value: active,          table: "contractors (is_published)" },
+      scraped:    { events: evScraped,    raw: scrapedRaw,   raw_source: "contractor_prospects/leads/contractors" },
+      contacted:  { events: evSent,       raw: rawContacted, raw_source: "contractor_outreach_logs (status)" },
+      delivered:  { events: evDelivered,  raw: rawDelivered, raw_source: "contractor_outreach_logs (status)", trust: "events_only" },
+      opened:     { events: evOpened,     raw: null,         raw_source: null },
+      clicked:    { events: evClicked,    raw: null,         raw_source: null, trust: "events_only" },
+      registered: { events: evRegistered, raw: registeredRaw, raw_source: "profiles + contractors(user_id)" },
+      onboarded:  { events: evOnboarded,  raw: rawOnboarded, raw_source: "contractors (onboarding_status)" },
+      paid:       { events: evPaid,       raw: rawPaid,      raw_source: "contractor_subscriptions (status)" },
+      active:     { events: evActive,     raw: rawActive,    raw_source: "contractors (is_published)" },
+      failed:     { events: evFailed,     raw: null,         raw_source: null },
     };
 
     return new Response(JSON.stringify({
-      mode,
-      state_rows: stateRows,
+      mode: "events",
       counts,
       sources,
-      raw_totals: {
-        contractor_prospects: prospects,
-        contractor_leads: leads,
-        contractors,
-        profiles: profilesCount,
-      },
+      raw_totals: { contractor_prospects: prospects, contractor_leads: leads, contractors, profiles: profilesCount },
       computed_at: new Date().toISOString(),
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {

@@ -171,3 +171,19 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.sync-acquisition-funnel-state]
     verify_jwt = false
+  [functions.twilio-status-events]
+    verify_jwt = false
+  [functions.resend-events]
+    verify_jwt = false
+  [functions.r-redirect]
+    verify_jwt = false
+  [functions.acquisition-health-check]
+    verify_jwt = false
+  [functions.acq-test-tracking-link]
+    verify_jwt = false
+  [functions.acq-test-simulate-click]
+    verify_jwt = false
+  [functions.acq-test-send-sms]
+    verify_jwt = false
+  [functions.acq-test-send-email]
+    verify_jwt = false
