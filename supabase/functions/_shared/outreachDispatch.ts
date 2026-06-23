@@ -78,9 +78,21 @@ async function sendEmailViaResend(
   to: string,
   subject: string,
   html: string,
-): Promise<{ ok: boolean; id?: string; error?: string }> {
+  ctx: { lead_id?: string; contractor_id?: string; campaign?: string; template_key?: string } = {},
+): Promise<{ ok: boolean; id?: string; error?: string; cta_urls?: string[]; has_tracked_cta?: boolean; rendered_html?: string }> {
   if (!RESEND_API_KEY || !LOVABLE_API_KEY) {
     return { ok: false, error: "resend_not_configured" };
+  }
+  // Wrap every internal URL through /r/ tracker
+  const wrapped = await wrapAllUrls(html, {
+    prospect_id: ctx.lead_id ?? null,
+    contractor_id: ctx.contractor_id ?? null,
+    campaign: ctx.campaign ?? ctx.template_key ?? null,
+    channel: "email",
+  });
+  const v = validateCta(wrapped.body);
+  if (!v.ok) {
+    return { ok: false, error: "missing_cta", cta_urls: [], has_tracked_cta: false, rendered_html: wrapped.body };
   }
   try {
     const resp = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
@@ -94,14 +106,14 @@ async function sendEmailViaResend(
         from: "UNPRO <onboarding@resend.dev>",
         to: [to],
         subject,
-        html,
+        html: wrapped.body,
       }),
     });
     const data = await resp.json().catch(() => ({}));
-    if (!resp.ok) return { ok: false, error: data?.message ?? `HTTP ${resp.status}` };
-    return { ok: true, id: data?.id };
+    if (!resp.ok) return { ok: false, error: data?.message ?? `HTTP ${resp.status}`, cta_urls: wrapped.cta_urls, has_tracked_cta: wrapped.has_tracked_cta, rendered_html: wrapped.body };
+    return { ok: true, id: data?.id, cta_urls: wrapped.cta_urls, has_tracked_cta: wrapped.has_tracked_cta, rendered_html: wrapped.body };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+    return { ok: false, error: e instanceof Error ? e.message : String(e), cta_urls: wrapped.cta_urls, has_tracked_cta: wrapped.has_tracked_cta, rendered_html: wrapped.body };
   }
 }
 
