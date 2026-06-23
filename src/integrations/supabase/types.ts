@@ -28093,6 +28093,7 @@ export type Database = {
           phone_failure_reason: string | null
           phone_lookup_at: string | null
           phone_type: string | null
+          phone_validation_checked_at: string | null
           phone_validation_status: string
           pipeline_status: string | null
           postal_code: string | null
@@ -28182,6 +28183,7 @@ export type Database = {
           phone_failure_reason?: string | null
           phone_lookup_at?: string | null
           phone_type?: string | null
+          phone_validation_checked_at?: string | null
           phone_validation_status?: string
           pipeline_status?: string | null
           postal_code?: string | null
@@ -28271,6 +28273,7 @@ export type Database = {
           phone_failure_reason?: string | null
           phone_lookup_at?: string | null
           phone_type?: string | null
+          phone_validation_checked_at?: string | null
           phone_validation_status?: string
           pipeline_status?: string | null
           postal_code?: string | null
@@ -77225,6 +77228,27 @@ export type Database = {
           saturation_score: number | null
           snapshot_date: string | null
           trade_slug: string | null
+        }
+        Relationships: []
+      }
+      v_channel_routing_health: {
+        Row: {
+          email_delivered: number | null
+          email_fallback: number | null
+          email_sent: number | null
+          landline: number | null
+          landline_30006: number | null
+          mobile: number | null
+          needs_manual: number | null
+          sms_delivered: number | null
+          sms_delivery_rate_mobile_pct: number | null
+          sms_disabled: number | null
+          sms_failed: number | null
+          sms_sent: number | null
+          total: number | null
+          unknown: number | null
+          voip: number | null
+          with_email: number | null
         }
         Relationships: []
       }

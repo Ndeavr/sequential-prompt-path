@@ -44,6 +44,7 @@ export async function validateBeforeSend(opts: {
 
   // Mobile-only + failure-threshold guard. Looks up the lead row (when id provided)
   // and rejects landlines, VoIP, unknown, sms_disabled, or >=2 failed attempts.
+  let resolvedPhoneType: string | null = null;
   if (opts.lead_id) {
     const { data: lead } = await opts.supabase
       .from("contractor_leads")
@@ -56,7 +57,6 @@ export async function validateBeforeSend(opts: {
         return { ok: false, reason: "sms_disabled", detail: "lead.sms_disabled=true", normalized: norm.normalized };
       }
       if (failed >= 2) {
-        // Auto-flip so future agents don't re-check
         await opts.supabase.from("contractor_leads").update({
           sms_disabled: true,
           contact_method: "email",
@@ -65,11 +65,35 @@ export async function validateBeforeSend(opts: {
         }).eq("id", opts.lead_id);
         return { ok: false, reason: "max_failures", detail: `sms_failed_attempts=${failed}`, normalized: norm.normalized };
       }
-      const pt = (lead as any).phone_type;
-      if (pt && pt !== "mobile") {
-        return { ok: false, reason: "not_mobile", detail: `phone_type=${pt}`, normalized: norm.normalized };
+      resolvedPhoneType = (lead as any).phone_type ?? null;
+    }
+  }
+
+  // If phone_type unknown/missing, attempt inline Twilio Lookup (cached 90d).
+  if (!resolvedPhoneType || resolvedPhoneType === "unknown") {
+    const looked = await lookupPhoneTypeCached(opts.supabase, norm.normalized);
+    if (looked) {
+      resolvedPhoneType = looked;
+      if (opts.lead_id) {
+        await opts.supabase.from("contractor_leads").update({
+          phone_type: looked,
+          phone_e164: norm.normalized,
+          phone_validation_status: looked === "mobile" ? "verified_mobile" : "verified_not_mobile",
+          phone_validation_checked_at: new Date().toISOString(),
+          phone_lookup_at: new Date().toISOString(),
+          ...(looked !== "mobile" ? {
+            sms_disabled: true,
+            sms_suppressed_at: new Date().toISOString(),
+            sms_suppressed_reason: `twilio_lookup_${looked}`,
+            contact_method: "email",
+          } : {}),
+        }).eq("id", opts.lead_id);
       }
     }
+  }
+
+  if (resolvedPhoneType && resolvedPhoneType !== "mobile") {
+    return { ok: false, reason: "not_mobile", detail: `phone_type=${resolvedPhoneType}`, normalized: norm.normalized };
   }
 
   return { ok: true, normalized: norm.normalized, area_code: norm.area_code, country_code: norm.country_code };
@@ -77,4 +101,58 @@ export async function validateBeforeSend(opts: {
 
 export function isBlockedSync(normalizedPhone: string): boolean {
   return BLOCKED_PATTERNS.some((re) => re.test(normalizedPhone));
+}
+
+// Inline Twilio Lookup v2 with 90d cache in phone_carrier_cache.
+// Returns: "mobile" | "landline" | "voip" | "unknown" | null (on hard failure)
+export async function lookupPhoneTypeCached(
+  supabase: ReturnType<typeof createClient>,
+  e164: string,
+): Promise<"mobile" | "landline" | "voip" | "unknown" | null> {
+  try {
+    const { data: cached } = await supabase
+      .from("phone_carrier_cache")
+      .select("line_type, validated_at")
+      .eq("normalized_phone", e164)
+      .maybeSingle();
+    if (cached?.line_type && cached.validated_at) {
+      const ageDays = (Date.now() - new Date(cached.validated_at as string).getTime()) / 86400000;
+      if (ageDays < 90) return normalizeLineType(cached.line_type as string);
+    }
+
+    const SID = Deno.env.get("TWILIO_ACCOUNT_SID");
+    const TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
+    if (!SID || !TOKEN) return null;
+
+    const url = `https://lookups.twilio.com/v2/PhoneNumbers/${encodeURIComponent(e164)}?Fields=line_type_intelligence`;
+    const resp = await fetch(url, { headers: { Authorization: `Basic ${btoa(`${SID}:${TOKEN}`)}` } });
+    const body = await resp.json().catch(() => ({}));
+    if (!resp.ok) return null;
+
+    const lti = body?.line_type_intelligence ?? {};
+    const rawType = String(lti.type ?? "").toLowerCase();
+    const normalized = normalizeLineType(rawType);
+
+    await supabase.from("phone_carrier_cache").upsert({
+      normalized_phone: e164,
+      line_type: rawType || "unknown",
+      carrier: lti.carrier_name ?? null,
+      country_code: body?.country_code ?? null,
+      raw_payload: body,
+      fetched_at: new Date().toISOString(),
+      validated_at: new Date().toISOString(),
+    }, { onConflict: "normalized_phone" });
+
+    return normalized;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeLineType(raw: string): "mobile" | "landline" | "voip" | "unknown" {
+  const r = (raw ?? "").toLowerCase();
+  if (r === "mobile") return "mobile";
+  if (r === "landline") return "landline";
+  if (r.includes("voip")) return "voip";
+  return "unknown";
 }

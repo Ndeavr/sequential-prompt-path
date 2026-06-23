@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import SectionErrorBoundary from "@/components/admin/SectionErrorBoundary";
 import { AcquisitionHealthPanel } from "@/components/admin/AcquisitionHealthPanel";
+import ChannelRoutingCard from "@/components/admin/ChannelRoutingCard";
 import { Link } from "react-router-dom";
 
 type Finding = {
@@ -187,6 +188,11 @@ export default function PageAdminAcquisitionFunnel() {
         {/* ── Provider health ─────────────────────────────── */}
         <SectionErrorBoundary title="Santé providers" onRetry={() => window.location.reload()}>
           <AcquisitionHealthPanel />
+        </SectionErrorBoundary>
+
+        {/* ── Channel routing health ──────────────────────── */}
+        <SectionErrorBoundary title="Routage canal" onRetry={() => window.location.reload()}>
+          <ChannelRoutingCard />
         </SectionErrorBoundary>
 
         {/* ── Status banner ────────────────────────────────── */}
