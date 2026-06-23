@@ -1,72 +1,48 @@
-## Root cause analysis
+## Problem
 
-Le crash visible n'est **pas** dans la logique de `PageAdminAcquisitionFunnel` (la page `/admin/revenue-intelligence`). Les logs console le prouvent :
+`/admin/revenue-intelligence` shows "Entonnoir — 0 entrepreneurs" because the funnel reads `acquisition_funnel_state` (0 rows) instead of the live operational tables (227 prospects, 335 outreach logs, 39 profiles, 238 leads, 22 contractors).
 
+## Fix
+
+### 1. Edge function: `acquisition-funnel-live` (new)
+Computes funnel from raw sources and returns counts + provenance:
 ```
-[AppErrorBoundary] stale chunk detected — reloading once
-TypeError: Failed to fetch dynamically imported module:
-  https://…/assets/PropertyTypeCityPage-DHtpAA7T.js
+scraped    = max(contractor_prospects, contractor_leads, contractors)
+contacted  = contractor_outreach_logs where status in ('sent','queued','contacted','sms_sent','email_sent')
+delivered  = contractor_outreach_logs where status in ('delivered','sms_delivered','email_delivered')
+opened     = contractor_outreach_logs where event_type in ('opened','email_opened')
+clicked    = contractor_outreach_logs where event_type in ('clicked','link_clicked','cta_clicked')
+registered = max(profiles since first outreach, contractors where user_id not null)
+onboarded  = contractors where onboarding_status in ('completed','complete','onboarded')
+paid       = contractor_subscriptions where status in ('active','trialing')
+active     = contractors where status in ('active','visible','published')
 ```
+Response: `{ counts, sources: { scraped: { value, table }, ... }, mode: 'live'|'state' }`.
 
-- Le navigateur tente de charger un **chunk Vite obsolète** (`PropertyTypeCityPage-DHtpAA7T.js`) qui n'existe plus après le dernier déploiement.
-- `AppErrorBoundary` recharge une fois via sessionStorage, mais si le second fetch échoue aussi → écran « Une erreur est survenue ».
-- L'utilisateur perçoit que `/admin/revenue-intelligence` crash, alors que c'est un import dynamique périmé déclenché par préchargement / cache.
+### 2. Edge function: `sync-acquisition-funnel-state` (new)
+Rebuilds `acquisition_funnel_state` by iterating contractors + leads + prospects, assigning `current_stage` from outreach / subscription / contractor status, upserting on `contractor_id`. Idempotent.
 
-Les requêtes Supabase de la page sont déjà tolérantes (`(supabase as any).from(...)` + `?? []`) — pas la source du crash, mais la robustesse globale est faible : une exception future dans n'importe quelle carte ferait sauter toute la page.
+### 3. Cron (insert tool, not migration)
+`select cron.schedule('sync-acquisition-funnel-state-hourly','0 * * * *', $$ net.http_post(...sync-acquisition-funnel-state...) $$)`.
 
-## Plan
+### 4. Dashboard (`PageAdminAcquisitionFunnel.tsx`)
+- Replace `loadFunnel` to call `acquisition-funnel-live` first. If `acquisition_funnel_state` has 0 rows, set `mode='fallback'`.
+- Show amber warning banner: *"Table d'état du funnel vide — calcul en direct à partir des logs opérationnels. Sync en cours."*
+- Auto-invoke `sync-acquisition-funnel-state` once when fallback is detected.
+- Under each stage row, render small caption: `{count} from {source_table}` (e.g. `227 from contractor_prospects`).
+- Stage label `total` recomputed from `scraped` (top of funnel), not sum of stages.
 
-### 1. Corriger la cause réelle — stale chunk recovery (permanent)
+### 5. Triggers (out of scope for now — documented hook points)
+The sync function is reusable; the user can wire it from scraper / outreach / Stripe webhooks later by calling the same endpoint. Plan flags the integration points but does not modify those edge functions in this pass.
 
-Créer `src/lib/lazyWithRetry.ts` :
+## Files
 
-- Wrapper autour de `lazy(() => import(...))`.
-- Si le `import()` échoue avec `Failed to fetch dynamically imported module` ou `Importing a module script failed`, on retry une fois avec un cache-buster (`?v=<timestamp>`).
-- Si le retry échoue, on force `window.location.reload()` **une seule fois** par session (sessionStorage flag `__lazy_reload_<chunk>`), puis on rejette proprement.
-- Remplace tous les `lazy(() => import(...))` de `src/app/router.tsx` par `lazyWithRetry(() => import(...))` (un seul `sed` ciblé).
-
-Effet : plus jamais d'écran « Une erreur est survenue » sur stale chunk — la page se recharge silencieusement avec les nouveaux hashes.
-
-### 2. Ajouter des Error Boundaries par section (ce que le user a demandé)
-
-Créer `src/components/admin/SectionErrorBoundary.tsx` :
-
-- Petit class component React qui catch les erreurs.
-- UI fallback compacte : icône ⚠, titre « Composant indisponible », message d'erreur tronqué, bouton « Réessayer » qui reset l'état.
-- Props : `title`, `onRetry?`, children.
-
-### 3. Refactor `src/pages/admin/PageAdminAcquisitionFunnel.tsx`
-
-- Splitter `load()` en 3 requêtes indépendantes (`loadFunnel`, `loadFindings`, `loadLatestRun`) chacune avec son propre try/catch et état `{ data, error, loading }`.
-- Wrapper chaque `<Card>` avec `<SectionErrorBoundary title="…">`.
-- Sections wrappées : Status banner, Audit summary, Silent failures, Data availability, Event validation, Funnel, Top fuites.
-- Garde-fous null :
-  - `latestRun.started_at` peut être null → `new Date(... ?? Date.now())` + fallback « — ».
-  - `data_availability` / `event_counts` : vérifier `typeof v === "object" && v !== null` avant `v.rows` / `v.status` / `v.total`.
-  - `silent_failures` : déjà guard `Array.isArray`.
-- Si une requête échoue avec un code Postgres `42P01` (table absente) ou `42501` (permission), afficher dans la section un état « Source indisponible » + détail, **sans** propager.
-
-### 4. Vérifier les tables référencées
-
-Lancer une lecture rapide (`information_schema.tables`) pour confirmer que `acquisition_funnel_state`, `acquisition_findings`, `acquisition_audit_runs` existent bien (la dernière migration les a étendues mais on revalide). Si l'une manque, on ajoute la migration correspondante — sinon, pas de changement DB.
-
-## Files touched
-
-```
-NEW  src/lib/lazyWithRetry.ts
-NEW  src/components/admin/SectionErrorBoundary.tsx
-EDIT src/app/router.tsx                          (lazy → lazyWithRetry)
-EDIT src/pages/admin/PageAdminAcquisitionFunnel.tsx
-```
+- **NEW** `supabase/functions/acquisition-funnel-live/index.ts`
+- **NEW** `supabase/functions/sync-acquisition-funnel-state/index.ts`
+- **EDIT** `supabase/config.toml` — register both with `verify_jwt = false`
+- **EDIT** `src/pages/admin/PageAdminAcquisitionFunnel.tsx` — new loader, fallback banner, per-stage source caption, auto-sync trigger
+- **INSERT (cron)** hourly call to `sync-acquisition-funnel-state`
 
 ## Out of scope
-
-- Pas de changement à la logique de l'edge function `acquisition-pipeline-audit` (déjà v2 télémétrique).
-- Pas de refonte UI du dashboard.
-- Pas d'autres pages admin (les error boundaries arrivent ici en premier, on étend ensuite si la pattern est validée).
-
-## Success criteria
-
-- `/admin/revenue-intelligence` ne crash plus, même quand le navigateur a un chunk périmé en cache.
-- Si `acquisition_funnel_state` retourne 0 rows ou une erreur, seule la carte concernée affiche « Composant indisponible · Réessayer » — le reste du dashboard reste vivant.
-- Stack trace exact + cause précise tracés dans la console de chaque SectionErrorBoundary (`console.error("[SectionErrorBoundary]", title, error, errorInfo)`).
+- Editing scraper / outreach / Stripe webhook edge functions to call the sync (will be done in a follow-up pass).
+- Schema changes to `acquisition_funnel_state` (existing columns are sufficient).
