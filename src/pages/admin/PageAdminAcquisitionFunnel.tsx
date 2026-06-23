@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import SectionErrorBoundary from "@/components/admin/SectionErrorBoundary";
+import { AcquisitionHealthPanel } from "@/components/admin/AcquisitionHealthPanel";
+import { Link } from "react-router-dom";
 
 type Finding = {
   id: string;
