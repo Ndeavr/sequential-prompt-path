@@ -167,17 +167,27 @@ export default function PageAdminAcquisitionFunnel() {
   return (
     <div className="admin-theme min-h-screen bg-background text-foreground p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <header className="flex items-center justify-between">
+        <header className="flex items-center justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Funnel d'acquisition</h1>
             <p className="text-sm text-muted-foreground mt-1">
               Scraping → Contact → Click → Inscription → Paiement → Activation
             </p>
           </div>
-          <Button onClick={runAudit} disabled={running}>
-            {running ? "Audit en cours…" : "Lancer l'audit"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link to="/admin/acquisition-tests">
+              <Button variant="outline" size="sm">Tests pipeline</Button>
+            </Link>
+            <Button onClick={runAudit} disabled={running}>
+              {running ? "Audit en cours…" : "Lancer l'audit"}
+            </Button>
+          </div>
         </header>
+
+        {/* ── Provider health ─────────────────────────────── */}
+        <SectionErrorBoundary title="Santé providers" onRetry={() => window.location.reload()}>
+          <AcquisitionHealthPanel />
+        </SectionErrorBoundary>
 
         {/* ── Status banner ────────────────────────────────── */}
         <SectionErrorBoundary title="Statut système" onRetry={loadRun}>
