@@ -24,6 +24,12 @@ export default function QrRedirectPage() {
           .maybeSingle();
 
         if (!link || !link.is_active || !link.destination_url || link.destination_url === "pending") {
+          // Fallback: acquisition tracking link — delegate to edge function so click event is logged.
+          const projectRef = import.meta.env.VITE_SUPABASE_PROJECT_ID || "";
+          if (projectRef) {
+            window.location.replace(`https://${projectRef}.functions.supabase.co/r-redirect/${encodeURIComponent(shortCode)}`);
+            return;
+          }
           navigate("/", { replace: true });
           return;
         }
