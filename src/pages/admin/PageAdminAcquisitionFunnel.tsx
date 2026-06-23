@@ -99,6 +99,35 @@ export default function PageAdminAcquisitionFunnel() {
           </Button>
         </header>
 
+        {latestRun && (() => {
+          const conf = latestRun.confidence_score ?? 0;
+          const status = (latestRun.system_status ?? "unknown") as string;
+          const tone =
+            status === "healthy" ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-300" :
+            status === "warning" ? "bg-amber-500/10 border-amber-500/40 text-amber-300" :
+            "bg-red-500/10 border-red-500/40 text-red-300";
+          const label =
+            status === "healthy" ? "VERIFIED" :
+            status === "warning" ? "PARTIAL VISIBILITY" :
+            status === "critical" ? "CRITICAL" : "UNKNOWN";
+          const msg = conf < 50
+            ? "Télémétrie d'acquisition insuffisante. Le système ne peut pas déterminer si des fuites existent. Vérifier : Scraper, Tracking, Twilio, Resend, Stripe, Event Pipeline."
+            : conf < 95
+              ? "Visibilité partielle — certaines sources de données sont muettes."
+              : "Funnel verrouillé. Aucune fuite télémétrique détectée.";
+          return (
+            <Card className={`p-4 border-2 ${tone}`}>
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <div className="text-xs uppercase tracking-widest opacity-80">Statut système</div>
+                  <div className="text-2xl font-bold mt-1">{label} · {conf}%</div>
+                </div>
+                <div className="text-sm max-w-2xl opacity-90">{msg}</div>
+              </div>
+            </Card>
+          );
+        })()}
+
         {latestRun && (
           <Card className="p-4">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
@@ -110,6 +139,72 @@ export default function PageAdminAcquisitionFunnel() {
             </div>
           </Card>
         )}
+
+        {latestRun?.silent_failures && Array.isArray(latestRun.silent_failures) && latestRun.silent_failures.length > 0 && (
+          <Card className="p-4 border-red-500/40 bg-red-500/5">
+            <h2 className="text-sm font-semibold mb-3 text-red-300">⚠ Silent failures détectés</h2>
+            <div className="space-y-2">
+              {(latestRun.silent_failures as any[]).map((sf, i) => (
+                <div key={i} className="text-sm border-l-2 border-red-500 pl-3 py-1">
+                  <div className="font-mono text-xs text-red-300">{sf.code}</div>
+                  <div>{sf.description}</div>
+                  <div className="text-xs text-muted-foreground mt-1">→ {sf.recommended_action}</div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {latestRun?.data_availability && (
+          <Card className="p-4">
+            <h2 className="text-sm font-semibold mb-3">Data Availability</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
+                    <th className="py-2 pr-3">Table</th>
+                    <th className="py-2 pr-3 text-right">Rows</th>
+                    <th className="py-2 pr-3">Dernière entrée</th>
+                    <th className="py-2 pr-3">Statut</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(latestRun.data_availability as Record<string, any>).map(([t, v]) => (
+                    <tr key={t} className="border-b border-border/50">
+                      <td className="py-2 pr-3 font-mono text-xs">{t}</td>
+                      <td className="py-2 pr-3 text-right">{v.rows}</td>
+                      <td className="py-2 pr-3 text-xs text-muted-foreground">{v.last_at ? new Date(v.last_at).toLocaleString("fr-CA") : "—"}</td>
+                      <td className="py-2 pr-3">
+                        <Badge variant={v.status === "healthy" ? "secondary" : v.status === "warning" ? "default" : "destructive"}>
+                          {v.status === "healthy" ? "✓ Connected" : v.status === "warning" ? "⚠ Low" : "✗ No data"}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
+
+        {latestRun?.event_counts && (
+          <Card className="p-4">
+            <h2 className="text-sm font-semibold mb-3">Event Validation — par stage</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+              {Object.entries(latestRun.event_counts as Record<string, any>).map(([stage, v]) => (
+                <div key={stage} className={`p-3 rounded-lg border ${v.total === 0 ? "border-red-500/40 bg-red-500/5" : "border-emerald-500/30 bg-emerald-500/5"}`}>
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">{stage}</div>
+                  <div className="text-lg font-semibold">{v.total} events</div>
+                  <div className="text-xs text-muted-foreground">Last: {v.last_at ? new Date(v.last_at).toLocaleString("fr-CA") : "never"}</div>
+                  <div className={`text-xs mt-1 font-medium ${v.total === 0 ? "text-red-300" : "text-emerald-300"}`}>
+                    {v.total === 0 ? "Critical" : "Healthy"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
 
         <Card className="p-4">
           <h2 className="text-sm font-semibold mb-4">Entonnoir — {total} entrepreneurs</h2>
