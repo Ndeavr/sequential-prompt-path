@@ -29466,14 +29466,19 @@ export type Database = {
           clicked_at: string | null
           contractor_id: string | null
           created_at: string
+          cta_urls: string[]
           error_code: string | null
           error_message: string | null
+          has_tracked_cta: boolean
           id: string
           lead_id: string
           message_body: string
           message_subject: string | null
           opened_at: string | null
           provider_response: Json | null
+          raw_template: Json | null
+          rendered_html: string | null
+          rendered_text: string | null
           sent_at: string
           status: string
           template_key: string
@@ -29484,14 +29489,19 @@ export type Database = {
           clicked_at?: string | null
           contractor_id?: string | null
           created_at?: string
+          cta_urls?: string[]
           error_code?: string | null
           error_message?: string | null
+          has_tracked_cta?: boolean
           id?: string
           lead_id: string
           message_body: string
           message_subject?: string | null
           opened_at?: string | null
           provider_response?: Json | null
+          raw_template?: Json | null
+          rendered_html?: string | null
+          rendered_text?: string | null
           sent_at?: string
           status?: string
           template_key: string
@@ -29502,14 +29512,19 @@ export type Database = {
           clicked_at?: string | null
           contractor_id?: string | null
           created_at?: string
+          cta_urls?: string[]
           error_code?: string | null
           error_message?: string | null
+          has_tracked_cta?: boolean
           id?: string
           lead_id?: string
           message_body?: string
           message_subject?: string | null
           opened_at?: string | null
           provider_response?: Json | null
+          raw_template?: Json | null
+          rendered_html?: string | null
+          rendered_text?: string | null
           sent_at?: string
           status?: string
           template_key?: string
@@ -37215,6 +37230,51 @@ export type Database = {
             referencedColumns: ["check_key"]
           },
         ]
+      }
+      email_cta_audit_findings: {
+        Row: {
+          count_direct_url: number
+          count_no_url: number
+          count_tracked_url: number
+          id: string
+          metadata: Json
+          ran_at: string
+          root_cause: string | null
+          sample_message_ids: string[]
+          template_key: string | null
+          total_emails: number
+          window_end: string
+          window_start: string
+        }
+        Insert: {
+          count_direct_url?: number
+          count_no_url?: number
+          count_tracked_url?: number
+          id?: string
+          metadata?: Json
+          ran_at?: string
+          root_cause?: string | null
+          sample_message_ids?: string[]
+          template_key?: string | null
+          total_emails?: number
+          window_end: string
+          window_start: string
+        }
+        Update: {
+          count_direct_url?: number
+          count_no_url?: number
+          count_tracked_url?: number
+          id?: string
+          metadata?: Json
+          ran_at?: string
+          root_cause?: string | null
+          sample_message_ids?: string[]
+          template_key?: string | null
+          total_emails?: number
+          window_end?: string
+          window_start?: string
+        }
+        Relationships: []
       }
       email_delivery_events: {
         Row: {
@@ -52654,10 +52714,12 @@ export type Database = {
           body_rendered: string | null
           campaign_id: string | null
           channel_type: string
+          cta_urls: string[]
           delivered_at: string | null
           error_message: string | null
           failed_at: string | null
           from_value: string | null
+          has_tracked_cta: boolean
           id: string
           message_status: string | null
           prospect_id: string | null
@@ -52665,6 +52727,7 @@ export type Database = {
           provider_name: string | null
           queued_at: string | null
           recipient_id: string | null
+          rendered_html: string | null
           sent_at: string | null
           sequence_step_id: string | null
           subject_rendered: string | null
@@ -52674,10 +52737,12 @@ export type Database = {
           body_rendered?: string | null
           campaign_id?: string | null
           channel_type: string
+          cta_urls?: string[]
           delivered_at?: string | null
           error_message?: string | null
           failed_at?: string | null
           from_value?: string | null
+          has_tracked_cta?: boolean
           id?: string
           message_status?: string | null
           prospect_id?: string | null
@@ -52685,6 +52750,7 @@ export type Database = {
           provider_name?: string | null
           queued_at?: string | null
           recipient_id?: string | null
+          rendered_html?: string | null
           sent_at?: string | null
           sequence_step_id?: string | null
           subject_rendered?: string | null
@@ -52694,10 +52760,12 @@ export type Database = {
           body_rendered?: string | null
           campaign_id?: string | null
           channel_type?: string
+          cta_urls?: string[]
           delivered_at?: string | null
           error_message?: string | null
           failed_at?: string | null
           from_value?: string | null
+          has_tracked_cta?: boolean
           id?: string
           message_status?: string | null
           prospect_id?: string | null
@@ -52705,6 +52773,7 @@ export type Database = {
           provider_name?: string | null
           queued_at?: string | null
           recipient_id?: string | null
+          rendered_html?: string | null
           sent_at?: string | null
           sequence_step_id?: string | null
           subject_rendered?: string | null
@@ -77438,6 +77507,19 @@ export type Database = {
           verified_credentials_count: number | null
           visibility_score: number | null
           years_experience: number | null
+        }
+        Relationships: []
+      }
+      v_email_cta_health: {
+        Row: {
+          clicked: number | null
+          ctr_pct: number | null
+          day: string | null
+          missing_cta: number | null
+          sent: number | null
+          template_key: string | null
+          with_direct_url: number | null
+          with_tracked_cta: number | null
         }
         Relationships: []
       }
