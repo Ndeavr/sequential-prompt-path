@@ -39,11 +39,12 @@ const errToMsg = (e: any): string => {
   return e.message ?? JSON.stringify(e);
 };
 
+type FunnelSource = { events?: number; raw?: number | null; raw_source?: string | null; trust?: string };
 type FunnelLive = {
-  mode: "state" | "fallback";
-  state_rows: number;
+  mode: "events" | "state" | "fallback";
+  state_rows?: number;
   counts: Record<string, number>;
-  sources: Record<string, { value: number; table: string }>;
+  sources: Record<string, FunnelSource>;
 };
 
 export default function PageAdminAcquisitionFunnel() {
