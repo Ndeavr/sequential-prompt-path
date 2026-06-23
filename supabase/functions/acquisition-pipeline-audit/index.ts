@@ -166,6 +166,70 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ============ PHASE 0e — Event-source-of-truth checks (acquisition_events) ============
+    async function evCount(eventType: string, provider?: string): Promise<number> {
+      let q = supabase.from("acquisition_events").select("*", { count: "exact", head: true }).eq("event_type", eventType);
+      if (provider) q = q.eq("provider", provider);
+      const { count } = await q;
+      return count ?? 0;
+    }
+    const [evSentTwilio, evDelivTwilio, evSentResend, evDelivResend, evClickedAll, evRegistered, evOnboarded, evPaid, evActive, trackingLinksCount] = await Promise.all([
+      evCount("sent", "twilio"), evCount("delivered", "twilio"),
+      evCount("sent", "resend"), evCount("delivered", "resend"),
+      evCount("clicked"), evCount("registered"), evCount("onboarded"), evCount("paid"), evCount("active"),
+      supabase.from("acquisition_tracking_links").select("*", { count: "exact", head: true }).then(r => r.count ?? 0),
+    ]);
+
+    if (evSentTwilio > 0 && evDelivTwilio === 0) {
+      silentFailures.push({
+        code: "TWILIO_WEBHOOK_MISSING", severity: "critical",
+        description: `${evSentTwilio} SMS envoyés mais aucun événement de livraison reçu — webhook Twilio non configuré.`,
+        recommended_action: "Configurer le Status Callback URL Twilio → /twilio-status-events.",
+      });
+    }
+    if (evSentResend > 0 && evDelivResend === 0) {
+      silentFailures.push({
+        code: "RESEND_WEBHOOK_MISSING", severity: "critical",
+        description: `${evSentResend} emails envoyés mais aucun événement Resend reçu — webhook absent.`,
+        recommended_action: "Ajouter le webhook Resend → /resend-events.",
+      });
+    }
+    if ((outreachSent ?? 0) > 0 && trackingLinksCount === 0) {
+      silentFailures.push({
+        code: "TRACKING_LINKS_BYPASSED", severity: "high",
+        description: `${outreachSent} messages envoyés sans aucun lien de tracking /r/ — clics non attribuables.`,
+        recommended_action: "Réécrire les URLs sortantes via acquisition_tracking_links + /r/{id}.",
+      });
+    }
+    if (evRegistered > 0 && evOnboarded === 0) {
+      silentFailures.push({
+        code: "ONBOARDING_GAP", severity: "high",
+        description: `${evRegistered} profils créés, 0 onboarding complété — étape d'onboarding bloque la conversion.`,
+        recommended_action: "Vérifier le flow d'onboarding entrepreneur + déclencheur 'onboarded' event.",
+      });
+    }
+    if (evPaid > 0 && evActive < evPaid) {
+      silentFailures.push({
+        code: "PAID_NOT_ACTIVATED", severity: "critical",
+        description: `${evPaid} contractors payés mais seulement ${evActive} publiés/actifs — paiement sans activation.`,
+        recommended_action: "Vérifier post-payment activation (publish_contractor edge function + Stripe webhook).",
+      });
+    }
+
+    // Profiles without attribution
+    const { count: profilesNoAttribution } = await supabase
+      .from("profiles").select("*", { count: "exact", head: true });
+    const { count: registeredFromEvents } = await supabase
+      .from("acquisition_events").select("*", { count: "exact", head: true })
+      .eq("event_type", "registered").not("metadata->>backfill", "is", null);
+    if ((profilesNoAttribution ?? 0) > 0 && trackingLinksCount === 0 && evClickedAll === 0) {
+      silentFailures.push({
+        code: "NO_REGISTRATION_ATTRIBUTION", severity: "medium",
+        description: `${profilesNoAttribution} profils créés sans tracking_id — attribution de campagne impossible.`,
+        recommended_action: "Propager tracking_id depuis /r/{id} → signup form → registered event.",
+      });
+    }
+
     // ============ PHASE 0d — Confidence score ============
     let confidence = 0;
     if (totalContractors > 0) confidence += 30;
