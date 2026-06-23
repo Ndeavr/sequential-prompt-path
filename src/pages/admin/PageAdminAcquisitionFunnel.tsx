@@ -73,7 +73,8 @@ export default function PageAdminAcquisitionFunnel() {
       toast.success("Audit terminé");
       await load();
     } catch (e: any) {
-      toast.error(e.message ?? "Erreur audit");
+      const detail = e?.context?.body || e?.message || "Erreur audit";
+      toast.error(typeof detail === "string" ? detail : JSON.stringify(detail));
     } finally {
       setRunning(false);
     }
