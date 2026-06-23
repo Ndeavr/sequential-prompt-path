@@ -1,11 +1,14 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Copy, ArrowLeft, Quote } from "lucide-react";
+import { Copy, ArrowLeft, Quote, Mic, ArrowRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
+import { detectAlexIntent } from "@/services/alexOpeningTemplates";
 
 export default function JournalArticlePage() {
+  const { openAlex } = useAlexVoice();
   const { slug } = useParams<{ slug: string }>();
 
   const { data, isLoading } = useQuery({
@@ -210,6 +213,35 @@ export default function JournalArticlePage() {
             </div>
           </section>
         )}
+
+        {/* Alex contextual CTA — opens Alex with article topic pre-loaded as intent + context */}
+        <section className="my-16">
+          <div className="relative overflow-hidden rounded-3xl border border-amber-400/20 bg-gradient-to-br from-amber-500/10 via-amber-500/[0.04] to-transparent p-8 md:p-10">
+            <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-amber-400/10 blur-3xl" aria-hidden />
+            <div className="relative">
+              <div className="text-xs uppercase tracking-[0.2em] text-amber-300/90 mb-3">Parlez à Alex de votre situation</div>
+              <h3 className="text-2xl md:text-3xl font-bold tracking-tight text-white leading-tight mb-3">
+                Votre cas est différent. Alex peut trouver la vraie cause.
+              </h3>
+              <p className="text-white/70 leading-relaxed max-w-2xl mb-6">
+                En 2 minutes, Alex analyse votre situation — drainage, pente, âge de la fondation, historique
+                d''inondation — et vous dit où investir en premier. Sans soumission, sans pression.
+              </p>
+              <button
+                onClick={() => {
+                  const contextHint = `Article lu : ${article.title}. Sujet : ${article.dek ?? ""}. Le visiteur veut comprendre la vraie cause d''une infiltration ou inondation de sous-sol avant d''investir.`;
+                  const intent = detectAlexIntent(contextHint, "journal_article", "homeowner");
+                  openAlex(`journal_${article.slug}`, contextHint, undefined, intent);
+                }}
+                className="inline-flex items-center gap-3 rounded-full bg-amber-400 hover:bg-amber-300 text-[#060B14] font-semibold px-6 py-3 transition-colors"
+              >
+                <Mic className="h-4 w-4" />
+                Parler à Alex de mon sous-sol
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </section>
 
         {/* FAQ */}
         {faqs.length > 0 && (
