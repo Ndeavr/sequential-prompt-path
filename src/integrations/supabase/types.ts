@@ -19346,10 +19346,12 @@ export type Database = {
           final_total_after_discount: number
           id: string
           payment_provider: string | null
+          personalized_monthly_price_cents: number | null
           presentment_currency: string | null
           promo_code: string | null
           promo_code_type: string | null
           promo_redemption_id: string | null
+          quote_id: string | null
           selected_plan_code: string | null
           selected_plan_id: string | null
           selected_plan_name: string | null
@@ -19380,10 +19382,12 @@ export type Database = {
           final_total_after_discount?: number
           id?: string
           payment_provider?: string | null
+          personalized_monthly_price_cents?: number | null
           presentment_currency?: string | null
           promo_code?: string | null
           promo_code_type?: string | null
           promo_redemption_id?: string | null
+          quote_id?: string | null
           selected_plan_code?: string | null
           selected_plan_id?: string | null
           selected_plan_name?: string | null
@@ -19414,10 +19418,12 @@ export type Database = {
           final_total_after_discount?: number
           id?: string
           payment_provider?: string | null
+          personalized_monthly_price_cents?: number | null
           presentment_currency?: string | null
           promo_code?: string | null
           promo_code_type?: string | null
           promo_redemption_id?: string | null
+          quote_id?: string | null
           selected_plan_code?: string | null
           selected_plan_id?: string | null
           selected_plan_name?: string | null

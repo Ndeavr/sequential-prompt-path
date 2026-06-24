@@ -1,10 +1,11 @@
 /**
  * UNPRO — PageContractorCheckout
  * Summary, Stripe checkout, founder offer.
+ * Personalized quote (?quoteId=...) is the single source of truth for price/plan.
  */
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, CreditCard, Shield, Lock, CheckCircle2, Gift, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import { toast } from "sonner";
 
 import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
+import { fetchPricingQuote, type PricingQuote } from "@/services/contractorPricingQuoteService";
 
 const PLAN_DETAILS: Record<string, { name: string; price: number; features: string[] }> = Object.fromEntries(
   CONTRACTOR_PLANS.map((p) => [p.slug, { name: p.name, price: p.monthlyPrice, features: p.features }])
@@ -28,11 +30,33 @@ export default function PageContractorCheckout() {
   const { state, goToStep } = useContractorFunnel();
   const { isAuthenticated, isLoading: authLoading, session } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const plan = PLAN_DETAILS[state.selectedPlanId || "premium"];
-  const planName = plan?.name || "Premium";
-  const planPrice = plan?.price || 299;
+  const [quote, setQuote] = useState<PricingQuote | null>(null);
+
+  const quoteId = searchParams.get("quoteId") || (state as any).quoteId || null;
+
+  // Plan resolution priority: quote > funnel state > fallback
+  const planSlug = (quote?.recommended_plan as string) || state.selectedPlanId || "pro";
+  const plan = PLAN_DETAILS[planSlug] || PLAN_DETAILS["pro"];
+  const planName = plan?.name || planSlug;
+  const planPrice = quote?.recommended_monthly_price ?? plan?.price ?? 349;
+
+  // Load personalized quote if URL provides it
+  useEffect(() => {
+    if (!quoteId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const q = await fetchPricingQuote(quoteId);
+        if (!cancelled && q) setQuote(q);
+      } catch {
+        if (!cancelled) toast.error("Impossible de charger votre devis personnalisé. Tarif catalogue affiché.");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [quoteId]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -44,7 +68,7 @@ export default function PageContractorCheckout() {
   }, [authLoading, isAuthenticated, navigate]);
 
   const tax = Math.round(planPrice * 0.14975 * 100) / 100;
-  const total = planPrice + tax;
+  const total = Math.round((planPrice + tax) * 100) / 100;
 
   if (authLoading) {
     return (
@@ -63,17 +87,18 @@ export default function PageContractorCheckout() {
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout-session", {
         body: {
-          planId: state.selectedPlanId || "premium",
+          planId: planSlug,
           billingInterval: "month",
-          successUrl: `${window.location.origin}/entrepreneur/activation`,
-          cancelUrl: `${window.location.origin}/entrepreneur/checkout`,
+          quoteId: quoteId || undefined,
+          displayedPriceCents: Math.round(planPrice * 100),
+          successUrl: `${window.location.origin}/entrepreneur/activation${quoteId ? `?quote_id=${quoteId}` : ""}`,
+          cancelUrl: `${window.location.origin}/entrepreneur/checkout${quoteId ? `?quoteId=${quoteId}` : ""}`,
         },
       });
 
       if (error) throw error;
       if (data?.url) {
         redirectToCheckout(data.url);
-        // Release the loader after 2s in case the user stays on this tab
         setTimeout(() => setIsLoading(false), 2000);
         return;
       } else if (data?.activated) {
@@ -82,13 +107,19 @@ export default function PageContractorCheckout() {
       } else {
         toast.error("Erreur lors de la création du checkout");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error("Erreur lors de la création du checkout");
+      const code = err?.context?.body && (() => { try { return JSON.parse(err.context.body)?.code; } catch { return null; } })();
+      if (code === "pricing_mismatch") {
+        toast.error("Désaccord de prix détecté. Rechargez votre devis.");
+      } else {
+        toast.error("Erreur lors de la création du checkout");
+      }
     } finally {
       setIsLoading(false);
     }
   };
+
 
   return (
     <>

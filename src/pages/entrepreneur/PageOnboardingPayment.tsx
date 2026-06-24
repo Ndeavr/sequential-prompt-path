@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,21 +6,39 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, CreditCard, Lock, Shield, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { CONTRACTOR_PLANS, PLAN_PRICE_MAP } from "@/config/contractorPlans";
+import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
+import { fetchPricingQuote, type PricingQuote } from "@/services/contractorPricingQuoteService";
 
 export default function PageOnboardingPayment() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const planCode = searchParams.get("plan") || "premium";
+  const quoteId = searchParams.get("quoteId") || searchParams.get("quote_id");
+  const planParam = searchParams.get("plan");
+  const [quote, setQuote] = useState<PricingQuote | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const { toast } = useToast();
 
+  useEffect(() => {
+    if (!quoteId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const q = await fetchPricingQuote(quoteId);
+        if (!cancelled && q) setQuote(q);
+      } catch {
+        if (!cancelled) toast({ title: "Devis", description: "Tarif catalogue affiché.", variant: "default" });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [quoteId, toast]);
+
+  const planCode = (quote?.recommended_plan as string) || planParam || "pro";
   const planObj = CONTRACTOR_PLANS.find((p) => p.slug === planCode);
-  const planName = planObj?.name || "Premium";
-  const monthlyPrice = planObj?.monthlyPrice || 599;
+  const planName = planObj?.name || planCode;
+  const monthlyPrice = quote?.recommended_monthly_price ?? planObj?.monthlyPrice ?? 349;
 
   const currentPrice = billingCycle === "monthly" ? monthlyPrice : Math.round(monthlyPrice * 12 * 0.85);
   const savings = billingCycle === "yearly" ? Math.round(monthlyPrice * 12 - currentPrice) : 0;
@@ -28,30 +46,38 @@ export default function PageOnboardingPayment() {
   const handleCheckout = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-stripe-checkout-session", {
+      // Use canonical checkout function so personalized quote price is honored.
+      const { data, error } = await supabase.functions.invoke("create-checkout-session", {
         body: {
-          plan_code: planCode,
-          billing_cycle: billingCycle,
-          coupon_code: couponCode || undefined,
+          planId: planCode,
+          billingInterval: billingCycle === "yearly" ? "year" : "month",
+          quoteId: quoteId || undefined,
+          displayedPriceCents: Math.round(currentPrice * 100),
+          promoCode: couponCode || undefined,
+          successUrl: `${window.location.origin}/entrepreneur/payment-success${quoteId ? `?quote_id=${quoteId}` : ""}`,
+          cancelUrl: `${window.location.origin}/entrepreneur/payment-cancelled`,
         },
       });
 
       if (error) throw error;
       if (data?.url) {
         redirectToCheckout(data.url);
+      } else if (data?.activated) {
+        navigate(`/entrepreneur/payment-success${quoteId ? `?quote_id=${quoteId}` : ""}`);
       } else {
         throw new Error("Aucune URL de checkout reçue");
       }
     } catch (err: any) {
       toast({
         title: "Erreur de paiement",
-        description: err.message || "Impossible de lancer le paiement. Réessayez.",
+        description: err?.message || "Impossible de lancer le paiement. Réessayez.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 max-w-lg mx-auto space-y-6">

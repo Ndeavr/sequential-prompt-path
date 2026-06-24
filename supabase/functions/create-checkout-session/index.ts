@@ -45,7 +45,18 @@ Deno.serve(async (req) => {
     const userId = userData.user.id;
     const userEmail = userData.user.email as string;
 
-    const { planId, billingInterval, successUrl, cancelUrl, promoCode, appointmentPack, uiMode, returnUrl, quoteId } = await req.json();
+    const {
+      planId,
+      billingInterval,
+      successUrl,
+      cancelUrl,
+      promoCode,
+      appointmentPack,
+      uiMode,
+      returnUrl,
+      quoteId,
+      displayedPriceCents,
+    } = await req.json();
     const interval: "month" | "year" = billingInterval === "year" ? "year" : "month";
 
     const serviceClient = createClient(
@@ -57,7 +68,7 @@ Deno.serve(async (req) => {
     const priceColumn = interval === "year" ? "stripe_yearly_price_id" : "stripe_monthly_price_id";
     const { data: planRow, error: planError } = await serviceClient
       .from("plan_catalog")
-      .select(`code, name, ${priceColumn}`)
+      .select(`code, name, ${priceColumn}, stripe_product_id`)
       .eq("code", planId)
       .eq("active", true)
       .maybeSingle();
@@ -70,7 +81,81 @@ Deno.serve(async (req) => {
     }
 
     const resolvedPriceId = (planRow as any)[priceColumn];
-    if (!resolvedPriceId) {
+    const planName = (planRow as any).name || (planId.charAt(0).toUpperCase() + planId.slice(1));
+    const stripeProductId = (planRow as any).stripe_product_id as string | null;
+
+    // ── PERSONALIZED QUOTE OVERRIDE ──
+    // When quoteId is present, the AI-recommended price becomes the single source of truth.
+    let personalizedPriceCents: number | null = null;
+    let quoteRow: any = null;
+    if (quoteId) {
+      const { data: q, error: qErr } = await serviceClient
+        .from("contractor_pricing_quotes")
+        .select("id, recommended_plan, recommended_monthly_price, pricing_status")
+        .eq("id", quoteId)
+        .maybeSingle();
+      if (qErr || !q) {
+        return new Response(JSON.stringify({ error: "Devis introuvable", code: "quote_not_found" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      quoteRow = q;
+      if (q.pricing_status === "waitlisted") {
+        return new Response(JSON.stringify({ error: "Ce territoire est en liste d'attente", code: "waitlisted" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (q.recommended_plan !== planId) {
+        return new Response(
+          JSON.stringify({
+            error: "Désaccord plan/devis détecté.",
+            code: "pricing_mismatch",
+            expected_plan: q.recommended_plan,
+            received_plan: planId,
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      personalizedPriceCents = Math.round(Number(q.recommended_monthly_price) * 100);
+
+      // Closed-loop validation: client-displayed price must match server-computed quote price
+      if (
+        typeof displayedPriceCents === "number" &&
+        Math.abs(displayedPriceCents - personalizedPriceCents) > 1
+      ) {
+        console.error("[pricing_mismatch]", {
+          quoteId,
+          displayedPriceCents,
+          personalizedPriceCents,
+          planId,
+        });
+        try {
+          await serviceClient.from("acquisition_events").insert({
+            event_type: "pricing_mismatch",
+            metadata: {
+              quote_id: quoteId,
+              plan_id: planId,
+              displayed: displayedPriceCents,
+              server: personalizedPriceCents,
+            },
+          });
+        } catch { /* table optional */ }
+        return new Response(
+          JSON.stringify({
+            error: "Désaccord de prix détecté entre l'écran et le serveur.",
+            code: "pricing_mismatch",
+            displayed_cents: displayedPriceCents,
+            server_cents: personalizedPriceCents,
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Require a Stripe price ID only when we are NOT overriding with a personalized quote
+    if (!personalizedPriceCents && !resolvedPriceId) {
       return new Response(JSON.stringify({ error: "Price not configured for this plan/interval" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -262,8 +347,21 @@ Deno.serve(async (req) => {
       customerId = customer.id;
     }
 
-    // Build line items
-    const lineItems: any[] = [{ price: resolvedPriceId, quantity: 1 }];
+    // Build line items — personalized quote overrides catalog price via price_data
+    const planLineItem = personalizedPriceCents
+      ? {
+          price_data: {
+            currency: "cad",
+            recurring: { interval },
+            unit_amount: personalizedPriceCents,
+            ...(stripeProductId
+              ? { product: stripeProductId }
+              : { product_data: { name: `UNPRO Plan ${planName}` } }),
+          },
+          quantity: 1,
+        }
+      : { price: resolvedPriceId, quantity: 1 };
+    const lineItems: any[] = [planLineItem];
 
     // Add one-time appointment pack if present
     if (appointmentPack && appointmentPack.totalPriceCents > 0) {
@@ -344,7 +442,7 @@ Deno.serve(async (req) => {
     await serviceClient.from("checkout_sessions").insert({
       contractor_profile_id: contractor.id,
       selected_plan_code: planId,
-      selected_plan_name: planId.charAt(0).toUpperCase() + planId.slice(1),
+      selected_plan_name: planName,
       billing_cycle: interval === "year" ? "yearly" : "monthly",
       external_checkout_id: session.id,
       stripe_customer_id: customerId,
@@ -353,6 +451,8 @@ Deno.serve(async (req) => {
       checkout_status: "pending",
       payment_provider: "stripe",
       adaptive_pricing_enabled: false,
+      quote_id: quoteId || null,
+      personalized_monthly_price_cents: personalizedPriceCents,
     });
 
     if (isEmbedded) {
