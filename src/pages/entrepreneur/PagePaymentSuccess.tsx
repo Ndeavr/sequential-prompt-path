@@ -45,31 +45,50 @@ export default function PagePaymentSuccess() {
   const navigate = useNavigate();
   const quoteId = searchParams.get("quote_id");
   const [planName, setPlanName] = useState("votre plan");
+  const [monthlyPrice, setMonthlyPrice] = useState<number | null>(null);
 
   useEffect(() => {
     triggerConfetti();
 
-    // Load plan info from session
+    // 1) Fast path: session cache
     const stored = sessionStorage.getItem("unpro_pricing_result");
     if (stored) {
       try {
         const r = JSON.parse(stored);
-        setPlanName(r.selected_plan?.name || "votre plan");
+        if (r.selected_plan?.name) setPlanName(r.selected_plan.name);
       } catch {}
     }
 
-    // Notify admin + send welcome email (fire-and-forget via edge functions)
+    // 2) Source of truth: personalized quote
     if (quoteId) {
+      (async () => {
+        try {
+          const { data } = await supabase
+            .from("contractor_pricing_quotes" as any)
+            .select("recommended_plan, recommended_monthly_price")
+            .eq("id", quoteId)
+            .maybeSingle();
+          const q = data as any;
+          if (q) {
+            if (q.recommended_plan) {
+              setPlanName(`Plan ${q.recommended_plan.charAt(0).toUpperCase() + q.recommended_plan.slice(1)}`);
+            }
+            if (typeof q.recommended_monthly_price === "number") {
+              setMonthlyPrice(q.recommended_monthly_price);
+            }
+          }
+        } catch {}
+      })();
+
       supabase.functions.invoke("send-transactional-email", {
         body: {
           templateName: "contractor-profile-activated",
-          recipientEmail: "", // handled server-side
+          recipientEmail: "",
           idempotencyKey: `welcome-payment-${quoteId}`,
         },
       }).catch(() => {});
     }
 
-    // Clean session
     sessionStorage.removeItem("unpro_pricing_result");
   }, [quoteId]);
 
