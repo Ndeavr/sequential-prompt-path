@@ -60,8 +60,28 @@ Deno.serve(async (req) => {
     const { error } = await supabase.from("sms_events_v2").update(update).eq("twilio_sid", sid);
     if (error) {
       console.error("twilio-status-v2 update failed", error.message);
-      return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      // do not return — still record canonical funnel event below
     }
+
+    // Canonical funnel: feed outreach_sms_events keyed by Twilio MessageSid
+    {
+      const kind = mapped === "delivered" ? "delivered"
+        : (mapped === "failed" || mapped === "undelivered") ? "failed"
+        : "sent";
+      try {
+        await supabase.rpc("record_outreach_sms_event", {
+          p_sid: sid,
+          p_kind: kind,
+          p_payload: {
+            status: mapped,
+            error_code: errorCode,
+            error: errorMessage,
+            source: "twilio_status_v2",
+          },
+        });
+      } catch (e) { console.error("[twilio-status-v2] funnel rpc failed", e); }
+    }
+
 
     // Mirror to contractor_onboarding_messages by twilio_message_sid
     const comUpdate: Record<string, unknown> = { status: mapped };

@@ -231,6 +231,36 @@ Deno.serve(async (req) => {
       await supabase.from("outbound_messages").update({ replied: true }).eq("id", messageId);
     }
 
+    // Canonical funnel: stamp replied_at on outreach_email_events (best-effort by In-Reply-To OR recipient)
+    try {
+      const repliedTo = (inReplyTo || messageIdHdr || "").replace(/[<>]/g, "").trim();
+      if (repliedTo) {
+        await supabase.rpc("record_email_event", {
+          p_message_id: repliedTo,
+          p_kind: "replied",
+          p_payload: { recipient: fromEmail, intent: cls.intent, source: "resend_inbound" },
+        });
+      } else if (fromEmail) {
+        // Fallback: most recent email to this address in last 30d
+        const { data: recent } = await supabase
+          .from("outreach_email_events")
+          .select("message_id")
+          .eq("recipient", fromEmail)
+          .gte("created_at", new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString())
+          .order("sent_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (recent?.message_id) {
+          await supabase.rpc("record_email_event", {
+            p_message_id: recent.message_id,
+            p_kind: "replied",
+            p_payload: { recipient: fromEmail, intent: cls.intent, source: "resend_inbound_fallback" },
+          });
+        }
+      }
+    } catch (e) { console.error("[reply funnel rpc]", e); }
+
+
     return new Response(JSON.stringify({ ok: true, reply_id: inserted.id, intent: cls.intent, auto_action: autoAction }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -6,7 +6,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { validateBeforeSend, lookupPhoneTypeCached } from "./smsGuard.ts";
 import { sendSms } from "./twilioSend.ts";
 import { normalizePhone } from "./normalizePhone.ts";
-import { wrapAllUrls, validateCta } from "./ctaTracker.ts";
+import { wrapAllUrls, validateCta, withReplyFooter } from "./ctaTracker.ts";
+import { recordEmailEvent, recordSmsEvent } from "./outreachEvents.ts";
+import { checkAutopilotGate } from "./autopilotGate.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -83,8 +85,10 @@ async function sendEmailViaResend(
   if (!RESEND_API_KEY || !LOVABLE_API_KEY) {
     return { ok: false, error: "resend_not_configured" };
   }
+  // Append the FR reply-as-conversion footer (OUI) on every outreach email
+  const withFooter = withReplyFooter(html);
   // Wrap every internal URL through /r/ tracker
-  const wrapped = await wrapAllUrls(html, {
+  const wrapped = await wrapAllUrls(withFooter, {
     prospect_id: ctx.lead_id ?? null,
     contractor_id: ctx.contractor_id ?? null,
     campaign: ctx.campaign ?? ctx.template_key ?? null,
@@ -92,7 +96,7 @@ async function sendEmailViaResend(
   });
   const v = validateCta(wrapped.body);
   if (!v.ok) {
-    return { ok: false, error: "missing_cta", cta_urls: [], has_tracked_cta: false, rendered_html: wrapped.body };
+    return { ok: false, error: v.reason ?? "missing_cta", cta_urls: v.cta_urls, has_tracked_cta: v.has_tracked_cta, rendered_html: wrapped.body };
   }
   try {
     const resp = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
@@ -107,10 +111,25 @@ async function sendEmailViaResend(
         to: [to],
         subject,
         html: wrapped.body,
+        tags: [
+          { name: "campaign", value: String(ctx.campaign ?? ctx.template_key ?? "outreach") },
+          ...(ctx.contractor_id ? [{ name: "contractor_id", value: ctx.contractor_id }] : []),
+          ...(ctx.lead_id ? [{ name: "lead_id", value: ctx.lead_id }] : []),
+        ],
       }),
     });
     const data = await resp.json().catch(() => ({}));
     if (!resp.ok) return { ok: false, error: data?.message ?? `HTTP ${resp.status}`, cta_urls: wrapped.cta_urls, has_tracked_cta: wrapped.has_tracked_cta, rendered_html: wrapped.body };
+    // Record canonical sent event so the funnel sees this email immediately
+    if (data?.id) {
+      await recordEmailEvent(data.id as string, "sent", {
+        recipient: to,
+        contractor_id: ctx.contractor_id ?? undefined,
+        campaign_id: ctx.campaign ?? ctx.template_key ?? undefined,
+        template: ctx.template_key ?? undefined,
+        subject,
+      });
+    }
     return { ok: true, id: data?.id, cta_urls: wrapped.cta_urls, has_tracked_cta: wrapped.has_tracked_cta, rendered_html: wrapped.body };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e), cta_urls: wrapped.cta_urls, has_tracked_cta: wrapped.has_tracked_cta, rendered_html: wrapped.body };
@@ -119,6 +138,15 @@ async function sendEmailViaResend(
 
 export async function sendOutreach(input: DispatchInput): Promise<DispatchResult> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+  // Hard autopilot gate — block every dispatch unless e2e selftest passed within 24h.
+  // Bypass with metadata.bypass_gate === true (used by the selftest itself and admin tools).
+  if (!input.metadata || (input.metadata as any).bypass_gate !== true) {
+    const gate = await checkAutopilotGate(supabase);
+    if (!gate.allowed) {
+      return { ok: false, channel: "none", outcome: "needs_manual_contact", detail: `autopilot_gated:${gate.reason}` };
+    }
+  }
 
   const phoneNorm = normalizePhone(input.phone);
   const hasValidPhone = phoneNorm.valid && phoneNorm.normalized;
@@ -140,6 +168,19 @@ export async function sendOutreach(input: DispatchInput): Promise<DispatchResult
         metadata: { ...(input.metadata ?? {}), channel: "sms" },
       });
       const sent = ["sending", "queued"].includes(res.status);
+      // Canonical SMS lifecycle row
+      if (res.twilio_sid) {
+        await recordSmsEvent(res.twilio_sid, sent ? "sent" : "failed", {
+          recipient: phoneNorm.normalized!,
+          contractor_id: input.contractor_id,
+          campaign_id: input.campaign_id,
+          template: input.template_key,
+          body: input.sms_body,
+          status: res.status,
+          error_code: res.error_code,
+          error: res.error_message,
+        });
+      }
       await logEvent(supabase, {
         event_type: sent ? "sent" : "failed",
         channel: "sms",

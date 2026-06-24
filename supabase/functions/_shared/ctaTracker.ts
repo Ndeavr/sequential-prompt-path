@@ -83,9 +83,36 @@ export async function wrapAllUrls(body: string, ctx: TrackCtx = {}): Promise<{ b
   return { body: out, cta_urls: tracked, has_tracked_cta: tracked.some(isTrackedUrl) };
 }
 
+// Direct landing URLs that bypass tracking — sends must be blocked if found.
+const BLOCKED_RAW_URL_RE = /https?:\/\/(?:app\.)?unpro\.ca\/(?:onboarding|signup|pro\/onboarding|pro\/signup|entrepreneur\/onboarding)\b/i;
+
 export function validateCta(body: string): { ok: boolean; cta_urls: string[]; has_tracked_cta: boolean; reason?: string } {
   const urls = extractUrls(body);
   if (urls.length === 0) return { ok: false, cta_urls: [], has_tracked_cta: false, reason: "missing_cta" };
+  // Block any raw onboarding/signup URL that escaped wrapAllUrls
+  for (const u of urls) {
+    if (BLOCKED_RAW_URL_RE.test(u) && !isTrackedUrl(u)) {
+      return { ok: false, cta_urls: urls, has_tracked_cta: false, reason: "direct_onboarding_url_forbidden" };
+    }
+  }
   const has_tracked_cta = urls.some(isTrackedUrl);
+  if (!has_tracked_cta) {
+    return { ok: false, cta_urls: urls, has_tracked_cta: false, reason: "no_tracked_cta" };
+  }
   return { ok: true, cta_urls: urls, has_tracked_cta };
 }
+
+// FR reply-as-conversion footer. Appended to every outreach email body.
+export const REPLY_FOOTER_FR = `
+<p style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;color:#374151;font-size:14px;line-height:1.6;">
+  Vous préférez ne pas cliquer ? Répondez simplement à ce courriel avec
+  <strong style="background:#fef3c7;padding:2px 6px;border-radius:4px;">OUI</strong>
+  et nous vous enverrons votre rapport gratuitement.
+</p>`.trim();
+
+export function withReplyFooter(html: string): string {
+  if (!html) return html;
+  if (/OUI/.test(html) && /Répondez/i.test(html)) return html; // already present
+  return html + "\n" + REPLY_FOOTER_FR;
+}
+
