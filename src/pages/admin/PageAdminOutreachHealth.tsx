@@ -127,7 +127,7 @@ export default function PageAdminOutreachHealth() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="text-xs text-muted-foreground uppercase">
-                  <tr><th className="text-left py-2">Campagne</th><th>Canal</th><th>Sent</th><th>Delivered</th><th>Opened</th><th>Clicked</th><th>Replied</th><th>Converted</th><th>Bounced</th></tr>
+                  <tr><th className="text-left py-2">Campagne</th><th>Canal</th><th>Sent</th><th>Delivered</th><th>Opened</th><th>Clicked</th><th>Onboard</th><th>Activated</th><th>Paid</th><th>Bounced</th></tr>
                 </thead>
                 <tbody className="divide-y divide-border/40">
                   {(funnel.data ?? []).map((r, i) => (
@@ -135,11 +135,12 @@ export default function PageAdminOutreachHealth() {
                       <td className="text-left py-2">{r.campaign_id}</td>
                       <td><Badge variant="outline">{r.channel}</Badge></td>
                       <td>{fmt(r.sent)}</td><td>{fmt(r.delivered)}</td><td>{fmt(r.opened)}</td>
-                      <td>{fmt(r.clicked)}</td><td>{fmt(r.replied)}</td><td>{fmt(r.converted)}</td><td>{fmt(r.bounced)}</td>
+                      <td>{fmt(r.clicked)}</td><td>{fmt(r.onboarding_started)}</td>
+                      <td>{fmt(r.activated)}</td><td>{fmt(r.paid)}</td><td>{fmt(r.bounced)}</td>
                     </tr>
                   ))}
                   {!funnel.data?.length && (
-                    <tr><td colSpan={9} className="py-6 text-center text-muted-foreground">Aucune donnée. Lance le selftest ou le backfill.</td></tr>
+                    <tr><td colSpan={10} className="py-6 text-center text-muted-foreground">Aucune donnée. Lance le selftest ou le backfill.</td></tr>
                   )}
                 </tbody>
               </table>
