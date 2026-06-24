@@ -13,7 +13,10 @@ import { toast } from "sonner";
 import {
   useOutreachFunnel, useAutopilotGate, useRecentE2ERuns, useProviderHealth,
   useRecentEmailEvents, useRunSelftest, useRun30dBackfill,
+  useOperationalScore, useActiveHealthChecks, useRepairRuns, useCriticalAlerts,
+  useE2EFullRuns, useRunHealthAgent, useRunE2EReal,
 } from "@/hooks/useOutreachHealth";
+
 
 const fmt = (n: number | null | undefined) => (n ?? 0).toLocaleString("fr-CA");
 const pct = (num: number, den: number) => (den > 0 ? `${Math.round((num / den) * 100)}%` : "—");
