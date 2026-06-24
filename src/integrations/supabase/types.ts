@@ -78008,6 +78008,29 @@ export type Database = {
         }
         Relationships: []
       }
+      v_outreach_funnel_full: {
+        Row: {
+          activated: number | null
+          bounced: number | null
+          campaign_id: string | null
+          channel: string | null
+          clicked: number | null
+          delivered: number | null
+          onboarding_started: number | null
+          opened: number | null
+          paid: number | null
+          replied: number | null
+          sent: number | null
+        }
+        Relationships: []
+      }
+      v_outreach_provider_health: {
+        Row: {
+          last_event_at: string | null
+          provider: string | null
+        }
+        Relationships: []
+      }
       v_pipeline_agents_live: {
         Row: {
           agent_key: string | null
@@ -78580,6 +78603,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      evaluate_outreach_gate: { Args: never; Returns: Json }
       fn_alex_compute_booking_readiness: {
         Args: { _session_id: string }
         Returns: Json
