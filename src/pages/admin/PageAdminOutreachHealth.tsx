@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
-  useOutreachFunnel, useAutopilotGate, useRecentE2ERuns,
+  useOutreachFunnel, useAutopilotGate, useRecentE2ERuns, useProviderHealth,
   useRecentEmailEvents, useRunSelftest, useRun30dBackfill,
 } from "@/hooks/useOutreachHealth";
 
