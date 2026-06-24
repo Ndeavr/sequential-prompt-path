@@ -86,10 +86,16 @@ export async function wrapAllUrls(body: string, ctx: TrackCtx = {}): Promise<{ b
 // Direct landing URLs that bypass tracking — sends must be blocked if found.
 const BLOCKED_RAW_URL_RE = /https?:\/\/(?:app\.)?unpro\.ca\/(?:onboarding|signup|pro\/onboarding|pro\/signup|entrepreneur\/onboarding)\b/i;
 
+// Reply CTA = explicit "répondez OUI" instruction. Required on every outreach message.
+const REPLY_CTA_RE = /(répondez|repondez|reply).{0,40}\bOUI\b/i;
+
+export function hasReplyCta(body: string): boolean {
+  return !!body && REPLY_CTA_RE.test(body);
+}
+
 export function validateCta(body: string): { ok: boolean; cta_urls: string[]; has_tracked_cta: boolean; reason?: string } {
   const urls = extractUrls(body);
   if (urls.length === 0) return { ok: false, cta_urls: [], has_tracked_cta: false, reason: "missing_cta" };
-  // Block any raw onboarding/signup URL that escaped wrapAllUrls
   for (const u of urls) {
     if (BLOCKED_RAW_URL_RE.test(u) && !isTrackedUrl(u)) {
       return { ok: false, cta_urls: urls, has_tracked_cta: false, reason: "direct_onboarding_url_forbidden" };
@@ -102,6 +108,23 @@ export function validateCta(body: string): { ok: boolean; cta_urls: string[]; ha
   return { ok: true, cta_urls: urls, has_tracked_cta };
 }
 
+/**
+ * MANDATORY OUTREACH RULE — every email/SMS leaving the system MUST contain:
+ *   1. a tracked CTA (unpro.ca/r/{id})
+ *   2. a reply CTA ("Répondez … OUI")
+ * Either missing → BLOCKED with reason=missing_cta.
+ */
+export function validateOutreachMessage(
+  body: string,
+  _channel: "email" | "sms",
+): { ok: boolean; cta_urls: string[]; has_tracked_cta: boolean; has_reply_cta: boolean; reason?: string } {
+  const cta = validateCta(body);
+  const has_reply_cta = hasReplyCta(body);
+  if (!cta.ok) return { ok: false, cta_urls: cta.cta_urls, has_tracked_cta: cta.has_tracked_cta, has_reply_cta, reason: cta.reason ?? "missing_cta" };
+  if (!has_reply_cta) return { ok: false, cta_urls: cta.cta_urls, has_tracked_cta: cta.has_tracked_cta, has_reply_cta, reason: "missing_reply_cta" };
+  return { ok: true, cta_urls: cta.cta_urls, has_tracked_cta: cta.has_tracked_cta, has_reply_cta };
+}
+
 // FR reply-as-conversion footer. Appended to every outreach email body.
 export const REPLY_FOOTER_FR = `
 <p style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;color:#374151;font-size:14px;line-height:1.6;">
@@ -112,7 +135,16 @@ export const REPLY_FOOTER_FR = `
 
 export function withReplyFooter(html: string): string {
   if (!html) return html;
-  if (/OUI/.test(html) && /Répondez/i.test(html)) return html; // already present
+  if (hasReplyCta(html)) return html;
   return html + "\n" + REPLY_FOOTER_FR;
+}
+
+// SMS-safe reply line. Appended if SMS body lacks reply CTA.
+export const SMS_REPLY_LINE = "Ou répondez OUI.";
+
+export function withSmsReplyLine(body: string): string {
+  if (!body) return body;
+  if (hasReplyCta(body)) return body;
+  return body.trimEnd() + "\n" + SMS_REPLY_LINE;
 }
 
