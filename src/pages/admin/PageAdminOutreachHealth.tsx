@@ -112,6 +112,105 @@ export default function PageAdminOutreachHealth() {
           </CardContent>
         </Card>
 
+        {/* === ACTIVE HEALTH ENGINE === */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Active Health Engine</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">Probes auto every 15 min. Auto-repair + auto-unlock autopilot.</p>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => runAgent.mutate(undefined, { onSuccess: () => { healthChecks.refetch(); score.refetch(); repairs.refetch(); alerts.refetch(); gate.refetch(); toast.success("Health agent exécuté"); }, onError: (e: any) => toast.error(e.message) })} disabled={runAgent.isPending}>
+                {runAgent.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCcw className="h-3.5 w-3.5" />}
+                <span className="ml-1.5 text-xs">Run health agent</span>
+              </Button>
+              <Button size="sm" onClick={() => runE2E.mutate(undefined, { onSuccess: (r: any) => { e2eFull.refetch(); gate.refetch(); toast[r?.pass ? "success" : "error"](`E2E ${r?.pass ? "PASS" : "FAIL"} (${r?.total_ms}ms)`); }, onError: (e: any) => toast.error(e.message) })} disabled={runE2E.isPending}>
+                {runE2E.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <PlayCircle className="h-3.5 w-3.5" />}
+                <span className="ml-1.5 text-xs">Run real E2E (14 steps)</span>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Operational score */}
+            <div className="grid grid-cols-2 md:grid-cols-8 gap-2 text-center">
+              {(["overall","infrastructure","messaging","tracking","payments","automation","conversion","autopilot"] as const).map(k => {
+                const v = (score.data?.[k] ?? 0) as number;
+                const color = v >= 95 ? "text-emerald-500" : v >= 80 ? "text-amber-500" : "text-red-500";
+                return (
+                  <div key={k} className="rounded-lg border border-border/40 p-2">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{k}</p>
+                    <p className={`text-xl font-semibold tabular-nums ${color}`}>{v}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Provider status grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              {(healthChecks.data ?? []).map((p: any) => {
+                const color = p.status === "green" ? "bg-emerald-500" : p.status === "yellow" ? "bg-amber-500" : p.status === "red" ? "bg-red-500" : "bg-slate-400";
+                return (
+                  <div key={p.provider} className="rounded-lg border border-border/40 p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className={`h-2.5 w-2.5 rounded-full ${color}`} />
+                        <span className="text-sm font-medium">{p.provider}</span>
+                      </div>
+                      <span className="text-[10px] uppercase text-muted-foreground">{p.status}</span>
+                    </div>
+                    {p.failure_reason && <p className="text-xs text-red-500 mt-1">{p.failure_reason}</p>}
+                    {p.message && <p className="text-xs text-muted-foreground mt-1">{p.message}</p>}
+                    {p.repair_action && <p className="text-xs text-amber-500 mt-1">→ {p.repair_action}</p>}
+                  </div>
+                );
+              })}
+              {!healthChecks.data?.length && <p className="text-xs text-muted-foreground">Aucune probe enregistrée. Lance le health agent.</p>}
+            </div>
+
+            {/* Critical alerts */}
+            {(alerts.data ?? []).length > 0 && (
+              <div className="rounded-lg border border-red-500/40 bg-red-500/5 p-3 space-y-2">
+                <p className="text-sm font-medium text-red-500">⚠ Alertes critiques ouvertes</p>
+                {(alerts.data as any[]).map((a) => (
+                  <div key={a.id} className="text-xs">
+                    <span className="font-medium">{a.provider}</span> — {a.root_cause} · repair: {a.repair_progress ?? "—"} · ARR risk: ${(a.revenue_at_risk_cents/100).toFixed(0)}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Repair log */}
+            <div>
+              <p className="text-xs font-medium uppercase text-muted-foreground mb-1.5">Repair runs récents</p>
+              <div className="space-y-1 text-xs">
+                {(repairs.data ?? []).slice(0, 8).map((r: any) => (
+                  <div key={r.id} className="flex items-center justify-between border-b border-border/30 pb-1">
+                    <span><Badge variant={r.outcome === "success" ? "default" : "secondary"} className="mr-2">{r.outcome}</Badge>{r.provider} · {r.action}</span>
+                    <span className="text-muted-foreground">{r.duration_ms}ms · {new Date(r.created_at).toLocaleTimeString("fr-CA")}</span>
+                  </div>
+                ))}
+                {!repairs.data?.length && <p className="text-muted-foreground">Aucune réparation lancée.</p>}
+              </div>
+            </div>
+
+            {/* E2E full runs */}
+            <div>
+              <p className="text-xs font-medium uppercase text-muted-foreground mb-1.5">Tests E2E 14 étapes</p>
+              <div className="space-y-1 text-xs">
+                {(e2eFull.data ?? []).map((r: any) => (
+                  <div key={r.id} className="flex items-center justify-between border-b border-border/30 pb-1">
+                    <span><Badge variant={r.pass ? "default" : "destructive"} className="mr-2">{r.pass ? "PASS" : "FAIL"}</Badge>{new Date(r.created_at).toLocaleString("fr-CA")}</span>
+                    <span className="text-muted-foreground">{r.total_duration_ms}ms</span>
+                  </div>
+                ))}
+                {!e2eFull.data?.length && <p className="text-muted-foreground">Aucun E2E complet exécuté.</p>}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+
+
         {/* Provider webhook freshness */}
         <Card>
           <CardHeader><CardTitle className="text-base">Webhooks providers</CardTitle></CardHeader>
