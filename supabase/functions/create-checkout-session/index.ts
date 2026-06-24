@@ -347,8 +347,21 @@ Deno.serve(async (req) => {
       customerId = customer.id;
     }
 
-    // Build line items
-    const lineItems: any[] = [{ price: resolvedPriceId, quantity: 1 }];
+    // Build line items — personalized quote overrides catalog price via price_data
+    const planLineItem = personalizedPriceCents
+      ? {
+          price_data: {
+            currency: "cad",
+            recurring: { interval },
+            unit_amount: personalizedPriceCents,
+            ...(stripeProductId
+              ? { product: stripeProductId }
+              : { product_data: { name: `UNPRO Plan ${planName}` } }),
+          },
+          quantity: 1,
+        }
+      : { price: resolvedPriceId, quantity: 1 };
+    const lineItems: any[] = [planLineItem];
 
     // Add one-time appointment pack if present
     if (appointmentPack && appointmentPack.totalPriceCents > 0) {
