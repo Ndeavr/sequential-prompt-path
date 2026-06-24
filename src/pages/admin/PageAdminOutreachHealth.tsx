@@ -101,8 +101,38 @@ export default function PageAdminOutreachHealth() {
           </CardContent>
         </Card>
 
+        {/* Provider webhook freshness */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">Webhooks providers</CardTitle></CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {(providers.data ?? []).map((p) => {
+                const ts = p.last_event_at ? new Date(p.last_event_at) : null;
+                const ageMin = ts ? (Date.now() - ts.getTime()) / 60_000 : Infinity;
+                const status = !ts ? "missing" : ageMin < 30 ? "ok" : ageMin < 1440 ? "stale" : "missing";
+                const color = status === "ok" ? "bg-emerald-500" : status === "stale" ? "bg-amber-500" : "bg-red-500";
+                const label: Record<string,string> = {
+                  resend_email: "Resend (email)", twilio_sms: "Twilio (SMS)",
+                  r_redirect_clicks: "/r/ clicks", stripe_checkouts: "Stripe",
+                };
+                return (
+                  <div key={p.provider} className="rounded-lg border border-border/40 p-3">
+                    <div className="flex items-center gap-2">
+                      <span className={`h-2.5 w-2.5 rounded-full ${color}`} />
+                      <span className="text-sm font-medium">{label[p.provider] ?? p.provider}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1.5">
+                      {ts ? `Dernier événement : ${ts.toLocaleString("fr-CA")}` : "Aucun événement reçu"}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Funnel cards */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
           {cells.map(c => (
             <Card key={c.label}>
               <CardContent className="pt-5">
