@@ -2,6 +2,7 @@
 // Configure in Resend dashboard: Webhooks → Add → this function URL.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { logAcquisitionEvent, AcqEventType } from "../_shared/acquisitionEvents.ts";
+import { recordEmailEvent, EmailEventKind } from "../_shared/outreachEvents.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -53,6 +54,27 @@ serve(async (req) => {
         click: data?.click,
       },
     });
+
+    // Canonical funnel: feed outreach_email_events keyed by Resend email_id
+    const kindMap: Record<string, EmailEventKind> = {
+      "email.sent": "sent",
+      "email.delivered": "delivered",
+      "email.opened": "opened",
+      "email.clicked": "clicked",
+      "email.bounced": "bounced",
+      "email.complained": "complained",
+    };
+    const kind = kindMap[type];
+    if (emailId && kind) {
+      await recordEmailEvent(emailId, kind, {
+        recipient: Array.isArray(data?.to) ? data.to[0] : data?.to,
+        subject: data?.subject,
+        contractor_id: contractor_id ?? undefined,
+        campaign_id: tags?.campaign ?? null,
+        source: "resend_webhook",
+      });
+    }
+
 
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
   } catch (err) {
