@@ -6,7 +6,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { validateBeforeSend, lookupPhoneTypeCached } from "./smsGuard.ts";
 import { sendSms } from "./twilioSend.ts";
 import { normalizePhone } from "./normalizePhone.ts";
-import { wrapAllUrls, validateCta, withReplyFooter } from "./ctaTracker.ts";
+import { wrapAllUrls, validateOutreachMessage, withReplyFooter, withSmsReplyLine } from "./ctaTracker.ts";
 import { recordEmailEvent, recordSmsEvent } from "./outreachEvents.ts";
 import { checkAutopilotGate } from "./autopilotGate.ts";
 
@@ -94,7 +94,7 @@ async function sendEmailViaResend(
     campaign: ctx.campaign ?? ctx.template_key ?? null,
     channel: "email",
   });
-  const v = validateCta(wrapped.body);
+  const v = validateOutreachMessage(wrapped.body, "email");
   if (!v.ok) {
     return { ok: false, error: v.reason ?? "missing_cta", cta_urls: v.cta_urls, has_tracked_cta: v.has_tracked_cta, rendered_html: wrapped.body };
   }
@@ -157,15 +157,31 @@ export async function sendOutreach(input: DispatchInput): Promise<DispatchResult
     const guard = await validateBeforeSend({ supabase, phone: phoneNorm.normalized!, lead_id: input.lead_id });
 
     if (guard.ok) {
+      // Wrap every internal URL → /r/{id}, append reply OUI if missing, validate dual-CTA.
+      const wrappedSms = await wrapAllUrls(withSmsReplyLine(input.sms_body), {
+        prospect_id: input.lead_id ?? null,
+        contractor_id: input.contractor_id ?? null,
+        campaign: input.campaign_id ?? input.template_key ?? null,
+        channel: "sms",
+      });
+      const smsV = validateOutreachMessage(wrappedSms.body, "sms");
+      if (!smsV.ok) {
+        await logEvent(supabase, {
+          event_type: "failed", channel: "sms",
+          lead_id: input.lead_id, contractor_id: input.contractor_id,
+          metadata: { failure_class: "missing_cta", reason: smsV.reason, template_key: input.template_key, cta_urls: smsV.cta_urls, has_tracked_cta: smsV.has_tracked_cta, has_reply_cta: smsV.has_reply_cta },
+        });
+        return { ok: false, channel: "none", outcome: "needs_manual_contact", detail: `blocked:${smsV.reason ?? "missing_cta"}` };
+      }
       const res = await sendSms({
         to: phoneNorm.normalized!,
-        body: input.sms_body,
+        body: wrappedSms.body,
         message_type: (input.message_type as any) ?? "outreach",
         template_key: input.template_key,
         lead_id: input.lead_id,
         contractor_id: input.contractor_id,
         campaign_id: input.campaign_id,
-        metadata: { ...(input.metadata ?? {}), channel: "sms" },
+        metadata: { ...(input.metadata ?? {}), channel: "sms", cta_urls: wrappedSms.cta_urls, has_tracked_cta: wrappedSms.has_tracked_cta, has_reply_cta: smsV.has_reply_cta },
       });
       const sent = ["sending", "queued"].includes(res.status);
       // Canonical SMS lifecycle row
