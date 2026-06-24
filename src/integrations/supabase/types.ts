@@ -486,6 +486,48 @@ export type Database = {
         }
         Relationships: []
       }
+      acq_e2e_test_runs: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          email_recipient: string | null
+          failed_step: string | null
+          finished_at: string | null
+          id: string
+          notes: string | null
+          sms_recipient: string | null
+          status: string
+          steps: Json
+          triggered_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          email_recipient?: string | null
+          failed_step?: string | null
+          finished_at?: string | null
+          id?: string
+          notes?: string | null
+          sms_recipient?: string | null
+          status?: string
+          steps?: Json
+          triggered_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          email_recipient?: string | null
+          failed_step?: string | null
+          finished_at?: string | null
+          id?: string
+          notes?: string | null
+          sms_recipient?: string | null
+          status?: string
+          steps?: Json
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       acq_email_logs: {
         Row: {
           clicked_at: string | null
@@ -35406,6 +35448,75 @@ export type Database = {
         }
         Relationships: []
       }
+      cta_links: {
+        Row: {
+          campaign_id: string | null
+          click_count: number
+          contractor_id: string | null
+          created_at: string
+          destination_url: string
+          email_id: string | null
+          first_clicked_at: string | null
+          last_clicked_at: string | null
+          last_device: string | null
+          last_ip_hash: string | null
+          last_user_agent: string | null
+          metadata: Json
+          sms_id: string | null
+          source: string | null
+          token: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          click_count?: number
+          contractor_id?: string | null
+          created_at?: string
+          destination_url: string
+          email_id?: string | null
+          first_clicked_at?: string | null
+          last_clicked_at?: string | null
+          last_device?: string | null
+          last_ip_hash?: string | null
+          last_user_agent?: string | null
+          metadata?: Json
+          sms_id?: string | null
+          source?: string | null
+          token: string
+        }
+        Update: {
+          campaign_id?: string | null
+          click_count?: number
+          contractor_id?: string | null
+          created_at?: string
+          destination_url?: string
+          email_id?: string | null
+          first_clicked_at?: string | null
+          last_clicked_at?: string | null
+          last_device?: string | null
+          last_ip_hash?: string | null
+          last_user_agent?: string | null
+          metadata?: Json
+          sms_id?: string | null
+          source?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cta_links_email_id_fkey"
+            columns: ["email_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_email_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cta_links_sms_id_fkey"
+            columns: ["sms_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_sms_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       curiosity_funnel_events: {
         Row: {
           created_at: string
@@ -52339,6 +52450,41 @@ export type Database = {
           },
         ]
       }
+      outreach_autopilot_gate: {
+        Row: {
+          gated: boolean
+          id: number
+          last_pass_at: string | null
+          last_test_id: string | null
+          reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          gated?: boolean
+          id?: number
+          last_pass_at?: string | null
+          last_test_id?: string | null
+          reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          gated?: boolean
+          id?: number
+          last_pass_at?: string | null
+          last_test_id?: string | null
+          reason?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_autopilot_gate_last_test_id_fkey"
+            columns: ["last_test_id"]
+            isOneToOne: false
+            referencedRelation: "acq_e2e_test_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outreach_campaigns: {
         Row: {
           campaign_type: string | null
@@ -52627,6 +52773,75 @@ export type Database = {
           last_checked_at?: string | null
           spf_status?: string | null
           warmup_status?: string | null
+        }
+        Relationships: []
+      }
+      outreach_email_events: {
+        Row: {
+          bounced_at: string | null
+          campaign_id: string | null
+          clicked_at: string | null
+          complained_at: string | null
+          contractor_id: string | null
+          converted_at: string | null
+          created_at: string
+          delivered_at: string | null
+          id: string
+          last_error: string | null
+          message_id: string
+          metadata: Json
+          opened_at: string | null
+          prospect_id: string | null
+          recipient: string
+          replied_at: string | null
+          sent_at: string | null
+          subject: string | null
+          template: string | null
+          updated_at: string
+        }
+        Insert: {
+          bounced_at?: string | null
+          campaign_id?: string | null
+          clicked_at?: string | null
+          complained_at?: string | null
+          contractor_id?: string | null
+          converted_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          last_error?: string | null
+          message_id: string
+          metadata?: Json
+          opened_at?: string | null
+          prospect_id?: string | null
+          recipient: string
+          replied_at?: string | null
+          sent_at?: string | null
+          subject?: string | null
+          template?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bounced_at?: string | null
+          campaign_id?: string | null
+          clicked_at?: string | null
+          complained_at?: string | null
+          contractor_id?: string | null
+          converted_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          last_error?: string | null
+          message_id?: string
+          metadata?: Json
+          opened_at?: string | null
+          prospect_id?: string | null
+          recipient?: string
+          replied_at?: string | null
+          sent_at?: string | null
+          subject?: string | null
+          template?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -53276,6 +53491,75 @@ export type Database = {
           sms_daily_limit?: number
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      outreach_sms_events: {
+        Row: {
+          body: string | null
+          campaign_id: string | null
+          clicked_at: string | null
+          contractor_id: string | null
+          converted_at: string | null
+          created_at: string
+          delivered_at: string | null
+          error_code: string | null
+          failed_at: string | null
+          id: string
+          last_error: string | null
+          message_sid: string
+          metadata: Json
+          prospect_id: string | null
+          recipient: string
+          replied_at: string | null
+          sent_at: string | null
+          status: string | null
+          template: string | null
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          campaign_id?: string | null
+          clicked_at?: string | null
+          contractor_id?: string | null
+          converted_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          error_code?: string | null
+          failed_at?: string | null
+          id?: string
+          last_error?: string | null
+          message_sid: string
+          metadata?: Json
+          prospect_id?: string | null
+          recipient: string
+          replied_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          template?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          campaign_id?: string | null
+          clicked_at?: string | null
+          contractor_id?: string | null
+          converted_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          error_code?: string | null
+          failed_at?: string | null
+          id?: string
+          last_error?: string | null
+          message_sid?: string
+          metadata?: Json
+          prospect_id?: string | null
+          recipient?: string
+          replied_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          template?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -77704,6 +77988,20 @@ export type Database = {
         }
         Relationships: []
       }
+      v_outreach_funnel: {
+        Row: {
+          bounced: number | null
+          campaign_id: string | null
+          channel: string | null
+          clicked: number | null
+          converted: number | null
+          delivered: number | null
+          opened: number | null
+          replied: number | null
+          sent: number | null
+        }
+        Relationships: []
+      }
       v_pipeline_agents_live: {
         Row: {
           agent_key: string | null
@@ -78522,6 +78820,14 @@ export type Database = {
       recompute_ai_entity_score: {
         Args: { p_entity: string }
         Returns: undefined
+      }
+      record_email_event: {
+        Args: { p_kind: string; p_message_id: string; p_payload?: Json }
+        Returns: string
+      }
+      record_outreach_sms_event: {
+        Args: { p_kind: string; p_payload?: Json; p_sid: string }
+        Returns: string
       }
       refresh_appointment_value_matrix: { Args: never; Returns: Json }
       reject_company: {
