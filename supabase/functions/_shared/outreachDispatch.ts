@@ -168,6 +168,19 @@ export async function sendOutreach(input: DispatchInput): Promise<DispatchResult
         metadata: { ...(input.metadata ?? {}), channel: "sms" },
       });
       const sent = ["sending", "queued"].includes(res.status);
+      // Canonical SMS lifecycle row
+      if (res.twilio_sid) {
+        await recordSmsEvent(res.twilio_sid, sent ? "sent" : "failed", {
+          recipient: phoneNorm.normalized!,
+          contractor_id: input.contractor_id,
+          campaign_id: input.campaign_id,
+          template: input.template_key,
+          body: input.sms_body,
+          status: res.status,
+          error_code: res.error_code,
+          error: res.error_message,
+        });
+      }
       await logEvent(supabase, {
         event_type: sent ? "sent" : "failed",
         channel: "sms",
