@@ -1,33 +1,7 @@
-// acq-generate-outreach — creates draft email + SMS messages referencing real AIPP gaps
+// acq-generate-outreach — creates draft email + SMS messages with the mandatory
+// AI Visibility narrative. Every draft includes the tracked CTA + reply OUI line.
 import { svc, startRun, finishRun, log, cors } from "../_shared/acq-logger.ts";
-
-const PUBLIC_BASE = "https://unpro.ca";
-
-function buildEmail(p: any, scores: any, missing: string[]): { subject: string; body: string } {
-  const subject = `${p.business_name}: votre score visibilité IA est de ${scores?.overall_score ?? p.aipp_score ?? "?"}/100`;
-  const gaps = missing?.length ? missing.slice(0, 3).map((m: string) => `• ${m}`).join("\n") : "• Quelques améliorations rapides identifiées";
-  const body = `Bonjour,
-
-Nous avons analysé la présence en ligne de ${p.business_name} (${p.city || "QC"}).
-
-Score actuel: ${scores?.overall_score ?? p.aipp_score ?? "—"}/100
-
-Points d'amélioration prioritaires:
-${gaps}
-
-UNPRO connecte les ${p.trade || "entrepreneurs"} aux rendez-vous exclusifs adaptés à leur capacité.
-
-Voir votre rapport personnalisé:
-${PUBLIC_BASE}/pro/${p.public_slug || p.id}
-
-— Alex, UNPRO`;
-  return { subject, body };
-}
-
-function buildSms(p: any, scores: any): string {
-  const score = scores?.overall_score ?? p.aipp_score ?? "—";
-  return `${p.business_name}: votre score IA UNPRO = ${score}/100. Rapport: ${PUBLIC_BASE}/pro/${p.public_slug || p.id}`;
-}
+import { masterEmail1, masterSms1 } from "../_shared/masterOutreachCopy.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
@@ -43,8 +17,12 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: "Not found" }), { status: 404, headers: cors });
   }
 
-  const { data: scores } = await s.from("contractor_aipp_scores").select("*").eq("prospect_id", prospect_id).maybeSingle();
-  const missing: string[] = scores?.missing_data || [];
+  const ctx = {
+    first_name: p.first_name ?? p.contact_first_name ?? p.contact_name ?? null,
+    business_name: p.business_name,
+    slug: p.public_slug ?? null,
+    prospect_id: p.id,
+  };
 
   const channels = channel ? [channel] : ["email", "sms"];
   const created: any[] = [];
@@ -52,44 +30,24 @@ Deno.serve(async (req) => {
   for (const ch of channels) {
     try {
       if (ch === "email") {
-        if (!p.email) {
-          await log(s, runId, "outreach.email", "blocked", "Email manquant", prospect_id);
-          continue;
-        }
-        const { subject, body } = buildEmail(p, scores, missing);
+        if (!p.email) { await log(s, runId, "outreach.email", "blocked", "Email manquant", prospect_id); continue; }
+        const { subject, html } = masterEmail1(ctx);
         const { data: msg, error: insErr } = await s.from("outreach_messages").insert({
-          prospect_id,
-          channel_type: "email",
-          provider_name: "resend",
-          to_value: p.email,
-          subject_rendered: subject,
-          body_rendered: body,
+          prospect_id, channel_type: "email", provider_name: "resend",
+          to_value: p.email, subject_rendered: subject, body_rendered: html,
           message_status: "draft",
         }).select("id").single();
-        if (insErr) {
-          await log(s, runId, "outreach.email", "error", insErr.message, prospect_id);
-        } else if (msg) {
-          created.push({ channel: "email", id: msg.id });
-        }
+        if (insErr) await log(s, runId, "outreach.email", "error", insErr.message, prospect_id);
+        else if (msg) created.push({ channel: "email", id: msg.id });
       } else if (ch === "sms") {
-        if (!p.phone) {
-          await log(s, runId, "outreach.sms", "blocked", "Téléphone manquant", prospect_id);
-          continue;
-        }
-        const body = buildSms(p, scores);
+        if (!p.phone) { await log(s, runId, "outreach.sms", "blocked", "Téléphone manquant", prospect_id); continue; }
+        const { body } = masterSms1(ctx);
         const { data: msg, error: insErr } = await s.from("outreach_messages").insert({
-          prospect_id,
-          channel_type: "sms",
-          provider_name: "twilio",
-          to_value: p.phone,
-          body_rendered: body,
-          message_status: "draft",
+          prospect_id, channel_type: "sms", provider_name: "twilio",
+          to_value: p.phone, body_rendered: body, message_status: "draft",
         }).select("id").single();
-        if (insErr) {
-          await log(s, runId, "outreach.sms", "error", insErr.message, prospect_id);
-        } else if (msg) {
-          created.push({ channel: "sms", id: msg.id });
-        }
+        if (insErr) await log(s, runId, "outreach.sms", "error", insErr.message, prospect_id);
+        else if (msg) created.push({ channel: "sms", id: msg.id });
       }
     } catch (e) {
       await log(s, runId, `outreach.${ch}`, "error", String(e), prospect_id);
