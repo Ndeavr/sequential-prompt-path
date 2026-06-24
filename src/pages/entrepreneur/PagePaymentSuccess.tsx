@@ -116,7 +116,11 @@ export default function PagePaymentSuccess() {
             Félicitations! 🎉
           </h1>
           <p className="text-muted-foreground">
-            Votre plan <strong className="text-foreground">{planName}</strong> est maintenant actif.
+            Votre <strong className="text-foreground">{planName}</strong> est maintenant actif
+            {monthlyPrice != null && (
+              <> à <strong className="text-foreground">{monthlyPrice} $ / mois</strong> + taxes</>
+            )}
+            .
           </p>
         </motion.div>
 
