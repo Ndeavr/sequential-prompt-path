@@ -442,7 +442,7 @@ Deno.serve(async (req) => {
     await serviceClient.from("checkout_sessions").insert({
       contractor_profile_id: contractor.id,
       selected_plan_code: planId,
-      selected_plan_name: planId.charAt(0).toUpperCase() + planId.slice(1),
+      selected_plan_name: planName,
       billing_cycle: interval === "year" ? "yearly" : "monthly",
       external_checkout_id: session.id,
       stripe_customer_id: customerId,
@@ -451,6 +451,8 @@ Deno.serve(async (req) => {
       checkout_status: "pending",
       payment_provider: "stripe",
       adaptive_pricing_enabled: false,
+      quote_id: quoteId || null,
+      personalized_monthly_price_cents: personalizedPriceCents,
     });
 
     if (isEmbedded) {
