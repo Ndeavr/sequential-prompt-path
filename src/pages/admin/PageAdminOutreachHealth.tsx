@@ -23,6 +23,7 @@ export default function PageAdminOutreachHealth() {
   const gate = useAutopilotGate();
   const runs = useRecentE2ERuns(5);
   const events = useRecentEmailEvents(100);
+  const providers = useProviderHealth();
   const selftest = useRunSelftest();
   const backfill = useRun30dBackfill();
   const [testEmail, setTestEmail] = useState("");
@@ -37,17 +38,20 @@ export default function PageAdminOutreachHealth() {
     acc.opened += Number(r.opened || 0);
     acc.clicked += Number(r.clicked || 0);
     acc.replied += Number(r.replied || 0);
-    acc.converted += Number(r.converted || 0);
+    acc.onboarding += Number(r.onboarding_started || 0);
+    acc.activated += Number(r.activated || 0);
+    acc.paid += Number(r.paid || 0);
     return acc;
-  }, { sent: 0, delivered: 0, opened: 0, clicked: 0, replied: 0, converted: 0 });
+  }, { sent: 0, delivered: 0, opened: 0, clicked: 0, replied: 0, onboarding: 0, activated: 0, paid: 0 });
 
   const cells = [
-    { label: "Envoyés",      value: totals.sent,      ratio: null },
-    { label: "Livrés",       value: totals.delivered, ratio: pct(totals.delivered, totals.sent) },
-    { label: "Ouverts",      value: totals.opened,    ratio: pct(totals.opened, totals.delivered) },
-    { label: "Cliqués",      value: totals.clicked,   ratio: pct(totals.clicked, totals.delivered) },
-    { label: "Répondus",     value: totals.replied,   ratio: pct(totals.replied, totals.delivered) },
-    { label: "Convertis",    value: totals.converted, ratio: pct(totals.converted, totals.sent) },
+    { label: "Envoyés",   value: totals.sent,       ratio: null },
+    { label: "Livrés",    value: totals.delivered,  ratio: pct(totals.delivered, totals.sent) },
+    { label: "Ouverts",   value: totals.opened,     ratio: pct(totals.opened, totals.delivered) },
+    { label: "Cliqués",   value: totals.clicked,    ratio: pct(totals.clicked, totals.delivered) },
+    { label: "Onboarding",value: totals.onboarding, ratio: pct(totals.onboarding, totals.clicked) },
+    { label: "Activés",   value: totals.activated,  ratio: pct(totals.activated, totals.onboarding) },
+    { label: "Payés",     value: totals.paid,       ratio: pct(totals.paid, totals.sent) },
   ];
 
   const handleSelftest = () => {
