@@ -1,84 +1,182 @@
-# Acquisition Funnel Observability — Phase 0
 
-**Goal:** Before spending another dollar on ads, SEO, AI scoring tweaks, Alex tuning, matching, or pricing, make the full acquisition funnel **fully attributable end-to-end**. Every email and SMS sent must produce verifiable Sent → Delivered → Opened → Clicked → Onboarding Started → Activated → Paid events tied back to one prospect and one campaign.
+# Outreach Health → Active Acquisition Command Center
 
-The previous work already created the CTA tracker, `outreach_email_events`, `outreach_sms_events`, the autopilot gate, and the `/admin/outreach-health` page. This phase **closes the remaining gaps** that keep showing 0 clicks / 0 attribution.
-
----
-
-## What we will build
-
-### 1. SMS delivery webhook — actually wired
-
-- Verify `twilio-status-v2` is the URL registered on the active Twilio Messaging Service (status callback).
-- Add a one-shot **Twilio Webhook Self-Check** edge function: sends a real test SMS to a founder number, polls `outreach_sms_events` for `delivered_at` within 60s, writes result to `acq_e2e_test_runs`.
-- Surface in `/admin/outreach-health` as a "SMS delivery proven" green/red light with last proof timestamp.
-
-### 2. Email delivery + open + click webhook — actually wired
-
-- Confirm Resend webhook points at `resend-events` and signs requests.
-- Add explicit handling for `email.delivered`, `email.opened`, `email.clicked`, `email.bounced`, `email.complained` (writing to `outreach_email_events`).
-- Reuse the same self-check pattern: send to founder address, verify delivered + open pixel + tracked click round-trip.
-
-### 3. Click attribution — every URL wrapped, no exceptions
-
-- Add a build-time + send-time guard in `outreachDispatch.ts` and `acq-send-outreach` that **fails the send** if any anchor href or SMS URL is not a `/r/<token>` link (already partially in place via `validateOutreachMessage`; harden it to scan rendered HTML, not template source).
-- `/r/:token` must: log to `outreach_click_events`, set a first-party cookie, then 302 to destination. Cookie + token are read by `fn-track-email-click` and the onboarding landing to attribute Onboarding Started → Activated → Paid back to the original `outreach_messages.id`.
-
-### 4. Onboarding & conversion events — closed loop
-
-- Onboarding landing (`/entrepreneur/...`) reads the attribution cookie/token on first paint and writes `acquisition_events` rows: `onboarding_started`, `profile_completed`, `checkout_opened`, `checkout_succeeded`.
-- `create-checkout-session` + Stripe webhook stamp the `outreach_message_id` into `checkout_sessions.metadata` and `acq_payment_events`.
-- One view `v_outreach_funnel` already exists; extend it (or add `v_outreach_funnel_full`) to include `onboarding_started`, `activated`, `paid` per campaign × channel.
-
-### 5. End-to-end self-test (the founder receipt)
-
-- One button in `/admin/outreach-health` → `acq-e2e-selftest` runs:
-  1. Insert synthetic prospect.
-  2. Send 1 email + 1 SMS via the real dispatch pipeline.
-  3. Auto-click the tracked links server-side (HEAD on `/r/<token>` with a synthetic UA marker so it's excluded from real stats).
-  4. Simulate onboarding page hit + Stripe test checkout in test mode.
-  5. Assert every funnel stage produced exactly one event.
-- Result row in `acq_e2e_test_runs` with per-stage pass/fail + latency.
-- **Autopilot gate (`outreach_autopilot_gate.gated`) auto-flips to TRUE** if any stage fails or no green self-test in the last 24h. Already in place — we just make the self-test the canonical trigger.
-
-### 6. Observability dashboard — single source of truth
-
-Extend `/admin/outreach-health` with:
-- 7-stage funnel bar per campaign (Sent → Delivered → Opened → Clicked → Onboarding → Activated → Paid) with absolute counts and conversion %.
-- Provider health row: Twilio webhook last event, Resend webhook last event, Stripe webhook last event, `/r/` last click.
-- "Last full green E2E" timestamp + big red banner if > 24h or autopilot gated.
-- Per-message drill-down: pick any `outreach_messages.id` and see its full event timeline.
-
-### 7. Backfill + retention
-
-- `acq-events-backfill-30d` (already created) is run once to reconstruct missing `delivered/opened/clicked` rows from raw `email_delivery_events` / `acq_sms_logs` / `r-redirect` logs so historical campaigns aren't permanently blind.
+Goal: replace the passive `/admin/outreach-health` dashboard with an active engine that diagnoses, repairs, proves the funnel end-to-end, and unlocks Autopilot itself. Builds on existing `outreach_autopilot_gate`, `v_outreach_provider_health`, `v_outreach_funnel_full`, `acq-e2e-selftest`, `acq-events-backfill-30d`, `platform_operation_outcomes`, and the Production Reliability Framework — no parallel system.
 
 ---
 
-## What we will NOT touch in this phase
+## 1. Schema (single migration)
 
-- Ad spend, SEO pages, AI scoring weights, Alex prompts, matching algorithm, pricing.
-- Outreach copy beyond ensuring every message still carries dual CTA (reply OUI + tracked link) — that rule stays enforced as-is.
-- New campaigns. Autopilot stays gated until a green self-test exists.
+New tables (all `GRANT`s + RLS admin-read, service-role write):
+
+- `outreach_health_checks` — one row per provider per run: `provider`, `status` (`green|yellow|red`), `last_success_at`, `last_failure_at`, `failure_reason` (canonical `FailureCode`), `repair_attempts`, `next_retry_at`, `repair_duration_ms`, `repair_action`, `payload jsonb`.
+- `outreach_repair_runs` — every auto-repair attempt: `provider`, `action` (`recreate_webhook|redeploy_function|recreate_cron|rotate_secret|...`), `outcome`, `error`, `duration_ms`.
+- `outreach_e2e_full_runs` — 14-step real E2E: `step`, `step_status`, `step_payload`, `total_duration_ms`, `pass`, `cleanup_completed`, `synthetic_contractor_id`.
+- `outreach_revenue_loss` — rolling estimate: `day`, `provider`, `contractors_lost`, `arr_at_risk_cents`, `reason`.
+- `outreach_operational_score` — daily snapshot: `infrastructure`, `messaging`, `tracking`, `payments`, `automation`, `conversion`, `autopilot`, `overall`.
+- `outreach_contact_intelligence` — per-recipient cache: `email_confidence`, `spf/dkim/dmarc/mx_ok`, `disposable`, `role_address`, `bounce_history`, `phone_type` (`mobile|landline|voip|invalid|dnc`), `carrier`, `decision` (`sms+email|email|call|discard`).
+- `outreach_cta_checks` — per-link preflight: `url`, `status_code`, `https_ok`, `tracked`, `utm_ok`, `redirect_chain`, `screenshot_url`, `blocks_campaign bool`.
+- `outreach_critical_alerts` — admin notifications with root cause, affected count, revenue at risk, repair progress.
+
+Extend `outreach_autopilot_gate` with `auto_unlocked_at`, `auto_unlock_reason`, `operational_score`.
+
+Extend `evaluate_outreach_gate()` to auto-unlock when: last E2E PASS < 24h AND overall score ≥ 95 AND all critical providers green.
 
 ---
 
-## Acceptance criteria
+## 2. Active Health Engine
 
-1. Pressing "Run E2E self-test" in `/admin/outreach-health` produces, within 5 minutes, a row showing **green for all 7 stages** with real provider webhook timestamps (not synthetic).
-2. `v_outreach_funnel_full` returns non-zero `delivered`, `opened`, `clicked` for at least one historical campaign after backfill.
-3. Any attempt to send an outreach message with an un-tracked URL is **blocked** (`status=BLOCKED`, `reason=untracked_url`) and visible in the dashboard.
-4. If the Twilio or Resend webhook stops firing for > 30 min, `outreach_autopilot_gate.gated` flips to TRUE automatically and a red banner shows in the dashboard.
-5. From a single `outreach_messages.id`, the drill-down panel shows: sent → delivered → opened → clicked → onboarding_started → checkout_succeeded with timestamps.
+Edge function `outreach-health-agent` (cron every 15 min):
+
+For each of: Supabase DB, Edge Functions registry, pg_cron jobs, Resend, Twilio, Stripe, `/r/` redirect, DNS (SPF/DKIM/DMARC of sender domain), required secrets, key freshness.
+
+1. Probe → write `outreach_health_checks` row.
+2. If failure and repair is automatable → run `outreach-repair-agent` action, log `outreach_repair_runs`.
+3. Recompute `outreach_operational_score`.
+4. If critical red → insert `outreach_critical_alerts` + `admin_notifications` + (optional) SMS via Twilio + email.
+5. Every terminal state calls `reportOutcome(...)` (Production Reliability Framework).
+
+Repair playbook (deterministic, each action idempotent):
+
+| Failure | Auto-repair |
+|---|---|
+| Missing Resend webhook | Re-register via Resend API |
+| Missing Twilio status callback | Re-set on phone number |
+| Missing/disabled pg_cron job | Re-create from canonical SQL |
+| Edge function 404 | Mark for redeploy (surfaces in dashboard with one-click; deploy itself stays manual) |
+| Stale webhook secret | Rotate + update Supabase secret |
+| Expired API key | Alert only (cannot self-mint) |
+| `/r/` redirect 500 | Re-run smoke probe, flag for redeploy |
+
+Non-automatable failures show explicit `next_action` + revenue impact.
 
 ---
 
-## Technical notes
+## 3. Real End-to-End Self-Test
 
-- New edge functions: `twilio-webhook-selftest`, `resend-webhook-selftest`, extension of `acq-e2e-selftest` to cover the 7-stage chain.
-- New SQL: `v_outreach_funnel_full` view, scheduled `pg_cron` job every 5 min to evaluate webhook freshness and update `outreach_autopilot_gate`.
-- Dashboard work in `src/pages/admin/PageAdminOutreachHealth.tsx` + new components `FunnelStageBar`, `ProviderWebhookHealthRow`, `MessageTimelineDrawer`.
-- No schema changes to existing event tables — we only add the view, the cron job, and the self-test rows.
+New edge function `acq-e2e-real` (extends current `acq-e2e-selftest`, runs every 24h via cron + on-demand):
 
-Once this is green, *then* we resume optimizing acquisition.
+14 steps, each writing to `outreach_e2e_full_runs`:
+
+1. Create synthetic contractor (`prefix __e2e_`, dedicated test category).
+2. Generate outreach via `acq-generate-outreach`.
+3. Send email via `acq-send-outreach` to controlled sink address.
+4. Poll Resend webhook → `delivered`.
+5. Send SMS to controlled sink number.
+6. Poll Twilio status callback → `delivered`.
+7. Programmatically GET tracked `/r/<token>` (server-side fetch with synthetic UA tag).
+8. Verify 302 + `outreach_click_events` row.
+9. Fetch landing page, assert 200 + attribution cookie set.
+10. Create synthetic auth user, run onboarding API.
+11. `create-checkout-session` in Stripe **test mode** with test card token.
+12. Confirm Stripe webhook stamps `outreach_message_id`.
+13. Verify `v_outreach_funnel_full` increments `paid` and dashboard reflects it.
+14. Cleanup: delete synthetic contractor, user, sessions, events (tagged `__e2e_`).
+
+Pass only if all 14 green. On pass: stamp `outreach_autopilot_gate.last_pass_at` + auto-unlock if score ≥ 95.
+
+---
+
+## 4. Funnel, Failure Intelligence, Replay
+
+- **Live Funnel timeline** (component `LiveFunnelTimeline`): 10 stages from Scraping → Activated, click stage → drawer of failed message IDs with canonical reason.
+- **Failure Intelligence card** per provider: root cause, probability, repair status countdown, % traffic impacted, ARR at risk (from `outreach_revenue_loss`).
+- **Contractor Journey Replay** (`/admin/outreach-health/contractor/:id`): reads `outreach_messages`, `outreach_email_events`, `outreach_sms_events`, `outreach_click_events`, `acquisition_events`, `checkout_sessions` for one contractor, renders stop point + reason.
+
+---
+
+## 5. Pre-Send Intelligence
+
+- Edge `outreach-verify-email`: SPF/DKIM/DMARC lookup, disposable/role check, bounce history → writes `outreach_contact_intelligence.email_confidence`. Below threshold → channel re-routed to SMS.
+- Edge `outreach-verify-phone`: Twilio Lookup v2 → `phone_type`, `carrier`, DNC. Decision tree drives `decision` field. `outreachDispatch` consults it before send; landline-only with no email → enqueues `call_task`.
+- Edge `outreach-cta-preflight`: every templated CTA in `masterOrchestrator` copy is fetched + screenshotted (Playwright via existing rendering pipeline) before campaign send. Broken CTA sets `blocks_campaign = true`; `acq-send-outreach` checks and aborts with `BlockReason.MISSING_CTA` analog.
+
+---
+
+## 6. Daily Autopilot Report
+
+Edge `outreach-daily-report` (cron 07:00 America/Toronto):
+
+- Compose markdown report (health %, providers, funnel counts, revenue, lost opportunities + reasons).
+- Email + push to admin via `admin_notifications`.
+- Persist as `outreach_health_checks` snapshot for history graph.
+
+---
+
+## 7. Dashboard UI (`/admin/outreach-health`)
+
+Replace passive cards with:
+
+- **Operational Score ring** (7 sub-scores + overall, color-coded). Below 95 → auto-trigger diagnostic banner.
+- **Provider grid** (green/yellow/red with repair progress, last success, ARR at risk, next retry).
+- **Live Funnel timeline** (clickable stages).
+- **E2E status strip** (14 steps with timestamps, "Run now" button).
+- **Repair log table** (last 50 repair runs).
+- **Revenue protection card** (today's lost ARR, recoverable list).
+- **Contractor Journey search** (input contractor id/email → replay).
+- **Critical alerts feed**.
+
+All hooks in `useOutreachHealth.ts` extended; new components in `src/components/admin/outreach-health/`.
+
+---
+
+## 8. Auto-Unlock Logic
+
+`evaluate_outreach_gate()` re-written:
+
+```
+gated = NOT (
+  last_e2e_pass_at > now() - 24h
+  AND overall_score >= 95
+  AND all critical providers status = 'green'
+)
+auto_unlocked_at = now() when gate flips true → false
+```
+
+If gated and last E2E older than 6h, agent triggers `acq-e2e-real` itself — never waits for human.
+
+---
+
+## 9. Production Reliability compliance
+
+Every new edge function:
+- Uses `withRetry` (5m/30m/2h/12h) for Twilio/Resend/Stripe/DNS calls.
+- Calls `reportOutcome` with canonical `FailureCode` / `BlockReason`.
+- Surfaces via `<OperationHealthCard>` in `/admin/operations`.
+- Revenue-impact failures populate `admin_notifications` + dashboard banner.
+
+---
+
+## Out of scope (this plan)
+
+- No changes to outreach **copy**, pricing, AI scoring, matching, Alex, SEO.
+- Stripe test-mode payment uses the existing test publishable key; no new Stripe products.
+- Manual edge function redeploys remain manual (tool surfaces them).
+
+---
+
+## Files (high level)
+
+**Migrations** (1):
+- `..._outreach_active_health_engine.sql` — 8 new tables + grants + RLS + extended gate function + cron schedules.
+
+**Edge functions** (new):
+- `outreach-health-agent`, `outreach-repair-agent`, `acq-e2e-real`, `outreach-verify-email`, `outreach-verify-phone`, `outreach-cta-preflight`, `outreach-daily-report`.
+
+**Shared** (extended):
+- `_shared/outreachDispatch.ts` (consult contact intelligence + CTA preflight).
+- `_shared/reliability.ts` (already exists — used as is).
+
+**Frontend**:
+- `src/hooks/useOutreachHealth.ts` (extend with new queries).
+- `src/components/admin/outreach-health/*` (OperationalScoreRing, ProviderCard, LiveFunnelTimeline, E2EStrip, RepairLogTable, RevenueProtectionCard, ContractorJourneyDrawer, CriticalAlertsFeed).
+- `src/pages/admin/PageAdminOutreachHealth.tsx` (recompose).
+- New route `/admin/outreach-health/contractor/:id` (`PageAdminContractorReplay`).
+
+## Acceptance
+
+- Provider failure auto-repaired within 15 min when automatable; otherwise alerted with revenue impact.
+- `acq-e2e-real` passes all 14 stages on cron; failure auto-gates Autopilot.
+- Score ≥ 95 + green E2E < 24h → Autopilot auto-unlocks without human action.
+- Any contractor id reproduces full journey + stop reason.
+- Zero free-form failure strings — all canonical `FailureCode` / `BlockReason`.
