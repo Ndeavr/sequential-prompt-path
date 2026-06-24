@@ -6,7 +6,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { validateBeforeSend, lookupPhoneTypeCached } from "./smsGuard.ts";
 import { sendSms } from "./twilioSend.ts";
 import { normalizePhone } from "./normalizePhone.ts";
-import { wrapAllUrls, validateCta, withReplyFooter } from "./ctaTracker.ts";
+import { wrapAllUrls, validateOutreachMessage, withReplyFooter, withSmsReplyLine } from "./ctaTracker.ts";
 import { recordEmailEvent, recordSmsEvent } from "./outreachEvents.ts";
 import { checkAutopilotGate } from "./autopilotGate.ts";
 
@@ -94,7 +94,7 @@ async function sendEmailViaResend(
     campaign: ctx.campaign ?? ctx.template_key ?? null,
     channel: "email",
   });
-  const v = validateCta(wrapped.body);
+  const v = validateOutreachMessage(wrapped.body, "email");
   if (!v.ok) {
     return { ok: false, error: v.reason ?? "missing_cta", cta_urls: v.cta_urls, has_tracked_cta: v.has_tracked_cta, rendered_html: wrapped.body };
   }
