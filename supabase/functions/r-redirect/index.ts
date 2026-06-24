@@ -64,6 +64,40 @@ serve(async (req) => {
       },
     });
 
+    // Canonical funnel: stamp clicked_at on outreach_email_events when the link
+    // carries a Resend message_id (set by ctaTracker via metadata in future, or
+    // matched by contractor + campaign as a best-effort fallback today).
+    try {
+      const mid = (link as any).metadata?.email_message_id;
+      if (mid) {
+        await supa.rpc("record_email_event", {
+          p_message_id: mid,
+          p_kind: "clicked",
+          p_payload: {
+            user_agent: req.headers.get("user-agent"),
+            referer: req.headers.get("referer"),
+            source: "r-redirect",
+          },
+        });
+      } else if (link.contractor_id) {
+        const { data: recent } = await supa
+          .from("outreach_email_events")
+          .select("message_id")
+          .eq("contractor_id", link.contractor_id)
+          .gte("sent_at", new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString())
+          .order("sent_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (recent?.message_id) {
+          await supa.rpc("record_email_event", {
+            p_message_id: recent.message_id,
+            p_kind: "clicked",
+            p_payload: { source: "r-redirect_fallback", tracking_id: trackingId },
+          });
+        }
+      }
+    } catch (e) { console.error("[r-redirect funnel rpc]", e); }
+
     return Response.redirect(link.destination_url || FALLBACK_URL, 302);
   } catch (err) {
     console.error("[r-redirect]", err);
