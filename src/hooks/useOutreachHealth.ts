@@ -10,7 +10,7 @@ export function useOutreachFunnel() {
         .select("*")
         .order("sent", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as Array<{
+      return ((data ?? []) as unknown) as Array<{
         campaign_id: string; channel: "email" | "sms";
         sent: number; delivered: number; opened: number; clicked: number;
         replied: number; converted: number; bounced: number;
@@ -30,7 +30,7 @@ export function useAutopilotGate() {
         .eq("id", 1)
         .maybeSingle();
       if (error) throw error;
-      return data as { gated: boolean; last_pass_at: string | null; reason: string | null; updated_at: string } | null;
+      return (data as unknown) as { gated: boolean; last_pass_at: string | null; reason: string | null; updated_at: string } | null;
     },
     refetchInterval: 15_000,
   });
