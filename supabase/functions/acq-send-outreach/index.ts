@@ -133,20 +133,20 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: false, blocked: true, reason: h.reason }), { headers: cors });
     }
     try {
-      const { wrapAllUrls, validateCta } = await import("../_shared/ctaTracker.ts");
-      const wrapped = await wrapAllUrls(msg.body_rendered ?? "", {
+      const { wrapAllUrls, validateOutreachMessage, withReplyFooter } = await import("../_shared/ctaTracker.ts");
+      const wrapped = await wrapAllUrls(withReplyFooter(msg.body_rendered ?? ""), {
         prospect_id: msg.prospect_id, campaign: "outreach_messages", channel: "email",
       });
-      const cta = validateCta(wrapped.body);
+      const cta = validateOutreachMessage(wrapped.body, "email");
       if (!cta.ok) {
         await s.from("outreach_messages").update({
           message_status: "failed", error_message: "Email has no CTA link.",
           failed_at: new Date().toISOString(),
           cta_urls: wrapped.cta_urls, has_tracked_cta: wrapped.has_tracked_cta, rendered_html: wrapped.body,
         }).eq("id", message_id);
-        await log(s, runId, "outreach_send.email", "blocked", "missing_cta", msg.prospect_id);
-        await finishRun(s, runId, { status: "failed", error_summary: "missing_cta" });
-        return new Response(JSON.stringify({ ok: false, blocked: true, reason: "missing_cta", error: "Email has no CTA link." }), { status: 422, headers: cors });
+        await log(s, runId, "outreach_send.email", "blocked", cta.reason ?? "missing_cta", msg.prospect_id);
+        await finishRun(s, runId, { status: "failed", error_summary: cta.reason ?? "missing_cta" });
+        return new Response(JSON.stringify({ ok: false, blocked: true, reason: cta.reason, error: "Email has no CTA link." }), { status: 422, headers: cors });
       }
 
       const r = await fetch("https://api.resend.com/emails", {
