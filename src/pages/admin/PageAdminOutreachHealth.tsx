@@ -29,7 +29,15 @@ export default function PageAdminOutreachHealth() {
   const providers = useProviderHealth();
   const selftest = useRunSelftest();
   const backfill = useRun30dBackfill();
+  const score = useOperationalScore();
+  const healthChecks = useActiveHealthChecks();
+  const repairs = useRepairRuns(20);
+  const alerts = useCriticalAlerts();
+  const e2eFull = useE2EFullRuns(5);
+  const runAgent = useRunHealthAgent();
+  const runE2E = useRunE2EReal();
   const [testEmail, setTestEmail] = useState("");
+
 
   const lastPass = gate.data?.last_pass_at ? new Date(gate.data.last_pass_at) : null;
   const freshPass = lastPass ? (Date.now() - lastPass.getTime() < 24 * 3600 * 1000) : false;
