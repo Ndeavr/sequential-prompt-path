@@ -3,20 +3,38 @@ import { supabase } from "@/integrations/supabase/client";
 
 export function useOutreachFunnel() {
   return useQuery({
-    queryKey: ["v_outreach_funnel"],
+    queryKey: ["v_outreach_funnel_full"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("v_outreach_funnel" as any)
+        .from("v_outreach_funnel_full" as any)
         .select("*")
         .order("sent", { ascending: false });
       if (error) throw error;
       return ((data ?? []) as unknown) as Array<{
         campaign_id: string; channel: "email" | "sms";
         sent: number; delivered: number; opened: number; clicked: number;
-        replied: number; converted: number; bounced: number;
+        replied: number; bounced: number;
+        onboarding_started: number; activated: number; paid: number;
       }>;
     },
     refetchInterval: 15_000,
+  });
+}
+
+export function useProviderHealth() {
+  return useQuery({
+    queryKey: ["v_outreach_provider_health"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("v_outreach_provider_health" as any)
+        .select("*");
+      if (error) throw error;
+      return ((data ?? []) as unknown) as Array<{
+        provider: "resend_email" | "twilio_sms" | "r_redirect_clicks" | "stripe_checkouts";
+        last_event_at: string | null;
+      }>;
+    },
+    refetchInterval: 30_000,
   });
 }
 

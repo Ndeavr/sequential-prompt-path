@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
-  useOutreachFunnel, useAutopilotGate, useRecentE2ERuns,
+  useOutreachFunnel, useAutopilotGate, useRecentE2ERuns, useProviderHealth,
   useRecentEmailEvents, useRunSelftest, useRun30dBackfill,
 } from "@/hooks/useOutreachHealth";
 
@@ -23,6 +23,7 @@ export default function PageAdminOutreachHealth() {
   const gate = useAutopilotGate();
   const runs = useRecentE2ERuns(5);
   const events = useRecentEmailEvents(100);
+  const providers = useProviderHealth();
   const selftest = useRunSelftest();
   const backfill = useRun30dBackfill();
   const [testEmail, setTestEmail] = useState("");
@@ -37,17 +38,20 @@ export default function PageAdminOutreachHealth() {
     acc.opened += Number(r.opened || 0);
     acc.clicked += Number(r.clicked || 0);
     acc.replied += Number(r.replied || 0);
-    acc.converted += Number(r.converted || 0);
+    acc.onboarding += Number(r.onboarding_started || 0);
+    acc.activated += Number(r.activated || 0);
+    acc.paid += Number(r.paid || 0);
     return acc;
-  }, { sent: 0, delivered: 0, opened: 0, clicked: 0, replied: 0, converted: 0 });
+  }, { sent: 0, delivered: 0, opened: 0, clicked: 0, replied: 0, onboarding: 0, activated: 0, paid: 0 });
 
   const cells = [
-    { label: "Envoyés",      value: totals.sent,      ratio: null },
-    { label: "Livrés",       value: totals.delivered, ratio: pct(totals.delivered, totals.sent) },
-    { label: "Ouverts",      value: totals.opened,    ratio: pct(totals.opened, totals.delivered) },
-    { label: "Cliqués",      value: totals.clicked,   ratio: pct(totals.clicked, totals.delivered) },
-    { label: "Répondus",     value: totals.replied,   ratio: pct(totals.replied, totals.delivered) },
-    { label: "Convertis",    value: totals.converted, ratio: pct(totals.converted, totals.sent) },
+    { label: "Envoyés",   value: totals.sent,       ratio: null },
+    { label: "Livrés",    value: totals.delivered,  ratio: pct(totals.delivered, totals.sent) },
+    { label: "Ouverts",   value: totals.opened,     ratio: pct(totals.opened, totals.delivered) },
+    { label: "Cliqués",   value: totals.clicked,    ratio: pct(totals.clicked, totals.delivered) },
+    { label: "Onboarding",value: totals.onboarding, ratio: pct(totals.onboarding, totals.clicked) },
+    { label: "Activés",   value: totals.activated,  ratio: pct(totals.activated, totals.onboarding) },
+    { label: "Payés",     value: totals.paid,       ratio: pct(totals.paid, totals.sent) },
   ];
 
   const handleSelftest = () => {
@@ -97,8 +101,38 @@ export default function PageAdminOutreachHealth() {
           </CardContent>
         </Card>
 
+        {/* Provider webhook freshness */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">Webhooks providers</CardTitle></CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {(providers.data ?? []).map((p) => {
+                const ts = p.last_event_at ? new Date(p.last_event_at) : null;
+                const ageMin = ts ? (Date.now() - ts.getTime()) / 60_000 : Infinity;
+                const status = !ts ? "missing" : ageMin < 30 ? "ok" : ageMin < 1440 ? "stale" : "missing";
+                const color = status === "ok" ? "bg-emerald-500" : status === "stale" ? "bg-amber-500" : "bg-red-500";
+                const label: Record<string,string> = {
+                  resend_email: "Resend (email)", twilio_sms: "Twilio (SMS)",
+                  r_redirect_clicks: "/r/ clicks", stripe_checkouts: "Stripe",
+                };
+                return (
+                  <div key={p.provider} className="rounded-lg border border-border/40 p-3">
+                    <div className="flex items-center gap-2">
+                      <span className={`h-2.5 w-2.5 rounded-full ${color}`} />
+                      <span className="text-sm font-medium">{label[p.provider] ?? p.provider}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1.5">
+                      {ts ? `Dernier événement : ${ts.toLocaleString("fr-CA")}` : "Aucun événement reçu"}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Funnel cards */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
           {cells.map(c => (
             <Card key={c.label}>
               <CardContent className="pt-5">
@@ -123,7 +157,7 @@ export default function PageAdminOutreachHealth() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="text-xs text-muted-foreground uppercase">
-                  <tr><th className="text-left py-2">Campagne</th><th>Canal</th><th>Sent</th><th>Delivered</th><th>Opened</th><th>Clicked</th><th>Replied</th><th>Converted</th><th>Bounced</th></tr>
+                  <tr><th className="text-left py-2">Campagne</th><th>Canal</th><th>Sent</th><th>Delivered</th><th>Opened</th><th>Clicked</th><th>Onboard</th><th>Activated</th><th>Paid</th><th>Bounced</th></tr>
                 </thead>
                 <tbody className="divide-y divide-border/40">
                   {(funnel.data ?? []).map((r, i) => (
@@ -131,11 +165,12 @@ export default function PageAdminOutreachHealth() {
                       <td className="text-left py-2">{r.campaign_id}</td>
                       <td><Badge variant="outline">{r.channel}</Badge></td>
                       <td>{fmt(r.sent)}</td><td>{fmt(r.delivered)}</td><td>{fmt(r.opened)}</td>
-                      <td>{fmt(r.clicked)}</td><td>{fmt(r.replied)}</td><td>{fmt(r.converted)}</td><td>{fmt(r.bounced)}</td>
+                      <td>{fmt(r.clicked)}</td><td>{fmt(r.onboarding_started)}</td>
+                      <td>{fmt(r.activated)}</td><td>{fmt(r.paid)}</td><td>{fmt(r.bounced)}</td>
                     </tr>
                   ))}
                   {!funnel.data?.length && (
-                    <tr><td colSpan={9} className="py-6 text-center text-muted-foreground">Aucune donnée. Lance le selftest ou le backfill.</td></tr>
+                    <tr><td colSpan={10} className="py-6 text-center text-muted-foreground">Aucune donnée. Lance le selftest ou le backfill.</td></tr>
                   )}
                 </tbody>
               </table>
