@@ -139,6 +139,15 @@ async function sendEmailViaResend(
 export async function sendOutreach(input: DispatchInput): Promise<DispatchResult> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+  // Hard autopilot gate — block every dispatch unless e2e selftest passed within 24h.
+  // Bypass with metadata.bypass_gate === true (used by the selftest itself and admin tools).
+  if (!input.metadata || (input.metadata as any).bypass_gate !== true) {
+    const gate = await checkAutopilotGate(supabase);
+    if (!gate.allowed) {
+      return { ok: false, channel: "none", outcome: "needs_manual_contact", detail: `autopilot_gated:${gate.reason}` };
+    }
+  }
+
   const phoneNorm = normalizePhone(input.phone);
   const hasValidPhone = phoneNorm.valid && phoneNorm.normalized;
   const hasValidEmail = isValidEmail(input.email);
