@@ -67,13 +67,25 @@ export default function PageContractorPersonalizedPlan() {
     if (!quote) return;
     setCheckoutLoading(true);
     try {
+      const targetPlan = planCode ?? quote.recommended_plan;
+      const targetPrice =
+        targetPlan === quote.recommended_plan
+          ? quote.recommended_monthly_price
+          : targetPlan === "recrue" || planCode === "recrue"
+            ? quote.min_monthly_price
+            : quote.max_monthly_price;
       const { data, error } = await supabase.functions.invoke(
         "create-checkout-session",
         {
           body: {
-            planId: planCode ?? quote.recommended_plan,
+            planId: targetPlan,
             billingInterval: "month",
             quoteId: quote.id,
+            // Only send displayed price when it matches the server quote (recommended plan).
+            // Triad up/down plans don't have a personalized server-side price.
+            ...(targetPlan === quote.recommended_plan && {
+              displayedPriceCents: Math.round(targetPrice * 100),
+            }),
             successUrl: `${window.location.origin}/entrepreneur/plan-personnalise/${quote.id}?checkout=success`,
             cancelUrl: `${window.location.origin}/entrepreneur/plan-personnalise/${quote.id}?checkout=canceled`,
           },
