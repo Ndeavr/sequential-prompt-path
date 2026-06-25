@@ -483,9 +483,9 @@ function Step0Identification({
       <FieldGroup icon={Phone} label="Téléphone">
         <Input
           value={form.phone}
-          onChange={(e) => update("phone", e.target.value)}
+          onChange={(e) => update("phone", formatPhoneDisplay(e.target.value))}
           onBlur={(e) => update("phone", normalizePhone(e.target.value))}
-          placeholder="(514) 555-1234"
+          placeholder="(514) 123-4567"
           inputMode="tel"
           className={INPUT_BASE}
         />
