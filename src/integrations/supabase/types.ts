@@ -52458,26 +52458,35 @@ export type Database = {
       }
       outreach_autopilot_gate: {
         Row: {
+          auto_unlock_reason: string | null
+          auto_unlocked_at: string | null
           gated: boolean
           id: number
           last_pass_at: string | null
           last_test_id: string | null
+          operational_score: number | null
           reason: string | null
           updated_at: string
         }
         Insert: {
+          auto_unlock_reason?: string | null
+          auto_unlocked_at?: string | null
           gated?: boolean
           id?: number
           last_pass_at?: string | null
           last_test_id?: string | null
+          operational_score?: number | null
           reason?: string | null
           updated_at?: string
         }
         Update: {
+          auto_unlock_reason?: string | null
+          auto_unlocked_at?: string | null
           gated?: boolean
           id?: number
           last_pass_at?: string | null
           last_test_id?: string | null
+          operational_score?: number | null
           reason?: string | null
           updated_at?: string
         }
@@ -52636,6 +52645,156 @@ export type Database = {
           },
         ]
       }
+      outreach_contact_intelligence: {
+        Row: {
+          bounce_history: number | null
+          carrier: string | null
+          checked_at: string
+          created_at: string
+          decision: string | null
+          disposable: boolean | null
+          dkim_ok: boolean | null
+          dmarc_ok: boolean | null
+          email: string | null
+          email_confidence: number | null
+          id: string
+          mx_ok: boolean | null
+          payload: Json
+          phone: string | null
+          phone_type: string | null
+          role_address: boolean | null
+          spf_ok: boolean | null
+        }
+        Insert: {
+          bounce_history?: number | null
+          carrier?: string | null
+          checked_at?: string
+          created_at?: string
+          decision?: string | null
+          disposable?: boolean | null
+          dkim_ok?: boolean | null
+          dmarc_ok?: boolean | null
+          email?: string | null
+          email_confidence?: number | null
+          id?: string
+          mx_ok?: boolean | null
+          payload?: Json
+          phone?: string | null
+          phone_type?: string | null
+          role_address?: boolean | null
+          spf_ok?: boolean | null
+        }
+        Update: {
+          bounce_history?: number | null
+          carrier?: string | null
+          checked_at?: string
+          created_at?: string
+          decision?: string | null
+          disposable?: boolean | null
+          dkim_ok?: boolean | null
+          dmarc_ok?: boolean | null
+          email?: string | null
+          email_confidence?: number | null
+          id?: string
+          mx_ok?: boolean | null
+          payload?: Json
+          phone?: string | null
+          phone_type?: string | null
+          role_address?: boolean | null
+          spf_ok?: boolean | null
+        }
+        Relationships: []
+      }
+      outreach_critical_alerts: {
+        Row: {
+          affected_users: number | null
+          created_at: string
+          estimated_repair: string | null
+          id: string
+          payload: Json
+          provider: string
+          repair_progress: string | null
+          resolved_at: string | null
+          revenue_at_risk_cents: number | null
+          root_cause: string
+          severity: string
+        }
+        Insert: {
+          affected_users?: number | null
+          created_at?: string
+          estimated_repair?: string | null
+          id?: string
+          payload?: Json
+          provider: string
+          repair_progress?: string | null
+          resolved_at?: string | null
+          revenue_at_risk_cents?: number | null
+          root_cause: string
+          severity: string
+        }
+        Update: {
+          affected_users?: number | null
+          created_at?: string
+          estimated_repair?: string | null
+          id?: string
+          payload?: Json
+          provider?: string
+          repair_progress?: string | null
+          resolved_at?: string | null
+          revenue_at_risk_cents?: number | null
+          root_cause?: string
+          severity?: string
+        }
+        Relationships: []
+      }
+      outreach_cta_checks: {
+        Row: {
+          blocks_campaign: boolean
+          campaign_id: string | null
+          checked_at: string
+          created_at: string
+          error: string | null
+          https_ok: boolean | null
+          id: string
+          redirect_chain: Json | null
+          screenshot_url: string | null
+          status_code: number | null
+          tracked: boolean | null
+          url: string
+          utm_ok: boolean | null
+        }
+        Insert: {
+          blocks_campaign?: boolean
+          campaign_id?: string | null
+          checked_at?: string
+          created_at?: string
+          error?: string | null
+          https_ok?: boolean | null
+          id?: string
+          redirect_chain?: Json | null
+          screenshot_url?: string | null
+          status_code?: number | null
+          tracked?: boolean | null
+          url: string
+          utm_ok?: boolean | null
+        }
+        Update: {
+          blocks_campaign?: boolean
+          campaign_id?: string | null
+          checked_at?: string
+          created_at?: string
+          error?: string | null
+          https_ok?: boolean | null
+          id?: string
+          redirect_chain?: Json | null
+          screenshot_url?: string | null
+          status_code?: number | null
+          tracked?: boolean | null
+          url?: string
+          utm_ok?: boolean | null
+        }
+        Relationships: []
+      }
       outreach_delivery_events: {
         Row: {
           event_status: string | null
@@ -52782,6 +52941,54 @@ export type Database = {
         }
         Relationships: []
       }
+      outreach_e2e_full_runs: {
+        Row: {
+          cleanup_completed: boolean | null
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          id: string
+          pass: boolean | null
+          run_group: string
+          step: string
+          step_index: number
+          step_payload: Json
+          step_status: string
+          synthetic_contractor_id: string | null
+          total_duration_ms: number | null
+        }
+        Insert: {
+          cleanup_completed?: boolean | null
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          pass?: boolean | null
+          run_group: string
+          step: string
+          step_index: number
+          step_payload?: Json
+          step_status: string
+          synthetic_contractor_id?: string | null
+          total_duration_ms?: number | null
+        }
+        Update: {
+          cleanup_completed?: boolean | null
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          pass?: boolean | null
+          run_group?: string
+          step?: string
+          step_index?: number
+          step_payload?: Json
+          step_status?: string
+          synthetic_contractor_id?: string | null
+          total_duration_ms?: number | null
+        }
+        Relationships: []
+      }
       outreach_email_events: {
         Row: {
           bounced_at: string | null
@@ -52888,6 +53095,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      outreach_health_checks: {
+        Row: {
+          created_at: string
+          failure_reason: string | null
+          id: string
+          last_failure_at: string | null
+          last_success_at: string | null
+          message: string | null
+          next_retry_at: string | null
+          payload: Json
+          provider: string
+          repair_action: string | null
+          repair_attempts: number
+          repair_duration_ms: number | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          failure_reason?: string | null
+          id?: string
+          last_failure_at?: string | null
+          last_success_at?: string | null
+          message?: string | null
+          next_retry_at?: string | null
+          payload?: Json
+          provider: string
+          repair_action?: string | null
+          repair_attempts?: number
+          repair_duration_ms?: number | null
+          status: string
+        }
+        Update: {
+          created_at?: string
+          failure_reason?: string | null
+          id?: string
+          last_failure_at?: string | null
+          last_success_at?: string | null
+          message?: string | null
+          next_retry_at?: string | null
+          payload?: Json
+          provider?: string
+          repair_action?: string | null
+          repair_attempts?: number
+          repair_duration_ms?: number | null
+          status?: string
+        }
+        Relationships: []
       }
       outreach_logs: {
         Row: {
@@ -53090,6 +53345,48 @@ export type Database = {
           },
         ]
       }
+      outreach_operational_score: {
+        Row: {
+          automation: number
+          autopilot: number
+          computed_at: string
+          conversion: number
+          id: string
+          infrastructure: number
+          messaging: number
+          overall: number
+          payload: Json
+          payments: number
+          tracking: number
+        }
+        Insert: {
+          automation?: number
+          autopilot?: number
+          computed_at?: string
+          conversion?: number
+          id?: string
+          infrastructure?: number
+          messaging?: number
+          overall?: number
+          payload?: Json
+          payments?: number
+          tracking?: number
+        }
+        Update: {
+          automation?: number
+          autopilot?: number
+          computed_at?: string
+          conversion?: number
+          id?: string
+          infrastructure?: number
+          messaging?: number
+          overall?: number
+          payload?: Json
+          payments?: number
+          tracking?: number
+        }
+        Relationships: []
+      }
       outreach_page_events: {
         Row: {
           created_at: string
@@ -53244,6 +53541,39 @@ export type Database = {
           },
         ]
       }
+      outreach_repair_runs: {
+        Row: {
+          action: string
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          id: string
+          outcome: string
+          payload: Json
+          provider: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          outcome: string
+          payload?: Json
+          provider: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          outcome?: string
+          payload?: Json
+          provider?: string
+        }
+        Relationships: []
+      }
       outreach_replies: {
         Row: {
           body: string | null
@@ -53345,6 +53675,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      outreach_revenue_loss: {
+        Row: {
+          arr_at_risk_cents: number
+          contractors_lost: number
+          created_at: string
+          day: string
+          id: string
+          payload: Json
+          provider: string
+          reason: string | null
+        }
+        Insert: {
+          arr_at_risk_cents?: number
+          contractors_lost?: number
+          created_at?: string
+          day?: string
+          id?: string
+          payload?: Json
+          provider: string
+          reason?: string | null
+        }
+        Update: {
+          arr_at_risk_cents?: number
+          contractors_lost?: number
+          created_at?: string
+          day?: string
+          id?: string
+          payload?: Json
+          provider?: string
+          reason?: string | null
+        }
+        Relationships: []
       }
       outreach_send_windows: {
         Row: {
@@ -78603,7 +78966,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
-      evaluate_outreach_gate: { Args: never; Returns: Json }
+      evaluate_outreach_gate: { Args: never; Returns: undefined }
       fn_alex_compute_booking_readiness: {
         Args: { _session_id: string }
         Returns: Json
