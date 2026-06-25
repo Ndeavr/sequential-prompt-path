@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -94,11 +95,10 @@ export default function SectionFormV2({ onTrackCta }: Props) {
               onChange={update("city")}
               className="h-12 rounded-xl bg-background/60 border-border/60"
             />
-            <Input
-              type="tel"
+            <PhoneInput
               placeholder="Téléphone"
               value={form.phone}
-              onChange={update("phone")}
+              onChange={(v) => setForm((f) => ({ ...f, phone: v }))}
               className="h-12 rounded-xl bg-background/60 border-border/60"
             />
             <Input

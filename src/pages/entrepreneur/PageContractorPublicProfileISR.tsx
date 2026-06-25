@@ -9,6 +9,7 @@ import { Phone, Globe, MapPin, Star, ShieldCheck, RefreshCcw, Lock, Sparkles, Ex
 import { useContractorIntel, fetchContractorIntel, type ContractorIntelIdentity } from "@/hooks/useContractorIntel";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { formatPhoneDisplay, phoneToE164 } from "@/utils/formatPhone";
 import { useQueryClient } from "@tanstack/react-query";
 
 const SLUG = "isolation-solution-royal";
@@ -354,8 +355,11 @@ function EvaluationBookingPanel({ slug }: { slug: string }) {
           <Field label="Téléphone">
             <input
               type="tel"
+              inputMode="tel"
+              autoComplete="tel"
               value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              onChange={(e) => setForm({ ...form, phone: formatPhoneDisplay(e.target.value) })}
+              placeholder="(514) 123-4567"
               className={inputCls}
             />
           </Field>

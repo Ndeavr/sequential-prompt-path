@@ -5,6 +5,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { WebsiteInput } from "@/components/ui/website-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -147,11 +149,11 @@ export default function SignaturePlan() {
                         <Input placeholder="Nom entreprise *" required className="rounded-xl" value={form.company_name} onChange={(e) => updateField("company_name", e.target.value)} />
                         <Input placeholder="Nom contact *" required className="rounded-xl" value={form.contact_name} onChange={(e) => updateField("contact_name", e.target.value)} />
                         <Input type="email" placeholder="Email *" required className="rounded-xl" value={form.email} onChange={(e) => updateField("email", e.target.value)} onBlur={() => updateField("email", formatEmail(form.email))} />
-                        <Input type="tel" placeholder="Téléphone" className="rounded-xl" value={form.phone} onChange={(e) => updateField("phone", formatPhoneDisplay(e.target.value))} />
+                        <PhoneInput placeholder="Téléphone" className="rounded-xl" value={form.phone} onChange={(v) => updateField("phone", v)} />
                         <Input placeholder="Ville principale *" required className="rounded-xl" value={form.city} onChange={(e) => updateField("city", e.target.value)} onBlur={() => updateField("city", cleanTextField(form.city))} />
                         <Input placeholder="Catégorie principale *" required className="rounded-xl" value={form.category} onChange={(e) => updateField("category", e.target.value)} onBlur={() => updateField("category", cleanTextField(form.category))} />
                         <Input placeholder="Spécialité" className="rounded-xl" value={form.specialty} onChange={(e) => updateField("specialty", e.target.value)} />
-                        <Input placeholder="Site web" className="rounded-xl" value={form.website} onChange={(e) => updateField("website", e.target.value)} />
+                        <WebsiteInput placeholder="Site web" className="rounded-xl" value={form.website} onChange={(v) => updateField("website", v)} />
                         <Input placeholder="Budget mensuel souhaité" className="rounded-xl" value={form.monthly_budget} onChange={(e) => updateField("monthly_budget", e.target.value)} />
                         <div className="flex items-center gap-3 py-1">
                           <Switch

@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { WebsiteInput } from "@/components/ui/website-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -251,13 +253,13 @@ export default function ContractorQuestionnairePage() {
                     <Input value={form.legal_name} onChange={(e) => updateField("legal_name", e.target.value)} placeholder="9876-5432 Québec Inc." />
                   </FieldWrapper>
                   <FieldWrapper label="Téléphone" prefilled={pf.has("phone")} aippBoost={5}>
-                    <Input type="tel" value={form.phone} onChange={(e) => updateField("phone", e.target.value)} placeholder="(514) 555-1234" />
+                    <PhoneInput value={form.phone} onChange={(v) => updateField("phone", v)} placeholder="(514) 123-4567" />
                   </FieldWrapper>
                   <FieldWrapper label="Courriel" prefilled={pf.has("email")} aippBoost={5}>
                     <Input type="email" value={form.email} onChange={(e) => updateField("email", e.target.value)} placeholder="info@entreprise.ca" />
                   </FieldWrapper>
                   <FieldWrapper label="Site web" prefilled={pf.has("website")} aippBoost={8}>
-                    <Input value={form.website} onChange={(e) => updateField("website", e.target.value)} placeholder="https://www.entreprise.ca" />
+                    <WebsiteInput value={form.website} onChange={(v) => updateField("website", v)} placeholder="entreprise.ca" />
                   </FieldWrapper>
                   <FieldWrapper label="Langues de service">
                     <ChipSelector options={LANGUAGES} selected={form.languages} onToggle={(v) => toggleArrayField("languages", v)} columns={3} />

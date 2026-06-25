@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -287,7 +288,7 @@ export default function PagePartenairesCertifies() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="phone" className="text-white/80">Téléphone *</Label>
-                  <Input id="phone" type="tel" required value={form.phone} onChange={e => update("phone", e.target.value)} className="bg-white/5 border-white/10 text-white" />
+                  <PhoneInput value={form.phone} onChange={(v) => update("phone", v)} required className="bg-white/5 border-white/10 text-white" />
                 </div>
                 <div>
                   <Label htmlFor="email" className="text-white/80">Courriel *</Label>

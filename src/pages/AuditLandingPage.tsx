@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { phoneToE164 } from "@/utils/formatPhone";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -79,7 +81,7 @@ const AuditLandingPage = () => {
       contractor_id: prospect?.id,
       name: form.name,
       email: form.email,
-      phone: form.phone,
+      phone: phoneToE164(form.phone) ?? form.phone,
       company: form.company || prospect?.business_name,
       notes: form.message,
       category: prospect?.category,
@@ -277,7 +279,7 @@ const AuditLandingPage = () => {
             <p className="text-sm text-muted-foreground text-center mb-6">Voyez si votre catégorie est encore ouverte à {p.city ?? "Laval"}</p>
             <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 gap-3">
               <Input placeholder="Prénom et nom *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-              <Input placeholder="Téléphone *" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
+              <PhoneInput placeholder="Téléphone *" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} required />
               <Input placeholder="Courriel" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
               <Input placeholder="Entreprise" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} />
               <Textarea placeholder="Message (optionnel)" className="sm:col-span-2" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} />
