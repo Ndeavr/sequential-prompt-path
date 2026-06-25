@@ -7,6 +7,8 @@ import { motion } from "framer-motion";
 import { Building2, ArrowRight, User, Phone, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { phoneDigitsOnly } from "@/utils/formatPhone";
 
 interface Props {
   onComplete: (data: { businessName: string; contactName: string; phone: string; service: string }) => void;
@@ -58,15 +60,14 @@ export default function PanelAlexEntrepreneurOnboarding({ onComplete, prefilled 
       label: "Téléphone",
       icon: <Phone className="w-4 h-4" />,
       content: (
-        <Input
+        <PhoneInput
           value={phone}
-          onChange={e => setPhone(e.target.value)}
-          placeholder="(514) 000-0000"
-          type="tel"
+          onChange={setPhone}
+          placeholder="(514) 123-4567"
           className="bg-background/80 border-border/40"
         />
       ),
-      valid: phone.trim().length >= 7,
+      valid: phoneDigitsOnly(phone).length === 10,
     },
     {
       label: "Spécialité principale",

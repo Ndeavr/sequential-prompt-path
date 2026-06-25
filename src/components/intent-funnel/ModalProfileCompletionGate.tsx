@@ -75,9 +75,11 @@ export default function ModalProfileCompletionGate({ open, onClose, onComplete }
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Téléphone *</label>
                 <input
                   type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
                   value={phone}
                   onChange={(e) => setPhone(formatPhoneDisplay(e.target.value))}
-                  placeholder="(514) 555-1234"
+                  placeholder="(514) 123-4567"
                   className="w-full h-11 rounded-xl px-4 bg-muted/50 border border-border/60 text-foreground text-sm
                     focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />

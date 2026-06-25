@@ -28,15 +28,46 @@ describe("normalizeInput — phone", () => {
     ["+1 514 555-1212", "+15145551212"],
     ["1.514.555.1212", "+15145551212"],
     [" 5145551212 ", "+15145551212"],
+    ["5141234567", "+15141234567"],
+    ["514 123 4567", "+15141234567"],
+    ["514-123-4567", "+15141234567"],
+    ["(514)1234567", "+15141234567"],
+    ["+1 514 123 4567", "+15141234567"],
+    ["1-514-123-4567", "+15141234567"],
   ])("%s → %s", (input, expected) => {
     const r = normalizeInput(input, "phone");
     expect(r.value).toBe(expected);
     expect(r.valid).toBe(true);
   });
 
+  it("display is (###) ###-####", () => {
+    const r = normalizeInput("5141234567", "phone");
+    expect(r.display).toBe("(514) 123-4567");
+  });
+
   it("rejects short numbers but does not throw", () => {
     const r = normalizeInput("514555", "phone");
     expect(r.valid).toBe(false);
+  });
+});
+
+describe("normalizeInput — url isroyal.ca variants", () => {
+  it.each([
+    ["isroyal.ca", "https://isroyal.ca"],
+    ["www.isroyal.ca", "https://isroyal.ca"],
+    ["https://isroyal.ca", "https://isroyal.ca"],
+    ["http://isroyal.ca/", "https://isroyal.ca"],
+    ["  isroyal.ca  ", "https://isroyal.ca"],
+  ])("%s → %s", (input, expected) => {
+    const r = normalizeInput(input, "url");
+    expect(r.value).toBe(expected);
+    expect(r.valid).toBe(true);
+  });
+
+  it("preserves path and query", () => {
+    const r = normalizeInput("isroyal.ca/services?x=1", "url");
+    expect(r.value).toBe("https://isroyal.ca/services?x=1");
+    expect(r.valid).toBe(true);
   });
 });
 

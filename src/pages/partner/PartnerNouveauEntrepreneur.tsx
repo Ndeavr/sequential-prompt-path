@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePartner } from "./usePartner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { WebsiteInput } from "@/components/ui/website-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -58,11 +60,11 @@ export default function PartnerNouveauEntrepreneur() {
           <div><Label>Nom de l'entreprise *</Label><Input required value={form.business_name} onChange={(e) => onChange("business_name", e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Nom du contact</Label><Input value={form.contact_name} onChange={(e) => onChange("contact_name", e.target.value)} /></div>
-            <div><Label>Téléphone</Label><Input type="tel" value={form.phone} onChange={(e) => onChange("phone", e.target.value)} /></div>
+            <div><Label>Téléphone</Label><PhoneInput value={form.phone} onChange={(v) => onChange("phone", v)} /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Courriel</Label><Input type="email" value={form.email} onChange={(e) => onChange("email", e.target.value)} /></div>
-            <div><Label>Site web</Label><Input type="url" value={form.website} onChange={(e) => onChange("website", e.target.value)} /></div>
+            <div><Label>Site web</Label><WebsiteInput value={form.website} onChange={(v) => onChange("website", v)} /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>RBQ</Label><Input value={form.rbq} onChange={(e) => onChange("rbq", e.target.value)} /></div>

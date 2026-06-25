@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Search, MapPin, Phone, Globe, Building2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPhoneDisplay } from "@/utils/formatPhone";
+import { formatWebsiteStorage } from "@/utils/formatWebsite";
 
 export interface GmbSearchParams {
   business_name: string;
@@ -135,8 +136,13 @@ export default function FormGoogleBusinessLookup({ onResults, onError, onLoading
               placeholder="Site web"
               value={website}
               onChange={(e) => setWebsite(e.target.value)}
+              onBlur={(e) => setWebsite(formatWebsiteStorage(e.target.value))}
               onKeyDown={handleKeyDown}
               className="h-10 pl-8 text-sm"
+              inputMode="url"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
             />
             <Globe className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           </div>

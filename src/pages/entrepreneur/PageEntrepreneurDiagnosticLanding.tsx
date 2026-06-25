@@ -428,18 +428,16 @@ function StepCard({ children }: { children: React.ReactNode }) {
   );
 }
 
+import { formatWebsiteStorage } from "@/utils/formatWebsite";
+import { formatPhoneDisplay } from "@/utils/formatPhone";
+
 function normalizeWebsite(v: string): string {
-  const t = v.trim();
-  if (!t) return "";
-  if (/^https?:\/\//i.test(t)) return t.toLowerCase();
-  return `https://${t.toLowerCase()}`;
+  return formatWebsiteStorage(v);
 }
 function normalizePhone(v: string): string {
-  const digits = v.replace(/\D/g, "").slice(0, 10);
-  if (digits.length < 4) return v.trim();
-  if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  return formatPhoneDisplay(v);
 }
+
 
 function Step0Identification({
   form,
@@ -485,9 +483,9 @@ function Step0Identification({
       <FieldGroup icon={Phone} label="Téléphone">
         <Input
           value={form.phone}
-          onChange={(e) => update("phone", e.target.value)}
+          onChange={(e) => update("phone", formatPhoneDisplay(e.target.value))}
           onBlur={(e) => update("phone", normalizePhone(e.target.value))}
-          placeholder="(514) 555-1234"
+          placeholder="(514) 123-4567"
           inputMode="tel"
           className={INPUT_BASE}
         />
