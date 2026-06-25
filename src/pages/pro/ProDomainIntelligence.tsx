@@ -8,6 +8,7 @@ import { Globe, Shield, Search, Zap, Database, Brain, Award, ArrowRight, Refresh
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatWebsiteStorage } from "@/utils/formatWebsite";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import ScoreRing from "@/components/ui/score-ring";
@@ -108,8 +109,9 @@ const ProDomainIntelligence = () => {
         contractorId = contractor?.id || null;
       }
 
+      const normalizedDomain = formatWebsiteStorage(domainInput) || domainInput.trim();
       const { data, error } = await supabase.functions.invoke("domain-intelligence", {
-        body: { domain_input: domainInput, contractor_id: contractorId },
+        body: { domain_input: normalizedDomain, contractor_id: contractorId },
       });
 
       clearInterval(progressInterval);
