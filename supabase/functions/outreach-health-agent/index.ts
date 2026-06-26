@@ -255,8 +255,8 @@ Deno.serve(async (req) => {
   // Auto-repair where possible
   for (const p of probes) if (p.status !== "green" && p.repair_action) await runRepair(p);
 
-  // Compute & persist operational score
-  const score = computeScore(probes);
+  // Compute & persist operational score (async — reads latest E2E)
+  const score = await computeScore(probes);
   await supabase.from("outreach_operational_score").insert(score);
 
   // Critical alerts
