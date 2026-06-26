@@ -79,11 +79,11 @@ export default function PageAdminOutreachHealth() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Outreach Health</h1>
-          <p className="text-sm text-muted-foreground">Funnel canonique de bout en bout. Bloque l'auto-pilote tant qu'un test E2E n'est pas passé dans les 24h.</p>
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 min-w-0">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight break-normal">Outreach Health</h1>
+          <p className="text-sm text-muted-foreground break-normal">Funnel canonique de bout en bout. Bloque l'auto-pilote tant qu'un test E2E n'est pas passé dans les 24h.</p>
         </div>
 
         {/* Autopilot gate banner */}
