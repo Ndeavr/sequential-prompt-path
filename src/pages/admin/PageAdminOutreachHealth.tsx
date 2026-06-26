@@ -36,7 +36,9 @@ export default function PageAdminOutreachHealth() {
   const e2eFull = useE2EFullRuns(5);
   const runAgent = useRunHealthAgent();
   const runE2E = useRunE2EReal();
+  const repairMessaging = useRepairMessaging();
   const [testEmail, setTestEmail] = useState("");
+  const [lastE2E, setLastE2E] = useState<null | { pass: boolean; failed_step: any; total_ms: number }>(null);
 
 
   const lastPass = gate.data?.last_pass_at ? new Date(gate.data.last_pass_at) : null;
