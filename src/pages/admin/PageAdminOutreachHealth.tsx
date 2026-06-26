@@ -4,7 +4,7 @@
  * Gates autopilot dispatch until acq-e2e-selftest passes within 24h.
  */
 import { useState } from "react";
-import { Loader2, PlayCircle, ShieldAlert, ShieldCheck, RefreshCcw } from "lucide-react";
+import { Loader2, PlayCircle, ShieldAlert, ShieldCheck, RefreshCcw, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import {
   useOutreachFunnel, useAutopilotGate, useRecentE2ERuns, useProviderHealth,
   useRecentEmailEvents, useRunSelftest, useRun30dBackfill,
   useOperationalScore, useActiveHealthChecks, useRepairRuns, useCriticalAlerts,
-  useE2EFullRuns, useRunHealthAgent, useRunE2EReal,
+  useE2EFullRuns, useRunHealthAgent, useRunE2EReal, useRepairMessaging,
 } from "@/hooks/useOutreachHealth";
 
 
