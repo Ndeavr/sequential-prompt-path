@@ -53144,6 +53144,30 @@ export type Database = {
         }
         Relationships: []
       }
+      outreach_health_state: {
+        Row: {
+          id: number
+          resend_last_checked_at: string | null
+          resend_last_error: string | null
+          resend_verified_domain: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          resend_last_checked_at?: string | null
+          resend_last_error?: string | null
+          resend_verified_domain?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          resend_last_checked_at?: string | null
+          resend_last_error?: string | null
+          resend_verified_domain?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       outreach_logs: {
         Row: {
           clicked: boolean | null

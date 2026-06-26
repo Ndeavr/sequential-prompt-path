@@ -39,21 +39,53 @@ async function probeSecret(name: string, value: string | undefined): Promise<Pro
   };
 }
 
+async function readResendBody(r: Response): Promise<{ name?: string; message?: string; raw: string }> {
+  const raw = await r.text();
+  try { const j = JSON.parse(raw); return { name: j?.name, message: j?.message, raw }; }
+  catch { return { raw }; }
+}
+
 async function probeResend(): Promise<Probe> {
-  if (!RESEND_KEY) return { provider: "resend", status: "red", failure_reason: "MISSING_SECRET", message: "RESEND_API_KEY missing" };
+  if (!RESEND_KEY) return { provider: "resend", status: "red", failure_reason: "MISSING_SECRET", message: "RESEND_API_KEY missing", repair_action: "manual_required" };
   try {
-    const r = await fetch("https://api.resend.com/domains", {
-      headers: { Authorization: `Bearer ${RESEND_KEY}` },
-    });
-    if (r.status === 401) return { provider: "resend", status: "red", failure_reason: "RESEND_AUTH_ERROR", message: "401 Unauthorized — API key invalid", repair_action: "rotate_secret" };
-    if (!r.ok) return { provider: "resend", status: "yellow", failure_reason: "RESEND_PROVIDER_ERROR", message: `HTTP ${r.status}` };
-    // Webhook freshness
-    const { data } = await supabase.from("outreach_email_events").select("created_at").order("created_at",{ascending:false}).limit(1);
-    const last = data?.[0]?.created_at;
-    if (last && Date.now() - new Date(last).getTime() > 30 * 60 * 1000) {
-      return { provider: "resend", status: "yellow", failure_reason: "WEBHOOK_STALE", message: `last event ${last}`, repair_action: "recreate_webhook" };
+    // 1) Auth ping — /api-keys requires `api_keys:read` scope but returns 200/401 on basic keys too
+    const auth = await fetch("https://api.resend.com/api-keys", { headers: { Authorization: `Bearer ${RESEND_KEY}` } });
+    if (auth.status === 401 || auth.status === 403) {
+      const b = await readResendBody(auth);
+      return { provider: "resend", status: "red", failure_reason: "RESEND_AUTH_ERROR",
+        message: `${auth.status} — ${b.message ?? "invalid key"}`, repair_action: "rotate_secret" };
     }
-    return { provider: "resend", status: "green", message: "API ok" };
+
+    // 2) Domains — source of truth for verified sender
+    const dom = await fetch("https://api.resend.com/domains", { headers: { Authorization: `Bearer ${RESEND_KEY}` } });
+    if (!dom.ok) {
+      const b = await readResendBody(dom);
+      await supabase.from("outreach_health_state").upsert({ id: 1, resend_last_checked_at: new Date().toISOString(), resend_last_error: `HTTP ${dom.status}: ${b.message ?? b.raw.slice(0,200)}` });
+      return { provider: "resend", status: "yellow", failure_reason: "RESEND_PROVIDER_ERROR",
+        message: `HTTP ${dom.status} — ${b.message ?? b.name ?? b.raw.slice(0,200)}`,
+        repair_action: dom.status === 400 ? "manual_required" : "rotate_secret" };
+    }
+    const body = await readResendBody(dom);
+    let domains: any[] = [];
+    try { domains = JSON.parse(body.raw)?.data ?? []; } catch {}
+    const verified = domains.find(d => d?.status === "verified") ?? domains.find(d => d?.status === "active");
+    await supabase.from("outreach_health_state").upsert({
+      id: 1,
+      resend_verified_domain: verified?.name ?? null,
+      resend_last_checked_at: new Date().toISOString(),
+      resend_last_error: verified ? null : "NO_VERIFIED_DOMAIN",
+    });
+    if (!verified) return { provider: "resend", status: "red", failure_reason: "NO_VERIFIED_DOMAIN",
+      message: `No verified domain (found ${domains.length})`, repair_action: "manual_required" };
+
+    // 3) Webhook freshness (informational — yellow only)
+    const { data } = await supabase.from("outreach_email_events").select("created_at").order("created_at",{ascending:false}).limit(1);
+    const last = (data as any)?.[0]?.created_at;
+    if (last && Date.now() - new Date(last).getTime() > 30 * 60 * 1000) {
+      return { provider: "resend", status: "yellow", failure_reason: "WEBHOOK_STALE",
+        message: `last event ${last} · sender ${verified.name}`, repair_action: "recreate_webhook" };
+    }
+    return { provider: "resend", status: "green", message: `API ok · sender ${verified.name}` };
   } catch (e) {
     return { provider: "resend", status: "red", failure_reason: "EXTERNAL_TIMEOUT", message: String(e) };
   }
@@ -123,20 +155,52 @@ async function probeDatabase(): Promise<Probe> {
   }
 }
 
-function computeScore(probes: Probe[]) {
+async function getLastE2EPass(): Promise<{ pass: boolean; fresh: boolean; at: string | null }> {
+  const { data } = await supabase.from("outreach_e2e_full_runs").select("pass,created_at")
+    .eq("step", "summary").order("created_at", { ascending: false }).limit(1).maybeSingle();
+  const at = (data as any)?.created_at ?? null;
+  const pass = !!(data as any)?.pass;
+  const fresh = at ? (Date.now() - new Date(at).getTime() < 24 * 3600 * 1000) : false;
+  return { pass, fresh, at };
+}
+
+type Scores = { infrastructure: number; messaging: number; tracking: number; payments: number; automation: number; conversion: number; autopilot: number };
+
+async function computeScore(probes: Probe[]) {
   const groupFor: Record<string, keyof Scores> = {
     database: "infrastructure", pg_cron: "infrastructure", redirect_tracker: "tracking",
     resend: "messaging", twilio: "messaging", stripe: "payments",
   };
-  type Scores = { infrastructure: number; messaging: number; tracking: number; payments: number; automation: number; conversion: number; autopilot: number };
   const scores: Scores = { infrastructure: 100, messaging: 100, tracking: 100, payments: 100, automation: 100, conversion: 100, autopilot: 100 };
   for (const p of probes) {
     const grp = groupFor[p.provider] ?? "automation";
     const delta = p.status === "red" ? 50 : p.status === "yellow" ? 20 : 0;
     scores[grp] = Math.max(0, scores[grp] - delta);
   }
-  const overall = Math.round(Object.values(scores).reduce((a, b) => a + b, 0) / Object.values(scores).length);
-  return { ...scores, overall };
+
+  // ---- Honesty caps ----
+  const reason_capped: string[] = [];
+  const resend = probes.find(p => p.provider === "resend");
+  if (resend && resend.status !== "green") {
+    if (scores.messaging > 60) { scores.messaging = 60; reason_capped.push("messaging≤60 (Resend not green)"); }
+  }
+  const e2e = await getLastE2EPass();
+  const e2eOk = e2e.pass && e2e.fresh;
+  if (!e2eOk) {
+    if (scores.automation > 70) { scores.automation = 70; reason_capped.push("automation≤70 (no fresh E2E pass)"); }
+    if (scores.autopilot > 70) { scores.autopilot = 70; reason_capped.push("autopilot≤70 (no fresh E2E pass)"); }
+  }
+  if (scores.messaging < 95 && scores.autopilot > 70) {
+    scores.autopilot = 70; reason_capped.push("autopilot≤70 (messaging<95)");
+  }
+
+  let overall = Math.round(Object.values(scores).reduce((a, b) => a + b, 0) / Object.values(scores).length);
+  // Overall can never exceed the weakest pillar
+  const weakest = Math.min(...Object.values(scores));
+  if (overall > weakest) { overall = weakest; reason_capped.push(`overall≤${weakest} (weakest pillar)`); }
+  if (!e2eOk && overall > 70) { overall = 70; reason_capped.push("overall≤70 (no fresh E2E pass)"); }
+
+  return { ...scores, overall, reason_capped, e2e_pass: e2eOk, e2e_last_at: e2e.at };
 }
 
 async function runRepair(probe: Probe): Promise<void> {
@@ -191,9 +255,10 @@ Deno.serve(async (req) => {
   // Auto-repair where possible
   for (const p of probes) if (p.status !== "green" && p.repair_action) await runRepair(p);
 
-  // Compute & persist operational score
-  const score = computeScore(probes);
-  await supabase.from("outreach_operational_score").insert(score);
+  // Compute & persist operational score (async — reads latest E2E)
+  const score = await computeScore(probes);
+  const { reason_capped: _rc, e2e_pass: _ep, e2e_last_at: _ea, ...scoreRow } = score;
+  await supabase.from("outreach_operational_score").insert(scoreRow);
 
   // Critical alerts
   for (const p of probes) {
