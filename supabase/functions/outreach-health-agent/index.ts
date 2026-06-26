@@ -257,7 +257,8 @@ Deno.serve(async (req) => {
 
   // Compute & persist operational score (async — reads latest E2E)
   const score = await computeScore(probes);
-  await supabase.from("outreach_operational_score").insert(score);
+  const { reason_capped: _rc, e2e_pass: _ep, e2e_last_at: _ea, ...scoreRow } = score;
+  await supabase.from("outreach_operational_score").insert(scoreRow);
 
   // Critical alerts
   for (const p of probes) {
