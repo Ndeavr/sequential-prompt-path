@@ -199,7 +199,25 @@ export function useRunE2EReal() {
     mutationFn: async () => {
       const { data, error } = await supabase.functions.invoke("acq-e2e-real", { body: { trigger: "manual" } });
       if (error) throw error;
-      return data;
+      return data as {
+        run_group: string; pass: boolean; total_ms: number;
+        failed_step: { index: number; step: string; error: string; repair?: string } | null;
+        steps: Array<{ index: number; step: string; status: "pass"|"fail"|"skipped"; duration_ms: number; error?: string; repair?: string }>;
+      };
+    },
+  });
+}
+
+export function useRepairMessaging() {
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("outreach-repair-messaging", { body: {} });
+      if (error) throw error;
+      return data as {
+        ok: boolean;
+        steps: Array<{ step: string; ok: boolean; detail: string; duration_ms: number; repair?: string }>;
+        e2e: { pass: boolean; failed_step: any } | null;
+      };
     },
   });
 }
