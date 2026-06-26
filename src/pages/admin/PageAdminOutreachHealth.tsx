@@ -115,37 +115,74 @@ export default function PageAdminOutreachHealth() {
         </Card>
 
         {/* === ACTIVE HEALTH ENGINE === */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-base">Active Health Engine</CardTitle>
-              <p className="text-xs text-muted-foreground mt-1">Probes auto every 15 min. Auto-repair + auto-unlock autopilot.</p>
+        <Card className="min-w-0">
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <CardTitle className="text-base break-normal">Active Health Engine</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1 break-normal whitespace-normal">Probes auto every 15 min. Auto-repair + auto-unlock autopilot.</p>
             </div>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => runAgent.mutate(undefined, { onSuccess: () => { healthChecks.refetch(); score.refetch(); repairs.refetch(); alerts.refetch(); gate.refetch(); toast.success("Health agent exécuté"); }, onError: (e: any) => toast.error(e.message) })} disabled={runAgent.isPending}>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Button size="sm" variant="outline" className="w-full sm:w-auto justify-center" onClick={() => runAgent.mutate(undefined, { onSuccess: () => { healthChecks.refetch(); score.refetch(); repairs.refetch(); alerts.refetch(); gate.refetch(); toast.success("Health agent exécuté"); }, onError: (e: any) => toast.error(e.message) })} disabled={runAgent.isPending}>
                 {runAgent.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCcw className="h-3.5 w-3.5" />}
                 <span className="ml-1.5 text-xs">Run health agent</span>
               </Button>
-              <Button size="sm" onClick={() => runE2E.mutate(undefined, { onSuccess: (r: any) => { e2eFull.refetch(); gate.refetch(); toast[r?.pass ? "success" : "error"](`E2E ${r?.pass ? "PASS" : "FAIL"} (${r?.total_ms}ms)`); }, onError: (e: any) => toast.error(e.message) })} disabled={runE2E.isPending}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full sm:w-auto justify-center border-amber-500/40 text-amber-600 hover:bg-amber-500/10"
+                onClick={() => repairMessaging.mutate(undefined, {
+                  onSuccess: (r: any) => {
+                    healthChecks.refetch(); score.refetch(); repairs.refetch(); e2eFull.refetch(); gate.refetch();
+                    const bad = (r?.steps ?? []).find((s: any) => !s.ok);
+                    if (r?.ok) toast.success("Messagerie réparée — E2E relancé");
+                    else toast.error(`Repair: ${bad?.step ?? "?"} → ${bad?.detail ?? "fail"}`);
+                  },
+                  onError: (e: any) => toast.error(e.message),
+                })}
+                disabled={repairMessaging.isPending}
+              >
+                {repairMessaging.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wrench className="h-3.5 w-3.5" />}
+                <span className="ml-1.5 text-xs">Réparer la messagerie</span>
+              </Button>
+              <Button size="sm" className="w-full sm:w-auto justify-center" onClick={() => runE2E.mutate(undefined, {
+                onSuccess: (r: any) => {
+                  setLastE2E({ pass: !!r?.pass, failed_step: r?.failed_step ?? null, total_ms: r?.total_ms ?? 0 });
+                  e2eFull.refetch(); gate.refetch(); score.refetch();
+                  if (r?.pass) toast.success(`E2E PASS (${r?.total_ms}ms)`);
+                  else toast.error(`E2E FAIL — Étape ${r?.failed_step?.index}/14: ${r?.failed_step?.step}`);
+                },
+                onError: (e: any) => toast.error(e.message),
+              })} disabled={runE2E.isPending}>
                 {runE2E.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <PlayCircle className="h-3.5 w-3.5" />}
-                <span className="ml-1.5 text-xs">Run real E2E (14 steps)</span>
+                <span className="ml-1.5 text-xs">Run E2E (14)</span>
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 min-w-0">
             {/* Operational score */}
-            <div className="grid grid-cols-2 md:grid-cols-8 gap-2 text-center">
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2 text-center">
               {(["overall","infrastructure","messaging","tracking","payments","automation","conversion","autopilot"] as const).map(k => {
                 const v = (score.data?.[k] ?? 0) as number;
                 const color = v >= 95 ? "text-emerald-500" : v >= 80 ? "text-amber-500" : "text-red-500";
                 return (
-                  <div key={k} className="rounded-lg border border-border/40 p-2">
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{k}</p>
+                  <div key={k} className="rounded-lg border border-border/40 p-2 min-w-0">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground truncate">{k}</p>
                     <p className={`text-xl font-semibold tabular-nums ${color}`}>{v}</p>
                   </div>
                 );
               })}
             </div>
+
+            {/* Last E2E failed step banner */}
+            {lastE2E && !lastE2E.pass && lastE2E.failed_step && (
+              <div className="rounded-lg border border-red-500/40 bg-red-500/5 p-3 text-xs space-y-1">
+                <p className="font-semibold text-red-500">
+                  Étape {lastE2E.failed_step.index}/14 échouée — {lastE2E.failed_step.step}
+                </p>
+                <p className="text-red-500/90 break-words">{lastE2E.failed_step.error}</p>
+                {lastE2E.failed_step.repair && <p className="text-amber-600 break-words">→ Réparer : {lastE2E.failed_step.repair}</p>}
+              </div>
+            )}
 
             {/* Provider status grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
