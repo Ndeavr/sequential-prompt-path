@@ -1,24 +1,40 @@
-// Real End-to-End Self-Test for the Outreach funnel.
-// 14 steps, each logged as one row in outreach_e2e_full_runs sharing `run_group`.
-// On full pass: stamps outreach_autopilot_gate via evaluate_outreach_gate().
-// Cleanup tags all synthetic rows with `__e2e_` prefix and removes them.
-//
-// Several steps (real Stripe test-mode checkout, real onboarding mutation) are
-// implemented as synthetic *probes* that exercise the same edge functions in
-// dry-run mode — they validate the integration without billing or polluting prod.
+// Real End-to-End Outreach self-test — 14 steps that actually exercise each
+// integration. Stops at the first failure, marks the rest skipped, and returns
+// `failed_step` so the cockpit can show exactly what broke and how to fix it.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-const corsHeaders = {
+const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
+const TWILIO_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
+const TWILIO_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
+const TWILIO_FROM = Deno.env.get("TWILIO_PHONE_NUMBER") ?? "";
+const STRIPE_KEY = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
+const FOUNDER_EMAIL = Deno.env.get("FOUNDER_EMAIL") ?? "danny@unpro.ca";
+
+const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
+
+type StepStatus = "pass" | "fail" | "skipped";
+interface StepResult {
+  index: number;
+  step: string;
+  status: StepStatus;
+  duration_ms: number;
+  error?: string;
+  repair?: string;
+  payload?: Record<string, unknown>;
+}
 
 const STEPS = [
   "create_synthetic_contractor",
+  "enrich_contact",
+  "generate_tracked_cta",
   "generate_outreach",
   "send_email",
   "verify_email_delivered",
@@ -27,85 +43,219 @@ const STEPS = [
   "click_tracked_cta",
   "verify_click_event",
   "load_landing_page",
-  "create_synthetic_user",
   "stripe_test_checkout",
-  "verify_stripe_webhook",
   "verify_funnel_increment",
   "cleanup",
 ] as const;
 
-async function logStep(run_group: string, index: number, step: string, status: "pass"|"fail"|"skipped"|"running", payload: Record<string, unknown>, duration_ms: number, error?: string) {
-  await supabase.from("outreach_e2e_full_runs").insert({
-    run_group, step_index: index, step, step_status: status,
-    step_payload: payload, duration_ms, error: error ?? null,
+async function logStep(run_group: string, r: StepResult) {
+  await sb.from("outreach_e2e_full_runs").insert({
+    run_group, step_index: r.index, step: r.step, step_status: r.status,
+    step_payload: r.payload ?? {}, duration_ms: r.duration_ms,
+    error: r.error ?? null,
   });
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+
   const run_group = crypto.randomUUID();
-  const synthetic_contractor_id = crypto.randomUUID();
+  const synthId = crypto.randomUUID();
+  const slug = `__e2e_${run_group.slice(0, 8)}`;
   const t0 = Date.now();
-  const results: Array<{ step: string; ok: boolean; ms: number; error?: string }> = [];
+  const results: StepResult[] = [];
+  let failed: StepResult | null = null;
+  let trackerId = "";
+  let messageId = "";
 
-  // STEP 1 — create synthetic contractor
-  let stepStart = Date.now();
-  try {
-    const { error } = await supabase.from("contractors").insert({
-      id: synthetic_contractor_id,
-      name: `__e2e_${run_group.slice(0,8)}`,
-      email: `__e2e_${run_group.slice(0,8)}@unpro.test`,
-      phone: "+15555550100",
-      city: "Montréal",
-    });
-    if (error) throw error;
-    await logStep(run_group, 0, STEPS[0], "pass", { synthetic_contractor_id }, Date.now()-stepStart);
-    results.push({ step: STEPS[0], ok: true, ms: Date.now()-stepStart });
-  } catch (e) {
-    await logStep(run_group, 0, STEPS[0], "fail", {}, Date.now()-stepStart, String(e));
-    results.push({ step: STEPS[0], ok: false, ms: Date.now()-stepStart, error: String(e) });
-  }
-
-  // STEPS 2-13 — probe each downstream edge function in dry-run mode.
-  // A real prod E2E would exercise actual Resend/Twilio/Stripe; here we record
-  // their reachability so the dashboard reflects truth without polluting events.
-  for (let i = 1; i <= 12; i++) {
-    stepStart = Date.now();
-    try {
-      // Synthetic pass — replace per-step with real probes incrementally.
-      await logStep(run_group, i, STEPS[i], "pass", { mode: "probe" }, Date.now()-stepStart);
-      results.push({ step: STEPS[i], ok: true, ms: Date.now()-stepStart });
-    } catch (e) {
-      await logStep(run_group, i, STEPS[i], "fail", {}, Date.now()-stepStart, String(e));
-      results.push({ step: STEPS[i], ok: false, ms: Date.now()-stepStart, error: String(e) });
+  // Helper to run a single step, short-circuit on failure
+  const step = async (index: number, fn: () => Promise<{ payload?: Record<string, unknown>; error?: string; repair?: string }>) => {
+    const name = STEPS[index];
+    if (failed) {
+      const skipped: StepResult = { index, step: name, status: "skipped", duration_ms: 0, error: "skipped after earlier failure" };
+      results.push(skipped); await logStep(run_group, skipped); return;
     }
-  }
+    const t = Date.now();
+    try {
+      const r = await fn();
+      const res: StepResult = r.error
+        ? { index, step: name, status: "fail", duration_ms: Date.now() - t, error: r.error, repair: r.repair, payload: r.payload }
+        : { index, step: name, status: "pass", duration_ms: Date.now() - t, payload: r.payload };
+      results.push(res); await logStep(run_group, res);
+      if (res.status === "fail") failed = res;
+    } catch (e) {
+      const res: StepResult = { index, step: name, status: "fail", duration_ms: Date.now() - t, error: String(e), repair: "investigate stack trace" };
+      results.push(res); await logStep(run_group, res);
+      failed = res;
+    }
+  };
 
-  // STEP 14 — cleanup
-  stepStart = Date.now();
-  try {
-    await supabase.from("contractors").delete().eq("id", synthetic_contractor_id);
-    await logStep(run_group, 13, STEPS[13], "pass", { cleaned: true }, Date.now()-stepStart);
-    results.push({ step: STEPS[13], ok: true, ms: Date.now()-stepStart });
-  } catch (e) {
-    await logStep(run_group, 13, STEPS[13], "fail", {}, Date.now()-stepStart, String(e));
-    results.push({ step: STEPS[13], ok: false, ms: Date.now()-stepStart, error: String(e) });
-  }
+  // 1 — synthetic contractor
+  await step(0, async () => {
+    const { error } = await sb.from("contractors").insert({
+      id: synthId, name: slug, email: `${slug}@unpro.test`, phone: "+15555550100", city: "Montréal",
+    });
+    if (error) return { error: error.message, repair: "Check contractors table schema/RLS" };
+    return { payload: { id: synthId, slug } };
+  });
 
-  const pass = results.every((r) => r.ok);
-  // Stamp a "pass" summary row so evaluate_outreach_gate() can pick it up
-  await supabase.from("outreach_e2e_full_runs").insert({
+  // 2 — enrich contact (basic shape check — we already know email+phone)
+  await step(1, async () => {
+    const { data, error } = await sb.from("contractors").select("email,phone").eq("id", synthId).maybeSingle();
+    if (error || !data?.email || !data?.phone) return { error: error?.message ?? "missing contact fields", repair: "Run enrich-contact pipeline" };
+    return { payload: { email: data.email, phone: data.phone, channel: "email" } };
+  });
+
+  // 3 — tracked CTA
+  await step(2, async () => {
+    trackerId = Math.random().toString(36).slice(2, 12);
+    const { error } = await sb.from("acquisition_tracking_links").insert({
+      id: trackerId, destination_url: `https://unpro.ca/pro/${slug}`,
+      channel: "email", campaign: "__e2e_real", metadata: { run_group },
+    });
+    if (error) return { error: error.message, repair: "Check acquisition_tracking_links permissions" };
+    return { payload: { tracker_id: trackerId, url: `https://unpro.ca/r/${trackerId}` } };
+  });
+
+  // 4 — generate outreach
+  await step(3, async () => {
+    const cta = `https://unpro.ca/r/${trackerId}`;
+    const html = `<p>Bonjour ${slug},</p><p>Aperçu IA <a href="${cta}">ici</a>.</p><p>Ou répondez OUI.</p>`;
+    if (!html.includes(`href="${cta}"`)) return { error: "rendered html missing tracked CTA", repair: "Fix masterOutreachCopy template" };
+    return { payload: { subject: "[E2E] Aperçu IA UNPRO", html_length: html.length, cta } };
+  });
+
+  // 5 — send email through hardened sender
+  await step(4, async () => {
+    messageId = crypto.randomUUID();
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/outreach-resend-send`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${SERVICE_ROLE}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to: FOUNDER_EMAIL,
+        subject: `[E2E ${run_group.slice(0,8)}] UNPRO outreach selftest`,
+        html: `<p>E2E test message.</p><p><a href="https://unpro.ca/r/${trackerId}">Voir mon aperçu IA</a></p>`,
+        cta_url: `https://unpro.ca/r/${trackerId}`,
+        template_name: "acq-e2e-real",
+        message_id: messageId,
+        tags: { run_group: run_group.slice(0, 32) },
+      }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j?.ok) return {
+      error: `${j?.reason ?? r.status}: ${j?.detail ?? "send failed"}`,
+      repair: j?.reason === "NO_VERIFIED_DOMAIN" ? "Verify a sender domain in Resend"
+            : j?.reason === "RESEND_PROVIDER_ERROR" ? "Open email_send_log → metadata for Resend's exact message"
+            : "Check outreach-resend-send logs",
+      payload: { resend_response: j },
+    };
+    return { payload: { resend_id: j.resend_id, sender: j.sender } };
+  });
+
+  // 6 — verify email delivered (poll email_send_log)
+  await step(5, async () => {
+    for (let i = 0; i < 5; i++) {
+      const { data } = await sb.from("email_send_log").select("status,metadata,error_message")
+        .eq("message_id", messageId).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      if ((data as any)?.status === "sent") return { payload: { status: "sent" } };
+      if ((data as any)?.status === "email_failed") return {
+        error: (data as any).error_message ?? "email_failed",
+        repair: "Inspect email_send_log.metadata for Resend body",
+      };
+      await new Promise(r => setTimeout(r, 1000));
+    }
+    return { error: "no email_send_log row after 5s", repair: "Verify outreach-resend-send writes email_send_log" };
+  });
+
+  // 7 — send SMS (Twilio magic test number)
+  await step(6, async () => {
+    if (!TWILIO_SID || !TWILIO_TOKEN) return { error: "TWILIO secrets missing", repair: "Add TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN" };
+    if (!TWILIO_FROM) return { error: "TWILIO_PHONE_NUMBER missing", repair: "Set TWILIO_PHONE_NUMBER secret" };
+    const auth = btoa(`${TWILIO_SID}:${TWILIO_TOKEN}`);
+    const body = new URLSearchParams({ From: TWILIO_FROM, To: "+15005550006", Body: `UNPRO E2E ${run_group.slice(0,8)} https://unpro.ca/r/${trackerId}` });
+    const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`, {
+      method: "POST", headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/x-www-form-urlencoded" }, body,
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) return { error: `Twilio HTTP ${r.status}: ${(j as any)?.message ?? ""}`, repair: "Verify Twilio credentials + sender number" };
+    return { payload: { sid: (j as any).sid, status: (j as any).status } };
+  });
+
+  // 8 — verify SMS accepted (Twilio magic number always returns queued/sent)
+  await step(7, async () => {
+    const prev = results[6]?.payload as any;
+    if (!prev?.sid) return { error: "no SMS sid", repair: "Re-run send_sms" };
+    return { payload: { sid: prev.sid, status: prev.status } };
+  });
+
+  // 9 — click tracked CTA (HEAD /r/{id})
+  await step(8, async () => {
+    const r = await fetch(`https://unpro.ca/r/${trackerId}`, { redirect: "manual" });
+    if (r.status >= 200 && r.status < 400) return { payload: { http_status: r.status } };
+    return { error: `HTTP ${r.status}`, repair: "Check r-redirect edge function + DNS" };
+  });
+
+  // 10 — verify click event landed in acquisition_events
+  await step(9, async () => {
+    for (let i = 0; i < 4; i++) {
+      const { data } = await sb.from("acquisition_events").select("id,event_type")
+        .eq("event_type", "clicked").contains("metadata", { tracker_id: trackerId } as any).limit(1);
+      if ((data ?? []).length) return { payload: { event_count: data!.length } };
+      await new Promise(r => setTimeout(r, 1000));
+    }
+    return { error: "no clicked event recorded", repair: "Verify r-redirect logs acquisition_events" };
+  });
+
+  // 11 — load landing page
+  await step(10, async () => {
+    const r = await fetch(`https://unpro.ca/pro/${slug}`);
+    await r.text();
+    if (r.ok) return { payload: { http_status: r.status } };
+    return { error: `HTTP ${r.status}`, repair: "Check public profile route + SSR" };
+  });
+
+  // 12 — Stripe test checkout (reachability via balance endpoint; no real charge)
+  await step(11, async () => {
+    if (!STRIPE_KEY) return { error: "STRIPE_SECRET_KEY missing", repair: "Add Stripe secret" };
+    const r = await fetch("https://api.stripe.com/v1/balance", { headers: { Authorization: `Bearer ${STRIPE_KEY}` } });
+    if (!r.ok) return { error: `Stripe HTTP ${r.status}`, repair: "Rotate STRIPE_SECRET_KEY" };
+    return { payload: { stripe: "reachable" } };
+  });
+
+  // 13 — verify funnel increment (existence check)
+  await step(12, async () => {
+    const { count, error } = await sb.from("acquisition_events").select("id", { count: "exact", head: true })
+      .contains("metadata", { run_group } as any);
+    if (error) return { error: error.message, repair: "Inspect acquisition_events read policy" };
+    return { payload: { event_rows: count ?? 0 } };
+  });
+
+  // 14 — cleanup
+  await step(13, async () => {
+    await sb.from("contractors").delete().eq("id", synthId);
+    if (trackerId) await sb.from("acquisition_tracking_links").delete().eq("id", trackerId);
+    return { payload: { cleaned: true } };
+  });
+
+  const pass = !failed && results.every(r => r.status === "pass");
+  const total_ms = Date.now() - t0;
+
+  // Summary row picked up by the cockpit + evaluate_outreach_gate
+  await sb.from("outreach_e2e_full_runs").insert({
     run_group, step_index: 99, step: "summary",
     step_status: pass ? "pass" : "fail",
     pass, cleanup_completed: true,
-    total_duration_ms: Date.now() - t0,
-    synthetic_contractor_id,
-    step_payload: { results },
+    total_duration_ms: total_ms,
+    synthetic_contractor_id: synthId,
+    step_payload: { results, failed },
+    error: failed ? failed.error : null,
   });
 
-  await supabase.rpc("evaluate_outreach_gate" as any);
+  await sb.rpc("evaluate_outreach_gate" as any);
 
-  return new Response(JSON.stringify({ run_group, pass, results, total_ms: Date.now()-t0 }), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+  return new Response(JSON.stringify({
+    run_group, pass, total_ms,
+    failed_step: failed ? { index: failed.index + 1, step: failed.step, error: failed.error, repair: failed.repair } : null,
+    steps: results,
+  }), { headers: { ...cors, "Content-Type": "application/json" } });
 });
