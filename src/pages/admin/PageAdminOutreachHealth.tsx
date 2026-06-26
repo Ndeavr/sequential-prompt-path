@@ -88,25 +88,27 @@ export default function PageAdminOutreachHealth() {
 
         {/* Autopilot gate banner */}
         <Card className={open ? "border-emerald-500/40 bg-emerald-500/5" : "border-amber-500/40 bg-amber-500/5"}>
-          <CardContent className="pt-6 flex items-start gap-4">
-            {open ? <ShieldCheck className="h-6 w-6 text-emerald-500 mt-0.5" /> : <ShieldAlert className="h-6 w-6 text-amber-500 mt-0.5" />}
-            <div className="flex-1">
-              <p className="font-medium">
-                {open ? "Auto-pilote OUVERT" : "Auto-pilote FERMÉ — aucun envoi en masse autorisé"}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {gate.data?.reason ?? "—"} ·{" "}
-                {lastPass ? `dernier test passé : ${lastPass.toLocaleString("fr-CA")}` : "aucun test passé"}
-              </p>
+          <CardContent className="pt-6 flex flex-col sm:flex-row sm:items-start gap-4 min-w-0">
+            <div className="flex items-start gap-3 min-w-0 flex-1">
+              {open ? <ShieldCheck className="h-6 w-6 text-emerald-500 mt-0.5 shrink-0" /> : <ShieldAlert className="h-6 w-6 text-amber-500 mt-0.5 shrink-0" />}
+              <div className="min-w-0">
+                <p className="font-medium break-normal">
+                  {open ? "Auto-pilote OUVERT" : "Auto-pilote FERMÉ — aucun envoi en masse autorisé"}
+                </p>
+                <p className="text-sm text-muted-foreground break-words">
+                  {gate.data?.reason ?? "—"} ·{" "}
+                  {lastPass ? `dernier test passé : ${lastPass.toLocaleString("fr-CA")}` : "aucun test passé"}
+                </p>
+              </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Input
                 placeholder="email cible (default founder)"
                 value={testEmail}
                 onChange={e => setTestEmail(e.target.value)}
-                className="w-64"
+                className="w-full sm:w-64"
               />
-              <Button onClick={handleSelftest} disabled={selftest.isPending} className="gap-2">
+              <Button onClick={handleSelftest} disabled={selftest.isPending} className="gap-2 w-full sm:w-auto justify-center">
                 {selftest.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
                 Lancer selftest E2E
               </Button>
