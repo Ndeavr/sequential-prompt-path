@@ -53147,22 +53147,43 @@ export type Database = {
       outreach_health_state: {
         Row: {
           id: number
+          resend_account_id: string | null
+          resend_key_length: number | null
+          resend_key_prefix: string | null
           resend_last_checked_at: string | null
           resend_last_error: string | null
+          resend_last_send_at: string | null
+          resend_last_send_error: string | null
+          resend_last_send_id: string | null
+          resend_last_send_status: string | null
           resend_verified_domain: string | null
           updated_at: string
         }
         Insert: {
           id?: number
+          resend_account_id?: string | null
+          resend_key_length?: number | null
+          resend_key_prefix?: string | null
           resend_last_checked_at?: string | null
           resend_last_error?: string | null
+          resend_last_send_at?: string | null
+          resend_last_send_error?: string | null
+          resend_last_send_id?: string | null
+          resend_last_send_status?: string | null
           resend_verified_domain?: string | null
           updated_at?: string
         }
         Update: {
           id?: number
+          resend_account_id?: string | null
+          resend_key_length?: number | null
+          resend_key_prefix?: string | null
           resend_last_checked_at?: string | null
           resend_last_error?: string | null
+          resend_last_send_at?: string | null
+          resend_last_send_error?: string | null
+          resend_last_send_id?: string | null
+          resend_last_send_status?: string | null
           resend_verified_domain?: string | null
           updated_at?: string
         }
