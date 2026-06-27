@@ -159,8 +159,11 @@ export default function TwilioDiagnosticPanel() {
         </div>
       )}
 
+      <LiveAuthAudit />
+
       {data && (
         <>
+
           {/* Sender config */}
           {data.diagnosis && (
             <div className={`p-3 rounded border ${blocked ? "border-red-500/50 bg-red-500/10" : data.diagnosis.status === "warning" ? "border-amber-500/40 bg-amber-500/10" : "border-emerald-500/40 bg-emerald-500/5"}`}>
