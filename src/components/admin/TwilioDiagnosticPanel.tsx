@@ -161,6 +161,9 @@ export default function TwilioDiagnosticPanel() {
 
       <LiveAuthAudit />
 
+      <TwilioE2EAuditPanel />
+
+
       {data && (
         <>
 
