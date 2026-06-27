@@ -271,7 +271,7 @@ export default function PageCheckoutSuccess() {
               <Button
                 variant="outline"
                 className="flex-1 h-10 rounded-xl text-sm"
-                onClick={() => navigate("/pro/dashboard")}
+                onClick={() => navigate("/pro")}
               >
                 <BarChart3 className="w-3.5 h-3.5 mr-1" /> Mon cockpit
               </Button>
