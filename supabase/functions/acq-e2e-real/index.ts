@@ -216,7 +216,7 @@ Deno.serve(async (req) => {
   await step(9, async () => {
     for (let i = 0; i < 4; i++) {
       const { data } = await sb.from("acquisition_events").select("id,event_type")
-        .eq("event_type", "clicked").contains("metadata", { tracker_id: trackerId } as any).limit(1);
+        .eq("event_type", "clicked").eq("tracking_id", trackerId).limit(1);
       if ((data ?? []).length) return { payload: { event_count: data!.length } };
       await new Promise(r => setTimeout(r, 1000));
     }
