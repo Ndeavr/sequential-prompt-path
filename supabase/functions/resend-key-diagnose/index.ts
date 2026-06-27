@@ -37,11 +37,26 @@ Deno.serve(async (req) => {
   let apiKeys: any = { status: 0, message: null, count: null, names: [] };
   let domains: any = { status: 0, message: null, count: null, verified: null, items: [] };
 
+  // Lovable connector keys (lovc_…) are valid — they route via the Lovable gateway, not api.resend.com.
+  // Direct calls to api.resend.com with a lovc_ key return 401 "API key is invalid" (a false negative).
+  const isGatewayKey = trimmed.startsWith("lovc_");
+  const lovableKey = Deno.env.get("LOVABLE_API_KEY") ?? "";
+
+  const fetchResend = async (path: string) => {
+    if (isGatewayKey) {
+      if (!lovableKey) {
+        return new Response(JSON.stringify({ message: "LOVABLE_API_KEY missing for gateway routing" }), { status: 500 });
+      }
+      return fetch(`https://connector-gateway.lovable.dev/resend${path}`, {
+        headers: { Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": trimmed },
+      });
+    }
+    return fetch(`https://api.resend.com${path}`, { headers: { Authorization: `Bearer ${trimmed}` } });
+  };
+
   if (trimmed) {
     try {
-      const r = await fetch("https://api.resend.com/api-keys", {
-        headers: { Authorization: `Bearer ${trimmed}` },
-      });
+      const r = await fetchResend("/api-keys");
       const b = await readBody(r);
       apiKeys = {
         status: r.status,
@@ -54,9 +69,7 @@ Deno.serve(async (req) => {
     } catch (e) { apiKeys = { status: -1, message: String(e) }; }
 
     try {
-      const r = await fetch("https://api.resend.com/domains", {
-        headers: { Authorization: `Bearer ${trimmed}` },
-      });
+      const r = await fetchResend("/domains");
       const b = await readBody(r);
       const items = Array.isArray(b.json?.data) ? b.json.data : [];
       const verified = items.find((d: any) => d?.status === "verified") ?? null;
