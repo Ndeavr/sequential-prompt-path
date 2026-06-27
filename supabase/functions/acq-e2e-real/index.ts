@@ -14,7 +14,19 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const TWILIO_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
 const TWILIO_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
-const TWILIO_FROM = Deno.env.get("TWILIO_PHONE_NUMBER") ?? "";
+// Normalize Twilio sender to strict E.164. Twilio rejects "4501234567" or "14501234567"
+// — must start with "+". Auto-prepend "+" (and "+1" for 10-digit NANP) so a slightly
+// malformed secret still works.
+function normalizeE164(raw: string): string {
+  const v = (raw ?? "").trim();
+  if (!v) return "";
+  if (v.startsWith("+")) return v;
+  const digits = v.replace(/\D/g, "");
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+  return `+${digits}`;
+}
+const TWILIO_FROM = normalizeE164(Deno.env.get("TWILIO_PHONE_NUMBER") ?? "");
 const STRIPE_KEY = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
 const FOUNDER_EMAIL = Deno.env.get("FOUNDER_EMAIL") ?? "danny@unpro.ca";
 
@@ -178,7 +190,9 @@ Deno.serve(async (req) => {
   // 7 — send SMS (Twilio magic test number)
   await step(6, async () => {
     if (!TWILIO_SID || !TWILIO_TOKEN) return { error: "TWILIO secrets missing", repair: "Add TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN" };
-    if (!TWILIO_FROM) return { error: "TWILIO_PHONE_NUMBER missing", repair: "Set TWILIO_PHONE_NUMBER secret" };
+    const rawFrom = Deno.env.get("TWILIO_PHONE_NUMBER") ?? "";
+    if (!TWILIO_FROM) return { error: `TWILIO_PHONE_NUMBER missing or unparseable (raw_len=${rawFrom.length})`, repair: "Set TWILIO_PHONE_NUMBER to E.164 (e.g. +15145551234)" };
+    if (!/^\+\d{10,15}$/.test(TWILIO_FROM)) return { error: `TWILIO_PHONE_NUMBER invalid after normalize: ${TWILIO_FROM}`, repair: "Use E.164 format +15145551234" };
     const auth = btoa(`${TWILIO_SID}:${TWILIO_TOKEN}`);
     const body = new URLSearchParams({ From: TWILIO_FROM, To: "+15005550006", Body: `UNPRO E2E ${run_group.slice(0,8)} https://unpro.ca/r/${trackerId}` });
     const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`, {
