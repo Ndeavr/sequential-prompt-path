@@ -15,6 +15,7 @@ import {
   useRecentEmailEvents, useRunSelftest, useRun30dBackfill,
   useOperationalScore, useActiveHealthChecks, useRepairRuns, useCriticalAlerts,
   useE2EFullRuns, useRunHealthAgent, useRunE2EReal, useRepairMessaging,
+  useResendDiagnose, useResendTestSend,
 } from "@/hooks/useOutreachHealth";
 
 
