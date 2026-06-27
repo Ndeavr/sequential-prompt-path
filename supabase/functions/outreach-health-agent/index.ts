@@ -57,6 +57,11 @@ async function probeResend(): Promise<Probe> {
   // Persist diag basics every probe
   const baseDiag = { id: 1, resend_key_prefix: prefix, resend_key_length: keyLen, resend_last_checked_at: new Date().toISOString() };
 
+  if (trimmed.startsWith("lovc_")) {
+    await supabase.from("outreach_health_state").upsert({ ...baseDiag, resend_last_error: `lovable_connector_key prefix=${prefix} — expected re_` });
+    return { provider: "resend", status: "red", failure_reason: "LOVABLE_CONNECTOR_KEY_INSTEAD_OF_RESEND",
+      message: `RESEND_API_KEY contient une clé Lovable connector (${prefix}…). Resend rejette HTTP 400. Remplacer par une vraie clé Resend (re_…).`, repair_action: "update_secret" };
+  }
   if (!trimmed.startsWith("re_")) {
     await supabase.from("outreach_health_state").upsert({ ...baseDiag, resend_last_error: `bad_format prefix=${prefix}` });
     return { provider: "resend", status: "red", failure_reason: "WRONG_VARIABLE_MAPPING",
