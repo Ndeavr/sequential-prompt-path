@@ -70935,7 +70935,7 @@ export type Database = {
           message_body: string
           message_sid: string | null
           phone_number: string
-          prospect_id: string
+          prospect_id: string | null
           provider: string
           purpose: string | null
           sent_at: string | null
@@ -70952,7 +70952,7 @@ export type Database = {
           message_body: string
           message_sid?: string | null
           phone_number: string
-          prospect_id: string
+          prospect_id?: string | null
           provider?: string
           purpose?: string | null
           sent_at?: string | null
@@ -70969,7 +70969,7 @@ export type Database = {
           message_body?: string
           message_sid?: string | null
           phone_number?: string
-          prospect_id?: string
+          prospect_id?: string | null
           provider?: string
           purpose?: string | null
           sent_at?: string | null

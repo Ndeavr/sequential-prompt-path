@@ -1,0 +1,1 @@
+ALTER TABLE public.sms_messages ALTER COLUMN prospect_id DROP NOT NULL;
