@@ -1,29 +1,22 @@
-## Problème
-E2E étape 1/14 (`create_synthetic_contractor`) plante : l'insert utilise `name`, mais la table `public.contractors` n'a pas cette colonne — c'est `business_name`. De plus, `user_id` est `NOT NULL` et n'est pas fourni. Résultat : Overall capé à 70, Autopilot bloqué.
+## Cause de l'échec étape 10/14
 
-## Fix (1 fichier)
-`supabase/functions/acq-e2e-real/index.ts` — étape 1 (lignes 94-100) :
+L'étape 9 `click_tracked_cta` fait `fetch("https://unpro.ca/r/{trackerId}")`. Ce chemin est servi par le SPA React (`QrRedirectPage`) qui ne déclenche le tracking **que dans le navigateur** via `window.location.replace(...)`. Un `fetch` côté serveur reçoit simplement le HTML de la SPA (HTTP 200), donc l'edge function `r-redirect` n'est jamais invoquée et aucun event `clicked` n'est inséré dans `acquisition_events`. L'étape 10 échoue donc systématiquement.
 
-```ts
-const synthUserId = crypto.randomUUID();
-const { error } = await sb.from("contractors").insert({
-  id: synthId,
-  user_id: synthUserId,
-  business_name: `E2E ${slug}`,
-  email: `${slug}@unpro.test`,
-  phone: "+15555550100",
-  city: "Montréal",
-  account_status: "test",
-  onboarding_status: "synthetic",
-  activation_status: "synthetic",
-});
-```
+## Correctif
 
-Pas de FK sur `user_id` (vérifié) → uuid aléatoire OK. Le delete final (ligne 235) nettoie déjà la ligne par `id`.
+Dans `supabase/functions/acq-e2e-real/index.ts`, taper directement l'edge function `r-redirect` pour l'étape 9 :
 
-## Validation
-1. Redéployer `acq-e2e-real`.
-2. Cliquer **Run E2E (14)** → étape 1 doit passer (`ok`).
-3. Overall remonte au-dessus de 70 si les autres étapes passent ; Autopilot se débloque si ≥ 95.
+- Remplacer le `fetch` vers `https://unpro.ca/r/{trackerId}` par un appel à l'URL de la fonction : `${SUPABASE_URL}/functions/v1/r-redirect/{trackerId}` avec `redirect: "manual"` et header `Authorization: Bearer ${SERVICE_ROLE_KEY}`.
+- Accepter `status === 302` (ou 3xx) comme succès ; échec sinon.
+- Conserver le polling existant de l'étape 10 (4 × 1s) sur `acquisition_events` avec `event_type=clicked` + `metadata.tracker_id`.
 
-Aucun autre changement (UI, schéma, RLS) — c'est un bug de payload côté edge function.
+## Effet attendu
+
+- Étape 9 : 302 vers `destination_url`.
+- `r-redirect` insère la ligne `clicked` dans `acquisition_events` et incrémente `acquisition_tracking_links.click_count`.
+- Étape 10 trouve l'event → passe.
+- Messaging cap retombe à 100, Overall ≥ 95, Autopilot se déverrouille.
+
+## Notes
+
+Aucune modification UI, aucun changement de logique métier. Test E2E uniquement. Le comportement réel utilisateur (clic mobile/desktop sur `unpro.ca/r/...`) reste inchangé — le SPA continue de rediriger via `window.location.replace`.

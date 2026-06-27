@@ -196,11 +196,20 @@ Deno.serve(async (req) => {
     return { payload: { sid: prev.sid, status: prev.status } };
   });
 
-  // 9 — click tracked CTA (HEAD /r/{id})
+  // 9 — click tracked CTA (call edge function directly; /r/* on unpro.ca is the SPA)
   await step(8, async () => {
-    const r = await fetch(`https://unpro.ca/r/${trackerId}`, { redirect: "manual" });
-    if (r.status >= 200 && r.status < 400) return { payload: { http_status: r.status } };
-    return { error: `HTTP ${r.status}`, repair: "Check r-redirect edge function + DNS" };
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/r-redirect/${trackerId}`, {
+      method: "GET",
+      redirect: "manual",
+      headers: {
+        Authorization: `Bearer ${SERVICE_ROLE}`,
+        apikey: SERVICE_ROLE,
+      },
+    });
+    // consume body to avoid resource leak
+    try { await r.text(); } catch { /* noop */ }
+    if (r.status >= 300 && r.status < 400) return { payload: { http_status: r.status } };
+    return { error: `HTTP ${r.status} (expected 3xx)`, repair: "Check r-redirect edge function logs" };
   });
 
   // 10 — verify click event landed in acquisition_events
