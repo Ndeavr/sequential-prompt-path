@@ -64,6 +64,30 @@ serve(async (req) => {
       },
     });
 
+    await supa.from("click_events").insert({
+      tracking_id: trackingId,
+      channel: (link.channel as any) || "web",
+      provider: "app",
+      provider_message_id: (link as any).metadata?.twilio_sid || (link as any).metadata?.email_message_id || null,
+      destination_url: link.destination_url || FALLBACK_URL,
+      user_agent: req.headers.get("user-agent"),
+      referer: req.headers.get("referer"),
+      source_table: "acquisition_tracking_links",
+      source_row_id: trackingId,
+      payload: {
+        campaign: link.campaign,
+        metadata: link.metadata ?? {},
+        source: "r-redirect",
+      },
+    });
+
+    if ((link.channel || "").toLowerCase() === "sms") {
+      await supa
+        .from("sms_events_v2")
+        .update({ clicked_at: now })
+        .contains("metadata", { tracking_id: trackingId });
+    }
+
     // Canonical funnel: stamp clicked_at on outreach_email_events when the link
     // carries a Resend message_id (set by ctaTracker via metadata in future, or
     // matched by contractor + campaign as a best-effort fallback today).

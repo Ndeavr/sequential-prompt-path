@@ -7,7 +7,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, content-type",
+  "Access-Control-Allow-Headers": "authorization, content-type, x-twilio-signature",
 };
 
 function classify(body: string): string {
@@ -42,12 +42,15 @@ serve(async (req) => {
 
     const form = await req.formData();
     const From = String(form.get("From") || "");
+    const To = String(form.get("To") || "");
     const Body = String(form.get("Body") || "");
     const MessageSid = String(form.get("MessageSid") || "");
+    const AccountSid = String(form.get("AccountSid") || "");
+    const rawPayload = Object.fromEntries(form.entries());
 
     const intent = classify(Body);
 
-    await sb.from("sms_messages").insert({
+    const { data: smsRow } = await sb.from("sms_messages").insert({
       message_sid: MessageSid,
       phone_number: From,
       direction: "inbound",
@@ -55,6 +58,17 @@ serve(async (req) => {
       status: "received",
       intent,
       provider: "twilio",
+    }).select("id").maybeSingle();
+
+    await sb.from("message_events").insert({
+      channel: "sms",
+      provider: "twilio",
+      provider_message_id: MessageSid,
+      message_event_type: "inbound",
+      status: "received",
+      source_table: "sms_messages",
+      source_row_id: smsRow?.id ?? null,
+      payload: { ...rawPayload, from: From, to: To, body: Body, intent, account_sid: AccountSid ? `${AccountSid.slice(0, 4)}…${AccountSid.slice(-4)}` : null },
     });
 
     // Resolve lead by phone (last 10 digits)
@@ -71,6 +85,19 @@ serve(async (req) => {
       lead_id: leadId, channel: "sms", provider: "twilio", provider_message_id: MessageSid,
       from_address: From, body: Body, intent,
     }).select("id").single();
+
+    if (reply?.id) {
+      await sb.from("acquisition_events").insert({
+        channel: "sms",
+        event_type: intent === "stop" ? "unsubscribed" : "contacted",
+        provider: "twilio",
+        provider_event_id: MessageSid,
+        source_table: "outreach_replies",
+        source_row_id: reply.id,
+        metadata: { lead_id: leadId, from: From, to: To, intent, inbound_reply: true, body_preview: Body.slice(0, 160) },
+        occurred_at: new Date().toISOString(),
+      });
+    }
 
     if (leadId) {
       const newStatus = intent === "stop" ? "unsubscribed" : "replied";

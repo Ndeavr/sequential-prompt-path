@@ -19760,6 +19760,57 @@ export type Database = {
         }
         Relationships: []
       }
+      click_events: {
+        Row: {
+          channel: string
+          created_at: string
+          destination_url: string | null
+          id: string
+          ip_hash: string | null
+          occurred_at: string
+          payload: Json
+          provider: string
+          provider_message_id: string | null
+          referer: string | null
+          source_row_id: string | null
+          source_table: string | null
+          tracking_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          destination_url?: string | null
+          id?: string
+          ip_hash?: string | null
+          occurred_at?: string
+          payload?: Json
+          provider?: string
+          provider_message_id?: string | null
+          referer?: string | null
+          source_row_id?: string | null
+          source_table?: string | null
+          tracking_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          destination_url?: string | null
+          id?: string
+          ip_hash?: string | null
+          occurred_at?: string
+          payload?: Json
+          provider?: string
+          provider_message_id?: string | null
+          referer?: string | null
+          source_row_id?: string | null
+          source_table?: string | null
+          tracking_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       client_record_quote_files: {
         Row: {
           client_record_quote_id: string
@@ -48504,6 +48555,54 @@ export type Database = {
           },
         ]
       }
+      message_events: {
+        Row: {
+          channel: string
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          id: string
+          message_event_type: string
+          occurred_at: string
+          payload: Json
+          provider: string
+          provider_message_id: string | null
+          source_row_id: string | null
+          source_table: string | null
+          status: string | null
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          message_event_type: string
+          occurred_at?: string
+          payload?: Json
+          provider?: string
+          provider_message_id?: string | null
+          source_row_id?: string | null
+          source_table?: string | null
+          status?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          message_event_type?: string
+          occurred_at?: string
+          payload?: Json
+          provider?: string
+          provider_message_id?: string | null
+          source_row_id?: string | null
+          source_table?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       message_frequency_rules: {
         Row: {
           category: string
@@ -70557,6 +70656,7 @@ export type Database = {
           body_hash: string | null
           campaign_id: string | null
           carrier: string | null
+          clicked_at: string | null
           contractor_id: string | null
           country_code: string | null
           created_at: string
@@ -70572,11 +70672,15 @@ export type Database = {
           metadata: Json
           next_retry_at: string | null
           normalized_phone: string | null
+          provider_response: Json
           raw_phone: string | null
           sent_at: string | null
           status: string
+          status_callback_url: string | null
           template_key: string | null
           twilio_sid: string | null
+          twilio_status_checked_at: string | null
+          twilio_status_url: string | null
           updated_at: string
           webhook_received_at: string | null
         }
@@ -70586,6 +70690,7 @@ export type Database = {
           body_hash?: string | null
           campaign_id?: string | null
           carrier?: string | null
+          clicked_at?: string | null
           contractor_id?: string | null
           country_code?: string | null
           created_at?: string
@@ -70601,11 +70706,15 @@ export type Database = {
           metadata?: Json
           next_retry_at?: string | null
           normalized_phone?: string | null
+          provider_response?: Json
           raw_phone?: string | null
           sent_at?: string | null
           status?: string
+          status_callback_url?: string | null
           template_key?: string | null
           twilio_sid?: string | null
+          twilio_status_checked_at?: string | null
+          twilio_status_url?: string | null
           updated_at?: string
           webhook_received_at?: string | null
         }
@@ -70615,6 +70724,7 @@ export type Database = {
           body_hash?: string | null
           campaign_id?: string | null
           carrier?: string | null
+          clicked_at?: string | null
           contractor_id?: string | null
           country_code?: string | null
           created_at?: string
@@ -70630,11 +70740,15 @@ export type Database = {
           metadata?: Json
           next_retry_at?: string | null
           normalized_phone?: string | null
+          provider_response?: Json
           raw_phone?: string | null
           sent_at?: string | null
           status?: string
+          status_callback_url?: string | null
           template_key?: string | null
           twilio_sid?: string | null
+          twilio_status_checked_at?: string | null
+          twilio_status_url?: string | null
           updated_at?: string
           webhook_received_at?: string | null
         }
@@ -70821,7 +70935,7 @@ export type Database = {
           message_body: string
           message_sid: string | null
           phone_number: string
-          prospect_id: string
+          prospect_id: string | null
           provider: string
           purpose: string | null
           sent_at: string | null
@@ -70838,7 +70952,7 @@ export type Database = {
           message_body: string
           message_sid?: string | null
           phone_number: string
-          prospect_id: string
+          prospect_id?: string | null
           provider?: string
           purpose?: string | null
           sent_at?: string | null
@@ -70855,7 +70969,7 @@ export type Database = {
           message_body?: string
           message_sid?: string | null
           phone_number?: string
-          prospect_id?: string
+          prospect_id?: string | null
           provider?: string
           purpose?: string | null
           sent_at?: string | null
