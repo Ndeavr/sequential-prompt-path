@@ -38,7 +38,7 @@ const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? "";
 const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY") ?? "";
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 
-const STATUS_CALLBACK_URL = `${SUPABASE_URL.replace("supabase.co", "functions.supabase.co")}/functions/v1/twilio-status-v2`;
+const STATUS_CALLBACK_URL = `${SUPABASE_URL}/functions/v1/twilio-status`;
 const TWILIO_MESSAGE_BASE = TWILIO_ACCOUNT_SID
   ? `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages`
   : "";

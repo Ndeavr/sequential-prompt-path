@@ -27,7 +27,7 @@ serve(async (req) => {
     try {
       const params = new URLSearchParams();
       for (const [k, v] of form.entries()) params.append(k, String(v));
-      const target = `${SUPABASE_URL.replace("supabase.co", "functions.supabase.co")}/functions/v1/twilio-status-v2`;
+      const target = `${SUPABASE_URL}/functions/v1/twilio-status-v2`;
       await fetch(target, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", "X-Forwarded-From": "twilio-status" }, body: params.toString() });
     } catch (_) { /* swallow */ }
 
