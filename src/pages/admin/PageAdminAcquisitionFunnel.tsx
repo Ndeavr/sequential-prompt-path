@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import SectionErrorBoundary from "@/components/admin/SectionErrorBoundary";
 import { AcquisitionHealthPanel } from "@/components/admin/AcquisitionHealthPanel";
 import ChannelRoutingCard from "@/components/admin/ChannelRoutingCard";
+import TwilioDiagnosticPanel from "@/components/admin/TwilioDiagnosticPanel";
 import { Link } from "react-router-dom";
 
 type Finding = {
