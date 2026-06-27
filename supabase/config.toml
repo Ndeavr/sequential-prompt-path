@@ -189,3 +189,6 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.private-access]
     verify_jwt = false
+  [functions.resend-key-diagnose]
+    verify_jwt = true
+
