@@ -326,19 +326,37 @@ Deno.serve(async (req) => {
   const { reason_capped: _rc, e2e_pass: _ep, e2e_last_at: _ea, ...scoreRow } = score;
   await supabase.from("outreach_operational_score").insert(scoreRow);
 
-  // Critical alerts
+  // Critical alerts — auto-resolve obsolete ones, dedupe open ones.
   for (const p of probes) {
-    if (p.status === "red" && p.failure_reason !== "MISSING_SECRET") {
-      await supabase.from("outreach_critical_alerts").insert({
-        provider: p.provider, severity: "critical",
-        root_cause: p.failure_reason ?? "UNKNOWN",
-        affected_users: 0,
-        revenue_at_risk_cents: 0,
-        estimated_repair: p.repair_action ?? "manual_required",
-        repair_progress: "queued",
-        payload: { message: p.message },
-      });
+    // When the probe is green, resolve every open alert for that provider.
+    if (p.status === "green") {
+      await supabase.from("outreach_critical_alerts")
+        .update({ resolved_at: new Date().toISOString(), repair_progress: "resolved" })
+        .eq("provider", p.provider).is("resolved_at", null);
+      continue;
     }
+    if (p.status !== "red" || p.failure_reason === "MISSING_SECRET") continue;
+
+    // Resolve any stale alert with a *different* root_cause (the failure mode has changed).
+    await supabase.from("outreach_critical_alerts")
+      .update({ resolved_at: new Date().toISOString(), repair_progress: "superseded" })
+      .eq("provider", p.provider).is("resolved_at", null).neq("root_cause", p.failure_reason ?? "UNKNOWN");
+
+    // Dedupe: if an open alert with same root_cause already exists, skip insert.
+    const { data: existing } = await supabase.from("outreach_critical_alerts")
+      .select("id").eq("provider", p.provider).eq("root_cause", p.failure_reason ?? "UNKNOWN")
+      .is("resolved_at", null).limit(1).maybeSingle();
+    if (existing?.id) continue;
+
+    await supabase.from("outreach_critical_alerts").insert({
+      provider: p.provider, severity: "critical",
+      root_cause: p.failure_reason ?? "UNKNOWN",
+      affected_users: 0,
+      revenue_at_risk_cents: 0,
+      estimated_repair: p.repair_action ?? "manual_required",
+      repair_progress: "queued",
+      payload: { message: p.message },
+    });
   }
 
   // Re-evaluate gate so auto-unlock can trigger
