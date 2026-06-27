@@ -84,10 +84,16 @@ export default function PageSmsHealth() {
     try {
       const { data, error } = await supabase.functions.invoke("sms-admin-test", { body: {} });
       if (error) throw error;
-      if (!data?.event_id) throw new Error(data?.error || "Aucun event_id retourné");
+      if (!data?.event_id) {
+        const detail = data?.error_message || data?.error || data?.status || "no_event_id";
+        const code = data?.error_code ? ` [${data.error_code}]` : "";
+        throw new Error(`sendSms a renvoyé un event_id vide — ${detail}${code}`);
+      }
       setTestEventId(data.event_id);
       setTestStatus(data.status);
-      toast.success(`Test envoyé · ${data.status}`);
+      const label = data.error_code ? `${data.status} (${data.error_code})` : data.status;
+      if (data.ok === false) toast.error(`Test envoyé mais échec: ${label} — ${data.error_message ?? ""}`);
+      else toast.success(`Test envoyé · ${label}`);
     } catch (e: any) {
       toast.error(`Échec du test: ${e?.message ?? e}`);
     } finally {

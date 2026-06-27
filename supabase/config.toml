@@ -197,4 +197,8 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.resend-key-diagnose]
     verify_jwt = true
+  [functions.twilio-e2e-audit]
+    verify_jwt = false
+
+
 

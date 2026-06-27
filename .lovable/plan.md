@@ -1,56 +1,64 @@
-## Twilio Live Authentication Audit
+## Twilio E2E Audit — Trace Every Step
 
-Build a fresh, no-cache diagnostic that hits the real Twilio API and pinpoints the failing secret.
+Build a single deterministic audit that walks the entire SMS pipeline, reports PASS/FAIL + payloads for each of the 10 stages, then sends a real SMS and waits for the Twilio status callback to flip the row to `delivered`.
 
-### 1. New edge function: `twilio-auth-audit` (verify_jwt = false, admin-gated)
-For each of the three auth modes present in secrets, perform a real authenticated GET against Twilio:
+### Current findings (already verified during exploration)
 
-- **Mode A — Account SID + Auth Token** (the failing path):
-  `GET https://api.twilio.com/2010-04-01/Accounts/{TWILIO_ACCOUNT_SID}.json`
-  Basic auth: `TWILIO_ACCOUNT_SID:TWILIO_AUTH_TOKEN`
-- **Mode B — API Key + Auth Token** via connector gateway (`TWILIO_API_KEY` exists as a connector key) — call `/2010-04-01/Accounts.json` through `connector-gateway.lovable.dev/twilio` to confirm whether the gateway-backed credential still works.
-- **Mode C — Phone number lookup**:
-  `GET /2010-04-01/Accounts/{SID}/IncomingPhoneNumbers.json?PhoneNumber={TWILIO_PHONE_NUMBER}` and same for `TWILIO_FROM_NUMBER` (+14503286776).
-- **Mode D — Messaging Service & Verify Service**:
-  `GET https://messaging.twilio.com/v1/Services/{TWILIO_MESSAGING_SERVICE_SID}`
-  `GET https://verify.twilio.com/v2/Services/{TWILIO_VERIFY_SERVICE_SID}`
+- `sms_events_v2` row from the last test (`d2062525…`, 2026-06-27 18:51) **did** return an `event_id` with `status=failed`, `error_code=20003` (auth error — fixed since then by the user's secret update).
+- The frontend error "Aucun event_id retourné" (PageSmsHealth.tsx:87) only fires when `sendSms()` returns `event_id: ""`, which happens only when the up-front audit INSERT into `sms_events_v2` fails (`qErr` branch in `_shared/twilioSend.ts`).
+- `sms_events_v2` RLS + grants: `service_role` ALL policy exists, `has_table_privilege('service_role', 'public.sms_events_v2', 'INSERT')` = true. So the insert path is healthy at the DB layer.
+- Last `sms-admin-test` deploy logs show only boot lines (no recent invocation) — the user's "Aucun event_id" report may predate the secret fix, OR an unrelated path (TwilioDiagnosticPanel smoke test) is being hit. Both will be covered.
 
-For every call, return raw `{ status, twilio_code, twilio_message, body_excerpt, latency_ms }`. No caching, no DB reads — each request is freshly issued.
+### What gets built
 
-### 2. Verdict block
-Compute and return a structured verdict naming the exact failing secret:
+#### 1. New edge function `twilio-e2e-audit` (`verify_jwt = false`, admin-gated like `twilio-auth-audit`)
 
+One callable function. Returns a 10-step trace array `[{ step, name, status: pass|fail|warn, latency_ms, request, response, error }]` plus a root-cause verdict.
+
+Steps it runs in order, each isolated and continuing past failure:
+
+| # | Step | What it does |
+|---|------|--------------|
+| 1 | `frontend_invoke` | Echoes the request body received (proves frontend → edge reachability) |
+| 2 | `admin_auth` | Validates caller is admin via `user_roles` |
+| 3 | `secrets_present` | Checks `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`, `SUPABASE_SERVICE_ROLE_KEY` |
+| 4 | `db_write_permission` | Inserts a dry-run row into `sms_events_v2` (`status='audit_probe'`), returns the new `event_id`, then deletes it. Confirms grants + RLS for service_role. |
+| 5 | `twilio_auth` | `GET /Accounts/{SID}.json` — returns HTTP status + Twilio error code |
+| 6 | `from_number_owned` | `GET /IncomingPhoneNumbers.json?PhoneNumber=+14503286776` — confirms canonical sender is in account |
+| 7 | `status_callback_reachable` | `HEAD` on `${SUPABASE_URL}/functions/v1/twilio-status` — confirms webhook URL responds |
+| 8 | `real_send` | Calls canonical `sendSms()` to `ADMIN_TEST_PHONE` (or `body.to`). Captures `event_id`, `twilio_sid`, request form, full Twilio response JSON. |
+| 9 | `poll_callback` | Polls `sms_events_v2` row by `event_id` every 2 s for up to 60 s. PASS when `status ∈ {sent, delivered}`, FAIL on `failed/undelivered/blocked`, WARN on timeout. |
+| 10 | `dashboard_reads` | Re-queries the exact aggregates `PageSmsHealth.tsx` uses (`status` rollup for last 24 h) and confirms the new event_id is in the count. |
+
+Each step returns:
+
+```ts
+{ step: number, name: string, status: 'pass'|'fail'|'warn',
+  latency_ms: number, http_status?: number, twilio_code?: string,
+  request?: unknown, response?: unknown, error?: string }
 ```
-{
-  account_sid: { present, format_ok, valid: bool, error_code, error_message },
-  auth_token:  { present, length, valid: bool },   // valid = Mode A returns 200
-  phone_number:{ present, e164_ok, exists_in_account: bool, sid, capabilities },
-  from_number: { ... same ... },
-  messaging_service: { present, valid, friendly_name },
-  verify_service: { present, valid, friendly_name },
-  api_key_connector: { present, gateway_valid },
-  failing_secret: "TWILIO_AUTH_TOKEN" | "TWILIO_ACCOUNT_SID" | "TWILIO_PHONE_NUMBER" | null,
-  next_action: human-readable repair instruction
-}
-```
 
-Decision logic:
-- Mode A → 401 with code 20003 ⇒ `failing_secret = TWILIO_AUTH_TOKEN` (or SID if account not found → code 20404).
-- Mode A → 200 but phone lookup returns empty array ⇒ `failing_secret = TWILIO_PHONE_NUMBER`.
-- Mode A → 200 + number found ⇒ `failing_secret = null`, system is healthy; investigate elsewhere.
+Root-cause verdict logic — first failing step wins; map to one of:
+`FRONTEND_UNREACHABLE | NOT_ADMIN | SECRET_MISSING:{name} | DB_INSERT_BLOCKED | TWILIO_AUTH_FAILED | FROM_NUMBER_NOT_IN_ACCOUNT | STATUS_CALLBACK_UNREACHABLE | TWILIO_SEND_REJECTED:{code} | CALLBACK_NEVER_FIRED | DASHBOARD_QUERY_MISMATCH | HEALTHY`.
 
-### 3. Admin UI hook
-Add a **"Run Live Auth Audit"** button + result panel inside the existing `TwilioDiagnosticPanel.tsx` (under `/admin/revenue-intelligence`). Shows the verdict block above with green/red rows per secret and a copy-paste repair recommendation. No reliance on the existing cached `twilio-diagnostics` output.
+#### 2. Admin UI: `TwilioE2EAuditPanel`
 
-### 4. Repair guidance surfaced in UI
-If `failing_secret = TWILIO_AUTH_TOKEN`, the panel shows a one-click "Update TWILIO_AUTH_TOKEN" CTA explaining where to find the current Auth Token in Twilio Console → Account → API keys & tokens, then triggers the secrets update form.
+Added under existing `TwilioDiagnosticPanel` in `/admin/revenue-intelligence`. Single "Run Full E2E (10)" button. Renders one row per step with badge (✓ / ✗ / ⏳), latency, copy-paste payload toggle, and a final amber/green verdict bar with the exact failing secret/step + one-click repair CTA (e.g. open `update_secret` for the named secret).
+
+### Fix the immediate "Aucun event_id retourné" bug
+
+In `src/pages/admin/PageSmsHealth.tsx` (line 87): when `data.event_id` is empty but `data.error` exists, surface `data.error` instead of the generic message. Also display `data.error_code` and `data.error_message` from `sendSms()` so failures (e.g. WRONG_SENDER, OUT_OF_WINDOW, audit_insert_failed) are not hidden behind one ambiguous string.
 
 ### Files
-- `supabase/functions/twilio-auth-audit/index.ts` (new)
-- `supabase/config.toml` (register `verify_jwt = false`)
-- `src/components/admin/TwilioDiagnosticPanel.tsx` (add Live Audit section)
+
+- `supabase/functions/twilio-e2e-audit/index.ts` (new)
+- `supabase/config.toml` — register `[functions.twilio-e2e-audit] verify_jwt = false`
+- `src/components/admin/TwilioE2EAuditPanel.tsx` (new)
+- `src/components/admin/TwilioDiagnosticPanel.tsx` — mount the new panel
+- `src/pages/admin/PageSmsHealth.tsx` — surface real error from `sms-admin-test`
 
 ### Done when
-- Calling `twilio-auth-audit` returns a real Twilio HTTP status for each secret
-- The exact failing secret name is identified deterministically
-- Admin panel surfaces the verdict and a direct repair CTA
+
+- Clicking "Run Full E2E (10)" returns 10 step rows with PASS/FAIL + payloads.
+- A successful run produces a real SMS to `ADMIN_TEST_PHONE`, the `sms_events_v2` row flips to `delivered` via the Twilio callback (step 9 PASS), and the `PageSmsHealth` aggregates count it (step 10 PASS).
+- A failing run names the exact failing step, exact failing secret/URL, and the precise Twilio code or DB error in the verdict bar.
