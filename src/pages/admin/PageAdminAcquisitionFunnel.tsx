@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import SectionErrorBoundary from "@/components/admin/SectionErrorBoundary";
 import { AcquisitionHealthPanel } from "@/components/admin/AcquisitionHealthPanel";
 import ChannelRoutingCard from "@/components/admin/ChannelRoutingCard";
+import TwilioDiagnosticPanel from "@/components/admin/TwilioDiagnosticPanel";
 import { Link } from "react-router-dom";
 
 type Finding = {
@@ -194,6 +195,12 @@ export default function PageAdminAcquisitionFunnel() {
         <SectionErrorBoundary title="Routage canal" onRetry={() => window.location.reload()}>
           <ChannelRoutingCard />
         </SectionErrorBoundary>
+
+        {/* ── Twilio diagnostic + smoke test ──────────────── */}
+        <SectionErrorBoundary title="Twilio diagnostic" onRetry={() => window.location.reload()}>
+          <TwilioDiagnosticPanel />
+        </SectionErrorBoundary>
+
 
         {/* ── Status banner ────────────────────────────────── */}
         <SectionErrorBoundary title="Statut système" onRetry={loadRun}>
