@@ -37,8 +37,8 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 
 // Configuration
 const SITE_NAME = "UNPRO"
-const FROM_NAME = "Alex UNPRO"
-const FROM_EMAIL = "alex@notify.unpro.ca"
+const FROM_NAME = "Alex d'UNPRO"
+const FROM_EMAIL = "alex@mail.unpro.ca"
 const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend"
 
 // Sample data for preview mode ONLY (not used in actual email sending).

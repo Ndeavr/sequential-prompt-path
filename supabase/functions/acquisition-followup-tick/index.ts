@@ -62,7 +62,7 @@ async function sendEmail(to: string, subject: string, html: string, text: string
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   const resendKey = Deno.env.get("RESEND_API_KEY");
   if (!lovableKey || !resendKey) return { ok: false, error: "MISSING_SECRET" } as const;
-  const from = Deno.env.get("OUTBOUND_FROM_EMAIL") ?? "UNPRO <bonjour@notify.unpro.ca>";
+  const from = "Alex d'UNPRO <alex@mail.unpro.ca>";
   const r = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
     method: "POST",
     headers: {

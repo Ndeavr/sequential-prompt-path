@@ -13,7 +13,7 @@ serve(async (req) => {
   const apiKey = Deno.env.get("RESEND_API_KEY");
   const body = await req.json().catch(() => ({}));
   const to = body?.to || Deno.env.get("ADMIN_TEST_EMAIL");
-  const from = body?.from || "UNPRO Test <onboarding@resend.dev>";
+  const from = "Alex d'UNPRO <alex@mail.unpro.ca>";
   const subject = body?.subject || `UNPRO acquisition test — ${new Date().toISOString()}`;
   const html = body?.html || `<p>UNPRO acquisition pipeline test message.</p>`;
 

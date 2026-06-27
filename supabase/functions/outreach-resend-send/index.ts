@@ -36,10 +36,8 @@ async function logSend(row: Record<string, unknown>) {
 }
 
 async function resolveSender(): Promise<{ from: string; verified: boolean; domain: string | null }> {
-  const { data } = await sb.from("outreach_health_state").select("resend_verified_domain").eq("id", 1).maybeSingle();
-  const domain = (data as any)?.resend_verified_domain ?? null;
-  if (domain) return { from: `UNPRO <noreply@${domain}>`, verified: true, domain };
-  return { from: "UNPRO <onboarding@resend.dev>", verified: false, domain: null };
+  // Canonical sender for UNPRO — never override.
+  return { from: "Alex d'UNPRO <alex@mail.unpro.ca>", verified: true, domain: "mail.unpro.ca" };
 }
 
 function htmlToText(html: string): string {
