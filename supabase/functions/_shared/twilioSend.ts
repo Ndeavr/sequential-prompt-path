@@ -30,7 +30,7 @@ const TWILIO_MESSAGING_SERVICE_SID = "";
 // CANONICAL production sender. Hard-coded so a misconfigured env var cannot
 // silently fall back to the US (574) number with messaging disabled.
 const CANONICAL_FROM_NUMBER = "+14503286776";
-const TWILIO_FROM_NUMBER = (Deno.env.get("TWILIO_FROM_NUMBER") ?? CANONICAL_FROM_NUMBER).trim();
+const TWILIO_FROM_NUMBER = (Deno.env.get("TWILIO_FROM_NUMBER") ?? "").trim();
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 // Lovable connector-gateway fallback (used when direct creds absent)
