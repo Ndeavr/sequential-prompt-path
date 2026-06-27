@@ -87,7 +87,7 @@ function twilioVerify(path: string, init: RequestInit = {}) {
 }
 
 async function loadAccountInfo() {
-  const res = await twilio2010(`/Accounts/${TWILIO_ACCOUNT_SID}.json`);
+  const res = await twilioFetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}.json`);
   if (!res.ok) {
     return {
       ok: false,
