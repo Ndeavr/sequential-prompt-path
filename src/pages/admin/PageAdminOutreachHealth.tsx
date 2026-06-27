@@ -38,6 +38,8 @@ export default function PageAdminOutreachHealth() {
   const runAgent = useRunHealthAgent();
   const runE2E = useRunE2EReal();
   const repairMessaging = useRepairMessaging();
+  const resendDiag = useResendDiagnose();
+  const resendTest = useResendTestSend();
   const [testEmail, setTestEmail] = useState("");
   const [lastE2E, setLastE2E] = useState<null | { pass: boolean; failed_step: any; total_ms: number }>(null);
 
