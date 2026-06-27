@@ -159,8 +159,11 @@ export default function TwilioDiagnosticPanel() {
         </div>
       )}
 
+      <LiveAuthAudit />
+
       {data && (
         <>
+
           {/* Sender config */}
           {data.diagnosis && (
             <div className={`p-3 rounded border ${blocked ? "border-red-500/50 bg-red-500/10" : data.diagnosis.status === "warning" ? "border-amber-500/40 bg-amber-500/10" : "border-emerald-500/40 bg-emerald-500/5"}`}>
@@ -353,3 +356,97 @@ export default function TwilioDiagnosticPanel() {
     </Card>
   );
 }
+
+function ProbeRow({ label, secret, probe }: { label: string; secret: string; probe: any }) {
+  if (!probe || probe.skipped) {
+    return (
+      <div className="flex items-center justify-between text-xs py-1 border-b border-white/5">
+        <span className="text-muted-foreground">{label} <code className="text-[10px]">{secret}</code></span>
+        <span className="text-muted-foreground">— {probe?.reason || "non testé"}</span>
+      </div>
+    );
+  }
+  const ok = probe.ok || probe.exists_in_account === true;
+  return (
+    <div className="flex items-center justify-between text-xs py-1 border-b border-white/5 gap-2">
+      <span><span className={ok ? "text-emerald-400" : "text-red-400"}>{ok ? "✓" : "✗"}</span> {label} <code className="text-[10px] text-muted-foreground">{secret}</code></span>
+      <span className="font-mono text-[10px] text-muted-foreground truncate max-w-[60%] text-right">
+        HTTP {probe.status}{probe.twilio_code ? ` · code ${probe.twilio_code}` : ""}{probe.twilio_message ? ` · ${probe.twilio_message}` : ""}{probe.exists_in_account === false ? " · introuvable dans le compte" : ""}
+      </span>
+    </div>
+  );
+}
+
+function LiveAuthAudit() {
+  const [busy, setBusy] = useState(false);
+  const [audit, setAudit] = useState<any>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  const run = useCallback(async () => {
+    setBusy(true); setErr(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("twilio-auth-audit", { method: "GET" });
+      if (error) throw error;
+      setAudit(data);
+    } catch (e: any) {
+      setErr(e?.message || String(e));
+    } finally { setBusy(false); }
+  }, []);
+
+  const verdict = audit?.verdict;
+  const failing: string | null = verdict?.failing_secret ?? null;
+
+  return (
+    <div className="border border-white/10 rounded p-3 space-y-3 bg-black/20">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div>
+          <div className="text-sm font-semibold">Live Twilio auth audit (no cache)</div>
+          <p className="text-xs text-muted-foreground">Appel direct authentifié à l'API Twilio. Identifie le secret défaillant.</p>
+        </div>
+        <Button size="sm" variant="outline" onClick={run} disabled={busy}>
+          {busy ? "Audit en cours…" : "Run Live Auth Audit"}
+        </Button>
+      </div>
+
+      {err && <div className="text-xs text-red-400">{err}</div>}
+
+      {audit && (
+        <>
+          <div className={`p-2 rounded text-sm border ${failing ? "border-red-500/50 bg-red-500/10 text-red-200" : "border-emerald-500/40 bg-emerald-500/5 text-emerald-200"}`}>
+            {failing ? (
+              <>
+                <div className="font-semibold">Secret défaillant : <code className="text-red-300">{failing}</code></div>
+                <div className="text-xs mt-1 text-red-100/90">{verdict?.next_action}</div>
+              </>
+            ) : (
+              <div className="font-semibold">✓ Tous les secrets Twilio sont valides ({verdict?.next_action})</div>
+            )}
+          </div>
+
+          <div>
+            <ProbeRow label="Account auth (SID + Token)" secret="TWILIO_AUTH_TOKEN" probe={audit.account} />
+            <ProbeRow label="Phone number" secret="TWILIO_PHONE_NUMBER" probe={audit.phone_number} />
+            <ProbeRow label="From number" secret="TWILIO_FROM_NUMBER" probe={audit.from_number} />
+            <ProbeRow label="Messaging Service" secret="TWILIO_MESSAGING_SERVICE_SID" probe={audit.messaging_service} />
+            <ProbeRow label="Verify Service" secret="TWILIO_VERIFY_SERVICE_SID" probe={audit.verify_service} />
+            <ProbeRow label="Connector gateway" secret="TWILIO_API_KEY" probe={audit.connector_gateway} />
+          </div>
+
+          {failing === "TWILIO_AUTH_TOKEN" && (
+            <a
+              href="https://console.twilio.com/us1/account/keys-credentials/api-keys"
+              target="_blank" rel="noreferrer"
+              className="inline-block text-xs underline text-blue-300"
+            >Ouvrir Twilio Console → Account → API keys & tokens</a>
+          )}
+
+          <details className="text-[10px]">
+            <summary className="cursor-pointer text-muted-foreground">Raw audit JSON</summary>
+            <pre className="mt-1 max-h-64 overflow-auto bg-black/40 p-2 rounded">{JSON.stringify(audit, null, 2)}</pre>
+          </details>
+        </>
+      )}
+    </div>
+  );
+}
+
