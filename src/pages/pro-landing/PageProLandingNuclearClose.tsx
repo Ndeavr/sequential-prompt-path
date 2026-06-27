@@ -187,6 +187,11 @@ export default function PageProLandingNuclearClose() {
   const runId = searchParams.get("r");
   const navigate = useNavigate();
 
+  // Guard: reserved slugs (e.g. /pro/dashboard) are internal mis-links — redirect to /pro.
+  if (slug && RESERVED_PRO_SLUGS.has(slug.toLowerCase())) {
+    return <Navigate to="/pro" replace />;
+  }
+
   // ISR live-run tracking: link_clicked on mount, plan_viewed after 4s.
   useEffect(() => {
     if (!runId) return;
