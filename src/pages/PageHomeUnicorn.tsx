@@ -256,7 +256,7 @@ function AiInputCard({ onTalk }: { onTalk: (hint?: string) => void }) {
   const [activeChip, setActiveChip] = useState<number | null>(null);
 
   const sectionLabel =
-    source === "trending" ? "Questions populaires en ce moment" : "Suggestions de saison";
+    source === "trending" ? "QUESTIONS POPULAIRES" : "Suggestions de saison";
 
   return (
     <section className="px-4 mt-4 relative z-10 uc-fade-up" style={{ animationDelay: "60ms" }}>
