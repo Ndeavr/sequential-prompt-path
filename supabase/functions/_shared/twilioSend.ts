@@ -39,6 +39,9 @@ const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY") ?? "";
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 
 const STATUS_CALLBACK_URL = `${SUPABASE_URL.replace("supabase.co", "functions.supabase.co")}/functions/v1/twilio-status-v2`;
+const TWILIO_MESSAGE_BASE = TWILIO_ACCOUNT_SID
+  ? `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages`
+  : "";
 
 export type SendSmsInput = {
   to: string;
@@ -95,6 +98,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
         status: "deferred_window",
         error_code: "OUT_OF_WINDOW",
         error_message: `Hors fenêtre — reprise prévue ${windowCheck.next_send_at}`,
+        status_callback_url: STATUS_CALLBACK_URL,
         metadata: { ...(input.metadata ?? {}), next_send_at: windowCheck.next_send_at, send_window_blocked: true },
       })
       .select("id")
@@ -128,6 +132,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     message_preview,
     body_hash,
     attempt_number: input.attempt_number ?? 1,
+    status_callback_url: STATUS_CALLBACK_URL,
     metadata: input.metadata ?? {},
   };
 
@@ -164,6 +169,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     const msg = `Wrong Twilio sender configured. Expected ${CANONICAL_FROM_NUMBER}. Current: ${TWILIO_FROM_NUMBER || "(unset)"}`;
     await supabase.from("sms_events_v2").update({
       status: "failed", error_code: "WRONG_SENDER", error_message: msg, failed_at: new Date().toISOString(),
+      provider_response: { blocked: true, expected_from: CANONICAL_FROM_NUMBER, env_from: TWILIO_FROM_NUMBER },
     }).eq("id", queued.id);
     return { event_id: queued.id, status: "failed", twilio_sid: null, error_code: "WRONG_SENDER", error_message: msg };
   }
@@ -171,6 +177,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     const msg = "SMS delivery tracking is not configured. Fix Twilio status webhook before sending.";
     await supabase.from("sms_events_v2").update({
       status: "failed", error_code: "STATUS_CALLBACK_MISSING", error_message: msg, failed_at: new Date().toISOString(),
+      provider_response: { blocked: true, status_callback_url: STATUS_CALLBACK_URL },
     }).eq("id", queued.id);
     return { event_id: queued.id, status: "failed", twilio_sid: null, error_code: "STATUS_CALLBACK_MISSING", error_message: msg };
   }
@@ -179,6 +186,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
   if (!TWILIO_ACCOUNT_SID && !useGateway) {
     await supabase.from("sms_events_v2").update({
       status: "failed", error_code: "config", error_message: "twilio_not_configured", failed_at: new Date().toISOString(),
+      provider_response: { blocked: true, reason: "missing_twilio_credentials" },
     }).eq("id", queued.id);
     return { event_id: queued.id, status: "failed", twilio_sid: null, error_message: "twilio_not_configured" };
   }
@@ -199,6 +207,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
   } catch (e) {
     await supabase.from("sms_events_v2").update({
       status: "failed", error_code: "network", error_message: String(e), failed_at: new Date().toISOString(),
+      provider_response: { network_error: String(e), status_callback_url: STATUS_CALLBACK_URL },
     }).eq("id", queued.id);
     return { event_id: queued.id, status: "failed", twilio_sid: null, error_message: String(e) };
   }
@@ -210,13 +219,31 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
       error_code: String(tw.code ?? twResp.status),
       error_message: tw.message ?? `HTTP ${twResp.status}`,
       failed_at: new Date().toISOString(),
+      provider_response: { http_status: twResp.status, body: tw, status_callback_url: STATUS_CALLBACK_URL },
     }).eq("id", queued.id);
     return { event_id: queued.id, status: "failed", twilio_sid: null, error_code: String(tw.code ?? twResp.status), error_message: tw.message };
   }
 
   await supabase.from("sms_events_v2").update({
-    status: "sending", twilio_sid: tw.sid, sent_at: new Date().toISOString(),
+    status: "sending",
+    twilio_sid: tw.sid,
+    sent_at: new Date().toISOString(),
+    provider_response: { http_status: twResp.status, body: tw, status_callback_url: STATUS_CALLBACK_URL },
+    twilio_status_url: tw.sid && TWILIO_MESSAGE_BASE ? `${TWILIO_MESSAGE_BASE}/${tw.sid}.json` : null,
   }).eq("id", queued.id);
+
+  try {
+    await supabase.from("message_events").insert({
+      channel: "sms",
+      provider: "twilio",
+      provider_message_id: tw.sid ?? null,
+      message_event_type: "api_accepted",
+      status: tw.status ?? "queued",
+      source_table: "sms_events_v2",
+      source_row_id: queued.id,
+      payload: { to: guard.normalized, from: CANONICAL_FROM_NUMBER, status_callback_url: STATUS_CALLBACK_URL, twilio_response: tw },
+    });
+  } catch (_) { /* best effort */ }
 
   return { event_id: queued.id, status: "sending", twilio_sid: tw.sid ?? null };
 }
