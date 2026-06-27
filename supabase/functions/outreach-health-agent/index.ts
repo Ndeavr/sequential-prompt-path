@@ -57,21 +57,31 @@ async function probeResend(): Promise<Probe> {
   // Persist diag basics every probe
   const baseDiag = { id: 1, resend_key_prefix: prefix, resend_key_length: keyLen, resend_last_checked_at: new Date().toISOString() };
 
-  if (trimmed.startsWith("lovc_")) {
-    await supabase.from("outreach_health_state").upsert({ ...baseDiag, resend_last_error: `lovable_connector_key prefix=${prefix} — expected re_` });
-    return { provider: "resend", status: "red", failure_reason: "LOVABLE_CONNECTOR_KEY_INSTEAD_OF_RESEND",
-      message: `RESEND_API_KEY contient une clé Lovable connector (${prefix}…). Resend rejette HTTP 400. Remplacer par une vraie clé Resend (re_…).`, repair_action: "update_secret" };
+  // Lovable connector keys (lovc_…) are VALID and must be routed via the Lovable gateway.
+  // Treat them like a normal Resend key here, but call the gateway endpoint.
+  const isGatewayKey = trimmed.startsWith("lovc_");
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? "";
+  if (isGatewayKey && !LOVABLE_API_KEY) {
+    await supabase.from("outreach_health_state").upsert({ ...baseDiag, resend_last_error: "LOVABLE_API_KEY missing (gateway routing requires it)" });
+    return { provider: "resend", status: "red", failure_reason: "MISSING_SECRET",
+      message: "LOVABLE_API_KEY missing — required to route lovc_ key through Lovable gateway", repair_action: "manual_required" };
   }
-  if (!trimmed.startsWith("re_")) {
+  if (!isGatewayKey && !trimmed.startsWith("re_")) {
     await supabase.from("outreach_health_state").upsert({ ...baseDiag, resend_last_error: `bad_format prefix=${prefix}` });
     return { provider: "resend", status: "red", failure_reason: "WRONG_VARIABLE_MAPPING",
-      message: `Key does not start with re_ · prefix=${prefix} · len=${keyLen}`, repair_action: "update_secret" };
+      message: `Key does not start with re_ or lovc_ · prefix=${prefix} · len=${keyLen}`, repair_action: "update_secret" };
   }
   if (hasWs) {
     await supabase.from("outreach_health_state").upsert({ ...baseDiag, resend_last_error: "whitespace_in_secret" });
     return { provider: "resend", status: "red", failure_reason: "WHITESPACE_CORRUPTION",
       message: `Secret contains whitespace/newline · raw_len=${keyLen} trimmed=${trimmed.length}`, repair_action: "update_secret" };
   }
+
+  const fetchResend = (path: string) => isGatewayKey
+    ? fetch(`https://connector-gateway.lovable.dev/resend${path}`, {
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "X-Connection-Api-Key": trimmed },
+      })
+    : fetch(`https://api.resend.com${path}`, { headers: { Authorization: `Bearer ${trimmed}` } });
 
   try {
     // 1) Auth ping — /api-keys requires `api_keys:read`. Returns 200 with Full-access, 401/403 with sending-only.
