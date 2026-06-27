@@ -37742,6 +37742,42 @@ export type Database = {
           },
         ]
       }
+      email_health_selftest_runs: {
+        Row: {
+          error_message: string | null
+          id: string
+          passed: boolean
+          provider_message_id: string | null
+          provider_response: Json | null
+          ran_at: string
+          recipient: string
+          run_type: string
+          subject: string | null
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          passed?: boolean
+          provider_message_id?: string | null
+          provider_response?: Json | null
+          ran_at?: string
+          recipient: string
+          run_type?: string
+          subject?: string | null
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          passed?: boolean
+          provider_message_id?: string | null
+          provider_response?: Json | null
+          ran_at?: string
+          recipient?: string
+          run_type?: string
+          subject?: string | null
+        }
+        Relationships: []
+      }
       email_personalizations: {
         Row: {
           aipp_score: number | null
