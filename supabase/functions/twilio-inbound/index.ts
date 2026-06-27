@@ -86,14 +86,15 @@ serve(async (req) => {
       from_address: From, body: Body, intent,
     }).select("id").single();
 
-    if (leadId) {
+    if (reply?.id) {
       await sb.from("acquisition_events").insert({
-        lead_id: leadId,
         channel: "sms",
-        event_type: intent === "stop" ? "unsubscribed" : "replied",
+        event_type: intent === "stop" ? "unsubscribed" : "contacted",
         provider: "twilio",
         provider_event_id: MessageSid,
-        metadata: { from: From, to: To, intent, body_preview: Body.slice(0, 160) },
+        source_table: "outreach_replies",
+        source_row_id: reply.id,
+        metadata: { lead_id: leadId, from: From, to: To, intent, inbound_reply: true, body_preview: Body.slice(0, 160) },
         occurred_at: new Date().toISOString(),
       });
     }
