@@ -181,6 +181,8 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.r-redirect]
     verify_jwt = false
+  [functions.message-click]
+    verify_jwt = false
   [functions.acquisition-health-check]
     verify_jwt = false
   [functions.acq-test-tracking-link]
