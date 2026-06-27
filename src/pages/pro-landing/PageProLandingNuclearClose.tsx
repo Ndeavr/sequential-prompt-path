@@ -12,7 +12,14 @@
  */
 import { Helmet } from "react-helmet-async";
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useSearchParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate, Link, Navigate } from "react-router-dom";
+
+// Reserved slugs that collide with contractor dashboard sub-routes. Any of these
+// arriving on /pro/:slug is an internal mis-link, not a prospect URL — redirect to /pro.
+const RESERVED_PRO_SLUGS = new Set([
+  "dashboard", "profile", "leads", "appointments", "reviews", "billing",
+  "territories", "documents", "account", "aipp-score", "domain-intelligence",
+]);
 import { motion } from "framer-motion";
 import {
   Volume2,
