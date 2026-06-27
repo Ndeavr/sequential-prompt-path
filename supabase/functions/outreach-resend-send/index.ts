@@ -105,6 +105,9 @@ Deno.serve(async (req) => {
   if (!body.cta_url && !HREF_RE.test(html)) return fail(422, "MISSING_CTA", "no cta_url and no <a href> found in html");
   const text = body.text ?? htmlToText(html);
   if (!text) return fail(422, "MISSING_TEXT_BODY", "text empty after derivation");
+  if (USE_GATEWAY && !LOVABLE_API_KEY) {
+    return fail(500, "MISSING_SECRET", "LOVABLE_API_KEY missing (required to route lovc_ key through Lovable gateway)");
+  }
 
   // ---- Sender resolution ----
   const sender = await resolveSender();
@@ -116,9 +119,16 @@ Deno.serve(async (req) => {
 
   // ---- Live send ----
   try {
-    const resp = await fetch("https://api.resend.com/emails", {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (USE_GATEWAY) {
+      headers["Authorization"] = `Bearer ${LOVABLE_API_KEY}`;
+      headers["X-Connection-Api-Key"] = RESEND_KEY;
+    } else {
+      headers["Authorization"] = `Bearer ${RESEND_KEY}`;
+    }
+    const resp = await fetch(RESEND_ENDPOINT, {
       method: "POST",
-      headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({
         from: sender.from,
         to: [body.to],
@@ -132,10 +142,10 @@ Deno.serve(async (req) => {
     let parsed: any = null; try { parsed = JSON.parse(raw); } catch { /* keep raw */ }
 
     if (!resp.ok) {
-      const detail = parsed?.message ?? raw.slice(0, 500);
+      const detail = parsed?.message ?? parsed?.error ?? raw.slice(0, 500);
       const name = parsed?.name ?? `HTTP_${resp.status}`;
       return fail(502, "RESEND_PROVIDER_ERROR", detail, {
-        http_status: resp.status, resend_name: name, sender: sender.from,
+        http_status: resp.status, resend_name: name, sender: sender.from, via: USE_GATEWAY ? "lovable_gateway" : "direct",
       });
     }
 
