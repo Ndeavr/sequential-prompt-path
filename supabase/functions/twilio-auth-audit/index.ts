@@ -19,7 +19,7 @@ type Probe = {
   error?: string;
 };
 
-async function probe(url: string, basic?: { sid: string; token: string }, extraHeaders?: Record<string, string>): Promise<Probe> {
+async function probe(url: string, basic?: { sid: string; token: string }, extraHeaders?: Record<string, string>): Promise<Probe & { _json?: any }> {
   const t0 = Date.now();
   const headers: Record<string, string> = { Accept: "application/json", ...(extraHeaders ?? {}) };
   if (basic) headers["Authorization"] = "Basic " + btoa(`${basic.sid}:${basic.token}`);
@@ -28,10 +28,11 @@ async function probe(url: string, basic?: { sid: string; token: string }, extraH
     const text = await r.text();
     let twilio_code: number | null = null;
     let twilio_message: string | null = null;
+    let parsed: any = undefined;
     try {
-      const j = JSON.parse(text);
-      twilio_code = j?.code ?? null;
-      twilio_message = j?.message ?? null;
+      parsed = JSON.parse(text);
+      twilio_code = parsed?.code ?? null;
+      twilio_message = parsed?.message ?? null;
     } catch { /* ignore */ }
     return {
       status: r.status,
@@ -40,11 +41,13 @@ async function probe(url: string, basic?: { sid: string; token: string }, extraH
       twilio_message,
       body_excerpt: text.slice(0, 400),
       latency_ms: Date.now() - t0,
+      _json: parsed,
     };
   } catch (e) {
     return { status: 0, ok: false, latency_ms: Date.now() - t0, error: e instanceof Error ? e.message : String(e) };
   }
 }
+
 
 function mask(s?: string | null) {
   if (!s) return null;
