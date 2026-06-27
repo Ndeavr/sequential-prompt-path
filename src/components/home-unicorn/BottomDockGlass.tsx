@@ -33,7 +33,7 @@ function getMenu(role: string | undefined): RoleMenu {
   if (role === "contractor") {
     return {
       left: [
-        { label: "Tableau", to: "/pro/dashboard", icon: Home },
+        { label: "Tableau", to: "/pro", icon: Home },
         { label: "Leads", to: "/pro/leads", icon: Inbox },
       ],
       right: [

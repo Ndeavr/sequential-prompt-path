@@ -12,7 +12,14 @@
  */
 import { Helmet } from "react-helmet-async";
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useSearchParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate, Link, Navigate } from "react-router-dom";
+
+// Reserved slugs that collide with contractor dashboard sub-routes. Any of these
+// arriving on /pro/:slug is an internal mis-link, not a prospect URL — redirect to /pro.
+const RESERVED_PRO_SLUGS = new Set([
+  "dashboard", "profile", "leads", "appointments", "reviews", "billing",
+  "territories", "documents", "account", "aipp-score", "domain-intelligence",
+]);
 import { motion } from "framer-motion";
 import {
   Volume2,
@@ -179,6 +186,11 @@ export default function PageProLandingNuclearClose() {
   const token = searchParams.get("t");
   const runId = searchParams.get("r");
   const navigate = useNavigate();
+
+  // Guard: reserved slugs (e.g. /pro/dashboard) are internal mis-links — redirect to /pro.
+  if (slug && RESERVED_PRO_SLUGS.has(slug.toLowerCase())) {
+    return <Navigate to="/pro" replace />;
+  }
 
   // ISR live-run tracking: link_clicked on mount, plan_viewed after 4s.
   useEffect(() => {

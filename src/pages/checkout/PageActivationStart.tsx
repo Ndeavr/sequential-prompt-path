@@ -206,7 +206,7 @@ export default function PageActivationStart() {
             size="lg"
             variant="premium"
             className="w-full h-12 rounded-xl text-base"
-            onClick={() => navigate("/pro/dashboard")}
+            onClick={() => navigate("/pro")}
           >
             <BarChart3 className="w-4 h-4 mr-2" /> Entrer dans mon cockpit
           </Button>
