@@ -12,8 +12,28 @@ const cors = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const RESEND_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
+const RESEND_KEY = (Deno.env.get("RESEND_API_KEY") ?? "").trim();
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? "";
 const FOUNDER_EMAIL = Deno.env.get("FOUNDER_EMAIL") ?? "danny@unpro.ca";
+
+// Route Lovable connector keys (lovc_*) through the gateway, native re_* directly.
+const IS_GATEWAY_KEY = RESEND_KEY.startsWith("lovc_");
+function resendFetch(path: string, init: RequestInit = {}) {
+  if (IS_GATEWAY_KEY) {
+    return fetch(`https://connector-gateway.lovable.dev/resend${path}`, {
+      ...init,
+      headers: {
+        ...(init.headers ?? {}),
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "X-Connection-Api-Key": RESEND_KEY,
+      },
+    });
+  }
+  return fetch(`https://api.resend.com${path}`, {
+    ...init,
+    headers: { ...(init.headers ?? {}), Authorization: `Bearer ${RESEND_KEY}` },
+  });
+}
 
 const sb = createClient(SUPABASE_URL, SRK, { auth: { persistSession: false } });
 
@@ -48,20 +68,31 @@ Deno.serve(async (req) => {
 
   const steps: StepResult[] = [];
 
-  // 1) Resend API key ping
+  // 1) Resend API key ping — uses gateway for lovc_* keys, direct for re_* keys.
   steps.push(await runStep("resend_api_key_ping", async () => {
     if (!RESEND_KEY) return { ok: false, detail: "RESEND_API_KEY missing", repair: "Add the RESEND_API_KEY secret in Lovable Cloud." };
-    const r = await fetch("https://api.resend.com/api-keys", { headers: { Authorization: `Bearer ${RESEND_KEY}` } });
+    if (IS_GATEWAY_KEY && !LOVABLE_API_KEY) {
+      return { ok: false, detail: "LOVABLE_API_KEY missing — required to route lovc_ key via gateway", repair: "Provision LOVABLE_API_KEY" };
+    }
+    if (!IS_GATEWAY_KEY && !RESEND_KEY.startsWith("re_")) {
+      return { ok: false, detail: `Bad key format (prefix=${RESEND_KEY.slice(0, 5)}). Expected re_… or lovc_…`, repair: "Update RESEND_API_KEY secret" };
+    }
+    // /api-keys requires `api_keys:read`; sending-only keys 401/403 here, that's fine.
+    const r = await resendFetch("/api-keys");
     const body = await r.text();
-    if (r.ok) return { ok: true, detail: "api-keys 200" };
+    if (r.ok) return { ok: true, detail: `api-keys 200 (${IS_GATEWAY_KEY ? "gateway" : "direct"})` };
+    if (r.status === 401 || r.status === 403) {
+      return { ok: true, detail: `api-keys ${r.status} (sending-only scope, OK) via ${IS_GATEWAY_KEY ? "gateway" : "direct"}` };
+    }
     let msg = body; try { msg = JSON.parse(body)?.message ?? body; } catch {}
-    return { ok: false, detail: `HTTP ${r.status} — ${msg}`, repair: r.status === 401 ? "Rotate RESEND_API_KEY" : "Check Resend dashboard" };
+    return { ok: false, detail: `HTTP ${r.status} — ${msg} (${IS_GATEWAY_KEY ? "gateway" : "direct"})`,
+      repair: r.status === 400 ? "Rotate or fix RESEND_API_KEY value" : "Check Resend dashboard" };
   }));
   if (!steps[0].ok) return finish(steps);
 
   // 2) Verified sender domain
   steps.push(await runStep("resend_verified_domain", async () => {
-    const r = await fetch("https://api.resend.com/domains", { headers: { Authorization: `Bearer ${RESEND_KEY}` } });
+    const r = await resendFetch("/domains");
     const body = await r.text();
     if (!r.ok) {
       let msg = body; try { msg = JSON.parse(body)?.message ?? body; } catch {}
