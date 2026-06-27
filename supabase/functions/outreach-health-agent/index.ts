@@ -85,7 +85,7 @@ async function probeResend(): Promise<Probe> {
 
   try {
     // 1) Auth ping — /api-keys requires `api_keys:read`. Returns 200 with Full-access, 401/403 with sending-only.
-    const auth = await fetch("https://api.resend.com/api-keys", { headers: { Authorization: `Bearer ${trimmed}` } });
+    const auth = await fetchResend("/api-keys");
     let accountId: string | null = null;
     if (auth.status === 401 || auth.status === 403) {
       // Sending-only keys hit here; do NOT fail yet — fall through to /domains which works for sending keys too.
@@ -104,7 +104,7 @@ async function probeResend(): Promise<Probe> {
     }
 
     // 2) Domains — source of truth for verified sender (works with sending-access keys)
-    const dom = await fetch("https://api.resend.com/domains", { headers: { Authorization: `Bearer ${trimmed}` } });
+    const dom = await fetchResend("/domains");
     if (!dom.ok) {
       const b = await readResendBody(dom);
       const msg = (b.message ?? "").toLowerCase();
