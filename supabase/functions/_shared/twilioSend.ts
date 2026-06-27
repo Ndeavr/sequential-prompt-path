@@ -159,6 +159,22 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     return { event_id: "", status: "failed", twilio_sid: null, error_message: `audit_insert_failed: ${qErr?.message}` };
   }
 
+  // ── HARD BLOCK: sender must match canonical QC number ────────────────
+  if (TWILIO_FROM_NUMBER !== CANONICAL_FROM_NUMBER) {
+    const msg = `Wrong Twilio sender configured. Expected ${CANONICAL_FROM_NUMBER}. Current: ${TWILIO_FROM_NUMBER || "(unset)"}`;
+    await supabase.from("sms_events_v2").update({
+      status: "failed", error_code: "WRONG_SENDER", error_message: msg, failed_at: new Date().toISOString(),
+    }).eq("id", queued.id);
+    return { event_id: queued.id, status: "failed", twilio_sid: null, error_code: "WRONG_SENDER", error_message: msg };
+  }
+  if (!STATUS_CALLBACK_URL || !STATUS_CALLBACK_URL.includes("/functions/v1/twilio-status")) {
+    const msg = "SMS delivery tracking is not configured. Fix Twilio status webhook before sending.";
+    await supabase.from("sms_events_v2").update({
+      status: "failed", error_code: "STATUS_CALLBACK_MISSING", error_message: msg, failed_at: new Date().toISOString(),
+    }).eq("id", queued.id);
+    return { event_id: queued.id, status: "failed", twilio_sid: null, error_code: "STATUS_CALLBACK_MISSING", error_message: msg };
+  }
+
   const useGateway = (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) && LOVABLE_API_KEY && TWILIO_API_KEY;
   if (!TWILIO_ACCOUNT_SID && !useGateway) {
     await supabase.from("sms_events_v2").update({
@@ -168,8 +184,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
   }
 
   const form = new URLSearchParams({ To: guard.normalized, Body: input.body, StatusCallback: STATUS_CALLBACK_URL });
-  if (TWILIO_MESSAGING_SERVICE_SID) form.set("MessagingServiceSid", TWILIO_MESSAGING_SERVICE_SID);
-  else if (TWILIO_FROM_NUMBER) form.set("From", TWILIO_FROM_NUMBER);
+  form.set("From", CANONICAL_FROM_NUMBER);
 
   const url = useGateway
     ? `${GATEWAY_URL}/Messages.json`
