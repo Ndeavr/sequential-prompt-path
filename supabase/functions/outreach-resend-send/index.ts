@@ -140,10 +140,21 @@ Deno.serve(async (req) => {
       template_name: template,
       recipient_email: body.to,
       status: "sent",
-      metadata: { resend_id: id, sender: sender.from, latency_ms: Date.now() - startedAt },
+      metadata: { resend_id: id, sender: sender.from, key_prefix: keyPrefix, latency_ms: Date.now() - startedAt },
     });
+    try {
+      await sb.from("outreach_health_state").upsert({
+        id: 1,
+        resend_key_prefix: keyPrefix || null,
+        resend_key_length: (RESEND_KEY ?? "").length || null,
+        resend_last_send_status: "sent",
+        resend_last_send_at: new Date().toISOString(),
+        resend_last_send_id: id,
+        resend_last_send_error: null,
+      });
+    } catch (_) {}
 
-    return new Response(JSON.stringify({ ok: true, message_id: messageId, resend_id: id, sender: sender.from }), {
+    return new Response(JSON.stringify({ ok: true, message_id: messageId, resend_id: id, sender: sender.from, key_prefix: keyPrefix }), {
       headers: { ...cors, "Content-Type": "application/json" },
     });
   } catch (e) {
