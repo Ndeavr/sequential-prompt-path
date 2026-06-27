@@ -9,23 +9,39 @@ import { toast } from "sonner";
 type Diag = {
   ok: boolean;
   sender?: {
+    account_sid_present?: boolean;
+    account_sid_masked?: string;
+    auth_token_present?: boolean;
     env_value: string;
+    legacy_phone_number_env?: string;
     canonical: string;
     blocked_us_number: string;
     env_matches_canonical: boolean;
     status_callback_url: string;
+    canonical_status_callback_url?: string;
     inbound_webhook_url: string;
   };
+  account?: { ok: boolean; status?: string | null; type?: string | null; friendly_name?: string | null; error_message?: string | null; http_status?: number | null };
   twilio_number?: {
     available: boolean;
     reason?: string;
+    friendly_name?: string | null;
     phone_number?: string;
     country?: string | null;
     sms_enabled?: boolean;
+    mms_enabled?: boolean;
     voice_enabled?: boolean;
     sms_url?: string;
+    sms_method?: string;
     status_callback?: string;
+    error_message?: string | null;
   };
+  messaging_service?: { configured: boolean; ok?: boolean; sid?: string; friendly_name?: string | null; sender_attached?: boolean; sender_count?: number; status_callback?: string | null; inbound_request_url?: string | null; error_message?: string | null; note?: string };
+  verify_service?: { configured: boolean; ok?: boolean; sid?: string; friendly_name?: string | null; error_message?: string | null };
+  edge_callbacks?: Record<string, { ok: boolean; status: number; error?: string }>;
+  diagnosis?: { status: "blocked" | "warning" | "green"; root_cause: string; blockers: string[]; warnings: string[] };
+  db_totals?: { total: number; api_sent: number; delivered: number; failed: number; webhooks: number; error_30006: number; invalid_phone: number };
+  twilio_messages?: { ok: boolean; http_status?: number; error_message?: string; messages: Array<any> };
   status_breakdown?: Record<string, number>;
   recent_messages?: Array<{
     id: string;
@@ -42,8 +58,12 @@ type Diag = {
     sent_at: string | null;
     delivered_at: string | null;
     failed_at: string | null;
+    webhook_received_at?: string | null;
     clicked_at: string | null;
     created_at: string;
+    provider_response?: any;
+    status_callback_url?: string | null;
+    twilio_status_url?: string | null;
     metadata: any;
   }>;
   error?: string;
@@ -71,6 +91,7 @@ export default function TwilioDiagnosticPanel() {
   const [error, setError] = useState<string | null>(null);
   const [testTo, setTestTo] = useState("");
   const [sending, setSending] = useState(false);
+  const [lastTest, setLastTest] = useState<any>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -99,9 +120,11 @@ export default function TwilioDiagnosticPanel() {
       if (err) throw err;
       const r: any = res;
       if (r?.ok) {
-        toast.success(`SMS envoyé — sid=${r.result?.twilio_sid ?? "—"}`);
+        toast.success(`SMS accepté par Twilio — sid=${r.result?.twilio_sid ?? "—"}`);
+        setLastTest(r);
         setTimeout(load, 2500);
       } else {
+        setLastTest(r);
         toast.error(`Échec: ${r?.result?.error_code || ""} ${r?.result?.error_message || r?.error || "unknown"}`);
         load();
       }
@@ -114,6 +137,7 @@ export default function TwilioDiagnosticPanel() {
 
   const senderOk = data?.sender?.env_matches_canonical;
   const numOk = data?.twilio_number?.available && data?.twilio_number?.sms_enabled;
+  const blocked = data?.diagnosis?.status === "blocked";
 
   return (
     <Card className="p-4 space-y-4">
@@ -138,10 +162,43 @@ export default function TwilioDiagnosticPanel() {
       {data && (
         <>
           {/* Sender config */}
+          {data.diagnosis && (
+            <div className={`p-3 rounded border ${blocked ? "border-red-500/50 bg-red-500/10" : data.diagnosis.status === "warning" ? "border-amber-500/40 bg-amber-500/10" : "border-emerald-500/40 bg-emerald-500/5"}`}>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="text-sm font-semibold">Root cause — Twilio SMS production</div>
+                <Badge variant="outline" className={blocked ? "bg-red-500/20 text-red-300 border-red-500/40" : data.diagnosis.status === "warning" ? "bg-amber-500/20 text-amber-300 border-amber-500/40" : "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"}>
+                  {data.diagnosis.status.toUpperCase()}
+                </Badge>
+              </div>
+              <p className="text-sm mt-1">{data.diagnosis.root_cause}</p>
+              {data.diagnosis.blockers.length > 0 && (
+                <ul className="text-xs text-red-200 list-disc ml-5 mt-2 space-y-1">
+                  {data.diagnosis.blockers.map((b) => <li key={b}>{b}</li>)}
+                </ul>
+              )}
+              {data.diagnosis.warnings.length > 0 && (
+                <ul className="text-xs text-amber-200 list-disc ml-5 mt-2 space-y-1">
+                  {data.diagnosis.warnings.map((w) => <li key={w}>{w}</li>)}
+                </ul>
+              )}
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-2 text-xs">
+            <div className="p-2 rounded bg-white/[0.03] border border-white/10"><div className="text-muted-foreground">API sent</div><div className="text-lg font-semibold">{data.db_totals?.api_sent ?? 0}</div></div>
+            <div className="p-2 rounded bg-white/[0.03] border border-white/10"><div className="text-muted-foreground">Delivered</div><div className="text-lg font-semibold text-emerald-300">{data.db_totals?.delivered ?? 0}</div></div>
+            <div className="p-2 rounded bg-white/[0.03] border border-white/10"><div className="text-muted-foreground">Webhooks</div><div className="text-lg font-semibold">{data.db_totals?.webhooks ?? 0}</div></div>
+            <div className="p-2 rounded bg-white/[0.03] border border-white/10"><div className="text-muted-foreground">Failed</div><div className="text-lg font-semibold text-red-300">{data.db_totals?.failed ?? 0}</div></div>
+            <div className="p-2 rounded bg-white/[0.03] border border-white/10"><div className="text-muted-foreground">30006</div><div className="text-lg font-semibold text-amber-300">{data.db_totals?.error_30006 ?? 0}</div></div>
+            <div className="p-2 rounded bg-white/[0.03] border border-white/10"><div className="text-muted-foreground">Invalid</div><div className="text-lg font-semibold">{data.db_totals?.invalid_phone ?? 0}</div></div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className={`p-3 rounded border ${senderOk ? "border-emerald-500/40 bg-emerald-500/5" : "border-red-500/50 bg-red-500/10"}`}>
               <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Sender configuré</div>
               <div className="font-mono text-sm">{data.sender?.env_value}</div>
+              <div className="text-xs text-muted-foreground mt-1">Account SID: {data.sender?.account_sid_masked} · Auth token: {data.sender?.auth_token_present ? "présent" : "manquant"}</div>
+              <div className="text-xs text-muted-foreground">TWILIO_PHONE_NUMBER legacy: {data.sender?.legacy_phone_number_env}</div>
               {!senderOk && (
                 <div className="text-xs text-red-300 mt-1">
                   ⚠️ Mauvais sender. Attendu {data.sender?.canonical}. SMS bloqués jusqu'à correction.
@@ -153,14 +210,37 @@ export default function TwilioDiagnosticPanel() {
               {data.twilio_number?.available ? (
                 <div className="text-sm space-y-0.5">
                   <div className="font-mono">{data.twilio_number.phone_number} · {data.twilio_number.country}</div>
-                  <div className="text-xs">SMS: {data.twilio_number.sms_enabled ? "✅" : "❌"} · Voice: {data.twilio_number.voice_enabled ? "✅" : "❌"}</div>
+                  <div className="text-xs">SMS: {data.twilio_number.sms_enabled ? "✅" : "❌"} · MMS: {data.twilio_number.mms_enabled ? "✅" : "❌"} · Voice: {data.twilio_number.voice_enabled ? "✅" : "❌"}</div>
+                  <div className="text-xs text-muted-foreground break-all">Incoming SMS URL: {data.twilio_number.sms_url || "—"}</div>
                   {data.twilio_number.status_callback?.includes("demo.twilio.com") && (
                     <div className="text-xs text-red-300">⚠️ Webhook = demo Twilio. Remplace par {data.sender?.status_callback_url}</div>
                   )}
                 </div>
               ) : (
-                <div className="text-sm text-amber-300">Indisponible · {data.twilio_number?.reason}</div>
+                <div className="text-sm text-amber-300">Indisponible · {data.twilio_number?.reason} {data.twilio_number?.error_message ? `· ${data.twilio_number.error_message}` : ""}</div>
               )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+            <div className="p-3 rounded border border-white/10 bg-white/[0.02]">
+              <div className="uppercase tracking-wider text-muted-foreground mb-1">Account</div>
+              <div>Status: {data.account?.ok ? `✅ ${data.account.status || "ok"}` : `❌ ${data.account?.error_message || "failed"}`}</div>
+              <div>Type: {data.account?.type || "—"}</div>
+              <div>Name: {data.account?.friendly_name || "—"}</div>
+            </div>
+            <div className="p-3 rounded border border-white/10 bg-white/[0.02]">
+              <div className="uppercase tracking-wider text-muted-foreground mb-1">Messaging Service</div>
+              <div>{data.messaging_service?.configured ? (data.messaging_service.ok ? "✅ Configuré" : "❌ Erreur") : "Non utilisé"}</div>
+              <div>SID: {data.messaging_service?.sid || "—"}</div>
+              <div>Sender attaché: {data.messaging_service?.sender_attached ? "✅" : data.messaging_service?.configured ? "❌" : "—"}</div>
+              {data.messaging_service?.error_message && <div className="text-red-300">{data.messaging_service.error_message}</div>}
+            </div>
+            <div className="p-3 rounded border border-white/10 bg-white/[0.02]">
+              <div className="uppercase tracking-wider text-muted-foreground mb-1">Verify Service</div>
+              <div>{data.verify_service?.configured ? (data.verify_service.ok ? "✅ Configuré" : "❌ Erreur") : "Non configuré"}</div>
+              <div>SID: {data.verify_service?.sid || "—"}</div>
+              {data.verify_service?.error_message && <div className="text-red-300">{data.verify_service.error_message}</div>}
             </div>
           </div>
 
@@ -169,6 +249,7 @@ export default function TwilioDiagnosticPanel() {
             <div className="text-muted-foreground uppercase tracking-wider">URLs à coller dans Twilio Console</div>
             <div><span className="text-muted-foreground">Inbound:</span> <code className="break-all">{data.sender?.inbound_webhook_url}</code></div>
             <div><span className="text-muted-foreground">Status callback:</span> <code className="break-all">{data.sender?.status_callback_url}</code></div>
+            <div className="pt-1 text-muted-foreground">Reachability: inbound {data.edge_callbacks?.inbound?.ok ? "✅" : "❌"} · status {data.edge_callbacks?.status?.ok ? "✅" : "❌"} · v2 {data.edge_callbacks?.status_v2?.ok ? "✅" : "❌"}</div>
           </div>
 
           {/* Smoke test */}
@@ -181,14 +262,37 @@ export default function TwilioDiagnosticPanel() {
                 onChange={(e) => setTestTo(e.target.value)}
                 className="max-w-xs"
               />
-              <Button onClick={runSmoke} disabled={sending || !senderOk}>
+              <Button onClick={runSmoke} disabled={sending || !senderOk || blocked}>
                 {sending ? "Envoi…" : "Envoyer test SMS"}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
               Flow attendu: queued → sent → delivered → clicked. Si pas delivered dans 2 min, l'erreur Twilio exacte apparaît ci-dessous.
             </p>
+            {lastTest && (
+              <div className="text-xs rounded bg-black/20 border border-white/10 p-2 space-y-1">
+                <div>Message SID: <code>{lastTest.result?.twilio_sid || "—"}</code></div>
+                <div>API status: <code>{lastTest.live_status?.status || lastTest.result?.status || "—"}</code> · error: <code>{lastTest.live_status?.error_code || lastTest.result?.error_code || "—"}</code></div>
+                <div>Tracked CTA: <code className="break-all">{lastTest.tracking_url || "—"}</code></div>
+              </div>
+            )}
           </div>
+
+          {data.twilio_messages?.messages?.length ? (
+            <details className="text-xs p-3 rounded border border-white/10 bg-white/[0.02]">
+              <summary className="cursor-pointer font-medium">Twilio live Messaging Logs — derniers 25</summary>
+              <div className="overflow-x-auto mt-2">
+                <table className="w-full">
+                  <thead className="text-left text-muted-foreground"><tr><th className="pr-2">SID</th><th className="pr-2">To</th><th className="pr-2">Status</th><th className="pr-2">Error</th><th className="pr-2">Sent</th></tr></thead>
+                  <tbody>{data.twilio_messages.messages.map((m: any) => (
+                    <tr key={m.sid} className="border-t border-white/5"><td className="py-1 pr-2 font-mono">{m.sid?.slice(0, 14)}</td><td className="pr-2 font-mono">{m.to}</td><td className="pr-2">{m.status}</td><td className="pr-2 text-red-300">{m.error_code || "—"} {m.error_message || ""}</td><td className="pr-2 whitespace-nowrap">{m.date_sent || m.date_created}</td></tr>
+                  ))}</tbody>
+                </table>
+              </div>
+            </details>
+          ) : data.twilio_messages && !data.twilio_messages.ok ? (
+            <div className="text-xs text-red-300 p-3 rounded border border-red-500/30 bg-red-500/10">Twilio Messaging Logs indisponibles: {data.twilio_messages.error_message}</div>
+          ) : null}
 
           {/* Status breakdown */}
           {data.status_breakdown && (
@@ -213,6 +317,7 @@ export default function TwilioDiagnosticPanel() {
                   <th className="py-2 pr-2">SID</th>
                   <th className="py-2 pr-2">Sent</th>
                   <th className="py-2 pr-2">Delivered</th>
+                  <th className="py-2 pr-2">Webhook</th>
                   <th className="py-2 pr-2">Clicked</th>
                   <th className="py-2 pr-2">Erreur</th>
                 </tr>
@@ -229,6 +334,7 @@ export default function TwilioDiagnosticPanel() {
                     <td className="py-2 pr-2 font-mono text-[10px]">{m.twilio_sid?.slice(0, 12) || "—"}</td>
                     <td className="py-2 pr-2 whitespace-nowrap">{fmt(m.sent_at)}</td>
                     <td className="py-2 pr-2 whitespace-nowrap">{fmt(m.delivered_at)}</td>
+                    <td className="py-2 pr-2 whitespace-nowrap">{fmt(m.webhook_received_at)}</td>
                     <td className="py-2 pr-2 whitespace-nowrap">{fmt(m.clicked_at)}</td>
                     <td className="py-2 pr-2 text-red-300">
                       {m.error_code ? <div className="font-mono">{m.error_code}</div> : null}
