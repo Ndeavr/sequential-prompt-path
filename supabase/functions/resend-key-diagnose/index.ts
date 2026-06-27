@@ -100,8 +100,8 @@ Deno.serve(async (req) => {
   let root_cause = "unknown";
   let repair = "manual_required";
   if (!diag.present) { root_cause = "missing_secret"; repair = "add_secret RESEND_API_KEY"; }
-  else if (trimmed.startsWith("lovc_")) { root_cause = "lovable_connector_key_instead_of_resend"; repair = "RESEND_API_KEY holds a Lovable connector key (lovc_…). Replace with a real Resend key from resend.com/api-keys that starts with re_."; }
-  else if (!diag.starts_with_re_) { root_cause = "wrong_variable_mapping"; repair = `Secret value does not start with re_ (got prefix=${diag.prefix}). Paste the key from resend.com/api-keys.`; }
+  else if (trimmed.startsWith("lovc_") && (apiKeys.status >= 200 && apiKeys.status < 300)) { root_cause = "ok_gateway"; repair = "none (Lovable connector key via gateway)"; }
+  else if (trimmed.startsWith("lovc_")) { root_cause = "gateway_unreachable"; repair = `Lovable gateway returned HTTP ${apiKeys.status}. Check LOVABLE_API_KEY or reconnect the Resend connector.`; }
   else if (diag.has_whitespace) { root_cause = "whitespace_corruption"; repair = "Re-save secret without whitespace/newline"; }
   else if (apiKeys.status === 401 || apiKeys.status === 403) { root_cause = "revoked_key_or_no_scope"; repair = "Rotate RESEND_API_KEY (Full access)"; }
   else if (apiKeys.status === 400 && (apiKeys.message ?? "").toLowerCase().includes("invalid")) { root_cause = "revoked_or_unknown_key"; repair = "Regenerate key in Resend dashboard, then update_secret RESEND_API_KEY"; }
