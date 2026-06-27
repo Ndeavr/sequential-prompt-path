@@ -13,7 +13,14 @@ const cors = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? "";
 const FOUNDER_EMAIL = Deno.env.get("FOUNDER_EMAIL") ?? "danny@unpro.ca";
+// Lovable connector keys (lovc_…) must be sent through the Lovable gateway,
+// not directly to api.resend.com (which would 401 with "API key is invalid").
+const USE_GATEWAY = RESEND_KEY.startsWith("lovc_");
+const RESEND_ENDPOINT = USE_GATEWAY
+  ? "https://connector-gateway.lovable.dev/resend/emails"
+  : "https://api.resend.com/emails";
 
 const sb = createClient(SUPABASE_URL, SRK, { auth: { persistSession: false } });
 
