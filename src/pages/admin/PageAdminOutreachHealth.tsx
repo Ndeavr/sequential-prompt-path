@@ -15,6 +15,7 @@ import {
   useRecentEmailEvents, useRunSelftest, useRun30dBackfill,
   useOperationalScore, useActiveHealthChecks, useRepairRuns, useCriticalAlerts,
   useE2EFullRuns, useRunHealthAgent, useRunE2EReal, useRepairMessaging,
+  useResendDiagnose, useResendTestSend,
 } from "@/hooks/useOutreachHealth";
 
 
@@ -37,6 +38,8 @@ export default function PageAdminOutreachHealth() {
   const runAgent = useRunHealthAgent();
   const runE2E = useRunE2EReal();
   const repairMessaging = useRepairMessaging();
+  const resendDiag = useResendDiagnose();
+  const resendTest = useResendTestSend();
   const [testEmail, setTestEmail] = useState("");
   const [lastE2E, setLastE2E] = useState<null | { pass: boolean; failed_step: any; total_ms: number }>(null);
 
@@ -185,6 +188,68 @@ export default function PageAdminOutreachHealth() {
                 {lastE2E.failed_step.repair && <p className="text-amber-600 break-words">→ Réparer : {lastE2E.failed_step.repair}</p>}
               </div>
             )}
+
+            {/* Resend key diagnostic */}
+            <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">Diagnostic Resend (clé API)</p>
+                  <p className="text-[11px] text-muted-foreground">N'affiche que le préfixe — la clé complète n'est jamais loggée.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={() => resendDiag.mutate(undefined, {
+                    onSuccess: (d) => toast.success(`Resend: ${d.root_cause}`),
+                    onError: (e: any) => toast.error(e.message),
+                  })} disabled={resendDiag.isPending}>
+                    {resendDiag.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCcw className="h-3.5 w-3.5" />}
+                    <span className="ml-1.5 text-xs">Diagnostiquer clé</span>
+                  </Button>
+                  <Button size="sm" onClick={() => {
+                    const to = testEmail.trim() || "danny@unpro.ca";
+                    resendTest.mutate(to, {
+                      onSuccess: (d) => {
+                        healthChecks.refetch(); score.refetch();
+                        if (d.ok) toast.success(`Envoi réel OK · id=${d.resend_id} · key=${d.key_prefix}`);
+                        else toast.error(`${d.reason}: ${d.detail}`);
+                      },
+                      onError: (e: any) => toast.error(e.message),
+                    });
+                  }} disabled={resendTest.isPending}>
+                    {resendTest.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <PlayCircle className="h-3.5 w-3.5" />}
+                    <span className="ml-1.5 text-xs">Envoyer test réel</span>
+                  </Button>
+                </div>
+              </div>
+
+              {resendDiag.data && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  <div className="rounded border border-border/40 p-2 space-y-0.5">
+                    <p className="font-semibold">Clé déployée</p>
+                    <p>Préfixe attendu : <code className="bg-muted px-1">re_</code></p>
+                    <p>Préfixe observé : <code className="bg-muted px-1">{resendDiag.data.diag.prefix || "—"}</code></p>
+                    <p>Longueur : <code className="bg-muted px-1">{resendDiag.data.diag.length}</code> (trim {resendDiag.data.diag.trimmed_length})</p>
+                    <p>Espace/saut : {resendDiag.data.diag.has_whitespace ? <span className="text-red-500">oui ⚠</span> : "non"}</p>
+                    <p>Format re_ : {resendDiag.data.diag.starts_with_re_ ? <span className="text-emerald-500">oui</span> : <span className="text-red-500">non</span>}</p>
+                  </div>
+                  <div className="rounded border border-border/40 p-2 space-y-0.5">
+                    <p className="font-semibold">Réponses API Resend</p>
+                    <p>GET /api-keys : <code className="bg-muted px-1">HTTP {resendDiag.data.api_keys.status}</code> {resendDiag.data.api_keys.message ?? ""}</p>
+                    <p>GET /domains : <code className="bg-muted px-1">HTTP {resendDiag.data.domains.status}</code> {resendDiag.data.domains.message ?? ""}</p>
+                    <p>Domaine vérifié : <code className="bg-muted px-1">{resendDiag.data.domains.verified ?? "aucun"}</code></p>
+                    <p>Cause racine : <span className="font-semibold">{resendDiag.data.root_cause}</span></p>
+                    <p className="text-amber-600">→ {resendDiag.data.repair}</p>
+                  </div>
+                </div>
+              )}
+
+              {resendTest.data && (
+                <div className={`rounded border p-2 text-xs ${resendTest.data.ok ? "border-emerald-500/40 bg-emerald-500/5" : "border-red-500/40 bg-red-500/5"}`}>
+                  {resendTest.data.ok
+                    ? <>✅ Envoi réel accepté · resend_id <code>{resendTest.data.resend_id}</code> · clé <code>{resendTest.data.key_prefix}</code></>
+                    : <>❌ {resendTest.data.reason} — <span className="break-words">{resendTest.data.detail}</span> · clé <code>{resendTest.data.key_prefix}</code></>}
+                </div>
+              )}
+            </div>
 
             {/* Provider status grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">

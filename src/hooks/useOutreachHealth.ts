@@ -222,3 +222,41 @@ export function useRepairMessaging() {
   });
 }
 
+export function useResendDiagnose() {
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("resend-key-diagnose", { body: {} });
+      if (error) throw error;
+      return data as {
+        diag: { present: boolean; length: number; trimmed_length: number; has_whitespace: boolean; starts_with_re_: boolean; prefix: string; suffix: string };
+        api_keys: { status: number; message: string | null; count: number | null; names?: any[]; raw_excerpt?: string };
+        domains: { status: number; message: string | null; count: number | null; verified: string | null; items: any[]; raw_excerpt?: string };
+        root_cause: string;
+        repair: string;
+      };
+    },
+  });
+}
+
+export function useResendTestSend() {
+  return useMutation({
+    mutationFn: async (toEmail: string) => {
+      const html = `<p>UNPRO Resend test envoyé à ${new Date().toLocaleString("fr-CA")}.</p><p><a href="https://unpro.ca/r/health-test">Vérifier le tracker</a></p>`;
+      const { data, error } = await supabase.functions.invoke("outreach-resend-send", {
+        body: {
+          to: toEmail,
+          subject: "UNPRO RESEND TEST",
+          html,
+          text: "UNPRO Resend test. https://unpro.ca/r/health-test",
+          cta_url: "https://unpro.ca/r/health-test",
+          template_name: "resend-health-test",
+          tags: { source: "health_diag" },
+        },
+      });
+      if (error) throw error;
+      return data as { ok: boolean; resend_id?: string; key_prefix?: string; reason?: string; detail?: string };
+    },
+  });
+}
+
+
