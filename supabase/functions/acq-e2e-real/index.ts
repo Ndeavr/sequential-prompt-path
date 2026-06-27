@@ -93,7 +93,15 @@ Deno.serve(async (req) => {
   // 1 — synthetic contractor
   await step(0, async () => {
     const { error } = await sb.from("contractors").insert({
-      id: synthId, name: slug, email: `${slug}@unpro.test`, phone: "+15555550100", city: "Montréal",
+      id: synthId,
+      user_id: crypto.randomUUID(),
+      business_name: `E2E ${slug}`,
+      email: `${slug}@unpro.test`,
+      phone: "+15555550100",
+      city: "Montréal",
+      account_status: "test",
+      onboarding_status: "synthetic",
+      activation_status: "synthetic",
     });
     if (error) return { error: error.message, repair: "Check contractors table schema/RLS" };
     return { payload: { id: synthId, slug } };
