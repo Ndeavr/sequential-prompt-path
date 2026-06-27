@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: `${settings?.outreach_from_name || "Alex — UNPRO"} <${settings?.outreach_from_email || "alex@unpro.ca"}>`,
+        from: "Alex d'UNPRO <alex@mail.unpro.ca>",
         to: [prospect.email],
         subject: draft.subject,
         html: draft.body,

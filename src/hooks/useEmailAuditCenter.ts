@@ -250,7 +250,7 @@ export function useSendTestEmail() {
     mutationFn: async (recipientEmail: string) => {
       const { data, error } = await supabase.from("email_test_messages" as any).insert({
         recipient_email: recipientEmail,
-        sender_email: "noreply@unpro.ca",
+        sender_email: "alex@mail.unpro.ca",
         subject: "[UNPRO] Test de délivrabilité",
         body_preview: "Ceci est un test automatique de délivrabilité UNPRO.",
         send_status: "sent",

@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 
-const SENDER_EMAIL = "alex@unpro.ca";
+const SENDER_EMAIL = "alex@mail.unpro.ca";
 const STATUSES = ["queued", "sent", "delivered", "bounced", "opened"] as const;
 
 export default function PageAdminManualTestSend() {
@@ -20,7 +20,7 @@ export default function PageAdminManualTestSend() {
   const { toast } = useToast();
   const [recipientEmail, setRecipientEmail] = useState("");
   const [subject, setSubject] = useState("Test live UNPRO");
-  const [body, setBody] = useState("Ceci est un test live envoyé depuis alex@unpro.ca.");
+  const [body, setBody] = useState("Ceci est un test live envoyé depuis alex@mail.unpro.ca.");
   const [messageId, setMessageId] = useState<string | null>(null);
 
   const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail.trim()), [recipientEmail]);
@@ -59,7 +59,7 @@ export default function PageAdminManualTestSend() {
       if (!emailValid) throw new Error("Email destinataire invalide");
       if (!subject.trim()) throw new Error("Sujet requis");
       if (!body.trim()) throw new Error("Body requis");
-      if (mailbox.data?.mailbox_status !== "active") throw new Error("Mailbox alex@unpro.ca inactive");
+      if (mailbox.data?.mailbox_status !== "active") throw new Error("Mailbox alex@mail.unpro.ca inactive");
 
       const id = crypto.randomUUID();
       const trimmedRecipient = recipientEmail.trim().toLowerCase();

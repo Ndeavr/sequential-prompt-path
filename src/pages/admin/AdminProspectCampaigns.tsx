@@ -136,8 +136,8 @@ export default function AdminProspectCampaigns() {
           campaign_name: `AIPP Outreach — ${new Date().toLocaleDateString("fr-CA")}`,
           subject,
           body_text: body,
-          from_name: "UnPRO",
-          from_email: "hello@unpro.ca",
+          from_name: "Alex d'UNPRO",
+          from_email: "alex@mail.unpro.ca",
           tracking_id: trackingId,
           sent_at: new Date().toISOString(),
         });
