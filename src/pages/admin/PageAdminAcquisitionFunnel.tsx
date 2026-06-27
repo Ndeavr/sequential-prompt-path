@@ -196,6 +196,12 @@ export default function PageAdminAcquisitionFunnel() {
           <ChannelRoutingCard />
         </SectionErrorBoundary>
 
+        {/* ── Twilio diagnostic + smoke test ──────────────── */}
+        <SectionErrorBoundary title="Twilio diagnostic" onRetry={() => window.location.reload()}>
+          <TwilioDiagnosticPanel />
+        </SectionErrorBoundary>
+
+
         {/* ── Status banner ────────────────────────────────── */}
         <SectionErrorBoundary title="Statut système" onRetry={loadRun}>
           {runQ.error ? (
