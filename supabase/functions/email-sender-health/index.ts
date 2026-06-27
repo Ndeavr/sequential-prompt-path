@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     sb.from("email_send_log").select("created_at,message_id,template_name").order("created_at", { ascending: false }).limit(1).maybeSingle(),
     sb.from("email_send_log").select("created_at,message_id").eq("status", "sent").order("created_at", { ascending: false }).limit(1).maybeSingle(),
     sb.from("email_send_log").select("created_at,error_message,status").in("status", ["failed", "dlq", "bounced"]).order("created_at", { ascending: false }).limit(1).maybeSingle(),
-    sb.from("email_test_runs" as any).select("ran_at,passed,provider_message_id,provider_response").eq("run_type", "daily_selftest").order("ran_at", { ascending: false }).limit(1).maybeSingle(),
+    sb.from("email_health_selftest_runs").select("ran_at,passed,provider_message_id,provider_response").eq("run_type", "daily_selftest").order("ran_at", { ascending: false }).limit(1).maybeSingle(),
     sb.from("system_events").select("created_at,payload").eq("event_type", "EMAIL_SENDER_MISMATCH").order("created_at", { ascending: false }).limit(10),
   ]);
 

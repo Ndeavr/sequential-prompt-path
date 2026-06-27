@@ -44,13 +44,14 @@ Deno.serve(async (req) => {
     const ok = !error && (data as any)?.ok !== false;
     const messageId = (data as any)?.id ?? (data as any)?.message_id ?? null;
 
-    await sb.from("email_test_runs" as any).insert({
+    await sb.from("email_health_selftest_runs").insert({
       run_type: "daily_selftest",
       recipient: SELFTEST_TO,
       subject,
       passed: ok,
       provider_message_id: messageId,
       provider_response: data ?? error ?? null,
+      error_message: ok ? null : (error?.message ?? JSON.stringify(data).slice(0, 500)),
       ran_at: now,
     });
 
