@@ -56,12 +56,38 @@ Deno.serve(async (req) => {
     if (mapped === "failed" || mapped === "undelivered") update.failed_at = now;
     if (errorCode) update.error_code = errorCode;
     if (errorMessage) update.error_message = errorMessage;
+    update.provider_response = {
+      source: "twilio-status-v2",
+      received_at: now,
+      payload: Object.fromEntries(params.entries()),
+    };
 
     const { error } = await supabase.from("sms_events_v2").update(update).eq("twilio_sid", sid);
     if (error) {
       console.error("twilio-status-v2 update failed", error.message);
       // do not return — still record canonical funnel event below
     }
+
+    try {
+      const { data: smsEvent } = await supabase
+        .from("sms_events_v2")
+        .select("id")
+        .eq("twilio_sid", sid)
+        .maybeSingle();
+      await supabase.from("message_events").insert({
+        channel: "sms",
+        provider: "twilio",
+        provider_message_id: sid,
+        message_event_type: mapped,
+        status: mapped,
+        error_code: errorCode || null,
+        error_message: errorMessage || null,
+        source_table: smsEvent?.id ? "sms_events_v2" : "twilio_webhook",
+        source_row_id: smsEvent?.id ?? null,
+        payload: Object.fromEntries(params.entries()),
+        occurred_at: now,
+      });
+    } catch (e) { console.error("[twilio-status-v2] message_events insert failed", e); }
 
     // Canonical funnel: feed outreach_sms_events keyed by Twilio MessageSid
     {
