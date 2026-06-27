@@ -606,7 +606,7 @@ function ContractorAippSplit() {
             className="text-[18px] font-extrabold leading-tight tracking-tight mt-3"
             style={{ color: "#FFFFFF" }}
           >
-            Faites partie des entrepreneurs recommandés.
+            Faites partie des entrepreneurs recommandés par l'IA.
           </h3>
 
           <p className="text-[12px] mt-2 leading-relaxed" style={{ color: "#C6CFEE" }}>
