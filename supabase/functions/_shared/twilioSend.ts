@@ -25,8 +25,12 @@ function classifyMessage(type: string): MessageClass {
 
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
-const TWILIO_MESSAGING_SERVICE_SID = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID") ?? "";
-const TWILIO_FROM_NUMBER = Deno.env.get("TWILIO_FROM_NUMBER") ?? "";
+// Disable MessagingServiceSid path: we must enforce a specific QC sender.
+const TWILIO_MESSAGING_SERVICE_SID = "";
+// CANONICAL production sender. Hard-coded so a misconfigured env var cannot
+// silently fall back to the US (574) number with messaging disabled.
+const CANONICAL_FROM_NUMBER = "+14503286776";
+const TWILIO_FROM_NUMBER = (Deno.env.get("TWILIO_FROM_NUMBER") ?? CANONICAL_FROM_NUMBER).trim();
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 // Lovable connector-gateway fallback (used when direct creds absent)
