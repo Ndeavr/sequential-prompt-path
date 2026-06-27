@@ -1,6 +1,10 @@
 project_id = "clmaqdnphbndvmmqvpff"
 
 [functions]
+  [functions.email-daily-selftest]
+    verify_jwt = false
+  [functions.email-sender-health]
+    verify_jwt = true
   [functions.launch-stripe-webhook]
     verify_jwt = false
   [functions.process-form-submission]
