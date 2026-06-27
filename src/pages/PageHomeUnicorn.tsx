@@ -184,7 +184,7 @@ function HeroAlexOrb({ onTalk }: { onTalk: (hint?: string) => void }) {
           className="font-extrabold leading-[0.98] text-[28px] sm:text-[38px] tracking-[-0.035em]"
           style={{ color: "#0B1220" }}
         >
-          Votre maison a une question.{" "}
+          Vous avez une question sur votre maison ?{"\u00a0"}
           <span className="uc-gradient-text">Alex trouve la réponse.</span>
         </h1>
         <p
