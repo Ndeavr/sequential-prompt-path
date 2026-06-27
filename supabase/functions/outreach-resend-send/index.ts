@@ -64,6 +64,9 @@ Deno.serve(async (req) => {
   const messageId = body.message_id ?? crypto.randomUUID();
   const template = body.template_name ?? "outreach-resend-send";
 
+  const trimmedKey = (RESEND_KEY ?? "").trim();
+  const keyPrefix = trimmedKey.slice(0, 8);
+
   const fail = async (status: number, reason: string, detail: string, extra: Record<string, unknown> = {}) => {
     await logSend({
       message_id: messageId,
@@ -71,11 +74,20 @@ Deno.serve(async (req) => {
       recipient_email: body?.to ?? null,
       status: "email_failed",
       error_message: `${reason}: ${detail}`,
-      metadata: { reason, detail, latency_ms: Date.now() - startedAt, ...extra },
+      metadata: { reason, detail, key_prefix: keyPrefix, latency_ms: Date.now() - startedAt, ...extra },
     });
-    return new Response(JSON.stringify({ ok: false, reason, detail, message_id: messageId }), {
-      status,
-      headers: { ...cors, "Content-Type": "application/json" },
+    try {
+      await sb.from("outreach_health_state").upsert({
+        id: 1,
+        resend_key_prefix: keyPrefix || null,
+        resend_key_length: (RESEND_KEY ?? "").length || null,
+        resend_last_send_status: "failed",
+        resend_last_send_at: new Date().toISOString(),
+        resend_last_send_error: `${reason}: ${detail}`.slice(0, 500),
+      });
+    } catch (_) {}
+    return new Response(JSON.stringify({ ok: false, reason, detail, key_prefix: keyPrefix, message_id: messageId }), {
+      status, headers: { ...cors, "Content-Type": "application/json" },
     });
   };
 
