@@ -1,51 +1,114 @@
-## Diagnostic
+A — PROMPT LOVABLE FINAL
 
-L'écran montre deux problèmes distincts qui plafonnent Overall à 60 :
+1. CONTEXT
+UNPRO doit arrêter les faux statuts SMS “sent” et prouver le chemin réel : UNPRO → fonction backend → Twilio → transporteur → delivered/failed. La configuration Voice visible dans Twilio ne corrige pas les SMS; l’audit doit porter sur Messaging, webhooks, credentials et logs.
 
-1. **Étape 7/14 — `TWILIO_PHONE_NUMBER missing`**  
-   Le secret a été ajouté à la dernière itération, mais la fonction `acq-e2e-real` semble toujours lire `undefined`. Causes probables :
-   - Le secret a été ajouté mais la fonction n'a pas été redéployée (les Edge Functions doivent être redéployées pour récupérer les nouveaux secrets dans certains cas) — peu probable mais à vérifier.
-   - Plus probable : le code lit un nom de variable différent (ex. `TWILIO_FROM_NUMBER`, `TWILIO_FROM`, `TWILIO_SENDER`) ou le `.trim()` n'est pas appliqué (espace/retour de ligne dans le secret le rend "présent mais vide").
-   - Ou le secret a été enregistré sans le `+` (Twilio exige E.164 strict `+15145551234`).
+2. OBJECTIVE
+Créer un audit Twilio production complet, bloquant et traçable, pour identifier la cause racine du 329 SMS sent / 0 delivered et valider un SMS réel avec Message SID, réponse API, statut livraison et code erreur.
 
-2. **`resend_api_key_ping → HTTP 400 — API key is invalid`**  
-   Le secret `RESEND_API_KEY` configuré n'est **pas** une clé Resend native (`re_xxx`). C'est probablement :
-   - Une clé du Lovable Connector (`lovc_xxx`) → doit être routée via le Gateway, pas vers `api.resend.com` directement.
-   - Ou une clé Resend révoquée/expirée/d'un mauvais workspace.
-   - Ou une clé restreinte qui n'a pas le scope `emails:send` (Resend renvoie 401 normalement, mais 400 si format invalide).
+3. USERS
+- Admin UNPRO
+- Founder / opérateur acquisition
+- Système Autopilot SMS
 
-## Plan de correction
+4. DELIVERABLES
+- Vérification sécurisée des secrets backend existants : `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER` / `TWILIO_PHONE_NUMBER`, `TWILIO_MESSAGING_SERVICE_SID`, `TWILIO_VERIFY_SERVICE_SID` si présent.
+- Fonction backend d’audit Twilio qui interroge Twilio Messaging via les credentials serveur.
+- Diagnostic Admin dans Revenue Intelligence / Acquisition avec :
+  - numéro actif
+  - sender attendu `+14503286776`
+  - statut Messaging
+  - présence/absence Messaging Service
+  - webhooks configurés
+  - derniers 25 SMS Twilio
+  - Message SID
+  - From / To masqués
+  - status Twilio
+  - error_code / error_message
+  - statusCallback présent ou absent
+- Bouton “Envoyer SMS test” avec destination contrôlée.
+- Blocage dur si sender différent de `+14503286776`.
+- Blocage dur si status callback absent ou pointe vers une URL non-production.
+- Rapport racine : credentials, sender, messaging service, restrictions pays/trial, Canada SMS, webhooks, erreurs Twilio.
 
-### Étape A — Fix `TWILIO_PHONE_NUMBER` (Step 7/14)
+5. LOGIC
+- Ne jamais considérer un SMS comme delivered sur simple succès API.
+- `sent/queued/accepted` = statut intermédiaire.
+- `delivered` = uniquement depuis webhook Twilio ou lecture directe du message Twilio.
+- `failed/undelivered` = capturer `ErrorCode` + `ErrorMessage`.
+- Si Twilio API rejette la requête, enregistrer `failed_api_rejected`, pas `sent`.
+- Si aucun webhook delivery n’arrive, marquer `delivery_unknown_callback_missing`, pas `delivered`.
+- Si Messaging Service SID existe, vérifier que le numéro `+14503286776` y est attaché.
+- Si Messaging Service absent, envoyer avec `From=+14503286776`.
+- Si Messaging Service présent mais mal configuré, bloquer l’envoi et afficher la réparation requise.
 
-1. Inspecter `supabase/functions/acq-e2e-real/index.ts` à l'étape `send_sms` pour vérifier :
-   - Nom exact de la variable d'environnement lue.
-   - Présence d'un `.trim()` sur la valeur.
-   - Validation E.164 (`+` en tête).
-2. Ajouter un diagnostic explicite : `{ from_present: !!from, from_length: from?.length, starts_with_plus: from?.startsWith("+") }` au lieu d'un simple "missing".
-3. Si le secret existe mais commence sans `+`, normaliser automatiquement : `from.startsWith("+") ? from : "+" + from.replace(/\D/g, "")`.
-4. Vérifier également l'utilisation cohérente dans `outreachDispatch.ts` / `smsGuard.ts` / `outreach-repair-agent` pour qu'aucune fonction ne lise un autre nom (`TWILIO_FROM`, `TWILIO_SENDER`, etc.).
+6. DATA
+- Lire les tables SMS existantes (`sms_events_v2` et/ou tables récentes créées autour de `sms_messages`, `message_events`, `click_events`) sans casser l’existant.
+- Ajouter uniquement les champs manquants si nécessaire :
+  - `twilio_sid`
+  - `twilio_status`
+  - `twilio_error_code`
+  - `twilio_error_message`
+  - `status_callback_url`
+  - `provider_response`
+  - `delivery_verified_at`
+  - `root_cause_code`
+- Maintenir RLS, grants et accès admin uniquement.
 
-### Étape B — Fix Resend (HTTP 400 invalid)
+7. UI/UX
+- Ne pas redesign.
+- Ajouter un panneau diagnostic compact dans Admin → Revenue Intelligence / Acquisition.
+- Afficher des états lisibles : Green = livré vérifié, Amber = en attente / inconnu, Red = bloqué / rejeté / mauvais sender.
+- Masquer les numéros clients partiellement.
+- Afficher des actions claires : “Configurer webhook”, “Réparer sender”, “Relancer test”, “Voir dernier SID”.
 
-1. Ajouter au panneau **Diagnostic Resend** (déjà présent dans la UI) l'affichage de :
-   - Préfixe de la clé (`re_`, `lovc_`, autre) — déjà fait selon UI.
-   - Source détectée (Lovable Gateway vs Resend direct).
-   - Endpoint réellement utilisé pour le ping.
-2. Renforcer `probeResend` dans `outreach-health-agent` :
-   - Si clé commence par `lovc_` → ping via `https://connector-gateway.lovable.dev/resend/emails` avec headers Lovable Gateway (`Authorization: Bearer ${LOVABLE_API_KEY}` + `X-Connection-Api-Key: ${RESEND_API_KEY}`).
-   - Si clé commence par `re_` → ping direct `https://api.resend.com/api-keys` (GET, vérifie validité sans envoyer).
-   - Sinon → marquer la clé comme `format inconnu` au lieu de tenter un appel qui retournera 400.
-3. Aligner `outreachDispatch.ts` (et toutes les fonctions email : `send-onboarding-email`, `resend-events`, etc.) sur le même routeur (`_shared/emailSender.ts`) pour qu'elles utilisent la même logique de détection que le health probe.
-4. Si la clé est `lovc_` mais le connector Resend n'est pas lié, retourner un message actionnable : "Connector Resend non lié — ouvrir Workspace → Connectors → Resend".
+8. COMPONENTS
+- `TwilioDiagnosticPanel` enrichi ou réparé.
+- `TwilioSmokeTestForm` si le panneau actuel ne suffit pas.
+- `TwilioMessageTraceTable` pour les 25 derniers messages.
+- `TwilioRootCauseCard` pour afficher la cause principale.
 
-### Étape C — Vérification
+9. ACTIONS
+- Vérifier les secrets sans exposer les valeurs.
+- Vérifier la présence et la cohérence du sender.
+- Interroger Twilio `/Messages.json` pour les derniers SMS.
+- Interroger Twilio Messaging Services si `TWILIO_MESSAGING_SERVICE_SID` existe.
+- Envoyer un SMS test réel via backend.
+- Poller ou relire le Message SID pour obtenir le statut.
+- Enregistrer l’événement dans la table SMS.
+- Mettre à jour le dashboard avec le statut réel.
 
-1. Redéployer `acq-e2e-real`, `outreach-health-agent`, `outreach-repair-agent`.
-2. Relancer **Run health agent** → vérifier que Messaging passe de 60 à 100.
-3. Relancer **Run E2E (14)** → vérifier que l'étape 7 passe et que Overall remonte ≥ 95.
+10. CONSTRAINTS
+- Ne jamais afficher Account SID complet, Auth Token ou credentials.
+- Ne jamais logger les secrets.
+- Ne pas utiliser les réglages Voice comme preuve de santé SMS.
+- Ne pas inventer de screenshots Twilio Dashboard, Messaging Logs, Messaging Services ou Verify Services; Lovable ne peut pas capturer l’interface Twilio Console privée sans accès navigateur utilisateur. Remplacer par données API Twilio réelles et demander les captures si une vérification UI manuelle reste nécessaire.
+- Ne pas compter les landlines / non-mobile comme échecs SMS.
+- Ne pas débloquer Autopilot si E2E SMS n’est pas delivered ou si callback delivery manque.
 
-### Questions avant build
+11. SUCCESS
+- L’audit retourne une cause racine explicite pour “329 sent / 0 delivered”.
+- Le test SMS retourne : Message SID, réponse API, delivery status, error code si failed.
+- Le dashboard distingue `api_accepted`, `sent`, `delivered`, `undelivered`, `failed`, `unknown_no_callback`.
+- Aucun SMS ne part depuis un numéro différent de `+14503286776`.
+- Aucun SMS n’est marqué delivered sans preuve Twilio.
+- Autopilot reste bloqué tant que le test réel n’est pas vert.
 
-- Voulez-vous que je présume **Resend connector Lovable** (clé `lovc_`) ou **Resend direct API** (clé `re_`) ? La présence d'un panneau "Diagnostic Resend" qui affiche le préfixe suggère que vous voulez du diagnostic — je vais simplement faire en sorte que le probe route correctement selon le préfixe détecté.
-- Pour `TWILIO_PHONE_NUMBER` : voulez-vous l'auto-normalisation au `+` en tête, ou échec strict si format invalide ?
+12. TASKS
+- Inspecter les fonctions Twilio existantes : send, inbound, status, diagnostics.
+- Inspecter le panneau admin existant Twilio.
+- Inspecter la table SMS réelle utilisée en production.
+- Renforcer l’audit backend pour lire Twilio Messaging, Messaging Service et derniers messages.
+- Renforcer le smoke test pour retourner le Message SID et relire son statut.
+- Renforcer le mapping des statuts entrants Twilio webhook.
+- Ajouter ou compléter la trace UI dans Admin → Revenue Intelligence.
+- Ajouter les blockers sender/callback/messaging-service.
+- Vérifier via appel edge function et retourner le résultat exploitable.
+
+Technical implementation details
+- Use backend functions only for Twilio API calls.
+- Prefer existing Twilio connector/gateway if linked; otherwise use existing runtime secrets already configured.
+- Use form-urlencoded Twilio requests.
+- Use CORS on every function response.
+- Keep all secret values masked.
+- If a live test destination phone number is required and not already available in a secure field, request it via secure input or ask the user to provide the test number explicitly before sending.
