@@ -1,22 +1,29 @@
-## Problem
+## Problème
+E2E étape 1/14 (`create_synthetic_contractor`) plante : l'insert utilise `name`, mais la table `public.contractors` n'a pas cette colonne — c'est `business_name`. De plus, `user_id` est `NOT NULL` et n'est pas fourni. Résultat : Overall capé à 70, Autopilot bloqué.
 
-`unpro.ca/pro/dashboard` shows "Lien expiré". Root cause: the route `/pro/:slug` (PageProLandingNuclearClose) is declared **before** `/pro` (ProDashboard) and captures `dashboard` as a prospect slug. Since no prospect named "dashboard" exists, it falls through to the not-found state ("Lien expiré").
+## Fix (1 fichier)
+`supabase/functions/acq-e2e-real/index.ts` — étape 1 (lignes 94-100) :
 
-Three places in the app navigate to the wrong path `/pro/dashboard` instead of the canonical `/pro`:
-- `src/components/home-unicorn/BottomDockGlass.tsx:36` — "Tableau" dock link
-- `src/pages/checkout/PageCheckoutSuccess.tsx:274`
-- `src/pages/checkout/PageActivationStart.tsx:209`
+```ts
+const synthUserId = crypto.randomUUID();
+const { error } = await sb.from("contractors").insert({
+  id: synthId,
+  user_id: synthUserId,
+  business_name: `E2E ${slug}`,
+  email: `${slug}@unpro.test`,
+  phone: "+15555550100",
+  city: "Montréal",
+  account_status: "test",
+  onboarding_status: "synthetic",
+  activation_status: "synthetic",
+});
+```
 
-The selftest / outreach links land on `/pro/{slug}` which is correct — the bug is only triggered by internal navigations writing `/pro/dashboard`.
+Pas de FK sur `user_id` (vérifié) → uuid aléatoire OK. Le delete final (ligne 235) nettoie déjà la ligne par `id`.
 
-## Fix
+## Validation
+1. Redéployer `acq-e2e-real`.
+2. Cliquer **Run E2E (14)** → étape 1 doit passer (`ok`).
+3. Overall remonte au-dessus de 70 si les autres étapes passent ; Autopilot se débloque si ≥ 95.
 
-1. **Repoint internal navigations** from `/pro/dashboard` → `/pro` in the three files above (canonical dashboard route per `ROUTES.PRO_DASHBOARD = "/pro"`).
-2. **Add a reserved-slug guard** in `PageProLandingNuclearClose.tsx`: when `slug` matches a reserved word (`dashboard`, `profile`, `leads`, `appointments`, `reviews`, `billing`, `territories`, `documents`, `account`, `aipp-score`, `domain-intelligence`), `<Navigate to="/pro" replace />` before attempting prospect lookup. This protects against any future accidental link.
-3. **No router order change** — the `/pro/:slug` route stays where it is; the guard handles the collision deterministically without breaking real prospect slugs.
-
-## Verification
-
-- Click "Tableau" in the bottom dock → lands on `/pro` ProDashboard, not "Lien expiré".
-- Visiting `/pro/dashboard` directly → redirects to `/pro`.
-- Visiting a real prospect URL like `/pro/toitures-lb-laval?t=xxx` → still renders the personalized landing.
+Aucun autre changement (UI, schéma, RLS) — c'est un bug de payload côté edge function.
