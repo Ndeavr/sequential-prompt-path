@@ -97,20 +97,20 @@ Deno.serve(async (req) => {
         `https://api.twilio.com/2010-04-01/Accounts/${SID}/IncomingPhoneNumbers.json?PhoneNumber=${encodeURIComponent(PHONE)}`,
         { sid: SID, token: TOKEN }
       );
-      let count = 0;
-      let first: any = null;
-      try { const j = JSON.parse(p.body_excerpt ?? "{}"); count = j?.incoming_phone_numbers?.length ?? 0; first = j?.incoming_phone_numbers?.[0] ?? null; } catch {}
-      result.phone_number = { ...p, exists_in_account: count > 0, sid: first?.sid ?? null, capabilities: first?.capabilities ?? null, friendly_name: first?.friendly_name ?? null };
+      const list = p._json?.incoming_phone_numbers ?? [];
+      const first = list[0] ?? null;
+      result.phone_number = { ...p, _json: undefined, exists_in_account: list.length > 0, sid: first?.sid ?? null, capabilities: first?.capabilities ?? null, friendly_name: first?.friendly_name ?? null };
     }
     if (FROM && FROM !== PHONE) {
       const p = await probe(
         `https://api.twilio.com/2010-04-01/Accounts/${SID}/IncomingPhoneNumbers.json?PhoneNumber=${encodeURIComponent(FROM)}`,
         { sid: SID, token: TOKEN }
       );
-      let count = 0; let first: any = null;
-      try { const j = JSON.parse(p.body_excerpt ?? "{}"); count = j?.incoming_phone_numbers?.length ?? 0; first = j?.incoming_phone_numbers?.[0] ?? null; } catch {}
-      result.from_number = { ...p, exists_in_account: count > 0, sid: first?.sid ?? null, capabilities: first?.capabilities ?? null, friendly_name: first?.friendly_name ?? null };
+      const list = p._json?.incoming_phone_numbers ?? [];
+      const first = list[0] ?? null;
+      result.from_number = { ...p, _json: undefined, exists_in_account: list.length > 0, sid: first?.sid ?? null, capabilities: first?.capabilities ?? null, friendly_name: first?.friendly_name ?? null };
     }
+
     if (MSG_SID) {
       result.messaging_service = await probe(`https://messaging.twilio.com/v1/Services/${MSG_SID}`, { sid: SID, token: TOKEN });
     }
