@@ -46,46 +46,97 @@ async function readResendBody(r: Response): Promise<{ name?: string; message?: s
 }
 
 async function probeResend(): Promise<Probe> {
-  if (!RESEND_KEY) return { provider: "resend", status: "red", failure_reason: "MISSING_SECRET", message: "RESEND_API_KEY missing", repair_action: "manual_required" };
+  const trimmed = (RESEND_KEY ?? "").trim();
+  const prefix = trimmed.slice(0, 8);
+  const keyLen = (RESEND_KEY ?? "").length;
+  const hasWs = !!RESEND_KEY && RESEND_KEY !== trimmed;
+  console.log("[resend.probe] prefix=", prefix, "len=", keyLen, "ws=", hasWs, "starts_re_=", trimmed.startsWith("re_"));
+
+  if (!trimmed) return { provider: "resend", status: "red", failure_reason: "MISSING_SECRET", message: "RESEND_API_KEY missing", repair_action: "manual_required" };
+
+  // Persist diag basics every probe
+  const baseDiag = { id: 1, resend_key_prefix: prefix, resend_key_length: keyLen, resend_last_checked_at: new Date().toISOString() };
+
+  if (!trimmed.startsWith("re_")) {
+    await supabase.from("outreach_health_state").upsert({ ...baseDiag, resend_last_error: `bad_format prefix=${prefix}` });
+    return { provider: "resend", status: "red", failure_reason: "WRONG_VARIABLE_MAPPING",
+      message: `Key does not start with re_ · prefix=${prefix} · len=${keyLen}`, repair_action: "update_secret" };
+  }
+  if (hasWs) {
+    await supabase.from("outreach_health_state").upsert({ ...baseDiag, resend_last_error: "whitespace_in_secret" });
+    return { provider: "resend", status: "red", failure_reason: "WHITESPACE_CORRUPTION",
+      message: `Secret contains whitespace/newline · raw_len=${keyLen} trimmed=${trimmed.length}`, repair_action: "update_secret" };
+  }
+
   try {
-    // 1) Auth ping — /api-keys requires `api_keys:read` scope but returns 200/401 on basic keys too
-    const auth = await fetch("https://api.resend.com/api-keys", { headers: { Authorization: `Bearer ${RESEND_KEY}` } });
+    // 1) Auth ping — /api-keys requires `api_keys:read`. Returns 200 with Full-access, 401/403 with sending-only.
+    const auth = await fetch("https://api.resend.com/api-keys", { headers: { Authorization: `Bearer ${trimmed}` } });
+    let accountId: string | null = null;
     if (auth.status === 401 || auth.status === 403) {
+      // Sending-only keys hit here; do NOT fail yet — fall through to /domains which works for sending keys too.
+      console.log("[resend.probe] api-keys", auth.status, "(likely sending-only scope) — continuing");
+    } else if (auth.status === 400) {
       const b = await readResendBody(auth);
-      return { provider: "resend", status: "red", failure_reason: "RESEND_AUTH_ERROR",
-        message: `${auth.status} — ${b.message ?? "invalid key"}`, repair_action: "rotate_secret" };
+      const msg = (b.message ?? "").toLowerCase();
+      if (msg.includes("invalid") || msg.includes("api key")) {
+        await supabase.from("outreach_health_state").upsert({ ...baseDiag, resend_last_error: `auth 400 ${b.message} · prefix=${prefix} len=${keyLen}` });
+        return { provider: "resend", status: "red", failure_reason: "RESEND_AUTH_ERROR",
+          message: `HTTP 400 — ${b.message ?? "API key is invalid"} · prefix=${prefix} len=${keyLen}`, repair_action: "rotate_secret" };
+      }
+    } else if (auth.ok) {
+      const b = await readResendBody(auth);
+      try { accountId = JSON.parse(b.raw)?.data?.[0]?.id ?? null; } catch {}
     }
 
-    // 2) Domains — source of truth for verified sender
-    const dom = await fetch("https://api.resend.com/domains", { headers: { Authorization: `Bearer ${RESEND_KEY}` } });
+    // 2) Domains — source of truth for verified sender (works with sending-access keys)
+    const dom = await fetch("https://api.resend.com/domains", { headers: { Authorization: `Bearer ${trimmed}` } });
     if (!dom.ok) {
       const b = await readResendBody(dom);
-      await supabase.from("outreach_health_state").upsert({ id: 1, resend_last_checked_at: new Date().toISOString(), resend_last_error: `HTTP ${dom.status}: ${b.message ?? b.raw.slice(0,200)}` });
-      return { provider: "resend", status: "yellow", failure_reason: "RESEND_PROVIDER_ERROR",
-        message: `HTTP ${dom.status} — ${b.message ?? b.name ?? b.raw.slice(0,200)}`,
-        repair_action: dom.status === 400 ? "manual_required" : "rotate_secret" };
+      const msg = (b.message ?? "").toLowerCase();
+      const isAuthLike = dom.status === 401 || dom.status === 403 || (dom.status === 400 && (msg.includes("invalid") || msg.includes("api key")));
+      await supabase.from("outreach_health_state").upsert({
+        ...baseDiag,
+        resend_account_id: accountId,
+        resend_last_error: `domains HTTP ${dom.status}: ${b.message ?? b.raw.slice(0,200)} · prefix=${prefix} len=${keyLen}`,
+      });
+      return {
+        provider: "resend",
+        status: "red",
+        failure_reason: isAuthLike ? "RESEND_AUTH_ERROR" : "RESEND_PROVIDER_ERROR",
+        message: `HTTP ${dom.status} — ${b.message ?? b.name ?? b.raw.slice(0,200)} · prefix=${prefix}`,
+        repair_action: isAuthLike ? "rotate_secret" : "manual_required",
+      };
     }
     const body = await readResendBody(dom);
     let domains: any[] = [];
     try { domains = JSON.parse(body.raw)?.data ?? []; } catch {}
     const verified = domains.find(d => d?.status === "verified") ?? domains.find(d => d?.status === "active");
     await supabase.from("outreach_health_state").upsert({
-      id: 1,
+      ...baseDiag,
+      resend_account_id: accountId,
       resend_verified_domain: verified?.name ?? null,
-      resend_last_checked_at: new Date().toISOString(),
       resend_last_error: verified ? null : "NO_VERIFIED_DOMAIN",
     });
     if (!verified) return { provider: "resend", status: "red", failure_reason: "NO_VERIFIED_DOMAIN",
-      message: `No verified domain (found ${domains.length})`, repair_action: "manual_required" };
+      message: `No verified domain (found ${domains.length}) · prefix=${prefix}`, repair_action: "manual_required" };
 
-    // 3) Webhook freshness (informational — yellow only)
+    // 3) Honest cap — require a real send within 24h before going green.
+    const { data: state } = await supabase.from("outreach_health_state").select("resend_last_send_status,resend_last_send_at").eq("id", 1).maybeSingle();
+    const lastSendAt = state?.resend_last_send_at ? new Date(state.resend_last_send_at).getTime() : 0;
+    const sendFresh = state?.resend_last_send_status === "sent" && (Date.now() - lastSendAt < 24 * 3600 * 1000);
+    if (!sendFresh) {
+      return { provider: "resend", status: "yellow", failure_reason: "NO_RECENT_SEND",
+        message: `API ok · sender ${verified.name} · prefix=${prefix} · no real send <24h`, repair_action: "run_send_test" };
+    }
+
+    // 4) Webhook freshness (informational — yellow only)
     const { data } = await supabase.from("outreach_email_events").select("created_at").order("created_at",{ascending:false}).limit(1);
     const last = (data as any)?.[0]?.created_at;
     if (last && Date.now() - new Date(last).getTime() > 30 * 60 * 1000) {
       return { provider: "resend", status: "yellow", failure_reason: "WEBHOOK_STALE",
         message: `last event ${last} · sender ${verified.name}`, repair_action: "recreate_webhook" };
     }
-    return { provider: "resend", status: "green", message: `API ok · sender ${verified.name}` };
+    return { provider: "resend", status: "green", message: `API ok · sender ${verified.name} · prefix=${prefix}` };
   } catch (e) {
     return { provider: "resend", status: "red", failure_reason: "EXTERNAL_TIMEOUT", message: String(e) };
   }
