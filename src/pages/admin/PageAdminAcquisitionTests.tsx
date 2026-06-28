@@ -99,12 +99,18 @@ export default function PageAdminAcquisitionTests() {
         <TestCard
           title="3. Envoyer un SMS de test (Twilio)"
           description="Envoie via Twilio avec StatusCallback configuré. Loggue 'sent', attend 'delivered' via webhook."
-          run={() => invoke("acq-test-send-sms", { to: adminPhone })}
+          run={async () => {
+            if (!adminPhone) return { ok: false, error: "Renseigne le téléphone admin (E.164) en haut de page.", timestamp: new Date().toISOString() };
+            return invoke("acq-test-send-sms", { to: adminPhone });
+          }}
         />
         <TestCard
           title="4. Envoyer un email de test (Resend)"
           description="Envoie via Resend avec tags tracking_id. Loggue 'sent', webhook Resend logguera 'delivered'/'opened'."
-          run={() => invoke("acq-test-send-email", { to: adminEmail })}
+          run={async () => {
+            if (!adminEmail) return { ok: false, error: "Renseigne l'email admin en haut de page.", timestamp: new Date().toISOString() };
+            return invoke("acq-test-send-email", { to: adminEmail });
+          }}
         />
         <TestCard
           title="5. Vérifier la santé du pipeline"
