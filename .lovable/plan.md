@@ -1,60 +1,65 @@
-## Why a plan is needed
+## Root cause
 
-I can't read the value of `TWILIO_MESSAGING_SERVICE_SID` directly — secret values are encrypted and never exposed to me, and the Twilio connector gateway only proxies `/2010-04-01/Accounts/{SID}/…`, not the Messaging API (`messaging.twilio.com/v1`) where Messaging Services live. So I can't answer "which MG…" definitively from chat alone. I need to add one tiny read-only edge function that fetches the Service details from Twilio's Messaging API using the existing `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` secrets, then report the result back to you.
+`sms_events_v2.status` CHECK constraint allows only:
+`queued, sending, sent, delivered, undelivered, failed, invalid_phone, blocked, opted_out, retry_scheduled, contact_required, deferred_window, delivery_unknown, api_accepted`
 
-## What gets built
+Twilio's lifecycle also emits: **`accepted`**, **`scheduled`**, **`receiving`**, **`received`**, **`read`**, **`canceled`** (and webhook may send uppercased values). The E2E inserts `accepted` (Twilio's first state after API submission) → constraint violation → `DB_INSERT_BLOCKED`.
 
-### 1. New edge function `twilio-messaging-service-info` (`verify_jwt = false`, admin-gated)
+## Fix
 
-One read-only call. Reads `TWILIO_MESSAGING_SERVICE_SID` from env and `GET`s:
+### 1. Migration — widen the CHECK + normalize
 
+```sql
+ALTER TABLE public.sms_events_v2 DROP CONSTRAINT sms_events_v2_status_check;
+
+-- Normalize anything inbound to lowercase before validation
+ALTER TABLE public.sms_events_v2
+  ADD CONSTRAINT sms_events_v2_status_check
+  CHECK (status = ANY (ARRAY[
+    -- Twilio canonical
+    'queued','accepted','scheduled','sending','sent',
+    'delivered','undelivered','failed','canceled',
+    'receiving','received','read',
+    -- UNPRO internal
+    'api_accepted','invalid_phone','blocked','opted_out',
+    'retry_scheduled','contact_required','deferred_window','delivery_unknown'
+  ]));
+
+-- Defensive normalizer trigger: lowercase + map legacy spellings
+CREATE OR REPLACE FUNCTION public.normalize_sms_event_status()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.status := lower(trim(NEW.status));
+  IF NEW.status IN ('cancelled') THEN NEW.status := 'canceled'; END IF;
+  RETURN NEW;
+END $$;
+
+DROP TRIGGER IF EXISTS trg_normalize_sms_event_status ON public.sms_events_v2;
+CREATE TRIGGER trg_normalize_sms_event_status
+  BEFORE INSERT OR UPDATE ON public.sms_events_v2
+  FOR EACH ROW EXECUTE FUNCTION public.normalize_sms_event_status();
 ```
-https://messaging.twilio.com/v1/Services/{MG_SID}
-```
 
-with HTTP Basic Auth (`TWILIO_ACCOUNT_SID:TWILIO_AUTH_TOKEN`).
+### 2. Code — single mapper used by every writer
 
-Returns:
+Add `supabase/functions/_shared/smsStatusMap.ts`:
+- `mapTwilioStatus(raw)` → returns one of the allowed values, defaulting unknown → `'delivery_unknown'` and logging.
 
-```json
-{
-  "messaging_service_sid": "MGxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-  "friendly_name": "...",
-  "inbound_request_url": "...",          // currently configured in Twilio
-  "inbound_method": "POST",
-  "status_callback": "...",
-  "expected_inbound_url": "https://clmaqdnphbndvmmqvpff.supabase.co/functions/v1/twilio-inbound",
-  "expected_status_callback": "https://clmaqdnphbndvmmqvpff.supabase.co/functions/v1/twilio-status-v2",
-  "matches_expected_inbound": true|false,
-  "twilio_console_url": "https://console.twilio.com/us1/develop/sms/services/{MG_SID}/integration"
-}
-```
+Apply it in every insert/update path:
+- `supabase/functions/twilio-status-v2/index.ts` (webhook)
+- `supabase/functions/_shared/twilioSend.ts` (initial insert — currently writes `accepted`)
+- `supabase/functions/twilio-e2e-audit/index.ts` (steps 04 + 09)
+- `supabase/functions/sms-admin-test/index.ts`
+- any other insert into `sms_events_v2` (grep first)
 
-Also lists the phone numbers attached to the service via `GET /v1/Services/{MG_SID}/PhoneNumbers` so we can confirm `+14503286776` is bound to it.
+### 3. Redeploy + rerun
 
-### 2. Surface the result
+Deploy: `twilio-status-v2`, `twilio-e2e-audit`, `sms-admin-test`, plus any function importing `_shared/twilioSend.ts`.
 
-Add a one-shot "Reveal Messaging Service" button at the top of `TwilioDiagnosticPanel.tsx` (already mounted in `/admin/revenue-intelligence`) that invokes the new function and prints the JSON. No other UI changes.
+Then run `Run Full E2E (10)` and confirm:
+- 04 db_write_permission PASS
+- 08 real_send PASS
+- 09 poll_callback PASS
+- 10 dashboard_reads PASS
 
-### 3. Register the function
-
-`supabase/config.toml` → `[functions.twilio-messaging-service-info] verify_jwt = false`.
-
-## What you'll get back (the actual answer to your question)
-
-After this ships and you click the button once, the panel will show:
-
-- **Messaging Service SID** — the real `MG…` value from the secret.
-- **Service name** — Twilio "FriendlyName".
-- **Exact inbound webhook URL required** — `https://clmaqdnphbndvmmqvpff.supabase.co/functions/v1/twilio-inbound` (already the value the E2E audit expects).
-- **Exact Twilio page where it must be configured** — Twilio Console → **Messaging → Services → {service name} → Integration → "Incoming Messages" → Send a webhook → Request URL** (direct link returned in the JSON).
-
-## Files
-
-- `supabase/functions/twilio-messaging-service-info/index.ts` (new)
-- `supabase/config.toml` (register function, `verify_jwt = false`)
-- `src/components/admin/TwilioDiagnosticPanel.tsx` (add button + JSON viewer)
-
-## Done when
-
-Clicking "Reveal Messaging Service" returns the live MG SID, friendly name, currently configured inbound URL, and a clear PASS/FAIL on whether it matches `…/functions/v1/twilio-inbound`, plus the deep-link to the exact Twilio Console page to fix it.
+If any still fails, surface the raw `status` value the audit attempted to insert and extend the mapper — the trigger guarantees no further `DB_INSERT_BLOCKED`.

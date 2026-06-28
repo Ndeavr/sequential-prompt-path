@@ -12,16 +12,17 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+const ALLOWED_STATUSES = new Set([
+  "queued","accepted","scheduled","sending","sent",
+  "delivered","undelivered","failed","canceled",
+  "receiving","received","read",
+  "api_accepted","invalid_phone","blocked","opted_out",
+  "retry_scheduled","contact_required","deferred_window","delivery_unknown",
+]);
 function mapStatus(twilio: string): string {
-  switch (twilio) {
-    case "queued": return "queued";
-    case "sending": return "sending";
-    case "sent": return "sent";
-    case "delivered": return "delivered";
-    case "undelivered": return "undelivered";
-    case "failed": return "failed";
-    default: return twilio || "queued";
-  }
+  const s = (twilio || "").toLowerCase().trim();
+  if (s === "cancelled") return "canceled";
+  return ALLOWED_STATUSES.has(s) ? s : "delivery_unknown";
 }
 
 Deno.serve(async (req) => {

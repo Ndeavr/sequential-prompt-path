@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
       message_type: "audit_probe",
       raw_phone: "+10000000000",
       normalized_phone: "+10000000000",
-      status: "audit_probe",
+      status: "queued",
       attempt_number: 1,
       metadata: { source: "twilio-e2e-audit", user_id: userId },
     }).select("id").single();
