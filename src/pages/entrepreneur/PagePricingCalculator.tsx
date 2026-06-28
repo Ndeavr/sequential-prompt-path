@@ -119,6 +119,10 @@ export default function PagePricingCalculator() {
 
       // Store for later
       sessionStorage.setItem("unpro_pricing_result", JSON.stringify(res));
+      if (res?.quote_id) {
+        const { setActiveQuoteId } = await import("@/lib/checkoutUrl");
+        setActiveQuoteId(res.quote_id);
+      }
     } catch (e: any) {
       toast.error(e.message || "Erreur de calcul");
     } finally {
