@@ -224,9 +224,10 @@ export default function PageEntrepreneurDiagnosticLanding() {
     });
   }, [step, aipp.score, planSlug, projection.upliftLow, projection.upliftHigh, patch]);
 
-  const startCheckout = () => {
+  const startCheckout = async () => {
     sessionStorage.setItem("unpro_intake_recommended_plan", planSlug);
-    navigate(`/entrepreneur/checkout?plan=${planSlug}`);
+    const { buildCheckoutUrl } = await import("@/lib/checkoutUrl");
+    navigate(buildCheckoutUrl({ plan: planSlug }));
   };
 
   return (
