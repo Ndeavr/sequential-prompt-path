@@ -168,7 +168,9 @@ export default function PanelContractorAdvisorAlex({
     try {
       const result = await getContractorCheckoutUrl(recommended);
       if (result.requiresAuth) {
-        navigate(`/auth?next=/entrepreneur/checkout/${recommended}`);
+        const { buildCheckoutUrl } = await import("@/lib/checkoutUrl");
+        const next = buildCheckoutUrl({ plan: recommended });
+        navigate(`/auth?next=${encodeURIComponent(next)}`);
         return;
       }
       if (result.url) {
