@@ -166,6 +166,23 @@ export default function PageContractorCheckout() {
               </div>
             </motion.div>
 
+            {/* Recommendation vs applied plan banner */}
+            {showDowngradeBanner && (
+              <motion.div variants={fadeUp}>
+                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-1">
+                  <p className="text-sm font-semibold text-foreground">
+                    Plan recommandé : {recommendedPlan!.name} {recommendedPlan!.price} $/mois
+                  </p>
+                  <p className="text-sm text-foreground/90">
+                    Offre Fondateur appliquée : {planName} {planPrice} $/mois
+                  </p>
+                  <p className="text-xs text-emerald-500 font-semibold">
+                    Économie : {monthlySavings} $/mois
+                  </p>
+                </div>
+              </motion.div>
+            )}
+
             {/* Plan summary */}
             <motion.div variants={fadeUp}>
               <CardGlass noAnimation elevated>
