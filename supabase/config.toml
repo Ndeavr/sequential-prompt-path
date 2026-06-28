@@ -21,6 +21,8 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.twilio-status-v2]
     verify_jwt = false
+  [functions.twilio-messaging-service-info]
+    verify_jwt = false
   [functions.sms-retry-scheduler]
     verify_jwt = false
   [functions.admin-activation-import]
