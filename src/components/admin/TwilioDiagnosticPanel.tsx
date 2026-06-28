@@ -93,6 +93,22 @@ export default function TwilioDiagnosticPanel() {
   const [testTo, setTestTo] = useState("");
   const [sending, setSending] = useState(false);
   const [lastTest, setLastTest] = useState<any>(null);
+  const [msvc, setMsvc] = useState<any>(null);
+  const [msvcLoading, setMsvcLoading] = useState(false);
+
+  const revealMessagingService = useCallback(async () => {
+    setMsvcLoading(true);
+    try {
+      const { data: res, error: err } = await supabase.functions.invoke("twilio-messaging-service-info", { method: "POST" });
+      if (err) throw err;
+      setMsvc(res);
+    } catch (e: any) {
+      toast.error(e?.message || String(e));
+    } finally {
+      setMsvcLoading(false);
+    }
+  }, []);
+
 
   const load = useCallback(async () => {
     setLoading(true);
