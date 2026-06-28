@@ -35,13 +35,24 @@ export default function PageContractorCheckout() {
   const [isLoading, setIsLoading] = useState(false);
   const [quote, setQuote] = useState<PricingQuote | null>(null);
 
-  const quoteId = searchParams.get("quoteId") || (state as any).quoteId || null;
+  const quoteId = searchParams.get("quoteId") || searchParams.get("quote_id") || (state as any).quoteId || null;
+  const planParam = searchParams.get("plan");
 
-  // Plan resolution priority: quote > funnel state > fallback
-  const planSlug = (quote?.recommended_plan as string) || state.selectedPlanId || "pro";
+  // Plan resolution priority: explicit ?plan= > quote > funnel state > fallback
+  const planSlug = planParam || (quote?.recommended_plan as string) || state.selectedPlanId || "pro";
   const plan = PLAN_DETAILS[planSlug] || PLAN_DETAILS["pro"];
   const planName = plan?.name || planSlug;
-  const planPrice = quote?.recommended_monthly_price ?? plan?.price ?? 349;
+  // When ?plan= overrides the quote, bill at catalog price for that plan (not the quote's recommended price)
+  const planPrice = (planParam ? plan?.price : quote?.recommended_monthly_price ?? plan?.price) ?? 349;
+
+  // Recommendation context — used to display "Premium recommandé → Pro Fondateur appliqué"
+  const recommendedSlug = (quote?.recommended_plan as string) || null;
+  const recommendedPlan = recommendedSlug ? PLAN_DETAILS[recommendedSlug] : null;
+  const showDowngradeBanner =
+    !!recommendedPlan &&
+    recommendedSlug !== planSlug &&
+    recommendedPlan.price > planPrice;
+  const monthlySavings = showDowngradeBanner ? Math.round(recommendedPlan!.price - planPrice) : 0;
 
   // Load personalized quote if URL provides it
   useEffect(() => {
@@ -154,6 +165,23 @@ export default function PageContractorCheckout() {
                 </div>
               </div>
             </motion.div>
+
+            {/* Recommendation vs applied plan banner */}
+            {showDowngradeBanner && (
+              <motion.div variants={fadeUp}>
+                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-1">
+                  <p className="text-sm font-semibold text-foreground">
+                    Plan recommandé : {recommendedPlan!.name} {recommendedPlan!.price} $/mois
+                  </p>
+                  <p className="text-sm text-foreground/90">
+                    Offre Fondateur appliquée : {planName} {planPrice} $/mois
+                  </p>
+                  <p className="text-xs text-emerald-500 font-semibold">
+                    Économie : {monthlySavings} $/mois
+                  </p>
+                </div>
+              </motion.div>
+            )}
 
             {/* Plan summary */}
             <motion.div variants={fadeUp}>
