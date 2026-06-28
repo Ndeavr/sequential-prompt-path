@@ -169,7 +169,10 @@ export default function PageContractorCheckout() {
             {/* Recommendation vs applied plan banner */}
             {showDowngradeBanner && (
               <motion.div variants={fadeUp}>
-                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-1">
+                <div
+                  aria-live="polite"
+                  className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-1.5"
+                >
                   <p className="text-sm font-semibold text-foreground">
                     Plan recommandé : {recommendedPlan!.name} {recommendedPlan!.price} $/mois
                   </p>
@@ -179,6 +182,18 @@ export default function PageContractorCheckout() {
                   <p className="text-xs text-emerald-500 font-semibold">
                     Économie : {monthlySavings} $/mois
                   </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const params = new URLSearchParams();
+                      if (quoteId) params.set("quoteId", quoteId);
+                      params.set("plan", recommendedSlug!);
+                      navigate(`/entrepreneur/checkout?${params.toString()}`, { replace: true });
+                    }}
+                    className="mt-1 text-xs font-semibold text-amber-600 hover:text-amber-700 underline underline-offset-2"
+                  >
+                    Choisir plutôt le plan recommandé ({recommendedPlan!.name})
+                  </button>
                 </div>
               </motion.div>
             )}
