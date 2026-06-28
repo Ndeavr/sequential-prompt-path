@@ -13,6 +13,7 @@ import AlexHomepageConversation, {
   type AlexState,
 } from "./AlexHomepageConversation";
 import { useActiveRole } from "@/contexts/ActiveRoleContext";
+import { buildCheckoutUrl } from "@/lib/checkoutUrl";
 import FounderNoteConsent from "./FounderNoteConsent";
 
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
@@ -76,7 +77,7 @@ export default function HeroOrbMockup() {
     ? [
         { label: "Voir mon AIPP", href: "/entrepreneur" },
         { label: "Mes rendez-vous", href: "/contractor/calendar" },
-        { label: "Activer mon profil", href: "/entrepreneur/checkout" },
+        { label: "Activer mon profil", href: buildCheckoutUrl() },
         { label: "Mon plan recommandé", href: "/entrepreneur" },
       ]
     : [

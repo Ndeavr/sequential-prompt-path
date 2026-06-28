@@ -141,9 +141,10 @@ export function DynamicPlanReveal({
         <Button
           size="lg"
           className="w-full bg-[hsl(210,100%,65%)] hover:bg-[hsl(210,100%,70%)] text-black font-medium h-14 rounded-2xl"
-          onClick={() =>
-            navigate(`/entrepreneur/checkout?plan=${r.recommended_plan_slug}&recommendation=${r.id}`)
-          }
+          onClick={async () => {
+            const { buildCheckoutUrl } = await import("@/lib/checkoutUrl");
+            navigate(buildCheckoutUrl({ plan: r.recommended_plan_slug, recommendation: r.id }));
+          }}
         >
           Activer ce plan
           <ArrowRight className="w-4 h-4 ml-2" />

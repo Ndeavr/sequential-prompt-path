@@ -1,65 +1,63 @@
-## Root cause
+## Objectif
 
-`sms_events_v2.status` CHECK constraint allows only:
-`queued, sending, sent, delivered, undelivered, failed, invalid_phone, blocked, opted_out, retry_scheduled, contact_required, deferred_window, delivery_unknown, api_accepted`
+Faire de `?quoteId=` la **single source of truth** sur `/entrepreneur/checkout`, et afficher systématiquement le bandeau ambre "Plan recommandé X — Offre Fondateur appliquée Y — Économie Z $" lorsque le plan sélectionné est inférieur au plan recommandé du devis.
 
-Twilio's lifecycle also emits: **`accepted`**, **`scheduled`**, **`receiving`**, **`received`**, **`read`**, **`canceled`** (and webhook may send uppercased values). The E2E inserts `accepted` (Twilio's first state after API submission) → constraint violation → `DB_INSERT_BLOCKED`.
+## État actuel (vérifié)
 
-## Fix
+Déjà en place dans `PageContractorCheckout.tsx` :
+- Lit `?quoteId=` (et alias `quote_id`) + fallback `state.quoteId`.
+- Lit `?plan=` comme override.
+- `fetchPricingQuote(quoteId)` charge le devis.
+- Bandeau `showDowngradeBanner` affiché si `recommendedSlug !== planSlug && recommendedPlan.price > planPrice`.
+- `successUrl` / `cancelUrl` reconduisent `quote_id`.
 
-### 1. Migration — widen the CHECK + normalize
+**Manque** : plusieurs entrées qui naviguent vers `/entrepreneur/checkout` ne propagent **pas** `quoteId`, donc le devis est perdu et le bandeau ne peut jamais s'afficher depuis ces points d'entrée.
 
-```sql
-ALTER TABLE public.sms_events_v2 DROP CONSTRAINT sms_events_v2_status_check;
+## Changements
 
--- Normalize anything inbound to lowercase before validation
-ALTER TABLE public.sms_events_v2
-  ADD CONSTRAINT sms_events_v2_status_check
-  CHECK (status = ANY (ARRAY[
-    -- Twilio canonical
-    'queued','accepted','scheduled','sending','sent',
-    'delivered','undelivered','failed','canceled',
-    'receiving','received','read',
-    -- UNPRO internal
-    'api_accepted','invalid_phone','blocked','opted_out',
-    'retry_scheduled','contact_required','deferred_window','delivery_unknown'
-  ]));
+### 1. Stocker le `quoteId` actif en session (canonique)
 
--- Defensive normalizer trigger: lowercase + map legacy spellings
-CREATE OR REPLACE FUNCTION public.normalize_sms_event_status()
-RETURNS trigger LANGUAGE plpgsql AS $$
-BEGIN
-  NEW.status := lower(trim(NEW.status));
-  IF NEW.status IN ('cancelled') THEN NEW.status := 'canceled'; END IF;
-  RETURN NEW;
-END $$;
+Dans `src/pages/entrepreneur/PagePlanResult.tsx` :
+- Au mount, si `quoteId` présent dans l'URL → `sessionStorage.setItem("unpro_active_quote_id", quoteId)`.
 
-DROP TRIGGER IF EXISTS trg_normalize_sms_event_status ON public.sms_events_v2;
-CREATE TRIGGER trg_normalize_sms_event_status
-  BEFORE INSERT OR UPDATE ON public.sms_events_v2
-  FOR EACH ROW EXECUTE FUNCTION public.normalize_sms_event_status();
+Dans `src/pages/entrepreneur/PagePricingCalculator.tsx` (après calcul) :
+- Stocker `result.quote_id` dans `sessionStorage` sous la même clé.
+
+### 2. Helper de construction d'URL checkout
+
+Nouveau util `src/lib/checkoutUrl.ts` :
+```ts
+export function buildCheckoutUrl(opts?: { plan?: string; quoteId?: string | null }) {
+  const qid = opts?.quoteId ?? sessionStorage.getItem("unpro_active_quote_id");
+  const params = new URLSearchParams();
+  if (qid) params.set("quoteId", qid);
+  if (opts?.plan) params.set("plan", opts.plan);
+  const qs = params.toString();
+  return `/entrepreneur/checkout${qs ? `?${qs}` : ""}`;
+}
 ```
 
-### 2. Code — single mapper used by every writer
+### 3. Propager `quoteId` dans toutes les entrées vers checkout
 
-Add `supabase/functions/_shared/smsStatusMap.ts`:
-- `mapTwilioStatus(raw)` → returns one of the allowed values, defaulting unknown → `'delivery_unknown'` and logging.
+- `src/features/dynamicPricing/components/DynamicPlanReveal.tsx` (ligne 145) — utiliser `buildCheckoutUrl({ plan: r.recommended_plan_slug })` (annexe `quoteId` depuis la session).
+- `src/components/home-orb/HeroOrbMockup.tsx` (ligne 79) — `href: buildCheckoutUrl()`.
+- `src/pages/entrepreneur/PageEntrepreneurDiagnosticLanding.tsx` (ligne 229) — `navigate(buildCheckoutUrl({ plan: planSlug }))`.
+- `src/components/PanelContractorAdvisorAlex.tsx` (ligne 171) — inclure `quoteId` dans le `next=` (`?next=${encodeURIComponent(buildCheckoutUrl({ plan: recommended }))}`).
+- `src/hooks/useContractorFunnel.ts` (ligne 28) — exposer une fonction `getCheckoutUrl()` qui utilise le helper, ou laisser tel quel et migrer les call sites.
 
-Apply it in every insert/update path:
-- `supabase/functions/twilio-status-v2/index.ts` (webhook)
-- `supabase/functions/_shared/twilioSend.ts` (initial insert — currently writes `accepted`)
-- `supabase/functions/twilio-e2e-audit/index.ts` (steps 04 + 09)
-- `supabase/functions/sms-admin-test/index.ts`
-- any other insert into `sms_events_v2` (grep first)
+### 4. Renforcer le bandeau
 
-### 3. Redeploy + rerun
+Dans `PageContractorCheckout.tsx` :
+- Vérifier que `recommendedPlan` est résolu via le catalogue canonique (`getContractorPlan(recommendedSlug)`) pour avoir le bon `price`.
+- Garder le bandeau ambre existant ; ajouter `aria-live="polite"` et un lien "Choisir le plan recommandé" qui repointe sur `/entrepreneur/checkout?quoteId=...&plan=<recommended>` (un clic = upgrade explicite).
 
-Deploy: `twilio-status-v2`, `twilio-e2e-audit`, `sms-admin-test`, plus any function importing `_shared/twilioSend.ts`.
+### 5. Test sanity
 
-Then run `Run Full E2E (10)` and confirm:
-- 04 db_write_permission PASS
-- 08 real_send PASS
-- 09 poll_callback PASS
-- 10 dashboard_reads PASS
+Build + naviguer depuis chaque entrée (DynamicPlanReveal, Diagnostic landing, HeroOrb, Plan Result) vers `/entrepreneur/checkout` et vérifier :
+- `quoteId` présent dans l'URL.
+- Bandeau ambre visible quand `?plan=pro` mais devis recommande `premium`.
 
-If any still fails, surface the raw `status` value the audit attempted to insert and extend the mapper — the trigger guarantees no further `DB_INSERT_BLOCKED`.
+## Hors scope
+
+- Pas de changement de logique de tarification, de Stripe, ni de base de données.
+- Pas de refonte UI au-delà du bandeau existant.

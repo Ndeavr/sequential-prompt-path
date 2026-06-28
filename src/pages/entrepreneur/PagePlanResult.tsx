@@ -19,6 +19,9 @@ export default function PagePlanResult() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (quoteId) {
+      import("@/lib/checkoutUrl").then((m) => m.setActiveQuoteId(quoteId));
+    }
     const stored = sessionStorage.getItem("unpro_pricing_result");
     if (stored) {
       setResult(JSON.parse(stored));
