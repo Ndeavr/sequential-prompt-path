@@ -178,7 +178,36 @@ export default function TwilioDiagnosticPanel() {
 
       <LiveAuthAudit />
 
+      <div className="p-3 rounded border border-violet-500/30 bg-violet-500/5 space-y-2">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div>
+            <div className="text-sm font-semibold">Messaging Service — révéler SID + webhook configuré</div>
+            <p className="text-xs text-muted-foreground">Lit <code>TWILIO_MESSAGING_SERVICE_SID</code> et appelle l'API Twilio Messaging pour retourner le SID, le nom, l'URL inbound réellement configurée, et les numéros attachés.</p>
+          </div>
+          <Button size="sm" variant="outline" onClick={revealMessagingService} disabled={msvcLoading}>
+            {msvcLoading ? "Chargement…" : "Reveal Messaging Service"}
+          </Button>
+        </div>
+        {msvc && (
+          <div className="text-xs space-y-1">
+            <div><span className="text-muted-foreground">SID:</span> <code className="font-mono">{msvc.messaging_service_sid || "—"}</code></div>
+            <div><span className="text-muted-foreground">Nom:</span> {msvc.friendly_name || "—"}</div>
+            <div><span className="text-muted-foreground">Inbound configuré:</span> <code className="break-all">{msvc.inbound_request_url || "—"}</code> {msvc.matches_expected_inbound ? "✅" : "❌"}</div>
+            <div><span className="text-muted-foreground">Inbound attendu:</span> <code className="break-all">{msvc.expected_inbound_url}</code></div>
+            <div><span className="text-muted-foreground">Status callback configuré:</span> <code className="break-all">{msvc.status_callback || "—"}</code> {msvc.matches_expected_status_callback ? "✅" : "❌"}</div>
+            <div><span className="text-muted-foreground">Status callback attendu:</span> <code className="break-all">{msvc.expected_status_callback}</code></div>
+            <div><span className="text-muted-foreground">Numéro canonique attaché ({msvc.canonical_from}):</span> {msvc.canonical_attached ? "✅" : "❌"}</div>
+            <div><span className="text-muted-foreground">Numéros attachés:</span> {(msvc.phone_numbers || []).map((p: any) => p.phone_number).join(", ") || "—"}</div>
+            <div className="pt-1">
+              <a className="text-violet-300 underline" href={msvc.twilio_console_url} target="_blank" rel="noreferrer">→ Configurer dans Twilio Console (Integration)</a>
+            </div>
+            {msvc.error && <div className="text-red-300">{msvc.error}</div>}
+          </div>
+        )}
+      </div>
+
       <TwilioE2EAuditPanel />
+
 
 
       {data && (
