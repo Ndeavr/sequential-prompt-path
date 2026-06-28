@@ -13,6 +13,7 @@ import AlexHomepageConversation, {
   type AlexState,
 } from "./AlexHomepageConversation";
 import { useActiveRole } from "@/contexts/ActiveRoleContext";
+import { buildCheckoutUrl } from "@/lib/checkoutUrl";
 import FounderNoteConsent from "./FounderNoteConsent";
 
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
