@@ -68,13 +68,14 @@ Deno.serve(async (req) => {
     const priceColumn = interval === "year" ? "stripe_yearly_price_id" : "stripe_monthly_price_id";
     const { data: planRow, error: planError } = await serviceClient
       .from("plan_catalog")
-      .select(`code, name, ${priceColumn}, stripe_product_id`)
+      .select(`code, name, ${priceColumn}`)
       .eq("code", planId)
       .eq("active", true)
       .maybeSingle();
 
     if (planError || !planRow) {
-      return new Response(JSON.stringify({ error: "Invalid plan" }), {
+      console.error("[create-checkout-session] plan_catalog lookup failed", { planId, interval, planError });
+      return new Response(JSON.stringify({ error: "Invalid plan", code: "invalid_plan", planId, details: planError?.message }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -82,7 +83,7 @@ Deno.serve(async (req) => {
 
     const resolvedPriceId = (planRow as any)[priceColumn];
     const planName = (planRow as any).name || (planId.charAt(0).toUpperCase() + planId.slice(1));
-    const stripeProductId = (planRow as any).stripe_product_id as string | null;
+    const stripeProductId: string | null = null;
 
     // ── PERSONALIZED QUOTE OVERRIDE ──
     // When quoteId is present, the AI-recommended price becomes the single source of truth.
