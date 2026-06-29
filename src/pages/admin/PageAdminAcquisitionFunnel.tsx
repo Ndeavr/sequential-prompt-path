@@ -8,7 +8,9 @@ import SectionErrorBoundary from "@/components/admin/SectionErrorBoundary";
 import { AcquisitionHealthPanel } from "@/components/admin/AcquisitionHealthPanel";
 import ChannelRoutingCard from "@/components/admin/ChannelRoutingCard";
 import TwilioDiagnosticPanel from "@/components/admin/TwilioDiagnosticPanel";
+import ValidationDebugPanel from "@/components/admin/ValidationDebugPanel";
 import { Link } from "react-router-dom";
+
 
 type Finding = {
   id: string;
@@ -186,10 +188,16 @@ export default function PageAdminAcquisitionFunnel() {
           </div>
         </header>
 
+        {/* ── Validation debug (cause racine 0 valides) ──── */}
+        <SectionErrorBoundary title="Audit validation" onRetry={() => window.location.reload()}>
+          <ValidationDebugPanel />
+        </SectionErrorBoundary>
+
         {/* ── Provider health ─────────────────────────────── */}
         <SectionErrorBoundary title="Santé providers" onRetry={() => window.location.reload()}>
           <AcquisitionHealthPanel />
         </SectionErrorBoundary>
+
 
         {/* ── Channel routing health ──────────────────────── */}
         <SectionErrorBoundary title="Routage canal" onRetry={() => window.location.reload()}>

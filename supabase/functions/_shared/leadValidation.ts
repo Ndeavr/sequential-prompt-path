@@ -23,6 +23,7 @@ export type BlockReason =
   | "invalid_company_name"
   | "low_confidence"
   | "lookup_failed"
+  | "lookup_unavailable"
   | "do_not_contact"
   | "opt_out"
   | "needs_review";
@@ -40,12 +41,14 @@ export type ValidateLeadResult = {
   phone_type: string | null;
   phone_carrier: string | null;
   block_reason: BlockReason | null;
+  tentative_send: boolean;
 };
 
 function phoneStatusToScore(s: PhoneValidationStatus): number {
   switch (s) {
     case "valid_mobile": return 100;
     case "valid_voip": return 88;
+    case "lookup_unavailable": return 75;
     case "pending_validation": return 60;
     case "lookup_failed": return 40;
     case "landline": return 20;
@@ -55,6 +58,7 @@ function phoneStatusToScore(s: PhoneValidationStatus): number {
     default: return 0;
   }
 }
+
 
 export async function validateLead(
   sb: ReturnType<typeof createClient>,
@@ -77,6 +81,8 @@ export async function validateLead(
   let area: string | null = null;
   let phoneType: string | null = null;
   let carrier: string | null = null;
+  let lookupRaw: unknown = null;
+  let lookupHttp: number | null = null;
 
   if (!raw) {
     phoneStatus = "invalid_phone";
@@ -93,6 +99,8 @@ export async function validateLead(
       phoneReason = lk.reason;
       phoneType = lk.phone_type;
       carrier = lk.carrier;
+      lookupRaw = lk.raw ?? null;
+      lookupHttp = lk.http_status ?? null;
     }
   }
   const phoneScore = phoneStatusToScore(phoneStatus);
@@ -115,6 +123,7 @@ export async function validateLead(
   // 4. Status decision (priority order)
   let status: ValidationStatus = "needs_review";
   let blockReason: BlockReason | null = null;
+  let tentative = false;
 
   if (lead.do_not_contact) {
     status = "invalid_phone";
@@ -131,6 +140,16 @@ export async function validateLead(
   } else if (phoneStatus === "invalid_phone") {
     status = "invalid_phone";
     blockReason = (phoneReason as BlockReason) || "invalid_format";
+  } else if (phoneStatus === "lookup_unavailable") {
+    // Twilio Lookup couldn't classify — assume sendable, mark tentative
+    if (!company.valid) {
+      status = "invalid_company";
+      blockReason = company.reason === "low_confidence" ? "low_confidence" : "invalid_company_name";
+    } else {
+      status = "valid";
+      blockReason = null;
+      tentative = true;
+    }
   } else if (phoneStatus === "lookup_failed") {
     status = "needs_review";
     blockReason = "lookup_failed";
@@ -161,9 +180,10 @@ export async function validateLead(
     phone_type: phoneType,
     phone_carrier: carrier,
     block_reason: blockReason,
+    tentative_send: tentative,
   };
 
-  // 5. Persist
+  // 5. Persist (best-effort: ignore unknown columns)
   await sb.from("contractor_leads").update({
     validation_status: result.validation_status,
     company_confidence_score: result.company_confidence_score,
@@ -177,6 +197,9 @@ export async function validateLead(
     phone_type: result.phone_type,
     phone_carrier: result.phone_carrier,
     phone_lookup_at: new Date().toISOString(),
+    phone_lookup_raw: lookupRaw,
+    phone_lookup_http_status: lookupHttp,
+    tentative_send: tentative,
   }).eq("id", lead.id);
 
   return result;
@@ -190,6 +213,7 @@ export function gateLeadForOutreach(lead: {
   do_not_contact?: boolean | null;
   phone_failure_reason?: string | null;
   company_failure_reason?: string | null;
+  tentative_send?: boolean | null;
 }): BlockReason | null {
   if (lead.do_not_contact) return "do_not_contact";
   if (lead.validation_status !== "valid") {
@@ -204,7 +228,10 @@ export function gateLeadForOutreach(lead: {
     if (lead.validation_status === "needs_review") return "needs_review";
     return "needs_review";
   }
+  // Allow tentative_send leads through even without 85+ phone confidence
+  if (lead.tentative_send) return null;
   if ((lead.phone_confidence_score ?? 0) < 85) return "low_confidence";
   if ((lead.company_confidence_score ?? 0) < 85) return "low_confidence";
   return null;
 }
+

@@ -17,10 +17,12 @@ export type PhoneValidationStatus =
   | "invalid_phone"
   | "outside_quebec"
   | "do_not_contact"
-  | "lookup_failed";
+  | "lookup_failed"
+  | "lookup_unavailable";
 
 export type PhoneFailureReason =
   | "invalid_format"
+  | "missing_phone"
   | "bad_length"
   | "invalid_nanp"
   | "blocked_pattern"
@@ -30,7 +32,9 @@ export type PhoneFailureReason =
   | "outside_quebec"
   | "missing_country_code"
   | "lookup_failed"
+  | "lookup_unavailable"
   | null;
+
 
 export type ClassifyResult = {
   e164: string | null;
@@ -74,38 +78,58 @@ export type LookupResult = {
   phone_type: "mobile" | "landline" | "voip" | "unknown";
   carrier: string | null;
   raw?: unknown;
+  http_status?: number | null;
 };
 
 export async function lookupPhone(e164: string): Promise<LookupResult> {
   const SID = Deno.env.get("TWILIO_ACCOUNT_SID");
   const TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
   if (!SID || !TOKEN) {
-    return { ok: false, status: "lookup_failed", reason: "lookup_failed", phone_type: "unknown", carrier: null };
+    return {
+      ok: false, status: "lookup_unavailable", reason: "lookup_unavailable",
+      phone_type: "unknown", carrier: null, http_status: null,
+      raw: { error: "TWILIO_CREDENTIALS_MISSING" },
+    };
   }
   try {
     const url = `https://lookups.twilio.com/v2/PhoneNumbers/${encodeURIComponent(e164)}?Fields=line_type_intelligence`;
     const auth = btoa(`${SID}:${TOKEN}`);
     const resp = await fetch(url, { headers: { Authorization: `Basic ${auth}` } });
-    const body = await resp.json();
+    const http_status = resp.status;
+    let body: any = null;
+    try { body = await resp.json(); } catch { body = { error: "non_json_response" }; }
+
     if (!resp.ok) {
-      return { ok: false, status: "lookup_failed", reason: "lookup_failed", phone_type: "unknown", carrier: null, raw: body };
+      // Twilio code 20404 = number not found / invalid format → real invalid
+      const twCode = Number(body?.code ?? 0);
+      if (twCode === 20404) {
+        return { ok: true, status: "invalid_phone", reason: "invalid_nanp", phone_type: "unknown", carrier: null, raw: body, http_status };
+      }
+      // Any other HTTP error → unavailable, NOT invalid
+      return { ok: false, status: "lookup_unavailable", reason: "lookup_unavailable", phone_type: "unknown", carrier: null, raw: body, http_status };
     }
+
     const lti = (body?.line_type_intelligence ?? {}) as { type?: string; carrier_name?: string };
     const rawType = String(lti.type ?? "").toLowerCase();
     let phone_type: LookupResult["phone_type"] = "unknown";
-    let status: PhoneValidationStatus = "lookup_failed";
-    let reason: PhoneFailureReason = "lookup_failed";
+    let status: PhoneValidationStatus = "lookup_unavailable";
+    let reason: PhoneFailureReason = "lookup_unavailable";
 
     if (rawType === "mobile") { phone_type = "mobile"; status = "valid_mobile"; reason = null; }
     else if (rawType.includes("voip")) { phone_type = "voip"; status = "valid_voip"; reason = null; }
     else if (rawType === "landline" || rawType === "fixed") { phone_type = "landline"; status = "landline"; reason = "landline"; }
-    else { phone_type = "unknown"; status = "lookup_failed"; reason = "lookup_failed"; }
+    else { phone_type = "unknown"; status = "lookup_unavailable"; reason = "lookup_unavailable"; }
 
-    return { ok: true, status, reason, phone_type, carrier: lti.carrier_name ?? null, raw: body };
+    return { ok: true, status, reason, phone_type, carrier: lti.carrier_name ?? null, raw: body, http_status };
   } catch (e) {
-    return { ok: false, status: "lookup_failed", reason: "lookup_failed", phone_type: "unknown", carrier: null, raw: { error: String((e as Error).message ?? e) } };
+    return {
+      ok: false, status: "lookup_unavailable", reason: "lookup_unavailable",
+      phone_type: "unknown", carrier: null, http_status: null,
+      raw: { error: String((e as Error).message ?? e) },
+    };
   }
 }
+
 
 /**
  * Full validation: classify → lookup if needed → persist to contractor_leads.
