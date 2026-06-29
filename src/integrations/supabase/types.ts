@@ -28191,6 +28191,8 @@ export type Database = {
           phone_e164: string | null
           phone_failure_reason: string | null
           phone_lookup_at: string | null
+          phone_lookup_http_status: number | null
+          phone_lookup_raw: Json | null
           phone_type: string | null
           phone_validation_checked_at: string | null
           phone_validation_status: string
@@ -28216,6 +28218,7 @@ export type Database = {
           source_query_id: string | null
           source_type: string
           street_address: string | null
+          tentative_send: boolean
           trade: string | null
           unsubscribed_at: string | null
           updated_at: string
@@ -28281,6 +28284,8 @@ export type Database = {
           phone_e164?: string | null
           phone_failure_reason?: string | null
           phone_lookup_at?: string | null
+          phone_lookup_http_status?: number | null
+          phone_lookup_raw?: Json | null
           phone_type?: string | null
           phone_validation_checked_at?: string | null
           phone_validation_status?: string
@@ -28306,6 +28311,7 @@ export type Database = {
           source_query_id?: string | null
           source_type?: string
           street_address?: string | null
+          tentative_send?: boolean
           trade?: string | null
           unsubscribed_at?: string | null
           updated_at?: string
@@ -28371,6 +28377,8 @@ export type Database = {
           phone_e164?: string | null
           phone_failure_reason?: string | null
           phone_lookup_at?: string | null
+          phone_lookup_http_status?: number | null
+          phone_lookup_raw?: Json | null
           phone_type?: string | null
           phone_validation_checked_at?: string | null
           phone_validation_status?: string
@@ -28396,6 +28404,7 @@ export type Database = {
           source_query_id?: string | null
           source_type?: string
           street_address?: string | null
+          tentative_send?: boolean
           trade?: string | null
           unsubscribed_at?: string | null
           updated_at?: string
