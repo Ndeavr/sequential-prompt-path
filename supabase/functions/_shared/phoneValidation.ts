@@ -17,10 +17,12 @@ export type PhoneValidationStatus =
   | "invalid_phone"
   | "outside_quebec"
   | "do_not_contact"
-  | "lookup_failed";
+  | "lookup_failed"
+  | "lookup_unavailable";
 
 export type PhoneFailureReason =
   | "invalid_format"
+  | "missing_phone"
   | "bad_length"
   | "invalid_nanp"
   | "blocked_pattern"
@@ -30,7 +32,9 @@ export type PhoneFailureReason =
   | "outside_quebec"
   | "missing_country_code"
   | "lookup_failed"
+  | "lookup_unavailable"
   | null;
+
 
 export type ClassifyResult = {
   e164: string | null;
