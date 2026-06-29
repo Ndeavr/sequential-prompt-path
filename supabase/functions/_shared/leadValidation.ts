@@ -23,6 +23,7 @@ export type BlockReason =
   | "invalid_company_name"
   | "low_confidence"
   | "lookup_failed"
+  | "lookup_unavailable"
   | "do_not_contact"
   | "opt_out"
   | "needs_review";
@@ -40,12 +41,14 @@ export type ValidateLeadResult = {
   phone_type: string | null;
   phone_carrier: string | null;
   block_reason: BlockReason | null;
+  tentative_send: boolean;
 };
 
 function phoneStatusToScore(s: PhoneValidationStatus): number {
   switch (s) {
     case "valid_mobile": return 100;
     case "valid_voip": return 88;
+    case "lookup_unavailable": return 75;
     case "pending_validation": return 60;
     case "lookup_failed": return 40;
     case "landline": return 20;
@@ -55,6 +58,7 @@ function phoneStatusToScore(s: PhoneValidationStatus): number {
     default: return 0;
   }
 }
+
 
 export async function validateLead(
   sb: ReturnType<typeof createClient>,
