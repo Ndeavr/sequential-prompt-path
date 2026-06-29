@@ -66,6 +66,8 @@ const PageAdminAcquisitionTests = lazyWithRetry(() => import("@/pages/admin/Page
 const PageAdminEmailCtaAudit = lazyWithRetry(() => import("@/pages/admin/PageAdminEmailCtaAudit"));
 const PageAdminOutreachHealth = lazyWithRetry(() => import("@/pages/admin/PageAdminOutreachHealth"));
 const PageAdminEmailSenderHealth = lazyWithRetry(() => import("@/pages/admin/PageAdminEmailSenderHealth"));
+const PageAdminWaitingHomeowners = lazyWithRetry(() => import("@/pages/admin/PageAdminWaitingHomeowners"));
+const PageContractorDemandLanding = lazyWithRetry(() => import("@/pages/contractor/PageContractorDemandLanding"));
 const PageIsrDemoPlanTest = lazyWithRetry(() => import("@/pages/demo/PageIsrDemoPlanTest"));
 const PageIsrDemoSuccess = lazyWithRetry(() => import("@/pages/demo/PageIsrDemoSuccess"));
 const PageIsrDemoCancel = lazyWithRetry(() => import("@/pages/demo/PageIsrDemoCancel"));
@@ -1362,6 +1364,8 @@ export const AppRouter = () => (
         <Route path="/admin/validation" element={<ProtectedRoute requiredRole="admin"><AdminValidation /></ProtectedRoute>} />
         <Route path="/admin/answer-engine" element={<ProtectedRoute requiredRole="admin"><AdminAnswerEngine /></ProtectedRoute>} />
         <Route path="/admin/operations" element={<ProtectedRoute requiredRole="admin"><AdminOperationsHub /></ProtectedRoute>} />
+        <Route path="/admin/waiting-homeowners" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminWaitingHomeowners /></Suspense></ProtectedRoute>} />
+        <Route path="/pro/demande/:city/:category" element={<Suspense fallback={<LazyFallback />}><PageContractorDemandLanding /></Suspense>} />
         <Route path="/admin/founder-verification" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageFounderVerification /></Suspense></ProtectedRoute>} />
         <Route path="/admin/pricing-intelligence" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminPricingIntelligence /></Suspense></ProtectedRoute>} />
         <Route path="/admin/system-mode" element={<ProtectedRoute requiredRole="admin"><PageSystemModeControlCenter /></ProtectedRoute>} />

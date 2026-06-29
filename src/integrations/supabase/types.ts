@@ -32222,6 +32222,51 @@ export type Database = {
           },
         ]
       }
+      contractor_recruitment_targets: {
+        Row: {
+          category: string
+          city: string
+          created_at: string
+          estimated_ltv: number
+          estimated_revenue: number
+          id: string
+          landing_slug: string
+          pressure_score: number
+          priority_score: number
+          status: string
+          updated_at: string
+          waiting_count: number
+        }
+        Insert: {
+          category: string
+          city: string
+          created_at?: string
+          estimated_ltv?: number
+          estimated_revenue?: number
+          id?: string
+          landing_slug: string
+          pressure_score?: number
+          priority_score?: number
+          status?: string
+          updated_at?: string
+          waiting_count?: number
+        }
+        Update: {
+          category?: string
+          city?: string
+          created_at?: string
+          estimated_ltv?: number
+          estimated_revenue?: number
+          id?: string
+          landing_slug?: string
+          pressure_score?: number
+          priority_score?: number
+          status?: string
+          updated_at?: string
+          waiting_count?: number
+        }
+        Relationships: []
+      }
       contractor_recruitment_tasks: {
         Row: {
           assigned_to: string | null
@@ -32279,6 +32324,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      contractor_referrals: {
+        Row: {
+          contractor_email: string | null
+          contractor_name: string
+          contractor_phone: string | null
+          created_at: string
+          homeowner_id: string
+          id: string
+          metadata: Json
+          project_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          contractor_email?: string | null
+          contractor_name: string
+          contractor_phone?: string | null
+          created_at?: string
+          homeowner_id: string
+          id?: string
+          metadata?: Json
+          project_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          contractor_email?: string | null
+          contractor_name?: string
+          contractor_phone?: string | null
+          created_at?: string
+          homeowner_id?: string
+          id?: string
+          metadata?: Json
+          project_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       contractor_refusal_signals: {
         Row: {
@@ -35931,6 +36015,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      demand_signals: {
+        Row: {
+          category: string
+          city: string
+          created_at: string
+          estimated_ltv: number
+          estimated_project_value: number
+          homeowner_id: string
+          id: string
+          matched_contractor_id: string | null
+          metadata: Json
+          notify_channels: Json
+          position_in_queue: number | null
+          postal_code: string | null
+          project_id: string
+          status: string
+          subcategory: string | null
+          updated_at: string
+          urgency_score: number
+        }
+        Insert: {
+          category: string
+          city: string
+          created_at?: string
+          estimated_ltv?: number
+          estimated_project_value?: number
+          homeowner_id: string
+          id?: string
+          matched_contractor_id?: string | null
+          metadata?: Json
+          notify_channels?: Json
+          position_in_queue?: number | null
+          postal_code?: string | null
+          project_id: string
+          status?: string
+          subcategory?: string | null
+          updated_at?: string
+          urgency_score?: number
+        }
+        Update: {
+          category?: string
+          city?: string
+          created_at?: string
+          estimated_ltv?: number
+          estimated_project_value?: number
+          homeowner_id?: string
+          id?: string
+          matched_contractor_id?: string | null
+          metadata?: Json
+          notify_channels?: Json
+          position_in_queue?: number | null
+          postal_code?: string | null
+          project_id?: string
+          status?: string
+          subcategory?: string | null
+          updated_at?: string
+          urgency_score?: number
+        }
+        Relationships: []
       }
       demand_signals_qc: {
         Row: {
@@ -46940,6 +47084,51 @@ export type Database = {
           specialty?: string
           updated_at?: string | null
           waiting_list_count?: number
+        }
+        Relationships: []
+      }
+      market_demand: {
+        Row: {
+          avg_urgency: number
+          category: string
+          city: string
+          estimated_ltv: number
+          estimated_revenue: number
+          gap_score: number
+          homeowner_count: number
+          last_signal_at: string | null
+          pressure_score: number
+          supply_count: number
+          total_projects: number
+          updated_at: string
+        }
+        Insert: {
+          avg_urgency?: number
+          category: string
+          city: string
+          estimated_ltv?: number
+          estimated_revenue?: number
+          gap_score?: number
+          homeowner_count?: number
+          last_signal_at?: string | null
+          pressure_score?: number
+          supply_count?: number
+          total_projects?: number
+          updated_at?: string
+        }
+        Update: {
+          avg_urgency?: number
+          category?: string
+          city?: string
+          estimated_ltv?: number
+          estimated_revenue?: number
+          gap_score?: number
+          homeowner_count?: number
+          last_signal_at?: string | null
+          pressure_score?: number
+          supply_count?: number
+          total_projects?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -79190,6 +79379,17 @@ export type Database = {
       fn_alex_promote_guest_session: {
         Args: { _session_token: string; _user_id: string }
         Returns: Json
+      }
+      fn_match_waiting_demand: {
+        Args: { _contractor_id: string }
+        Returns: {
+          matched_count: number
+          segments: Json
+        }[]
+      }
+      fn_refresh_market_demand: {
+        Args: { _category: string; _city: string }
+        Returns: undefined
       }
       generate_curiosity_slug: {
         Args: { _business_name: string; _lead_id: string }
