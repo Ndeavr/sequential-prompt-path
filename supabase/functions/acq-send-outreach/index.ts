@@ -134,7 +134,20 @@ Deno.serve(async (req) => {
     }
     try {
       const { wrapAllUrls, validateOutreachMessage, withReplyFooter } = await import("../_shared/ctaTracker.ts");
-      const wrapped = await wrapAllUrls(withReplyFooter(msg.body_rendered ?? ""), {
+      const { buildDemandIntro } = await import("../_shared/demandInjector.ts");
+      // Fetch prospect demand context (city + category) to prepend a live demand intro.
+      let bodyWithIntro = msg.body_rendered ?? "";
+      let demandMeta: any = null;
+      if (msg.prospect_id) {
+        const { data: p } = await s.from("contractor_prospects").select("city, category_slug, trade_category").eq("id", msg.prospect_id).maybeSingle();
+        const cat = (p?.category_slug || p?.trade_category) ?? null;
+        const intro = await buildDemandIntro(p?.city ?? null, cat).catch(() => null);
+        if (intro?.intro) {
+          bodyWithIntro = `${intro.intro}\n\n${bodyWithIntro}`;
+          demandMeta = { city: intro.city, category: intro.category, homeowner_count: intro.homeowner_count, estimated_revenue: intro.estimated_revenue };
+        }
+      }
+      const wrapped = await wrapAllUrls(withReplyFooter(bodyWithIntro), {
         prospect_id: msg.prospect_id, campaign: "outreach_messages", channel: "email",
       });
       const cta = validateOutreachMessage(wrapped.body, "email");
