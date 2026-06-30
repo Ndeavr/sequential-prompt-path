@@ -134,7 +134,20 @@ Deno.serve(async (req) => {
     }
     try {
       const { wrapAllUrls, validateOutreachMessage, withReplyFooter } = await import("../_shared/ctaTracker.ts");
-      const wrapped = await wrapAllUrls(withReplyFooter(msg.body_rendered ?? ""), {
+      const { buildDemandIntro } = await import("../_shared/demandInjector.ts");
+      // Fetch prospect demand context (city + category) to prepend a live demand intro.
+      let bodyWithIntro = msg.body_rendered ?? "";
+      let demandMeta: any = null;
+      if (msg.prospect_id) {
+        const { data: p } = await s.from("contractor_prospects").select("city, category_slug, trade_category").eq("id", msg.prospect_id).maybeSingle();
+        const cat = (p?.category_slug || p?.trade_category) ?? null;
+        const intro = await buildDemandIntro(p?.city ?? null, cat).catch(() => null);
+        if (intro?.intro) {
+          bodyWithIntro = `${intro.intro}\n\n${bodyWithIntro}`;
+          demandMeta = { city: intro.city, category: intro.category, homeowner_count: intro.homeowner_count, estimated_revenue: intro.estimated_revenue };
+        }
+      }
+      const wrapped = await wrapAllUrls(withReplyFooter(bodyWithIntro), {
         prospect_id: msg.prospect_id, campaign: "outreach_messages", channel: "email",
       });
       const cta = validateOutreachMessage(wrapped.body, "email");
@@ -180,7 +193,21 @@ Deno.serve(async (req) => {
   } else if (msg.channel_type === "sms") {
     try {
       const { wrapAllUrls, validateOutreachMessage, withSmsReplyLine } = await import("../_shared/ctaTracker.ts");
-      const wrappedSms = await wrapAllUrls(withSmsReplyLine(msg.body_rendered ?? ""), {
+      const { buildDemandIntro } = await import("../_shared/demandInjector.ts");
+      let smsBodyWithIntro = msg.body_rendered ?? "";
+      let demandMetaSms: any = null;
+      if (msg.prospect_id) {
+        const { data: p } = await s.from("contractor_prospects").select("city, category_slug, trade_category").eq("id", msg.prospect_id).maybeSingle();
+        const cat = (p?.category_slug || p?.trade_category) ?? null;
+        const intro = await buildDemandIntro(p?.city ?? null, cat).catch(() => null);
+        if (intro?.intro) {
+          // SMS-compact variant: trim to first sentence to respect SMS length.
+          const compact = intro.intro.split(".")[0] + ".";
+          smsBodyWithIntro = `${compact}\n\n${smsBodyWithIntro}`;
+          demandMetaSms = { city: intro.city, category: intro.category, homeowner_count: intro.homeowner_count };
+        }
+      }
+      const wrappedSms = await wrapAllUrls(withSmsReplyLine(smsBodyWithIntro), {
         prospect_id: msg.prospect_id, campaign: "outreach_messages", channel: "sms",
       });
       const smsV = validateOutreachMessage(wrappedSms.body, "sms");
@@ -197,7 +224,7 @@ Deno.serve(async (req) => {
       const send = await sendSms({
         to: msg.to_value, body: wrappedSms.body,
         message_type: "outreach", template_key: "acq_send_outreach",
-        metadata: { source: "acq-send-outreach", message_id, prospect_id: msg.prospect_id, cta_urls: wrappedSms.cta_urls, has_tracked_cta: wrappedSms.has_tracked_cta, has_reply_cta: smsV.has_reply_cta },
+        metadata: { source: "acq-send-outreach", message_id, prospect_id: msg.prospect_id, cta_urls: wrappedSms.cta_urls, has_tracked_cta: wrappedSms.has_tracked_cta, has_reply_cta: smsV.has_reply_cta, demand_intro: demandMetaSms },
       });
       const ok = send.status === "sending" || send.status === "sent" || send.status === "delivered";
       if (!ok) throw new Error(send.error_message ?? send.status);
