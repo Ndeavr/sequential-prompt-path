@@ -230,7 +230,6 @@ Deno.serve(async (req) => {
       if (!ok) throw new Error(send.error_message ?? send.status);
       await s.from("outreach_messages").update({
         message_status: "sent", provider_message_id: send.twilio_sid, sent_at: new Date().toISOString(),
-        metadata: { ...(msg.metadata ?? {}), demand_intro: demandMetaSms },
       }).eq("id", message_id);
       if (msg.prospect_id) {
         await s.from("contractor_prospects").update({ outreach_status: "sent", updated_at: new Date().toISOString() }).eq("id", msg.prospect_id);
