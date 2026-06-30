@@ -70,6 +70,29 @@ export async function validateBeforeSend(opts: {
     return { ok: false, reason: "opted_out", detail: "in sms_opt_outs", normalized: norm.normalized };
   }
 
+  // Strict admin override: bypass mobile-enforcement Lookup. Opt-out + blocked-pattern
+  // checks above still applied. Never reachable from prospect outreach paths.
+  if (isAllowlistOverride) {
+    try {
+      console.log(JSON.stringify({
+        scope: "smsGuard",
+        sms_guard_reason: "admin_allowlist_override",
+        phone: norm.normalized,
+        phone_type: "mobile_override",
+      }));
+    } catch { /* noop */ }
+    return {
+      ok: true,
+      normalized: norm.normalized,
+      area_code: norm.area_code,
+      country_code: norm.country_code,
+      phone_type: "mobile_override",
+      sms_guard_reason: "admin_allowlist_override",
+    };
+  }
+
+
+
   // Mobile-only + failure-threshold guard. Looks up the lead row (when id provided)
   // and rejects landlines, VoIP, unknown, sms_disabled, or >=2 failed attempts.
   let resolvedPhoneType: string | null = null;
