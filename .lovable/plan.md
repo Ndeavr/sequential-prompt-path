@@ -1,81 +1,151 @@
-## Cause racine identifiée (audit live de la DB et du code)
+## Goal
 
-J'ai requêté `contractor_leads` et lu `leadValidation.ts` / `phoneValidation.ts` / `twilio-status-v2`. Le compteur "0 valides" vient de **trois causes distinctes** mélangées dans un seul bucket UI.
-
-### Distribution réelle des 238 leads
-
-```text
-156  validation_status=invalid_phone  reason=invalid_format   → phone IS NULL/''  (jamais scrapé)
- 81  validation_status=needs_review   reason=lookup_failed    → format OK, Twilio Lookup v2 répond mal
-  1  validation_status=invalid_phone  reason=invalid_nanp     → 514-123-4567 (seed test)
-```
-
-Vérifié en SQL : les 156 "Format invalide" ont littéralement `phone = ''`. Ce sont des leads importés **sans téléphone** — pas un bug de normalisation, un problème de qualité de scraping. Les 81 "lookup échoué" ont tous un `phone_e164` valide en area code QC (514/450/438…) — la normalisation marche, c'est Twilio Lookup v2 qui retourne soit une erreur soit `line_type=unknown`, mappée vers `lookup_failed` dans `phoneValidation.ts:96-102`.
-
-### "contact_required" dans le Flux temps réel
-N'a **rien à voir** avec la validation. C'est un statut `sms_events_v2` posé par `twilio-status-v2/index.ts:198` après 3 échecs de livraison Twilio. La capture montre que ces lignes datent d'anciens tests bloqués (callback `<24h` rouge).
+Wire the Demand Intelligence Engine into the live homeowner project + Stripe activation flows, and inject demand language into outreach.
 
 ---
 
-## Ce que je vais faire
+## #1 — Homeowner project creation → demand signal
 
-### 1. Persister la vraie raison de blocage
-- `missing_phone` au lieu de `invalid_format` quand `phone IS NULL/''` (corriger `leadValidation.ts:75` et `phoneValidation.ts` pour propager `missing_phone` jusqu'à la DB).
-- Ajouter colonnes `phone_lookup_raw jsonb` + `phone_lookup_http_status int` sur `contractor_leads` pour stocker la réponse brute Twilio (corps + code HTTP).
-- Migration: backfill — recalculer `phone_failure_reason='missing_phone'` pour les 156 sans phone.
+### Edit `src/pages/dashboard/ProjectNewPage.tsx`
 
-### 2. Nouveau statut `lookup_unavailable` (non bloquant)
-Conformément à la directive : si Twilio Lookup échoue (HTTP error, timeout, type=unknown), **ne pas** marquer invalide.
-- Ajout `lookup_unavailable` au type `PhoneValidationStatus`.
-- `lookupPhone()` retourne `lookup_unavailable` au lieu de `lookup_failed` quand: HTTP ≥ 400, exception réseau, ou `line_type=unknown`.
-- `validateLead()` : `lookup_unavailable` → `validation_status='valid'` avec `phone_confidence_score=70` (assez pour franchir le gate à 85? non — on baisse le seuil SMS à 70 pour ce cas, marqué `tentative_send=true`).
-- `gateLeadForOutreach()` : autorise `lookup_unavailable` à passer mais loggue `attribution_warning='lookup_unavailable'`.
-- Net : les **81 leads format-OK redeviennent éligibles** à l'envoi SMS.
+After the `projects.insert(...)` succeeds (line 74-92), invoke `demand-signal-create` **non-blocking**:
 
-### 3. Edge function `acq-validation-audit` (lecture seule)
-Renvoie pour les 50 premiers échecs et pour les 157 sans-téléphone :
-```json
-{ company_name, phone_original, phone_normalized, validation_status,
-  validation_reason, twilio_lookup_status, twilio_lookup_body }
-```
-Groupe les 157 invalides par bucket : `missing_phone | invalid_nanp | landline | lookup_unavailable | duplicate`.
+- Read property city via a follow-up query (`properties.select("city, postal_code").eq("id", form.property_id)`).
+- Resolve category slug from `selectedCategory.name_fr` (lowercase) or `subcategory`.
+- Call `supabase.functions.invoke("demand-signal-create", { body: { project_id, homeowner_id, city, category, subcategory, postal_code, urgency_score } })`.
+- Wrap in `try/catch`. On error: `supabase.from("system_events").insert({ event_type: "demand_signal_failed", payload: { project_id, error } })` and continue.
+- Read `result.has_match_path`:
+  - `true` → existing behaviour, navigate to `/dashboard/projects/:id/matches`.
+  - `false` → navigate to new route `/dashboard/projects/:id/waiting`.
 
-### 4. Échantillon scraper qualité (100 prospects)
-Réutilise `acq-validation-audit` avec `?sample=100` → renvoie `% mobile, % landline, % fake (555-01XX), % duplicate, % missing`.
+### New page `src/pages/dashboard/ProjectWaitingPage.tsx`
 
-### 5. UI — Debug Panel
-Ajoute `ValidationDebugPanel.tsx` dans `/admin/acquisition-funnel` :
-- Table avec colonnes : Entreprise · Téléphone brut · E.164 · Étape (classify / lookup / dedupe) · Résultat · Raison · Body Twilio (collapsible).
-- Bouton "Re-valider" qui appelle `validate-lead-phones` sur la sélection.
-- Compteurs mis à jour : `Valide`, `Lookup indispo (envoyable)`, `À enrichir téléphone`, `Sans téléphone`.
+- Reads `projectId` from params.
+- Fetches `projects` row (title, category) + matching `demand_signals` row (`position_in_queue`, `city`, `category`).
+- Renders `<WaitingPositionCard projectId homeownerId city category position />` (already built).
+- Wrapped in `DashboardLayout` + `PageHeader("Vous êtes sur la liste prioritaire")`.
 
-### 6. Rapport final (route `/admin/acquisition-funnel` haut de page)
-```text
-Contactables aujourd'hui          : N  (valid_mobile + lookup_unavailable + email fallback)
-Email seulement                   : N  (no mobile + valid email)
-Inutilisables                     : N  (missing_phone + missing_email)
-```
+### Router
 
-### 7. Nettoyage des `contact_required` historiques
-Script de migration : `UPDATE sms_events_v2 SET status='archived_legacy' WHERE status='contact_required' AND created_at < now() - interval '24 hours'` — pour vider le Flux temps réel pollué par les anciens tests.
+Add route in `src/app/router.tsx` (or matching dashboard router) for `/dashboard/projects/:projectId/waiting` → lazy `ProjectWaitingPage`.
+
+### ProjectMatchesPage fallback (safety net)
+
+In `ProjectMatchesPage.tsx`, when `suggestions.length === 0` after load, also query `demand_signals` for the project and render `<WaitingPositionCard />` instead of the bare "Aucun entrepreneur trouvé" card. Covers cases where a signal exists but the user landed on /matches directly.
+
+### Edge function `demand-signal-create` (verify)
+
+Confirm it returns `{ ok, signal, market, has_match_path }`. If missing `has_match_path`, add it: after computing matches, set `has_match_path = matched_contractor_id !== null`. (Will inspect during build.)
+
+### PII guard
+
+`PageAdminWaitingHomeowners` already uses `market_demand` aggregates (no homeowner PII). Confirm `<DemandRevealPanel>` and public `/pro/demande/:city/:category` only read `market_demand` — no joins onto `demand_signals.homeowner_id`. RLS on `demand_signals` already blocks contractors.
+
+### Success criteria
+
+1. New project with no match writes a `demand_signals` row.
+2. `market_demand` row for that city+category is updated (existing trigger).
+3. Homeowner lands on `WaitingPositionCard`.
+4. Public demand pages still show only aggregates.
+5. `/admin/waiting-homeowners` lists the new signal.
+6. Edge function failure → project still created, error in `system_events`, user redirected to `/matches` fallback.
 
 ---
 
-## Détails techniques (pour l'exécution)
+## #2 — Stripe activation → match-waiting-demand
 
-**Fichiers modifiés**
-- `supabase/functions/_shared/phoneValidation.ts` — ajout `lookup_unavailable`, mapping `unknown`/HTTP error → `lookup_unavailable`, retour du body brut.
-- `supabase/functions/_shared/leadValidation.ts` — `missing_phone` propagé, branche `lookup_unavailable` → valid+tentative, persister `phone_lookup_raw`.
-- `supabase/functions/validate-lead-phones/index.ts` — mêmes branches.
-- Nouvelle migration : colonnes `phone_lookup_raw`, `phone_lookup_http_status`, `tentative_send` sur `contractor_leads` + backfill `missing_phone` + nettoyage `sms_events_v2.contact_required` legacy.
-- Nouvelle edge function : `supabase/functions/acq-validation-audit/index.ts`.
-- Nouveau composant : `src/components/admin/ValidationDebugPanel.tsx` monté dans `PageAdminAcquisitionFunnel.tsx`.
-- `src/pages/admin/PageAdminAcquisitionFunnel.tsx` — bandeau "Contactables / Email seulement / Inutilisables".
+### Edit `supabase/functions/stripe-webhook/index.ts`
 
-**Résultat attendu après run**
-- Bucket "Format invalide" passe de 156 à 0 (renommé `Sans téléphone`).
-- Bucket "Lookup Twilio échoué" passe de 81 à 0 (renommé `Lookup indispo` et **envoyable**).
-- "Valide (prêt à envoyer)" passe de 0 à ~81.
-- Worker SMS peut enfin traiter une vague réelle.
+After the `acq_contractors.update({ status: "active" })` (line 142-145) AND after the equivalent `contractors` activation block (the upstream `planId` branch around line 90-100), invoke `match-waiting-demand`:
 
-Pas d'envoi automatique tant que tu n'as pas validé la liste dans le Debug Panel.
+```ts
+await supabase.functions.invoke("match-waiting-demand", {
+  body: { contractor_id: contractorId }
+}).catch((e) => console.warn("[match-waiting-demand] failed", e));
+```
+
+Also call after `activate-contractor-plan` (if that path exists and bypasses the webhook).
+
+### Success criteria
+
+A `checkout.session.completed` for a contractor in a city/category with waiting signals triggers `match-waiting-demand`, signals transition to `matched`, homeowners get notified via existing channels in that function.
+
+---
+
+## #3 — `buildDemandIntro()` in outreach copy
+
+### Edit `supabase/functions/_shared/masterOutreachCopy.ts`
+
+Make the email/SMS builders accept an optional `demandIntro` string and prepend it before the value pitch when present.
+
+### Edit `supabase/functions/_shared/outreachDispatch.ts`
+
+Before composing the message, if the prospect has `city` + primary `category`, call `buildDemandIntro(city, category)` from `demandInjector.ts`. Pass the result into `masterOutreachCopy` builders. Skip silently if it returns null/empty.
+
+This gives every outbound message live demand language ("12 propriétaires attendent un couvreur à Laval…") with zero PII.
+
+---
+
+## Technical notes (non-user)
+
+- `demand-signal-create` already idempotent on `(project_id)` per existing implementation.
+- `match-waiting-demand` already secured by service role.
+- No new tables — leverages `demand_signals`, `market_demand`, `system_events`.
+- No schema changes required for #1 unless `has_match_path` is missing from the edge response (added inline in the function, no migration).
+
+## Build order
+
+1. ProjectNewPage wiring + ProjectWaitingPage + route.
+2. ProjectMatchesPage fallback to WaitingPositionCard.
+3. stripe-webhook → match-waiting-demand invocation (both branches).
+4. outreachDispatch → buildDemandIntro integration.
+
+Approved. Execute exactly in this build order:
+
+1. ProjectNewPage wiring + ProjectWaitingPage + route
+
+2. ProjectMatchesPage fallback to WaitingPositionCard
+
+3. stripe-webhook → match-waiting-demand invocation in all activation branches
+
+4. outreachDispatch → buildDemandIntro integration
+
+Priority rule:
+
+Do not redesign UI.
+
+Do not change schema unless has_match_path is missing from demand-signal-create response.
+
+Do not expose homeowner PII on public demand pages.
+
+Project creation must never fail because demand signal creation failed.
+
+After patching, run a test:
+
+- Create unmatched homeowner project
+
+- Confirm demand_signals row
+
+- Confirm market_demand aggregate update
+
+- Confirm homeowner lands on /waiting
+
+- Confirm /matches fallback renders WaitingPositionCard
+
+- Simulate Stripe activation
+
+- Confirm match-waiting-demand runs
+
+- Confirm outreach copy includes live demand intro when city/category exist
+
+Return:
+
+1. Files changed
+
+2. Exact logic added
+
+3. Any errors found
+
+4. Test results
+
+5. Remaining blockers only

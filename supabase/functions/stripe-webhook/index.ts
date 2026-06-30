@@ -94,6 +94,12 @@ Deno.serve(async (req) => {
               message: `Activé via plan ${acqPlanId}`,
               metadata: { session_id: session.id, subscription_id: sub?.id, amount: session.amount_total },
             });
+            // Demand Intelligence — try to match newly active contractor (best-effort).
+            // contractor_prospects.id is not always the canonical contractors.id; we still ping
+            // match-waiting-demand which is idempotent and no-ops on missing contractors.
+            await supabase.functions.invoke("match-waiting-demand", {
+              body: { contractor_id: prospectId },
+            }).catch((e) => console.warn("[match-waiting-demand] prospect branch failed", e));
           } catch (e) {
             await supabase.from("acquisition_pipeline_logs").insert({
               prospect_id: prospectId, step: "stripe_webhook.activation", status: "error", message: String(e), metadata: { session_id: session.id },
@@ -143,6 +149,11 @@ Deno.serve(async (req) => {
             .from("acq_contractors")
             .update({ status: "active" })
             .eq("id", contractorId);
+
+          // Demand Intelligence — match waiting homeowners to the freshly activated contractor.
+          await supabase.functions.invoke("match-waiting-demand", {
+            body: { contractor_id: contractorId },
+          }).catch((e) => console.warn("[match-waiting-demand] acq branch failed", e));
 
           // Increment territory slot
           if (slotCity && slotTrade) {
@@ -232,6 +243,11 @@ Deno.serve(async (req) => {
             subscription_plan: planId,
           })
           .eq("id", contractorId);
+
+        // Demand Intelligence — match waiting homeowners to the freshly activated contractor.
+        await supabase.functions.invoke("match-waiting-demand", {
+          body: { contractor_id: contractorId },
+        }).catch((e) => console.warn("[match-waiting-demand] contractors branch failed", e));
 
         // Consume promo redemption
         if (redemptionId) {

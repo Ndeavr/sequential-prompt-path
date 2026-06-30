@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles, MapPin, Star, ShieldCheck, ArrowRight, Clock, Award, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import TrustSummaryCard from "@/components/contractor/TrustSummaryCard";
+import { WaitingPositionCard } from "@/components/demand/WaitingPositionCard";
 
 const ProjectMatchesPage = () => {
   const { projectId } = useParams();
@@ -67,6 +68,20 @@ const ProjectMatchesPage = () => {
     enabled: !!project,
   });
 
+  // Demand-signal fallback when no contractor match exists yet.
+  const { data: demandSignal } = useQuery({
+    queryKey: ["project-demand-signal", projectId],
+    enabled: !!projectId && !!user?.id && !isLoading && (suggestions?.length ?? 0) === 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("demand_signals" as any)
+        .select("id, city, category, position_in_queue, status")
+        .eq("project_id", projectId!)
+        .maybeSingle();
+      return data;
+    },
+  });
+
   const [expandedTrust, setExpandedTrust] = useState<string | null>(null);
 
   return (
@@ -105,11 +120,15 @@ const ProjectMatchesPage = () => {
           ))}
         </div>
       ) : (suggestions?.length ?? 0) === 0 ? (
-        <Card className="glass-card border-0 p-8 text-center">
-          <Users className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">Aucun entrepreneur trouvé pour le moment.</p>
-          <p className="text-xs text-muted-foreground mt-1">Nous élargirons la recherche bientôt.</p>
-        </Card>
+        <div className="alex-immersive max-w-2xl mx-auto">
+          <WaitingPositionCard
+            projectId={projectId!}
+            homeownerId={user!.id}
+            city={(demandSignal as any)?.city ?? (project?.properties as any)?.city ?? "votre région"}
+            category={(demandSignal as any)?.category ?? "entrepreneur"}
+            position={(demandSignal as any)?.position_in_queue ?? null}
+          />
+        </div>
       ) : (
         <div className="space-y-4">
           {suggestions!.map((c, i) => (
