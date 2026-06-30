@@ -194,7 +194,21 @@ Deno.serve(async (req) => {
   } else if (msg.channel_type === "sms") {
     try {
       const { wrapAllUrls, validateOutreachMessage, withSmsReplyLine } = await import("../_shared/ctaTracker.ts");
-      const wrappedSms = await wrapAllUrls(withSmsReplyLine(msg.body_rendered ?? ""), {
+      const { buildDemandIntro } = await import("../_shared/demandInjector.ts");
+      let smsBodyWithIntro = msg.body_rendered ?? "";
+      let demandMetaSms: any = null;
+      if (msg.prospect_id) {
+        const { data: p } = await s.from("contractor_prospects").select("city, category_slug, trade_category").eq("id", msg.prospect_id).maybeSingle();
+        const cat = (p?.category_slug || p?.trade_category) ?? null;
+        const intro = await buildDemandIntro(p?.city ?? null, cat).catch(() => null);
+        if (intro?.intro) {
+          // SMS-compact variant: trim to first sentence to respect SMS length.
+          const compact = intro.intro.split(".")[0] + ".";
+          smsBodyWithIntro = `${compact}\n\n${smsBodyWithIntro}`;
+          demandMetaSms = { city: intro.city, category: intro.category, homeowner_count: intro.homeowner_count };
+        }
+      }
+      const wrappedSms = await wrapAllUrls(withSmsReplyLine(smsBodyWithIntro), {
         prospect_id: msg.prospect_id, campaign: "outreach_messages", channel: "sms",
       });
       const smsV = validateOutreachMessage(wrappedSms.body, "sms");
