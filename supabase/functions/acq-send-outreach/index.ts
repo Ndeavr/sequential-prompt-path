@@ -225,12 +225,13 @@ Deno.serve(async (req) => {
       const send = await sendSms({
         to: msg.to_value, body: wrappedSms.body,
         message_type: "outreach", template_key: "acq_send_outreach",
-        metadata: { source: "acq-send-outreach", message_id, prospect_id: msg.prospect_id, cta_urls: wrappedSms.cta_urls, has_tracked_cta: wrappedSms.has_tracked_cta, has_reply_cta: smsV.has_reply_cta },
+        metadata: { source: "acq-send-outreach", message_id, prospect_id: msg.prospect_id, cta_urls: wrappedSms.cta_urls, has_tracked_cta: wrappedSms.has_tracked_cta, has_reply_cta: smsV.has_reply_cta, demand_intro: demandMetaSms },
       });
       const ok = send.status === "sending" || send.status === "sent" || send.status === "delivered";
       if (!ok) throw new Error(send.error_message ?? send.status);
       await s.from("outreach_messages").update({
         message_status: "sent", provider_message_id: send.twilio_sid, sent_at: new Date().toISOString(),
+        metadata: { ...(msg.metadata ?? {}), demand_intro: demandMetaSms },
       }).eq("id", message_id);
       if (msg.prospect_id) {
         await s.from("contractor_prospects").update({ outreach_status: "sent", updated_at: new Date().toISOString() }).eq("id", msg.prospect_id);
