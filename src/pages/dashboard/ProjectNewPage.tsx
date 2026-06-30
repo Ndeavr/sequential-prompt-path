@@ -87,9 +87,47 @@ const ProjectNewPage = () => {
 
       if (error) throw error;
 
+      // Demand Intelligence — never block project creation if this fails.
+      let hasMatchPath = true;
+      try {
+        const { data: prop } = await supabase
+          .from("properties")
+          .select("city, postal_code")
+          .eq("id", form.property_id)
+          .maybeSingle();
+        const city = (prop as any)?.city?.trim();
+        const postal_code = (prop as any)?.postal_code ?? null;
+        const category = (selectedCategory?.name_fr || form.subcategory || "").toLowerCase().trim();
+        const urgencyScore = form.urgency === "critical" ? 9 : form.urgency === "high" ? 7 : form.urgency === "low" ? 3 : 5;
+        if (city && category) {
+          const { data: ds, error: dsErr } = await supabase.functions.invoke("demand-signal-create", {
+            body: {
+              project_id: data.id,
+              homeowner_id: user.id,
+              city,
+              category,
+              subcategory: form.subcategory || null,
+              postal_code,
+              urgency_score: urgencyScore,
+            },
+          });
+          if (dsErr) throw dsErr;
+          hasMatchPath = (ds as any)?.has_match_path !== false;
+        }
+      } catch (signalErr: any) {
+        await supabase.from("system_events" as any).insert({
+          event_type: "demand_signal_failed",
+          payload: { project_id: data.id, error: String(signalErr?.message ?? signalErr) },
+        }).then(() => {}, () => {});
+        console.warn("[demand-signal-create] non-blocking failure", signalErr);
+      }
+
       setCreated(data.id);
-      toast.success("Projet créé ! Recherche d'entrepreneurs…");
-      setTimeout(() => navigate(`/dashboard/projects/${data.id}/matches`), 1500);
+      toast.success(hasMatchPath ? "Projet créé ! Recherche d'entrepreneurs…" : "Projet reçu — vous êtes sur la liste prioritaire.");
+      setTimeout(
+        () => navigate(hasMatchPath ? `/dashboard/projects/${data.id}/matches` : `/dashboard/projects/${data.id}/waiting`),
+        1500,
+      );
     } catch (err: any) {
       toast.error(err.message || "Erreur lors de la création.");
     } finally {

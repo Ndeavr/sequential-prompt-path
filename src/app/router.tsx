@@ -555,6 +555,7 @@ const HomeownerAppointments = lazyWithRetry(() => import("@/pages/dashboard/Home
 const BookingPage = lazyWithRetry(() => import("@/pages/dashboard/BookingPage"));
 const DocumentUploadPage = lazyWithRetry(() => import("@/pages/dashboard/DocumentUploadPage"));
 const ProjectNewPage = lazyWithRetry(() => import("@/pages/dashboard/ProjectNewPage"));
+const ProjectWaitingPage = lazyWithRetry(() => import("@/pages/dashboard/ProjectWaitingPage"));
 const SyndicateDashboard = lazyWithRetry(() => import("@/pages/dashboard/SyndicateDashboard"));
 const SyndicateDetailDashboard = lazyWithRetry(() => import("@/pages/dashboard/SyndicateDetailDashboard"));
 const SyndicateReserveFund = lazyWithRetry(() => import("@/pages/dashboard/SyndicateReserveFund"));
@@ -1264,6 +1265,7 @@ export const AppRouter = () => (
         <Route path="/dashboard/documents/upload" element={<ProtectedRoute requiredRole="homeowner"><DocumentUploadPage /></ProtectedRoute>} />
         <Route path="/dashboard/projects/new" element={<ProtectedRoute requiredRole="homeowner"><ProjectNewPage /></ProtectedRoute>} />
         <Route path="/dashboard/projects/:projectId/matches" element={<ProtectedRoute requiredRole="homeowner"><ProjectMatchesPage /></ProtectedRoute>} />
+        <Route path="/dashboard/projects/:projectId/waiting" element={<ProtectedRoute requiredRole="homeowner"><ProjectWaitingPage /></ProtectedRoute>} />
         <Route path="/dashboard/leads/:id/results" element={<ProtectedRoute requiredRole="homeowner"><LeadResults /></ProtectedRoute>} />
         <Route path="/dashboard/syndicates" element={<ProtectedRoute requiredRole="homeowner"><SyndicateDashboard /></ProtectedRoute>} />
         <Route path="/dashboard/syndicates/:id" element={<ProtectedRoute requiredRole="homeowner"><SyndicateDetailDashboard /></ProtectedRoute>} />
