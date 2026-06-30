@@ -144,6 +144,11 @@ Deno.serve(async (req) => {
             .update({ status: "active" })
             .eq("id", contractorId);
 
+          // Demand Intelligence — match waiting homeowners to the freshly activated contractor.
+          await supabase.functions.invoke("match-waiting-demand", {
+            body: { contractor_id: contractorId },
+          }).catch((e) => console.warn("[match-waiting-demand] acq branch failed", e));
+
           // Increment territory slot
           if (slotCity && slotTrade) {
             await supabase.rpc("acq_increment_slot", { p_city: slotCity, p_trade: slotTrade });
@@ -232,6 +237,11 @@ Deno.serve(async (req) => {
             subscription_plan: planId,
           })
           .eq("id", contractorId);
+
+        // Demand Intelligence — match waiting homeowners to the freshly activated contractor.
+        await supabase.functions.invoke("match-waiting-demand", {
+          body: { contractor_id: contractorId },
+        }).catch((e) => console.warn("[match-waiting-demand] contractors branch failed", e));
 
         // Consume promo redemption
         if (redemptionId) {
