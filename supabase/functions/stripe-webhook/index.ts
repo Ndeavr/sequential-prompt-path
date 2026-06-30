@@ -94,6 +94,12 @@ Deno.serve(async (req) => {
               message: `Activé via plan ${acqPlanId}`,
               metadata: { session_id: session.id, subscription_id: sub?.id, amount: session.amount_total },
             });
+            // Demand Intelligence — try to match newly active contractor (best-effort).
+            // contractor_prospects.id is not always the canonical contractors.id; we still ping
+            // match-waiting-demand which is idempotent and no-ops on missing contractors.
+            await supabase.functions.invoke("match-waiting-demand", {
+              body: { contractor_id: prospectId },
+            }).catch((e) => console.warn("[match-waiting-demand] prospect branch failed", e));
           } catch (e) {
             await supabase.from("acquisition_pipeline_logs").insert({
               prospect_id: prospectId, step: "stripe_webhook.activation", status: "error", message: String(e), metadata: { session_id: session.id },
