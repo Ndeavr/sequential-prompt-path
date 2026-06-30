@@ -15,18 +15,46 @@ const BLOCKED_PATTERNS: RegExp[] = [
 ];
 
 export type GuardOutcome =
-  | { ok: true; normalized: string; area_code: string | null; country_code: string | null }
+  | { ok: true; normalized: string; area_code: string | null; country_code: string | null; phone_type?: string; sms_guard_reason?: string }
   | { ok: false; reason: "invalid_phone" | "blocked" | "opted_out" | "not_mobile" | "sms_disabled" | "max_failures"; detail: string; normalized: string | null };
+
+/**
+ * Admin allowlist bypass.
+ * Reads ADMIN_SMS_ALLOWLIST (comma-separated E.164, e.g. "+15142499522,+15141111111").
+ * Only honored when caller explicitly passes `strict_admin_override: true`.
+ * NEVER triggered by the normal prospect outreach paths (`acq-send-outreach`, autopilot, etc.)
+ * because they do not — and must not — pass that flag.
+ */
+function getAdminAllowlist(): Set<string> {
+  const raw = Deno.env.get("ADMIN_SMS_ALLOWLIST") ?? "";
+  return new Set(
+    raw.split(/[,\s;]+/).map((s) => s.trim()).filter((s) => /^\+\d{8,15}$/.test(s)),
+  );
+}
 
 export async function validateBeforeSend(opts: {
   supabase: ReturnType<typeof createClient>;
   phone: string | null | undefined;
   lead_id?: string | null;
+  /**
+   * Strict admin override flag. When true AND the destination is in ADMIN_SMS_ALLOWLIST,
+   * the mobile-enforcement Lookup gate is bypassed and the guard returns
+   * `phone_type = "mobile_override"` with `sms_guard_reason = "admin_allowlist_override"`.
+   * Production prospect sends MUST leave this undefined/false.
+   */
+  strict_admin_override?: boolean;
 }): Promise<GuardOutcome> {
   const norm = normalizePhone(opts.phone);
   if (!norm.valid || !norm.normalized) {
     return { ok: false, reason: "invalid_phone", detail: norm.reason ?? "invalid", normalized: norm.normalized };
   }
+
+  // Admin allowlist short-circuit. Only valid in strict admin override / test mode.
+  // Still enforces phone normalization (E.164) but bypasses Lookup mobile enforcement.
+  // Opt-out and blocked-pattern checks still run below before we return.
+  const isAllowlistOverride =
+    opts.strict_admin_override === true && getAdminAllowlist().has(norm.normalized);
+
   for (const re of BLOCKED_PATTERNS) {
     if (re.test(norm.normalized)) {
       return { ok: false, reason: "blocked", detail: `matches ${re.source}`, normalized: norm.normalized };
