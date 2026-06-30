@@ -177,6 +177,7 @@ Deno.serve(async (req) => {
       await s.from("outreach_messages").update({
         message_status: "sent", provider_message_id: j.id, sent_at: new Date().toISOString(),
         cta_urls: wrapped.cta_urls, has_tracked_cta: wrapped.has_tracked_cta, rendered_html: wrapped.body,
+        metadata: { ...(msg.metadata ?? {}), demand_intro: demandMeta },
       }).eq("id", message_id);
       if (msg.prospect_id) {
         await s.from("contractor_prospects").update({ outreach_status: "sent", updated_at: new Date().toISOString() }).eq("id", msg.prospect_id);
