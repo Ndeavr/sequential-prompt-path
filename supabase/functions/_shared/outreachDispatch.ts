@@ -9,6 +9,7 @@ import { normalizePhone } from "./normalizePhone.ts";
 import { wrapAllUrls, validateOutreachMessage, withReplyFooter, withSmsReplyLine } from "./ctaTracker.ts";
 import { recordEmailEvent, recordSmsEvent } from "./outreachEvents.ts";
 import { checkAutopilotGate } from "./autopilotGate.ts";
+import { buildDemandIntro } from "./demandInjector.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -26,6 +27,9 @@ export type DispatchInput = {
   template_key?: string;
   message_type?: string;
   campaign_id?: string;
+  /** City + category enable live demand intro injection (no PII). */
+  demand_city?: string | null;
+  demand_category?: string | null;
   metadata?: Record<string, unknown>;
 };
 
@@ -146,6 +150,20 @@ export async function sendOutreach(input: DispatchInput): Promise<DispatchResult
     if (!gate.allowed) {
       return { ok: false, channel: "none", outcome: "needs_manual_contact", detail: `autopilot_gated:${gate.reason}` };
     }
+  }
+
+  // Demand Intelligence — inject live city/category demand intro at the top of the message.
+  // No PII: only aggregates from market_demand. Silent no-op if no signal exists.
+  try {
+    const intro = await buildDemandIntro(input.demand_city ?? null, input.demand_category ?? null);
+    if (intro?.intro) {
+      input.sms_body = `${intro.intro}\n\n${input.sms_body}`;
+      if (input.email_html) {
+        input.email_html = `<p style="font-size:15px;color:#0F172A;font-weight:600;margin:0 0 16px;">${intro.intro}</p>\n${input.email_html}`;
+      }
+    }
+  } catch (e) {
+    console.warn("[demand-injector] non-blocking", e);
   }
 
   const phoneNorm = normalizePhone(input.phone);
