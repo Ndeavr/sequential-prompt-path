@@ -10,6 +10,7 @@ import { wrapAllUrls, validateOutreachMessage, withReplyFooter, withSmsReplyLine
 import { recordEmailEvent, recordSmsEvent } from "./outreachEvents.ts";
 import { checkAutopilotGate } from "./autopilotGate.ts";
 import { buildDemandIntro } from "./demandInjector.ts";
+import { sanitizeTags } from "./resendTags.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -115,11 +116,11 @@ async function sendEmailViaResend(
         to: [to],
         subject,
         html: wrapped.body,
-        tags: [
+        tags: sanitizeTags([
           { name: "campaign", value: String(ctx.campaign ?? ctx.template_key ?? "outreach") },
           ...(ctx.contractor_id ? [{ name: "contractor_id", value: ctx.contractor_id }] : []),
           ...(ctx.lead_id ? [{ name: "lead_id", value: ctx.lead_id }] : []),
-        ],
+        ]),
       }),
     });
     const data = await resp.json().catch(() => ({}));
