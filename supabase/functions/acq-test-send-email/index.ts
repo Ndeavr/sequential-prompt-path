@@ -5,6 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { logAcquisitionEvent } from "../_shared/acquisitionEvents.ts";
 import { createTrackedLink } from "../_shared/ctaTracker.ts";
 import { EMAIL_FROM } from "../_shared/emailSender.ts";
+import { sanitizeTags } from "../_shared/resendTags.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -97,10 +98,10 @@ serve(async (req) => {
       subject,
       html,
       text,
-      tags: [
+      tags: sanitizeTags([
         { name: "tracking_id", value: trackingId },
         { name: "campaign", value: "admin_test" },
-      ],
+      ]),
     }),
   });
   const data = await res.json().catch(() => ({}));

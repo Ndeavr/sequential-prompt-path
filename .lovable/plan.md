@@ -1,119 +1,67 @@
+# Acquisition Recovery Sprint
 
-# Dispatch Bottleneck Audit + Auto-Repair
+Goal: move 238 imported → contactable → ready_for_contact → dispatched → delivered. No Stripe/matching/onboarding work.
 
-## What the data already tells us (238 leads audited)
+## Phase 1 — Enrichment failure audit
 
+New edge fn `acq-enrich-audit`:
+- Classify the 156 no-contact leads by inspecting `contractor_leads` + `contractor_prospects` + latest run of `acq-enrich-contractor`.
+- Buckets: `no_website`, `website_fetch_failed` (http 4xx/5xx/timeout logged), `parser_no_hits` (fetched but 0 tel/mailto/JSON-LD), `provider_error`, `normalization_dropped` (raw value present but normalized→null), `overwrite_wiped` (had value, later run set null), `duplicate_merge_loss`, `unknown`.
+- Returns counts + 20 sample lead IDs per bucket.
+
+Patch `acq-enrich-contractor`:
+- Guard: never write NULL over an existing non-null `phone`/`email` (fixes overwrite bucket).
+- Add extractors: `mailto:`, `tel:`, footer scan, `/contact`, `/nous-joindre`, JSON-LD `telephone`/`email`, obfuscated `(at)`/`[dot]`.
+- Persist `enrichment_last_error`, `enrichment_last_source`, `enrichment_attempts` for observability.
+- Ship whichever single patch addresses the largest bucket first; keep others behind the same fn.
+
+## Phase 2 — Re-enrich missing leads
+
+New edge fn `acq-reenrich-missing`:
+- Query `contractor_leads WHERE phone IS NULL AND email IS NULL`.
+- For each: try website → homepage → `/contact` → footer → mailto/tel → JSON-LD → cached Google Places payload (`contractor_prospects.raw_gmb_json` / `places_details`).
+- Batched (concurrency 8), respects per-domain rate.
+- Returns `{ before_missing, after_missing, new_phone_count, new_email_count, by_source }`.
+
+## Phase 3 — Queue creation repair
+
+New edge fn `acq-queue-audit`:
+- Trace the 82 contactable → 0 `ready_for_contact` gap. Report per lead: `current_status`, `validation_status`, `phone_type`, `has_email`, `blocking_condition`, expected worker (`alex-outreach-queue-builder` or equivalent).
+
+Patch queue builder (identified worker, likely `acquisition-autopilot` / `dispatch-outreach-batch`):
+- Transition rule: `contactable AND (phone_type='mobile' OR email IS NOT NULL) AND NOT opted_out ⇒ ready_for_contact`.
+- Idempotent upsert into `alex_outreach_queue`.
+- Cron every 5 min + one-shot backfill call from repair phase.
+
+## Phase 4 — Resend tag sanitizer
+
+Central helper `supabase/functions/_shared/resendTags.ts`:
 ```
-Contact coverage
-  total leads .................. 238
-  has phone .................... 82  (34%)
-  has email .................... 23  (10%)
-  no phone AND no email ........ ~150
-
-Lead pipeline
-  new / none ................... 179  (never dispatched)
-  contacted / contacted ........  56  (dispatch attempted)
-  ready_for_contact / none .....   2
-  qualified / booked ...........   1
-
-Events written
-  outreach_sms_events .......... 2   (1 delivered, 1 ping)
-  outreach_email_events ........ 3   (0 delivered)
+sanitizeTagValue(v) → strip accents (NFD), lowercase, replace non [A-Za-z0-9_-] with '_', trim to 256; drop tag if empty.
+sanitizeTags(record) → array of {name,value}, drops invalids, never throws.
 ```
+Wire into every `resend.emails.send` caller: `outreachDispatch.ts`, `outreach-resend-send`, `acq-followup-send`, `acq-test-send-email`, `acq-e2e-real`, `acq-e2e-selftest`, `email-daily-selftest`. Send proceeds even if all tags dropped (log warning to `outreach_repair_actions`).
 
-**Two independent collapses:**
+## Phase 5 — Execute live repair
 
-1. **Contact-data collapse** — enrichment never populated `phone` / `email` on ~150 leads, so they are structurally undispatchable.
-2. **Event-log collapse** — 56 leads are flagged `outreach_status = contacted` but only 5 provider events exist. Either dispatch worker short-circuited before calling Twilio/Resend, or provider calls happened without writing to `outreach_sms_events` / `outreach_email_events`. That's why the funnel dashboard shows 2 SMS / 3 emails — the funnel reads events, not lead status.
+Call `dispatch-bottleneck-repair` with `dry_run=false` and actions:
+`renormalize_phones, retry_stuck_validation, reenrich_missing_contact, requeue_orphaned, clear_dead_queue_locks, restart_stalled_workers`.
 
-## Deliverable — 1 audit function + 1 repair function + 1 admin panel
+Immediately after: invoke `acq-queue-audit` + queue builder to materialize `ready_for_contact`. Still no outbound sends triggered by this step; sending remains gated by existing autopilot.
 
-### 1. `dispatch-bottleneck-audit` (new edge function, read-only)
+## Phase 6 — Final report page
 
-Returns a single JSON envelope with 5 sections. No writes.
-
-**A. Per-prospect breakdown** (paged, 500 rows/page):
-`id, company_name, phone, email, lead_status, outreach_status, enrichment_status, validation_status, last_transition, blocked_reason, created_at`.
-
-`blocked_reason` computed with this deterministic ladder (first match wins):
-```
-missing_phone_and_email → no phone/mobile AND no email
-missing_phone           → no phone/mobile, has email
-missing_email           → no email, has phone
-invalid_phone           → phone_type in ('landline','voip','toll_free','invalid')
-lookup_failed           → phone present, phone_type IS NULL, last_lookup_error IS NOT NULL
-pending_validation      → phone present, phone_type IS NULL, no lookup error
-waiting_approval        → lead_status='ready_for_contact', outreach_status='none'
-dispatch_skipped        → outreach_status='contacted' AND no rows in outreach_sms_events/outreach_email_events for that lead
-queue_error             → metadata_json->'last_dispatch_error' set
-delivery_error          → has event with status in ('failed','undelivered','bounced')
-delivered_no_response   → has delivered event, no click
-none                    → everything else
-```
-
-**B. Choke-point ladder** (real counts across `contractor_leads` + provider event tables):
-```
-imported → validated → sms_eligible → email_eligible → queued
-        → dispatched → delivered
-```
-Returns the first stage where volume drops >70% vs the previous stage.
-
-**C. Twilio audit** — last 20 rows from `outreach_sms_events` joined on `contractor_leads`: `recipient, status, error_code, carrier, delivery_status, created_at`. Plus health verdict: `twilio_healthy` (creds valid via existing `twilio-auth-audit`), `queue_healthy` (any events in last 24h), `delivery_healthy` (delivered / dispatched ≥ 0.7 over last 24h).
-
-**D. Resend audit** — last 20 rows from `outreach_email_events`: `recipient, status, rejection_reason, bounce_reason, delivery_status, created_at`. Plus health verdict: pulls `email_domain--check_email_domain_status` result (SPF/DKIM/DMARC), and `accepted_by_resend` = count with `provider_message_id NOT NULL`.
-
-**E. Final output** — root cause string, offending table/function, `prospects_recoverable_now` (leads that will pass validation after re-enrichment or phone re-normalization), `prospects_needing_manual` (leads with no contact data at all), and an ordered `repair_sequence`.
-
-### 2. `dispatch-bottleneck-repair` (new edge function, safe writes only, `dry_run` default `true`)
-
-Never sends messages. Only mutates queue/validation/lock state. Returns before/after counts per action.
-
-Actions (each independently toggleable via `?actions=…`):
-```
-retry_stuck_validation   — leads with phone present + phone_type null older than 15m
-                            → clear last_lookup_error, mark for re-lookup by acq-phone-backfill
-requeue_orphaned         — outreach_status='none' + validation_status='valid' older than 30m
-                            → set outreach_status='ready', enqueue in acquisition-autopilot
-restart_stalled_workers  — outreach_health_state rows where last_tick_at < now()-15m
-                            → call outreach-repair-agent to re-arm the cron
-clear_dead_queue_locks   — alex_outreach_queue rows locked > 10m
-                            → release lock (locked_at=null, worker_id=null)
-renormalize_phones       — leads where phone !~ E.164
-                            → run through normalizeE164, update in place
-reenrich_missing_contact — leads missing phone+email + has website_url or company_name
-                            → enqueue in acq-enrich-contractor
-```
-
-Every action logs a row in a new `outreach_repair_actions` table: `run_id, action, dry_run, before_count, after_count, error, created_at`.
-
-### 3. `/admin/dispatch-bottleneck` page
-
-Three cards + one table:
-- **Choke-point ladder** (stacked bars, first collapse highlighted amber).
-- **Twilio health** + **Resend health** (green/amber/red pills with verdict).
-- **Repair console** — checkbox per action, `Dry-run` toggle (default on), `Execute` button that calls `dispatch-bottleneck-repair`, shows before/after diff.
-- **Prospect table** — paginated, filterable by `blocked_reason`, CSV export.
+Extend `/admin/dispatch-bottleneck` with a "Recovery Sprint" panel:
+- BEFORE/AFTER counters: imported, contactable, ready_for_contact, queued.
+- Top-20 recoverable prospects table (company, phone, email, current_status).
+- Root cause ranking #1/#2/#3 from Phase 1 buckets.
+- "Fastest path to first 10 activations" list: the 10 highest-score `ready_for_contact` leads with mobile phone or verified email.
 
 ## Technical notes
 
-- Reads only from `contractor_leads`, `outreach_sms_events`, `outreach_email_events`, `outreach_health_state`, `alex_outreach_queue`, `contractor_prospects` (for cross-ref).
-- Uses existing `_shared/reliability.ts` (`withRetry`, `reportOutcome`) for repair actions per Production Reliability Framework.
-- Reuses existing `twilio-auth-audit` and `email_domain--check_email_domain_status`.
-- Does not touch matching, Stripe, or onboarding logic.
-- Follows readability tokens (`.admin-theme` scope, no raw `text-gray-*`).
+- New tables: none. New columns on `contractor_leads`: `enrichment_last_error text`, `enrichment_last_source text`, `enrichment_attempts int default 0`, `enrichment_last_run_at timestamptz` (migration with GRANTs — table already exists, just ALTER).
+- New edge fns: `acq-enrich-audit`, `acq-reenrich-missing`, `acq-queue-audit`. Patched: `acq-enrich-contractor`, queue builder, all Resend senders.
+- No schema-breaking changes; safe to ship incrementally (Phase 4 first to unblock any current send attempts, then 1→2→3→5→6).
 
-## Success
-
-- Panel shows exact reason for each of the 238 leads.
-- Choke-point ladder pinpoints the collapse stage in one glance.
-- Repair console can be executed in dry-run and shows what would be recovered before any real change.
-- After running the safe repairs, the "recoverable now" count in `revenue-path-audit` moves upward on next refresh — without a single message being sent.
-
-## Files
-
-New:
-- `supabase/functions/dispatch-bottleneck-audit/index.ts`
-- `supabase/functions/dispatch-bottleneck-repair/index.ts`
-- `supabase/migrations/<ts>_outreach_repair_actions.sql` (new table + grants + RLS)
-- `src/pages/admin/PageAdminDispatchBottleneck.tsx`
-- Route in `src/app/router.tsx`: `/admin/dispatch-bottleneck`
+## Out of scope
+Stripe, matching, onboarding, message-content changes, new templates.
