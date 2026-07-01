@@ -146,7 +146,6 @@ Deno.serve(async (req) => {
       .is("phone", null).is("email", null);
     const before_missing = before_missing_c ?? 0;
 
-    const { data: leadsRaw, error: fetchErr } = await sb
     const skipRecentErrors = body?.skip_recent_errors !== false;
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     let q = sb
@@ -155,10 +154,10 @@ Deno.serve(async (req) => {
       .is("phone", null)
       .is("email", null);
     if (skipRecentErrors) {
-      // Skip leads with a recent failed attempt to avoid retrying same dead sites
       q = q.or(`enrichment_last_run_at.is.null,enrichment_last_run_at.lt.${oneHourAgo}`);
     }
     const { data: leadsRaw, error: fetchErr } = await q.limit(limit);
+    if (fetchErr) throw new Error("fetch_leads: " + fetchErr.message);
     const leads = (leadsRaw ?? []) as Lead[];
 
     const buckets: Record<string, number> = {
