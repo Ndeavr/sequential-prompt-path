@@ -53,6 +53,13 @@ export type SendSmsInput = {
   campaign_id?: string;
   metadata?: Record<string, unknown>;
   attempt_number?: number;
+  /**
+   * Strict admin override — ONLY passed by admin/test edge functions.
+   * When true AND destination is in ADMIN_SMS_ALLOWLIST, smsGuard bypasses
+   * mobile-enforcement Lookup and returns phone_type=mobile_override.
+   * Never set by production prospect outreach paths.
+   */
+  strict_admin_override?: boolean;
 };
 
 export type SendSmsResult = {
@@ -112,7 +119,12 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     };
   }
 
-  const guard = await validateBeforeSend({ supabase, phone: input.to });
+  const guard = await validateBeforeSend({
+    supabase,
+    phone: input.to,
+    lead_id: input.lead_id ?? null,
+    strict_admin_override: input.strict_admin_override === true,
+  });
   const body_hash = await hashBody(input.body);
   const message_preview = input.body.slice(0, 160);
 
@@ -133,7 +145,11 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     body_hash,
     attempt_number: input.attempt_number ?? 1,
     status_callback_url: STATUS_CALLBACK_URL,
-    metadata: input.metadata ?? {},
+    metadata: {
+      ...(input.metadata ?? {}),
+      ...(guard.ok && (guard as any).phone_type ? { phone_type: (guard as any).phone_type } : {}),
+      ...(guard.ok && (guard as any).sms_guard_reason ? { sms_guard_reason: (guard as any).sms_guard_reason } : {}),
+    },
   };
 
   if (!guard.ok) {
