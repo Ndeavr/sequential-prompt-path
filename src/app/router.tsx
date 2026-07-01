@@ -1480,6 +1480,8 @@ export const AppRouter = () => (
         <Route path="/admin/dispatch-bottleneck" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminDispatchBottleneck /></Suspense></ProtectedRoute>} />
         <Route path="/admin/recovery-sprint" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminRecoverySprint /></Suspense></ProtectedRoute>} />
         <Route path="/admin/normalization" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminNormalization /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/ops" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOps /></Suspense></ProtectedRoute>} />
+
         <Route path="/admin/email-cta-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailCtaAudit /></Suspense></ProtectedRoute>} />
         <Route path="/admin/outreach-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOutreachHealth /></Suspense></ProtectedRoute>} />
         <Route path="/admin/email-sender-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailSenderHealth /></Suspense></ProtectedRoute>} />
