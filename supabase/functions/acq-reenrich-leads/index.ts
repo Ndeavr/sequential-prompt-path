@@ -37,7 +37,7 @@ function normalizePhone(raw: string | null): string | null {
   return null;
 }
 
-async function fetchPage(url: string, ms = 6000): Promise<string | null> {
+async function fetchPage(url: string, ms = 3500): Promise<string | null> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms);
   try {
@@ -53,7 +53,7 @@ async function fetchPage(url: string, ms = 6000): Promise<string | null> {
     const ct = r.headers.get("content-type") || "";
     if (!ct.includes("text/html") && !ct.includes("xml")) return null;
     const txt = await r.text();
-    return txt.slice(0, 500_000);
+    return txt.slice(0, 200_000);
   } catch {
     return null;
   } finally {
@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const execute = body?.execute === true;
-    const limit = Math.min(Number(body?.limit ?? 300), 300);
+    const limit = Math.min(Number(body?.limit ?? 25), 40);
 
     const sb = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -140,12 +140,11 @@ Deno.serve(async (req) => {
     );
 
     // Snapshot before
-    const { data: beforeRows } = await sb
+    const { count: before_missing_c } = await sb
       .from("contractor_leads")
-      .select("id", { count: "exact", head: false })
-      .is("phone", null)
-      .is("email", null);
-    const before_missing = beforeRows?.length ?? 0;
+      .select("id", { count: "exact", head: true })
+      .is("phone", null).is("email", null);
+    const before_missing = before_missing_c ?? 0;
 
     const { data: leadsRaw, error: fetchErr } = await sb
       .from("contractor_leads")
