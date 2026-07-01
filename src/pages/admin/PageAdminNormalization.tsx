@@ -42,6 +42,7 @@ export default function PageAdminNormalization() {
     <div className="alex-immersive min-h-screen p-6 space-y-6">
       <div className="max-w-6xl mx-auto space-y-6">
         <header className="space-y-2">
+          <a href="/admin/ops" className="text-xs text-readable-muted hover:text-readable underline">← Operations Center</a>
           <h1 className="text-3xl font-bold text-readable">Normalisation des leads</h1>
           <p className="text-readable-secondary">
             Couche universelle de nettoyage : emails, téléphones, sites web, noms d'entreprise, tags Resend.
