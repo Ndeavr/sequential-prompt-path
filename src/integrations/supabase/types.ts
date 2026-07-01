@@ -2809,6 +2809,102 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_repair_jobs: {
+        Row: {
+          affected_count: number
+          applied_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          id: string
+          job_type: string
+          risk_level: string
+          sample_diff: Json
+          status: string
+          summary: Json
+          updated_at: string
+        }
+        Insert: {
+          affected_count?: number
+          applied_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          job_type: string
+          risk_level?: string
+          sample_diff?: Json
+          status?: string
+          summary?: Json
+          updated_at?: string
+        }
+        Update: {
+          affected_count?: number
+          applied_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          job_type?: string
+          risk_level?: string
+          sample_diff?: Json
+          status?: string
+          summary?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      admin_system_checks: {
+        Row: {
+          affected_count: number
+          category: string
+          check_key: string
+          created_at: string
+          id: string
+          label: string
+          last_auto_fix_at: string | null
+          last_checked_at: string | null
+          metadata: Json
+          recommended_action: string | null
+          repair_route: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          affected_count?: number
+          category: string
+          check_key: string
+          created_at?: string
+          id?: string
+          label: string
+          last_auto_fix_at?: string | null
+          last_checked_at?: string | null
+          metadata?: Json
+          recommended_action?: string | null
+          repair_route?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          affected_count?: number
+          category?: string
+          check_key?: string
+          created_at?: string
+          id?: string
+          label?: string
+          last_auto_fix_at?: string | null
+          last_checked_at?: string | null
+          metadata?: Json
+          recommended_action?: string | null
+          repair_route?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       aeo_building_types: {
         Row: {
           created_at: string
