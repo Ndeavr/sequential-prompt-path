@@ -190,6 +190,7 @@ const PageAdminRevenuePathAudit = lazyWithRetry(() => import("@/pages/admin/Page
 const PageAdminDispatchBottleneck = lazyWithRetry(() => import("@/pages/admin/PageAdminDispatchBottleneck"));
 const PageAdminRecoverySprint = lazyWithRetry(() => import("@/pages/admin/PageAdminRecoverySprint"));
 const PageAdminNormalization = lazyWithRetry(() => import("@/pages/admin/PageAdminNormalization"));
+const PageAdminOps = lazyWithRetry(() => import("@/pages/admin/PageAdminOps"));
 const AdminLaunchWarRoom = lazyWithRetry(() => import("@/pages/admin/AdminLaunchWarRoom"));
 const PageAdminCriticalPathAudit = lazyWithRetry(() => import("@/pages/admin/PageAdminCriticalPathAudit"));
 const AdminUIHealthMonitor = lazyWithRetry(() => import("@/pages/admin/AdminUIHealthMonitor"));
