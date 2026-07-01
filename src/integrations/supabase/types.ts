@@ -79872,6 +79872,7 @@ export type Database = {
         }
         Returns: Json
       }
+      unaccent: { Args: { "": string }; Returns: string }
       unpro_aipp_tier: { Args: { score: number }; Returns: string }
       unpro_slugify: { Args: { input: string }; Returns: string }
       update_profile_field_partial: {
