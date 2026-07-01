@@ -145,7 +145,11 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     body_hash,
     attempt_number: input.attempt_number ?? 1,
     status_callback_url: STATUS_CALLBACK_URL,
-    metadata: input.metadata ?? {},
+    metadata: {
+      ...(input.metadata ?? {}),
+      ...(guard.ok && (guard as any).phone_type ? { phone_type: (guard as any).phone_type } : {}),
+      ...(guard.ok && (guard as any).sms_guard_reason ? { sms_guard_reason: (guard as any).sms_guard_reason } : {}),
+    },
   };
 
   if (!guard.ok) {
