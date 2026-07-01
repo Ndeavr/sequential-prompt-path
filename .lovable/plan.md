@@ -1,106 +1,119 @@
-## Objective
 
-Prove the revenue gate end-to-end with a **real $1 Stripe payment** and then run a **Full Revenue Path Audit** from prospect → match eligibility, so we can see the true next bottleneck.
+# Dispatch Bottleneck Audit + Auto-Repair
 
----
-
-## Phase 1 — Real Stripe Payment Verification
-
-### 1.1 Pre-payment snapshot
-Build an admin panel `StripeRevenueGateAudit` at `/admin/revenue-gate-audit` that, given a contractor ID, captures and displays:
+## What the data already tells us (238 leads audited)
 
 ```
-BEFORE PAYMENT
-- account_status
-- activation_status
-- onboarding_status
-- is_published
-- is_discoverable
-- is_accepting_appointments
-- published_at
-- stripe_customer_id / subscription_id
+Contact coverage
+  total leads .................. 238
+  has phone .................... 82  (34%)
+  has email .................... 23  (10%)
+  no phone AND no email ........ ~150
+
+Lead pipeline
+  new / none ................... 179  (never dispatched)
+  contacted / contacted ........  56  (dispatch attempted)
+  ready_for_contact / none .....   2
+  qualified / booked ...........   1
+
+Events written
+  outreach_sms_events .......... 2   (1 delivered, 1 ping)
+  outreach_email_events ........ 3   (0 delivered)
 ```
 
-Snapshot stored in a new `revenue_gate_audit_runs` table (id, contractor_id, phase, snapshot jsonb, captured_at).
+**Two independent collapses:**
 
-### 1.2 Trigger the real purchase
-- Use the existing `/pro/:slug` → `create-activation-checkout` flow with the seeded E2E contractor.
-- The admin clicks "Start Real $1 Test" button which:
-  1. Captures BEFORE snapshot
-  2. Opens a live Stripe Checkout URL in a new tab
-  3. Starts polling `stripe-webhook` event log every 3s
+1. **Contact-data collapse** — enrichment never populated `phone` / `email` on ~150 leads, so they are structurally undispatchable.
+2. **Event-log collapse** — 56 leads are flagged `outreach_status = contacted` but only 5 provider events exist. Either dispatch worker short-circuited before calling Twilio/Resend, or provider calls happened without writing to `outreach_sms_events` / `outreach_email_events`. That's why the funnel dashboard shows 2 SMS / 3 emails — the funnel reads events, not lead status.
 
-### 1.3 Webhook observability
-Add a `stripe_webhook_events` audit table (populated inside `stripe-webhook/index.ts`):
-- stripe_event_id (unique)
-- event_type
-- received_at
-- processed_at
-- success (bool)
-- error_message
-- contractor_id (resolved)
-- raw payload jsonb
+## Deliverable — 1 audit function + 1 repair function + 1 admin panel
 
-Panel displays the matching event row in real-time.
+### 1. `dispatch-bottleneck-audit` (new edge function, read-only)
 
-### 1.4 Post-payment snapshot + diff
-Once webhook is `processed_at != null`, re-snapshot and render a side-by-side diff highlighting each field that changed. Expected green: `account_status=active`, `activation_status=activated`, `is_published=true`, `is_discoverable=true`, `published_at` set.
+Returns a single JSON envelope with 5 sections. No writes.
 
-### 1.5 Visibility verification (4 automated checks)
-Right after diff, panel runs and displays PASS/FAIL for:
-1. **Search**: query `contractors-api` for the contractor's trade/city → contractor present
-2. **Alex matching**: invoke `alex-best-match-select` with matching criteria → contractor returned
-3. **Homeowner recommendations**: invoke recommendation edge fn → contractor present
-4. **Public URL**: fetch `/entrepreneur/:slug` → HTTP 200 + contractor name in HTML
+**A. Per-prospect breakdown** (paged, 500 rows/page):
+`id, company_name, phone, email, lead_status, outreach_status, enrichment_status, validation_status, last_transition, blocked_reason, created_at`.
 
-Overall verdict: `REVENUE GATE OPEN` / `BLOCKED AT STEP X`.
-
----
-
-## Phase 2 — Full Revenue Path Audit
-
-New edge function `revenue-path-audit` + admin page `/admin/revenue-path-audit` that computes, over a rolling 30-day window:
-
+`blocked_reason` computed with this deterministic ladder (first match wins):
 ```
-Stage                       Count    Conv%    Blocker
-────────────────────────────────────────────────────────
-Prospects imported             …        —         —
-SMS/Email dispatched           …        …%      …
-SMS delivered (Twilio)         …        …%      …
-Email delivered (Resend)       …        …%      …
-Clicks (/r/{id})               …        …%      …
-Signups / onboarding start     …        …%      …
-Stripe checkout created        …        …%      …
-Stripe payment succeeded       …        …%      …
-Webhook processed              …        …%      …
-Contractor activated           …        …%      …
-Visible in search              …        …%      …
-Eligible in Alex matching      …        …%      …
+missing_phone_and_email → no phone/mobile AND no email
+missing_phone           → no phone/mobile, has email
+missing_email           → no email, has phone
+invalid_phone           → phone_type in ('landline','voip','toll_free','invalid')
+lookup_failed           → phone present, phone_type IS NULL, last_lookup_error IS NOT NULL
+pending_validation      → phone present, phone_type IS NULL, no lookup error
+waiting_approval        → lead_status='ready_for_contact', outreach_status='none'
+dispatch_skipped        → outreach_status='contacted' AND no rows in outreach_sms_events/outreach_email_events for that lead
+queue_error             → metadata_json->'last_dispatch_error' set
+delivery_error          → has event with status in ('failed','undelivered','bounced')
+delivered_no_response   → has delivered event, no click
+none                    → everything else
 ```
 
-Data sources (already in DB):
-- `contractor_prospects`, `contractor_leads`
-- `outreach_sms_events`, `outreach_email_events`
-- `acquisition_events` (clicks)
-- `contractor_activation_events`, `contractors`
-- `stripe_webhook_events` (new)
-- `checkout_sessions`
+**B. Choke-point ladder** (real counts across `contractor_leads` + provider event tables):
+```
+imported → validated → sms_eligible → email_eligible → queued
+        → dispatched → delivered
+```
+Returns the first stage where volume drops >70% vs the previous stage.
 
-For each stage, `Blocker` shows the top failure reason (e.g. "landline_or_unreachable", "RESEND_400", "no_cta"). Auto-highlights the first stage where conversion < 30% as the **current bottleneck**.
+**C. Twilio audit** — last 20 rows from `outreach_sms_events` joined on `contractor_leads`: `recipient, status, error_code, carrier, delivery_status, created_at`. Plus health verdict: `twilio_healthy` (creds valid via existing `twilio-auth-audit`), `queue_healthy` (any events in last 24h), `delivery_healthy` (delivered / dispatched ≥ 0.7 over last 24h).
 
----
+**D. Resend audit** — last 20 rows from `outreach_email_events`: `recipient, status, rejection_reason, bounce_reason, delivery_status, created_at`. Plus health verdict: pulls `email_domain--check_email_domain_status` result (SPF/DKIM/DMARC), and `accepted_by_resend` = count with `provider_message_id NOT NULL`.
 
-## Technical Notes
+**E. Final output** — root cause string, offending table/function, `prospects_recoverable_now` (leads that will pass validation after re-enrichment or phone re-normalization), `prospects_needing_manual` (leads with no contact data at all), and an ordered `repair_sequence`.
 
-- No schema breaks: add `stripe_webhook_events` and `revenue_gate_audit_runs` only.
-- `stripe-webhook` gets a wrapper that logs every event to the new audit table (success or fail) before doing work — gives us the missing observability.
-- Visibility checks reuse existing edge functions; no duplicated logic.
-- All admin pages wrapped in `SectionErrorBoundary` per prior hardening.
+### 2. `dispatch-bottleneck-repair` (new edge function, safe writes only, `dry_run` default `true`)
 
----
+Never sends messages. Only mutates queue/validation/lock state. Returns before/after counts per action.
+
+Actions (each independently toggleable via `?actions=…`):
+```
+retry_stuck_validation   — leads with phone present + phone_type null older than 15m
+                            → clear last_lookup_error, mark for re-lookup by acq-phone-backfill
+requeue_orphaned         — outreach_status='none' + validation_status='valid' older than 30m
+                            → set outreach_status='ready', enqueue in acquisition-autopilot
+restart_stalled_workers  — outreach_health_state rows where last_tick_at < now()-15m
+                            → call outreach-repair-agent to re-arm the cron
+clear_dead_queue_locks   — alex_outreach_queue rows locked > 10m
+                            → release lock (locked_at=null, worker_id=null)
+renormalize_phones       — leads where phone !~ E.164
+                            → run through normalizeE164, update in place
+reenrich_missing_contact — leads missing phone+email + has website_url or company_name
+                            → enqueue in acq-enrich-contractor
+```
+
+Every action logs a row in a new `outreach_repair_actions` table: `run_id, action, dry_run, before_count, after_count, error, created_at`.
+
+### 3. `/admin/dispatch-bottleneck` page
+
+Three cards + one table:
+- **Choke-point ladder** (stacked bars, first collapse highlighted amber).
+- **Twilio health** + **Resend health** (green/amber/red pills with verdict).
+- **Repair console** — checkbox per action, `Dry-run` toggle (default on), `Execute` button that calls `dispatch-bottleneck-repair`, shows before/after diff.
+- **Prospect table** — paginated, filterable by `blocked_reason`, CSV export.
+
+## Technical notes
+
+- Reads only from `contractor_leads`, `outreach_sms_events`, `outreach_email_events`, `outreach_health_state`, `alex_outreach_queue`, `contractor_prospects` (for cross-ref).
+- Uses existing `_shared/reliability.ts` (`withRetry`, `reportOutcome`) for repair actions per Production Reliability Framework.
+- Reuses existing `twilio-auth-audit` and `email_domain--check_email_domain_status`.
+- Does not touch matching, Stripe, or onboarding logic.
+- Follows readability tokens (`.admin-theme` scope, no raw `text-gray-*`).
 
 ## Success
 
-- One real $1 test produces a green BEFORE→AFTER diff + 4/4 visibility PASS
-- Revenue Path Audit renders with real counts and clearly names the next bottleneck (expected: SMS or email delivery upstream)
-- Zero changes required to business logic in matching, activation, or Stripe — this phase is purely **proof + observability**
+- Panel shows exact reason for each of the 238 leads.
+- Choke-point ladder pinpoints the collapse stage in one glance.
+- Repair console can be executed in dry-run and shows what would be recovered before any real change.
+- After running the safe repairs, the "recoverable now" count in `revenue-path-audit` moves upward on next refresh — without a single message being sent.
+
+## Files
+
+New:
+- `supabase/functions/dispatch-bottleneck-audit/index.ts`
+- `supabase/functions/dispatch-bottleneck-repair/index.ts`
+- `supabase/migrations/<ts>_outreach_repair_actions.sql` (new table + grants + RLS)
+- `src/pages/admin/PageAdminDispatchBottleneck.tsx`
+- Route in `src/app/router.tsx`: `/admin/dispatch-bottleneck`
