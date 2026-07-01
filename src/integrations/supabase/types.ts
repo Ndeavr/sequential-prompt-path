@@ -66041,6 +66041,36 @@ export type Database = {
           },
         ]
       }
+      revenue_gate_audit_runs: {
+        Row: {
+          captured_at: string
+          captured_by: string | null
+          contractor_id: string
+          id: string
+          phase: string
+          session_id: string | null
+          snapshot: Json
+        }
+        Insert: {
+          captured_at?: string
+          captured_by?: string | null
+          contractor_id: string
+          id?: string
+          phase: string
+          session_id?: string | null
+          snapshot: Json
+        }
+        Update: {
+          captured_at?: string
+          captured_by?: string | null
+          contractor_id?: string
+          id?: string
+          phase?: string
+          session_id?: string | null
+          snapshot?: Json
+        }
+        Relationships: []
+      }
       revenue_loss_estimations: {
         Row: {
           aipp_score: number | null
@@ -72100,6 +72130,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      stripe_webhook_events: {
+        Row: {
+          contractor_id: string | null
+          created_at: string
+          error_message: string | null
+          event_type: string
+          id: string
+          payload: Json | null
+          processed_at: string | null
+          received_at: string
+          session_id: string | null
+          stripe_event_id: string
+          success: boolean | null
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          id?: string
+          payload?: Json | null
+          processed_at?: string | null
+          received_at?: string
+          session_id?: string | null
+          stripe_event_id: string
+          success?: boolean | null
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json | null
+          processed_at?: string | null
+          received_at?: string
+          session_id?: string | null
+          stripe_event_id?: string
+          success?: boolean | null
+        }
+        Relationships: []
       }
       subcontract_requests: {
         Row: {

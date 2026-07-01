@@ -185,6 +185,8 @@ const PageContractorAippCockpit = lazyWithRetry(() => import("@/pages/contractor
 const PageAcqActivation = lazyWithRetry(() => import("@/pages/acquisition/PageAcqActivation"));
 const PageActivationSuccess = lazyWithRetry(() => import("@/pages/acquisition/PageActivationSuccess"));
 const PageAdminWarRoom = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminWarRoom"));
+const PageAdminRevenueGateAudit = lazyWithRetry(() => import("@/pages/admin/PageAdminRevenueGateAudit"));
+const PageAdminRevenuePathAudit = lazyWithRetry(() => import("@/pages/admin/PageAdminRevenuePathAudit"));
 const AdminLaunchWarRoom = lazyWithRetry(() => import("@/pages/admin/AdminLaunchWarRoom"));
 const PageAdminCriticalPathAudit = lazyWithRetry(() => import("@/pages/admin/PageAdminCriticalPathAudit"));
 const AdminUIHealthMonitor = lazyWithRetry(() => import("@/pages/admin/AdminUIHealthMonitor"));
@@ -1469,6 +1471,8 @@ export const AppRouter = () => (
         <Route path="/admin/acquisition-funnel" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionFunnel /></Suspense></ProtectedRoute>} />
         <Route path="/admin/revenue-intelligence" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionFunnel /></Suspense></ProtectedRoute>} />
         <Route path="/admin/acquisition-tests" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionTests /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/revenue-gate-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminRevenueGateAudit /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/revenue-path-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminRevenuePathAudit /></Suspense></ProtectedRoute>} />
         <Route path="/admin/email-cta-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailCtaAudit /></Suspense></ProtectedRoute>} />
         <Route path="/admin/outreach-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOutreachHealth /></Suspense></ProtectedRoute>} />
         <Route path="/admin/email-sender-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailSenderHealth /></Suspense></ProtectedRoute>} />

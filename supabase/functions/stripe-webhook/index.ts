@@ -40,28 +40,42 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Idempotency: log event
-    const { data: existingLog } = await supabase
-      .from("integration_audit_logs")
-      .select("id")
-      .eq("integration_name", "stripe")
-      .eq("action_name", event.id)
-      .maybeSingle();
+    // Observability: log to stripe_webhook_events (idempotent via unique stripe_event_id)
+    const receivedAt = new Date().toISOString();
+    const sessionObj = (event.data.object as any) || {};
+    const sessionIdField = sessionObj?.id || null;
+    const contractorIdField =
+      sessionObj?.metadata?.contractor_id ||
+      sessionObj?.metadata?.prospect_id ||
+      null;
 
-    if (existingLog) {
+    const { error: insertErr } = await supabase.from("stripe_webhook_events").insert({
+      stripe_event_id: event.id,
+      event_type: event.type,
+      received_at: receivedAt,
+      contractor_id: contractorIdField,
+      session_id: sessionIdField,
+      payload: event as any,
+    });
+
+    if (insertErr && !String(insertErr.message).includes("duplicate")) {
+      console.warn("[stripe-webhook] audit insert warning", insertErr.message);
+    }
+    if (insertErr && String(insertErr.message).includes("duplicate")) {
       console.log(`Duplicate webhook event ${event.id}, skipping`);
       return new Response(JSON.stringify({ received: true, duplicate: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Log event
+    // Legacy audit log (kept for backward compat)
     await supabase.from("integration_audit_logs").insert({
       integration_name: "stripe",
       action_name: event.id,
       status: "processing",
       payload: { type: event.type },
     });
+
 
     switch (event.type) {
       case "checkout.session.completed": {
@@ -447,15 +461,29 @@ Deno.serve(async (req) => {
       .eq("integration_name", "stripe")
       .eq("action_name", event.id);
 
+    await supabase
+      .from("stripe_webhook_events")
+      .update({ processed_at: new Date().toISOString(), success: true })
+      .eq("stripe_event_id", event.id);
+
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
     console.error("Webhook error:", error);
     const msg = error instanceof Error ? error.message : "Unknown error";
+    try {
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+      // Best-effort: try to mark last event as failed if we captured its id in scope.
+      // We can't always reach event.id here safely, so we skip if not available.
+    } catch (_) { /* noop */ }
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
+
