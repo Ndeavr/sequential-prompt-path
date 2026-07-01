@@ -2,7 +2,7 @@
  * /admin/dispatch-bottleneck — audit + safe repair console for the acquisition dispatch layer.
  */
 import { useEffect, useMemo, useState } from "react";
-import SectionErrorBoundary from "@/components/admin/SectionErrorBoundary";
+import { SectionErrorBoundary } from "@/components/admin/SectionErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, RefreshCw, AlertTriangle, PlayCircle } from "lucide-react";
 
@@ -317,7 +317,7 @@ function Inner() {
 
 export default function PageAdminDispatchBottleneck() {
   return (
-    <SectionErrorBoundary sectionName="DispatchBottleneck">
+    <SectionErrorBoundary title="Dispatch Bottleneck">
       <Inner />
     </SectionErrorBoundary>
   );
