@@ -1,45 +1,45 @@
-## Fix Resend — Rotate key + isolated admin email delivery test
+## Prove the revenue gate: $1 payment → contractor activation → visible in matching
 
-### Step 1 — Rotate `RESEND_API_KEY`
-Open the secure secret form so you can paste the freshly-minted Resend key from the Resend dashboard (Settings → API Keys → Create → full-access, domain `mail.unpro.ca`). Nothing else in the app changes at this step.
+Objective: verify (with database evidence) that a paid contractor is immediately activated and returned by the matching engine. No new features — only a read-only end-to-end trace + one minimal safety patch if a gap is found.
 
-### Step 2 — Harden `acq-test-send-email` (admin-only, CTA-enforced)
-Patch `supabase/functions/acq-test-send-email/index.ts` to mirror the SMS admin override contract:
+### Phase A — Read-only audit (no code changes)
+1. Trace `stripe-webhook/index.ts`: confirm every `checkout.session.completed` branch sets contractor `status='active'` (or equivalent flag consumed by matching) and inserts an `acquisition_events` row `event_type='paid'` then `'active'`.
+2. Trace `match-waiting-demand` invocation from the same webhook branches: confirm it runs with the new `contractor_id`.
+3. Trace the search/matching query used by homeowners (identify the exact SQL / view / RPC). Confirm the visibility predicate matches the flag(s) set in step 1 (e.g. `status='active' AND published=true AND plan_active=true`).
+4. Run SQL against production data on the last 30 days: for every `contractors.status='active'` row, does it appear in the matching query for its `city × category`? Report gaps.
 
-- Require `strict_admin_override: true` in the request body — otherwise return `403 admin_override_required`.
-- Require the destination `to` to be present in `ADMIN_EMAIL_ALLOWLIST` (new secret, comma-separated). Reject otherwise with `403 not_in_admin_allowlist`.
-- Generate `tracking_id` (already done) and **insert a row into `acquisition_tracking_links`** pointing to `https://unpro.ca/entrepreneur` so `/r/{id}` actually resolves (today the tracking_id is orphan).
-- Build the CTA `https://unpro.ca/r/{tracking_id}` and inject it into both `html` and `text` bodies via the existing `ctaTracker` (block send if no CTA — same rule as prod).
-- Use canonical sender `Alex d'UNPRO <alex@mail.unpro.ca>` via `_shared/emailSender.ts`.
-- On Resend response:
-  - `res.ok` → insert into `email_send_log` with `status='sent'`, `message_id = resend.id`, `template_name='admin_test'`, plus `logAcquisitionEvent('sent')`.
-  - `!res.ok` → insert `email_send_log` `status='failed'` with `error_message = <resend body>` and log `acquisition_events.failed` with full status + body.
-- Return `{ ok, resend_id, tracking_id, cta_url, to, subject, email_send_log_id, db_status }`.
+### Phase B — Live $1 E2E test (build mode)
+Preconditions I need from you:
+- Confirm `STRIPE_TEST_SECRET_KEY` + `STRIPE_TEST_WEBHOOK_SECRET` are set (else BLOCKED).
+- A test contractor row (I'll seed one with a real category + city, no real contact info).
 
-### Step 3 — Deploy + execute
-1. Deploy `acq-test-send-email`.
-2. Set `ADMIN_EMAIL_ALLOWLIST` secret to the admin email you want to receive the test (I'll ask which).
-3. Curl the function with `{ strict_admin_override: true, to: "<admin_email>" }`.
-4. Query `email_send_log` and `acquisition_events` for the returned `tracking_id` / `resend_id` to confirm persistence.
-5. HTTP-hit `https://unpro.ca/r/{tracking_id}` (via `acq-test-simulate-click`) to prove the CTA resolves 302 (already covered by prior tests, optional here).
+Steps executed:
+1. Create Stripe test checkout session for the seed contractor with `unit_amount=100` (via existing `create-checkout-session` with a $1 override quote).
+2. Complete the checkout using Stripe test card `4242 4242 4242 4242` (headless via Playwright).
+3. Poll `stripe-webhook` execution: capture the exact row transitions in `contractors`, `contractor_subscriptions`, `acquisition_events`.
+4. Immediately query the live matching endpoint/RPC with the contractor's `city × category` and assert the contractor is returned in `top_3_matches`.
+5. Return a per-step PASS/FAIL table with row IDs, timestamps, before/after.
 
-### Return payload (reported back to you)
+### Phase C — Only if Phase B reveals a gap
+Ship the minimal patch that closes it (e.g. missing `published=true` set on activation, missing invalidation, missing plan flag). One targeted edit — no scope creep.
+
+### Deliverable
+A single report:
 ```
-Email Delivered : PASS | FAIL
-Resend message_id : <id or null>
-To                : <admin email>
-Subject           : UNPRO acquisition test — <iso>
-CTA URL           : https://unpro.ca/r/<tracking_id>
-DB event status   : email_send_log.status=<sent|failed>, acquisition_events.event_type=<sent|failed>
-Exact error       : <resend json body if FAIL, else null>
+Stripe session       : cs_test_...
+Contractor id        : ...
+Before status        : ...
+After status         : ...
+Webhook events fired : [checkout.session.completed, ...]
+Matching visible     : YES / NO
+Gap identified       : none | <exact SQL/logic mismatch>
+Patch applied        : none | <file:line diff summary>
 ```
 
-### Guardrails
-- No changes to production outreach paths (`acq-send-outreach`, `outreachDispatch.ts`, `send-transactional-email`).
-- Admin override + allowlist are the only bypass, identical pattern to `smsGuard` allowlist.
-- CTA rule enforced (block if none).
-- Canonical sender enforced.
+### Out of scope (deliberately deferred)
+- Resend domain verification (separate track — you must add & verify `mail.unpro.ca` in the connected Resend account; I can prep the DNS instructions but cannot verify inside Lovable).
+- Deleting `ADMIN_EMAIL_ALLOWLIST*` secrets (safe to delete anytime — audit confirmed 0 revenue-path references).
+- Real prospect SMS/email sends (blocked by Resend domain + Twilio real-mobile testing).
 
-### Open questions before I execute
-1. Which admin email should receive the test and be added to `ADMIN_EMAIL_ALLOWLIST` (e.g. the same you used for `ADMIN_TEST_EMAIL`)?
-2. Confirm you want me to open the rotate-secret dialog for `RESEND_API_KEY` as Step 1 (you paste the new key from Resend dashboard).
+### Open question
+Do you want me to seed a synthetic test contractor for Phase B, or use a specific existing contractor row (give me the id)?
