@@ -235,14 +235,38 @@ Deno.serve(async (req) => {
           );
         }
 
-        // Activate contractor
-        await supabase
+        // Activate contractor (PATCH A — use real columns; fail loudly on error)
+        const nowIso = new Date().toISOString();
+        const { error: activateErr } = await supabase
           .from("contractors")
           .update({
-            status: "active",
-            subscription_plan: planId,
+            account_status: "active",
+            activation_status: "active",
+            onboarding_status: "completed",
+            is_published: true,
+            is_discoverable: true,
+            is_accepting_appointments: true,
+            published_at: nowIso,
+            updated_at: nowIso,
           })
           .eq("id", contractorId);
+
+        if (activateErr) {
+          console.error("[stripe-webhook] CRITICAL: contractor activation failed", {
+            contractorId,
+            planId,
+            error: activateErr,
+          });
+          await supabase.from("integration_audit_logs").insert({
+            integration_name: "stripe",
+            action_name: `${event.id}.activation_failed`,
+            status: "error",
+            payload: { contractor_id: contractorId, plan_id: planId, error: activateErr.message },
+          });
+          throw new Error(`Contractor activation failed: ${activateErr.message}`);
+        }
+
+        // Mirror plan on contractor_subscriptions already handled above.
 
         // Demand Intelligence — match waiting homeowners to the freshly activated contractor.
         await supabase.functions.invoke("match-waiting-demand", {
