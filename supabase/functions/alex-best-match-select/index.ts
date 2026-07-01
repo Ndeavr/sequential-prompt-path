@@ -26,17 +26,34 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Try to find real contractors matching criteria
-    let { data: contractors } = await sb
+    // PATCH B — real columns + strict visibility filter
+    let query = sb
       .from("contractors")
-      .select("id, company_name, city, specialty, trust_score, response_time_hours, avatar_url, verification_status")
-      .limit(10);
+      .select("id, business_name, city, specialty, aipp_score, rating, review_count, logo_url, verification_status, is_published, is_discoverable")
+      .eq("is_published", true)
+      .eq("is_discoverable", true);
 
-    // If no real data, use mock
+    if (city) query = query.ilike("city", `%${city}%`);
+    if (recommended_trade) query = query.ilike("specialty", `%${recommended_trade}%`);
+
+    let { data: contractors } = await query.limit(10);
+
+    // Broaden if no match on trade/city
+    if (!contractors || contractors.length === 0) {
+      const { data: any_active } = await sb
+        .from("contractors")
+        .select("id, business_name, city, specialty, aipp_score, rating, review_count, logo_url, verification_status, is_published, is_discoverable")
+        .eq("is_published", true)
+        .eq("is_discoverable", true)
+        .limit(10);
+      contractors = any_active || [];
+    }
+
+    // Only fall back to mocks if NO active contractor exists at all
     if (!contractors || contractors.length === 0) {
       const mockPrimary = {
         id: "mock-c1",
-        company_name: getMockName(recommended_trade),
+        business_name: getMockName(recommended_trade),
         city: city || "Montréal",
         specialty: recommended_trade || "rénovation_générale",
         trust_score: 92,
@@ -47,10 +64,9 @@ serve(async (req) => {
         availability_score: 88,
         reason_summary: getMatchReason(recommended_trade, urgency_level),
       };
-
       const mockAlternative = {
         id: "mock-c2",
-        company_name: getMockAltName(recommended_trade),
+        business_name: getMockAltName(recommended_trade),
         city: city || "Laval",
         specialty: recommended_trade || "rénovation_générale",
         trust_score: 87,
@@ -61,22 +77,6 @@ serve(async (req) => {
         availability_score: 75,
         reason_summary: "Alternative solide si le premier choix ne convient pas.",
       };
-
-      // Log recommendation decision
-      if (conversation_session_id) {
-        await sb.from("alex_recommendation_decisions").insert([
-          {
-            conversation_session_id,
-            contractor_id: null,
-            is_primary_match: true,
-            compatibility_score: mockPrimary.compatibility_score,
-            availability_score: mockPrimary.availability_score,
-            trust_score: mockPrimary.trust_score,
-            reason_summary: mockPrimary.reason_summary,
-          },
-        ]);
-      }
-
       return new Response(
         JSON.stringify({
           primary_match: mockPrimary,
@@ -87,15 +87,19 @@ serve(async (req) => {
       );
     }
 
-    // Score and rank real contractors
-    const scored = contractors.map((c: any) => ({
-      ...c,
-      compatibility_score: Math.min(95, (c.trust_score || 70) + Math.random() * 15),
-      availability_score: c.response_time_hours
-        ? Math.max(50, 100 - c.response_time_hours * 2)
-        : 70,
-      reason_summary: `Spécialiste vérifié en ${c.specialty || recommended_trade}, disponible rapidement.`,
-    }));
+    // Score and rank real contractors using real fields
+    const scored = contractors.map((c: any) => {
+      const trust = Number(c.aipp_score) || 70;
+      const ratingBoost = (Number(c.rating) || 0) * 4; // 0-20
+      const reviewsBoost = Math.min(10, Math.log10((c.review_count || 0) + 1) * 10);
+      return {
+        ...c,
+        trust_score: Math.round(trust),
+        compatibility_score: Math.min(98, trust + ratingBoost / 2),
+        availability_score: Math.min(95, 70 + reviewsBoost),
+        reason_summary: `Spécialiste vérifié en ${c.specialty || recommended_trade || "services résidentiels"}, disponible rapidement à ${c.city || "proximité"}.`,
+      };
+    });
 
     scored.sort(
       (a: any, b: any) =>
@@ -113,7 +117,7 @@ serve(async (req) => {
         is_primary_match: true,
         compatibility_score: primary.compatibility_score,
         availability_score: primary.availability_score,
-        trust_score: primary.trust_score || 80,
+        trust_score: primary.trust_score,
         reason_summary: primary.reason_summary,
       });
     }
