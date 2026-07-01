@@ -28202,6 +28202,7 @@ export type Database = {
           phone_lookup_at: string | null
           phone_lookup_http_status: number | null
           phone_lookup_raw: Json | null
+          phone_normalization_status: string | null
           phone_normalized: string | null
           phone_original: string | null
           phone_type: string | null
@@ -28307,6 +28308,7 @@ export type Database = {
           phone_lookup_at?: string | null
           phone_lookup_http_status?: number | null
           phone_lookup_raw?: Json | null
+          phone_normalization_status?: string | null
           phone_normalized?: string | null
           phone_original?: string | null
           phone_type?: string | null
@@ -28412,6 +28414,7 @@ export type Database = {
           phone_lookup_at?: string | null
           phone_lookup_http_status?: number | null
           phone_lookup_raw?: Json | null
+          phone_normalization_status?: string | null
           phone_normalized?: string | null
           phone_original?: string | null
           phone_type?: string | null
