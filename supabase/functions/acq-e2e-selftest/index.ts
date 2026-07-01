@@ -4,6 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { wrapAllUrls, validateCta, withReplyFooter } from "../_shared/ctaTracker.ts";
 import { recordEmailEvent } from "../_shared/outreachEvents.ts";
+import { sanitizeTags } from "../_shared/resendTags.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -75,7 +76,7 @@ Deno.serve(async (req) => {
         to: [emailTo],
         subject: `[UNPRO selftest] ${runId.slice(0, 8)}`,
         html: wrapped.body,
-        tags: [{ name: "campaign", value: "e2e_selftest" }, { name: "run_id", value: runId }],
+        tags: sanitizeTags([{ name: "campaign", value: "e2e_selftest" }, { name: "run_id", value: runId }]),
       }),
     });
     const sendJson = await sendResp.json().catch(() => ({}));

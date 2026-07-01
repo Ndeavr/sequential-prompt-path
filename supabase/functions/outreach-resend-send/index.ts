@@ -3,6 +3,7 @@
 // Surfaces Resend's actual error body instead of swallowing it.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { sanitizeTags } from "../_shared/resendTags.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -135,7 +136,7 @@ Deno.serve(async (req) => {
         subject: body.subject,
         html,
         text,
-        tags: body.tags ? Object.entries(body.tags).map(([name, value]) => ({ name, value })) : undefined,
+        tags: sanitizeTags(body.tags),
       }),
     });
     const raw = await resp.text();

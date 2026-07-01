@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { wrapAllUrls, validateOutreachMessage, withReplyFooter } from "../_shared/ctaTracker.ts";
 import { recordEmailEvent } from "../_shared/outreachEvents.ts";
 import { MASTER_EMAIL_SEQUENCES } from "../_shared/masterOutreachCopy.ts";
+import { sanitizeTags } from "../_shared/resendTags.ts";
 
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
 
@@ -72,10 +73,10 @@ Deno.serve(async (req) => {
             to: [contractor.email],
             subject,
             html: wrapped.body,
-            tags: [
+            tags: sanitizeTags([
               { name: "campaign", value: sequence_code },
               { name: "contractor_id", value: String(contractor_id) },
-            ],
+            ]),
           }),
         });
         const j = await r.json();
