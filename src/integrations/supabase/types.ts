@@ -28146,6 +28146,7 @@ export type Database = {
           company_confidence_score: number | null
           company_failure_reason: string | null
           company_name: string | null
+          company_name_normalized: string | null
           contact_method: string
           contractor_id: string | null
           created_at: string
@@ -28156,6 +28157,7 @@ export type Database = {
           do_not_contact: boolean
           email: string | null
           email_fallback_enabled: boolean
+          email_normalized: string | null
           email_status: string | null
           enrichment_attempts: number
           enrichment_last_error: string | null
@@ -28180,6 +28182,9 @@ export type Database = {
           lead_status: string
           metadata_json: Json | null
           mobile_phone: string | null
+          normalization_errors: Json | null
+          normalization_status: string | null
+          normalized_at: string | null
           onboarding_started_at: string | null
           onboarding_token: string | null
           opened_at: string | null
@@ -28197,6 +28202,9 @@ export type Database = {
           phone_lookup_at: string | null
           phone_lookup_http_status: number | null
           phone_lookup_raw: Json | null
+          phone_normalization_status: string | null
+          phone_normalized: string | null
+          phone_original: string | null
           phone_type: string | null
           phone_validation_checked_at: string | null
           phone_validation_status: string
@@ -28227,6 +28235,7 @@ export type Database = {
           unsubscribed_at: string | null
           updated_at: string
           validation_status: string
+          website_normalized: string | null
           website_url: string | null
         }
         Insert: {
@@ -28243,6 +28252,7 @@ export type Database = {
           company_confidence_score?: number | null
           company_failure_reason?: string | null
           company_name?: string | null
+          company_name_normalized?: string | null
           contact_method?: string
           contractor_id?: string | null
           created_at?: string
@@ -28253,6 +28263,7 @@ export type Database = {
           do_not_contact?: boolean
           email?: string | null
           email_fallback_enabled?: boolean
+          email_normalized?: string | null
           email_status?: string | null
           enrichment_attempts?: number
           enrichment_last_error?: string | null
@@ -28277,6 +28288,9 @@ export type Database = {
           lead_status?: string
           metadata_json?: Json | null
           mobile_phone?: string | null
+          normalization_errors?: Json | null
+          normalization_status?: string | null
+          normalized_at?: string | null
           onboarding_started_at?: string | null
           onboarding_token?: string | null
           opened_at?: string | null
@@ -28294,6 +28308,9 @@ export type Database = {
           phone_lookup_at?: string | null
           phone_lookup_http_status?: number | null
           phone_lookup_raw?: Json | null
+          phone_normalization_status?: string | null
+          phone_normalized?: string | null
+          phone_original?: string | null
           phone_type?: string | null
           phone_validation_checked_at?: string | null
           phone_validation_status?: string
@@ -28324,6 +28341,7 @@ export type Database = {
           unsubscribed_at?: string | null
           updated_at?: string
           validation_status?: string
+          website_normalized?: string | null
           website_url?: string | null
         }
         Update: {
@@ -28340,6 +28358,7 @@ export type Database = {
           company_confidence_score?: number | null
           company_failure_reason?: string | null
           company_name?: string | null
+          company_name_normalized?: string | null
           contact_method?: string
           contractor_id?: string | null
           created_at?: string
@@ -28350,6 +28369,7 @@ export type Database = {
           do_not_contact?: boolean
           email?: string | null
           email_fallback_enabled?: boolean
+          email_normalized?: string | null
           email_status?: string | null
           enrichment_attempts?: number
           enrichment_last_error?: string | null
@@ -28374,6 +28394,9 @@ export type Database = {
           lead_status?: string
           metadata_json?: Json | null
           mobile_phone?: string | null
+          normalization_errors?: Json | null
+          normalization_status?: string | null
+          normalized_at?: string | null
           onboarding_started_at?: string | null
           onboarding_token?: string | null
           opened_at?: string | null
@@ -28391,6 +28414,9 @@ export type Database = {
           phone_lookup_at?: string | null
           phone_lookup_http_status?: number | null
           phone_lookup_raw?: Json | null
+          phone_normalization_status?: string | null
+          phone_normalized?: string | null
+          phone_original?: string | null
           phone_type?: string | null
           phone_validation_checked_at?: string | null
           phone_validation_status?: string
@@ -28421,6 +28447,7 @@ export type Database = {
           unsubscribed_at?: string | null
           updated_at?: string
           validation_status?: string
+          website_normalized?: string | null
           website_url?: string | null
         }
         Relationships: [
@@ -79355,6 +79382,7 @@ export type Database = {
         Returns: boolean
       }
       aipp_is_published: { Args: { _profile_id: string }; Returns: boolean }
+      apply_lead_normalization: { Args: { payload: Json }; Returns: number }
       approve_company: {
         Args: { _actor_id: string; _company_id: string }
         Returns: Json
@@ -79844,6 +79872,7 @@ export type Database = {
         }
         Returns: Json
       }
+      unaccent: { Args: { "": string }; Returns: string }
       unpro_aipp_tier: { Args: { score: number }; Returns: string }
       unpro_slugify: { Args: { input: string }; Returns: string }
       update_profile_field_partial: {
