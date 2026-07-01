@@ -28157,6 +28157,10 @@ export type Database = {
           email: string | null
           email_fallback_enabled: boolean
           email_status: string | null
+          enrichment_attempts: number
+          enrichment_last_error: string | null
+          enrichment_last_run_at: string | null
+          enrichment_last_source: string | null
           enrichment_status: string
           failure_code: string | null
           first_name: string | null
@@ -28250,6 +28254,10 @@ export type Database = {
           email?: string | null
           email_fallback_enabled?: boolean
           email_status?: string | null
+          enrichment_attempts?: number
+          enrichment_last_error?: string | null
+          enrichment_last_run_at?: string | null
+          enrichment_last_source?: string | null
           enrichment_status?: string
           failure_code?: string | null
           first_name?: string | null
@@ -28343,6 +28351,10 @@ export type Database = {
           email?: string | null
           email_fallback_enabled?: boolean
           email_status?: string | null
+          enrichment_attempts?: number
+          enrichment_last_error?: string | null
+          enrichment_last_run_at?: string | null
+          enrichment_last_source?: string | null
           enrichment_status?: string
           failure_code?: string | null
           first_name?: string | null
