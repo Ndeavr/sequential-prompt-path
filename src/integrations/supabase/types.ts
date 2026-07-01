@@ -53919,6 +53919,42 @@ export type Database = {
           },
         ]
       }
+      outreach_repair_actions: {
+        Row: {
+          action: string
+          after_count: number | null
+          before_count: number | null
+          created_at: string
+          details: Json
+          dry_run: boolean
+          error: string | null
+          id: string
+          run_id: string
+        }
+        Insert: {
+          action: string
+          after_count?: number | null
+          before_count?: number | null
+          created_at?: string
+          details?: Json
+          dry_run?: boolean
+          error?: string | null
+          id?: string
+          run_id: string
+        }
+        Update: {
+          action?: string
+          after_count?: number | null
+          before_count?: number | null
+          created_at?: string
+          details?: Json
+          dry_run?: boolean
+          error?: string | null
+          id?: string
+          run_id?: string
+        }
+        Relationships: []
+      }
       outreach_repair_runs: {
         Row: {
           action: string
