@@ -190,8 +190,6 @@ Deno.serve(async (req) => {
         const candidates = [
           base,
           base.replace(/\/+$/, "") + "/contact",
-          base.replace(/\/+$/, "") + "/nous-joindre",
-          base.replace(/\/+$/, "") + "/contact-us",
         ];
 
         let siteReachable = false;
@@ -240,14 +238,13 @@ Deno.serve(async (req) => {
         }
       }
     }
-    await Promise.all([worker(), worker(), worker(), worker(), worker(), worker()]);
+    await Promise.all([worker(), worker(), worker()]);
 
-    const { data: afterRows } = await sb
+    const { count: after_missing_c } = await sb
       .from("contractor_leads")
-      .select("id", { count: "exact", head: false })
-      .is("phone", null)
-      .is("email", null);
-    const after_missing = afterRows?.length ?? before_missing;
+      .select("id", { count: "exact", head: true })
+      .is("phone", null).is("email", null);
+    const after_missing = after_missing_c ?? before_missing;
 
     return new Response(JSON.stringify({
       ok: true,
