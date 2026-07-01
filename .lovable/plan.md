@@ -1,126 +1,147 @@
-# Universal Lead Normalization Layer
 
-Goal: One canonical `normalizeAcquisitionLead()` used by every ingress/egress path (scrape, enrich, validate, dispatch, Resend, Twilio, Stripe metadata, tracking links, admin UI). Then a one-shot repair pass on all existing `contractor_leads`. **No outbound messages sent.**
+# UNPRO Admin Operations Center — `/admin/ops`
 
----
-
-## 1. Shared normalization module
-
-Create `supabase/functions/_shared/normalization.ts` (mirror in `src/lib/normalization.ts` for admin UI parity, both re-exporting the same pure logic).
-
-Exports:
-- `normalizeEmail(raw)` → trim, NFKC, strip zero-width/invisible chars, lowercase, RFC-ish regex validate. Returns `{ value, valid, error }`.
-- `normalizePhone(raw, defaultCountry='CA')` → strip non-digits, handle leading `1`, E.164, reject test patterns (`555-01xx`, all-same-digit, `450-555-*`, `000…`). Returns `{ original, normalized, e164, status: 'valid'|'invalid'|'test'|'empty' }`.
-- `normalizeWebsite(raw)` → trim, add `https://` if missing scheme, lowercase host, drop default ports, strip trailing slash (except root), keep path/query lowercased on host only, reject if `URL()` throws or host has no dot. Returns `{ value, host, valid }`.
-- `sanitizeResendTag(name, value)` → NFKD strip accents, lowercase, non-`[a-z0-9_-]` → `_`, collapse `_`, trim length (name ≤ 40, value ≤ 100). Returns `null` if empty after sanitize (caller drops it, never blocks send).
-- `sanitizeResendTags(tags)` → array/object → filtered array of valid `{name,value}`.
-- `normalizeCompanyName(raw)` → `{ display, key }` where `key` is lowercased, accents stripped, punctuation removed, collapsed spaces → single space, common suffixes (`inc`, `ltée`, `ltee`, `enr`, `srl`) stripped for dedupe.
-- `slugifyForUrl(str)` → ASCII, `[a-z0-9-]`, for tracking segments.
-- `buildTrackingUrl({ lead_id, campaign_id })` → `https://unpro.ca/r/{tracking_id}` derived from ids only; never accepts raw company/city.
-- `normalizeAcquisitionLead(rawLead)` → orchestrator returning:
-  ```ts
-  {
-    email_normalized, website_normalized, company_name_normalized,
-    phone_original, phone_normalized, phone_e164, phone_validation_status,
-    normalization_status: 'ok'|'partial'|'rejected',
-    normalization_errors: { email?, phone?, website?, company? },
-    normalized_at: ISO,
-  }
-  ```
-
-Unit-testable pure functions, no I/O.
-
-Deprecate/redirect existing helpers: `_shared/resendTags.ts`, `_shared/phoneValidation.ts` (keep API, re-export from new module), `src/lib/phoneFormat.ts`, `src/lib/urlFormat.ts`.
+Unified command layer over every existing admin repair tool. Nothing is removed; existing routes stay intact. New layer summarizes, ranks by ROI, automates the safe fixes, and requires explicit approval for the risky ones.
 
 ---
 
-## 2. Database migration
+## 1. Database (single migration)
 
-`supabase/migrations/<ts>_lead_normalization_fields.sql`:
+### `admin_system_checks`
+Current state of each health check.
+- `check_key` (unique), `label`, `category`
+- `status`: `healthy | warning | critical | unknown`
+- `affected_count`, `last_checked_at`, `last_auto_fix_at`
+- `recommended_action`, `repair_route`, `metadata jsonb`
 
-```sql
-ALTER TABLE public.contractor_leads
-  ADD COLUMN IF NOT EXISTS email_normalized text,
-  ADD COLUMN IF NOT EXISTS website_normalized text,
-  ADD COLUMN IF NOT EXISTS company_name_normalized text,
-  ADD COLUMN IF NOT EXISTS phone_original text,
-  ADD COLUMN IF NOT EXISTS phone_normalized text,
-  ADD COLUMN IF NOT EXISTS phone_e164 text,
-  ADD COLUMN IF NOT EXISTS phone_validation_status text,
-  ADD COLUMN IF NOT EXISTS normalization_status text,
-  ADD COLUMN IF NOT EXISTS normalization_errors jsonb,
-  ADD COLUMN IF NOT EXISTS normalized_at timestamptz;
+### `admin_repair_jobs`
+Every dry-run / apply / auto-fix attempt.
+- `job_type`, `status` (`queued|running|dry_run_completed|waiting_approval|applied|failed|skipped`)
+- `risk_level` (`safe|review|danger`), `affected_count`
+- `sample_diff jsonb` (≤20 rows: `{record_id, table, field, before, after, reason, safe_to_apply}`)
+- `summary jsonb`, `error_message`
+- `created_by`, `approved_by`, `applied_at`
 
-CREATE INDEX IF NOT EXISTS idx_leads_email_norm    ON public.contractor_leads (email_normalized);
-CREATE INDEX IF NOT EXISTS idx_leads_phone_e164    ON public.contractor_leads (phone_e164);
-CREATE INDEX IF NOT EXISTS idx_leads_company_key   ON public.contractor_leads (company_name_normalized);
-CREATE INDEX IF NOT EXISTS idx_leads_norm_status   ON public.contractor_leads (normalization_status);
+**RLS:** admin-only via `has_role(auth.uid(),'admin')`; `service_role` full. Grants for `authenticated` + `service_role` in same migration.
+
+---
+
+## 2. Tool Registry — `src/admin/adminToolsRegistry.ts`
+
+Static catalog of every existing admin tool. Shape:
+```ts
+{ id, label, description, route, category,
+  risk_level: 'safe'|'review'|'danger',
+  automation_available, requires_approval,
+  related_tables: string[], primary_metric, recommended_action }
 ```
+Seeded with: Normalization, Phone Validation, Acquisition Funnel, Outreach Funnel, Dispatch Bottleneck, Recovery Sprint, Revenue Gate, Revenue Path, Contractor Activation, Stripe / Checkout audit, Profile Publishing, Scraper Import, Demand Intelligence, Redirect / CTA Tracking, Twilio & Email Health, Outreach Health.
 
-Mirror the additive columns on `contractor_prospects` (email_normalized, phone_e164, company_name_normalized) if present — read-only add, no data change here.
-
----
-
-## 3. Wire the normalizer into every path
-
-Update to call `normalizeAcquisitionLead` (or the targeted helper) **before** writing / dispatching:
-
-- **Scraper import** — `supabase/functions/acq-scrape-*` / CSV importer: normalize on insert; store all `*_normalized` columns.
-- **`acq-enrich-contractor`** — normalize discovered email/phone/website before update; never overwrite a `valid` E.164 with a lower-confidence one.
-- **`acq-reenrich-leads`** — same.
-- **Phone validation (`_shared/smsGuard.ts`, `_shared/phoneValidation.ts`)** — use `phone_e164` as input; skip Lookup for `status='test'|'invalid'`.
-- **Resend dispatch (`_shared/outreachDispatch.ts`, `outreach-resend-send`, `acq-followup-send`, `acq-test-send-email`, `acq-e2e-selftest`, health probes)** — recipient from `email_normalized`; tags via `sanitizeResendTags` (already partial, extend to strip accents and drop invalid without blocking).
-- **Twilio dispatch (`acq-test-send-sms`, outreach worker, `twilio-*`)** — recipient from `phone_e164`; block if status ≠ `valid`.
-- **Stripe metadata (`create-checkout-session`, `stripe-webhook`)** — pass `email_normalized`, `company_name_normalized`, `phone_e164` (metadata values ASCII-sanitized, ≤ 500 chars).
-- **Click tracking (`r-redirect`, CTA builder `ctaTracker.ts`)** — URLs built only from `lead_id` + `campaign_id`; reject raw strings.
-- **Admin audit UI** — `PageAdminDispatchBottleneck` + new panel to show normalization health.
+Rendered at bottom of `/admin/ops` in a grouped “All Admin Tools” directory (Revenue • Acquisition • Data Quality • Delivery • Trust/Safety).
 
 ---
 
-## 4. Repair edge function (one-shot, no sends)
+## 3. Edge Function — `admin-ops-health-check`
 
-`supabase/functions/acq-normalize-repair/index.ts`:
+One idempotent scanner that upserts a row into `admin_system_checks` per `check_key`, and creates dry-run `admin_repair_jobs` for safe auto-fixes.
 
-- Input: `{ dry_run: boolean, limit?: number }` (default `dry_run=true`).
-- Iterates all `contractor_leads` in batches (500), runs `normalizeAcquisitionLead` on raw fields, computes diff.
-- Writes new columns + `normalization_status`, `normalization_errors`, `normalized_at`.
-- Does **not** enqueue, send, or trigger outreach.
-- Returns counters:
-  ```
-  { scanned, emails_normalized, phones_normalized, websites_normalized,
-    companies_normalized, invalid_rejected, unchanged,
-    sample_before_after: [ ...20 rows ] }
-  ```
+Checks (all read-only, cheap COUNT queries + LIMIT 20 samples):
+- Company names with leading/trailing spaces or double spaces
+- Inconsistent capitalization (city not title-case, province not `QC`)
+- Phones not E.164 / missing `+1`
+- Websites missing `https://`, mixed www, trailing slash w/o path
+- Empty required profile fields
+- Prospects stuck `invalid` >7d
+- Leads pending validation >48h
+- Contractors paid (`stripe_subscription_status=active`) but `profile_status != active`
+- Contractors active but `slug` unreachable / no city / no category
+- Outreach `sent` with no matching `acquisition_events` tracking row
+- Tracking links with 0 redirect resolutions after 24h
+- Demand signals waiting with no recruitment target
 
-Admin trigger button on `/admin/dispatch-bottleneck` (and route entry on `/admin/normalization`).
-
----
-
-## 5. Admin UI
-
-New page `src/pages/admin/PageAdminNormalization.tsx` (route `/admin/normalization`):
-- Counters (total, ok / partial / rejected).
-- "Run dry-run" and "Apply repair" buttons.
-- Table of 20 before/after samples returned by the function.
-- Per-field breakdown of `normalization_errors`.
+For each: compute `affected_count`, `status` (thresholds per check), and `recommended_action`. Safe fixes emit a `dry_run_completed` job; risky ones emit `waiting_approval`.
 
 ---
 
-## 6. Validation & rollout
+## 4. Normalization Bridge
 
-1. Deploy migration (columns + indexes).
-2. Deploy `_shared/normalization.ts` + patched functions.
-3. Run `acq-normalize-repair { dry_run: true }` → review sample.
-4. Run `{ dry_run: false }` → repair all rows.
-5. Report the required deliverables (files changed, rules added, counts, 20-row sample).
+`acq-normalize-repair` already exists. Wrap it so every dry-run/apply writes an `admin_repair_jobs` row with the 20-row diff. No rule changes to the existing shared module beyond confirming:
+- trim + collapse spaces
+- E.164 only when deterministic (NANP 10/11 digits)
+- URL: add `https://`, lowercase host, strip trailing `/` unless path
+- City → Title Case, Province → `QC` uppercase
+- Company names: **trim only** (no case rewrites — protects brands)
+- Email: trim + lowercase domain only
 
-## Out of scope
-- No outbound sends.
-- No changes to funnel logic, RLS, or Stripe pricing.
-- No schema changes beyond the additive columns above.
+/admin/normalization page gains a link back to `/admin/ops` and shows its last job from `admin_repair_jobs`.
 
-## Technical notes
-- All ASCII sanitization uses `String.prototype.normalize('NFKD').replace(/\p{Diacritic}/gu, '')`.
-- Invisible chars regex: `/[\u200B-\u200D\uFEFF\u00A0]/g`.
-- Test-number blocklist: `/^\+1?(555\d{7}|(\d)\1{9})$/` plus `+1450555\d{4}`.
-- Deduplication uses `(company_name_normalized, phone_e164)` and `(email_normalized)` — no destructive merge in this pass; just flag duplicates in `normalization_errors.duplicate_of`.
+---
+
+## 5. `/admin/ops` Page — `src/pages/admin/PageAdminOps.tsx`
+
+Route registered in `src/app/router.tsx` under the admin guard. Uses `.admin-theme` wrap per readability rule.
+
+### Layout (top → bottom)
+
+**A. Highest ROI Actions** (ranked list, top of page)
+Rank: `critical` → revenue impact weight → `affected_count` → `automation_available`. Each row: severity chip, why-it-matters one-liner, primary CTA button, owner tag (`admin | automation | lovable_fix`).
+
+**B. System Health Grid** (9 cards)
+Data Normalization • Phone Validation • Outreach Delivery • Contractor Onboarding • Stripe Activation • Profile Publishing • Scraper Quality • Tracking/Clicks • Demand Signals.
+
+Each card: status pill, `affected_count`, `last_checked_at`, `last_auto_fix_at`, `action_required`, primary CTA linking to the exact repair route from the registry. Expandable 20-row evidence table pulled from the latest `admin_repair_jobs.sample_diff`.
+
+**C. Automated Jobs Panel**
+Table of recent `admin_repair_jobs`: last run, status, scanned, fixed, needs-approval, failed. Buttons: Run health check now • Normalization dry-run • Apply safe fixes • Re-run phone validation • Rebuild contractor visibility • Recheck Stripe activations • Recompute demand targets. Each button invokes the corresponding existing edge function and refreshes the checks table.
+
+**D. All Admin Tools Directory**
+Rendered from `adminToolsRegistry.ts`, grouped by category with risk-level chips.
+
+---
+
+## 6. Safety Matrix (enforced in edge function + UI gating)
+
+| Class | Examples | Behavior |
+|---|---|---|
+| **Safe** | trim, URL protocol, city/province case, deterministic E.164 | Auto dry-run + one-click apply |
+| **Review** | company name rewrites, mark lead valid, activate paid contractor with unclear Stripe evidence, merge duplicates | Requires `approved_by` before apply |
+| **Danger** | bulk delete, overwrite scraped data, mutate Stripe state, change subscription plan | UI blocks; requires typed confirmation + logs `danger` job |
+
+---
+
+## 7. Cron
+
+`pg_cron` runs `admin-ops-health-check` every 15 min (`net.http_post` with anon key) so `/admin/ops` is always fresh without user action.
+
+---
+
+## 8. Out of Scope (this iteration)
+
+- No changes to existing admin pages' internals beyond linking back to `/admin/ops`.
+- No deletion of legacy routes.
+- No new business logic in normalization module.
+- No app-wide redesign.
+
+---
+
+## Files touched
+
+**New**
+- `supabase/migrations/<ts>_admin_ops_center.sql`
+- `supabase/functions/admin-ops-health-check/index.ts`
+- `src/admin/adminToolsRegistry.ts`
+- `src/pages/admin/PageAdminOps.tsx`
+- `src/hooks/useAdminOps.ts` (TanStack Query bindings for checks + jobs)
+- `src/components/admin/ops/HealthCard.tsx`
+- `src/components/admin/ops/NextActionRow.tsx`
+- `src/components/admin/ops/RepairJobsTable.tsx`
+- `src/components/admin/ops/ToolsDirectory.tsx`
+
+**Edited**
+- `src/app/router.tsx` — register `/admin/ops`
+- Admin nav — add “Operations Center”
+- `src/pages/admin/PageAdminNormalization.tsx` — wire jobs into `admin_repair_jobs`, add link back to `/admin/ops`
+- `supabase/config.toml` — register new edge function
+
+**Success**
+`/admin/ops` loads with 9 populated health cards, ranked ROI actions, at least one working safe auto-fix (URL protocol or trim), and a linked directory of every existing admin tool — with zero regressions to current routes.
