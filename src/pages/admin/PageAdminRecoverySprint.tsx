@@ -96,7 +96,7 @@ export default function PageAdminRecoverySprint() {
   useEffect(() => { loadReport().then((r) => setBefore(r.counters)).catch((e) => setErr(String(e?.message ?? e))); }, [loadReport]);
 
   return (
-    <SectionErrorBoundary label="Recovery Sprint">
+    <SectionErrorBoundary>
       <div className="min-h-screen admin-theme bg-[#050816] text-white">
         <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-5">
           <header>

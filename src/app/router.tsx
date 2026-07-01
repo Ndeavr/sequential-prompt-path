@@ -188,6 +188,7 @@ const PageAdminWarRoom = lazyWithRetry(() => import("@/pages/admin/acquisition/P
 const PageAdminRevenueGateAudit = lazyWithRetry(() => import("@/pages/admin/PageAdminRevenueGateAudit"));
 const PageAdminRevenuePathAudit = lazyWithRetry(() => import("@/pages/admin/PageAdminRevenuePathAudit"));
 const PageAdminDispatchBottleneck = lazyWithRetry(() => import("@/pages/admin/PageAdminDispatchBottleneck"));
+const PageAdminRecoverySprint = lazyWithRetry(() => import("@/pages/admin/PageAdminRecoverySprint"));
 const AdminLaunchWarRoom = lazyWithRetry(() => import("@/pages/admin/AdminLaunchWarRoom"));
 const PageAdminCriticalPathAudit = lazyWithRetry(() => import("@/pages/admin/PageAdminCriticalPathAudit"));
 const AdminUIHealthMonitor = lazyWithRetry(() => import("@/pages/admin/AdminUIHealthMonitor"));
@@ -1475,6 +1476,7 @@ export const AppRouter = () => (
         <Route path="/admin/revenue-gate-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminRevenueGateAudit /></Suspense></ProtectedRoute>} />
         <Route path="/admin/revenue-path-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminRevenuePathAudit /></Suspense></ProtectedRoute>} />
         <Route path="/admin/dispatch-bottleneck" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminDispatchBottleneck /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/recovery-sprint" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminRecoverySprint /></Suspense></ProtectedRoute>} />
         <Route path="/admin/email-cta-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailCtaAudit /></Suspense></ProtectedRoute>} />
         <Route path="/admin/outreach-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOutreachHealth /></Suspense></ProtectedRoute>} />
         <Route path="/admin/email-sender-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailSenderHealth /></Suspense></ProtectedRoute>} />
