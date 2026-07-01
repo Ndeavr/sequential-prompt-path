@@ -37,7 +37,7 @@ function normalizePhone(raw: string | null): string | null {
   return null;
 }
 
-async function fetchPage(url: string, ms = 3500): Promise<string | null> {
+async function fetchPage(url: string, ms = 2500): Promise<string | null> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms);
   try {
@@ -147,12 +147,18 @@ Deno.serve(async (req) => {
     const before_missing = before_missing_c ?? 0;
 
     const { data: leadsRaw, error: fetchErr } = await sb
+    const skipRecentErrors = body?.skip_recent_errors !== false;
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    let q = sb
       .from("contractor_leads")
-      .select("id, company_name, website_url, phone, email, do_not_contact, unsubscribed_at")
+      .select("id, company_name, website_url, phone, email, do_not_contact, unsubscribed_at, enrichment_last_error, enrichment_last_run_at")
       .is("phone", null)
-      .is("email", null)
-      .limit(limit);
-    if (fetchErr) throw new Error("fetch_leads: " + fetchErr.message);
+      .is("email", null);
+    if (skipRecentErrors) {
+      // Skip leads with a recent failed attempt to avoid retrying same dead sites
+      q = q.or(`enrichment_last_run_at.is.null,enrichment_last_run_at.lt.${oneHourAgo}`);
+    }
+    const { data: leadsRaw, error: fetchErr } = await q.limit(limit);
     const leads = (leadsRaw ?? []) as Lead[];
 
     const buckets: Record<string, number> = {
