@@ -204,3 +204,5 @@ project_id = "clmaqdnphbndvmmqvpff"
 
 
 
+  [functions.acq-normalize-repair]
+    verify_jwt = true
