@@ -79379,6 +79379,7 @@ export type Database = {
         Returns: boolean
       }
       aipp_is_published: { Args: { _profile_id: string }; Returns: boolean }
+      apply_lead_normalization: { Args: { payload: Json }; Returns: number }
       approve_company: {
         Args: { _actor_id: string; _company_id: string }
         Returns: Json
