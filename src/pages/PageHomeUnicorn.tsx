@@ -15,6 +15,7 @@ import {
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import AlexOrbPremium from "@/components/home-unicorn/AlexOrbPremium";
 // BottomDockGlass is intentionally NOT imported here — MainLayout owns the single dock instance.
+import PageShell from "@/layouts/PageShell";
 import NearbyContractorsCarousel from "@/components/home-unicorn/NearbyContractorsCarousel";
 import AlexCapabilitiesStrip from "@/components/home-unicorn/AlexCapabilitiesStrip";
 import CinematicArchScenes from "@/components/home-unicorn/CinematicArchScenes";
@@ -743,7 +744,7 @@ export default function PageHomeUnicorn() {
         <script type="application/ld+json">{JSON.stringify(orgSchema)}</script>
       </Helmet>
 
-      <div className="unicorn-theme min-h-[100svh] pb-[var(--dock-safe-pb)] relative isolate overflow-x-clip overflow-y-visible">
+      <PageShell variant="marketing" id="home-unicorn" className="unicorn-theme overflow-y-visible">
         {/* Base intelligence background — full-page, sits behind every section.
             Memoized hero backdrop: never re-renders on Alex voice/chat state. */}
         <HeroBackdrop />
@@ -778,7 +779,7 @@ export default function PageHomeUnicorn() {
             Intelligence résidentielle · Québec · fr-CA
           </p>
         </footer>
-      </div>
+      </PageShell>
     </>
   );
 }
