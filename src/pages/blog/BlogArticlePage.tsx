@@ -127,7 +127,7 @@ export default function BlogArticlePage() {
   const internalLinks = article.internal_linking_json || [];
 
   return (
-    <>
+    <div className="alex-immersive min-h-screen bg-background">
       <Helmet>
         <title>{article.seo_title || article.title} | UNPRO</title>
         <meta name="description" content={article.meta_description || ""} />
@@ -141,7 +141,8 @@ export default function BlogArticlePage() {
         {faqJsonLd && <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>}
       </Helmet>
 
-      <article className="max-w-3xl mx-auto px-4 py-12 space-y-10">
+      <article className="max-w-3xl mx-auto px-4 py-12 space-y-10 text-readable-body">
+
         {/* Breadcrumb */}
         <nav className="text-sm text-muted-foreground">
           <Link to="/" className="hover:text-primary">Accueil</Link>
