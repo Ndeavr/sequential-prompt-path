@@ -12,9 +12,13 @@ const PUBLIC_BASE = Deno.env.get("PUBLIC_APP_URL") ?? "https://unpro.ca";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const softFail = (code: string) =>
+    new Response(JSON.stringify({ ok: false, error: code }), {
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   try {
     const { slug, email } = await req.json();
-    if (!slug) throw new Error("missing_slug");
+    if (!slug) return softFail("missing_slug");
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -25,7 +29,7 @@ Deno.serve(async (req) => {
       .from("sms_sprint_prospects")
       .select("id, company_name, city, category, variant, campaign_id")
       .eq("tracking_slug", slug).maybeSingle();
-    if (!sp) throw new Error("prospect_not_found");
+    if (!sp) return softFail("prospect_not_found");
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
