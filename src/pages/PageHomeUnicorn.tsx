@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import AlexOrbPremium from "@/components/home-unicorn/AlexOrbPremium";
-import BottomDockGlass from "@/components/home-unicorn/BottomDockGlass";
+// BottomDockGlass is intentionally NOT imported here — MainLayout owns the single dock instance.
 import NearbyContractorsCarousel from "@/components/home-unicorn/NearbyContractorsCarousel";
 import AlexCapabilitiesStrip from "@/components/home-unicorn/AlexCapabilitiesStrip";
 import CinematicArchScenes from "@/components/home-unicorn/CinematicArchScenes";
