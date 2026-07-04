@@ -37,7 +37,7 @@ export default function AlexCapabilitiesStrip() {
       <button
         type="button"
         onClick={() => openAlex("home_capability", "vous recommander le bon professionnel")}
-        className="w-full flex items-center gap-3 px-4 py-4 mb-2 transition-transform active:scale-[0.98] cursor-pointer text-left"
+        className="w-full max-w-full min-w-0 flex items-center gap-3 px-4 py-4 mb-2 transition-transform active:scale-[0.98] cursor-pointer text-left"
         style={{
           borderRadius: 20,
           background: "linear-gradient(135deg, #2563FF 0%, #1D4FE0 100%)",
