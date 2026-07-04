@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "unpro-mcp",
+      "version": "0.1.0",
+      "title": "UNPRO — Home Intelligence Platform"
+    },
+    "tools": [
+      {
+        "name": "search_contractors",
+        "title": "Search contractors",
+        "description": "Search UNPRO verified contractors in Québec by city, specialty/trade, or free-text query. Returns business name, city, specialty, AIPP score, rating and slug.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "query": {
+              "description": "Free-text search on business name.",
+              "type": "string"
+            },
+            "city": {
+              "description": "City name, e.g. 'Montréal', 'Québec'.",
+              "type": "string"
+            },
+            "specialty": {
+              "description": "Trade/specialty, e.g. 'plombier', 'toiture'.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Max results (default 10).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_contractor",
+        "title": "Get contractor",
+        "description": "Fetch a UNPRO contractor's public profile by slug.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "slug": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Contractor slug, e.g. 'plomberie-tremblay-montreal'."
+            }
+          },
+          "required": [
+            "slug"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_cities",
+        "title": "List Québec cities",
+        "description": "List Québec cities served by UNPRO. Optional prefix filter.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "prefix": {
+              "description": "Filter cities starting with this prefix.",
+              "type": "string"
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          }
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
