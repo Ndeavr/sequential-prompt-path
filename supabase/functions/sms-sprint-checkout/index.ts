@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
       .update({ activation_status: "checkout_started" })
       .eq("id", sp.id);
 
-    return new Response(JSON.stringify({ url: session.url, session_id: session.id }), {
+    return new Response(JSON.stringify({ ok: true, url: session.url, session_id: session.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
