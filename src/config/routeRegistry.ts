@@ -9,8 +9,22 @@
 // ─────────────────────────────────────────────────────────────────────
 export const LEGACY_REDIRECTS: Record<string, string> = {
   "/home": "/",
-  "/matches": "/",
+  "/matches": "/recommendations",
+  "/coming-soon": "/",
+  "/test": "/",
+  "/demo": "/",
+  "/v2": "/",
+  "/v3": "/",
+  "/conversation": "/alex",
+  "/homeowner": "/",
+  "/contractor": "/entrepreneurs",
+  "/professional": "/entrepreneurs",
 };
+
+// Any unknown path matching this pattern gets bounced to `/` by the fallback
+// route. Prevents test/demo slugs from ever rendering the SEO landing template.
+export const PLACEHOLDER_PATH_RE =
+  /(^|\/)(test|demo|scratch|coming-soon|placeholder|sandbox|preview)(\/|$)/i;
 
 /**
  * Paths that render a real, shipped page today. Kept small on purpose —

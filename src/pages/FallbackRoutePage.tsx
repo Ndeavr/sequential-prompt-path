@@ -1,17 +1,23 @@
 /**
  * UNPRO — Fallback Route Page
- * Catches unbuilt routes and renders a premium fallback landing
- * using DB-driven content from navigation_fallback_pages.
+ * Any unknown path either:
+ *   1. Matches PLACEHOLDER_PATH_RE (test/demo/etc) → redirect to `/`
+ *   2. Otherwise → DB-driven fallback landing template
+ * No public route ever renders a "coming soon" page.
  */
-import { useLocation } from "react-router-dom";
+import { useLocation, Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import FallbackLandingTemplateUNPRO from "@/components/fallback-pages/FallbackLandingTemplateUNPRO";
+import { PLACEHOLDER_PATH_RE } from "@/config/routeRegistry";
 
 export default function FallbackRoutePage() {
   const { pathname } = useLocation();
 
-  // Derive page_key from path: /score-aipp → score-aipp, /plans-prix → plans-prix
+  if (PLACEHOLDER_PATH_RE.test(pathname)) {
+    return <Navigate to="/" replace />;
+  }
+
   const pageKey = pathname.replace(/^\//, "").replace(/\//g, "-") || "default";
 
   const { data: fallbackData } = useQuery({
