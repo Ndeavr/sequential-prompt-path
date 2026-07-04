@@ -64,6 +64,37 @@ export default function PageActivationSprint() {
     );
   }
 
+  if (!prospect) {
+    return (
+      <div className="alex-immersive min-h-screen bg-[#050816] text-white">
+        <div className="max-w-lg mx-auto px-6 pt-24 pb-24">
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/60 mb-8">
+            <Sparkles className="w-3.5 h-3.5" /> UNPRO Founder Access
+          </div>
+          <h1 className="text-3xl font-semibold leading-tight tracking-tight mb-4">
+            Ce lien d'activation n'est plus valide.
+          </h1>
+          <p className="text-white/70 text-base leading-relaxed mb-8">
+            Chaque invitation Fondateur est personnelle et limitée dans le temps.
+            Contactez-nous pour recevoir un nouveau lien.
+          </p>
+          <a
+            href="mailto:hello@unpro.ca?subject=Nouveau%20lien%20Fondateur"
+            className="inline-flex items-center justify-center w-full h-14 rounded-2xl bg-white text-[#050816] font-semibold"
+          >
+            Demander un nouveau lien
+          </a>
+          <a
+            href="/entrepreneur"
+            className="mt-4 inline-flex items-center justify-center w-full h-12 rounded-2xl border border-white/15 text-white/80 text-sm"
+          >
+            Découvrir UNPRO pour entrepreneurs
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="alex-immersive min-h-screen bg-[#050816] text-white">
       <div className="max-w-lg mx-auto px-6 pt-16 pb-24">
@@ -81,15 +112,13 @@ export default function PageActivationSprint() {
           Les entrepreneurs sélectionnés peuvent activer leur profil IA pour <span className="font-semibold text-white">1$</span>.
         </p>
 
-        {prospect && (
-          <div className="rounded-2xl bg-white/[0.04] backdrop-blur-xl border border-white/10 p-5 mb-8">
-            <div className="text-xs uppercase tracking-widest text-white/50 mb-2">Invité</div>
-            <div className="text-lg font-medium">{prospect.company_name ?? "Entrepreneur qualifié"}</div>
-            <div className="text-sm text-white/60 mt-1">
-              {[prospect.city, prospect.category].filter(Boolean).join(" • ")}
-            </div>
+        <div className="rounded-2xl bg-white/[0.04] backdrop-blur-xl border border-white/10 p-5 mb-8">
+          <div className="text-xs uppercase tracking-widest text-white/50 mb-2">Invité</div>
+          <div className="text-lg font-medium">{prospect.company_name ?? "Entrepreneur qualifié"}</div>
+          <div className="text-sm text-white/60 mt-1">
+            {[prospect.city, prospect.category].filter(Boolean).join(" • ")}
           </div>
-        )}
+        </div>
 
         <label className="block text-sm text-white/70 mb-2">Courriel (optionnel)</label>
         <Input
