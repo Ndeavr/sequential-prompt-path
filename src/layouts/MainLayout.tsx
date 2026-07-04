@@ -48,7 +48,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
 
       <SmartHeader />
-      <main className="flex-1 relative z-0 w-full max-w-full overflow-x-hidden pb-[calc(96px+env(safe-area-inset-bottom))]">{children}</main>
+      <main className="flex-1 relative z-0 w-full max-w-full overflow-x-hidden pb-[var(--dock-safe-pb)]">{children}</main>
 
       {showSEOGrid && <FooterSEOGrid />}
       <SiteFooterIntelligence />

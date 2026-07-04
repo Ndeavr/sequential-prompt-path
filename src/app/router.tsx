@@ -1741,6 +1741,10 @@ export const AppRouter = () => (
           <Route path="/verifier-pro" element={<Navigate to="/verifier-un-entrepreneur" replace />} />
           <Route path="/verification-entrepreneur" element={<Navigate to="/verifier-un-entrepreneur" replace />} />
 
+          {/* Legacy / placeholder paths that used to hit the "coming soon" fallback */}
+          <Route path="/home" element={<Navigate to="/" replace />} />
+          <Route path="/matches" element={<Navigate to="/" replace />} />
+
           {/* Catch-all: try fallback, then 404 */}
           <Route path="*" element={<FallbackRoutePage />} />
       </Routes>

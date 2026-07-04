@@ -19,17 +19,21 @@ interface Probes {
 
 const TEST_ROUTES = [
   "/",
-  "/home",
   "/contractors",
   "/project/new",
   "/waiting",
-  "/matches",
   "/onboarding",
   "/contractor/onboarding",
   "/admin",
   "/admin/ops",
   "/admin/acquisition-funnel",
   "/admin/normalization",
+];
+
+// Routes that must redirect to a real page (not the "coming soon" fallback).
+const REDIRECTED_ROUTES: Array<{ from: string; to: string }> = [
+  { from: "/home", to: "/" },
+  { from: "/matches", to: "/" },
 ];
 
 export default function PageAdminSiteHealth() {

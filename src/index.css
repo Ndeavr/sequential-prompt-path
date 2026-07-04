@@ -14,6 +14,11 @@
     --duration-cinematic: 420ms;
     --duration-reveal: 600ms;
 
+    /* ─── Mobile dock safe-area padding token ───
+       Used by <main> in every layout so page content never slides behind
+       the fixed BottomDockGlass / MobileBottomNav on mobile viewports. */
+    --dock-safe-pb: calc(112px + env(safe-area-inset-bottom));
+
     /* ─── Radius (premium soft) ─── */
     --radius-card: 28px;
     --radius-button: 18px;
