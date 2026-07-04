@@ -160,6 +160,25 @@ export default function PageAdminSiteHealth() {
       </section>
 
       <section className="rounded-2xl border border-border p-5">
+        <h2 className="font-semibold text-lg mb-3">Routes redirigées</h2>
+        <ul className="space-y-2 text-sm">
+          {REDIRECTED_ROUTES.map((r) => (
+            <li key={r.from} className="flex items-center justify-between gap-3">
+              <span className="font-mono">{r.from} → {r.to}</span>
+              <a
+                href={r.from}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs px-2 py-1 rounded border border-border hover:bg-muted"
+              >
+                Tester
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="rounded-2xl border border-border p-5">
         <h2 className="font-semibold text-lg mb-3">Routes à tester</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
           {TEST_ROUTES.map((r) => (

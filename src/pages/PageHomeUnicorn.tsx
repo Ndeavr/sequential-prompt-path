@@ -579,13 +579,16 @@ function ContractorAippSplit() {
           boxSizing: "border-box",
         }}
       >
-        {/* radial glow */}
+        {/* radial glow — constrained inside the card, no negative offsets that
+            escape overflow-clip parents on 360px viewports */}
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full"
+          className="pointer-events-none absolute inset-0 rounded-[24px]"
           style={{
             background:
-              "radial-gradient(circle, rgba(59,130,246,0.45) 0%, rgba(59,130,246,0) 70%)",
+              "radial-gradient(circle at 100% 0%, rgba(59,130,246,0.35) 0%, rgba(59,130,246,0) 55%)",
+            mixBlendMode: "screen",
+            opacity: 0.9,
           }}
         />
 
