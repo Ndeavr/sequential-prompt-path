@@ -1,147 +1,87 @@
+# Site Stability & Anti-Flicker Sprint
 
-# UNPRO Admin Operations Center — `/admin/ops`
+Focused production stability pass. **No redesign, no schema changes.** Only defensive infrastructure that removes flicker, stabilizes image loading, and adds an admin diagnostic surface.
 
-Unified command layer over every existing admin repair tool. Nothing is removed; existing routes stay intact. New layer summarizes, ranks by ROI, automates the safe fixes, and requires explicit approval for the risky ones.
+## Root Causes (from initial scan)
 
----
+1. **Auth/profile fetch triggers re-renders on entire app shell** — `PROFILE_FETCH_TIMEOUT` after 2.5s (visible in console) causes many guarded pages to blank/re-render. `AuthGuard`/`UniversalRouteGuard` render fallback trees while `isLoading` toggles.
+2. **Framer-motion `initial="hidden"` on `SectionContainer` and `CardGlass`** — every section starts at `opacity:0` and depends on viewport intersection to reveal. On slow devices or short viewports this reads as flicker/blank cards.
+3. **No unified image component** — 855 files use raw `<img>`. Many use unnormalized Supabase paths or undefined `src`, producing broken icons and layout jump (no width/height/aspect-ratio).
+4. **Deferred overlays via `DeferredAfterInteractive`** — mount after first interaction but some pages depend on them for content, producing perceived "half-loaded" cards.
+5. **StableBackgroundLayer OK** (already single-mount) — not the culprit; keep it.
 
-## 1. Database (single migration)
+## Deliverables
 
-### `admin_system_checks`
-Current state of each health check.
-- `check_key` (unique), `label`, `category`
-- `status`: `healthy | warning | critical | unknown`
-- `affected_count`, `last_checked_at`, `last_auto_fix_at`
-- `recommended_action`, `repair_route`, `metadata jsonb`
+### 1. `SafeImage` component (`src/components/media/SafeImage.tsx`)
+- Props: `src`, `alt`, `width`, `height` OR `aspectRatio`, `priority` (eager vs lazy), `fallback`, `className`.
+- URL normalizer (`src/lib/normalizeImageUrl.ts`): trim, reject empty/`null`/`undefined`, allow `https://`, `/` public, `data:`, and Supabase storage. Never retry more than once on `onError`; swap to fallback placeholder and log once via `visualStabilityLogger`.
+- Always renders a fixed-dimension wrapper (`aspect-ratio` or explicit w/h) to reserve space — no layout shift.
+- `loading="eager"` + `fetchpriority="high"` when `priority`; else `loading="lazy"` + `decoding="async"`.
 
-### `admin_repair_jobs`
-Every dry-run / apply / auto-fix attempt.
-- `job_type`, `status` (`queued|running|dry_run_completed|waiting_approval|applied|failed|skipped`)
-- `risk_level` (`safe|review|danger`), `affected_count`
-- `sample_diff jsonb` (≤20 rows: `{record_id, table, field, before, after, reason, safe_to_apply}`)
-- `summary jsonb`, `error_message`
-- `created_by`, `approved_by`, `applied_at`
+### 2. Motion stability
+- Add `src/lib/motion.ts` guardrails: `revealCard` and `fadeUp` variants change `initial` opacity from `0` → `1` when `prefers-reduced-motion` OR when `import.meta.env.VITE_DISABLE_REVEAL === "1"`. Keep transforms subtle. Critical content never depends on JS to become visible.
+- `SectionContainer` / `CardGlass`: switch `whileInView` to `animate` with `once: true` and a **safety timeout** — content becomes visible after 400ms even if IntersectionObserver never fires (fixes short-viewport blank sections on mobile).
+- Remove `transition-all` from any page-level wrapper found (audit `src/layouts/*`, `src/app/*`).
 
-**RLS:** admin-only via `has_role(auth.uid(),'admin')`; `service_role` full. Grants for `authenticated` + `service_role` in same migration.
+### 3. Auth-shell stability
+- `AuthGuard` and `UniversalRouteGuard`: render a **skeleton that matches the protected page shell** instead of a centered "Chargement…" that replaces the whole tree. Keep header/footer mounted at all times (already true in `MainLayout` — verify no guard wraps `MainLayout`).
+- Add `useStableAuth()` selector that only re-renders when `isAuthenticated` **transitions**, not on every profile timeout tick. Prevents cascade re-renders during the 2.5s profile timeout.
+- Do not gate `MainLayout` children on auth loading.
 
----
+### 4. Hydration safety
+- Add `src/hooks/useIsMounted.ts` (returns bool after first commit). Any read of `window`/`localStorage`/`document` in render paths must be wrapped. Sweep top offenders: `LanguageToggle`, `ThemeProvider` default, `AlexVoiceContext`, `authSessionStore`.
+- Wrap `ThemeProvider` with `suppressHydrationWarning` on `<html>` (via index.html) — already default in next-themes but confirm.
 
-## 2. Tool Registry — `src/admin/adminToolsRegistry.ts`
+### 5. Visual Stability Logger (`src/lib/visualStabilityLogger.ts`)
+Client-side ring buffer (last 200) capturing:
+- `image_load_failed { src }`
+- `empty_image_src { component }`
+- `component_data_timeout { component, ms }`
+- `repeated_mount_detected { component, count }` (via a `useMountCounter` hook opt-in on suspect components)
+- `section_rendered_empty { section }`
+- Last 25 `console.error` intercepted via a passive wrapper.
+Persisted to `sessionStorage` only. Not exposed to public users.
 
-Static catalog of every existing admin tool. Shape:
-```ts
-{ id, label, description, route, category,
-  risk_level: 'safe'|'review'|'danger',
-  automation_available, requires_approval,
-  related_tables: string[], primary_metric, recommended_action }
-```
-Seeded with: Normalization, Phone Validation, Acquisition Funnel, Outreach Funnel, Dispatch Bottleneck, Recovery Sprint, Revenue Gate, Revenue Path, Contractor Activation, Stripe / Checkout audit, Profile Publishing, Scraper Import, Demand Intelligence, Redirect / CTA Tracking, Twilio & Email Health, Outreach Health.
+### 6. `/admin/site-health` diagnostic page
+`src/pages/admin/PageAdminSiteHealth.tsx` (admin-only via existing guard). Sections:
+- **Image health**: run through registered image URLs found in current session buffer; show broken count, empty-src count, sample list.
+- **Render events**: dump ring buffer (mount counts, timeouts, empty sections).
+- **Console errors**: last 25 captured.
+- **Connectivity probes**: Supabase `select 1`, public asset HEAD (`/placeholder.svg`), Supabase storage HEAD (test bucket object).
+- **Route health**: quick links to test pages listed below; each opens in a new tab.
+Registered in `src/app/router.tsx` and added to `adminToolsRegistry.ts` under `category: "diagnostics"`.
 
-Rendered at bottom of `/admin/ops` in a grouped “All Admin Tools” directory (Revenue • Acquisition • Data Quality • Delivery • Trust/Safety).
+### 7. Sweep of high-traffic pages
+Manual audit + targeted fixes on: `/`, `/home`, `/contractors`, `/project/new`, `/waiting`, `/matches`, `/onboarding`, `/contractor/onboarding`, `/admin`, `/admin/acquisition-funnel`, `/admin/normalization`. For each: replace raw `<img>` in hero/card with `SafeImage`, remove `initial opacity-0` on above-the-fold content, add min-height to card grids.
 
----
+## Out of Scope
+- No visual redesign, no token changes, no restructure of routes.
+- No DB migrations (logger is client-side only).
+- Not touching `StableBackgroundLayer` (already correct).
+- Not rewriting Alex voice/overlays.
 
-## 3. Edge Function — `admin-ops-health-check`
-
-One idempotent scanner that upserts a row into `admin_system_checks` per `check_key`, and creates dry-run `admin_repair_jobs` for safe auto-fixes.
-
-Checks (all read-only, cheap COUNT queries + LIMIT 20 samples):
-- Company names with leading/trailing spaces or double spaces
-- Inconsistent capitalization (city not title-case, province not `QC`)
-- Phones not E.164 / missing `+1`
-- Websites missing `https://`, mixed www, trailing slash w/o path
-- Empty required profile fields
-- Prospects stuck `invalid` >7d
-- Leads pending validation >48h
-- Contractors paid (`stripe_subscription_status=active`) but `profile_status != active`
-- Contractors active but `slug` unreachable / no city / no category
-- Outreach `sent` with no matching `acquisition_events` tracking row
-- Tracking links with 0 redirect resolutions after 24h
-- Demand signals waiting with no recruitment target
-
-For each: compute `affected_count`, `status` (thresholds per check), and `recommended_action`. Safe fixes emit a `dry_run_completed` job; risky ones emit `waiting_approval`.
-
----
-
-## 4. Normalization Bridge
-
-`acq-normalize-repair` already exists. Wrap it so every dry-run/apply writes an `admin_repair_jobs` row with the 20-row diff. No rule changes to the existing shared module beyond confirming:
-- trim + collapse spaces
-- E.164 only when deterministic (NANP 10/11 digits)
-- URL: add `https://`, lowercase host, strip trailing `/` unless path
-- City → Title Case, Province → `QC` uppercase
-- Company names: **trim only** (no case rewrites — protects brands)
-- Email: trim + lowercase domain only
-
-/admin/normalization page gains a link back to `/admin/ops` and shows its last job from `admin_repair_jobs`.
-
----
-
-## 5. `/admin/ops` Page — `src/pages/admin/PageAdminOps.tsx`
-
-Route registered in `src/app/router.tsx` under the admin guard. Uses `.admin-theme` wrap per readability rule.
-
-### Layout (top → bottom)
-
-**A. Highest ROI Actions** (ranked list, top of page)
-Rank: `critical` → revenue impact weight → `affected_count` → `automation_available`. Each row: severity chip, why-it-matters one-liner, primary CTA button, owner tag (`admin | automation | lovable_fix`).
-
-**B. System Health Grid** (9 cards)
-Data Normalization • Phone Validation • Outreach Delivery • Contractor Onboarding • Stripe Activation • Profile Publishing • Scraper Quality • Tracking/Clicks • Demand Signals.
-
-Each card: status pill, `affected_count`, `last_checked_at`, `last_auto_fix_at`, `action_required`, primary CTA linking to the exact repair route from the registry. Expandable 20-row evidence table pulled from the latest `admin_repair_jobs.sample_diff`.
-
-**C. Automated Jobs Panel**
-Table of recent `admin_repair_jobs`: last run, status, scanned, fixed, needs-approval, failed. Buttons: Run health check now • Normalization dry-run • Apply safe fixes • Re-run phone validation • Rebuild contractor visibility • Recheck Stripe activations • Recompute demand targets. Each button invokes the corresponding existing edge function and refreshes the checks table.
-
-**D. All Admin Tools Directory**
-Rendered from `adminToolsRegistry.ts`, grouped by category with risk-level chips.
-
----
-
-## 6. Safety Matrix (enforced in edge function + UI gating)
-
-| Class | Examples | Behavior |
-|---|---|---|
-| **Safe** | trim, URL protocol, city/province case, deterministic E.164 | Auto dry-run + one-click apply |
-| **Review** | company name rewrites, mark lead valid, activate paid contractor with unclear Stripe evidence, merge duplicates | Requires `approved_by` before apply |
-| **Danger** | bulk delete, overwrite scraped data, mutate Stripe state, change subscription plan | UI blocks; requires typed confirmation + logs `danger` job |
-
----
-
-## 7. Cron
-
-`pg_cron` runs `admin-ops-health-check` every 15 min (`net.http_post` with anon key) so `/admin/ops` is always fresh without user action.
-
----
-
-## 8. Out of Scope (this iteration)
-
-- No changes to existing admin pages' internals beyond linking back to `/admin/ops`.
-- No deletion of legacy routes.
-- No new business logic in normalization module.
-- No app-wide redesign.
-
----
-
-## Files touched
+## Files
 
 **New**
-- `supabase/migrations/<ts>_admin_ops_center.sql`
-- `supabase/functions/admin-ops-health-check/index.ts`
-- `src/admin/adminToolsRegistry.ts`
-- `src/pages/admin/PageAdminOps.tsx`
-- `src/hooks/useAdminOps.ts` (TanStack Query bindings for checks + jobs)
-- `src/components/admin/ops/HealthCard.tsx`
-- `src/components/admin/ops/NextActionRow.tsx`
-- `src/components/admin/ops/RepairJobsTable.tsx`
-- `src/components/admin/ops/ToolsDirectory.tsx`
+- `src/components/media/SafeImage.tsx`
+- `src/lib/normalizeImageUrl.ts`
+- `src/lib/visualStabilityLogger.ts`
+- `src/hooks/useIsMounted.ts`
+- `src/hooks/useMountCounter.ts`
+- `src/pages/admin/PageAdminSiteHealth.tsx`
 
 **Edited**
-- `src/app/router.tsx` — register `/admin/ops`
-- Admin nav — add “Operations Center”
-- `src/pages/admin/PageAdminNormalization.tsx` — wire jobs into `admin_repair_jobs`, add link back to `/admin/ops`
-- `supabase/config.toml` — register new edge function
+- `src/lib/motion.ts` (reduced-motion + safe defaults)
+- `src/components/unpro/SectionContainer.tsx`, `CardGlass.tsx` (safety timeout, no opacity-0 default)
+- `src/guards/AuthGuard.tsx`, `src/guards/UniversalRouteGuard.tsx` (shell skeleton, no full-tree replacement)
+- `src/hooks/useAuth.ts` (stable selector; debounce timeout-driven re-renders)
+- `src/app/router.tsx` (register `/admin/site-health`)
+- `src/admin/adminToolsRegistry.ts` (add entry)
+- Targeted image replacements on the pages listed in §7 (only image swaps + min-height, no layout changes)
 
-**Success**
-`/admin/ops` loads with 9 populated health cards, ranked ROI actions, at least one working safe auto-fix (URL protocol or trim), and a linked directory of every existing admin tool — with zero regressions to current routes.
+## Success Criteria
+- Hard refresh: no full-page flash, header/footer never remount.
+- Cards on `/`, `/matches`, `/contractors` render with reserved space; images fall back gracefully.
+- `AuthGuard` never blanks the shell during 2.5s profile timeout.
+- `/admin/site-health` shows live counts and connectivity probes.
+- `prefers-reduced-motion` fully disables reveal animations.

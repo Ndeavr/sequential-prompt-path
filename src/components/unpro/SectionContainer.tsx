@@ -1,21 +1,19 @@
 /**
  * UNPRO — SectionContainer
  * Standardized section wrapper with consistent max-width, padding, and scroll animation.
+ * Safety: never keeps content invisible — a 400ms fallback forces the visible state.
  */
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { fadeUp, viewportOnce } from "@/lib/motion";
+import { fadeUp, viewportOnce, shouldSkipReveal } from "@/lib/motion";
 
 interface SectionContainerProps {
   children: ReactNode;
   className?: string;
-  /** Narrow (720px) | default (1280px) | wide (1440px) | full */
   width?: "narrow" | "default" | "wide" | "full";
-  /** Add section-gradient background */
   gradient?: boolean;
-  /** Disable scroll animation */
   noAnimation?: boolean;
   id?: string;
   as?: "section" | "div";
@@ -37,15 +35,28 @@ export default function SectionContainer({
   id,
   as = "section",
 }: SectionContainerProps) {
-  const Comp = noAnimation ? as : motion[as];
-  const animationProps = noAnimation
+  const skip = noAnimation || shouldSkipReveal();
+  const [forceVisible, setForceVisible] = useState(skip);
+
+  useEffect(() => {
+    if (skip) return;
+    // Safety net: if IntersectionObserver never fires (short viewport / mobile),
+    // reveal after 400ms so the section never remains blank.
+    const t = window.setTimeout(() => setForceVisible(true), 400);
+    return () => window.clearTimeout(t);
+  }, [skip]);
+
+  const Comp = skip ? as : motion[as];
+  const animationProps = skip
     ? {}
-    : {
-        initial: "hidden" as const,
-        whileInView: "visible" as const,
-        viewport: viewportOnce,
-        variants: fadeUp,
-      };
+    : forceVisible
+      ? { initial: "visible" as const, animate: "visible" as const, variants: fadeUp }
+      : {
+          initial: "hidden" as const,
+          whileInView: "visible" as const,
+          viewport: viewportOnce,
+          variants: fadeUp,
+        };
 
   return (
     <Comp

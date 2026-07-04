@@ -9,6 +9,20 @@ import type { Variants, Transition } from "framer-motion";
 const EASE_PREMIUM: Transition["ease"] = [0.22, 1, 0.36, 1];
 const EASE_SPRING: Transition["ease"] = [0.16, 1, 0.3, 1];
 
+/**
+ * Global switch — when true, all reveal variants render "visible" immediately.
+ * Respects prefers-reduced-motion and an env override.
+ */
+export function shouldSkipReveal(): boolean {
+  if (typeof window === "undefined") return true;
+  if ((import.meta as any).env?.VITE_DISABLE_REVEAL === "1") return true;
+  try {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch {
+    return false;
+  }
+}
+
 /* ─── Reusable transitions ─── */
 export const transitions = {
   fast: { duration: 0.2, ease: EASE_PREMIUM } as Transition,
