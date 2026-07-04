@@ -179,45 +179,27 @@ function HeaderFloatingGlass() {
 /* ---------------- Hero ---------------- */
 function HeroAlexOrb({ onTalk }: { onTalk: (hint?: string) => void }) {
   return (
-    <section className="px-4 pt-3 pb-6 grid grid-cols-[1.05fr_1fr] gap-2 items-center relative z-10 uc-fade-up">
-      <div>
+    <section
+      className="px-4 pt-3 pb-6 flex flex-col items-stretch gap-4 sm:grid sm:grid-cols-[1.05fr_1fr] sm:gap-2 sm:items-center relative z-10 uc-fade-up"
+    >
+      <div className="min-w-0">
         <h1
-          className="font-extrabold leading-[0.98] text-[28px] sm:text-[38px] tracking-[-0.035em]"
+          className="font-extrabold leading-[0.98] text-[26px] min-[380px]:text-[28px] sm:text-[38px] tracking-[-0.035em]"
           style={{ color: "#0B1220" }}
         >
           Vous avez une question sur votre maison ?{"\u00a0"}
           <span className="uc-gradient-text">Alex trouve la réponse.</span>
         </h1>
         <p
-          className="mt-3 text-[13px] sm:text-[14px] leading-snug max-w-[34ch]"
+          className="mt-3 text-[13px] sm:text-[14px] leading-snug max-w-[38ch]"
           style={{ color: "#475467" }}
         >
           Téléversez une photo ou décrivez votre situation. Alex identifie les problèmes
           potentiels, explique les risques, estime les coûts et recommande les prochaines
           étapes.
         </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => onTalk()}
-            className="rounded-2xl px-4 py-2.5 text-white text-[13px] font-semibold"
-            style={{
-              background: "linear-gradient(135deg, #2563FF, #3B82F6)",
-              boxShadow: "0 8px 18px -6px rgba(37,99,255,0.55)",
-            }}
-          >
-            Analyser ma situation
-          </button>
-          <a
-            href="/ia-maison"
-            className="rounded-2xl px-4 py-2.5 text-[13px] font-semibold uc-glass-strong"
-            style={{ color: "#0B1220" }}
-          >
-            Voir un exemple
-          </a>
-        </div>
       </div>
-      <div className="flex flex-col items-center justify-center pr-1 -mt-2">
+      <div className="flex flex-col items-center justify-center sm:pr-1 order-first sm:order-none">
         <button
           type="button"
           onClick={() => onTalk()}
@@ -228,9 +210,30 @@ function HeroAlexOrb({ onTalk }: { onTalk: (hint?: string) => void }) {
           <AlexOrbPremium size={144} interactive showLabel showCaption />
         </button>
       </div>
+      <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:col-span-2 min-w-0">
+        <button
+          type="button"
+          onClick={() => onTalk()}
+          className="w-full sm:w-auto rounded-2xl px-4 py-3 sm:py-2.5 text-white text-[14px] sm:text-[13px] font-semibold text-center"
+          style={{
+            background: "linear-gradient(135deg, #2563FF, #3B82F6)",
+            boxShadow: "0 8px 18px -6px rgba(37,99,255,0.55)",
+          }}
+        >
+          Analyser ma situation
+        </button>
+        <a
+          href="/ia-maison"
+          className="w-full sm:w-auto rounded-2xl px-4 py-3 sm:py-2.5 text-[14px] sm:text-[13px] font-semibold uc-glass-strong text-center"
+          style={{ color: "#0B1220" }}
+        >
+          Voir un exemple
+        </a>
+      </div>
     </section>
   );
 }
+
 
 /* ---------------- AI Input Card ---------------- */
 function WaveformMini() {
