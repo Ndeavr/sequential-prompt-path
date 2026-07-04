@@ -1452,6 +1452,36 @@ export type Database = {
           },
         ]
       }
+      acquisition_suppression_domains: {
+        Row: {
+          active: boolean
+          created_at: string
+          domain: string
+          id: string
+          kind: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          domain: string
+          id?: string
+          kind?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          domain?: string
+          id?: string
+          kind?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       acquisition_system_health: {
         Row: {
           error_code: string | null
@@ -18827,6 +18857,13 @@ export type Database = {
             foreignKeyName: "campaign_contacts_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_contacts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
@@ -21224,6 +21261,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concierge_touches_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
             referencedColumns: ["id"]
           },
           {
@@ -25337,6 +25381,13 @@ export type Database = {
             columns: ["contractor_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_conversions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
             referencedColumns: ["id"]
           },
           {
@@ -29859,6 +29910,13 @@ export type Database = {
             foreignKeyName: "contractor_outreach_tests_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_outreach_tests_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
@@ -30899,6 +30957,13 @@ export type Database = {
             foreignKeyName: "contractor_profiles_draft_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_profiles_draft_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
@@ -30947,6 +31012,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prospect_contacts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
             referencedColumns: ["id"]
           },
           {
@@ -31013,6 +31085,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: true
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prospect_enrichment_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: true
+            referencedRelation: "v_acquisition_queues"
             referencedColumns: ["id"]
           },
           {
@@ -31089,6 +31168,13 @@ export type Database = {
             foreignKeyName: "contractor_prospect_scores_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prospect_scores_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
@@ -31096,8 +31182,10 @@ export type Database = {
       }
       contractor_prospects: {
         Row: {
+          acquisition_priority_score: number
           activation_status: string
           address: string | null
+          aggregator_email: boolean
           aipp_score: number | null
           aipp_status: string
           avg_job_value_cad: number | null
@@ -31120,6 +31208,7 @@ export type Database = {
           do_not_contact: boolean
           domain_status: string | null
           email: string | null
+          email_quality: string | null
           enrichment_count: number
           enrichment_status: string
           estimated_capacity: number | null
@@ -31127,6 +31216,9 @@ export type Database = {
           extraction_confidence: number | null
           google_business_url: string | null
           google_place_id: string | null
+          has_landline: boolean
+          has_mobile: boolean
+          has_website: boolean
           id: string
           ingestion_status: string
           language_guess: string | null
@@ -31139,11 +31231,16 @@ export type Database = {
           next_action_due_at: string | null
           normalized_domain: string | null
           onboarding_status: string
+          outreach_channel: string | null
+          outreach_eligible: boolean
           outreach_status: string
           owner_name: string | null
           payment_status: string
           phone: string | null
+          phone_type: string | null
+          photo_count: number
           postal_code: string | null
+          priority_recomputed_at: string | null
           priority_score: number | null
           province: string | null
           public_slug: string | null
@@ -31158,20 +31255,25 @@ export type Database = {
           review_count: number | null
           review_rating: number | null
           selected_plan: string | null
+          service_area_count: number
           source: string | null
           source_name: string | null
           source_record_id: string | null
           source_url: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
+          suppression_reason: string | null
           trade: string | null
           trade_category: Database["public"]["Enums"]["exterior_trade"] | null
           updated_at: string
+          website_quality_score: number
           website_url: string | null
         }
         Insert: {
+          acquisition_priority_score?: number
           activation_status?: string
           address?: string | null
+          aggregator_email?: boolean
           aipp_score?: number | null
           aipp_status?: string
           avg_job_value_cad?: number | null
@@ -31194,6 +31296,7 @@ export type Database = {
           do_not_contact?: boolean
           domain_status?: string | null
           email?: string | null
+          email_quality?: string | null
           enrichment_count?: number
           enrichment_status?: string
           estimated_capacity?: number | null
@@ -31201,6 +31304,9 @@ export type Database = {
           extraction_confidence?: number | null
           google_business_url?: string | null
           google_place_id?: string | null
+          has_landline?: boolean
+          has_mobile?: boolean
+          has_website?: boolean
           id?: string
           ingestion_status?: string
           language_guess?: string | null
@@ -31213,11 +31319,16 @@ export type Database = {
           next_action_due_at?: string | null
           normalized_domain?: string | null
           onboarding_status?: string
+          outreach_channel?: string | null
+          outreach_eligible?: boolean
           outreach_status?: string
           owner_name?: string | null
           payment_status?: string
           phone?: string | null
+          phone_type?: string | null
+          photo_count?: number
           postal_code?: string | null
+          priority_recomputed_at?: string | null
           priority_score?: number | null
           province?: string | null
           public_slug?: string | null
@@ -31232,20 +31343,25 @@ export type Database = {
           review_count?: number | null
           review_rating?: number | null
           selected_plan?: string | null
+          service_area_count?: number
           source?: string | null
           source_name?: string | null
           source_record_id?: string | null
           source_url?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          suppression_reason?: string | null
           trade?: string | null
           trade_category?: Database["public"]["Enums"]["exterior_trade"] | null
           updated_at?: string
+          website_quality_score?: number
           website_url?: string | null
         }
         Update: {
+          acquisition_priority_score?: number
           activation_status?: string
           address?: string | null
+          aggregator_email?: boolean
           aipp_score?: number | null
           aipp_status?: string
           avg_job_value_cad?: number | null
@@ -31268,6 +31384,7 @@ export type Database = {
           do_not_contact?: boolean
           domain_status?: string | null
           email?: string | null
+          email_quality?: string | null
           enrichment_count?: number
           enrichment_status?: string
           estimated_capacity?: number | null
@@ -31275,6 +31392,9 @@ export type Database = {
           extraction_confidence?: number | null
           google_business_url?: string | null
           google_place_id?: string | null
+          has_landline?: boolean
+          has_mobile?: boolean
+          has_website?: boolean
           id?: string
           ingestion_status?: string
           language_guess?: string | null
@@ -31287,11 +31407,16 @@ export type Database = {
           next_action_due_at?: string | null
           normalized_domain?: string | null
           onboarding_status?: string
+          outreach_channel?: string | null
+          outreach_eligible?: boolean
           outreach_status?: string
           owner_name?: string | null
           payment_status?: string
           phone?: string | null
+          phone_type?: string | null
+          photo_count?: number
           postal_code?: string | null
+          priority_recomputed_at?: string | null
           priority_score?: number | null
           province?: string | null
           public_slug?: string | null
@@ -31306,15 +31431,18 @@ export type Database = {
           review_count?: number | null
           review_rating?: number | null
           selected_plan?: string | null
+          service_area_count?: number
           source?: string | null
           source_name?: string | null
           source_record_id?: string | null
           source_url?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          suppression_reason?: string | null
           trade?: string | null
           trade_category?: Database["public"]["Enums"]["exterior_trade"] | null
           updated_at?: string
+          website_quality_score?: number
           website_url?: string | null
         }
         Relationships: [
@@ -31323,6 +31451,13 @@ export type Database = {
             columns: ["dedupe_matched_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prospects_dedupe_matched_id_fkey"
+            columns: ["dedupe_matched_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
             referencedColumns: ["id"]
           },
           {
@@ -31702,6 +31837,13 @@ export type Database = {
             foreignKeyName: "contractor_recruitment_checkout_sessions_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_checkout_sessions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
@@ -31781,6 +31923,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_conversions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
             referencedColumns: ["id"]
           },
           {
@@ -31881,6 +32030,13 @@ export type Database = {
             foreignKeyName: "contractor_recruitment_exceptions_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_exceptions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
@@ -31966,6 +32122,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_messages_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
             referencedColumns: ["id"]
           },
           {
@@ -32067,6 +32230,13 @@ export type Database = {
             foreignKeyName: "contractor_recruitment_offers_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_offers_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
@@ -32137,6 +32307,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_payments_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
             referencedColumns: ["id"]
           },
           {
@@ -32214,6 +32391,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_replies_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
             referencedColumns: ["id"]
           },
           {
@@ -32449,6 +32633,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_tasks_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
             referencedColumns: ["id"]
           },
           {
@@ -46993,6 +47184,13 @@ export type Database = {
             foreignKeyName: "live_outreach_drafts_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_outreach_drafts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
@@ -53781,6 +53979,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_messages_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
             referencedColumns: ["id"]
           },
           {
@@ -62612,6 +62817,13 @@ export type Database = {
             foreignKeyName: "prospect_dedupe_reviews_candidate_prospect_id_fkey"
             columns: ["candidate_prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_dedupe_reviews_candidate_prospect_id_fkey"
+            columns: ["candidate_prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
@@ -62620,6 +62832,13 @@ export type Database = {
             columns: ["existing_prospect_id"]
             isOneToOne: false
             referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_dedupe_reviews_existing_prospect_id_fkey"
+            columns: ["existing_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
             referencedColumns: ["id"]
           },
           {
@@ -78534,6 +78753,298 @@ export type Database = {
         }
         Relationships: []
       }
+      v_acquisition_queues: {
+        Row: {
+          acquisition_priority_score: number | null
+          activation_status: string | null
+          address: string | null
+          aggregator_email: boolean | null
+          aipp_score: number | null
+          aipp_status: string | null
+          avg_job_value_cad: number | null
+          blocked_reason: string | null
+          business_name: string | null
+          category_slug: string | null
+          city: string | null
+          concierge_notes: string | null
+          concierge_owner_id: string | null
+          concierge_priority: number | null
+          concierge_stage: string | null
+          confidence_score: number | null
+          contractor_id: string | null
+          created_at: string | null
+          custom_offer: Json | null
+          dedupe_confidence: number | null
+          dedupe_matched_id: string | null
+          dedupe_signals: Json | null
+          discovery_method: string | null
+          do_not_contact: boolean | null
+          domain_status: string | null
+          email: string | null
+          email_quality: string | null
+          enrichment_count: number | null
+          enrichment_status: string | null
+          estimated_capacity: number | null
+          estimated_monthly_value: number | null
+          extraction_confidence: number | null
+          google_business_url: string | null
+          google_place_id: string | null
+          has_landline: boolean | null
+          has_mobile: boolean | null
+          has_website: boolean | null
+          id: string | null
+          ingestion_status: string | null
+          language_guess: string | null
+          last_action_at: string | null
+          last_enriched_at: string | null
+          legal_name: string | null
+          needs_review: boolean | null
+          neq: string | null
+          next_action: string | null
+          next_action_due_at: string | null
+          normalized_domain: string | null
+          onboarding_status: string | null
+          outreach_channel: string | null
+          outreach_eligible: boolean | null
+          outreach_status: string | null
+          owner_name: string | null
+          payment_status: string | null
+          phone: string | null
+          phone_type: string | null
+          photo_count: number | null
+          postal_code: string | null
+          priority_recomputed_at: string | null
+          priority_score: number | null
+          province: string | null
+          public_slug: string | null
+          qualification_status: string | null
+          queue_tier: string | null
+          raw_data: Json | null
+          rbq: string | null
+          rbq_license: string | null
+          rbq_verified: boolean | null
+          recommended_plan: string | null
+          recommended_plan_reason: string | null
+          region: string | null
+          review_count: number | null
+          review_rating: number | null
+          selected_plan: string | null
+          service_area_count: number | null
+          source: string | null
+          source_name: string | null
+          source_record_id: string | null
+          source_url: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          suppression_reason: string | null
+          trade: string | null
+          trade_category: Database["public"]["Enums"]["exterior_trade"] | null
+          updated_at: string | null
+          website_quality_score: number | null
+          website_url: string | null
+        }
+        Insert: {
+          acquisition_priority_score?: number | null
+          activation_status?: string | null
+          address?: string | null
+          aggregator_email?: boolean | null
+          aipp_score?: number | null
+          aipp_status?: string | null
+          avg_job_value_cad?: number | null
+          blocked_reason?: string | null
+          business_name?: string | null
+          category_slug?: string | null
+          city?: string | null
+          concierge_notes?: string | null
+          concierge_owner_id?: string | null
+          concierge_priority?: number | null
+          concierge_stage?: string | null
+          confidence_score?: number | null
+          contractor_id?: string | null
+          created_at?: string | null
+          custom_offer?: Json | null
+          dedupe_confidence?: number | null
+          dedupe_matched_id?: string | null
+          dedupe_signals?: Json | null
+          discovery_method?: string | null
+          do_not_contact?: boolean | null
+          domain_status?: string | null
+          email?: string | null
+          email_quality?: string | null
+          enrichment_count?: number | null
+          enrichment_status?: string | null
+          estimated_capacity?: number | null
+          estimated_monthly_value?: number | null
+          extraction_confidence?: number | null
+          google_business_url?: string | null
+          google_place_id?: string | null
+          has_landline?: boolean | null
+          has_mobile?: boolean | null
+          has_website?: boolean | null
+          id?: string | null
+          ingestion_status?: string | null
+          language_guess?: string | null
+          last_action_at?: string | null
+          last_enriched_at?: string | null
+          legal_name?: string | null
+          needs_review?: boolean | null
+          neq?: string | null
+          next_action?: string | null
+          next_action_due_at?: string | null
+          normalized_domain?: string | null
+          onboarding_status?: string | null
+          outreach_channel?: string | null
+          outreach_eligible?: boolean | null
+          outreach_status?: string | null
+          owner_name?: string | null
+          payment_status?: string | null
+          phone?: string | null
+          phone_type?: string | null
+          photo_count?: number | null
+          postal_code?: string | null
+          priority_recomputed_at?: string | null
+          priority_score?: number | null
+          province?: string | null
+          public_slug?: string | null
+          qualification_status?: string | null
+          queue_tier?: never
+          raw_data?: Json | null
+          rbq?: string | null
+          rbq_license?: string | null
+          rbq_verified?: boolean | null
+          recommended_plan?: string | null
+          recommended_plan_reason?: string | null
+          region?: string | null
+          review_count?: number | null
+          review_rating?: number | null
+          selected_plan?: string | null
+          service_area_count?: number | null
+          source?: string | null
+          source_name?: string | null
+          source_record_id?: string | null
+          source_url?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          suppression_reason?: string | null
+          trade?: string | null
+          trade_category?: Database["public"]["Enums"]["exterior_trade"] | null
+          updated_at?: string | null
+          website_quality_score?: number | null
+          website_url?: string | null
+        }
+        Update: {
+          acquisition_priority_score?: number | null
+          activation_status?: string | null
+          address?: string | null
+          aggregator_email?: boolean | null
+          aipp_score?: number | null
+          aipp_status?: string | null
+          avg_job_value_cad?: number | null
+          blocked_reason?: string | null
+          business_name?: string | null
+          category_slug?: string | null
+          city?: string | null
+          concierge_notes?: string | null
+          concierge_owner_id?: string | null
+          concierge_priority?: number | null
+          concierge_stage?: string | null
+          confidence_score?: number | null
+          contractor_id?: string | null
+          created_at?: string | null
+          custom_offer?: Json | null
+          dedupe_confidence?: number | null
+          dedupe_matched_id?: string | null
+          dedupe_signals?: Json | null
+          discovery_method?: string | null
+          do_not_contact?: boolean | null
+          domain_status?: string | null
+          email?: string | null
+          email_quality?: string | null
+          enrichment_count?: number | null
+          enrichment_status?: string | null
+          estimated_capacity?: number | null
+          estimated_monthly_value?: number | null
+          extraction_confidence?: number | null
+          google_business_url?: string | null
+          google_place_id?: string | null
+          has_landline?: boolean | null
+          has_mobile?: boolean | null
+          has_website?: boolean | null
+          id?: string | null
+          ingestion_status?: string | null
+          language_guess?: string | null
+          last_action_at?: string | null
+          last_enriched_at?: string | null
+          legal_name?: string | null
+          needs_review?: boolean | null
+          neq?: string | null
+          next_action?: string | null
+          next_action_due_at?: string | null
+          normalized_domain?: string | null
+          onboarding_status?: string | null
+          outreach_channel?: string | null
+          outreach_eligible?: boolean | null
+          outreach_status?: string | null
+          owner_name?: string | null
+          payment_status?: string | null
+          phone?: string | null
+          phone_type?: string | null
+          photo_count?: number | null
+          postal_code?: string | null
+          priority_recomputed_at?: string | null
+          priority_score?: number | null
+          province?: string | null
+          public_slug?: string | null
+          qualification_status?: string | null
+          queue_tier?: never
+          raw_data?: Json | null
+          rbq?: string | null
+          rbq_license?: string | null
+          rbq_verified?: boolean | null
+          recommended_plan?: string | null
+          recommended_plan_reason?: string | null
+          region?: string | null
+          review_count?: number | null
+          review_rating?: number | null
+          selected_plan?: string | null
+          service_area_count?: number | null
+          source?: string | null
+          source_name?: string | null
+          source_record_id?: string | null
+          source_url?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          suppression_reason?: string | null
+          trade?: string | null
+          trade_category?: Database["public"]["Enums"]["exterior_trade"] | null
+          updated_at?: string | null
+          website_quality_score?: number | null
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_prospects_dedupe_matched_id_fkey"
+            columns: ["dedupe_matched_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prospects_dedupe_matched_id_fkey"
+            columns: ["dedupe_matched_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prospects_dedupe_matched_id_fkey"
+            columns: ["dedupe_matched_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_autopilot_pipeline: {
         Row: {
           activated_count: number | null
@@ -79896,6 +80407,7 @@ export type Database = {
         Returns: Json
       }
       resolve_qr_token: { Args: { _token: string }; Returns: Json }
+      rpc_acquisition_intelligence_summary: { Args: never; Returns: Json }
       rpc_get_cluster_fill_ratio: {
         Args: { p_category_slug?: string; p_cluster_id: string }
         Returns: {

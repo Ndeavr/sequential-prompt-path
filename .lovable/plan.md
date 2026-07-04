@@ -1,175 +1,222 @@
-# Navigation & Conversion Architecture
+# Acquisition Pipeline → Revenue Intelligence Refactor
 
-Goal: every page routes to one of 4 actions — **Talk to Alex**, **Create Project**, **Activate Profile**, **Book Appointment**. Zero dead ends, zero "coming soon", zero orphan test routes.
+Transform `contractor_prospects` scraping firehose into a **Contractor Activation Engine**. Stop spending SMS / email / AI credits on unreachable or low-probability prospects. Every outreach worker must consult a single eligibility contract before firing.
 
 ---
 
-## 1. Canonical CTA System
+## Phase 1 — Schema (single migration)
 
-**New file `src/config/ctaRegistry.ts`** — single source of truth:
+Add columns to `public.contractor_prospects` (existing `priority_score numeric` is kept; new integer `acquisition_priority_score` mirrors the 0–100 scale used by scoring):
+
+```
+acquisition_priority_score  integer  default 0
+phone_type                  text                       -- mobile | landline | voip_business | unknown | invalid
+has_mobile                  boolean  default false
+has_landline                boolean  default false
+email_quality               text                       -- valid | invalid | disposable | role | aggregator
+aggregator_email            boolean  default false
+has_website                 boolean  default false
+website_quality_score       integer  default 0        -- -10 .. +20
+review_count already exists (integer)
+review_rating already exists (numeric)
+photo_count                 integer  default 0
+service_area_count          integer  default 0
+outreach_channel            text                       -- sms_email | sms | email | none
+outreach_eligible           boolean  default false
+suppression_reason          text                       -- aggregator_email | unreachable | do_not_contact | low_score
+priority_recomputed_at      timestamptz
+```
+
+Indexes: `(outreach_eligible, acquisition_priority_score desc)`, `(phone_type)`, `(aggregator_email)`, `(suppression_reason)`.
+
+RLS/grants unchanged (table is admin/edge-function scoped; keep existing policies).
+
+---
+
+## Phase 2 — Aggregator Suppression
+
+**New file `supabase/functions/_shared/aggregator.ts`**
 
 ```ts
-export type CanonicalCTA = "alex" | "create_project" | "activate_profile" | "book";
-export const CTA_DEST = {
-  alex:              { href: "/alex",              label: "Parler à Alex" },
-  create_project:    { href: "/project/new",       label: "Créer mon projet" },
-  activate_profile:  { href: "/entrepreneurs",     label: "Activer mon profil" },
-  book:              { href: "/recommendations",   label: "Prendre rendez-vous" },
-};
+export const AGGREGATOR_DOMAINS = new Set([
+  "renoassistance.ca","soumissionrenovation.com","soumissionsmaison.com",
+  "bark.com","bark.co.uk","homestars.com","trustedpros.ca",
+  "renovationfind.com","renovationquotes.com",
+]);
+export function isAggregatorEmail(email: string | null): boolean { … }
 ```
 
-**New component `src/components/cta/PrimaryCTA.tsx`** — renders one canonical CTA button with analytics tag `cta_click:{name}:{page}`.
+When matched → `aggregator_email = true`, `outreach_eligible = false`, `suppression_reason = 'aggregator_email'`, `acquisition_priority_score = 0`. Never enrich, personalize, or contact.
 
-**New component `src/components/cta/PageCTAFooter.tsx`** — sticky bottom-of-page block (above dock) enforcing "at least one visible CTA" on every page. Injected by `PageShell` when the page doesn't declare its own CTA via prop `cta={...}`.
-
-**Update `src/layouts/PageShell.tsx`** — add required prop `cta: CanonicalCTA | CanonicalCTA[]` (default `"alex"`). Dev-mode assertion warns if a page omits it. Renders `PageCTAFooter` automatically unless `hideCta` set.
+Also seed a small DB table `acquisition_suppression_domains` (id, domain, kind, active) so admins can add domains without a redeploy. Aggregator helper reads the union of the hardcoded set and this table (cached 5 min).
 
 ---
 
-## 2. Route Map — Keep / Add / Redirect / Remove
+## Phase 3 — Phone Intelligence
 
-### Add canonical routes (aliases to existing pages)
-| New route | Renders |
-|---|---|
-| `/entrepreneurs` | existing `PageContractorLandingAcquisition` |
-| `/partenaires` | new `PagePartnersLanding` (realtors/notaries/managers/condo boards) |
-| `/project-created` | new `PageProjectCreatedSuccess` (demand context + CTA "View Project") |
-| `/recommendations` | new `PageRecommendations` (top match, score, why, book CTA) |
-| `/waiting` | keep — enrich with queue position, market value, invite-contractor CTA |
-| `/activation-success` | new `PageActivationSuccess` (cities, categories, waiting count, revenue opp) |
-| `/projects`, `/quotes`, `/home-passport` | dashboard tabs — add real routes if missing |
+**New file `supabase/functions/_shared/phone.ts`**
 
-### Redirect (add to `LEGACY_REDIRECTS` in `src/config/routeRegistry.ts`)
+- Normalize to E.164 via `libphonenumber-js` (already available on npm specifier).
+- Classify with a lightweight rules layer first (Canadian mobile NPA/NXX ranges) and, when available, delegate to Twilio Lookup v2 (`Type=carrier`) — feature-flagged by `TWILIO_LOOKUP_ENABLED`.
+- Persist `phone_type`, `has_mobile`, `has_landline`, cache result in `phone_carrier_cache` (already exists).
+
+**Channel selection** (helper `selectOutreachChannel(prospect)`):
+| mobile | validEmail (non-aggregator) | channel |
+|---|---|---|
+| ✓ | ✓ | `sms_email` |
+| ✓ | ✗ | `sms` |
+| ✗ | ✓ | `email` |
+| ✗ | ✗ | `none` → `outreach_eligible=false`, `suppression_reason='unreachable'` |
+
+---
+
+## Phase 4–6 — Scoring Signals
+
+**New file `supabase/functions/_shared/prospectScoring.ts`**
+
+- **Website** (`website_quality_score`): none → +20, weak (raw HTML, no HTTPS, no meta) → +10, strong (SEO + HTTPS + responsive) → 0, agency-grade (heavy JS bundle, tracking pixels, blog) → −10. Uses existing `contractor_domain_checks` when present; otherwise a cheap HEAD + tiny HTML sniff.
+- **Reviews**: 0 → −50, 5–24 → +15, 25–99 → +25, 100+ → +35; rating ≥ 4.7 → +10 bonus.
+- **GBP completeness**: photos + hours + categories + description + services → complete +15, partial +5, poor 0. Reads from `contractor_gmb_profiles` where available.
+- **Mobile score**: mobile +10, else 0. **Email score**: valid non-aggregator +5, else 0. **Service area**: ≥3 cities +5.
+
+Compose:
+
 ```
-/home              → /
-/matches           → /recommendations
-/coming-soon       → /
-/test, /test/*     → /
-/demo (bare)       → /
-/v2, /v3           → /            (variants no longer public)
-/conversation      → /alex
-/homeowner         → /
-/contractor        → /entrepreneurs
-/professional      → /entrepreneurs
-/start             → /
-/pim, /ai, /go, /aipp-check       → keep (real landings)
+score = clamp(0, 100, 50 + review + website + mobile + gbp + email + serviceArea)
 ```
 
-### Remove from router (delete `<Route>` lines)
-- `/demo/isroyal-alex-plan-test*` (move under `/admin` if still needed internally)
-- Any orphan `/*-test`, `/*-preview`, `/scratch/*` routes
-
-### Fallback route hardening
-`FallbackRoutePage` already redirects unknown nav paths to `/`. Extend to **also** redirect any path containing `test|demo|scratch|coming-soon|placeholder` unless explicitly allowlisted.
+Stored in `acquisition_priority_score` (integer) with source breakdown JSON in `raw_data.scoring`.
 
 ---
 
-## 3. Unified Homeowner Flow
+## Phase 7 — Queue Classification
 
-**Entry (all three converge):**
-- Voice → `/alex` orb tap
-- Chat → `/alex` text input
-- Manual → `/project/new` form
+Derived (no new column needed) via `acquisition_priority_score`:
 
-All three call new hook **`useCreateProject()`** in `src/hooks/useCreateProject.ts` which:
-1. Calls edge function `create-project-unified` (new) which inserts `projects` + `demand_signals` + upserts `profiles` (homeowner_account). Demand-signal failure is caught, logged, never blocks project insert.
-2. Navigates to `/project-created?id={projectId}`.
-3. On that page: fetch demand context (category, city, waiting count via existing `demand_signals` aggregates), then show CTA "View Project" → `/projects/:id`, plus secondary CTA "Continue with Alex" → `/alex?project={id}`.
+- **A / Ready to activate** — 90–100
+- **B / High potential** — 75–89
+- **C / Medium** — 50–74
+- **D / Ignore** — < 50
 
-**Matching branch** — after project created, background job returns:
-- matches exist → CTA on `/project-created` becomes "Voir mes recommandations" → `/recommendations?project={id}`
-- no matches → CTA becomes "Suivre ma demande" → `/waiting?project={id}`
+Expose via SQL view `v_acquisition_queues`:
 
----
+```sql
+CREATE VIEW public.v_acquisition_queues AS
+SELECT *, CASE
+  WHEN acquisition_priority_score >= 90 THEN 'A_ready'
+  WHEN acquisition_priority_score >= 75 THEN 'B_high'
+  WHEN acquisition_priority_score >= 50 THEN 'C_medium'
+  ELSE 'D_ignore' END AS queue_tier
+FROM public.contractor_prospects
+WHERE outreach_eligible = true;
+```
 
-## 4. Unified Contractor Flow
-
-`/entrepreneurs` (existing) → Alex-guided OR Manual → business search (Company / GMB import via existing `business-import`) → profile draft → AI optimization (existing scoring) → plan selection (`/entrepreneur/plan`) → Stripe → **`/activation-success`**.
-
-**New `PageActivationSuccess`:**
-- Query `contractor_service_regions` + `demand_signals` for the contractor's cities × categories.
-- Show 3 real numbers: homeowners waiting, estimated $ opportunity, next 3 hot demands.
-- CTA "Voir mes opportunités" → `/leads`.
-
-Replace any generic "Payment successful" redirect from Stripe webhook / checkout success URL with `/activation-success`.
+`SECURITY INVOKER`, grants match table.
 
 ---
 
-## 5. Registration Success Router
+## Phase 8 — Eligibility Contract in Every Worker
 
-Replace any "Account Created" terminal page. New **`src/pages/PageRegistrationSuccess.tsx`** at `/welcome`:
-- Reads role from session; if unknown, shows 3 role cards (🏠 / 🔨 / 🏢).
-- On pick → routes to homeowner onboarding (`/alex`), contractor onboarding (`/entrepreneurs`), or condo (`/condo`).
-- Never a dead end.
+**New file `supabase/functions/_shared/outreachEligibility.ts`** — single guard used by every sending worker:
 
-Update `AuthCallbackPage` and Supabase `emailRedirectTo` to land on `/welcome`.
+```ts
+export function assertCanSendSMS(p) {
+  if (!p.outreach_eligible) throw new SkipError('not_eligible');
+  if (p.phone_type !== 'mobile') throw new SkipError('not_mobile');
+}
+export function assertCanSendEmail(p) {
+  if (!p.outreach_eligible) throw new SkipError('not_eligible');
+  if (p.aggregator_email) throw new SkipError('aggregator');
+}
+export function assertCanPersonalize(p) {
+  if ((p.acquisition_priority_score ?? 0) < 50) throw new SkipError('low_score');
+}
+```
 
----
-
-## 6. Dashboards
-
-**Homeowner `/dashboard`** — tabs: `Alex | Projets | Soumissions | Entrepreneurs | Passeport`. Each tab route: `/dashboard`, `/projects`, `/quotes`, `/contractors-mine`, `/home-passport`. Missing pages get real minimal shells with CTA.
-
-**Contractor `/pro`** — tabs: `Aperçu | Leads | Recommandations | Agenda | Profil`. Existing routes `/leads`, `/agenda`, `/profile` remain. Add `/pro/recommendations`.
-
----
-
-## 7. Layout Guardrail Extension
-
-Extend `PageShell` and `MobileQAOverlay` (already in place from prior work):
-- New QA rule: **"no canonical CTA visible"** — scans DOM for `[data-cta-canonical]`; warns if absent.
-- New QA rule: **"placeholder text"** — flags visible text matching `/coming soon|bientôt disponible|placeholder|lorem/i`.
-- Dev + admin overlay shows a red banner if either fires.
+Wire into every existing outreach edge function that sends SMS or email (`outbound-*`, `acq-*`, `send-*`). Each guard records a `platform_operation_outcomes` row so admins see *why* nothing was sent (uses the Production Reliability framework already in place).
 
 ---
 
-## 8. Files Changed
+## Phase 9 — Reprocessing Edge Function
+
+**New `supabase/functions/acquisition-recalculate-priority/index.ts`**
+
+- Paginated (default 500/batch, `?batch=` + `?cursor=`) to avoid function timeouts.
+- For each prospect: aggregator check → phone classify → website check → recompute score → set eligibility + channel → upsert row.
+- Emits `platform_operation_outcomes` with counts (recomputed, suppressed_aggregator, suppressed_unreachable, promoted_to_A).
+- Idempotent; safe to re-run.
+
+A one-shot cron (`pg_cron`) row triggers it hourly for prospects where `priority_recomputed_at IS NULL OR older than 7 days`. Admin can also trigger from the new dashboard.
+
+---
+
+## Phase 10 — `/admin/revenue-intelligence`
+
+**New file `src/pages/admin/PageAdminRevenueIntelligence.tsx`** (registered in admin router + `adminToolsRegistry`).
+
+Wrapped in `PageShell variant="admin"`, uses `CardGlass`/`SectionBlock`, follows readability tokens.
+
+**KPI cards** (single RPC `rpc_acquisition_intelligence_summary`): Total prospects, Eligible, Suppressed, Aggregator emails, Mobile numbers, Landlines, No website, 25+ reviews, Ready to activate (queue A).
+
+**Table** (paginated, server-side sort, from `v_acquisition_queues`): Company · Category · City · Reviews · Rating · Website · Phone Type · Email · Priority · Status · Recommended Channel.
+
+**Filters**: Only Mobile · Only No Website · 25+ Reviews · No Website + Reviews · Eligible Only · Suppressed Only · Queue tier (A/B/C/D).
+
+**Actions**: Recompute selected · Recompute all (fires the edge function with confirmation).
+
+---
+
+## Phase 11 — Rollout Order
+
+1. Migration (Phase 1 + Phase 7 view + suppression domain table).
+2. Shared helpers (aggregator, phone, scoring, eligibility).
+3. Edge function `acquisition-recalculate-priority` + summary RPC.
+4. Wire eligibility guards into every existing outreach function (grep for `send-sms`, `send-email`, `outbound-*`, `acq-*`).
+5. Admin page `/admin/revenue-intelligence`.
+6. Trigger one-shot recompute of the entire table.
+7. Enable hourly cron.
+
+---
+
+## Files & Artefacts
 
 **New**
-- `src/config/ctaRegistry.ts`
-- `src/components/cta/PrimaryCTA.tsx`
-- `src/components/cta/PageCTAFooter.tsx`
-- `src/hooks/useCreateProject.ts`
-- `src/pages/PageProjectCreatedSuccess.tsx`
-- `src/pages/PageRecommendations.tsx`
-- `src/pages/PageActivationSuccess.tsx`
-- `src/pages/PagePartnersLanding.tsx`
-- `src/pages/PageRegistrationSuccess.tsx`
-- `supabase/functions/create-project-unified/index.ts`
+- `supabase/migrations/*_acquisition_intelligence.sql`
+- `supabase/functions/_shared/aggregator.ts`
+- `supabase/functions/_shared/phone.ts`
+- `supabase/functions/_shared/prospectScoring.ts`
+- `supabase/functions/_shared/outreachEligibility.ts`
+- `supabase/functions/acquisition-recalculate-priority/index.ts`
+- `src/pages/admin/PageAdminRevenueIntelligence.tsx`
+- `src/components/admin/revenue-intelligence/KPICards.tsx`
+- `src/components/admin/revenue-intelligence/ProspectTable.tsx`
 
 **Edited**
-- `src/config/routeRegistry.ts` — expanded `LEGACY_REDIRECTS`, tightened `FallbackRoutePage` rules
-- `src/app/router.tsx` — add new routes, remove test/demo routes, add `/entrepreneurs`, `/partenaires`, `/welcome`, `/project-created`, `/recommendations`, `/activation-success`
-- `src/layouts/PageShell.tsx` — required `cta` prop + auto footer
-- `src/components/dev/MobileQAOverlay.tsx` — 2 new rules
-- `src/pages/PageHomeUnicorn.tsx` — primary CTA "Parler à Alex", secondaries "Uploader photos" / "Uploader soumissions"
-- `src/pages/PageWaiting.tsx` — enrich with queue/value/CTA
-- `src/pages/AuthCallbackPage.tsx` — route to `/welcome`
-- Stripe success URLs in `create-checkout-session` edge function → `/activation-success`
+- All outreach edge functions that call SMS/email — add `assertCanSendSMS`/`assertCanSendEmail` at top of the handler (batch grep).
+- `src/admin/adminToolsRegistry.ts` — register new page.
+- `src/app/router.tsx` — add `/admin/revenue-intelligence` route.
 
 ---
 
-## 9. Validation
+## Success Metrics (recorded in `platform_operation_outcomes`)
 
-- Playwright script at 360 / 390 / 430 px:
-  - visits `/`, `/entrepreneurs`, `/partenaires`, `/project-created`, `/recommendations`, `/waiting`, `/activation-success`, `/dashboard`, `/pro`, `/welcome`
-  - asserts exactly one `[data-bottom-dock]`
-  - asserts `[data-cta-canonical]` present
-  - asserts no visible "coming soon"/"placeholder"
-  - screenshots each viewport
-- Curl-check redirects: `/home`, `/matches`, `/coming-soon`, `/test`, `/demo`, `/v2`, `/conversation`, `/homeowner`, `/contractor` all resolve to allowed destinations client-side.
+- `sms_blocked_not_mobile` count monotonically ≥ pre-refactor SMS attempts on landline numbers (proves the guard fires).
+- `email_blocked_aggregator` > 0 within first hour.
+- 0 SMS to `phone_type != 'mobile'` after cutover.
+- 0 emails to `aggregator_email = true`.
+- Queue A size trends up as scoring improves data.
 
 ---
 
-## 10. Out of Scope
+## Out of Scope
 
-- No changes to Alex voice/session (`alexSessionState`, voice config).
-- No pricing changes.
-- No schema changes beyond one edge function; `projects`, `demand_signals`, `profiles` tables already exist.
-- No visual redesign — reuses existing tokens, `PageShell`, `SectionBlock`, `CardGlass`.
+- No changes to Alex, checkout, or Stripe.
+- No new user-visible marketing pages.
+- No SMS/email provider swap — only guard rails.
+- Legacy `priority_score` (numeric) stays for backwards compatibility; UIs read `acquisition_priority_score` going forward.
 
-## 11. Blockers to Confirm
+## Confirm Before Building
 
-1. **`/partenaires` content** — do you have copy/logos for realtors/notaries/property managers/condo boards, or should I ship a functional shell with generic value props + "Contact us" CTA?
-2. **Recommendations data source** — use existing `contractor_scores` + `matches` tables, or is there a preferred RPC?
-3. **Waiting page invite flow** — CTA "Invite Contractors" should open share sheet (SMS/email) or route to a form? I'll default to share sheet unless told otherwise.
+1. **Twilio Lookup** — enable live carrier lookup ($0.005/lookup) or rely purely on NPA/NXX heuristics? Recommendation: rules-first, Twilio behind a feature flag for uncertain cases only.
+2. **Legacy `priority_score`** — leave as-is or backfill from `acquisition_priority_score`?
+3. **Immediate cutover** — after reprocessing, should I hard-pause every existing outbound sequence so nothing sends until the eligibility guards are in place, then resume? Recommended.
