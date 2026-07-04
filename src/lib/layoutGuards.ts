@@ -90,6 +90,16 @@ export function scanLayout(): LayoutScan {
     }
   }
 
+  // Canonical CTA presence — every page should surface at least one.
+  const ctaEls = document.querySelectorAll("[data-cta-canonical]");
+  const missingCanonicalCTA = ctaEls.length === 0;
+
+  // Placeholder text sniff — flag copy that leaks unfinished states.
+  const bodyText = document.body?.innerText ?? "";
+  const placeholderText: string[] = [];
+  const m = bodyText.match(PLACEHOLDER_RE);
+  if (m) placeholderText.push(m[0]);
+
   return {
     timestamp: Date.now(),
     viewport: { w: window.innerWidth, h: window.innerHeight },
@@ -98,6 +108,8 @@ export function scanLayout(): LayoutScan {
     largeGaps,
     contentBehindDock,
     pageShellsFound: document.querySelectorAll("[data-page-shell]").length,
+    missingCanonicalCTA,
+    placeholderText,
   };
 }
 
