@@ -41,8 +41,15 @@ export default function PageActivationSprint() {
         body: { slug, email: email || undefined },
       });
       if (error) throw error;
-      if (data?.url) window.location.href = data.url;
-      else throw new Error("no_checkout_url");
+      if (data?.ok && data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+      const code = data?.error ?? "unknown";
+      const msg = code === "prospect_not_found" || code === "missing_slug"
+        ? "Lien expiré. Contactez-nous pour un nouveau lien Fondateur."
+        : "Impossible d'ouvrir le paiement. Réessayez dans un instant.";
+      throw new Error(msg);
     } catch (e: any) {
       setErr(e?.message ?? "Erreur");
       setBusy(false);
