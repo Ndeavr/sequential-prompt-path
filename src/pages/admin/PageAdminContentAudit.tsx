@@ -57,7 +57,7 @@ export default function PageAdminContentAudit() {
     queryKey: ["cq-categories"],
     queryFn: async () => {
       const { data } = await supabase.from("content_image_categories" as any).select("id, slug, label").order("label");
-      return (data ?? []) as Cat[];
+      return ((data ?? []) as unknown) as Cat[];
     },
   });
 
@@ -65,7 +65,7 @@ export default function PageAdminContentAudit() {
     queryKey: ["cq-rules"],
     queryFn: async () => {
       const { data } = await supabase.from("content_image_rules" as any).select("*");
-      return (data ?? []) as Rule[];
+      return ((data ?? []) as unknown) as Rule[];
     },
   });
 
@@ -76,7 +76,7 @@ export default function PageAdminContentAudit() {
       if (categoryFilter !== "all") q = q.eq("category_id", categoryFilter);
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
       const { data } = await q;
-      return (data ?? []) as LibImg[];
+      return ((data ?? []) as unknown) as LibImg[];
     },
   });
 
@@ -87,7 +87,7 @@ export default function PageAdminContentAudit() {
       if (categoryFilter !== "all") q = q.eq("category_id", categoryFilter);
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
       const { data } = await q;
-      return (data ?? []) as ArtImg[];
+      return ((data ?? []) as unknown) as ArtImg[];
     },
   });
 
