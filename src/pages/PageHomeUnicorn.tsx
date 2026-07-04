@@ -743,7 +743,7 @@ export default function PageHomeUnicorn() {
         <script type="application/ld+json">{JSON.stringify(orgSchema)}</script>
       </Helmet>
 
-      <div className="unicorn-theme min-h-[100svh] pb-[calc(9rem+env(safe-area-inset-bottom))] relative overflow-x-clip overflow-y-visible">
+      <div className="unicorn-theme min-h-[100svh] pb-[var(--dock-safe-pb)] relative isolate overflow-x-clip overflow-y-visible">
         {/* Base intelligence background — full-page, sits behind every section.
             Memoized hero backdrop: never re-renders on Alex voice/chat state. */}
         <HeroBackdrop />
@@ -767,7 +767,7 @@ export default function PageHomeUnicorn() {
           <ContractorAippSplit />
         </section>
         <EntityDefinitionBlock />
-        <BottomDockGlass />
+        {/* BottomDockGlass is mounted once by MainLayout — do not render again here. */}
         <footer className="relative mt-12 py-10 px-4 text-center">
           <FooterBackdrop />
           <p className="relative z-10 text-[13px] text-white/80 max-w-xl mx-auto leading-relaxed">
