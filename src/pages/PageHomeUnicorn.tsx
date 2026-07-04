@@ -748,13 +748,15 @@ export default function PageHomeUnicorn() {
       </Helmet>
 
       <PageShell variant="marketing" id="home-unicorn" className="unicorn-theme overflow-y-visible">
-        {/* Base intelligence background — full-page, sits behind every section.
-            Memoized hero backdrop: never re-renders on Alex voice/chat state. */}
-        <HeroBackdrop />
-        <CinematicArchScenes />
-        <HeaderFloatingGlass />
-        <BannerFirstCustomer48h />
-        <HeroAlexOrb onTalk={onTalk} />
+        {/* Hero region — backdrop + arch scenes are contained inside a relative
+            wrapper so their absolute layers can't paint over other sections. */}
+        <section className="relative">
+          <HeroBackdrop />
+          <CinematicArchScenes />
+          <HeaderFloatingGlass />
+          <BannerFirstCustomer48h />
+          <HeroAlexOrb onTalk={onTalk} />
+        </section>
         <AlexCapabilitiesStrip />
         <AiInputCard onTalk={onTalk} />
         <SectionAIHomeIntelligence />
