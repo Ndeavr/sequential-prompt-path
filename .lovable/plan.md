@@ -1,115 +1,81 @@
-## AI Content Quality Gate — Contrast + Image Governance
+# High-ROI SMS Acquisition Sprint
 
-Fix the three trust-breaking failures visible on `/blog/*` and other article pages: unreadable text, wrong-category AI images, and no central image policy. Ship the four highest-ROI fixes as one coherent system.
+Ship a controlled 25-SMS founder sprint driving contractors to a $1 Stripe activation, gated by an internal test to 514-249-9522.
 
----
+## Guardrails (hard stops)
 
-### 1. Global readability fix (site-wide)
+- **No contractor SMS** goes out until the internal test to `5142499522` is `delivered` AND the tracked link resolves to a working Stripe $1 checkout.
+- **No SMS** if: landline, phone validation failed, ROI < 80, duplicate company, aggregator/marketplace domain, missing tracking link, or Stripe unavailable.
+- Send **5 first, wait 30 min, then 20** only if delivery + click tracking prove out.
+- Cap scraping the moment 25 qualified prospects are queued.
 
-Enforce WCAG AAA on all text over dark/gradient surfaces.
+## Step 1 — Data model (migration)
 
-- Update tokens in `src/index.css` under the dark scope (`.alex-immersive`, `.admin-theme`, article shells):
-  - `--text-primary: 255 255 255` (headings → `#FFFFFF`)
-  - `--text-body: 255 255 255 / 0.92`
-  - `--text-muted: 255 255 255 / 0.75` (floor — never below)
-  - Deprecate any `text-white/60`, `text-white/50`, `opacity-70` on text.
-- Add a "readable surface" rule: any text block sitting on a gradient/backdrop must be wrapped in `.glass-strong` (bg `rgba(10,15,25,0.72)` + blur 24px) so contrast is measured against a solid, not the gradient.
-- Extend the existing UI readability rule (`mem://standards/ui-readability-rule`) with the AAA floor and the "no text on raw gradient" rule.
-- Sweep the offenders visible in the screenshots:
-  - `PageArticleDetail` / SEO article template: FAQ accordion, "Articles connexes" cards, breadcrumbs, `3 min` metadata.
-  - `SeoFaqSection`, `SeoInternalLinks`, article breadcrumb component.
-  Replace muted classes with the new tokens and wrap each section in `.glass-strong`.
+New tables (all with GRANTs + RLS + service_role access for edge functions):
 
-### 2. Article contrast guard (build-time + runtime)
+- `sms_sprint_campaigns` — id, name, status (`draft|test_pending|test_ok|sending|paused|complete`), test_phone, batch_size, created_by.
+- `sms_sprint_prospects` — campaign_id, prospect_id (FK `contractor_prospects`), city, category, roi_score, phone_e164, phone_type, qualification_status (`qualified|rejected`), rejection_reason, variant (`A..E`), tracking_slug (unique), created_at.
+- `sms_sprint_messages` — prospect_row_id, phase (`initial|followup_24h|followup_48h`), body, provider_id, status (`queued|sent|delivered|failed`), status_reason, sent_at, delivered_at.
+- `sms_sprint_link_events` — tracking_slug, event (`click|activation_view|checkout_started|checkout_completed`), prospect_row_id, meta jsonb, occurred_at.
+- `sms_sprint_test_runs` — campaign_id, phone, status, provider_id, delivered_at, link_clicked_at, checkout_completed_at.
 
-- **Build-time**: extend `scripts/content-audit.ts` with a new scanner `contrast-audit` that parses article/SEO templates and flags any text utility whose computed contrast against its nearest surface token is `< 7:1`. Fails CI (`blocking` severity).
-- **Runtime dev guard**: small hook `useContrastGuard` (dev-only) that walks article DOM, computes contrast via `getComputedStyle`, and logs to the visual stability buffer when `< 7`.
+Extend `contractor_prospects` reads via a view `v_sms_sprint_eligible` filtering: ROI ≥ 80, `has_mobile = true` OR `phone_type in ('mobile','likely_mobile')`, google_rating ≥ 4.6, review_count ≥ 20, active GBP, non-aggregator, no franchise flag, weak/no website, province = QC, city in the 6 targets, category in the 6 targets. Reuses existing `_shared/prospectScoring.ts`, `_shared/phone.ts`, `_shared/aggregator.ts` from the earlier refactor.
 
-### 3. Category-scoped image governance
+## Step 2 — Edge functions (Twilio via existing connector gateway)
 
-Replace "article → random image" with `category → approved library → article`.
+1. `sms-sprint-test` — sends the internal test SMS to `5142499522` with a real generated tracking slug pointing at the activation landing. Records to `sms_sprint_test_runs`. Blocks Step 4 until `delivered` + `link_clicked_at` OR admin manual override.
+2. `sms-sprint-scrape` — pulls from `v_sms_sprint_eligible` across the 6 cities × 6 categories, round-robins for city/category diversity, stops at 25. Records rejections with reason for the dashboard.
+3. `sms-sprint-assign-variants` — evenly distributes variants A–E (5 each), personalizes `[owner/company]`, `[city]`, `[category]`, `[link]`. Generates unique tracking slug per SMS embedding `prospect_id | variant | city | category | campaign_id | click_id`.
+4. `sms-sprint-send` — batch param (`5` or `20`), enforces per-prospect Twilio validation lookup (line type), skips + logs rejection if landline/invalid, posts via Twilio gateway. Handles delivery status webhook.
+5. `sms-sprint-webhook` — Twilio status callback → updates `sms_sprint_messages.status`.
+6. `sms-sprint-track` (public GET `/r/:slug`) — records click, 302 to activation landing with UTM + `click_id`.
+7. `sms-sprint-followups` (cron every 15 min) — 24h no-payment → Follow-up 1; 48h no-click → Follow-up 2. Uses same variant tone.
 
-New tables (single migration):
+## Step 3 — Activation landing (Stripe $1)
 
-- `content_image_categories` — slug, label, description.
-- `content_image_rules` — category_id, allowed_tags[], blocked_tags[], required_tags[], style_prompt, negative_prompt.
-- `content_image_library` — category_id, storage path/url, tags[], source (`generated` | `uploaded` | `stock`), status (`pending` | `approved` | `rejected`), confidence, rejected_reason.
-- `content_article_images` — article_id, image_id, status, override_reason.
+Route `/activer/:slug` (contractor-facing):
 
-Seed the first category `attic-insulation`:
-- Allowed: `unfinished attic, blown fiberglass, attic floor, trusses, soffit, attic hatch, pink insulation, low headroom`
-- Blocked: `window, finished attic, drywall ceiling, cathedral ceiling, insulated wall cavity, living space, furniture, worker posing, cellulose bag, european roof`
-- Style prompt tuned to Quebec unfinished attics (reference: user's ISR photo).
+- H1: **Exclusive Guaranteed Appointments. Not Shared Leads.**
+- Sub: UNPRO helps homeowners find the right contractor using AI. Selected contractors can activate their AI profile for $1.
+- CTA: **Activate for $1** → invokes existing `create-checkout-session` with `mode: payment`, price = $1 CAD one-time SKU, metadata `{ sprint_slug, prospect_id, variant, campaign_id }`.
+- On mount: fire `activation_view` → `sms_sprint_link_events`. On checkout redirect: fire `checkout_started`. Success webhook (extend existing Stripe webhook) → `checkout_completed` + mark prospect `activated`.
 
-Add ~6 more launch categories (roofing, plumbing, HVAC, foundation, exterior, general) with the same shape — content teams extend later via `/admin/content-audit`.
+## Step 4 — Admin cockpit `/admin/acquisition/sms-sprint`
 
-### 4. Image validation pipeline
+Single dashboard (dark `.admin-theme`) showing:
 
-New edge function `content-image-validate`:
+- Internal test status card (sent / delivered / clicked / checkout completed) with **Send Test** button (disabled once ok).
+- Sprint controls: **Scrape 25**, **Send first 5**, **Send remaining 20** (gated: 5-send disabled until test ok; 20-send disabled until 30 min elapsed AND ≥1 delivered click).
+- KPI tiles: scraped, qualified, rejected (+ reason breakdown), queued, sent, delivered, failed, clicked, checkout_started, $1 activations, winning variant (by activation rate).
+- Prospect table: company, city, category, ROI, phone_type, variant, message status, click, payment, rejection reason. Row actions: **Mark for manual call** (landline high-ROI bucket), **Requeue**, **Suppress**.
+- Manual-call queue tab: landline-only prospects with ROI ≥ 80 (not sent SMS, surfaced for founder to call).
 
-1. Accepts `{ image_url, category_slug }`.
-2. Calls Gemini 2.5 Flash multimodal via AI Gateway with a structured prompt: "Return JSON `{ detected_tags[], violates_blocked[], missing_required[], confidence 0-1, verdict: approved|rejected, reason }`."
-3. Writes result to `content_image_library`. Verdict `rejected` blocks publish.
+## Step 5 — Message variants
 
-New edge function `content-image-generate`:
-1. Reads category rule → composes prompt = `style_prompt` + allowed tags, `negative_prompt` + blocked tags.
-2. Calls `openai/gpt-image-2` (or Gemini fallback) via `/v1/images/generations`.
-3. Pipes result through `content-image-validate` before storing.
-4. On rejection, auto-regenerates up to 3 times, then flags for manual review.
+Stored in `sms_sprint_variants` seed rows (A–E, verbatim copy from the brief) + follow-up 1 (24h) + follow-up 2 (48h) templates. Rendered server-side to keep formatting stable.
 
-Wire this into the existing article publish path (`renovationContentService` / any current image assignment) — a publish is blocked if `content_article_images.status !== 'approved'`.
+## Step 6 — Execution runbook (after build)
 
-### 5. Admin cockpit — `/admin/content-audit`
+1. Open `/admin/acquisition/sms-sprint` → click **Send Test** → confirm delivery + click + $1 checkout page loads on the test phone. Nothing else fires until this is green.
+2. Click **Scrape 25** → verify rejection reasons look sane.
+3. Click **Send first 5** → wait 30 min → review delivery + click counters.
+4. Click **Send remaining 20**.
+5. Cron takes over follow-ups at 24h / 48h.
 
-New page `PageAdminContentAudit.tsx`:
+## Return payload (dashboard export button)
 
-Columns: URL · Category · Image status (approved / rejected / pending) · Confidence · Readability status · Contrast score · Publish status.
+JSON download with: test SMS result, scraped count, 25 qualified prospects (with variant, phone_type, ROI), rejection reasons, delivery/click/payment status per prospect, first $1 activation timestamp, blockers list.
 
-Row actions: Replace image (from library), Regenerate (calls `content-image-generate`), Approve manually (with reason), Open in new tab.
+## Technical notes
 
-Bulk actions: Regenerate all rejected · Re-run contrast audit · Re-run image audit for a category.
+- Reuse: `_shared/prospectScoring.ts`, `_shared/phone.ts`, `_shared/aggregator.ts`, `_shared/outreachEligibility.ts`, `_shared/reliability.ts` (FailureCode, reportOutcome).
+- Twilio: gateway pattern per project standards, `TWILIO_API_KEY` connection (confirm linked before sending; if missing, ask user to connect Twilio).
+- Stripe: reuse `create-checkout-session`; need a **$1 CAD founder activation** price — I will create it via Stripe tools during build.
+- Reliability: every send/scrape/webhook writes to `platform_operation_outcomes` with canonical FailureCode; dashboard surfaces via `<OperationHealthCard>`.
+- No client-side secrets, no rate limiting primitive added (per project standard).
 
-Filters: category, status, confidence range, last audited date.
+## Out of scope this sprint
 
-KPI header: total articles · % passing readability · % passing image audit · pending manual review.
-
----
-
-### Files (new)
-
-- `supabase/migrations/<ts>_content_quality_gate.sql`
-- `supabase/functions/content-image-validate/index.ts`
-- `supabase/functions/content-image-generate/index.ts`
-- `src/pages/admin/PageAdminContentAudit.tsx`
-- `src/features/contentQuality/{types.ts,useContentAudit.ts,ImageLibraryPicker.tsx,ContrastBadge.tsx}`
-- `src/hooks/useContrastGuard.ts` (dev-only)
-- `src/content-guard/contrastScanner.ts`
-- Seed: `supabase/seeds/content_image_rules_v1.sql`
-
-### Files (edited)
-
-- `src/index.css` — AAA tokens, `.glass-strong` floor.
-- `src/seo/components/SeoFaqSection.tsx`, `SeoInternalLinks.tsx`, article/breadcrumb components — swap muted classes + wrap in `.glass-strong`.
-- `src/pages/PageArticleDetail*.tsx` (and equivalent SEO article templates) — apply the readable surface pattern.
-- `src/seo/services/renovationContentService.ts` — call the new image validation before publish.
-- `scripts/content-audit.ts` — add contrast scanner, fail CI on `< 7:1`.
-- `src/app/router.tsx` — add `/admin/content-audit`.
-- `src/admin/adminToolsRegistry.ts` — register the tool.
-
-### Data / API changes
-
-- 4 new tables (with GRANTs + RLS admin-only) + seed of `attic-insulation` rule and starter categories.
-- 2 new edge functions using Lovable AI Gateway (Gemini for validation, gpt-image-2 for generation).
-
-### Rollout
-
-1. Migration + seed + edge functions.
-2. Global tokens + article template sweep (visible fix on `/blog/*` immediately).
-3. Image pipeline + admin cockpit.
-4. Backfill: run `content-image-validate` across existing articles → auto-flag wrong-category images (all cathedral/finished-attic/window photos on attic articles get `rejected` and queued for regeneration).
-
-### Out of scope (this pass)
-
-- Rebuilding article content itself.
-- Full library beyond the 7 launch categories.
-- Public-facing image credits / photographer attribution.
+- Long-term nurture beyond 48h follow-up.
+- Voice/RCS fallback (SMS only per brief).
+- Auto-dialer for landlines (manual call queue only).
