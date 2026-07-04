@@ -66,6 +66,7 @@ const PageAdminPartners = lazyWithRetry(() => import("@/pages/admin/partners/Pag
 const PageAdminContentGuard = lazyWithRetry(() => import("@/pages/admin/PageAdminContentGuard"));
 const PageAdminAiVisibilityAudit = lazyWithRetry(() => import("@/pages/admin/PageAdminAiVisibilityAudit"));
 const PageAdminAcquisitionFunnel = lazyWithRetry(() => import("@/pages/admin/PageAdminAcquisitionFunnel"));
+const PageAdminRevenueIntelligence = lazyWithRetry(() => import("@/pages/admin/PageAdminRevenueIntelligence"));
 const PageAdminAcquisitionTests = lazyWithRetry(() => import("@/pages/admin/PageAdminAcquisitionTests"));
 const PageAdminEmailCtaAudit = lazyWithRetry(() => import("@/pages/admin/PageAdminEmailCtaAudit"));
 const PageAdminOutreachHealth = lazyWithRetry(() => import("@/pages/admin/PageAdminOutreachHealth"));
@@ -1478,7 +1479,7 @@ export const AppRouter = () => (
         <Route path="/admin/content-guard" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminContentGuard /></Suspense></ProtectedRoute>} />
         <Route path="/admin/ai-visibility-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAiVisibilityAudit /></Suspense></ProtectedRoute>} />
         <Route path="/admin/acquisition-funnel" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionFunnel /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/revenue-intelligence" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionFunnel /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/revenue-intelligence" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminRevenueIntelligence /></Suspense></ProtectedRoute>} />
         <Route path="/admin/acquisition-tests" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionTests /></Suspense></ProtectedRoute>} />
         <Route path="/admin/revenue-gate-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminRevenueGateAudit /></Suspense></ProtectedRoute>} />
         <Route path="/admin/revenue-path-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminRevenuePathAudit /></Suspense></ProtectedRoute>} />
