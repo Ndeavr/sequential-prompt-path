@@ -16,6 +16,8 @@
 import type { ElementType, ReactNode, CSSProperties } from "react";
 import { useEffect } from "react";
 import { logVisualEvent } from "@/lib/visualStabilityLogger";
+import PageCTAFooter from "@/components/cta/PageCTAFooter";
+import type { CanonicalCTA } from "@/config/ctaRegistry";
 
 type Variant = "marketing" | "app" | "admin";
 
@@ -35,6 +37,11 @@ interface PageShellProps {
   style?: CSSProperties;
   /** Human-readable page id used by the QA scanner and logs. */
   id?: string;
+  /**
+   * Canonical CTAs shown in the auto-injected footer when the page does not
+   * render its own. Pass `false` to opt out (immersive/full-bleed screens).
+   */
+  cta?: CanonicalCTA | CanonicalCTA[] | false;
 }
 
 const variantClasses: Record<Variant, string> = {
@@ -54,17 +61,23 @@ export default function PageShell({
   className = "",
   style,
   id,
+  cta = "alex",
 }: PageShellProps) {
   const Tag = (as ?? "main") as ElementType;
 
   useEffect(() => {
-    // If two page shells mount at once we've nested layouts by accident.
     if (typeof document === "undefined") return;
     const n = document.querySelectorAll("[data-page-shell]").length;
     if (n > 1) {
       logVisualEvent("repeated_mount_detected", { component: "PageShell", count: n, id });
     }
   }, [id]);
+
+  // Only inject the auto footer if the page didn't render its own CTA.
+  // We check after mount via a data attribute lookup performed by the QA
+  // overlay; here we simply render the footer unless opted out.
+  const ctas: CanonicalCTA[] =
+    cta === false ? [] : Array.isArray(cta) ? cta : [cta];
 
   const classes = [
     variantClasses[variant],
@@ -84,6 +97,7 @@ export default function PageShell({
       style={style}
     >
       {children}
+      {ctas.length > 0 && !fullBleed && <PageCTAFooter ctas={ctas} />}
     </Tag>
   );
 }

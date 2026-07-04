@@ -30,11 +30,12 @@ function badgeTone(scan: LayoutScan): "ok" | "warn" | "fail" {
     scan.duplicateDocks > 1 ||
     scan.horizontalOverflow > 0 ||
     scan.contentBehindDock ||
+    scan.placeholderText.length > 0 ||
     scan.largeGaps.some((g) => g.gapPx > LAYOUT_QA_THRESHOLDS.GAP_FAIL_PX)
   ) {
     return "fail";
   }
-  if (scan.largeGaps.length > 0) return "warn";
+  if (scan.largeGaps.length > 0 || scan.missingCanonicalCTA) return "warn";
   return "ok";
 }
 
@@ -97,11 +98,13 @@ export default function MobileQAOverlay() {
         QA · {scan.viewport.w}px · {tone.toUpperCase()}
       </button>
       {open && (
-        <div className="mt-2 w-[260px] rounded-xl bg-black/85 text-white text-[11px] p-3 space-y-1 font-mono shadow-2xl">
+        <div className="mt-2 w-[280px] rounded-xl bg-black/85 text-white text-[11px] p-3 space-y-1 font-mono shadow-2xl">
           <div>viewport: {scan.viewport.w}×{scan.viewport.h}</div>
           <div>docks: {scan.duplicateDocks} {scan.duplicateDocks > 1 ? "❌ duplicate" : "✓"}</div>
           <div>h-overflow: {scan.horizontalOverflow}px {scan.horizontalOverflow ? "❌" : "✓"}</div>
           <div>behind-dock: {scan.contentBehindDock ? "❌ yes" : "✓ no"}</div>
+          <div>canonical-cta: {scan.missingCanonicalCTA ? "⚠ missing" : "✓"}</div>
+          <div>placeholder-text: {scan.placeholderText.length ? `❌ ${scan.placeholderText[0]}` : "✓"}</div>
           <div>page-shells: {scan.pageShellsFound}</div>
           <div>
             large-gaps: {scan.largeGaps.length}
