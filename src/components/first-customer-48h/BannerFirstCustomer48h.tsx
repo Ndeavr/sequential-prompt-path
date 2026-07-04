@@ -12,19 +12,32 @@ const DISMISS_KEY = "fc48h_banner_dismissed";
 
 export default function BannerFirstCustomer48h() {
   const navigate = useNavigate();
-  const [dismissed, setDismissed] = useState(false);
+  // Lazy initializer reads sessionStorage synchronously on first render so the
+  // banner never flashes for users who already dismissed it (was causing a
+  // ~180px vertical jump on load).
+  const [dismissed, setDismissed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return sessionStorage.getItem(DISMISS_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
   const spots = useFounderSpotsRemaining("fondateur-149");
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    setDismissed(sessionStorage.getItem(DISMISS_KEY) === "1");
+    if (dismissed) return;
     trackFirstCustomerEvent("founder_banner_view");
-  }, []);
+  }, [dismissed]);
 
   if (dismissed) return null;
 
   const handleClose = () => {
-    sessionStorage.setItem(DISMISS_KEY, "1");
+    try {
+      sessionStorage.setItem(DISMISS_KEY, "1");
+    } catch {
+      /* ignore */
+    }
     setDismissed(true);
   };
 
