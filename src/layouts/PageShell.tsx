@@ -81,7 +81,7 @@ export default function PageShell({
 
   const classes = [
     variantClasses[variant],
-    isolate ? "isolate overflow-x-clip" : "",
+    isolate ? "isolate overflow-x-clip [contain:paint]" : "",
     dockSafe ? "pb-[var(--dock-safe-pb)]" : "",
     padded && !fullBleed ? "" : "",
     className,
