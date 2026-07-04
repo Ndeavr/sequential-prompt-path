@@ -15,9 +15,11 @@
     --duration-reveal: 600ms;
 
     /* ─── Mobile dock safe-area padding token ───
-       Used by <main> in every layout so page content never slides behind
-       the fixed BottomDockGlass / MobileBottomNav on mobile viewports. */
-    --dock-safe-pb: calc(112px + env(safe-area-inset-bottom));
+       Used by <PageShell> so page content never slides behind the fixed
+       BottomDockGlass / MobileBottomNav on mobile viewports.
+       dock-safe-pb = dock height + iOS safe area + 24px breathing room. */
+    --bottom-dock-height: 88px;
+    --dock-safe-pb: calc(var(--bottom-dock-height) + env(safe-area-inset-bottom) + 24px);
 
     /* ─── Radius (premium soft) ─── */
     --radius-card: 28px;
