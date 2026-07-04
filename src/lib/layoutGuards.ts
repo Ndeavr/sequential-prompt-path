@@ -42,6 +42,8 @@ export function scanLayout(): LayoutScan {
       largeGaps: [],
       contentBehindDock: false,
       pageShellsFound: 0,
+      missingCanonicalCTA: false,
+      placeholderText: [],
     };
   }
 
