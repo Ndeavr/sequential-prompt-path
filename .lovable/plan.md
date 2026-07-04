@@ -1,80 +1,115 @@
-## Root cause
+## Goal
+Turn the one-off fix into permanent, self-enforcing layout guardrails: a single reusable `<PageShell>`, tokens + lint rules that prevent duplicate docks, safe bottom padding on every mobile page, and a runtime QA overlay that flags regressions.
 
-1. **`/home` and `/matches` render the "Coming soon" fallback.** Neither path is registered in `src/app/router.tsx`. The catch-all `<Route path="*" element={<FallbackRoutePage />} />` sends them to `FallbackLandingTemplateUNPRO`, which shows the "Cette fonctionnalité arrive bientôt" copy pulled from `navigation_fallback_pages`.
-2. **Bottom nav is rendered twice on `/`.** `MainLayout` lazy-mounts `BottomDockGlass` as `MobileBottomNav`, and `PageHomeUnicorn` also mounts `<BottomDockGlass />` at the end of the tree. Two stacked fixed docks cause the visible "cut" over the Espace entrepreneurs preview card and extra whitespace where a second dock reserves nothing.
-3. **Content passes behind the fixed dock on non-Main layouts.** `ContractorLayout`, `DashboardLayout`, `AdminLayout` render `MobileBottomNav` but their `<main>` has no `padding-bottom` reserving the dock height + `env(safe-area-inset-bottom)`, so cards get clipped on mobile.
-4. **`ContractorAippSplit` uses a decorative absolute glow that on narrow viewports pushes the card into a taller flow because of `overflow-x-clip` on parent + the outer `<section className="relative">` wrapping only the backdrop + content.** The `IntelligenceBackground` variants (`contractors`, `passport`, `footer`) are `position:absolute inset-0` inside sections that are visually adjacent, producing the large empty band between "Espace entrepreneurs" and "Qu'est-ce que UNPRO ?" seen in the screenshots.
-5. **Route directory exposes unfinished slugs.** `SmartHeader`, `MegaMenu`, `SmartFooter`, `BottomDockGlass` and site-map fallbacks reference paths (`/matches`, `/home`, etc.) that hit the fallback template instead of a real page.
+## New files
 
-## Fixes
+### 1. `src/layouts/PageShell.tsx`
+Canonical page wrapper. Every page must use it (directly or via a layout).
 
-### 1. Router redirects and route hygiene (`src/app/router.tsx`)
+Props:
+- `as` (default `main`)
+- `variant`: `"marketing" | "app" | "admin"` — controls max-width, background scope
+- `padded` (default `true`) — applies horizontal + top padding
+- `dockSafe` (default `true`) — applies `pb-[var(--dock-safe-pb)]`
+- `isolate` (default `true`) — adds `isolate overflow-x-clip`
+- `noGap` — flag for landing pages that manage their own vertical rhythm
+- `data-page-shell` marker used by the QA scanner
+- Dev-only assertion: if a descendant renders `<BottomDockGlass />` or `<MobileBottomNav />`, log a red console error via `visualStabilityLogger` and mark `data-nav-clipped`.
 
-- Add near the top of the `<Routes>` block, before the catch-all:
-  ```tsx
-  <Route path="/home" element={<Navigate to="/" replace />} />
-  <Route path="/matches" element={<Navigate to="/" replace />} />
-  ```
-  (`Navigate` imported from `react-router-dom`.)
-- Audit all `<Route>` entries that render `FallbackRoutePage`/`FallbackLandingTemplateUNPRO` directly. If any legacy paths exist besides the catch-all, redirect them to `/` too.
-- Keep `<Route path="*" element={<FallbackRoutePage />} />` last so genuinely unknown URLs still land on the branded fallback (not the ones we own).
+### 2. `src/components/layout/SectionBlock.tsx`
+Wrapper enforcing max 48 px inter-section gap:
+- `gap`: `"none" | "sm" | "md" | "lg"` mapped to `mt-0 | mt-4 | mt-6 | mt-8` (max 32 px).
+- `namedGap` prop bypasses the cap with a comment reason.
+- Adds `relative isolate` and enforces `overflow-x-clip` when children contain absolute layers.
 
-### 2. Hide unfinished links from navigation
+### 3. `src/lib/layoutGuards.ts`
+Pure helpers:
+- `assertSingleDock()` — counts `[data-bottom-dock]` in DOM.
+- `scanLayout()` — returns `{ duplicateDocks, horizontalOverflow, largeGaps, contentBehindDock }`.
+- Uses `IntersectionObserver` + `getBoundingClientRect` on all `[data-page-shell] > *` to compute gaps.
 
-- In `src/components/navigation/SmartHeader.tsx`, `src/components/navigation/SmartFooter.tsx`, `src/components/navigation/MegaMenu.tsx`, `src/components/home-unicorn/BottomDockGlass.tsx`, and `src/components/layout/SiteFooterIntelligence.tsx`, remove or `hidden`-guard link items whose `to` matches: `/home`, `/matches`, and any other href that resolves to `FallbackRoutePage` (grep for links with no matching `<Route path=...>` in the router).
-- Add a small allow-list constant `SHIPPED_ROUTES` in `src/config/routeRegistry.ts` and a `isShipped(path)` helper. Use it in the nav components to filter items instead of hard-deleting, so we can re-enable safely later.
+### 4. `src/components/dev/MobileQAOverlay.tsx`
+Dev + admin-only floating badge (bottom-left, `z-[9999]`) rendered inside `MainLayout` when `import.meta.env.DEV` OR `?qa=1` OR user has admin role.
+- Runs `scanLayout()` every 1 s.
+- Shows PASS / WARN chips per rule; click expands to details.
+- Emits events into `visualStabilityLogger` for `/admin/site-health`.
 
-### 3. Kill duplicate bottom dock and reserve bottom padding
+### 5. `src/config/routeRegistry.ts`
+`SHIPPED_ROUTES: Set<string>` + `isShipped(path)` + `LEGACY_REDIRECTS: Record<string,string>`. Router iterates `LEGACY_REDIRECTS` to emit `<Navigate>` entries — one source of truth.
 
-- In `src/pages/PageHomeUnicorn.tsx`, delete the inline `<BottomDockGlass />` render (line 767). `MainLayout` already mounts it via `DeferredAfterInteractive`.
-- In `src/layouts/MainLayout.tsx`, `<main>` already has `pb-[calc(96px+env(safe-area-inset-bottom))]`. Confirm the value matches the dock's real rendered height (~84 px + safe area). Bump to `pb-[calc(112px+env(safe-area-inset-bottom))]` and expose it as a CSS var `--dock-safe-pb` in `src/index.css` so every layout uses the same token.
-- Apply `pb-[var(--dock-safe-pb)] md:pb-0` on `<main>` in `ContractorLayout.tsx`, `DashboardLayout.tsx`, `AdminLayout.tsx`. This stops cards from sliding behind the dock on Android 360–430 px.
-- Ensure `BottomDockGlass` wrapper keeps `z-50` and `pointer-events-none` on the outer container while the pill/dock itself is `pointer-events-auto` — already correct in the file. Keep that.
+### 6. `eslint-rules/no-bottom-dock-in-pages.js` + register in `eslint.config.js`
+Custom ESLint rule that errors on any import of `BottomDockGlass` or `MobileBottomNav` outside `src/layouts/**` and `src/components/navigation/**` and `src/components/home-unicorn/BottomDockGlass.tsx` itself. Prevents the class of bug returning.
 
-### 4. Fix Espace entrepreneurs cut and section gaps in `src/pages/PageHomeUnicorn.tsx`
+## Edits
 
-- Remove the outer `<section className="relative">…</section>` wrappers around `PassportBackdrop`/`PIMIntroBand` and `ContractorsBackdrop`/`ContractorAippSplit`. Move the backdrops inside the block they decorate (as `position:absolute` layers inside `ContractorAippSplit`'s own root, wrapped in a `relative isolate` container). This eliminates the collapsed-height section that produces the ~400 px blank band.
-- Add `isolate` and `overflow-visible` to the root `<div className="unicorn-theme …">` so absolute glow layers cannot bleed into siblings.
-- Remove the decorative `absolute -top-16 -right-16 w-64 h-64` glow inside `ContractorAippSplit` (line 583–590) or convert it to `inset: 0; mix-blend-mode: screen; opacity: .35` inside a `relative` inner wrapper. This stops the card from being visually clipped on 360 px viewports.
-- Set every inter-section spacer to `mt-6` max and cap standalone spacers to `mb-8` (48 px) — no `mt-12`/`my-16` in the mobile flow.
-- Wrap `ContractorAippSplit`'s outer container with `contain: paint; content-visibility: auto; contain-intrinsic-size: 640px` so it renders as one atomic card and never appears half-loaded during scroll.
+### `src/index.css`
+- Confirm `--dock-safe-pb: calc(var(--bottom-dock-height, 88px) + env(safe-area-inset-bottom) + 24px)` (adds the required 24 px breathing room).
+- Add `--bottom-dock-height: 88px`.
+- Add utility `.page-dock-safe { padding-bottom: var(--dock-safe-pb); }` for legacy pages.
 
-### 5. Guard absolute-positioned decorations globally
+### `src/components/home-unicorn/BottomDockGlass.tsx`
+Add `data-bottom-dock="glass"` on the outer fixed wrapper. Guard: if `document.querySelectorAll('[data-bottom-dock]').length > 1` on mount, unmount self and log error. This makes duplication impossible at runtime, not just at lint time.
 
-- Grep for `pointer-events-none absolute` / `absolute -top-` / `absolute -right-` in `src/pages/PageHomeUnicorn.tsx` and `src/components/home-unicorn/*`. For each, ensure the parent has `relative overflow-hidden` (or `overflow-x-clip`) AND a non-zero natural height. Where the absolute layer is purely decorative, add `[contain:layout_paint]` on the parent.
-- Confirm `IntelligenceBackground` is only used inside a `relative` parent that has real content height. Ban `position:absolute` background when the parent is a bare wrapper with no siblings.
+### `src/components/navigation/MobileBottomNav.tsx`
+Same `data-bottom-dock="nav"` attribute and singleton guard.
 
-### 6. Admin diagnostics tie-in
+### `src/layouts/MainLayout.tsx`
+- Wrap `<main>` with `<PageShell>`.
+- Mount `<MobileQAOverlay />` inside `DeferredAfterInteractive`.
 
-- In `src/pages/admin/PageAdminSiteHealth.tsx`, remove `/home` and `/matches` from the "Routes à tester" list and add a "Routes redirigées" row that verifies `/home` and `/matches` reach `/`. Adds a mobile clip probe: `document.querySelectorAll('[data-nav-clipped]')` count so future regressions surface.
+### `src/layouts/DashboardLayout.tsx`, `ContractorLayout.tsx`, `AdminLayout.tsx`, `CondoLayout.tsx`
+- Replace inline `<main className="… pb-[var(--dock-safe-pb)] …">` with `<PageShell variant="app">` / `"admin"`.
+- Ensure only one `<MobileBottomNav />` per layout. Add runtime assert.
+
+### `src/app/router.tsx`
+- Replace inline `<Route path="/home" …>` / `<Route path="/matches" …>` with a loop over `LEGACY_REDIRECTS`.
+- Wrap `FallbackRoutePage` to consult `isShipped(pathname)`: if the pathname matches a known nav item slug that isn't shipped, redirect to `/` instead of rendering the "coming soon" template. Marketing-crawlable content-only fallbacks remain, but no nav item can reach a coming-soon screen.
+
+### `src/pages/PageHomeUnicorn.tsx`
+- Confirm no local `<BottomDockGlass />` import (already removed).
+- Replace root `<div className="unicorn-theme …">` with `<PageShell variant="marketing">`; drop manual `pb-[var(--dock-safe-pb)]` and `isolate` — the shell owns them.
+- Wrap the "Espace entrepreneurs" and "Comment fonctionne UNPRO" blocks with `<SectionBlock gap="md">`.
+
+### Every current page using `MainLayout`
+Sweep `src/pages/**` and replace bespoke `<div className="min-h-screen …">` wrappers with `<PageShell>`. Batched by directory:
+- `src/pages/PageHomeCopilot.tsx`
+- `src/pages/Home.tsx`
+- `src/pages/PageProfile*.tsx` (leads, agenda, profile referenced in the screenshots)
+- `src/pages/admin/PageAdminSiteHealth.tsx`
+- `src/pages/admin/PageAdminOps.tsx`
+- `src/pages/admin/PageAdminNormalization.tsx`
+
+Pages that already opt out of `MainLayout` (Alex, checkout, immersive) keep custom root but must still use `<PageShell dockSafe={false}>` for the QA scanner to pick them up.
+
+### Documentation
+`docs/standards/PAGE_LAYOUT.md` — 1-page rule sheet: "Every page uses `<PageShell>`; never mount a dock; use `<SectionBlock>` for spacing; `/admin/site-health` catches regressions."
+
+## Runtime QA rules (`MobileQAOverlay`)
+| Rule | Detection | Threshold |
+|---|---|---|
+| Duplicate dock | `document.querySelectorAll('[data-bottom-dock]').length > 1` | fail if > 1 |
+| Body horizontal overflow | `document.documentElement.scrollWidth > window.innerWidth + 1` | fail |
+| Large section gap | consecutive `[data-page-shell] > section` vertical gap | warn > 48 px, fail > 80 px |
+| Content behind dock | `elementFromPoint(x, innerHeight - dockHeight/2)` returns non-dock content | fail |
+| Viewport width | `window.innerWidth` in {360, 390, 430} | info chip |
+
+Runs on mount, on resize, and every 1 s (dev) / 5 s (admin). Persists last 20 findings in `sessionStorage` and forwards them to `visualStabilityLogger` so `/admin/site-health` shows them.
+
+## Prevention proof
+1. **ESLint rule** — importing `BottomDockGlass` in `src/pages/**` fails CI (`Failed to lint` in build output).
+2. **Runtime singleton guard** — even if lint is bypassed, second dock unmounts itself and logs to `visualStabilityLogger`.
+3. **`<PageShell>` mandatory bottom padding** — no page can render without it because layouts wrap `children` in it.
+4. **`<SectionBlock>` gap cap** — `gap="xl"` doesn't exist; the only escape hatch is `namedGap="reason"`.
+5. **`MobileQAOverlay`** — surfaces regressions live at 360 / 390 / 430 px during development, in staging via `?qa=1`, and inside `/admin/site-health` in production.
+6. **Router redirect table** — new legacy paths added by editing one file, not by scattering `<Navigate>` calls.
 
 ## Files changed (expected)
-
-- `src/app/router.tsx` — add redirects, remove stale routes
-- `src/config/routeRegistry.ts` — `SHIPPED_ROUTES` + `isShipped()`
-- `src/components/navigation/SmartHeader.tsx`
-- `src/components/navigation/SmartFooter.tsx`
-- `src/components/navigation/MegaMenu.tsx`
-- `src/components/home-unicorn/BottomDockGlass.tsx`
-- `src/components/layout/SiteFooterIntelligence.tsx`
-- `src/layouts/MainLayout.tsx`, `ContractorLayout.tsx`, `DashboardLayout.tsx`, `AdminLayout.tsx`
-- `src/pages/PageHomeUnicorn.tsx` (remove duplicate dock, refactor section wrappers, tame absolute glow)
-- `src/index.css` — `--dock-safe-pb` token
-- `src/pages/admin/PageAdminSiteHealth.tsx`
-
-## Success criteria
-
-- `/home` and `/matches` respond with `<Navigate to="/" replace />`, no more "Cette fonctionnalité arrive bientôt".
-- Espace entrepreneurs renders as one continuous card on 360–430 px; no visible cut when scrolling.
-- No section on `/` has more than 48 px of empty vertical gap.
-- Bottom dock never overlaps content on Home, Contractor dashboard, Admin, or homeowner dashboard.
-- Only one `BottomDockGlass` is present in the DOM (verified via Playwright + screenshot).
-- No hidden nav item routes to `FallbackRoutePage`.
-
-## Out of scope
-
-No redesign, no new SQL, no dependency changes, no Alex/voice logic changes.
+Created: `src/layouts/PageShell.tsx`, `src/components/layout/SectionBlock.tsx`, `src/lib/layoutGuards.ts`, `src/components/dev/MobileQAOverlay.tsx`, `src/config/routeRegistry.ts`, `eslint-rules/no-bottom-dock-in-pages.js`, `docs/standards/PAGE_LAYOUT.md`
+Edited: `src/index.css`, `src/components/home-unicorn/BottomDockGlass.tsx`, `src/components/navigation/MobileBottomNav.tsx`, `src/layouts/MainLayout.tsx` + Dashboard/Contractor/Admin/Condo layouts, `src/app/router.tsx`, `src/pages/PageHomeUnicorn.tsx`, `src/pages/PageHomeCopilot.tsx`, `src/pages/Home.tsx`, `src/pages/admin/PageAdminSiteHealth.tsx`, `src/pages/admin/PageAdminOps.tsx`, `src/pages/admin/PageAdminNormalization.tsx`, `eslint.config.js`
 
 ## Verification
+- Playwright at 360 / 390 / 430 px against `/`, `/home`, `/matches`, `/profile`, `/leads`, `/agenda`, `/admin/site-health`. Capture screenshots + `scanLayout()` output.
+- Force a violation (temporarily import `<BottomDockGlass />` in a page) to prove ESLint + runtime guard both catch it, then revert.
 
-Run Playwright headless at 375×812 against `/`, `/home`, `/matches`, `/contractors`, `/admin/ops` and capture screenshots. Compare before/after and paste side-by-side into the reply.
+## Out of scope
+No visual redesign, no schema changes, no changes to Alex voice/session code.
