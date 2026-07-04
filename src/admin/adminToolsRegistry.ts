@@ -144,6 +144,19 @@ export const ADMIN_TOOLS: AdminTool[] = [
     primary_metric: "gap score",
     recommended_action: "Recomputer cibles",
   },
+  {
+    id: "site_health",
+    label: "Site Health (diagnostics visuels)",
+    description: "Images cassées, remounts répétés, sondes de connectivité, erreurs console.",
+    route: "/admin/site-health",
+    category: "data_quality",
+    risk_level: "safe",
+    automation_available: false,
+    requires_approval: false,
+    related_tables: [],
+    primary_metric: "événements visuels",
+    recommended_action: "Ouvrir /admin/site-health",
+  },
 ];
 
 export const TOOLS_BY_CATEGORY = ADMIN_TOOLS.reduce<Record<string, AdminTool[]>>((acc, t) => {
