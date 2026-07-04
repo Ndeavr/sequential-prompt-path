@@ -14,7 +14,11 @@ export interface LayoutScan {
   largeGaps: Array<{ afterIndex: number; gapPx: number }>;
   contentBehindDock: boolean;
   pageShellsFound: number;
+  missingCanonicalCTA: boolean;
+  placeholderText: string[];
 }
+
+const PLACEHOLDER_RE = /coming soon|bient[oô]t disponible|placeholder|lorem ipsum/i;
 
 const DOCK_HEIGHT_FALLBACK = 88;
 const GAP_WARN_PX = 48;
