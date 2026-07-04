@@ -112,7 +112,7 @@ export default function BannerFirstCustomer48h() {
                 }
               }
               return (
-                <p className="mt-1 text-[11.5px] font-semibold" style={{ color }}>
+                <p className="mt-1 text-[11.5px] font-semibold min-h-[16px]" style={{ color }}>
                   {label}
                 </p>
               );
