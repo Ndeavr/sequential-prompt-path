@@ -262,7 +262,8 @@ export default function BlogArticlePage() {
           </div>
         </motion.div>
       </article>
-    </>
+    </div>
+
   );
 }
 
