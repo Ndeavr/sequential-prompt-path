@@ -21969,6 +21969,66 @@ export type Database = {
         }
         Relationships: []
       }
+      content_article_images: {
+        Row: {
+          article_id: string
+          article_url: string | null
+          category_id: string | null
+          contrast_score: number | null
+          created_at: string
+          id: string
+          image_id: string | null
+          last_audited_at: string | null
+          override_reason: string | null
+          readability_status: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          article_id: string
+          article_url?: string | null
+          category_id?: string | null
+          contrast_score?: number | null
+          created_at?: string
+          id?: string
+          image_id?: string | null
+          last_audited_at?: string | null
+          override_reason?: string | null
+          readability_status?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          article_id?: string
+          article_url?: string | null
+          category_id?: string | null
+          contrast_score?: number | null
+          created_at?: string
+          id?: string
+          image_id?: string | null
+          last_audited_at?: string | null
+          override_reason?: string | null
+          readability_status?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_article_images_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "content_image_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_article_images_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "content_image_library"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_assets: {
         Row: {
           alt_text: string | null
@@ -22106,6 +22166,148 @@ export type Database = {
             columns: ["topic_id"]
             isOneToOne: false
             referencedRelation: "topic_backlog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_image_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          label: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          label: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          label?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      content_image_library: {
+        Row: {
+          category_id: string
+          confidence: number
+          created_at: string
+          detected_tags: string[]
+          id: string
+          missing_required: string[]
+          model_used: string | null
+          prompt_used: string | null
+          rejected_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source: string
+          status: string
+          storage_path: string | null
+          updated_at: string
+          url: string
+          violates_blocked: string[]
+        }
+        Insert: {
+          category_id: string
+          confidence?: number
+          created_at?: string
+          detected_tags?: string[]
+          id?: string
+          missing_required?: string[]
+          model_used?: string | null
+          prompt_used?: string | null
+          rejected_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+          url: string
+          violates_blocked?: string[]
+        }
+        Update: {
+          category_id?: string
+          confidence?: number
+          created_at?: string
+          detected_tags?: string[]
+          id?: string
+          missing_required?: string[]
+          model_used?: string | null
+          prompt_used?: string | null
+          rejected_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+          url?: string
+          violates_blocked?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_image_library_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "content_image_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_image_rules: {
+        Row: {
+          allowed_tags: string[]
+          blocked_tags: string[]
+          category_id: string
+          created_at: string
+          id: string
+          min_confidence: number
+          negative_prompt: string
+          required_tags: string[]
+          style_prompt: string
+          updated_at: string
+        }
+        Insert: {
+          allowed_tags?: string[]
+          blocked_tags?: string[]
+          category_id: string
+          created_at?: string
+          id?: string
+          min_confidence?: number
+          negative_prompt?: string
+          required_tags?: string[]
+          style_prompt?: string
+          updated_at?: string
+        }
+        Update: {
+          allowed_tags?: string[]
+          blocked_tags?: string[]
+          category_id?: string
+          created_at?: string
+          id?: string
+          min_confidence?: number
+          negative_prompt?: string
+          required_tags?: string[]
+          style_prompt?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_image_rules_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: true
+            referencedRelation: "content_image_categories"
             referencedColumns: ["id"]
           },
         ]
