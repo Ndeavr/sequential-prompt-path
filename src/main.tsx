@@ -7,9 +7,11 @@ import { installLegacyPlanGuard } from "./dev/legacyPlanGuard";
 import { logBoot } from "./lib/bootDebug";
 import { initObservability } from "./lib/observability";
 import { tryRecoverFromChunkError } from "./components/errors/AppErrorBoundary";
+import { installConsoleErrorCapture } from "./lib/visualStabilityLogger";
 
 logBoot("APP_MOUNT");
 void initObservability();
+installConsoleErrorCapture();
 
 // DEV-only: scream in console if legacy plan names (Essentiel/Starter/Basic) leak into UI.
 installLegacyPlanGuard();
