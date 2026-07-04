@@ -67,6 +67,7 @@ const PageAdminContentGuard = lazyWithRetry(() => import("@/pages/admin/PageAdmi
 const PageAdminAiVisibilityAudit = lazyWithRetry(() => import("@/pages/admin/PageAdminAiVisibilityAudit"));
 const PageAdminAcquisitionFunnel = lazyWithRetry(() => import("@/pages/admin/PageAdminAcquisitionFunnel"));
 const PageAdminRevenueIntelligence = lazyWithRetry(() => import("@/pages/admin/PageAdminRevenueIntelligence"));
+const PageAdminContentAudit = lazyWithRetry(() => import("@/pages/admin/PageAdminContentAudit"));
 const PageAdminAcquisitionTests = lazyWithRetry(() => import("@/pages/admin/PageAdminAcquisitionTests"));
 const PageAdminEmailCtaAudit = lazyWithRetry(() => import("@/pages/admin/PageAdminEmailCtaAudit"));
 const PageAdminOutreachHealth = lazyWithRetry(() => import("@/pages/admin/PageAdminOutreachHealth"));
