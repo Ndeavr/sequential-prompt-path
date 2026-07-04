@@ -18867,6 +18867,13 @@ export type Database = {
             referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "campaign_contacts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
+            referencedColumns: ["id"]
+          },
         ]
       }
       campaign_generations: {
@@ -21275,6 +21282,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concierge_touches_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
             referencedColumns: ["id"]
           },
         ]
@@ -25597,6 +25611,13 @@ export type Database = {
             columns: ["contractor_id"]
             isOneToOne: false
             referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_conversions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
             referencedColumns: ["id"]
           },
         ]
@@ -30122,6 +30143,13 @@ export type Database = {
             referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_outreach_tests_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
+            referencedColumns: ["id"]
+          },
         ]
       }
       contractor_performance_metrics: {
@@ -31169,6 +31197,13 @@ export type Database = {
             referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_profiles_draft_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
+            referencedColumns: ["id"]
+          },
         ]
       }
       contractor_prospect_contacts: {
@@ -31228,6 +31263,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prospect_contacts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
             referencedColumns: ["id"]
           },
         ]
@@ -31301,6 +31343,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: true
             referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prospect_enrichment_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: true
+            referencedRelation: "v_sms_sprint_eligible"
             referencedColumns: ["id"]
           },
         ]
@@ -31378,6 +31427,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prospect_scores_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
             referencedColumns: ["id"]
           },
         ]
@@ -31667,6 +31723,13 @@ export type Database = {
             columns: ["dedupe_matched_id"]
             isOneToOne: false
             referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prospects_dedupe_matched_id_fkey"
+            columns: ["dedupe_matched_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
             referencedColumns: ["id"]
           },
         ]
@@ -32049,6 +32112,13 @@ export type Database = {
             referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_recruitment_checkout_sessions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
+            referencedColumns: ["id"]
+          },
         ]
       }
       contractor_recruitment_conversions: {
@@ -32139,6 +32209,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_conversions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
             referencedColumns: ["id"]
           },
         ]
@@ -32242,6 +32319,13 @@ export type Database = {
             referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_recruitment_exceptions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
+            referencedColumns: ["id"]
+          },
         ]
       }
       contractor_recruitment_messages: {
@@ -32338,6 +32422,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_messages_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
             referencedColumns: ["id"]
           },
           {
@@ -32442,6 +32533,13 @@ export type Database = {
             referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_recruitment_offers_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
+            referencedColumns: ["id"]
+          },
         ]
       }
       contractor_recruitment_payments: {
@@ -32523,6 +32621,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_payments_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
             referencedColumns: ["id"]
           },
         ]
@@ -32607,6 +32712,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_replies_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
             referencedColumns: ["id"]
           },
         ]
@@ -32849,6 +32961,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_tasks_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
             referencedColumns: ["id"]
           },
         ]
@@ -47396,6 +47515,13 @@ export type Database = {
             referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "live_outreach_drafts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
+            referencedColumns: ["id"]
+          },
         ]
       }
       login_interstitial_content: {
@@ -54195,6 +54321,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_messages_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
             referencedColumns: ["id"]
           },
           {
@@ -63030,6 +63163,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "prospect_dedupe_reviews_candidate_prospect_id_fkey"
+            columns: ["candidate_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "prospect_dedupe_reviews_existing_prospect_id_fkey"
             columns: ["existing_prospect_id"]
             isOneToOne: false
@@ -63048,6 +63188,13 @@ export type Database = {
             columns: ["existing_prospect_id"]
             isOneToOne: false
             referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_dedupe_reviews_existing_prospect_id_fkey"
+            columns: ["existing_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
             referencedColumns: ["id"]
           },
         ]
@@ -71880,6 +72027,288 @@ export type Database = {
           },
         ]
       }
+      sms_sprint_campaigns: {
+        Row: {
+          batch_size: number
+          created_at: string
+          created_by: string | null
+          first_batch_sent_at: string | null
+          id: string
+          name: string
+          status: string
+          target_categories: string[]
+          target_cities: string[]
+          test_ok_at: string | null
+          test_phone: string
+          updated_at: string
+        }
+        Insert: {
+          batch_size?: number
+          created_at?: string
+          created_by?: string | null
+          first_batch_sent_at?: string | null
+          id?: string
+          name: string
+          status?: string
+          target_categories?: string[]
+          target_cities?: string[]
+          test_ok_at?: string | null
+          test_phone?: string
+          updated_at?: string
+        }
+        Update: {
+          batch_size?: number
+          created_at?: string
+          created_by?: string | null
+          first_batch_sent_at?: string | null
+          id?: string
+          name?: string
+          status?: string
+          target_categories?: string[]
+          target_cities?: string[]
+          test_ok_at?: string | null
+          test_phone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sms_sprint_link_events: {
+        Row: {
+          event: string
+          id: string
+          meta: Json
+          occurred_at: string
+          sprint_prospect_id: string | null
+          tracking_slug: string
+        }
+        Insert: {
+          event: string
+          id?: string
+          meta?: Json
+          occurred_at?: string
+          sprint_prospect_id?: string | null
+          tracking_slug: string
+        }
+        Update: {
+          event?: string
+          id?: string
+          meta?: Json
+          occurred_at?: string
+          sprint_prospect_id?: string | null
+          tracking_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_sprint_link_events_sprint_prospect_id_fkey"
+            columns: ["sprint_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "sms_sprint_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_sprint_messages: {
+        Row: {
+          body: string
+          created_at: string
+          delivered_at: string | null
+          id: string
+          phase: string
+          provider_id: string | null
+          sent_at: string | null
+          sprint_prospect_id: string
+          status: string
+          status_reason: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          phase?: string
+          provider_id?: string | null
+          sent_at?: string | null
+          sprint_prospect_id: string
+          status?: string
+          status_reason?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          phase?: string
+          provider_id?: string | null
+          sent_at?: string | null
+          sprint_prospect_id?: string
+          status?: string
+          status_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_sprint_messages_sprint_prospect_id_fkey"
+            columns: ["sprint_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "sms_sprint_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_sprint_prospects: {
+        Row: {
+          activated_at: string | null
+          activation_status: string
+          campaign_id: string
+          category: string | null
+          city: string | null
+          company_name: string | null
+          created_at: string
+          google_rating: number | null
+          id: string
+          owner_name: string | null
+          phone_e164: string | null
+          phone_type: string | null
+          prospect_id: string | null
+          qualification_status: string
+          rejection_reason: string | null
+          review_count: number | null
+          roi_score: number
+          tracking_slug: string | null
+          variant: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          activation_status?: string
+          campaign_id: string
+          category?: string | null
+          city?: string | null
+          company_name?: string | null
+          created_at?: string
+          google_rating?: number | null
+          id?: string
+          owner_name?: string | null
+          phone_e164?: string | null
+          phone_type?: string | null
+          prospect_id?: string | null
+          qualification_status?: string
+          rejection_reason?: string | null
+          review_count?: number | null
+          roi_score?: number
+          tracking_slug?: string | null
+          variant?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          activation_status?: string
+          campaign_id?: string
+          category?: string | null
+          city?: string | null
+          company_name?: string | null
+          created_at?: string
+          google_rating?: number | null
+          id?: string
+          owner_name?: string | null
+          phone_e164?: string | null
+          phone_type?: string | null
+          prospect_id?: string | null
+          qualification_status?: string
+          rejection_reason?: string | null
+          review_count?: number | null
+          roi_score?: number
+          tracking_slug?: string | null
+          variant?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_sprint_prospects_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "sms_sprint_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_sprint_prospects_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_sprint_prospects_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_sprint_prospects_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_sprint_prospects_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_sprint_test_runs: {
+        Row: {
+          campaign_id: string | null
+          checkout_completed_at: string | null
+          created_at: string
+          delivered_at: string | null
+          id: string
+          link_clicked_at: string | null
+          phone: string
+          provider_id: string | null
+          sent_at: string | null
+          status: string
+          status_reason: string | null
+          tracking_slug: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          checkout_completed_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          link_clicked_at?: string | null
+          phone: string
+          provider_id?: string | null
+          sent_at?: string | null
+          status?: string
+          status_reason?: string | null
+          tracking_slug?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          checkout_completed_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          link_clicked_at?: string | null
+          phone?: string
+          provider_id?: string | null
+          sent_at?: string | null
+          status?: string
+          status_reason?: string | null
+          tracking_slug?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_sprint_test_runs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "sms_sprint_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sms_templates: {
         Row: {
           audience_type: string | null
@@ -79245,6 +79674,13 @@ export type Database = {
             referencedRelation: "v_concierge_targets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_prospects_dedupe_matched_id_fkey"
+            columns: ["dedupe_matched_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
+            referencedColumns: ["id"]
+          },
         ]
       }
       v_autopilot_pipeline: {
@@ -80054,6 +80490,93 @@ export type Database = {
           message_type: string | null
           sender: string | null
           total: number | null
+        }
+        Relationships: []
+      }
+      v_sms_sprint_eligible: {
+        Row: {
+          aggregator_email: boolean | null
+          category: string | null
+          city: string | null
+          company_name: string | null
+          google_rating: number | null
+          has_landline: boolean | null
+          has_mobile: boolean | null
+          has_website: boolean | null
+          id: string | null
+          outreach_eligible: boolean | null
+          owner_name: string | null
+          phone_raw: string | null
+          phone_type: string | null
+          review_count: number | null
+          roi_score: number | null
+          suppression_reason: string | null
+          website_quality_score: number | null
+        }
+        Insert: {
+          aggregator_email?: boolean | null
+          category?: string | null
+          city?: string | null
+          company_name?: string | null
+          google_rating?: number | null
+          has_landline?: boolean | null
+          has_mobile?: boolean | null
+          has_website?: boolean | null
+          id?: string | null
+          outreach_eligible?: boolean | null
+          owner_name?: string | null
+          phone_raw?: string | null
+          phone_type?: string | null
+          review_count?: number | null
+          roi_score?: number | null
+          suppression_reason?: string | null
+          website_quality_score?: number | null
+        }
+        Update: {
+          aggregator_email?: boolean | null
+          category?: string | null
+          city?: string | null
+          company_name?: string | null
+          google_rating?: number | null
+          has_landline?: boolean | null
+          has_mobile?: boolean | null
+          has_website?: boolean | null
+          id?: string | null
+          outreach_eligible?: boolean | null
+          owner_name?: string | null
+          phone_raw?: string | null
+          phone_type?: string | null
+          review_count?: number | null
+          roi_score?: number | null
+          suppression_reason?: string | null
+          website_quality_score?: number | null
+        }
+        Relationships: []
+      }
+      v_sms_sprint_landing: {
+        Row: {
+          activation_status: string | null
+          category: string | null
+          city: string | null
+          company_name: string | null
+          tracking_slug: string | null
+          variant: string | null
+        }
+        Insert: {
+          activation_status?: string | null
+          category?: string | null
+          city?: string | null
+          company_name?: string | null
+          tracking_slug?: string | null
+          variant?: string | null
+        }
+        Update: {
+          activation_status?: string | null
+          category?: string | null
+          city?: string | null
+          company_name?: string | null
+          tracking_slug?: string | null
+          variant?: string | null
         }
         Relationships: []
       }
