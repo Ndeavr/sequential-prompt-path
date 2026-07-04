@@ -134,18 +134,18 @@
     --popover: 222 40% 6%;
     --popover-foreground: 216 30% 95%;
     --muted: 222 25% 11%;
-    /* Readability rule — dark scope: muted text floor 70% lightness (WCAG AA on #060B14) */
-    --muted-foreground: 220 14% 72%;
+    /* Readability rule — dark scope: WCAG AAA floors (Content Quality Gate). */
+    --muted-foreground: 0 0% 82%;
     --border: 222 20% 14%;
     --input: 222 20% 15%;
     --ring: 222 100% 60%;
 
-    /* ─── UNPRO Readability tokens (dark) ─── */
-    --text-primary: 0 0% 98%;
-    --text-body: 220 16% 92%;
-    --text-secondary: 220 14% 82%;
-    --text-muted: 220 14% 72%;
-    --text-disabled: 220 10% 55%;
+    /* ─── UNPRO Readability tokens (dark) — AAA ─── */
+    --text-primary: 0 0% 100%;      /* headings — pure white */
+    --text-body: 0 0% 96%;          /* body ~ rgba(255,255,255,0.96) */
+    --text-secondary: 0 0% 88%;
+    --text-muted: 0 0% 82%;         /* floor — never below */
+    --text-disabled: 0 0% 65%;
     --surface-primary: 222 47% 5%;
     --surface-secondary: 222 40% 8%;
 
