@@ -68,6 +68,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           <CommandPalette lang={lang} />
           <SeoStructuredDataInjector />
           <DeferredJourneyTracker />
+          <MobileQAOverlay />
         </Suspense>
       </DeferredAfterInteractive>
     </div>
