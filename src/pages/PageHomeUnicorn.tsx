@@ -199,7 +199,7 @@ function HeroAlexOrb({ onTalk }: { onTalk: (hint?: string) => void }) {
           étapes.
         </p>
       </div>
-      <div className="flex flex-col items-center justify-center sm:pr-1 order-first sm:order-none">
+      <div className="flex flex-col items-center justify-center sm:pr-1">
         <button
           type="button"
           onClick={() => onTalk()}
