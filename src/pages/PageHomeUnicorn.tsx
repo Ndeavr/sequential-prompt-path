@@ -207,7 +207,7 @@ function HeroAlexOrb({ onTalk }: { onTalk: (hint?: string) => void }) {
           className="group relative rounded-full cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-[#3B82F6]/40 active:scale-[0.97] transition-transform duration-200 ease-out"
           style={{ WebkitTapHighlightColor: "transparent" }}
         >
-          <AlexOrbPremium size={144} interactive showLabel showCaption />
+          <AlexOrbPremium size={144} interactive showLabel={false} showCaption={false} />
         </button>
       </div>
       <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:col-span-2 min-w-0">
