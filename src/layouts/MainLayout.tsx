@@ -13,11 +13,13 @@ import SiteFooterIntelligence from "@/components/layout/SiteFooterIntelligence";
 import FooterSEOGrid from "@/components/navigation/FooterSEOGrid";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import DeferredAfterInteractive from "@/components/system/DeferredAfterInteractive";
+import PageShell from "@/layouts/PageShell";
 
 const AlexCompanionOrb = lazy(() => import("@/components/alex/AlexCompanionOrb"));
 const MobileBottomNav = lazy(() => import("@/components/home-unicorn/BottomDockGlass"));
 const CommandPalette = lazy(() => import("@/components/navigation/CommandPalette"));
 const SeoStructuredDataInjector = lazy(() => import("@/seo/components/SeoStructuredDataInjector"));
+const MobileQAOverlay = lazy(() => import("@/components/dev/MobileQAOverlay"));
 
 import { useJourneyTracker } from "@/hooks/useJourneyTracker";
 
@@ -48,7 +50,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
 
       <SmartHeader />
-      <main className="flex-1 relative z-0 w-full max-w-full overflow-x-hidden pb-[var(--dock-safe-pb)]">{children}</main>
+      <PageShell variant="marketing" className="flex-1 relative z-0">{children}</PageShell>
 
       {showSEOGrid && <FooterSEOGrid />}
       <SiteFooterIntelligence />
