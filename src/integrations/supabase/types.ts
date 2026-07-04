@@ -13801,6 +13801,45 @@ export type Database = {
         }
         Relationships: []
       }
+      appointment_slots: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          ends_at: string
+          held_by: string | null
+          held_until: string | null
+          id: string
+          source: string
+          starts_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          ends_at: string
+          held_by?: string | null
+          held_until?: string | null
+          id?: string
+          source?: string
+          starts_at: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          ends_at?: string
+          held_by?: string | null
+          held_until?: string | null
+          id?: string
+          source?: string
+          starts_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       appointment_surge_events: {
         Row: {
           city_slug: string
@@ -13914,6 +13953,7 @@ export type Database = {
       }
       appointments: {
         Row: {
+          address_id: string | null
           budget_range: string | null
           cancellation_reason: string | null
           completed_at: string | null
@@ -13923,6 +13963,8 @@ export type Database = {
           contractor_id: string
           created_at: string
           created_by: string | null
+          ends_at: string | null
+          google_event_id: string | null
           homeowner_confirmed: boolean | null
           homeowner_user_id: string
           id: string
@@ -13930,16 +13972,20 @@ export type Database = {
           notes: string | null
           preferred_date: string | null
           preferred_time_window: string | null
+          problem_summary: string | null
           project_category: string | null
           property_id: string | null
           reschedule_reason: string | null
           scheduled_at: string | null
+          slot_id: string | null
+          source_page: string | null
           status: Database["public"]["Enums"]["appointment_status"]
           timeline: string | null
           updated_at: string
           urgency_level: string | null
         }
         Insert: {
+          address_id?: string | null
           budget_range?: string | null
           cancellation_reason?: string | null
           completed_at?: string | null
@@ -13949,6 +13995,8 @@ export type Database = {
           contractor_id: string
           created_at?: string
           created_by?: string | null
+          ends_at?: string | null
+          google_event_id?: string | null
           homeowner_confirmed?: boolean | null
           homeowner_user_id: string
           id?: string
@@ -13956,16 +14004,20 @@ export type Database = {
           notes?: string | null
           preferred_date?: string | null
           preferred_time_window?: string | null
+          problem_summary?: string | null
           project_category?: string | null
           property_id?: string | null
           reschedule_reason?: string | null
           scheduled_at?: string | null
+          slot_id?: string | null
+          source_page?: string | null
           status?: Database["public"]["Enums"]["appointment_status"]
           timeline?: string | null
           updated_at?: string
           urgency_level?: string | null
         }
         Update: {
+          address_id?: string | null
           budget_range?: string | null
           cancellation_reason?: string | null
           completed_at?: string | null
@@ -13975,6 +14027,8 @@ export type Database = {
           contractor_id?: string
           created_at?: string
           created_by?: string | null
+          ends_at?: string | null
+          google_event_id?: string | null
           homeowner_confirmed?: boolean | null
           homeowner_user_id?: string
           id?: string
@@ -13982,16 +14036,26 @@ export type Database = {
           notes?: string | null
           preferred_date?: string | null
           preferred_time_window?: string | null
+          problem_summary?: string | null
           project_category?: string | null
           property_id?: string | null
           reschedule_reason?: string | null
           scheduled_at?: string | null
+          slot_id?: string | null
+          source_page?: string | null
           status?: Database["public"]["Enums"]["appointment_status"]
           timeline?: string | null
           updated_at?: string
           urgency_level?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "appointments_address_id_fkey"
+            columns: ["address_id"]
+            isOneToOne: false
+            referencedRelation: "homeowner_addresses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "appointments_contractor_id_fkey"
             columns: ["contractor_id"]
@@ -14053,6 +14117,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "appointment_slots"
             referencedColumns: ["id"]
           },
         ]
@@ -24214,6 +24285,39 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      contractor_calendar_connections: {
+        Row: {
+          access_status: string
+          contractor_id: string
+          created_at: string
+          google_calendar_id: string | null
+          id: string
+          last_synced_at: string | null
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          access_status?: string
+          contractor_id: string
+          created_at?: string
+          google_calendar_id?: string | null
+          id?: string
+          last_synced_at?: string | null
+          provider?: string
+          updated_at?: string
+        }
+        Update: {
+          access_status?: string
+          contractor_id?: string
+          created_at?: string
+          google_calendar_id?: string | null
+          id?: string
+          last_synced_at?: string | null
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       contractor_capabilities: {
         Row: {
@@ -44182,6 +44286,63 @@ export type Database = {
           seo_keywords?: string[] | null
           slug?: string
           time_estimate_hours?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      homeowner_addresses: {
+        Row: {
+          city: string
+          country: string | null
+          created_at: string
+          full_address: string
+          google_place_id: string | null
+          homeowner_id: string
+          id: string
+          is_default: boolean | null
+          label: string | null
+          lat: number | null
+          lng: number | null
+          postal_code: string | null
+          province: string | null
+          route: string | null
+          street_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          city: string
+          country?: string | null
+          created_at?: string
+          full_address: string
+          google_place_id?: string | null
+          homeowner_id: string
+          id?: string
+          is_default?: boolean | null
+          label?: string | null
+          lat?: number | null
+          lng?: number | null
+          postal_code?: string | null
+          province?: string | null
+          route?: string | null
+          street_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city?: string
+          country?: string | null
+          created_at?: string
+          full_address?: string
+          google_place_id?: string | null
+          homeowner_id?: string
+          id?: string
+          is_default?: boolean | null
+          label?: string | null
+          lat?: number | null
+          lng?: number | null
+          postal_code?: string | null
+          province?: string | null
+          route?: string | null
+          street_number?: string | null
           updated_at?: string
         }
         Relationships: []
