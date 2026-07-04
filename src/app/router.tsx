@@ -500,6 +500,7 @@ const PageCommandCenterTerritories = lazyWithRetry(() => import("@/pages/admin/P
 // SEO Index Domination
 const ContractorSeoPage = lazyWithRetry(() => import("@/pages/seo/ContractorSeoPage"));
 const PageContractorPublicProfileISR = lazyWithRetry(() => import("@/pages/entrepreneur/PageContractorPublicProfileISR"));
+const PageHomeownerBookingFunnel = lazyWithRetry(() => import("@/pages/homeowner/PageHomeownerBookingFunnel"));
 const PageClaimWizard = lazyWithRetry(() => import("@/pages/entrepreneur/PageClaimWizard"));
 const PageClaimWelcome = lazyWithRetry(() => import("@/pages/entrepreneur/PageClaimWelcome"));
 const SolutionServiceCityPage = lazyWithRetry(() => import("@/pages/seo/SolutionServiceCityPage"));
@@ -909,6 +910,7 @@ export const AppRouter = () => (
         <Route path="/radon" element={<Suspense fallback={<LazyFallback />}><PageRadonLanding /></Suspense>} />
         <Route path="/contractors/:id" element={<ContractorProfile />} />
         <Route path="/entrepreneur/isolation-solution-royal" element={<Suspense fallback={<LazyFallback />}><PageContractorPublicProfileISR /></Suspense>} />
+        <Route path="/entrepreneurs/:slug" element={<Suspense fallback={<LazyFallback />}><PageHomeownerBookingFunnel /></Suspense>} />
         <Route path="/entrepreneur/bienvenue" element={<Suspense fallback={<LazyFallback />}><PageClaimWelcome /></Suspense>} />
         <Route path="/entrepreneur/:slug/reclamer" element={<Suspense fallback={<LazyFallback />}><PageClaimWizard /></Suspense>} />
         <Route path="/entrepreneur/:slug" element={<Suspense fallback={<LazyFallback />}><ContractorSeoPage /></Suspense>} />
