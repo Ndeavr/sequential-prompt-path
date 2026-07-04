@@ -1,87 +1,80 @@
-# Site Stability & Anti-Flicker Sprint
+## Root cause
 
-Focused production stability pass. **No redesign, no schema changes.** Only defensive infrastructure that removes flicker, stabilizes image loading, and adds an admin diagnostic surface.
+1. **`/home` and `/matches` render the "Coming soon" fallback.** Neither path is registered in `src/app/router.tsx`. The catch-all `<Route path="*" element={<FallbackRoutePage />} />` sends them to `FallbackLandingTemplateUNPRO`, which shows the "Cette fonctionnalité arrive bientôt" copy pulled from `navigation_fallback_pages`.
+2. **Bottom nav is rendered twice on `/`.** `MainLayout` lazy-mounts `BottomDockGlass` as `MobileBottomNav`, and `PageHomeUnicorn` also mounts `<BottomDockGlass />` at the end of the tree. Two stacked fixed docks cause the visible "cut" over the Espace entrepreneurs preview card and extra whitespace where a second dock reserves nothing.
+3. **Content passes behind the fixed dock on non-Main layouts.** `ContractorLayout`, `DashboardLayout`, `AdminLayout` render `MobileBottomNav` but their `<main>` has no `padding-bottom` reserving the dock height + `env(safe-area-inset-bottom)`, so cards get clipped on mobile.
+4. **`ContractorAippSplit` uses a decorative absolute glow that on narrow viewports pushes the card into a taller flow because of `overflow-x-clip` on parent + the outer `<section className="relative">` wrapping only the backdrop + content.** The `IntelligenceBackground` variants (`contractors`, `passport`, `footer`) are `position:absolute inset-0` inside sections that are visually adjacent, producing the large empty band between "Espace entrepreneurs" and "Qu'est-ce que UNPRO ?" seen in the screenshots.
+5. **Route directory exposes unfinished slugs.** `SmartHeader`, `MegaMenu`, `SmartFooter`, `BottomDockGlass` and site-map fallbacks reference paths (`/matches`, `/home`, etc.) that hit the fallback template instead of a real page.
 
-## Root Causes (from initial scan)
+## Fixes
 
-1. **Auth/profile fetch triggers re-renders on entire app shell** — `PROFILE_FETCH_TIMEOUT` after 2.5s (visible in console) causes many guarded pages to blank/re-render. `AuthGuard`/`UniversalRouteGuard` render fallback trees while `isLoading` toggles.
-2. **Framer-motion `initial="hidden"` on `SectionContainer` and `CardGlass`** — every section starts at `opacity:0` and depends on viewport intersection to reveal. On slow devices or short viewports this reads as flicker/blank cards.
-3. **No unified image component** — 855 files use raw `<img>`. Many use unnormalized Supabase paths or undefined `src`, producing broken icons and layout jump (no width/height/aspect-ratio).
-4. **Deferred overlays via `DeferredAfterInteractive`** — mount after first interaction but some pages depend on them for content, producing perceived "half-loaded" cards.
-5. **StableBackgroundLayer OK** (already single-mount) — not the culprit; keep it.
+### 1. Router redirects and route hygiene (`src/app/router.tsx`)
 
-## Deliverables
+- Add near the top of the `<Routes>` block, before the catch-all:
+  ```tsx
+  <Route path="/home" element={<Navigate to="/" replace />} />
+  <Route path="/matches" element={<Navigate to="/" replace />} />
+  ```
+  (`Navigate` imported from `react-router-dom`.)
+- Audit all `<Route>` entries that render `FallbackRoutePage`/`FallbackLandingTemplateUNPRO` directly. If any legacy paths exist besides the catch-all, redirect them to `/` too.
+- Keep `<Route path="*" element={<FallbackRoutePage />} />` last so genuinely unknown URLs still land on the branded fallback (not the ones we own).
 
-### 1. `SafeImage` component (`src/components/media/SafeImage.tsx`)
-- Props: `src`, `alt`, `width`, `height` OR `aspectRatio`, `priority` (eager vs lazy), `fallback`, `className`.
-- URL normalizer (`src/lib/normalizeImageUrl.ts`): trim, reject empty/`null`/`undefined`, allow `https://`, `/` public, `data:`, and Supabase storage. Never retry more than once on `onError`; swap to fallback placeholder and log once via `visualStabilityLogger`.
-- Always renders a fixed-dimension wrapper (`aspect-ratio` or explicit w/h) to reserve space — no layout shift.
-- `loading="eager"` + `fetchpriority="high"` when `priority`; else `loading="lazy"` + `decoding="async"`.
+### 2. Hide unfinished links from navigation
 
-### 2. Motion stability
-- Add `src/lib/motion.ts` guardrails: `revealCard` and `fadeUp` variants change `initial` opacity from `0` → `1` when `prefers-reduced-motion` OR when `import.meta.env.VITE_DISABLE_REVEAL === "1"`. Keep transforms subtle. Critical content never depends on JS to become visible.
-- `SectionContainer` / `CardGlass`: switch `whileInView` to `animate` with `once: true` and a **safety timeout** — content becomes visible after 400ms even if IntersectionObserver never fires (fixes short-viewport blank sections on mobile).
-- Remove `transition-all` from any page-level wrapper found (audit `src/layouts/*`, `src/app/*`).
+- In `src/components/navigation/SmartHeader.tsx`, `src/components/navigation/SmartFooter.tsx`, `src/components/navigation/MegaMenu.tsx`, `src/components/home-unicorn/BottomDockGlass.tsx`, and `src/components/layout/SiteFooterIntelligence.tsx`, remove or `hidden`-guard link items whose `to` matches: `/home`, `/matches`, and any other href that resolves to `FallbackRoutePage` (grep for links with no matching `<Route path=...>` in the router).
+- Add a small allow-list constant `SHIPPED_ROUTES` in `src/config/routeRegistry.ts` and a `isShipped(path)` helper. Use it in the nav components to filter items instead of hard-deleting, so we can re-enable safely later.
 
-### 3. Auth-shell stability
-- `AuthGuard` and `UniversalRouteGuard`: render a **skeleton that matches the protected page shell** instead of a centered "Chargement…" that replaces the whole tree. Keep header/footer mounted at all times (already true in `MainLayout` — verify no guard wraps `MainLayout`).
-- Add `useStableAuth()` selector that only re-renders when `isAuthenticated` **transitions**, not on every profile timeout tick. Prevents cascade re-renders during the 2.5s profile timeout.
-- Do not gate `MainLayout` children on auth loading.
+### 3. Kill duplicate bottom dock and reserve bottom padding
 
-### 4. Hydration safety
-- Add `src/hooks/useIsMounted.ts` (returns bool after first commit). Any read of `window`/`localStorage`/`document` in render paths must be wrapped. Sweep top offenders: `LanguageToggle`, `ThemeProvider` default, `AlexVoiceContext`, `authSessionStore`.
-- Wrap `ThemeProvider` with `suppressHydrationWarning` on `<html>` (via index.html) — already default in next-themes but confirm.
+- In `src/pages/PageHomeUnicorn.tsx`, delete the inline `<BottomDockGlass />` render (line 767). `MainLayout` already mounts it via `DeferredAfterInteractive`.
+- In `src/layouts/MainLayout.tsx`, `<main>` already has `pb-[calc(96px+env(safe-area-inset-bottom))]`. Confirm the value matches the dock's real rendered height (~84 px + safe area). Bump to `pb-[calc(112px+env(safe-area-inset-bottom))]` and expose it as a CSS var `--dock-safe-pb` in `src/index.css` so every layout uses the same token.
+- Apply `pb-[var(--dock-safe-pb)] md:pb-0` on `<main>` in `ContractorLayout.tsx`, `DashboardLayout.tsx`, `AdminLayout.tsx`. This stops cards from sliding behind the dock on Android 360–430 px.
+- Ensure `BottomDockGlass` wrapper keeps `z-50` and `pointer-events-none` on the outer container while the pill/dock itself is `pointer-events-auto` — already correct in the file. Keep that.
 
-### 5. Visual Stability Logger (`src/lib/visualStabilityLogger.ts`)
-Client-side ring buffer (last 200) capturing:
-- `image_load_failed { src }`
-- `empty_image_src { component }`
-- `component_data_timeout { component, ms }`
-- `repeated_mount_detected { component, count }` (via a `useMountCounter` hook opt-in on suspect components)
-- `section_rendered_empty { section }`
-- Last 25 `console.error` intercepted via a passive wrapper.
-Persisted to `sessionStorage` only. Not exposed to public users.
+### 4. Fix Espace entrepreneurs cut and section gaps in `src/pages/PageHomeUnicorn.tsx`
 
-### 6. `/admin/site-health` diagnostic page
-`src/pages/admin/PageAdminSiteHealth.tsx` (admin-only via existing guard). Sections:
-- **Image health**: run through registered image URLs found in current session buffer; show broken count, empty-src count, sample list.
-- **Render events**: dump ring buffer (mount counts, timeouts, empty sections).
-- **Console errors**: last 25 captured.
-- **Connectivity probes**: Supabase `select 1`, public asset HEAD (`/placeholder.svg`), Supabase storage HEAD (test bucket object).
-- **Route health**: quick links to test pages listed below; each opens in a new tab.
-Registered in `src/app/router.tsx` and added to `adminToolsRegistry.ts` under `category: "diagnostics"`.
+- Remove the outer `<section className="relative">…</section>` wrappers around `PassportBackdrop`/`PIMIntroBand` and `ContractorsBackdrop`/`ContractorAippSplit`. Move the backdrops inside the block they decorate (as `position:absolute` layers inside `ContractorAippSplit`'s own root, wrapped in a `relative isolate` container). This eliminates the collapsed-height section that produces the ~400 px blank band.
+- Add `isolate` and `overflow-visible` to the root `<div className="unicorn-theme …">` so absolute glow layers cannot bleed into siblings.
+- Remove the decorative `absolute -top-16 -right-16 w-64 h-64` glow inside `ContractorAippSplit` (line 583–590) or convert it to `inset: 0; mix-blend-mode: screen; opacity: .35` inside a `relative` inner wrapper. This stops the card from being visually clipped on 360 px viewports.
+- Set every inter-section spacer to `mt-6` max and cap standalone spacers to `mb-8` (48 px) — no `mt-12`/`my-16` in the mobile flow.
+- Wrap `ContractorAippSplit`'s outer container with `contain: paint; content-visibility: auto; contain-intrinsic-size: 640px` so it renders as one atomic card and never appears half-loaded during scroll.
 
-### 7. Sweep of high-traffic pages
-Manual audit + targeted fixes on: `/`, `/home`, `/contractors`, `/project/new`, `/waiting`, `/matches`, `/onboarding`, `/contractor/onboarding`, `/admin`, `/admin/acquisition-funnel`, `/admin/normalization`. For each: replace raw `<img>` in hero/card with `SafeImage`, remove `initial opacity-0` on above-the-fold content, add min-height to card grids.
+### 5. Guard absolute-positioned decorations globally
 
-## Out of Scope
-- No visual redesign, no token changes, no restructure of routes.
-- No DB migrations (logger is client-side only).
-- Not touching `StableBackgroundLayer` (already correct).
-- Not rewriting Alex voice/overlays.
+- Grep for `pointer-events-none absolute` / `absolute -top-` / `absolute -right-` in `src/pages/PageHomeUnicorn.tsx` and `src/components/home-unicorn/*`. For each, ensure the parent has `relative overflow-hidden` (or `overflow-x-clip`) AND a non-zero natural height. Where the absolute layer is purely decorative, add `[contain:layout_paint]` on the parent.
+- Confirm `IntelligenceBackground` is only used inside a `relative` parent that has real content height. Ban `position:absolute` background when the parent is a bare wrapper with no siblings.
 
-## Files
+### 6. Admin diagnostics tie-in
 
-**New**
-- `src/components/media/SafeImage.tsx`
-- `src/lib/normalizeImageUrl.ts`
-- `src/lib/visualStabilityLogger.ts`
-- `src/hooks/useIsMounted.ts`
-- `src/hooks/useMountCounter.ts`
+- In `src/pages/admin/PageAdminSiteHealth.tsx`, remove `/home` and `/matches` from the "Routes à tester" list and add a "Routes redirigées" row that verifies `/home` and `/matches` reach `/`. Adds a mobile clip probe: `document.querySelectorAll('[data-nav-clipped]')` count so future regressions surface.
+
+## Files changed (expected)
+
+- `src/app/router.tsx` — add redirects, remove stale routes
+- `src/config/routeRegistry.ts` — `SHIPPED_ROUTES` + `isShipped()`
+- `src/components/navigation/SmartHeader.tsx`
+- `src/components/navigation/SmartFooter.tsx`
+- `src/components/navigation/MegaMenu.tsx`
+- `src/components/home-unicorn/BottomDockGlass.tsx`
+- `src/components/layout/SiteFooterIntelligence.tsx`
+- `src/layouts/MainLayout.tsx`, `ContractorLayout.tsx`, `DashboardLayout.tsx`, `AdminLayout.tsx`
+- `src/pages/PageHomeUnicorn.tsx` (remove duplicate dock, refactor section wrappers, tame absolute glow)
+- `src/index.css` — `--dock-safe-pb` token
 - `src/pages/admin/PageAdminSiteHealth.tsx`
 
-**Edited**
-- `src/lib/motion.ts` (reduced-motion + safe defaults)
-- `src/components/unpro/SectionContainer.tsx`, `CardGlass.tsx` (safety timeout, no opacity-0 default)
-- `src/guards/AuthGuard.tsx`, `src/guards/UniversalRouteGuard.tsx` (shell skeleton, no full-tree replacement)
-- `src/hooks/useAuth.ts` (stable selector; debounce timeout-driven re-renders)
-- `src/app/router.tsx` (register `/admin/site-health`)
-- `src/admin/adminToolsRegistry.ts` (add entry)
-- Targeted image replacements on the pages listed in §7 (only image swaps + min-height, no layout changes)
+## Success criteria
 
-## Success Criteria
-- Hard refresh: no full-page flash, header/footer never remount.
-- Cards on `/`, `/matches`, `/contractors` render with reserved space; images fall back gracefully.
-- `AuthGuard` never blanks the shell during 2.5s profile timeout.
-- `/admin/site-health` shows live counts and connectivity probes.
-- `prefers-reduced-motion` fully disables reveal animations.
+- `/home` and `/matches` respond with `<Navigate to="/" replace />`, no more "Cette fonctionnalité arrive bientôt".
+- Espace entrepreneurs renders as one continuous card on 360–430 px; no visible cut when scrolling.
+- No section on `/` has more than 48 px of empty vertical gap.
+- Bottom dock never overlaps content on Home, Contractor dashboard, Admin, or homeowner dashboard.
+- Only one `BottomDockGlass` is present in the DOM (verified via Playwright + screenshot).
+- No hidden nav item routes to `FallbackRoutePage`.
+
+## Out of scope
+
+No redesign, no new SQL, no dependency changes, no Alex/voice logic changes.
+
+## Verification
+
+Run Playwright headless at 375×812 against `/`, `/home`, `/matches`, `/contractors`, `/admin/ops` and capture screenshots. Compare before/after and paste side-by-side into the reply.

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import AlexOrbPremium from "@/components/home-unicorn/AlexOrbPremium";
-import BottomDockGlass from "@/components/home-unicorn/BottomDockGlass";
+// BottomDockGlass is intentionally NOT imported here — MainLayout owns the single dock instance.
 import NearbyContractorsCarousel from "@/components/home-unicorn/NearbyContractorsCarousel";
 import AlexCapabilitiesStrip from "@/components/home-unicorn/AlexCapabilitiesStrip";
 import CinematicArchScenes from "@/components/home-unicorn/CinematicArchScenes";
@@ -579,13 +579,16 @@ function ContractorAippSplit() {
           boxSizing: "border-box",
         }}
       >
-        {/* radial glow */}
+        {/* radial glow — constrained inside the card, no negative offsets that
+            escape overflow-clip parents on 360px viewports */}
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full"
+          className="pointer-events-none absolute inset-0 rounded-[24px]"
           style={{
             background:
-              "radial-gradient(circle, rgba(59,130,246,0.45) 0%, rgba(59,130,246,0) 70%)",
+              "radial-gradient(circle at 100% 0%, rgba(59,130,246,0.35) 0%, rgba(59,130,246,0) 55%)",
+            mixBlendMode: "screen",
+            opacity: 0.9,
           }}
         />
 
@@ -740,7 +743,7 @@ export default function PageHomeUnicorn() {
         <script type="application/ld+json">{JSON.stringify(orgSchema)}</script>
       </Helmet>
 
-      <div className="unicorn-theme min-h-[100svh] pb-[calc(9rem+env(safe-area-inset-bottom))] relative overflow-x-clip overflow-y-visible">
+      <div className="unicorn-theme min-h-[100svh] pb-[var(--dock-safe-pb)] relative isolate overflow-x-clip overflow-y-visible">
         {/* Base intelligence background — full-page, sits behind every section.
             Memoized hero backdrop: never re-renders on Alex voice/chat state. */}
         <HeroBackdrop />
@@ -764,7 +767,7 @@ export default function PageHomeUnicorn() {
           <ContractorAippSplit />
         </section>
         <EntityDefinitionBlock />
-        <BottomDockGlass />
+        {/* BottomDockGlass is mounted once by MainLayout — do not render again here. */}
         <footer className="relative mt-12 py-10 px-4 text-center">
           <FooterBackdrop />
           <p className="relative z-10 text-[13px] text-white/80 max-w-xl mx-auto leading-relaxed">

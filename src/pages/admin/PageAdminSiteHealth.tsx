@@ -19,17 +19,21 @@ interface Probes {
 
 const TEST_ROUTES = [
   "/",
-  "/home",
   "/contractors",
   "/project/new",
   "/waiting",
-  "/matches",
   "/onboarding",
   "/contractor/onboarding",
   "/admin",
   "/admin/ops",
   "/admin/acquisition-funnel",
   "/admin/normalization",
+];
+
+// Routes that must redirect to a real page (not the "coming soon" fallback).
+const REDIRECTED_ROUTES: Array<{ from: string; to: string }> = [
+  { from: "/home", to: "/" },
+  { from: "/matches", to: "/" },
 ];
 
 export default function PageAdminSiteHealth() {
@@ -153,6 +157,25 @@ export default function PageAdminSiteHealth() {
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="rounded-2xl border border-border p-5">
+        <h2 className="font-semibold text-lg mb-3">Routes redirigées</h2>
+        <ul className="space-y-2 text-sm">
+          {REDIRECTED_ROUTES.map((r) => (
+            <li key={r.from} className="flex items-center justify-between gap-3">
+              <span className="font-mono">{r.from} → {r.to}</span>
+              <a
+                href={r.from}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs px-2 py-1 rounded border border-border hover:bg-muted"
+              >
+                Tester
+              </a>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="rounded-2xl border border-border p-5">

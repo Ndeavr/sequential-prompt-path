@@ -13,7 +13,7 @@ export default function EntityDefinitionBlock() {
     <section
       id="entity-definition"
       aria-label="Qu'est-ce que UNPRO"
-      className="relative px-4 py-12 md:py-16"
+      className="relative px-4 py-8 md:py-12"
     >
       <div className="max-w-3xl mx-auto uc-glass-strong p-6 md:p-8" style={{ borderRadius: 28 }}>
         <h2
