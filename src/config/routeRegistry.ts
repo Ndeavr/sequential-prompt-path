@@ -1,117 +1,114 @@
 /**
- * UNPRO — Centralized Route Registry
- * Single source of truth for all route access rules, journey types, and fallbacks.
+ * routeRegistry — single source of truth for legacy URL redirects,
+ * role-based destinations, and shipped-route access checks.
  */
 
-export type JourneyType = "homeowner" | "contractor" | "condo_manager" | "affiliate" | "admin" | "public" | "auth" | "seo";
-
-export interface RouteEntry {
-  path: string;
-  allowedRoles: string[] | "public";
-  journeyType: JourneyType;
-  requiresAuth: boolean;
-  fallbackRoute: string;
-  /** If role mismatch, where to send them */
-  mismatchStrategy: "role_redirect" | "role_selection" | "home";
-}
+// ─────────────────────────────────────────────────────────────────────
+// Legacy redirects — new "coming soon" nav slugs go here (never in nav
+// components) so no visitor can reach the fallback template via our links.
+// ─────────────────────────────────────────────────────────────────────
+export const LEGACY_REDIRECTS: Record<string, string> = {
+  "/home": "/",
+  "/matches": "/",
+};
 
 /**
- * Route registry — defines access rules for every critical route group.
- * Public routes have allowedRoles: "public".
+ * Paths that render a real, shipped page today. Kept small on purpose —
+ * used by the fallback route to decide whether an unknown path was a nav
+ * item we forgot to build (→ redirect to `/`) or an SEO/marketing slug
+ * that legitimately renders the branded landing template.
  */
-export const ROUTE_REGISTRY: RouteEntry[] = [
-  // ─── Public ───
-  { path: "/", allowedRoles: "public", journeyType: "public", requiresAuth: false, fallbackRoute: "/", mismatchStrategy: "home" },
-  { path: "/search", allowedRoles: ["admin"], journeyType: "admin", requiresAuth: true, fallbackRoute: "/", mismatchStrategy: "home" },
-  { path: "/login", allowedRoles: "public", journeyType: "auth", requiresAuth: false, fallbackRoute: "/", mismatchStrategy: "home" },
-  { path: "/signup", allowedRoles: "public", journeyType: "auth", requiresAuth: false, fallbackRoute: "/", mismatchStrategy: "home" },
-  { path: "/onboarding", allowedRoles: "public", journeyType: "auth", requiresAuth: false, fallbackRoute: "/", mismatchStrategy: "home" },
-  { path: "/entrepreneur", allowedRoles: "public", journeyType: "public", requiresAuth: false, fallbackRoute: "/", mismatchStrategy: "home" },
-  { path: "/entrepreneurs", allowedRoles: "public", journeyType: "public", requiresAuth: false, fallbackRoute: "/", mismatchStrategy: "home" },
-  { path: "/condo", allowedRoles: "public", journeyType: "public", requiresAuth: false, fallbackRoute: "/", mismatchStrategy: "home" },
-  { path: "/condos", allowedRoles: "public", journeyType: "public", requiresAuth: false, fallbackRoute: "/", mismatchStrategy: "home" },
-  { path: "/courtiers", allowedRoles: "public", journeyType: "public", requiresAuth: false, fallbackRoute: "/", mismatchStrategy: "home" },
-  { path: "/pricing", allowedRoles: "public", journeyType: "public", requiresAuth: false, fallbackRoute: "/", mismatchStrategy: "home" },
-  { path: "/blog", allowedRoles: "public", journeyType: "seo", requiresAuth: false, fallbackRoute: "/", mismatchStrategy: "home" },
+export const SHIPPED_NAV_ROUTES: ReadonlySet<string> = new Set([
+  "/",
+  "/index",
+  "/alex",
+  "/contractors",
+  "/project/new",
+  "/onboarding",
+  "/waiting",
+  "/dashboard",
+  "/pro",
+  "/admin",
+  "/profile",
+  "/leads",
+  "/agenda",
+]);
 
-  // ─── Homeowner Dashboard ───
-  { path: "/dashboard", allowedRoles: ["homeowner", "admin"], journeyType: "homeowner", requiresAuth: true, fallbackRoute: "/", mismatchStrategy: "role_redirect" },
+export function isShippedNav(pathname: string): boolean {
+  return SHIPPED_NAV_ROUTES.has(pathname);
+}
 
-  // ─── Contractor Pro ───
-  { path: "/pro", allowedRoles: ["contractor", "admin"], journeyType: "contractor", requiresAuth: true, fallbackRoute: "/entrepreneurs", mismatchStrategy: "role_redirect" },
+// ─────────────────────────────────────────────────────────────────────
+// Role helpers used by guards, banners, and the journey tracker.
+// ─────────────────────────────────────────────────────────────────────
+export type UserRoleLike = string | null | undefined;
 
-  // ─── Admin ───
-  { path: "/admin", allowedRoles: ["admin"], journeyType: "admin", requiresAuth: true, fallbackRoute: "/", mismatchStrategy: "role_redirect" },
-  { path: "/admin/system-mode", allowedRoles: ["admin"], journeyType: "admin", requiresAuth: true, fallbackRoute: "/", mismatchStrategy: "role_redirect" },
+export function resolveDestinationForRole(role: UserRoleLike): string {
+  switch (role) {
+    case "contractor":
+      return "/pro";
+    case "admin":
+      return "/admin";
+    case "condo_manager":
+    case "manager":
+      return "/condo";
+    case "homeowner":
+      return "/dashboard";
+    default:
+      return "/";
+  }
+}
 
-  // ─── Condo Dashboard ───
-  { path: "/condos/dashboard", allowedRoles: ["homeowner", "condo_manager", "admin"], journeyType: "condo_manager", requiresAuth: true, fallbackRoute: "/condo", mismatchStrategy: "role_redirect" },
+export function getJourneyTypeForRole(role: UserRoleLike): string {
+  switch (role) {
+    case "contractor":
+      return "contractor";
+    case "admin":
+      return "admin";
+    case "condo_manager":
+    case "manager":
+      return "condo_manager";
+    case "homeowner":
+      return "homeowner";
+    default:
+      return "guest";
+  }
+}
 
-  // ─── Broker ───
-  { path: "/broker", allowedRoles: ["homeowner", "admin"], journeyType: "homeowner", requiresAuth: true, fallbackRoute: "/courtiers", mismatchStrategy: "role_redirect" },
+export interface RouteAccessResult {
+  allowed: boolean;
+  reason?: "auth_required" | "role_mismatch" | "not_found";
+  fallback?: string;
+}
+
+// Prefix rules — kept intentionally permissive. Real granular access
+// remains inside <ProtectedRoute> per-route. This registry only prevents
+// obvious cross-role access (e.g. anon hitting /admin).
+const ROLE_PREFIX_RULES: Array<{ prefix: string; roles: string[] }> = [
+  { prefix: "/admin", roles: ["admin"] },
+  { prefix: "/pro", roles: ["contractor", "admin"] },
+  { prefix: "/condo", roles: ["condo_manager", "manager", "admin"] },
 ];
 
-/**
- * Find the best matching route entry for a given path.
- * Uses prefix matching — more specific paths match first.
- */
-export function findRouteEntry(path: string): RouteEntry | null {
-  // Sort by path length desc so more specific routes match first
-  const sorted = [...ROUTE_REGISTRY].sort((a, b) => b.path.length - a.path.length);
-  return sorted.find(entry => path === entry.path || path.startsWith(entry.path + "/")) ?? null;
-}
-
-/**
- * Check if a role has access to a route.
- */
-export function hasRouteAccess(path: string, role: string | null, isAuthenticated: boolean): { allowed: boolean; reason?: string; fallback?: string } {
-  const entry = findRouteEntry(path);
-
-  // Unknown route — allow (will 404 naturally)
-  if (!entry) return { allowed: true };
-
-  // Public route
-  if (entry.allowedRoles === "public") return { allowed: true };
-
-  // Requires auth but not authenticated
-  if (entry.requiresAuth && !isAuthenticated) {
-    return { allowed: false, reason: "auth_required", fallback: "/login" };
+export function hasRouteAccess(
+  pathname: string,
+  role: UserRoleLike,
+  isAuthenticated: boolean,
+): RouteAccessResult {
+  for (const rule of ROLE_PREFIX_RULES) {
+    if (pathname.startsWith(rule.prefix)) {
+      if (!isAuthenticated) {
+        return { allowed: false, reason: "auth_required", fallback: "/login" };
+      }
+      if (!role || !rule.roles.includes(role)) {
+        return {
+          allowed: false,
+          reason: "role_mismatch",
+          fallback: resolveDestinationForRole(role),
+        };
+      }
+      return { allowed: true };
+    }
   }
-
-  // Admin can access everything
-  if (role === "admin") return { allowed: true };
-
-  // Role check
-  if (!role || !entry.allowedRoles.includes(role)) {
-    return { allowed: false, reason: "role_mismatch", fallback: entry.fallbackRoute };
-  }
-
   return { allowed: true };
-}
-
-/**
- * Resolve the correct destination for a user based on role.
- * RULE: Never default to /dashboard as universal fallback.
- */
-export function resolveDestinationForRole(role: string | null): string {
-  switch (role) {
-    case "admin": return "/admin";
-    case "contractor": return "/pro";
-    case "homeowner": return "/dashboard";
-    case "condo_manager": return "/condos/dashboard";
-    default: return "/";
-  }
-}
-
-/**
- * Get the journey type for the user's role.
- */
-export function getJourneyTypeForRole(role: string | null): JourneyType {
-  switch (role) {
-    case "admin": return "admin";
-    case "contractor": return "contractor";
-    case "homeowner": return "homeowner";
-    case "condo_manager": return "condo_manager";
-    default: return "public";
-  }
 }

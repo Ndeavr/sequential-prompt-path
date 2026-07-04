@@ -19,6 +19,12 @@ const MobileBottomNav = () => {
   const hiddenPaths = ["/alex", "/login", "/signup", "/start"];
   if (hiddenPaths.some((p) => pathname === p)) return null;
 
+  // Runtime singleton guard — if BottomDockGlass is already mounted, defer
+  // to it and render nothing. Prevents two docks stacking.
+  if (typeof document !== "undefined" && document.querySelector('[data-bottom-dock="glass"]')) {
+    return null;
+  }
+
   const tabs = mobileTabsByRole[(activeRole as UserRole | "guest")] || mobileTabsByRole.guest;
 
   const isActive = (to: string) => {
@@ -33,6 +39,7 @@ const MobileBottomNav = () => {
 
   return (
     <nav
+      data-bottom-dock="nav"
       className="lg:hidden fixed bottom-2 left-2 right-2 z-40 rounded-2xl safe-area-bottom"
       aria-label="Mobile navigation"
       style={{

@@ -90,7 +90,10 @@ export default function BottomDockGlass() {
   };
 
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none pb-[env(safe-area-inset-bottom)]">
+    <div
+      data-bottom-dock="glass"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none pb-[env(safe-area-inset-bottom)]"
+    >
       <div className="mx-3 mb-3 pointer-events-auto relative">
         <div
           className="grid grid-cols-5 items-end rounded-[28px] px-0 pt-1 pb-1 relative"

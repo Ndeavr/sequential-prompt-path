@@ -19,6 +19,7 @@ const PageHomeVariantB = lazyWithRetry(() => import("@/pages/home/PageHomeVarian
 const PageHomeVariantC = lazyWithRetry(() => import("@/pages/home/PageHomeVariantC"));
 import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
+import { LEGACY_REDIRECTS } from "@/config/routeRegistry";
 import PageEmergencyReset from "@/pages/PageEmergencyReset";
 import StaticContentPage from "@/pages/static/StaticContentPage";
 const PageAdminLiveRuns = lazyWithRetry(() => import("@/pages/admin/PageAdminLiveRuns"));
@@ -1741,9 +1742,11 @@ export const AppRouter = () => (
           <Route path="/verifier-pro" element={<Navigate to="/verifier-un-entrepreneur" replace />} />
           <Route path="/verification-entrepreneur" element={<Navigate to="/verifier-un-entrepreneur" replace />} />
 
-          {/* Legacy / placeholder paths that used to hit the "coming soon" fallback */}
-          <Route path="/home" element={<Navigate to="/" replace />} />
-          <Route path="/matches" element={<Navigate to="/" replace />} />
+          {/* Legacy paths — sourced from routeRegistry so new redirects have
+              one home instead of scattering <Navigate> calls. */}
+          {Object.entries(LEGACY_REDIRECTS).map(([from, to]) => (
+            <Route key={from} path={from} element={<Navigate to={to} replace />} />
+          ))}
 
           {/* Catch-all: try fallback, then 404 */}
           <Route path="*" element={<FallbackRoutePage />} />
