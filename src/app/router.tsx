@@ -21,6 +21,9 @@ import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
 import { LEGACY_REDIRECTS } from "@/config/routeRegistry";
 import PageEmergencyReset from "@/pages/PageEmergencyReset";
+const PageProjectCreatedSuccess = lazyWithRetry(() => import("@/pages/PageProjectCreatedSuccess"));
+const PageRecommendations = lazyWithRetry(() => import("@/pages/PageRecommendations"));
+const PageRegistrationSuccess = lazyWithRetry(() => import("@/pages/PageRegistrationSuccess"));
 import StaticContentPage from "@/pages/static/StaticContentPage";
 const PageAdminLiveRuns = lazyWithRetry(() => import("@/pages/admin/PageAdminLiveRuns"));
 const PageAdminProspectSMS = lazyWithRetry(() => import("@/pages/admin/PageAdminProspectSMS"));
@@ -1747,6 +1750,11 @@ export const AppRouter = () => (
           {Object.entries(LEGACY_REDIRECTS).map(([from, to]) => (
             <Route key={from} path={from} element={<Navigate to={to} replace />} />
           ))}
+
+          {/* Canonical conversion routes */}
+          <Route path="/project-created" element={<Suspense fallback={<LazyFallback />}><PageProjectCreatedSuccess /></Suspense>} />
+          <Route path="/recommendations" element={<Suspense fallback={<LazyFallback />}><PageRecommendations /></Suspense>} />
+          <Route path="/welcome" element={<Suspense fallback={<LazyFallback />}><PageRegistrationSuccess /></Suspense>} />
 
           {/* Catch-all: try fallback, then 404 */}
           <Route path="*" element={<FallbackRoutePage />} />
