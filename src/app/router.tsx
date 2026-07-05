@@ -76,6 +76,10 @@ const PageAdminOutreachHealth = lazyWithRetry(() => import("@/pages/admin/PageAd
 const PageAdminEmailSenderHealth = lazyWithRetry(() => import("@/pages/admin/PageAdminEmailSenderHealth"));
 const PageAdminWaitingHomeowners = lazyWithRetry(() => import("@/pages/admin/PageAdminWaitingHomeowners"));
 const PageContractorDemandLanding = lazyWithRetry(() => import("@/pages/contractor/PageContractorDemandLanding"));
+const PageScanIALanding = lazyWithRetry(() => import("@/pages/scan-ia/PageScanIALanding"));
+const PageScanIARun = lazyWithRetry(() => import("@/pages/scan-ia/PageScanIARun"));
+const PageScanIAReport = lazyWithRetry(() => import("@/pages/scan-ia/PageScanIAReport"));
+const PageScanIAActivationSuccess = lazyWithRetry(() => import("@/pages/scan-ia/PageScanIAActivationSuccess"));
 const PageIsrDemoPlanTest = lazyWithRetry(() => import("@/pages/demo/PageIsrDemoPlanTest"));
 const PageIsrDemoSuccess = lazyWithRetry(() => import("@/pages/demo/PageIsrDemoSuccess"));
 const PageIsrDemoCancel = lazyWithRetry(() => import("@/pages/demo/PageIsrDemoCancel"));
