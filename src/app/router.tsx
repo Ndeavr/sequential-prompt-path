@@ -780,6 +780,7 @@ const PageAffiliateDashboard = lazyWithRetry(() => import("@/pages/admin/affilia
 
 // Email Audit Center
 const PageEmailAuditCenter = lazyWithRetry(() => import("@/pages/admin/email-health/PageEmailAuditCenter"));
+const PageEmailHealthCenterV2 = lazyWithRetry(() => import("@/pages/admin/email-health/PageEmailHealthCenterV2"));
 const PageEmailAuditHistory = lazyWithRetry(() => import("@/pages/admin/email-health/PageEmailAuditHistory"));
 const PageAdminEmailControlCenter = lazyWithRetry(() => import("@/pages/admin/email-health/PageAdminEmailControlCenter"));
 const PageAdminEmailWarmup = lazyWithRetry(() => import("@/pages/admin/email-health/PageAdminEmailWarmup"));
@@ -1591,7 +1592,8 @@ export const AppRouter = () => (
         <Route path="/admin/prospect-execution" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminProspectExecutionDashboard /></Suspense></ProtectedRoute>} />
         <Route path="/admin/prospect-execution/:runId" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminProspectExecutionRunDetail /></Suspense></ProtectedRoute>} />
         <Route path="/admin/affiliates" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAffiliateDashboard /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/email-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailAuditCenter /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/email-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailHealthCenterV2 /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/email-health-legacy" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailAuditCenter /></Suspense></ProtectedRoute>} />
         <Route path="/admin/email-audit-history" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailAuditHistory /></Suspense></ProtectedRoute>} />
         <Route path="/admin/email-control-center" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailControlCenter /></Suspense></ProtectedRoute>} />
         <Route path="/admin/email-warmup" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailWarmup /></Suspense></ProtectedRoute>} />

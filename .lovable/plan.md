@@ -1,48 +1,61 @@
-# Fix — /activer/:slug "Edge Function returned non-2xx"
+# Email Health Truth Layer v2.0
 
-## Root cause
+## Goal
+Replace the current `/admin/email-health` (which shows contradictory "Conforme" + HTTP 400) with a dashboard where every indicator comes from **live verification**, never stale logs. Admin answers in <5s: can UNPRO send email right now, and what revenue is at risk.
 
-The landing page `/activer/t-73...` calls `sms-sprint-checkout`, which does:
+## Architecture
 
+```text
+Browser  →  /admin/email-health (v2)
+              │
+              ├── useEmailHealthV2  → edge: email-health-v2  (live checks, no cache)
+              ├── useEmailLiveTest  → edge: email-live-test  (real Resend send)
+              ├── useEmailEvents    → email_delivery_events (last 50)
+              └── useRevenueImpact  → email_failure_analysis view
+                                       │
+Cron every 15 min → edge: email-health-selfheal → writes email_health_checks
 ```
-select ... from sms_sprint_prospects where tracking_slug = :slug
-if !prospect → throw "prospect_not_found" → HTTP 400
-```
 
-`sms_sprint_prospects` is currently **empty** (0 rows). No scrape has been run, and the test SMS the user tapped points at a slug that was never persisted. The frontend surfaces the raw supabase.functions.invoke error string: *"Edge Function returned a non-2xx status code"*. This is the recurring failure.
+## Database (new migration)
+- `email_health_checks` — id, ts, overall_status (healthy|degraded|failed), resend_auth_ok, domain_ok, sender_ok, live_send_ok, latency_ms, error_category, details_json. GRANTs + RLS admin-only.
+- `email_delivery_events` — id, ts, recipient, template, status, provider_message_id, latency_ms, error_raw, category. Fed by send functions + Resend webhook.
+- `email_failure_analysis` — view aggregating last 24h by `error_category` with counts + estimated lost revenue (pending_onboarding × 0.15 × plan_avg_349).
 
-Even after scraping runs, this is fragile: any expired/mistyped slug produces the same ugly error, and the landing page happily shows the CTA even when `prospect` is null.
+## Edge Functions
+1. **`email-health-v2`** (GET) — runs live in-order:
+   - Resend `GET /domains` with current key → auth + fingerprint (last 4).
+   - Domain lookup `mail.unpro.ca` → SPF/DKIM/DMARC record status from Resend response.
+   - Sender validation: verify `alex@mail.unpro.ca` matches verified domain.
+   - Latest `email_health_checks` row for last live-send timestamp.
+   - Returns unified `{ status, reason, impact, config, domain, sender, lastLiveSend, categories }`. No fallback to historical success.
+2. **`email-live-test`** (POST `{recipient}`) — actually sends via Resend, subject "UNPRO Live Email Health Check", body carries `timestamp/env/deploy_id`. Persists to `email_health_checks` + `email_delivery_events`. Returns raw Resend response (200 or error body).
+3. **`email-health-selfheal`** (cron `*/15 * * * *`) — runs all 5 checks incl. live send to `healthcheck@unpro.ca`. Writes row, classifies error into: INVALID_API_KEY | INVALID_SENDER | DOMAIN_NOT_VERIFIED | RATE_LIMITED | RESEND_OUTAGE | TEMPLATE_ERROR | EDGE_FUNCTION_ERROR | UNKNOWN.
+4. Patch existing `send-transactional-email` + `auth-email-hook` to append `email_delivery_events` on every send with provider response.
 
-## Fix (3 parts)
+## Frontend — `src/pages/admin/email-health/PageEmailHealthCenterV2.tsx`
+Replace body of existing route with new sections (mobile-first, dark admin theme):
 
-### 1. `PageActivationSprint.tsx` — no CTA without a valid prospect
-- If `prospect` is null after load, render a clean fallback state:
-  - Title: "Ce lien d'activation n'est plus valide."
-  - Sub: "Contactez-nous pour recevoir un nouveau lien Fondateur."
-  - Secondary CTA → `mailto:` / `/entrepreneur`.
-- Hide the email input + "Activer pour 1$" button entirely when no prospect.
-- Map the `activate()` error to a friendly FR string (`"Lien expiré. Contactez-nous pour un nouveau lien."`) instead of the raw invoke message.
+1. **HeroRevenueCriticalStatus** — HEALTHY/DEGRADED/FAILED badge + one-line reason + impact sentence. Colored ring. Auto-refresh 30s.
+2. **CardConfigurationTruth** — API key loaded y/n, fingerprint `re_xxxx…abcd`, sender, from, reply-to, env, last deploy ts.
+3. **CardDomainHealthV2** — `mail.unpro.ca` verified state + SPF/DKIM/DMARC each PASS/WARN/FAIL with raw failing record on expand.
+4. **PanelLiveResendTest** — recipient input (defaults to admin email), "Send Live Test" button, shows success + message id + latency, or raw Resend error body.
+5. **TableRecentEmailEvents** — last 50 with filter chips (success/bounce/failed/blocked) + search.
+6. **CardRootCauseDetector** — counts per category over 24h, click filters events table.
+7. **CardRevenueImpact** — pending onboarding × 0.15 × $349, failed onboarding email count, computed loss.
+8. **PanelSelfHealingHistory** — last 20 selfheal runs sparkline.
+9. Admin action row: Run Health Check · Send Test · Export Failures (CSV) · View Raw Resend · View Runtime Config drawer.
 
-### 2. `sms-sprint-checkout` edge function — return 200 + error field
-- Stop throwing on `prospect_not_found` / `missing_slug`. Return `{ ok: false, error: "prospect_not_found" }` with **HTTP 200** so `supabase.functions.invoke` doesn't reject with the generic non-2xx message.
-- Only real 500s (Stripe failure, DB failure) return non-2xx.
-- Frontend checks `data.ok === false` and shows the friendly copy above.
+## False-status prevention
+- "Sender actif" chip only rendered when `resend_auth_ok && domain_ok && sender_ok && live_send_ok_within_30min`. Otherwise show truthful state.
+- Remove all UI paths that derive status from `last_success_at` alone in `HeroSectionEmailHealthStatus`, `useEmailSenderHealth`. Keep hook but re-map to v2 payload.
 
-### 3. Seed one working test prospect
-Insert a single row into `sms_sprint_prospects` so the user can smoke-test the full flow end-to-end without waiting for a scrape:
-- `tracking_slug = 'test-founder'`
-- `company_name = 'Test Founder'`, `city = 'Montréal'`, `category = 'toiture'`
-- `variant = 'A'`, `activation_status = 'sent'`
-- Landing URL: `https://unpro.ca/activer/test-founder`
-
-## Files touched
-
-- `src/pages/PageActivationSprint.tsx` — null-prospect fallback + friendly error mapping
-- `supabase/functions/sms-sprint-checkout/index.ts` — return 200 with error field for known validation failures
-- New migration — insert `test-founder` seed row (idempotent `on conflict do nothing`)
+## Files to change
+- Add: migration, 3 edge functions, `useEmailHealthV2.ts`, `useEmailLiveTest.ts`, `useEmailEvents.ts`, `PageEmailHealthCenterV2.tsx`, 9 components under `src/components/email-health-v2/`.
+- Edit: `src/app/router.tsx` (point `/admin/email-health` to v2), `send-transactional-email/index.ts` + `auth-email-hook/index.ts` (log events), `supabase/config.toml` (cron).
+- Deprecate (keep files, unroute): current `PageEmailHealthCenter.tsx`.
 
 ## Out of scope
+- Contractor onboarding UI, Alex flows, SMS. Auth email template edits.
 
-- No changes to scrape/send/track/followup functions.
-- No schema changes beyond the seed insert.
-- No design/copy changes to the successful landing state.
+## Success
+Admin loads page; if Resend returns HTTP 400 the hero is FAILED with "INVALID_API_KEY — onboarding blocked" and revenue impact card shows $ at risk. No green anywhere unless a live send just succeeded.
