@@ -38644,6 +38644,54 @@ export type Database = {
           },
         ]
       }
+      email_health_checks: {
+        Row: {
+          details_json: Json
+          domain_ok: boolean
+          error_category: string | null
+          id: string
+          impact: string | null
+          latency_ms: number | null
+          live_send_ok: boolean
+          overall_status: string
+          reason: string | null
+          resend_auth_ok: boolean
+          sender_ok: boolean
+          triggered_by: string
+          ts: string
+        }
+        Insert: {
+          details_json?: Json
+          domain_ok?: boolean
+          error_category?: string | null
+          id?: string
+          impact?: string | null
+          latency_ms?: number | null
+          live_send_ok?: boolean
+          overall_status: string
+          reason?: string | null
+          resend_auth_ok?: boolean
+          sender_ok?: boolean
+          triggered_by?: string
+          ts?: string
+        }
+        Update: {
+          details_json?: Json
+          domain_ok?: boolean
+          error_category?: string | null
+          id?: string
+          impact?: string | null
+          latency_ms?: number | null
+          live_send_ok?: boolean
+          overall_status?: string
+          reason?: string | null
+          resend_auth_ok?: boolean
+          sender_ok?: boolean
+          triggered_by?: string
+          ts?: string
+        }
+        Relationships: []
+      }
       email_health_reports: {
         Row: {
           alignment_score: number | null
@@ -79456,6 +79504,15 @@ export type Database = {
           scores: Json | null
           traits: Json | null
           updated_at: string | null
+        }
+        Relationships: []
+      }
+      email_failure_analysis: {
+        Row: {
+          category: string | null
+          first_seen: string | null
+          last_seen: string | null
+          occurrences: number | null
         }
         Relationships: []
       }
