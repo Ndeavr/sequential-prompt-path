@@ -37,7 +37,7 @@ export default function PageScanIARun() {
       clearInterval(iv);
 
       if (fnError || !data?.success) {
-        setError(data?.error || fnError?.message || "Analyse impossible pour le moment.");
+        setError(data?.error || "Analyse temporairement ralentie. Réessayez dans un instant.");
         setLoading(false);
         return;
       }
@@ -45,7 +45,7 @@ export default function PageScanIARun() {
       navigate(`/scan-ia/rapport?st=${encodeURIComponent(data.session_token)}`);
     } catch (err) {
       clearInterval(iv);
-      setError(String(err));
+      setError("Analyse temporairement ralentie. Réessayez dans un instant.");
       setLoading(false);
     }
   };
