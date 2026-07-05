@@ -115,6 +115,8 @@ Deno.serve(async (req) => {
       top_competitors: topRanks,
     };
 
+    const ownRank = topRanks.find((rank) => isLikelySameBusiness(raw, businessName, rank.contractor_name));
+
     // 6. Simulation Alex
     const alexSimulation = {
       question: `Qui recommandes-tu pour ${category.toLowerCase()} à ${city} ?`,
@@ -125,8 +127,11 @@ Deno.serve(async (req) => {
         "territoire défini",
         "disponibilité confirmée",
       ],
-      your_business_visible: false,
-      punchline: `${businessName} n'apparaît pas encore.`,
+      your_business_visible: Boolean(ownRank),
+      your_rank: ownRank?.rank ?? null,
+      punchline: ownRank
+        ? `${businessName} apparaît au rang ${ownRank.rank}. Le prochain levier est d'augmenter le score de confiance IA.`
+        : `${businessName} n'apparaît pas encore.`,
     };
 
     // 7. Persist scan
@@ -230,6 +235,30 @@ function fallbackRanks(city: string, category: string) {
       reasons: ["présence locale", "avis détectés"],
     },
   ];
+}
+
+function isLikelySameBusiness(input: string, detectedName: string, candidateName: string): boolean {
+  const compactInput = normalizeBusinessKey(input.replace(/^https?:\/\//i, "").replace(/^www\./i, "").split(/[/?#]/)[0].split(".")[0]);
+  const compactDetected = normalizeBusinessKey(detectedName);
+  const compactCandidate = normalizeBusinessKey(candidateName);
+  if (!compactCandidate) return false;
+  if (compactInput && compactCandidate.includes(compactInput)) return true;
+  if (compactDetected && compactCandidate.includes(compactDetected)) return true;
+  const initials = candidateName
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word[0])
+    .join("")
+    .toLowerCase();
+  return Boolean(compactInput && initials.length >= 3 && compactInput.includes(initials));
+}
+
+function normalizeBusinessKey(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 }
 
 function normalizeCity(c?: string): string | null {
