@@ -4951,6 +4951,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_recommendation_rank: {
+        Row: {
+          category: string
+          city: string
+          computed_at: string
+          contractor_id: string | null
+          contractor_name: string
+          created_at: string
+          id: string
+          rank: number
+          reasons: Json
+          score: number
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          city: string
+          computed_at?: string
+          contractor_id?: string | null
+          contractor_name: string
+          created_at?: string
+          id?: string
+          rank: number
+          reasons?: Json
+          score?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          city?: string
+          computed_at?: string
+          contractor_id?: string | null
+          contractor_name?: string
+          created_at?: string
+          id?: string
+          rank?: number
+          reasons?: Json
+          score?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_recommendation_signals: {
         Row: {
           citation_score: number | null
@@ -22945,6 +22987,60 @@ export type Database = {
           },
         ]
       }
+      contractor_ai_score: {
+        Row: {
+          activity_score: number
+          business_name: string | null
+          compliance_score: number
+          computed_at: string
+          contractor_id: string | null
+          created_at: string
+          domain: string | null
+          id: string
+          overall_score: number
+          proof_score: number
+          review_score: number
+          signals: Json
+          trust_score: number
+          updated_at: string
+          visibility_score: number
+        }
+        Insert: {
+          activity_score?: number
+          business_name?: string | null
+          compliance_score?: number
+          computed_at?: string
+          contractor_id?: string | null
+          created_at?: string
+          domain?: string | null
+          id?: string
+          overall_score?: number
+          proof_score?: number
+          review_score?: number
+          signals?: Json
+          trust_score?: number
+          updated_at?: string
+          visibility_score?: number
+        }
+        Update: {
+          activity_score?: number
+          business_name?: string | null
+          compliance_score?: number
+          computed_at?: string
+          contractor_id?: string | null
+          created_at?: string
+          domain?: string | null
+          id?: string
+          overall_score?: number
+          proof_score?: number
+          review_score?: number
+          signals?: Json
+          trust_score?: number
+          updated_at?: string
+          visibility_score?: number
+        }
+        Relationships: []
+      }
       contractor_aipp_audits: {
         Row: {
           ai_visibility_score: number
@@ -29291,6 +29387,51 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      contractor_market_opportunity: {
+        Row: {
+          category: string
+          city: string
+          competitors_ahead: number
+          computed_at: string
+          created_at: string
+          estimated_ltv_cents: number
+          estimated_revenue_cents: number
+          id: string
+          pressure_score: number
+          source: string
+          updated_at: string
+          waiting_homeowners: number
+        }
+        Insert: {
+          category: string
+          city: string
+          competitors_ahead?: number
+          computed_at?: string
+          created_at?: string
+          estimated_ltv_cents?: number
+          estimated_revenue_cents?: number
+          id?: string
+          pressure_score?: number
+          source?: string
+          updated_at?: string
+          waiting_homeowners?: number
+        }
+        Update: {
+          category?: string
+          city?: string
+          competitors_ahead?: number
+          computed_at?: string
+          created_at?: string
+          estimated_ltv_cents?: number
+          estimated_revenue_cents?: number
+          id?: string
+          pressure_score?: number
+          source?: string
+          updated_at?: string
+          waiting_homeowners?: number
+        }
+        Relationships: []
       }
       contractor_match_metrics: {
         Row: {
@@ -68099,6 +68240,72 @@ export type Database = {
           language_code?: string
           prompt_key?: string
           version?: number | null
+        }
+        Relationships: []
+      }
+      scan_ia_reports: {
+        Row: {
+          activation_status: string
+          alex_simulation: Json
+          business_name: string | null
+          category: string | null
+          city: string | null
+          claimed_at: string | null
+          claimed_by: string | null
+          created_at: string
+          id: string
+          input_type: string
+          input_value: string
+          normalized_url: string | null
+          opportunities: Json
+          overall_score: number
+          session_token: string
+          signals: Json
+          sub_scores: Json
+          threats: Json
+          updated_at: string
+        }
+        Insert: {
+          activation_status?: string
+          alex_simulation?: Json
+          business_name?: string | null
+          category?: string | null
+          city?: string | null
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string
+          id?: string
+          input_type?: string
+          input_value: string
+          normalized_url?: string | null
+          opportunities?: Json
+          overall_score?: number
+          session_token: string
+          signals?: Json
+          sub_scores?: Json
+          threats?: Json
+          updated_at?: string
+        }
+        Update: {
+          activation_status?: string
+          alex_simulation?: Json
+          business_name?: string | null
+          category?: string | null
+          city?: string | null
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string
+          id?: string
+          input_type?: string
+          input_value?: string
+          normalized_url?: string | null
+          opportunities?: Json
+          overall_score?: number
+          session_token?: string
+          signals?: Json
+          sub_scores?: Json
+          threats?: Json
+          updated_at?: string
         }
         Relationships: []
       }
