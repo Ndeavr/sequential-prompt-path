@@ -14,7 +14,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { slug, email } = await req.json();
+    const body = await req.json();
+    const { slug, email, source, utm } = body ?? {};
     if (!slug) {
       return new Response(JSON.stringify({ error: "missing_slug" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -24,35 +25,48 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    const isSprint = source === "isolation-qc" || String(slug).startsWith("sprint-");
+
     // Resolve prospect from war_prospects (same source as /pro/:slug landing).
     // Fallback to legacy prospect_pages for backward compatibility.
-    let { data: prospect } = await supabase
-      .from("war_prospects").select("id, slug").eq("slug", slug).maybeSingle();
-
-    if (!prospect) {
-      const legacy = await supabase
-        .from("prospect_pages").select("id, slug").eq("slug", slug).maybeSingle();
-      prospect = legacy.data;
-    }
-
-    if (!prospect) {
-      return new Response(JSON.stringify({ error: "prospect_not_found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    // Sprint flow (no prospect yet) skips this lookup.
+    let prospectRow: { id: string; slug: string } | null = null;
+    if (!isSprint) {
+      const wp = await supabase
+        .from("war_prospects").select("id, slug").eq("slug", slug).maybeSingle();
+      prospectRow = wp.data as any;
+      if (!prospectRow) {
+        const legacy = await supabase
+          .from("prospect_pages").select("id, slug").eq("slug", slug).maybeSingle();
+        prospectRow = legacy.data as any;
+      }
+      if (!prospectRow) {
+        return new Response(JSON.stringify({ error: "prospect_not_found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
     }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, { apiVersion: "2025-08-27.basil" });
 
     const origin = req.headers.get("origin") || "https://unpro.ca";
+    const successPath = isSprint
+      ? `/activation-success?session_id={CHECKOUT_SESSION_ID}&source=isolation-qc`
+      : `/activation-success?session_id={CHECKOUT_SESSION_ID}&slug=${encodeURIComponent(slug)}`;
+    const cancelPath = isSprint ? `/isolation-qc?canceled=1` : `/pro/${encodeURIComponent(slug)}?canceled=1`;
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [{ price: ACTIVATION_PRICE_ID, quantity: 1 }],
       customer_email: email || undefined,
-      success_url: `${origin}/activation-success?session_id={CHECKOUT_SESSION_ID}&slug=${encodeURIComponent(slug)}`,
-      cancel_url: `${origin}/pro/${encodeURIComponent(slug)}?canceled=1`,
+      success_url: `${origin}${successPath}`,
+      cancel_url: `${origin}${cancelPath}`,
       metadata: {
         prospect_slug: slug,
-        prospect_id: prospect.id,
+        prospect_id: prospectRow?.id ?? "",
         offer: "activation_7d",
+        source: source ?? "",
+        campaign_variant: utm?.camp ?? "",
+        utm_city: utm?.city ?? "",
+        utm_company: utm?.company ?? "",
       },
       locale: "fr",
     });
