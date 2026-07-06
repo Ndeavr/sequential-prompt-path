@@ -68245,6 +68245,7 @@ export type Database = {
       }
       scan_ia_reports: {
         Row: {
+          activated_at: string | null
           activation_status: string
           alex_simulation: Json
           business_name: string | null
@@ -68252,20 +68253,29 @@ export type Database = {
           city: string | null
           claimed_at: string | null
           claimed_by: string | null
+          company_reveal: Json | null
           created_at: string
           id: string
           input_type: string
           input_value: string
+          market_position: Json | null
           normalized_url: string | null
           opportunities: Json
           overall_score: number
+          recommended_plan: string | null
           session_token: string
           signals: Json
+          stripe_session_id: string | null
           sub_scores: Json
+          territory_demand: Json | null
           threats: Json
+          today_jobs_per_month: number | null
           updated_at: string
+          user_capacity: number | null
+          user_goal: string | null
         }
         Insert: {
+          activated_at?: string | null
           activation_status?: string
           alex_simulation?: Json
           business_name?: string | null
@@ -68273,20 +68283,29 @@ export type Database = {
           city?: string | null
           claimed_at?: string | null
           claimed_by?: string | null
+          company_reveal?: Json | null
           created_at?: string
           id?: string
           input_type?: string
           input_value: string
+          market_position?: Json | null
           normalized_url?: string | null
           opportunities?: Json
           overall_score?: number
+          recommended_plan?: string | null
           session_token: string
           signals?: Json
+          stripe_session_id?: string | null
           sub_scores?: Json
+          territory_demand?: Json | null
           threats?: Json
+          today_jobs_per_month?: number | null
           updated_at?: string
+          user_capacity?: number | null
+          user_goal?: string | null
         }
         Update: {
+          activated_at?: string | null
           activation_status?: string
           alex_simulation?: Json
           business_name?: string | null
@@ -68294,18 +68313,26 @@ export type Database = {
           city?: string | null
           claimed_at?: string | null
           claimed_by?: string | null
+          company_reveal?: Json | null
           created_at?: string
           id?: string
           input_type?: string
           input_value?: string
+          market_position?: Json | null
           normalized_url?: string | null
           opportunities?: Json
           overall_score?: number
+          recommended_plan?: string | null
           session_token?: string
           signals?: Json
+          stripe_session_id?: string | null
           sub_scores?: Json
+          territory_demand?: Json | null
           threats?: Json
+          today_jobs_per_month?: number | null
           updated_at?: string
+          user_capacity?: number | null
+          user_goal?: string | null
         }
         Relationships: []
       }
