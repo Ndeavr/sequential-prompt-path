@@ -80,6 +80,7 @@ const PageScanIALanding = lazyWithRetry(() => import("@/pages/scan-ia/PageScanIA
 const PageScanIARun = lazyWithRetry(() => import("@/pages/scan-ia/PageScanIARun"));
 const PageScanIAReport = lazyWithRetry(() => import("@/pages/scan-ia/PageScanIAReport"));
 const PageScanIAActivationSuccess = lazyWithRetry(() => import("@/pages/scan-ia/PageScanIAActivationSuccess"));
+const PageScanIAWizard = lazyWithRetry(() => import("@/pages/scan-ia/wizard/PageScanIAWizard"));
 const PageIsrDemoPlanTest = lazyWithRetry(() => import("@/pages/demo/PageIsrDemoPlanTest"));
 const PageIsrDemoSuccess = lazyWithRetry(() => import("@/pages/demo/PageIsrDemoSuccess"));
 const PageIsrDemoCancel = lazyWithRetry(() => import("@/pages/demo/PageIsrDemoCancel"));
