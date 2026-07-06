@@ -73,14 +73,18 @@ export default function StepActivate() {
             </div>
             <div className="text-2xl font-semibold mb-4">{plan?.name ?? "Premium"}</div>
 
-            <div className="rounded-2xl bg-[#050816] text-white py-5 mb-4">
+            <div className="rounded-2xl bg-[#050816] text-white py-5 mb-4 px-4">
               <div className="text-[10px] uppercase tracking-widest text-amber-300 mb-1">
-                Essai activation
+                Aujourd'hui
               </div>
-              <div className="text-4xl font-semibold">
-                1&nbsp;$ <span className="text-sm font-normal text-white/60">/ 7 jours</span>
+              <div className="text-4xl font-semibold leading-tight">
+                1&nbsp;$
+              </div>
+              <div className="text-xs text-white/60 mt-2">
+                puis <span className="text-white font-medium">{fmtCADDollars(plan?.monthlyPrice ?? 0)}/mois</span> dès le jour&nbsp;8
               </div>
             </div>
+
 
             {(() => {
               const b = getPlanPricingBreakdown(planSlug);
@@ -159,10 +163,12 @@ export default function StepActivate() {
                 </>
               ) : (
                 <>
-                  Activer maintenant <ArrowRight className="h-4 w-4" />
+                  Activer pour 1&nbsp;$ · puis {fmtCADDollars(plan?.monthlyPrice ?? 0)}/mois
+                  <ArrowRight className="h-4 w-4" />
                 </>
               )}
             </button>
+
 
             {err && <div className="mt-3 text-xs text-red-500">{err}</div>}
 

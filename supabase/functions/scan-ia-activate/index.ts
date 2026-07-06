@@ -30,6 +30,8 @@ Deno.serve(async (req) => {
       goal,
       capacity,
       recommended_plan,
+      plan_name,
+      plan_monthly_price_cents,
     } = body ?? {};
 
     if (!session_token) return json({ error: "Session invalide." }, 400);
@@ -50,6 +52,26 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const origin = req.headers.get("origin") ?? "https://unpro.ca";
 
+    // Post-trial pricing summary for transparency
+    const monthlyDollars = Math.round((Number(plan_monthly_price_cents) || 0) / 100);
+    const GST = 0.05;
+    const QST = 0.09975;
+    const totalTaxIncl = monthlyDollars > 0
+      ? Math.round(monthlyDollars * (1 + GST + QST) * 100) / 100
+      : 0;
+    const nextChargeDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const nextChargeFR = nextChargeDate.toLocaleDateString("fr-CA", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    const planLabel = plan_name || "Premium";
+    const productName = `Activation IA UNPRO — Plan ${planLabel}`;
+    const productDescription = monthlyDollars > 0
+      ? `1 $ aujourd'hui pour 7 jours d'accès complet. Puis ${monthlyDollars} $/mois (${totalTaxIncl.toFixed(2)} $ taxes QC incluses) à partir du ${nextChargeFR}. Annulation en 1 clic avant le jour 8.`
+      : "Profil IA, territoires, catégories, apparition dans Alex, réception de rendez-vous.";
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: email || undefined,
@@ -61,13 +83,19 @@ Deno.serve(async (req) => {
             currency: "cad",
             unit_amount: 100,
             product_data: {
-              name: "Activation IA UNPRO — 7 jours",
-              description:
-                "Profil IA, territoires, catégories, apparition dans Alex, réception de rendez-vous.",
+              name: productName,
+              description: productDescription,
             },
           },
         },
       ],
+      custom_text: {
+        submit: {
+          message: monthlyDollars > 0
+            ? `Vous payez 1 $ aujourd'hui. Le ${nextChargeFR}, votre plan ${planLabel} démarrera à ${monthlyDollars} $/mois (${totalTaxIncl.toFixed(2)} $ taxes incluses). Annulation en 1 clic avant cette date.`
+            : "Vous payez 1 $ aujourd'hui pour 7 jours d'accès complet.",
+        },
+      },
       metadata: {
         source: "scan_ia_wizard",
         report_id: String(report_id ?? ""),
@@ -76,12 +104,16 @@ Deno.serve(async (req) => {
         goal: String(goal ?? ""),
         capacity: String(capacity ?? ""),
         recommended_plan: String(recommended_plan ?? ""),
+        plan_name: String(planLabel),
+        plan_monthly_price_cents: String(plan_monthly_price_cents ?? ""),
+        next_charge_date: nextChargeDate.toISOString(),
       },
       success_url: `${origin}/scan-ia/activation-success?st=${encodeURIComponent(session_token)}&cs={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/scan-ia/wizard?st=${encodeURIComponent(session_token)}`,
     });
 
     return json({ success: true, url: session.url });
+
   } catch (e) {
     console.error("scan-ia-activate error:", e);
     const msg = e instanceof Error ? e.message : "Paiement indisponible.";
