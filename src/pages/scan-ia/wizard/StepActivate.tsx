@@ -73,11 +73,44 @@ export default function StepActivate() {
               </div>
             </div>
 
+            {(() => {
+              const b = getPlanPricingBreakdown(planSlug);
+              if (!b) return null;
+              return (
+                <div
+                  className="text-left border-t border-black/5 pt-4 mb-5"
+                  aria-label={`Après l'essai : ${b.name} à ${b.total.toFixed(2)} dollars par mois taxes incluses`}
+                >
+                  <div className="text-[10px] uppercase tracking-widest text-black/40 mb-1.5">
+                    Après l'essai
+                  </div>
+                  <div className="flex items-baseline justify-between mb-1">
+                    <span className="text-sm font-medium text-black/80">{b.name}</span>
+                    <span className="text-sm text-black/60">
+                      {fmtCADDollars(b.subtotal)} <span className="text-black/40">/ mois</span>
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-[11px] text-black/50">
+                    <span>+ TPS {fmtCADDollars(b.gst)}</span>
+                    <span>+ TVQ {fmtCADDollars(b.qst)}</span>
+                  </div>
+                  <div className="flex items-baseline justify-between mt-2 pt-2 border-t border-black/5">
+                    <span className="text-xs font-semibold text-black/70">Total / mois</span>
+                    <span className="text-base font-semibold text-black">
+                      {fmtCADDollars(b.total)}
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-black/40 mt-1">Taxes incluses (QC)</div>
+                </div>
+              );
+            })()}
+
             <ul className="space-y-2 text-left text-sm mb-5">
               {[
                 "Profil IA visible sur Alex",
                 "Territoires & catégories réservés",
                 "Rendez-vous propriétaires qualifiés",
+                "Aucun prélèvement avant le jour 8",
                 "Annulation en 1 clic",
               ].map((f) => (
                 <li key={f} className="flex items-center gap-2 text-black/70">
@@ -85,6 +118,7 @@ export default function StepActivate() {
                 </li>
               ))}
             </ul>
+
 
             <button
               onClick={activate}
