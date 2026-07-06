@@ -112,6 +112,8 @@ const PageHomeIntentUNPRO = lazyWithRetry(() => import("@/pages/PageHomeIntentUN
 // Mission 48H — First Customer
 const PageProScoreInstant = lazyWithRetry(() => import("@/pages/pro/PageProScoreInstant"));
 const PageProActivate = lazyWithRetry(() => import("@/pages/pro/PageProActivate"));
+const PageProIsolationQC = lazyWithRetry(() => import("@/pages/pro/PageProIsolationQC"));
+const PageFirstDollarSprint = lazyWithRetry(() => import("@/pages/admin/PageFirstDollarSprint"));
 const PageProWelcome = lazyWithRetry(() => import("@/pages/pro/PageProWelcome"));
 const PageProPublicProfile = lazyWithRetry(() => import("@/pages/pro/PageProPublicProfile"));
 const PageProPrivateOnboarding = lazyWithRetry(() => import("@/pages/pro/PageProPrivateOnboarding"));
@@ -878,6 +880,8 @@ export const AppRouter = () => (
 
         <Route path="/pro/score" element={<Suspense fallback={<LazyFallback />}><PageProScoreInstant /></Suspense>} />
         <Route path="/pro/activate" element={<Suspense fallback={<LazyFallback />}><PageProActivate /></Suspense>} />
+        <Route path="/isolation-qc" element={<Suspense fallback={<LazyFallback />}><PageProIsolationQC /></Suspense>} />
+        <Route path="/admin/first-dollar-sprint" element={<Suspense fallback={<LazyFallback />}><PageFirstDollarSprint /></Suspense>} />
         <Route path="/pro/welcome" element={<Suspense fallback={<LazyFallback />}><PageProWelcome /></Suspense>} />
         <Route path="/pro/profile/public/:contractorId" element={<Suspense fallback={<LazyFallback />}><PageProPublicProfile /></Suspense>} />
         <Route path="/pro/onboarding/:token" element={<Suspense fallback={<LazyFallback />}><PageProPrivateOnboarding /></Suspense>} />

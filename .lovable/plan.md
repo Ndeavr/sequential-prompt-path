@@ -1,61 +1,119 @@
-## Objectif
-1. Rendre la projection "Aujourd'hui vs Avec UNPRO" crédible (chiffres réels, pas gonflés)
-2. Afficher clairement "1 $ maintenant · puis 599 $/mois" sur Stripe Checkout et sur l'écran d'activation
+## Objectif unique
+
+Obtenir **1 entrepreneur qui paie 1 $ aujourd'hui**. Tout le reste est du bruit.
+
+Cible : **25 entrepreneurs isolation QC** (mobile + 20+ avis + site/FB actif), routés vers une landing dédiée avec paiement en moins de 60 secondes.
 
 ---
 
-## 1. Projection réaliste (Step10Projection.tsx)
+## 1. Landing dédiée `/isolation-qc` (nouvelle)
 
-**Problème actuel** : `today = 1` (fallback max(1, ...)) et `projected = today + min(capacity, topCityDemand)` → saute à 19 sans justification. Aucun tag "IA".
+Fichier : `src/pages/pro/PageProIsolationQC.tsx` + route dans `routesConfig.ts`.
 
-**Fix** :
-- `today` = `report.today_jobs_per_month ?? 4` (garder 4 comme fallback humain, pas 1)
-- `projected` = `today + min(capacity, demandeRéelleTop, RDVduPlanChoisi)`, où `RDVduPlanChoisi = plan.appointmentsIncluded`
-- Cap dur : `projected ≤ today + plan.appointmentsIncluded` (jamais promettre plus que le plan livre)
-- Ajouter petit label sous la barre verte : **"Projection basée sur IA · {ville} · plan {planName}"** avec icône Sparkles
-- Sous-ligne : "{demandeRéelle} propriétaires en attente · {capacityCappée} captables ce mois"
-- Retirer le "+18" trompeur → afficher "+{delta} rendez-vous IA / mois"
+Contenu ultra-minimal (règle des 3 secondes) :
+- **H1** : « Recevez des rendez-vous exclusifs en isolation. Pas des leads partagés. »
+- **Sub** : « Essai 7 jours — 1 $. Payez seulement pour activer votre profil. »
+- **1 bouton** : « Activer pour 1 $ » → checkout direct
+- **3 preuves** courtes sous le bouton : demandes actives cette semaine dans la ville trackée (UTM), vérification RBQ, annulation en 1 clic
 
-## 2. Transparence "1 $ maintenant puis 599 $" sur Stripe
+Retirés : score IA, dashboard preview, % complétion, jargon, plans multiples, comparateurs.
 
-**Problème actuel** : Stripe Checkout affiche seulement "CA$1.00", zéro mention du renouvellement à 599 $. C'est ce qui a été encerclé.
+Params UTM lus : `?src=sms&camp=A|B|C|D|E&city=&company=` → pré-remplit checkout metadata pour attribution.
 
-**Fix `supabase/functions/scan-ia-activate/index.ts`** :
-- Recevoir `plan_slug` + `plan_monthly_price` du frontend (déjà passe `recommended_plan`)
-- Nom du line item : `"Activation IA UNPRO — Plan {Name}"` (ex: "Plan Premium")
-- Description Stripe enrichie : `"Essai 7 jours à 1 $. Puis {prix} $/mois + taxes QC ({total} $/mois). Annulation en 1 clic avant le jour 8."`
-- Métadonnées : `plan_slug`, `plan_monthly_price_cents`, `next_charge_date` (J+8)
-- Passer `custom_text.submit.message` : `"Vous payez 1 $ aujourd'hui. Le {date J+8}, votre plan {Name} démarre à {total} $/mois taxes incluses. Annulation en 1 clic."`
-- (Optionnel Phase 2) : passer à `mode: "subscription"` avec `trial_period_days: 7` + `subscription_data.trial_settings.end_behavior.missing_payment_method: "cancel"` pour que Stripe affiche nativement "Then $599/month after 7 days". Mais nécessite d'avoir un vrai `stripe_monthly_price_id` par plan — le catalogue actuel (`plan_catalog.stripe_monthly_price_id`) l'a, donc faisable proprement.
+---
 
-**Recommandation : Phase 2 (vrai subscription avec trial)** — c'est ce que l'utilisateur veut voir "1 $ maintenant puis 599 $" natif dans Stripe. Utiliser `usePlanCatalog` pour récupérer le `stripeMonthlyPriceId` du plan choisi et créer une Checkout Session en mode subscription avec :
-```ts
-mode: "subscription",
-line_items: [{ price: stripeMonthlyPriceId, quantity: 1 }],
-subscription_data: {
-  trial_period_days: 7,
-  description: `Plan ${planName} · Essai 7 jours à 1 $`,
-},
-// Frais d'activation 1 $ via invoice_items ou une ligne setup_fee séparée
+## 2. Checkout 60 secondes
+
+Réutiliser `create-activation-checkout` existant, mais :
+- Bouton unique déclenche `supabase.functions.invoke("create-activation-checkout", { body: { slug, source: "isolation-qc", utm } })`
+- Redirection immédiate (pas de formulaire intermédiaire — email collecté par Stripe Checkout)
+- Success URL → `/pro/activate/success?cs={CHECKOUT_SESSION_ID}` qui déclenche activation instantanée + envoie SMS/email de bienvenue
+
+Vérifier que l'edge function tag bien `campaign_variant` dans metadata Stripe pour rapport de conversion.
+
+---
+
+## 3. Les 5 variantes SMS (test simultané, 5×5)
+
+Créer dans `src/lib/outbound/isolationSprintCopy.ts` les 5 templates (A Revenue, B Fear, C Social Proof, D Demand, E Curiosity) — exactement le texte du prompt utilisateur.
+
+Chaque SMS pointe vers `unpro.ca/isolation-qc?src=sms&camp=X&city={{city}}&company={{company}}`.
+
+---
+
+## 4. Sélection de 25 cibles
+
+Query SQL dans `/admin/sniper` (existe déjà) ou nouvelle vue admin `/admin/first-dollar-sprint` :
+
+```sql
+select * from prospects
+where category ilike '%isolation%'
+  and province = 'QC'
+  and mobile_phone is not null
+  and reviews_count >= 20
+  and (website is not null or facebook_url is not null)
+  and status = 'active'
+  and last_contact_at is null
+order by reviews_count desc
+limit 25;
 ```
-Fallback si pas de `stripe_monthly_price_id` en base : mode payment actuel + custom_text explicite.
 
-## 3. StepActivate — cohérence copy
+Assignation manuelle des 25 aux 5 variantes (5 par variante).
 
-- Remplacer "Essai activation · 1 $ / 7 jours" par un bloc en 2 lignes :
-  - Ligne 1 grande : **"1 $ aujourd'hui"**
-  - Ligne 2 : **"puis {total} $/mois taxes incluses dès le {date J+8}"**
-- Bouton : `"Activer pour 1 $ → puis {prix arrondi}$/mois"` (au lieu de "Activer maintenant")
+---
 
-## 4. Fichiers touchés
+## 5. Funnel tracking obligatoire
 
-- `src/pages/scan-ia/wizard/Step10Projection.tsx` — chiffres réels + tag IA + cap sur plan
-- `src/pages/scan-ia/wizard/StepActivate.tsx` — copy "1 $ aujourd'hui puis X $/mois", bouton explicite, passer `plan_monthly_price_cents` + `stripe_price_id` à l'edge
-- `supabase/functions/scan-ia-activate/index.ts` — mode `subscription` + `trial_period_days: 7` + setup fee 1 $ via `add_invoice_items`, fallback mode payment avec `custom_text` si price_id absent
-- `src/hooks/usePlanCatalog.ts` — pas de changement, juste lecture depuis StepActivate
+Table `first_dollar_sprint_events` (une seule) :
+- `sms_sent` / `sms_delivered` / `link_clicked` / `landing_viewed` / `checkout_opened` / `checkout_paid` / `activated`
+- Colonnes : `prospect_id`, `campaign_variant`, `city`, `category`, `event`, `timestamp`, `session_id`
+
+Dashboard `/admin/first-dollar-sprint` affiche l'entonnoir en direct (25 → clics → paiements) avec le drop-off le plus élevé mis en évidence.
+
+---
+
+## 6. Follow-up 15 min si abandon paiement
+
+Cron `*/5 * * * *` → edge function `sprint-abandonment-followup` :
+- Si `checkout_opened` sans `checkout_paid` après 15 min → SMS unique : « Une question sur l'activation 1 $ ? Répondez ici, un humain répond. »
+- Un seul follow-up. Pas de séquence.
+
+---
+
+## 7. Règle d'arrêt
+
+Après les 25 SMS envoyés :
+- **1+ paiement** → cloner exactement cette variante × ville × catégorie pour toiture, fondation, moisissure, thermopompe (25 chacun).
+- **0 paiement mais clics** → le blocage est la landing ou le checkout, pas le SMS. Corriger avant de renvoyer.
+- **0 clic** → le blocage est le SMS (copie ou ciblage). Ne pas envoyer les 500 suivants.
+
+---
+
+## Livrables techniques
+
+**Nouveaux fichiers**
+- `src/pages/pro/PageProIsolationQC.tsx`
+- `src/lib/outbound/isolationSprintCopy.ts`
+- `src/pages/admin/PageFirstDollarSprint.tsx`
+- `supabase/functions/sprint-abandonment-followup/index.ts`
+
+**Migrations**
+- Table `first_dollar_sprint_events` (avec GRANT + RLS admin-only)
+- Cron `sprint-abandonment-followup` toutes les 5 min
+
+**Modifications**
+- `src/config/routesConfig.ts` : ajouter `/isolation-qc` + `/admin/first-dollar-sprint`
+- `supabase/functions/create-activation-checkout/index.ts` : accepter `source` + `utm` dans metadata
+
+**Explicitement hors scope** (à ne PAS toucher aujourd'hui) :
+- Refonte du wizard scan-ia
+- Plans (Pro/Premium/Élite/Signature)
+- Score AIPP
+- Onboarding entrepreneur global
+- Autres pages publiques
+
+---
 
 ## Succès
-- Step10 : `Aujourd'hui = 4` (ou vrai chiffre), `Avec UNPRO = today + min(capacity, demande, plan.RDV)`, tag "IA · ville · plan" visible
-- Stripe Checkout affiche natif : `"CA$1.00 due today"` + `"Then CA$599.00/month starting July 13, 2026"`
-- StepActivate : bloc prix montre "1 $ aujourd'hui · puis 688,70 $/mois taxes incl. dès le 13 juillet"
-- Bouton : "Activer pour 1 $ → puis 599 $/mois"
+
+Un entrepreneur isolation QC paie 1 $ dans les 24 h et son profil est activé automatiquement. On enregistre : source SMS, variante, ville, temps clic→paiement. C'est le patron zéro à cloner.
