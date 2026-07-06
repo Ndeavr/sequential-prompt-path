@@ -42,7 +42,7 @@ export default function PageScanIARun() {
         return;
       }
 
-      navigate(`/scan-ia/rapport?st=${encodeURIComponent(data.session_token)}`);
+      navigate(`/scan-ia/wizard?st=${encodeURIComponent(data.session_token)}`);
     } catch (err) {
       clearInterval(iv);
       setError("Analyse temporairement ralentie. Réessayez dans un instant.");
