@@ -41,6 +41,8 @@ export default function StepActivate() {
           goal,
           capacity,
           recommended_plan: planSlug,
+          plan_name: plan?.name ?? "",
+          plan_monthly_price_cents: (plan?.monthlyPrice ?? 0) * 100,
         },
       });
       if (error) throw new Error(error.message);
@@ -51,6 +53,7 @@ export default function StepActivate() {
       setBusy(false);
     }
   }
+
 
   return (
     <WizardShell hidePrimary>

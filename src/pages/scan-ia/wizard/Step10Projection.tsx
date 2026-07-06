@@ -1,22 +1,16 @@
 import { useMemo } from "react";
 import WizardShell from "./WizardShell";
 import { useScanWizardState } from "./useScanWizardState";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, Sparkles } from "lucide-react";
 import { pickRecommendedPlan, buildGrowthPlan, type BusinessGoal } from "@/features/scanIA/growthPlanEngine";
 import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
 import { fmtCADDollars } from "@/features/scanIA/planPricingBreakdown";
 
 export default function Step10Projection() {
   const { report, capacity, goal, selectedPlan, next } = useScanWizardState();
-  const today = Math.max(1, report?.today_jobs_per_month ?? 4);
-  const topCityDemand =
-    (report?.territory_demand?.[0]?.waiting_homeowners as number) ?? capacity;
-  const projected = today + Math.min(capacity, topCityDemand);
 
-  const max = Math.max(today, projected);
-  const todayW = (today / max) * 100;
-  const projW = (projected / max) * 100;
-  const todayNarrow = todayW < 18;
+  // Real baseline: what the pro declared (or 4 if truly unknown — never 1)
+  const today = Math.max(1, report?.today_jobs_per_month ?? 4);
 
   const opp = Number(report?.opportunities?.estimated_revenue ?? 0);
   const recs = useMemo(
@@ -27,6 +21,21 @@ export default function Step10Projection() {
   const recommendedSlug = pickRecommendedPlan(Math.max(opp, totalPlan));
   const activeSlug = selectedPlan ?? recommendedSlug;
   const plan = CONTRACTOR_PLANS.find((p) => p.slug === activeSlug);
+
+  // Real numbers, all capped:
+  // - can't exceed real waiting homeowners
+  // - can't exceed what the pro said they can absorb
+  // - can't exceed what the plan actually delivers (RDV inclus)
+  const topCity = report?.territory_demand?.[0];
+  const topCityDemand = Math.max(0, Number(topCity?.waiting_homeowners ?? 0));
+  const planCap = plan?.appointmentsIncluded ?? capacity;
+  const additional = Math.min(capacity, topCityDemand || capacity, planCap);
+  const projected = today + additional;
+
+  const max = Math.max(today, projected, 1);
+  const todayW = (today / max) * 100;
+  const projW = (projected / max) * 100;
+  const todayNarrow = todayW < 18;
 
   return (
     <WizardShell primaryLabel="Activer mon profil">
@@ -48,7 +57,7 @@ export default function Step10Projection() {
               <span className="text-white font-semibold ml-3">{today}</span>
             )}
           </div>
-          <div className="text-white/50 text-sm text-center mb-8">projets / mois</div>
+          <div className="text-white/50 text-sm text-center mb-8">projets / mois (déclaré)</div>
 
           <div className="flex justify-center mb-6">
             <ArrowDown className="h-6 w-6 text-amber-400 animate-bounce" />
@@ -65,9 +74,22 @@ export default function Step10Projection() {
               {projected}
             </div>
           </div>
-          <div className="text-emerald-400 text-sm text-center font-medium mb-6">
-            +{projected - today} projets additionnels / mois
+          <div className="text-emerald-400 text-sm text-center font-medium mb-2">
+            +{additional} rendez-vous IA / mois
           </div>
+          <div className="flex items-center justify-center gap-1.5 text-[11px] text-white/50 mb-6">
+            <Sparkles className="h-3 w-3 text-amber-300" />
+            <span>
+              Estimation IA
+              {topCity?.city ? ` · ${topCity.city}` : ""}
+              {plan ? ` · plan ${plan.name} (${plan.appointmentsIncluded} RDV inclus)` : ""}
+            </span>
+          </div>
+          {topCityDemand > 0 && (
+            <div className="text-center text-[11px] text-white/40 mb-6 -mt-4">
+              {topCityDemand} propriétaires en attente · {additional} captables ce mois
+            </div>
+          )}
 
           {plan && (
             <button
@@ -82,8 +104,8 @@ export default function Step10Projection() {
                 <div className="text-white font-semibold text-sm">{plan.name}</div>
               </div>
               <div className="text-right">
-                <div className="text-white font-semibold text-sm">{fmtCADDollars(plan.monthlyPrice)}</div>
-                <div className="text-white/50 text-[10px]">/ mois · Essai 1 $</div>
+                <div className="text-white font-semibold text-sm">1&nbsp;$ aujourd'hui</div>
+                <div className="text-white/50 text-[10px]">puis {fmtCADDollars(plan.monthlyPrice)}/mois</div>
               </div>
             </button>
           )}
