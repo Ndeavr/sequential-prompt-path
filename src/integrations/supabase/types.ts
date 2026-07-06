@@ -42491,6 +42491,42 @@ export type Database = {
           },
         ]
       }
+      first_dollar_sprint_events: {
+        Row: {
+          campaign_variant: string | null
+          category: string | null
+          city: string | null
+          created_at: string
+          event: string
+          id: string
+          metadata: Json
+          prospect_id: string | null
+          session_id: string | null
+        }
+        Insert: {
+          campaign_variant?: string | null
+          category?: string | null
+          city?: string | null
+          created_at?: string
+          event: string
+          id?: string
+          metadata?: Json
+          prospect_id?: string | null
+          session_id?: string | null
+        }
+        Update: {
+          campaign_variant?: string | null
+          category?: string | null
+          city?: string | null
+          created_at?: string
+          event?: string
+          id?: string
+          metadata?: Json
+          prospect_id?: string | null
+          session_id?: string | null
+        }
+        Relationships: []
+      }
       form_email_logs: {
         Row: {
           attempt: number
