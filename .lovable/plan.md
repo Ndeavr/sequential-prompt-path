@@ -1,77 +1,61 @@
 ## Objectif
+1. Rendre la projection "Aujourd'hui vs Avec UNPRO" crédible (chiffres réels, pas gonflés)
+2. Afficher clairement "1 $ maintenant · puis 599 $/mois" sur Stripe Checkout et sur l'écran d'activation
 
-Sur les écrans finaux du wizard `/scan-ia/wizard` (Step10 Projection + StepActivate), afficher **clairement le plan recommandé** et permettre en un tap un **upsell** (Élite/Signature) ou un **downgrade** (Recrue/Pro) — avec prix mensuel + total taxes incluses mis à jour instantanément. Corriger aussi la barre « Aujourd'hui » qui coupe le chiffre `1`.
+---
 
-Aucun changement à Stripe, aux edge functions ni au flow d'activation (le slug de plan sélectionné est déjà transmis via `recommended_plan` à `scan-ia-activate`).
+## 1. Projection réaliste (Step10Projection.tsx)
 
-## Changements
+**Problème actuel** : `today = 1` (fallback max(1, ...)) et `projected = today + min(capacity, topCityDemand)` → saute à 19 sans justification. Aucun tag "IA".
 
-### 1. `src/features/scanIA/growthPlanEngine.ts`
-- Étendre `RecommendedPlanSlug` à `"recrue" | "pro" | "premium" | "elite" | "signature"`.
-- Étendre `pickRecommendedPlan(opp)` :
-  - ≥ 1 000 000 → `signature`
-  - ≥ 500 000 → `elite`
-  - ≥ 200 000 → `premium`
-  - ≥ 100 000 → `pro`
-  - sinon → `recrue`
+**Fix** :
+- `today` = `report.today_jobs_per_month ?? 4` (garder 4 comme fallback humain, pas 1)
+- `projected` = `today + min(capacity, demandeRéelleTop, RDVduPlanChoisi)`, où `RDVduPlanChoisi = plan.appointmentsIncluded`
+- Cap dur : `projected ≤ today + plan.appointmentsIncluded` (jamais promettre plus que le plan livre)
+- Ajouter petit label sous la barre verte : **"Projection basée sur IA · {ville} · plan {planName}"** avec icône Sparkles
+- Sous-ligne : "{demandeRéelle} propriétaires en attente · {capacityCappée} captables ce mois"
+- Retirer le "+18" trompeur → afficher "+{delta} rendez-vous IA / mois"
 
-### 2. `src/pages/scan-ia/wizard/useScanWizardState.ts`
-- Ajouter `selectedPlan: ContractorPlanSlug | null` + `setSelectedPlan(slug)`.
-- Initialisé à `null` (fallback = plan recommandé calculé).
+## 2. Transparence "1 $ maintenant puis 599 $" sur Stripe
 
-### 3. Nouveau composant `src/pages/scan-ia/wizard/PlanChoiceStrip.tsx`
-Strip horizontal scrollable (mobile-first) présentant les 5 plans standards :
+**Problème actuel** : Stripe Checkout affiche seulement "CA$1.00", zéro mention du renouvellement à 599 $. C'est ce qui a été encerclé.
 
+**Fix `supabase/functions/scan-ia-activate/index.ts`** :
+- Recevoir `plan_slug` + `plan_monthly_price` du frontend (déjà passe `recommended_plan`)
+- Nom du line item : `"Activation IA UNPRO — Plan {Name}"` (ex: "Plan Premium")
+- Description Stripe enrichie : `"Essai 7 jours à 1 $. Puis {prix} $/mois + taxes QC ({total} $/mois). Annulation en 1 clic avant le jour 8."`
+- Métadonnées : `plan_slug`, `plan_monthly_price_cents`, `next_charge_date` (J+8)
+- Passer `custom_text.submit.message` : `"Vous payez 1 $ aujourd'hui. Le {date J+8}, votre plan {Name} démarre à {total} $/mois taxes incluses. Annulation en 1 clic."`
+- (Optionnel Phase 2) : passer à `mode: "subscription"` avec `trial_period_days: 7` + `subscription_data.trial_settings.end_behavior.missing_payment_method: "cancel"` pour que Stripe affiche nativement "Then $599/month after 7 days". Mais nécessite d'avoir un vrai `stripe_monthly_price_id` par plan — le catalogue actuel (`plan_catalog.stripe_monthly_price_id`) l'a, donc faisable proprement.
+
+**Recommandation : Phase 2 (vrai subscription avec trial)** — c'est ce que l'utilisateur veut voir "1 $ maintenant puis 599 $" natif dans Stripe. Utiliser `usePlanCatalog` pour récupérer le `stripeMonthlyPriceId` du plan choisi et créer une Checkout Session en mode subscription avec :
+```ts
+mode: "subscription",
+line_items: [{ price: stripeMonthlyPriceId, quantity: 1 }],
+subscription_data: {
+  trial_period_days: 7,
+  description: `Plan ${planName} · Essai 7 jours à 1 $`,
+},
+// Frais d'activation 1 $ via invoice_items ou une ligne setup_fee séparée
 ```
-[ Recrue 149$ ] [ Pro 349$ ] [• Premium 599$ recommandé •] [ Élite 999$ ↑ ] [ Signature 1799$ ↑ ]
-```
+Fallback si pas de `stripe_monthly_price_id` en base : mode payment actuel + custom_text explicite.
 
-- Plan recommandé : bordure `amber-400`, badge « Recommandé ».
-- Plans inférieurs : label « Économiser » discret.
-- Plans supérieurs : label « Plus de capacité » avec flèche ↑.
-- Plan sélectionné : fond blanc, bordure `amber-400` renforcée + check.
-- Chaque pill affiche : nom · prix HT/mois · appointmentsIncluded.
-- Tap → `setSelectedPlan(slug)` (haptic léger).
-- Utilise `CONTRACTOR_PLANS` de `src/config/contractorPlans.ts`.
-- Ancré en bas de la carte activation, largeur pleine, `overflow-x-auto snap-x`.
+## 3. StepActivate — cohérence copy
 
-### 4. `src/pages/scan-ia/wizard/StepActivate.tsx`
-- Remplacer `planSlug = pickRecommendedPlan(...)` par :
-  ```ts
-  const recommendedSlug = pickRecommendedPlan(...);
-  const planSlug = selectedPlan ?? recommendedSlug;
-  ```
-- Injecter `<PlanChoiceStrip recommended={recommendedSlug} selected={planSlug} onSelect={setSelectedPlan} />` sous la liste des features.
-- Le bloc « Après l'essai » (déjà ajouté) reste — recalcule automatiquement via `getPlanPricingBreakdown(planSlug)`.
-- Si `planSlug !== recommendedSlug` :
-  - downgrade → petite ligne `text-black/50` : « Vous choisissez un plan plus léger — capacité réduite. »
-  - upsell → ligne `text-emerald-700` : « Capacité étendue — vous captez plus d'opportunités. »
-- Le CTA passe `recommended_plan: planSlug` (déjà le cas).
+- Remplacer "Essai activation · 1 $ / 7 jours" par un bloc en 2 lignes :
+  - Ligne 1 grande : **"1 $ aujourd'hui"**
+  - Ligne 2 : **"puis {total} $/mois taxes incluses dès le {date J+8}"**
+- Bouton : `"Activer pour 1 $ → puis {prix arrondi}$/mois"` (au lieu de "Activer maintenant")
 
-### 5. `src/pages/scan-ia/wizard/Step10Projection.tsx` (fix + indication plan)
-- **Fix bar readability** : si `todayW < 15%`, afficher le chiffre à droite en dehors de la barre (`ml-2 text-white`) au lieu de dans la barre.
-- Forcer une largeur minimum visuelle de 44 px (`min-w-[44px]`) sur la barre pour que le chiffre reste lisible.
-- Ajouter sous « +N projets additionnels » un mini badge :
-  ```
-  Plan recommandé : Premium — 599 $/mois
-  ```
-  cliquable qui scrolle vers l'écran d'activation (déjà l'étape suivante, donc simple `next()`).
+## 4. Fichiers touchés
 
-### 6. Aucun changement DB / edge / Stripe
-- `scan-ia-activate` reçoit déjà `recommended_plan` et mappe au bon prix Stripe. Vérifier rapidement que les 5 slugs (`recrue`, `pro`, `premium`, `elite`, `signature`) sont bien tous supportés côté edge. Si `elite`/`signature` ne sont pas dans le mapping Stripe, ajouter les Price IDs correspondants (ou fallback safe sur `premium` avec log warning).
+- `src/pages/scan-ia/wizard/Step10Projection.tsx` — chiffres réels + tag IA + cap sur plan
+- `src/pages/scan-ia/wizard/StepActivate.tsx` — copy "1 $ aujourd'hui puis X $/mois", bouton explicite, passer `plan_monthly_price_cents` + `stripe_price_id` à l'edge
+- `supabase/functions/scan-ia-activate/index.ts` — mode `subscription` + `trial_period_days: 7` + setup fee 1 $ via `add_invoice_items`, fallback mode payment avec `custom_text` si price_id absent
+- `src/hooks/usePlanCatalog.ts` — pas de changement, juste lecture depuis StepActivate
 
-## Fichiers touchés
-- `src/features/scanIA/growthPlanEngine.ts` (extension enum + seuils)
-- `src/pages/scan-ia/wizard/useScanWizardState.ts` (état sélection)
-- `src/pages/scan-ia/wizard/PlanChoiceStrip.tsx` (nouveau, ~90 lignes)
-- `src/pages/scan-ia/wizard/StepActivate.tsx` (intégration + copy contextuelle)
-- `src/pages/scan-ia/wizard/Step10Projection.tsx` (fix chiffre + badge plan)
-- `supabase/functions/scan-ia-activate/index.ts` (vérif mapping 5 plans — ajout si manquant)
-
-## Critères de succès
-- Le chiffre `1` de la barre « Aujourd'hui » est toujours lisible même à faible largeur.
-- Step10 affiche le nom du plan recommandé + prix mensuel.
-- StepActivate affiche 5 plans en strip, plan recommandé pré-sélectionné et visuellement distinct.
-- Tap sur un autre plan → prix, taxes, total et badge « Après l'essai » se mettent à jour instantanément.
-- L'activation Stripe utilise bien le plan sélectionné (pas juste le recommandé).
-- Aucun impact sur les autres écrans du wizard ni sur les autres flows checkout de l'app.
+## Succès
+- Step10 : `Aujourd'hui = 4` (ou vrai chiffre), `Avec UNPRO = today + min(capacity, demande, plan.RDV)`, tag "IA · ville · plan" visible
+- Stripe Checkout affiche natif : `"CA$1.00 due today"` + `"Then CA$599.00/month starting July 13, 2026"`
+- StepActivate : bloc prix montre "1 $ aujourd'hui · puis 688,70 $/mois taxes incl. dès le 13 juillet"
+- Bouton : "Activer pour 1 $ → puis 599 $/mois"
