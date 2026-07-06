@@ -39,7 +39,7 @@ export default function PageFirstDollarSprint() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("first_dollar_sprint_events")
       .select("event, campaign_variant, city, created_at")
       .order("created_at", { ascending: false })

@@ -13,7 +13,7 @@ const SPRINT_SLUG = "sprint-isolation-qc";
 
 async function logEvent(event: string, payload: Record<string, unknown>) {
   try {
-    await supabase.from("first_dollar_sprint_events").insert({
+    await (supabase as any).from("first_dollar_sprint_events").insert({
       event,
       campaign_variant: (payload.camp as string) ?? null,
       city: (payload.city as string) ?? null,
