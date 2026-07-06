@@ -908,8 +908,10 @@ export const AppRouter = () => (
         <Route path="/aipp-check" element={<PageAdLandingAipp />} />
         <Route path="/scan-ia" element={<Suspense fallback={<LazyFallback />}><PageScanIALanding /></Suspense>} />
         <Route path="/scan-ia/scan" element={<Suspense fallback={<LazyFallback />}><PageScanIARun /></Suspense>} />
-        <Route path="/scan-ia/rapport" element={<Suspense fallback={<LazyFallback />}><PageScanIAReport /></Suspense>} />
+        <Route path="/scan-ia/wizard" element={<Suspense fallback={<LazyFallback />}><PageScanIAWizard /></Suspense>} />
+        <Route path="/scan-ia/rapport" element={<Suspense fallback={<LazyFallback />}><PageScanIAWizard /></Suspense>} />
         <Route path="/scan-ia/activation-success" element={<Suspense fallback={<LazyFallback />}><PageScanIAActivationSuccess /></Suspense>} />
+        <Route path="/_legacy/scan-ia/rapport" element={<Suspense fallback={<LazyFallback />}><PageScanIAReport /></Suspense>} />
         <Route path="/business-import" element={<PageBusinessImport />} />
         <Route path="/business-card-import" element={<PageBusinessCardImport />} />
         <Route path="/scanner" element={<PageBusinessCardScannerHub />} />
