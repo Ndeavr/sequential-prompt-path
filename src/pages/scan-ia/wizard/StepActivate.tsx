@@ -111,6 +111,25 @@ export default function StepActivate() {
               );
             })()}
 
+            <PlanChoiceStrip
+              recommended={recommendedSlug}
+              selected={planSlug}
+              onSelect={setSelectedPlan}
+            />
+
+            {isUpsell && (
+              <div className="mb-4 rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-2 text-xs text-emerald-800">
+                Capacité étendue — vous captez plus d'opportunités que votre recommandation.
+              </div>
+            )}
+            {isDowngrade && (
+              <div className="mb-4 rounded-xl bg-black/[0.03] border border-black/5 px-3 py-2 text-xs text-black/60">
+                Plan plus léger — capacité et visibilité réduites vs. la recommandation.
+              </div>
+            )}
+
+
+
             <ul className="space-y-2 text-left text-sm mb-5">
               {[
                 "Profil IA visible sur Alex",
