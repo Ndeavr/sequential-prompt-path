@@ -4,12 +4,15 @@ import { useScanWizardState } from "./useScanWizardState";
 import { pickRecommendedPlan, buildGrowthPlan, type BusinessGoal } from "@/features/scanIA/growthPlanEngine";
 import { fmtCAD } from "./useCountUp";
 import { supabase } from "@/integrations/supabase/client";
-import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
+import { CONTRACTOR_PLANS, type ContractorPlanSlug } from "@/config/contractorPlans";
 import { getPlanPricingBreakdown, fmtCADDollars } from "@/features/scanIA/planPricingBreakdown";
+import PlanChoiceStrip from "./PlanChoiceStrip";
 import { Check, Loader2, ArrowRight, ShieldCheck } from "lucide-react";
 
+const ORDER: ContractorPlanSlug[] = ["recrue", "pro", "premium", "elite", "signature"];
+
 export default function StepActivate() {
-  const { report, goal, capacity } = useScanWizardState();
+  const { report, goal, capacity, selectedPlan, setSelectedPlan } = useScanWizardState();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -19,8 +22,11 @@ export default function StepActivate() {
     [report, goal, capacity],
   );
   const totalPlan = recs.reduce((s, r) => s + r.annual_value_cad, 0);
-  const planSlug = pickRecommendedPlan(Math.max(opp, totalPlan));
+  const recommendedSlug = pickRecommendedPlan(Math.max(opp, totalPlan));
+  const planSlug: ContractorPlanSlug = selectedPlan ?? recommendedSlug;
   const plan = CONTRACTOR_PLANS.find((p) => p.slug === planSlug);
+  const isUpsell = ORDER.indexOf(planSlug) > ORDER.indexOf(recommendedSlug);
+  const isDowngrade = ORDER.indexOf(planSlug) < ORDER.indexOf(recommendedSlug);
 
   async function activate() {
     if (!report || busy) return;
@@ -104,6 +110,25 @@ export default function StepActivate() {
                 </div>
               );
             })()}
+
+            <PlanChoiceStrip
+              recommended={recommendedSlug}
+              selected={planSlug}
+              onSelect={setSelectedPlan}
+            />
+
+            {isUpsell && (
+              <div className="mb-4 rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-2 text-xs text-emerald-800">
+                Capacité étendue — vous captez plus d'opportunités que votre recommandation.
+              </div>
+            )}
+            {isDowngrade && (
+              <div className="mb-4 rounded-xl bg-black/[0.03] border border-black/5 px-3 py-2 text-xs text-black/60">
+                Plan plus léger — capacité et visibilité réduites vs. la recommandation.
+              </div>
+            )}
+
+
 
             <ul className="space-y-2 text-left text-sm mb-5">
               {[

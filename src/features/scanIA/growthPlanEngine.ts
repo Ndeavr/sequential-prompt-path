@@ -89,9 +89,11 @@ export function buildGrowthPlan(
   return recs.map((r, i) => ({ ...r, rank: i + 1 }));
 }
 
-export type RecommendedPlanSlug = "recrue" | "pro" | "premium";
+export type RecommendedPlanSlug = "recrue" | "pro" | "premium" | "elite" | "signature";
 
 export function pickRecommendedPlan(annualOpportunity: number): RecommendedPlanSlug {
+  if (annualOpportunity >= 1_000_000) return "signature";
+  if (annualOpportunity >= 500_000) return "elite";
   if (annualOpportunity >= 200_000) return "premium";
   if (annualOpportunity >= 100_000) return "pro";
   return "recrue";
