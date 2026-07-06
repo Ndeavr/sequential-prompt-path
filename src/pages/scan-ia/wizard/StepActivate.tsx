@@ -5,6 +5,7 @@ import { pickRecommendedPlan, buildGrowthPlan, type BusinessGoal } from "@/featu
 import { fmtCAD } from "./useCountUp";
 import { supabase } from "@/integrations/supabase/client";
 import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
+import { getPlanPricingBreakdown, fmtCADDollars } from "@/features/scanIA/planPricingBreakdown";
 import { Check, Loader2, ArrowRight, ShieldCheck } from "lucide-react";
 
 export default function StepActivate() {
