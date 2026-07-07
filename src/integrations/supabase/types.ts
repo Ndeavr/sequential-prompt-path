@@ -75830,6 +75830,42 @@ export type Database = {
         }
         Relationships: []
       }
+      system_alerts: {
+        Row: {
+          code: string
+          created_at: string
+          details: Json
+          id: string
+          message: string
+          resolved: boolean
+          resolved_at: string | null
+          severity: string
+          source: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          details?: Json
+          id?: string
+          message: string
+          resolved?: boolean
+          resolved_at?: string | null
+          severity?: string
+          source: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          message?: string
+          resolved?: boolean
+          resolved_at?: string | null
+          severity?: string
+          source?: string
+        }
+        Relationships: []
+      }
       system_config_health: {
         Row: {
           error_message: string | null
