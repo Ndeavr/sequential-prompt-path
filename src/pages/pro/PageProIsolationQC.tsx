@@ -195,7 +195,14 @@ export default function PageProIsolationQC() {
           Aucun engagement · Annulation en 1 clic · Paiement Stripe
         </p>
 
-        {err && <p className="mt-3 text-[13px] text-rose-300 text-center">{err}</p>}
+        {err && (
+          <p className="mt-3 text-[13px] text-rose-300 text-center">
+            {err}{" "}
+            <a href="mailto:hello@unpro.ca?subject=Activation%20UNPRO" className="underline text-rose-200">
+              Nous écrire
+            </a>
+          </p>
+        )}
 
         {/* 4 micro-benefits */}
         <ul className="mt-7 space-y-2.5 text-[13.5px] text-white/75">
