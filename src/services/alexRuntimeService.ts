@@ -3,6 +3,8 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { getAlexFlag } from "@/lib/alexFeatureFlags";
+import { recordMemoryTurn } from "@/hooks/useHomeownerDNA";
 
 const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
@@ -14,6 +16,7 @@ async function getAuthToken(): Promise<string> {
 export class AlexRuntimeService {
   private sessionToken: string;
   private sessionId: string | null = null;
+  private lastAlexQuestion: string = "";
 
   constructor(existingToken?: string) {
     this.sessionToken = existingToken || crypto.randomUUID();
@@ -34,7 +37,7 @@ export class AlexRuntimeService {
     return data;
   }
 
-  async processTurn(userMessage: string, messageMode = "text", uiContext?: any) {
+  async processTurn(userMessage: string, messageMode = "text", uiContext?: any, userId?: string | null) {
     const token = await getAuthToken();
     const resp = await fetch(`${FUNCTIONS_BASE}/alex-process-turn`, {
       method: "POST",
@@ -47,7 +50,24 @@ export class AlexRuntimeService {
         ui_context: uiContext,
       }),
     });
-    return resp.json();
+    const data = await resp.json();
+
+    // Fire-and-forget: feed the memory extractor. Never blocks the chat UX.
+    if (userId && getAlexFlag("compat_memory_engine_v1")) {
+      const prevQuestion = this.lastAlexQuestion;
+      void Promise.resolve().then(() =>
+        recordMemoryTurn({
+          user_id: userId,
+          session_id: this.sessionToken,
+          question: prevQuestion,
+          answer: userMessage,
+          source: "alex_runtime",
+        })
+      );
+    }
+    this.lastAlexQuestion = data?.alex_question ?? data?.assistant_message ?? data?.message ?? "";
+
+    return data;
   }
 
   async resumeAfterAuth(userId: string) {
