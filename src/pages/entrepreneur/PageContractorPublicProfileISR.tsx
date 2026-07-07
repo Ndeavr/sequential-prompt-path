@@ -40,7 +40,7 @@ export default function PageContractorPublicProfileISR() {
         <title>Isolation Solution Royal — Spécialiste de l'entretoit · UNPRO</title>
         <meta
           name="description"
-          content="Isolation Solution Royal (9480-0976 Québec inc.) — spécialiste de l'entretoit à Laval, Montréal, Rive-Nord et Lanaudière. Planifiez une évaluation en 15 minutes."
+          content="Isolation Solution Royal (9480-0976 Québec inc.) — spécialiste de l'entretoit à Laval, Montréal, Rive-Nord et Lanaudière. Planifiez une évaluation de 60 min."
         />
         <link rel="canonical" href="https://unpro.ca/entrepreneur/isolation-solution-royal" />
         <script type="application/ld+json">
@@ -113,7 +113,7 @@ export default function PageContractorPublicProfileISR() {
             className="mt-7 inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-[18px] bg-amber-300 px-6 py-3.5 text-sm font-semibold text-[#050816] hover:-translate-y-0.5 transition-all duration-[420ms] [transition-timing-function:cubic-bezier(.22,1,.36,1)] shadow-[0_20px_60px_-20px_rgba(251,191,36,0.5)]"
           >
             <Sparkles className="h-4 w-4" />
-            Planifier une évaluation 15 min
+            Planifier une évaluation de 60 min.
           </a>
         </section>
 
@@ -317,7 +317,7 @@ function EvaluationBookingPanel({ slug }: { slug: string }) {
           Demande reçue.
         </h3>
         <p className="mt-2 text-sm text-white/75">
-          L'équipe UNPRO vous contacte sous 24 h pour confirmer l'évaluation 15 min.
+          L'équipe UNPRO vous contacte sous 24 h pour confirmer l'évaluation de 60 min.
         </p>
       </div>
     );
@@ -325,7 +325,7 @@ function EvaluationBookingPanel({ slug }: { slug: string }) {
 
   return (
     <div className="rounded-[28px] border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6 sm:p-8">
-      <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80">Évaluation 15 min</div>
+      <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80">Évaluation de 60 min.</div>
       <h3 className="mt-1 text-2xl font-semibold tracking-[-0.03em] text-white">
         Planifier un échange avec l'équipe UNPRO
       </h3>
