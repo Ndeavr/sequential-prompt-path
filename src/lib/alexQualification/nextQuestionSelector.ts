@@ -1,8 +1,10 @@
 /**
  * Alex V3 — Picks ONE question per turn following the universal priority order.
+ * Skips questions whose answer is already stored in the homeowner's compat DNA.
  */
 import type { QualificationGraph } from "./qualificationGraph";
 import { getCategoryTree } from "./categoryDecisionTrees";
+import { isFieldKnown, type KnownDnaFacts } from "./dnaGate";
 
 export interface NextQuestion {
   field: string;
