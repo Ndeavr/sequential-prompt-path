@@ -14,6 +14,8 @@ const FLAGS = {
   debug_alex_flow_admin: false,
   /** Alex V3 Universal Qualification Engine — gates matching behind score >= 70 */
   alex_v3_qualification_engine: true,
+  /** Compatibility Memory Engine v1 — extract long-term facts + adaptive questions + match explainability */
+  compat_memory_engine_v1: true,
 } as const;
 
 type FlagKey = keyof typeof FLAGS;
