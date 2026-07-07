@@ -2106,6 +2106,45 @@ export type Database = {
         }
         Relationships: []
       }
+      adaptive_question_bank: {
+        Row: {
+          answer_schema: Json
+          applies_when: Json
+          created_at: string
+          dimension: string
+          id: string
+          information_gain: number
+          is_active: boolean
+          question_en: string | null
+          question_fr: string
+          updates_fields: string[]
+        }
+        Insert: {
+          answer_schema?: Json
+          applies_when?: Json
+          created_at?: string
+          dimension: string
+          id?: string
+          information_gain?: number
+          is_active?: boolean
+          question_en?: string | null
+          question_fr: string
+          updates_fields?: string[]
+        }
+        Update: {
+          answer_schema?: Json
+          applies_when?: Json
+          created_at?: string
+          dimension?: string
+          id?: string
+          information_gain?: number
+          is_active?: boolean
+          question_en?: string | null
+          question_fr?: string
+          updates_fields?: string[]
+        }
+        Relationships: []
+      }
       adaptive_sessions: {
         Row: {
           conversion_stage: string
@@ -29768,6 +29807,39 @@ export type Database = {
           },
         ]
       }
+      contractor_memory_events: {
+        Row: {
+          confidence: number
+          contractor_id: string | null
+          created_at: string
+          extracted: Json
+          id: string
+          scope: string
+          signal: string | null
+          source: string
+        }
+        Insert: {
+          confidence?: number
+          contractor_id?: string | null
+          created_at?: string
+          extracted?: Json
+          id?: string
+          scope: string
+          signal?: string | null
+          source?: string
+        }
+        Update: {
+          confidence?: number
+          contractor_id?: string | null
+          created_at?: string
+          extracted?: Json
+          id?: string
+          scope?: string
+          signal?: string | null
+          source?: string
+        }
+        Relationships: []
+      }
       contractor_merge_suggestions: {
         Row: {
           confidence: number | null
@@ -44572,6 +44644,42 @@ export type Database = {
         }
         Relationships: []
       }
+      homeowner_compat_dna: {
+        Row: {
+          behavior: Json
+          communication: Json
+          confidence: Json
+          created_at: string
+          environment: Json
+          preferences: Json
+          property: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          behavior?: Json
+          communication?: Json
+          confidence?: Json
+          created_at?: string
+          environment?: Json
+          preferences?: Json
+          property?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          behavior?: Json
+          communication?: Json
+          confidence?: Json
+          created_at?: string
+          environment?: Json
+          preferences?: Json
+          property?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       homeowner_dna_profiles: {
         Row: {
           confidence: number
@@ -44714,6 +44822,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      homeowner_memory_events: {
+        Row: {
+          answer_raw: string | null
+          confidence: number
+          created_at: string
+          expires_at: string | null
+          extracted: Json
+          id: string
+          question: string | null
+          scope: string
+          session_id: string | null
+          source: string
+          user_id: string | null
+        }
+        Insert: {
+          answer_raw?: string | null
+          confidence?: number
+          created_at?: string
+          expires_at?: string | null
+          extracted?: Json
+          id?: string
+          question?: string | null
+          scope: string
+          session_id?: string | null
+          source?: string
+          user_id?: string | null
+        }
+        Update: {
+          answer_raw?: string | null
+          confidence?: number
+          created_at?: string
+          expires_at?: string | null
+          extracted?: Json
+          id?: string
+          question?: string | null
+          scope?: string
+          session_id?: string | null
+          source?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       homeowner_messages: {
         Row: {
@@ -66467,6 +66617,39 @@ export type Database = {
             referencedColumns: ["code"]
           },
         ]
+      }
+      recommendation_explanations: {
+        Row: {
+          blockers: Json
+          contractor_id: string | null
+          created_at: string
+          dimensions: Json
+          id: string
+          match_id: string | null
+          overall_score: number
+          user_id: string | null
+        }
+        Insert: {
+          blockers?: Json
+          contractor_id?: string | null
+          created_at?: string
+          dimensions?: Json
+          id?: string
+          match_id?: string | null
+          overall_score?: number
+          user_id?: string | null
+        }
+        Update: {
+          blockers?: Json
+          contractor_id?: string | null
+          created_at?: string
+          dimensions?: Json
+          id?: string
+          match_id?: string | null
+          overall_score?: number
+          user_id?: string | null
+        }
+        Relationships: []
       }
       recruitment_capacity_targets: {
         Row: {
