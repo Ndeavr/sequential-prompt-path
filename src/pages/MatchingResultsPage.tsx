@@ -3,18 +3,27 @@
  * Shows ranked contractors for a homeowner's project.
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSearchParams, Link } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Scale, Filter, SlidersHorizontal, HelpCircle } from "lucide-react";
+import { Scale, Filter, SlidersHorizontal, HelpCircle, Sparkles } from "lucide-react";
 import MatchCard from "@/components/matching/MatchCard";
 import CompareDrawer from "@/components/matching/CompareDrawer";
 import AlexMatchingModule from "@/components/matching/AlexMatchingModule";
+import MatchCompatibilityCard, { type Dimension } from "@/components/matching/MatchCompatibilityCard";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMatchResults } from "@/hooks/useMatchingEngine";
+import { useAuth } from "@/hooks/useAuth";
+import { getAlexFlag } from "@/lib/alexFeatureFlags";
+import {
+  persistBatchExplanations,
+  fetchExplanation,
+  type RecommendationExplanationRow,
+} from "@/services/recommendationExplanationService";
 import type { MatchEvaluation } from "@/types/matching";
 import SectionTrustProof from "@/components/trust/SectionTrustProof";
 
@@ -93,9 +102,37 @@ const MatchingResultsPage = () => {
   const { data: realMatches, isLoading } = useMatchResults(projectId);
 
   const matches = (realMatches?.length ?? 0) > 0 ? realMatches! : MOCK_MATCHES;
+  const { user } = useAuth();
   const [compareIds, setCompareIds] = useState<Set<string>>(new Set());
   const [compareOpen, setCompareOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
+  const [selectedExplanation, setSelectedExplanation] = useState<RecommendationExplanationRow | null>(null);
+
+  // Persist explanations (fire-and-forget) whenever real matches land.
+  useEffect(() => {
+    if (!user?.id) return;
+    if (!getAlexFlag("compat_memory_engine_v1")) return;
+    if (!realMatches || realMatches.length === 0) return;
+    void persistBatchExplanations(realMatches, user.id);
+  }, [realMatches, user?.id]);
+
+  const selectedMatch = useMemo(
+    () => matches.find((m) => m.id === selectedMatchId) ?? null,
+    [matches, selectedMatchId]
+  );
+
+  useEffect(() => {
+    if (!selectedMatch || !user?.id) {
+      setSelectedExplanation(null);
+      return;
+    }
+    let cancelled = false;
+    fetchExplanation(user.id, selectedMatch.contractor_id).then((row) => {
+      if (!cancelled) setSelectedExplanation(row);
+    });
+    return () => { cancelled = true; };
+  }, [selectedMatch, user?.id]);
 
   const filteredMatches = useMemo(() => {
     if (!activeFilter) return matches;
