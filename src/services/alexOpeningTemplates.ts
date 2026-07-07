@@ -151,9 +151,10 @@ export function buildAlexOpening(args: OpeningArgs = {}): string {
     case "generic":
     default:
       body =
-        "Je vais vous aider à comprendre votre situation et à trouver le bon professionnel si nécessaire. Que se passe-t-il ?";
+        "Comment puis-je vous aider avec votre maison aujourd'hui ?";
       break;
   }
+
 
   const out = `${salutation} ${body}`;
   assertNoForbiddenOpening(out);
