@@ -1,59 +1,85 @@
-## Objectif
 
-Éliminer l'ambiguïté du checkout d'activation 7 jours pour lever le blocage de conversion vers la première vente.
+## Goal
 
-## Décision
+Collapse the multi-button, sequence-heavy SMS Sprint page (`/admin/sms-sprint`) into a single-button revenue engine focused on one outcome: get the next contractor to pay $1. No J+0/J+2 exposure, no editing, no manual batching.
 
-Adopter l'option recommandée par l'utilisateur : garder l'activation comme **paiement unique de 1 $ (aucun renouvellement)**, et faire choisir le plan pendant l'onboarding après paiement. Cela supprime la confusion « quel plan me sera facturé au jour 8 ? ».
+## Scope
 
-Techniquement, c'est déjà le cas côté Stripe (`mode: "payment"`, one-time price), mais rien ne le dit clairement à l'utilisateur. On rend cette promesse visible partout.
+Rewrite `src/pages/admin/PageAdminSmsSprint.tsx` only. Reuse existing edge functions (`sms-sprint-scrape`, `sms-sprint-send`, `sms-sprint-followups`, `sms-sprint-test`) and DB tables (`sms_sprint_*`). No schema changes, no new endpoints, no changes to Alex, checkout, or landing pages.
 
-## Changements
+## New page layout (top → bottom)
 
-### 1. Landing `/isolation-qc` — bloc récap prix avant le CTA
-Fichier : `src/pages/pro/PageProIsolationQC.tsx`
+1. **Goal Today banner**
+   - "🎯 Prochain entrepreneur qui active à 1 $"
+   - Progress bar: `activations_today / 1` (or /5 once first sale lands)
+   - Revenue counter (activations × $1) with green pulse when > 0
 
-Ajouter, juste au-dessus du bouton « Activer mon essai », un encadré :
+2. **Campaign Status strip** (auto-computed, no controls)
+   - Prospects ready (qualified count)
+   - Mobile numbers validated (phone_type = mobile)
+   - High AI score (roi_score ≥ threshold)
+   - SMS remaining today (daily cap − sent today)
+   - Status pill: 🟢 Ready / 🟡 Test required / 🔴 Quota reached
+
+3. **Current Experiment card** — the 6 new variants shown as compact cards with live win-rate (activation ÷ sent). Ribbon 🏆 on the leader. Copy comes from a new constant `SMS_REVENUE_VARIANTS` (see Technical). No edit affordance — read-only.
+
+4. **One Button**
+   - Large primary: `🚀 Trouver mon premier dollar`
+   - Under it, sub-text: "L'IA choisit le meilleur message, envoie aux numéros mobiles validés, surveille les réponses, met en pause sur STOP, et apprend automatiquement."
+   - Disabled states surface as tiny copy: "Test SMS requis" / "Quota atteint" / "Aucun prospect qualifié — j'en cherche…"
+
+5. **Live Feed** — vertical timeline of the last 30 events (SMS sent, delivered, clicked, onboarding started, paid). Real-time via existing Supabase channels on `sms_sprint_messages` + `sms_sprint_link_events` + `sms_sprint_prospects` (activation).
+
+Everything else on the current page (rejection breakdown, prospects table, test SMS card, Scrape/Send-5/Send-20/Follow-ups buttons, KPI grid of 8 tiles) is removed.
+
+## Button behavior ("Find My First Dollar")
+
+Single click orchestrates in order, hidden from operator:
+1. If no `sms_sprint_test_runs` success → run `sms-sprint-test`, toast "Test envoyé", exit.
+2. If qualified prospects < 5 → invoke `sms-sprint-scrape` with `{ limit: 25 }`.
+3. Invoke `sms-sprint-send` with `{ batch: 5 }` when no prior batch, else `{ batch: 20 }` if 30 min elapsed + ≥1 click, else `sms-sprint-followups`. All timing rules already exist in the current page — moved into a `pickNextAction()` helper inside the component.
+4. On any error, single toast in plain FR: "Impossible pour l'instant — je réessaie automatiquement."
+5. Auto-refresh state every 15 s while the tab is visible.
+
+## Variants (read-only display)
+
+Ship the 6 SMS bodies from the message as the source of truth. Rendered from a `SMS_REVENUE_VARIANTS` array declared at the top of the file:
 
 ```
-Aujourd'hui              1,00 $ + taxes
-Après 7 jours            Aucun prélèvement automatique
-                         Vous choisirez votre plan pendant l'essai
-
-✓ Profil IA activé
-✓ Recommandations propriétaires  
-✓ Rendez-vous exclusifs
-✓ Annulation en 1 clic — aucun frais caché
+1. Recommandation IA + activation 1 $
+2. « Courir après les soumissions »
+3. « Si l'IA recommandait aujourd'hui, serait-ce vous ? »
+4. « Meilleurs entrepreneurs ≠ plus visibles »
+5. « Votre fiche est prête »
+6. « Vous avez été identifié dans votre secteur »
 ```
 
-Micro-copie sous le CTA : « Paiement unique de 1 $. Aucun renouvellement automatique. »
+Win-rate is computed from existing `sms_sprint_prospects.variant` + `activation_status` (already done in the current file). Copy is only visual for now — actual send-side variant selection continues to use whatever `sms-sprint-send` already picks. A follow-up sprint can wire the new variant keys into the send function when ready; this UI change does not require it.
 
-### 2. Stripe Checkout — libellé + description explicites
-Fichier : `supabase/functions/create-activation-checkout/index.ts`
+## Live Feed data source
 
-- Remplacer `line_items: [{ price: ACTIVATION_PRICE_ID }]` par un `price_data` inline pour contrôler le libellé produit affiché sur Stripe :
-  - `product_data.name` : `"UNPRO — Activation 7 jours (paiement unique)"`
-  - `product_data.description` : `"1 $ aujourd'hui. Aucun renouvellement automatique. Vous choisirez votre plan pendant l'essai."`
-  - `unit_amount: 100`, `currency: "cad"`
-- Ajouter `payment_intent_data.description` identique pour le relevé bancaire / reçu.
-- Ajouter `custom_text.submit.message` : `"Paiement unique de 1 $ CA. Aucun abonnement créé."`
-- Garder `locale: "fr"`, `mode: "payment"`.
+Merge three streams client-side into one sorted timeline:
+- `sms_sprint_messages` inserts → "SMS envoyé à {company}"
+- `sms_sprint_link_events` inserts → "Cliqué" / "Checkout démarré"
+- `sms_sprint_prospects` update where `activation_status = 'activated'` → "Payé 1 $ 🎉" (green highlight, confetti-free — just color)
 
-Note : on garde le même `ACTIVATION_PRICE_ID` comme fallback commenté, mais on privilégie `price_data` pour maîtriser la copie sans passer par le dashboard Stripe.
+Subscribed via `supabase.channel('sms-revenue-feed').on('postgres_changes', …)`. Fallback: 15 s polling if realtime unavailable.
 
-### 3. Page succès — confirmer le message
-Fichier : `src/pages/scan-ia/PageScanIAActivationSuccess.tsx` (ou route équivalente `/activation-success`)
+## Out of scope
 
-Vérifier / ajuster le texte de succès pour dire : « Essai activé. Aucun renouvellement automatique — vous choisirez votre plan pendant les 7 prochains jours. » (À confirmer selon la page réellement rendue par `/activation-success`.)
+- No changes to edge functions, DB, Alex, checkout, or landing.
+- No new routes, no navigation changes (same `/admin/sms-sprint` URL).
+- No A/B routing logic on the send side (deferred).
+- No Observability Foundation — that comes after the first sale, per the sprint charter.
 
-### Hors périmètre (volontairement)
+## Files touched
 
-- Pas de conversion vers un vrai `mode: "subscription"` avec trial → renouvellement automatique. La demande utilisateur privilégie l'option « aucune confusion de plan ».
-- Pas de calcul de taxes dans Stripe (activer `automatic_tax` demanderait de configurer Stripe Tax côté compte — à traiter dans un sprint séparé). La mention « + taxes » reste sur la landing ; le montant Stripe reste 1,00 $ CA net.
-- Pas de refonte du flow d'onboarding post-paiement — le prompt « Choisissez votre plan » sera un ticket suivant si absent.
+- `src/pages/admin/PageAdminSmsSprint.tsx` — full rewrite (~250 lines).
 
-## Vérification
+## Success criteria
 
-1. `curl` la fonction déployée → session Stripe créée avec le nouveau libellé.
-2. Ouvrir l'URL Stripe → vérifier que le nom du produit, la description et le message de soumission correspondent.
-3. Charger `/isolation-qc` mobile 384px → bloc récap visible au-dessus du CTA.
+- Operator sees one goal, one status strip, one button.
+- No mention of J+0/J+2/J+5/J+8 anywhere on the page.
+- Click sends the right next action automatically without prompting.
+- Live feed shows activity within 2 s of a real event.
+- Zero regression on the underlying send/scrape/followup pipeline.
