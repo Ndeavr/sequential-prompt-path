@@ -159,6 +159,45 @@ Deno.serve(async (req) => {
 
   let candidates = pickCandidates(pool ?? []).slice(0, batch);
 
+  // Pass 1b — FALLBACK to contractor_prospects when outbound_companies is starved.
+  // contractor_prospects is where scraping actually lands; use it directly so
+  // the pipeline can breathe even if outbound_companies is empty or contact-less.
+  let fallback_source = "outbound_companies";
+  if (candidates.length === 0) {
+    const { data: prospects } = await sb
+      .from("contractor_prospects")
+      .select("id, business_name, city, trade, category_slug, phone, email, region, do_not_contact")
+      .not("phone", "is", null)
+      .neq("phone", "")
+      .neq("do_not_contact", true)
+      .order("created_at", { ascending: false })
+      .limit(500);
+    const mapped = (prospects ?? []).map((p: any) => ({
+      id: p.id,
+      company_name: p.business_name,
+      city: p.city,
+      trade: p.trade ?? p.category_slug,
+      specialty: p.trade ?? p.category_slug,
+      phone: p.phone,
+      email: p.email,
+      region: p.region,
+    }));
+    const before = rejection.no_phone_no_email + rejection.outside_territory + rejection.duplicate;
+    candidates = pickCandidates(mapped).slice(0, batch);
+    if (candidates.length > 0) {
+      fallback_source = "contractor_prospects";
+      pool = mapped as any;
+    } else {
+      // record that fallback ran but nothing survived filters
+      await logLaunchEvent({
+        agent: "launch-agent-scout", event: "fallback_empty", success: false,
+        message: `contractor_prospects fallback: 0/${mapped.length} passed filters`,
+        payload: { rejection, delta: rejection.no_phone_no_email + rejection.outside_territory + rejection.duplicate - before },
+      });
+    }
+  }
+
+
   // Pass 2 — refill via Google Places if pool yielded too few
   let refill: Awaited<ReturnType<typeof googlePlacesRefill>> | null = null;
   if (candidates.length < Math.floor(batch / 2)) {
@@ -242,13 +281,13 @@ Deno.serve(async (req) => {
     agent: "launch-agent-scout",
     event: "discovered_batch",
     success: true,
-    message: `+${rows.length} leads`,
-    payload: { count: rows.length, rejection, refill },
+    message: `+${rows.length} leads via ${fallback_source}`,
+    payload: { count: rows.length, rejection, refill, fallback_source },
   });
   await reportOutcome({
     operation: "launch.scout.run",
     outcome: "achieved",
-    payload: { inserted: rows.length, rejection, refill },
+    payload: { inserted: rows.length, rejection, refill, fallback_source },
   });
   await sb.from("launch_mode_state").update({
     current_stage_label: "DISCOVERING",
@@ -256,7 +295,8 @@ Deno.serve(async (req) => {
     last_success_description: `${rows.length} contractor(s) découvert(s)`,
   }).eq("id", true);
 
-  return new Response(JSON.stringify({ ok: true, inserted: rows.length, rejection, refill }), {
+  return new Response(JSON.stringify({ ok: true, inserted: rows.length, rejection, refill, fallback_source }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 });
+
