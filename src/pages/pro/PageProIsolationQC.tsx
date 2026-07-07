@@ -179,6 +179,21 @@ export default function PageProIsolationQC() {
           />
         </div>
 
+        {/* Pricing recap — no ambiguity on what happens after 7 days */}
+        <div className="mb-4 rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
+          <div className="flex items-center justify-between px-3.5 py-3 border-b border-white/10">
+            <span className="text-[12px] text-white/60">Aujourd'hui</span>
+            <span className="text-[14px] font-semibold text-white">1,00 $ + taxes</span>
+          </div>
+          <div className="flex items-start justify-between px-3.5 py-3">
+            <span className="text-[12px] text-white/60">Après 7 jours</span>
+            <span className="text-[12.5px] text-right text-white/85 leading-tight max-w-[62%]">
+              Aucun prélèvement automatique.<br/>
+              <span className="text-white/60">Vous choisirez votre plan pendant l'essai.</span>
+            </span>
+          </div>
+        </div>
+
         <button
           onClick={activate}
           disabled={loading}
@@ -192,8 +207,9 @@ export default function PageProIsolationQC() {
         </button>
 
         <p className="mt-2.5 text-[11.5px] text-center text-white/50">
-          Aucun engagement · Annulation en 1 clic · Paiement Stripe
+          Paiement unique de 1 $ · Aucun renouvellement automatique · Stripe
         </p>
+
 
         {err && (
           <p className="mt-3 text-[13px] text-rose-300 text-center">
