@@ -11,6 +11,7 @@ import {
   loadFunnel, loadTopBlockers, loadRecentSms, loadRecentCheckouts,
   triggerEmergencyBlast,
 } from "@/services/revenueRealityService";
+import { runHealthProbe, loadRevenueTruth, computeCriticalBlockers } from "@/services/systemHealthService";
 
 function fmt(iso: string | null): string {
   if (!iso) return "—";
@@ -30,6 +31,15 @@ export default function PageRevenueReality() {
   const blockers = useQuery({ queryKey: ["rr-blockers"], queryFn: loadTopBlockers, refetchInterval: 30_000 });
   const sms = useQuery({ queryKey: ["rr-sms"], queryFn: () => loadRecentSms(25), refetchInterval: 30_000 });
   const checkouts = useQuery({ queryKey: ["rr-checkouts"], queryFn: () => loadRecentCheckouts(25), refetchInterval: 60_000 });
+  const probe = useQuery({ queryKey: ["rr-probe"], queryFn: runHealthProbe, refetchInterval: 120_000 });
+  const truth = useQuery({ queryKey: ["rr-truth"], queryFn: loadRevenueTruth, refetchInterval: 60_000 });
+  const smsStep = (funnel.data ?? []).find((s) => s.key === "sms_sent");
+  const validMobileStep = (funnel.data ?? []).find((s) => s.key === "valid_mobile");
+  const blockersLive = useQuery({
+    queryKey: ["rr-critical", probe.data?.probed_at, smsStep?.count_24h, validMobileStep?.count_total],
+    queryFn: () => computeCriticalBlockers(probe.data ?? null, (smsStep?.count_24h ?? 0) > 0, validMobileStep?.count_total ?? 0),
+    enabled: !!probe.data && !!funnel.data,
+  });
 
   const [dryRun, setDryRun] = useState(true);
   const [blastResult, setBlastResult] = useState<any>(null);
@@ -68,6 +78,55 @@ export default function PageRevenueReality() {
             {JSON.stringify(blastResult, null, 2)}
           </pre>
         )}
+
+        {/* CRITICAL BLOCKERS — top of page */}
+        <section>
+          <h2 className="text-lg font-semibold mb-3">Critical Blockers</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {(blockersLive.data ?? []).length === 0 && !blockersLive.isFetching && (
+              <div className="text-xs text-muted-foreground">Aucun blocage détecté par la sonde.</div>
+            )}
+            {(blockersLive.data ?? []).map((b) => {
+              const dot = b.severity === "critical" ? "🔴" : b.severity === "warning" ? "🟡" : "🟢";
+              const border = b.severity === "critical" ? "border-destructive/60 bg-destructive/10"
+                : b.severity === "warning" ? "border-amber-500/50 bg-amber-500/10"
+                : "border-emerald-500/40 bg-emerald-500/5";
+              return (
+                <div key={b.key} className={`rounded-2xl border p-3 ${border}`}>
+                  <div className="text-sm font-semibold">{dot} {b.label}</div>
+                  <div className="text-xs text-muted-foreground mt-1">{b.detail}</div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* REVENUE TRUTH LAYER */}
+        <section>
+          <h2 className="text-lg font-semibold mb-3">Revenue Truth</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="rounded-2xl border border-emerald-500/50 bg-emerald-500/10 p-4">
+              <div className="text-[10px] uppercase tracking-wider text-emerald-500">Paid</div>
+              <div className="text-2xl font-bold tabular-nums">{truth.data?.paid ?? 0}</div>
+              <div className="text-xs text-muted-foreground">{truth.data ? `${(truth.data.total_paid_amount_cents / 100).toFixed(2)} $` : "—"}</div>
+            </div>
+            <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4">
+              <div className="text-[10px] uppercase tracking-wider text-amber-500">Pending</div>
+              <div className="text-2xl font-bold tabular-nums">{truth.data?.pending ?? 0}</div>
+              <div className="text-xs text-muted-foreground">Checkout créé, pas payé</div>
+            </div>
+            <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-4">
+              <div className="text-[10px] uppercase tracking-wider text-destructive">Abandoned</div>
+              <div className="text-2xl font-bold tabular-nums">{truth.data?.abandoned ?? 0}</div>
+              <div className="text-xs text-muted-foreground">&gt; 24 h sans paiement</div>
+            </div>
+            <div className="rounded-2xl border border-border/40 bg-card/40 p-4">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Test</div>
+              <div className="text-2xl font-bold tabular-nums">{truth.data?.test ?? 0}</div>
+              <div className="text-xs text-muted-foreground">Stripe test mode — exclus du revenu</div>
+            </div>
+          </div>
+        </section>
 
         {/* Funnel */}
         <section>

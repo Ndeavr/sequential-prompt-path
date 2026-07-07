@@ -29,6 +29,10 @@ const PageAdminLiveRuns = lazyWithRetry(() => import("@/pages/admin/PageAdminLiv
 const PageContractorGeneratorHealth = lazyWithRetry(() => import("@/pages/admin/PageContractorGeneratorHealth"));
 const PageMemoryHealth = lazyWithRetry(() => import("@/pages/admin/PageMemoryHealth"));
 const PageRevenueReality = lazyWithRetry(() => import("@/pages/admin/PageRevenueReality"));
+const PageSystemHealth = lazyWithRetry(() => import("@/pages/admin/PageSystemHealth"));
+const PageEdgeFunctionHealth = lazyWithRetry(() => import("@/pages/admin/PageEdgeFunctionHealth"));
+const PageReplayPipeline = lazyWithRetry(() => import("@/pages/admin/PageReplayPipeline"));
+const PageTestSMS = lazyWithRetry(() => import("@/pages/admin/PageTestSMS"));
 const PageWhyUnproRecommends = lazyWithRetry(() => import("@/pages/journal/PageWhyUnproRecommends"));
 const PageAdminProspectSMS = lazyWithRetry(() => import("@/pages/admin/PageAdminProspectSMS"));
 const PageFounderVerification = lazyWithRetry(() => import("@/pages/admin/PageFounderVerification"));
@@ -1753,6 +1757,10 @@ export const AppRouter = () => (
 
           <Route path="/admin/memory-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageMemoryHealth /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/revenue-reality" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageRevenueReality /></Suspense></UniversalRouteGuard>} />
+          <Route path="/admin/system-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSystemHealth /></Suspense></UniversalRouteGuard>} />
+          <Route path="/admin/edge-function-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageEdgeFunctionHealth /></Suspense></UniversalRouteGuard>} />
+          <Route path="/admin/replay-pipeline" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageReplayPipeline /></Suspense></UniversalRouteGuard>} />
+          <Route path="/admin/test-sms" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageTestSMS /></Suspense></UniversalRouteGuard>} />
           <Route path="/journal/comment-unpro-recommande-le-bon-entrepreneur" element={<Suspense fallback={<LazyFallback />}><PageWhyUnproRecommends /></Suspense>} />
 
           {/* Lead Pipe Empire — SEO + Conversion */}
