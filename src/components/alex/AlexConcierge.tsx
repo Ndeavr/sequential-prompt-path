@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAlex } from "@/hooks/useAlex";
 import { useAuth } from "@/hooks/useAuth";
+import { recordMemoryTurn } from "@/hooks/useHomeownerDNA";
+import { getAlexFlag } from "@/lib/alexFeatureFlags";
 import { detectIntent, detectCategory } from "@/services/alexIntentService";
 import { getRecommendations, type AlexRecommendation } from "@/services/alexRecommendationService";
 import {
@@ -137,7 +139,7 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
   const { pathname } = useLocation();
   const isHomePage = pathname === "/";
   const [isOpen, setIsOpen] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { openAlex: openAlexVoice, isOpen: voiceOverlayOpen } = useAlexVoice();
   const { messages, isStreaming, sendMessage, reset } = useAlex();
   const [input, setInput] = useState("");
@@ -189,7 +191,18 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
     const phaseActions = getPhaseGatedActions(session, { category, hasProperties: (properties ?? []).length > 0 });
     const recs = phaseActionsToRecommendations(phaseActions);
     setRecommendations(recs);
+    // Capture the last Alex question BEFORE sending, for the memory extractor.
+    const lastAlexQuestion = [...messages].reverse().find((m) => m.role === "assistant")?.content ?? "";
     await sendMessage(trimmed, { properties, homeScore, currentPage: pathname, propertyFamily, propertyType, occupancyStatus });
+    // Fire-and-forget: enrich compat memory. Never blocks chat.
+    if (user?.id && getAlexFlag("compat_memory_engine_v1")) {
+      void recordMemoryTurn({
+        user_id: user.id,
+        question: lastAlexQuestion,
+        answer: trimmed,
+        source: "alex_concierge",
+      });
+    }
   };
 
   const handleQuickAction = (message: string) => {

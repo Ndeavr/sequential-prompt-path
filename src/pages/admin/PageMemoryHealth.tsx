@@ -42,6 +42,60 @@ export default function PageMemoryHealth() {
     },
   });
 
+  const todayISO = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
+  const weekISO = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+
+  const eventsToday = useQuery({
+    queryKey: ["memory-events-today"],
+    queryFn: async () => {
+      const { count } = await (supabase as any)
+        .from("homeowner_memory_events").select("*", { count: "exact", head: true })
+        .gte("created_at", todayISO);
+      return count ?? 0;
+    },
+  });
+
+  const dnaUpdatedToday = useQuery({
+    queryKey: ["dna-updated-today"],
+    queryFn: async () => {
+      const { count } = await (supabase as any)
+        .from("homeowner_compat_dna").select("*", { count: "exact", head: true })
+        .gte("updated_at", todayISO);
+      return count ?? 0;
+    },
+  });
+
+  const confidenceAvg = useQuery({
+    queryKey: ["memory-confidence-7d"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("homeowner_memory_events").select("confidence").gte("created_at", weekISO);
+      const rows = (data ?? []) as { confidence: number }[];
+      if (!rows.length) return 0;
+      return rows.reduce((s, r) => s + Number(r.confidence || 0), 0) / rows.length;
+    },
+  });
+
+  const failedExtractions = useQuery({
+    queryKey: ["memory-failed-7d"],
+    queryFn: async () => {
+      const { count } = await (supabase as any)
+        .from("homeowner_memory_events").select("*", { count: "exact", head: true })
+        .lt("confidence", 0.2).gte("created_at", weekISO);
+      return count ?? 0;
+    },
+  });
+
+  const explanationsSaved = useQuery({
+    queryKey: ["reco-explanations-7d"],
+    queryFn: async () => {
+      const { count } = await (supabase as any)
+        .from("recommendation_explanations").select("*", { count: "exact", head: true })
+        .gte("created_at", weekISO);
+      return count ?? 0;
+    },
+  });
+
   return (
     <DashboardLayout>
       <Helmet><title>Memory Health — Admin UNPRO</title></Helmet>
@@ -50,6 +104,25 @@ export default function PageMemoryHealth() {
           <h1 className="text-2xl font-semibold">Compatibility Memory — Health</h1>
           <p className="text-sm text-muted-foreground">Observability of long-term homeowner memory and adaptive questioning.</p>
         </header>
+
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="rounded-2xl border border-border/40 p-5 bg-card/40">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Events today</div>
+            <div className="text-3xl font-semibold mt-2 tabular-nums">{eventsToday.data ?? "…"}</div>
+          </div>
+          <div className="rounded-2xl border border-border/40 p-5 bg-card/40">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">DNA updated today</div>
+            <div className="text-3xl font-semibold mt-2 tabular-nums">{dnaUpdatedToday.data ?? "…"}</div>
+          </div>
+          <div className="rounded-2xl border border-border/40 p-5 bg-card/40">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Avg confidence (7d)</div>
+            <div className="text-3xl font-semibold mt-2 tabular-nums">{confidenceAvg.data != null ? Number(confidenceAvg.data).toFixed(2) : "…"}</div>
+          </div>
+          <div className="rounded-2xl border border-border/40 p-5 bg-card/40">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Failed extractions (7d)</div>
+            <div className="text-3xl font-semibold mt-2 tabular-nums">{failedExtractions.data ?? "…"}</div>
+          </div>
+        </section>
 
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="rounded-2xl border border-border/40 p-5 bg-card/40">
@@ -61,10 +134,11 @@ export default function PageMemoryHealth() {
             <div className="text-3xl font-semibold mt-2 tabular-nums">{bank.data?.length ?? "…"}</div>
           </div>
           <div className="rounded-2xl border border-border/40 p-5 bg-card/40">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">Recent events (50 max)</div>
-            <div className="text-3xl font-semibold mt-2 tabular-nums">{events.data?.length ?? "…"}</div>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Explanations saved (7d)</div>
+            <div className="text-3xl font-semibold mt-2 tabular-nums">{explanationsSaved.data ?? "…"}</div>
           </div>
         </section>
+
 
         <section>
           <h2 className="text-lg font-semibold mb-3">Question bank — information gain ranking</h2>

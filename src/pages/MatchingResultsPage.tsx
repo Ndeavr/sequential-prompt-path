@@ -3,18 +3,27 @@
  * Shows ranked contractors for a homeowner's project.
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSearchParams, Link } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Scale, Filter, SlidersHorizontal, HelpCircle } from "lucide-react";
+import { Scale, Filter, SlidersHorizontal, HelpCircle, Sparkles } from "lucide-react";
 import MatchCard from "@/components/matching/MatchCard";
 import CompareDrawer from "@/components/matching/CompareDrawer";
 import AlexMatchingModule from "@/components/matching/AlexMatchingModule";
+import MatchCompatibilityCard, { type Dimension } from "@/components/matching/MatchCompatibilityCard";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMatchResults } from "@/hooks/useMatchingEngine";
+import { useAuth } from "@/hooks/useAuth";
+import { getAlexFlag } from "@/lib/alexFeatureFlags";
+import {
+  persistBatchExplanations,
+  fetchExplanation,
+  type RecommendationExplanationRow,
+} from "@/services/recommendationExplanationService";
 import type { MatchEvaluation } from "@/types/matching";
 import SectionTrustProof from "@/components/trust/SectionTrustProof";
 
@@ -93,9 +102,37 @@ const MatchingResultsPage = () => {
   const { data: realMatches, isLoading } = useMatchResults(projectId);
 
   const matches = (realMatches?.length ?? 0) > 0 ? realMatches! : MOCK_MATCHES;
+  const { user } = useAuth();
   const [compareIds, setCompareIds] = useState<Set<string>>(new Set());
   const [compareOpen, setCompareOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
+  const [selectedExplanation, setSelectedExplanation] = useState<RecommendationExplanationRow | null>(null);
+
+  // Persist explanations (fire-and-forget) whenever real matches land.
+  useEffect(() => {
+    if (!user?.id) return;
+    if (!getAlexFlag("compat_memory_engine_v1")) return;
+    if (!realMatches || realMatches.length === 0) return;
+    void persistBatchExplanations(realMatches, user.id);
+  }, [realMatches, user?.id]);
+
+  const selectedMatch = useMemo(
+    () => matches.find((m) => m.id === selectedMatchId) ?? null,
+    [matches, selectedMatchId]
+  );
+
+  useEffect(() => {
+    if (!selectedMatch || !user?.id) {
+      setSelectedExplanation(null);
+      return;
+    }
+    let cancelled = false;
+    fetchExplanation(user.id, selectedMatch.contractor_id).then((row) => {
+      if (!cancelled) setSelectedExplanation(row);
+    });
+    return () => { cancelled = true; };
+  }, [selectedMatch, user?.id]);
 
   const filteredMatches = useMemo(() => {
     if (!activeFilter) return matches;
@@ -197,13 +234,23 @@ const MatchingResultsPage = () => {
           ) : (
             <div className="space-y-4">
               {filteredMatches.map((match, i) => (
-                <MatchCard
-                  key={match.id}
-                  match={match}
-                  rank={i + 1}
-                  onCompare={toggleCompare}
-                  isComparing={compareIds.has(match.contractor_id)}
-                />
+                <div key={match.id} className="space-y-2">
+                  <MatchCard
+                    match={match}
+                    rank={i + 1}
+                    onCompare={toggleCompare}
+                    isComparing={compareIds.has(match.contractor_id)}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-xs text-primary hover:bg-primary/5"
+                    onClick={() => setSelectedMatchId(match.id)}
+                  >
+                    <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                    Voir la compatibilité détaillée
+                  </Button>
+                </div>
               ))}
             </div>
           )}
@@ -227,6 +274,33 @@ const MatchingResultsPage = () => {
           onOpenChange={setCompareOpen}
           onRemove={(id) => toggleCompare(id)}
         />
+
+        {/* Compatibility detail sheet */}
+        <Sheet open={!!selectedMatch} onOpenChange={(o) => !o && setSelectedMatchId(null)}>
+          <SheetContent side="right" className="w-full sm:max-w-md bg-background/95 backdrop-blur-2xl border-l border-border/40 overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle className="text-sm uppercase tracking-widest text-muted-foreground">
+                {selectedMatch?.business_name}
+              </SheetTitle>
+            </SheetHeader>
+            {selectedMatch && (
+              <div className="mt-4">
+                <MatchCompatibilityCard
+                  overallScore={selectedExplanation?.overall_match_score ?? selectedMatch.recommendation_score}
+                  dimensions={[
+                    { key: "project",       label: "Projet",         score: selectedExplanation?.project_compatibility       ?? selectedMatch.project_fit_score },
+                    { key: "budget",        label: "Budget",         score: selectedExplanation?.budget_compatibility        ?? selectedMatch.budget_fit_score },
+                    { key: "region",        label: "Région",         score: selectedExplanation?.region_compatibility        ?? selectedMatch.property_fit_score },
+                    { key: "availability",  label: "Disponibilité",  score: selectedExplanation?.availability_compatibility  ?? selectedMatch.availability_score },
+                    { key: "communication", label: "Communication",  score: selectedExplanation?.communication_compatibility ?? selectedMatch.ccai_score },
+                    { key: "performance",   label: "Performance",    score: (selectedExplanation?.performance_verified ?? (selectedMatch.unpro_score_snapshot ?? 0) >= 75) ? 100 : (selectedMatch.unpro_score_snapshot ?? 0) },
+                  ] as Dimension[]}
+                  blockers={selectedExplanation?.blockers ?? (selectedMatch.explanations?.watchouts ?? []).map((w: any) => w.text_fr)}
+                />
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
       </div>
     </MainLayout>
   );

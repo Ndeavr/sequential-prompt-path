@@ -1,8 +1,10 @@
 /**
  * Alex V3 — Picks ONE question per turn following the universal priority order.
+ * Skips questions whose answer is already stored in the homeowner's compat DNA.
  */
 import type { QualificationGraph } from "./qualificationGraph";
 import { getCategoryTree } from "./categoryDecisionTrees";
+import { isFieldKnown, type KnownDnaFacts } from "./dnaGate";
 
 export interface NextQuestion {
   field: string;
@@ -36,9 +38,11 @@ const BUDGET_OPTIONS = [
   { value: "50k+", label_fr: "50 000 $ et plus" },
 ];
 
-export function pickNextQuestion(g: QualificationGraph): NextQuestion | null {
+export function pickNextQuestion(g: QualificationGraph, dna?: KnownDnaFacts): NextQuestion | null {
+  const known = (field: string) => (dna ? isFieldKnown(dna, field) : false);
+
   // 1. Problem category (must exist before we can branch)
-  if (!g.problem.category) {
+  if (!g.problem.category && !known("problem.category")) {
     return {
       field: "problem.category",
       question_fr: "Décrivez-moi en quelques mots la situation ou le projet pour votre propriété.",
@@ -70,7 +74,7 @@ export function pickNextQuestion(g: QualificationGraph): NextQuestion | null {
   }
 
   // 4. Urgency
-  if (!g.urgency) {
+  if (!g.urgency && !known("urgency")) {
     return {
       field: "urgency",
       question_fr: "Quand souhaitez-vous réaliser les travaux ?",
@@ -81,7 +85,7 @@ export function pickNextQuestion(g: QualificationGraph): NextQuestion | null {
   }
 
   // 5. Property type
-  if (!g.property.type) {
+  if (!g.property.type && !known("property.type")) {
     return {
       field: "property.type",
       question_fr: "De quel type de propriété s'agit-il ?",
@@ -102,7 +106,7 @@ export function pickNextQuestion(g: QualificationGraph): NextQuestion | null {
   }
 
   // 7. Photos (if category invites it)
-  if (tree?.invites_photo && !g.photos.requested) {
+  if (tree?.invites_photo && !g.photos.requested && !known("photos.requested")) {
     return {
       field: "photos",
       question_fr: "Souhaitez-vous ajouter des photos ? Ça aide énormément à préciser le diagnostic.",
@@ -112,7 +116,7 @@ export function pickNextQuestion(g: QualificationGraph): NextQuestion | null {
   }
 
   // 8. Budget (optional, non-blocking)
-  if (!g.budget) {
+  if (!g.budget && !known("budget")) {
     return {
       field: "budget",
       question_fr: "Quel budget envisagez-vous ? (Facultatif)",
@@ -124,3 +128,4 @@ export function pickNextQuestion(g: QualificationGraph): NextQuestion | null {
 
   return null;
 }
+
