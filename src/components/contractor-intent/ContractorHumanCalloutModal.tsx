@@ -27,10 +27,10 @@ export default function ContractorHumanCalloutModal() {
             <Phone className="h-6 w-6" />
           </div>
 
-          <h2 className="text-2xl font-semibold tracking-[-0.04em] text-foreground">
+          <h2 className="text-2xl font-semibold tracking-[-0.04em] text-white">
             {CONTRACTOR_HUMAN_CALLOUT.title}
           </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-2 text-sm text-white/70">
             {CONTRACTOR_HUMAN_CALLOUT.subtitle}
           </p>
 
