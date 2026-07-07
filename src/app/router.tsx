@@ -26,6 +26,7 @@ const PageRecommendations = lazyWithRetry(() => import("@/pages/PageRecommendati
 const PageRegistrationSuccess = lazyWithRetry(() => import("@/pages/PageRegistrationSuccess"));
 import StaticContentPage from "@/pages/static/StaticContentPage";
 const PageAdminLiveRuns = lazyWithRetry(() => import("@/pages/admin/PageAdminLiveRuns"));
+const PageContractorGeneratorHealth = lazyWithRetry(() => import("@/pages/admin/PageContractorGeneratorHealth"));
 const PageAdminProspectSMS = lazyWithRetry(() => import("@/pages/admin/PageAdminProspectSMS"));
 const PageFounderVerification = lazyWithRetry(() => import("@/pages/admin/PageFounderVerification"));
 const PageSmsHealth = lazyWithRetry(() => import("@/pages/admin/PageSmsHealth"));
@@ -1745,6 +1746,7 @@ export const AppRouter = () => (
          <Route path="/admin/command-center/territories" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageCommandCenterTerritories /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/seo-index-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSeoIndexHealth /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/sms-debug" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSmsDebug /></Suspense></UniversalRouteGuard>} />
+          <Route path="/admin/contractor-generator-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageContractorGeneratorHealth /></Suspense></UniversalRouteGuard>} />
 
           {/* Lead Pipe Empire — SEO + Conversion */}
           <Route path="/plomb-eau/:ville" element={<Suspense fallback={<LazyFallback />}><LeadPipePagePlombEauCity /></Suspense>} />
