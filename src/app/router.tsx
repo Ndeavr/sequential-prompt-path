@@ -27,6 +27,8 @@ const PageRegistrationSuccess = lazyWithRetry(() => import("@/pages/PageRegistra
 import StaticContentPage from "@/pages/static/StaticContentPage";
 const PageAdminLiveRuns = lazyWithRetry(() => import("@/pages/admin/PageAdminLiveRuns"));
 const PageContractorGeneratorHealth = lazyWithRetry(() => import("@/pages/admin/PageContractorGeneratorHealth"));
+const PageMemoryHealth = lazyWithRetry(() => import("@/pages/admin/PageMemoryHealth"));
+const PageWhyUnproRecommends = lazyWithRetry(() => import("@/pages/journal/PageWhyUnproRecommends"));
 const PageAdminProspectSMS = lazyWithRetry(() => import("@/pages/admin/PageAdminProspectSMS"));
 const PageFounderVerification = lazyWithRetry(() => import("@/pages/admin/PageFounderVerification"));
 const PageSmsHealth = lazyWithRetry(() => import("@/pages/admin/PageSmsHealth"));
