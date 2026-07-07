@@ -32,7 +32,7 @@ export default function SectionAlexCapabilities() {
             Mémoire de la maison
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-[-0.04em] text-white leading-[1.1]">
-            Votre maison se souvient{" "}
+            Votre Passeport Maison{" "}
             <span className="text-white/50">de tout ce qui compte.</span>
           </h2>
         </motion.div>

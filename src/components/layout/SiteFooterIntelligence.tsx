@@ -19,7 +19,7 @@ const HOMEOWNER_SOLUTIONS = [
 ];
 
 const HOMEOWNER_INTELLIGENCE = [
-  { label: "Ma maison se souvient de tout", to: "/pim" },
+  { label: "Mon Passeport Maison", to: "/pim" },
   { label: "Historique des rénovations",    to: "/dashboard/properties" },
   { label: "Garanties et documents",        to: "/dashboard/documents/upload" },
   { label: "Entretien préventif",           to: "/entretien-preventif" },
