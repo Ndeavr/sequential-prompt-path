@@ -173,7 +173,7 @@ export default function PageHomeVariantB() {
           name="description"
           content="UNPRO recommande le meilleur entrepreneur pour votre situation. Pas le plus visible. Pas le plus cher en publicité. Le bon."
         />
-        <meta name="robots" content="noindex,follow" />
+        <link rel="canonical" href="https://unpro.ca/" />
       </Helmet>
 
       <main className="min-h-screen bg-background pb-28 lg:pb-0">
