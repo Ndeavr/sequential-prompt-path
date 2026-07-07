@@ -19,7 +19,7 @@ const HOMEOWNER_SOLUTIONS = [
 ];
 
 const HOMEOWNER_INTELLIGENCE = [
-  { label: "Ma maison se souvient de tout", to: "/pim" },
+  { label: "Mon Passeport Maison", to: "/pim" },
   { label: "Historique des rénovations",    to: "/dashboard/properties" },
   { label: "Garanties et documents",        to: "/dashboard/documents/upload" },
   { label: "Entretien préventif",           to: "/entretien-preventif" },
@@ -77,7 +77,7 @@ function Column({ title, items }: { title: string; items: { label: string; to: s
 export default function SiteFooterIntelligence() {
   return (
     <section
-      aria-label="UNPRO — Intelligence résidentielle"
+      aria-label="UNPRO — Passeport Maison"
       className="relative border-t border-border/20"
       style={{
         background:
@@ -88,15 +88,15 @@ export default function SiteFooterIntelligence() {
         {/* Trust block */}
         <div className="max-w-3xl mb-12">
           <p className="text-[11px] tracking-[0.22em] uppercase text-primary/80 mb-3">
-            Intelligence résidentielle du Québec
+            Passeport Maison du Québec
           </p>
           <h2 className="text-2xl md:text-3xl font-semibold tracking-[-0.02em] text-foreground leading-tight mb-3">
-            Votre maison devrait se souvenir de tout.
+            En avez-vous assez de toujours repartir de zéro ?
           </h2>
           <p className="text-[14px] text-muted-foreground leading-relaxed max-w-2xl">
-            UNPRO conserve l'historique des rénovations, garanties, inspections,
-            soumissions et décisions importantes — afin de vous aider à prendre
-            de meilleures décisions année après année.
+            Votre Passeport Maison conserve l'historique de votre propriété afin
+            de vous aider à planifier les entretiens futurs, anticiper les dépenses
+            importantes et prendre de meilleures décisions.
           </p>
         </div>
 
@@ -136,7 +136,7 @@ export default function SiteFooterIntelligence() {
               to="/intelligence"
               className="inline-block mt-4 text-[12px] font-medium text-primary hover:text-primary/80 transition-colors"
             >
-              Explorer l'intelligence résidentielle →
+              Explorer le Passeport Maison →
             </Link>
           </div>
         </div>

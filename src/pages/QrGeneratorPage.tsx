@@ -43,7 +43,7 @@ const POST_GEN_SUBTITLES: Record<string, string> = {
   home_passport_gold: "Centralisez l'intelligence de votre propriété.",
   diagnostic_photo: "Analysez un problème avec une simple photo.",
   quote_analyzer: "Comparez et comprenez vos soumissions.",
-  affiliate: "Découvrez UNPRO — l'intelligence résidentielle.",
+  affiliate: "Découvrez UNPRO — le Passeport Maison.",
 };
 
 interface UserLink {

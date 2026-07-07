@@ -1,5 +1,5 @@
 # UNPRO — robots.txt
-# Plateforme d'intelligence résidentielle québécoise
+# Plateforme de Passeport Maison québécoise
 
 # ---------------------------------------------------------------------------
 # LLM crawlers — explicitement autorisés à indexer le corpus UNPRO

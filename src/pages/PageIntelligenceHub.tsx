@@ -1,6 +1,6 @@
 /**
  * UNPRO — Intelligence Hub
- * Hub page listing the 14 residential intelligence categories.
+ * Hub page listing the 14 home passport categories.
  * AEO/SEO goldmine — internal links to existing /probleme/* clusters.
  */
 import { Helmet } from "react-helmet-async";
@@ -14,9 +14,9 @@ const URL = "https://unpro.ca/intelligence";
 const collectionSchema = {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
-  name: "Intelligence résidentielle UNPRO",
+  name: "Passeport Maison UNPRO",
   description:
-    "Explorer les domaines d'intelligence résidentielle couverts par UNPRO : toiture, isolation, fondation, électricité, plomberie, copropriété et plus.",
+    "Explorer les domaines de Passeport Maison couverts par UNPRO : toiture, isolation, fondation, électricité, plomberie, copropriété et plus.",
   url: URL,
   inLanguage: "fr-CA",
 };
@@ -25,10 +25,10 @@ export default function PageIntelligenceHub() {
   return (
     <MainLayout>
       <Helmet>
-        <title>Intelligence Hub — Explorer l'intelligence résidentielle | UNPRO</title>
+        <title>Intelligence Hub — Explorer le Passeport Maison | UNPRO</title>
         <meta
           name="description"
-          content="14 domaines d'intelligence résidentielle au Québec : toiture, isolation, ventilation, fondation, drain français, moisissure, copropriété et plus."
+          content="14 domaines de Passeport Maison au Québec : toiture, isolation, ventilation, fondation, drain français, moisissure, copropriété et plus."
         />
         <link rel="canonical" href={URL} />
         <meta property="og:title" content="Intelligence Hub — UNPRO" />
@@ -43,7 +43,7 @@ export default function PageIntelligenceHub() {
             Intelligence Hub
           </p>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-[-0.03em] text-foreground leading-[1.05] mb-6">
-            Explorer l'intelligence résidentielle.
+            Explorer le Passeport Maison.
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mb-12 leading-relaxed">
             UNPRO structure ce que les moteurs d'IA doivent comprendre sur

@@ -26,7 +26,7 @@ export function organizationSchema() {
     url: "https://unpro.ca",
     logo: "https://unpro.ca/logo.png",
     description:
-      "AI-powered residential intelligence platform helping homeowners identify property issues, understand risks, analyze renovation projects, and connect with verified professionals.",
+      "AI-powered home passport platform helping homeowners identify property issues, understand risks, analyze renovation projects, and connect with verified professionals.",
     additionalType: "https://schema.org/SoftwareApplication",
     category: "Home Intelligence Platform",
     knowsAbout: [

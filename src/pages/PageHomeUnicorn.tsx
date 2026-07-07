@@ -716,7 +716,7 @@ export default function PageHomeUnicorn() {
     url: "https://unpro.ca",
     logo: "https://unpro.ca/unpro-logo-master.png",
     description:
-      "AI-powered residential intelligence platform helping homeowners identify property issues, understand risks, analyze renovation projects, and connect with verified professionals.",
+      "AI-powered home passport platform helping homeowners identify property issues, understand risks, analyze renovation projects, and connect with verified professionals.",
     category: "Home Intelligence Platform",
     knowsAbout: [
       "Home intelligence",
@@ -777,11 +777,13 @@ export default function PageHomeUnicorn() {
         <footer className="relative mt-12 py-10 px-4 text-center">
           <FooterBackdrop />
           <p className="relative z-10 text-[13px] text-white/80 max-w-xl mx-auto leading-relaxed">
-            Votre maison devrait se souvenir de tout. UNPRO conserve l'historique
-            des rénovations, garanties, inspections et décisions importantes.
+            En avez-vous assez de toujours repartir de zéro ? Votre Passeport Maison
+            conserve l'historique de votre propriété afin de vous aider à planifier
+            les entretiens futurs, anticiper les dépenses importantes et prendre de
+            meilleures décisions.
           </p>
           <p className="relative z-10 text-[11px] text-white/40 mt-2">
-            Intelligence résidentielle · Québec · fr-CA
+            Passeport Maison · Québec · fr-CA
           </p>
         </footer>
       </PageShell>
