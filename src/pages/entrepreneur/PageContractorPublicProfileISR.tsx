@@ -113,7 +113,7 @@ export default function PageContractorPublicProfileISR() {
             className="mt-7 inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-[18px] bg-amber-300 px-6 py-3.5 text-sm font-semibold text-[#050816] hover:-translate-y-0.5 transition-all duration-[420ms] [transition-timing-function:cubic-bezier(.22,1,.36,1)] shadow-[0_20px_60px_-20px_rgba(251,191,36,0.5)]"
           >
             <Sparkles className="h-4 w-4" />
-            Planifier une évaluation de 60 min.
+            Planifier une évaluation (60 min.)
           </a>
         </section>
 
