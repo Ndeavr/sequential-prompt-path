@@ -91,12 +91,12 @@ export default function SiteFooterIntelligence() {
             Passeport Maison du Québec
           </p>
           <h2 className="text-2xl md:text-3xl font-semibold tracking-[-0.02em] text-foreground leading-tight mb-3">
-            Votre maison devrait se souvenir de tout.
+            En avez-vous assez de toujours repartir de zéro ?
           </h2>
           <p className="text-[14px] text-muted-foreground leading-relaxed max-w-2xl">
-            UNPRO conserve l'historique des rénovations, garanties, inspections,
-            soumissions et décisions importantes — afin de vous aider à prendre
-            de meilleures décisions année après année.
+            Votre Passeport Maison conserve l'historique de votre propriété afin
+            de vous aider à planifier les entretiens futurs, anticiper les dépenses
+            importantes et prendre de meilleures décisions.
           </p>
         </div>
 
