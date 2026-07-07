@@ -1,23 +1,59 @@
-## Fix — Activation CTA renvoie "temporairement indisponible"
+## Objectif
 
-### Diagnostic
-Test live de `create-activation-checkout` avec `{slug:"sprint-isolation-qc", source:"isolation-qc"}` → **HTTP 404 `prospect_not_found`**.
+Éliminer l'ambiguïté du checkout d'activation 7 jours pour lever le blocage de conversion vers la première vente.
 
-Le code source de la fonction contient déjà la branche `isSprint` (source `isolation-qc` OU slug commençant par `sprint-`) qui saute la recherche prospect. **La version déployée est stale** — elle ne contient pas cette branche, donc elle cherche un prospect qui n'existe pas et renvoie 404 → front affiche l'erreur rouge.
+## Décision
 
-### Correctif
-1. **Redéployer `supabase/functions/create-activation-checkout/index.ts`** (touch/no-op edit force le redeploy) pour que la logique `isSprint` soit active en prod.
-2. **Durcir la fonction** pour éviter la même classe de bug :
-   - Si `isSprint` OU si prospect introuvable, continuer quand même vers Stripe (jamais bloquer un paiement à cause d'un lookup interne). Logger l'événement sans prospect_id.
-   - Renvoyer un message d'erreur plus précis (`prospect_lookup_failed`, `stripe_error`, etc.) pour futur debug.
-3. **Améliorer le fallback front** `PageProIsolationQC.tsx` :
-   - Logger `cta_failed` dans `first_dollar_sprint_events` avec le message d'erreur exact renvoyé par l'edge (au lieu de swallow).
-   - Garder le message utilisateur court mais ajouter un lien "Nous écrire" (mailto) pour capturer les prospects malgré l'échec.
+Adopter l'option recommandée par l'utilisateur : garder l'activation comme **paiement unique de 1 $ (aucun renouvellement)**, et faire choisir le plan pendant l'onboarding après paiement. Cela supprime la confusion « quel plan me sera facturé au jour 8 ? ».
 
-### Vérification
-- `curl` la fonction avec le payload sprint → attendu HTTP 200 + `url` Stripe.
-- Charger `/isolation-qc`, cliquer CTA → redirection Stripe Checkout.
-- Vérifier `first_dollar_sprint_events` : `cta_clicked` puis (idéalement) plus de `cta_failed`.
+Techniquement, c'est déjà le cas côté Stripe (`mode: "payment"`, one-time price), mais rien ne le dit clairement à l'utilisateur. On rend cette promesse visible partout.
 
-### Hors scope
-Refonte plus large de l'observabilité, leak detectors additionnels — reste réservée au prochain sprint post-première-vente.
+## Changements
+
+### 1. Landing `/isolation-qc` — bloc récap prix avant le CTA
+Fichier : `src/pages/pro/PageProIsolationQC.tsx`
+
+Ajouter, juste au-dessus du bouton « Activer mon essai », un encadré :
+
+```
+Aujourd'hui              1,00 $ + taxes
+Après 7 jours            Aucun prélèvement automatique
+                         Vous choisirez votre plan pendant l'essai
+
+✓ Profil IA activé
+✓ Recommandations propriétaires  
+✓ Rendez-vous exclusifs
+✓ Annulation en 1 clic — aucun frais caché
+```
+
+Micro-copie sous le CTA : « Paiement unique de 1 $. Aucun renouvellement automatique. »
+
+### 2. Stripe Checkout — libellé + description explicites
+Fichier : `supabase/functions/create-activation-checkout/index.ts`
+
+- Remplacer `line_items: [{ price: ACTIVATION_PRICE_ID }]` par un `price_data` inline pour contrôler le libellé produit affiché sur Stripe :
+  - `product_data.name` : `"UNPRO — Activation 7 jours (paiement unique)"`
+  - `product_data.description` : `"1 $ aujourd'hui. Aucun renouvellement automatique. Vous choisirez votre plan pendant l'essai."`
+  - `unit_amount: 100`, `currency: "cad"`
+- Ajouter `payment_intent_data.description` identique pour le relevé bancaire / reçu.
+- Ajouter `custom_text.submit.message` : `"Paiement unique de 1 $ CA. Aucun abonnement créé."`
+- Garder `locale: "fr"`, `mode: "payment"`.
+
+Note : on garde le même `ACTIVATION_PRICE_ID` comme fallback commenté, mais on privilégie `price_data` pour maîtriser la copie sans passer par le dashboard Stripe.
+
+### 3. Page succès — confirmer le message
+Fichier : `src/pages/scan-ia/PageScanIAActivationSuccess.tsx` (ou route équivalente `/activation-success`)
+
+Vérifier / ajuster le texte de succès pour dire : « Essai activé. Aucun renouvellement automatique — vous choisirez votre plan pendant les 7 prochains jours. » (À confirmer selon la page réellement rendue par `/activation-success`.)
+
+### Hors périmètre (volontairement)
+
+- Pas de conversion vers un vrai `mode: "subscription"` avec trial → renouvellement automatique. La demande utilisateur privilégie l'option « aucune confusion de plan ».
+- Pas de calcul de taxes dans Stripe (activer `automatic_tax` demanderait de configurer Stripe Tax côté compte — à traiter dans un sprint séparé). La mention « + taxes » reste sur la landing ; le montant Stripe reste 1,00 $ CA net.
+- Pas de refonte du flow d'onboarding post-paiement — le prompt « Choisissez votre plan » sera un ticket suivant si absent.
+
+## Vérification
+
+1. `curl` la fonction déployée → session Stripe créée avec le nouveau libellé.
+2. Ouvrir l'URL Stripe → vérifier que le nom du produit, la description et le message de soumission correspondent.
+3. Charger `/isolation-qc` mobile 384px → bloc récap visible au-dessus du CTA.

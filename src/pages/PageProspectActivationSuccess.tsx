@@ -48,6 +48,10 @@ export default function PageActivationSuccess() {
                 ? <>Un lien d'accès a été envoyé à <span className="text-foreground font-medium">{email}</span>.</>
                 : <>Votre accès est prêt.</>}
             </p>
+            <p className="text-sm text-muted-foreground">
+              Aucun renouvellement automatique — vous choisirez votre plan pendant les 7 prochains jours.
+            </p>
+
             {magic ? (
               <a href={magic} className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground px-6 py-3 font-medium">
                 Ouvrir mon tableau de bord

@@ -66,10 +66,31 @@ Deno.serve(async (req) => {
     try {
       session = await stripe.checkout.sessions.create({
         mode: "payment",
-        line_items: [{ price: ACTIVATION_PRICE_ID, quantity: 1 }],
+        line_items: [{
+          quantity: 1,
+          price_data: {
+            currency: "cad",
+            unit_amount: 100,
+            product_data: {
+              name: "UNPRO — Activation 7 jours (paiement unique)",
+              description:
+                "1 $ aujourd'hui. Aucun renouvellement automatique. Vous choisirez votre plan pendant l'essai.",
+            },
+          },
+        }],
         customer_email: email || undefined,
         success_url: `${origin}${successPath}`,
         cancel_url: `${origin}${cancelPath}`,
+        payment_intent_data: {
+          description:
+            "UNPRO Activation 7 jours — paiement unique de 1 $ CA. Aucun abonnement créé.",
+        },
+        custom_text: {
+          submit: {
+            message:
+              "Paiement unique de 1 $ CA. Aucun abonnement — vous choisirez votre plan pendant les 7 jours d'essai.",
+          },
+        },
         metadata: {
           prospect_slug: slug,
           prospect_id: prospectId,
@@ -85,6 +106,7 @@ Deno.serve(async (req) => {
       console.error("[create-activation-checkout] stripe_error", stripeErr?.message || stripeErr);
       return json({ error: "stripe_error", detail: stripeErr?.message || String(stripeErr), stage: "stripe_create" }, 502);
     }
+
 
     // Best-effort event log (table may not exist in all envs).
     try {
