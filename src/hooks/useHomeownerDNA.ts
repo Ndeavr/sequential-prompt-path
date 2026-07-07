@@ -20,13 +20,13 @@ export function useHomeownerDNA() {
     queryKey: ["homeowner-dna", user?.id],
     queryFn: async (): Promise<HomeownerDNAProfile | null> => {
       if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("homeowner_dna_profiles")
+      const { data, error } = await (supabase as any)
+        .from("homeowner_compat_dna")
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle();
       if (error) throw error;
-      return data as HomeownerDNAProfile | null;
+      return (data ?? null) as HomeownerDNAProfile | null;
     },
     enabled: !!user?.id,
   });
