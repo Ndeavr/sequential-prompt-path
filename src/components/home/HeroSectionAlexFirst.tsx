@@ -178,7 +178,7 @@ export default function HeroSectionAlexFirst() {
               </span>
             </h1>
             <p className="text-[15px] sm:text-base text-white/75 max-w-md leading-relaxed">
-              UNPRO est votre plateforme d'intelligence résidentielle : Passeport Maison, Score Maison, maintenance prédictive, planification de rénovations et jumelage d'entrepreneur — guidé par Alex.
+              UNPRO est votre plateforme de Passeport Maison : Passeport Maison, Score Maison, maintenance prédictive, planification de rénovations et jumelage d'entrepreneur — guidé par Alex.
             </p>
             <p className="text-[13px] sm:text-sm text-white/55 max-w-md leading-relaxed">
               Pas trois soumissions. Pas dix appels. Une intelligence complète pour votre propriété.

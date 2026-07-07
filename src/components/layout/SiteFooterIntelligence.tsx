@@ -77,7 +77,7 @@ function Column({ title, items }: { title: string; items: { label: string; to: s
 export default function SiteFooterIntelligence() {
   return (
     <section
-      aria-label="UNPRO — Intelligence résidentielle"
+      aria-label="UNPRO — Passeport Maison"
       className="relative border-t border-border/20"
       style={{
         background:
@@ -88,7 +88,7 @@ export default function SiteFooterIntelligence() {
         {/* Trust block */}
         <div className="max-w-3xl mb-12">
           <p className="text-[11px] tracking-[0.22em] uppercase text-primary/80 mb-3">
-            Intelligence résidentielle du Québec
+            Passeport Maison du Québec
           </p>
           <h2 className="text-2xl md:text-3xl font-semibold tracking-[-0.02em] text-foreground leading-tight mb-3">
             Votre maison devrait se souvenir de tout.
@@ -136,7 +136,7 @@ export default function SiteFooterIntelligence() {
               to="/intelligence"
               className="inline-block mt-4 text-[12px] font-medium text-primary hover:text-primary/80 transition-colors"
             >
-              Explorer l'intelligence résidentielle →
+              Explorer le Passeport Maison →
             </Link>
           </div>
         </div>

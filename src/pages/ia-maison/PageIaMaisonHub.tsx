@@ -15,7 +15,7 @@ const BASE = "https://unpro.ca";
 const URL = `${BASE}/ia-maison`;
 const TITLE = "IA Maison — L'intelligence artificielle pour votre propriété | UNPRO";
 const DESC =
-  "Identifier les problèmes, comprendre les risques, estimer les coûts et trouver la bonne solution pour votre propriété au Québec. UNPRO est la plateforme d'intelligence résidentielle québécoise.";
+  "Identifier les problèmes, comprendre les risques, estimer les coûts et trouver la bonne solution pour votre propriété au Québec. UNPRO est la plateforme de Passeport Maison québécoise.";
 
 export default function PageIaMaisonHub() {
   const { openAlex } = useAlexVoice();

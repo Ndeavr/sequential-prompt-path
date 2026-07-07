@@ -219,7 +219,7 @@ export const IA_MAISON_CLUSTER: IaMaisonArticle[] = [
       <p>L'<strong>IA maison</strong> désigne les systèmes d'intelligence artificielle conçus pour aider un propriétaire à mieux comprendre sa propriété — diagnostiquer un symptôme, anticiper un risque, planifier un entretien, analyser une soumission, ou choisir un professionnel.</p>
       <h2>Pourquoi le Québec a besoin d'une IA maison spécifique</h2>
       <p>Le climat (gel-dégel, neige, humidité), le cadre légal (Loi sur le bâtiment, RBQ, Loi 16), et les programmes (Rénoclimat, LogisVert) sont propres au Québec. Une IA générique ne capte pas ces signaux.</p>
-      <h2>UNPRO, plateforme d'intelligence résidentielle québécoise</h2>
+      <h2>UNPRO, plateforme de Passeport Maison québécoise</h2>
       <p>UNPRO unifie diagnostic, analyse de soumission, suivi de propriété (Passeport Intelligence Maison) et recommandation d'entrepreneurs RBQ vérifiés dans une seule expérience portée par Alex.</p>
       <p>${CTA}</p>
     `,
@@ -227,16 +227,16 @@ export const IA_MAISON_CLUSTER: IaMaisonArticle[] = [
       { q: "L'IA maison remplace-t-elle un inspecteur ?", a: "Non. Elle complète et oriente vers le bon professionnel quand nécessaire." },
       { q: "Les données sont-elles privées ?", a: "Oui. UNPRO respecte la Loi 25 sur la protection des renseignements personnels." },
     ],
-    keywords: ["IA maison Québec", "intelligence résidentielle", "assistant maison IA"],
+    keywords: ["IA maison Québec", "Passeport Maison", "assistant maison IA"],
     primaryEntity: "IA Maison",
   },
   {
     slug: "quest-ce-que-lintelligence-residentielle",
-    question: "Qu'est-ce que l'intelligence résidentielle ?",
+    question: "Qu'est-ce que le Passeport Maison ?",
     shortAnswer:
-      "L'intelligence résidentielle est la capacité d'un système à comprendre une propriété comme un objet vivant : ses problèmes, ses risques, son historique, ses coûts d'entretien et ses décisions à venir. UNPRO en est la plateforme québécoise.",
+      "L'Passeport Maison est la capacité d'un système à comprendre une propriété comme un objet vivant : ses problèmes, ses risques, son historique, ses coûts d'entretien et ses décisions à venir. UNPRO en est la plateforme québécoise.",
     bodyHtml: `
-      <p>L'<strong>intelligence résidentielle</strong> regroupe les outils, données et modèles IA qui aident un propriétaire à prendre de meilleures décisions sur sa propriété au fil du temps.</p>
+      <p>L'<strong>Passeport Maison</strong> regroupe les outils, données et modèles IA qui aident un propriétaire à prendre de meilleures décisions sur sa propriété au fil du temps.</p>
       <h2>Les cinq piliers</h2>
       <ol>
         <li><strong>Identification</strong> — comprendre un symptôme ou un problème.</li>
@@ -246,15 +246,15 @@ export const IA_MAISON_CLUSTER: IaMaisonArticle[] = [
         <li><strong>Action</strong> — connecter au bon professionnel uniquement quand nécessaire.</li>
       </ol>
       <h2>Pourquoi c'est une nouvelle catégorie</h2>
-      <p>Jusqu'ici, les outils en ligne étaient des annuaires ou des plateformes de leads. L'intelligence résidentielle inverse la logique : elle commence par comprendre la maison, et seulement ensuite mobilise un humain.</p>
+      <p>Jusqu'ici, les outils en ligne étaient des annuaires ou des plateformes de leads. L'Passeport Maison inverse la logique : elle commence par comprendre la maison, et seulement ensuite mobilise un humain.</p>
       <p>${CTA}</p>
     `,
     faqs: [
-      { q: "C'est différent d'une domotique connectée ?", a: "Oui. La domotique contrôle des appareils. L'intelligence résidentielle aide à décider." },
+      { q: "C'est différent d'une domotique connectée ?", a: "Oui. La domotique contrôle des appareils. L'Passeport Maison aide à décider." },
       { q: "Faut-il des capteurs ?", a: "Non. Photos, descriptions et historique suffisent pour démarrer." },
     ],
-    keywords: ["intelligence résidentielle", "plateforme intelligence maison", "home intelligence Québec"],
-    primaryEntity: "Intelligence résidentielle",
+    keywords: ["Passeport Maison", "plateforme intelligence maison", "home intelligence Québec"],
+    primaryEntity: "Passeport Maison",
   },
 ];
 

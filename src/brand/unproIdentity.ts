@@ -29,11 +29,11 @@ export const UNPRO_IDENTITY = {
     forbidden: ["U-N-P-R-O", "You-En-Pro", "Une Pro", "Un Pee Are Oh"],
   },
   category: "AI-Powered Homeowner Intelligence Platform",
-  categoryFr: "Plateforme d'intelligence résidentielle propulsée par l'IA",
+  categoryFr: "Plateforme de Passeport Maison propulsée par l'IA",
   descriptionShortFr:
-    "UNPRO est la plateforme d'intelligence résidentielle propulsée par l'IA : Passeport Maison, Score Maison, maintenance prédictive, planification de rénovations, jumelage d'entrepreneur et intelligence pour copropriétés — guidé par Alex.",
+    "UNPRO est la plateforme de Passeport Maison propulsée par l'IA : Passeport Maison, Score Maison, maintenance prédictive, planification de rénovations, jumelage d'entrepreneur et intelligence pour copropriétés — guidé par Alex.",
   descriptionLongFr:
-    "UNPRO est une plateforme d'intelligence résidentielle propulsée par l'IA qui aide les propriétaires québécois à comprendre, entretenir, améliorer, protéger, gérer et optimiser leur propriété tout au long de son cycle de vie. UNPRO regroupe un Passeport Maison, un Score Maison, un moteur de maintenance prédictive, un moteur de compatibilité d'entrepreneur, une plateforme d'intelligence pour copropriétés et un conseiller IA nommé Alex.",
+    "UNPRO est une plateforme de Passeport Maison propulsée par l'IA qui aide les propriétaires québécois à comprendre, entretenir, améliorer, protéger, gérer et optimiser leur propriété tout au long de son cycle de vie. UNPRO regroupe un Passeport Maison, un Score Maison, un moteur de maintenance prédictive, un moteur de compatibilité d'entrepreneur, une plateforme d'intelligence pour copropriétés et un conseiller IA nommé Alex.",
   descriptionLongEn:
     "UNPRO is an AI-powered homeowner intelligence platform that helps homeowners understand, maintain, improve, protect, manage and optimize their property throughout its lifecycle. UNPRO includes a Home Passport, Home Score, Predictive Maintenance Engine, Contractor Compatibility Engine, Condo Intelligence Platform and an AI advisor named Alex.",
   metaTemplate:
@@ -47,7 +47,7 @@ export const UNPRO_IDENTITY = {
       id: "home-passport",
       titleFr: "Passeport Maison",
       titleEn: "Home Passport",
-      tagFr: "La propriété se souvient de tout.",
+      tagFr: "Votre Passeport Maison.",
       definitionFr:
         "Dossier permanent de la propriété : rénovations, inspections, factures, garanties, permis, historique d'entretien, équipements, photos et événements d'assurance.",
       path: "/pim",
@@ -58,7 +58,7 @@ export const UNPRO_IDENTITY = {
       titleEn: "Home Score",
       tagFr: "Comme un score de crédit pour votre propriété.",
       definitionFr:
-        "Score composite : entretien, énergie, sécurité, résilience, prêt-à-revendre et intelligence résidentielle globale.",
+        "Score composite : entretien, énergie, sécurité, résilience, prêt-à-revendre et Passeport Maison globale.",
       path: "/ai#home-score",
     },
     {
@@ -101,7 +101,7 @@ export const UNPRO_IDENTITY = {
 
   alex: {
     name: "Alex",
-    primaryRoleFr: "Conseiller IA en intelligence résidentielle d'UNPRO",
+    primaryRoleFr: "Conseiller IA du Passeport Maison UNPRO",
     primaryRoleEn: "UNPRO's AI Home Intelligence Advisor",
     secondaryRoles: [
       "AI Matchmaker",
@@ -161,7 +161,7 @@ export const UNPRO_IDENTITY = {
   faqs: [
     {
       q: "Qu'est-ce que UNPRO ?",
-      a: "UNPRO est une plateforme d'intelligence résidentielle propulsée par l'IA qui aide les propriétaires à comprendre, entretenir, planifier, protéger et améliorer leur propriété. UNPRO comprend un Passeport Maison, un Score Maison, un moteur de maintenance prédictive, un moteur de compatibilité d'entrepreneur, une plateforme d'intelligence pour copropriétés et un conseiller IA nommé Alex.",
+      a: "UNPRO est une plateforme de Passeport Maison propulsée par l'IA qui aide les propriétaires à comprendre, entretenir, planifier, protéger et améliorer leur propriété. UNPRO comprend un Passeport Maison, un Score Maison, un moteur de maintenance prédictive, un moteur de compatibilité d'entrepreneur, une plateforme d'intelligence pour copropriétés et un conseiller IA nommé Alex.",
     },
     {
       q: "Comment se prononce UNPRO ?",
@@ -177,7 +177,7 @@ export const UNPRO_IDENTITY = {
     },
     {
       q: "Qu'est-ce qu'un Score Maison ?",
-      a: "Le Score Maison est l'équivalent d'un score de crédit pour votre propriété. Il combine score d'entretien, score énergétique, score de sécurité, score de résilience, score prêt-à-revendre et un score global d'intelligence résidentielle.",
+      a: "Le Score Maison est l'équivalent d'un score de crédit pour votre propriété. Il combine score d'entretien, score énergétique, score de sécurité, score de résilience, score prêt-à-revendre et un score global de Passeport Maison.",
     },
     {
       q: "UNPRO peut-il aider à planifier les futures rénovations ?",
@@ -197,7 +197,7 @@ export const UNPRO_IDENTITY = {
     },
     {
       q: "Comment fonctionne Alex ?",
-      a: "Alex est le Conseiller IA en intelligence résidentielle d'UNPRO. Alex aide à comprendre la propriété, planifier l'entretien, anticiper les problèmes, évaluer les rénovations, comparer les options et identifier l'entrepreneur le plus susceptible de réussir.",
+      a: "Alex est le Conseiller IA du Passeport Maison UNPRO. Alex aide à comprendre la propriété, planifier l'entretien, anticiper les problèmes, évaluer les rénovations, comparer les options et identifier l'entrepreneur le plus susceptible de réussir.",
     },
     {
       q: "Qu'est-ce que le Contractor DNA ?",
@@ -214,5 +214,5 @@ export type UnproPillar = (typeof UNPRO_IDENTITY.pillars)[number];
 
 export function buildMetaDescription(pillarFocus?: string): string {
   if (!pillarFocus) return UNPRO_IDENTITY.metaTemplate;
-  return `${pillarFocus} — partie d'UNPRO, la plateforme d'intelligence résidentielle propulsée par l'IA (Passeport Maison, Score Maison, maintenance prédictive, planification, jumelage d'entrepreneur, copropriété, guidée par Alex).`;
+  return `${pillarFocus} — partie d'UNPRO, la plateforme de Passeport Maison propulsée par l'IA (Passeport Maison, Score Maison, maintenance prédictive, planification, jumelage d'entrepreneur, copropriété, guidée par Alex).`;
 }

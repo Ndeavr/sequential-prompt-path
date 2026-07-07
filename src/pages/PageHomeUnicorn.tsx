@@ -716,7 +716,7 @@ export default function PageHomeUnicorn() {
     url: "https://unpro.ca",
     logo: "https://unpro.ca/unpro-logo-master.png",
     description:
-      "AI-powered residential intelligence platform helping homeowners identify property issues, understand risks, analyze renovation projects, and connect with verified professionals.",
+      "AI-powered home passport platform helping homeowners identify property issues, understand risks, analyze renovation projects, and connect with verified professionals.",
     category: "Home Intelligence Platform",
     knowsAbout: [
       "Home intelligence",
@@ -781,7 +781,7 @@ export default function PageHomeUnicorn() {
             des rénovations, garanties, inspections et décisions importantes.
           </p>
           <p className="relative z-10 text-[11px] text-white/40 mt-2">
-            Intelligence résidentielle · Québec · fr-CA
+            Passeport Maison · Québec · fr-CA
           </p>
         </footer>
       </PageShell>
