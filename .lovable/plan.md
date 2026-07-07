@@ -1,118 +1,109 @@
-# Contractor Profile Generator V2
+# Plan — UNPRO Compatibility Memory System + AI Recommendation Article
 
-Fix the generator, not ISR. Every current + future contractor page routes through one schema-locked pipeline with hard publish gates.
+Build a permanent memory layer that turns every Alex answer into structured long-term facts, feeds them into matching, and exposes the reasoning to homeowners. Ship an SEO article + NotebookLM/llms.txt corpus entry explaining the philosophy.
 
-## 1. Schema-locked page types
+## 1. Data model (migrations)
 
-New file `src/features/contractorProfile/generator/pageTypes.ts` defines three exclusive templates — never mixed at render time:
+New tables (all `public.*`, RLS + GRANTs per project standard):
 
-- `contractor_registry` — official public profile (`/pro/:slug`, `/entrepreneur/:slug`)
-- `contractor_recommendation` — Alex / matching output card + page
-- `contractor_reasoning` — "why this pro" explanation surface
+- `homeowner_dna_profiles` — one row per user. Columns grouped in `jsonb`:
+  - `communication` (language[], preferred_channel, tone)
+  - `property` (types[], primary_property_id)
+  - `preferences` (priority: cost|value|quality|speed|eco, local_preferred bool)
+  - `environment` (cats, dogs, smoking, fragrance_sensitive, accessibility[])
+  - `behavior` (decision_maker, research_depth, explanation_depth, response_speed)
+  - `confidence` jsonb (per-field 0–1), `updated_at`
+- `contractor_dna_profiles` — one row per contractor:
+  - `project_prefs` (loves[], avoids[], min_ticket, max_ticket, specialties[])
+  - `territory` (included[], excluded[])
+  - `client_prefs` (languages[], segments[])
+  - `constraints` (cat_allergy, dog_allergy, smoke_free_only, hours[])
+  - `confidence` jsonb
+- `homeowner_memory_events` — append-only log: `user_id`, `session_id`, `source` (alex|form|import), `question`, `answer_raw`, `extracted` jsonb, `scope` (`temporary`|`long_term`), `confidence`, `expires_at nullable`, `created_at`.
+- `contractor_memory_events` — same shape for contractor side.
+- `recommendation_explanations` — `match_id`, `overall_score`, `dimensions` jsonb (project/budget/region/availability/communication/performance each with score + reason), `blockers` jsonb, `created_at`.
+- `adaptive_question_bank` — `id`, `dimension`, `question_fr`, `question_en`, `answer_schema` jsonb, `information_gain` numeric, `applies_when` jsonb (rule), `updates_fields` text[].
 
-Each type gets a strict TypeScript `ContractorPageSchema` (Zod) + a single React template component under `src/features/contractorProfile/templates/{Registry,Recommendation,Reasoning}Template.tsx`. AI is never allowed to emit JSX — only schema-valid JSON.
+All tables get: `GRANT SELECT,INSERT,UPDATE ON ... TO authenticated`, `GRANT ALL ... TO service_role`, RLS `user_id = auth.uid()` for homeowner tables; contractor tables scoped by contractor membership; `service_role` writes from edge functions.
 
-## 2. Logo rule (highest-leverage fix)
+## 2. Memory extraction pipeline
 
-New `src/features/contractorProfile/logo/LogoResolver.tsx`:
+New edge function `alex-memory-extract`:
+- Input: `{ user_id, session_id, question, answer, context }`.
+- Uses `google/gemini-3-flash-preview` with a strict JSON schema → returns `{ scope, extracted_fields, confidence, expires_at? }`.
+- Classifier rules (deterministic first, LLM as fallback): pets/language/channel/priority/property_type/accessibility → long_term; specific project intents/dates → temporary.
+- Writes to `homeowner_memory_events`, then upserts into `homeowner_dna_profiles` via SQL merge (only overwrite when new confidence ≥ stored confidence).
 
-```
-if contractor.logo_url && verified → render <SafeImage> above fold
-else → render <MonogramBadge initials={ISR-style}> in premium glass card
-```
+Hook into existing Alex turn pipeline: after each answered turn in `alex-qualify-turn`, enqueue extraction (fire-and-forget). No user-visible latency.
 
-Never render broken/empty. Used by: profile hero, `/recommandation`, search cards, Alex recommendation cards, homeowner-facing pro cards. Enforced by ESLint rule forbidding raw `<img src={contractor.logo}` outside `LogoResolver`.
+Client hook `src/hooks/useHomeownerDNA.ts` — read profile, subscribe to changes.
 
-Backing table `contractor_logos` (url, source, verified_at, monogram_bg, monogram_fg, initials).
+Contractor side: on onboarding save + after each accepted/declined lead, run `contractor-memory-extract` (declines are strong signals — territory, project type, allergies).
 
-## 3. Image minimum + categories
+## 3. Adaptive questioning
 
-`src/features/contractorProfile/media/mediaContract.ts` — every profile must resolve ≥6 images across categories: `logo`, `team`, `vehicle`, `completed_project`, `before_after`, `service`. Missing slots → `IntelligentPlaceholder` (branded, category-specific SVG), never empty container. `contractor_media` table adds `category` enum + `verified` flag.
+Extend `src/lib/alexQualification/nextQuestionSelector.ts`:
+- Load current DNA + qualification graph.
+- Load `adaptive_question_bank`, filter by `applies_when` (already-known fields excluded).
+- Rank by `information_gain × (1 − current_confidence_on_target_field)`.
+- Compute `recommendation_confidence` = weighted coverage across the 6 match dimensions.
+- Stop asking when confidence ≥ threshold (simple 90 / complex 85 / emergency 75).
+- Never re-ask a field with stored confidence ≥ 0.8.
 
-## 4. Language engine
+Seed ~40 questions covering the DNA dimensions listed by the user.
 
-`src/features/contractorProfile/lang/detectPageLanguage.ts` runs at build/render time. Hashes visible strings; if mixed FR/EN detected in header/body/CTA/FAQ → throws in dev, sets `status='draft'` in prod. Contractor rows carry `content_language: 'fr' | 'en'`; template refuses to render mismatched blocks.
+## 4. Matching + explanation
 
-## 5. Publish validator
+Extend match scoring (build on `src/lib/alexQualification/serviceSpecialtyValidator.ts` + `useMatchingEngine`) to compute 6 sub-scores:
+1. Project compatibility (specialty × sub_type)
+2. Budget compatibility (band overlap)
+3. Region compatibility (contractor territory vs property city)
+4. Availability compatibility (slots vs urgency)
+5. Communication compatibility (language + channel overlap)
+6. Performance verified (AIPP + reviews threshold)
 
-`src/features/contractorProfile/validation/validatePublicPage.ts`:
+Blockers (any hard fail → drop from list): pet allergy vs pet, excluded territory, wrong specialty, condo-not-served, language mismatch with no shared language.
 
-```
-checks = [logo, hero, gallery(≥6), description, faq, schema, cta, canonical, language, images]
-```
+Persist to `recommendation_explanations`. New UI `MatchCompatibilityCard` on match result screens showing the 6 bars + Overall Match %. Reuses cinematic dark tokens; no hardcoded colors.
 
-Returns `{ passed, failed[], score }`. Wired into:
-- Edge function `contractor-profile-publish` (blocks publish if any fail)
-- Admin cockpit `/admin/contractor-generator-health`
-- Nightly cron re-validates all published profiles → auto-demote to draft on regression
+## 5. SEO article
 
-## 6. Canonical brand engine (extend existing)
+Add to journal system (`journal_articles` table already exists):
+- Slug: `/journal/comment-unpro-recommande-le-bon-entrepreneur`
+- Title: "Comment UNPRO utilise l'IA pour recommander le bon entrepreneur"
+- Subtitle: "Pourquoi le meilleur entrepreneur pour votre voisin n'est peut-être pas le meilleur pour vous."
+- Sections mirroring Part 6 topics; end with "Aucune recommandation n'est identique."
+- French-first, warm neutral landing theme.
+- Full SchemaStack (Article + FAQPage + BreadcrumbList).
+- Add to `public/sitemap-journal.xml` + internal links from `/pourquoi-unpro` and contractor recommendation pages.
 
-Extend `src/lib/brand/canonicalContractor.ts`:
-- Move aliases to `contractor_canonical_names` table (editable via `/admin/canonical-brands`)
-- Normalizer runs in ingestion pipeline (`aipp-pipeline-run`, GMB import, scraping)
-- Runtime guard already exists — extend `assertNoPlaceholderTokens` to also fail on blocked aliases in visible copy
+## 6. NotebookLM / llms corpus
 
-## 7. AEO enforcement
+Append a dedicated section to `public/llms-full.txt`: "UNPRO Recommendation Philosophy" with the exact bullets from Part 7. Add `/llms/recommendation-engine.md` as a standalone corpus doc referenced from `/llms.txt`.
 
-`src/seo/components/ContractorSchemaStack.tsx` — always injects the full set on every contractor page: `LocalBusiness`, `Organization`, `Service`, `Review`, `FAQPage`, `BreadcrumbList`. Validator check #6 fails publish if any missing.
+## 7. Admin cockpit (minimal)
 
-## 8. Hero image priority rules
+New page `/admin/memory-health`:
+- Homeowner DNA coverage histogram.
+- Top extracted fields last 7d.
+- Question-bank information-gain leaderboard.
+- Sample recent extractions (redacted).
 
-`src/features/contractorProfile/media/heroSelector.ts` — deterministic priority per trade category. For insulation/roofing/service trades: `completed_work → team → vehicle → project`. Explicit denylist for stock tropes (handshake, generic office, smiling family) matched via image tags from Gemini vision tagging in ingestion.
+## Technical notes
 
-## 9. Scoring gate (0-100, publish ≥90)
+- Model: `google/gemini-3-flash-preview` for extraction (cheap, multimodal-ready). No priority tier.
+- Memory writes go through edge functions with service role; client never writes to DNA tables directly.
+- Backward compatible: if DNA row missing, matching falls back to today's behavior.
+- Feature flag `compat_memory_engine_v1` in `alexFeatureFlags.ts`.
+- No changes to auth, checkout, or voice pipeline.
 
-`src/features/contractorProfile/scoring/profileScore.ts` computes 4 sub-scores:
+## Deliverables checklist
 
-| Score | Signals |
-|---|---|
-| Visibility (25) | logo, images≥6, CTA visible |
-| Trust (25) | company legal name, territory, phone, website, reviews |
-| AEO (25) | schema complete, FAQ ≥5, entity mapping, service_area |
-| Conversion (25) | book_appointment, alex_cta, evaluation_cta present |
-
-Stored in `contractor_profile_scores` (updated on every ingestion/edit). `status='published'` requires `total_score ≥ 90`. Below → `draft` with actionable diff shown in cockpit.
-
-## 10. Admin cockpit
-
-New route `/admin/contractor-generator-health`:
-- Table of all contractor profiles: score, failed checks, publish status, last validated
-- Bulk re-validate button
-- Per-profile drawer: shows exact failed checks + one-click fix suggestions (regen logo monogram, fetch missing images, translate mismatched block, add missing schema)
-
-## Technical layout
-
-```
-src/features/contractorProfile/
-├── generator/pageTypes.ts               # zod schemas, page_type enum
-├── templates/{Registry,Recommendation,Reasoning}Template.tsx
-├── logo/{LogoResolver,MonogramBadge}.tsx
-├── media/{mediaContract,heroSelector,IntelligentPlaceholder}.ts(x)
-├── lang/detectPageLanguage.ts
-├── validation/validatePublicPage.ts
-├── scoring/profileScore.ts
-└── index.ts
-
-supabase/migrations/*_contractor_generator_v2.sql
-  - contractor_logos, contractor_media(+category), contractor_canonical_names
-  - contractor_profile_scores, contractor_publish_audits
-  - GRANT + RLS for each
-
-supabase/functions/
-  - contractor-profile-publish/    # runs validator, sets status
-  - contractor-profile-validate-cron/  # nightly re-check
-```
-
-## Rollout
-
-1. Ship schema + validator + logo resolver + monogram (blocks new bad pages immediately)
-2. Backfill: run validator on all existing contractors → auto-draft anything <90, populate cockpit worklist
-3. Migrate `/pro/:slug` (ISR + others) to Registry template
-4. Wire recommendation + reasoning surfaces
-5. Enable nightly re-validation cron
-
-## Out of scope
-
-- Redesigning ISR page visuals (V2 template will render it correctly automatically)
-- New AI copywriting model — reuses existing `aipp-pipeline-run` outputs, only adds structural + validation layer
+1. 5 migrations (DNA + events + explanations + question bank) with GRANTs + RLS.
+2. 2 edge functions: `alex-memory-extract`, `contractor-memory-extract`.
+3. Question bank seed (~40 rows) + `nextQuestionSelector` upgrade.
+4. Match scoring extension + `MatchCompatibilityCard` UI.
+5. Journal article + sitemap + internal links.
+6. `llms-full.txt` + `/llms/recommendation-engine.md` update.
+7. `/admin/memory-health` page.
+8. Feature flag + docs entry under `docs/features/compatibility-memory.md`.
