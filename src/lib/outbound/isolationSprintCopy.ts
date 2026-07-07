@@ -1,14 +1,26 @@
 /**
- * First-Dollar Sprint — 5 SMS variants for isolation QC contractors.
- * Each SMS routes to /isolation-qc with UTM for attribution.
+ * Onboarding SMS — « Être recommandé » repositioning.
+ *
+ * 6 variants + 1 champion (A/B principal) aligned with the Passeport Maison
+ * positioning: UNPRO ne vend pas de leads, UNPRO recommande.
+ *
+ * All SMS route to /isolation-qc with UTM `camp=<variant>` for attribution.
  */
 
-export type SprintVariant = "A" | "B" | "C" | "D" | "E";
+export type SprintVariant =
+  | "curiosity"
+  | "ai"
+  | "competitor"
+  | "opportunity"
+  | "founder"
+  | "passport"
+  | "champion";
 
 export interface SprintCopyContext {
   company: string;
   city: string;
-  category?: string; // default "isolation"
+  category?: string; // default: "entrepreneur"
+  prenom?: string;   // optional first name
 }
 
 const link = (v: SprintVariant, ctx: SprintCopyContext) => {
@@ -21,40 +33,65 @@ const link = (v: SprintVariant, ctx: SprintCopyContext) => {
   return `https://unpro.ca/isolation-qc?${params.toString()}`;
 };
 
+const salut = (ctx: SprintCopyContext) =>
+  ctx.prenom?.trim() ? `Bonjour ${ctx.prenom.trim()},` : "Bonjour,";
+
+const cat = (ctx: SprintCopyContext) => ctx.category ?? "entrepreneur";
+
 export const SPRINT_TEMPLATES: Record<
   SprintVariant,
   { name: string; angle: string; build: (ctx: SprintCopyContext) => string }
 > = {
-  A: {
-    name: "Revenue",
-    angle: "Demandes actives + activation 1$",
+  curiosity: {
+    name: "Curiosité",
+    angle: "Votre entreprise mérite-t-elle d'être recommandée ?",
     build: (ctx) =>
-      `Bonjour ${ctx.company}.\n\nNous avons actuellement des demandes actives en ${ctx.city} pour ${ctx.category ?? "isolation"}.\n\nActivation entrepreneur: 1$ pour 7 jours.\n\nSi votre entreprise est admissible, vous pourrez recevoir des rendez-vous exclusifs.\n\n👉 ${link("A", ctx)}`,
+      `${salut(ctx)}\n\nVotre entreprise mérite-t-elle d'être recommandée ?\n\nUNPRO analyse l'expertise, la réputation, le territoire et la capacité des entrepreneurs afin d'identifier les meilleurs candidats pour chaque projet.\n\nDécouvrez si votre entreprise est admissible.\n\n${link("curiosity", ctx)}`,
   },
-  B: {
-    name: "Competitor Fear",
-    angle: "IA recommande vos concurrents",
+  ai: {
+    name: "IA",
+    angle: "Apparaissez-vous dans les recommandations IA ?",
     build: (ctx) =>
-      `Pendant que plusieurs entrepreneurs dépensent encore sur Google Ads, certains commencent à être recommandés directement par l'IA.\n\nVotre entreprise est-elle visible lorsque les propriétaires demandent un entrepreneur en ${ctx.category ?? "isolation"}?\n\nActivation 7 jours: 1$\n\n👉 ${link("B", ctx)}`,
+      `${salut(ctx)}\n\nLes propriétaires demandent de plus en plus à l'IA quels professionnels choisir.\n\nVotre entreprise apparaît-elle parmi les recommandations ?\n\nÉvaluation gratuite :\n\n${link("ai", ctx)}`,
   },
-  C: {
-    name: "Social Proof",
-    angle: "Places limitées",
+  competitor: {
+    name: "Concurrent",
+    angle: "Vous ou un concurrent recommandé ?",
     build: (ctx) =>
-      `Nous recherchons actuellement quelques entrepreneurs ${ctx.category ?? "isolation"} pour compléter notre réseau dans ${ctx.city}.\n\nPlusieurs places sont déjà occupées.\n\nEssai 7 jours: 1$\n\n👉 ${link("C", ctx)}`,
+      `${salut(ctx)}\n\nLorsqu'un propriétaire recherche un ${cat(ctx)} dans votre région, est-ce votre entreprise ou celle d'un concurrent qui est recommandée ?\n\nDécouvrez votre positionnement sur UNPRO.\n\n${link("competitor", ctx)}`,
   },
-  D: {
-    name: "Demand",
-    angle: "Propriétaires cherchent maintenant",
+  opportunity: {
+    name: "Opportunité",
+    angle: "UNPRO ne vend pas de listes",
     build: (ctx) =>
-      `Bonjour.\n\nDes propriétaires recherchent actuellement un entrepreneur ${ctx.category ?? "isolation"} dans votre secteur.\n\nNous vérifions les entreprises avant recommandation.\n\nVoir votre admissibilité:\n\n👉 ${link("D", ctx)}`,
+      `${salut(ctx)}\n\nUNPRO ne vend pas de listes de clients.\n\nNous aidons les propriétaires à prendre de meilleures décisions et les entrepreneurs qualifiés à être recommandés.\n\nVoyez si votre entreprise est admissible :\n\n${link("opportunity", ctx)}`,
   },
-  E: {
-    name: "Curiosity",
-    angle: "Question rapide IA",
+  founder: {
+    name: "Fondateur",
+    angle: "Places fondatrices dans votre secteur",
     build: (ctx) =>
-      `Question rapide.\n\nSi un propriétaire demandait aujourd'hui:\n\n"Quel est le meilleur entrepreneur ${ctx.category ?? "isolation"} dans ${ctx.city}?"\n\nVotre entreprise apparaîtrait-elle?\n\nVérifiez gratuitement:\n\n👉 ${link("E", ctx)}`,
+      `${salut(ctx)}\n\nNous ouvrons actuellement les places fondatrices UNPRO dans votre secteur.\n\nL'objectif : aider les meilleurs entrepreneurs à être recommandés aux bons propriétaires, au bon moment.\n\nVérifiez votre admissibilité :\n\n${link("founder", ctx)}`,
+  },
+  passport: {
+    name: "Passeport Maison",
+    angle: "Recommandé via le Passeport Maison",
+    build: (ctx) =>
+      `${salut(ctx)}\n\nUNPRO construit le Passeport Maison des propriétaires.\n\nLorsque des travaux sont requis, notre IA identifie les professionnels les plus pertinents selon le projet, la région et les besoins réels.\n\nVotre entreprise pourrait-elle être recommandée ?\n\n${link("passport", ctx)}`,
+  },
+  champion: {
+    name: "Champion A/B",
+    angle: "SMS le plus fort — test principal",
+    build: (ctx) =>
+      `${salut(ctx)}\n\nVotre entreprise mérite-t-elle d'être recommandée ?\n\nUNPRO analyse votre expertise, votre réputation, votre territoire et votre capacité afin d'identifier les situations où votre entreprise représente un excellent choix.\n\nUNPRO vous aide à être recommandé.\n\nDécouvrez votre admissibilité :\n\n${link("champion", ctx)}\n\nSTOP = retrait.`,
   },
 };
 
-export const SPRINT_VARIANTS: SprintVariant[] = ["A", "B", "C", "D", "E"];
+export const SPRINT_VARIANTS: SprintVariant[] = [
+  "curiosity",
+  "ai",
+  "competitor",
+  "opportunity",
+  "founder",
+  "passport",
+  "champion",
+];
