@@ -26,9 +26,13 @@ function isBucket(v: string | null): v is HomeBucket {
   return v === "a" || v === "b" || v === "c";
 }
 
+const BOT_UA = /bot|crawler|spider|crawling|slurp|facebookexternalhit|twitterbot|linkedinbot|applebot|gptbot|chatgpt|claude|perplexity|google-extended|oai-searchbot|ccbot|meta-externalagent|bytespider/i;
+
 function assignBucket(): HomeBucket {
   const override = new URLSearchParams(window.location.search).get("variant");
   if (isBucket(override)) return override;
+  // Defense in depth: crawlers always get bucket A (the canonical indexable variant).
+  if (typeof navigator !== "undefined" && BOT_UA.test(navigator.userAgent || "")) return "a";
   const existing = localStorage.getItem(BUCKET_KEY);
   if (isBucket(existing)) return existing;
   const r = Math.random();

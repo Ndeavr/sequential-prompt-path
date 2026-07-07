@@ -34,7 +34,7 @@ export default function PageHomeVariantC() {
           name="description"
           content="Pas le plus visible. Pas le moins cher. Le bon. UNPRO recommande l'entrepreneur qui correspond réellement à votre projet."
         />
-        <meta name="robots" content="noindex,nofollow" />
+        <link rel="canonical" href="https://unpro.ca/" />
       </Helmet>
 
       <div className="bg-background w-full max-w-full overflow-x-hidden">
