@@ -115,12 +115,16 @@ export default function PageProIsolationQC() {
         "create-activation-checkout",
         { body: { slug: SPRINT_SLUG, source: "isolation-qc", utm } },
       );
-      if (error || !data?.url) {
+      const url = (data as any)?.url as string | undefined;
+      if (error || !url) {
+        const detail = (data as any)?.error || (data as any)?.detail || error?.message || "unknown";
+        logEvent("cta_failed", { ...utm, detail });
         setErr("Activation temporairement indisponible — réessayez dans 10 secondes.");
         return;
       }
-      redirectToCheckout(data.url);
-    } catch {
+      redirectToCheckout(url);
+    } catch (e: any) {
+      logEvent("cta_failed", { ...utm, detail: e?.message || "exception" });
       setErr("Activation temporairement indisponible — réessayez dans 10 secondes.");
     } finally {
       setLoading(false);
