@@ -35,7 +35,7 @@ export function useHomeownerDNA() {
     if (!user?.id) return;
     const channel = supabase
       .channel(`dna-${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "homeowner_dna_profiles", filter: `user_id=eq.${user.id}` }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "homeowner_compat_dna", filter: `user_id=eq.${user.id}` }, () => {
         query.refetch();
       })
       .subscribe();
