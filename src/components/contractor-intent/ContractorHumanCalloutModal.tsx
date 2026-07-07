@@ -10,7 +10,7 @@ export default function ContractorHumanCalloutModal() {
   return (
     <Dialog open={isOpen} onOpenChange={(o) => !o && dismiss()}>
       <DialogContent
-        className="max-w-md border-white/10 bg-white/[0.04] backdrop-blur-2xl rounded-[28px] p-0 overflow-hidden [&>button]:hidden"
+        className="alex-immersive max-w-md border-white/10 bg-[#0B1220]/95 backdrop-blur-2xl rounded-[28px] p-0 overflow-hidden [&>button]:hidden text-white"
         style={{ transitionTimingFunction: "cubic-bezier(.22,1,.36,1)" }}
       >
         <button
