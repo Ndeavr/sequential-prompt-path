@@ -26,27 +26,27 @@ export default function PageHomeCopilot() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Service",
-    name: "UNPRO",
+    name: "UNPRO — Passeport Maison",
     description:
-      "UNPRO recommande le meilleur professionnel vérifié pour votre projet maison au Québec. Une seule recommandation, un rendez-vous rapide.",
+      "UNPRO crée le Passeport Maison de votre propriété : historique, entretiens, garanties, factures et professionnels au même endroit pour prendre de meilleures décisions.",
     url: "https://unpro.ca",
     areaServed: { "@type": "Place", name: "Quebec" },
     provider: { "@type": "Organization", name: "UNPRO", url: "https://unpro.ca" },
-    serviceType: "Recommandation entrepreneur résidentiel par IA",
+    serviceType: "Home Intelligence Platform",
   };
 
   return (
     <MainLayout>
       <Helmet>
-        <title>UNPRO — Votre maison, enfin comprise par l'IA</title>
+        <title>UNPRO — Passeport Maison : l'intelligence de votre propriété</title>
         <meta
           name="description"
-          content="UNPRO est le système d'intelligence IA pour les propriétaires. Diagnostic visuel, analyse de soumission, vérification d'entrepreneur et Passeport Maison — tout au même endroit."
+          content="Votre Passeport Maison conserve l'historique de votre propriété pour planifier les entretiens, anticiper les dépenses et prendre de meilleures décisions."
         />
-        <meta property="og:title" content="UNPRO — Votre maison, enfin comprise par l'IA" />
+        <meta property="og:title" content="UNPRO — Passeport Maison : l'intelligence de votre propriété" />
         <meta
           property="og:description"
-          content="Le système d'intelligence pour comprendre votre maison, réduire les risques et trouver le bon professionnel au bon moment."
+          content="Historique, entretiens, garanties, factures et professionnels — au même endroit. Prenez de meilleures décisions pour votre maison."
         />
         <meta property="og:type" content="website" />
         <meta name="theme-color" content="#050A12" />

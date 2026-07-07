@@ -1,24 +1,30 @@
 /**
  * UNPRO — Contractor Acquisition Landing CTA
- * Shown on public pages to attract contractors.
+ * Repositioned: UNPRO does not sell leads. UNPRO recommends the right
+ * professional based on the homeowner's Passeport Maison.
  */
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { TrendingUp, Users, MapPin, Shield } from "lucide-react";
+import { Sparkles, Target, MapPin, Shield } from "lucide-react";
+import {
+  CONTRACTOR_HERO_H1,
+  CONTRACTOR_HERO_SUB,
+  CONTRACTOR_CTA,
+} from "@/lib/copy/passportPositioning";
 
 const ContractorLandingCta = () => (
   <section className="rounded-xl border bg-card p-6 md:p-8 space-y-5">
-    <h2 className="text-xl font-bold text-foreground">Vous êtes entrepreneur?</h2>
+    <h2 className="text-xl font-bold text-foreground">{CONTRACTOR_HERO_H1}</h2>
     <p className="text-muted-foreground leading-relaxed">
-      Rejoignez UNPRO pour recevoir des demandes qualifiées de propriétaires dans votre région.
+      {CONTRACTOR_HERO_SUB} UNPRO ne vend pas de leads : nous recommandons
+      le bon professionnel au bon moment, selon le profil réel de la propriété.
     </p>
 
     <div className="grid grid-cols-2 gap-3">
       {[
-        { icon: TrendingUp, label: "Score AIPP", desc: "Mesurez votre performance" },
-        { icon: Users, label: "Leads qualifiés", desc: "Demandes vérifiées" },
+        { icon: Sparkles, label: "Recommandation IA", desc: "Au bon moment, au bon client" },
+        { icon: Target, label: "Contexte propriété", desc: "Basé sur le Passeport Maison" },
         { icon: MapPin, label: "Territoires exclusifs", desc: "Accès par zone" },
         { icon: Shield, label: "Profil vérifié", desc: "Badge de confiance" },
       ].map((item) => (
@@ -34,7 +40,7 @@ const ContractorLandingCta = () => (
 
     <div className="flex gap-3">
       <Button asChild>
-        <Link to="/signup">Activer mon profil</Link>
+        <Link to="/signup">{CONTRACTOR_CTA}</Link>
       </Button>
       <Button asChild variant="outline">
         <Link to="/alex">Voir la plateforme</Link>

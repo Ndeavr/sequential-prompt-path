@@ -1,29 +1,33 @@
 /**
- * HeroCopilotMobile — Orb-first mobile hero.
+ * HeroCopilotMobile — Passeport Maison first hero.
  *
- * UX rules:
- *  - Alex Orb is the primary entry. No autofocus. Keyboard never opens on load.
- *  - "Parler à Alex" → opens action menu (voice-first, no keyboard).
- *  - Compact text input below: tapping it opens the chat in text mode (focus only
- *    happens AFTER user explicitly taps the input or the send button).
- *  - Quick chips trigger the corresponding Alex action inside the chat sheet.
+ * UNPRO is a Home Intelligence Platform. The Passeport Maison is the product.
+ * Contractor recommendations are a feature accessed via Alex.
  */
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowUp, ShieldCheck, Sparkles, Search, Calculator, BadgeCheck, FileText, Camera, HardHat } from "lucide-react";
+import { ArrowUp, ShieldCheck, Sparkles, History, Wrench, Calendar, FileText, ClipboardList, HardHat } from "lucide-react";
 import AlexOrbPremium from "@/components/alex/AlexOrbPremium";
 import { useCopilotConversationStore } from "@/stores/copilotConversationStore";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
+import {
+  PASSPORT_HERO_H1,
+  PASSPORT_HERO_SUB,
+  PASSPORT_PRIMARY_CTA,
+  PASSPORT_PRIMARY_HREF,
+  PASSPORT_SECONDARY_CTA,
+  PASSPORT_SECONDARY_HREF,
+} from "@/lib/copy/passportPositioning";
 
 const CHIPS = [
-  { id: "find", label: "Trouver un pro", icon: Search, intent: "Je cherche un pro pour un projet maison." },
-  { id: "estimate", label: "Estimer le coût", icon: Calculator, intent: "Je veux estimer le coût d'un projet." },
-  { id: "verify", label: "Vérifier un pro", icon: BadgeCheck, intent: "Je veux vérifier un entrepreneur." },
+  { id: "passport", label: "Passeport Maison", icon: ClipboardList, intent: "Je veux construire mon Passeport Maison." },
+  { id: "history", label: "Historique", icon: History, intent: "Je veux retrouver l'historique de ma propriété." },
+  { id: "plan", label: "Planifier entretiens", icon: Calendar, intent: "Je veux prévoir mes entretiens futurs." },
+  { id: "project", label: "Planifier projet", icon: Wrench, intent: "Je veux planifier un projet pour ma maison." },
   { id: "quote", label: "Analyser soumission", icon: FileText, intent: "J'ai déjà une soumission à analyser." },
-  { id: "photo", label: "Téléverser photos", icon: Camera, intent: "Je veux téléverser des photos de mon problème." },
-  { id: "pro", label: "Je suis entrepreneur", icon: HardHat, intent: "Je suis entrepreneur et je veux recevoir des clients." },
+  { id: "pro", label: "Vérifier un pro", icon: HardHat, intent: "Je veux vérifier un entrepreneur." },
 ];
 
 export default function HeroCopilotMobile() {
@@ -37,13 +41,11 @@ export default function HeroCopilotMobile() {
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!text.trim()) {
-      // No text? Treat as "Parler à Alex" — open action menu.
       openActionMenu();
       return;
     }
     open(text.trim());
     setText("");
-    // Drop focus so keyboard collapses; chat sheet handles its own composer.
     textareaRef.current?.blur();
   };
 
@@ -52,9 +54,14 @@ export default function HeroCopilotMobile() {
     openActionMenu();
   };
 
-  const handleVoice = () => {
-    trackCopilotEvent("alex_started", { mode: "voice" });
-    openAlex("home_copilot_voice");
+  const handlePrimary = () => {
+    trackCopilotEvent("passport_cta_clicked", { placement: "hero_primary" });
+    navigate(PASSPORT_PRIMARY_HREF);
+  };
+
+  const handleSecondary = () => {
+    trackCopilotEvent("passport_cta_clicked", { placement: "hero_secondary" });
+    navigate(PASSPORT_SECONDARY_HREF);
   };
 
   return (
@@ -67,7 +74,6 @@ export default function HeroCopilotMobile() {
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-start px-5 pt-8 pb-8 text-center">
-        {/* Orb is the hero — tappable */}
         <motion.button
           type="button"
           onClick={handleOrbTap}
@@ -84,12 +90,9 @@ export default function HeroCopilotMobile() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.5 }}
-          className="mt-6 text-[28px] sm:text-[34px] font-bold leading-[1.15] tracking-tight max-w-md"
+          className="mt-6 text-[26px] sm:text-[32px] font-bold leading-[1.15] tracking-tight max-w-md"
         >
-          Votre maison.{" "}
-          <span className="bg-gradient-to-r from-[hsl(207_100%_70%)] to-[hsl(198_100%_78%)] bg-clip-text text-transparent">
-            Enfin comprise par l'IA.
-          </span>
+          {PASSPORT_HERO_H1}
         </motion.h1>
 
         <motion.p
@@ -98,33 +101,45 @@ export default function HeroCopilotMobile() {
           transition={{ delay: 0.2, duration: 0.5 }}
           className="mt-3 text-[14px] text-white/70 max-w-sm leading-relaxed"
         >
-          Décrivez un problème, importez une photo ou analysez une soumission en quelques secondes. UNPRO comprend votre maison, réduit les risques et trouve le bon professionnel au bon moment.
+          {PASSPORT_HERO_SUB}
         </motion.p>
 
-        {/* Primary CTA — Parler à Alex (voice-first, no keyboard) */}
+        {/* Primary CTA — Créer mon Passeport Maison */}
         <motion.button
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          onClick={handleVoice}
+          onClick={handlePrimary}
           className="w-full max-w-md mt-6 h-14 rounded-2xl bg-gradient-to-r from-[hsl(220_100%_55%)] to-[hsl(207_100%_58%)] text-white text-[16px] font-semibold flex items-center justify-center gap-2 shadow-[0_10px_30px_-8px_hsl(220_100%_50%/0.7)] active:scale-[0.98] transition"
         >
-          <Sparkles className="w-5 h-5" />
-          Parler à Alex
+          <ClipboardList className="w-5 h-5" />
+          {PASSPORT_PRIMARY_CTA}
+        </motion.button>
+
+        {/* Secondary — Découvrir mon historique */}
+        <motion.button
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35, duration: 0.5 }}
+          onClick={handleSecondary}
+          className="w-full max-w-md mt-3 h-12 rounded-2xl bg-white/5 border border-white/15 text-white/90 text-[14.5px] font-medium flex items-center justify-center gap-2 hover:bg-white/8 active:scale-[0.98] transition"
+        >
+          <History className="w-4 h-4" />
+          {PASSPORT_SECONDARY_CTA}
         </motion.button>
 
         <p className="mt-3 text-[12px] text-white/55 inline-flex items-center gap-1.5">
           <ShieldCheck className="w-3.5 h-3.5 text-sky-400/70" />
-          Gratuit • Sans engagement • Réponse rapide
+          Gratuit • Vos informations restent privées
         </p>
 
-        {/* Compact text input — secondary entry, NEVER autofocused */}
+        {/* Compact text input — talk to Alex */}
         <motion.form
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35, duration: 0.5 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
           onSubmit={handleSubmit}
-          className="w-full max-w-md mt-5"
+          className="w-full max-w-md mt-6"
         >
           <div className="relative rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-[inset_0_1px_0_hsl(0_0%_100%/0.05)] focus-within:border-sky-400/50 transition">
             <textarea
@@ -139,7 +154,7 @@ export default function HeroCopilotMobile() {
               }}
               rows={1}
               inputMode="text"
-              placeholder="Ou écrivez ici…"
+              placeholder="Demander à Alex…"
               className="w-full bg-transparent resize-none px-4 py-3 pr-14 text-[14px] text-white placeholder:text-white/45 outline-none rounded-2xl"
             />
             <button

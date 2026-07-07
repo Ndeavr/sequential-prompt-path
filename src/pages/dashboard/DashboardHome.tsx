@@ -50,8 +50,8 @@ const Dashboard = () => {
         <BannerCalendarMissingWarning role="homeowner" />
       </div>
       <PageHeader
-        title="Tableau de bord"
-        description="Vue d'ensemble de vos propriétés et projets"
+        title="Passeport Maison"
+        description="Historique, entretiens et décisions — votre propriété au même endroit."
         action={
           <div className="flex gap-2">
             <Button asChild size="sm" variant="outline" className="rounded-xl">
