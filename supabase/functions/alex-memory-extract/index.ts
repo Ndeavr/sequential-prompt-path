@@ -96,7 +96,7 @@ serve(async (req) => {
 
     if (scope === "long_term" && Object.keys(extracted).length > 0) {
       // Merge into DNA profile
-      const { data: existing } = await supabase.from("homeowner_dna_profiles").select("*").eq("user_id", user_id).maybeSingle();
+      const { data: existing } = await supabase.from("homeowner_compat_dna").select("*").eq("user_id", user_id).maybeSingle();
       const base = existing ?? { communication: {}, property: {}, preferences: {}, environment: {}, behavior: {}, confidence: {} };
       const merged: Record<string, any> = {
         communication: { ...(base.communication ?? {}) },
@@ -113,7 +113,7 @@ serve(async (req) => {
           merged.confidence[path] = confidence;
         }
       }
-      await supabase.from("homeowner_dna_profiles").upsert({ user_id, ...merged, updated_at: new Date().toISOString() });
+      await supabase.from("homeowner_compat_dna").upsert({ user_id, ...merged, updated_at: new Date().toISOString() });
     }
 
     return new Response(JSON.stringify({ ok: true, scope, extracted, confidence }), {
