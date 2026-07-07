@@ -1750,6 +1750,9 @@ export const AppRouter = () => (
           <Route path="/admin/sms-debug" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSmsDebug /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/contractor-generator-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageContractorGeneratorHealth /></Suspense></UniversalRouteGuard>} />
 
+          <Route path="/admin/memory-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageMemoryHealth /></Suspense></UniversalRouteGuard>} />
+          <Route path="/journal/comment-unpro-recommande-le-bon-entrepreneur" element={<Suspense fallback={<LazyFallback />}><PageWhyUnproRecommends /></Suspense>} />
+
           {/* Lead Pipe Empire — SEO + Conversion */}
           <Route path="/plomb-eau/:ville" element={<Suspense fallback={<LazyFallback />}><LeadPipePagePlombEauCity /></Suspense>} />
           <Route path="/tuyaux-plomb/:quartier" element={<Suspense fallback={<LazyFallback />}><LeadPipePageTuyauxPlombQuartier /></Suspense>} />
