@@ -234,13 +234,23 @@ const MatchingResultsPage = () => {
           ) : (
             <div className="space-y-4">
               {filteredMatches.map((match, i) => (
-                <MatchCard
-                  key={match.id}
-                  match={match}
-                  rank={i + 1}
-                  onCompare={toggleCompare}
-                  isComparing={compareIds.has(match.contractor_id)}
-                />
+                <div key={match.id} className="space-y-2">
+                  <MatchCard
+                    match={match}
+                    rank={i + 1}
+                    onCompare={toggleCompare}
+                    isComparing={compareIds.has(match.contractor_id)}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-xs text-primary hover:bg-primary/5"
+                    onClick={() => setSelectedMatchId(match.id)}
+                  >
+                    <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                    Voir la compatibilité détaillée
+                  </Button>
+                </div>
               ))}
             </div>
           )}
@@ -264,6 +274,33 @@ const MatchingResultsPage = () => {
           onOpenChange={setCompareOpen}
           onRemove={(id) => toggleCompare(id)}
         />
+
+        {/* Compatibility detail sheet */}
+        <Sheet open={!!selectedMatch} onOpenChange={(o) => !o && setSelectedMatchId(null)}>
+          <SheetContent side="right" className="w-full sm:max-w-md bg-background/95 backdrop-blur-2xl border-l border-border/40 overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle className="text-sm uppercase tracking-widest text-muted-foreground">
+                {selectedMatch?.business_name}
+              </SheetTitle>
+            </SheetHeader>
+            {selectedMatch && (
+              <div className="mt-4">
+                <MatchCompatibilityCard
+                  overallScore={selectedExplanation?.overall_match_score ?? selectedMatch.recommendation_score}
+                  dimensions={[
+                    { key: "project",       label: "Projet",         score: selectedExplanation?.project_compatibility       ?? selectedMatch.project_fit_score },
+                    { key: "budget",        label: "Budget",         score: selectedExplanation?.budget_compatibility        ?? selectedMatch.budget_fit_score },
+                    { key: "region",        label: "Région",         score: selectedExplanation?.region_compatibility        ?? selectedMatch.property_fit_score },
+                    { key: "availability",  label: "Disponibilité",  score: selectedExplanation?.availability_compatibility  ?? selectedMatch.availability_score },
+                    { key: "communication", label: "Communication",  score: selectedExplanation?.communication_compatibility ?? selectedMatch.ccai_score },
+                    { key: "performance",   label: "Performance",    score: (selectedExplanation?.performance_verified ?? (selectedMatch.unpro_score_snapshot ?? 0) >= 75) ? 100 : (selectedMatch.unpro_score_snapshot ?? 0) },
+                  ] as Dimension[]}
+                  blockers={selectedExplanation?.blockers ?? (selectedMatch.explanations?.watchouts ?? []).map((w: any) => w.text_fr)}
+                />
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
       </div>
     </MainLayout>
   );
