@@ -44644,6 +44644,42 @@ export type Database = {
         }
         Relationships: []
       }
+      homeowner_compat_dna: {
+        Row: {
+          behavior: Json
+          communication: Json
+          confidence: Json
+          created_at: string
+          environment: Json
+          preferences: Json
+          property: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          behavior?: Json
+          communication?: Json
+          confidence?: Json
+          created_at?: string
+          environment?: Json
+          preferences?: Json
+          property?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          behavior?: Json
+          communication?: Json
+          confidence?: Json
+          created_at?: string
+          environment?: Json
+          preferences?: Json
+          property?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       homeowner_dna_profiles: {
         Row: {
           confidence: number
