@@ -28,6 +28,7 @@ import StaticContentPage from "@/pages/static/StaticContentPage";
 const PageAdminLiveRuns = lazyWithRetry(() => import("@/pages/admin/PageAdminLiveRuns"));
 const PageContractorGeneratorHealth = lazyWithRetry(() => import("@/pages/admin/PageContractorGeneratorHealth"));
 const PageMemoryHealth = lazyWithRetry(() => import("@/pages/admin/PageMemoryHealth"));
+const PageRevenueReality = lazyWithRetry(() => import("@/pages/admin/PageRevenueReality"));
 const PageWhyUnproRecommends = lazyWithRetry(() => import("@/pages/journal/PageWhyUnproRecommends"));
 const PageAdminProspectSMS = lazyWithRetry(() => import("@/pages/admin/PageAdminProspectSMS"));
 const PageFounderVerification = lazyWithRetry(() => import("@/pages/admin/PageFounderVerification"));
@@ -1751,6 +1752,7 @@ export const AppRouter = () => (
           <Route path="/admin/contractor-generator-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageContractorGeneratorHealth /></Suspense></UniversalRouteGuard>} />
 
           <Route path="/admin/memory-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageMemoryHealth /></Suspense></UniversalRouteGuard>} />
+          <Route path="/admin/revenue-reality" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageRevenueReality /></Suspense></UniversalRouteGuard>} />
           <Route path="/journal/comment-unpro-recommande-le-bon-entrepreneur" element={<Suspense fallback={<LazyFallback />}><PageWhyUnproRecommends /></Suspense>} />
 
           {/* Lead Pipe Empire — SEO + Conversion */}
