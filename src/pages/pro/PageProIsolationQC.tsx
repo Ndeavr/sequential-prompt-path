@@ -115,12 +115,16 @@ export default function PageProIsolationQC() {
         "create-activation-checkout",
         { body: { slug: SPRINT_SLUG, source: "isolation-qc", utm } },
       );
-      if (error || !data?.url) {
+      const url = (data as any)?.url as string | undefined;
+      if (error || !url) {
+        const detail = (data as any)?.error || (data as any)?.detail || error?.message || "unknown";
+        logEvent("cta_failed", { ...utm, detail });
         setErr("Activation temporairement indisponible — réessayez dans 10 secondes.");
         return;
       }
-      redirectToCheckout(data.url);
-    } catch {
+      redirectToCheckout(url);
+    } catch (e: any) {
+      logEvent("cta_failed", { ...utm, detail: e?.message || "exception" });
       setErr("Activation temporairement indisponible — réessayez dans 10 secondes.");
     } finally {
       setLoading(false);
@@ -191,7 +195,14 @@ export default function PageProIsolationQC() {
           Aucun engagement · Annulation en 1 clic · Paiement Stripe
         </p>
 
-        {err && <p className="mt-3 text-[13px] text-rose-300 text-center">{err}</p>}
+        {err && (
+          <p className="mt-3 text-[13px] text-rose-300 text-center">
+            {err}{" "}
+            <a href="mailto:hello@unpro.ca?subject=Activation%20UNPRO" className="underline text-rose-200">
+              Nous écrire
+            </a>
+          </p>
+        )}
 
         {/* 4 micro-benefits */}
         <ul className="mt-7 space-y-2.5 text-[13.5px] text-white/75">
