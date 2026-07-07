@@ -1,119 +1,120 @@
-## Objectif unique
+# UNPRO Repositioning — Passeport Maison First
 
-Obtenir **1 entrepreneur qui paie 1 $ aujourd'hui**. Tout le reste est du bruit.
-
-Cible : **25 entrepreneurs isolation QC** (mobile + 20+ avis + site/FB actif), routés vers une landing dédiée avec paiement en moins de 60 secondes.
+Shift UNPRO's category from "contractor marketplace" to "Home Intelligence Platform" with the **Passeport Maison** as the hero product. Contractor recommendations become a downstream feature.
 
 ---
 
-## 1. Landing dédiée `/isolation-qc` (nouvelle)
+## 1. New messaging system (single source of truth)
 
-Fichier : `src/pages/pro/PageProIsolationQC.tsx` + route dans `routesConfig.ts`.
+Create `src/lib/copy/passportPositioning.ts` — canonical FR copy tokens used across landing, dashboard, Alex, contractor pages, meta tags:
 
-Contenu ultra-minimal (règle des 3 secondes) :
-- **H1** : « Recevez des rendez-vous exclusifs en isolation. Pas des leads partagés. »
-- **Sub** : « Essai 7 jours — 1 $. Payez seulement pour activer votre profil. »
-- **1 bouton** : « Activer pour 1 $ » → checkout direct
-- **3 preuves** courtes sous le bouton : demandes actives cette semaine dans la ville trackée (UTM), vérification RBQ, annulation en 1 clic
+- `HERO_H1` = "En avez-vous assez de toujours repartir de zéro ?"
+- `HERO_SUB` = "Votre Passeport Maison conserve l'historique de votre propriété..."
+- `PRIMARY_CTA` = "Créer mon Passeport Maison" → `/passport/new`
+- `SECONDARY_CTA` = "Découvrir mon historique immobilier" → `/passport/discover`
+- Forbidden phrases list (for content-guard): "Trouver un entrepreneur", "Obtenir 3 soumissions", "Recevoir des prix" as primary CTAs, "marketplace", "annuaire".
 
-Retirés : score IA, dashboard preview, % complétion, jargon, plans multiples, comparateurs.
+Extend `src/content-guard/rules.ts` to flag the forbidden primary-CTA phrases so future edits can't regress.
 
-Params UTM lus : `?src=sms&camp=A|B|C|D|E&city=&company=` → pré-remplit checkout metadata pour attribution.
+## 2. Homepage rewrite (`/` = `PageHomeCopilot`)
 
----
+Replace hero + below-fold sections while keeping the cinematic dark shell:
 
-## 2. Checkout 60 secondes
+- **Hero**: new H1/sub/CTAs from the copy module. Primary → Passeport, secondary → "Comment ça fonctionne".
+- **Section « Tout ce qui concerne votre propriété »** — 8 cards: Historique des travaux, Inspections, Garanties, Factures, Photos avant/après, Entretiens, Professionnels utilisés, Documents importants.
+- **Section « Prenez de meilleures décisions »** — 5-bullet value list.
+- **Section « Votre maison évolue »** — explains Passeport Maison lifecycle.
+- Keep `PropertyIntelligenceTicker` and `StickyBottomAlexCTA` (relabel sticky CTA to "Créer mon Passeport Maison").
+- Update `<Helmet>` title/description/JSON-LD to Home Intelligence Platform framing.
 
-Réutiliser `create-activation-checkout` existant, mais :
-- Bouton unique déclenche `supabase.functions.invoke("create-activation-checkout", { body: { slug, source: "isolation-qc", utm } })`
-- Redirection immédiate (pas de formulaire intermédiaire — email collecté par Stripe Checkout)
-- Success URL → `/pro/activate/success?cs={CHECKOUT_SESSION_ID}` qui déclenche activation instantanée + envoie SMS/email de bienvenue
+New components under `src/components/home-passport/`: `HeroPassport.tsx`, `WhatFitsInsideGrid.tsx`, `BetterDecisionsSection.tsx`, `HomeLifecycleSection.tsx`.
 
-Vérifier que l'edge function tag bien `campaign_variant` dans metadata Stripe pour rapport de conversion.
+## 3. Owner dashboard → "Passeport Maison"
 
----
+Rename homeowner dashboard shell + add sectioned view:
 
-## 3. Les 5 variantes SMS (test simultané, 5×5)
+- Rename `PageHomeownerDashboard` header to **Passeport Maison**.
+- New tabbed/sectioned layout: Historique · Entretiens à venir · Budget 1/5/10 ans · Garanties · Documents · Professionnels recommandés · Risques détectés · Valeur protégée.
+- Reuse existing services (`propertyInsightService`, `predictionService`, `homeScoreService`) to feed each section; sections with no data show empty-state CTAs ("Ajouter votre première facture", etc.).
+- Sidebar/nav label updated in `DashboardLayout`.
 
-Créer dans `src/lib/outbound/isolationSprintCopy.ts` les 5 templates (A Revenue, B Fear, C Social Proof, D Demand, E Curiosity) — exactement le texte du prompt utilisateur.
+## 4. Alex onboarding reframe
 
-Chaque SMS pointe vers `unpro.ca/isolation-qc?src=sms&camp=X&city={{city}}&company={{company}}`.
+Update `src/services/alexOpeningTemplates.ts` + `alexCopy.ts`:
 
----
+- New homeowner opening: **"Bonjour. Comment puis-je vous aider avec votre maison aujourd'hui ?"**
+- Replace homeowner quick-action set with:
+  1. Construire mon Passeport Maison
+  2. Planifier un projet
+  3. Prévoir mes entretiens futurs
+  4. Comprendre l'état de ma maison
+  5. Trouver un professionnel recommandé
+  6. Comparer des soumissions
+  7. Vérifier un entrepreneur
+- Update `QUICK_ACTIONS` in `alexCopy.ts` and any registry driving the mobile action grid (`HomeIntelligenceActionGrid`).
+- Update memory Core rule for Alex opening to the new line.
 
-## 4. Sélection de 25 cibles
+## 5. Contractor landing repositioning
 
-Query SQL dans `/admin/sniper` (existe déjà) ou nouvelle vue admin `/admin/first-dollar-sprint` :
+Rewrite the public contractor-facing pages (`/entrepreneurs`, `ContractorLandingCta`, `PageProIsolationQC`, master message memory):
 
-```sql
-select * from prospects
-where category ilike '%isolation%'
-  and province = 'QC'
-  and mobile_phone is not null
-  and reviews_count >= 20
-  and (website is not null or facebook_url is not null)
-  and status = 'active'
-  and last_contact_at is null
-order by reviews_count desc
-limit 25;
-```
+- H1: **"Et si l'IA recommandait votre entreprise ?"**
+- Sub: "Soyez identifié comme le bon professionnel au bon moment."
+- CTA: "Être recommandé par UNPRO".
+- Replace "leads qualifiés" copy with "recommandation contextuelle".
+- Keep pricing/checkout logic intact — copy layer only.
 
-Assignation manuelle des 25 aux 5 variantes (5 par variante).
+## 6. Blog / SEO clusters
 
----
+- Add 7 seed article stubs (`src/data/mockBlogPosts.ts` or content system in use) with the titles listed in the brief.
+- Extend SEO service (`renovationContentService`, sitemap) with a new cluster registry: passeport-maison, historique-maison, carnet-entretien, budget-entretien, etc. — generates canonical URLs and internal links.
+- Update sitemap generation to include the new cluster URLs.
 
-## 5. Funnel tracking obligatoire
+## 7. Head metadata + JSON-LD
 
-Table `first_dollar_sprint_events` (une seule) :
-- `sms_sent` / `sms_delivered` / `link_clicked` / `landing_viewed` / `checkout_opened` / `checkout_paid` / `activated`
-- Colonnes : `prospect_id`, `campaign_variant`, `city`, `category`, `event`, `timestamp`, `session_id`
+Update `index.html` + per-route `<Helmet>` on Home, Dashboard, Contractor landing to reflect Home Intelligence Platform. New sitewide `Service` schema: `serviceType: "Home Intelligence Platform"`. Add `WebSite` schema with the new brand statement.
 
-Dashboard `/admin/first-dollar-sprint` affiche l'entonnoir en direct (25 → clics → paiements) avec le drop-off le plus élevé mis en évidence.
+## 8. Onboarding outcome contract
 
----
+Homeowner post-auth flow must guarantee, before exit:
+1. Passeport record created (existing `PropertyForm` path — relabel to "Passeport Maison").
+2. Property profile saved.
+3. Initial maintenance roadmap generated (`predictionService`).
+4. Suggested next actions rendered.
 
-## 6. Follow-up 15 min si abandon paiement
+Contractor discovery moves to an optional post-passport step.
 
-Cron `*/5 * * * *` → edge function `sprint-abandonment-followup` :
-- Si `checkout_opened` sans `checkout_paid` après 15 min → SMS unique : « Une question sur l'activation 1 $ ? Répondez ici, un humain répond. »
-- Un seul follow-up. Pas de séquence.
+## 9. Memory + governance
 
----
+Update `mem://index.md` Core:
+- **Positioning** rule → replace "Home Intelligence Platform" line with explicit "Passeport Maison is the product, contractor recommendations are a feature."
+- **Alex opening (homeowner)** → new line.
+- Add forbidden primary-CTA phrases (marketplace, 3 soumissions, trouver un entrepreneur as primary).
 
-## 7. Règle d'arrêt
-
-Après les 25 SMS envoyés :
-- **1+ paiement** → cloner exactement cette variante × ville × catégorie pour toiture, fondation, moisissure, thermopompe (25 chacun).
-- **0 paiement mais clics** → le blocage est la landing ou le checkout, pas le SMS. Corriger avant de renvoyer.
-- **0 clic** → le blocage est le SMS (copie ou ciblage). Ne pas envoyer les 500 suivants.
-
----
-
-## Livrables techniques
-
-**Nouveaux fichiers**
-- `src/pages/pro/PageProIsolationQC.tsx`
-- `src/lib/outbound/isolationSprintCopy.ts`
-- `src/pages/admin/PageFirstDollarSprint.tsx`
-- `supabase/functions/sprint-abandonment-followup/index.ts`
-
-**Migrations**
-- Table `first_dollar_sprint_events` (avec GRANT + RLS admin-only)
-- Cron `sprint-abandonment-followup` toutes les 5 min
-
-**Modifications**
-- `src/config/routesConfig.ts` : ajouter `/isolation-qc` + `/admin/first-dollar-sprint`
-- `supabase/functions/create-activation-checkout/index.ts` : accepter `source` + `utm` dans metadata
-
-**Explicitement hors scope** (à ne PAS toucher aujourd'hui) :
-- Refonte du wizard scan-ia
-- Plans (Pro/Premium/Élite/Signature)
-- Score AIPP
-- Onboarding entrepreneur global
-- Autres pages publiques
+Add memory file `mem://brand/passport-first-positioning` documenting the full copy contract.
 
 ---
 
-## Succès
+## Out of scope (this pass)
 
-Un entrepreneur isolation QC paie 1 $ dans les 24 h et son profil est activé automatiquement. On enregistre : source SMS, variante, ville, temps clic→paiement. C'est le patron zéro à cloner.
+- No pricing changes, no checkout logic, no Stripe changes.
+- No changes to Premier Dollar sprint infra (`/isolation-qc`, sprint dashboard) — those keep their contractor-acquisition role.
+- No new backend tables — reuse existing `properties`, `property_events`, `property_documents`, `property_recommendations`.
+- No visual redesign of the cinematic dark shell — copy + section swap only.
+
+## Technical notes
+
+- All new copy flows through `passportPositioning.ts` — components import tokens, no inline FR strings.
+- Content-guard rule addition prevents accidental "trouver un entrepreneur" primary CTAs.
+- Alex quick-action registry is the single point of change for the 7-option menu; used by both `AlexQuickActions` and `HomeIntelligenceActionGrid`.
+- Homeowner dashboard reuses existing services — no new data fetching contracts.
+- SEO cluster registry extends the current programmatic SEO engine rather than replacing it.
+
+## Success criteria
+
+- Homepage above-the-fold shows Passeport hero + "Créer mon Passeport Maison" as the only primary CTA.
+- Dashboard header reads "Passeport Maison" with 9 sections wired to real (or empty-state) data.
+- Alex opens with the new homeowner line and shows the 7-option quick actions.
+- Contractor landing leads with "Et si l'IA recommandait votre entreprise ?" — no "leads" language in H1/sub.
+- Content-guard fails builds that reintroduce forbidden primary CTAs.
+- Memory Core reflects the new positioning; a fresh session applies it automatically.
