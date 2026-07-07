@@ -15,6 +15,7 @@ import {
   FileCheck, AlertTriangle, CheckCircle2, Clock,
 } from "lucide-react";
 import ContactHealthPanel from "@/components/admin/ContactHealthPanel";
+import PaidNoOpportunitiesCard from "@/components/admin/leak-detectors/PaidNoOpportunitiesCard";
 
 function useOperationsData() {
   return useQuery({
@@ -83,6 +84,12 @@ const AdminOperationsHub = () => {
   return (
     <AdminLayout>
       <PageHeader title="Centre d'opérations" description="Suivi opérationnel et observabilité" />
+
+      {/* First-$1 leak detector — must always be zero */}
+      <div className="mb-6">
+        <PaidNoOpportunitiesCard />
+      </div>
+
 
       {/* Quick stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">

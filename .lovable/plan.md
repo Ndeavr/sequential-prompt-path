@@ -1,58 +1,71 @@
-# Purge legacy positioning — Passeport Maison everywhere
+# First-$1 Sprint — Landing Hook + Single Leak Detector
 
-The screenshot shows `/index` (rendered by `PageHomeUnicorn.tsx`) still displaying:
+Per your answer: no more dashboards. Only two things ship this turn.
 
-> "Votre maison devrait se souvenir de tout. UNPRO conserve l'historique des rénovations, garanties, inspections et décisions importantes."
-> "Intelligence résidentielle · Québec · fr-CA"
+1. **Rewrite the contractor landing** so it answers *"What's in it for me?"* in 3 seconds.
+2. **One admin leak card**: *Paid contractors receiving zero opportunities* — must always be zero.
 
-That block, plus dozens of sibling occurrences of `souvenir` / `mémoire` / `intelligence résidentielle` / `residential intelligence` / `remember everything`, still ships across pages, footer, SEO, LLM feeds, brand identity and Alex prompts. The site still reads like a marketplace with Passeport bolted on.
+Everything else (state machine, notification funnel, /admin/operations expansion, onboarding rewrite, mobile audit, revenue funnel) is deferred until after the first $1 sale, then we clone the exact winning path.
 
-This plan does a **surgical global find-and-replace** driven by the canonical `src/lib/copy/passportPositioning.ts` module, plus targeted rewrites where the legacy phrase is baked into a paragraph.
+## 1. Contractor landing rewrite
 
-## 1. Canonical replacement vocabulary
+File: `src/pages/pro/PageProIsolationQC.tsx` (route stays `/isolation-qc`, all UTM/tracking preserved, edge function `create-activation-checkout` unchanged, `first_dollar_sprint_events` schema unchanged).
 
-Add to `src/lib/copy/passportPositioning.ts` (single source of truth):
+New structure — visible without scroll:
 
-- `PASSPORT_TAGLINE_LONG` (Option A): *"En avez-vous assez de toujours repartir de zéro ? Votre Passeport Maison conserve l'historique de votre propriété afin de vous aider à planifier les entretiens futurs, anticiper les dépenses importantes et prendre de meilleures décisions."*
-- `PASSPORT_TAGLINE_SHORT` (Option B): *"Votre Passeport Maison — l'historique de votre propriété. Les décisions de demain."*
-- `PASSPORT_FOOTER_BLOCK` (Option C): *"UNPRO – Votre Passeport Maison. Conservez l'historique de votre propriété. Planifiez les entretiens futurs. Prenez de meilleures décisions."*
-- `PASSPORT_CATEGORY_LABEL`: `"Passeport Maison · Québec · fr-CA"` (replaces "Intelligence résidentielle · Québec · fr-CA")
-- `PASSPORT_CATEGORY_FR`: `"Plateforme Passeport Maison"` (replaces "Plateforme d'intelligence résidentielle")
-- `PASSPORT_CATEGORY_EN`: `"Home Passport Platform"` (replaces "residential intelligence platform")
+- **Kicker** — `UNPRO · Recommandation IA · {city or "Québec"}`
+- **H1** — *"Votre entreprise mérite-t-elle d'être recommandée par l'IA d'UNPRO ?"*
+- **Sub** — *"Nous analysons votre expertise, votre territoire et votre capacité pour vous recommander au bon client, au bon moment."*
+- **3-stat proof strip** (loaded before button paints, no spinner blocking):
+  - `Revenu potentiel · ${monthlyPotential}$/mois` (city × category × avg ticket, cached client-side fallback = "5 000 – 15 000 $/mois")
+  - `Villes couvertes · N` (from `utm.city` + 4 neighbours or fallback "12 villes")
+  - `Demande en attente · N projets` (last 7d project count for category × region, fallback "24 projets")
+- **Primary CTA** — *"Activer mon essai — 1 $ pour 7 jours"* → same `create-activation-checkout` call.
+- **Trust line under CTA** — *"Aucun engagement. Annulation en 1 clic. Paiement Stripe."*
+- **4 micro-benefits** (icon + one line each):
+  - Recommandé au bon moment, pas noyé dans une liste
+  - Territoire respecté, pas revendu à 5 concurrents
+  - Score IA visible sur votre fiche
+  - Rendez-vous, pas des leads froids
 
-## 2. Files to rewrite
+Stat data source: new lightweight function `fetchLandingStats({ city, category })` in the same file — reads existing `projects` + `contractors` counts via `supabase.from(...).select("id", { count: "exact", head: true })`, wrapped in `Promise.race([call, 800ms])` so it never blocks the fold. If the race loses, render the fallback strings — the landing must never stall on a slow query.
 
-### Homepage / hero (the circled block)
-- `src/pages/PageHomeUnicorn.tsx` line ~780 → replace the "Votre maison devrait se souvenir de tout…" paragraph and the "Intelligence résidentielle · Québec · fr-CA" caption with `PASSPORT_TAGLINE_LONG` + `PASSPORT_CATEGORY_LABEL`. Also update the `description` JSON-LD at line ~719.
-- `src/components/layout/SiteFooterIntelligence.tsx` line ~94 → same tagline swap using `PASSPORT_FOOTER_BLOCK`.
-- `src/pages/PageHomeCopilot.tsx` — already uses Passeport copy; only ensure meta description pulls from `PASSPORT_TAGLINE_LONG` (removes duplicated string).
+Tracking additions (append to existing `logEvent` payloads, no schema change):
+- `landing_viewed` → include `city`, `camp`, `has_stats`
+- New event `stats_loaded` with `{ revenue, cities, demand }`
+- New event `cta_clicked` fired the instant the button is pressed, before the checkout roundtrip
 
-### Global head / SEO / feeds
-- `index.html` — `<title>`, `og:title`, `twitter:title`, JSON-LD Q&A: swap "plateforme d'intelligence résidentielle propulsée par l'IA" → `"UNPRO — Passeport Maison : plateforme d'intelligence pour propriétaires"`. Update the two FAQ answers referring to "Conseiller IA en intelligence résidentielle".
-- `public/llms.txt`, `public/llms-full.txt`, `public/knowledge-graph.json`, `public/robots.txt` — replace every "intelligence résidentielle" / "residential intelligence" with Passeport-first framing, and remove the "se souvient / s'oublie / souvenirs" narrative sentences (llms-full lines 90, 1997, 2145, 2175).
-- `src/lib/seoSchema.ts` line 29 — swap English description to "Home Passport platform helping homeowners…".
-- `src/brand/unproIdentity.ts` — update `categoryFr`, both descriptions and the `tagFr: "La propriété se souvient de tout."` (→ `"Votre Passeport Maison."`).
+Design: keep the current dark `#0B1220` shell + white CTA. Add subtle `border border-white/10 rounded-2xl` cards for the stat strip. Mobile-first — everything readable at 384px width without scrolling to see H1 + stats + CTA.
 
-### Alex prompts + guard
-- `src/features/alex/voice/alexCorePrompt.ts`, `src/features/alex/voice/alexSystemPromptV2.ts` — replace any "intelligence résidentielle" / "se souvient" phrasing in Alex's self-description with Passeport-first wording (identity stays FR-only, opening unchanged).
-- `src/content-guard/rules.ts` — replace the existing "Conseiller IA en intelligence résidentielle" rule with block patterns for the legacy vocabulary:
-  - `"se souvenir de tout"`, `"maison qui n'oublie"`, `"home memory"`, `"remember everything"`, `"intelligence résidentielle"`, `"residential intelligence"`, `"La propriété se souvient"`.
-  This locks the new positioning: any future drift fails the guard.
+## 2. Leak detector card — "Paid, receiving nothing"
 
-### PIM / Intelligence hub / other pages
-- `src/pages/PagePIMLanding.tsx`, `src/pages/PageIntelligenceHub.tsx`, `src/pages/PageMemoryCenter.tsx`, `src/pages/PageHomeUnicorn.tsx`, `src/pages/QrGeneratorPage.tsx`, `src/pages/PageWhyUnpro.tsx`, `src/pages/ia-maison/PageIaMaisonHub.tsx`, `src/pages/condos/CondoCarnetPage.tsx`, `src/pages/admin/AdminJournalPage.tsx` — swap in-page "intelligence résidentielle" strings for "Passeport Maison" / "historique de propriété" / "planification". Keep section structure; only copy changes.
-- PIM section components (`src/components/pim/*.tsx`), condo landing (`src/components/condo-landing/*.tsx`), `src/components/home/HeroSectionAlexFirst.tsx`, `src/components/home-copilot/HomeIntelligenceActionGrid.tsx`, `src/components/alex-voice-engine/PanelAlexContextMemory.tsx`, `src/components/flywheel/flywheelData.ts`, `src/components/visual/intelligence-bg/*` (text labels only), `src/data/iaMaisonCluster.ts`, `src/services/messages/messagingService.ts`, `src/pages/partner/PartnerCrm.tsx`, `src/components/agents/AgentMetricsPanel.tsx`, `src/components/partner/RecordConsentModal.tsx`, `src/pages/PropertyGraphPage.tsx` — same pass: replace legacy vocabulary with Passeport-first terms defined in section 1.
+New file: `src/components/admin/leak-detectors/PaidNoOpportunitiesCard.tsx`.
 
-## 3. Do NOT touch
+Mounted into the existing `AdminOperationsHub.tsx` at the top of its main column (single import, no route change).
 
-- Alex opening line, voice IDs, session state, backend logic, edge functions.
-- SMS `isolationSprintCopy.ts` (already Passeport-aligned).
-- Migration files, RLS, pricing.
-- Any component that already imports from `passportPositioning.ts` correctly.
+Behaviour:
+- Query: contractors where `subscription_status = 'active'` (or `plan_status = 'active'`, whichever the current schema uses — verified at build time) AND either `eligible_for_matching = false` OR zero rows in `contractor_opportunities` / `matches` over the last 7 days.
+- Card shows a big number, red pill *"MUST BE ZERO"* if `> 0`, green *"OK"* if `= 0`.
+- Expandable list (max 20 rows): contractor name, city, category, `subscription_status`, `eligible_for_matching`, last opportunity date, one-click **"Force match"** button that calls existing edge function if present (`launch-commander` or `match-project`), otherwise opens a toast *"Aucun moteur de matching disponible — investiguer manuellement"*.
+- Refreshes every 60s.
 
-## 4. Success criteria
+Read-only query first — the "Force match" action lands only if a matching edge function already exists (I'll verify during build). Otherwise the row shows a copy-to-clipboard *contractor_id* so you can act manually.
 
-- `rg -in "souvenir|intelligence résidentielle|residential intelligence|remember everything|home memory|maison qui n'oublie"` returns **zero hits in `src/` and `public/`** — except inside `src/content-guard/rules.ts` (guard patterns) and this plan file.
-- The `/index` hero block now reads with `PASSPORT_TAGLINE_LONG` + `PASSPORT_CATEGORY_LABEL`.
-- Footer, SEO title, og tags, llms.txt, brand identity all speak "Passeport Maison" first.
-- Content guard blocks any future reintroduction of the legacy phrases.
+## Out of scope (explicitly deferred)
+
+- Project state machine enum expansion
+- Notification queued/delivered/opened/clicked funnel
+- Contractor 4-step auto-import onboarding
+- Homeowner problem-first onboarding + progress tracker
+- Mobile stability scanner
+- Full revenue command center funnel
+- New /admin/operations tabs beyond the single card above
+
+These wait for signal from your real E2E test. Once one contractor pays, we clone that exact path and only then invest in observability.
+
+## Success
+
+- Landing renders H1 + 3 stats + CTA above the fold on 384px, ≤ 800ms after nav.
+- Stripe checkout still opens in < 60s with UTM preserved.
+- `PaidNoOpportunitiesCard` renders on `/admin/operations` and returns a number (0 or N) on first load.
+- No new tables, no migrations, no schema changes.
