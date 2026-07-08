@@ -187,6 +187,7 @@ const SolicitationActivationPage = lazyWithRetry(() => import("@/pages/Solicitat
 const AdminSolicitationPage = lazyWithRetry(() => import("@/pages/admin/AdminSolicitationPage"));
 const PageAdminOutreachErrors = lazyWithRetry(() => import("@/pages/admin/PageAdminOutreachErrors"));
 const PageAdminProviderHealth = lazyWithRetry(() => import("@/pages/admin/PageAdminProviderHealth"));
+const PageAdminContractorsContacted = lazyWithRetry(() => import("@/pages/admin/PageAdminContractorsContacted"));
 const PageCheckoutNativeScrollable = lazyWithRetry(() => import("@/pages/checkout/PageCheckoutNativeScrollable"));
 const LandingContractorAIActivation = lazyWithRetry(() => import("@/pages/acquisition/LandingContractorAIActivation"));
 const PageAdminPipelineProspects = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminPipelineProspects"));
@@ -1472,6 +1473,7 @@ export const AppRouter = () => (
         <Route path="/admin/solicitation" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><AdminSolicitationPage /></Suspense></ProtectedRoute>} />
         <Route path="/admin/outreach-errors" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOutreachErrors /></Suspense></ProtectedRoute>} />
         <Route path="/admin/provider-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminProviderHealth /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/contractors-contacted" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminContractorsContacted /></Suspense></ProtectedRoute>} />
         <Route path="/admin/domain-intelligence" element={<ProtectedRoute requiredRole="admin"><AdminDomainIntelligence /></ProtectedRoute>} />
         <Route path="/admin/domain-health" element={<ProtectedRoute requiredRole="admin"><PageDomainHealthDashboard /></ProtectedRoute>} />
         <Route path="/admin/alex-guardrails" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexConversationRules /></ProtectedRoute>} />
