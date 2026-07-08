@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getGoogleMapsCredentials, googleConnectorAvailable, placesSearchTextRaw } from "../_shared/googleMapsConnector.ts";
-import { getGoogleMapsCredentials, googleConnectorAvailable, placesSearchText } from "../_shared/googleMapsConnector.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
