@@ -13,6 +13,7 @@
 import { corsHeaders, adminClient, logLaunchEvent } from "../_shared/launch.ts";
 import { resolvePlacesKey } from "../_shared/launchKeys.ts";
 import { reportOutcome, BlockReason, FailureCode } from "../_shared/reliability.ts";
+import { placesSearchTextRaw, googleConnectorAvailable } from "../_shared/googleMapsConnector.ts";
 
 const PRIORITY_TRADES = [
   "isolation", "toiture", "fondation", "drain", "drain francais",
@@ -49,9 +50,9 @@ async function googlePlacesRefill(sb: ReturnType<typeof adminClient>): Promise<{
   city: string;
   error?: string;
 }> {
-  const resolved = resolvePlacesKey();
-  if (!resolved) return { inserted_into_pool: 0, query: "", trade: "", city: "", error: "no_places_key (tried GOOGLE_PLACES_SERVER_KEY, GOOGLE_MAPS_API_KEY, GOOGLE_PLACES_API_KEY)" };
-  const key = resolved.key;
+  const useConnector = googleConnectorAvailable();
+  const resolved = useConnector ? { key: "connector" } : resolvePlacesKey();
+  if (!resolved) return { inserted_into_pool: 0, query: "", trade: "", city: "", error: "no_places_key (tried connector, GOOGLE_PLACES_SERVER_KEY, GOOGLE_MAPS_API_KEY, GOOGLE_PLACES_API_KEY)" };
 
   // Round-robin cursor
   const { data: state } = await sb.from("launch_mode_state").select("scout_cursor").eq("id", true).maybeSingle();
@@ -65,22 +66,44 @@ async function googlePlacesRefill(sb: ReturnType<typeof adminClient>): Promise<{
 
   const query = `${trade} ${city} Québec`;
 
-  let resp: Response;
-  try {
-    resp = await fetch(
-      `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&region=ca&language=fr&key=${key}`,
+  // Prefer the Lovable Google Maps connector (server-to-server, no referer restrictions).
+  let results: Array<Record<string, unknown>> = [];
+  if (useConnector) {
+    const res = await placesSearchTextRaw(
+      query,
+      { language: "fr-CA", region: "CA", maxResults: 20 },
+      "places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.businessStatus",
     );
-  } catch (e) {
-    return { inserted_into_pool: 0, query, trade, city, error: `network: ${String(e)}` };
+    if (res.google_status && !["OK", "ZERO_RESULTS"].includes(res.google_status)) {
+      return { inserted_into_pool: 0, query, trade, city, error: `connector: ${res.google_status}: ${res.error_message ?? ""}` };
+    }
+    results = res.places.map((p: any) => ({
+      name: p.displayName?.text ?? "",
+      formatted_address: p.formattedAddress ?? "",
+      place_id: p.id ?? "",
+      rating: p.rating ?? null,
+      user_ratings_total: p.userRatingCount ?? null,
+      business_status: p.businessStatus ?? "OPERATIONAL",
+    }));
+  } else {
+    const key = (resolved as { key: string }).key;
+    let resp: Response;
+    try {
+      resp = await fetch(
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&region=ca&language=fr&key=${key}`,
+      );
+    } catch (e) {
+      return { inserted_into_pool: 0, query, trade, city, error: `network: ${String(e)}` };
+    }
+    if (!resp.ok) {
+      return { inserted_into_pool: 0, query, trade, city, error: `http_${resp.status}` };
+    }
+    const json = (await resp.json()) as { results?: Array<Record<string, unknown>>; status?: string; error_message?: string };
+    if (json.status && !["OK", "ZERO_RESULTS"].includes(json.status)) {
+      return { inserted_into_pool: 0, query, trade, city, error: `${json.status}: ${json.error_message ?? ""}` };
+    }
+    results = json.results ?? [];
   }
-  if (!resp.ok) {
-    return { inserted_into_pool: 0, query, trade, city, error: `http_${resp.status}` };
-  }
-  const json = (await resp.json()) as { results?: Array<Record<string, unknown>>; status?: string; error_message?: string };
-  if (json.status && !["OK", "ZERO_RESULTS"].includes(json.status)) {
-    return { inserted_into_pool: 0, query, trade, city, error: `${json.status}: ${json.error_message ?? ""}` };
-  }
-  const results = json.results ?? [];
 
   const rows = results
     .filter(r => r.business_status === "OPERATIONAL" || !r.business_status)
