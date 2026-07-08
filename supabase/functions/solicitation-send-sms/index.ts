@@ -4,6 +4,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { classifyTwilio, classifyNetworkError } from "../_shared/outreachRetryPolicy.ts";
 import { normalizePhone } from "../_shared/normalizePhone.ts";
+import { isOutreachEnabled } from "../_shared/killSwitch.ts";
+import { guardPhone } from "../_shared/phoneGuard.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -34,6 +36,15 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    // Kill switch — refuse to send while OUTREACH_ENABLED = false.
+    if (!dryRun && !(await isOutreachEnabled(sb))) {
+      return json({
+        sent: 0,
+        blocked: "outreach_disabled",
+        note: "Kill switch OUTREACH_ENABLED is OFF. Flip it in /admin/provider-health once Twilio auth passes.",
+      });
+    }
 
     // Daily cap check
     const today = new Date().toISOString().slice(0, 10);
