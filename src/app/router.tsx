@@ -1469,6 +1469,7 @@ export const AppRouter = () => (
         <Route path="/admin/nexus" element={<ProtectedRoute requiredRole="admin"><AdminNexusDashboard /></ProtectedRoute>} />
         <Route path="/admin/dispatch-center" element={<ProtectedRoute requiredRole="admin"><AdminDispatchCenter /></ProtectedRoute>} />
         <Route path="/admin/solicitation" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><AdminSolicitationPage /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/outreach-errors" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOutreachErrors /></Suspense></ProtectedRoute>} />
         <Route path="/admin/domain-intelligence" element={<ProtectedRoute requiredRole="admin"><AdminDomainIntelligence /></ProtectedRoute>} />
         <Route path="/admin/domain-health" element={<ProtectedRoute requiredRole="admin"><PageDomainHealthDashboard /></ProtectedRoute>} />
         <Route path="/admin/alex-guardrails" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexConversationRules /></ProtectedRoute>} />
