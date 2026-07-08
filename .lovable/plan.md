@@ -1,53 +1,28 @@
-## Objective
+## What's happening
 
-Build an admin view at `/admin/contractors-contacted` showing the last 100 contractors reached by the outreach engine, one row per contractor with the full funnel status, plus a one-click CSV export of every failure.
+You're getting the "UNPRO Live Email Health Check" email twice every 15 min because two cron jobs are firing the same live-test path.
 
-## Columns (per contractor)
+- `supabase/functions/email-health-selfheal/index.ts` — header comment says "runs full health probe + live send… every 15 min" — invokes `email-live-test` which produces the exact subject "UNPRO Live Email Health Check".
+- `email-live-test` is also scheduled directly by a second cron entry hitting the same */15 slot.
 
-| Column | Source |
-|---|---|
-| Business name | `contractor_leads.business_name` |
-| Phone (E.164) | `contractor_leads.phone` |
-| SMS sent | latest `contractor_outreach_logs` row where `channel='sms'` — status ∈ (`queued`, `sent`, `delivered`, `failed`) |
-| Delivered | Twilio status callback → `delivered` |
-| Clicked | `outreach_click_events` (or `contractor_outreach_logs.clicked_at`) joined by tracking token |
-| Signup started | `contractor_funnel_events.event_type='signup_started'` matched by phone / lead_id |
-| Signup completed | `event_type='signup_completed'` |
-| Paid | `contractor_leads.pipeline_status='paid'` OR `stripe_payment_events` matched |
-| Activation status | `contractor_leads.pipeline_status` (`profile_active` = ✅) |
-| Failure code | latest `contractor_outreach_logs.failure_code` if last attempt failed |
+Both jobs land on `:00 / :15 / :30 / :45`, so at every quarter-hour two identical emails arrive (matches your 18:45 / 18:45 pair in the screenshot).
 
-## Deliverables
+## Fix
 
-1. **Edge function `admin-contractors-contacted-report`**
-   - Auth: admin only (`has_role(auth.uid(), 'admin')`).
-   - Query: last 100 distinct contractor_leads with any outreach attempt in the last 30 days, joined to their latest SMS log, click events, funnel events, and pipeline status.
-   - Returns `{ rows: ContactedRow[], failures: FailureRow[] }`.
-   - CSV export mode via `?format=csv&scope=failures` returns text/csv of every row where `sms_status='failed'` OR `failure_code IS NOT NULL` in the last 30 days (not capped at 100).
+Two changes, both in a single migration:
 
-2. **Page `/admin/contractors-contacted`** (`src/pages/admin/PageAdminContractorsContacted.tsx`)
-   - Table with the 10 columns above, colored status pills (grey/blue/green/red).
-   - Top strip: totals (Sent / Delivered / Clicked / Signup / Paid / Failed).
-   - Two buttons: **"Export failures (CSV)"** and **"Refresh"**.
-   - Empty state if no outreach in window.
+1. **Unschedule the duplicates.** Drop every cron job whose command references `email-live-test` or `email-health-selfheal` (idempotent `cron.unschedule(...)` loop over `cron.job` filtered by `command ILIKE '%email-live-test%' OR command ILIKE '%email-health-selfheal%'`).
+2. **Reschedule a single hourly probe** — one job named `email-live-health-hourly` running `0 * * * *` (once/hour on the hour) calling `email-health-selfheal`. Keeps monitoring alive, drops volume from 96/day to 24/day, guarantees no dupes.
 
-3. **Router entry** in `src/app/router.tsx` under the admin cluster + link in `AdminSolicitationPage` sidebar.
-
-## Data model notes
-
-- Contractor identity = `contractor_leads.id`; join on `contractor_outreach_logs.lead_id`.
-- Funnel events store `metadata.lead_id` or match by phone — do a phone-normalized join fallback.
-- "Delivered" uses the terminal Twilio status stored on the log row (`provider_status='delivered'`).
-- "Failed" = any log with `status='failed'` OR `failure_code` set (e.g. `PROVIDER_401`, `INVALID_PHONE`, `21610_stop`).
+Also flip the header comment in `email-health-selfheal/index.ts` from "every 15 min" → "every hour" so future readers don't reintroduce the 15-min cadence.
 
 ## Out of scope
 
-- No changes to send/lookup/kill-switch logic.
-- No SEO, landing, or Alex UI touches.
-- Read-only view — no retry buttons (retry lives on `/admin/outreach-errors`).
+- No change to `email-daily-selftest` (different subject, runs daily — leave it).
+- No change to the send pipeline, `email-live-test` payload, or the admin Email Health page.
+- No change to any other cron job (autopilot, followup, watchdog, log retention).
 
 ## Success
 
-- Page loads under 2s for 100 rows.
-- CSV download of all failures (last 30 days) opens cleanly in Excel/Numbers.
-- Admin can see, per contractor, exactly where the funnel breaks.
+- After the migration, `SELECT jobname, schedule FROM cron.job WHERE command ILIKE '%email-live%' OR command ILIKE '%selfheal%'` returns exactly one row on `0 * * * *`.
+- Your inbox gets one "UNPRO Live Email Health Check" per hour, never two.
