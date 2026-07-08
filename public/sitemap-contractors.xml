@@ -26,17 +26,17 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://unpro.ca/entrepreneur/renovation-prestige-pro</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://unpro.ca/entrepreneur/construction-gagnon</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://unpro.ca/entrepreneur/renovations-lafortune</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://unpro.ca/entrepreneur/renovation-prestige-pro</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
