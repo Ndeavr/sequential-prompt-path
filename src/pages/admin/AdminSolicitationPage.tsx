@@ -129,6 +129,19 @@ export default function AdminSolicitationPage() {
           </div>
         </header>
 
+        {/* Kill switch banner */}
+        {data && !data.outreachEnabled && (
+          <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 text-sm flex items-center justify-between gap-3">
+            <div>
+              <div className="font-semibold text-red-300">⛔ OUTREACH_ENABLED = OFF — no SMS will be sent.</div>
+              <div className="text-xs text-red-200/80 mt-0.5">
+                Every sender short-circuits with `OUTREACH_DISABLED`. Fix Twilio auth then flip the switch in Provider Health.
+              </div>
+            </div>
+            <a href="/admin/provider-health" className="text-xs underline text-red-100">Open Provider Health →</a>
+          </div>
+        )}
+
         {/* Production Health Banner */}
         <Card className="border-border">
           <CardContent className="p-4 grid grid-cols-2 md:grid-cols-5 lg:grid-cols-9 gap-3 text-center text-xs">
