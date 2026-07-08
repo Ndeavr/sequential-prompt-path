@@ -1,57 +1,30 @@
-## Problem
+## Post-Payment Audit — Contractor `72bc8179-d836-497d-8114-e0fcd773281b`
 
-Creating a property fails with **"permission denied for table users"**.
+Contractor: `e2e+run1783477950@unpro.ca` · Plan: **Recrue** · Sub: `sub_1TqmPrCvZwK1QnPVypk1H1xs` · Customer: `cus_UqSCJFKK3PoBlv`
 
-Root cause found in the database:
+| # | Check | Result | Evidence |
+|---|---|---|---|
+| 1 | Contractor appears in public search | **PASS (technical) / FAIL (practical)** | Flags OK (`is_published=t`, `is_discoverable=t`), but `slug=NULL`, `city=NULL`, `business_name` is the raw email, and no `contractor_category_assignments` / `contractor_service_areas` rows — invisible to any faceted search on city/category/name. |
+| 2 | Appears in recommendation engine candidates | **PASS** | `v_contractor_recommendation_score` returns the row with `plan_code=recrue`, score `11.00`. |
+| 3 | Can receive appointments | **FAIL** | `is_accepting_appointments=t` on the flag, but `booking_enabled=false` AND `booking_page_published=false` → booking engine will refuse to schedule. |
+| 4 | Profile URL returns 200 | **PASS** | `GET https://unpro.ca/entrepreneur/72bc8179…` → HTTP 200 (SPA renders, but content will be a stub because no slug/business data). |
+| 5 | Stripe customer ID stored | **PASS** | `contractor_subscriptions.stripe_customer_id = cus_UqSCJFKK3PoBlv`. |
+| 6 | Subscription renewal date stored correctly | **PASS** | `current_period_start = 2026-07-08 03:44:52 UTC`, `current_period_end = 2026-08-08 03:44:52 UTC` (monthly cycle, aligned with Stripe). |
+| 7 | Welcome email delivered | **FAIL** | `email_send_log` has zero rows for `recipient_email ILIKE 'e2e+run1783477950%'`. The `stripe-webhook` fix restored the subscription but never triggered a post-activation welcome email. |
+| 8 | No hidden blockers preventing future recommendations | **FAIL** | Multiple blockers:<br>• `slug=NULL` → no public URL slug, no SEO, no share cards.<br>• `city=NULL`, no `contractor_service_areas` → matching engine can't geo-target.<br>• No `contractor_category_assignments` → matching engine can't category-target.<br>• `booking_enabled=false` → recommendations that require bookable pros will filter this contractor out.<br>• `verification_status=unverified` → any policy that gates on verification will exclude it.<br>• `plans.id` (UUID) is stored in `contractor_subscriptions.plan_id`, but `v_contractor_recommendation_score` joins on `plans.code = cs.plan_id` — the join FAILS and the view silently falls back to defaults (`plan_code='recrue'`, multipliers 1.0). Any future upgrade to Pro/Premium/Élite/Signature will NOT lift multipliers until either the column is written as the plan code or the view is rewritten to join on `plans.id`.
 
-- The `properties` INSERT succeeds, but PostgREST then re-`SELECT`s the row (to return it to the client).
-- That triggers the SELECT policy `Shared users can read property` on `properties`, which does `EXISTS (SELECT 1 FROM property_shares ps ...)`.
-- Evaluating that sub-select fires RLS on `property_shares`, whose policy `Shared user sees own invitations` contains:
+### Summary
 
-  ```sql
-  shared_with_email = (SELECT users.email FROM auth.users WHERE users.id = auth.uid())
-  ```
+- **PASS (4):** 2, 4, 5, 6
+- **FAIL (3):** 3, 7, 8
+- **Mixed (1):** 1 — technically visible, practically empty
 
-- The `authenticated` role does not have SELECT on `auth.users` → Postgres raises `permission denied for table users`, which bubbles up as the toast the user sees.
+### Recommended follow-up fixes (separate plan/turn)
 
-Bonus bug also spotted (not the cause, but broken): the `Shared users can read property` policy has `ps.property_id = ps.id` — self-join on the same alias — should be `ps.property_id = properties.id`.
+1. Backfill `contractors.slug`, `city`, `business_name`, category assignments, service areas.
+2. Enable `booking_enabled` + `booking_page_published` on plan activation (or gate criterion 3 differently).
+3. Fire welcome email from `stripe-webhook` on `checkout.session.completed` / `customer.subscription.created`; add it to the manual-recovery path too.
+4. Standardize plan reference: either store `plans.code` in `contractor_subscriptions.plan_id` (rename/refactor) or change `v_contractor_recommendation_score` to `JOIN plans p ON p.id::text = cs.plan_id`.
+5. Decide whether recommendation eligibility should require `verification_status <> 'unverified'`; if so, add a verification step to activation.
 
-## Fix (single migration)
-
-1. Replace the `property_shares` policy so it uses the JWT email claim instead of hitting `auth.users`:
-
-   ```sql
-   DROP POLICY "Shared user sees own invitations" ON public.property_shares;
-   CREATE POLICY "Shared user sees own invitations"
-     ON public.property_shares FOR SELECT
-     TO authenticated
-     USING (
-       shared_with_user_id = auth.uid()
-       OR lower(shared_with_email) = lower(auth.jwt() ->> 'email')
-     );
-   ```
-
-2. Fix the broken join in the `properties` SELECT policy:
-
-   ```sql
-   DROP POLICY "Shared users can read property" ON public.properties;
-   CREATE POLICY "Shared users can read property"
-     ON public.properties FOR SELECT
-     TO authenticated
-     USING (
-       user_id = auth.uid()
-       OR EXISTS (
-         SELECT 1 FROM public.property_shares ps
-         WHERE ps.property_id = properties.id
-           AND ps.status = 'accepted'
-           AND ps.shared_with_user_id = auth.uid()
-       )
-     );
-   ```
-
-No frontend changes required. After the migration, "Créer la propriété" will succeed and return the new row without the permission error.
-
-## Verification
-
-- Re-run the create-property flow from `/dashboard/properties/new`; expect success toast + redirect to the new property page.
-- Confirm no regression on shared-property listing for users invited by email.
+Awaiting your go-ahead before implementing any of these — this plan is audit-only.
