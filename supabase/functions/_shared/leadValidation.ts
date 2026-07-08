@@ -140,8 +140,9 @@ export async function validateLead(
   } else if (phoneStatus === "invalid_phone") {
     status = "invalid_phone";
     blockReason = (phoneReason as BlockReason) || "invalid_format";
-  } else if (phoneStatus === "lookup_unavailable") {
-    // Twilio Lookup couldn't classify — assume sendable, mark tentative
+  } else if (phoneStatus === "lookup_unavailable" || phoneStatus === "lookup_failed") {
+    // Twilio Lookup couldn't classify — E.164 QC number is still sendable.
+    // Never downgrade to invalid/needs_review just because Lookup is offline.
     if (!company.valid) {
       status = "invalid_company";
       blockReason = company.reason === "low_confidence" ? "low_confidence" : "invalid_company_name";
@@ -150,9 +151,8 @@ export async function validateLead(
       blockReason = null;
       tentative = true;
     }
-  } else if (phoneStatus === "lookup_failed") {
-    status = "needs_review";
-    blockReason = "lookup_failed";
+    // Canonicalize on the sendable bucket
+    phoneStatus = "lookup_unavailable";
   } else if (!company.valid) {
     status = "invalid_company";
     blockReason = company.reason === "low_confidence" ? "low_confidence" : "invalid_company_name";

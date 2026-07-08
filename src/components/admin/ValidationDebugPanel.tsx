@@ -127,8 +127,7 @@ export default function ValidationDebugPanel() {
           <Bucket label="NANP invalide" value={d.invalid_nanp} tone="red" />
           <Bucket label="Landline" value={d.landline} tone="amber" />
           <Bucket label="Hors Québec" value={d.outside_quebec} tone="red" />
-          <Bucket label="Lookup indispo" value={d.lookup_unavailable} tone="amber" />
-          <Bucket label="Lookup échoué" value={d.lookup_failed} tone="red" />
+          <Bucket label="Lookup indisponible" value={(d.lookup_unavailable ?? 0) + (d.lookup_failed ?? 0)} tone="amber" />
           <Bucket label="En attente" value={d.pending_validation} tone="blue" />
           <Bucket label="Duplicata" value={d.duplicate} tone="red" />
           <Bucket label="Avec email" value={d.with_email} tone="blue" />
