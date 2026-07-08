@@ -185,6 +185,7 @@ const PageCheckoutSuccess = lazyWithRetry(() => import("@/pages/checkout/PageChe
 const PageActivationStart = lazyWithRetry(() => import("@/pages/checkout/PageActivationStart"));
 const SolicitationActivationPage = lazyWithRetry(() => import("@/pages/SolicitationActivationPage"));
 const AdminSolicitationPage = lazyWithRetry(() => import("@/pages/admin/AdminSolicitationPage"));
+const PageAdminOutreachErrors = lazyWithRetry(() => import("@/pages/admin/PageAdminOutreachErrors"));
 const PageCheckoutNativeScrollable = lazyWithRetry(() => import("@/pages/checkout/PageCheckoutNativeScrollable"));
 const LandingContractorAIActivation = lazyWithRetry(() => import("@/pages/acquisition/LandingContractorAIActivation"));
 const PageAdminPipelineProspects = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminPipelineProspects"));
