@@ -25,18 +25,19 @@ type Usage = {
   type: "places" | "maps" | "geocoding" | "gemini" | "stt" | "oauth" | "other";
   side: "frontend" | "edge";
   suspectedProject: string;
-  status: "ok" | "duplicate" | "unknown" | "unsafe";
+  status: "ok" | "duplicate" | "unknown" | "unsafe" | "removed";
 };
 
 const CODE_USAGES: Usage[] = [
-  { file: "supabase/functions/google-places-autocomplete/index.ts", line: 19, pattern: "GOOGLE_PLACES_API_KEY", type: "places", side: "edge", suspectedProject: "Maps UnPRO (maps-unpro-441820)", status: "ok" },
-  { file: "supabase/functions/business-lookup/index.ts", line: 86, pattern: "GOOGLE_PLACES_API_KEY", type: "places", side: "edge", suspectedProject: "Maps UnPRO", status: "ok" },
-  { file: "supabase/functions/contractor-activation-enrich/index.ts", line: 87, pattern: "GOOGLE_PLACES_API_KEY", type: "places", side: "edge", suspectedProject: "Maps UnPRO", status: "ok" },
-  { file: "supabase/functions/onboarding-import/index.ts", line: 32, pattern: "GOOGLE_PLACES_API_KEY", type: "places", side: "edge", suspectedProject: "Maps UnPRO", status: "ok" },
-  { file: "supabase/functions/get-places-key/index.ts", line: 13, pattern: "GOOGLE_PLACES_API_KEY", type: "places", side: "edge", suspectedProject: "Maps UnPRO", status: "unsafe" },
-  { file: "supabase/functions/search-google-business/index.ts", line: 40, pattern: "GOOGLE_PLACES_API_KEY", type: "places", side: "edge", suspectedProject: "Maps UnPRO", status: "ok" },
-  { file: "supabase/functions/search-gmb-profile/index.ts", line: 157, pattern: "GOOGLE_PLACES_API_KEY", type: "places", side: "edge", suspectedProject: "Maps UnPRO", status: "ok" },
-  { file: "supabase/functions/fn-instant-profile-demo/index.ts", line: 68, pattern: "GOOGLE_PLACES_API_KEY", type: "places", side: "edge", suspectedProject: "Maps UnPRO", status: "ok" },
+  { file: "supabase/functions/_shared/googleMapsConnector.ts", line: 1, pattern: "LOVABLE_API_KEY + GOOGLE_MAPS_API_KEY", type: "places", side: "edge", suspectedProject: "Maps UnPRO (maps-unpro-441820)", status: "ok" },
+  { file: "supabase/functions/google-places-autocomplete/index.ts", line: 1, pattern: "placesAutocomplete / placeDetails", type: "places", side: "edge", suspectedProject: "Maps UnPRO", status: "ok" },
+  { file: "supabase/functions/business-lookup/index.ts", line: 2, pattern: "placesSearchTextRaw", type: "places", side: "edge", suspectedProject: "Maps UnPRO", status: "ok" },
+  { file: "supabase/functions/contractor-activation-enrich/index.ts", line: 88, pattern: "GOOGLE_PLACES_SERVER_KEY || GOOGLE_PLACES_API_KEY", type: "places", side: "edge", suspectedProject: "Maps UnPRO", status: "ok" },
+  { file: "supabase/functions/onboarding-import/index.ts", line: 32, pattern: "GOOGLE_PLACES_SERVER_KEY || GOOGLE_PLACES_API_KEY", type: "places", side: "edge", suspectedProject: "Maps UnPRO", status: "ok" },
+  { file: "supabase/functions/get-places-key/index.ts", line: 1, pattern: "DEPRECATED — no key exposed", type: "places", side: "edge", suspectedProject: "Maps UnPRO", status: "removed" },
+  { file: "supabase/functions/search-google-business/index.ts", line: 40, pattern: "GOOGLE_PLACES_SERVER_KEY || GOOGLE_PLACES_API_KEY", type: "places", side: "edge", suspectedProject: "Maps UnPRO", status: "ok" },
+  { file: "supabase/functions/search-gmb-profile/index.ts", line: 157, pattern: "GOOGLE_PLACES_SERVER_KEY || GOOGLE_PLACES_API_KEY", type: "places", side: "edge", suspectedProject: "Maps UnPRO", status: "ok" },
+  { file: "supabase/functions/fn-instant-profile-demo/index.ts", line: 68, pattern: "GOOGLE_PLACES_SERVER_KEY || GOOGLE_PLACES_API_KEY", type: "places", side: "edge", suspectedProject: "Maps UnPRO", status: "ok" },
   { file: "supabase/functions/alex-stt/index.ts", line: 52, pattern: "speech.googleapis.com", type: "stt", side: "edge", suspectedProject: "GOOGLE_CLOUD_STT_API_KEY", status: "ok" },
   { file: "supabase/functions/alex-stt-stream/index.ts", line: 83, pattern: "speech.googleapis.com", type: "stt", side: "edge", suspectedProject: "GOOGLE_CLOUD_STT_API_KEY", status: "ok" },
   { file: "supabase/functions/alex-live-token/index.ts", line: 22, pattern: "GEMINI_API_KEY", type: "gemini", side: "edge", suspectedProject: "Gemini (gen-lang-client-0488436653)", status: "ok" },
@@ -141,6 +142,7 @@ export default function PageGoogleProjectUsageAudit() {
       duplicate: "bg-amber-500/10 text-amber-400 border-amber-500/30",
       unknown: "bg-zinc-500/10 text-zinc-400 border-zinc-500/30",
       unsafe: "bg-rose-500/10 text-rose-400 border-rose-500/30",
+      removed: "bg-slate-500/10 text-slate-400 border-slate-500/30",
       missing: "bg-rose-500/10 text-rose-400 border-rose-500/30",
       oauth_secret: "bg-indigo-500/10 text-indigo-400 border-indigo-500/30",
     };

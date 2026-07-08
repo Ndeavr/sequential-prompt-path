@@ -1,7 +1,8 @@
 // Admin diagnostic — audits Google API key environment in this Edge runtime
-// and runs a live autocomplete probe.
+// and runs a live autocomplete probe via the Lovable connector.
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { getGoogleMapsCredentials, googleConnectorAvailable, placesAutocomplete } from "../_shared/googleMapsConnector.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,9 +10,9 @@ const corsHeaders = {
 };
 
 const TARGET_KEYS = [
+  "LOVABLE_API_KEY",
   "GOOGLE_MAPS_API_KEY",
-  "VITE_GOOGLE_MAPS_API_KEY",
-  "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY",
+  "GOOGLE_PLACES_SERVER_KEY",
   "GOOGLE_PLACES_API_KEY",
   "GOOGLE_GEOCODING_API_KEY",
   "GEMINI_API_KEY",
@@ -37,35 +38,32 @@ function fingerprintProject(k: string | null | undefined): string | null {
   return "format_unknown";
 }
 
-async function probeAutocomplete(input: string, key: string) {
-  const params = new URLSearchParams({
-    input,
-    key,
-    language: "fr",
-    components: "country:ca",
-    types: "address",
-  });
-  const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?${params}`;
+async function probeAutocomplete(input: string) {
   const t0 = Date.now();
   try {
-    const res = await fetch(url);
-    const data = await res.json();
+    const { data, source, google_status, error_message } = await placesAutocomplete(input.trim(), {
+      types: "address",
+      region: "ca",
+      language: "fr",
+    });
     return {
-      endpoint: "maps.googleapis.com/maps/api/place/autocomplete/json",
-      http_status: res.status,
-      google_status: data.status ?? null,
-      error_message: data.error_message ?? null,
-      predictions_count: Array.isArray(data.predictions) ? data.predictions.length : 0,
+      endpoint: "connector/google_maps/places/v1",
+      http_status: 200,
+      google_status: google_status ?? (data ? "OK" : "ZERO_RESULTS"),
+      error_message: error_message ?? null,
+      predictions_count: data?.length ?? 0,
       latency_ms: Date.now() - t0,
+      source,
     };
   } catch (e) {
     return {
-      endpoint: "maps.googleapis.com/maps/api/place/autocomplete/json",
+      endpoint: "connector/google_maps/places/v1",
       http_status: 0,
       google_status: "FETCH_ERROR",
       error_message: String(e),
       predictions_count: 0,
       latency_ms: Date.now() - t0,
+      source: "error",
     };
   }
 }
@@ -131,15 +129,13 @@ Deno.serve(async (req) => {
 
   let liveProbe: any = null;
   if (action === "probe" || body?.probe) {
-    const placesKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
-    if (!placesKey) {
-      liveProbe = { error: "GOOGLE_PLACES_API_KEY missing in edge runtime" };
+    const connector = googleConnectorAvailable();
+    if (!connector) {
+      liveProbe = { error: "Lovable Google Maps connector not configured (LOVABLE_API_KEY + GOOGLE_MAPS_API_KEY)" };
     } else {
       liveProbe = {
-        used_env_var: "GOOGLE_PLACES_API_KEY",
-        used_key: maskKey(placesKey),
-        fingerprint: fingerprintProject(placesKey),
-        ...(await probeAutocomplete(body?.input || "1234 rue Sainte-Catherine, Montréal", placesKey)),
+        connector_available: true,
+        ...(await probeAutocomplete(body?.input || "1234 rue Sainte-Catherine, Montréal")),
       };
     }
   }
@@ -156,6 +152,7 @@ Deno.serve(async (req) => {
 });
 
 function featureFor(name: string): string {
+  if (/LOVABLE/i.test(name)) return "Lovable Connector (gateway proxy)";
   if (/PLACES/i.test(name)) return "Places / Address Autocomplete / Geocoding";
   if (/MAPS/i.test(name)) return "Maps JavaScript / Static Maps";
   if (/GEOCODING/i.test(name)) return "Geocoding";

@@ -3,11 +3,17 @@
 // Persists into outbound_companies + outbound_leads with mission_id attribution.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { corsHeaders, jsonResponse } from "../_shared/mission-cors.ts";
+import { resolvePlacesKey } from "../_shared/launchKeys.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const GOOGLE_PLACES_API_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY");
 const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
+
+let _placesKey: { key: string; source: string } | null | undefined;
+function getPlacesKey() {
+  if (_placesKey === undefined) _placesKey = resolvePlacesKey();
+  return _placesKey;
+}
 
 type ScrapedCompany = {
   name: string;
@@ -25,8 +31,9 @@ function normalizeKey(s: string): string {
 }
 
 async function placesTextSearch(query: string): Promise<any[]> {
-  if (!GOOGLE_PLACES_API_KEY) return [];
-  const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&region=ca&language=fr&key=${GOOGLE_PLACES_API_KEY}`;
+  const pk = getPlacesKey();
+  if (!pk) return [];
+  const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&region=ca&language=fr&key=${pk.key}`;
   const res = await fetch(url);
   if (!res.ok) {
     console.error("places http", res.status);
@@ -40,7 +47,8 @@ async function placesTextSearch(query: string): Promise<any[]> {
 }
 
 async function scrapeGooglePlaces(trade: string, city: string): Promise<ScrapedCompany[]> {
-  if (!GOOGLE_PLACES_API_KEY) return [];
+  const pk = getPlacesKey();
+  if (!pk) return [];
   const queries = [
     `${trade} ${city} Québec`,
     `isolation entretoit ${city}`,
@@ -58,7 +66,7 @@ async function scrapeGooglePlaces(trade: string, city: string): Promise<ScrapedC
     let phone: string | null = null;
     let website: string | null = null;
     try {
-      const dUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${r.place_id}&fields=formatted_phone_number,website,formatted_address&key=${GOOGLE_PLACES_API_KEY}`;
+      const dUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${r.place_id}&fields=formatted_phone_number,website,formatted_address&key=${pk.key}`;
       const dRes = await fetch(dUrl);
       if (dRes.ok) {
         const d = await dRes.json();
@@ -249,7 +257,7 @@ Deno.serve(async (req) => {
       per_city: perCityDiag,
       total_inserted: inserted.length,
       errors,
-      has_places_key: !!GOOGLE_PLACES_API_KEY,
+      has_places_key: !!getPlacesKey(),
       has_firecrawl_key: !!FIRECRAWL_API_KEY,
     };
 

@@ -65,7 +65,7 @@ interface ProfilePayload {
 }
 
 async function gmbLookup(input: DemoInput): Promise<ProfilePayload> {
-  const apiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
+  const apiKey = Deno.env.get("GOOGLE_PLACES_SERVER_KEY") || Deno.env.get("GOOGLE_PLACES_API_KEY");
   const phoneDigits = normalizePhone(input.phone);
   const domain = extractDomain(input.website || input.google_url);
 

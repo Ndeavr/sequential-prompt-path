@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const placesKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
+    const placesKey = Deno.env.get("GOOGLE_PLACES_SERVER_KEY") || Deno.env.get("GOOGLE_PLACES_API_KEY");
     const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");
 
     // ── 1. Google Places Text Search ──

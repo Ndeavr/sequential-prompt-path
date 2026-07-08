@@ -1,6 +1,7 @@
 // system-health-probe — reads live status for Google Places, Twilio, Stripe, Resend,
 // and the top edge functions. Returns real numbers — never mocked.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { googleConnectorAvailable, placesAutocomplete } from "../_shared/googleMapsConnector.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -12,20 +13,26 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 async function probeGooglePlaces() {
-  const key =
-    Deno.env.get("GOOGLE_PLACES_SERVER_KEY") ||
-    Deno.env.get("GOOGLE_MAPS_API_KEY") ||
-    Deno.env.get("GOOGLE_PLACES_API_KEY");
-  if (!key) return { ok: false, code: "MISSING_KEY", message: "GOOGLE_PLACES_API_KEY not set", detail: null };
   try {
-    const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=plombier+montreal&key=${key}`;
-    const r = await fetch(url);
-    const j = await r.json();
+    const { data, source, google_status, error_message } = await placesAutocomplete(
+      "plombier Montréal",
+      { types: "establishment", region: "ca", language: "fr" },
+    );
+
+    if (!data) {
+      return {
+        ok: false,
+        code: google_status || "MISSING_KEY",
+        message: error_message || "Google Places not configured",
+        detail: { source },
+      };
+    }
+
     return {
-      ok: j.status === "OK" || j.status === "ZERO_RESULTS",
-      code: j.status,
-      message: j.error_message ?? "",
-      detail: { results: (j.results ?? []).length },
+      ok: true,
+      code: "OK",
+      message: "",
+      detail: { source, predictions: data.length },
     };
   } catch (e) {
     return { ok: false, code: "FETCH_ERROR", message: String((e as Error).message), detail: null };
