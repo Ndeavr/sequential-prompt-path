@@ -1,30 +1,53 @@
-## Post-Payment Audit — Contractor `72bc8179-d836-497d-8114-e0fcd773281b`
+## Contractor Revenue Readiness Report
 
-Contractor: `e2e+run1783477950@unpro.ca` · Plan: **Recrue** · Sub: `sub_1TqmPrCvZwK1QnPVypk1H1xs` · Customer: `cus_UqSCJFKK3PoBlv`
+### Part 1 — The 7 active contractors NOT booking-enabled
 
-| # | Check | Result | Evidence |
-|---|---|---|---|
-| 1 | Contractor appears in public search | **PASS (technical) / FAIL (practical)** | Flags OK (`is_published=t`, `is_discoverable=t`), but `slug=NULL`, `city=NULL`, `business_name` is the raw email, and no `contractor_category_assignments` / `contractor_service_areas` rows — invisible to any faceted search on city/category/name. |
-| 2 | Appears in recommendation engine candidates | **PASS** | `v_contractor_recommendation_score` returns the row with `plan_code=recrue`, score `11.00`. |
-| 3 | Can receive appointments | **FAIL** | `is_accepting_appointments=t` on the flag, but `booking_enabled=false` AND `booking_page_published=false` → booking engine will refuse to schedule. |
-| 4 | Profile URL returns 200 | **PASS** | `GET https://unpro.ca/entrepreneur/72bc8179…` → HTTP 200 (SPA renders, but content will be a stub because no slug/business data). |
-| 5 | Stripe customer ID stored | **PASS** | `contractor_subscriptions.stripe_customer_id = cus_UqSCJFKK3PoBlv`. |
-| 6 | Subscription renewal date stored correctly | **PASS** | `current_period_start = 2026-07-08 03:44:52 UTC`, `current_period_end = 2026-08-08 03:44:52 UTC` (monthly cycle, aligned with Stripe). |
-| 7 | Welcome email delivered | **FAIL** | `email_send_log` has zero rows for `recipient_email ILIKE 'e2e+run1783477950%'`. The `stripe-webhook` fix restored the subscription but never triggered a post-activation welcome email. |
-| 8 | No hidden blockers preventing future recommendations | **FAIL** | Multiple blockers:<br>• `slug=NULL` → no public URL slug, no SEO, no share cards.<br>• `city=NULL`, no `contractor_service_areas` → matching engine can't geo-target.<br>• No `contractor_category_assignments` → matching engine can't category-target.<br>• `booking_enabled=false` → recommendations that require bookable pros will filter this contractor out.<br>• `verification_status=unverified` → any policy that gates on verification will exclude it.<br>• `plans.id` (UUID) is stored in `contractor_subscriptions.plan_id`, but `v_contractor_recommendation_score` joins on `plans.code = cs.plan_id` — the join FAILS and the view silently falls back to defaults (`plan_code='recrue'`, multipliers 1.0). Any future upgrade to Pro/Premium/Élite/Signature will NOT lift multipliers until either the column is written as the plan code or the view is rewritten to join on `plans.id`.
+| Business name | Plan | Visible | Category | Service area | Reason `booking_enabled = false` | Rec. eligible |
+|---|---|---|---|---|---|---|
+| Construction Gagnon | Recrue (free) | Yes | renovation-generale | Montréal | `is_accepting_appointments=false` (only blocker) | No |
+| Isolation Solution Royal | Recrue | No (discoverable=false) | isolation-entretoits, isolation | Laval | accepting=false **+** verification=pending **+** discoverable=false | No |
+| Jean-Édouard Fanfan | Recrue | No (unpublished) | — none — | — none — | accepting=false + no city + no category + no area + not published | No |
+| Pros Rénovation | Recrue | No (unpublished) | isolation-entretoits, isolation | Montréal, Laval, Longueuil, +3 | accepting=false + not published + not discoverable | No |
+| Rénovations Lafortune | Recrue | Yes | renovation-generale | Laval | accepting=false (only blocker) | No |
+| Toiture hogue | Recrue | No | — none — | — none — | accepting=false + no city + no category + no area + not published | No |
+| Toitures Beaupré | Recrue | Yes | toiture | Québec | accepting=false + verification=pending | No |
 
-### Summary
+**Root cause:** all 7 have `is_accepting_appointments=false`. The `sync_contractor_booking_flags` trigger only lights up booking when accepting flips true. 3 of the 7 (Construction Gagnon, Rénovations Lafortune, Toitures Beaupré) are one flag flip away from being fully bookable.
 
-- **PASS (4):** 2, 4, 5, 6
-- **FAIL (3):** 3, 7, 8
-- **Mixed (1):** 1 — technically visible, practically empty
+### Lost revenue estimate for these 7
 
-### Recommended follow-up fixes (separate plan/turn)
+Assumptions: Recrue plan $149/mo baseline subscription potential; appointment-driven revenue only counts the 3 "one-flip-away" profiles at ~2 appointments/mo × $85 avg booking fee.
 
-1. Backfill `contractors.slug`, `city`, `business_name`, category assignments, service areas.
-2. Enable `booking_enabled` + `booking_page_published` on plan activation (or gate criterion 3 differently).
-3. Fire welcome email from `stripe-webhook` on `checkout.session.completed` / `customer.subscription.created`; add it to the manual-recovery path too.
-4. Standardize plan reference: either store `plans.code` in `contractor_subscriptions.plan_id` (rename/refactor) or change `v_contractor_recommendation_score` to `JOIN plans p ON p.id::text = cs.plan_id`.
-5. Decide whether recommendation eligibility should require `verification_status <> 'unverified'`; if so, add a verification step to activation.
+- Subscription upside (7 × $149): **$1,043 / mo** (~$12.5k/yr)
+- Appointment fee upside (3 × 2 × $85): **$510 / mo** (~$6.1k/yr)
+- **Total leak: ~$1,553 / mo (~$18.6k/yr)**
 
-Awaiting your go-ahead before implementing any of these — this plan is audit-only.
+### Part 2 — Full readiness across 19 active contractors
+
+| Stage | Count | % of active |
+|---|---|---|
+| Active | 19 | 100% |
+| Publicly visible (published + discoverable) | 15 | 78.9% |
+| Booking enabled | 12 | 63.2% |
+| Appointment ready (booking + accepting + area + category) | 10 | 52.6% |
+| Recommendation eligible (above + verification ∈ verified/pending) | 6 | 31.6% |
+| Fully verified & eligible | 4 | 21.1% |
+
+### Exact blockers remaining (19 active)
+
+- **7** — `is_accepting_appointments=false` (see Part 1) — biggest blocker.
+- **2** — verification=`unverified` blocks recommendation: Benali Construction, Lavoie Peinture, Plomberie Démo Neuve *(3, but Plomberie also has no specialty)*.
+- **1** — verification=`rejected`: Pellegrino Carrelage (permanent exclusion).
+- **2** — junk profiles still marked active with no city/category/area/publish: Jean-Édouard Fanfan, Toiture hogue → recommend deactivation.
+- **1** — Plomberie Démo Neuve: no specialty field → no category assignment.
+- **0** — missing service areas (all backfilled).
+- **0** — missing category assignments among booking-enabled contractors.
+
+### Next actions (proposed, awaiting approval to build)
+
+1. **Auto-flip trigger extension** — when a contractor completes onboarding (`profile_completion ≥ threshold` or admin publish), set `is_accepting_appointments=true` so the existing trigger lights up booking.
+2. **Nudge sequence** — email/SMS to the 3 one-flip-away contractors ("Activez vos rendez-vous en 1 clic") with a magic link that toggles `is_accepting_appointments`.
+3. **Deactivate junk** — mark Jean-Édouard Fanfan and Toiture hogue `account_status='inactive'` (no city + no specialty + unpublished).
+4. **Verification funnel** — surface the 3 unverified booking-enabled pros in `/admin/dispatch-center` so they get pushed through verification (currently invisible to the recommendation engine).
+
+Confirm which of (1)–(4) to ship and I'll build the migration + edge function in one pass.
