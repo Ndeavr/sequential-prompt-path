@@ -1,74 +1,79 @@
-# UNPRO Revenue Readiness Audit — Execution Plan
+## Objective
+Drive a real contractor signup end-to-end with Playwright, pause at Stripe Checkout so you can pay, then monitor all downstream systems and audit every public path that could leave a paying contractor invisible.
 
-A full end-to-end, evidence-based audit of the revenue funnel. No assumptions — every claim will be backed by a file path, edge function name, DB table row, or live probe result.
+## Prereqs I need to confirm before running
 
-## Scope
+1. **Test email inbox.** Signup requires magic link / email OTP. Playwright cannot receive email. Pick one:
+   - **(A)** You give me a mailbox I can poll (e.g. `admin+e2etest-<ts>@unpro.ca` if Resend inbound / forwarding to a mailbox we can query, or a Gmail with app password).
+   - **(B)** I use the admin service-role path: create the `auth.users` row + confirm email server-side via edge function, then Playwright resumes at `/role → /entrepreneur/checkout`.
+   - **(C)** You complete the email click manually on your phone alongside the Stripe payment.
+   Default if you don't answer: **(B)** — fastest, most reliable, still exercises the real webhook + activation + email + visibility chain.
 
-Funnel under audit:
-`Homeowner → Address search → Project creation → Alex qualification → Recommendation → Contractor landing → Entrepreneur registration → Stripe checkout (test + live) → Webhook → Profile activation → Public visibility → SMS → Email`
+2. **$1 checkout.** Stripe is in **live** mode (`pk_live_…`). There is no built-in $1 plan. Pick one:
+   - **(A)** I create a one-off Stripe price of $1 CAD tied to a temporary "E2E Test" product and pass it to `create-contractor-checkout` via a `price_id_override` (small code addition, revert after).
+   - **(B)** I generate a 100%-off (or 99.4%-off from Recrue 149 → ~$1) coupon and apply it at checkout.
+   - **(C)** You accept paying the real Recrue $149 once (refundable via Stripe).
+   Default if you don't answer: **(B)** — cleanest, no schema change, verifies coupon path too.
 
-## Method (read-only, no code changes)
+## Test flow (Playwright script under `/tmp/browser/onboarding-e2e/`)
 
-### 1. Static codebase audit
-- Map each funnel step to its route, component, edge function, and DB table.
-- Grep for placeholder data, TODOs, mock flags, disabled features, hardcoded test values leaking to prod.
-- Verify Stripe wiring: `create-checkout-session`, `stripe-webhook`, price IDs (Recrue/Pro/Premium/Élite/Signature), metadata propagation (quote_id, plan_id).
-- Verify webhook → `contractor_subscriptions` / `profiles` activation path.
-- Verify public visibility gates (`is_public`, `status='active'`, RLS on `contractors`, `contractor_public_view`).
-- Verify SMS (Twilio/RCS edge functions) and Email (Resend + SPF/DKIM/DMARC) dispatch paths + delivery logging tables.
-- Verify tracking: CTA clicks, page views, `share_card_clicks`, `outbound_events`, analytics events.
-
-### 2. Database probes (read-only SQL)
-- Recent rows in: `projects`, `alex_conversations`, `contractors`, `contractor_subscriptions`, `stripe_events`, `outbound_messages`, `sms_deliveries`, `email_deliveries`, `platform_operation_outcomes`.
-- Check for silent-failure signals via `platform_operation_outcomes` (FailureCode/BlockReason counts, last 7d).
-- Check webhook idempotency table for gaps.
-- Check `contractors` where paid but not public, or public with placeholder fields.
-
-### 3. Live edge function probes
-- `curl` health endpoints: `system-health-probe`, `google-project-audit`, `voice_smoke_test`, `outbound/email-health`.
-- Dry-run `create-checkout-session` (test mode) and inspect returned client_secret path.
-- Simulated `stripe-webhook` payload (test signature) → confirm activation side-effects in DB.
-
-### 4. Browser probes (Playwright, localhost)
-- Homeowner flow: `/` → address autocomplete → project intake → Alex greet.
-- Contractor flow: `/entrepreneur/*` → registration → checkout element render → post-payment redirect.
-- Public profile: `/entrepreneur/:slug` renders real data, no `Lorem`/`placeholder`/`undefined`.
-- SEO: `/sitemap.xml`, `/llms.txt`, prerender headers for Googlebot UA.
-
-## Deliverables (single report)
-
-For each of the ~13 funnel steps:
-
-```text
-STEP | STATUS (PASS/FAIL/PARTIAL/BLOCKED) | Evidence
-  Root cause
-  Component: <file>
-  Table: <schema.table>
-  Edge fn: <name>
-  API: <endpoint>
-  Expected: ...
-  Actual: ...
-  Repair: <exact change>
+```
+1. Open http://localhost:8080/role → select "Entrepreneur"
+2. /signup → email = e2e+<ts>@unpro.ca
+   → path (B) above: call admin edge fn `e2e-confirm-user` to confirm + mint session
+   → inject Supabase session into localStorage
+3. Navigate through /entrepreneur/onboarding → /entrepreneur/plan
+   Fill: business_name, phone, RBQ, website, city
+4. Land on /entrepreneur/checkout → click "Activer mon profil"
+5. Wait for Stripe URL (intercept `create-contractor-checkout` response OR window navigation)
+6. PAUSE → print the checkout URL to console + save to /tmp/browser/onboarding-e2e/checkout_url.txt
 ```
 
-Followed by:
+At this point I return control. You open the URL on your phone, apply the coupon (if path B for pricing), complete the $1 payment.
 
-1. **Revenue Blockers Report** — ordered list of anything that stops "first dollar".
-2. **First Dollar Probability Score (0–100)** — weighted from: checkout works, webhook fires, activation flips, profile becomes public, homeowner can reach a paid pro.
-3. **Top 10 Fixes Ranked by Revenue Impact** — each with effort estimate + $ unlocked.
-4. **Autopilot Verification Report** — `launch-commander` + 9 agents + `followup-engine` cron status, last run, success/failure counts from `launch_pipeline_events`.
-5. **Hidden Silent Failures Report** — mined from `platform_operation_outcomes`, edge function logs (last 7d), unhandled promise rejections, webhook 4xx/5xx.
+## Post-payment monitor (I poll every 5s for up to 3 min)
 
-## Constraints
+For contractor `email = e2e+<ts>@unpro.ca`:
 
-- Read-only. No migrations, no secret changes, no code edits during audit.
-- All findings cite file:line, table, or function name.
-- No claim without evidence. Anything unverifiable is marked `BLOCKED` with the reason (e.g., "cannot test live Stripe without real card").
+| # | Check | Source | PASS criteria |
+|---|-------|--------|----------------|
+| 1 | Stripe webhook received | `launch_pipeline_events` where `agent='launch-stripe-webhook'` + `payload.session_id` | 1+ row within 60s |
+| 2 | Contractor activated | `contractors.status = 'active'` + `activated_at IS NOT NULL` | row exists |
+| 3 | Welcome email sent | `email_send_log` dedup by `message_id` where `template_name='entrepreneur-welcome'` + recipient | status=`sent` |
+| 4 | Public profile visible | GET `/entrepreneur/:slug` returns 200 + name renders | HTML contains business_name |
+| 5 | Subscription recorded | `contractors.stripe_subscription_id` set + `contractor_subscriptions` row | both present |
 
-## After the audit
+Each check reports `PASS/FAIL @ <ISO timestamp>` + message ID / row ID.
 
-I will present the report. You then choose which findings to fix, and I'll build them in a separate pass.
+## Invisibility audit (independent of the E2E)
 
----
+For a paying contractor to be actually reachable, ALL of these must be true. I'll query each and flag any that would silently drop them:
 
-**Approve this plan** to run the audit. It will take several tool calls (SQL reads, edge function probes, Playwright runs, log scans) executed in parallel where possible.
+- `contractors.status = 'active'` AND `contractors.published = true`
+- `contractors.city_id` set AND matches a served city
+- `contractors.trade_ids` non-empty AND matches active categories
+- `contractor_scores` row exists (matching engine gate)
+- `contractor_service_regions` rows exist (regional visibility)
+- `v_contractor_recommendation_score` view returns the row (recommendation eligibility)
+- RLS: anon SELECT on `contractors_public` view returns the row
+- Sitemap: `/sitemap-contractors.xml` includes `/entrepreneur/:slug`
+- Search: `contractors-api` edge function public search returns the row
+- Territory: `territory_slots` has capacity (not saturated → hidden)
+- Onboarding gate: `contractor_onboarding_state.completed_at` set (else PageContractorActivated redirects loop)
+
+I'll produce a table: `check | result | fix_needed`.
+
+## Deliverables
+
+- `/tmp/browser/onboarding-e2e/checkout_url.txt` (returned to you mid-run)
+- Screenshots at each Playwright step
+- Final report: 5 numbered PASS/FAIL rows with timestamps + IDs
+- Invisibility audit table with any red flags
+
+## Decisions I need from you
+
+1. Email path: **A / B / C** (default B)
+2. Pricing path: **A / B / C** (default B — coupon)
+3. Confirm you're OK with me creating one temp Stripe coupon `E2E_TEST_<ts>` (auto-expires in 24h)
+
+Reply "go with defaults" to run B+B, or specify overrides.
