@@ -3,11 +3,17 @@
 // Persists into outbound_companies + outbound_leads with mission_id attribution.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { corsHeaders, jsonResponse } from "../_shared/mission-cors.ts";
+import { resolvePlacesKey } from "../_shared/launchKeys.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const GOOGLE_PLACES_API_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY");
 const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
+
+let _placesKey: { key: string; source: string } | null | undefined;
+function getPlacesKey() {
+  if (_placesKey === undefined) _placesKey = resolvePlacesKey();
+  return _placesKey;
+}
 
 type ScrapedCompany = {
   name: string;
