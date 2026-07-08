@@ -257,7 +257,7 @@ Deno.serve(async (req) => {
       per_city: perCityDiag,
       total_inserted: inserted.length,
       errors,
-      has_places_key: !!GOOGLE_PLACES_API_KEY,
+      has_places_key: !!getPlacesKey(),
       has_firecrawl_key: !!FIRECRAWL_API_KEY,
     };
 
