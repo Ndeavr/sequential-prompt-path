@@ -164,17 +164,38 @@ export default function PageAdminProviderHealth() {
                       </td>
                       <td>{r.http_status ?? "—"}</td>
                       <td>{r.latency_ms} ms</td>
-                      <td className="max-w-md">
-                        {r.error_body ? (
-                          <pre className="bg-black/40 rounded p-2 text-[10px] overflow-x-auto whitespace-pre-wrap max-h-40">
-                            {JSON.stringify(r.error_body, null, 2)}
-                          </pre>
-                        ) : r.metadata ? (
-                          <pre className="text-[10px] opacity-80">{JSON.stringify(r.metadata)}</pre>
-                        ) : (
-                          <span className="opacity-60">—</span>
-                        )}
+                      <td className="max-w-md space-y-1">
+                        {(() => {
+                          const debug = (r.metadata as any)?.debug;
+                          return (
+                            <>
+                              {debug?.request_url && (
+                                <div className="text-[10px] font-mono opacity-80 break-all">
+                                  <span className="opacity-60">URL:</span> {debug.request_url}
+                                </div>
+                              )}
+                              {debug?.headers_used && (
+                                <div className="text-[10px] font-mono opacity-60">
+                                  headers: [{(debug.headers_used as string[]).join(", ")}]
+                                </div>
+                              )}
+                              {r.error_body ? (
+                                <pre className="bg-black/40 rounded p-2 text-[10px] overflow-x-auto whitespace-pre-wrap max-h-40">
+                                  {JSON.stringify(r.error_body, null, 2)}
+                                </pre>
+                              ) : debug?.response_body_preview ? (
+                                <pre className="bg-black/20 rounded p-2 text-[10px] overflow-x-auto whitespace-pre-wrap max-h-32 opacity-70">
+                                  {debug.response_body_preview}
+                                </pre>
+                              ) : null}
+                              {r.metadata && !debug && (
+                                <pre className="text-[10px] opacity-80">{JSON.stringify(r.metadata)}</pre>
+                              )}
+                            </>
+                          );
+                        })()}
                       </td>
+
                     </tr>
                   ))}
                 </tbody>
