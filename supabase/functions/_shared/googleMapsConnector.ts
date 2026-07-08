@@ -217,17 +217,18 @@ export async function placesAutocomplete(
 }
 
 /**
- * SearchText via the connector. Used for business/address lookups.
+ * SearchText via the connector with a custom field mask. Used when the caller
+ * needs full place details (phone, website, rating, address components, etc.)
  */
-export async function placesSearchText(
+export async function placesSearchTextRaw(
   query: string,
   opts: SearchTextOptions = {},
-  c?: GoogleMapsCredentials,
-): Promise<ApiResult<PlacePrediction[]>> {
-  const creds = c ?? getGoogleMapsCredentials();
+  fieldMask: string = "places.id,places.displayName,places.formattedAddress",
+): Promise<{ places: any[]; source: string; google_status?: string; error_message?: string }> {
+  const creds = getGoogleMapsCredentials();
   if (!googleConnectorAvailable(creds)) {
     return {
-      data: null,
+      places: [],
       source: "missing_connector",
       error_message: "Connecteur Lovable Google Maps non configuré",
     };
@@ -246,21 +247,37 @@ export async function placesSearchText(
     method: "POST",
     headers: {
       ...connectorHeaders(creds),
-      "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress",
+      "X-Goog-FieldMask": fieldMask,
     },
     body: JSON.stringify(body),
   });
 
   if (!r.ok) {
     const text = await r.text();
-    return { data: null, source: "connector_searchText", google_status: "FETCH_ERROR", error_message: text.slice(0, 300) };
+    return { places: [], source: "connector_searchText", google_status: "FETCH_ERROR", error_message: text.slice(0, 300) };
   }
 
   const data = await r.json();
   const places = Array.isArray(data.places) ? data.places : [];
 
   return {
-    data: places.map((p: any) => ({
+    places,
+    source: "connector_searchText",
+    google_status: places.length ? "OK" : "ZERO_RESULTS",
+  };
+}
+
+/**
+ * SearchText via the connector. Lightweight version used for autocomplete fallbacks.
+ */
+export async function placesSearchText(
+  query: string,
+  opts: SearchTextOptions = {},
+  c?: GoogleMapsCredentials,
+): Promise<ApiResult<PlacePrediction[]>> {
+  const res = await placesSearchTextRaw(query, opts, "places.id,places.displayName,places.formattedAddress");
+  return {
+    data: res.places.map((p: any) => ({
       place_id: p.id || "",
       description: p.formattedAddress || p.displayName?.text || "",
       structured_formatting: {
@@ -268,8 +285,9 @@ export async function placesSearchText(
         secondary_text: p.formattedAddress || "",
       },
     })),
-    source: "connector_searchText",
-    google_status: places.length ? "OK" : "ZERO_RESULTS",
+    source: res.source,
+    google_status: res.google_status,
+    error_message: res.error_message,
   };
 }
 
