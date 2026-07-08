@@ -1,6 +1,8 @@
 project_id = "clmaqdnphbndvmmqvpff"
 
 [functions]
+  [functions.e2e-create-test-contractor]
+    verify_jwt = false
   [functions.email-daily-selftest]
     verify_jwt = false
   [functions.email-sender-health]
