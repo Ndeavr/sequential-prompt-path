@@ -275,7 +275,7 @@ export default function PageAdminOutreachErrors() {
                             <Bug className="w-3.5 h-3.5 mr-1" />Analyze
                           </Button>
                           {l.status === "failed" && l.retryable && (
-                            <Button size="sm" variant="ghost" onClick={() => retryOne(l)} disabled={busy}>
+                            <Button size="sm" variant="ghost" onClick={() => retryOne(l)} disabled={busy || !outreachEnabled}>
                               <RotateCw className="w-3.5 h-3.5 mr-1" />Retry
                             </Button>
                           )}
