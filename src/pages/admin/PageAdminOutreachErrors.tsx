@@ -80,6 +80,35 @@ export default function PageAdminOutreachErrors() {
   const queueMap = data?.queueMap ?? {};
   const outreachEnabled = data?.outreachEnabled ?? false;
 
+  // Phone eligibility metrics (independent of delivery logs)
+  const phoneMetricsQuery = useQuery({
+    queryKey: ["admin-outreach-phone-metrics"],
+    refetchInterval: 30_000,
+    queryFn: async () => {
+      const QC = ["418","438","450","468","514","579","581","819","873","354","367","263"];
+      const cnt = async (build: (q: any) => any) => {
+        const { count } = await build(
+          supabase.from("contractor_leads" as any).select("id", { count: "exact", head: true }),
+        );
+        return count ?? 0;
+      };
+      const [e164Valid, lookupSuccess, lookupUnavailable, stuckLegacy, eligibleMobile, eligibleTentative] = await Promise.all([
+        cnt((q) => q.not("phone_e164", "is", null).neq("phone_validation_status", "invalid_phone")),
+        cnt((q) => q.in("phone_type", ["mobile","landline","voip"])),
+        cnt((q) => q.eq("phone_validation_status", "lookup_unavailable")),
+        cnt((q) => q.in("phone_validation_status", ["lookup_failed","pending_validation"])),
+        cnt((q) => q.eq("phone_type","mobile").not("sms_disabled","eq",true).not("do_not_contact","eq",true)),
+        cnt((q) => q.eq("phone_validation_status","lookup_unavailable").in("phone_area_code", QC).not("sms_disabled","eq",true).not("do_not_contact","eq",true)),
+      ]);
+      return {
+        e164Valid,
+        lookupSuccess,
+        lookupUnavailable: lookupUnavailable + stuckLegacy,
+        eligibleForSms: eligibleMobile + eligibleTentative,
+      };
+    },
+  });
+
   const stats = useMemo(() => {
     const failed = logs.filter((l) => l.status === "failed");
     const retryable = failed.filter((l) => l.retryable === true).length;
@@ -95,6 +124,25 @@ export default function PageAdminOutreachErrors() {
       topCodes: [...byCode.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5),
     };
   }, [logs]);
+
+  async function relookupStuck() {
+    setBusy(true);
+    try {
+      const { data: res, error } = await supabase.functions.invoke("outreach-relookup-stuck-phones", {
+        body: { limit: 500 },
+      });
+      if (error) throw error;
+      const r = res as any;
+      toast.success(
+        `Rechecked ${r?.rechecked ?? 0} · +${r?.promoted_to_valid ?? 0} sendable · ${r?.still_unavailable ?? 0} still unavailable · ${r?.real_invalid ?? 0} real invalid`,
+      );
+      phoneMetricsQuery.refetch();
+    } catch (e) {
+      toast.error(`Re-lookup failed: ${e instanceof Error ? e.message : e}`);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function retryOne(log: Log) {
     if (!log.queue_id) return;
