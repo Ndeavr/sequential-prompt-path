@@ -198,4 +198,12 @@ export async function validateAndPersistLeadPhone(
   return { ...c, status: lk.status, reason: lk.reason, phone_type: lk.phone_type, carrier: lk.carrier, contact_method };
 }
 
-export const SMS_ALLOWED_STATUSES: PhoneValidationStatus[] = ["valid_mobile", "valid_voip"];
+// SMS-eligible statuses. `lookup_unavailable` is included because Twilio Lookup being
+// unreachable (missing credentials, quota, network) MUST NOT be treated as "invalid".
+// Valid E.164 QC numbers are sent as tentative mobile — the send path itself will fail
+// gracefully if the number is unreachable, and per-lead sms_failed_attempts protects us.
+export const SMS_ALLOWED_STATUSES: PhoneValidationStatus[] = [
+  "valid_mobile",
+  "valid_voip",
+  "lookup_unavailable",
+];
