@@ -228,6 +228,7 @@ Deno.serve(async (req) => {
 
         // Upsert contractor_subscriptions
         if (subscription) {
+          const period = getSubscriptionPeriod(subscription);
           await supabase.from("contractor_subscriptions").upsert(
             {
               contractor_id: contractorId,
@@ -236,12 +237,8 @@ Deno.serve(async (req) => {
               plan_id: planId,
               billing_interval: billingInterval,
               status: subscription.status,
-              current_period_start: new Date(
-                subscription.current_period_start * 1000
-              ).toISOString(),
-              current_period_end: new Date(
-                subscription.current_period_end * 1000
-              ).toISOString(),
+              current_period_start: period.start,
+              current_period_end: period.end,
               cancel_at_period_end: subscription.cancel_at_period_end,
               updated_at: new Date().toISOString(),
             },
