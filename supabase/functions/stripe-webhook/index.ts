@@ -259,18 +259,49 @@ Deno.serve(async (req) => {
 
         // Activate contractor (PATCH A — use real columns; fail loudly on error)
         const nowIso = new Date().toISOString();
+
+        // Load existing contractor to compute slug fallback if missing
+        const { data: existingContractor } = await supabase
+          .from("contractors")
+          .select("slug, business_name, legal_name, email")
+          .eq("id", contractorId)
+          .maybeSingle();
+
+        const slugify = (s: string) =>
+          s
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "")
+            .slice(0, 80);
+
+        const activationPatch: Record<string, unknown> = {
+          account_status: "active",
+          activation_status: "active",
+          onboarding_status: "completed",
+          is_published: true,
+          is_discoverable: true,
+          is_accepting_appointments: true,
+          booking_enabled: true,
+          booking_page_published: true,
+          published_at: nowIso,
+          updated_at: nowIso,
+        };
+
+        if (!existingContractor?.slug) {
+          const seed =
+            (existingContractor as any)?.business_name ||
+            (existingContractor as any)?.legal_name ||
+            (existingContractor as any)?.email ||
+            contractorId;
+          const base = slugify(String(seed)) || "pro";
+          activationPatch.slug = `${base}-${contractorId.slice(0, 8)}`;
+        }
+
         const { error: activateErr } = await supabase
           .from("contractors")
-          .update({
-            account_status: "active",
-            activation_status: "active",
-            onboarding_status: "completed",
-            is_published: true,
-            is_discoverable: true,
-            is_accepting_appointments: true,
-            published_at: nowIso,
-            updated_at: nowIso,
-          })
+          .update(activationPatch)
           .eq("id", contractorId);
 
         if (activateErr) {
@@ -287,6 +318,7 @@ Deno.serve(async (req) => {
           });
           throw new Error(`Contractor activation failed: ${activateErr.message}`);
         }
+
 
         // Mirror plan on contractor_subscriptions already handled above.
 
