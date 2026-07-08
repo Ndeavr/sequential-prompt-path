@@ -30374,6 +30374,93 @@ export type Database = {
           },
         ]
       }
+      contractor_outreach_queue: {
+        Row: {
+          activated_at: string | null
+          attempts: number
+          category: string | null
+          city: string | null
+          clicked_at: string | null
+          company_name: string
+          contractor_id: string | null
+          created_at: string
+          delivered_at: string | null
+          email: string | null
+          id: string
+          last_error: string | null
+          message_variant: string | null
+          metadata: Json
+          next_retry_at: string | null
+          payment_started_at: string | null
+          phone: string
+          recovery_sent_at: string | null
+          registered_at: string | null
+          reviews_count: number | null
+          score: number | null
+          sent_at: string | null
+          status: string
+          tracking_slug: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          attempts?: number
+          category?: string | null
+          city?: string | null
+          clicked_at?: string | null
+          company_name: string
+          contractor_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          email?: string | null
+          id?: string
+          last_error?: string | null
+          message_variant?: string | null
+          metadata?: Json
+          next_retry_at?: string | null
+          payment_started_at?: string | null
+          phone: string
+          recovery_sent_at?: string | null
+          registered_at?: string | null
+          reviews_count?: number | null
+          score?: number | null
+          sent_at?: string | null
+          status?: string
+          tracking_slug?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          attempts?: number
+          category?: string | null
+          city?: string | null
+          clicked_at?: string | null
+          company_name?: string
+          contractor_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          email?: string | null
+          id?: string
+          last_error?: string | null
+          message_variant?: string | null
+          metadata?: Json
+          next_retry_at?: string | null
+          payment_started_at?: string | null
+          phone?: string
+          recovery_sent_at?: string | null
+          registered_at?: string | null
+          reviews_count?: number | null
+          score?: number | null
+          sent_at?: string | null
+          status?: string
+          tracking_slug?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       contractor_outreach_tests: {
         Row: {
           admin_test_sent_at: string | null
@@ -73430,6 +73517,140 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      solicitation_daily_stats: {
+        Row: {
+          activated: number
+          category: string | null
+          city: string | null
+          clicked: number
+          created_at: string
+          id: string
+          registered: number
+          revenue_cents: number
+          sent: number
+          stat_date: string
+          variant: string | null
+        }
+        Insert: {
+          activated?: number
+          category?: string | null
+          city?: string | null
+          clicked?: number
+          created_at?: string
+          id?: string
+          registered?: number
+          revenue_cents?: number
+          sent?: number
+          stat_date: string
+          variant?: string | null
+        }
+        Update: {
+          activated?: number
+          category?: string | null
+          city?: string | null
+          clicked?: number
+          created_at?: string
+          id?: string
+          registered?: number
+          revenue_cents?: number
+          sent?: number
+          stat_date?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      solicitation_first_wins: {
+        Row: {
+          category: string | null
+          city: string | null
+          company_name: string | null
+          created_at: string
+          id: string
+          message_variant: string | null
+          queue_id: string | null
+          revenue_cents: number | null
+          time_to_click_seconds: number | null
+          time_to_pay_seconds: number | null
+          time_to_register_seconds: number | null
+        }
+        Insert: {
+          category?: string | null
+          city?: string | null
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          message_variant?: string | null
+          queue_id?: string | null
+          revenue_cents?: number | null
+          time_to_click_seconds?: number | null
+          time_to_pay_seconds?: number | null
+          time_to_register_seconds?: number | null
+        }
+        Update: {
+          category?: string | null
+          city?: string | null
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          message_variant?: string | null
+          queue_id?: string | null
+          revenue_cents?: number | null
+          time_to_click_seconds?: number | null
+          time_to_pay_seconds?: number | null
+          time_to_register_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitation_first_wins_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_outreach_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      solicitation_message_variants: {
+        Row: {
+          activated_count: number
+          active: boolean
+          clicked_count: number
+          code: string
+          created_at: string
+          id: string
+          name: string
+          sent_count: number
+          template: string
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          activated_count?: number
+          active?: boolean
+          clicked_count?: number
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          sent_count?: number
+          template: string
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          activated_count?: number
+          active?: boolean
+          clicked_count?: number
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          sent_count?: number
+          template?: string
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: []
       }
       source_connectors: {
         Row: {
