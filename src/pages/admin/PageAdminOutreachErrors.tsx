@@ -243,6 +243,34 @@ export default function PageAdminOutreachErrors() {
             ["Failed", stats.failed],
             ["Retryable", stats.retryable],
             ["Distinct codes", stats.topCodes.length],
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Phone eligibility (source of truth)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                ["E.164 Valid", phoneMetricsQuery.data?.e164Valid ?? "—", "Parses as valid North-American number."],
+                ["Lookup Success", phoneMetricsQuery.data?.lookupSuccess ?? "—", "Twilio Lookup classified the line type."],
+                ["Lookup Unavailable", phoneMetricsQuery.data?.lookupUnavailable ?? "—", "Lookup offline — still sendable (tentative)."],
+                ["Eligible for SMS", phoneMetricsQuery.data?.eligibleForSms ?? "—", "Mobile + tentative QC numbers, opted in."],
+              ].map(([label, v, hint]) => (
+                <div key={label as string} className="rounded-lg border border-border p-3">
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
+                  <div className="text-2xl font-semibold mt-1">{v as any}</div>
+                  <div className="text-[10px] text-muted-foreground mt-1">{hint as string}</div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            ["Attempts (visible)", stats.total],
+            ["Failed", stats.failed],
+            ["Retryable", stats.retryable],
+            ["Distinct codes", stats.topCodes.length],
           ].map(([label, v]) => (
             <Card key={label as string}>
               <CardContent className="p-4">
