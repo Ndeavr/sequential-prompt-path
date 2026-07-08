@@ -1,6 +1,7 @@
 // system-health-probe — reads live status for Google Places, Twilio, Stripe, Resend,
 // and the top edge functions. Returns real numbers — never mocked.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { googleConnectorAvailable, placesAutocomplete } from "../_shared/googleMapsConnector.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
