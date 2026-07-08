@@ -1,53 +1,99 @@
-## Contractor Revenue Readiness Report
+## Market Validation Audit — Homeowner → Contractor Revenue Path
 
-### Part 1 — The 7 active contractors NOT booking-enabled
+**Test scenario:** Homeowner in Laval, category *Isolation entretoits*, budget résidentiel typique, urgence normale.
 
-| Business name | Plan | Visible | Category | Service area | Reason `booking_enabled = false` | Rec. eligible |
+### 1. Contractor pool for Laval + Isolation entretoits
+
+Strict match (serves Laval **AND** has `isolation-entretoits` category assigned):
+
+| # | Business | AIPP | accepting | booking | verified | Eligible? |
 |---|---|---|---|---|---|---|
-| Construction Gagnon | Recrue (free) | Yes | renovation-generale | Montréal | `is_accepting_appointments=false` (only blocker) | No |
-| Isolation Solution Royal | Recrue | No (discoverable=false) | isolation-entretoits, isolation | Laval | accepting=false **+** verification=pending **+** discoverable=false | No |
-| Jean-Édouard Fanfan | Recrue | No (unpublished) | — none — | — none — | accepting=false + no city + no category + no area + not published | No |
-| Pros Rénovation | Recrue | No (unpublished) | isolation-entretoits, isolation | Montréal, Laval, Longueuil, +3 | accepting=false + not published + not discoverable | No |
-| Rénovations Lafortune | Recrue | Yes | renovation-generale | Laval | accepting=false (only blocker) | No |
-| Toiture hogue | Recrue | No | — none — | — none — | accepting=false + no city + no category + no area + not published | No |
-| Toitures Beaupré | Recrue | Yes | toiture | Québec | accepting=false + verification=pending | No |
+| 1 | Isolation Solution Royal | 0 | ❌ | ❌ | pending | No |
+| 2 | Pros Rénovation | 47 | ❌ | ❌ | verified | No |
 
-**Root cause:** all 7 have `is_accepting_appointments=false`. The `sync_contractor_booking_flags` trigger only lights up booking when accepting flips true. 3 of the 7 (Construction Gagnon, Rénovations Lafortune, Toitures Beaupré) are one flag flip away from being fully bookable.
+**Qualified (city+category): 2 · Recommendation eligible: 0 · Ranking: empty.**
 
-### Lost revenue estimate for these 7
+### 2. Ranking evidence
 
-Assumptions: Recrue plan $149/mo baseline subscription potential; appointment-driven revenue only counts the 3 "one-flip-away" profiles at ~2 appointments/mo × $85 avg booking fee.
+`v_contractor_recommendation_score` returns both at score 11 (recrue plan, multipliers 1.0), but the eligibility layer requires `booking_enabled=true` + `is_accepting_appointments=true` + `verification_status ∈ (verified, pending)`. Both candidates fail booking_enabled → filtered out → **zero ranked results**.
 
-- Subscription upside (7 × $149): **$1,043 / mo** (~$12.5k/yr)
-- Appointment fee upside (3 × 2 × $85): **$510 / mo** (~$6.1k/yr)
-- **Total leak: ~$1,553 / mo (~$18.6k/yr)**
+### 3. Automated matching path — BROKEN
 
-### Part 2 — Full readiness across 19 active contractors
+`supabase/functions/match-lead/index.ts` lines 175-179 selects columns that do not exist on `contractors`:
+- `company_name` → actual: `business_name`
+- `service_areas` → actual: separate table `contractor_service_areas`
+- `specialties`, `sub_specialties` → actual: `specialty` (text) + `contractor_category_assignments`
+- `min_job_value`, `max_job_value`, `languages` → do not exist
 
-| Stage | Count | % of active |
+Result: query fails silently, `scored=[]`, lead marked `no_match`. Table `matches` currently has **0 rows** (confirmed). Automated homeowner→contractor matching has never fired in production.
+
+### 4. Direct booking path (bypass matching)
+
+`src/hooks/useAppointments.ts` inserts directly into `appointments` with `homeowner_user_id` + `contractor_id`. This works because RLS allows homeowners to create their own rows. Notification triggers via `notify-appointment-created`.
+
+### 5. Notification path
+
+`supabase/functions/notify-appointment-created` reads `appointments → leads(owner_profile_id)`. When appointment is created **without** a lead (direct booking), the homeowner notification is skipped. Contractor notification still fires if `contractors.user_id` is present.
+
+### 6. Step-by-step PASS / FAIL
+
+| Step | Result | Evidence |
 |---|---|---|
-| Active | 19 | 100% |
-| Publicly visible (published + discoverable) | 15 | 78.9% |
-| Booking enabled | 12 | 63.2% |
-| Appointment ready (booking + accepting + area + category) | 10 | 52.6% |
-| Recommendation eligible (above + verification ∈ verified/pending) | 6 | 31.6% |
-| Fully verified & eligible | 4 | 21.1% |
+| Homeowner Alex qualification | PASS | Alex sessions active, qualification graph reaches booking phase |
+| Lead row creation | FAIL | 0 rows in `leads` — no code path writes a `lead_type='contractor'` lead from Alex |
+| Recommendation engine (Laval + isolation) | FAIL | 0 eligible contractors |
+| Contractor ranking | FAIL | Empty ranking |
+| Automated match creation | FAIL | `match-lead` selects non-existent columns → 0 matches ever created |
+| Appointment creation (direct path) | PASS | `useAppointments` insert succeeds; 2 test appointments already exist |
+| Appointment creation (matched path) | FAIL | Blocked by missing `matches` row |
+| Contractor notification | CONDITIONAL PASS | Works only if `contractors.user_id` set; skips when appointment has no lead_id |
+| Homeowner confirmation notification | FAIL | `notify-appointment-created` requires `appointment.leads.owner_profile_id`; nil for direct bookings |
+| Contractor dashboard visibility | PASS | `useContractorDashboardData` reads appointments by `contractor_id` — verified |
+| Contractor response (accept/decline) | PASS | `contractor-manage-appointment` operates on `appointments.status` |
 
-### Exact blockers remaining (19 active)
+### 7. Root causes, files, tables, fixes
 
-- **7** — `is_accepting_appointments=false` (see Part 1) — biggest blocker.
-- **2** — verification=`unverified` blocks recommendation: Benali Construction, Lavoie Peinture, Plomberie Démo Neuve *(3, but Plomberie also has no specialty)*.
-- **1** — verification=`rejected`: Pellegrino Carrelage (permanent exclusion).
-- **2** — junk profiles still marked active with no city/category/area/publish: Jean-Édouard Fanfan, Toiture hogue → recommend deactivation.
-- **1** — Plomberie Démo Neuve: no specialty field → no category assignment.
-- **0** — missing service areas (all backfilled).
-- **0** — missing category assignments among booking-enabled contractors.
+| # | Failure | Root cause | File | Table | Fix |
+|---|---|---|---|---|---|
+| A | No leads written | Alex/booking funnel writes directly to `appointments`, never to `leads` | `src/hooks/useAppointments.ts`, `src/pages/homeowner/PageHomeownerBookingFunnel.tsx` | `leads` | On homeowner intent capture, insert a `leads` row (`lead_type='contractor'`, city, project_category) before calling `match-lead` |
+| B | `match-lead` returns 0 | Selects non-existent columns | `supabase/functions/match-lead/index.ts` (lines 175-186) | `contractors`, `contractor_service_areas`, `contractor_category_assignments` | Rewrite scorer to join real tables: `business_name`, service areas via `contractor_service_areas`, categories via `contractor_category_assignments`, filter `booking_enabled AND is_accepting_appointments AND verification_status IN ('verified','pending') AND account_status='active'` |
+| C | Empty eligible pool in Laval-isolation | Only 2 pros in the category and neither is booking-enabled | — | `contractors` (Isolation Solution Royal, Pros Rénovation) | Recruit isolation contractors in Laval; verify + activate the 2 existing; broaden radius via `contractor_service_areas.radius_km` |
+| D | Homeowner never notified on direct booking | Notification path assumes lead exists | `supabase/functions/notify-appointment-created/index.ts` line 32, 44 | `appointments`, `notifications` | Fallback: read `appointments.homeowner_user_id` directly when `leads` join is null |
+| E | Matched-path booking cannot start | Requires `match.response_status='accepted'` but no matches ever created | `supabase/functions/create-appointment-from-match/index.ts` line 94 | `matches` | Depends on fix B |
 
-### Next actions (proposed, awaiting approval to build)
+### 8. Revenue Readiness Score — **34 / 100**
 
-1. **Auto-flip trigger extension** — when a contractor completes onboarding (`profile_completion ≥ threshold` or admin publish), set `is_accepting_appointments=true` so the existing trigger lights up booking.
-2. **Nudge sequence** — email/SMS to the 3 one-flip-away contractors ("Activez vos rendez-vous en 1 clic") with a magic link that toggles `is_accepting_appointments`.
-3. **Deactivate junk** — mark Jean-Édouard Fanfan and Toiture hogue `account_status='inactive'` (no city + no specialty + unpublished).
-4. **Verification funnel** — surface the 3 unverified booking-enabled pros in `/admin/dispatch-center` so they get pushed through verification (currently invisible to the recommendation engine).
+| Layer | Score | Notes |
+|---|---|---|
+| Homeowner intake | 55/100 | Alex captures intent, but data never lands in `leads` |
+| Matching | 5/100 | Automated matcher is dead code (schema mismatch) |
+| Recommendation | 25/100 | View works, but eligible pool is too thin per (city × category) |
+| Appointment creation | 60/100 | Direct-insert path works; matched path blocked |
+| Contractor notification | 55/100 | Fires when `user_id` set + lead exists; degrades to silent on direct booking |
+| Contractor visibility | 75/100 | Dashboard reads appointments cleanly |
+| End-to-end conversion | 10/100 | Only path that reaches a contractor is manual public-search + direct-book |
 
-Confirm which of (1)–(4) to ship and I'll build the migration + edge function in one pass.
+Weighted average (equal weights): **~41**. Weighted for revenue impact (matching + conversion count double): **~34/100**.
+
+### 9. If 100 homeowners arrive tomorrow
+
+Assumptions (based on current 11 recommendation-eligible pros, category distribution: 4 rénovation, 2 plomberie, 2 électricité, 1 HVAC, 1 toiture, 1 peinture, 0 isolation-eligible, 0 carrelage-eligible):
+
+| Path | Reachable homeowners | Opportunities delivered |
+|---|---|---|
+| Automated `match-lead` | 100 → 0 (function broken) | **0** |
+| Homeowner picks pro in public search → direct book | ~40 land on public search; ~50% find a bookable pro in their city+category | **~15-20** |
+| Alex handoff to booking (no lead created) | Alex qualifies ~60, but no lead + no matcher → funnel dies | **~0** |
+| Homeowners in Laval + isolation specifically | 100% blocked | **0** |
+
+**Realistic opportunities delivered to contractors: 15-20 out of 100 (~15-20% capture rate).** The 80-85% loss is concentrated in: (a) matcher schema bug, (b) thin category × city inventory, (c) no lead write-through from Alex.
+
+### Recommended fix order (revenue-first, no changes yet — approval required)
+
+1. **Fix B** — rewrite `match-lead` scorer against real schema. Unlocks the entire automated funnel. **Highest ROI.**
+2. **Fix A** — write `leads` row from Alex booking phase so match-lead has input.
+3. **Fix D** — homeowner notification fallback on direct booking.
+4. **Fix C (ops)** — activate the 2 isolation contractors in Laval + recruit 3-5 more per top city×category dead zone.
+5. **Fix E** — auto-flows once B is live.
+
+Approve to proceed with build (Fix B → A → D as the first migration + edge deploy).

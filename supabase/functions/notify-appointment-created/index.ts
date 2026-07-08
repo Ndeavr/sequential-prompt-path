@@ -41,42 +41,70 @@ Deno.serve(async (req) => {
     }
 
     const notifications: Array<Record<string, unknown>> = [];
-    const homeownerId = (appointment.leads as any)?.owner_profile_id;
-    const contractorUserId = (appointment.contractors as any)?.user_id;
+    // Fallback: read homeowner from appointment directly when no lead is linked (direct-book path).
+    const homeownerUserId =
+      (appointment.leads as any)?.owner_profile_id ??
+      (appointment as any).homeowner_user_id ??
+      null;
+    const contractorUserId = (appointment.contractors as any)?.user_id ?? null;
     const contractorName = (appointment.contractors as any)?.business_name || "Un entrepreneur";
 
-    if (homeownerId) {
+    // Resolve auth user_ids → profiles.id (notifications.profile_id FK targets profiles.id).
+    const userIds = [homeownerUserId, contractorUserId].filter(Boolean) as string[];
+    const profileByUser = new Map<string, string>();
+    if (userIds.length > 0) {
+      const { data: profs } = await svc
+        .from("profiles")
+        .select("id, user_id")
+        .in("user_id", userIds);
+      (profs ?? []).forEach((p: any) => profileByUser.set(p.user_id, p.id));
+    }
+
+    const homeownerProfileId = homeownerUserId ? profileByUser.get(homeownerUserId) ?? null : null;
+    const contractorProfileId = contractorUserId ? profileByUser.get(contractorUserId) ?? null : null;
+
+    if (homeownerProfileId) {
       notifications.push({
-        profile_id: homeownerId,
+        profile_id: homeownerProfileId,
         type: "appointment_created",
         title: "Nouveau rendez-vous confirmé",
         body: `${contractorName} a planifié un rendez-vous${appointment.preferred_date ? ` le ${appointment.preferred_date}` : ""}.`,
         channel: "in_app",
+        status: "pending",
         entity_type: "appointment",
         entity_id: appointment.id,
         metadata: { appointment_id: appointment.id, lead_id: appointment.lead_id },
       });
     }
 
-    if (contractorUserId) {
+    if (contractorProfileId) {
       notifications.push({
-        profile_id: contractorUserId,
+        profile_id: contractorProfileId,
         type: "appointment_created",
         title: "Nouveau rendez-vous à votre agenda",
-        body: "Un rendez-vous a été ajouté à votre calendrier.",
+        body: `Un rendez-vous a été ajouté à votre calendrier${appointment.preferred_date ? ` le ${appointment.preferred_date}` : ""}.`,
         channel: "in_app",
+        status: "pending",
         entity_type: "appointment",
         entity_id: appointment.id,
         metadata: { appointment_id: appointment.id, lead_id: appointment.lead_id },
       });
     }
 
+    let insertError: string | null = null;
     if (notifications.length > 0) {
-      await svc.from("notifications").insert(notifications);
+      const { error: insErr } = await svc.from("notifications").insert(notifications);
+      if (insErr) insertError = insErr.message;
     }
 
     return new Response(
-      JSON.stringify({ ok: true }),
+      JSON.stringify({
+        ok: !insertError,
+        inserted: notifications.length,
+        homeowner_resolved: !!homeownerProfileId,
+        contractor_resolved: !!contractorProfileId,
+        error: insertError,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
