@@ -129,15 +129,13 @@ Deno.serve(async (req) => {
 
   let liveProbe: any = null;
   if (action === "probe" || body?.probe) {
-    const placesKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
-    if (!placesKey) {
-      liveProbe = { error: "GOOGLE_PLACES_API_KEY missing in edge runtime" };
+    const connector = googleConnectorAvailable();
+    if (!connector) {
+      liveProbe = { error: "Lovable Google Maps connector not configured (LOVABLE_API_KEY + GOOGLE_MAPS_API_KEY)" };
     } else {
       liveProbe = {
-        used_env_var: "GOOGLE_PLACES_API_KEY",
-        used_key: maskKey(placesKey),
-        fingerprint: fingerprintProject(placesKey),
-        ...(await probeAutocomplete(body?.input || "1234 rue Sainte-Catherine, Montréal", placesKey)),
+        connector_available: true,
+        ...(await probeAutocomplete(body?.input || "1234 rue Sainte-Catherine, Montréal")),
       };
     }
   }
