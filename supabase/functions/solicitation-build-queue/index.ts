@@ -78,7 +78,14 @@ Deno.serve(async (req) => {
       });
     }
     candidates.sort((a, b) => b._score - a._score);
-    const chosen = candidates.slice(0, target);
+    // Dedupe by phone within this batch (candidates from contractors + prospects can collide).
+    const seen = new Set<string>();
+    const deduped = candidates.filter((c) => {
+      if (seen.has(c.phone)) return false;
+      seen.add(c.phone);
+      return true;
+    });
+    const chosen = deduped.slice(0, target);
 
     if (chosen.length === 0) return json({ inserted: 0, note: "no eligible candidates" });
 
