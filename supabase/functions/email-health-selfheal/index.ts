@@ -1,4 +1,4 @@
-// Cron-invoked: runs full health probe + live send to healthcheck@unpro.ca every 15 min.
+// Cron-invoked: runs full health probe + live send to healthcheck@unpro.ca hourly (0 * * * *).
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 Deno.serve(async (req) => {
