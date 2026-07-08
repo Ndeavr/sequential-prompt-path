@@ -25,20 +25,30 @@ interface QueueRow {
 export default function AdminSolicitationPage() {
   const qc = useQueryClient();
   const [busy, setBusy] = useState<string | null>(null);
+  const [showTest, setShowTest] = useState(false);
 
   const { data } = useQuery({
-    queryKey: ["admin-solicitation"],
+    queryKey: ["admin-solicitation", showTest],
     refetchInterval: 10_000,
     queryFn: async () => {
-      const [rowsRes, variantsRes, winsRes] = await Promise.all([
-        supabase.from("contractor_outreach_queue" as any).select("*").order("created_at", { ascending: false }).limit(200),
+      let queueQ = supabase.from("contractor_outreach_queue" as any).select("*").order("created_at", { ascending: false }).limit(200);
+      if (!showTest) queueQ = queueQ.eq("is_test", false);
+      const [rowsRes, variantsRes, winsRes, milestonesRes, deliveredRes] = await Promise.all([
+        queueQ,
         supabase.from("solicitation_message_variants" as any).select("*").order("code"),
         supabase.from("solicitation_first_wins" as any).select("*").order("created_at", { ascending: false }).limit(1),
+        supabase.from("first_dollar_milestones" as any).select("*"),
+        supabase.from("outreach_delivery_logs" as any).select("status", { count: "exact", head: true }).eq("status", "sent").eq("is_test", showTest ? true : false),
       ]);
+      const milestones = ((milestonesRes.data ?? []) as any[]).reduce((acc, m) => {
+        acc[m.event] = m; return acc;
+      }, {} as Record<string, any>);
       return {
         rows: ((rowsRes.data ?? []) as unknown) as QueueRow[],
         variants: ((variantsRes.data ?? []) as unknown) as any[],
         firstWin: (((winsRes.data ?? [])[0] ?? null) as unknown) as any,
+        milestones,
+        deliveredCount: deliveredRes.count ?? 0,
       };
     },
   });
@@ -49,11 +59,16 @@ export default function AdminSolicitationPage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "contractor_outreach_queue" }, () => {
         qc.invalidateQueries({ queryKey: ["admin-solicitation"] });
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "outreach_delivery_logs" }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-solicitation"] });
+      })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [qc]);
 
   const rows = data?.rows ?? [];
+  const milestones = data?.milestones ?? {};
+  const delivered = data?.deliveredCount ?? 0;
   const funnel = {
     prospects: rows.length,
     sent: rows.filter((r) => r.sent_at).length,
