@@ -10,15 +10,17 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const key = Deno.env.get("GOOGLE_PLACES_API_KEY");
-  if (!key) {
-    return new Response(JSON.stringify({ error: "API key not configured" }), {
-      status: 500,
+  // Deprecated: Google Places API keys are no longer exposed to the browser.
+  // All Places calls are proxied through edge functions to support custom-domain
+  // referer restrictions and to keep keys server-side.
+  return new Response(
+    JSON.stringify({
+      error: "DEPRECATED",
+      message: "Use the google-places-autocomplete or business-lookup edge functions instead.",
+    }),
+    {
+      status: 410,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  return new Response(JSON.stringify({ key }), {
-    headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "public, max-age=3600" },
-  });
+    },
+  );
 });
