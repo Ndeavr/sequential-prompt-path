@@ -82002,6 +82002,7 @@ export type Database = {
         Args: { _channel: string; _from?: string }
         Returns: string
       }
+      nightly_log_retention: { Args: never; Returns: undefined }
       outbound_resolve_landing: {
         Args: { p_slug: string; p_token: string }
         Returns: Json
