@@ -1,66 +1,68 @@
+## Root cause
 
-## Root cause (confirmed by reading the code)
+`supabase/functions/_shared/phoneValidation.ts::lookupPhone()` and `_shared/smsGuard.ts::lookupPhoneTypeCached()` both call Twilio Lookup v2 **directly** with `TWILIO_ACCOUNT_SID` + `TWILIO_AUTH_TOKEN`. Those secrets don't exist on this project — Twilio is wired through the Lovable connector gateway with `TWILIO_API_KEY` only (that's the fix we just landed for the send path). So:
 
-The user's instinct is right. The screenshots show provider **probes** failing, not the credentials. Three separate bugs in `supabase/functions/provider-health-check/index.ts`:
+- Every Lookup call short-circuits with `TWILIO_CREDENTIALS_MISSING` → `lookup_unavailable`.
+- Legacy leads validated by an older code path are still stuck at `phone_validation_status = 'lookup_failed'` (71 in the screenshot).
+- `Mobile = 0%` and `Valid SMS = 0` because nothing ever gets classified as `mobile` or promoted through the SMS eligibility filter.
 
-### 1. Twilio `auth` — FAIL 404
-Probe calls `${GATEWAY}/twilio/Accounts.json`. The Lovable connector gateway **auto-prepends** `/2010-04-01/Accounts/{AccountSid}` to every Twilio path. Final URL becomes `.../2010-04-01/Accounts/{SID}/Accounts.json` → **404 Not Found**.
+Perfectly valid QC numbers (+1438/514/450/579/819/873) are being treated as unreachable — exactly what the user described.
 
-Meanwhile `from_number` calls `/twilio/IncomingPhoneNumbers.json`, which resolves to the correct `.../Accounts/{SID}/IncomingPhoneNumbers.json` → **200 PASS**. That's why one Twilio check passes and the other 404s with the exact same secrets. Credentials are fine; the URL is wrong.
+## Fix (4 focused changes)
 
-The real send path (`_shared/twilioSend.ts`) also uses the gateway with `TWILIO_API_KEY` + `LOVABLE_API_KEY` (no `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` needed) — so the current secrets shape (`TWILIO_API_KEY` + `TWILIO_FROM_NUMBER`) is correct for production sending. No need to add SID/TOKEN.
+### 1. Route Twilio Lookup through the connector gateway
+Rewrite `lookupPhone()` and `lookupPhoneTypeCached()` to call:
 
-### 2. Resend `auth` — FAIL 400
-Probe calls `https://api.resend.com/domains` directly with `Bearer ${RESEND_API_KEY}`. If `RESEND_API_KEY` is a Lovable connector key (starts with `lovc_`), Resend rejects it → **400**. Must go through the gateway with both `LOVABLE_API_KEY` + `X-Connection-Api-Key`.
+```
+https://connector-gateway.lovable.dev/twilio-lookups/v2/PhoneNumbers/{e164}?Fields=line_type_intelligence
+```
 
-### 3. Lovable AI `auth` — FAIL 400
-Probe calls `${GATEWAY}/api/v1/verify_credentials` with only `Authorization`. The endpoint requires **both** `Authorization: Bearer ${LOVABLE_API_KEY}` **and** `X-Connection-Api-Key: ${connector_key}`. Without the connection key header, the gateway can't verify anything → **400**.
+with headers `Authorization: Bearer ${LOVABLE_API_KEY}` and `X-Connection-Api-Key: ${TWILIO_API_KEY}`. Remove the SID/TOKEN fallback path (kept only as a last resort if both are set). Surface real `http_status` + response body preview on failure so `/admin/outreach-errors` shows the actual reason, not `lookup_unavailable`.
 
-## Fix plan
+If the gateway confirms Lookups isn't wired for this connector, keep the graceful `lookup_unavailable` return — never downgrade to `invalid_phone`.
 
-### A. Rewrite the three broken probes in `provider-health-check/index.ts`
+### 2. Never block outreach on a lookup miss for valid QC numbers
+In `_shared/leadValidation.ts` the `lookup_unavailable` branch already promotes to `valid` (tentative). Extend the same treatment to the legacy `lookup_failed` bucket:
 
-- **Twilio auth**: change path from `/twilio/Accounts.json` to `/twilio/Messages.json?PageSize=1` (GET, non-destructive, returns 200 with a valid key, exposes real Twilio error body on failure).
-- **Resend auth**: route through the gateway — `GET ${GATEWAY}/resend/domains` with both `Authorization` + `X-Connection-Api-Key: ${RESEND_API_KEY}` headers. Auto-detect whether `RESEND_API_KEY` is a direct key (`re_...`) or a gateway connection key; pick the path accordingly.
-- **Lovable AI auth**: replace verify_credentials with a real 1-token chat probe against `https://ai.gateway.lovable.dev/v1/chat/completions` using `google/gemini-2.5-flash-lite` and `max_tokens: 1`. That is the actual endpoint the app uses, so a PASS here means production AI works.
+- If `classifyPhone(raw)` returns `pending_validation` (i.e. E.164-valid + QC area code) and Lookup errors, persist status `lookup_unavailable` (single canonical bucket) with `tentative_send = true`, `contact_method = 'mobile_sms'` when no other blocker.
+- Drop the `phoneStatus === 'lookup_failed' → needs_review` branch — it's the false-negative the user called out.
+- Add `"lookup_unavailable"` to `SMS_ALLOWED_STATUSES` so downstream queue builders stop filtering these leads out.
 
-### B. Surface full diagnostic detail in the response (per user's request)
+### 3. Backfill the 71 stuck leads
+New edge function `outreach-relookup-stuck-phones` (run once from `/admin/outreach-errors` and cron every 6h):
 
-For every probe, always include in `error_body` (even on PASS, under `metadata.debug`):
-- `request_url` (the exact URL called, secrets stripped)
-- `http_status`
-- `response_body_preview` (first 500 chars)
-- `headers_used` (names only: `["Authorization","X-Connection-Api-Key"]`)
+- Selects `contractor_leads` where `phone_validation_status IN ('lookup_failed','pending_validation')` OR (`phone_validation_status = 'lookup_unavailable'` AND `phone_lookup_at < now() - 24h`).
+- Re-runs `validateAndPersistLeadPhone()` through the new gateway path in batches of 100.
+- Returns counts: `rechecked / promoted_to_valid / still_unavailable / real_invalid`.
 
-### C. Add a Twilio-specific diagnostic card on `/admin/provider-health`
+### 4. Expose the metrics the user asked for
+On `/admin/outreach-errors` (and mirror on `ValidationDebugPanel`):
 
-New collapsible section "Twilio wiring detail" showing, for each Twilio check row:
-- Full request URL used
-- HTTP status
-- Raw response body (JSON pretty-printed)
-- Which secret names were read (`TWILIO_API_KEY`, `TWILIO_FROM_NUMBER`) — and whether the code also *expected* `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` (answer: no, gateway mode is used).
+- **E164 Valid** — `phone_e164 IS NOT NULL AND phone_validation_status <> 'invalid_phone'`
+- **Lookup Success** — `phone_type IN ('mobile','landline','voip')`
+- **Lookup Failed / Unavailable** — `phone_validation_status = 'lookup_unavailable'` (single label, "Lookup unavailable")
+- **Eligible for SMS** — `phone_type = 'mobile' OR (phone_validation_status = 'lookup_unavailable' AND phone_area_code IN QC set AND NOT sms_disabled AND NOT do_not_contact)`
 
-This replaces the ambiguous "FAIL 404" chip with the JSON body the user asked for.
+Plus a manual **"Re-run lookup on stuck phones"** button that calls `outreach-relookup-stuck-phones` and shows the returned counters.
 
-### D. What we are NOT changing
+## Explicitly out of scope
 
-- No new secrets requested. `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` are **not** needed — gateway mode is intentional.
-- Kill switch stays OFF until the corrected probes all show PASS.
-- No changes to `solicitation-send-sms`, phoneGuard, or the outreach queue.
-- No new features, no SEO, no landing pages.
+- Kill switch stays OFF. This plan does not flip `OUTREACH_ENABLED` — we hand back to the user with clean metrics so they can decide.
+- No changes to the send path, phone guard blocked-pattern list, or SMS templates.
+- No new SEO/landing/onboarding work.
 
 ## Files touched
 
-- `supabase/functions/provider-health-check/index.ts` — fix 3 probes, add debug metadata
-- `src/pages/admin/PageAdminProviderHealth.tsx` — render new debug detail (request URL + raw body per check)
+- Edit `supabase/functions/_shared/phoneValidation.ts` (gateway lookup + `SMS_ALLOWED_STATUSES`)
+- Edit `supabase/functions/_shared/smsGuard.ts` (gateway lookup in `lookupPhoneTypeCached`)
+- Edit `supabase/functions/_shared/leadValidation.ts` (fold `lookup_failed` into `lookup_unavailable`)
+- New `supabase/functions/outreach-relookup-stuck-phones/index.ts` + cron
+- Edit `src/pages/admin/PageAdminOutreachErrors.tsx` (4 new metric cards + re-lookup button)
+- Edit `src/components/admin/ValidationDebugPanel.tsx` (rename "Lookup échoué" → "Lookup indisponible" with combined count)
 
 ## Success criteria
 
-After redeploy, `/admin/provider-health` shows:
-- Twilio `auth`: **PASS 200** (or a real Twilio error JSON like `{code: 20003, ...}` if the key is actually wrong)
-- Twilio `from_number`: **PASS 200** (unchanged)
-- Resend `auth`: **PASS 200** or real Resend error body
-- Lovable AI `auth`: **PASS 200** with a 1-token completion
-- Every row has a "View raw response" toggle exposing URL + status + body
-
-Only then does the user flip `OUTREACH_ENABLED = true` and send one real SMS to a real phone.
+- `/admin/provider-health` Twilio Lookup probe returns 200 via the gateway.
+- Running the backfill turns most of the 71 `lookup_failed` rows into either `valid_mobile` or `lookup_unavailable` (sendable, tentative).
+- **Eligible for SMS** count > 0 on `/admin/outreach-errors`.
+- One real SMS attempt to a promoted lead reaches `sent` at Twilio.
