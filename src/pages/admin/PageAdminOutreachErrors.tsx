@@ -237,12 +237,6 @@ export default function PageAdminOutreachErrors() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            ["Attempts (visible)", stats.total],
-            ["Failed", stats.failed],
-            ["Retryable", stats.retryable],
-            ["Distinct codes", stats.topCodes.length],
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Phone eligibility (source of truth)</CardTitle>
