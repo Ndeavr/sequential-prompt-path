@@ -56,9 +56,12 @@ export default function PageAdminOutreachErrors() {
         .limit(300);
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
       if (!showTest) q = q.eq("is_test", false);
-      const { data: logs, error } = await q;
-      if (error) throw error;
-      const logList = (logs ?? []) as unknown as Log[];
+      const [logsRes, flagRes] = await Promise.all([
+        q,
+        supabase.from("system_flags" as any).select("*").eq("key", "OUTREACH_ENABLED").maybeSingle(),
+      ]);
+      if (logsRes.error) throw logsRes.error;
+      const logList = (logsRes.data ?? []) as unknown as Log[];
 
       const queueIds = Array.from(new Set(logList.map((l) => l.queue_id).filter(Boolean))) as string[];
       let queueMap: Record<string, QueueLite> = {};
@@ -69,12 +72,13 @@ export default function PageAdminOutreachErrors() {
           .in("id", queueIds);
         queueMap = Object.fromEntries(((qs ?? []) as unknown as QueueLite[]).map((r) => [r.id, r]));
       }
-      return { logs: logList, queueMap };
+      return { logs: logList, queueMap, outreachEnabled: !!(flagRes.data as any)?.value };
     },
   });
 
   const logs = data?.logs ?? [];
   const queueMap = data?.queueMap ?? {};
+  const outreachEnabled = data?.outreachEnabled ?? false;
 
   const stats = useMemo(() => {
     const failed = logs.filter((l) => l.status === "failed");
