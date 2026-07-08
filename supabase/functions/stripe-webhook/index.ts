@@ -381,9 +381,17 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (sub?.contractor_id) {
+          const nowIso2 = new Date().toISOString();
           await supabase
             .from("contractors")
-            .update({ status: "active" })
+            .update({
+              account_status: "active",
+              activation_status: "active",
+              is_published: true,
+              is_discoverable: true,
+              is_accepting_appointments: true,
+              updated_at: nowIso2,
+            })
             .eq("id", sub.contractor_id);
         }
 
@@ -446,7 +454,14 @@ Deno.serve(async (req) => {
         if (sub?.contractor_id) {
           await supabase
             .from("contractors")
-            .update({ status: "inactive" })
+            .update({
+              account_status: "canceled",
+              activation_status: "inactive",
+              is_published: false,
+              is_discoverable: false,
+              is_accepting_appointments: false,
+              updated_at: new Date().toISOString(),
+            })
             .eq("id", sub.contractor_id);
         }
 
