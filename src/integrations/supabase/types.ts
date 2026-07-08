@@ -30387,6 +30387,7 @@ export type Database = {
           delivered_at: string | null
           email: string | null
           id: string
+          is_test: boolean
           last_error: string | null
           message_variant: string | null
           metadata: Json
@@ -30415,6 +30416,7 @@ export type Database = {
           delivered_at?: string | null
           email?: string | null
           id?: string
+          is_test?: boolean
           last_error?: string | null
           message_variant?: string | null
           metadata?: Json
@@ -30443,6 +30445,7 @@ export type Database = {
           delivered_at?: string | null
           email?: string | null
           id?: string
+          is_test?: boolean
           last_error?: string | null
           message_variant?: string | null
           metadata?: Json
@@ -42650,6 +42653,44 @@ export type Database = {
           },
         ]
       }
+      first_dollar_milestones: {
+        Row: {
+          achieved_at: string
+          contractor_id: string | null
+          created_at: string
+          event: string
+          id: string
+          metadata: Json
+          queue_id: string | null
+        }
+        Insert: {
+          achieved_at?: string
+          contractor_id?: string | null
+          created_at?: string
+          event: string
+          id?: string
+          metadata?: Json
+          queue_id?: string | null
+        }
+        Update: {
+          achieved_at?: string
+          contractor_id?: string | null
+          created_at?: string
+          event?: string
+          id?: string
+          metadata?: Json
+          queue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "first_dollar_milestones_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_outreach_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       first_dollar_sprint_events: {
         Row: {
           campaign_variant: string | null
@@ -54458,14 +54499,18 @@ export type Database = {
           error_code: string | null
           error_message: string | null
           id: string
+          is_test: boolean
           lead_id: string | null
           message_body: string | null
           message_id: string | null
           metadata: Json | null
           provider: string | null
           provider_message_id: string | null
+          queue_id: string | null
+          raw_response: Json | null
           recipient_normalized: string | null
           recipient_raw: string | null
+          retryable: boolean | null
           sent_at: string | null
           status: string
         }
@@ -54476,14 +54521,18 @@ export type Database = {
           error_code?: string | null
           error_message?: string | null
           id?: string
+          is_test?: boolean
           lead_id?: string | null
           message_body?: string | null
           message_id?: string | null
           metadata?: Json | null
           provider?: string | null
           provider_message_id?: string | null
+          queue_id?: string | null
+          raw_response?: Json | null
           recipient_normalized?: string | null
           recipient_raw?: string | null
+          retryable?: boolean | null
           sent_at?: string | null
           status: string
         }
@@ -54494,14 +54543,18 @@ export type Database = {
           error_code?: string | null
           error_message?: string | null
           id?: string
+          is_test?: boolean
           lead_id?: string | null
           message_body?: string | null
           message_id?: string | null
           metadata?: Json | null
           provider?: string | null
           provider_message_id?: string | null
+          queue_id?: string | null
+          raw_response?: Json | null
           recipient_normalized?: string | null
           recipient_raw?: string | null
+          retryable?: boolean | null
           sent_at?: string | null
           status?: string
         }
@@ -54518,6 +54571,13 @@ export type Database = {
             columns: ["message_id"]
             isOneToOne: false
             referencedRelation: "agent_outreach_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_delivery_logs_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_outreach_queue"
             referencedColumns: ["id"]
           },
         ]
