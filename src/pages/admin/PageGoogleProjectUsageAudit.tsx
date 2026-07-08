@@ -142,6 +142,7 @@ export default function PageGoogleProjectUsageAudit() {
       duplicate: "bg-amber-500/10 text-amber-400 border-amber-500/30",
       unknown: "bg-zinc-500/10 text-zinc-400 border-zinc-500/30",
       unsafe: "bg-rose-500/10 text-rose-400 border-rose-500/30",
+      removed: "bg-slate-500/10 text-slate-400 border-slate-500/30",
       missing: "bg-rose-500/10 text-rose-400 border-rose-500/30",
       oauth_secret: "bg-indigo-500/10 text-indigo-400 border-indigo-500/30",
     };
