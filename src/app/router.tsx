@@ -183,6 +183,8 @@ const PageAlexGoalsStrategy = lazyWithRetry(() => import("@/pages/goals/PageAlex
 const PageCheckoutStripe = lazyWithRetry(() => import("@/pages/checkout/PageCheckoutStripe"));
 const PageCheckoutSuccess = lazyWithRetry(() => import("@/pages/checkout/PageCheckoutSuccess"));
 const PageActivationStart = lazyWithRetry(() => import("@/pages/checkout/PageActivationStart"));
+const SolicitationActivationPage = lazyWithRetry(() => import("@/pages/SolicitationActivationPage"));
+const AdminSolicitationPage = lazyWithRetry(() => import("@/pages/admin/AdminSolicitationPage"));
 const PageCheckoutNativeScrollable = lazyWithRetry(() => import("@/pages/checkout/PageCheckoutNativeScrollable"));
 const LandingContractorAIActivation = lazyWithRetry(() => import("@/pages/acquisition/LandingContractorAIActivation"));
 const PageAdminPipelineProspects = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminPipelineProspects"));
@@ -1039,7 +1041,8 @@ export const AppRouter = () => (
         <Route path="/checkout" element={<PageCheckoutStripe />} />
         <Route path="/checkout/success" element={<PageCheckoutSuccess />} />
         <Route path="/checkout/native/:planCode" element={<PageCheckoutNativeScrollable />} />
-        <Route path="/activation" element={<PageActivationStart />} />
+        <Route path="/activation" element={<Suspense fallback={<LazyFallback />}><SolicitationActivationPage /></Suspense>} />
+        <Route path="/activation/start" element={<PageActivationStart />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/pricing/proprietaires" element={<PricingHomeownersPage />} />
         <Route path="/pricing/entrepreneurs" element={<PricingContractorsPage />} />
@@ -1464,6 +1467,7 @@ export const AppRouter = () => (
         <Route path="/admin/market-engine" element={<ProtectedRoute requiredRole="admin"><AdminMarketEngine /></ProtectedRoute>} />
         <Route path="/admin/nexus" element={<ProtectedRoute requiredRole="admin"><AdminNexusDashboard /></ProtectedRoute>} />
         <Route path="/admin/dispatch-center" element={<ProtectedRoute requiredRole="admin"><AdminDispatchCenter /></ProtectedRoute>} />
+        <Route path="/admin/solicitation" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><AdminSolicitationPage /></Suspense></ProtectedRoute>} />
         <Route path="/admin/domain-intelligence" element={<ProtectedRoute requiredRole="admin"><AdminDomainIntelligence /></ProtectedRoute>} />
         <Route path="/admin/domain-health" element={<ProtectedRoute requiredRole="admin"><PageDomainHealthDashboard /></ProtectedRoute>} />
         <Route path="/admin/alex-guardrails" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexConversationRules /></ProtectedRoute>} />
