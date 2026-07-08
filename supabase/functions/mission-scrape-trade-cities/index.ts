@@ -47,7 +47,8 @@ async function placesTextSearch(query: string): Promise<any[]> {
 }
 
 async function scrapeGooglePlaces(trade: string, city: string): Promise<ScrapedCompany[]> {
-  if (!GOOGLE_PLACES_API_KEY) return [];
+  const pk = getPlacesKey();
+  if (!pk) return [];
   const queries = [
     `${trade} ${city} Québec`,
     `isolation entretoit ${city}`,
@@ -65,7 +66,7 @@ async function scrapeGooglePlaces(trade: string, city: string): Promise<ScrapedC
     let phone: string | null = null;
     let website: string | null = null;
     try {
-      const dUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${r.place_id}&fields=formatted_phone_number,website,formatted_address&key=${GOOGLE_PLACES_API_KEY}`;
+      const dUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${r.place_id}&fields=formatted_phone_number,website,formatted_address&key=${pk.key}`;
       const dRes = await fetch(dUrl);
       if (dRes.ok) {
         const d = await dRes.json();
