@@ -218,6 +218,9 @@ export default function PageAdminOutreachErrors() {
             <Button variant="outline" size="sm" onClick={() => refetch()}>
               <RefreshCw className="w-4 h-4 mr-1" /> Refresh
             </Button>
+            <Button size="sm" variant="outline" onClick={relookupStuck} disabled={busy}>
+              <RotateCw className="w-4 h-4 mr-1" /> Re-run lookup on stuck phones
+            </Button>
             <Button size="sm" onClick={retryAll} disabled={busy || stats.retryable === 0 || !outreachEnabled}>
               <RotateCw className="w-4 h-4 mr-1" /> Retry {stats.retryable} retryable
             </Button>
