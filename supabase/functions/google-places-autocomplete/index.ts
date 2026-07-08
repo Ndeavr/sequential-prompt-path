@@ -1,4 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import {
+  getGoogleMapsCredentials,
+  googleConnectorAvailable,
+  placeDetails,
+  placesAutocomplete,
+} from "../_shared/googleMapsConnector.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,13 +22,13 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  const GOOGLE_PLACES_API_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY");
-  if (!GOOGLE_PLACES_API_KEY) {
-    console.error("[google-places] GOOGLE_PLACES_API_KEY missing");
+  const creds = getGoogleMapsCredentials();
+  if (!googleConnectorAvailable(creds) && !creds.serverKey && !creds.legacyKey) {
+    console.error("[google-places] no Google Maps credentials configured");
     return json({
       predictions: [],
       error: "API_KEY_MISSING",
-      message: "GOOGLE_PLACES_API_KEY not configured",
+      message: "Aucune clé Google Maps configurée",
     }, 200);
   }
 
@@ -32,52 +38,39 @@ serve(async (req) => {
 
     // ---------- Place Details ----------
     if (body.place_id) {
-      const fields =
-        "name,formatted_address,formatted_phone_number,website,rating,user_ratings_total,types,address_components,geometry";
-      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(
-        body.place_id,
-      )}&fields=${fields}&language=fr&key=${GOOGLE_PLACES_API_KEY}`;
-      const res = await fetch(url);
-      const data = await res.json();
+      const { data, source, google_status, error_message } = await placeDetails(body.place_id, {
+        language: "fr",
+      });
 
-      if (data.status !== "OK") {
-        console.error("[google-places][details] status=", data.status, "msg=", data.error_message);
+      if (!data) {
+        console.error("[google-places][details] status=", google_status, "msg=", error_message);
         return json({
-          error: data.status,
-          message: data.error_message || "Google Places details error",
-          ...(debug ? { debug_url: url.replace(GOOGLE_PLACES_API_KEY, "***") } : {}),
+          error: google_status || "DETAILS_FAILED",
+          message: error_message || "Google Places details error",
+          source,
         }, 200);
       }
 
-      const r = data.result;
-      const comps: any[] = r.address_components || [];
-      const pick = (type: string, useShort = false): string => {
-        const c = comps.find((x: any) => Array.isArray(x.types) && x.types.includes(type));
-        if (!c) return "";
-        return useShort ? (c.short_name || c.long_name || "") : (c.long_name || c.short_name || "");
-      };
-      const city =
-        pick("locality") || pick("sublocality") || pick("administrative_area_level_2");
-
       return json({
         result: {
-          place_id: body.place_id,
-          name: r.name || "",
-          address: r.formatted_address || "",
-          street_number: pick("street_number"),
-          street_name: pick("route"),
-          city,
-          province: pick("administrative_area_level_1", true),
-          postal_code: pick("postal_code"),
-          country: pick("country", true) || "CA",
-          latitude: r.geometry?.location?.lat ?? null,
-          longitude: r.geometry?.location?.lng ?? null,
-          phone: r.formatted_phone_number || "",
-          website: r.website || "",
-          rating: r.rating || 0,
-          review_count: r.user_ratings_total || 0,
-          types: r.types || [],
+          place_id: data.place_id,
+          name: data.name,
+          address: data.address,
+          street_number: data.street_number,
+          street_name: data.street_name,
+          city: data.city,
+          province: data.province,
+          postal_code: data.postal_code,
+          country: data.country,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          phone: data.phone,
+          website: data.website,
+          rating: data.rating,
+          review_count: data.review_count,
+          types: data.types,
         },
+        source,
       });
     }
 
@@ -87,49 +80,44 @@ serve(async (req) => {
       return json({ predictions: [] });
     }
 
-    const params = new URLSearchParams({
-      input: input.trim(),
-      key: GOOGLE_PLACES_API_KEY,
+    const { data, source, google_status, error_message } = await placesAutocomplete(input.trim(), {
       types: types || "address",
+      region: region || "ca",
       language: language || "fr",
     });
-    if (region) params.set("components", `country:${region}`);
 
-    const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?${params}`;
-    const res = await fetch(url);
-    const data = await res.json();
-
-    // Surface upstream errors clearly to client
-    if (data.status && data.status !== "OK" && data.status !== "ZERO_RESULTS") {
+    if (!data) {
       console.error(
         "[google-places][autocomplete] status=",
-        data.status,
+        google_status,
         "msg=",
-        data.error_message,
+        error_message,
         "input=",
         input,
       );
       return json({
         predictions: [],
-        error: data.status,
-        message: data.error_message || "Google Places autocomplete error",
-        ...(debug ? { debug_url: url.replace(GOOGLE_PLACES_API_KEY, "***") } : {}),
+        error: google_status || "AUTOCOMPLETE_FAILED",
+        message: error_message || "Google Places autocomplete error",
+        source,
+        ...(debug ? { debug_input: input } : {}),
       }, 200);
     }
 
-    if (data.status === "ZERO_RESULTS") {
+    if (data.length === 0) {
       console.log("[google-places][autocomplete] zero results for:", input);
     } else {
-      console.log("[google-places][autocomplete] OK", (data.predictions || []).length, "results for:", input);
+      console.log("[google-places][autocomplete]", data.length, "results for:", input, "via", source);
     }
 
     return json({
-      predictions: (data.predictions || []).map((p: any) => ({
+      predictions: data.map((p) => ({
         place_id: p.place_id,
         description: p.description,
         structured_formatting: p.structured_formatting,
       })),
-      ...(debug ? { debug_status: data.status, debug_url: url.replace(GOOGLE_PLACES_API_KEY, "***") } : {}),
+      source,
+      ...(debug ? { debug_status: google_status, debug_input: input } : {}),
     });
   } catch (err) {
     console.error("[google-places] unexpected error:", err);
