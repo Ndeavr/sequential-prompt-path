@@ -25,20 +25,30 @@ interface QueueRow {
 export default function AdminSolicitationPage() {
   const qc = useQueryClient();
   const [busy, setBusy] = useState<string | null>(null);
+  const [showTest, setShowTest] = useState(false);
 
   const { data } = useQuery({
-    queryKey: ["admin-solicitation"],
+    queryKey: ["admin-solicitation", showTest],
     refetchInterval: 10_000,
     queryFn: async () => {
-      const [rowsRes, variantsRes, winsRes] = await Promise.all([
-        supabase.from("contractor_outreach_queue" as any).select("*").order("created_at", { ascending: false }).limit(200),
+      let queueQ = supabase.from("contractor_outreach_queue" as any).select("*").order("created_at", { ascending: false }).limit(200);
+      if (!showTest) queueQ = queueQ.eq("is_test", false);
+      const [rowsRes, variantsRes, winsRes, milestonesRes, deliveredRes] = await Promise.all([
+        queueQ,
         supabase.from("solicitation_message_variants" as any).select("*").order("code"),
         supabase.from("solicitation_first_wins" as any).select("*").order("created_at", { ascending: false }).limit(1),
+        supabase.from("first_dollar_milestones" as any).select("*"),
+        supabase.from("outreach_delivery_logs" as any).select("status", { count: "exact", head: true }).eq("status", "sent").eq("is_test", showTest ? true : false),
       ]);
+      const milestones = ((milestonesRes.data ?? []) as any[]).reduce((acc, m) => {
+        acc[m.event] = m; return acc;
+      }, {} as Record<string, any>);
       return {
         rows: ((rowsRes.data ?? []) as unknown) as QueueRow[],
         variants: ((variantsRes.data ?? []) as unknown) as any[],
         firstWin: (((winsRes.data ?? [])[0] ?? null) as unknown) as any,
+        milestones,
+        deliveredCount: deliveredRes.count ?? 0,
       };
     },
   });
@@ -49,11 +59,16 @@ export default function AdminSolicitationPage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "contractor_outreach_queue" }, () => {
         qc.invalidateQueries({ queryKey: ["admin-solicitation"] });
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "outreach_delivery_logs" }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-solicitation"] });
+      })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [qc]);
 
   const rows = data?.rows ?? [];
+  const milestones = data?.milestones ?? {};
+  const delivered = data?.deliveredCount ?? 0;
   const funnel = {
     prospects: rows.length,
     sent: rows.filter((r) => r.sent_at).length,
@@ -88,12 +103,17 @@ export default function AdminSolicitationPage() {
   return (
     <div className="admin-theme min-h-screen bg-background text-foreground p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        <header className="flex items-center justify-between">
+        <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">Solicitation Engine</h1>
             <p className="text-sm text-muted-foreground mt-1">SMS acquisition funnel — target first $1 activation today.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap items-center">
+            <label className="flex items-center gap-1.5 text-xs">
+              <input type="checkbox" checked={showTest} onChange={(e) => setShowTest(e.target.checked)} />
+              Show test data
+            </label>
+            <a href="/admin/outreach-errors" className="text-xs underline opacity-80">Failure Command Center →</a>
             <Button variant="outline" disabled={busy !== null} onClick={() => callFn("solicitation-build-queue", { target: 25 }, "Build queue")}>
               Build queue (25)
             </Button>
@@ -105,6 +125,63 @@ export default function AdminSolicitationPage() {
             </Button>
           </div>
         </header>
+
+        {/* Production Health Banner */}
+        <Card className="border-border">
+          <CardContent className="p-4 grid grid-cols-2 md:grid-cols-5 lg:grid-cols-9 gap-3 text-center text-xs">
+            {(() => {
+              const scraped = funnel.prospects;
+              const queued = rows.filter((r) => r.status === "queued").length;
+              const sent = funnel.sent;
+              const clicked = funnel.clicked;
+              const activated = funnel.activated;
+              const paid = activated;
+              const revenue = funnel.revenue;
+              const cell = (label: string, v: number | string, red = false) => (
+                <div key={label} className={`rounded-md py-2 px-1 ${red ? "bg-red-500/15 text-red-300" : "bg-white/5"}`}>
+                  <div className="uppercase tracking-wider opacity-70">{label}</div>
+                  <div className="text-lg font-semibold mt-0.5">{v}</div>
+                </div>
+              );
+              return [
+                cell("Scraped", scraped),
+                cell("Queued", queued),
+                cell("Sent", sent),
+                cell("Delivered", delivered, delivered === 0),
+                cell("Clicked", clicked),
+                cell("Activated", activated, activated === 0),
+                cell("Paid", paid, paid === 0),
+                cell("Revenue", `$${revenue}`, revenue === 0),
+                cell("Test?", showTest ? "ON" : "OFF"),
+              ];
+            })()}
+          </CardContent>
+        </Card>
+
+        {/* First Dollar Status */}
+        <Card className={milestones.first_payment ? "border-emerald-500/40 bg-emerald-500/10" : "border-amber-500/40 bg-amber-500/5"}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">
+              {milestones.first_payment
+                ? `🏆 FIRST DOLLAR ACHIEVED — ${new Date(milestones.first_payment.achieved_at).toLocaleString("fr-CA")}`
+                : "First Dollar Status"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-4 gap-2 text-sm">
+            {[
+              ["Delivery", "first_delivery"],
+              ["Click", "first_click"],
+              ["Activation", "first_activation"],
+              ["Payment", "first_payment"],
+            ].map(([label, key]) => (
+              <div key={key} className="flex items-center gap-2">
+                <span>{milestones[key] ? "✅" : "❌"}</span>
+                <span className="opacity-80">{label}</span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
 
         <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
           {[
