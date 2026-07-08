@@ -7,6 +7,17 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Stripe 2025+ moved current_period_* onto subscription items. Fall back safely.
+function getSubscriptionPeriod(sub: any): { start: string | null; end: string | null } {
+  const item = sub?.items?.data?.[0];
+  const startSec = item?.current_period_start ?? sub?.current_period_start ?? null;
+  const endSec = item?.current_period_end ?? sub?.current_period_end ?? null;
+  const toIso = (s: number | null) =>
+    typeof s === "number" && Number.isFinite(s) ? new Date(s * 1000).toISOString() : null;
+  return { start: toIso(startSec), end: toIso(endSec) };
+}
+
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
