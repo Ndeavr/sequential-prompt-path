@@ -114,6 +114,28 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      // Phone guard — reject placeholder/test/invalid numbers before hitting Twilio.
+      const guard = guardPhone(row.phone);
+      if (!guard.ok) {
+        await insertLog(row, {
+          status: "failed",
+          error_code: guard.code,
+          error_message: `Blocked: ${guard.reason}`,
+          retryable: false,
+          message_body: message,
+          raw_response: { blocked_locally: true, reason: guard.reason },
+        });
+        await sb.from("contractor_outreach_queue").update({
+          status: "blocked_invalid_number",
+          last_error: `${guard.code}: ${guard.reason}`.slice(0, 240),
+          attempts: (row.attempts ?? 0) + 1,
+          updated_at: new Date().toISOString(),
+        }).eq("id", row.id);
+        failed++;
+        results.push({ phone: row.phone, error_code: guard.code, retryable: false });
+        continue;
+      }
+
       if (!LOVABLE_API_KEY || !TWILIO_API_KEY || !TWILIO_FROM) {
         await insertLog(row, {
           status: "failed",

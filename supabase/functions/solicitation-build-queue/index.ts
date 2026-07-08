@@ -1,6 +1,7 @@
 // solicitation-build-queue — select top prospects, insert into contractor_outreach_queue.
 // Admin/cron trigger. Never inserts duplicates for phones already active in queue.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { guardPhone } from "../_shared/phoneGuard.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -59,9 +60,11 @@ Deno.serve(async (req) => {
     const skip = new Set((existing ?? []).map((r: any) => r.phone));
 
     const candidates: any[] = [];
+    let rejectedByGuard = 0;
     for (const row of pool) {
-      const phone = normPhone(row.phone);
-      if (!phone) continue;
+      const guard = guardPhone(row.phone);
+      if (!guard.ok) { rejectedByGuard++; continue; }
+      const phone = guard.e164;
       if (skip.has(phone)) continue;
       if (row.company_name && DIRECTORY_BLOCKLIST.test(row.company_name)) continue;
       if (row.website && DIRECTORY_BLOCKLIST.test(row.website)) continue;
