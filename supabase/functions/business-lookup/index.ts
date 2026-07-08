@@ -95,7 +95,10 @@ serve(async (req) => {
 
     const searchQuery = city ? `${query} ${city} Québec` : `${query} Québec Canada`;
 
-    const res = await placesSearchText(searchQuery, {
+    const fieldMask =
+      "places.id,places.displayName,places.formattedAddress,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.primaryType,places.primaryTypeDisplayName,places.types,places.addressComponents,places.editorialSummary";
+
+    const res = await placesSearchTextRaw(searchQuery, {
       language: "fr",
       region: "CA",
       maxResults: 5,
@@ -105,9 +108,9 @@ serve(async (req) => {
           high: { latitude: 49.0, longitude: -57.1 },    // NE Quebec
         },
       },
-    });
+    }, fieldMask);
 
-    if (!res.data) {
+    if (!res.places) {
       console.error("business-lookup search failed:", res.error_message);
       return new Response(JSON.stringify({ results: [], error: res.error_message || "Search failed" }), {
         status: 200,
@@ -115,28 +118,36 @@ serve(async (req) => {
       });
     }
 
-    const results = res.data.map((place: any) => {
+    const results = res.places.map((place: any) => {
       const types = place.types || [];
       const { primary, secondary } = mapTypesToCategories(types);
 
+      // Extract city / province from address components
+      const cityComponent = place.addressComponents?.find((c: any) =>
+        c.types?.includes("locality")
+      );
+      const provinceComponent = place.addressComponents?.find((c: any) =>
+        c.types?.includes("administrative_area_level_1")
+      );
+
       return {
-        place_id: place.place_id,
-        business_name: place.structured_formatting?.main_text || place.description || "",
-        address: place.description || "",
-        city: city || "",
-        province: "QC",
-        phone: "",
-        website: "",
-        rating: 0,
-        review_count: 0,
+        place_id: place.id,
+        business_name: place.displayName?.text || "",
+        address: place.formattedAddress || "",
+        city: cityComponent?.longText || city || "",
+        province: provinceComponent?.shortText || provinceComponent?.longText || "",
+        phone: place.internationalPhoneNumber || "",
+        website: place.websiteUri || "",
+        rating: place.rating || 0,
+        review_count: place.userRatingCount || 0,
         primary_category: primary,
         secondary_categories: secondary,
         google_types: types.slice(0, 8),
-        description: "",
+        description: place.editorialSummary?.text || "",
       };
     });
 
-    return new Response(JSON.stringify({ results }), {
+    return new Response(JSON.stringify({ results, source: res.source }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
