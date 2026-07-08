@@ -7,6 +7,17 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Stripe 2025+ moved current_period_* onto subscription items. Fall back safely.
+function getSubscriptionPeriod(sub: any): { start: string | null; end: string | null } {
+  const item = sub?.items?.data?.[0];
+  const startSec = item?.current_period_start ?? sub?.current_period_start ?? null;
+  const endSec = item?.current_period_end ?? sub?.current_period_end ?? null;
+  const toIso = (s: number | null) =>
+    typeof s === "number" && Number.isFinite(s) ? new Date(s * 1000).toISOString() : null;
+  return { start: toIso(startSec), end: toIso(endSec) };
+}
+
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -228,6 +239,7 @@ Deno.serve(async (req) => {
 
         // Upsert contractor_subscriptions
         if (subscription) {
+          const period = getSubscriptionPeriod(subscription);
           await supabase.from("contractor_subscriptions").upsert(
             {
               contractor_id: contractorId,
@@ -236,12 +248,8 @@ Deno.serve(async (req) => {
               plan_id: planId,
               billing_interval: billingInterval,
               status: subscription.status,
-              current_period_start: new Date(
-                subscription.current_period_start * 1000
-              ).toISOString(),
-              current_period_end: new Date(
-                subscription.current_period_end * 1000
-              ).toISOString(),
+              current_period_start: period.start,
+              current_period_end: period.end,
               cancel_at_period_end: subscription.cancel_at_period_end,
               updated_at: new Date().toISOString(),
             },
@@ -355,14 +363,11 @@ Deno.serve(async (req) => {
         const planId = subscription.metadata?.plan_id;
         const billingInterval = subscription.metadata?.billing_interval;
 
+        const period = getSubscriptionPeriod(subscription);
         const updateData: Record<string, unknown> = {
           status: subscription.status,
-          current_period_start: new Date(
-            subscription.current_period_start * 1000
-          ).toISOString(),
-          current_period_end: new Date(
-            subscription.current_period_end * 1000
-          ).toISOString(),
+          current_period_start: period.start,
+          current_period_end: period.end,
           updated_at: new Date().toISOString(),
         };
         if (planId) updateData.plan_id = planId;
@@ -415,14 +420,11 @@ Deno.serve(async (req) => {
         const planId = subscription.metadata?.plan_id;
         const billingInterval = subscription.metadata?.billing_interval;
 
+        const period = getSubscriptionPeriod(subscription);
         const updateData: Record<string, unknown> = {
           status: subscription.status,
-          current_period_start: new Date(
-            subscription.current_period_start * 1000
-          ).toISOString(),
-          current_period_end: new Date(
-            subscription.current_period_end * 1000
-          ).toISOString(),
+          current_period_start: period.start,
+          current_period_end: period.end,
           cancel_at_period_end: subscription.cancel_at_period_end,
           updated_at: new Date().toISOString(),
         };
