@@ -170,11 +170,21 @@ export default function PageAdminOutreachErrors() {
             <Button variant="outline" size="sm" onClick={() => refetch()}>
               <RefreshCw className="w-4 h-4 mr-1" /> Refresh
             </Button>
-            <Button size="sm" onClick={retryAll} disabled={busy || stats.retryable === 0}>
+            <Button size="sm" onClick={retryAll} disabled={busy || stats.retryable === 0 || !outreachEnabled}>
               <RotateCw className="w-4 h-4 mr-1" /> Retry {stats.retryable} retryable
             </Button>
           </div>
         </header>
+
+        {!outreachEnabled && (
+          <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 text-sm flex items-center justify-between gap-3">
+            <div>
+              <div className="font-semibold text-red-300">⛔ OUTREACH_ENABLED = OFF — retries are disabled.</div>
+              <div className="text-xs text-red-200/80 mt-0.5">Flip the kill switch in Provider Health once Twilio auth passes.</div>
+            </div>
+            <a href="/admin/provider-health" className="text-xs underline text-red-100">Provider Health →</a>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
