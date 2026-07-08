@@ -409,14 +409,11 @@ Deno.serve(async (req) => {
         const planId = subscription.metadata?.plan_id;
         const billingInterval = subscription.metadata?.billing_interval;
 
+        const period = getSubscriptionPeriod(subscription);
         const updateData: Record<string, unknown> = {
           status: subscription.status,
-          current_period_start: new Date(
-            subscription.current_period_start * 1000
-          ).toISOString(),
-          current_period_end: new Date(
-            subscription.current_period_end * 1000
-          ).toISOString(),
+          current_period_start: period.start,
+          current_period_end: period.end,
           cancel_at_period_end: subscription.cancel_at_period_end,
           updated_at: new Date().toISOString(),
         };
