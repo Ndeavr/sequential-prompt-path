@@ -56,9 +56,12 @@ export default function PageAdminOutreachErrors() {
         .limit(300);
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
       if (!showTest) q = q.eq("is_test", false);
-      const { data: logs, error } = await q;
-      if (error) throw error;
-      const logList = (logs ?? []) as unknown as Log[];
+      const [logsRes, flagRes] = await Promise.all([
+        q,
+        supabase.from("system_flags" as any).select("*").eq("key", "OUTREACH_ENABLED").maybeSingle(),
+      ]);
+      if (logsRes.error) throw logsRes.error;
+      const logList = (logsRes.data ?? []) as unknown as Log[];
 
       const queueIds = Array.from(new Set(logList.map((l) => l.queue_id).filter(Boolean))) as string[];
       let queueMap: Record<string, QueueLite> = {};
@@ -69,12 +72,13 @@ export default function PageAdminOutreachErrors() {
           .in("id", queueIds);
         queueMap = Object.fromEntries(((qs ?? []) as unknown as QueueLite[]).map((r) => [r.id, r]));
       }
-      return { logs: logList, queueMap };
+      return { logs: logList, queueMap, outreachEnabled: !!(flagRes.data as any)?.value };
     },
   });
 
   const logs = data?.logs ?? [];
   const queueMap = data?.queueMap ?? {};
+  const outreachEnabled = data?.outreachEnabled ?? false;
 
   const stats = useMemo(() => {
     const failed = logs.filter((l) => l.status === "failed");
@@ -166,11 +170,21 @@ export default function PageAdminOutreachErrors() {
             <Button variant="outline" size="sm" onClick={() => refetch()}>
               <RefreshCw className="w-4 h-4 mr-1" /> Refresh
             </Button>
-            <Button size="sm" onClick={retryAll} disabled={busy || stats.retryable === 0}>
+            <Button size="sm" onClick={retryAll} disabled={busy || stats.retryable === 0 || !outreachEnabled}>
               <RotateCw className="w-4 h-4 mr-1" /> Retry {stats.retryable} retryable
             </Button>
           </div>
         </header>
+
+        {!outreachEnabled && (
+          <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 text-sm flex items-center justify-between gap-3">
+            <div>
+              <div className="font-semibold text-red-300">⛔ OUTREACH_ENABLED = OFF — retries are disabled.</div>
+              <div className="text-xs text-red-200/80 mt-0.5">Flip the kill switch in Provider Health once Twilio auth passes.</div>
+            </div>
+            <a href="/admin/provider-health" className="text-xs underline text-red-100">Provider Health →</a>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
@@ -261,7 +275,7 @@ export default function PageAdminOutreachErrors() {
                             <Bug className="w-3.5 h-3.5 mr-1" />Analyze
                           </Button>
                           {l.status === "failed" && l.retryable && (
-                            <Button size="sm" variant="ghost" onClick={() => retryOne(l)} disabled={busy}>
+                            <Button size="sm" variant="ghost" onClick={() => retryOne(l)} disabled={busy || !outreachEnabled}>
                               <RotateCw className="w-3.5 h-3.5 mr-1" />Retry
                             </Button>
                           )}

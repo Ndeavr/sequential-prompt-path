@@ -65633,6 +65633,42 @@ export type Database = {
           },
         ]
       }
+      provider_health_checks: {
+        Row: {
+          check_name: string
+          checked_at: string
+          error_body: Json | null
+          http_status: number | null
+          id: string
+          latency_ms: number | null
+          metadata: Json | null
+          provider: string
+          status: string
+        }
+        Insert: {
+          check_name: string
+          checked_at?: string
+          error_body?: Json | null
+          http_status?: number | null
+          id?: string
+          latency_ms?: number | null
+          metadata?: Json | null
+          provider: string
+          status: string
+        }
+        Update: {
+          check_name?: string
+          checked_at?: string
+          error_body?: Json | null
+          http_status?: number | null
+          id?: string
+          latency_ms?: number | null
+          metadata?: Json | null
+          provider?: string
+          status?: string
+        }
+        Relationships: []
+      }
       qr_bundle_cards: {
         Row: {
           bundle_id: string
@@ -76249,6 +76285,30 @@ export type Database = {
         }
         Relationships: []
       }
+      system_flags: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: boolean
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: boolean
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: boolean
+        }
+        Relationships: []
+      }
       system_health_checks: {
         Row: {
           check_type: string
@@ -82174,6 +82234,22 @@ export type Database = {
       set_lead_pipeline_status: {
         Args: { p_lead_id: string; p_status: string }
         Returns: undefined
+      }
+      set_system_flag: {
+        Args: { _key: string; _value: boolean }
+        Returns: {
+          description: string | null
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: boolean
+        }
+        SetofOptions: {
+          from: "*"
+          to: "system_flags"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       sms_infrastructure_score: { Args: never; Returns: Json }
       track_affiliate_conversion: {

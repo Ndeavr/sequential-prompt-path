@@ -33,12 +33,13 @@ export default function AdminSolicitationPage() {
     queryFn: async () => {
       let queueQ = supabase.from("contractor_outreach_queue" as any).select("*").order("created_at", { ascending: false }).limit(200);
       if (!showTest) queueQ = queueQ.eq("is_test", false);
-      const [rowsRes, variantsRes, winsRes, milestonesRes, deliveredRes] = await Promise.all([
+      const [rowsRes, variantsRes, winsRes, milestonesRes, deliveredRes, flagRes] = await Promise.all([
         queueQ,
         supabase.from("solicitation_message_variants" as any).select("*").order("code"),
         supabase.from("solicitation_first_wins" as any).select("*").order("created_at", { ascending: false }).limit(1),
         supabase.from("first_dollar_milestones" as any).select("*"),
         supabase.from("outreach_delivery_logs" as any).select("status", { count: "exact", head: true }).eq("status", "sent").eq("is_test", showTest ? true : false),
+        supabase.from("system_flags" as any).select("*").eq("key", "OUTREACH_ENABLED").maybeSingle(),
       ]);
       const milestones = ((milestonesRes.data ?? []) as any[]).reduce((acc, m) => {
         acc[m.event] = m; return acc;
@@ -49,6 +50,7 @@ export default function AdminSolicitationPage() {
         firstWin: (((winsRes.data ?? [])[0] ?? null) as unknown) as any,
         milestones,
         deliveredCount: deliveredRes.count ?? 0,
+        outreachEnabled: !!(flagRes.data as any)?.value,
       };
     },
   });
@@ -113,6 +115,7 @@ export default function AdminSolicitationPage() {
               <input type="checkbox" checked={showTest} onChange={(e) => setShowTest(e.target.checked)} />
               Show test data
             </label>
+            <a href="/admin/provider-health" className="text-xs underline opacity-80">Provider Health →</a>
             <a href="/admin/outreach-errors" className="text-xs underline opacity-80">Failure Command Center →</a>
             <Button variant="outline" disabled={busy !== null} onClick={() => callFn("solicitation-build-queue", { target: 25 }, "Build queue")}>
               Build queue (25)
@@ -125,6 +128,19 @@ export default function AdminSolicitationPage() {
             </Button>
           </div>
         </header>
+
+        {/* Kill switch banner */}
+        {data && !data.outreachEnabled && (
+          <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 text-sm flex items-center justify-between gap-3">
+            <div>
+              <div className="font-semibold text-red-300">⛔ OUTREACH_ENABLED = OFF — no SMS will be sent.</div>
+              <div className="text-xs text-red-200/80 mt-0.5">
+                Every sender short-circuits with `OUTREACH_DISABLED`. Fix Twilio auth then flip the switch in Provider Health.
+              </div>
+            </div>
+            <a href="/admin/provider-health" className="text-xs underline text-red-100">Open Provider Health →</a>
+          </div>
+        )}
 
         {/* Production Health Banner */}
         <Card className="border-border">

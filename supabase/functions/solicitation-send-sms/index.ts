@@ -4,6 +4,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { classifyTwilio, classifyNetworkError } from "../_shared/outreachRetryPolicy.ts";
 import { normalizePhone } from "../_shared/normalizePhone.ts";
+import { isOutreachEnabled } from "../_shared/killSwitch.ts";
+import { guardPhone } from "../_shared/phoneGuard.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -34,6 +36,15 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    // Kill switch — refuse to send while OUTREACH_ENABLED = false.
+    if (!dryRun && !(await isOutreachEnabled(sb))) {
+      return json({
+        sent: 0,
+        blocked: "outreach_disabled",
+        note: "Kill switch OUTREACH_ENABLED is OFF. Flip it in /admin/provider-health once Twilio auth passes.",
+      });
+    }
 
     // Daily cap check
     const today = new Date().toISOString().slice(0, 10);
@@ -100,6 +111,28 @@ Deno.serve(async (req) => {
 
       if (dryRun) {
         results.push({ phone: row.phone, variant: variant.code, message });
+        continue;
+      }
+
+      // Phone guard — reject placeholder/test/invalid numbers before hitting Twilio.
+      const guard = guardPhone(row.phone);
+      if (!guard.ok) {
+        await insertLog(row, {
+          status: "failed",
+          error_code: guard.code,
+          error_message: `Blocked: ${guard.reason}`,
+          retryable: false,
+          message_body: message,
+          raw_response: { blocked_locally: true, reason: guard.reason },
+        });
+        await sb.from("contractor_outreach_queue").update({
+          status: "blocked_invalid_number",
+          last_error: `${guard.code}: ${guard.reason}`.slice(0, 240),
+          attempts: (row.attempts ?? 0) + 1,
+          updated_at: new Date().toISOString(),
+        }).eq("id", row.id);
+        failed++;
+        results.push({ phone: row.phone, error_code: guard.code, retryable: false });
         continue;
       }
 
