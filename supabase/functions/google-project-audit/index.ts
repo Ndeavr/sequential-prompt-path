@@ -152,6 +152,7 @@ Deno.serve(async (req) => {
 });
 
 function featureFor(name: string): string {
+  if (/LOVABLE/i.test(name)) return "Lovable Connector (gateway proxy)";
   if (/PLACES/i.test(name)) return "Places / Address Autocomplete / Geocoding";
   if (/MAPS/i.test(name)) return "Maps JavaScript / Static Maps";
   if (/GEOCODING/i.test(name)) return "Geocoding";
