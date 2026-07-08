@@ -31,8 +31,9 @@ function normalizeKey(s: string): string {
 }
 
 async function placesTextSearch(query: string): Promise<any[]> {
-  if (!GOOGLE_PLACES_API_KEY) return [];
-  const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&region=ca&language=fr&key=${GOOGLE_PLACES_API_KEY}`;
+  const pk = getPlacesKey();
+  if (!pk) return [];
+  const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&region=ca&language=fr&key=${pk.key}`;
   const res = await fetch(url);
   if (!res.ok) {
     console.error("places http", res.status);
