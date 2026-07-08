@@ -1,5 +1,6 @@
 // outreach-retry-failed — resets retryable failed queue rows to 'queued', then triggers send.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { isOutreachEnabled } from "../_shared/killSwitch.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -20,6 +21,10 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    if (trigger && !(await isOutreachEnabled(sb))) {
+      return json({ retried: 0, blocked: "outreach_disabled", note: "Kill switch OUTREACH_ENABLED is OFF." }, 200);
+    }
 
     // Find candidate queue rows: status='failed' AND latest log retryable=true.
     // Pull failed queue rows.

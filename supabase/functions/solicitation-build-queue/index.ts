@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     });
     const chosen = deduped.slice(0, target);
 
-    if (chosen.length === 0) return json({ inserted: 0, note: "no eligible candidates" });
+    if (chosen.length === 0) return json({ inserted: 0, rejected_by_guard: rejectedByGuard, note: "no eligible candidates" });
 
     const rows = chosen.map((c) => ({
       contractor_id: c.contractor_id,
@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
     }));
     const { error } = await sb.from("contractor_outreach_queue").insert(rows);
     if (error) return json({ error: error.message }, 500);
-    return json({ inserted: rows.length, sample: rows.slice(0, 3) });
+    return json({ inserted: rows.length, rejected_by_guard: rejectedByGuard, sample: rows.slice(0, 3) });
   } catch (e: any) {
     return json({ error: String(e?.message ?? e) }, 500);
   }
