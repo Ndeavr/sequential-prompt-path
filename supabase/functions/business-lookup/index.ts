@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getGoogleMapsCredentials, googleConnectorAvailable, placesSearchText } from "../_shared/googleMapsConnector.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -74,6 +75,14 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const creds = getGoogleMapsCredentials();
+  if (!googleConnectorAvailable(creds) && !creds.serverKey && !creds.legacyKey) {
+    return new Response(JSON.stringify({ results: [], error: "No API credentials configured" }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const { query, city } = await req.json();
     if (!query || query.trim().length < 2) {
@@ -83,76 +92,46 @@ serve(async (req) => {
       });
     }
 
-    const googleApiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
-    if (!googleApiKey) {
-      return new Response(JSON.stringify({ results: [], error: "No API key configured" }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Build search query
     const searchQuery = city ? `${query} ${city} Québec` : `${query} Québec Canada`;
 
-    const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": googleApiKey,
-        "X-Goog-FieldMask":
-          "places.id,places.displayName,places.formattedAddress,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.primaryType,places.primaryTypeDisplayName,places.types,places.addressComponents,places.editorialSummary",
-      },
-      body: JSON.stringify({
-        textQuery: searchQuery,
-        languageCode: "fr",
-        maxResultCount: 5,
-        locationBias: {
-          rectangle: {
-            low: { latitude: 44.9, longitude: -79.8 },   // SW Quebec
-            high: { latitude: 49.0, longitude: -57.1 },   // NE Quebec
-          },
+    const res = await placesSearchText(searchQuery, {
+      language: "fr",
+      region: "CA",
+      maxResults: 5,
+      locationBias: {
+        rectangle: {
+          low: { latitude: 44.9, longitude: -79.8 },   // SW Quebec
+          high: { latitude: 49.0, longitude: -57.1 },    // NE Quebec
         },
-      }),
+      },
     });
 
-    if (!res.ok) {
-      const errBody = await res.text();
-      console.error("Google Places error:", res.status, errBody);
-      return new Response(JSON.stringify({ results: [], error: "Search failed" }), {
+    if (!res.data) {
+      console.error("business-lookup search failed:", res.error_message);
+      return new Response(JSON.stringify({ results: [], error: res.error_message || "Search failed" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const data = await res.json();
-    const places = data.places || [];
-
-    const results = places.map((place: any) => {
+    const results = res.data.map((place: any) => {
       const types = place.types || [];
       const { primary, secondary } = mapTypesToCategories(types);
-      
-      // Extract city from address components
-      const cityComponent = place.addressComponents?.find((c: any) =>
-        c.types?.includes("locality")
-      );
-      const provinceComponent = place.addressComponents?.find((c: any) =>
-        c.types?.includes("administrative_area_level_1")
-      );
 
       return {
-        place_id: place.id,
-        business_name: place.displayName?.text || "",
-        address: place.formattedAddress || "",
-        city: cityComponent?.longText || "",
-        province: provinceComponent?.shortText || provinceComponent?.longText || "",
-        phone: place.internationalPhoneNumber || "",
-        website: place.websiteUri || "",
-        rating: place.rating || 0,
-        review_count: place.userRatingCount || 0,
+        place_id: place.place_id,
+        business_name: place.structured_formatting?.main_text || place.description || "",
+        address: place.description || "",
+        city: city || "",
+        province: "QC",
+        phone: "",
+        website: "",
+        rating: 0,
+        review_count: 0,
         primary_category: primary,
         secondary_categories: secondary,
         google_types: types.slice(0, 8),
-        description: place.editorialSummary?.text || "",
+        description: "",
       };
     });
 
@@ -162,8 +141,8 @@ serve(async (req) => {
     });
   } catch (err) {
     console.error("business-lookup error:", err);
-    return new Response(JSON.stringify({ error: (err as Error).message, results: [] }), {
-      status: 500,
+    return new Response(JSON.stringify({ results: [], error: String(err) }), {
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
