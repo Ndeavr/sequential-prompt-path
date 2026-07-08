@@ -25,7 +25,7 @@ type Usage = {
   type: "places" | "maps" | "geocoding" | "gemini" | "stt" | "oauth" | "other";
   side: "frontend" | "edge";
   suspectedProject: string;
-  status: "ok" | "duplicate" | "unknown" | "unsafe";
+  status: "ok" | "duplicate" | "unknown" | "unsafe" | "removed";
 };
 
 const CODE_USAGES: Usage[] = [
