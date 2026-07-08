@@ -38,35 +38,32 @@ function fingerprintProject(k: string | null | undefined): string | null {
   return "format_unknown";
 }
 
-async function probeAutocomplete(input: string, key: string) {
-  const params = new URLSearchParams({
-    input,
-    key,
-    language: "fr",
-    components: "country:ca",
-    types: "address",
-  });
-  const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?${params}`;
+async function probeAutocomplete(input: string) {
   const t0 = Date.now();
   try {
-    const res = await fetch(url);
-    const data = await res.json();
+    const { data, source, google_status, error_message } = await placesAutocomplete(input.trim(), {
+      types: "address",
+      region: "ca",
+      language: "fr",
+    });
     return {
-      endpoint: "maps.googleapis.com/maps/api/place/autocomplete/json",
-      http_status: res.status,
-      google_status: data.status ?? null,
-      error_message: data.error_message ?? null,
-      predictions_count: Array.isArray(data.predictions) ? data.predictions.length : 0,
+      endpoint: "connector/google_maps/places/v1",
+      http_status: 200,
+      google_status: google_status ?? (data ? "OK" : "ZERO_RESULTS"),
+      error_message: error_message ?? null,
+      predictions_count: data?.length ?? 0,
       latency_ms: Date.now() - t0,
+      source,
     };
   } catch (e) {
     return {
-      endpoint: "maps.googleapis.com/maps/api/place/autocomplete/json",
+      endpoint: "connector/google_maps/places/v1",
       http_status: 0,
       google_status: "FETCH_ERROR",
       error_message: String(e),
       predictions_count: 0,
       latency_ms: Date.now() - t0,
+      source: "error",
     };
   }
 }
