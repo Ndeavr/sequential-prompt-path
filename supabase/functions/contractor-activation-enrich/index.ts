@@ -85,7 +85,7 @@ async function enrichContractor(
   const importedData: Record<string, unknown> = {};
 
   // 1. Google Places lookup (if GOOGLE_PLACES_API_KEY available)
-  const googleApiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
+  const googleApiKey = Deno.env.get("GOOGLE_PLACES_SERVER_KEY") || Deno.env.get("GOOGLE_PLACES_API_KEY");
   if (googleApiKey && businessName) {
     try {
       const query = encodeURIComponent(`${businessName} Quebec`);

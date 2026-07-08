@@ -154,7 +154,7 @@ serve(async (req) => {
       });
     }
 
-    const googleApiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
+    const googleApiKey = Deno.env.get("GOOGLE_PLACES_SERVER_KEY") || Deno.env.get("GOOGLE_PLACES_API_KEY");
     let places: any[];
 
     if (googleApiKey) {

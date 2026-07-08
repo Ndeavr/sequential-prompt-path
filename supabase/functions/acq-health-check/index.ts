@@ -25,7 +25,7 @@ async function checkSecret(name: string): Promise<boolean> {
 async function pingGooglePlaces(): Promise<Result> {
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   const mapsKey = Deno.env.get("GOOGLE_MAPS_API_KEY");
-  const legacyKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
+  const legacyKey = Deno.env.get("GOOGLE_PLACES_SERVER_KEY") || Deno.env.get("GOOGLE_PLACES_API_KEY");
 
   // Preferred: Lovable Google Maps Platform connector via gateway
   if (lovableKey && mapsKey) {

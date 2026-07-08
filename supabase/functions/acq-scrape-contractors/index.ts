@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
 
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   const mapsKey = Deno.env.get("GOOGLE_MAPS_API_KEY");
-  const legacyKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
+  const legacyKey = Deno.env.get("GOOGLE_PLACES_SERVER_KEY") || Deno.env.get("GOOGLE_PLACES_API_KEY");
   const useGateway = !!(lovableKey && mapsKey);
 
   let created = 0, skipped = 0, errors = 0;

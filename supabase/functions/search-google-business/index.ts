@@ -37,7 +37,7 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  const GOOGLE_PLACES_API_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY");
+  const GOOGLE_PLACES_API_KEY = Deno.env.get("GOOGLE_PLACES_SERVER_KEY") || Deno.env.get("GOOGLE_PLACES_API_KEY");
   if (!GOOGLE_PLACES_API_KEY) {
     return new Response(
       JSON.stringify({ error: "GOOGLE_PLACES_API_KEY not configured" }),
