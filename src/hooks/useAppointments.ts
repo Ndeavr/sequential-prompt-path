@@ -38,15 +38,65 @@ export const useCreateAppointment = () => {
       timeline?: string;
       project_category?: string;
     }) => {
-      // 1. Create appointment
+      // 0. Get contractor city (used for lead + scoring)
+      const { data: contractor } = await supabase
+        .from("contractors")
+        .select("city")
+        .eq("id", input.contractor_id)
+        .maybeSingle();
+
+      // 1. Create a `leads` row so the matching + notification funnel has a linkable record.
+      //    Non-blocking: if this fails we still create the appointment.
+      let leadId: string | null = null;
+      try {
+        const { data: leadRow } = await supabase
+          .from("leads")
+          .insert({
+            lead_type: "contractor",
+            owner_profile_id: user!.id,
+            property_id: input.property_id ?? null,
+            city: contractor?.city ?? null,
+            project_category: input.project_category ?? null,
+            urgency: input.urgency_level ?? "normal",
+            status: "direct_booked",
+            matching_status: "direct_booked",
+            assigned_contractor_id: input.contractor_id,
+            payload: {
+              source: "homeowner_direct_book",
+              budget_range: input.budget_range ?? null,
+              timeline: input.timeline ?? null,
+              notes: input.notes ?? null,
+            } as any,
+          } as any)
+          .select("id")
+          .single();
+        leadId = leadRow?.id ?? null;
+      } catch (e) {
+        console.warn("Lead write-through failed (non-blocking):", e);
+      }
+
+      // 2. Create appointment (linked to lead if we got one).
       const { data: appt, error } = await supabase
         .from("appointments")
-        .insert({ ...input, homeowner_user_id: user!.id })
+        .insert({
+          ...input,
+          homeowner_user_id: user!.id,
+          lead_id: leadId,
+        })
         .select()
         .single();
       if (error) throw error;
 
-      // 2. Gather signals for lead scoring
+      // 3. Fire notifications (non-blocking).
+      try {
+        await supabase.functions.invoke("notify-appointment-created", {
+          body: { appointmentId: appt.id },
+        });
+      } catch (e) {
+        console.warn("notify-appointment-created failed (non-blocking):", e);
+      }
+
+      // 4. Gather signals for lead qualification scoring
       const { data: profile } = await supabase
         .from("profiles")
         .select("full_name, email, phone, avatar_url")
@@ -65,7 +115,6 @@ export const useCreateAppointment = () => {
 
       const profileCompleteness = getProfileCompleteness(profile);
 
-      // 3. Compute score
       const scoreResult = computeLeadScore({
         notes: input.notes,
         project_category: input.project_category,
@@ -79,14 +128,7 @@ export const useCreateAppointment = () => {
         homeowner_profile_completeness: profileCompleteness,
       });
 
-      // 4. Get contractor city
-      const { data: contractor } = await supabase
-        .from("contractors")
-        .select("city")
-        .eq("id", input.contractor_id)
-        .maybeSingle();
-
-      // 5. Insert lead qualification
+      // 5. Insert lead qualification (analytics/scoring — separate from `leads`).
       const { error: leadError } = await supabase
         .from("lead_qualifications")
         .insert({
