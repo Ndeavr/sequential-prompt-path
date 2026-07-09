@@ -21,8 +21,7 @@ import SmartCTA from "@/components/cta/SmartCTA";
 import QRShareSheet from "@/components/sharing/QRShareSheet";
 import MenuQuickActionsContextual from "./MenuQuickActionsContextual";
 import DrawerNavigationMobileIntent from "./DrawerNavigationMobileIntent";
-import unproWordmarkAsset from "@/assets/brand/unpro-logo-blue.png.asset.json";
-const unproWordmarkChrome = unproWordmarkAsset.url;
+import { BRAND } from "@/config/branding";
 import type { UserRole } from "@/types/navigation";
 
 const guestMegaKeys = [
@@ -106,23 +105,12 @@ const SmartHeader = () => {
             {/* Zone 1 — Brand */}
             <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0 -ml-1 sm:ml-0" style={{ minWidth: "fit-content" }}>
               <img
-                src={unproWordmarkChrome}
+                src={BRAND.logo}
                 alt="UNPRO"
-                className={`${isHome ? "h-20 sm:h-24 lg:h-28" : "h-16 sm:h-20 lg:h-24"} w-auto -my-4 transition-all duration-300 group-hover:scale-105`}
-                style={{
-                  filter:
-                    "drop-shadow(0 1px 2px hsl(220 50% 0% / 0.5)) drop-shadow(0 0 0 transparent)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.filter =
-                    "drop-shadow(0 1px 2px hsl(220 50% 0% / 0.5)) drop-shadow(0 0 18px hsl(217 91% 60% / 0.35))";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.filter =
-                    "drop-shadow(0 1px 2px hsl(220 50% 0% / 0.5)) drop-shadow(0 0 0 transparent)";
-                }}
+                className="h-9 md:h-11 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
                 draggable={false}
               />
+
             </Link>
 
             {/* Zone 2 — Desktop main nav */}
