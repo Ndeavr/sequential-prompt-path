@@ -55,7 +55,7 @@ function HeaderFloatingGlass() {
           <img
             src={BRAND.logo}
             alt="UNPRO"
-            className="h-10 md:h-12 w-auto object-contain"
+            className="h-7 md:h-8 w-auto object-contain"
             draggable={false}
           />
         </div>
