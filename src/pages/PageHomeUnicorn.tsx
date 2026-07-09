@@ -50,23 +50,15 @@ function HeaderFloatingGlass() {
   return (
     <header className="px-3 md:px-4 pt-4 pb-2 sticky top-0 z-30">
       <div className="flex items-center justify-between gap-1.5 min-w-0">
-        <div
-          className="uc-glass-strong rounded-2xl pl-2 pr-2.5 md:pl-3 md:pr-4 py-1.5 md:py-2 flex items-center gap-1.5 md:gap-2 flex-shrink-0"
-          style={{ borderRadius: 18 }}
-        >
-          <div
-            className="w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{
-              background: "linear-gradient(135deg, #2563FF, #3B82F6)",
-              boxShadow: "0 6px 14px -4px rgba(37,99,255,0.55)",
-            }}
-          >
-            <HomeIcon size={14} color="white" strokeWidth={2.4} />
-          </div>
-          <span className="font-extrabold tracking-tight text-[13px] md:text-[15px]" style={{ color: "#0B1220" }}>
-            UN<span style={{ color: "#94A3B8" }}>PRO</span>
-          </span>
+        <div className="flex items-center flex-shrink-0">
+          <img
+            src={BRAND.logo}
+            alt="UNPRO"
+            className="h-10 md:h-12 w-auto object-contain"
+            draggable={false}
+          />
         </div>
+
 
         <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
           <div className="flex items-center gap-1 md:gap-2">
