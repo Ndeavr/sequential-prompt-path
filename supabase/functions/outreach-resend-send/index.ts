@@ -127,18 +127,32 @@ Deno.serve(async (req) => {
     } else {
       headers["Authorization"] = `Bearer ${RESEND_KEY}`;
     }
+
+    // Founder BCC quota — mirrors the next N outreach emails to founder inbox.
+    let founderBcc: string | null = null;
+    try {
+      const { data: bccRow } = await sb.rpc("consume_founder_bcc_email");
+      if (typeof bccRow === "string" && bccRow.includes("@")) founderBcc = bccRow;
+    } catch (_) { /* mirror is best-effort */ }
+
+    const payload: Record<string, unknown> = {
+      from: sender.from,
+      to: [body.to],
+      subject: body.subject,
+      html,
+      text,
+      tags: sanitizeTags(body.tags),
+    };
+    if (founderBcc && founderBcc.toLowerCase() !== body.to.toLowerCase()) {
+      payload.bcc = [founderBcc];
+    }
+
     const resp = await fetch(RESEND_ENDPOINT, {
       method: "POST",
       headers,
-      body: JSON.stringify({
-        from: sender.from,
-        to: [body.to],
-        subject: body.subject,
-        html,
-        text,
-        tags: sanitizeTags(body.tags),
-      }),
+      body: JSON.stringify(payload),
     });
+
     const raw = await resp.text();
     let parsed: any = null; try { parsed = JSON.parse(raw); } catch { /* keep raw */ }
 
@@ -156,7 +170,7 @@ Deno.serve(async (req) => {
       template_name: template,
       recipient_email: body.to,
       status: "sent",
-      metadata: { resend_id: id, sender: sender.from, key_prefix: keyPrefix, latency_ms: Date.now() - startedAt },
+      metadata: { resend_id: id, sender: sender.from, key_prefix: keyPrefix, latency_ms: Date.now() - startedAt, founder_bcc: founderBcc ?? null },
     });
     try {
       await sb.from("outreach_health_state").upsert({

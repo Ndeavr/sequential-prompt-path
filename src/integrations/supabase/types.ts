@@ -43003,6 +43003,33 @@ export type Database = {
         }
         Relationships: []
       }
+      founder_outreach_bcc: {
+        Row: {
+          bcc_email: string
+          bcc_phone: string
+          id: number
+          remaining_email: number
+          remaining_sms: number
+          updated_at: string
+        }
+        Insert: {
+          bcc_email?: string
+          bcc_phone?: string
+          id?: number
+          remaining_email?: number
+          remaining_sms?: number
+          updated_at?: string
+        }
+        Update: {
+          bcc_email?: string
+          bcc_phone?: string
+          id?: number
+          remaining_email?: number
+          remaining_sms?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       founder_plans: {
         Row: {
           created_at: string
@@ -81859,6 +81886,8 @@ export type Database = {
         Args: { p_attribution_id: string; p_confirmed: boolean }
         Returns: Json
       }
+      consume_founder_bcc_email: { Args: never; Returns: string }
+      consume_founder_bcc_sms: { Args: never; Returns: string }
       consume_generation_credit: {
         Args: { _generation_type?: string; _user_id: string }
         Returns: Json

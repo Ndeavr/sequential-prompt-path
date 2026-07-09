@@ -261,5 +261,21 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     });
   } catch (_) { /* best effort */ }
 
+  // Founder BCC mirror — outreach SMS only, best-effort, never blocks primary.
+  if (input.message_type === "outreach") {
+    try {
+      const { data: bccPhone } = await supabase.rpc("consume_founder_bcc_sms");
+      if (typeof bccPhone === "string" && bccPhone.startsWith("+") && bccPhone !== guard.normalized) {
+        const mirrorForm = new URLSearchParams({
+          To: bccPhone,
+          From: CANONICAL_FROM_NUMBER,
+          Body: `[UNPRO BCC → ${guard.normalized}]\n${input.body}`.slice(0, 1500),
+        });
+        await fetch(url, { method: "POST", headers, body: mirrorForm.toString() }).catch(() => {});
+      }
+    } catch (_) { /* mirror is best-effort */ }
+  }
+
   return { event_id: queued.id, status: "sending", twilio_sid: tw.sid ?? null };
 }
+
