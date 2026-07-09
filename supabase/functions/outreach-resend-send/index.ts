@@ -170,7 +170,7 @@ Deno.serve(async (req) => {
       template_name: template,
       recipient_email: body.to,
       status: "sent",
-      metadata: { resend_id: id, sender: sender.from, key_prefix: keyPrefix, latency_ms: Date.now() - startedAt },
+      metadata: { resend_id: id, sender: sender.from, key_prefix: keyPrefix, latency_ms: Date.now() - startedAt, founder_bcc: founderBcc ?? null },
     });
     try {
       await sb.from("outreach_health_state").upsert({
