@@ -25,6 +25,7 @@ import BannerFirstCustomer48h from "@/components/first-customer-48h/BannerFirstC
 import SocialProofContractorBlock from "@/components/first-customer-48h/SocialProofContractorBlock";
 import SectionAIHomeIntelligence from "@/components/home-intelligence/SectionAIHomeIntelligence";
 import EntityDefinitionBlock from "@/components/home-intelligence/EntityDefinitionBlock";
+import { BRAND } from "@/config/branding";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
   DropdownMenu,
