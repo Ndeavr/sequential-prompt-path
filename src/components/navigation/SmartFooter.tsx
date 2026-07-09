@@ -7,7 +7,8 @@ import { useLanguage } from "@/components/ui/LanguageToggle";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { getFooterSections } from "@/config/navigationConfig";
 import type { UserRole } from "@/types/navigation";
-import unproWordmarkChrome from "@/assets/unpro-wordmark-chrome.png";
+import unproWordmarkAsset from "@/assets/brand/unpro-logo-white.png.asset.json";
+const unproWordmarkChrome = unproWordmarkAsset.url;
 
 const socialLinks = [
   { href: "#", label: "Facebook", icon: "f" },
