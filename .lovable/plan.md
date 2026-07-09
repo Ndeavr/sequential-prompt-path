@@ -1,55 +1,47 @@
-## Two fixes
+## Adopt the new UNPRO logo (wordmark + speech-bubble mark)
 
-### 1. Reject obvious fake / placeholder phones before send
+Replace the current "fleur-de-lys" master logo with the uploaded UNPRO wordmark set (blue primary, black, white, grey, round-blue favicon).
 
-The circled `514-550-1234` is a textbook placeholder — QC area code + sequential last four. Current `classifyPhone` only checks NANP + area code, so it slips through as `pending_validation` → `valid`.
+### Assets
 
-Add a `blocked_pattern` check to `supabase/functions/_shared/phoneValidation.ts` inside `classifyPhone`, before returning `pending_validation`. Blocks on the E.164 digits:
+Upload the five files as Lovable CDN assets and write `.asset.json` pointers into `src/assets/brand/`:
 
-- **Sequential last 4**: `1234`, `2345`, `3456`, `4567`, `5678`, `6789`, `0123`
-- **Repeating last 4**: `0000`, `1111`, `2222`, …, `9999`
-- **Repeating last 7**: any single digit repeated (e.g. `5555555`)
-- **Movie/reserved 555 exchange**: NXX `555` with last-4 in `0100-0199` (`+1AAA5550100`…`+1AAA5550199`)
-- **Sequential across full 7**: `1234567`, `2345678`, …
-- **All-zero subscriber**: `AAA0000000`
+- `Logo-UNPRO.png` → `src/assets/brand/unpro-logo-blue.png.asset.json` (primary color logo)
+- `Logo-UNPRO-Black.png` → `unpro-logo-black.png.asset.json`
+- `Logo-UNPRO-White.png` → `unpro-logo-white.png.asset.json`
+- `Logo-UNPRO-Grey.png` → `unpro-logo-grey.png.asset.json`
+- `Logo-UNPRO-fav.png` → `unpro-logo-mark.png.asset.json` (round blue mark, used as icon and for favicons)
 
-When matched → return `{ status: "invalid_phone", reason: "blocked_pattern" }`. `blocked_pattern` already exists in `PhoneFailureReason`, and `leadValidation` already drops non-`valid_*` statuses out of the sendable bucket — so this stops the send with zero other wiring.
+### Component rewiring
 
-Add a matching client-side warning in `src/components/admin/ValidationDebugPanel.tsx` bucket "Blocked pattern" for visibility.
+**`src/components/brand/UnproLogo.tsx`** — replace fleur/chrome imports with the new asset pointers. Map variants directly (no CSS filters, use the correct file per variant):
 
-### 2. BCC the next 5 sends to the founder
+| variant | source |
+|---|---|
+| `primary` / `blue` | blue wordmark |
+| `mono` (light bg) | black wordmark |
+| `mono-invert` (dark bg) | white wordmark |
+| `rubber` / `muted` | grey wordmark |
 
-Create a founder-mirror quota:
+`showWordmark={false}` → render the round blue mark (`unpro-logo-mark.png`).
 
-```
-public.founder_outreach_bcc (
-  id int PRIMARY KEY default 1 CHECK (id=1),  -- single-row
-  remaining_email int NOT NULL DEFAULT 5,
-  remaining_sms   int NOT NULL DEFAULT 5,
-  bcc_email text NOT NULL DEFAULT 'yturcotte@gmail.com',
-  bcc_phone text NOT NULL DEFAULT '+15142499522',
-  updated_at timestamptz DEFAULT now()
-)
-```
+Update aspect ratio: new wordmark is ~1160×270 (ratio ≈ 4.3). Height = `Math.round(size / 4.3)`.
 
-GRANT to service_role only; RLS enabled, no anon/authenticated policies (admin-only via service role).
+**`src/components/brand/UnproIcon.tsx`** — swap fleur source for the round blue mark asset (`unpro-logo-mark.png`); keep it a perfect square.
 
-Seed one row `(1, 5, 5, …)`.
+Delete `src/assets/unpro-icon-fleur.png` and `src/assets/unpro-wordmark-chrome.png` (+ their `.asset.json` if present) once the components no longer reference them.
 
-Then, in the two live senders:
+### Favicons + PWA icons
 
-- **`supabase/functions/outreach-resend-send/index.ts`** — before the Resend POST, atomically decrement `remaining_email` (`update … set remaining_email = greatest(remaining_email-1,0) where remaining_email>0 returning bcc_email`). If a row is returned, add `bcc: [bcc_email]` to the Resend payload. Log a `founder_bcc: true` tag on `email_send_log.metadata`.
-- **`supabase/functions/sms-prospect-send/index.ts`** (and `send-sms-prospect` if it's the live path) — after a successful Twilio send, if `remaining_sms>0`, atomically decrement and fire a second Twilio message to `bcc_phone` with body prefixed `[UNPRO BCC → <company>] ` + the same copy. Failure of the mirror send never blocks or fails the primary.
+The round blue mark IS the new favicon. Copy it to `public/` and rewrite the icon set:
 
-Deploy both edge functions after edits.
-
-### Success
-
-- A lead with `514-550-1234` shows in the admin panel under a new "Blocked pattern" bucket and never enters the SMS/email send queue.
-- The next 5 real prospect emails also arrive in `yturcotte@gmail.com`; the next 5 real prospect SMS also arrive at `514-249-9522`. After that, quotas hit 0 and mirroring stops automatically.
-- No changes to templates, throttling, or the general validator/lookup pipeline.
+1. `public/favicon.png` ← round blue mark (single canonical fallback).
+2. Regenerate the five branded PNGs already referenced in `index.html` (`favicon-32.png`, `favicon-64.png`, `favicon-chrome-32/64/192/512.png`, `icon-192.png`, `icon-512.png`) from the round blue mark at the matching sizes using `imagegen--edit_image` or a shell resize.
+3. `public/unpro-logo-master.png` (used by `og:image`, `twitter:image`, and JSON-LD `logo`) ← the full blue wordmark file, so link previews now show the correct mark.
+4. Delete `public/favicon.ico` (still on disk, browsers hit it by default and would override the new PNG).
+5. Leave `index.html` head tags as-is — they already point at these filenames.
 
 ### Out of scope
 
-- Twilio Lookup carrier heuristics (already handled by prior migration).
-- Any UI to top up the BCC quota — you can bump it later with a one-line update.
+- No color-token / theme changes. The new logo's blue (`#3B57F0`-ish) matches the existing primary; no `--brand-*` rewrites in this pass.
+- No changes to `PillarStrip`, `BrandPronunciation`, PWA manifest metadata, or the outbound email header logo (those already resolve `/unpro-logo-master.png` and will pick up the new file automatically).
