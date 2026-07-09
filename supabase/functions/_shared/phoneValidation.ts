@@ -64,8 +64,43 @@ export function classifyPhone(raw: string | null | undefined): ClassifyResult {
   if (!QC_AREA_CODES.has(npa)) {
     return { e164: n.normalized, area_code: npa, status: "outside_quebec", reason: "outside_quebec" };
   }
+  // Block obvious placeholder / test / fake patterns before we ever call Twilio.
+  if (isBlockedPattern(n.normalized)) {
+    return { e164: n.normalized, area_code: npa, status: "invalid_phone", reason: "blocked_pattern" };
+  }
   return { e164: n.normalized, area_code: npa, status: "pending_validation", reason: null };
 }
+
+/**
+ * Rejects placeholder / sequential / repeating / 555-01xx test numbers.
+ * Input is an E.164 string like "+15145501234".
+ */
+export function isBlockedPattern(e164: string): boolean {
+  const digits = (e164 || "").replace(/\D/g, "");
+  if (digits.length !== 11 || !digits.startsWith("1")) return false;
+  const nxx = digits.slice(4, 7);   // exchange
+  const last4 = digits.slice(7, 11);
+  const sub7 = digits.slice(4, 11); // 7-digit subscriber
+  const SEQ_UP = "01234567890";
+  const SEQ_DN = "09876543210";
+  // Repeating last 4 (0000, 1111, ..., 9999)
+  if (/^(\d)\1{3}$/.test(last4)) return true;
+  // Sequential last 4 (up or down): 1234, 2345, ..., 0123, 9876, ...
+  if (SEQ_UP.includes(last4) || SEQ_DN.includes(last4)) return true;
+  // Repeating 7-digit subscriber (5555555, 1111111, ...)
+  if (/^(\d)\1{6}$/.test(sub7)) return true;
+  // Sequential 7-digit subscriber (1234567, 2345678, ...)
+  if (SEQ_UP.includes(sub7) || SEQ_DN.includes(sub7)) return true;
+  // All-zero subscriber (AAA0000000)
+  if (sub7 === "0000000") return true;
+  // Reserved 555-01xx test range
+  if (nxx === "555") {
+    const n4 = parseInt(last4, 10);
+    if (n4 >= 100 && n4 <= 199) return true;
+  }
+  return false;
+}
+
 
 /**
  * Step 4: Twilio Lookup v2 (line_type_intelligence).
