@@ -1,25 +1,32 @@
 /**
- * UNPRO — Primary Logo (Quebec fleur-de-lys + UNPRO wordmark)
- * Renders the master PNG lockup. `showWordmark={false}` falls back to the icon-only fleur.
+ * UNPRO — Primary Logo (wordmark + speech-bubble mark)
+ * Renders the master UNPRO wordmark. `showWordmark={false}` falls back to the round mark.
  */
-import unproMaster from "@/assets/unpro-wordmark-chrome.png";
-import unproFleur from "@/assets/unpro-icon-fleur.png";
+import blueAsset from "@/assets/brand/unpro-logo-blue.png.asset.json";
+import blackAsset from "@/assets/brand/unpro-logo-black.png.asset.json";
+import whiteAsset from "@/assets/brand/unpro-logo-white.png.asset.json";
+import greyAsset from "@/assets/brand/unpro-logo-grey.png.asset.json";
+import markAsset from "@/assets/brand/unpro-logo-mark.png.asset.json";
 
 type UnproLogoProps = {
   size?: number;
-  variant?: "primary" | "mono" | "blue" | "rubber";
+  variant?: "primary" | "blue" | "mono" | "mono-invert" | "rubber";
   /** Kept for API compatibility; the master lockup is a static image. */
   animated?: boolean;
   showWordmark?: boolean;
   className?: string;
 };
 
-const variantFilter: Record<NonNullable<UnproLogoProps["variant"]>, string | undefined> = {
-  primary: undefined,
-  blue: "hue-rotate(-5deg) saturate(1.15)",
-  mono: "grayscale(1) brightness(1.6) contrast(1.1)",
-  rubber: "grayscale(1) brightness(0.55) contrast(1.05)",
+const variantSrc: Record<NonNullable<UnproLogoProps["variant"]>, string> = {
+  primary: blueAsset.url,
+  blue: blueAsset.url,
+  mono: blackAsset.url,
+  "mono-invert": whiteAsset.url,
+  rubber: greyAsset.url,
 };
+
+// New wordmark aspect ≈ 1160 x 270 ≈ 4.3
+const WORDMARK_RATIO = 4.3;
 
 export default function UnproLogo({
   size = 320,
@@ -30,35 +37,26 @@ export default function UnproLogo({
   if (!showWordmark) {
     return (
       <img
-        src={unproFleur}
+        src={markAsset.url}
         alt="UNPRO"
         width={size}
         height={size}
         className={`object-contain ${className}`}
-        style={{
-          width: size,
-          height: size,
-          filter: variantFilter[variant],
-        }}
+        style={{ width: size, height: size }}
         draggable={false}
       />
     );
   }
 
-  // Chrome wordmark aspect ≈ 1500 x 1000 ≈ 1.5
-  const height = Math.round(size / 1.5);
+  const height = Math.round(size / WORDMARK_RATIO);
   return (
     <img
-      src={unproMaster}
+      src={variantSrc[variant] ?? blueAsset.url}
       alt="UNPRO"
       width={size}
       height={height}
       className={`object-contain ${className}`}
-      style={{
-        width: size,
-        height,
-        filter: variantFilter[variant],
-      }}
+      style={{ width: size, height }}
       draggable={false}
     />
   );

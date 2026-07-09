@@ -1,8 +1,8 @@
 /**
- * UNPRO — Icon-only (Quebec fleur-de-lys, premium 3D mark)
+ * UNPRO — Icon-only (round blue speech-bubble mark)
  * Master brand icon used across avatars, auth surfaces, navigation marks.
  */
-import unproFleur from "@/assets/unpro-icon-fleur.png";
+import markAsset from "@/assets/brand/unpro-logo-mark.png.asset.json";
 
 type UnproIconProps = {
   size?: number;
@@ -13,7 +13,7 @@ type UnproIconProps = {
 export default function UnproIcon({ size = 64, className = "" }: UnproIconProps) {
   return (
     <img
-      src={unproFleur}
+      src={markAsset.url}
       alt="UNPRO"
       width={size}
       height={size}
