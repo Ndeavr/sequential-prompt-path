@@ -27523,39 +27523,69 @@ export type Database = {
       }
       contractor_funnel_events: {
         Row: {
+          contractor_id: string | null
           created_at: string
+          current_path: string | null
           device: string | null
+          email: string | null
+          event_source: string | null
           event_type: string
           id: string
           metadata: Json | null
+          phone: string | null
           session_id: string | null
           source: string | null
           step: string | null
           user_id: string | null
         }
         Insert: {
+          contractor_id?: string | null
           created_at?: string
+          current_path?: string | null
           device?: string | null
+          email?: string | null
+          event_source?: string | null
           event_type: string
           id?: string
           metadata?: Json | null
+          phone?: string | null
           session_id?: string | null
           source?: string | null
           step?: string | null
           user_id?: string | null
         }
         Update: {
+          contractor_id?: string | null
           created_at?: string
+          current_path?: string | null
           device?: string | null
+          email?: string | null
+          event_source?: string | null
           event_type?: string
           id?: string
           metadata?: Json | null
+          phone?: string | null
           session_id?: string | null
           source?: string | null
           step?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contractor_funnel_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_aipp_public_view"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_funnel_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_contractors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contractor_generation_targets: {
         Row: {
@@ -80955,6 +80985,42 @@ export type Database = {
         }
         Relationships: []
       }
+      v_contractor_journey_latest: {
+        Row: {
+          company_name: string | null
+          contractor_id: string | null
+          current_stage: string | null
+          email: string | null
+          first_activity_at: string | null
+          has_activated: boolean | null
+          has_activation_started: boolean | null
+          has_checkout_opened: boolean | null
+          has_checkout_started: boolean | null
+          has_clicked: boolean | null
+          has_landing_view: boolean | null
+          has_paid: boolean | null
+          has_payment_failed: boolean | null
+          has_registration_completed: boolean | null
+          has_registration_started: boolean | null
+          has_sms_delivered: boolean | null
+          has_sms_failed: boolean | null
+          has_sms_queued: boolean | null
+          has_sms_sent: boolean | null
+          has_step_company: boolean | null
+          has_step_pricing: boolean | null
+          has_step_reviews: boolean | null
+          has_step_services: boolean | null
+          has_step_territories: boolean | null
+          journey_key: string | null
+          last_activity_at: string | null
+          last_event_metadata: Json | null
+          last_event_type: string | null
+          last_known_path: string | null
+          phone: string | null
+          rescue_bucket: string | null
+        }
+        Relationships: []
+      }
       v_contractor_public_profile: {
         Row: {
           aipp_score: number | null
@@ -81468,6 +81534,42 @@ export type Database = {
           neighborhood: string | null
           work_date: string | null
           work_type: string | null
+        }
+        Relationships: []
+      }
+      v_revenue_rescue_queue: {
+        Row: {
+          company_name: string | null
+          contractor_id: string | null
+          current_stage: string | null
+          email: string | null
+          first_activity_at: string | null
+          has_activated: boolean | null
+          has_activation_started: boolean | null
+          has_checkout_opened: boolean | null
+          has_checkout_started: boolean | null
+          has_clicked: boolean | null
+          has_landing_view: boolean | null
+          has_paid: boolean | null
+          has_payment_failed: boolean | null
+          has_registration_completed: boolean | null
+          has_registration_started: boolean | null
+          has_sms_delivered: boolean | null
+          has_sms_failed: boolean | null
+          has_sms_queued: boolean | null
+          has_sms_sent: boolean | null
+          has_step_company: boolean | null
+          has_step_pricing: boolean | null
+          has_step_reviews: boolean | null
+          has_step_services: boolean | null
+          has_step_territories: boolean | null
+          journey_key: string | null
+          last_activity_at: string | null
+          last_event_metadata: Json | null
+          last_event_type: string | null
+          last_known_path: string | null
+          phone: string | null
+          rescue_bucket: string | null
         }
         Relationships: []
       }
