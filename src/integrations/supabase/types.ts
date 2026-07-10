@@ -22809,6 +22809,50 @@ export type Database = {
         }
         Relationships: []
       }
+      contractor_activation_reminders: {
+        Row: {
+          attempt: number
+          channel: string
+          contractor_id: string | null
+          id: string
+          lead_id: string
+          sent_at: string
+          stage: string
+          status: string
+          template_key: string
+        }
+        Insert: {
+          attempt: number
+          channel?: string
+          contractor_id?: string | null
+          id?: string
+          lead_id: string
+          sent_at?: string
+          stage: string
+          status?: string
+          template_key: string
+        }
+        Update: {
+          attempt?: number
+          channel?: string
+          contractor_id?: string | null
+          id?: string
+          lead_id?: string
+          sent_at?: string
+          stage?: string
+          status?: string
+          template_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_activation_reminders_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_ai_indexing_snapshots: {
         Row: {
           contractor_id: string
@@ -31784,6 +31828,71 @@ export type Database = {
           },
           {
             foreignKeyName: "contractor_prospect_enrichment_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: true
+            referencedRelation: "v_sms_sprint_eligible"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_prospect_priority: {
+        Row: {
+          computed_at: string
+          google_reviews_score: number
+          id: string
+          prospect_id: string
+          response_score: number
+          score_breakdown: Json
+          territory_score: number
+          total_score: number
+          website_score: number
+        }
+        Insert: {
+          computed_at?: string
+          google_reviews_score?: number
+          id?: string
+          prospect_id: string
+          response_score?: number
+          score_breakdown?: Json
+          territory_score?: number
+          total_score?: number
+          website_score?: number
+        }
+        Update: {
+          computed_at?: string
+          google_reviews_score?: number
+          id?: string
+          prospect_id?: string
+          response_score?: number
+          score_breakdown?: Json
+          territory_score?: number
+          total_score?: number
+          website_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_prospect_priority_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: true
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prospect_priority_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: true
+            referencedRelation: "v_acquisition_queues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prospect_priority_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: true
+            referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prospect_priority_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: true
             referencedRelation: "v_sms_sprint_eligible"
@@ -55910,6 +56019,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      outreach_template_metrics: {
+        Row: {
+          activated_count: number
+          clicked_count: number
+          computed_at: string
+          delivered_count: number
+          id: string
+          is_winner: boolean
+          registered_count: number
+          sent_count: number
+          template_key: string
+          variant: string
+        }
+        Insert: {
+          activated_count?: number
+          clicked_count?: number
+          computed_at?: string
+          delivered_count?: number
+          id?: string
+          is_winner?: boolean
+          registered_count?: number
+          sent_count?: number
+          template_key: string
+          variant: string
+        }
+        Update: {
+          activated_count?: number
+          clicked_count?: number
+          computed_at?: string
+          delivered_count?: number
+          id?: string
+          is_winner?: boolean
+          registered_count?: number
+          sent_count?: number
+          template_key?: string
+          variant?: string
+        }
+        Relationships: []
       }
       outreach_template_versions: {
         Row: {
@@ -81175,6 +81323,21 @@ export type Database = {
         }
         Relationships: []
       }
+      v_first_revenue_snapshot: {
+        Row: {
+          activations_30d: number | null
+          activations_7d: number | null
+          activations_today: number | null
+          alert_no_activation_48h: boolean | null
+          contacted_30d: number | null
+          contacted_7d: number | null
+          last_activation_at: string | null
+          paid_plans_active: number | null
+          profiles_completed_7d: number | null
+          registrations_7d: number | null
+        }
+        Relationships: []
+      }
       v_growth_engine_today: {
         Row: {
           activations_today: number | null
@@ -81339,6 +81502,17 @@ export type Database = {
         }
         Relationships: []
       }
+      v_outreach_command_funnel: {
+        Row: {
+          delta_24h: number | null
+          delta_7d: number | null
+          stage_key: string | null
+          stage_label: string | null
+          stage_order: number | null
+          total: number | null
+        }
+        Relationships: []
+      }
       v_outreach_funnel: {
         Row: {
           bounced: number | null
@@ -81373,6 +81547,51 @@ export type Database = {
         Row: {
           last_event_at: string | null
           provider: string | null
+        }
+        Relationships: []
+      }
+      v_outreach_template_performance: {
+        Row: {
+          activated_count: number | null
+          activation_rate: number | null
+          click_rate: number | null
+          clicked_count: number | null
+          computed_at: string | null
+          delivered_count: number | null
+          delivered_rate: number | null
+          is_winner: boolean | null
+          registered_count: number | null
+          sent_count: number | null
+          template_key: string | null
+          variant: string | null
+        }
+        Insert: {
+          activated_count?: number | null
+          activation_rate?: never
+          click_rate?: never
+          clicked_count?: number | null
+          computed_at?: string | null
+          delivered_count?: number | null
+          delivered_rate?: never
+          is_winner?: boolean | null
+          registered_count?: number | null
+          sent_count?: number | null
+          template_key?: string | null
+          variant?: string | null
+        }
+        Update: {
+          activated_count?: number | null
+          activation_rate?: never
+          click_rate?: never
+          clicked_count?: number | null
+          computed_at?: string | null
+          delivered_count?: number | null
+          delivered_rate?: never
+          is_winner?: boolean | null
+          registered_count?: number | null
+          sent_count?: number | null
+          template_key?: string | null
+          variant?: string | null
         }
         Relationships: []
       }

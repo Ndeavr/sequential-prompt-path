@@ -32,6 +32,7 @@ const PageRevenueReality = lazyWithRetry(() => import("@/pages/admin/PageRevenue
 const PageContactedContractors = lazyWithRetry(() => import("@/pages/admin/PageContactedContractors"));
 const PageContractorForensics = lazyWithRetry(() => import("@/pages/admin/PageContractorForensics"));
 const PageRevenueDebug = lazyWithRetry(() => import("@/pages/admin/PageRevenueDebug"));
+const PageOutreachCommandCenter = lazyWithRetry(() => import("@/pages/admin/PageOutreachCommandCenter"));
 const PageSystemHealth = lazyWithRetry(() => import("@/pages/admin/PageSystemHealth"));
 const PageEdgeFunctionHealth = lazyWithRetry(() => import("@/pages/admin/PageEdgeFunctionHealth"));
 const PageReplayPipeline = lazyWithRetry(() => import("@/pages/admin/PageReplayPipeline"));
@@ -1773,6 +1774,7 @@ export const AppRouter = () => (
           <Route path="/admin/contacted-contractors" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageContactedContractors /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/contractor/:id" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageContractorForensics /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/revenue-debug" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageRevenueDebug /></Suspense></UniversalRouteGuard>} />
+          <Route path="/admin/outreach-command-center" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageOutreachCommandCenter /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/system-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSystemHealth /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/edge-function-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageEdgeFunctionHealth /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/replay-pipeline" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageReplayPipeline /></Suspense></UniversalRouteGuard>} />

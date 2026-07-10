@@ -1,86 +1,173 @@
-## The problem (root cause)
+# Revenue War Room — Autonomous Outreach Engine V1
 
-The forensics page is reading from the wrong table. Real onboarding data lives in `contractor_leads` + `contractor_outreach_logs`; the new view `v_contractor_journey_latest` reads from `contractor_funnel_events`, which is essentially empty (no phone, email, or contractor_id populated). That's why the drilldown shows "Unknown / —" for everyone while the dashboard correctly counts 27 sent / 1 clicked / 1 inscription from `contractor_leads`.
+Goal: acquire the first recurring paid contractors. Fix telemetry first, then score, message, scrape, recover, and freeze feature work until the funnel produces activations.
 
-The "1 inscription" is already identifiable in the DB:
+---
 
-```
-Couvreurs Therrien Inc. — 514-573-4159 — Verdun
-last_sms_at:            2026-06-14 17:30
-clicked_at:             2026-06-14 18:00
-onboarding_started_at:  2026-06-14 17:30
-pipeline_status:        onboarding_started
-paid_at:                null
-```
+## Phase 1 — Repair Delivery Intelligence
 
-That single lead should surface as the top HOT lead. It doesn't because the forensics view never joins to `contractor_leads`.
+**New page:** `/admin/outreach-command-center` (`src/pages/admin/PageOutreachCommandCenter.tsx`)
 
-## Scope
-
-Two things: (1) fix the forensics data source so it uses the real onboarding tables, (2) fix dark-mode readability on all admin pages.
-
-## Plan
-
-### 1. Unified journey view (SQL migration)
-
-Create `v_contractor_forensic_journey` that UNIONs three sources into one event stream keyed by `lead_id`:
-
-- `contractor_leads` → derived events from `last_sms_at`, `opened_at`, `clicked_at`, `onboarding_started_at`, `payment_started_at`, `paid_at`, `activation_status`
-- `contractor_outreach_logs` → real SMS/email events with status, error_code, error_message
-- `contractor_funnel_events` → app-side events (landing_viewed, plan_selected, etc.) joined on phone/email when populated
-
-Create `v_contractor_forensic_state` (one row per lead) with identity (company, phone, city), current_stage, last_known_path, rescue_bucket, and boolean checkmarks for each stage (has_sms_sent, has_sms_delivered, has_clicked, has_registration_started, has_stripe_started, has_paid, has_activated).
-
-### 2. Rewire admin forensics pages
-
-- `useContractorJourney(id)` → query `v_contractor_forensic_state` + `v_contractor_forensic_journey` (accept lead_id, phone, or company slug)
-- `useRevenueRescueQueue()` → order by rescue bucket priority (registered_not_paid → clicked_not_registered → paid_not_activated), so Couvreurs Therrien surfaces at top
-- `useContactedContractors()` → drop the `v_contractor_journey_latest` source; use `v_contractor_forensic_state`
-- `PageContractorForensics` → never render "Unknown" when any identity field exists; fall back gracefully company → phone → email → id
-
-### 3. DATA INTEGRITY alert
-
-Add a red banner on `/admin/contacted-contractors` and `/admin/revenue-debug` when `SUM(has_clicked) > SUM(has_sms_delivered)` or `SUM(has_paid) > SUM(has_registration)`. Banner shows the failing invariant + record IDs so tracking bugs are impossible to hide.
-
-### 4. New page `/admin/revenue-debug`
-
-Raw event timeline per contractor, one contractor per collapsible block, 11-row grid:
+Live funnel with 10 stages, each showing: **count · conversion % · Δ24h · Δ7d**.
 
 ```text
-SMS SENT · SMS DELIVERED · LINK CLICKED · LANDING · REGISTRATION STARTED ·
-OTP VERIFIED · PLAN SELECTED · STRIPE STARTED · STRIPE SUCCESS ·
-PROFILE COMPLETED · ACTIVATED
+Prospects Found → Validated Mobile → SMS Sent → Delivered → Clicked
+→ Registration Started → Profile Completed → Stripe Started → $1 Activated → Plan Upgraded
 ```
 
-Each cell = timestamp + source (twilio/app/stripe) or `—`. No aggregates, no percentages. Sorted by proximity-to-revenue.
+**Backing view (migration):** `v_outreach_command_funnel` — one row per stage, computed from:
+- `contractor_prospects` / `outbound_leads` → Prospects Found
+- `contractor_prospects.phone IS NOT NULL AND phone_valid` → Validated Mobile
+- `contractor_outreach_logs` (status = sent / delivered / clicked) → SMS stages
+- `contractor_leads.onboarding_started_at / profile_completed_at / payment_started_at / paid_at` → registration → activation
+- `contractor_subscriptions` where plan ≠ recrue → Plan Upgraded
 
-### 5. Dark-mode readability pass
+**Delivery attribution fix:** Twilio status webhook (`supabase/functions/twilio-sms-status`) must upsert into `contractor_outreach_logs` on `delivered / failed / undelivered` using `MessageSid`. This closes the `clicked=1 > delivered=0` gap surfaced by the DATA INTEGRITY alert.
 
-Audit `.admin-theme` scope. Replace `text-muted-foreground` used on dark cards with `.text-readable-muted` token (≥ AA contrast). Update `src/index.css`:
+Component: `<FunnelStageCard>` with count, %, sparkline-style deltas. Reuse `admin-theme` + readable tokens.
 
-```css
-.admin-theme {
-  --muted-foreground: 203 213 225;  /* slate-300, AA on #050816 */
-}
-.admin-theme .text-muted-foreground { color: rgb(203 213 225); }
+---
+
+## Phase 2 — Contractor Prioritization Engine
+
+**New table:** `contractor_prospect_priority`
+- `prospect_id`, `google_reviews_score`, `website_score`, `response_score`, `territory_score`, `total_score` (0–100), `computed_at`
+
+**Edge function:** `compute-prospect-priority` — scores every row in `contractor_prospects`:
+
+```text
+Reviews:  ≥200 → +60, ≥100 → +40, ≥50 → +20, else 0
+Website:  none → +40, poor (no https / no phone) → +25, strong → 0
+Response: mobile → +30, email only → +5
+Territory: category_demand + city_demand (from city_service_demand_grid)
 ```
 
-Sweep the six flagged surfaces (title, filters, table headers, activity column, hot leads block, stage pills) so no text falls below AA. Never touch `.landing-warm` scope.
+Clamp to 100. Sort desc. Only prospects with `total_score ≥ 60` enter outreach queue.
 
-## Files to change
+**UI:** Add "Priority Queue" tab in Command Center listing top 100 by score with the score breakdown visible.
 
-- **migration** — create `v_contractor_forensic_journey` + `v_contractor_forensic_state`, drop stale `v_contractor_journey_latest` / `v_revenue_rescue_queue`
-- `src/hooks/useContractorJourney.ts` — point at new views, accept lead_id
-- `src/pages/admin/PageContractorForensics.tsx` — resolve identity, never show "Unknown" when data exists
-- `src/pages/admin/PageContactedContractors.tsx` — new view + DATA INTEGRITY banner
-- `src/components/admin/forensics/RevenueRescueQueue.tsx` — new view
-- **new** `src/pages/admin/PageRevenueDebug.tsx` — raw 11-column event grid
-- **new** `src/components/admin/forensics/DataIntegrityBanner.tsx`
-- `src/app/router.tsx` — register `/admin/revenue-debug`
-- `src/index.css` — admin-theme readable tokens
+---
 
-## Out of scope
+## Phase 3 — Multi-Message A/B Testing
 
-- Backfilling `contractor_funnel_events` for historical leads
-- Fixing Twilio delivery webhook (separate — that's why `has_sms_delivered = 0`; will be surfaced by the DATA INTEGRITY banner but not repaired here)
-- Automated rescue SMS
+**Reuse existing** `outreach_templates` table (already present).
+
+Seed 3 templates (variant A / B / C) with the exact FR-CA copy from the brief, `unpro.ca` link, and `channel='sms'`.
+
+**Table addition:** `outreach_template_metrics` — per-template rollup of `sent / delivered / clicked / registered / activated`, refreshed nightly by `refresh-template-winner` edge function.
+
+**Winner logic:** template with highest `activated / sent` after ≥ 100 sends per variant becomes `is_winner=true` and gets 80% of traffic; losers keep 10% each (explore/exploit).
+
+**UI:** `TemplatePerformanceTable` in Command Center showing per-template funnel + winner badge.
+
+---
+
+## Phase 4 — Daily Autonomous Outreach
+
+**Cron (pg_cron, 07:00 America/Montreal):** invoke `daily-outreach-orchestrator` which chains:
+
+1. `scrape-contractors-daily` — pulls new prospects from Google Places for target cities (Laval, Terrebonne, Repentigny, Mascouche, Saint-Jérôme, Mirabel) × trades (roofing, insulation, HVAC, electrician, plumbing).
+2. **Suppression filter** (`outbound_suppressions`) — hard-block domains and name patterns:
+   - `renoassistance*`, `soumissionrenovation*`, `bark.com`, `homestars.com/professionals/*`, `houzz.com/pro/*`, `trouvetonpro*`, `estimatique*`
+3. `compute-prospect-priority` — score fresh rows.
+4. `dispatch-priority-outreach` — send winning template SMS to top N prospects (respecting `outreach_send_windows` and `outbound_global_settings` daily cap).
+
+Log every step in `pipeline_logs` and surface in Command Center as "Last daily run".
+
+---
+
+## Phase 5 — Activation Recovery
+
+**Table:** `contractor_activation_reminders`
+- `contractor_id`, `stage` (`registration_incomplete` | `profile_incomplete`), `attempt` (1 | 2 | 3), `sent_at`, `template_key`
+
+**Cron (every 15 min):** `activation-recovery-worker` detects:
+- `onboarding_started_at IS NOT NULL AND profile_completed_at IS NULL`
+
+Sends staged SMS via winning channel:
+- +24 h → Reminder 1 ("Il vous reste 2 minutes pour activer votre profil UNPRO.")
+- +72 h → Reminder 2 ("Votre place réservée expire bientôt.")
+- +7 d → Reminder 3 (final, offers Alex call).
+
+Enforce max 3 attempts (aligns with Alex Reengagement Control memory).
+
+---
+
+## Phase 6 — First Revenue Dashboard
+
+**Card** `<FirstRevenueTracker>` on `/admin/outreach-command-center` top:
+
+- Today's Activations
+- Today's Revenue ($)
+- 30-Day MRR
+- Contractors Contacted (7d / 30d)
+- Registrations (7d / 30d)
+- Profile Completions
+- $1 Activations
+- Paid Plans
+
+**Big red alert** when `MAX(paid_at) < NOW() - 48h`:
+> "AUCUNE ACTIVATION DEPUIS 48 HEURES — Vérifier Command Center."
+
+Backed by `v_first_revenue_snapshot` view.
+
+---
+
+## Phase 7 — Feature Freeze Gate
+
+**New file:** `src/lib/launch/featureFreeze.ts` — exports thresholds and a `useFeatureFreezeStatus()` hook reading `v_outreach_command_funnel`:
+
+```text
+sms_delivered_rate   ≥ 90 %
+click_rate           ≥ 5  %
+registration_rate    ≥ 2  %
+paid_activations_7d  ≥ 3
+```
+
+Show freeze banner at top of every `/admin/*` page listing which thresholds are unmet. Purely informational — no route blocking.
+
+Document freeze rule in `docs/standards/FEATURE_FREEZE.md` (new features paused until all four green).
+
+---
+
+## Technical Details
+
+**Migrations (single file):**
+- `v_outreach_command_funnel`, `v_first_revenue_snapshot` views
+- `contractor_prospect_priority`, `outreach_template_metrics`, `contractor_activation_reminders` tables (GRANTs to `authenticated`+`service_role`, RLS admin-only via `has_role`)
+- Seed 3 outreach templates + suppression domain rows
+- pg_cron schedules for `daily-outreach-orchestrator` (daily 07:00) and `activation-recovery-worker` (*/15 min)
+
+**Edge functions (new):**
+- `compute-prospect-priority`
+- `daily-outreach-orchestrator` (chains scrape → score → dispatch)
+- `scrape-contractors-daily`
+- `dispatch-priority-outreach`
+- `refresh-template-winner`
+- `activation-recovery-worker`
+- `twilio-sms-status` (or patch existing) for delivery attribution
+
+All use `reportOutcome()` + `FailureCode` per Production Reliability Framework.
+
+**Frontend files (new):**
+- `src/pages/admin/PageOutreachCommandCenter.tsx`
+- `src/components/admin/outreach/FunnelStageCard.tsx`
+- `src/components/admin/outreach/FirstRevenueTracker.tsx`
+- `src/components/admin/outreach/TemplatePerformanceTable.tsx`
+- `src/components/admin/outreach/PriorityQueueTable.tsx`
+- `src/components/admin/outreach/FeatureFreezeBanner.tsx`
+- `src/hooks/useOutreachCommandCenter.ts`
+- `src/lib/launch/featureFreeze.ts`
+
+**Router:** add `/admin/outreach-command-center` and link from `/admin/contacted-contractors` + `/admin/revenue-debug`.
+
+**Styling:** wrap all new admin pages in `.admin-theme`, use `.text-readable*` tokens (per UI Readability Rule memory).
+
+---
+
+## Out of Scope
+
+- Building homeowner features, new AI modules, animations, or dashboards not listed here (Phase 7 freeze).
+- Backfilling historical `contractor_funnel_events`.
+- Actual contact of the first 100 contractors — that happens after deploy, manually driven by telemetry.
+- Rewriting Twilio provider integration beyond fixing the status webhook.
