@@ -149,6 +149,7 @@ export default function PageContactedContractors() {
           <RevenueRescueQueue />
         </aside>
       </div>
+      </div>
     </div>
   );
 }
