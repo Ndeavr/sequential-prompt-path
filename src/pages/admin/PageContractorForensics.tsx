@@ -92,6 +92,7 @@ export default function PageContractorForensics() {
         </div>
         <EventTimeline events={events} />
       </div>
+      </div>
     </div>
   );
 }
