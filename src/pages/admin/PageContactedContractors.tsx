@@ -69,11 +69,19 @@ export default function PageContactedContractors() {
   return (
     <div className="admin-theme min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-7xl px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-readable">Contractor Revenue Forensics</h1>
-          <p className="text-sm text-readable-muted mt-1">
-            Drill into each contractor's exact journey. No aggregates. Append-only events. Trié par proximité à la conversion.
-          </p>
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-readable">Contractor Revenue Forensics</h1>
+            <p className="text-sm text-readable-muted mt-1">
+              Drill into each contractor's exact journey. No aggregates. Append-only events. Trié par proximité à la conversion.
+            </p>
+          </div>
+          <Link
+            to="/admin/outreach-command-center"
+            className="text-xs text-emerald-400 hover:text-emerald-300 inline-flex items-center gap-1 shrink-0"
+          >
+            → Command Center
+          </Link>
         </div>
 
         <DataIntegrityBanner rows={data} />
