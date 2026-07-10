@@ -1774,6 +1774,7 @@ export const AppRouter = () => (
           <Route path="/admin/contacted-contractors" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageContactedContractors /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/contractor/:id" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageContractorForensics /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/revenue-debug" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageRevenueDebug /></Suspense></UniversalRouteGuard>} />
+          <Route path="/admin/outreach-command-center" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageOutreachCommandCenter /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/system-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSystemHealth /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/edge-function-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageEdgeFunctionHealth /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/replay-pipeline" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageReplayPipeline /></Suspense></UniversalRouteGuard>} />
