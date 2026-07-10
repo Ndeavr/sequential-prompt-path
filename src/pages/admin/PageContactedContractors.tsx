@@ -67,13 +67,16 @@ export default function PageContactedContractors() {
   }, [data, q, filter]);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Contractor Revenue Forensics</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Drill into each contractor's exact journey. No aggregates. Append-only events. Trié par proximité à la conversion.
-        </p>
-      </div>
+    <div className="admin-theme min-h-screen bg-background text-foreground">
+      <div className="mx-auto max-w-7xl px-4 py-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-readable">Contractor Revenue Forensics</h1>
+          <p className="text-sm text-readable-muted mt-1">
+            Drill into each contractor's exact journey. No aggregates. Append-only events. Trié par proximité à la conversion.
+          </p>
+        </div>
+
+        <DataIntegrityBanner rows={data} />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div>
