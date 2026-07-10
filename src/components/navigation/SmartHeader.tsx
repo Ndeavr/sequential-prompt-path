@@ -107,7 +107,7 @@ const SmartHeader = () => {
               <img
                 src={BRAND.logo}
                 alt="UNPRO"
-                className="h-8 md:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                className="h-[31px] md:h-[38px] w-auto object-contain transition-transform duration-300 group-hover:scale-105"
                 draggable={false}
               />
 
