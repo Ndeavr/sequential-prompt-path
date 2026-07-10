@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useContactedContractors, stageLabelFr, type JourneyStateRow } from "@/hooks/useContractorJourney";
 import RevenueRescueQueue from "@/components/admin/forensics/RevenueRescueQueue";
+import DataIntegrityBanner from "@/components/admin/forensics/DataIntegrityBanner";
 import { useAdminPageTracking } from "@/hooks/useAdminPageTracking";
 import { ChevronRight, Search } from "lucide-react";
 
