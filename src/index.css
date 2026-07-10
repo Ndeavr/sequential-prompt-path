@@ -1078,6 +1078,12 @@
 .text-readable-strong { color: hsl(var(--text-primary, var(--foreground))); font-weight: 500; }
 .text-readable-soft   { color: hsl(var(--text-secondary, var(--muted-foreground))); }
 .text-readable-meta   { color: hsl(var(--text-muted, var(--muted-foreground))); font-size: 0.8125rem; }
+.text-readable-muted  { color: hsl(var(--muted-foreground)); }
+
+/* Admin dark scope — enforce AA-contrast muted text on every card/table. */
+.admin-theme .text-muted-foreground { color: hsl(0 0% 82%); }
+.admin-theme table thead th,
+.admin-theme th { color: hsl(0 0% 88%); }
 
 /* Mobile-first sizing: prevent iOS auto-zoom + enforce 16px body minimum */
 html { -webkit-text-size-adjust: 100%; }
