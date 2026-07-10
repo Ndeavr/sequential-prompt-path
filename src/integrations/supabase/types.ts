@@ -80954,39 +80954,27 @@ export type Database = {
         }
         Relationships: []
       }
-      v_contractor_full_public: {
+      v_contractor_forensic_journey: {
         Row: {
-          aipp_score: number | null
-          best_for: Json | null
-          business_name: string | null
-          city: string | null
-          description: string | null
-          faq: Json | null
+          contractor_id: string | null
+          created_at: string | null
+          current_path: string | null
+          email: string | null
+          event_source: string | null
+          event_type: string | null
           id: string | null
-          is_published: boolean | null
-          logo_url: string | null
-          not_ideal_for: Json | null
-          page_slug: string | null
-          personality_tags: string[] | null
-          province: string | null
-          rating: number | null
-          recommendation_reasons: Json | null
-          review_count: number | null
-          seo_description: string | null
-          seo_title: string | null
-          slug: string | null
-          specialty: string | null
-          summary_en: string | null
-          summary_fr: string | null
-          verification_status:
-            | Database["public"]["Enums"]["verification_status"]
-            | null
-          years_experience: number | null
+          journey_key: string | null
+          metadata: Json | null
+          phone: string | null
+          session_id: string | null
+          step: string | null
+          user_id: string | null
         }
         Relationships: []
       }
-      v_contractor_journey_latest: {
+      v_contractor_forensic_state: {
         Row: {
+          city: string | null
           company_name: string | null
           contractor_id: string | null
           current_stage: string | null
@@ -81018,6 +81006,37 @@ export type Database = {
           last_known_path: string | null
           phone: string | null
           rescue_bucket: string | null
+        }
+        Relationships: []
+      }
+      v_contractor_full_public: {
+        Row: {
+          aipp_score: number | null
+          best_for: Json | null
+          business_name: string | null
+          city: string | null
+          description: string | null
+          faq: Json | null
+          id: string | null
+          is_published: boolean | null
+          logo_url: string | null
+          not_ideal_for: Json | null
+          page_slug: string | null
+          personality_tags: string[] | null
+          province: string | null
+          rating: number | null
+          recommendation_reasons: Json | null
+          review_count: number | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string | null
+          specialty: string | null
+          summary_en: string | null
+          summary_fr: string | null
+          verification_status:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          years_experience: number | null
         }
         Relationships: []
       }
@@ -81059,6 +81078,43 @@ export type Database = {
           recommendation_multiplier: number | null
           recommendation_score: number | null
           visibility_multiplier: number | null
+        }
+        Relationships: []
+      }
+      v_contractor_rescue_queue: {
+        Row: {
+          city: string | null
+          company_name: string | null
+          contractor_id: string | null
+          current_stage: string | null
+          email: string | null
+          first_activity_at: string | null
+          has_activated: boolean | null
+          has_activation_started: boolean | null
+          has_checkout_opened: boolean | null
+          has_checkout_started: boolean | null
+          has_clicked: boolean | null
+          has_landing_view: boolean | null
+          has_paid: boolean | null
+          has_payment_failed: boolean | null
+          has_registration_completed: boolean | null
+          has_registration_started: boolean | null
+          has_sms_delivered: boolean | null
+          has_sms_failed: boolean | null
+          has_sms_queued: boolean | null
+          has_sms_sent: boolean | null
+          has_step_company: boolean | null
+          has_step_pricing: boolean | null
+          has_step_reviews: boolean | null
+          has_step_services: boolean | null
+          has_step_territories: boolean | null
+          journey_key: string | null
+          last_activity_at: string | null
+          last_event_metadata: Json | null
+          last_event_type: string | null
+          last_known_path: string | null
+          phone: string | null
+          rescue_bucket: string | null
         }
         Relationships: []
       }
@@ -81534,42 +81590,6 @@ export type Database = {
           neighborhood: string | null
           work_date: string | null
           work_type: string | null
-        }
-        Relationships: []
-      }
-      v_revenue_rescue_queue: {
-        Row: {
-          company_name: string | null
-          contractor_id: string | null
-          current_stage: string | null
-          email: string | null
-          first_activity_at: string | null
-          has_activated: boolean | null
-          has_activation_started: boolean | null
-          has_checkout_opened: boolean | null
-          has_checkout_started: boolean | null
-          has_clicked: boolean | null
-          has_landing_view: boolean | null
-          has_paid: boolean | null
-          has_payment_failed: boolean | null
-          has_registration_completed: boolean | null
-          has_registration_started: boolean | null
-          has_sms_delivered: boolean | null
-          has_sms_failed: boolean | null
-          has_sms_queued: boolean | null
-          has_sms_sent: boolean | null
-          has_step_company: boolean | null
-          has_step_pricing: boolean | null
-          has_step_reviews: boolean | null
-          has_step_services: boolean | null
-          has_step_territories: boolean | null
-          journey_key: string | null
-          last_activity_at: string | null
-          last_event_metadata: Json | null
-          last_event_type: string | null
-          last_known_path: string | null
-          phone: string | null
-          rescue_bucket: string | null
         }
         Relationships: []
       }
