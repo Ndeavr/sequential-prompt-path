@@ -31,6 +31,7 @@ const PageMemoryHealth = lazyWithRetry(() => import("@/pages/admin/PageMemoryHea
 const PageRevenueReality = lazyWithRetry(() => import("@/pages/admin/PageRevenueReality"));
 const PageContactedContractors = lazyWithRetry(() => import("@/pages/admin/PageContactedContractors"));
 const PageContractorForensics = lazyWithRetry(() => import("@/pages/admin/PageContractorForensics"));
+const PageRevenueDebug = lazyWithRetry(() => import("@/pages/admin/PageRevenueDebug"));
 const PageSystemHealth = lazyWithRetry(() => import("@/pages/admin/PageSystemHealth"));
 const PageEdgeFunctionHealth = lazyWithRetry(() => import("@/pages/admin/PageEdgeFunctionHealth"));
 const PageReplayPipeline = lazyWithRetry(() => import("@/pages/admin/PageReplayPipeline"));
