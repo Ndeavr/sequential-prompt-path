@@ -22,18 +22,24 @@ export default function PageContractorForensics() {
   const { data, isLoading } = useContractorJourney(decodedId);
 
   if (isLoading) {
-    return <div className="mx-auto max-w-6xl px-4 py-8 text-sm text-muted-foreground">Chargement…</div>;
+    return (
+      <div className="admin-theme min-h-screen bg-background text-foreground">
+        <div className="mx-auto max-w-6xl px-4 py-8 text-sm text-readable-muted">Chargement…</div>
+      </div>
+    );
   }
 
   if (!data?.state) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        <Link to="/admin/contacted-contractors" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
-          <ArrowLeft className="w-3 h-3" /> Retour
-        </Link>
-        <div className="mt-6 rounded-xl border border-border/20 bg-card/20 p-6">
-          <h1 className="text-lg font-semibold mb-2">Journey introuvable</h1>
-          <p className="text-sm text-muted-foreground">Aucun événement trouvé pour <span className="font-mono">{decodedId}</span>.</p>
+      <div className="admin-theme min-h-screen bg-background text-foreground">
+        <div className="mx-auto max-w-6xl px-4 py-8">
+          <Link to="/admin/contacted-contractors" className="text-sm text-readable-muted hover:text-foreground inline-flex items-center gap-1">
+            <ArrowLeft className="w-3 h-3" /> Retour
+          </Link>
+          <div className="mt-6 rounded-xl border border-border/20 bg-card/20 p-6">
+            <h1 className="text-lg font-semibold mb-2">Journey introuvable</h1>
+            <p className="text-sm text-readable-muted">Aucun événement trouvé pour <span className="font-mono">{decodedId}</span>.</p>
+          </div>
         </div>
       </div>
     );
@@ -41,10 +47,12 @@ export default function PageContractorForensics() {
 
   const { state, events } = data;
   const analysis = analyzeAbandonment(state, events);
+  const identity = state.company_name || state.phone || state.email || state.contractor_id || decodedId || "Contractor";
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <Link to="/admin/contacted-contractors" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mb-4">
+    <div className="admin-theme min-h-screen bg-background text-foreground">
+      <div className="mx-auto max-w-6xl px-4 py-8">
+      <Link to="/admin/contacted-contractors" className="text-sm text-readable-muted hover:text-foreground inline-flex items-center gap-1 mb-4">
         <ArrowLeft className="w-3 h-3" /> Retour à la liste
       </Link>
 
@@ -52,8 +60,8 @@ export default function PageContractorForensics() {
       <div className="rounded-xl border border-border/20 bg-card/30 backdrop-blur-sm p-5 mb-6">
         <div className="flex flex-wrap gap-4 justify-between">
           <div>
-            <h1 className="text-2xl font-bold">{state.company_name || state.phone || state.email || "Contractor inconnu"}</h1>
-            <div className="mt-2 text-sm text-muted-foreground space-y-0.5">
+            <h1 className="text-2xl font-bold text-readable">{identity}</h1>
+            <div className="mt-2 text-sm text-readable-muted space-y-0.5">
               {state.phone && <div>📱 {state.phone}</div>}
               {state.email && <div>✉️ {state.email}</div>}
               {state.contractor_id && <div className="font-mono text-xs">ID: {state.contractor_id}</div>}
@@ -61,9 +69,9 @@ export default function PageContractorForensics() {
             </div>
           </div>
           <div className="text-right text-sm">
-            <div className="text-muted-foreground">Étape actuelle</div>
-            <div className="text-xl font-bold mt-0.5">{stageLabelFr(state.current_stage)}</div>
-            <div className="text-xs text-muted-foreground mt-2">
+            <div className="text-readable-muted">Étape actuelle</div>
+            <div className="text-xl font-bold mt-0.5 text-readable">{stageLabelFr(state.current_stage)}</div>
+            <div className="text-xs text-readable-muted mt-2">
               1re activité: {formatDate(state.first_activity_at)}<br />
               Dernière: {formatDate(state.last_activity_at)}
             </div>
@@ -83,6 +91,7 @@ export default function PageContractorForensics() {
           <AbandonmentReasonCard analysis={analysis} />
         </div>
         <EventTimeline events={events} />
+      </div>
       </div>
     </div>
   );

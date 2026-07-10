@@ -56,19 +56,17 @@ export interface FunnelEventRow {
   user_id: string | null;
 }
 
-/** Resolve a journey key from the `:id` route param (uuid | phone | email | session id). */
+/** Resolve a journey key from the `:id` route param (uuid | phone | email). */
 async function resolveJourneyKey(id: string): Promise<JourneyStateRow | null> {
-  // Try direct match on journey_key first
   const { data } = await supabase
-    .from("v_contractor_journey_latest" as any)
+    .from("v_contractor_forensic_state" as any)
     .select("*")
     .eq("journey_key", id)
     .maybeSingle();
   if (data) return data as any;
 
-  // Fallback: try by contractor_id or phone or email
   const { data: any2 } = await supabase
-    .from("v_contractor_journey_latest" as any)
+    .from("v_contractor_forensic_state" as any)
     .select("*")
     .or(`contractor_id.eq.${id},phone.eq.${id},email.eq.${id}`)
     .limit(1)
@@ -85,21 +83,13 @@ export function useContractorJourney(id: string | undefined) {
       const state = await resolveJourneyKey(id);
       if (!state) return { state: null, events: [] as FunnelEventRow[] };
 
-      // Timeline — filter by whichever key we have
-      let query = supabase
-        .from("contractor_funnel_events" as any)
+      const { data: events } = await supabase
+        .from("v_contractor_forensic_journey" as any)
         .select("*")
+        .eq("journey_key", state.journey_key)
         .order("created_at", { ascending: true })
         .limit(500);
 
-      const or: string[] = [];
-      if (state.contractor_id) or.push(`contractor_id.eq.${state.contractor_id}`);
-      if (state.phone) or.push(`phone.eq.${state.phone}`);
-      if (state.email) or.push(`email.eq.${state.email}`);
-      if (state.journey_key) or.push(`session_id.eq.${state.journey_key}`);
-      if (or.length) query = query.or(or.join(","));
-
-      const { data: events } = await query;
       return { state, events: (events as any as FunnelEventRow[]) ?? [] };
     },
     refetchInterval: 15_000,
@@ -111,7 +101,7 @@ export function useRevenueRescueQueue() {
     queryKey: ["revenue-rescue-queue"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("v_revenue_rescue_queue" as any)
+        .from("v_contractor_rescue_queue" as any)
         .select("*")
         .limit(200);
       if (error) throw error;
@@ -126,7 +116,7 @@ export function useContactedContractors() {
     queryKey: ["contacted-contractors"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("v_contractor_journey_latest" as any)
+        .from("v_contractor_forensic_state" as any)
         .select("*")
         .order("last_activity_at", { ascending: false })
         .limit(500);
@@ -136,6 +126,7 @@ export function useContactedContractors() {
     refetchInterval: 20_000,
   });
 }
+
 
 // ————— Stage → label + abandonment logic
 

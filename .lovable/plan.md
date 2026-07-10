@@ -1,127 +1,86 @@
-## Contractor Revenue Forensics — drilldown & leak inspector
+## The problem (root cause)
 
-Goal: for every SMS-touched contractor, expose the **exact stage** where they stopped and surface the closest-to-paying record on top. No aggregates, append-only events, reconciled metrics.
+The forensics page is reading from the wrong table. Real onboarding data lives in `contractor_leads` + `contractor_outreach_logs`; the new view `v_contractor_journey_latest` reads from `contractor_funnel_events`, which is essentially empty (no phone, email, or contractor_id populated). That's why the drilldown shows "Unknown / —" for everyone while the dashboard correctly counts 27 sent / 1 clicked / 1 inscription from `contractor_leads`.
 
----
+The "1 inscription" is already identifiable in the DB:
 
-### 1. Data layer
-
-**Extend `contractor_funnel_events`** (already exists with `session_id/user_id/event_type/step/metadata/source/device/created_at`). Add append-only, non-destructive:
-
-- `contractor_id uuid` (nullable — filled once known)
-- `phone text`, `email text` (nullable — for pre-auth SMS/link events)
-- `event_source text` (twilio / resend / stripe / app / webhook)
-- `current_path text`
-- indexes on `(phone)`, `(contractor_id, created_at desc)`, `(event_type, created_at desc)`
-
-Keep every legacy row. Never overwrite.
-
-**New view `v_contractor_journey`**: for each `(contractor_id | phone | email)` returns latest event, current stage, last known path, last activity, ordered timeline JSON.
-
-**New view `v_revenue_rescue_queue`**: joins funnel + `acq_sms_logs` + `checkout_sessions` + `contractor_subscriptions` to bucket:
-- clicked & not registered
-- registered & not paid
-- paid & not activated
-
-Sorted by `last_activity_at desc`.
-
----
-
-### 2. Event capture (append everywhere)
-
-Emit into `contractor_funnel_events` from:
-
-| Source | Events |
-|---|---|
-| Twilio webhook (`sms-status-webhook` edge fn) | `sms_queued`, `sms_sent`, `sms_delivered`, `sms_failed` |
-| SMS link redirect edge fn | `sms_clicked` |
-| Landing route effect | `landing_view` + `current_path` |
-| Onboarding wizard steps | `registration_started`, `_step_company`, `_services`, `_territories`, `_reviews`, `_pricing`, `registration_completed` |
-| Stripe create-checkout edge fn | `stripe_checkout_started` |
-| Checkout page mount | `stripe_checkout_opened` |
-| Stripe webhook | `stripe_payment_success`, `stripe_payment_failed` |
-| Activation flow | `activation_started`, `activation_completed` |
-
-All go through one helper `logFunnelEvent({ contractor_id?, phone?, email?, event_type, event_source, current_path?, metadata })`. Append-only.
-
----
-
-### 3. Admin routes
-
-**`/admin/contacted-contractors`** (new page)
-- Table of every contractor touched by SMS (join `acq_sms_logs` + funnel).
-- Columns: company, phone, current stage badge, last activity, "closest to $" score, row click → detail.
-- Filters: stage, has-clicked, has-registered, unpaid.
-
-**`/admin/contractor/:id`** (new page)
-Four blocks:
-
-1. **Identity** — company, phone, email, created, source.
-2. **Current stage checklist** — the exact 10-step list from the request, ✓ / ✗ derived from event presence.
-3. **Timeline** — chronological event list with time, type, source, metadata expand.
-4. **Last known page** — big prominent card showing `current_path` from most recent event (e.g. `/entrepreneur/onboarding/pricing`).
-5. **Abandonment Reason Engine** — computed:
-   - current stage
-   - time since last activity
-   - previous event → next expected event
-   - blocker label ("Pricing friction", "Checkout not opened", "Payment failed", …)
-
-`:id` accepts `contractor_id` OR phone-hash fallback for pre-auth records.
-
----
-
-### 4. Reconciliation logic (fix fake metrics)
-
-Server-side view enforces monotonic funnel invariants:
 ```
-if clicked_count > 0 → delivered_count >= clicked_count
-if registered > 0    → clicked_count  >= registered
-if paid > 0          → registered     >= paid
+Couvreurs Therrien Inc. — 514-573-4159 — Verdun
+last_sms_at:            2026-06-14 17:30
+clicked_at:             2026-06-14 18:00
+onboarding_started_at:  2026-06-14 17:30
+pipeline_status:        onboarding_started
+paid_at:                null
 ```
-When violated, dashboard cards display **"Tracking Error Detected — reconcile pending"** with the offending pair, instead of the impossible number. A small `contractor_funnel_reconciliation_flags` table logs each anomaly for later backfill.
 
----
+That single lead should surface as the top HOT lead. It doesn't because the forensics view never joins to `contractor_leads`.
 
-### 5. Revenue Rescue Queue widget
+## Scope
 
-Sidebar/top card on `/admin/contacted-contractors` and `/admin/revenue-reality`:
+Two things: (1) fix the forensics data source so it uses the real onboarding tables, (2) fix dark-mode readability on all admin pages.
 
-- **🔥 HOT LEADS**
-  - Clicked ↛ Registered
-  - Registered ↛ Paid  ← highlighted red, this is where the first-paying contractor lives
-  - Paid ↛ Activated
-- Each item: company, stage, minutes since last activity, quick-link to `/admin/contractor/:id`, one-tap "Send rescue SMS" (dry-run default, respecting existing send-window policy).
+## Plan
 
----
+### 1. Unified journey view (SQL migration)
 
-### 6. Immediate deliverable
+Create `v_contractor_forensic_journey` that UNIONs three sources into one event stream keyed by `lead_id`:
 
-On first load of the new dashboard the "Registered ↛ Paid" bucket answers, for the single record described in the brief:
-- company, phone, email
-- last known page
-- whether `stripe_checkout_started` was logged
-- whether `stripe_payment_failed` exists
-- exact abandonment stage + minutes elapsed
+- `contractor_leads` → derived events from `last_sms_at`, `opened_at`, `clicked_at`, `onboarding_started_at`, `payment_started_at`, `paid_at`, `activation_status`
+- `contractor_outreach_logs` → real SMS/email events with status, error_code, error_message
+- `contractor_funnel_events` → app-side events (landing_viewed, plan_selected, etc.) joined on phone/email when populated
 
----
+Create `v_contractor_forensic_state` (one row per lead) with identity (company, phone, city), current_stage, last_known_path, rescue_bucket, and boolean checkmarks for each stage (has_sms_sent, has_sms_delivered, has_clicked, has_registration_started, has_stripe_started, has_paid, has_activated).
 
-### Files to add / touch
+### 2. Rewire admin forensics pages
 
-- `supabase/migrations/*_funnel_forensics.sql` — column adds, indexes, views, reconciliation table, GRANTs, RLS (admin read only).
-- `supabase/functions/sms-status-webhook/index.ts` — emit sms_* events (patch or create).
-- `supabase/functions/stripe-webhook/index.ts` — emit stripe_* events.
-- `src/lib/analytics/logFunnelEvent.ts` — single client helper; wraps insert.
-- Wire calls in: onboarding wizard steps, checkout page mount, activation page, landing route effect.
-- `src/pages/admin/PageContactedContractors.tsx` — new.
-- `src/pages/admin/PageContractorForensics.tsx` — new (`/admin/contractor/:id`).
-- `src/components/admin/forensics/StageChecklist.tsx`, `EventTimeline.tsx`, `AbandonmentReasonCard.tsx`, `LastKnownPageCard.tsx`, `RevenueRescueQueue.tsx`.
-- `src/hooks/useContractorJourney.ts`, `useRevenueRescueQueue.ts`.
-- Register routes in the admin router; add link from existing Revenue Reality dashboard.
+- `useContractorJourney(id)` → query `v_contractor_forensic_state` + `v_contractor_forensic_journey` (accept lead_id, phone, or company slug)
+- `useRevenueRescueQueue()` → order by rescue bucket priority (registered_not_paid → clicked_not_registered → paid_not_activated), so Couvreurs Therrien surfaces at top
+- `useContactedContractors()` → drop the `v_contractor_journey_latest` source; use `v_contractor_forensic_state`
+- `PageContractorForensics` → never render "Unknown" when any identity field exists; fall back gracefully company → phone → email → id
 
-### Out of scope (unless asked next)
+### 3. DATA INTEGRITY alert
 
-- Backfilling historical Twilio/Stripe events from provider APIs.
-- Automated rescue SMS sending (queue only; send button stays dry-run until confirmed).
-- Cross-project telemetry.
+Add a red banner on `/admin/contacted-contractors` and `/admin/revenue-debug` when `SUM(has_clicked) > SUM(has_sms_delivered)` or `SUM(has_paid) > SUM(has_registration)`. Banner shows the failing invariant + record IDs so tracking bugs are impossible to hide.
 
-Approve to build phase 1 (migration + capture helper + `/admin/contractor/:id` + rescue queue) in one pass.
+### 4. New page `/admin/revenue-debug`
+
+Raw event timeline per contractor, one contractor per collapsible block, 11-row grid:
+
+```text
+SMS SENT · SMS DELIVERED · LINK CLICKED · LANDING · REGISTRATION STARTED ·
+OTP VERIFIED · PLAN SELECTED · STRIPE STARTED · STRIPE SUCCESS ·
+PROFILE COMPLETED · ACTIVATED
+```
+
+Each cell = timestamp + source (twilio/app/stripe) or `—`. No aggregates, no percentages. Sorted by proximity-to-revenue.
+
+### 5. Dark-mode readability pass
+
+Audit `.admin-theme` scope. Replace `text-muted-foreground` used on dark cards with `.text-readable-muted` token (≥ AA contrast). Update `src/index.css`:
+
+```css
+.admin-theme {
+  --muted-foreground: 203 213 225;  /* slate-300, AA on #050816 */
+}
+.admin-theme .text-muted-foreground { color: rgb(203 213 225); }
+```
+
+Sweep the six flagged surfaces (title, filters, table headers, activity column, hot leads block, stage pills) so no text falls below AA. Never touch `.landing-warm` scope.
+
+## Files to change
+
+- **migration** — create `v_contractor_forensic_journey` + `v_contractor_forensic_state`, drop stale `v_contractor_journey_latest` / `v_revenue_rescue_queue`
+- `src/hooks/useContractorJourney.ts` — point at new views, accept lead_id
+- `src/pages/admin/PageContractorForensics.tsx` — resolve identity, never show "Unknown" when data exists
+- `src/pages/admin/PageContactedContractors.tsx` — new view + DATA INTEGRITY banner
+- `src/components/admin/forensics/RevenueRescueQueue.tsx` — new view
+- **new** `src/pages/admin/PageRevenueDebug.tsx` — raw 11-column event grid
+- **new** `src/components/admin/forensics/DataIntegrityBanner.tsx`
+- `src/app/router.tsx` — register `/admin/revenue-debug`
+- `src/index.css` — admin-theme readable tokens
+
+## Out of scope
+
+- Backfilling `contractor_funnel_events` for historical leads
+- Fixing Twilio delivery webhook (separate — that's why `has_sms_delivered = 0`; will be surfaced by the DATA INTEGRITY banner but not repaired here)
+- Automated rescue SMS
