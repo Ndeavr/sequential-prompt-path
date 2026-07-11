@@ -77930,6 +77930,132 @@ export type Database = {
         }
         Relationships: []
       }
+      unpro_payment_activation_audit: {
+        Row: {
+          action: string
+          amount_cents: number | null
+          campaign_id: string | null
+          checkout_session_id: string | null
+          contractor_id: string | null
+          created_at: string
+          currency: string | null
+          error_code: string | null
+          error_message: string | null
+          id: string
+          metadata: Json
+          new_status: string | null
+          payment_intent_id: string | null
+          previous_status: string | null
+          prospect_id: string | null
+          result: string
+          source: string | null
+          stripe_event_id: string | null
+          subscription_id: string | null
+        }
+        Insert: {
+          action: string
+          amount_cents?: number | null
+          campaign_id?: string | null
+          checkout_session_id?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          currency?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json
+          new_status?: string | null
+          payment_intent_id?: string | null
+          previous_status?: string | null
+          prospect_id?: string | null
+          result?: string
+          source?: string | null
+          stripe_event_id?: string | null
+          subscription_id?: string | null
+        }
+        Update: {
+          action?: string
+          amount_cents?: number | null
+          campaign_id?: string | null
+          checkout_session_id?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          currency?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json
+          new_status?: string | null
+          payment_intent_id?: string | null
+          previous_status?: string | null
+          prospect_id?: string | null
+          result?: string
+          source?: string | null
+          stripe_event_id?: string | null
+          subscription_id?: string | null
+        }
+        Relationships: []
+      }
+      unpro_stripe_webhook_events: {
+        Row: {
+          attempt_count: number
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          event_type: string
+          id: string
+          last_attempt_at: string | null
+          livemode: boolean
+          object_id: string | null
+          payload: Json
+          processed_at: string | null
+          processing_result: Json
+          processing_status: Database["public"]["Enums"]["unpro_webhook_processing_status"]
+          received_at: string
+          stripe_account_id: string | null
+          stripe_event_id: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          event_type: string
+          id?: string
+          last_attempt_at?: string | null
+          livemode?: boolean
+          object_id?: string | null
+          payload?: Json
+          processed_at?: string | null
+          processing_result?: Json
+          processing_status?: Database["public"]["Enums"]["unpro_webhook_processing_status"]
+          received_at?: string
+          stripe_account_id?: string | null
+          stripe_event_id: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          last_attempt_at?: string | null
+          livemode?: boolean
+          object_id?: string | null
+          payload?: Json
+          processed_at?: string | null
+          processing_result?: Json
+          processing_status?: Database["public"]["Enums"]["unpro_webhook_processing_status"]
+          received_at?: string
+          stripe_account_id?: string | null
+          stripe_event_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       upgrade_pressure_events: {
         Row: {
           converted: boolean | null
@@ -83089,6 +83215,14 @@ export type Database = {
         | "board_member"
         | "manager"
         | "administrator"
+      unpro_webhook_processing_status:
+        | "received"
+        | "processing"
+        | "processed"
+        | "ignored"
+        | "retry_pending"
+        | "failed"
+        | "dead_letter"
       verification_input_type:
         | "phone"
         | "name"
@@ -83392,6 +83526,15 @@ export const Constants = {
         "board_member",
         "manager",
         "administrator",
+      ],
+      unpro_webhook_processing_status: [
+        "received",
+        "processing",
+        "processed",
+        "ignored",
+        "retry_pending",
+        "failed",
+        "dead_letter",
       ],
       verification_input_type: [
         "phone",

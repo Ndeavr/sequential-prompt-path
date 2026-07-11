@@ -185,24 +185,33 @@ Deno.serve(async (req) => {
       });
     }
 
+    const unproMetadata = {
+      platform: "unpro",
+      brand: "unpro",
+      environment: "production",
+      contractor_id: contractor?.id || "",
+      contractor_profile_id: contractor?.id || "",
+      user_id: userId,
+      prospect_id: quote.prospect_id || "",
+      plan_code: quote.selected_plan_code,
+      offer_code: quote.offer_code || "",
+      activation_type: quote.activation_type || "plan_subscription",
+      source: quote.source || "pricing_quote",
+      campaign_id: quote.campaign_id || "",
+      onboarding_session_id: quote.onboarding_session_id || "",
+      billing_period: quote.selected_billing_period,
+      pricing_quote_id: quote_id,
+    };
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
       line_items: lineItems,
       success_url: success_url || `${origin}/entrepreneur/payment-success?quote_id=${quote_id}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancel_url || `${origin}/entrepreneur/payment-cancelled?quote_id=${quote_id}`,
-      metadata: {
-        pricing_quote_id: quote_id,
-        contractor_id: contractor?.id || "",
-        plan_code: quote.selected_plan_code,
-        billing_period: quote.selected_billing_period,
-      },
+      metadata: unproMetadata,
       subscription_data: {
-        metadata: {
-          pricing_quote_id: quote_id,
-          contractor_id: contractor?.id || "",
-          plan_code: quote.selected_plan_code,
-        },
+        metadata: unproMetadata,
       },
     });
 

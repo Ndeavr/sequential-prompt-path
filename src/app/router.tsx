@@ -377,6 +377,7 @@ const PageContractorPlanRecommendation = lazyWithRetry(() => import("@/pages/con
 const PageContractorPersonalizedPlan = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorPersonalizedPlan"));
 const PageContractorPricingIntake = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorPricingIntake"));
 const PageAdminPricingIntelligence = lazyWithRetry(() => import("@/pages/admin/PageAdminPricingIntelligence"));
+const PageAdminUnproStripeHealth = lazyWithRetry(() => import("@/pages/admin/PageAdminUnproStripeHealth"));
 const PageContractorCheckout = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorCheckout"));
 const PageContractorActivationSuccess = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorActivationSuccess"));
 const PageContractorDashboardPostActivation = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorDashboardPostActivation"));
@@ -1422,6 +1423,7 @@ export const AppRouter = () => (
         <Route path="/pro/demande/:city/:category" element={<Suspense fallback={<LazyFallback />}><PageContractorDemandLanding /></Suspense>} />
         <Route path="/admin/founder-verification" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageFounderVerification /></Suspense></ProtectedRoute>} />
         <Route path="/admin/pricing-intelligence" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminPricingIntelligence /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/unpro-stripe-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminUnproStripeHealth /></Suspense></ProtectedRoute>} />
         <Route path="/admin/system-mode" element={<ProtectedRoute requiredRole="admin"><PageSystemModeControlCenter /></ProtectedRoute>} />
         <Route path="/admin/verification" element={<ProtectedRoute requiredRole="admin"><AdminVerificationRuns /></ProtectedRoute>} />
         <Route path="/admin/verification/:id" element={<ProtectedRoute requiredRole="admin"><AdminVerificationRunDetail /></ProtectedRoute>} />
