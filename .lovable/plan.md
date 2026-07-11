@@ -1,44 +1,86 @@
-## Goal
+# RBQ Compliance Status System
 
-The Kijiji outreach queue currently writes rows into `contractor_outreach_logs` with `status="queued"` but no code ever picks them up and calls Twilio. Even with `dry_run=false` from the admin UI, no SMS actually leaves the platform. This plan wires the queue directly to the canonical Twilio sender and flips the default to real sending, with the necessary safety rails.
+Add a first-class compliance field on contractors that drives badges AND recommendation eligibility.
 
-## Changes
+## 1. Database migration
 
-### 1. `supabase/functions/queue-kijiji-outreach/index.ts`
-- Import `sendSms` from `../_shared/twilioSend.ts`.
-- When `dry_run=false` and the prospect is SMS-eligible (P0/P1 → `sms_ready`):
-  1. Create the `contractor_leads` row (as today).
-  2. Insert the `contractor_outreach_logs` row with `status="sending"` (not `"queued"`) and capture its `id`.
-  3. Call `sendSms({ to: p.phone, body: rendered, message_type: "outreach", template_key: template.template_name, lead_id, metadata: { source: "kijiji", prospect_id, variant, bucket } })`.
-  4. Update the same log row with `status="sent"|"failed"`, `provider_response: { sid, twilio_status }`, `error_message`, `sent_at=now()`.
-  5. Update the lead's `outreach_status` to `sent` / `send_failed`.
-- Email-only path (P2/P3) stays as today — logs a `queued` row (email dispatch is out of scope; there is already a separate email pipeline).
-- Wrap per-prospect send in try/catch so one failure does not abort the batch. Continue collecting `queued[]` / `skipped[]` / add `failed[]`.
-- Report each outcome through `_shared/reliability.ts` (`reportOutcome`) with canonical `FailureCode.TWILIO_*` codes so the failures show up in `/admin/revenue-reality`.
+Extend `public.contractors` (existing `rbq_number` stays):
 
-### 2. `supabase/functions/kijiji-daily-orchestrator/index.ts`
-- Change the default `dry_run` from `true` to `false` for the P0 queue step, but still accept `body.dry_run` to force a rehearsal.
-- Pass through `bucket: "P0"`, `limit: 25` (unchanged).
+```sql
+CREATE TYPE public.rbq_status AS ENUM ('verified','in_progress','not_provided','expired');
 
-### 3. `src/pages/admin/PageAdminKijijiSource.tsx`
-- Split the P0 action into two explicit buttons:
-  - **"Simuler P0 (dry-run)"** → invokes with `dry_run: true` and shows the message previews.
-  - **"Envoyer P0 réel"** → invokes with `dry_run: false`; shows a confirm dialog ("Envoi SMS réels via Twilio. Continuer ?") before firing.
-- Toast reports `queued`, `sent`, `failed` counts (add a `failed` field to the tuple).
-- No other UI changes.
+ALTER TABLE public.contractors
+  ADD COLUMN rbq_status public.rbq_status NOT NULL DEFAULT 'not_provided',
+  ADD COLUMN rbq_verified_at   timestamptz,
+  ADD COLUMN rbq_expiry_date   date,
+  ADD COLUMN rbq_last_check    timestamptz;
 
-### 4. Safety rails (kept, not weakened)
-- Suppression list check — unchanged.
-- Daily cap `max_sms_queue_per_day` — unchanged.
-- `sms_ready` eligibility (Twilio Lookup mobile confirmed) — unchanged, gates the send.
-- `sendSms()` already enforces send window, opt-out, phone validation, and the QC sender number.
+CREATE INDEX contractors_rbq_status_idx ON public.contractors(rbq_status);
+```
 
-## Out of scope
-- No change to email delivery.
-- No change to Twilio credentials or webhook wiring.
-- No new tables.
+Backfill:
+- rows with a valid-looking `rbq_number` + `verification_status='verified'` → `verified`, set `rbq_verified_at = now()`.
+- rows with `rbq_number` present but unverified → `in_progress`.
+- rows with no `rbq_number` → `not_provided`.
 
-## Verification
-1. From `/admin/acquisition/sources/kijiji`, click **Simuler P0 (dry-run)** → toast shows `queued: N`, no Twilio traffic, all previews rendered.
-2. Click **Envoyer P0 réel** → confirm dialog → toast shows `sent: N, failed: F`; new rows in `contractor_outreach_logs` with `status="sent"` and a Twilio `sid`; `/admin/revenue-reality` funnel "SMS sent" increments within 30 s.
-3. `sms_events_v2` receives one row per attempt (existing invariant of `sendSms`).
+Nightly cron edge function `rbq-expiry-sweeper` flips `verified` → `expired` when `rbq_expiry_date < now()` and stamps `rbq_last_check`.
+
+## 2. Shared compliance helper
+
+New `src/lib/compliance/rbqStatus.ts` — single source of truth:
+
+- `RBQ_STATUS` type + `RBQ_BADGES` map (label FR/EN, tone, icon).
+- `getRbqCompliance(contractor)` → `{ status, badge, eligibility, visibilityMultiplier, explanation }`.
+- Bilingual explanation strings (FR canonical, EN fallback):
+  - verified — « Licence RBQ vérifiée et active. » / "RBQ license verified and active."
+  - in_progress — « Démarche RBQ en cours. Éligible aux catégories sans exigence de licence obligatoire. »
+  - not_provided — « Aucune licence RBQ fournie. Visibilité réduite, badge conformité indisponible. »
+  - expired — « Licence RBQ expirée ou invalide. Recommandations suspendues jusqu'à correction. »
+
+## 3. Badge component
+
+New `src/features/compliance/RbqStatusBadge.tsx` — colored pill using existing design tokens (green/amber/muted/destructive), tooltip carries FR+EN explanation. Reused on:
+- public contractor profile
+- `/pro/profile`
+- admin contractor detail view
+- recommendation cards (secondary chip)
+
+## 4. Recommendation engine rules
+
+Update `src/features/planSystem/recommendationScoreEngine.ts` (and `v_contractor_recommendation_score` view / edge scoring where applicable):
+
+| Status | Eligibility | Score effect |
+|---|---|---|
+| verified | 100% | ×1.0, unlocks compliance badge |
+| in_progress | Only for categories not requiring an active RBQ (checked against `services.rbq_required`) | ×0.85 |
+| not_provided | Eligible only where RBQ not mandatory | ×0.60, no compliance badge |
+| expired | Excluded entirely | ×0 (filtered out) |
+
+If `services.rbq_required` column doesn't exist yet, add a boolean column with sensible defaults for the trades listed in the qualification engine (roofing, foundation, electrical, plumbing, hvac → true; landscaping, painting → false).
+
+## 5. Profile form update
+
+`src/pages/pro/ProProfile.tsx` — add RBQ block: number, status dropdown (contractor-editable only to `not_provided` / `in_progress`; `verified` and `expired` are admin/system-controlled), expiry date picker. Uses existing `isValidRbq`.
+
+## 6. Admin surface
+
+Admin contractor detail: manual override of `rbq_status`, `rbq_verified_at`, `rbq_expiry_date` with an audit row into existing `contractor_domain_admin_notes` (or `admin_action_logs`).
+
+## 7. Verification
+
+- Typecheck.
+- Migration applies cleanly, backfill counts match.
+- Badge renders in all 4 states.
+- Recommendation query excludes `expired` and de-ranks `not_provided` / `in_progress`.
+- Playwright: visit a seeded contractor profile per status and screenshot the badge + tooltip.
+
+## Files touched
+
+- new: `supabase/migrations/<ts>_rbq_status.sql`
+- new: `supabase/functions/rbq-expiry-sweeper/index.ts` + cron entry
+- new: `src/lib/compliance/rbqStatus.ts`
+- new: `src/features/compliance/RbqStatusBadge.tsx`
+- edit: `src/features/planSystem/recommendationScoreEngine.ts`
+- edit: `src/pages/pro/ProProfile.tsx`
+- edit: admin contractor detail page
+- edit: public contractor profile + recommendation cards to render the badge
