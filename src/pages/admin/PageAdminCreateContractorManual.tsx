@@ -230,13 +230,30 @@ const PageAdminCreateContractorManual = () => {
     toast({ title: "Texte généré", description: "Copy persuasive remplie." });
   };
 
+  const canSubmit = !!(
+    businessName.trim() &&
+    phone.trim() &&
+    city.trim() &&
+    categories.length > 0 &&
+    planCode &&
+    durationMonths > 0 &&
+    Number(amountPaidDollars) >= 0 &&
+    adminConfirmed
+  );
+
   const handleSubmit = async () => {
-    if (!businessName.trim() || !phone.trim() || !city.trim()) {
-      toast({ title: "Champs requis", description: "Nom, téléphone et ville requis.", variant: "destructive" });
+    if (!canSubmit) {
+      toast({
+        title: "Champs requis",
+        description: "Nom, téléphone, ville, catégorie, plan, durée et confirmation admin requis.",
+        variant: "destructive",
+      });
       return;
     }
+    setShowSummary(false);
     setSubmitting(true);
     try {
+      const amountCents = Math.round((Number(amountPaidDollars) || 0) * 100);
       const { data, error } = await supabase.functions.invoke("admin-create-contractor-manual", {
         body: {
           business_name: businessName.trim(),
@@ -266,6 +283,12 @@ const PageAdminCreateContractorManual = () => {
           aipp_badge: aipp.badge,
           plan_code: planCode,
           plan_amount_cents: selectedPlan.price,
+          amount_paid_cents: amountCents,
+          duration_months: durationMonths,
+          activation_note: paymentNote || null,
+          priority_matching: priorityMatching,
+          can_be_matched: toggles.receives_leads,
+          admin_confirmed: true,
           ...toggles,
         },
       });
@@ -276,10 +299,11 @@ const PageAdminCreateContractorManual = () => {
         public_url: data.public_url,
         expiry_date: data.expiry_date,
         aipp_score: data.aipp_score,
+        contractor_id: data.contractor_id,
       });
       toast({ title: "✅ Entrepreneur activé", description: `${businessName} est en ligne.` });
     } catch (e: any) {
-      toast({ title: "Erreur", description: e.message ?? String(e), variant: "destructive" });
+      toast({ title: "Erreur activation", description: e.message ?? String(e), variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
