@@ -550,9 +550,9 @@ const PageAdminCreateContractorManual = () => {
             </div>
           </Section>
 
-          {/* SECTION 6 — Plan */}
-          <Section title="5 · Plan payé" icon={<Award className="w-4 h-4 text-white/60" />}>
-            <div className="grid md:grid-cols-2 gap-3 items-center">
+          {/* SECTION 5 — Plan & paiement manuel */}
+          <Section title="5 · Plan & paiement manuel" icon={<Award className="w-4 h-4 text-white/60" />}>
+            <div className="grid md:grid-cols-2 gap-3">
               <div>
                 <Label className="text-white/70">Plan</Label>
                 <Select value={planCode} onValueChange={setPlanCode}>
@@ -568,28 +568,67 @@ const PageAdminCreateContractorManual = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/5 p-3 text-sm text-white/80">
-                <div className="font-semibold text-emerald-200">Activation 1 an</div>
+              <div>
+                <Label className="text-white/70">Durée accordée</Label>
+                <Select
+                  value={String(durationMonths)}
+                  onValueChange={(v) => setDurationMonths(Number(v))}
+                >
+                  <SelectTrigger className="bg-black/30 border-white/10 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 mois</SelectItem>
+                    <SelectItem value="3">3 mois</SelectItem>
+                    <SelectItem value="6">6 mois</SelectItem>
+                    <SelectItem value="12">1 an</SelectItem>
+                    <SelectItem value="24">2 ans</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-white/70">Montant payé (CAD)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={amountPaidDollars}
+                  onChange={(e) => setAmountPaidDollars(e.target.value)}
+                  className="bg-black/30 border-white/10 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-white/70">Note paiement</Label>
+                <Input
+                  value={paymentNote}
+                  onChange={(e) => setPaymentNote(e.target.value)}
+                  placeholder="Payé 1 an — Interac"
+                  className="bg-black/30 border-white/10 text-white"
+                />
+              </div>
+              <div className="md:col-span-2 rounded-xl border border-emerald-400/20 bg-emerald-500/5 p-3 text-sm text-white/80">
+                <div className="font-semibold text-emerald-200">
+                  Activation {durationMonths >= 12 ? `${Math.floor(durationMonths / 12)} an${durationMonths >= 24 ? "s" : ""}` : `${durationMonths} mois`}
+                </div>
                 <div className="text-white/60 text-xs mt-1">
-                  Statut : <span className="text-emerald-300">Payé</span> · Méthode : Manuel · Note : Payé 1 an
+                  Statut : <span className="text-emerald-300">Payé</span> · Méthode : Manuel · Montant : {amountPaidDollars || "0"} $ · Note : {paymentNote || "—"}
                 </div>
                 <div className="text-white/60 text-xs">
-                  Expire : {new Date(Date.now() + 365 * 86400000).toLocaleDateString("fr-CA")}
+                  Expire : {new Date(Date.now() + durationMonths * 30 * 86400000).toLocaleDateString("fr-CA")}
                 </div>
               </div>
             </div>
           </Section>
 
-          {/* SECTION 7 — Activation toggles */}
-          <Section title="6 · Activation" icon={<Shield className="w-4 h-4 text-white/60" />}>
+          {/* SECTION 6 — Activation & droits */}
+          <Section title="6 · Activation & droits" icon={<Shield className="w-4 h-4 text-white/60" />}>
             <div className="grid md:grid-cols-2 gap-3">
               {(
                 [
-                  ["visible_public", "Visible public"],
-                  ["receives_leads", "Reçoit des leads"],
-                  ["priority_match", "Prioritaire matching"],
-                  ["unpro_verified", "Vérifié UNPRO"],
-                  ["badge_premium", "Badge premium"],
+                  ["visible_public", "Visible public (profil publié)"],
+                  ["receives_leads", "Reçoit des rendez-vous"],
+                  ["unpro_verified", "Vérifié UNPRO (documenté)"],
+                  ["badge_premium", "Badge premium (dépend du plan)"],
                 ] as const
               ).map(([key, label]) => (
                 <div key={key} className="flex items-center justify-between rounded-md border border-white/10 bg-black/20 px-3 py-2">
@@ -600,10 +639,77 @@ const PageAdminCreateContractorManual = () => {
                   />
                 </div>
               ))}
+              <div className="md:col-span-2 flex items-center justify-between gap-3 rounded-md border border-white/10 bg-black/20 px-3 py-2">
+                <Label className="text-white/80">Priorité de matching</Label>
+                <Select value={priorityMatching} onValueChange={(v: any) => setPriorityMatching(v)}>
+                  <SelectTrigger className="w-40 bg-black/30 border-white/10 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="normal">Normal</SelectItem>
+                    <SelectItem value="elevated">Élevée</SelectItem>
+                    <SelectItem value="exclusive">Exclusive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <label className="md:col-span-2 flex items-start gap-3 rounded-md border border-amber-400/30 bg-amber-500/5 px-3 py-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={adminConfirmed}
+                  onChange={(e) => setAdminConfirmed(e.target.checked)}
+                  className="mt-1 h-4 w-4 accent-emerald-500"
+                />
+                <span className="text-sm text-amber-100/90 leading-snug">
+                  Je confirme que le paiement a été reçu et que les informations ont été vérifiées.
+                </span>
+              </label>
             </div>
           </Section>
         </div>
       </div>
+
+      {/* Summary modal */}
+      {showSummary && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0A1220] p-5 shadow-2xl">
+            <h3 className="text-lg font-semibold text-white mb-4">Confirmer l'activation</h3>
+            <dl className="grid grid-cols-2 gap-y-2 text-sm">
+              {[
+                ["Entreprise", businessName || "—"],
+                ["Téléphone", phone || "—"],
+                ["Ville", city || "—"],
+                ["Catégories", categories.join(", ") || "—"],
+                ["Plan", selectedPlan.label],
+                ["Durée", `${durationMonths} mois`],
+                ["Montant payé", `${amountPaidDollars || "0"} $ CAD`],
+                ["Priorité matching", priorityMatching],
+                ["Visible public", toggles.visible_public ? "Oui" : "Non"],
+                ["Reçoit RDV", toggles.receives_leads ? "Oui" : "Non"],
+                ["Vérifié UNPRO", toggles.unpro_verified ? "Oui" : "Non"],
+                ["Badge premium", toggles.badge_premium ? "Oui" : "Non"],
+              ].map(([k, v]) => (
+                <>
+                  <dt className="text-white/50">{k}</dt>
+                  <dd className="text-white text-right">{v as string}</dd>
+                </>
+              ))}
+            </dl>
+            <div className="mt-5 flex gap-2 justify-end">
+              <Button variant="ghost" onClick={() => setShowSummary(false)} className="text-white/70">
+                Annuler
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold"
+              >
+                {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                Activer et publier
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sticky CTA */}
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-[#060B14]/90 backdrop-blur-xl">
