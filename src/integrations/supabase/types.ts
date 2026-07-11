@@ -59574,6 +59574,78 @@ export type Database = {
           },
         ]
       }
+      pipeline_engagement_events: {
+        Row: {
+          channel: string | null
+          contractor_id: string | null
+          created_at: string
+          destination_url: string | null
+          error_code: string | null
+          error_message: string | null
+          event_type: string
+          id: string
+          idempotency_key: string | null
+          lead_id: string | null
+          metadata: Json
+          occurred_at: string
+          prospect_id: string | null
+          provider: string | null
+          provider_message_id: string | null
+          session_id: string | null
+          source_row_id: string | null
+          source_table: string | null
+          status: string | null
+          tracking_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          channel?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          destination_url?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          event_type: string
+          id?: string
+          idempotency_key?: string | null
+          lead_id?: string | null
+          metadata?: Json
+          occurred_at?: string
+          prospect_id?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
+          session_id?: string | null
+          source_row_id?: string | null
+          source_table?: string | null
+          status?: string | null
+          tracking_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          channel?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          destination_url?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          idempotency_key?: string | null
+          lead_id?: string | null
+          metadata?: Json
+          occurred_at?: string
+          prospect_id?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
+          session_id?: string | null
+          source_row_id?: string | null
+          source_table?: string | null
+          status?: string | null
+          tracking_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       pipeline_health_snapshots: {
         Row: {
           automation_health: string
@@ -83558,6 +83630,38 @@ export type Database = {
         }
         Relationships: []
       }
+      v_engagement_funnel_24h: {
+        Row: {
+          channel: string | null
+          count_24h: number | null
+          count_7d: number | null
+          count_total: number | null
+          event_type: string | null
+          last_at: string | null
+        }
+        Relationships: []
+      }
+      v_engagement_recent: {
+        Row: {
+          channel: string | null
+          contractor_id: string | null
+          error_code: string | null
+          error_message: string | null
+          event_type: string | null
+          id: string | null
+          lead_id: string | null
+          metadata: Json | null
+          occurred_at: string | null
+          prospect_id: string | null
+          provider: string | null
+          provider_message_id: string | null
+          source_row_id: string | null
+          source_table: string | null
+          status: string | null
+          tracking_id: string | null
+        }
+        Relationships: []
+      }
       v_exclusivity_eligible: {
         Row: {
           active_pros: number | null
@@ -84862,6 +84966,29 @@ export type Database = {
       }
       record_email_event: {
         Args: { p_kind: string; p_message_id: string; p_payload?: Json }
+        Returns: string
+      }
+      record_engagement_event: {
+        Args: {
+          _channel?: string
+          _contractor_id?: string
+          _destination_url?: string
+          _error_code?: string
+          _error_message?: string
+          _event_type: string
+          _idempotency_key?: string
+          _lead_id?: string
+          _metadata?: Json
+          _prospect_id?: string
+          _provider?: string
+          _provider_message_id?: string
+          _session_id?: string
+          _source_row_id?: string
+          _source_table?: string
+          _status?: string
+          _tracking_id?: string
+          _user_id?: string
+        }
         Returns: string
       }
       record_outreach_sms_event: {
