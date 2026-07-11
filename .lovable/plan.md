@@ -1,136 +1,138 @@
-## Objectif
 
-Transformer l'écran `/admin/contractors/create-manual` en activation réellement opérationnelle : un clic doit produire l'état complet d'un abonnement payé (Stripe ou manuel), avec profil publié, matching activé, Alex qui peut recommander, réservation directe possible, et audit complet.
+# Pipeline Acquisition UNPRO — Audit, Réparation & Complétion
 
-## Diagnostic actuel
+Objectif : rendre le parcours **Prospect → Contact → Outreach → Onboarding → Paiement → Activation → Profil public → Matching → Alex** réellement opérationnel, sans système parallèle. On répare et complète ce qui existe déjà (`contractor_prospects`, `contractor_onboarding_sessions`, `outreach_*`, `admin-create-contractor-manual`, `admin_activate_contractor_finalize`, `contractor_matching_status`, `contractor_entitlements`, `stripe-webhook`, etc.).
 
-- L'edge function `admin-create-contractor-manual` existe et écrit déjà dans `contractors`, `contractor_subscriptions`, `admin_activation_overrides`, `manual_contractor_activations`, `contractor_public_pages`, `contractor_aipp_scores`. **Bases correctes** mais incomplètes.
-- Manques critiques :
-  1. Pas de `contractor_entitlements` ni de `contractor_matching_status` écrits → matching non garanti.
-  2. `payment_status` / `payment_method` / `amount_paid_cents` non stockés sur `contractor_subscriptions` (champs à ajouter).
-  3. Pas de recherche de doublons (téléphone/email/legal_name) → risque de doublons.
-  4. Pas de rollback si une étape échoue → profils partiellement activés.
-  5. AIPP figé côté client (68) au lieu d'être recalculé serveur post-insert.
-  6. Toggles = visuels seulement, ne persistent pas de façon fiable.
-  7. Pas de confirmation admin ni de résumé pré-activation, pas de bouton avec vérifications complètes.
-  8. Écran de succès ne propose pas "Tester dans Alex", "Copier lien", "CRM".
-  9. Pas de cron d'intégrité.
-  10. Pas de tests E2E.
+Vu l'ampleur, je livre en **6 phases**. Chaque phase produit quelque chose de testable et passe l'audit correspondant.
 
-## Livrables
+---
 
-### A. Migration Supabase (une seule)
+## Phase 1 — Cockpit d'audit & moteur de test (foundation)
 
-1. **`contractor_subscriptions`** — ajouter colonnes si absentes :
-   - `payment_status` (`'unpaid'|'paid'|'refunded'`), `payment_method` (`'stripe'|'manual'`), `amount_paid_cents`, `currency`, `activated_by` (uuid admin), `activation_note`, `stripe_subscription_id` (déjà là), `auto_renew`.
-2. **`contractor_entitlements`** (créer si absent) — `contractor_id` UNIQUE, `can_receive_appointments`, `can_be_matched`, `public_profile_enabled`, `priority_matching` (`normal|elevated|exclusive`), `verified_badge`, `premium_badge`, `appointment_quota`, `territory_limit`, `valid_until`.
-3. **`contractor_matching_status`** (créer si absent) — `contractor_id` UNIQUE, `is_eligible`, `eligibility_reason`, `capacity_status`, `accepting_new_projects`, `last_evaluated_at`.
-4. **`manual_payments`** (créer si absent, sinon réutiliser `manual_contractor_activations`) — enregistrement du paiement hors Stripe.
-5. **`admin_activation_logs`** (créer si absent) — `contractor_id`, `admin_user_id`, `action`, `status`, `before_state jsonb`, `after_state jsonb`, `error_message`.
-6. **Vue `v_contractor_alex_eligible`** — SQL déterministe pour Alex :
-   ```
-   subscription.status='active' AND payment_status='paid' AND expires_at>now()
-   AND entitlements.can_be_matched=true
-   AND matching_status.is_eligible=true
-   AND contractors.account_status='active'
-   ```
-   → indépendante de `stripe_subscription_id`.
-7. **Fonction SQL `recompute_contractor_aipp(contractor_id)`** — calcul serveur basé sur complétude réelle + retour du breakdown.
-8. RLS + GRANT explicites pour toutes les nouvelles tables (`authenticated` read-own, `service_role` all).
+Rend visible où le pipeline casse avant de réparer quoi que ce soit.
 
-### B. Edge function `admin-activate-contractor` (nouvelle, atomique)
+**Backend**
+- Migration : `system_audit_logs`, `stripe_webhook_events` (idempotence), `pipeline_audit_runs`, `pipeline_audit_steps`.
+- Edge function `audit-contractor-acquisition-pipeline` : exécute les 27 étapes (`01_source_available` → `27_appointment_flow_available`), retourne `PipelineAuditStep[]`, écrit dans `pipeline_audit_steps`. Modes : `simulation | stripe_test | production_no_send | production_live` (défaut `allow_live_delivery=false`).
+- Edge function `get-contractor-operational-status` : source de vérité unique (`prospect | contacted | onboarding | payment_pending | active | paused | suspended | expired | blocked` + `blockers[]`).
+- Vue SQL `v_pipeline_funnel_counts` (Scraped → Recommendable, 12 étapes).
 
-Refonte de `admin-create-contractor-manual` sous nom neutre. Traite `contractor_id` optionnel (update-or-create).
+**Frontend**
+- `/admin/acquisition/pipeline` : funnel cliquable, KPIs (SMS/Email/Stripe/Twilio/webhook errors), bouton **Tester tout le pipeline** (4 modes) avec résultat live par étape (✅/❌ + cause + fonction + action).
+- `/admin/acquisition/errors` : erreurs groupées par catégorie (scraping, phone, sms, email, stripe, webhook, activation, matching, alex) avec boutons Réparer / Ignorer / Ouvrir.
 
-Étapes séquentielles, avec **snapshot before / after** et rollback compensatoire en cas d'échec :
+---
 
-1. Vérifie rôle `admin`.
-2. Valide payload (Zod).
-3. Normalise phone→E.164, website, slug, catégories.
-4. Recherche doublons : `phone_e164`, `email`, `legal_name`, `slug`, `business_name`.
-5. Upsert `contractors` (status=active, onboarding_status=completed, activation_source=admin_manual).
-6. Upsert `contractor_profiles` (public_status=published, published_at=now).
-7. Écrit `contractor_service_areas` + `contractor_categories` (dédupliqués).
-8. Upsert `contractor_subscriptions` (status=active, payment_status=paid, payment_method=manual, amount_paid_cents, starts_at, expires_at, activated_by, activation_note).
-9. Insert `manual_payments` (source=admin_manual_activation, method=manual, status=paid).
-10. Upsert `contractor_entitlements` selon plan + toggles réels.
-11. Upsert `contractor_matching_status` (is_eligible=true si toggle+plan OK).
-12. Appelle `recompute_contractor_aipp(contractor_id)` → écrit dans `contractor_aipp_scores` (jamais 68 forcé).
-13. Écrit `contractor_public_pages`.
-14. Insert `admin_activation_logs` avec before/after.
-15. Retourne `{ ok, contractor_id, slug, public_url, expiry_date, aipp_score, entitlements, matching }`.
+## Phase 2 — Prospect, coordonnées, dédoublonnage, fusion
 
-En cas d'erreur à toute étape : rollback des inserts précédents (via `contractor_id`), log erreur dans `admin_activation_logs`, réponse 500 explicite.
+Un admin peut créer/éditer/fusionner un prospect proprement, un scraper aussi.
 
-### C. UI `PageAdminCreateContractorManual` — refonte finale
+**Backend**
+- Migration : `contractor_prospect_contacts` (value, type, is_primary, source, verified, verification_method, verified_at, added_by, historique conservé), `contractor_prospect_merges`.
+- Edge functions : `prospect-upsert` (normalise phone E.164 + détecte mobile/fixe/VoIP via `phone_carrier_cache`, normalise email, détecte doublons sur phone/email/RBQ/nom+ville/domaine), `prospect-merge` (garde progression onboarding la plus avancée, paiement, contractor_id, logs).
+- Sources supportées : `manual, kijiji, google_maps, rbq, referral, facebook, instagram, website, csv_import, phone_call, contractor_request, partner, other`.
 
-1. **Séparer les dimensions** : Catégories métier (Peinture, Plâtrage, Gypse, Après sinistre) vs. Types de clientèle (Résidentiel, Commercial, Condo refresh) — deux champs distincts.
-2. **Section "Paiement manuel"** : montant réellement payé (input), devise (CAD), date paiement, durée accordée (1 mois / 3 mois / 6 mois / 1 an), date expiration calculée, note.
-3. **Toggle "Priorité matching"** remplace "Prioritaire matching" par select `normal|elevated|exclusive`.
-4. **Vérification obligatoire** : checkbox `"Je confirme que le paiement a été reçu et que les informations ont été vérifiées."` — désactive le bouton tant que non cochée.
-5. **Bouton final unique** : `Activer et publier l'entrepreneur`. Désactivé si champs requis manquants (nom, phone E.164 valide, ville, ≥1 catégorie, plan, expiration, confirmation cochée).
-6. **Modale de résumé pré-activation** avec toutes les valeurs finales avant appel edge function.
-7. Appelle `admin-activate-contractor` (remplace `admin-create-contractor-manual`).
-8. **Écran de succès enrichi** :
-   - Statuts : profil publié, abonnement payé, plan, expiration, matching admissible, RDV activés, Alex peut recommander.
-   - Actions : Voir profil public · **Tester dans Alex** (ouvre `/admin/alex-test?contractor=<id>&city=<city>&category=<cat>`) · Voir fiche CRM · Copier lien public · Envoyer accès (envoi email/SMS à l'entrepreneur).
-9. AIPP live (client) reste un **estimé** — remplacé par la valeur serveur au retour.
+**Frontend**
+- `/admin/prospects/new`, `/admin/prospects/:id/edit` : formulaire complet (champs listés dans le brief) + mode rapide (Nom / Tel-Email / Ville / Catégorie).
+- Boutons **+ Ajouter un entrepreneur** dans `/admin/acquisition`, `/admin/outreach`, `/admin/contractors`, `/admin/acquisition/pipeline`.
+- Indicateurs live : `Mobile validé | Ligne fixe | VoIP | Courriel valide | Doublon possible | Aucune coordonnée exploitable`.
+- Écran de fusion avec preview avant/après.
+- Section **Ajouter une coordonnée** sur la fiche prospect (Tel mobile, Ligne fixe, Courriel, Site, Contact 2, Adresse, Ville desservie, RBQ, NEQ, Social).
 
-### D. Alex — moteur de recommandation
+---
 
-- Remplacer tout filtre implicite `stripe_subscription_id IS NOT NULL` par la vue `v_contractor_alex_eligible` (audit rapide : la codebase actuelle ne filtre pas sur Stripe directement, mais on sécurise via la vue).
-- Ajouter un edge function `admin-test-alex-recommendation` : entrée `{contractor_id, city, category, project_type}` → renvoie inclusion/exclusion + raison (score, capacité, langue, disponibilité, vérification).
+## Phase 3 — Outreach, tracking, lien d'onboarding sécurisé
 
-### E. Réservation directe
+Chaque envoi laisse une trace, chaque clic ouvre un onboarding prérempli.
 
-- Après activation, si aucun `appointment_slot` : proposer dans l'UI admin un bouton "Générer 4 semaines de disponibilité (Lun–Ven 9h–17h)" pour amorcer.
-- Si aucun slot au moment où homeowner réserve : créer `appointment_request_pending` (table existante ou nouvelle) et notifier l'entrepreneur — jamais renvoyer vers "parler avec UNPRO".
+**Backend**
+- Table `outreach_deliveries` complétée avec : `prospect_id, campaign_id, message_variant, channel, destination, provider_message_id, queued_at, sent_at, delivered_at, failed_at, clicked_at, onboarding_started_at, payment_completed_at`.
+- Webhooks Twilio & Resend consolidés dans `outreach-webhook` (idempotent, respect STOP / unsubscribe, jamais de SMS vers ligne fixe).
+- Edge function `onboarding-token-issue` + `onboarding-token-resolve` : token → `{ prospect_id, campaign_id, source, language, expires_at }`.
+- Route `/onboarding/pro/:token` : si expiré → écran de renouvellement (OTP SMS/email, pas de redirect accueil).
 
-### F. Cron `verify-contractor-activation-integrity`
+**Frontend**
+- Sur token valide : hook `usePrefillFromProspect` remplit nom, contact, tel, email, ville, catégorie, site, RBQ, territoire, langue, source (tous éditables). Aucune question déjà répondue n'est reposée.
 
-Edge function schedulée quotidiennement via `pg_cron` + `pg_net` (via `supabase--insert`, pas migration). Détections + réparations documentées :
+---
 
-- abonnement payé + entrepreneur inactif → réactive.
-- profil public activé mais page absente → régénère.
-- droits incohérents avec plan → aligne.
-- expiration dépassée + matching actif → désactive matching + badge.
-- paiement manuel sans audit → log alerte.
-- doublons slug/phone → alerte admin.
+## Phase 4 — Onboarding progressif, plan, checkout Stripe 1 $
 
-Insertions dans `admin_activation_logs` + notifications critiques dans `admin_notifications`.
+Progression jamais perdue, paiement idempotent.
 
-### G. Tests E2E (Playwright)
+**Backend**
+- `contractor_onboarding_sessions` complétée : statuts `not_started | link_opened | identity_confirmed | business_completed | services_completed | territory_completed | verification_completed | plan_selected | checkout_started | payment_pending | paid | activated | abandoned | blocked`, `completion_percent`, `last_activity_at`, `checkout_session_id`.
+- Sauvegarde autosave à chaque étape (debounce 500 ms).
+- `stripe-webhook` durci : signature vérifiée, écrit `stripe_webhook_events` avant traitement, statut `received | processing | processed | failed`, retraitement possible. Événements gérés : `checkout.session.completed, payment_intent.succeeded, invoice.paid, customer.subscription.{created,updated,deleted}, charge.refunded, payment_intent.payment_failed`.
+- Bouton admin **Retraiter le webhook** sur `/admin/acquisition/errors`.
 
-Fichier `tests/admin-activation.spec.ts` :
+---
 
-1. Nouvelle activation Jean Edouard Fanfan → vérifie 6 tables.
-2. Ré-activation même téléphone → pas de doublon.
-3. Aucun appel Stripe fait.
-4. Alex retourne le contractor comme candidat.
-5. Réservation d'un créneau → `appointments` inséré.
-6. Simuler `expires_at` passé → job cron désactive matching.
-7. Injecter erreur à l'étape 8 → rollback des étapes 5-7.
+## Phase 5 — Activation (Stripe + manuelle) unifiée & profil public
 
-## Détails techniques
+Activation manuelle = activation Stripe côté opérations, `payment_source` explicite.
 
-- La transaction "atomique" côté edge = séquence avec table de rollback compensatoire (les fonctions Deno ne peuvent pas ouvrir de transaction PG multi-statements sans SQL function). Alternative : envelopper toutes les écritures dans une **fonction plpgsql `admin_activate_contractor(payload jsonb)`** appelée depuis l'edge → transaction PG native. **Décision : plpgsql pour l'atomicité vraie.**
-- Edge function ne fait que : auth admin + validation Zod + `supabase.rpc('admin_activate_contractor', {payload})` + retour formaté.
-- Toutes tables nouvelles suivent le contrat `CREATE TABLE → GRANT → ENABLE RLS → CREATE POLICY`.
-- Aucun secret client. `SUPABASE_SERVICE_ROLE_KEY` reste serveur.
+**Backend**
+- Extension de `admin_activate_contractor_finalize` déjà en place :
+  - `manual_payment_status: not_required | paid_cash | paid_transfer | paid_card | stripe_verified | complimentary`
+  - `manual_payment_amount, manual_payment_reference, activation_reason, activation_expires_at`
+  - Jamais de fausse transaction Stripe ; `payment_source=manual` clairement marqué.
+- Alex ne lit **jamais** Stripe directement : uniquement `contractor_entitlements.matching_enabled && contractor_matching_status.recommendation_status='eligible'`.
+- Test automatique de publication du profil public : HTTP 200 + absence de `{nom_entreprise}, undefined, null, connect calendar, OAuth, token expired, admin, placeholder`.
 
-## Critère de succès
+**Frontend**
+- Écran succès activation avec **Copier lien public, Voir fiche CRM, Tester avec Alex** (déjà partiellement fait, on complète le "Tester avec Alex").
 
-Scénario complet reproductible :
-1. Remplir Jean Edouard Fanfan → cocher confirmation → cliquer "Activer et publier".
-2. Modale résumé → confirmer.
-3. Écran succès affiche 6 vérifications vertes.
-4. `/pro/jean-edouard-fanfan` accessible publiquement.
-5. `admin-test-alex-recommendation` avec `{city: "Montréal", category: "peinture"}` → renvoie Jean Edouard avec raison.
-6. Homeowner peut réserver un créneau → `appointments` récupérable.
-7. `admin_activation_logs` contient before/after complet.
+---
 
-## Hors scope
+## Phase 6 — Matching, test Alex, réparation automatique
 
-- Refonte du dashboard `/admin/contractors` (liste).
-- UI mobile de l'entrepreneur activé.
-- Envoi automatique Stripe pour renouvellement post-expiration.
+**Backend**
+- `contractor_matching_profiles` (ou extension de `contractor_matching_status`) : `primary_category, service_categories, service_cities, service_radius_km, languages, availability_status, min/max_project_value, home_types, commercial_allowed, emergency_available, rbq_status, insurance_status, performance_score, compatibility_score, recommendation_status`.
+- Statuts recommandation : `eligible | limited | waiting_verification | paused | suspended | ineligible`.
+- Edge function `admin-test-alex-recommendation` : entrée (ville, catégorie, type projet, budget, urgence, langue, type propriété) → sortie (entrepreneur trouvé, score compat, raison, éléments manquants, blocage réel — territoire, catégorie, dispo, RBQ, capacité, score, données).
+- Edge function `repair-stuck-contractor-pipeline` : détecte + répare chaque cas listé (paiement OK mais pas actif, activé mais profil absent, actif mais matching absent, onboarding OK mais checkout absent, clic sans session, SMS livré mais outreach non MàJ, webhook reçu non traité, prospect sans score, mobile non validé, plan sans plan_id, etc.). Chaque réparation → `system_audit_logs`.
+- Cron `*/15 * * * *` : intégrité (paiement sans activation, activation sans matching).
+
+**Frontend**
+- Bouton **Tester avec Alex** sur fiche entrepreneur + résultat détaillé.
+- Bouton **Réparer** par erreur dans `/admin/acquisition/errors`.
+
+---
+
+## Détails techniques transverses
+
+**Permissions** : Admin (créer/modifier/fusionner/outreach/activer/marquer payé/retraiter/réparer/tester), Entrepreneur (son profil, onboarding, plan, paiement, dispos, statut), Public (profils publiés uniquement, aucune donnée privée/scraping/outreach).
+
+**Audit obligatoire** dans `system_audit_logs` : `prospect_created, contact_added, contact_validated, prospect_merged, outreach_queued, outreach_sent, link_opened, onboarding_started, onboarding_completed, checkout_created, payment_confirmed, manual_payment_recorded, contractor_activated, profile_published, matching_enabled, alex_test_completed, pipeline_repaired`.
+
+**Idempotence garantie** : `stripe_webhook_events` (unique sur `stripe_event_id`), `outreach_deliveries` (unique sur `provider_message_id`), `contractor_prospect_merges` (log immuable).
+
+**Sécurité** : RLS sur toutes les nouvelles tables + GRANT `service_role` + GRANT admin authenticated via `has_role`. Aucune donnée PII exposée aux anon.
+
+**Défauts** : `allow_live_delivery=false` partout tant que non explicitement activé.
+
+---
+
+## Ordre d'exécution proposé
+
+```text
+Phase 1  → cockpit + moteur d'audit + logs        (visibilité)
+Phase 2  → prospect + coordonnées + fusion         (données propres)
+Phase 3  → outreach + tokens sécurisés             (canaux)
+Phase 4  → onboarding + Stripe idempotent          (conversion)
+Phase 5  → activation unifiée + profil public      (revenu)
+Phase 6  → matching + Alex + réparation auto       (recommandation)
+```
+
+À chaque fin de phase, on relance **Tester tout le pipeline** — la phase n'est terminée que si toutes ses étapes de l'audit passent au vert.
+
+---
+
+## Critère d'arrêt
+
+Le travail est terminé quand `audit-contractor-acquisition-pipeline` en mode `stripe_test` retourne les 27 étapes en `success`, que le bouton "Tester tout" affiche le pipeline complet vert, que `/admin/acquisition/errors` est vide sur un prospect fraîchement créé, et qu'Alex peut recommander l'entrepreneur test avec un score de compatibilité et une raison lisibles.
+
+---
+
+**Confirmes-tu qu'on démarre par la Phase 1 (cockpit d'audit + moteur de test) ?** Ou tu préfères que j'attaque directement une phase spécifique (ex. Phase 4 Stripe/onboarding si c'est le blocage revenu le plus critique) ?
