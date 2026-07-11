@@ -723,10 +723,10 @@ const PageAdminCreateContractorManual = () => {
                 ["Vérifié UNPRO", toggles.unpro_verified ? "Oui" : "Non"],
                 ["Badge premium", toggles.badge_premium ? "Oui" : "Non"],
               ].map(([k, v]) => (
-                <>
+                <div key={k as string} className="contents">
                   <dt className="text-white/50">{k}</dt>
                   <dd className="text-white text-right">{v as string}</dd>
-                </>
+                </div>
               ))}
             </dl>
             <div className="mt-5 flex gap-2 justify-end">
