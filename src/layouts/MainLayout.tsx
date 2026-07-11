@@ -8,8 +8,8 @@ import type { ReactNode } from "react";
 import { lazy, Suspense } from "react";
 import { useLocation } from "react-router-dom";
 import SmartHeader from "@/components/navigation/SmartHeader";
-import SmartFooter from "@/components/navigation/SmartFooter";
-import SiteFooterIntelligence from "@/components/layout/SiteFooterIntelligence";
+import SectionMemoireMaison from "@/components/layout/SectionMemoireMaison";
+import SiteFooterPremium from "@/components/layout/SiteFooterPremium";
 import FooterSEOGrid from "@/components/navigation/FooterSEOGrid";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import DeferredAfterInteractive from "@/components/system/DeferredAfterInteractive";
@@ -53,8 +53,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       <PageShell variant="marketing" className="flex-1 relative z-0">{children}</PageShell>
 
       {showSEOGrid && <FooterSEOGrid />}
-      <SiteFooterIntelligence />
-      <SmartFooter />
+      <SectionMemoireMaison />
+      <SiteFooterPremium />
 
       {/* All deferred — never blocks first paint */}
       <DeferredAfterInteractive>
