@@ -249,3 +249,13 @@ function ProspectMini({ label, p }: { label: string; p: any }) {
     </div>
   );
 }
+
+function Metric({ label, value, tone = "neutral" }: { label: string; value: any; tone?: "ok" | "warn" | "neutral" }) {
+  const color = tone === "warn" ? "text-amber-600" : tone === "ok" ? "text-emerald-600" : "text-foreground";
+  return (
+    <div className="border rounded-md p-2">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={`text-lg font-semibold ${color}`}>{value ?? "—"}</div>
+    </div>
+  );
+}
