@@ -1,5 +1,5 @@
 // UNPRO — Queue Kijiji prospects into existing outreach pipeline.
-// Applies eligibility gates, quiet hours, suppression, template selection.
+// Creates contractor_leads row + contractor_outreach_logs entry per eligible prospect.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
@@ -15,125 +15,139 @@ Deno.serve(async (req) => {
 
   const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
   const body = await req.json().catch(() => ({}));
-  const bucket: string = body.bucket ?? "P0"; // P0, P1, P2, P3
+  const bucket: string = body.bucket ?? "P0";
   const limit: number = Math.min(body.limit ?? 25, 200);
   const dryRun: boolean = !!body.dry_run;
 
-  // Source config for daily cap
   const { data: source } = await sb.from("scraping_sources")
     .select("config").eq("source_key", "kijiji_services").single();
   const maxDaily = (source?.config as any)?.max_sms_queue_per_day ?? 200;
 
-  // Today's queue count already sent from kijiji
+  // Today's sends already attributed to Kijiji
   const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
   const { count: sentToday } = await sb.from("contractor_outreach_logs")
     .select("id", { count: "exact", head: true })
-    .gte("created_at", startOfDay.toISOString())
-    .contains("metadata", { source_key: "kijiji_services" });
+    .gte("sent_at", startOfDay.toISOString())
+    .like("template_key", "kijiji_%");
 
   if ((sentToday ?? 0) >= maxDaily) {
     return json({ success: false, reason: "daily_cap_reached", sent_today: sentToday, cap: maxDaily });
   }
-
   const remaining = maxDaily - (sentToday ?? 0);
   const take = Math.min(limit, remaining);
 
-  // Score threshold per bucket
   const scoreMin =
     bucket === "P0" ? 80 :
     bucket === "P1" ? 65 :
     bucket === "P2" ? 65 : 50;
-
   const requireMobile = bucket === "P0" || bucket === "P1";
+  const eligibilityFilter = requireMobile ? "sms_ready" : "email_only";
 
-  let q = sb.from("contractor_prospects").select("*")
+  const { data: prospects, error } = await sb.from("contractor_prospects").select("*")
     .eq("source_key", "kijiji_services")
-    .eq("outreach_eligibility", requireMobile ? "sms_ready" : "email_only")
+    .eq("outreach_eligibility", eligibilityFilter)
     .gte("acquisition_score", scoreMin)
     .gte("classification_confidence", 0.8)
     .is("rejection_reason", null)
     .order("acquisition_score", { ascending: false })
     .limit(take);
-
-  const { data: prospects, error } = await q;
   if (error) return json({ success: false, error: error.message }, 500);
 
-  // Load winning template (Kijiji-scoped)
+  // Load Kijiji templates
   const { data: templates } = await sb.from("outreach_templates")
     .select("*")
-    .contains("metadata", { source: "kijiji" })
-    .eq("is_active", true);
-
-  const winner = templates?.find((t: any) => t.metadata?.is_winner) ?? templates?.[0];
-  const variants = templates ?? [];
+    .like("template_name", "kijiji_variant_%");
+  const variants = (templates ?? []) as any[];
+  if (!variants.length) {
+    return json({ success: false, reason: "no_kijiji_templates_seeded" });
+  }
 
   const queued: any[] = [];
   const skipped: any[] = [];
 
   for (const p of prospects ?? []) {
     // Suppression check
-    const { data: sup } = await sb.from("outreach_suppressions")
-      .select("id").or(`phone.eq.${p.phone},email.eq.${p.email ?? ""}`).limit(1);
-    if (sup && sup.length) { skipped.push({ id: p.id, reason: "suppressed" }); continue; }
+    const values = [p.phone, p.email].filter(Boolean);
+    if (values.length) {
+      const { data: sup } = await sb.from("outreach_suppressions")
+        .select("id").in("contact_value", values).limit(1);
+      if (sup && sup.length) { skipped.push({ id: p.id, reason: "suppressed" }); continue; }
+    }
 
     // Already contacted?
     const { data: prior } = await sb.from("contractor_outreach_logs")
-      .select("id").eq("phone", p.phone).limit(1);
+      .select("id").eq("to_address", requireMobile ? p.phone : (p.email ?? "")).limit(1);
     if (prior && prior.length) { skipped.push({ id: p.id, reason: "already_contacted" }); continue; }
 
-    // Assign variant (80% winner / 10% B / 10% C, or round-robin if no winner)
-    const template = pickVariant(variants, winner);
-    if (!template) { skipped.push({ id: p.id, reason: "no_template" }); continue; }
-
-    const rendered = renderTemplate(template.body ?? template.content, {
+    const template = pickVariant(variants, p.website);
+    const bodyTpl: string = template.body_template ?? "";
+    const rendered = renderTemplate(bodyTpl, {
       first_name_or_business: p.business_name || "bonjour",
       service: humanCategory(p.category_slug),
       city: p.city ?? "votre secteur",
-      tracked_link: `https://unpro.ca/r/${p.id}?src=kijiji&v=${template.id}`,
+      tracked_link: `https://unpro.ca/r/${p.id}?src=kijiji&v=${template.template_name}`,
     });
 
     if (dryRun) {
-      queued.push({ id: p.id, variant: template.id, message_preview: rendered.slice(0, 120) });
+      queued.push({ id: p.id, variant: template.template_name, message_preview: rendered.slice(0, 140) });
       continue;
     }
 
-    await sb.from("contractor_outreach_logs").insert({
-      contractor_id: null,
-      phone: p.phone,
+    // Create lead row (idempotent by phone_e164)
+    const leadInsert = await sb.from("contractor_leads").insert({
+      source_type: "kijiji_services",
+      company_name: p.business_name,
+      phone_e164: p.phone,
       email: p.email,
-      channel: requireMobile ? "sms" : "email",
-      status: "queued",
-      message_body: rendered,
-      template_id: template.id,
+      city: p.city,
+      trade_slug: p.category_slug,
+      outreach_status: "queued",
+      contact_method: requireMobile ? "sms" : "email",
       metadata: {
         source_key: "kijiji_services",
         source_priority: 90,
+        acquisition_score: p.acquisition_score,
         bucket,
         prospect_id: p.id,
-        variant: template.metadata?.variant ?? "A",
-        acquisition_score: p.acquisition_score,
+        variant: template.template_name,
+        priority_reason: p.priority_reason ?? [],
       },
+    }).select("id").single();
+    if (leadInsert.error) {
+      // Duplicate lead — link to existing
+      const { data: existing } = await sb.from("contractor_leads").select("id")
+        .eq("phone_e164", p.phone ?? "").limit(1).maybeSingle();
+      if (!existing) { skipped.push({ id: p.id, reason: leadInsert.error.message }); continue; }
+      leadInsert.data = existing as any;
+    }
+
+    await sb.from("contractor_outreach_logs").insert({
+      lead_id: leadInsert.data!.id,
+      channel: requireMobile ? "sms" : "email",
+      template_key: template.template_name,
+      to_address: requireMobile ? p.phone! : p.email!,
+      message_body: rendered,
+      status: "queued",
+      cta_urls: [`https://unpro.ca/r/${p.id}?src=kijiji`],
+      has_tracked_cta: true,
+      raw_template: { source: "kijiji", variant: template.template_name },
     });
 
-    queued.push({ id: p.id, variant: template.id, bucket });
+    queued.push({ id: p.id, variant: template.template_name, bucket });
   }
 
   return json({
-    success: true,
-    bucket,
-    queued: queued.length,
-    skipped: skipped.length,
-    dry_run: dryRun,
-    detail: { queued, skipped },
+    success: true, bucket, queued: queued.length, skipped: skipped.length,
+    dry_run: dryRun, detail: { queued, skipped },
   });
 });
 
-function pickVariant(templates: any[], winner: any): any | null {
-  if (!templates.length) return null;
-  const r = Math.random();
-  if (winner && r < 0.8) return winner;
-  const others = templates.filter(t => t.id !== winner?.id);
-  return others[Math.floor(Math.random() * others.length)] ?? winner;
+function pickVariant(variants: any[], hasWebsite: string | null): any {
+  // Variant D reserved for "no website" prospects
+  const noWebsite = variants.find(v => v.template_name === "kijiji_variant_d");
+  if (!hasWebsite && noWebsite) return noWebsite;
+  const eligible = variants.filter(v => v.template_name !== "kijiji_variant_d");
+  return eligible[Math.floor(Math.random() * eligible.length)] ?? variants[0];
 }
 
 function renderTemplate(tpl: string, vars: Record<string, string>): string {
