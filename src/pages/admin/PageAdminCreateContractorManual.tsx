@@ -321,55 +321,90 @@ const PageAdminCreateContractorManual = () => {
 
   // ---- success screen ----
   if (success) {
+    const fullPublicUrl = `${window.location.origin}${success.public_url}`;
     return (
       <AdminLayout>
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-2xl mx-auto py-12 text-center"
+          className="max-w-2xl mx-auto py-12 px-4"
         >
           <div className="mx-auto w-20 h-20 rounded-full bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center mb-6">
             <CheckCircle2 className="w-10 h-10 text-emerald-400" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Entrepreneur activé</h1>
-          <p className="text-white/60 mb-1">
+          <h1 className="text-3xl font-bold text-white mb-2 text-center">Entrepreneur activé avec succès</h1>
+          <p className="text-white/60 mb-1 text-center">
             Plan <span className="text-emerald-400 font-semibold">{selectedPlan.label}</span> actif jusqu'au{" "}
             <span className="text-white">{new Date(success.expiry_date).toLocaleDateString("fr-CA")}</span>
           </p>
-          <p className="text-white/50 text-sm mb-8">Score AIPP : {success.aipp_score} · {aipp.badge}</p>
+          <p className="text-white/50 text-sm mb-6 text-center">Score AIPP : {success.aipp_score} · {aipp.badge}</p>
 
-          <div className="grid sm:grid-cols-3 gap-3 max-w-lg mx-auto">
+          <ul className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 mb-6 grid gap-2 text-sm">
+            {[
+              "Profil public publié",
+              "Abonnement marqué payé",
+              `Plan ${selectedPlan.label} — expire le ${new Date(success.expiry_date).toLocaleDateString("fr-CA")}`,
+              "Admissible au matching Alex",
+              "Prêt à recevoir des rendez-vous",
+              "Alex peut recommander cet entrepreneur",
+            ].map((line) => (
+              <li key={line} className="flex items-center gap-2 text-white/85">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                {line}
+              </li>
+            ))}
+          </ul>
+
+          <div className="grid sm:grid-cols-2 gap-3">
             <a
               href={success.public_url}
               target="_blank"
               rel="noreferrer"
-              className="rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.07] p-4 text-white transition flex flex-col items-center gap-2"
+              className="rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.07] p-4 text-white transition flex items-center gap-3"
             >
-              <ExternalLink className="w-5 h-5" />
-              <span className="text-sm">Voir fiche publique</span>
+              <ExternalLink className="w-5 h-5 text-emerald-300" />
+              <span className="text-sm">Voir la fiche publique</span>
             </a>
-            <Link
-              to="/admin/contractors"
-              className="rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.07] p-4 text-white transition flex flex-col items-center gap-2"
-            >
-              <Shield className="w-5 h-5" />
-              <span className="text-sm">Modifier</span>
-            </Link>
             <button
               onClick={() => {
-                setSuccess(null);
-                setBusinessName("");
-                setPhone("");
-                setCategories([]);
-                setPhotoUrls([]);
-                setLogoUrl(null);
+                navigator.clipboard.writeText(fullPublicUrl);
+                toast({ title: "Lien copié", description: fullPublicUrl });
               }}
-              className="rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.07] p-4 text-white transition flex flex-col items-center gap-2"
+              className="rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.07] p-4 text-white transition flex items-center gap-3 text-left"
             >
-              <Sparkles className="w-5 h-5" />
-              <span className="text-sm">Créer un autre</span>
+              <Sparkles className="w-5 h-5 text-emerald-300" />
+              <span className="text-sm">Copier le lien public</span>
             </button>
+            <Link
+              to={success.contractor_id ? `/admin/contractors/${success.contractor_id}` : "/admin/contractors"}
+              className="rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.07] p-4 text-white transition flex items-center gap-3"
+            >
+              <Shield className="w-5 h-5 text-emerald-300" />
+              <span className="text-sm">Ouvrir la fiche CRM</span>
+            </Link>
+            <Link
+              to={`/alex?test_contractor_id=${success.contractor_id ?? ""}&test_city=${encodeURIComponent(city)}&test_category=${encodeURIComponent(categories[0] ?? "")}`}
+              className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/15 p-4 text-white transition flex items-center gap-3"
+            >
+              <Sparkles className="w-5 h-5 text-emerald-300" />
+              <span className="text-sm font-semibold">Tester dans Alex</span>
+            </Link>
           </div>
+
+          <button
+            onClick={() => {
+              setSuccess(null);
+              setBusinessName("");
+              setPhone("");
+              setCategories([]);
+              setPhotoUrls([]);
+              setLogoUrl(null);
+              setAdminConfirmed(false);
+            }}
+            className="mt-6 w-full rounded-xl border border-white/10 bg-transparent hover:bg-white/[0.04] p-3 text-white/70 text-sm transition"
+          >
+            Créer un autre entrepreneur
+          </button>
         </motion.div>
       </AdminLayout>
     );
