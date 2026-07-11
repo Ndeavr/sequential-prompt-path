@@ -1,7 +1,10 @@
 // UNPRO — Queue Kijiji prospects into existing outreach pipeline.
-// Creates contractor_leads row + contractor_outreach_logs entry per eligible prospect.
+// Creates contractor_leads row + contractor_outreach_logs entry per eligible prospect,
+// and (when dry_run=false) fires the real SMS via the canonical Twilio sender.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { sendSms } from "../_shared/twilioSend.ts";
+import { reportOutcome, FailureCode } from "../_shared/reliability.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
