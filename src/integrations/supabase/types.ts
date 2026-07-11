@@ -35927,7 +35927,11 @@ export type Database = {
           province: string | null
           published_at: string | null
           rating: number | null
+          rbq_compliance_status: Database["public"]["Enums"]["contractor_rbq_status"]
+          rbq_expiry_date: string | null
+          rbq_last_check: string | null
           rbq_number: string | null
+          rbq_verified_at: string | null
           recommended_plan_id: string | null
           review_count: number | null
           reviewed_at: string | null
@@ -35992,7 +35996,11 @@ export type Database = {
           province?: string | null
           published_at?: string | null
           rating?: number | null
+          rbq_compliance_status?: Database["public"]["Enums"]["contractor_rbq_status"]
+          rbq_expiry_date?: string | null
+          rbq_last_check?: string | null
           rbq_number?: string | null
+          rbq_verified_at?: string | null
           recommended_plan_id?: string | null
           review_count?: number | null
           reviewed_at?: string | null
@@ -36057,7 +36065,11 @@ export type Database = {
           province?: string | null
           published_at?: string | null
           rating?: number | null
+          rbq_compliance_status?: Database["public"]["Enums"]["contractor_rbq_status"]
+          rbq_expiry_date?: string | null
+          rbq_last_check?: string | null
           rbq_number?: string | null
+          rbq_verified_at?: string | null
           recommended_plan_id?: string | null
           review_count?: number | null
           reviewed_at?: string | null
@@ -82972,6 +82984,11 @@ export type Database = {
         | "confirmed"
         | "reschedule_requested"
       compatibility_result: "compatible" | "partial" | "verify" | "incompatible"
+      contractor_rbq_status:
+        | "verified"
+        | "in_progress"
+        | "not_provided"
+        | "expired"
       contribution_status: "pending" | "approved" | "rejected" | "expired"
       duplicate_review_status:
         | "pending"
@@ -83258,6 +83275,12 @@ export const Constants = {
         "reschedule_requested",
       ],
       compatibility_result: ["compatible", "partial", "verify", "incompatible"],
+      contractor_rbq_status: [
+        "verified",
+        "in_progress",
+        "not_provided",
+        "expired",
+      ],
       contribution_status: ["pending", "approved", "rejected", "expired"],
       duplicate_review_status: [
         "pending",
