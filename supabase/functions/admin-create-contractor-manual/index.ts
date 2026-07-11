@@ -110,6 +110,12 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+    if (!body.admin_confirmed) {
+      return new Response(
+        JSON.stringify({ error: "Admin confirmation required (paiement vérifié)" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     // Resolve plan from plan_catalog
     const { data: plan, error: planErr } = await admin
