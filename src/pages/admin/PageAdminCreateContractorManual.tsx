@@ -143,12 +143,20 @@ const PageAdminCreateContractorManual = () => {
 
   const [planCode, setPlanCode] = useState<string>(PREFILL.plan_code);
 
+  // Manual payment terms
+  const [durationMonths, setDurationMonths] = useState<number>(12);
+  const [amountPaidDollars, setAmountPaidDollars] = useState<string>("349");
+  const [paymentNote, setPaymentNote] = useState<string>("Payé 1 an");
+  const [priorityMatching, setPriorityMatching] = useState<"normal" | "elevated" | "exclusive">("elevated");
+  const [adminConfirmed, setAdminConfirmed] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
+
   const [toggles, setToggles] = useState<Toggles>({
     visible_public: true,
     receives_leads: true,
     priority_match: true,
-    unpro_verified: true,
-    badge_premium: true,
+    unpro_verified: false,
+    badge_premium: false,
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -157,6 +165,7 @@ const PageAdminCreateContractorManual = () => {
     public_url: string;
     expiry_date: string;
     aipp_score: number;
+    contractor_id?: string;
   } | null>(null);
 
   // Live AIPP score
@@ -221,13 +230,30 @@ const PageAdminCreateContractorManual = () => {
     toast({ title: "Texte généré", description: "Copy persuasive remplie." });
   };
 
+  const canSubmit = !!(
+    businessName.trim() &&
+    phone.trim() &&
+    city.trim() &&
+    categories.length > 0 &&
+    planCode &&
+    durationMonths > 0 &&
+    Number(amountPaidDollars) >= 0 &&
+    adminConfirmed
+  );
+
   const handleSubmit = async () => {
-    if (!businessName.trim() || !phone.trim() || !city.trim()) {
-      toast({ title: "Champs requis", description: "Nom, téléphone et ville requis.", variant: "destructive" });
+    if (!canSubmit) {
+      toast({
+        title: "Champs requis",
+        description: "Nom, téléphone, ville, catégorie, plan, durée et confirmation admin requis.",
+        variant: "destructive",
+      });
       return;
     }
+    setShowSummary(false);
     setSubmitting(true);
     try {
+      const amountCents = Math.round((Number(amountPaidDollars) || 0) * 100);
       const { data, error } = await supabase.functions.invoke("admin-create-contractor-manual", {
         body: {
           business_name: businessName.trim(),
@@ -257,6 +283,12 @@ const PageAdminCreateContractorManual = () => {
           aipp_badge: aipp.badge,
           plan_code: planCode,
           plan_amount_cents: selectedPlan.price,
+          amount_paid_cents: amountCents,
+          duration_months: durationMonths,
+          activation_note: paymentNote || null,
+          priority_matching: priorityMatching,
+          can_be_matched: toggles.receives_leads,
+          admin_confirmed: true,
           ...toggles,
         },
       });
@@ -267,10 +299,11 @@ const PageAdminCreateContractorManual = () => {
         public_url: data.public_url,
         expiry_date: data.expiry_date,
         aipp_score: data.aipp_score,
+        contractor_id: data.contractor_id,
       });
       toast({ title: "✅ Entrepreneur activé", description: `${businessName} est en ligne.` });
     } catch (e: any) {
-      toast({ title: "Erreur", description: e.message ?? String(e), variant: "destructive" });
+      toast({ title: "Erreur activation", description: e.message ?? String(e), variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -288,55 +321,90 @@ const PageAdminCreateContractorManual = () => {
 
   // ---- success screen ----
   if (success) {
+    const fullPublicUrl = `${window.location.origin}${success.public_url}`;
     return (
       <AdminLayout>
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-2xl mx-auto py-12 text-center"
+          className="max-w-2xl mx-auto py-12 px-4"
         >
           <div className="mx-auto w-20 h-20 rounded-full bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center mb-6">
             <CheckCircle2 className="w-10 h-10 text-emerald-400" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Entrepreneur activé</h1>
-          <p className="text-white/60 mb-1">
+          <h1 className="text-3xl font-bold text-white mb-2 text-center">Entrepreneur activé avec succès</h1>
+          <p className="text-white/60 mb-1 text-center">
             Plan <span className="text-emerald-400 font-semibold">{selectedPlan.label}</span> actif jusqu'au{" "}
             <span className="text-white">{new Date(success.expiry_date).toLocaleDateString("fr-CA")}</span>
           </p>
-          <p className="text-white/50 text-sm mb-8">Score AIPP : {success.aipp_score} · {aipp.badge}</p>
+          <p className="text-white/50 text-sm mb-6 text-center">Score AIPP : {success.aipp_score} · {aipp.badge}</p>
 
-          <div className="grid sm:grid-cols-3 gap-3 max-w-lg mx-auto">
+          <ul className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 mb-6 grid gap-2 text-sm">
+            {[
+              "Profil public publié",
+              "Abonnement marqué payé",
+              `Plan ${selectedPlan.label} — expire le ${new Date(success.expiry_date).toLocaleDateString("fr-CA")}`,
+              "Admissible au matching Alex",
+              "Prêt à recevoir des rendez-vous",
+              "Alex peut recommander cet entrepreneur",
+            ].map((line) => (
+              <li key={line} className="flex items-center gap-2 text-white/85">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                {line}
+              </li>
+            ))}
+          </ul>
+
+          <div className="grid sm:grid-cols-2 gap-3">
             <a
               href={success.public_url}
               target="_blank"
               rel="noreferrer"
-              className="rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.07] p-4 text-white transition flex flex-col items-center gap-2"
+              className="rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.07] p-4 text-white transition flex items-center gap-3"
             >
-              <ExternalLink className="w-5 h-5" />
-              <span className="text-sm">Voir fiche publique</span>
+              <ExternalLink className="w-5 h-5 text-emerald-300" />
+              <span className="text-sm">Voir la fiche publique</span>
             </a>
-            <Link
-              to="/admin/contractors"
-              className="rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.07] p-4 text-white transition flex flex-col items-center gap-2"
-            >
-              <Shield className="w-5 h-5" />
-              <span className="text-sm">Modifier</span>
-            </Link>
             <button
               onClick={() => {
-                setSuccess(null);
-                setBusinessName("");
-                setPhone("");
-                setCategories([]);
-                setPhotoUrls([]);
-                setLogoUrl(null);
+                navigator.clipboard.writeText(fullPublicUrl);
+                toast({ title: "Lien copié", description: fullPublicUrl });
               }}
-              className="rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.07] p-4 text-white transition flex flex-col items-center gap-2"
+              className="rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.07] p-4 text-white transition flex items-center gap-3 text-left"
             >
-              <Sparkles className="w-5 h-5" />
-              <span className="text-sm">Créer un autre</span>
+              <Sparkles className="w-5 h-5 text-emerald-300" />
+              <span className="text-sm">Copier le lien public</span>
             </button>
+            <Link
+              to={success.contractor_id ? `/admin/contractors/${success.contractor_id}` : "/admin/contractors"}
+              className="rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.07] p-4 text-white transition flex items-center gap-3"
+            >
+              <Shield className="w-5 h-5 text-emerald-300" />
+              <span className="text-sm">Ouvrir la fiche CRM</span>
+            </Link>
+            <Link
+              to={`/alex?test_contractor_id=${success.contractor_id ?? ""}&test_city=${encodeURIComponent(city)}&test_category=${encodeURIComponent(categories[0] ?? "")}`}
+              className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/15 p-4 text-white transition flex items-center gap-3"
+            >
+              <Sparkles className="w-5 h-5 text-emerald-300" />
+              <span className="text-sm font-semibold">Tester dans Alex</span>
+            </Link>
           </div>
+
+          <button
+            onClick={() => {
+              setSuccess(null);
+              setBusinessName("");
+              setPhone("");
+              setCategories([]);
+              setPhotoUrls([]);
+              setLogoUrl(null);
+              setAdminConfirmed(false);
+            }}
+            className="mt-6 w-full rounded-xl border border-white/10 bg-transparent hover:bg-white/[0.04] p-3 text-white/70 text-sm transition"
+          >
+            Créer un autre entrepreneur
+          </button>
         </motion.div>
       </AdminLayout>
     );
@@ -517,9 +585,9 @@ const PageAdminCreateContractorManual = () => {
             </div>
           </Section>
 
-          {/* SECTION 6 — Plan */}
-          <Section title="5 · Plan payé" icon={<Award className="w-4 h-4 text-white/60" />}>
-            <div className="grid md:grid-cols-2 gap-3 items-center">
+          {/* SECTION 5 — Plan & paiement manuel */}
+          <Section title="5 · Plan & paiement manuel" icon={<Award className="w-4 h-4 text-white/60" />}>
+            <div className="grid md:grid-cols-2 gap-3">
               <div>
                 <Label className="text-white/70">Plan</Label>
                 <Select value={planCode} onValueChange={setPlanCode}>
@@ -535,28 +603,67 @@ const PageAdminCreateContractorManual = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/5 p-3 text-sm text-white/80">
-                <div className="font-semibold text-emerald-200">Activation 1 an</div>
+              <div>
+                <Label className="text-white/70">Durée accordée</Label>
+                <Select
+                  value={String(durationMonths)}
+                  onValueChange={(v) => setDurationMonths(Number(v))}
+                >
+                  <SelectTrigger className="bg-black/30 border-white/10 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 mois</SelectItem>
+                    <SelectItem value="3">3 mois</SelectItem>
+                    <SelectItem value="6">6 mois</SelectItem>
+                    <SelectItem value="12">1 an</SelectItem>
+                    <SelectItem value="24">2 ans</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-white/70">Montant payé (CAD)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={amountPaidDollars}
+                  onChange={(e) => setAmountPaidDollars(e.target.value)}
+                  className="bg-black/30 border-white/10 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-white/70">Note paiement</Label>
+                <Input
+                  value={paymentNote}
+                  onChange={(e) => setPaymentNote(e.target.value)}
+                  placeholder="Payé 1 an — Interac"
+                  className="bg-black/30 border-white/10 text-white"
+                />
+              </div>
+              <div className="md:col-span-2 rounded-xl border border-emerald-400/20 bg-emerald-500/5 p-3 text-sm text-white/80">
+                <div className="font-semibold text-emerald-200">
+                  Activation {durationMonths >= 12 ? `${Math.floor(durationMonths / 12)} an${durationMonths >= 24 ? "s" : ""}` : `${durationMonths} mois`}
+                </div>
                 <div className="text-white/60 text-xs mt-1">
-                  Statut : <span className="text-emerald-300">Payé</span> · Méthode : Manuel · Note : Payé 1 an
+                  Statut : <span className="text-emerald-300">Payé</span> · Méthode : Manuel · Montant : {amountPaidDollars || "0"} $ · Note : {paymentNote || "—"}
                 </div>
                 <div className="text-white/60 text-xs">
-                  Expire : {new Date(Date.now() + 365 * 86400000).toLocaleDateString("fr-CA")}
+                  Expire : {new Date(Date.now() + durationMonths * 30 * 86400000).toLocaleDateString("fr-CA")}
                 </div>
               </div>
             </div>
           </Section>
 
-          {/* SECTION 7 — Activation toggles */}
-          <Section title="6 · Activation" icon={<Shield className="w-4 h-4 text-white/60" />}>
+          {/* SECTION 6 — Activation & droits */}
+          <Section title="6 · Activation & droits" icon={<Shield className="w-4 h-4 text-white/60" />}>
             <div className="grid md:grid-cols-2 gap-3">
               {(
                 [
-                  ["visible_public", "Visible public"],
-                  ["receives_leads", "Reçoit des leads"],
-                  ["priority_match", "Prioritaire matching"],
-                  ["unpro_verified", "Vérifié UNPRO"],
-                  ["badge_premium", "Badge premium"],
+                  ["visible_public", "Visible public (profil publié)"],
+                  ["receives_leads", "Reçoit des rendez-vous"],
+                  ["unpro_verified", "Vérifié UNPRO (documenté)"],
+                  ["badge_premium", "Badge premium (dépend du plan)"],
                 ] as const
               ).map(([key, label]) => (
                 <div key={key} className="flex items-center justify-between rounded-md border border-white/10 bg-black/20 px-3 py-2">
@@ -567,10 +674,77 @@ const PageAdminCreateContractorManual = () => {
                   />
                 </div>
               ))}
+              <div className="md:col-span-2 flex items-center justify-between gap-3 rounded-md border border-white/10 bg-black/20 px-3 py-2">
+                <Label className="text-white/80">Priorité de matching</Label>
+                <Select value={priorityMatching} onValueChange={(v: any) => setPriorityMatching(v)}>
+                  <SelectTrigger className="w-40 bg-black/30 border-white/10 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="normal">Normal</SelectItem>
+                    <SelectItem value="elevated">Élevée</SelectItem>
+                    <SelectItem value="exclusive">Exclusive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <label className="md:col-span-2 flex items-start gap-3 rounded-md border border-amber-400/30 bg-amber-500/5 px-3 py-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={adminConfirmed}
+                  onChange={(e) => setAdminConfirmed(e.target.checked)}
+                  className="mt-1 h-4 w-4 accent-emerald-500"
+                />
+                <span className="text-sm text-amber-100/90 leading-snug">
+                  Je confirme que le paiement a été reçu et que les informations ont été vérifiées.
+                </span>
+              </label>
             </div>
           </Section>
         </div>
       </div>
+
+      {/* Summary modal */}
+      {showSummary && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0A1220] p-5 shadow-2xl">
+            <h3 className="text-lg font-semibold text-white mb-4">Confirmer l'activation</h3>
+            <dl className="grid grid-cols-2 gap-y-2 text-sm">
+              {[
+                ["Entreprise", businessName || "—"],
+                ["Téléphone", phone || "—"],
+                ["Ville", city || "—"],
+                ["Catégories", categories.join(", ") || "—"],
+                ["Plan", selectedPlan.label],
+                ["Durée", `${durationMonths} mois`],
+                ["Montant payé", `${amountPaidDollars || "0"} $ CAD`],
+                ["Priorité matching", priorityMatching],
+                ["Visible public", toggles.visible_public ? "Oui" : "Non"],
+                ["Reçoit RDV", toggles.receives_leads ? "Oui" : "Non"],
+                ["Vérifié UNPRO", toggles.unpro_verified ? "Oui" : "Non"],
+                ["Badge premium", toggles.badge_premium ? "Oui" : "Non"],
+              ].map(([k, v]) => (
+                <div key={k as string} className="contents">
+                  <dt className="text-white/50">{k}</dt>
+                  <dd className="text-white text-right">{v as string}</dd>
+                </div>
+              ))}
+            </dl>
+            <div className="mt-5 flex gap-2 justify-end">
+              <Button variant="ghost" onClick={() => setShowSummary(false)} className="text-white/70">
+                Annuler
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold"
+              >
+                {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                Activer et publier
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sticky CTA */}
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-[#060B14]/90 backdrop-blur-xl">
@@ -581,12 +755,13 @@ const PageAdminCreateContractorManual = () => {
             <span className="text-emerald-300">{selectedPlan.label}</span>
           </div>
           <Button
-            onClick={handleSubmit}
-            disabled={submitting || !businessName || !phone || !city}
-            className="ml-auto bg-emerald-500 hover:bg-emerald-400 text-black font-semibold"
+            onClick={() => setShowSummary(true)}
+            disabled={submitting || !canSubmit}
+            className="ml-auto bg-emerald-500 hover:bg-emerald-400 text-black font-semibold disabled:opacity-40"
+            title={!adminConfirmed ? "Cochez la confirmation admin" : ""}
           >
             {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-            Créer la fiche entrepreneur
+            Activer et publier l'entrepreneur
           </Button>
         </div>
       </div>

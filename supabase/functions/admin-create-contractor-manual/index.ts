@@ -46,12 +46,18 @@ interface Body {
   aipp_badge?: string | null;
   plan_code: string;
   plan_amount_cents: number;
+  amount_paid_cents?: number;
+  duration_months?: number; // 1, 3, 6, 12
+  activation_note?: string | null;
   // toggles
   visible_public?: boolean;
   receives_leads?: boolean;
   priority_match?: boolean;
+  priority_matching?: "normal" | "elevated" | "exclusive";
+  can_be_matched?: boolean;
   unpro_verified?: boolean;
   badge_premium?: boolean;
+  admin_confirmed?: boolean;
 }
 
 Deno.serve(async (req) => {
@@ -101,6 +107,12 @@ Deno.serve(async (req) => {
     if (!body?.business_name || !body?.phone || !body?.city || !body?.plan_code) {
       return new Response(
         JSON.stringify({ error: "business_name, phone, city, plan_code are required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    if (!body.admin_confirmed) {
+      return new Response(
+        JSON.stringify({ error: "Admin confirmation required (paiement vérifié)" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -176,61 +188,95 @@ Deno.serve(async (req) => {
       .single();
     if (insertErr) throw insertErr;
 
-    // 1-year subscription
+    // Compute duration and expiry
     const now = new Date();
-    const oneYearFromNow = new Date(now);
-    oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+    const durationMonths = body.duration_months ?? 12;
+    const expiresAt = new Date(now);
+    expiresAt.setMonth(expiresAt.getMonth() + durationMonths);
 
-    const { data: sub, error: subErr } = await admin
-      .from("contractor_subscriptions")
-      .insert({
-        contractor_id: contractor.id,
-        plan_id: plan.id,
-        status: "active",
-        billing_interval: "year",
-        current_period_start: now.toISOString(),
-        current_period_end: oneYearFromNow.toISOString(),
-        activation_source: "admin_manual",
-      })
-      .select()
-      .single();
-    if (subErr) throw subErr;
+    const amountPaidCents = body.amount_paid_cents ?? body.plan_amount_cents ?? plan.monthly_price ?? 0;
+    const priorityMatching = body.priority_matching
+      ?? (body.priority_match ? "elevated" : "normal");
+    const canBeMatched = body.can_be_matched ?? body.receives_leads ?? true;
 
-    // Manual activation override (full discount → no Stripe charge expected)
-    await admin.from("admin_activation_overrides").insert({
-      contractor_id: contractor.id,
-      subscription_id: sub.id,
-      override_type: "full_discount",
-      override_value: 100,
-      reason: "Paiement manuel reçu — activation 1 an",
-      starts_at: now.toISOString(),
-      ends_at: oneYearFromNow.toISOString(),
-      created_by_admin_id: user.id,
-      is_active: true,
-    });
-
-    // Manual activation audit row
-    await admin.from("manual_contractor_activations").insert({
-      contractor_id: contractor.id,
-      admin_user_id: user.id,
-      plan_code: plan.code,
-      plan_amount_cents: body.plan_amount_cents ?? plan.monthly_price ?? 0,
-      paid_date: now.toISOString(),
-      expiry_date: oneYearFromNow.toISOString(),
-      payment_method: "manuel",
-      note: "Payé 1 an",
-      payload_json: {
-        toggles: {
-          visible_public: !!body.visible_public,
-          receives_leads: !!body.receives_leads,
-          priority_match: !!body.priority_match,
-          unpro_verified: !!body.unpro_verified,
-          badge_premium: !!body.badge_premium,
+    // Rollback wrapper: if any post-contractor step fails, delete the contractor to avoid orphans.
+    try {
+      // Atomic finalize: subscription + entitlements + matching_status + audit log in one plpgsql transaction.
+      const { data: finalizeResult, error: finalizeErr } = await admin.rpc(
+        "admin_activate_contractor_finalize",
+        {
+          p_contractor_id: contractor.id,
+          p_admin_user_id: user.id,
+          p_plan_code: plan.code,
+          p_amount_paid_cents: amountPaidCents,
+          p_currency: "CAD",
+          p_starts_at: now.toISOString(),
+          p_expires_at: expiresAt.toISOString(),
+          p_payment_method: "manual",
+          p_activation_note: body.activation_note ?? `Payé ${durationMonths} mois — activation manuelle`,
+          p_visible_public: !!body.visible_public,
+          p_receives_appointments: body.receives_leads ?? true,
+          p_can_be_matched: canBeMatched,
+          p_priority_matching: priorityMatching,
+          p_unpro_verified: !!body.unpro_verified,
+          p_premium_badge: !!body.badge_premium,
         },
-        aipp_score: aipp,
-        aipp_badge: body.aipp_badge ?? null,
-      },
-    });
+      );
+      if (finalizeErr) throw finalizeErr;
+
+      // Best-effort override (legacy compat)
+      await admin.from("admin_activation_overrides").insert({
+        contractor_id: contractor.id,
+        subscription_id: finalizeResult?.subscription_id ?? null,
+        override_type: "full_discount",
+        override_value: 100,
+        reason: "Paiement manuel reçu — activation manuelle",
+        starts_at: now.toISOString(),
+        ends_at: expiresAt.toISOString(),
+        created_by_admin_id: user.id,
+        is_active: true,
+      });
+
+      // Manual payment audit row
+      await admin.from("manual_contractor_activations").insert({
+        contractor_id: contractor.id,
+        admin_user_id: user.id,
+        plan_code: plan.code,
+        plan_amount_cents: amountPaidCents,
+        paid_date: now.toISOString(),
+        expiry_date: expiresAt.toISOString(),
+        payment_method: "manuel",
+        note: body.activation_note ?? `Payé ${durationMonths} mois`,
+        payload_json: {
+          duration_months: durationMonths,
+          toggles: {
+            visible_public: !!body.visible_public,
+            receives_leads: !!body.receives_leads,
+            can_be_matched: canBeMatched,
+            priority_matching: priorityMatching,
+            unpro_verified: !!body.unpro_verified,
+            badge_premium: !!body.badge_premium,
+          },
+          aipp_score: aipp,
+          aipp_badge: body.aipp_badge ?? null,
+        },
+      });
+
+      // Bind sub for legacy code paths below
+      var sub = { id: finalizeResult?.subscription_id };
+      var oneYearFromNow = expiresAt;
+    } catch (activationErr) {
+      // Rollback: remove partially-activated contractor
+      await admin.from("contractors").delete().eq("id", contractor.id);
+      await admin.from("admin_activation_logs").insert({
+        contractor_id: contractor.id,
+        admin_user_id: user.id,
+        action: "admin_activate_contractor",
+        status: "rollback",
+        error_message: activationErr instanceof Error ? activationErr.message : String(activationErr),
+      });
+      throw activationErr;
+    }
 
     // Public page record
     await admin.from("contractor_public_pages").insert({
@@ -311,6 +357,14 @@ Deno.serve(async (req) => {
         subscription_id: sub.id,
         plan: { code: plan.code, name: plan.name },
         expiry_date: oneYearFromNow.toISOString(),
+        duration_months: durationMonths,
+        amount_paid_cents: amountPaidCents,
+        payment_method: "manual",
+        payment_status: "paid",
+        can_be_matched: canBeMatched,
+        priority_matching: priorityMatching,
+        public_profile_enabled: !!body.visible_public,
+        can_receive_appointments: body.receives_leads ?? true,
         aipp_score: aipp,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
