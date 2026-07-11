@@ -227,9 +227,9 @@ export default function PageContractorPublicProfileISR() {
           </div>
         </Section>
 
-        {/* CTA évaluation */}
+        {/* Booking direct */}
         <section id="evaluation" className="mt-6">
-          <EvaluationBookingPanel slug={SLUG} />
+          <DirectBookingPanel contractorId="0abadcb7-3524-4db0-92ff-a73db8a443be" />
         </section>
 
         {/* Métadonnées de rafraîchissement */}
