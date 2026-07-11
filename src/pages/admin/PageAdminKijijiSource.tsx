@@ -117,13 +117,21 @@ export default function PageAdminKijijiSource() {
 
   const queueP0 = useMutation({
     mutationFn: async (dryRun: boolean) => {
+      if (!dryRun && !window.confirm("Envoi SMS réels via Twilio aux prospects P0. Continuer ?")) {
+        return { cancelled: true };
+      }
       const { data, error } = await supabase.functions.invoke("queue-kijiji-outreach", {
         body: { bucket: "P0", limit: 25, dry_run: dryRun },
       });
       if (error) throw error;
       return data;
     },
-    onSuccess: (d: any) => toast.success(`P0: ${d.queued} en file, ${d.skipped} exclus${d.dry_run ? " (dry run)" : ""}`),
+    onSuccess: (d: any) => {
+      if (d?.cancelled) return;
+      const parts = [`file: ${d.queued ?? 0}`, `envoyés: ${d.sent ?? 0}`, `échecs: ${d.failed ?? 0}`, `exclus: ${d.skipped ?? 0}`];
+      toast.success(`P0 ${d.dry_run ? "(dry run)" : "réel"} — ${parts.join(" · ")}`);
+      qc.invalidateQueries();
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
