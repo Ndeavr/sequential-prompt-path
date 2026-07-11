@@ -157,6 +157,10 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.stripe-isr-webhook]
     verify_jwt = false
+  [functions.stripe-unpro-webhook]
+    verify_jwt = false
+  [functions.stripe-unpro-reconcile]
+    verify_jwt = true
   [functions.log-isr-event]
     verify_jwt = false
   [functions.stripe-mode-check]
