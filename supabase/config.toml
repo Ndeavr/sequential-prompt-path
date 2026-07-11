@@ -211,3 +211,15 @@ project_id = "clmaqdnphbndvmmqvpff"
 
   [functions.admin-ops-health-check]
     verify_jwt = true
+
+  [functions.scrape-kijiji-services]
+    verify_jwt = true
+  [functions.process-kijiji-listing]
+    verify_jwt = true
+  [functions.validate-kijiji-contact]
+    verify_jwt = true
+  [functions.queue-kijiji-outreach]
+    verify_jwt = true
+  [functions.kijiji-daily-orchestrator]
+    verify_jwt = false
+
