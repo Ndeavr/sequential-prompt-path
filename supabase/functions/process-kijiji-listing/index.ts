@@ -277,7 +277,7 @@ async function checkDuplicate(
     if (data && data.length) return true;
   }
   if (rbq) {
-    const { data } = await sb.from("contractor_prospects").select("id").eq("rbq_number", rbq).limit(1);
+    const { data } = await sb.from("contractor_prospects").select("id").eq("rbq", rbq).limit(1);
     if (data && data.length) return true;
   }
   if (name && city) {
