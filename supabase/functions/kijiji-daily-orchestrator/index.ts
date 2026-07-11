@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
   const body = await req.json().catch(() => ({}));
-  const dryRun: boolean = body.dry_run ?? true;
+  const dryRun: boolean = body.dry_run ?? false;
 
   const report: any = { started_at: new Date().toISOString(), steps: [] };
 

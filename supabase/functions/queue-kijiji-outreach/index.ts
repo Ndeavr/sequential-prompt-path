@@ -1,7 +1,10 @@
 // UNPRO — Queue Kijiji prospects into existing outreach pipeline.
-// Creates contractor_leads row + contractor_outreach_logs entry per eligible prospect.
+// Creates contractor_leads row + contractor_outreach_logs entry per eligible prospect,
+// and (when dry_run=false) fires the real SMS via the canonical Twilio sender.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { sendSms } from "../_shared/twilioSend.ts";
+import { reportOutcome, FailureCode } from "../_shared/reliability.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -64,81 +67,161 @@ Deno.serve(async (req) => {
 
   const queued: any[] = [];
   const skipped: any[] = [];
+  const sent: any[] = [];
+  const failed: any[] = [];
 
   for (const p of prospects ?? []) {
-    // Suppression check
-    const values = [p.phone, p.email].filter(Boolean);
-    if (values.length) {
-      const { data: sup } = await sb.from("outreach_suppressions")
-        .select("id").in("contact_value", values).limit(1);
-      if (sup && sup.length) { skipped.push({ id: p.id, reason: "suppressed" }); continue; }
+    try {
+      // Suppression check
+      const values = [p.phone, p.email].filter(Boolean);
+      if (values.length) {
+        const { data: sup } = await sb.from("outreach_suppressions")
+          .select("id").in("contact_value", values).limit(1);
+        if (sup && sup.length) { skipped.push({ id: p.id, reason: "suppressed" }); continue; }
+      }
+
+      // Already contacted?
+      const { data: prior } = await sb.from("contractor_outreach_logs")
+        .select("id").eq("to_address", requireMobile ? p.phone : (p.email ?? "")).limit(1);
+      if (prior && prior.length) { skipped.push({ id: p.id, reason: "already_contacted" }); continue; }
+
+      const template = pickVariant(variants, p.website);
+      const bodyTpl: string = template.body_template ?? "";
+      const rendered = renderTemplate(bodyTpl, {
+        first_name_or_business: p.business_name || "bonjour",
+        service: humanCategory(p.category_slug),
+        city: p.city ?? "votre secteur",
+        tracked_link: `https://unpro.ca/r/${p.id}?src=kijiji&v=${template.template_name}`,
+      });
+
+      if (dryRun) {
+        queued.push({ id: p.id, variant: template.template_name, message_preview: rendered.slice(0, 140) });
+        continue;
+      }
+
+      // Create lead row (idempotent by phone_e164)
+      const leadInsert = await sb.from("contractor_leads").insert({
+        source_type: "kijiji_services",
+        company_name: p.business_name,
+        phone_e164: p.phone,
+        email: p.email,
+        city: p.city,
+        trade_slug: p.category_slug,
+        outreach_status: requireMobile ? "sending" : "queued",
+        contact_method: requireMobile ? "sms" : "email",
+        metadata: {
+          source_key: "kijiji_services",
+          source_priority: 90,
+          acquisition_score: p.acquisition_score,
+          bucket,
+          prospect_id: p.id,
+          variant: template.template_name,
+          priority_reason: p.priority_reason ?? [],
+        },
+      }).select("id").single();
+      if (leadInsert.error) {
+        const { data: existing } = await sb.from("contractor_leads").select("id")
+          .eq("phone_e164", p.phone ?? "").limit(1).maybeSingle();
+        if (!existing) { skipped.push({ id: p.id, reason: leadInsert.error.message }); continue; }
+        leadInsert.data = existing as any;
+      }
+      const leadId = leadInsert.data!.id;
+
+      const logInsert = await sb.from("contractor_outreach_logs").insert({
+        lead_id: leadId,
+        channel: requireMobile ? "sms" : "email",
+        template_key: template.template_name,
+        to_address: requireMobile ? p.phone! : p.email!,
+        message_body: rendered,
+        status: requireMobile ? "sending" : "queued",
+        cta_urls: [`https://unpro.ca/r/${p.id}?src=kijiji`],
+        has_tracked_cta: true,
+        raw_template: { source: "kijiji", variant: template.template_name },
+      }).select("id").single();
+      const logId = logInsert.data?.id ?? null;
+
+      // Email path: leave queued for email dispatcher.
+      if (!requireMobile) {
+        queued.push({ id: p.id, variant: template.template_name, bucket, channel: "email" });
+        continue;
+      }
+
+      // Real SMS send via canonical Twilio sender.
+      const result = await sendSms({
+        to: p.phone!,
+        body: rendered,
+        message_type: "outreach",
+        template_key: template.template_name,
+        lead_id: leadId,
+        metadata: {
+          source: "kijiji_services",
+          prospect_id: p.id,
+          variant: template.template_name,
+          bucket,
+        },
+      });
+      const ok = result.status === "sending" || result.status === "sent" || result.status === "delivered";
+
+      if (logId) {
+        await sb.from("contractor_outreach_logs").update({
+          status: ok ? "sent" : "failed",
+          sent_at: ok ? new Date().toISOString() : null,
+          provider_response: {
+            twilio_sid: result.twilio_sid ?? null,
+            twilio_status: result.status ?? null,
+            event_id: result.event_id ?? null,
+          },
+          error_message: ok ? null : (result.error_message ?? null),
+        }).eq("id", logId);
+      }
+
+      await sb.from("contractor_leads").update({
+        outreach_status: ok ? "sent" : "send_failed",
+      }).eq("id", leadId);
+
+      if (ok) {
+        sent.push({ id: p.id, variant: template.template_name, twilio_sid: result.twilio_sid });
+        await reportOutcome({
+          operation: "queue-kijiji-outreach",
+          intent: "send_sms",
+          outcome: "achieved",
+          affected_record: p.id,
+          service: "twilio",
+          payload: { variant: template.template_name, bucket, twilio_sid: result.twilio_sid },
+        });
+      } else {
+        failed.push({ id: p.id, error: result.error_message ?? "send_failed" });
+        await reportOutcome({
+          operation: "queue-kijiji-outreach",
+          intent: "send_sms",
+          outcome: "failed",
+          failure_code: FailureCode.TWILIO_PROVIDER_ERROR,
+          affected_record: p.id,
+          service: "twilio",
+          payload: { variant: template.template_name, bucket, error: result.error_message ?? null, status: result.status ?? null },
+        });
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      failed.push({ id: p.id, error: msg });
+      await reportOutcome({
+        operation: "queue-kijiji-outreach",
+        intent: "send_sms",
+        outcome: "failed",
+        failure_code: FailureCode.UNKNOWN,
+        affected_record: p.id,
+        service: "twilio",
+        payload: { error: msg },
+      });
     }
-
-    // Already contacted?
-    const { data: prior } = await sb.from("contractor_outreach_logs")
-      .select("id").eq("to_address", requireMobile ? p.phone : (p.email ?? "")).limit(1);
-    if (prior && prior.length) { skipped.push({ id: p.id, reason: "already_contacted" }); continue; }
-
-    const template = pickVariant(variants, p.website);
-    const bodyTpl: string = template.body_template ?? "";
-    const rendered = renderTemplate(bodyTpl, {
-      first_name_or_business: p.business_name || "bonjour",
-      service: humanCategory(p.category_slug),
-      city: p.city ?? "votre secteur",
-      tracked_link: `https://unpro.ca/r/${p.id}?src=kijiji&v=${template.template_name}`,
-    });
-
-    if (dryRun) {
-      queued.push({ id: p.id, variant: template.template_name, message_preview: rendered.slice(0, 140) });
-      continue;
-    }
-
-    // Create lead row (idempotent by phone_e164)
-    const leadInsert = await sb.from("contractor_leads").insert({
-      source_type: "kijiji_services",
-      company_name: p.business_name,
-      phone_e164: p.phone,
-      email: p.email,
-      city: p.city,
-      trade_slug: p.category_slug,
-      outreach_status: "queued",
-      contact_method: requireMobile ? "sms" : "email",
-      metadata: {
-        source_key: "kijiji_services",
-        source_priority: 90,
-        acquisition_score: p.acquisition_score,
-        bucket,
-        prospect_id: p.id,
-        variant: template.template_name,
-        priority_reason: p.priority_reason ?? [],
-      },
-    }).select("id").single();
-    if (leadInsert.error) {
-      // Duplicate lead — link to existing
-      const { data: existing } = await sb.from("contractor_leads").select("id")
-        .eq("phone_e164", p.phone ?? "").limit(1).maybeSingle();
-      if (!existing) { skipped.push({ id: p.id, reason: leadInsert.error.message }); continue; }
-      leadInsert.data = existing as any;
-    }
-
-    await sb.from("contractor_outreach_logs").insert({
-      lead_id: leadInsert.data!.id,
-      channel: requireMobile ? "sms" : "email",
-      template_key: template.template_name,
-      to_address: requireMobile ? p.phone! : p.email!,
-      message_body: rendered,
-      status: "queued",
-      cta_urls: [`https://unpro.ca/r/${p.id}?src=kijiji`],
-      has_tracked_cta: true,
-      raw_template: { source: "kijiji", variant: template.template_name },
-    });
-
-    queued.push({ id: p.id, variant: template.template_name, bucket });
   }
 
   return json({
-    success: true, bucket, queued: queued.length, skipped: skipped.length,
-    dry_run: dryRun, detail: { queued, skipped },
+    success: true, bucket,
+    queued: queued.length, skipped: skipped.length,
+    sent: sent.length, failed: failed.length,
+    dry_run: dryRun,
+    detail: { queued, skipped, sent, failed },
   });
 });
 
