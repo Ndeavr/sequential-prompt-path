@@ -143,12 +143,20 @@ const PageAdminCreateContractorManual = () => {
 
   const [planCode, setPlanCode] = useState<string>(PREFILL.plan_code);
 
+  // Manual payment terms
+  const [durationMonths, setDurationMonths] = useState<number>(12);
+  const [amountPaidDollars, setAmountPaidDollars] = useState<string>("349");
+  const [paymentNote, setPaymentNote] = useState<string>("Payé 1 an");
+  const [priorityMatching, setPriorityMatching] = useState<"normal" | "elevated" | "exclusive">("elevated");
+  const [adminConfirmed, setAdminConfirmed] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
+
   const [toggles, setToggles] = useState<Toggles>({
     visible_public: true,
     receives_leads: true,
     priority_match: true,
-    unpro_verified: true,
-    badge_premium: true,
+    unpro_verified: false,
+    badge_premium: false,
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -157,6 +165,7 @@ const PageAdminCreateContractorManual = () => {
     public_url: string;
     expiry_date: string;
     aipp_score: number;
+    contractor_id?: string;
   } | null>(null);
 
   // Live AIPP score
