@@ -6,33 +6,48 @@
 import { useState, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import { Phone, Globe, MapPin, Star, ShieldCheck, RefreshCcw, Lock, Sparkles, ExternalLink } from "lucide-react";
-import { useContractorIntel, fetchContractorIntel, type ContractorIntelIdentity } from "@/hooks/useContractorIntel";
+import { useContractorIntel, type ContractorIntelIdentity } from "@/hooks/useContractorIntel";
+import {
+  useContractorReputation,
+  useContractorProfileContent,
+  useRefreshReputation,
+} from "@/hooks/useContractorReputation";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPhoneDisplay, phoneToE164 } from "@/utils/formatPhone";
-import { useQueryClient } from "@tanstack/react-query";
 
 const SLUG = "isolation-solution-royal";
 
+const formatDateFrCA = (iso?: string | null) =>
+  iso
+    ? new Date(iso).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })
+    : "—";
+
 export default function PageContractorPublicProfileISR() {
   const { isAdmin } = useAuth() as any;
-  const { data, isLoading, error } = useContractorIntel(SLUG);
-  const qc = useQueryClient();
-  const [refreshing, setRefreshing] = useState(false);
+  // Kept only to hydrate identity metadata (services, territory, phones) — no live scraping used for reputation.
+  const { data: intel } = useContractorIntel(SLUG);
+  const { data: reputation, isLoading: repLoading } = useContractorReputation(SLUG);
+  const { data: content, isLoading: contentLoading } = useContractorProfileContent(SLUG);
+  const refreshMutation = useRefreshReputation(SLUG);
   const [showCockpit, setShowCockpit] = useState(false);
 
-  const identity = data?.identity;
-  const payload = data?.snapshot?.payload;
+  const identity = intel?.identity;
+  const refreshing = refreshMutation.isPending || reputation?.status === "refreshing";
+  const approvedSources = (reputation?.sources ?? []).filter((s) => s.approved);
+  const isLoading = repLoading || contentLoading;
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      await fetchContractorIntel(SLUG, { force: true });
-      await qc.invalidateQueries({ queryKey: ["contractor-intel", SLUG] });
-    } finally {
-      setRefreshing(false);
-    }
-  };
+  const description =
+    content?.company_description_fr ??
+    content?.company_description_en ??
+    null;
+  const services =
+    (content?.services_fr as string[] | null) ??
+    (content?.services_en as string[] | null) ??
+    identity?.services ??
+    DEFAULT_SERVICES;
+
+  const onRefresh = () => refreshMutation.mutate();
 
   return (
     <div className="alex-immersive min-h-screen bg-[#050816] text-white relative overflow-hidden">
