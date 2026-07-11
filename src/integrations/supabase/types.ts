@@ -23192,6 +23192,45 @@ export type Database = {
         }
         Relationships: []
       }
+      contractor_activation_ledger: {
+        Row: {
+          action: string
+          actor_id: string | null
+          after_state: Json | null
+          before_state: Json | null
+          contractor_id: string
+          created_at: string
+          id: string
+          metadata: Json
+          plan_id: string | null
+          source: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          after_state?: Json | null
+          before_state?: Json | null
+          contractor_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          plan_id?: string | null
+          source: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          after_state?: Json | null
+          before_state?: Json | null
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          plan_id?: string | null
+          source?: string
+        }
+        Relationships: []
+      }
       contractor_activation_reminders: {
         Row: {
           attempt: number
@@ -84569,6 +84608,16 @@ export type Database = {
         Args: { p_city: string; p_trade: string }
         Returns: boolean
       }
+      activate_contractor_unified: {
+        Args: {
+          p_actor?: string
+          p_contractor_id: string
+          p_metadata?: Json
+          p_plan_id?: string
+          p_source: string
+        }
+        Returns: Json
+      }
       admin_activate_contractor_finalize: {
         Args: {
           p_activation_note: string
@@ -85199,6 +85248,17 @@ export type Database = {
         }
       }
       sms_infrastructure_score: { Args: never; Returns: Json }
+      stalled_activations_report: {
+        Args: { p_min_age_minutes?: number }
+        Returns: {
+          age_minutes: number
+          contractor_id: string
+          detected_source: string
+          paid_at: string
+          plan_id: string
+          reason: string
+        }[]
+      }
       stripe_reconciliation_report: {
         Args: never
         Returns: {
