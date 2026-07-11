@@ -203,6 +203,7 @@ const PageAdminAcquisitionPipeline = lazyWithRetry(() => import("@/pages/admin/a
 const PageAdminAcquisitionErrors = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminAcquisitionErrors"));
 const PageAdminAcquisitionEngagement = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminAcquisitionEngagement"));
 const PageAdminAcquisitionStripe = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminAcquisitionStripe"));
+const PageAdminAcquisitionActivation = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminAcquisitionActivation"));
 const PageContractorAIScoreLanding = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorAIScoreLanding"));
 const PageAippPublic = lazyWithRetry(() => import("@/pages/aipp/PageAippPublic"));
 const PageAiIndexedProfile = lazyWithRetry(() => import("@/pages/aipp/PageAiIndexedProfile"));
@@ -1397,6 +1398,7 @@ export const AppRouter = () => (
         <Route path="/admin/acquisition/errors" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionErrors /></Suspense></ProtectedRoute>} />
         <Route path="/admin/acquisition/engagement" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionEngagement /></Suspense></ProtectedRoute>} />
         <Route path="/admin/acquisition/stripe" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionStripe /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/acquisition/activation" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionActivation /></Suspense></ProtectedRoute>} />
         <Route path="/contractor/ai-score/:prospectId" element={<Suspense fallback={<LazyFallback />}><PageContractorAIScoreLanding /></Suspense>} />
         <Route path="/aipp/:slug" element={<PageAippPublic />} />
         <Route path="/ai-indexed-profiles/:slug" element={<PageAiIndexedProfile />} />
