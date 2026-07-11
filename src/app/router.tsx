@@ -1396,6 +1396,7 @@ export const AppRouter = () => (
         <Route path="/admin/acquisition/pipeline" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionPipeline /></Suspense></ProtectedRoute>} />
         <Route path="/admin/acquisition/errors" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionErrors /></Suspense></ProtectedRoute>} />
         <Route path="/admin/acquisition/engagement" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionEngagement /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/acquisition/stripe" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionStripe /></Suspense></ProtectedRoute>} />
         <Route path="/contractor/ai-score/:prospectId" element={<Suspense fallback={<LazyFallback />}><PageContractorAIScoreLanding /></Suspense>} />
         <Route path="/aipp/:slug" element={<PageAippPublic />} />
         <Route path="/ai-indexed-profiles/:slug" element={<PageAiIndexedProfile />} />
