@@ -6,7 +6,16 @@
  */
 import { AlertTriangle, ShieldCheck, Calculator, Wrench, Handshake } from "lucide-react";
 
-const CARDS = [
+type Card = {
+  step: string;
+  stepLabel: string;
+  icon: typeof AlertTriangle;
+  title: string;
+  body: string;
+  examples?: string;
+};
+
+const CARDS: Card[] = [
   {
     step: "01",
     stepLabel: "Diagnostic",
