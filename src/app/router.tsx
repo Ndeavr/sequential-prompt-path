@@ -199,6 +199,8 @@ const PageAdminPipelineProspects = lazyWithRetry(() => import("@/pages/admin/acq
 const PageAdminAcquisition = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminAcquisition"));
 const PageAdminAcquisitionMachine = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminAcquisitionMachine"));
 const PageAdminAcquisitionDuplicates = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminAcquisitionDuplicates"));
+const PageAdminAcquisitionPipeline = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminAcquisitionPipeline"));
+const PageAdminAcquisitionErrors = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminAcquisitionErrors"));
 const PageContractorAIScoreLanding = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorAIScoreLanding"));
 const PageAippPublic = lazyWithRetry(() => import("@/pages/aipp/PageAippPublic"));
 const PageAiIndexedProfile = lazyWithRetry(() => import("@/pages/aipp/PageAiIndexedProfile"));
