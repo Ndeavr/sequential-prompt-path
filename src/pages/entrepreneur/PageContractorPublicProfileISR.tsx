@@ -135,9 +135,9 @@ export default function PageContractorPublicProfileISR() {
         {/* À propos */}
         <Section title="À propos">
           {isLoading ? (
-            <div className="text-white/50 text-sm">Analyse de isroyal.ca en cours…</div>
-          ) : payload?.summary ? (
-            <p className="text-white/85 leading-relaxed text-[15px]">{payload.summary}</p>
+            <div className="text-white/50 text-sm">Chargement…</div>
+          ) : description ? (
+            <p className="text-white/85 leading-relaxed text-[15px] whitespace-pre-line">{description}</p>
           ) : (
             <p className="text-white/75 leading-relaxed text-[15px]">
               Isolation Solution Royal est un spécialiste reconnu de l'entretoit dans la grande région
@@ -150,7 +150,7 @@ export default function PageContractorPublicProfileISR() {
         {/* Services */}
         <Section title="Services">
           <div className="flex flex-wrap gap-2">
-            {(identity?.services ?? DEFAULT_SERVICES).map((s) => (
+            {services.map((s) => (
               <span
                 key={s}
                 className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-white/85"
@@ -161,21 +161,21 @@ export default function PageContractorPublicProfileISR() {
           </div>
         </Section>
 
-        {/* Avis récents (Google via Firecrawl search) */}
+        {/* Présence et avis en ligne — cached, entity-locked */}
         <Section
           title="Présence et avis en ligne"
-          subtitle="Sources web indexées dans les 12 derniers mois"
+          subtitle="Sources vérifiées · mises à jour tous les 30 jours"
         >
           {isLoading ? (
-            <div className="text-white/50 text-sm">Recherche d'avis en cours…</div>
-          ) : (payload?.reviews_search?.length ?? 0) === 0 ? (
+            <div className="text-white/50 text-sm">Chargement des sources vérifiées…</div>
+          ) : approvedSources.length === 0 ? (
             <div className="text-white/55 text-sm">
-              Aucune mention indexée pour le moment. Les avis Google et les sources tierces seront
-              rafraîchis automatiquement.
+              Aucune source vérifiée pour le moment. La prochaine analyse aura lieu le{" "}
+              {formatDateFrCA(reputation?.next_scan_date)}.
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-2.5">
-              {payload!.reviews_search.slice(0, 5).map((r, i) => (
+              {approvedSources.slice(0, 8).map((r, i) => (
                 <a
                   key={i}
                   href={r.url}
@@ -184,18 +184,33 @@ export default function PageContractorPublicProfileISR() {
                   className="block rounded-2xl border border-white/10 bg-white/[0.03] p-4 hover:border-cyan-300/30 hover:bg-white/[0.05] transition-all"
                 >
                   <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-cyan-300/80">
-                    <Star className="h-3 w-3" /> Source web
+                    <Star className="h-3 w-3" /> Source vérifiée · {r.domain}
                   </div>
                   <div className="mt-1 text-sm font-medium text-white">{r.title ?? r.url}</div>
-                  {(r.description || r.snippet) && (
-                    <div className="mt-1 text-xs text-white/65 line-clamp-2">
-                      {r.description ?? r.snippet}
-                    </div>
+                  {r.snippet && (
+                    <div className="mt-1 text-xs text-white/65 line-clamp-2">{r.snippet}</div>
                   )}
                 </a>
               ))}
             </div>
           )}
+
+          <div className="mt-5 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-[11px] text-white/50">
+            <div className="space-y-0.5">
+              <div>Dernière mise à jour : <span className="text-white/75">{formatDateFrCA(reputation?.scan_date)}</span></div>
+              <div>Prochaine mise à jour : <span className="text-white/75">{formatDateFrCA(reputation?.next_scan_date)}</span></div>
+            </div>
+            {isAdmin && (
+              <button
+                onClick={onRefresh}
+                disabled={refreshing}
+                className="inline-flex items-center gap-1.5 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1.5 text-[11px] font-medium text-cyan-200 hover:bg-cyan-300/20 transition-all disabled:opacity-50"
+              >
+                <RefreshCcw className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} />
+                {refreshing ? "Actualisation…" : "Actualiser maintenant"}
+              </button>
+            )}
+          </div>
         </Section>
 
         {/* Territoire */}
@@ -218,13 +233,11 @@ export default function PageContractorPublicProfileISR() {
         </section>
 
         {/* Métadonnées de rafraîchissement */}
-        {payload?.fetched_at && (
+        {reputation?.scan_date && (
           <div className="mt-6 text-[11px] text-white/40 text-center">
-            Données vérifiées le {new Date(payload.fetched_at).toLocaleDateString("fr-CA", {
-              day: "numeric", month: "long", year: "numeric",
-            })}
-            {payload.scrape_error && (
-              <span className="ml-1 text-amber-300/70">(mode dégradé)</span>
+            Données vérifiées le {formatDateFrCA(reputation.scan_date)}
+            {reputation.status === "refreshing" && (
+              <span className="ml-1 text-cyan-300/70">(actualisation en cours…)</span>
             )}
           </div>
         )}
@@ -235,7 +248,7 @@ export default function PageContractorPublicProfileISR() {
         <AdminCockpit
           slug={SLUG}
           identity={identity}
-          payload={payload}
+          payload={null}
           onClose={() => setShowCockpit(false)}
           onRefresh={onRefresh}
           refreshing={refreshing}
