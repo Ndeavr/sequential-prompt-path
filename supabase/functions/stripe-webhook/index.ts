@@ -550,10 +550,42 @@ Deno.serve(async (req) => {
       // Best-effort: try to mark last event as failed if we captured its id in scope.
       // We can't always reach event.id here safely, so we skip if not available.
     } catch (_) { /* noop */ }
+    await supabase
+      .from("stripe_webhook_events")
+      .update({ processed_at: new Date().toISOString(), success: true, processing_status: "processed" })
+      .eq("stripe_event_id", event.id);
+
+    return new Response(JSON.stringify({ received: true }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error: unknown) {
+    console.error("Webhook error:", error);
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    try {
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+      // Best-effort: try to parse the event id from the body to mark it failed
+      // (may not always succeed depending on where the throw occurred).
+      // Callers can also inspect logs by request id.
+      try {
+        const rawBody = await req.clone().text();
+        const parsed = JSON.parse(rawBody);
+        if (parsed?.id) {
+          await supabase.from("stripe_webhook_events").update({
+            processing_status: "failed",
+            error_message: msg,
+            success: false,
+          }).eq("stripe_event_id", parsed.id);
+        }
+      } catch (_) { /* noop */ }
+    } catch (_) { /* noop */ }
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
+
 
