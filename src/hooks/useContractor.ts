@@ -19,7 +19,7 @@ export const useUpsertContractorProfile = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (profile: { business_name: string; specialty?: string; description?: string; phone?: string; email?: string; website?: string; address?: string; city?: string; province?: string; postal_code?: string; license_number?: string; insurance_info?: string; years_experience?: number }) => {
+    mutationFn: async (profile: { business_name: string; specialty?: string; description?: string; phone?: string; email?: string; website?: string; address?: string; city?: string; province?: string; postal_code?: string; license_number?: string; insurance_info?: string; years_experience?: number; rbq_number?: string; rbq_compliance_status?: "verified" | "in_progress" | "not_provided" | "expired"; rbq_expiry_date?: string | null }) => {
       const { data: existing } = await supabase.from("contractors").select("id").eq("user_id", user!.id).maybeSingle();
       if (existing) {
         const { data, error } = await supabase.from("contractors").update(profile).eq("user_id", user!.id).select().single();
