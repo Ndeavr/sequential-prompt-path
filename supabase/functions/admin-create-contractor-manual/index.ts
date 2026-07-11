@@ -46,12 +46,18 @@ interface Body {
   aipp_badge?: string | null;
   plan_code: string;
   plan_amount_cents: number;
+  amount_paid_cents?: number;
+  duration_months?: number; // 1, 3, 6, 12
+  activation_note?: string | null;
   // toggles
   visible_public?: boolean;
   receives_leads?: boolean;
   priority_match?: boolean;
+  priority_matching?: "normal" | "elevated" | "exclusive";
+  can_be_matched?: boolean;
   unpro_verified?: boolean;
   badge_premium?: boolean;
+  admin_confirmed?: boolean;
 }
 
 Deno.serve(async (req) => {
