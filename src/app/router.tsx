@@ -377,6 +377,7 @@ const PageContractorPlanRecommendation = lazyWithRetry(() => import("@/pages/con
 const PageContractorPersonalizedPlan = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorPersonalizedPlan"));
 const PageContractorPricingIntake = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorPricingIntake"));
 const PageAdminPricingIntelligence = lazyWithRetry(() => import("@/pages/admin/PageAdminPricingIntelligence"));
+const PageAdminUnproStripeHealth = lazyWithRetry(() => import("@/pages/admin/PageAdminUnproStripeHealth"));
 const PageContractorCheckout = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorCheckout"));
 const PageContractorActivationSuccess = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorActivationSuccess"));
 const PageContractorDashboardPostActivation = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorDashboardPostActivation"));
