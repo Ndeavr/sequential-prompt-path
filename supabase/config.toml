@@ -226,4 +226,11 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = true
   [functions.kijiji-daily-orchestrator]
     verify_jwt = false
+  [functions.engagement-track-click]
+    verify_jwt = false
+  [functions.engagement-webhook-twilio]
+    verify_jwt = false
+  [functions.engagement-webhook-resend]
+    verify_jwt = false
+
 
