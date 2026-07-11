@@ -31413,6 +31413,78 @@ export type Database = {
           },
         ]
       }
+      contractor_profile_content: {
+        Row: {
+          company_description_en: string | null
+          company_description_fr: string | null
+          contractor_id: string | null
+          created_at: string
+          faq_en: Json | null
+          faq_fr: Json | null
+          id: string
+          last_ai_generation_date: string | null
+          locked_en: boolean
+          locked_fr: boolean
+          services_en: Json | null
+          services_fr: Json | null
+          slug: string
+          specialties_en: Json | null
+          specialties_fr: Json | null
+          tagline_en: string | null
+          tagline_fr: string | null
+          trust_summary_en: string | null
+          trust_summary_fr: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          company_description_en?: string | null
+          company_description_fr?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          faq_en?: Json | null
+          faq_fr?: Json | null
+          id?: string
+          last_ai_generation_date?: string | null
+          locked_en?: boolean
+          locked_fr?: boolean
+          services_en?: Json | null
+          services_fr?: Json | null
+          slug: string
+          specialties_en?: Json | null
+          specialties_fr?: Json | null
+          tagline_en?: string | null
+          tagline_fr?: string | null
+          trust_summary_en?: string | null
+          trust_summary_fr?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          company_description_en?: string | null
+          company_description_fr?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          faq_en?: Json | null
+          faq_fr?: Json | null
+          id?: string
+          last_ai_generation_date?: string | null
+          locked_en?: boolean
+          locked_fr?: boolean
+          services_en?: Json | null
+          services_fr?: Json | null
+          slug?: string
+          specialties_en?: Json | null
+          specialties_fr?: Json | null
+          tagline_en?: string | null
+          tagline_fr?: string | null
+          trust_summary_en?: string | null
+          trust_summary_fr?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       contractor_profile_gaps: {
         Row: {
           contractor_id: string
@@ -33872,6 +33944,57 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      contractor_reputation_snapshots: {
+        Row: {
+          average_rating: number | null
+          contractor_id: string | null
+          created_at: string
+          id: string
+          last_refresh_error: string | null
+          next_scan_date: string
+          raw_payload: Json
+          review_count: number
+          scan_date: string
+          slug: string
+          source_count: number
+          sources: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          average_rating?: number | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          last_refresh_error?: string | null
+          next_scan_date?: string
+          raw_payload?: Json
+          review_count?: number
+          scan_date?: string
+          slug: string
+          source_count?: number
+          sources?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          average_rating?: number | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          last_refresh_error?: string | null
+          next_scan_date?: string
+          raw_payload?: Json
+          review_count?: number
+          scan_date?: string
+          slug?: string
+          source_count?: number
+          sources?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       contractor_review_aggregates: {
         Row: {
