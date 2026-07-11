@@ -1274,6 +1274,72 @@ export type Database = {
         }
         Relationships: []
       }
+      acquisition_pipeline_errors: {
+        Row: {
+          category: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          error_code: string
+          error_message: string
+          first_seen_at: string
+          id: string
+          last_repair_at: string | null
+          last_repair_result: string | null
+          last_seen_at: string
+          metadata: Json
+          occurrences: number
+          recommended_action: string | null
+          repair_attempts: number
+          repair_function: string | null
+          status: string
+          step_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          error_code: string
+          error_message: string
+          first_seen_at?: string
+          id?: string
+          last_repair_at?: string | null
+          last_repair_result?: string | null
+          last_seen_at?: string
+          metadata?: Json
+          occurrences?: number
+          recommended_action?: string | null
+          repair_attempts?: number
+          repair_function?: string | null
+          status?: string
+          step_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          error_code?: string
+          error_message?: string
+          first_seen_at?: string
+          id?: string
+          last_repair_at?: string | null
+          last_repair_result?: string | null
+          last_seen_at?: string
+          metadata?: Json
+          occurrences?: number
+          recommended_action?: string | null
+          repair_attempts?: number
+          repair_function?: string | null
+          status?: string
+          step_key?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       acquisition_pipeline_logs: {
         Row: {
           created_at: string
@@ -59567,43 +59633,58 @@ export type Database = {
       }
       pipeline_verification_runs: {
         Row: {
+          allow_live_delivery: boolean
           completed_at: string | null
           created_at: string
           created_by: string | null
           failure_count: number
           id: string
+          mode: string
+          operational_status: Json | null
           run_type: string
           started_at: string | null
           status: string
           success_count: number
           summary: string | null
           target_scope: string | null
+          test_contractor_id: string | null
+          test_prospect_id: string | null
         }
         Insert: {
+          allow_live_delivery?: boolean
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
           failure_count?: number
           id?: string
+          mode?: string
+          operational_status?: Json | null
           run_type?: string
           started_at?: string | null
           status?: string
           success_count?: number
           summary?: string | null
           target_scope?: string | null
+          test_contractor_id?: string | null
+          test_prospect_id?: string | null
         }
         Update: {
+          allow_live_delivery?: boolean
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
           failure_count?: number
           id?: string
+          mode?: string
+          operational_status?: Json | null
           run_type?: string
           started_at?: string | null
           status?: string
           success_count?: number
           summary?: string | null
           target_scope?: string | null
+          test_contractor_id?: string | null
+          test_prospect_id?: string | null
         }
         Relationships: []
       }
@@ -76192,9 +76273,12 @@ export type Database = {
           error_message: string | null
           event_type: string
           id: string
+          last_retry_at: string | null
           payload: Json | null
           processed_at: string | null
+          processing_status: string
           received_at: string
+          retry_count: number
           session_id: string | null
           stripe_event_id: string
           success: boolean | null
@@ -76205,9 +76289,12 @@ export type Database = {
           error_message?: string | null
           event_type: string
           id?: string
+          last_retry_at?: string | null
           payload?: Json | null
           processed_at?: string | null
+          processing_status?: string
           received_at?: string
+          retry_count?: number
           session_id?: string | null
           stripe_event_id: string
           success?: boolean | null
@@ -76218,9 +76305,12 @@ export type Database = {
           error_message?: string | null
           event_type?: string
           id?: string
+          last_retry_at?: string | null
           payload?: Json | null
           processed_at?: string | null
+          processing_status?: string
           received_at?: string
+          retry_count?: number
           session_id?: string | null
           stripe_event_id?: string
           success?: boolean | null
@@ -78269,6 +78359,51 @@ export type Database = {
           resolved_at?: string | null
           severity?: string
           source?: string
+        }
+        Relationships: []
+      }
+      system_audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_type: string
+          after_state: Json | null
+          before_state: Json | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          metadata: Json
+          request_id: string | null
+          source: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_type?: string
+          after_state?: Json | null
+          before_state?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          metadata?: Json
+          request_id?: string | null
+          source?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_type?: string
+          after_state?: Json | null
+          before_state?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          metadata?: Json
+          request_id?: string | null
+          source?: string | null
         }
         Relationships: []
       }
@@ -83741,6 +83876,23 @@ export type Database = {
         }
         Relationships: []
       }
+      v_pipeline_funnel_counts: {
+        Row: {
+          activated: number | null
+          clicked: number | null
+          contactable: number | null
+          delivered: number | null
+          onboarding_completed: number | null
+          onboarding_started: number | null
+          outreach_queued: number | null
+          paid: number | null
+          payment_started: number | null
+          recommendable: number | null
+          scraped: number | null
+          sent: number | null
+        }
+        Relationships: []
+      }
       v_pipeline_runs_live: {
         Row: {
           campaign_id: string | null
@@ -84535,6 +84687,20 @@ export type Database = {
         Args: { _at?: string; _channel: string }
         Returns: boolean
       }
+      log_system_audit: {
+        Args: {
+          _action: string
+          _actor_id?: string
+          _actor_type?: string
+          _after?: Json
+          _before?: Json
+          _entity_id?: string
+          _entity_type: string
+          _metadata?: Json
+          _source?: string
+        }
+        Returns: string
+      }
       manual_override_appointment_quota: {
         Args: {
           _contractor_id: string
@@ -84632,6 +84798,20 @@ export type Database = {
       }
       record_outreach_sms_event: {
         Args: { p_kind: string; p_payload?: Json; p_sid: string }
+        Returns: string
+      }
+      record_pipeline_error: {
+        Args: {
+          _category: string
+          _entity_id?: string
+          _entity_type?: string
+          _error_code: string
+          _error_message: string
+          _metadata?: Json
+          _recommended_action?: string
+          _repair_function?: string
+          _step_key?: string
+        }
         Returns: string
       }
       refresh_appointment_value_matrix: { Args: never; Returns: Json }

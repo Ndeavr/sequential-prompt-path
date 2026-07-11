@@ -199,6 +199,8 @@ const PageAdminPipelineProspects = lazyWithRetry(() => import("@/pages/admin/acq
 const PageAdminAcquisition = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminAcquisition"));
 const PageAdminAcquisitionMachine = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminAcquisitionMachine"));
 const PageAdminAcquisitionDuplicates = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminAcquisitionDuplicates"));
+const PageAdminAcquisitionPipeline = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminAcquisitionPipeline"));
+const PageAdminAcquisitionErrors = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminAcquisitionErrors"));
 const PageContractorAIScoreLanding = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorAIScoreLanding"));
 const PageAippPublic = lazyWithRetry(() => import("@/pages/aipp/PageAippPublic"));
 const PageAiIndexedProfile = lazyWithRetry(() => import("@/pages/aipp/PageAiIndexedProfile"));
@@ -1389,6 +1391,8 @@ export const AppRouter = () => (
         <Route path="/admin/acquisition" element={<ProtectedRoute requiredRole="admin"><PageAdminAcquisition /></ProtectedRoute>} />
         <Route path="/admin/acquisition-machine" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionMachine /></Suspense></ProtectedRoute>} />
         <Route path="/admin/acquisition/duplicates" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionDuplicates /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/acquisition/pipeline" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionPipeline /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/acquisition/errors" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionErrors /></Suspense></ProtectedRoute>} />
         <Route path="/contractor/ai-score/:prospectId" element={<Suspense fallback={<LazyFallback />}><PageContractorAIScoreLanding /></Suspense>} />
         <Route path="/aipp/:slug" element={<PageAippPublic />} />
         <Route path="/ai-indexed-profiles/:slug" element={<PageAiIndexedProfile />} />
