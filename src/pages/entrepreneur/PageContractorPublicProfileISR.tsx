@@ -294,58 +294,154 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
   );
 }
 
-/* ---------- Evaluation booking ---------- */
+/* ---------- Direct booking (real slots → appointments row) ---------- */
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
-const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+type Slot = {
+  id: string;
+  starts_at: string;
+  ends_at: string;
+};
 
-function EvaluationBookingPanel({ slug }: { slug: string }) {
-  const [form, setForm] = useState({ contact_name: "", email: "", phone: "", preferred_slot: "", message: "" });
-  const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
+function DirectBookingPanel({ contractorId }: { contractorId: string }) {
+  const { user } = useAuth() as any;
+  const [slots, setSlots] = useState<Slot[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+  const [booking, setBooking] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [confirmed, setConfirmed] = useState<Slot | null>(null);
+  const [showProfileGate, setShowProfileGate] = useState(false);
+  const [pendingSlotId, setPendingSlotId] = useState<string | null>(null);
 
-  const slots = useMemo(
-    () => [
-      "Demain matin (9 h–11 h)",
-      "Demain après-midi (13 h–16 h)",
-      "Cette semaine — flexible",
-      "La semaine prochaine",
-    ],
-    [],
-  );
+  // Fetch real available slots
+  useMemo(() => {
+    (async () => {
+      setLoading(true);
+      const { data, error } = await (supabase as any)
+        .from("appointment_slots")
+        .select("id, starts_at, ends_at")
+        .eq("contractor_id", contractorId)
+        .eq("status", "available")
+        .gt("starts_at", new Date().toISOString())
+        .order("starts_at", { ascending: true })
+        .limit(12);
+      if (!error && data) setSlots(data as Slot[]);
+      setLoading(false);
+    })();
+  }, [contractorId]);
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setState("loading");
+  const grouped = useMemo(() => {
+    const byDay: Record<string, Slot[]> = {};
+    for (const s of slots) {
+      const day = new Date(s.starts_at).toLocaleDateString("fr-CA", {
+        weekday: "long", day: "numeric", month: "long",
+      });
+      (byDay[day] ??= []).push(s);
+    }
+    return byDay;
+  }, [slots]);
+
+  const handleSelect = async (slotId: string) => {
+    setErrorMsg(null);
+    setSelectedSlotId(slotId);
+
+    // Guest → send to /auth then back here
+    if (!user) {
+      const returnTo = `${window.location.pathname}#evaluation`;
+      window.location.href = `/auth?returnTo=${encodeURIComponent(returnTo)}`;
+      return;
+    }
+
+    // Profile completion check
+    const { data: profile } = await (supabase as any)
+      .from("user_profiles_extended")
+      .select("phone, address")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!profile || !profile.phone || !profile.address) {
+      setPendingSlotId(slotId);
+      setShowProfileGate(true);
+      return;
+    }
+
+    await confirmBooking(slotId);
+  };
+
+  const confirmBooking = async (slotId: string) => {
+    if (!user) return;
+    setBooking(true);
     setErrorMsg(null);
     try {
-      const r = await fetch(`${SUPABASE_URL}/functions/v1/book-contractor-evaluation`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: ANON_KEY,
-          Authorization: `Bearer ${ANON_KEY}`,
-        },
-        body: JSON.stringify({ contractor_slug: slug, ...form }),
+      const slot = slots.find((s) => s.id === slotId);
+      if (!slot) throw new Error("Créneau introuvable");
+
+      // Try to hold the slot atomically
+      const { data: heldSlot, error: holdErr } = await (supabase as any)
+        .from("appointment_slots")
+        .update({ status: "booked", held_by: user.id })
+        .eq("id", slotId)
+        .eq("status", "available")
+        .select("id, starts_at, ends_at")
+        .maybeSingle();
+
+      if (holdErr || !heldSlot) throw new Error("Ce créneau vient d'être réservé, choisissez-en un autre.");
+
+      const { error: apptErr } = await (supabase as any).from("appointments").insert({
+        homeowner_user_id: user.id,
+        contractor_id: contractorId,
+        slot_id: slotId,
+        scheduled_at: slot.starts_at,
+        ends_at: slot.ends_at,
+        status: "scheduled",
+        contractor_confirmed: true,
+        project_category: "evaluation",
+        source_page: "isr_public_profile",
+        problem_summary: "Évaluation gratuite — Isolation Solution Royal (entretoit)",
       });
-      const json = await r.json();
-      if (!r.ok || !json.success) throw new Error(json.error ?? `status_${r.status}`);
-      setState("done");
+
+      if (apptErr) {
+        // rollback slot hold
+        await (supabase as any)
+          .from("appointment_slots")
+          .update({ status: "available", held_by: null })
+          .eq("id", slotId);
+        throw new Error(apptErr.message);
+      }
+
+      setConfirmed(slot);
+      setSlots((prev) => prev.filter((s) => s.id !== slotId));
     } catch (e) {
       setErrorMsg((e as Error).message);
-      setState("error");
+      setSelectedSlotId(null);
+    } finally {
+      setBooking(false);
     }
   };
 
-  if (state === "done") {
+  const handleGateComplete = async () => {
+    setShowProfileGate(false);
+    if (pendingSlotId) {
+      const id = pendingSlotId;
+      setPendingSlotId(null);
+      await confirmBooking(id);
+    }
+  };
+
+  // Success state
+  if (confirmed) {
+    const when = new Date(confirmed.starts_at).toLocaleString("fr-CA", {
+      weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit",
+    });
     return (
       <div className="rounded-[28px] border border-emerald-400/30 bg-emerald-400/5 p-6 sm:p-8 text-center">
         <Sparkles className="mx-auto h-6 w-6 text-emerald-300" />
         <h3 className="mt-3 text-xl font-semibold tracking-[-0.02em] text-white">
-          Demande reçue.
+          Rendez-vous confirmé.
         </h3>
-        <p className="mt-2 text-sm text-white/75">
-          L'équipe UNPRO vous contacte sous 24 h pour confirmer l'évaluation de 60 min.
+        <p className="mt-2 text-sm text-white/80">{when}</p>
+        <p className="mt-3 text-sm text-white/65">
+          Isolation Solution Royal vous appelle avant votre rendez-vous pour confirmer les détails d'accès.
         </p>
       </div>
     );
@@ -353,90 +449,69 @@ function EvaluationBookingPanel({ slug }: { slug: string }) {
 
   return (
     <div className="rounded-[28px] border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6 sm:p-8">
-      <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80">Évaluation de 60 min.</div>
+      <div className="text-[11px] uppercase tracking-[0.25em] text-amber-300/80">Évaluation gratuite · 60 min.</div>
       <h3 className="mt-1 text-2xl font-semibold tracking-[-0.03em] text-white">
-        Planifier un échange avec l'équipe UNPRO
+        Planifiez directement votre évaluation gratuite
       </h3>
       <p className="mt-2 text-sm text-white/65">
-        On valide l'ajustement entre Isolation Solution Royal et votre besoin, puis on planifie
-        directement avec l'entreprise. Aucun spam, aucun appel automatisé.
+        Choisissez un créneau disponible avec Isolation Solution Royal.
       </p>
 
-      <form onSubmit={submit} className="mt-5 grid grid-cols-1 gap-3">
-        <Field label="Votre nom">
-          <input
-            required
-            value={form.contact_name}
-            onChange={(e) => setForm({ ...form, contact_name: e.target.value })}
-            className={inputCls}
-          />
-        </Field>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="Courriel">
-            <input
-              type="email" required
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className={inputCls}
-            />
-          </Field>
-          <Field label="Téléphone">
-            <input
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: formatPhoneDisplay(e.target.value) })}
-              placeholder="(514) 123-4567"
-              className={inputCls}
-            />
-          </Field>
-        </div>
-        <Field label="Moment préféré">
-          <select
-            value={form.preferred_slot}
-            onChange={(e) => setForm({ ...form, preferred_slot: e.target.value })}
-            className={inputCls}
-          >
-            <option value="" className="bg-[#050816]">— Choisir —</option>
-            {slots.map((s) => <option key={s} className="bg-[#050816]">{s}</option>)}
-          </select>
-        </Field>
-        <Field label="Précisions (optionnel)">
-          <textarea
-            rows={3}
-            value={form.message}
-            onChange={(e) => setForm({ ...form, message: e.target.value })}
-            className={inputCls}
-            placeholder="Type de propriété, urgence, etc."
-          />
-        </Field>
-
-        <button
-          type="submit"
-          disabled={state === "loading"}
-          className="mt-2 w-full rounded-[18px] bg-amber-300 px-5 py-3.5 text-sm font-semibold text-[#050816] hover:-translate-y-0.5 transition-all duration-[420ms] [transition-timing-function:cubic-bezier(.22,1,.36,1)] disabled:opacity-50"
-        >
-          {state === "loading" ? "Envoi…" : "Confirmer la demande d'évaluation"}
-        </button>
-
-        {state === "error" && (
-          <div className="text-xs text-red-300">Impossible d'envoyer la demande ({errorMsg}). Réessayez ou appelez directement.</div>
+      <div className="mt-6 space-y-5">
+        {loading ? (
+          <div className="text-white/50 text-sm">Chargement des disponibilités…</div>
+        ) : slots.length === 0 ? (
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm text-white/75">
+            Aucun créneau libre cette semaine.{" "}
+            <a href="tel:+15142499522" className="text-cyan-300 hover:underline">
+              Appelez le 514-249-9522
+            </a>{" "}
+            pour un rendez-vous prioritaire.
+          </div>
+        ) : (
+          Object.entries(grouped).map(([day, list]) => (
+            <div key={day}>
+              <div className="text-[11px] uppercase tracking-[0.18em] text-white/50 capitalize">{day}</div>
+              <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {list.map((s) => {
+                  const t = new Date(s.starts_at).toLocaleTimeString("fr-CA", {
+                    hour: "numeric", minute: "2-digit",
+                  });
+                  const isSelected = selectedSlotId === s.id;
+                  return (
+                    <button
+                      key={s.id}
+                      disabled={booking}
+                      onClick={() => handleSelect(s.id)}
+                      className={`rounded-[14px] border px-3 py-3 text-sm transition-all disabled:opacity-50 ${
+                        isSelected
+                          ? "border-amber-300/60 bg-amber-300/15 text-white"
+                          : "border-white/10 bg-white/[0.03] text-white/90 hover:border-cyan-300/40 hover:bg-white/[0.06]"
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))
         )}
-      </form>
+
+        {booking && (
+          <div className="text-xs text-cyan-200/80">Confirmation du rendez-vous…</div>
+        )}
+        {errorMsg && (
+          <div className="text-xs text-red-300">{errorMsg}</div>
+        )}
+      </div>
+
+      <ModalProfileCompletionGate
+        open={showProfileGate}
+        onClose={() => setShowProfileGate(false)}
+        onComplete={handleGateComplete}
+      />
     </div>
-  );
-}
-
-const inputCls =
-  "w-full rounded-[14px] border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-cyan-300/40";
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="text-[11px] uppercase tracking-[0.18em] text-white/45">{label}</span>
-      <div className="mt-1.5">{children}</div>
-    </label>
   );
 }
 
