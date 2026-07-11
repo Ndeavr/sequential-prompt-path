@@ -720,12 +720,13 @@ const PageAdminCreateContractorManual = () => {
             <span className="text-emerald-300">{selectedPlan.label}</span>
           </div>
           <Button
-            onClick={handleSubmit}
-            disabled={submitting || !businessName || !phone || !city}
-            className="ml-auto bg-emerald-500 hover:bg-emerald-400 text-black font-semibold"
+            onClick={() => setShowSummary(true)}
+            disabled={submitting || !canSubmit}
+            className="ml-auto bg-emerald-500 hover:bg-emerald-400 text-black font-semibold disabled:opacity-40"
+            title={!adminConfirmed ? "Cochez la confirmation admin" : ""}
           >
             {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-            Créer la fiche entrepreneur
+            Activer et publier l'entrepreneur
           </Button>
         </div>
       </div>
