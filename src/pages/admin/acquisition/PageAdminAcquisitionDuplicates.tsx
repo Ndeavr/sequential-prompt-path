@@ -149,6 +149,37 @@ export default function PageAdminAcquisitionDuplicates() {
           </Badge>
         </div>
 
+        {/* Data Integrity + bulk actions */}
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <div className="text-sm font-medium">Intégrité des données</div>
+              <div className="text-xs text-muted-foreground">Normalisation, doublons et contacts orphelins.</div>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => runBulkDedupe.mutate(true)} disabled={runBulkDedupe.isPending}>
+                Scan (dry-run)
+              </Button>
+              <Button size="sm" onClick={() => runBulkDedupe.mutate(false)} disabled={runBulkDedupe.isPending}>
+                {runBulkDedupe.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Fusion auto ≥ 95%"}
+              </Button>
+            </div>
+          </div>
+          {integrity && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+              <Metric label="Prospects" value={integrity.prospects_total} />
+              <Metric label="Leads" value={integrity.leads_total} />
+              <Metric label="Doublons haute conf." value={integrity.prospects_dup_high_conf} tone={integrity.prospects_dup_high_conf > 0 ? "warn" : "ok"} />
+              <Metric label="Doublons en revue" value={integrity.prospects_dup_pending} />
+              <Metric label="Prospects sans tél E.164" value={integrity.prospects_missing_phone_e164} tone={integrity.prospects_missing_phone_e164 > 0 ? "warn" : "ok"} />
+              <Metric label="Prospects sans email norm." value={integrity.prospects_missing_email_norm} />
+              <Metric label="Leads sans tél E.164" value={integrity.leads_missing_phone_e164} />
+              <Metric label="Contacts orphelins" value={integrity.orphan_prospect_contacts} tone={integrity.orphan_prospect_contacts > 0 ? "warn" : "ok"} />
+            </div>
+          )}
+        </Card>
+
+
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
