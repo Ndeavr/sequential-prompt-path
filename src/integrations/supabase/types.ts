@@ -31987,6 +31987,7 @@ export type Database = {
       contractor_prospects: {
         Row: {
           acquisition_priority_score: number
+          acquisition_score: number | null
           activation_status: string
           address: string | null
           aggregator_email: boolean
@@ -31997,6 +31998,7 @@ export type Database = {
           business_name: string
           category_slug: string | null
           city: string | null
+          classification_confidence: number | null
           concierge_notes: string | null
           concierge_owner_id: string | null
           concierge_priority: number | null
@@ -32018,6 +32020,7 @@ export type Database = {
           estimated_capacity: number | null
           estimated_monthly_value: number | null
           extraction_confidence: number | null
+          first_seen_at: string | null
           google_business_url: string | null
           google_place_id: string | null
           has_landline: boolean
@@ -32028,7 +32031,9 @@ export type Database = {
           language_guess: string | null
           last_action_at: string | null
           last_enriched_at: string | null
+          last_seen_at: string | null
           legal_name: string | null
+          listing_intent: string | null
           needs_review: boolean
           neq: string | null
           next_action: string | null
@@ -32036,14 +32041,17 @@ export type Database = {
           normalized_domain: string | null
           onboarding_status: string
           outreach_channel: string | null
+          outreach_eligibility: string | null
           outreach_eligible: boolean
           outreach_status: string
           owner_name: string | null
           payment_status: string
           phone: string | null
+          phone_sms_capable: boolean | null
           phone_type: string | null
           photo_count: number
           postal_code: string | null
+          priority_reason: string[] | null
           priority_recomputed_at: string | null
           priority_score: number | null
           province: string | null
@@ -32056,12 +32064,15 @@ export type Database = {
           recommended_plan: string | null
           recommended_plan_reason: string | null
           region: string | null
+          rejection_reason: string | null
           review_count: number | null
           review_rating: number | null
           selected_plan: string | null
           service_area_count: number
           source: string | null
+          source_key: string | null
           source_name: string | null
+          source_priority: number | null
           source_record_id: string | null
           source_url: string | null
           stripe_customer_id: string | null
@@ -32075,6 +32086,7 @@ export type Database = {
         }
         Insert: {
           acquisition_priority_score?: number
+          acquisition_score?: number | null
           activation_status?: string
           address?: string | null
           aggregator_email?: boolean
@@ -32085,6 +32097,7 @@ export type Database = {
           business_name: string
           category_slug?: string | null
           city?: string | null
+          classification_confidence?: number | null
           concierge_notes?: string | null
           concierge_owner_id?: string | null
           concierge_priority?: number | null
@@ -32106,6 +32119,7 @@ export type Database = {
           estimated_capacity?: number | null
           estimated_monthly_value?: number | null
           extraction_confidence?: number | null
+          first_seen_at?: string | null
           google_business_url?: string | null
           google_place_id?: string | null
           has_landline?: boolean
@@ -32116,7 +32130,9 @@ export type Database = {
           language_guess?: string | null
           last_action_at?: string | null
           last_enriched_at?: string | null
+          last_seen_at?: string | null
           legal_name?: string | null
+          listing_intent?: string | null
           needs_review?: boolean
           neq?: string | null
           next_action?: string | null
@@ -32124,14 +32140,17 @@ export type Database = {
           normalized_domain?: string | null
           onboarding_status?: string
           outreach_channel?: string | null
+          outreach_eligibility?: string | null
           outreach_eligible?: boolean
           outreach_status?: string
           owner_name?: string | null
           payment_status?: string
           phone?: string | null
+          phone_sms_capable?: boolean | null
           phone_type?: string | null
           photo_count?: number
           postal_code?: string | null
+          priority_reason?: string[] | null
           priority_recomputed_at?: string | null
           priority_score?: number | null
           province?: string | null
@@ -32144,12 +32163,15 @@ export type Database = {
           recommended_plan?: string | null
           recommended_plan_reason?: string | null
           region?: string | null
+          rejection_reason?: string | null
           review_count?: number | null
           review_rating?: number | null
           selected_plan?: string | null
           service_area_count?: number
           source?: string | null
+          source_key?: string | null
           source_name?: string | null
+          source_priority?: number | null
           source_record_id?: string | null
           source_url?: string | null
           stripe_customer_id?: string | null
@@ -32163,6 +32185,7 @@ export type Database = {
         }
         Update: {
           acquisition_priority_score?: number
+          acquisition_score?: number | null
           activation_status?: string
           address?: string | null
           aggregator_email?: boolean
@@ -32173,6 +32196,7 @@ export type Database = {
           business_name?: string
           category_slug?: string | null
           city?: string | null
+          classification_confidence?: number | null
           concierge_notes?: string | null
           concierge_owner_id?: string | null
           concierge_priority?: number | null
@@ -32194,6 +32218,7 @@ export type Database = {
           estimated_capacity?: number | null
           estimated_monthly_value?: number | null
           extraction_confidence?: number | null
+          first_seen_at?: string | null
           google_business_url?: string | null
           google_place_id?: string | null
           has_landline?: boolean
@@ -32204,7 +32229,9 @@ export type Database = {
           language_guess?: string | null
           last_action_at?: string | null
           last_enriched_at?: string | null
+          last_seen_at?: string | null
           legal_name?: string | null
+          listing_intent?: string | null
           needs_review?: boolean
           neq?: string | null
           next_action?: string | null
@@ -32212,14 +32239,17 @@ export type Database = {
           normalized_domain?: string | null
           onboarding_status?: string
           outreach_channel?: string | null
+          outreach_eligibility?: string | null
           outreach_eligible?: boolean
           outreach_status?: string
           owner_name?: string | null
           payment_status?: string
           phone?: string | null
+          phone_sms_capable?: boolean | null
           phone_type?: string | null
           photo_count?: number
           postal_code?: string | null
+          priority_reason?: string[] | null
           priority_recomputed_at?: string | null
           priority_score?: number | null
           province?: string | null
@@ -32232,12 +32262,15 @@ export type Database = {
           recommended_plan?: string | null
           recommended_plan_reason?: string | null
           region?: string | null
+          rejection_reason?: string | null
           review_count?: number | null
           review_rating?: number | null
           selected_plan?: string | null
           service_area_count?: number
           source?: string | null
+          source_key?: string | null
           source_name?: string | null
+          source_priority?: number | null
           source_record_id?: string | null
           source_url?: string | null
           stripe_customer_id?: string | null
@@ -65324,6 +65357,108 @@ export type Database = {
         }
         Relationships: []
       }
+      prospect_source_listings: {
+        Row: {
+          acquisition_score: number | null
+          ad_description: string | null
+          ad_language: string | null
+          ad_title: string | null
+          business_name: string | null
+          category: string | null
+          city: string | null
+          classification_confidence: number | null
+          contact_name: string | null
+          created_at: string
+          email: string | null
+          first_seen_at: string
+          id: string
+          is_active: boolean
+          last_seen_at: string
+          listing_intent: string | null
+          normalized_phone_e164: string | null
+          posted_at: string | null
+          primary_category: string | null
+          prospect_id: string | null
+          province: string | null
+          raw_payload: Json
+          raw_phone: string | null
+          region: string | null
+          rejection_reason: string | null
+          secondary_categories: string[]
+          source_key: string
+          source_listing_id: string | null
+          source_url: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          acquisition_score?: number | null
+          ad_description?: string | null
+          ad_language?: string | null
+          ad_title?: string | null
+          business_name?: string | null
+          category?: string | null
+          city?: string | null
+          classification_confidence?: number | null
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          first_seen_at?: string
+          id?: string
+          is_active?: boolean
+          last_seen_at?: string
+          listing_intent?: string | null
+          normalized_phone_e164?: string | null
+          posted_at?: string | null
+          primary_category?: string | null
+          prospect_id?: string | null
+          province?: string | null
+          raw_payload?: Json
+          raw_phone?: string | null
+          region?: string | null
+          rejection_reason?: string | null
+          secondary_categories?: string[]
+          source_key: string
+          source_listing_id?: string | null
+          source_url: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          acquisition_score?: number | null
+          ad_description?: string | null
+          ad_language?: string | null
+          ad_title?: string | null
+          business_name?: string | null
+          category?: string | null
+          city?: string | null
+          classification_confidence?: number | null
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          first_seen_at?: string
+          id?: string
+          is_active?: boolean
+          last_seen_at?: string
+          listing_intent?: string | null
+          normalized_phone_e164?: string | null
+          posted_at?: string | null
+          primary_category?: string | null
+          prospect_id?: string | null
+          province?: string | null
+          raw_payload?: Json
+          raw_phone?: string | null
+          region?: string | null
+          rejection_reason?: string | null
+          secondary_categories?: string[]
+          source_key?: string
+          source_listing_id?: string | null
+          source_url?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       prospect_sources: {
         Row: {
           confidence_score: number | null
@@ -69300,6 +69435,80 @@ export type Database = {
         }
         Relationships: []
       }
+      scrape_runs: {
+        Row: {
+          city: string | null
+          completed_at: string | null
+          created_at: string
+          duplicates_found: number
+          emails_found: number
+          errors: Json
+          id: string
+          listings_discovered: number
+          listings_processed: number
+          listings_qualified: number
+          listings_rejected: number
+          metrics: Json
+          mobile_numbers_found: number
+          pages_requested: number
+          pages_successful: number
+          source_id: string | null
+          source_key: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          city?: string | null
+          completed_at?: string | null
+          created_at?: string
+          duplicates_found?: number
+          emails_found?: number
+          errors?: Json
+          id?: string
+          listings_discovered?: number
+          listings_processed?: number
+          listings_qualified?: number
+          listings_rejected?: number
+          metrics?: Json
+          mobile_numbers_found?: number
+          pages_requested?: number
+          pages_successful?: number
+          source_id?: string | null
+          source_key: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          city?: string | null
+          completed_at?: string | null
+          created_at?: string
+          duplicates_found?: number
+          emails_found?: number
+          errors?: Json
+          id?: string
+          listings_discovered?: number
+          listings_processed?: number
+          listings_qualified?: number
+          listings_rejected?: number
+          metrics?: Json
+          mobile_numbers_found?: number
+          pages_requested?: number
+          pages_successful?: number
+          source_id?: string | null
+          source_key?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scrape_runs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "scraping_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scraping_generation_jobs: {
         Row: {
           created_at: string
@@ -69340,6 +69549,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      scraping_sources: {
+        Row: {
+          base_url: string
+          city_scope: string[]
+          config: Json
+          country: string
+          created_at: string
+          id: string
+          last_error: string | null
+          last_run_at: string | null
+          last_success_at: string | null
+          outreach_priority: number
+          province_scope: string[]
+          rate_limit_per_minute: number
+          requires_manual_import: boolean
+          scrape_status: string
+          source_key: string
+          source_name: string
+          source_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          base_url: string
+          city_scope?: string[]
+          config?: Json
+          country?: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          last_run_at?: string | null
+          last_success_at?: string | null
+          outreach_priority?: number
+          province_scope?: string[]
+          rate_limit_per_minute?: number
+          requires_manual_import?: boolean
+          scrape_status?: string
+          source_key: string
+          source_name: string
+          source_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          base_url?: string
+          city_scope?: string[]
+          config?: Json
+          country?: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          last_run_at?: string | null
+          last_success_at?: string | null
+          outreach_priority?: number
+          province_scope?: string[]
+          rate_limit_per_minute?: number
+          requires_manual_import?: boolean
+          scrape_status?: string
+          source_key?: string
+          source_name?: string
+          source_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       screen_catalog: {
         Row: {
