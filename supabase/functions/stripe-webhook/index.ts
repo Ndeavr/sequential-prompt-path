@@ -31,9 +31,16 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
     const body = await req.text();
 
+    // Replay mode: internal reprocessing bypasses Stripe signature check.
+    // Requires x-replay-token header matching SERVICE_ROLE_KEY.
+    const replayToken = req.headers.get("x-replay-token");
+    const isReplay =
+      !!replayToken &&
+      replayToken === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
     let event: Stripe.Event;
 
-    if (webhookSecret) {
+    if (webhookSecret && !isReplay) {
       const sig = req.headers.get("stripe-signature");
       if (!sig) {
         return new Response(JSON.stringify({ error: "Missing signature" }), {
@@ -60,24 +67,38 @@ Deno.serve(async (req) => {
       sessionObj?.metadata?.prospect_id ||
       null;
 
-    const { error: insertErr } = await supabase.from("stripe_webhook_events").insert({
-      stripe_event_id: event.id,
-      event_type: event.type,
-      received_at: receivedAt,
-      contractor_id: contractorIdField,
-      session_id: sessionIdField,
-      payload: event as any,
-    });
-
-    if (insertErr && !String(insertErr.message).includes("duplicate")) {
-      console.warn("[stripe-webhook] audit insert warning", insertErr.message);
-    }
-    if (insertErr && String(insertErr.message).includes("duplicate")) {
-      console.log(`Duplicate webhook event ${event.id}, skipping`);
-      return new Response(JSON.stringify({ received: true, duplicate: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (isReplay) {
+      // Mark row as reprocessing; clear previous error.
+      await supabase.from("stripe_webhook_events").update({
+        processing_status: "processing",
+        error_message: null,
+        last_retry_at: new Date().toISOString(),
+        retry_count: 0 as any, // will be incremented below via RPC-safe update
+      }).eq("stripe_event_id", event.id);
+      // Increment retry_count safely
+      await supabase.rpc("increment_stripe_event_retry", { p_event_id: event.id }).then(() => {}).catch(() => {});
+    } else {
+      const { error: insertErr } = await supabase.from("stripe_webhook_events").insert({
+        stripe_event_id: event.id,
+        event_type: event.type,
+        received_at: receivedAt,
+        contractor_id: contractorIdField,
+        session_id: sessionIdField,
+        payload: event as any,
+        processing_status: "processing",
       });
+
+      if (insertErr && !String(insertErr.message).includes("duplicate")) {
+        console.warn("[stripe-webhook] audit insert warning", insertErr.message);
+      }
+      if (insertErr && String(insertErr.message).includes("duplicate")) {
+        console.log(`Duplicate webhook event ${event.id}, skipping`);
+        return new Response(JSON.stringify({ received: true, duplicate: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
+
 
     // Legacy audit log (kept for backward compat)
     await supabase.from("integration_audit_logs").insert({
@@ -510,9 +531,10 @@ Deno.serve(async (req) => {
       .eq("integration_name", "stripe")
       .eq("action_name", event.id);
 
+
     await supabase
       .from("stripe_webhook_events")
-      .update({ processed_at: new Date().toISOString(), success: true })
+      .update({ processed_at: new Date().toISOString(), success: true, processing_status: "processed" })
       .eq("stripe_event_id", event.id);
 
     return new Response(JSON.stringify({ received: true }), {
@@ -526,8 +548,20 @@ Deno.serve(async (req) => {
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
       );
-      // Best-effort: try to mark last event as failed if we captured its id in scope.
-      // We can't always reach event.id here safely, so we skip if not available.
+      // Best-effort: try to parse the event id from the body to mark it failed
+      // (may not always succeed depending on where the throw occurred).
+      // Callers can also inspect logs by request id.
+      try {
+        const rawBody = await req.clone().text();
+        const parsed = JSON.parse(rawBody);
+        if (parsed?.id) {
+          await supabase.from("stripe_webhook_events").update({
+            processing_status: "failed",
+            error_message: msg,
+            success: false,
+          }).eq("stripe_event_id", parsed.id);
+        }
+      } catch (_) { /* noop */ }
     } catch (_) { /* noop */ }
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,
@@ -535,4 +569,5 @@ Deno.serve(async (req) => {
     });
   }
 });
+
 

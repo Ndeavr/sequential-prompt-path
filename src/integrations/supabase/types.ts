@@ -31142,13 +31142,19 @@ export type Database = {
           audit_sections: Json | null
           business_data: Json | null
           business_name: string | null
+          checkout_session_id: string | null
           completed_at: string | null
+          completion_percent: number
+          contractor_id: string | null
           created_at: string
           current_step: number
           id: string
           import_form: Json | null
+          last_activity_at: string
           objective: string | null
+          prospect_id: string | null
           selected_plan: Json | null
+          status: string
           updated_at: string
           user_id: string
         }
@@ -31157,13 +31163,19 @@ export type Database = {
           audit_sections?: Json | null
           business_data?: Json | null
           business_name?: string | null
+          checkout_session_id?: string | null
           completed_at?: string | null
+          completion_percent?: number
+          contractor_id?: string | null
           created_at?: string
           current_step?: number
           id?: string
           import_form?: Json | null
+          last_activity_at?: string
           objective?: string | null
+          prospect_id?: string | null
           selected_plan?: Json | null
+          status?: string
           updated_at?: string
           user_id: string
         }
@@ -31172,13 +31184,19 @@ export type Database = {
           audit_sections?: Json | null
           business_data?: Json | null
           business_name?: string | null
+          checkout_session_id?: string | null
           completed_at?: string | null
+          completion_percent?: number
+          contractor_id?: string | null
           created_at?: string
           current_step?: number
           id?: string
           import_form?: Json | null
+          last_activity_at?: string
           objective?: string | null
+          prospect_id?: string | null
           selected_plan?: Json | null
+          status?: string
           updated_at?: string
           user_id?: string
         }
@@ -84376,6 +84394,48 @@ export type Database = {
         }
         Relationships: []
       }
+      v_stripe_events_reprocess_queue: {
+        Row: {
+          contractor_id: string | null
+          error_message: string | null
+          event_type: string | null
+          id: string | null
+          last_retry_at: string | null
+          processed_at: string | null
+          processing_status: string | null
+          received_at: string | null
+          retry_count: number | null
+          session_id: string | null
+          stripe_event_id: string | null
+        }
+        Insert: {
+          contractor_id?: string | null
+          error_message?: string | null
+          event_type?: string | null
+          id?: string | null
+          last_retry_at?: string | null
+          processed_at?: string | null
+          processing_status?: string | null
+          received_at?: string | null
+          retry_count?: number | null
+          session_id?: string | null
+          stripe_event_id?: string | null
+        }
+        Update: {
+          contractor_id?: string | null
+          error_message?: string | null
+          event_type?: string | null
+          id?: string | null
+          last_retry_at?: string | null
+          processed_at?: string | null
+          processing_status?: string | null
+          received_at?: string | null
+          retry_count?: number | null
+          session_id?: string | null
+          stripe_event_id?: string | null
+        }
+        Relationships: []
+      }
       v_territories: {
         Row: {
           available_elite: number | null
@@ -84528,6 +84588,36 @@ export type Database = {
           p_visible_public: boolean
         }
         Returns: Json
+      }
+      advance_onboarding_status: {
+        Args: { p_new_status: string; p_patch?: Json; p_session_id: string }
+        Returns: {
+          aipp_score: Json | null
+          audit_sections: Json | null
+          business_data: Json | null
+          business_name: string | null
+          checkout_session_id: string | null
+          completed_at: string | null
+          completion_percent: number
+          contractor_id: string | null
+          created_at: string
+          current_step: number
+          id: string
+          import_form: Json | null
+          last_activity_at: string
+          objective: string | null
+          prospect_id: string | null
+          selected_plan: Json | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "contractor_onboarding_sessions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       aipp_is_published: { Args: { _profile_id: string }; Returns: boolean }
       apply_lead_normalization: { Args: { payload: Json }; Returns: number }
@@ -84817,6 +84907,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_stripe_event_retry: {
+        Args: { p_event_id: string }
+        Returns: undefined
+      }
       is_admin: { Args: never; Returns: boolean }
       is_syndicate_admin: {
         Args: { _syndicate_id: string; _user_id: string }
@@ -85105,6 +85199,17 @@ export type Database = {
         }
       }
       sms_infrastructure_score: { Args: never; Returns: Json }
+      stripe_reconciliation_report: {
+        Args: never
+        Returns: {
+          activated_no_matching: number
+          failed: number
+          paid_no_activation: number
+          pending: number
+          processed: number
+          total_events: number
+        }[]
+      }
       track_affiliate_conversion: {
         Args: {
           p_conversion_type: string
