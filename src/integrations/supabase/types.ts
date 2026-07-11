@@ -33079,6 +33079,7 @@ export type Database = {
           category_slug: string | null
           city: string | null
           classification_confidence: number | null
+          company_name_normalized: string | null
           concierge_notes: string | null
           concierge_owner_id: string | null
           concierge_priority: number | null
@@ -33094,6 +33095,7 @@ export type Database = {
           do_not_contact: boolean
           domain_status: string | null
           email: string | null
+          email_normalized: string | null
           email_quality: string | null
           enrichment_count: number
           enrichment_status: string
@@ -33118,6 +33120,7 @@ export type Database = {
           neq: string | null
           next_action: string | null
           next_action_due_at: string | null
+          normalized_at: string | null
           normalized_domain: string | null
           onboarding_status: string
           outreach_channel: string | null
@@ -33127,6 +33130,9 @@ export type Database = {
           owner_name: string | null
           payment_status: string
           phone: string | null
+          phone_e164: string | null
+          phone_normalization_status: string | null
+          phone_normalized: string | null
           phone_sms_capable: boolean | null
           phone_type: string | null
           photo_count: number
@@ -33161,6 +33167,7 @@ export type Database = {
           trade: string | null
           trade_category: Database["public"]["Enums"]["exterior_trade"] | null
           updated_at: string
+          website_normalized: string | null
           website_quality_score: number
           website_url: string | null
         }
@@ -33178,6 +33185,7 @@ export type Database = {
           category_slug?: string | null
           city?: string | null
           classification_confidence?: number | null
+          company_name_normalized?: string | null
           concierge_notes?: string | null
           concierge_owner_id?: string | null
           concierge_priority?: number | null
@@ -33193,6 +33201,7 @@ export type Database = {
           do_not_contact?: boolean
           domain_status?: string | null
           email?: string | null
+          email_normalized?: string | null
           email_quality?: string | null
           enrichment_count?: number
           enrichment_status?: string
@@ -33217,6 +33226,7 @@ export type Database = {
           neq?: string | null
           next_action?: string | null
           next_action_due_at?: string | null
+          normalized_at?: string | null
           normalized_domain?: string | null
           onboarding_status?: string
           outreach_channel?: string | null
@@ -33226,6 +33236,9 @@ export type Database = {
           owner_name?: string | null
           payment_status?: string
           phone?: string | null
+          phone_e164?: string | null
+          phone_normalization_status?: string | null
+          phone_normalized?: string | null
           phone_sms_capable?: boolean | null
           phone_type?: string | null
           photo_count?: number
@@ -33260,6 +33273,7 @@ export type Database = {
           trade?: string | null
           trade_category?: Database["public"]["Enums"]["exterior_trade"] | null
           updated_at?: string
+          website_normalized?: string | null
           website_quality_score?: number
           website_url?: string | null
         }
@@ -33277,6 +33291,7 @@ export type Database = {
           category_slug?: string | null
           city?: string | null
           classification_confidence?: number | null
+          company_name_normalized?: string | null
           concierge_notes?: string | null
           concierge_owner_id?: string | null
           concierge_priority?: number | null
@@ -33292,6 +33307,7 @@ export type Database = {
           do_not_contact?: boolean
           domain_status?: string | null
           email?: string | null
+          email_normalized?: string | null
           email_quality?: string | null
           enrichment_count?: number
           enrichment_status?: string
@@ -33316,6 +33332,7 @@ export type Database = {
           neq?: string | null
           next_action?: string | null
           next_action_due_at?: string | null
+          normalized_at?: string | null
           normalized_domain?: string | null
           onboarding_status?: string
           outreach_channel?: string | null
@@ -33325,6 +33342,9 @@ export type Database = {
           owner_name?: string | null
           payment_status?: string
           phone?: string | null
+          phone_e164?: string | null
+          phone_normalization_status?: string | null
+          phone_normalized?: string | null
           phone_sms_capable?: boolean | null
           phone_type?: string | null
           photo_count?: number
@@ -33359,6 +33379,7 @@ export type Database = {
           trade?: string | null
           trade_category?: Database["public"]["Enums"]["exterior_trade"] | null
           updated_at?: string
+          website_normalized?: string | null
           website_quality_score?: number
           website_url?: string | null
         }
@@ -82838,6 +82859,21 @@ export type Database = {
         }
         Relationships: []
       }
+      v_acquisition_contacts_unified: {
+        Row: {
+          activation_status: string | null
+          city: string | null
+          created_at: string | null
+          email: string | null
+          id: string | null
+          name: string | null
+          name_key: string | null
+          outreach_status: string | null
+          phone_e164: string | null
+          source: string | null
+        }
+        Relationships: []
+      }
       v_acquisition_queues: {
         Row: {
           acquisition_priority_score: number | null
@@ -84509,6 +84545,10 @@ export type Database = {
           target_id: string
         }[]
       }
+      detect_prospect_duplicates: {
+        Args: { p_prospect_id: string }
+        Returns: number
+      }
       detect_referral_source: {
         Args: { p_ref_code?: string; p_session_token?: string }
         Returns: Json
@@ -84753,6 +84793,24 @@ export type Database = {
         Args: { _actor_id: string; _source_id: string; _target_id: string }
         Returns: Json
       }
+      merge_contractor_leads: {
+        Args: {
+          p_admin_id?: string
+          p_drop_id: string
+          p_keep_id: string
+          p_reason?: string
+        }
+        Returns: Json
+      }
+      merge_contractor_prospects: {
+        Args: {
+          p_admin_id?: string
+          p_drop_id: string
+          p_keep_id: string
+          p_reason?: string
+        }
+        Returns: Json
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -84776,9 +84834,19 @@ export type Database = {
         Args: { _run_id: string; _user_id: string }
         Returns: boolean
       }
+      pipeline_data_integrity_report: { Args: never; Returns: Json }
       process_waitlist_replacement: {
         Args: { p_territory_id: string; p_threshold?: number }
         Returns: Json
+      }
+      promote_prospect_contact: {
+        Args: {
+          p_contact_type: string
+          p_contact_value: string
+          p_is_primary?: boolean
+          p_prospect_id: string
+        }
+        Returns: string
       }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }

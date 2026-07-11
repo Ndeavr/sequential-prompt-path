@@ -71,23 +71,14 @@ export default function PageAdminAcquisitionDuplicates() {
   const decide = useMutation({
     mutationFn: async ({ review, action }: { review: Review; action: "merge" | "reject" | "keep_both" }) => {
       if (action === "merge" && review.candidate_prospect_id && review.existing_prospect_id) {
-        // Non-destructive merge into existing, then delete candidate
-        const { data: existing } = await supabase
-          .from("contractor_prospects")
-          .select("*")
-          .eq("id", review.existing_prospect_id)
-          .single();
-        const patch: Record<string, any> = {};
-        const fillable = ["phone","email","website_url","google_business_url","address","postal_code","owner_name","legal_name","rbq","neq","normalized_domain","google_place_id"];
-        for (const k of fillable) {
-          if ((existing?.[k] == null || existing?.[k] === "") && review.new_payload?.[k]) {
-            patch[k] = review.new_payload[k];
-          }
-        }
-        if (Object.keys(patch).length > 0) {
-          await supabase.from("contractor_prospects").update(patch).eq("id", review.existing_prospect_id);
-        }
-        await supabase.from("contractor_prospects").delete().eq("id", review.candidate_prospect_id);
+        // Atomic merge — reparents all child records and writes an audit log
+        const { error } = await supabase.rpc("merge_contractor_prospects", {
+          p_keep_id: review.existing_prospect_id,
+          p_drop_id: review.candidate_prospect_id,
+          p_admin_id: null,
+          p_reason: `dedupe_review:${review.id}`,
+        });
+        if (error) throw error;
       } else if (action === "keep_both" && review.candidate_prospect_id) {
         await supabase.from("contractor_prospects")
           .update({ ingestion_status: "inserted", needs_review: false })
@@ -103,8 +94,39 @@ export default function PageAdminAcquisitionDuplicates() {
     onSuccess: () => {
       toast.success("Décision enregistrée");
       qc.invalidateQueries({ queryKey: ["dedupe-reviews"] });
+      qc.invalidateQueries({ queryKey: ["integrity-report"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Échec"),
+  });
+
+  const { data: integrity } = useQuery({
+    queryKey: ["integrity-report"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("pipeline_data_integrity_report");
+      if (error) throw error;
+      return data as Record<string, any>;
+    },
+    refetchInterval: 30_000,
+  });
+
+  const runBulkDedupe = useMutation({
+    mutationFn: async (dryRun: boolean) => {
+      const { data, error } = await supabase.functions.invoke("dedupe-acquisition-contacts", {
+        body: { limit: 500, auto_merge_threshold: 0.95, dry_run: dryRun },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (d: any) => {
+      toast.success(
+        d?.dry_run
+          ? `Analyse : ${d.new_review_candidates} candidats détectés, ${d.auto_merge_candidates} fusionnables auto.`
+          : `Fusion exécutée : ${d.merges?.length ?? 0} fusions.`,
+      );
+      qc.invalidateQueries({ queryKey: ["dedupe-reviews"] });
+      qc.invalidateQueries({ queryKey: ["integrity-report"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Échec du scan"),
   });
 
   return (
@@ -126,6 +148,37 @@ export default function PageAdminAcquisitionDuplicates() {
             {reviews?.length ?? 0} en attente
           </Badge>
         </div>
+
+        {/* Data Integrity + bulk actions */}
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <div className="text-sm font-medium">Intégrité des données</div>
+              <div className="text-xs text-muted-foreground">Normalisation, doublons et contacts orphelins.</div>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => runBulkDedupe.mutate(true)} disabled={runBulkDedupe.isPending}>
+                Scan (dry-run)
+              </Button>
+              <Button size="sm" onClick={() => runBulkDedupe.mutate(false)} disabled={runBulkDedupe.isPending}>
+                {runBulkDedupe.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Fusion auto ≥ 95%"}
+              </Button>
+            </div>
+          </div>
+          {integrity && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+              <Metric label="Prospects" value={integrity.prospects_total} />
+              <Metric label="Leads" value={integrity.leads_total} />
+              <Metric label="Doublons haute conf." value={integrity.prospects_dup_high_conf} tone={integrity.prospects_dup_high_conf > 0 ? "warn" : "ok"} />
+              <Metric label="Doublons en revue" value={integrity.prospects_dup_pending} />
+              <Metric label="Prospects sans tél E.164" value={integrity.prospects_missing_phone_e164} tone={integrity.prospects_missing_phone_e164 > 0 ? "warn" : "ok"} />
+              <Metric label="Prospects sans email norm." value={integrity.prospects_missing_email_norm} />
+              <Metric label="Leads sans tél E.164" value={integrity.leads_missing_phone_e164} />
+              <Metric label="Contacts orphelins" value={integrity.orphan_prospect_contacts} tone={integrity.orphan_prospect_contacts > 0 ? "warn" : "ok"} />
+            </div>
+          )}
+        </Card>
+
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
@@ -193,6 +246,16 @@ function ProspectMini({ label, p }: { label: string; p: any }) {
           ★ {p.review_rating ?? "—"} ({p.review_count} avis)
         </div>
       )}
+    </div>
+  );
+}
+
+function Metric({ label, value, tone = "neutral" }: { label: string; value: any; tone?: "ok" | "warn" | "neutral" }) {
+  const color = tone === "warn" ? "text-amber-600" : tone === "ok" ? "text-emerald-600" : "text-foreground";
+  return (
+    <div className="border rounded-md p-2">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={`text-lg font-semibold ${color}`}>{value ?? "—"}</div>
     </div>
   );
 }
