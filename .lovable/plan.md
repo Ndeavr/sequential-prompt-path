@@ -1,173 +1,70 @@
-# Revenue War Room — Autonomous Outreach Engine V1
+# Kijiji Home Services Acquisition Pipeline
 
-Goal: acquire the first recurring paid contractors. Fix telemetry first, then score, message, scrape, recover, and freeze feature work until the funnel produces activations.
+Add Kijiji Services as a priority scraping source feeding the existing UNPRO outreach database, with strict exclusions (massage/adult/beauty/customer-requests), Quebec-first geography, mobile-priority routing, and full admin visibility.
 
----
+## Scope
+- **Extend** existing tables (`contractor_prospects`, `contractor_outreach_logs`, `outreach_suppressions`) — do NOT create a parallel outreach DB.
+- **New tables**: `scraping_sources`, `scrape_runs`, `prospect_source_listings`.
+- **New columns on `contractor_prospects`**: `source_key`, `source_priority`, `acquisition_score`, `classification_confidence`, `listing_intent`, `priority_reason[]`, `phone_type`, `phone_sms_capable`, `first_seen_at`, `last_seen_at`, `outreach_eligibility`, `rejection_reason`.
+- **New edge functions**: `scrape-kijiji-services`, `process-kijiji-listing`, `validate-kijiji-contact`, `queue-kijiji-outreach`, `kijiji-daily-orchestrator`.
+- **Admin panel**: `/admin/acquisition/sources/kijiji` inside existing admin cockpit (dark-mode `.admin-theme` + `.text-readable*`).
+- **Cron**: 06:00 America/Montreal daily; 7-day refresh for active listings.
 
-## Phase 1 — Repair Delivery Intelligence
+## Build order
 
-**New page:** `/admin/outreach-command-center` (`src/pages/admin/PageOutreachCommandCenter.tsx`)
+### 1. Database migration (single file)
+- `scraping_sources` — source registry (seed row: `kijiji_services`, Quebec cities list).
+- `scrape_runs` — per-run telemetry (pages, discovered, qualified, rejected, duplicates, errors jsonb).
+- `prospect_source_listings` — N:1 with `contractor_prospects`; unique(source_key, source_listing_id); tracks each ad separately from canonical prospect.
+- ALTER `contractor_prospects` add columns above (nullable, safe for existing rows).
+- GRANT to authenticated + service_role; RLS admin-only via `has_role`.
+- Indexes: `(source_key, acquisition_score DESC)`, `(normalized_phone_e164)`, `(outreach_eligibility)`.
 
-Live funnel with 10 stages, each showing: **count · conversion % · Δ24h · Δ7d**.
+### 2. Shared classification library (`supabase/functions/_shared/kijijiClassifier.ts`)
+- `HOME_SERVICE_CATEGORIES` (EN+FR synonyms → canonical trade).
+- `EXCLUSION_KEYWORDS` (massage variants, adult, beauty, finance, tutoring, auto, pet, childcare, job-seeker, product-only, real-estate).
+- `PROVIDER_INTENT` / `CUSTOMER_REQUEST` phrase lists (FR+EN).
+- `classifyListing({title, description, category}) → { intent, primary_category, secondary[], confidence, rejection_reason }`.
+- `scoreAcquisition(prospect) → 0–100` with breakdown (contactability 25 / fit 20 / geo 15 / quality 15 / intent 15 / opportunity 10 / risk penalty).
+- Reuse `normalizePhone` (already exists) for E.164 + `phone_type` heuristic (NANP area-code + carrier lookup deferred until validation step).
 
-```text
-Prospects Found → Validated Mobile → SMS Sent → Delivered → Clicked
-→ Registration Started → Profile Completed → Stripe Started → $1 Activated → Plan Upgraded
-```
+### 3. Edge functions
+- **`scrape-kijiji-services`** — reads `scraping_sources.kijiji_services`, fetches listing pages per QC city, respects `robots.txt` + rate_limit, extracts listing URLs, creates `scrape_runs` row, enqueues `process-kijiji-listing`. On 403/CAPTCHA → set `scrape_status = "blocked_by_source"`, `requires_manual_import = true`, stop cleanly.
+- **`process-kijiji-listing`** — extracts visible fields, classifies (intent + category + confidence), applies exclusion filters, dedupes (phone → email → domain → RBQ → name+city → fuzzy), upserts canonical prospect + inserts `prospect_source_listings` row, computes score.
+- **`validate-kijiji-contact`** — normalizes phone, sets `phone_type` + `phone_sms_capable`, chooses route (SMS/email/manual/enrichment/suppressed).
+- **`queue-kijiji-outreach`** — eligibility gate (intent=provider, confidence≥0.80, no rejection, score≥50, not duplicate/suppressed, quiet hours, consent), assigns variant A/B/C/D, inserts into existing `contractor_outreach_logs`/queue with `source_key=kijiji_services`, `source_priority=90`.
+- **`kijiji-daily-orchestrator`** — 06:00 chain: scrape → process → dedupe → validate → capacity check → queue P0/P1 → report.
 
-**Backing view (migration):** `v_outreach_command_funnel` — one row per stage, computed from:
-- `contractor_prospects` / `outbound_leads` → Prospects Found
-- `contractor_prospects.phone IS NOT NULL AND phone_valid` → Validated Mobile
-- `contractor_outreach_logs` (status = sent / delivered / clicked) → SMS stages
-- `contractor_leads.onboarding_started_at / profile_completed_at / payment_started_at / paid_at` → registration → activation
-- `contractor_subscriptions` where plan ≠ recrue → Plan Upgraded
+### 4. Cost + capacity guards
+- Config table row for `max_pages_per_run`, `max_listings_per_city`, `max_phone_validations_per_day`, `max_ocr_requests_per_day`, `max_sms_queue_per_day`, `minimum_acquisition_score`.
+- Pre-queue check joins `contractor_recruitment_targets` + demand/supply views (already exist) to pause saturated city×category pairs.
+- OCR gated behind `classification_confidence ≥ 0.85 AND no visible contact AND score_without_contact ≥ 60`.
+- 90-day phone-validation cache to skip re-validation.
 
-**Delivery attribution fix:** Twilio status webhook (`supabase/functions/twilio-sms-status`) must upsert into `contractor_outreach_logs` on `delivered / failed / undelivered` using `MessageSid`. This closes the `clicked=1 > delivered=0` gap surfaced by the DATA INTEGRITY alert.
+### 5. Outreach experiments
+- Seed 4 rows in `outreach_templates` scoped `source=kijiji`: Variant A (AI recommendation), B (Active local), C (Exclusive appointments), D (No-website, conditional). All FR-CA, all include tracked link + `{{prospect_id}}` + unsubscribe. Reuse existing `refresh-template-winner` rollup.
 
-Component: `<FunnelStageCard>` with count, %, sparkline-style deltas. Reuse `admin-theme` + readable tokens.
+### 6. Admin panel — `/admin/acquisition/sources/kijiji`
+- New page component under existing admin cockpit; dark-mode wrapped (`.admin-theme`).
+- Sections: source status card, run history table, funnel (discovered → qualified → validated → queued → sent → clicked → registered → paid), rejection breakdown, priority queue (P0/P1/P2/P3/REVIEW), cost per validated mobile, revenue attributed.
+- Filters: city, category, score, contact type, listing date, language, sponsored/organic, outreach state, rejection reason, duplicate status.
+- Actions: Run QC scrape, Run selected city, Reprocess rejected, Validate contacts, Approve review, Queue P0, Pause source, Export CSV, View Kijiji ad, Merge duplicate, Suppress contact.
+- Link from existing `/admin/outreach-command-center`.
 
----
+### 7. Tests (Deno test files under `supabase/functions/_shared/__tests__/`)
+20 classification+scoring cases from the spec (massage reject, hot-tub accept, homeowner-looking reject, painter mobile → P0/P1, landline no-SMS, duplicate merge, multi-ad attach, no-website bonus, non-QC reject, unsubscribe suppression, blocked-page stop, malformed phone, shortage priority boost, etc.).
 
-## Phase 2 — Contractor Prioritization Engine
+## Compliance guardrails
+- Honor `robots.txt`; obey rate limits; no CAPTCHA/auth bypass; no residential proxies; no fake accounts; no auto-messaging via Kijiji itself; only publicly visible ad content stored.
 
-**New table:** `contractor_prospect_priority`
-- `prospect_id`, `google_reviews_score`, `website_score`, `response_score`, `territory_score`, `total_score` (0–100), `computed_at`
+## Out of scope (phase 1)
+- Canada-wide scraping (QC only).
+- Auto-messaging inside Kijiji.
+- OCR beyond existing infrastructure gating.
+- Actual first outreach send — pipeline deploys enabled, but human presses "Queue P0 outreach" first run to confirm classification quality.
 
-**Edge function:** `compute-prospect-priority` — scores every row in `contractor_prospects`:
-
-```text
-Reviews:  ≥200 → +60, ≥100 → +40, ≥50 → +20, else 0
-Website:  none → +40, poor (no https / no phone) → +25, strong → 0
-Response: mobile → +30, email only → +5
-Territory: category_demand + city_demand (from city_service_demand_grid)
-```
-
-Clamp to 100. Sort desc. Only prospects with `total_score ≥ 60` enter outreach queue.
-
-**UI:** Add "Priority Queue" tab in Command Center listing top 100 by score with the score breakdown visible.
-
----
-
-## Phase 3 — Multi-Message A/B Testing
-
-**Reuse existing** `outreach_templates` table (already present).
-
-Seed 3 templates (variant A / B / C) with the exact FR-CA copy from the brief, `unpro.ca` link, and `channel='sms'`.
-
-**Table addition:** `outreach_template_metrics` — per-template rollup of `sent / delivered / clicked / registered / activated`, refreshed nightly by `refresh-template-winner` edge function.
-
-**Winner logic:** template with highest `activated / sent` after ≥ 100 sends per variant becomes `is_winner=true` and gets 80% of traffic; losers keep 10% each (explore/exploit).
-
-**UI:** `TemplatePerformanceTable` in Command Center showing per-template funnel + winner badge.
-
----
-
-## Phase 4 — Daily Autonomous Outreach
-
-**Cron (pg_cron, 07:00 America/Montreal):** invoke `daily-outreach-orchestrator` which chains:
-
-1. `scrape-contractors-daily` — pulls new prospects from Google Places for target cities (Laval, Terrebonne, Repentigny, Mascouche, Saint-Jérôme, Mirabel) × trades (roofing, insulation, HVAC, electrician, plumbing).
-2. **Suppression filter** (`outbound_suppressions`) — hard-block domains and name patterns:
-   - `renoassistance*`, `soumissionrenovation*`, `bark.com`, `homestars.com/professionals/*`, `houzz.com/pro/*`, `trouvetonpro*`, `estimatique*`
-3. `compute-prospect-priority` — score fresh rows.
-4. `dispatch-priority-outreach` — send winning template SMS to top N prospects (respecting `outreach_send_windows` and `outbound_global_settings` daily cap).
-
-Log every step in `pipeline_logs` and surface in Command Center as "Last daily run".
-
----
-
-## Phase 5 — Activation Recovery
-
-**Table:** `contractor_activation_reminders`
-- `contractor_id`, `stage` (`registration_incomplete` | `profile_incomplete`), `attempt` (1 | 2 | 3), `sent_at`, `template_key`
-
-**Cron (every 15 min):** `activation-recovery-worker` detects:
-- `onboarding_started_at IS NOT NULL AND profile_completed_at IS NULL`
-
-Sends staged SMS via winning channel:
-- +24 h → Reminder 1 ("Il vous reste 2 minutes pour activer votre profil UNPRO.")
-- +72 h → Reminder 2 ("Votre place réservée expire bientôt.")
-- +7 d → Reminder 3 (final, offers Alex call).
-
-Enforce max 3 attempts (aligns with Alex Reengagement Control memory).
-
----
-
-## Phase 6 — First Revenue Dashboard
-
-**Card** `<FirstRevenueTracker>` on `/admin/outreach-command-center` top:
-
-- Today's Activations
-- Today's Revenue ($)
-- 30-Day MRR
-- Contractors Contacted (7d / 30d)
-- Registrations (7d / 30d)
-- Profile Completions
-- $1 Activations
-- Paid Plans
-
-**Big red alert** when `MAX(paid_at) < NOW() - 48h`:
-> "AUCUNE ACTIVATION DEPUIS 48 HEURES — Vérifier Command Center."
-
-Backed by `v_first_revenue_snapshot` view.
-
----
-
-## Phase 7 — Feature Freeze Gate
-
-**New file:** `src/lib/launch/featureFreeze.ts` — exports thresholds and a `useFeatureFreezeStatus()` hook reading `v_outreach_command_funnel`:
-
-```text
-sms_delivered_rate   ≥ 90 %
-click_rate           ≥ 5  %
-registration_rate    ≥ 2  %
-paid_activations_7d  ≥ 3
-```
-
-Show freeze banner at top of every `/admin/*` page listing which thresholds are unmet. Purely informational — no route blocking.
-
-Document freeze rule in `docs/standards/FEATURE_FREEZE.md` (new features paused until all four green).
-
----
-
-## Technical Details
-
-**Migrations (single file):**
-- `v_outreach_command_funnel`, `v_first_revenue_snapshot` views
-- `contractor_prospect_priority`, `outreach_template_metrics`, `contractor_activation_reminders` tables (GRANTs to `authenticated`+`service_role`, RLS admin-only via `has_role`)
-- Seed 3 outreach templates + suppression domain rows
-- pg_cron schedules for `daily-outreach-orchestrator` (daily 07:00) and `activation-recovery-worker` (*/15 min)
-
-**Edge functions (new):**
-- `compute-prospect-priority`
-- `daily-outreach-orchestrator` (chains scrape → score → dispatch)
-- `scrape-contractors-daily`
-- `dispatch-priority-outreach`
-- `refresh-template-winner`
-- `activation-recovery-worker`
-- `twilio-sms-status` (or patch existing) for delivery attribution
-
-All use `reportOutcome()` + `FailureCode` per Production Reliability Framework.
-
-**Frontend files (new):**
-- `src/pages/admin/PageOutreachCommandCenter.tsx`
-- `src/components/admin/outreach/FunnelStageCard.tsx`
-- `src/components/admin/outreach/FirstRevenueTracker.tsx`
-- `src/components/admin/outreach/TemplatePerformanceTable.tsx`
-- `src/components/admin/outreach/PriorityQueueTable.tsx`
-- `src/components/admin/outreach/FeatureFreezeBanner.tsx`
-- `src/hooks/useOutreachCommandCenter.ts`
-- `src/lib/launch/featureFreeze.ts`
-
-**Router:** add `/admin/outreach-command-center` and link from `/admin/contacted-contractors` + `/admin/revenue-debug`.
-
-**Styling:** wrap all new admin pages in `.admin-theme`, use `.text-readable*` tokens (per UI Readability Rule memory).
-
----
-
-## Out of Scope
-
-- Building homeowner features, new AI modules, animations, or dashboards not listed here (Phase 7 freeze).
-- Backfilling historical `contractor_funnel_events`.
-- Actual contact of the first 100 contractors — that happens after deploy, manually driven by telemetry.
-- Rewriting Twilio provider integration beyond fixing the status webhook.
+## Technical notes
+- Migration adds columns nullable to avoid breaking existing prospect flows.
+- Reuses `contractor_outreach_logs`, `outreach_templates`, `outreach_template_metrics`, `outreach_suppressions`, `refresh-template-winner`, `activation-recovery-worker` — no parallel systems.
+- All new edge functions log to `platform_operation_outcomes` per the Production Reliability Framework (canonical `FailureCode`/`BlockReason`).
+- Kijiji access may be blocked at any time — every function has a `blocked_by_source` exit path that surfaces to admin without retries.
