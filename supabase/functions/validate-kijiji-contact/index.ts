@@ -1,6 +1,5 @@
 // UNPRO — Validate Kijiji contacts: classify phone type and pick outreach route.
-// Uses Twilio Lookup when TWILIO_ACCOUNT_SID/AUTH_TOKEN available; otherwise
-// falls back to NANP heuristics and marks phone_type "unknown".
+// Uses Twilio Lookup when available; otherwise defaults to "unknown".
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { normalizePhone } from "../_shared/normalizePhone.ts";
@@ -22,14 +21,13 @@ Deno.serve(async (req) => {
   const limit: number = Math.min(body.limit ?? 50, 200);
   const prospectId: string | undefined = body.prospect_id;
 
-  const query = sb.from("contractor_prospects")
-    .select("id, phone, email, phone_type, phone_sms_capable, outreach_eligibility")
+  let query = sb.from("contractor_prospects")
+    .select("id, phone, email, phone_type, phone_sms_capable")
     .eq("source_key", "kijiji_services")
     .is("phone_type", null)
     .not("phone", "is", null)
     .limit(limit);
-
-  if (prospectId) query.eq("id", prospectId);
+  if (prospectId) query = query.eq("id", prospectId);
 
   const { data: prospects, error } = await query;
   if (error) return json({ success: false, error: error.message }, 500);
@@ -40,7 +38,7 @@ Deno.serve(async (req) => {
     const norm = normalizePhone(p.phone ?? "");
     if (!norm.valid || !norm.normalized) {
       await sb.from("contractor_prospects").update({
-        phone_type: "unknown",
+        phone_type: "invalid",
         phone_sms_capable: false,
         outreach_eligibility: p.email ? "email_only" : "invalid_phone",
       }).eq("id", p.id);
@@ -48,18 +46,17 @@ Deno.serve(async (req) => {
       continue;
     }
 
-    // Cached lookup within 90 days
+    // Cache lookup (90-day window)
     const { data: cache } = await sb.from("phone_carrier_cache")
-      .select("phone_type, sms_capable, updated_at")
-      .eq("phone_e164", norm.normalized)
+      .select("line_type, validated_at, raw_payload")
+      .eq("normalized_phone", norm.normalized)
       .maybeSingle();
 
-    let phone_type = "unknown";
-    let sms_capable = false;
-
-    if (cache && cache.updated_at && (Date.now() - new Date(cache.updated_at).getTime()) < 90 * 86400 * 1000) {
-      phone_type = cache.phone_type;
-      sms_capable = cache.sms_capable;
+    let line_type = "unknown";
+    let cache_hit = false;
+    if (cache?.validated_at && (Date.now() - new Date(cache.validated_at).getTime()) < 90 * 86400 * 1000) {
+      line_type = cache.line_type ?? "unknown";
+      cache_hit = true;
     } else if (TW_SID && TW_TOKEN) {
       try {
         const auth = btoa(`${TW_SID}:${TW_TOKEN}`);
@@ -68,40 +65,42 @@ Deno.serve(async (req) => {
         });
         if (r.ok) {
           const j = await r.json();
-          const line = j?.line_type_intelligence?.type ?? "unknown";
-          phone_type = line === "mobile" ? "mobile"
-            : line === "landline" ? "landline"
-            : line === "voip" || line === "nonFixedVoip" ? "voip" : "unknown";
-          sms_capable = phone_type === "mobile" || phone_type === "voip";
+          const t = j?.line_type_intelligence?.type ?? "unknown";
+          line_type = t === "mobile" ? "mobile"
+            : t === "landline" ? "landline"
+            : (t === "voip" || t === "nonFixedVoip") ? "voip"
+            : "unknown";
           await sb.from("phone_carrier_cache").upsert({
-            phone_e164: norm.normalized,
-            phone_type,
-            sms_capable,
-            carrier_name: j?.line_type_intelligence?.carrier_name ?? null,
-            updated_at: new Date().toISOString(),
-          }, { onConflict: "phone_e164" });
+            normalized_phone: norm.normalized,
+            line_type,
+            carrier: j?.line_type_intelligence?.carrier_name ?? null,
+            country_code: "1",
+            raw_payload: j,
+            validated_at: new Date().toISOString(),
+          }, { onConflict: "normalized_phone" });
         }
       } catch (e) {
         console.error("twilio lookup failed", e);
       }
     }
 
-    // Route
+    const sms_capable = line_type === "mobile" || line_type === "voip";
     let eligibility: string;
-    if (phone_type === "mobile") eligibility = "sms_ready";
-    else if (phone_type === "voip" && sms_capable) eligibility = "sms_test";
-    else if (phone_type === "landline" && p.email) eligibility = "email_only";
-    else if (phone_type === "landline") eligibility = "manual_call_queue";
+    if (line_type === "mobile") eligibility = "sms_ready";
+    else if (line_type === "voip" && sms_capable) eligibility = "sms_test";
+    else if (line_type === "landline" && p.email) eligibility = "email_only";
+    else if (line_type === "landline") eligibility = "manual_call_queue";
     else if (p.email) eligibility = "email_only";
     else eligibility = "validation_queue";
 
     await sb.from("contractor_prospects").update({
-      phone_type,
+      phone: norm.normalized,
+      phone_type: line_type,
       phone_sms_capable: sms_capable,
       outreach_eligibility: eligibility,
     }).eq("id", p.id);
 
-    results.push({ id: p.id, phone_type, sms_capable, eligibility });
+    results.push({ id: p.id, line_type, sms_capable, eligibility, cache_hit });
   }
 
   return json({ success: true, validated: results.length, results });
