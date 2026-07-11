@@ -5,11 +5,11 @@
 import logoAsset from "@/assets/brand/unpro-logo-blue.png.asset.json";
 
 export const BRAND = {
-  /** Official UNPRO wordmark (blue speech-bubble). */
-  logo: "/assets/branding/unpro-logo.png",
+  /** Official UNPRO sticker (CDN-hosted, single source of truth). */
+  logo: logoAsset.url,
   /** CDN asset pointer for environments that resolve the asset pipeline. */
   logoAsset: logoAsset.url,
-  /** Static fallback for local/preview environments. */
-  logoStatic: "/assets/branding/unpro-logo.png",
+  /** Static fallback (kept for API compatibility — now points to the CDN URL). */
+  logoStatic: logoAsset.url,
   name: "UNPRO",
 } as const;
