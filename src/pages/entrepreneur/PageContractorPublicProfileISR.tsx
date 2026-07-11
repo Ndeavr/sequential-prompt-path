@@ -14,7 +14,6 @@ import {
 } from "@/hooks/useContractorReputation";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { formatPhoneDisplay, phoneToE164 } from "@/utils/formatPhone";
 import ModalProfileCompletionGate from "@/components/intent-funnel/ModalProfileCompletionGate";
 
 const SLUG = "isolation-solution-royal";
