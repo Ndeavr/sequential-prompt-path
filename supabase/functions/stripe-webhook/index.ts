@@ -531,25 +531,7 @@ Deno.serve(async (req) => {
       .eq("integration_name", "stripe")
       .eq("action_name", event.id);
 
-    await supabase
-      .from("stripe_webhook_events")
-      .update({ processed_at: new Date().toISOString(), success: true })
-      .eq("stripe_event_id", event.id);
 
-    return new Response(JSON.stringify({ received: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (error: unknown) {
-    console.error("Webhook error:", error);
-    const msg = error instanceof Error ? error.message : "Unknown error";
-    try {
-      const supabase = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-      );
-      // Best-effort: try to mark last event as failed if we captured its id in scope.
-      // We can't always reach event.id here safely, so we skip if not available.
-    } catch (_) { /* noop */ }
     await supabase
       .from("stripe_webhook_events")
       .update({ processed_at: new Date().toISOString(), success: true, processing_status: "processed" })
