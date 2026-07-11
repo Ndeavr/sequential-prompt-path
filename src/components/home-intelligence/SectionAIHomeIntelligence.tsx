@@ -52,7 +52,7 @@ const CARDS: Card[] = [
     title: "Trouver le professionnel qui vous correspond",
     body: "L'IA identifie l'entrepreneur le plus compatible avec vos besoins, votre budget, votre secteur et votre projet.",
   },
-] as const;
+];
 
 export default function SectionAIHomeIntelligence() {
   return (
