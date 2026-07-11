@@ -202,6 +202,7 @@ const PageAdminAcquisitionDuplicates = lazyWithRetry(() => import("@/pages/admin
 const PageAdminAcquisitionPipeline = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminAcquisitionPipeline"));
 const PageAdminAcquisitionErrors = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminAcquisitionErrors"));
 const PageAdminAcquisitionEngagement = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminAcquisitionEngagement"));
+const PageAdminAcquisitionStripe = lazyWithRetry(() => import("@/pages/admin/acquisition/PageAdminAcquisitionStripe"));
 const PageContractorAIScoreLanding = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorAIScoreLanding"));
 const PageAippPublic = lazyWithRetry(() => import("@/pages/aipp/PageAippPublic"));
 const PageAiIndexedProfile = lazyWithRetry(() => import("@/pages/aipp/PageAiIndexedProfile"));
