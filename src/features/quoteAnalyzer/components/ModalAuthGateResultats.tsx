@@ -59,7 +59,7 @@ export default function ModalAuthGateResultats({ open, fileCount, onAuthSuccess 
   const handleGoogle = async () => {
     setLoading(true);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.href,
+      redirect_uri: window.location.origin,
     });
     if (result.error) {
       setLoading(false);
