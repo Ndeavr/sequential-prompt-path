@@ -236,6 +236,9 @@ export default function PageAdminAcquisitionTests() {
           run={() => invoke("acquisition-funnel-live")}
         />
       </div>
+
+      <ActivationFlowHealth />
     </div>
   );
 }
+
