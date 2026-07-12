@@ -148,6 +148,10 @@ export default function PageProActivate() {
             ))}
           </div>
 
+          {form.trade && form.city ? (
+            <LocalizedDemandCard trade={form.trade} city={form.city} />
+          ) : null}
+
           <FounderOfferCard onActivate={startCheckout} loading={loading} checkoutUrl={checkoutUrl} />
         </div>
       </div>
