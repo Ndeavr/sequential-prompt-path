@@ -108,16 +108,18 @@ async function edgeFunctionSummary(sb: any) {
   const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
   const { data, error } = await sb
     .from("platform_operation_outcomes")
-    .select("operation, success, failure_code, created_at")
+    .select("operation, business_outcome, failure_code, created_at")
     .gte("created_at", since)
     .limit(5000);
   if (error) return { rows: [] as any[], error: error.message };
+  const SUCCESS = new Set(["succeeded", "recovered"]);
   const map = new Map<string, { total: number; ok: number; last_error: string | null; last_at: string | null }>();
   for (const r of (data ?? []) as any[]) {
     const cur = map.get(r.operation) ?? { total: 0, ok: 0, last_error: null, last_at: null };
     cur.total++;
-    if (r.success) cur.ok++;
-    if (!r.success && !cur.last_error) cur.last_error = r.failure_code ?? "unknown";
+    const ok = SUCCESS.has(r.business_outcome);
+    if (ok) cur.ok++;
+    if (!ok && !cur.last_error) cur.last_error = r.failure_code ?? r.business_outcome ?? "unknown";
     if (!cur.last_at || r.created_at > cur.last_at) cur.last_at = r.created_at;
     map.set(r.operation, cur);
   }
