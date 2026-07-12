@@ -1,4 +1,5 @@
-// pro-founder-checkout-guest — Guest checkout for the Fondateur 149$/mo plan.
+// pro-founder-checkout-guest — Guest checkout for the Fondateur plan.
+// Charges 1 $ CA today (one-time line) + 149 $/mo subscription with a 7-day trial.
 // No authentication required: Stripe collects the email at the checkout page.
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
@@ -9,6 +10,22 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+async function logStep(
+  admin: ReturnType<typeof createClient>,
+  step: string,
+  payload: Record<string, unknown>,
+) {
+  try {
+    await admin.from("activation_flow_events").insert({
+      step,
+      status: "ok",
+      ...payload,
+    });
+  } catch (_) {
+    /* soft-fail */
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -35,23 +52,10 @@ Deno.serve(async (req) => {
 
     const origin = req.headers.get("origin") ?? "https://unpro.ca";
 
-    // Idempotent $1 trial coupon ($148 off once → first charge = $1 today)
-    const COUPON_ID = "fondateur-trial-7d-1";
-    try {
-      await stripe.coupons.retrieve(COUPON_ID);
-    } catch (_) {
-      await stripe.coupons.create({
-        id: COUPON_ID,
-        amount_off: 14800,
-        currency: "cad",
-        duration: "once",
-        name: "Fondateur — 1 $ pour 7 jours",
-      });
-    }
-
-    // Next full charge in 7 days (today: $149 - $148 coupon = $1)
-    const trialAnchor = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60;
-
+    // Two line items in one Checkout Session:
+    //   1) One-time CA$1.00 activation fee — charged today.
+    //   2) Recurring subscription at the plan price with a 7-day free trial.
+    // Stripe renders: "CA$1.00 due today · then CA$149.00/month after 7-day trial".
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer_email: email || undefined,
@@ -60,9 +64,20 @@ Deno.serve(async (req) => {
           price_data: {
             currency: "cad",
             product_data: {
+              name: "UNPRO — Activation 7 jours",
+              description: "Frais d'activation unique · 1 $ CA payé aujourd'hui.",
+            },
+            unit_amount: 100,
+          },
+          quantity: 1,
+        },
+        {
+          price_data: {
+            currency: "cad",
+            product_data: {
               name: plan.name,
               description:
-                "Essai 7 jours pour 1 $ · Profil IA optimisé · Recommandations propriétaires · Accès Alex · Jusqu'à 3 rendez-vous exclusifs · Annulation en tout temps",
+                "Profil IA optimisé · Recommandations propriétaires · Accès Alex · Jusqu'à 3 rendez-vous exclusifs · Annulation en tout temps",
             },
             unit_amount: plan.price,
             recurring: { interval: "month" },
@@ -70,11 +85,13 @@ Deno.serve(async (req) => {
           quantity: 1,
         },
       ],
-      discounts: [{ coupon: COUPON_ID }],
       subscription_data: {
-        billing_cycle_anchor: trialAnchor,
-        proration_behavior: "none",
+        trial_period_days: 7,
+        trial_settings: {
+          end_behavior: { missing_payment_method: "pause" },
+        },
       },
+      payment_method_collection: "always",
       automatic_tax: { enabled: true },
       tax_id_collection: { enabled: true },
       success_url: `${origin}/pro/welcome?session_id={CHECKOUT_SESSION_ID}&prospect=${prospectId ?? ""}`,
@@ -84,17 +101,23 @@ Deno.serve(async (req) => {
         plan_id: plan.id,
         prospect_id: prospectId ?? "",
         source: "first_customer_48h",
-        trial_promo: "1cad_7d",
+        offer: "fondateur_1cad_7d_then_149",
       },
     });
 
-    // Mark prospect as checkout_started
     if (prospectId) {
       await admin
         .from("founder_score_prospects")
         .update({ status: "checkout_started", stripe_session_id: session.id })
         .eq("id", prospectId);
     }
+
+    await logStep(admin, "checkout_started", {
+      prospect_id: prospectId ?? null,
+      email: email ?? null,
+      stripe_session_id: session.id,
+      metadata: { plan_slug: slug, offer: "fondateur_1cad_7d_then_149" },
+    });
 
     return new Response(JSON.stringify({ url: session.url, session_id: session.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
