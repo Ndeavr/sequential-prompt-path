@@ -17,6 +17,24 @@ function getSubscriptionPeriod(sub: any): { start: string | null; end: string | 
   return { start: toIso(startSec), end: toIso(endSec) };
 }
 
+// Activation flow observability — best-effort insert, never throws.
+async function logActivationStep(
+  supabase: any,
+  step: string,
+  payload: Record<string, unknown>,
+) {
+  try {
+    await supabase.from("activation_flow_events").insert({
+      step,
+      status: "ok",
+      ...payload,
+    });
+  } catch (_) {
+    /* soft-fail */
+  }
+}
+
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -57,6 +75,18 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // Log every webhook receipt into the activation flow (best-effort).
+    {
+      const obj = (event.data.object as any) || {};
+      await logActivationStep(supabase, "webhook_received", {
+        stripe_event_id: event.id,
+        stripe_session_id: obj?.id ?? null,
+        metadata: { event_type: event.type },
+      });
+    }
+
+
 
     // Observability: log to stripe_webhook_events (idempotent via unique stripe_event_id)
     const receivedAt = new Date().toISOString();
@@ -118,6 +148,34 @@ Deno.serve(async (req) => {
         const billingInterval = session.metadata?.billing_interval || "month";
         const redemptionId = session.metadata?.redemption_id;
         const promoCode = session.metadata?.promo_code;
+
+        // Founder / activation flow observability.
+        if (session.payment_status === "paid" || session.status === "complete") {
+          await logActivationStep(supabase, "stripe_payment_succeeded", {
+            stripe_event_id: event.id,
+            stripe_session_id: session.id,
+            email: session.customer_details?.email ?? session.customer_email ?? null,
+            metadata: {
+              amount_total: session.amount_total,
+              currency: session.currency,
+              source: session.metadata?.source ?? null,
+              offer: session.metadata?.offer ?? null,
+            },
+          });
+        }
+        if (session.subscription) {
+          await logActivationStep(supabase, "subscription_created", {
+            stripe_event_id: event.id,
+            stripe_session_id: session.id,
+            email: session.customer_details?.email ?? session.customer_email ?? null,
+            metadata: {
+              subscription_id: String(session.subscription),
+              source: session.metadata?.source ?? null,
+              offer: session.metadata?.offer ?? null,
+            },
+          });
+        }
+
 
         // ACQUISITION PIPELINE flow: prospect-driven checkout (acq-create-checkout)
         if (session.metadata?.source === "acquisition_pipeline" && session.metadata?.prospect_id) {

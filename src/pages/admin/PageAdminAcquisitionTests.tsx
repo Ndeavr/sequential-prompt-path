@@ -1,5 +1,118 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+
+const CANONICAL_STEPS = [
+  "checkout_started",
+  "webhook_received",
+  "stripe_payment_succeeded",
+  "subscription_created",
+  "contractor_activated",
+  "profile_published",
+  "dashboard_access_granted",
+] as const;
+
+type FlowEvent = {
+  id: string;
+  step: string;
+  status: string;
+  stripe_session_id: string | null;
+  email: string | null;
+  metadata: any;
+  created_at: string;
+};
+
+function ActivationFlowHealth() {
+  const [events, setEvents] = useState<FlowEvent[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const refresh = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("activation_flow_events")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    setEvents((data as FlowEvent[]) || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    refresh();
+  }, []);
+
+  // Group by session_id (or email fallback for pre-session steps)
+  const groups = new Map<string, FlowEvent[]>();
+  for (const e of events) {
+    const key = e.stripe_session_id || `email:${e.email ?? "unknown"}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(e);
+  }
+  const sessions = Array.from(groups.entries()).slice(0, 30);
+
+  return (
+    <section className="mt-10">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Activation Flow Health</h2>
+        <button
+          onClick={refresh}
+          disabled={loading}
+          className="rounded-lg border border-white/15 bg-white/10 px-3 py-1.5 text-xs hover:bg-white/15 disabled:opacity-50"
+        >
+          {loading ? "Chargement…" : "Rafraîchir"}
+        </button>
+      </div>
+      <div className="overflow-x-auto rounded-xl border border-white/10 bg-white/[0.02]">
+        <table className="min-w-full text-[11px]">
+          <thead className="bg-white/[0.04] text-white/60">
+            <tr>
+              <th className="px-3 py-2 text-left font-medium">Session / Email</th>
+              {CANONICAL_STEPS.map((s) => (
+                <th key={s} className="px-2 py-2 text-center font-medium">
+                  {s.replace(/_/g, " ")}
+                </th>
+              ))}
+              <th className="px-3 py-2 text-left font-medium">Dernier</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sessions.length === 0 && (
+              <tr>
+                <td colSpan={CANONICAL_STEPS.length + 2} className="px-3 py-6 text-center text-white/50">
+                  Aucun événement — lance un checkout de test pour peupler cette table.
+                </td>
+              </tr>
+            )}
+            {sessions.map(([key, evts]) => {
+              const stepsHit = new Set(evts.map((e) => e.step));
+              const latest = evts[0];
+              return (
+                <tr key={key} className="border-t border-white/5">
+                  <td className="px-3 py-2 font-mono text-white/80">
+                    {key.length > 40 ? key.slice(0, 40) + "…" : key}
+                  </td>
+                  {CANONICAL_STEPS.map((s) => (
+                    <td key={s} className="px-2 py-2 text-center">
+                      <span
+                        className={`inline-block h-2.5 w-2.5 rounded-full ${
+                          stepsHit.has(s) ? "bg-emerald-400" : "bg-white/15"
+                        }`}
+                        title={s}
+                      />
+                    </td>
+                  ))}
+                  <td className="px-3 py-2 text-white/50">
+                    {new Date(latest.created_at).toLocaleString("fr-CA")}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 
 type TestResult = { ok: boolean; data?: any; error?: string; timestamp: string };
 
@@ -123,6 +236,9 @@ export default function PageAdminAcquisitionTests() {
           run={() => invoke("acquisition-funnel-live")}
         />
       </div>
+
+      <ActivationFlowHealth />
     </div>
   );
 }
+

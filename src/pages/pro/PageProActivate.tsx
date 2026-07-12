@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { trackFirstCustomerEvent } from "@/utils/trackFirstCustomerEvent";
 import FounderOfferCard from "@/components/first-customer-48h/FounderOfferCard";
+import LocalizedDemandCard from "@/components/first-customer-48h/LocalizedDemandCard";
 
 export default function PageProActivate() {
   const navigate = useNavigate();
@@ -146,6 +147,10 @@ export default function PageProActivate() {
               </label>
             ))}
           </div>
+
+          {form.trade && form.city ? (
+            <LocalizedDemandCard trade={form.trade} city={form.city} />
+          ) : null}
 
           <FounderOfferCard onActivate={startCheckout} loading={loading} checkoutUrl={checkoutUrl} />
         </div>

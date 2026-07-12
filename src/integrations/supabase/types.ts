@@ -1629,6 +1629,42 @@ export type Database = {
         }
         Relationships: []
       }
+      activation_flow_events: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          metadata: Json
+          prospect_id: string | null
+          status: string
+          step: string
+          stripe_event_id: string | null
+          stripe_session_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          metadata?: Json
+          prospect_id?: string | null
+          status?: string
+          step: string
+          stripe_event_id?: string | null
+          stripe_session_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          metadata?: Json
+          prospect_id?: string | null
+          status?: string
+          step?: string
+          stripe_event_id?: string | null
+          stripe_session_id?: string | null
+        }
+        Relationships: []
+      }
       activation_pipeline_runs: {
         Row: {
           activated_at: string | null
