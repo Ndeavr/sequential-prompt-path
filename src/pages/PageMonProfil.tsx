@@ -131,8 +131,8 @@ export default function PageMonProfil() {
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div><dt className="text-muted-foreground text-xs">Entreprise</dt><dd className="text-foreground">{extras.contractor.business_name || "—"}</dd></div>
                 <div><dt className="text-muted-foreground text-xs">RBQ</dt><dd className="text-foreground">{extras.contractor.rbq_number || "—"}</dd></div>
-                <div><dt className="text-muted-foreground text-xs">Région</dt><dd className="text-foreground">{extras.contractor.primary_city || "—"}</dd></div>
-                <div><dt className="text-muted-foreground text-xs">Services</dt><dd className="text-foreground">{Array.isArray(extras.contractor.services) ? extras.contractor.services.length : 0}</dd></div>
+                <div><dt className="text-muted-foreground text-xs">Région</dt><dd className="text-foreground">{extras.contractor.city || "—"}</dd></div>
+                <div><dt className="text-muted-foreground text-xs">Services</dt><dd className="text-foreground">{Array.isArray(extras.contractor.contractor_services) ? extras.contractor.contractor_services.length : 0}</dd></div>
               </dl>
               <Button asChild variant="outline" size="sm" className="mt-4"><Link to="/pro/profile">Gérer mon profil entrepreneur</Link></Button>
             </CardContent>
