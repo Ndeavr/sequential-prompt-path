@@ -149,6 +149,34 @@ Deno.serve(async (req) => {
         const redemptionId = session.metadata?.redemption_id;
         const promoCode = session.metadata?.promo_code;
 
+        // Founder / activation flow observability.
+        if (session.payment_status === "paid" || session.status === "complete") {
+          await logActivationStep(supabase, "stripe_payment_succeeded", {
+            stripe_event_id: event.id,
+            stripe_session_id: session.id,
+            email: session.customer_details?.email ?? session.customer_email ?? null,
+            metadata: {
+              amount_total: session.amount_total,
+              currency: session.currency,
+              source: session.metadata?.source ?? null,
+              offer: session.metadata?.offer ?? null,
+            },
+          });
+        }
+        if (session.subscription) {
+          await logActivationStep(supabase, "subscription_created", {
+            stripe_event_id: event.id,
+            stripe_session_id: session.id,
+            email: session.customer_details?.email ?? session.customer_email ?? null,
+            metadata: {
+              subscription_id: String(session.subscription),
+              source: session.metadata?.source ?? null,
+              offer: session.metadata?.offer ?? null,
+            },
+          });
+        }
+
+
         // ACQUISITION PIPELINE flow: prospect-driven checkout (acq-create-checkout)
         if (session.metadata?.source === "acquisition_pipeline" && session.metadata?.prospect_id) {
           const prospectId = session.metadata.prospect_id;
