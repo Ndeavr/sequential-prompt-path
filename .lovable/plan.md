@@ -1,59 +1,143 @@
-# Production Readiness Audit — Plan
 
-## Scope
-14 flows: registration, login, OTP, contractor onboarding, homeowner onboarding, Stripe checkout, $1 trial activation, profile publication, Google Maps, SMS, email, Alex recommendations, appointment booking, mobile UX.
+# Schema-First Repair — 15 Findings
 
-The codebase is very large (553 edge functions, hundreds of pages). A single audit pass cannot execute all 14 flows end-to-end without exceeding a reasonable turn budget. The plan below runs the audit in **3 waves**, ranked by revenue → conversion → trust, and applies **only safe automatic fixes** in wave 1. Waves 2–3 return findings for your approval before edits.
+Strategy: keep canonical schema, rewrite callers. Migrations only where a canonical column is genuinely missing or an RLS policy is unsafe. No parallel/mirror columns.
 
-## Wave 1 — Revenue-critical (auto-fix if safe)
-Verify and fix same-turn:
-1. **Stripe checkout** (`create-payment`, `activation-create-checkout`, `acq-create-checkout`) — verify success/cancel URLs resolve to real routes, `STRIPE_SECRET_KEY` present, price IDs valid, CORS headers, `FunctionsHttpError` handling on client.
-2. **$1 trial activation** — verify `/activation` route → checkout → success → publish trigger chain, coupon validation (`acq-validate-coupon`), amount = 100 cents, plan mapping.
-3. **Profile publication** (`admin-activation-publish`) — verify trigger on successful trial payment, RLS grants, contractor row status transitions, public route `/entrepreneur/:slug` renders published data.
-4. **Registration + Login + OTP** — verify `/auth`, `/login`, `/signup`, `/role` routes exist and are reachable; Google OAuth uses `lovable.auth.signInWithOAuth` with `redirect_uri: window.location.origin` (not protected routes); `emailRedirectTo` set on signUp; `/reset-password` page exists; OTP via `verifyOtp` returns to correct route.
+## Canonical schema (verified live)
 
-Safe auto-fixes applied without asking:
-- Broken `redirect_uri` pointing at protected routes → replace with `window.location.origin`.
-- Missing `emailRedirectTo` on `signUp` → add.
-- Missing `/reset-password` public route → create.
-- Dead links to routes not registered in `src/app/router.tsx` → remove or point to nearest live route.
-- Stripe success/cancel URLs pointing at 404s → fix to real routes.
-- Missing CORS headers on payment/auth edge functions → add.
+| Table | Canonical | Wrong caller |
+|---|---|---|
+| `contractors` | `city` (no `services` col) | `primary_city`, `services` |
+| `contractor_verification_runs` | `contractor_id` | `matched_contractor_id` |
+| `plan_catalog` | `stripe_monthly_price_id`, `stripe_yearly_price_id` | `stripe_price_id_monthly`, `stripe_price_id_one_time` |
+| `platform_operation_outcomes` | `business_outcome` (enum) | `success`, `duration_ms` |
+| `notifications` | `profile_id` | `recipient_user_id` |
+| `property_shares` RLS | `auth.jwt() ->> 'email'` | `SELECT email FROM auth.users` |
 
-Anything larger (schema changes, RLS, pricing, copy) → reported, not auto-fixed.
+---
 
-## Wave 2 — Conversion-critical (report + propose fixes)
-5. **Contractor onboarding** — walk `/entrepreneur/*` funnel: landing → AIPP scan → checkout → activation → profile completion. Report every dead button, missing route, and gate that blocks reaching checkout.
-6. **Homeowner onboarding** — walk `/` → Alex greet → intent capture → recommendation → booking. Report where value takes >5s to appear or a form appears before value.
-7. **Alex recommendations** (`alex-best-match-select`, `alex-inline-booking`, `alex-respond`) — verify recommendation returns a single pro (Concierge Décisif), never "3 quotes"; verify handoff to booking works; verify FR-only guard fires on English input.
-8. **Appointment booking** — verify `bookings` insert path, `availability_slots` respected, confirmation SMS+email fire, calendar reflects new booking.
-9. **Google Maps integration** — verify `GOOGLE_MAPS_BROWSER_KEY` used in client (autocomplete, map render), `GOOGLE_MAPS_API_KEY` used server-side (geocode, places); no 403/REQUEST_DENIED; billing/referrer restrictions correct for `unpro.ca` + preview domains.
+## CRITICAL — revenue / activation chain
 
-For each finding: **Issue → Impact → Proposed fix → Revenue/Conversion/Trust rank**.
+### 1. `/activation` route hijacked by SolicitationActivationPage (post-payment CTA loops back to checkout)
+- **Root cause**: `PageCheckoutSuccess.tsx` still calls `navigate("/activation")`, which now serves the cold-SMS $1 landing.
+- **Fix**: change `PageCheckoutSuccess` CTA to `navigate("/activation/start")`. Grep all other `navigate("/activation")` / `<Link to="/activation">` in-app callers and route them to `/activation/start` when they mean the calendar-connect onboarding.
+- **Migration**: none.
 
-## Wave 3 — Trust + delivery (report + propose fixes)
-10. **SMS sending** (`acq-sms-send`, `approve-isr-sms`) — verify Twilio/provider secret configured, sender domain/number valid, opt-out compliant, failure logging.
-11. **Email sending** — verify auth email hook (`auth-email-hook`) deployed, domain DNS status, transactional templates exist, bounce/complaint handling.
-12. **Mobile UX** — run Playwright at 384×706 across: `/`, `/entrepreneur`, `/pro`, `/dashboard`, `/alex`, `/checkout`, `/activation`. Verify: floating dock does not overlap footer (fix already deployed), tap targets ≥44px, one-handed reach, forms not appearing before value, no horizontal overflow.
-13. **Cross-cutting**: dead links scan (rg over all `<Link to=` and `href=` vs `router.tsx`), missing pages, hidden content behind `display:none` or `lg:hidden` on mobile, permission prompts firing on page load (should be event-driven per memory).
+### 2. `/register` dead link after Scan IA $1 checkout
+- **Root cause**: `PageScanIAActivationSuccess.tsx` links to `/register?scan=…` but signup lives at `/signup`.
+- **Fix**: change link target to `/signup?scan=…`. Verify `LoginPageUnpro` consumes the `scan` param (post-signup redirect to claim `scan_ia_reports`).
+- **Migration**: none.
 
-## Deliverable format (final report)
-Table ranked by (Revenue → Conversion → Trust) with columns:
+### 3. `plan_catalog` missing columns break contractor checkout
+- **Root cause**: `create-contractor-checkout` selects `stripe_price_id_monthly, stripe_price_id_one_time`; canonical columns are `stripe_monthly_price_id, stripe_yearly_price_id` (no one-time column).
+- **Fix**: rewrite select + downstream `.stripe_price_id_monthly` refs to canonical names. Handle one-time via existing `price_data` fallback path (already present). Remove the swallowing try/catch so future missing columns fail loudly.
+- **Migration**: none.
+
+### 4. `contractors.primary_city` / `contractors.services` don't exist → Mon profil broken
+- **Root cause**: `PageMonProfil.tsx` selects non-existent columns.
+- **Fix**: rewrite select to `business_name, rbq_number, city, contractor_services(service_key, is_primary)`. Update the UI mapping.
+- **Migration**: none.
+
+### 5. `contractor_verification_runs.matched_contractor_id` doesn't exist
+- **Root cause**: `useContractorVerificationIntegration.ts` filters wrong column.
+- **Fix**: change `.eq("matched_contractor_id", contractorId)` → `.eq("contractor_id", contractorId)`. Grep the whole repo for the same typo on this table and correct all callers.
+- **Migration**: none.
+
+### 6. Alex recommendation eligibility — depends on #4/#5 being green
+- **Verification only**: with Mon profil + verification hooks fixed, contractors regain `published=true + services + city + verification` — the fields Alex matching reads. No code fix beyond 1–5.
+
+---
+
+## HIGH — dashboards, monitoring, comms
+
+### 7. `platform_operation_outcomes.success` / `duration_ms` don't exist → System Health + Edge Function Health dead
+- **Root cause**: `systemHealthService.ts` + `system-health-probe` select non-existent columns.
+- **Fix**: rewrite select to `operation, business_outcome, failure_code, created_at`. Compute success as `business_outcome IN ('succeeded','recovered')`. Drop `duration_ms` from selects and any UI card that shows latency (or replace with count-only).
+- **Migration**: none.
+
+### 8. `notifications.recipient_user_id` doesn't exist → contractor notifications empty
+- **Root cause**: `useContractorDashboardData.ts` filters wrong column. Canonical is `profile_id` (FK to `profiles.id`).
+- **Fix**: query with `.eq("profile_id", user.id)` (contractor `profiles.id == auth.uid()` in this app). Remove the error-swallowing catch so failures surface.
+- **Migration**: none.
+
+### 9. `property_shares` RLS raises "permission denied for table users"
+- **Root cause**: policy USING clause reads `auth.users` as `authenticated`.
+- **Fix (migration)**: DROP + CREATE the SELECT policy on `public.property_shares` to use `auth.jwt() ->> 'email'` instead of a subquery on `auth.users`. Keep semantics identical: `shared_with_user_id = auth.uid() OR shared_with_email = (auth.jwt() ->> 'email')`.
+- **Migration**: yes, RLS-only.
+
+### 10. `email-live-test` returns 502 every 15 min → outbound email suspected down
+- **Root cause**: candidates are (a) missing/invalid `RESEND_API_KEY`, (b) unverified sender `alex@mail.unpro.ca`, (c) Resend outage.
+- **Fix**: run `email-live-test` once and read `email_health_checks.error_category` to determine which. If secret is missing/invalid → request `add_secret RESEND_API_KEY`. If sender not verified → surface actionable admin notice on `/admin/email-health`. No blind key rotation.
+- **Migration**: none.
+
+---
+
+## MEDIUM — mobile, wizard, layout
+
+### 11. Mobile bottom dock missing on `/` and `/index`
+- **Root cause**: `HomeAbSwitch` and `PageHomeUnicorn` are not wrapped in `MainLayout` (the only mounter of `BottomDockGlass`).
+- **Fix**: wrap both home routes in `MainLayout` in `router.tsx`. Verify no duplicate dock renders elsewhere (`PageHomeUnicorn` already removed its inline dock).
+
+### 12. Mobile footer text hidden behind bottom dock
+- **Root cause**: `SiteFooterPremium` lost the `pb-24` mobile clearance the old `SmartFooter` had.
+- **Fix**: rely on the existing global `body:has([data-bottom-dock]) { padding-bottom: var(--dock-safe-pb) }` rule (already added). If footer still clips, add `pb-[calc(var(--dock-safe-pb)+1rem)] lg:pb-0` to `SiteFooterPremium` outer wrapper.
+
+### 13. Scan IA Step 10 shows "+0 rendez-vous" when recommended plan is Recrue
+- **Root cause**: `planCap = plan?.appointmentsIncluded ?? capacity` — `??` doesn't handle `0`.
+- **Fix**: `const planCap = plan?.appointmentsIncluded && plan.appointmentsIncluded > 0 ? plan.appointmentsIncluded : capacity;` — preserves fallback semantics for Recrue.
+
+### 14. Scan IA wizard drops second-scan users directly on payment step
+- **Root cause**: Zustand store keeps `step` across scans; `setReport` doesn't reset step.
+- **Fix**: extend `setReport` in `useScanWizardState.ts` to also call `set({ step: 1 })`. Add a `resetForNewReport(id)` action if a report id change is detected in `PageScanIAWizard` useEffect.
+
+### 15. "Prêt à avancer? / Parler à Alex" CTA card auto-injected on most pages
+- **Root cause**: `PageShell` defaults `cta="alex"` and `PageCTAFooter` only self-hides on `[data-cta-canonical]` which doesn't exist on legacy pages.
+- **Fix**: flip `PageShell` default to `cta="none"`. Opt-in with `<PageShell cta="alex">` on pages that want it. Leaves current opt-outs (`/alex`, `/checkout`, etc.) unchanged.
+
+---
+
+## Migrations
+
+Exactly one migration:
 
 ```text
-| # | Flow | Issue | Impact | Auto-fixed? | Files touched | Recommended next step |
+20260712_property_shares_rls_no_auth_users
+  DROP POLICY "Users can view their shares" ON public.property_shares;
+  CREATE POLICY "Users can view their shares" ON public.property_shares
+    FOR SELECT TO authenticated
+    USING (
+      shared_with_user_id = auth.uid()
+      OR shared_with_email = (auth.jwt() ->> 'email')
+    );
 ```
 
-Plus a short executive summary of what is live, what is broken, and the top 5 revenue leaks.
+No new columns, no renames, no data moves.
 
-## Technical notes
-- Read-only exploration: `rg`, `code--view`, `supabase--read_query`, `supabase--linter`, edge function logs, `security--run_security_scan`.
-- Runtime verification: Playwright against `http://localhost:8080` at mobile viewport with the injected Supabase session (per browser-use knowledge).
-- Auto-fix scope in Wave 1 is intentionally narrow: only presentation/routing/redirect fixes that cannot break existing revenue. No schema, no RLS, no pricing, no Alex prompt edits without approval.
-- Waves 2 and 3 return findings only; you approve before I edit.
+---
 
-## Out of scope for this pass
-- Full load/performance testing.
-- Full security scan (call `security--run_security_scan` separately if needed).
-- Rewrites of Alex prompt, pricing, or brand copy.
-- New features. Audit only.
+## Validation matrix (must all pass)
+
+| Check | How |
+|---|---|
+| Types regen | after property_shares migration |
+| Type-check | `tsgo` on changed files |
+| Mon profil loads | shell curl `contractors?select=business_name,rbq_number,city,contractor_services(...)&user_id=eq.<uid>` |
+| Contractor verification history loads | curl `contractor_verification_runs?contractor_id=eq.<id>` |
+| Contractor notifications load | curl `notifications?profile_id=eq.<uid>` |
+| Contractor checkout price lookup | curl the fn, expect `client_secret` |
+| `$1` activation checkout still creates `cs_live_` | live-fire `create-activation-checkout` |
+| `/activation` renders solicitation, `/activation/start` renders `PageActivationStart` | Playwright |
+| `PageCheckoutSuccess` "Connecter mon agenda" → `/activation/start` | Playwright |
+| System Health / Edge Function Health pages load | Playwright |
+| Property share dialog opens without RLS error | Playwright signed-in |
+| Homepage `/` shows bottom dock at 384×706 | Playwright |
+| Footer copyright fully visible on mobile | Playwright screenshot |
+| Google Maps autocomplete on unpro.ca | already verified server-side; smoke-test again |
+
+---
+
+## Reporting format at the end
+
+One table per finding with columns: `#`, `Issue`, `Root cause`, `Canonical schema`, `Files changed`, `Migration`, `Test result`, `Revenue impact`, `Final status`. Plus PASS/FAIL for: new contractor registration, existing contractor login, Mon profil, $1 Stripe payment, webhook receipt, paid status saved, profile published, Alex recommendation eligibility, address autocomplete, mobile top routes, admin health pages.
+
+Success is declared only if the full chain **registration → payment → webhook → publication → recommendation eligibility** passes end-to-end. Any failure rolls back the offending edit.
