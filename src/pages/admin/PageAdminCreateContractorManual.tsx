@@ -747,7 +747,8 @@ const PageAdminCreateContractorManual = () => {
       )}
 
       {/* Sticky CTA */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-[#060B14]/90 backdrop-blur-xl">
+      <div data-dock-safe-fixed className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-[#060B14]/90 backdrop-blur-xl">
+
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="text-xs text-white/60 hidden sm:block">
             <span className="text-white">{businessName || "Nouvelle fiche"}</span> · {city || "—"} ·{" "}
