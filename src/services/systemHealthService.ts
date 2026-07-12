@@ -56,11 +56,18 @@ export interface EdgeOutcomeRow {
   last_duration_ms: number | null;
 }
 
+/**
+ * Canonical schema: `platform_operation_outcomes.business_outcome` (enum).
+ * Rows with business_outcome ∈ {succeeded, recovered} count as success.
+ * The table has no `duration_ms` column — `last_duration_ms` is always null here.
+ */
+const SUCCESS_OUTCOMES = new Set(["succeeded", "recovered"]);
+
 export async function loadEdgeFunctionOutcomes(limit = 50): Promise<EdgeOutcomeRow[]> {
   const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
   const { data } = await (supabase as any)
     .from("platform_operation_outcomes")
-    .select("operation, success, failure_code, duration_ms, created_at")
+    .select("operation, business_outcome, failure_code, created_at")
     .gte("created_at", since)
     .limit(10000);
   const map = new Map<string, EdgeOutcomeRow>();
@@ -73,14 +80,14 @@ export async function loadEdgeFunctionOutcomes(limit = 50): Promise<EdgeOutcomeR
       last_error: null,
       last_duration_ms: null,
     };
-    if (r.success) cur.success_count++;
+    const ok = SUCCESS_OUTCOMES.has(r.business_outcome);
+    if (ok) cur.success_count++;
     else {
       cur.fail_count++;
-      if (!cur.last_error) cur.last_error = r.failure_code ?? "unknown";
+      if (!cur.last_error) cur.last_error = r.failure_code ?? r.business_outcome ?? "unknown";
     }
     if (!cur.last_run || r.created_at > cur.last_run) {
       cur.last_run = r.created_at;
-      cur.last_duration_ms = r.duration_ms ?? cur.last_duration_ms;
     }
     map.set(r.operation, cur);
   }
