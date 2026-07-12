@@ -1023,6 +1023,10 @@
     [data-dock-safe="auto"] {
       padding-bottom: var(--dock-safe-pb);
     }
+    /* Fixed/sticky elements can opt-in and automatically clear the dock. */
+    [data-dock-safe-fixed] {
+      bottom: var(--dock-safe-pb) !important;
+    }
   }
   /* Reusable spacer utility */
   .dock-safe-spacer {

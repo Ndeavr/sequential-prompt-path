@@ -154,6 +154,7 @@ const PageCalculateurTaxesQuebec = lazyWithRetry(() => import("@/pages/calculato
 const PageIsRoyalCalculateurTaxes = lazyWithRetry(() => import("@/pages/calculators/PageIsRoyalCalculateurTaxes"));
 const PaintingCalculatorPage = lazyWithRetry(() => import("@/pages/painting/PaintingCalculatorPage"));
 const PageAIGrowthDiagnostic = lazyWithRetry(() => import("@/pages/diagnostic/PageAIGrowthDiagnostic"));
+const PageDiagnostic = lazyWithRetry(() => import("@/pages/diagnostic/PageDiagnostic"));
 
 // Lightweight loading fallback
 const LazyFallback = () => (
@@ -933,6 +934,7 @@ export const AppRouter = () => (
         <Route path="/peinture/calculateur" element={<Suspense fallback={<LazyFallback />}><PaintingCalculatorPage /></Suspense>} />
         <Route path="/:city/peinture/calculateur" element={<Suspense fallback={<LazyFallback />}><PaintingCalculatorPage /></Suspense>} />
         <Route path="/diagnostic-ia" element={<Suspense fallback={<LazyFallback />}><PageAIGrowthDiagnostic /></Suspense>} />
+        <Route path="/diagnostic" element={<Suspense fallback={<LazyFallback />}><PageDiagnostic /></Suspense>} />
         <Route path="/go" element={<PageAdLandingAipp />} />
         <Route path="/aipp-check" element={<PageAdLandingAipp />} />
         <Route path="/scan-ia" element={<Suspense fallback={<LazyFallback />}><PageScanIALanding /></Suspense>} />
