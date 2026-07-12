@@ -46,7 +46,17 @@ export const useScanWizardState = create<WizardState>((set, get) => ({
   goal: null,
   capacity: 10,
   selectedPlan: null,
-  setReport: (r) => set({ report: r, capacity: r.user_capacity ?? 10, goal: (r.user_goal as BusinessGoal) ?? null }),
+  setReport: (r) => {
+    const prev = get().report;
+    // Reset to step 1 when a new report is loaded so users don't get dropped on the payment step.
+    const shouldResetStep = !prev || prev.id !== r.id;
+    set({
+      report: r,
+      capacity: r.user_capacity ?? 10,
+      goal: (r.user_goal as BusinessGoal) ?? null,
+      ...(shouldResetStep ? { step: 1, selectedPlan: null } : {}),
+    });
+  },
   setStep: (s) => set({ step: Math.max(1, Math.min(TOTAL_STEPS, s)) }),
   next: () => set({ step: Math.min(TOTAL_STEPS, get().step + 1) }),
   prev: () => set({ step: Math.max(1, get().step - 1) }),
