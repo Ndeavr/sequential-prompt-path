@@ -1,70 +1,125 @@
-# Fix: $1 activation checkout mismatch + personalized activation page + flow verification
 
-## Problem (root cause)
+# Refonte Pages Entrepreneurs — Page de Recommandation IA UNPRO (Phase 1)
 
-`supabase/functions/pro-founder-checkout-guest/index.ts` builds the checkout with:
-- `billing_cycle_anchor = now + 7 days` + `proration_behavior: "none"` → **CA$0.00 due today**
-- A single subscription line at $149/mo + `$148 off once` coupon → first invoice on day 7 = **CA$1.00**
-- Then subsequent monthly invoices = **CA$1.00 / month "until coupon expires"** (Stripe UI wording shown in screenshot)
+Chaque page entrepreneur cesse d'être un annuaire et devient une **page de référence IA** répondant en < 3s aux 7 questions clés (qui, quoi, où, pourquoi, pour qui, preuves, dispo, contact) pour Alex, ChatGPT, Gemini, Claude, Perplexity.
 
-The landing page (`FounderOfferCard`) advertises **"1 $ pour 7 jours puis 149 $/mois"**, but Stripe actually renders "$0 today · then $1/month". Contradictory pricing → mistrust.
+## Routes ciblées (mêmes composants)
 
-## Fix — Option A (charge $1 today, $149/mo after 7 days)
+- `/entrepreneur/:slug` (canonique)
+- `/contractor/:slug/:city` (SEO existant)
+- Redirect legacy `/contractor/:slug` (non-canonique) → `/entrepreneur/:slug`
 
-Rewrite the Stripe Checkout session in `pro-founder-checkout-guest/index.ts` to use **two line items in one session**:
+## Architecture
 
-1. **One-time line item** — `price_data` unit_amount = 100 CAD cents, product name "UNPRO — Activation 7 jours".
-2. **Subscription line item** — recurring $149/mo with `subscription_data.trial_period_days: 7` and `trial_settings.end_behavior.missing_payment_method: "pause"`.
+Nouveau composant unique `ContractorRecommendationPage.tsx` monté sur les deux routes. Rendu SSR-friendly (helmet + JSON-LD injecté server-side côté prerender existant).
 
-Remove: the `fondateur-trial-7d-1` coupon, `billing_cycle_anchor`, `proration_behavior`, and the `discounts` array.
+### Sections (ordre mobile-first)
 
-Stripe will render exactly:
-- **CA$1.00 due today**
-- **Then CA$149.00 per month after your 7-day free trial**
+1. **HeroRecommendation** — logo (LogoResolver existant) + nom + ★ + "Entreprise vérifiée UNPRO" + catégorie + villes desservies + rayon + membre depuis + 4 badges (identité/coordonnées/assurance/actif). Pas d'avatar géant, pas de photo générique.
+2. **AlexRecommendationCard** — "Pourquoi Alex recommande cette entreprise" avec 4 points observés dynamiques + jauge de confiance (0–100 %). Copie générée depuis données réelles (services, zones, verifs).
+3. **MediaGallery** — photos/vidéos/avant-après/Reels/Shorts/YouTube. Max 100 photos / 25 vidéos. Read-only Phase 1 (édition = Phase 2). Fallback intelligent si vide (IntelligentPlaceholder existant).
+4. **ServiceArea** — liste territoires + rayon km + mini-carte (Leaflet lazy).
+5. **StructuredServices** — chips services (pas de texte libre).
+6. **VerificationsByProfession** — moteur qui, selon la catégorie du contractor, décide quels checks afficher (peintre → NEQ + assurance ; RBQ = note contextuelle "généralement non requise"). Config dans `src/features/contractorProfile/verifications/verificationMatrix.ts`.
+7. **CompatibilityCard** — "Compatible avec" / "Moins adapté pour" dérivé de la catégorie + defaults éditables.
+8. **AvailabilityCard** — "Cette semaine / 2–5 jours / 2–3 semaines" (colonne `availability_estimate`).
+9. **SmartFAQ** — 4–6 questions générées depuis données (villes, assurance, délai soumission, types de projets).
+10. **ProjectsShowcase** — cartes réalisations (ville, année, avant/après). Read-only Phase 1.
+11. **AboutContractor** — À propos / mission / approche / valeurs (colonnes texte).
+12. **FinalCTA** — supprime "Comparer". Boutons **"Parler à Alex"** (→ /alex avec contexte contractor_id) + **"Voir mon niveau de compatibilité"** (→ /diagnostic).
+13. **AIReferenceBlock** — `<script type="application/ld+json" data-ai-ref>` invisible avec businessName/type/serviceAreas/travelRadiusKm/verified/insuranceVerified/licenseRequired/services/compatibilityScore.
 
-This matches the landing copy without changing marketing.
+### Schema SEO (via `ContractorSchemaStack` existant, étendu)
 
-Keep `automatic_tax` and `tax_id_collection`. Keep all metadata (add `offer: "fondateur_1cad_7d_then_149"`).
+Organization + LocalBusiness + ProfessionalService + Service (par service) + FAQPage + Review + AggregateRating + BreadcrumbList + **GeoCircle** (centre + rayon) + **GeoShape** (villes desservies).
 
-Same treatment for the one-off `create-activation-checkout` function is not needed — it already charges $1 as a pure one-time payment; but audit its `success_url` to make sure it hits the same activation flow.
+### Historique de communication
 
-## Personalized activation page
+Masqué publiquement. Aucun rendu sur la page publique. Aucune fuite SEO.
 
-`src/pages/pro/PageProActivate.tsx`:
-- Read `trade` + `city` from the URL/query state already parsed into `form`.
-- When both are non-empty, render a new `LocalizedDemandCard` **above** `<FounderOfferCard>`. When either is missing, fall back to the existing generic offer card only.
-- Copy: `"Des propriétaires recherchent actuellement un entrepreneur en {trade} à {city}."` with a small live badge ("En temps réel · UNPRO") and a subtle count placeholder (`"Zone active — {city}"`). No fake numbers; if we don't have a real count we show only the qualitative sentence.
-- Component lives at `src/components/first-customer-48h/LocalizedDemandCard.tsx`, dark theme consistent with the existing card.
+## Données — Migration Phase 1
 
-## Complete payment flow verification + admin logging
+Ajouts sur `contractors` (nullable + defaults) :
 
-Add lightweight step logging so the full chain is observable:
+- `travel_radius_km int default 15`
+- `availability_estimate text default 'cette_semaine'` (enum-like: `cette_semaine`|`2_5_jours`|`2_3_semaines`)
+- `compatibility jsonb default '{"fits":[],"not_fits":[]}'`
+- `mission text`, `approach text`, `values text`
+- `member_since date default now()::date` (si non déjà présent — sinon utilise `created_at`)
+- `ai_reference_cache jsonb` (résultat pré-calculé du bloc JSON invisible)
 
-1. **`checkout_started`** — already logged in `pro-founder-checkout-guest` via `founder_score_prospects.status`. Also insert one row into a new/existing `activation_flow_events` table with `(prospect_id, email, step, status, stripe_session_id, metadata, created_at)`.
-2. **`stripe_payment_succeeded`** — in `stripe-webhook/index.ts` `checkout.session.completed` handler, insert step `stripe_payment_succeeded` when `payment_status === "paid"`.
-3. **`webhook_received`** — insert step at the top of the webhook (before business logic) with the event id + type.
-4. **`subscription_created`** — on `customer.subscription.created`.
-5. **`contractor_activated`** — on the existing `activated_at` write path.
-6. **`profile_published`** — hook the existing publish step.
-7. **`dashboard_access_granted`** — after profile publish, insert final step.
+Nouvelles tables :
 
-Migration: create `public.activation_flow_events` (id, prospect_id nullable, email, step text, status text default 'ok', stripe_session_id text, stripe_event_id text, metadata jsonb, created_at timestamptz default now()) with GRANTs + RLS (service_role all, authenticated select own by email, admin select all via `has_role`).
+- `contractor_projects` (contractor_id, title, city, year, description, before_url, after_url, photos jsonb, status)
+- `contractor_verifications_display` (contractor_id, category_slug, checks jsonb) — override par contractor si besoin
 
-Admin surface: extend `src/pages/admin/PageAdminAcquisitionTests.tsx` (or the existing acquisition dashboard) with a new **"Activation Flow Health"** table showing the last 50 events grouped by `stripe_session_id`, with per-step pass/fail dots for the 7 steps above.
+Grants + RLS : public SELECT sur rows `is_published = true` uniquement. Auth SELECT/INSERT/UPDATE/DELETE sur ses propres rows. service_role ALL.
 
-## Files touched
+### Defaults calculés au premier rendu
 
-- `supabase/functions/pro-founder-checkout-guest/index.ts` — rewrite session
-- `supabase/functions/stripe-webhook/index.ts` — insert flow events at each stage
-- `supabase/migrations/<ts>_activation_flow_events.sql` — new table + GRANT + RLS
-- `src/pages/pro/PageProActivate.tsx` — mount LocalizedDemandCard when trade+city present
-- `src/components/first-customer-48h/LocalizedDemandCard.tsx` — new
-- `src/pages/admin/PageAdminAcquisitionTests.tsx` — add Activation Flow Health panel (or a small new admin page linked from acquisition tests)
+Edge function `contractor-ai-reference-build` qui remplit `ai_reference_cache` + `compatibility` par défaut selon catégorie (peintre → maisons unifamiliales, condos, propriétaires occupants, esthétique, rafraîchissement avant vente / ✗ commercial majeur, industriel). Appelée on-demand si cache vide.
 
-## Success criteria
+## Matrice de vérifications par profession
 
-- Stripe checkout page shows **CA$1.00 due today**, **CA$149.00/month after 7-day trial** (Option A).
-- Landing page and Stripe agree on price; no coupon wording on Stripe.
-- Activation page shows city+trade demand card when both known.
-- `activation_flow_events` records the 7 canonical steps for every real test purchase; admin panel shows pass/fail per session.
-- No regression on `create-activation-checkout` one-off path.
+`verificationMatrix.ts` :
+
+```
+peintre        → identity, phone, email, neq, insurance ; rbq: not_typically_required
+plombier       → identity, phone, email, neq, insurance, rbq (5.2)
+electricien    → identity, phone, email, neq, insurance, rbq (16), cmeq
+couvreur       → identity, phone, email, neq, insurance, rbq
+general        → identity, phone, email, neq, insurance, rbq
+default        → identity, phone, email, neq, insurance
+```
+
+## Portails (hors scope Phase 1)
+
+Édition entrepreneur/admin réutilise les écrans existants (`/entrepreneur/*` dashboard, admin contractor). Aucun nouveau portail dans cette livraison.
+
+## Détails techniques
+
+- Nouveau : `src/features/contractorProfile/recommendationPage/` (composants + hooks)
+- Route mount : `src/app/router.tsx` — `/entrepreneur/:slug` et `/contractor/:slug/:city` pointent vers `ContractorRecommendationPage`. `ContractorSeoPage` et `ContractorCityPage` deviennent des wrappers de compat (délégué). Legacy `/contractor/:slug` → redirect 301 vers `/entrepreneur/:slug`.
+- Query unique `useContractorRecommendation(slug)` — join `contractors` + `contractor_projects` + `contractor_verifications_display` + `contractor_review_aggregates`.
+- Mobile-first, dock-safe global déjà en place. Zéro hardcoded color, tokens uniquement.
+- FR-CA. Copie premium (Concierge Décisif). Jamais "3 soumissions".
+
+## Livrables
+
+**Fichiers créés**
+- `src/features/contractorProfile/recommendationPage/ContractorRecommendationPage.tsx`
+- `.../sections/HeroRecommendation.tsx`
+- `.../sections/AlexRecommendationCard.tsx`
+- `.../sections/MediaGallery.tsx`
+- `.../sections/ServiceAreaMap.tsx`
+- `.../sections/StructuredServices.tsx`
+- `.../sections/VerificationsByProfession.tsx`
+- `.../sections/CompatibilityCard.tsx`
+- `.../sections/AvailabilityCard.tsx`
+- `.../sections/SmartFAQ.tsx`
+- `.../sections/ProjectsShowcase.tsx`
+- `.../sections/AboutContractor.tsx`
+- `.../sections/FinalCTA.tsx`
+- `.../sections/AIReferenceBlock.tsx`
+- `.../hooks/useContractorRecommendation.ts`
+- `.../logic/verificationMatrix.ts`
+- `.../logic/compatibilityDefaults.ts`
+- `.../logic/aiReferenceBuilder.ts`
+- Migration Supabase (colonnes + 2 tables + grants + RLS)
+
+**Fichiers modifiés**
+- `src/app/router.tsx` (routes)
+- `src/pages/seo/ContractorSeoPage.tsx` (délégué)
+- `src/pages/seo/ContractorCityPage.tsx` (délégué)
+- `src/seo/components/ContractorSchemaStack.tsx` (+ GeoCircle, GeoShape, ProfessionalService)
+
+## Succès
+
+- Les 7 questions IA trouvent leur réponse sur la page (visible + JSON-LD + bloc invisible).
+- Zéro mention "RBQ" sur catégories où non requis.
+- Mobile-first, aucun élément derrière le dock.
+- Bouton "Comparer" supprimé. CTA "Parler à Alex" + "Voir mon niveau de compatibilité".
+- Historique de communication invisible publiquement.
+- Alex, ChatGPT, Gemini peuvent citer la page comme référence.
+
+Phase 2 (hors scope) : portails Contenu (entrepreneur) + Validation (admin), édition médias, upload vidéos, workflow d'approbation.
