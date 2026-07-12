@@ -42,7 +42,7 @@ export default function PageMonProfil() {
     (async () => {
       const [{ count }, { data: contractor }] = await Promise.all([
         supabase.from("properties").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-        supabase.from("contractors").select("business_name, rbq_number, primary_city, services").eq("user_id", user.id).maybeSingle(),
+        supabase.from("contractors").select("business_name, rbq_number, city, contractor_services(service_key, is_primary)").eq("user_id", user.id).maybeSingle(),
       ]);
       setExtras({ propertiesCount: count ?? 0, contractor: contractor ?? null });
     })();
