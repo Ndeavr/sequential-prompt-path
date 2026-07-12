@@ -109,7 +109,7 @@ export default function PageAdminAcquisitionTests() {
           description="Envoie via Resend avec tags tracking_id. Loggue 'sent', webhook Resend logguera 'delivered'/'opened'."
           run={async () => {
             if (!adminEmail) return { ok: false, error: "Renseigne l'email admin en haut de page.", timestamp: new Date().toISOString() };
-            return invoke("acq-test-send-email", { to: adminEmail });
+            return invoke("acq-test-send-email", { to: adminEmail, strict_admin_override: true });
           }}
         />
         <TestCard
