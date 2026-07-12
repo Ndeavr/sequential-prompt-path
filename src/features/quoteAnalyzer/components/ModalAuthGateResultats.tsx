@@ -43,7 +43,7 @@ export default function ModalAuthGateResultats({ open, fileCount, onAuthSuccess 
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: window.location.href },
+      options: { emailRedirectTo: window.location.origin },
     });
     setLoading(false);
     if (error) {
@@ -59,7 +59,7 @@ export default function ModalAuthGateResultats({ open, fileCount, onAuthSuccess 
   const handleGoogle = async () => {
     setLoading(true);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.href,
+      redirect_uri: window.location.origin,
     });
     if (result.error) {
       setLoading(false);

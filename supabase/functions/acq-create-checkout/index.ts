@@ -64,7 +64,9 @@ Deno.serve(async (req) => {
           source: "acquisition_pipeline",
         },
       },
-      success_url: success_url || `${origin}/pro/onboarding/${prospect_id}/success?session_id={CHECKOUT_SESSION_ID}`,
+      // Success/cancel routes must exist in src/app/router.tsx.
+      // `/activation-success` and `/pro/onboarding/:token` are registered.
+      success_url: success_url || `${origin}/activation-success?session_id={CHECKOUT_SESSION_ID}&prospect=${prospect_id}`,
       cancel_url: cancel_url || `${origin}/pro/onboarding/${prospect_id}?cancelled=1`,
     });
 

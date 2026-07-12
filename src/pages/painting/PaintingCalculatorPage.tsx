@@ -213,7 +213,7 @@ export default function PaintingCalculatorPage() {
 
   async function handleGoogleSignIn() {
     const res = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.href,
+      redirect_uri: window.location.origin,
     });
     if (res.error) {
       toast.error("Connexion impossible pour le moment.");

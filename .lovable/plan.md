@@ -1,112 +1,59 @@
-## Rebuild homepage bottom section + premium footer
+# Production Readiness Audit — Plan
 
-Replace the current dark blue `SiteFooterIntelligence` block and the legacy `SmartFooter` with a two-part premium finish:
+## Scope
+14 flows: registration, login, OTP, contractor onboarding, homeowner onboarding, Stripe checkout, $1 trial activation, profile publication, Google Maps, SMS, email, Alex recommendations, appointment booking, mobile UX.
 
-1. **Emotional closing section** — "Votre maison se souvient."
-2. **Premium dark footer** — 4 columns + trust bottom bar.
+The codebase is very large (553 edge functions, hundreds of pages). A single audit pass cannot execute all 14 flows end-to-end without exceeding a reasonable turn budget. The plan below runs the audit in **3 waves**, ranked by revenue → conversion → trust, and applies **only safe automatic fixes** in wave 1. Waves 2–3 return findings for your approval before edits.
 
-Applied globally via `MainLayout` (both blocks currently render on every public page, so replacement stays consistent).
+## Wave 1 — Revenue-critical (auto-fix if safe)
+Verify and fix same-turn:
+1. **Stripe checkout** (`create-payment`, `activation-create-checkout`, `acq-create-checkout`) — verify success/cancel URLs resolve to real routes, `STRIPE_SECRET_KEY` present, price IDs valid, CORS headers, `FunctionsHttpError` handling on client.
+2. **$1 trial activation** — verify `/activation` route → checkout → success → publish trigger chain, coupon validation (`acq-validate-coupon`), amount = 100 cents, plan mapping.
+3. **Profile publication** (`admin-activation-publish`) — verify trigger on successful trial payment, RLS grants, contractor row status transitions, public route `/entrepreneur/:slug` renders published data.
+4. **Registration + Login + OTP** — verify `/auth`, `/login`, `/signup`, `/role` routes exist and are reachable; Google OAuth uses `lovable.auth.signInWithOAuth` with `redirect_uri: window.location.origin` (not protected routes); `emailRedirectTo` set on signUp; `/reset-password` page exists; OTP via `verifyOtp` returns to correct route.
 
----
+Safe auto-fixes applied without asking:
+- Broken `redirect_uri` pointing at protected routes → replace with `window.location.origin`.
+- Missing `emailRedirectTo` on `signUp` → add.
+- Missing `/reset-password` public route → create.
+- Dead links to routes not registered in `src/app/router.tsx` → remove or point to nearest live route.
+- Stripe success/cancel URLs pointing at 404s → fix to real routes.
+- Missing CORS headers on payment/auth edge functions → add.
 
-### 1. New emotional section — `SectionMemoireMaison`
+Anything larger (schema changes, RLS, pricing, copy) → reported, not auto-fixed.
 
-New file: `src/components/layout/SectionMemoireMaison.tsx`
+## Wave 2 — Conversion-critical (report + propose fixes)
+5. **Contractor onboarding** — walk `/entrepreneur/*` funnel: landing → AIPP scan → checkout → activation → profile completion. Report every dead button, missing route, and gate that blocks reaching checkout.
+6. **Homeowner onboarding** — walk `/` → Alex greet → intent capture → recommendation → booking. Report where value takes >5s to appear or a form appears before value.
+7. **Alex recommendations** (`alex-best-match-select`, `alex-inline-booking`, `alex-respond`) — verify recommendation returns a single pro (Concierge Décisif), never "3 quotes"; verify handoff to booking works; verify FR-only guard fires on English input.
+8. **Appointment booking** — verify `bookings` insert path, `availability_slots` respected, confirmation SMS+email fire, calendar reflects new booking.
+9. **Google Maps integration** — verify `GOOGLE_MAPS_BROWSER_KEY` used in client (autocomplete, map render), `GOOGLE_MAPS_API_KEY` used server-side (geocode, places); no 403/REQUEST_DENIED; billing/referrer restrictions correct for `unpro.ca` + preview domains.
 
-Content (exact, verbatim from user):
+For each finding: **Issue → Impact → Proposed fix → Revenue/Conversion/Trust rank**.
 
-- **Headline (H2, large, tight tracking)**: `Votre maison se souvient.`
-- **Body** — 5 short lines, each on its own row, muted rhythm:
-  - Elle conserve son historique.
-  - Elle retrouve ses documents.
-  - Elle anticipe les entretiens.
-  - Elle vous aide à éviter les mauvaises surprises.
-  - Bienvenue dans le Passeport Maison.
-- **Subtext**: `UNPRO aide les propriétaires québécois à conserver l'information importante de leur propriété afin de prendre des décisions plus éclairées, plus rapides et plus rentables.`
-- **Primary CTA**: `Créer mon Passeport Maison` → `/dashboard/properties/new`
-- **Secondary CTA**: `Parler à Alex` → `/alex`
+## Wave 3 — Trust + delivery (report + propose fixes)
+10. **SMS sending** (`acq-sms-send`, `approve-isr-sms`) — verify Twilio/provider secret configured, sender domain/number valid, opt-out compliant, failure logging.
+11. **Email sending** — verify auth email hook (`auth-email-hook`) deployed, domain DNS status, transactional templates exist, bounce/complaint handling.
+12. **Mobile UX** — run Playwright at 384×706 across: `/`, `/entrepreneur`, `/pro`, `/dashboard`, `/alex`, `/checkout`, `/activation`. Verify: floating dock does not overlap footer (fix already deployed), tap targets ≥44px, one-handed reach, forms not appearing before value, no horizontal overflow.
+13. **Cross-cutting**: dead links scan (rg over all `<Link to=` and `href=` vs `router.tsx`), missing pages, hidden content behind `display:none` or `lg:hidden` on mobile, permission prompts firing on page load (should be event-driven per memory).
 
-Visual:
-- Dark cinematic background (base `#050816` with subtle radial glow top, no gradient stripe)
-- Centered column, max-w-3xl, generous vertical rhythm (py-24 md:py-32)
-- H2 uses `text-4xl md:text-6xl font-semibold tracking-[-0.03em]` in `text-foreground`
-- Body lines in `text-lg md:text-xl text-foreground/85`, stacked with `space-y-2`
-- Subtext in `text-sm md:text-base text-muted-foreground max-w-xl`
-- CTAs: primary = filled premium button (bg-primary, rounded-2xl, h-14, px-8); secondary = ghost outline
-- Mobile-first: stacks CTAs vertically <sm, side-by-side ≥sm
+## Deliverable format (final report)
+Table ranked by (Revenue → Conversion → Trust) with columns:
 
-### 2. New footer — `SiteFooterPremium`
-
-New file: `src/components/layout/SiteFooterPremium.tsx`. Replaces `SiteFooterIntelligence` + `SmartFooter`.
-
-Structure (single dark container, `border-t border-white/10`, bg near-black gradient):
-
-**Top brand block (spans full width or col 1)**
-- Wordmark **UNPRO** (large, tight)
-- `L'intelligence artificielle au service des propriétaires québécois.`
-- `UNPRO aide les propriétaires à comprendre leur maison, conserver son historique, anticiper les problèmes et trouver les bons professionnels au bon moment.`
-
-**4 columns** (grid, 1 col mobile / 2 cols sm / 4 cols lg):
-
-- **Pour les propriétaires**
-  - Passeport Maison → `/pim`
-  - Score Maison → `/dashboard/home-score`
-  - Trouver un entrepreneur → `/alex`
-  - Vérifier un entrepreneur → `/verifier-entrepreneur`
-  - Intelligence copropriété → `/copropriete`
-  - Alex → `/alex`
-- **Pour les entrepreneurs**
-  - Être recommandé par l'IA → `/entrepreneurs`
-  - Activation 7 jours à 1 $ → `/pro/activate`
-  - Plans et tarifs → `/pricing/entrepreneurs`
-  - Fonctionnement → `/comment-fonctionne-ia`
-  - Centre d'aide → `/aide`
-- **Ressources**
-  - Journal → `/journal`
-  - FAQ → `/faq`
-  - Contact → `/contact`
-- **Confiance**
-  - Politique de confidentialité → `/confidentialite`
-  - Conditions d'utilisation → `/conditions`
-  - Vérification RBQ → `/verifier-entrepreneur`
-
-All destinations verified against `src/app/router.tsx` — no dead links.
-
-**Bottom bar** (`border-t border-white/10 mt-16 py-6`, flex between, wraps on mobile):
-- Left: `UNPRO © 2026`
-- Center (italic, muted-foreground): `Votre maison devrait se souvenir de tout.`
-- Right: `Québec • Canada`
-
-Visual:
-- Background: solid `#050816` with 1% white noise overlay to match Cinematic Dark base
-- Column headings: `text-[11px] uppercase tracking-[0.22em] font-semibold text-foreground/70`
-- Links: `text-sm text-muted-foreground hover:text-foreground transition-colors`
-- Brand wordmark: `text-3xl font-bold tracking-[-0.04em] text-foreground`
-- Padding: `py-16 md:py-20`, max-w-7xl, px-6
-
-### 3. Wire into layout
-
-Edit `src/layouts/MainLayout.tsx`:
-- Remove imports and JSX for `SiteFooterIntelligence` and `SmartFooter`.
-- Add `SectionMemoireMaison` before the footer.
-- Add `SiteFooterPremium` after.
-- Keep `FooterSEOGrid` conditional as-is (SEO routes only).
-
-Result:
 ```text
-...children
-  → FooterSEOGrid (conditional)
-  → SectionMemoireMaison
-  → SiteFooterPremium
+| # | Flow | Issue | Impact | Auto-fixed? | Files touched | Recommended next step |
 ```
 
-### Technical notes
-- Semantic tokens only (`text-foreground`, `text-muted-foreground`, `bg-background`, `bg-primary`). No hardcoded hex outside the section's base bg constant.
-- `<Link>` from `react-router-dom` for all navigation.
-- No new packages, no data fetching, purely presentational.
-- Legacy `SiteFooterIntelligence.tsx` and `SmartFooter` files kept on disk (unused) so any deep imports elsewhere don't break; can be pruned in a later cleanup.
+Plus a short executive summary of what is live, what is broken, and the top 5 revenue leaks.
 
-### Scope guardrails
-- Frontend/presentation only.
-- No changes to Alex, routing config, analytics, or business logic.
-- All copy verbatim from the user's brief.
+## Technical notes
+- Read-only exploration: `rg`, `code--view`, `supabase--read_query`, `supabase--linter`, edge function logs, `security--run_security_scan`.
+- Runtime verification: Playwright against `http://localhost:8080` at mobile viewport with the injected Supabase session (per browser-use knowledge).
+- Auto-fix scope in Wave 1 is intentionally narrow: only presentation/routing/redirect fixes that cannot break existing revenue. No schema, no RLS, no pricing, no Alex prompt edits without approval.
+- Waves 2 and 3 return findings only; you approve before I edit.
+
+## Out of scope for this pass
+- Full load/performance testing.
+- Full security scan (call `security--run_security_scan` separately if needed).
+- Rewrites of Alex prompt, pricing, or brand copy.
+- New features. Audit only.

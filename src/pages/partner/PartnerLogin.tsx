@@ -56,7 +56,7 @@ export default function PartnerLogin() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/partenaire/dashboard`,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: { full_name: `${firstName} ${lastName}`.trim() },
       },
     });

@@ -1411,7 +1411,7 @@ export const AppRouter = () => (
         <Route path="/admin/aipp-profiles" element={<ProtectedRoute requiredRole="admin"><PageAippProfiles /></ProtectedRoute>} />
         <Route path="/contractor/aipp-cockpit" element={<ProtectedRoute><PageContractorAippCockpit /></ProtectedRoute>} />
         <Route path="/activation/:slug" element={<PageAcqActivation />} />
-        <Route path="/activation-success" element={<PageActivationSuccess />} />
+        {/* Duplicate route removed — `/activation-success` is registered above (line 1042). */}
         <Route path="/admin/war-room" element={<ProtectedRoute requiredRole="admin"><PageAdminWarRoom /></ProtectedRoute>} />
         <Route path="/admin/contractors/create-manual" element={<ProtectedRoute requiredRole="admin"><PageAdminCreateContractorManual /></ProtectedRoute>} />
         <Route path="/admin/contractors/:id" element={<ProtectedRoute requiredRole="admin"><AdminContractorDetail /></ProtectedRoute>} />
