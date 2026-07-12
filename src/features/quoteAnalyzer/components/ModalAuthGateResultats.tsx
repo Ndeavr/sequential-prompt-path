@@ -43,7 +43,7 @@ export default function ModalAuthGateResultats({ open, fileCount, onAuthSuccess 
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: window.location.href },
+      options: { emailRedirectTo: window.location.origin },
     });
     setLoading(false);
     if (error) {
