@@ -28,7 +28,8 @@ export default function Step10Projection() {
   // - can't exceed what the plan actually delivers (RDV inclus)
   const topCity = report?.territory_demand?.[0];
   const topCityDemand = Math.max(0, Number(topCity?.waiting_homeowners ?? 0));
-  const planCap = plan?.appointmentsIncluded ?? capacity;
+  // Use plan cap only when > 0; Recrue has appointmentsIncluded=0, fall back to capacity.
+  const planCap = plan?.appointmentsIncluded && plan.appointmentsIncluded > 0 ? plan.appointmentsIncluded : capacity;
   const additional = Math.min(capacity, topCityDemand || capacity, planCap);
   const projected = today + additional;
 
