@@ -99,21 +99,25 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     // Try to find existing Stripe price via plan_catalog table (best-effort).
+    // Canonical columns: stripe_monthly_price_id, stripe_yearly_price_id.
+    // One-time prices are not stored in plan_catalog — use inline price_data fallback.
     let priceId: string | undefined;
     try {
       const supabaseService = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       );
-      const { data: catalogRow } = await supabaseService
+      const { data: catalogRow, error: catErr } = await supabaseService
         .from("plan_catalog")
-        .select("stripe_price_id_monthly, stripe_price_id_one_time")
+        .select("stripe_monthly_price_id, stripe_yearly_price_id")
         .eq("code", planCode)
         .maybeSingle();
-      priceId = plan.recurring
-        ? catalogRow?.stripe_price_id_monthly
-        : catalogRow?.stripe_price_id_one_time;
-      if (priceId) logStep("Found Stripe price in plan_catalog", { priceId });
+      if (catErr) {
+        logStep("plan_catalog lookup error", { error: catErr.message });
+      } else if (plan.recurring) {
+        priceId = catalogRow?.stripe_monthly_price_id ?? undefined;
+        if (priceId) logStep("Found Stripe price in plan_catalog", { priceId });
+      }
     } catch (e) {
       logStep("plan_catalog lookup skipped", { error: (e as Error).message });
     }

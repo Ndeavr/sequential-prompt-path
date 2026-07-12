@@ -61,7 +61,7 @@ export default function PageShell({
   className = "",
   style,
   id,
-  cta = "alex",
+  cta = false,
 }: PageShellProps) {
   const Tag = (as ?? "main") as ElementType;
 

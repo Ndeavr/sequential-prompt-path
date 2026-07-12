@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useContractorProfile } from "./useContractor";
 
-/** Real notifications from DB — uses `as any` since notifications table may not be in generated types */
+/** Real notifications from DB. Canonical column: notifications.profile_id (FK profiles.id, == auth.uid()). */
 export const useContractorNotifications = () => {
   const { user } = useAuth();
   return useQuery<any[]>({
@@ -16,13 +16,10 @@ export const useContractorNotifications = () => {
       const { data, error } = await (supabase as any)
         .from("notifications")
         .select("*")
-        .eq("recipient_user_id", user!.id)
+        .eq("profile_id", user!.id)
         .order("created_at", { ascending: false })
         .limit(10);
-      if (error) {
-        console.warn("Notifications query failed:", error.message);
-        return [];
-      }
+      if (error) throw error;
       return data ?? [];
     },
     enabled: !!user?.id,

@@ -56,7 +56,7 @@ export default function PageScanIAActivationSuccess() {
               Cela peut prendre une minute. Vous pouvez créer votre compte dès maintenant.
             </p>
             <Link
-              to={`/register?scan=${encodeURIComponent(token ?? "")}`}
+              to={`/signup?scan=${encodeURIComponent(token ?? "")}`}
               className="inline-flex items-center gap-2 rounded-2xl bg-white px-8 py-4 text-base font-semibold text-[#050816]"
             >
               Créer mon compte <ArrowRight className="h-5 w-5" />
@@ -71,7 +71,7 @@ export default function PageScanIAActivationSuccess() {
               votre configuration et commencer à recevoir des rendez-vous.
             </p>
             <Link
-              to={`/register?scan=${encodeURIComponent(token ?? "")}`}
+              to={`/signup?scan=${encodeURIComponent(token ?? "")}`}
               className="inline-flex items-center gap-2 rounded-2xl bg-white px-8 py-4 text-base font-semibold text-[#050816] transition hover:-translate-y-0.5"
             >
               Créer mon compte <ArrowRight className="h-5 w-5" />
