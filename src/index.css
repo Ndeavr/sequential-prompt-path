@@ -1008,6 +1008,32 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
+  /* ─── Global BottomDock protection ───
+     Any layout that mounts a fixed bottom dock (BottomDockGlass /
+     MobileBottomNav) is marked with [data-bottom-dock]. When present, we
+     reserve dock-safe space at the end of the page-scroll container so the
+     footer + last content block are never hidden behind the floating nav.
+     Applies below the `lg` breakpoint only (the dock is `lg:hidden`).
+     Works for both body-scroll layouts (marketing pages) and any parent
+     using `data-dock-safe` as an escape hatch. */
+  @media (max-width: 1023.98px) {
+    body:has([data-bottom-dock]) {
+      padding-bottom: var(--dock-safe-pb);
+    }
+    [data-dock-safe="auto"] {
+      padding-bottom: var(--dock-safe-pb);
+    }
+  }
+  /* Reusable spacer utility */
+  .dock-safe-spacer {
+    height: 0;
+  }
+  @media (max-width: 1023.98px) {
+    .dock-safe-spacer {
+      height: var(--dock-safe-pb);
+    }
+  }
+
   /* ─── Smooth theme transition ─── */
   :root {
     transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;

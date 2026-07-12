@@ -14,6 +14,7 @@ import FooterSEOGrid from "@/components/navigation/FooterSEOGrid";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import DeferredAfterInteractive from "@/components/system/DeferredAfterInteractive";
 import PageShell from "@/layouts/PageShell";
+import BottomDockSafeArea from "@/components/layout/BottomDockSafeArea";
 
 const AlexCompanionOrb = lazy(() => import("@/components/alex/AlexCompanionOrb"));
 const MobileBottomNav = lazy(() => import("@/components/home-unicorn/BottomDockGlass"));
@@ -50,11 +51,14 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
 
       <SmartHeader />
-      <PageShell variant="marketing" className="flex-1 relative z-0">{children}</PageShell>
+      <PageShell variant="marketing" dockSafe={false} className="flex-1 relative z-0">{children}</PageShell>
 
       {showSEOGrid && <FooterSEOGrid />}
       <SectionMemoireMaison />
       <SiteFooterPremium />
+      {/* Global dock-safe spacer — guarantees footer + last block clear
+          the fixed BottomDock on mobile even if body:has() is unsupported. */}
+      <BottomDockSafeArea />
 
       {/* All deferred — never blocks first paint */}
       <DeferredAfterInteractive>
