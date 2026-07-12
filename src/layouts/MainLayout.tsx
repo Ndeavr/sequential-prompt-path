@@ -14,6 +14,7 @@ import FooterSEOGrid from "@/components/navigation/FooterSEOGrid";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import DeferredAfterInteractive from "@/components/system/DeferredAfterInteractive";
 import PageShell from "@/layouts/PageShell";
+import BottomDockSafeArea from "@/components/layout/BottomDockSafeArea";
 
 const AlexCompanionOrb = lazy(() => import("@/components/alex/AlexCompanionOrb"));
 const MobileBottomNav = lazy(() => import("@/components/home-unicorn/BottomDockGlass"));
