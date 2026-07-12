@@ -76,6 +76,18 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Log every webhook receipt into the activation flow (best-effort).
+    {
+      const obj = (event.data.object as any) || {};
+      await logActivationStep(supabase, "webhook_received", {
+        stripe_event_id: event.id,
+        stripe_session_id: obj?.id ?? null,
+        metadata: { event_type: event.type },
+      });
+    }
+
+
+
     // Observability: log to stripe_webhook_events (idempotent via unique stripe_event_id)
     const receivedAt = new Date().toISOString();
     const sessionObj = (event.data.object as any) || {};
