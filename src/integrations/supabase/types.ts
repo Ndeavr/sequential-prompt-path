@@ -32860,6 +32860,104 @@ export type Database = {
           },
         ]
       }
+      contractor_projects: {
+        Row: {
+          after_url: string | null
+          before_url: string | null
+          city: string | null
+          contractor_id: string
+          created_at: string
+          description: string | null
+          id: string
+          photos: Json | null
+          sort_order: number | null
+          status: string
+          title: string
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          after_url?: string | null
+          before_url?: string | null
+          city?: string | null
+          contractor_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          photos?: Json | null
+          sort_order?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          after_url?: string | null
+          before_url?: string | null
+          city?: string | null
+          contractor_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          photos?: Json | null
+          sort_order?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_projects_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_projects_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_projects_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_projects_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_projects_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_projects_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_projects_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_prospect_contacts: {
         Row: {
           bounce_status: string | null
@@ -37064,6 +37162,83 @@ export type Database = {
           },
         ]
       }
+      contractor_verifications_display: {
+        Row: {
+          category_slug: string
+          checks: Json
+          contractor_id: string
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          category_slug: string
+          checks?: Json
+          contractor_id: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          category_slug?: string
+          checks?: Json
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_verifications_display_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_verifications_display_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_verifications_display_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_verifications_display_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_verifications_display_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_verifications_display_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_verifications_display_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_visibility_metrics: {
         Row: {
           contractor_id: string
@@ -37305,7 +37480,10 @@ export type Database = {
           address: string | null
           admin_note: string | null
           admin_verified: boolean | null
+          ai_reference_cache: Json | null
           aipp_score: number | null
+          approach: string | null
+          availability_estimate: string | null
           booking_base_lat: number | null
           booking_base_lng: number | null
           booking_default_rounding_minutes: number | null
@@ -37318,6 +37496,7 @@ export type Database = {
           booking_timezone: string | null
           business_name: string
           city: string | null
+          compatibility: Json | null
           created_at: string
           description: string | null
           email: string | null
@@ -37336,6 +37515,7 @@ export type Database = {
           legal_name: string | null
           license_number: string | null
           logo_url: string | null
+          mission: string | null
           neq: string | null
           normalized_business_name: string | null
           normalized_phone: string | null
@@ -37356,10 +37536,14 @@ export type Database = {
           review_count: number | null
           reviewed_at: string | null
           reviewed_by: string | null
+          service_areas: string[] | null
+          services_structured: string[] | null
           slug: string | null
           specialty: string | null
+          travel_radius_km: number | null
           updated_at: string
           user_id: string
+          values_text: string | null
           verification_notes: string | null
           verification_status:
             | Database["public"]["Enums"]["verification_status"]
@@ -37374,7 +37558,10 @@ export type Database = {
           address?: string | null
           admin_note?: string | null
           admin_verified?: boolean | null
+          ai_reference_cache?: Json | null
           aipp_score?: number | null
+          approach?: string | null
+          availability_estimate?: string | null
           booking_base_lat?: number | null
           booking_base_lng?: number | null
           booking_default_rounding_minutes?: number | null
@@ -37387,6 +37574,7 @@ export type Database = {
           booking_timezone?: string | null
           business_name: string
           city?: string | null
+          compatibility?: Json | null
           created_at?: string
           description?: string | null
           email?: string | null
@@ -37405,6 +37593,7 @@ export type Database = {
           legal_name?: string | null
           license_number?: string | null
           logo_url?: string | null
+          mission?: string | null
           neq?: string | null
           normalized_business_name?: string | null
           normalized_phone?: string | null
@@ -37425,10 +37614,14 @@ export type Database = {
           review_count?: number | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          service_areas?: string[] | null
+          services_structured?: string[] | null
           slug?: string | null
           specialty?: string | null
+          travel_radius_km?: number | null
           updated_at?: string
           user_id: string
+          values_text?: string | null
           verification_notes?: string | null
           verification_status?:
             | Database["public"]["Enums"]["verification_status"]
@@ -37443,7 +37636,10 @@ export type Database = {
           address?: string | null
           admin_note?: string | null
           admin_verified?: boolean | null
+          ai_reference_cache?: Json | null
           aipp_score?: number | null
+          approach?: string | null
+          availability_estimate?: string | null
           booking_base_lat?: number | null
           booking_base_lng?: number | null
           booking_default_rounding_minutes?: number | null
@@ -37456,6 +37652,7 @@ export type Database = {
           booking_timezone?: string | null
           business_name?: string
           city?: string | null
+          compatibility?: Json | null
           created_at?: string
           description?: string | null
           email?: string | null
@@ -37474,6 +37671,7 @@ export type Database = {
           legal_name?: string | null
           license_number?: string | null
           logo_url?: string | null
+          mission?: string | null
           neq?: string | null
           normalized_business_name?: string | null
           normalized_phone?: string | null
@@ -37494,10 +37692,14 @@ export type Database = {
           review_count?: number | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          service_areas?: string[] | null
+          services_structured?: string[] | null
           slug?: string | null
           specialty?: string | null
+          travel_radius_km?: number | null
           updated_at?: string
           user_id?: string
+          values_text?: string | null
           verification_notes?: string | null
           verification_status?:
             | Database["public"]["Enums"]["verification_status"]
