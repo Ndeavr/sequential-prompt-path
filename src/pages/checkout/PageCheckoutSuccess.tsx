@@ -263,7 +263,7 @@ export default function PageCheckoutSuccess() {
               size="lg"
               variant="premium"
               className="w-full h-12 rounded-xl text-base"
-              onClick={() => navigate("/activation")}
+              onClick={() => navigate("/activation/start")}
             >
               <Calendar className="w-4 h-4 mr-2" /> Connecter mon agenda
             </Button>
