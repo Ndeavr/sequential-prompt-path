@@ -17,6 +17,24 @@ function getSubscriptionPeriod(sub: any): { start: string | null; end: string | 
   return { start: toIso(startSec), end: toIso(endSec) };
 }
 
+// Activation flow observability — best-effort insert, never throws.
+async function logActivationStep(
+  supabase: any,
+  step: string,
+  payload: Record<string, unknown>,
+) {
+  try {
+    await supabase.from("activation_flow_events").insert({
+      step,
+      status: "ok",
+      ...payload,
+    });
+  } catch (_) {
+    /* soft-fail */
+  }
+}
+
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
