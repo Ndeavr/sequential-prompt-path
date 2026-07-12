@@ -15,6 +15,7 @@ import AuthOverlayPremium from "@/components/auth/AuthOverlayPremium";
 import HomeWithFeatureFlag from "@/components/home-intent/HomeWithFeatureFlag";
 import PageHomeUnicorn from "@/pages/PageHomeUnicorn";
 import HomeAbSwitch from "@/components/home-ab/HomeAbSwitch";
+import MainLayout from "@/layouts/MainLayout";
 const PageHomeVariantB = lazyWithRetry(() => import("@/pages/home/PageHomeVariantB"));
 const PageHomeVariantC = lazyWithRetry(() => import("@/pages/home/PageHomeVariantC"));
 import Home from "@/pages/Home";
