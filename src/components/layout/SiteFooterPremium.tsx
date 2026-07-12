@@ -64,7 +64,7 @@ export default function SiteFooterPremium() {
       className="relative border-t border-white/10"
       style={{ backgroundColor: "#050816" }}
     >
-      <div className="mx-auto max-w-7xl px-6 py-16 md:py-20">
+      <div className="mx-auto max-w-7xl px-6 pt-16 md:pt-20 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-20">
         {/* Brand block */}
         <div className="max-w-2xl mb-14 md:mb-16">
           <div className="text-3xl md:text-4xl font-bold tracking-[-0.04em] text-foreground mb-5">
