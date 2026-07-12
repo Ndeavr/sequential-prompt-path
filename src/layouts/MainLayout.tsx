@@ -51,7 +51,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
 
       <SmartHeader />
-      <PageShell variant="marketing" dockSafe={false} className="flex-1 relative z-0">{children}</PageShell>
+      <PageShell variant="marketing" dockSafe className="flex-1 relative z-0">{children}</PageShell>
 
       {showSEOGrid && <FooterSEOGrid />}
       <SectionMemoireMaison />
