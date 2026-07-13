@@ -42,6 +42,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const showSEOGrid = ["/problemes", "/services", "/villes", "/professionnels"].some(
     (prefix) => pathname.startsWith(prefix)
   );
+  // Unicorn home renders its own HeaderFloatingGlass — skip SmartHeader there to avoid duplicate.
+  const showSmartHeader = !["/", "/index"].includes(pathname);
 
   return (
     <div className="min-h-[100svh] flex flex-col relative w-full max-w-full overflow-visible">
@@ -50,7 +52,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
 
 
-      <SmartHeader />
+      {showSmartHeader && <SmartHeader />}
       <PageShell variant="marketing" dockSafe className="flex-1 relative z-0">{children}</PageShell>
 
       {showSEOGrid && <FooterSEOGrid />}
