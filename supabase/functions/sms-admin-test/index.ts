@@ -28,6 +28,24 @@ Deno.serve(async (req) => {
     const { data: role } = await admin.from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle();
     if (!role) return json({ error: "forbidden" }, 403);
 
+    // Rate limit: max 1 test SMS every 5 minutes across the whole system
+    const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const { data: recent } = await admin
+      .from("sms_test_runs")
+      .select("id,created_at")
+      .gte("created_at", cutoff)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (recent && recent.length > 0) {
+      const ageSec = Math.floor((Date.now() - new Date(recent[0].created_at).getTime()) / 1000);
+      const waitSec = Math.max(1, 300 - ageSec);
+      return json({
+        ok: false,
+        error_code: "RATE_LIMITED",
+        error_message: `Rate limit: attendez ${waitSec}s avant le prochain test.`,
+      }, 429);
+    }
+
     let body: { to?: string } = {};
     try { body = await req.json(); } catch { /* empty */ }
     const to = body.to || Deno.env.get("ADMIN_TEST_PHONE") || "";
