@@ -22,10 +22,35 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { slug, email, source, utm } = (body ?? {}) as {
-      slug?: string; email?: string; source?: string; utm?: Record<string, string>;
+    const { slug, email, source, utm, landing_token } = (body ?? {}) as {
+      slug?: string; email?: string; source?: string; utm?: Record<string, string>; landing_token?: string;
     };
-    if (!slug) return json({ error: "missing_slug", stage: "validate" }, 400);
+
+    // NEW: sms_outreach flow — resolve prospect via landing_token
+    let outreachProspectId = "";
+    let outreachCampaignId = "";
+    let outreachSlug = slug;
+    if (landing_token) {
+      const supabaseEarly = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      );
+      const { data: p } = await supabaseEarly
+        .from("prospects")
+        .select("id, campaign_id, business_name, email")
+        .eq("landing_token", landing_token)
+        .maybeSingle();
+      if (p) {
+        outreachProspectId = p.id as string;
+        outreachCampaignId = (p.campaign_id as string) ?? "";
+        outreachSlug = outreachSlug || `outreach-${p.id}`;
+        // Mark checkout_started
+        await supabaseEarly.from("prospects").update({ funnel_status: "checkout_started" }).eq("id", p.id);
+      }
+    }
+
+    if (!outreachSlug) return json({ error: "missing_slug", stage: "validate" }, 400);
+    const effectiveSlug = outreachSlug;
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
