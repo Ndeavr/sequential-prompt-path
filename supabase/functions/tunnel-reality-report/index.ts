@@ -75,24 +75,28 @@ Deno.serve(async (req) => {
       (supabase.from("acq_sms_logs").select("id", { count: "exact", head: true }) as any)
         .gte("created_at", from)
         .eq("is_simulation", false)
+        .eq("is_test_e2e", false)
         .in("status", ["sent", "delivered", "failed", "queued"])
     );
     const smsDelivered = await countAcross((from) =>
       (supabase.from("acq_sms_logs").select("id", { count: "exact", head: true }) as any)
         .gte("created_at", from)
         .eq("is_simulation", false)
+        .eq("is_test_e2e", false)
         .eq("status", "delivered")
     );
     const smsFailed = await countAcross((from) =>
       (supabase.from("acq_sms_logs").select("id", { count: "exact", head: true }) as any)
         .gte("created_at", from)
         .eq("is_simulation", false)
+        .eq("is_test_e2e", false)
         .eq("status", "failed")
     );
     const smsSimulated = await countAcross((from) =>
       (supabase.from("acq_sms_logs").select("id", { count: "exact", head: true }) as any)
         .gte("created_at", from)
         .eq("is_simulation", true)
+        .eq("is_test_e2e", false)
     );
 
     // Top real failure reason (7d)
@@ -133,7 +137,7 @@ Deno.serve(async (req) => {
     // 4) Account created — prospects with campaign attribution
     // ------------------------------------------------------------------
     const accounts = await countAcross((from) =>
-      (supabase.from("prospects").select("id", { count: "exact", head: true }) as any)
+      (supabase.from("prospects").select("id", { count: "exact", head: true }) as any).eq("is_test_e2e", false)
         .gte("funnel_status_updated_at", from)
         .not("campaign_id", "is", null)
         .in("funnel_status", [
@@ -150,7 +154,7 @@ Deno.serve(async (req) => {
     // 5) Checkout Stripe SMS opened — STRICT: prospect+stripe_session_id+campaign
     // ------------------------------------------------------------------
     const checkoutOpened = await countAcross((from) =>
-      (supabase.from("prospects").select("id", { count: "exact", head: true }) as any)
+      (supabase.from("prospects").select("id", { count: "exact", head: true }) as any).eq("is_test_e2e", false)
         .gte("funnel_status_updated_at", from)
         .not("stripe_session_id", "is", null)
         .not("campaign_id", "is", null)
@@ -166,7 +170,7 @@ Deno.serve(async (req) => {
     // 6) Paid 1$ — only attributed prospects
     // ------------------------------------------------------------------
     const paidSuccess = await countAcross((from) =>
-      (supabase.from("prospects").select("id", { count: "exact", head: true }) as any)
+      (supabase.from("prospects").select("id", { count: "exact", head: true }) as any).eq("is_test_e2e", false)
         .gte("activation_paid_at", from)
         .not("activation_paid_at", "is", null)
         .not("campaign_id", "is", null)
@@ -179,6 +183,7 @@ Deno.serve(async (req) => {
       const { data: sids } = await supabase
         .from("prospects")
         .select("stripe_session_id")
+        .eq("is_test_e2e", false)
         .not("stripe_session_id", "is", null)
         .not("campaign_id", "is", null)
         .gte("funnel_status_updated_at", from)
@@ -194,29 +199,29 @@ Deno.serve(async (req) => {
     });
 
     const completed = await countAcross((from) =>
-      (supabase.from("prospects").select("id", { count: "exact", head: true }) as any)
+      (supabase.from("prospects").select("id", { count: "exact", head: true }) as any).eq("is_test_e2e", false)
         .gte("funnel_status_updated_at", from)
         .not("campaign_id", "is", null)
         .in("funnel_status", ["profile_completed", "activated", "recommendable"])
     );
     const activated = await countAcross((from) =>
-      (supabase.from("prospects").select("id", { count: "exact", head: true }) as any)
+      (supabase.from("prospects").select("id", { count: "exact", head: true }) as any).eq("is_test_e2e", false)
         .gte("funnel_status_updated_at", from)
         .not("campaign_id", "is", null)
         .in("funnel_status", ["activated", "recommendable"])
     );
     const recommendable = await countAcross((from) =>
-      (supabase.from("prospects").select("id", { count: "exact", head: true }) as any)
+      (supabase.from("prospects").select("id", { count: "exact", head: true }) as any).eq("is_test_e2e", false)
         .gte("funnel_status_updated_at", from)
         .not("campaign_id", "is", null)
         .eq("recommendable", true)
     );
 
     // Last events
-    const lastSms = await lastTs("acq_sms_logs", "created_at", (q) => q.eq("is_simulation", false));
+    const lastSms = await lastTs("acq_sms_logs", "created_at", (q) => q.eq("is_simulation", false).eq("is_test_e2e", false));
     const lastClick = await lastTs("click_events", "occurred_at");
     const lastPaid = await lastTs("prospects", "activation_paid_at", (q) =>
-      q.not("activation_paid_at", "is", null).not("campaign_id", "is", null),
+      q.eq("is_test_e2e", false).not("activation_paid_at", "is", null).not("campaign_id", "is", null),
     );
 
     const stages: StageResult[] = [

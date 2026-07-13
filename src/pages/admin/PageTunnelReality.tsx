@@ -7,10 +7,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  AlertOctagon, AlertTriangle, Copy, FlaskConical, Loader2,
+  AlertOctagon, AlertTriangle, Copy, FlaskConical, Loader2, Lock,
   RefreshCw, Send, ShieldCheck, Wrench, X,
 } from "lucide-react";
 import { toast } from "sonner";
+import TunnelE2ETestPanel from "@/components/admin/TunnelE2ETestPanel";
 
 type Win = "24h" | "7d" | "30d";
 
@@ -77,6 +78,19 @@ export default function PageTunnelReality() {
   const [showUnattributed, setShowUnattributed] = useState(false);
   const [repairGaps, setRepairGaps] = useState<{ total_paid: number; missing_contractor: number; missing_profile: number } | null>(null);
   const [repairing, setRepairing] = useState(false);
+  const [e2eGatePass, setE2eGatePass] = useState(false);
+
+  // Initial gate check
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke("tunnel-e2e-test", { body: { action: "gate" } });
+        if (!cancelled) setE2eGatePass(Boolean((data as any)?.gate_pass));
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const scanRepair = useCallback(async () => {
     try {
@@ -272,6 +286,9 @@ export default function PageTunnelReality() {
           </div>
         )}
 
+        {/* E2E real test panel */}
+        <TunnelE2ETestPanel onGateChange={setE2eGatePass} />
+
         {/* Unattributed checkouts anomaly card */}
         {uWin && uWin.unattributed > 0 && (
           <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4">
@@ -312,6 +329,11 @@ export default function PageTunnelReality() {
             <div className="text-xs opacity-70 mt-0.5">
               Cap 3 par prospect · nouveau token à chaque relance · fenêtre 20 h anti-doublon.
             </div>
+            {!e2eGatePass && !dryRun && (
+              <div className="text-[11px] text-amber-300 mt-1 inline-flex items-center gap-1">
+                <Lock className="w-3 h-3" /> Envoi réel verrouillé — lancez d'abord un test E2E PASS.
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 text-sm">
@@ -324,14 +346,16 @@ export default function PageTunnelReality() {
             </label>
             <button
               onClick={() => (dryRun ? runRelances(true) : setConfirmReal(true))}
-              disabled={relancing}
-              className={`rounded-lg px-3 py-1.5 text-sm font-semibold inline-flex items-center gap-1 ${dryRun ? "bg-amber-400 text-black" : "bg-red-500 text-white"}`}
+              disabled={relancing || (!dryRun && !e2eGatePass)}
+              className={`rounded-lg px-3 py-1.5 text-sm font-semibold inline-flex items-center gap-1 disabled:opacity-40 ${dryRun ? "bg-amber-400 text-black" : "bg-red-500 text-white"}`}
+              title={!dryRun && !e2eGatePass ? "Lancez un test E2E réel PASS avant d'envoyer les vraies relances." : ""}
             >
-              {relancing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {relancing ? <Loader2 className="w-4 h-4 animate-spin" /> : (!dryRun && !e2eGatePass ? <Lock className="w-4 h-4" /> : <Send className="w-4 h-4" />)}
               {dryRun ? "Simuler les relances" : "Envoyer relances réelles…"}
             </button>
           </div>
         </div>
+
 
         {/* Repair panel */}
         <div className="rounded-2xl border border-border bg-white/[0.02] p-4 flex flex-wrap items-center gap-3 justify-between">
@@ -557,7 +581,7 @@ export default function PageTunnelReality() {
               </button>
               <button
                 onClick={() => runRelances(false)}
-                disabled={!confirmChecked || relancing}
+                disabled={!confirmChecked || relancing || !e2eGatePass}
                 className="rounded-lg bg-red-500 text-white px-3 py-1.5 text-sm font-semibold inline-flex items-center gap-1 disabled:opacity-40"
               >
                 {relancing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
