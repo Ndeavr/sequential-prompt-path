@@ -60,6 +60,13 @@ export type SendSmsInput = {
    * Never set by production prospect outreach paths.
    */
   strict_admin_override?: boolean;
+  /**
+   * Admin-only escape hatch: completely bypasses smsGuard (opt-out and prospect
+   * mobile-enforcement Lookup). Requires `strict_admin_override: true`. Used
+   * exclusively by `sms-admin-test` so a Twilio health probe never depends on
+   * a prospect's `phone_type` value. `to` MUST already be E.164 formatted.
+   */
+  bypass_guard?: boolean;
 };
 
 export type SendSmsResult = {
