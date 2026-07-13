@@ -68004,6 +68004,7 @@ export type Database = {
           id: string
           landing_token: string | null
           langue_preferee: string
+          last_relance_at: string | null
           main_city: string | null
           nom: string | null
           prenom: string | null
@@ -68011,6 +68012,7 @@ export type Database = {
           province: string | null
           recommendable: boolean | null
           region_name: string | null
+          relance_count: number
           service: string | null
           slug: string | null
           source: string | null
@@ -68041,6 +68043,7 @@ export type Database = {
           id?: string
           landing_token?: string | null
           langue_preferee?: string
+          last_relance_at?: string | null
           main_city?: string | null
           nom?: string | null
           prenom?: string | null
@@ -68048,6 +68051,7 @@ export type Database = {
           province?: string | null
           recommendable?: boolean | null
           region_name?: string | null
+          relance_count?: number
           service?: string | null
           slug?: string | null
           source?: string | null
@@ -68078,6 +68082,7 @@ export type Database = {
           id?: string
           landing_token?: string | null
           langue_preferee?: string
+          last_relance_at?: string | null
           main_city?: string | null
           nom?: string | null
           prenom?: string | null
@@ -68085,6 +68090,7 @@ export type Database = {
           province?: string | null
           recommendable?: boolean | null
           region_name?: string | null
+          relance_count?: number
           service?: string | null
           slug?: string | null
           source?: string | null

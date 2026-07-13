@@ -1,0 +1,265 @@
+// UNPRO — Tunnel Reality Report
+// Returns the 14 funnel stages with real counts across 24h / 7j / 30j
+// plus the top blocker (first RED stage in funnel order).
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+type Window = "24h" | "7d" | "30d";
+const WINDOW_HOURS: Record<Window, number> = { "24h": 24, "7d": 168, "30d": 720 };
+
+interface StageResult {
+  key: string;
+  label: string;
+  order: number;
+  totals: Record<Window, number>;
+  last_event_at: string | null;
+  top_error: string | null;
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    const now = new Date();
+    const cutoff = (w: Window) =>
+      new Date(now.getTime() - WINDOW_HOURS[w] * 3600_000).toISOString();
+
+    // Helper: count rows with filter builder, per window
+    async function countAcross(
+      buildQuery: (from: string) => Promise<{ count: number | null }>,
+    ): Promise<Record<Window, number>> {
+      const [a, b, c] = await Promise.all([
+        buildQuery(cutoff("24h")),
+        buildQuery(cutoff("7d")),
+        buildQuery(cutoff("30d")),
+      ]);
+      return { "24h": a.count ?? 0, "7d": b.count ?? 0, "30d": c.count ?? 0 };
+    }
+
+    // Helper: last row timestamp
+    async function lastTs(
+      table: string,
+      col: string,
+      filter?: (q: any) => any,
+    ): Promise<string | null> {
+      let q: any = supabase.from(table).select(col).order(col, { ascending: false }).limit(1);
+      if (filter) q = filter(q);
+      const { data } = await q;
+      return data?.[0]?.[col] ?? null;
+    }
+
+    // --- SMS sent / delivered / failed (acq_sms_logs) ---
+    const smsSent = await countAcross((from) =>
+      (supabase.from("acq_sms_logs").select("id", { count: "exact", head: true }) as any)
+        .gte("created_at", from)
+        .in("status", ["sent", "delivered", "failed", "queued"])
+    );
+    const smsDelivered = await countAcross((from) =>
+      (supabase.from("acq_sms_logs").select("id", { count: "exact", head: true }) as any)
+        .gte("created_at", from)
+        .eq("status", "delivered")
+    );
+    const smsFailed = await countAcross((from) =>
+      (supabase.from("acq_sms_logs").select("id", { count: "exact", head: true }) as any)
+        .gte("created_at", from)
+        .eq("status", "failed")
+    );
+
+    // Top SMS failure reason (7d)
+    const { data: failRows } = await supabase
+      .from("acq_sms_logs")
+      .select("error")
+      .eq("status", "failed")
+      .gte("created_at", cutoff("7d"))
+      .limit(500);
+    const errBucket = new Map<string, number>();
+    (failRows ?? []).forEach((r: any) => {
+      const k = (r.error ?? "unknown").slice(0, 80);
+      errBucket.set(k, (errBucket.get(k) ?? 0) + 1);
+    });
+    const topSmsError =
+      [...errBucket.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+
+    // --- Clicks (click_events, sms sources) ---
+    const clicks = await countAcross((from) =>
+      (supabase.from("click_events").select("id", { count: "exact", head: true }) as any)
+        .gte("occurred_at", from)
+        .in("source_table", ["acq_sms_logs", "outreach_messages", "prospects"])
+    );
+
+    // --- Landing views (contractor_funnel_events) ---
+    const landings = await countAcross((from) =>
+      (supabase.from("contractor_funnel_events").select("id", { count: "exact", head: true }) as any)
+        .gte("created_at", from)
+        .eq("event_type", "landing_view")
+    );
+
+    // --- Account created / checkout started / paid ---
+    const accounts = await countAcross((from) =>
+      (supabase.from("prospects").select("id", { count: "exact", head: true }) as any)
+        .gte("funnel_status_updated_at", from)
+        .in("funnel_status", [
+          "registered",
+          "profile_completed",
+          "checkout_started",
+          "paid_1_dollar",
+          "activated",
+          "recommendable",
+        ])
+    );
+    const checkoutOpened = await countAcross((from) =>
+      (supabase.from("checkout_sessions").select("id", { count: "exact", head: true }) as any)
+        .gte("created_at", from)
+    );
+    const paidSuccess = await countAcross((from) =>
+      (supabase.from("prospects").select("id", { count: "exact", head: true }) as any)
+        .gte("activation_paid_at", from)
+        .not("activation_paid_at", "is", null)
+    );
+    const paidFailed = await countAcross((from) =>
+      (supabase.from("checkout_sessions").select("id", { count: "exact", head: true }) as any)
+        .gte("created_at", from)
+        .in("checkout_status", ["failed", "canceled", "expired"])
+    );
+    const completed = await countAcross((from) =>
+      (supabase.from("prospects").select("id", { count: "exact", head: true }) as any)
+        .gte("funnel_status_updated_at", from)
+        .in("funnel_status", ["profile_completed", "activated", "recommendable"])
+    );
+    const activated = await countAcross((from) =>
+      (supabase.from("prospects").select("id", { count: "exact", head: true }) as any)
+        .gte("funnel_status_updated_at", from)
+        .in("funnel_status", ["activated", "recommendable"])
+    );
+    const recommendable = await countAcross((from) =>
+      (supabase.from("prospects").select("id", { count: "exact", head: true }) as any)
+        .gte("funnel_status_updated_at", from)
+        .eq("recommendable", true)
+    );
+
+    // Last events
+    const lastSms = await lastTs("acq_sms_logs", "created_at");
+    const lastClick = await lastTs("click_events", "occurred_at");
+    const lastPaid = await lastTs("prospects", "activation_paid_at", (q) =>
+      q.not("activation_paid_at", "is", null),
+    );
+
+    const stages: StageResult[] = [
+      { key: "sms_sent", label: "SMS envoyés", order: 1, totals: smsSent, last_event_at: lastSms, top_error: null },
+      { key: "sms_delivered", label: "SMS livrés", order: 2, totals: smsDelivered, last_event_at: lastSms, top_error: null },
+      { key: "sms_failed", label: "SMS échoués", order: 3, totals: smsFailed, last_event_at: lastSms, top_error: topSmsError },
+      { key: "clicks", label: "Clics short link", order: 4, totals: clicks, last_event_at: lastClick, top_error: null },
+      { key: "landing_view", label: "Landing ouverte", order: 5, totals: landings, last_event_at: null, top_error: null },
+      { key: "account_created", label: "Compte créé", order: 6, totals: accounts, last_event_at: null, top_error: null },
+      { key: "checkout_opened", label: "Checkout Stripe ouvert", order: 7, totals: checkoutOpened, last_event_at: null, top_error: null },
+      { key: "paid_success", label: "Paiement 1 $ réussi", order: 8, totals: paidSuccess, last_event_at: lastPaid, top_error: null },
+      { key: "paid_failed", label: "Paiement échoué", order: 9, totals: paidFailed, last_event_at: null, top_error: null },
+      { key: "profile_completed", label: "Profil complété", order: 10, totals: completed, last_event_at: null, top_error: null },
+      { key: "activated", label: "Entrepreneur activé", order: 11, totals: activated, last_event_at: null, top_error: null },
+      { key: "recommendable", label: "Recommandable par Alex", order: 12, totals: recommendable, last_event_at: null, top_error: null },
+    ];
+
+    // Compute conversion + traffic-light color on the 7d window
+    const t = (k: string) => stages.find((s) => s.key === k)?.totals["7d"] ?? 0;
+    function color(key: string): "red" | "amber" | "green" {
+      const v = t(key);
+      const sent = t("sms_sent");
+      const delivered = t("sms_delivered");
+      const clicks = t("clicks");
+      const paid = t("paid_success");
+      switch (key) {
+        case "sms_sent":
+          return v === 0 ? "red" : v < 25 ? "amber" : "green";
+        case "sms_delivered": {
+          if (sent === 0) return "red";
+          const rate = v / sent;
+          return rate < 0.7 ? "red" : rate < 0.9 ? "amber" : "green";
+        }
+        case "clicks": {
+          if (delivered === 0) return "red";
+          const rate = v / delivered;
+          return rate < 0.05 ? "red" : rate < 0.10 ? "amber" : "green";
+        }
+        case "landing_view":
+        case "account_created":
+        case "checkout_opened":
+          return v === 0 && clicks > 0 ? "red" : v > 0 ? "green" : "amber";
+        case "paid_success": {
+          if (delivered === 0) return "red";
+          const rate = v / delivered;
+          return rate < 0.005 ? "red" : rate < 0.01 ? "amber" : "green";
+        }
+        case "activated":
+        case "recommendable":
+          return paid > 0 && v === 0 ? "red" : v > 0 ? "green" : paid === 0 ? "amber" : "red";
+        case "sms_failed":
+          return sent > 0 && v / sent > 0.3 ? "red" : v / Math.max(sent, 1) > 0.1 ? "amber" : "green";
+        case "profile_completed":
+          return paid > 0 && v === 0 ? "red" : v > 0 ? "green" : "amber";
+        case "paid_failed":
+          return v > paid && paid === 0 ? "red" : "green";
+      }
+      return "amber";
+    }
+
+    const enriched = stages.map((s) => {
+      const c = color(s.key);
+      // conversion vs previous funnel stage (7d)
+      const prevMap: Record<string, string | null> = {
+        sms_sent: null,
+        sms_delivered: "sms_sent",
+        sms_failed: "sms_sent",
+        clicks: "sms_delivered",
+        landing_view: "clicks",
+        account_created: "landing_view",
+        checkout_opened: "account_created",
+        paid_success: "checkout_opened",
+        paid_failed: "checkout_opened",
+        profile_completed: "paid_success",
+        activated: "profile_completed",
+        recommendable: "activated",
+      };
+      const prev = prevMap[s.key];
+      const conv =
+        prev && t(prev) > 0
+          ? Math.round((s.totals["7d"] / t(prev)) * 1000) / 10
+          : null;
+      return { ...s, color: c, conv_7d_pct: conv };
+    });
+
+    // Top blocker = first RED stage in funnel order
+    const blocker = enriched.find((s) => s.color === "red") ?? null;
+
+    return new Response(
+      JSON.stringify({
+        generated_at: now.toISOString(),
+        stages: enriched,
+        blocker: blocker
+          ? {
+              stage_key: blocker.key,
+              stage_label: blocker.label,
+              top_error: blocker.top_error,
+              conv_pct: blocker.conv_7d_pct,
+            }
+          : null,
+        last_paid_at: lastPaid,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  } catch (e) {
+    console.error("[tunnel-reality-report]", e);
+    return new Response(
+      JSON.stringify({ error: e instanceof Error ? e.message : String(e) }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+});
