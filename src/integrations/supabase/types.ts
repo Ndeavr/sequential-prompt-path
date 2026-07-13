@@ -44557,6 +44557,30 @@ export type Database = {
           },
         ]
       }
+      first_dollar_daily_reports: {
+        Row: {
+          created_at: string
+          id: string
+          metrics: Json
+          report_date: string
+          top_dropoff: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metrics?: Json
+          report_date: string
+          top_dropoff?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metrics?: Json
+          report_date?: string
+          top_dropoff?: string | null
+        }
+        Relationships: []
+      }
       first_dollar_milestones: {
         Row: {
           achieved_at: string
@@ -48907,9 +48931,11 @@ export type Database = {
           reply_classification: string | null
           retry_count: number
           revenue_impact_cents: number | null
+          sms_batch_id: string | null
           source_agent: string | null
           stripe_session_id: string | null
           subscription_id: string | null
+          template_code: string | null
           trade: string | null
           updated_at: string
         }
@@ -48941,9 +48967,11 @@ export type Database = {
           reply_classification?: string | null
           retry_count?: number
           revenue_impact_cents?: number | null
+          sms_batch_id?: string | null
           source_agent?: string | null
           stripe_session_id?: string | null
           subscription_id?: string | null
+          template_code?: string | null
           trade?: string | null
           updated_at?: string
         }
@@ -48975,13 +49003,23 @@ export type Database = {
           reply_classification?: string | null
           retry_count?: number
           revenue_impact_cents?: number | null
+          sms_batch_id?: string | null
           source_agent?: string | null
           stripe_session_id?: string | null
           subscription_id?: string | null
+          template_code?: string | null
           trade?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "launch_leads_sms_batch_id_fkey"
+            columns: ["sms_batch_id"]
+            isOneToOne: false
+            referencedRelation: "sms_batches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       launch_mode_state: {
         Row: {
@@ -74825,6 +74863,54 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_batches: {
+        Row: {
+          clicked_count: number
+          converted_count: number
+          created_at: string
+          created_by: string | null
+          delivered_count: number
+          id: string
+          lead_ids: string[]
+          notes: string | null
+          reviewed_at: string | null
+          sent_count: number
+          size: number
+          status: string
+          template_distribution: Json
+        }
+        Insert: {
+          clicked_count?: number
+          converted_count?: number
+          created_at?: string
+          created_by?: string | null
+          delivered_count?: number
+          id?: string
+          lead_ids?: string[]
+          notes?: string | null
+          reviewed_at?: string | null
+          sent_count?: number
+          size?: number
+          status?: string
+          template_distribution?: Json
+        }
+        Update: {
+          clicked_count?: number
+          converted_count?: number
+          created_at?: string
+          created_by?: string | null
+          delivered_count?: number
+          id?: string
+          lead_ids?: string[]
+          notes?: string | null
+          reviewed_at?: string | null
+          sent_count?: number
+          size?: number
+          status?: string
+          template_distribution?: Json
+        }
+        Relationships: []
+      }
       sms_campaigns: {
         Row: {
           activated_at: string | null
@@ -75699,6 +75785,33 @@ export type Database = {
           is_active?: boolean
           template_key?: string
           template_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sms_templates_first_dollar: {
+        Row: {
+          active: boolean
+          body: string
+          code: string
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          body: string
+          code: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          body?: string
+          code?: string
+          created_at?: string
+          id?: string
           updated_at?: string
         }
         Relationships: []
