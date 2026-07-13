@@ -1073,6 +1073,12 @@ export const AppRouter = () => (
         <Route path="/checkout/native/:planCode" element={<PageCheckoutNativeScrollable />} />
         <Route path="/activation" element={<Suspense fallback={<LazyFallback />}><SolicitationActivationPage /></Suspense>} />
         <Route path="/activation/start" element={<PageActivationStart />} />
+        {/* SMS → 1$ outreach tunnel — public routes */}
+        <Route path="/r/:token" element={<Suspense fallback={<LazyFallback />}><PageShortLinkRedirect /></Suspense>} />
+        <Route path="/invitation/:token" element={<Suspense fallback={<LazyFallback />}><PageInvitationLanding /></Suspense>} />
+        <Route path="/invitation/:token/edit" element={<Suspense fallback={<LazyFallback />}><PageInvitationEdit /></Suspense>} />
+        <Route path="/invitation/:token/activate" element={<Suspense fallback={<LazyFallback />}><PageInvitationActivate /></Suspense>} />
+        <Route path="/activation/success" element={<Suspense fallback={<LazyFallback />}><PageOutreachActivationSuccess /></Suspense>} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/pricing/proprietaires" element={<PricingHomeownersPage />} />
         <Route path="/pricing/entrepreneurs" element={<PricingContractorsPage />} />
