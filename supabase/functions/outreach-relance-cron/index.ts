@@ -126,6 +126,10 @@ Deno.serve(async (req) => {
               body,
               status: "simulated",
               error: `dry_run:${batch.kind}`,
+              is_simulation: true,
+              prospect_id: p.id,
+              relance_kind: batch.kind,
+              invitation_token: token,
             } as never);
             summary.skipped += 1;
             continue;
@@ -138,6 +142,10 @@ Deno.serve(async (req) => {
               body,
               status: "failed",
               error: res.error,
+              is_simulation: false,
+              prospect_id: p.id,
+              relance_kind: batch.kind,
+              invitation_token: token,
             } as never);
             summary.failed += 1;
             continue;
@@ -149,6 +157,10 @@ Deno.serve(async (req) => {
             status: "sent",
             provider_message_id: res.sid ?? null,
             sent_at: now.toISOString(),
+            is_simulation: false,
+            prospect_id: p.id,
+            relance_kind: batch.kind,
+            invitation_token: token,
           } as never);
 
           await supabase
