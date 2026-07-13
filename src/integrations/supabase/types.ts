@@ -756,34 +756,52 @@ export type Database = {
       acq_sms_logs: {
         Row: {
           body: string
+          campaign_id: string | null
           contractor_id: string | null
           created_at: string
           error: string | null
           id: string
+          invitation_token: string | null
+          is_simulation: boolean
+          outreach_message_id: string | null
+          prospect_id: string | null
           provider_message_id: string | null
           recipient_phone: string
+          relance_kind: string | null
           sent_at: string | null
           status: string
         }
         Insert: {
           body: string
+          campaign_id?: string | null
           contractor_id?: string | null
           created_at?: string
           error?: string | null
           id?: string
+          invitation_token?: string | null
+          is_simulation?: boolean
+          outreach_message_id?: string | null
+          prospect_id?: string | null
           provider_message_id?: string | null
           recipient_phone: string
+          relance_kind?: string | null
           sent_at?: string | null
           status?: string
         }
         Update: {
           body?: string
+          campaign_id?: string | null
           contractor_id?: string | null
           created_at?: string
           error?: string | null
           id?: string
+          invitation_token?: string | null
+          is_simulation?: boolean
+          outreach_message_id?: string | null
+          prospect_id?: string | null
           provider_message_id?: string | null
           recipient_phone?: string
+          relance_kind?: string | null
           sent_at?: string | null
           status?: string
         }
