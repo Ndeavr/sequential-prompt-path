@@ -46,10 +46,35 @@ Deno.serve(async (req) => {
       }, 429);
     }
 
-    let body: { to?: string } = {};
-    try { body = await req.json(); } catch { /* empty */ }
-    const to = body.to || Deno.env.get("ADMIN_TEST_PHONE") || "";
-    if (!to) return json({ error: "missing_admin_test_phone" }, 400);
+    // Number ALWAYS comes from server-only secrets. Never trust the client body.
+    const rawDest =
+      (Deno.env.get("SMS_TEST_DESTINATION_NUMBER") ??
+        Deno.env.get("ADMIN_TEST_PHONE") ??
+        "").trim();
+    if (!rawDest) {
+      return json({
+        ok: false,
+        error_code: "MISSING_TEST_DESTINATION",
+        error_message: "SMS_TEST_DESTINATION_NUMBER n'est pas configuré.",
+      }, 400);
+    }
+    // Normalize to E.164 (NANP default). Reject anything else.
+    const digits = rawDest.replace(/[^\d+]/g, "");
+    const e164 = digits.startsWith("+")
+      ? digits
+      : digits.length === 10
+        ? `+1${digits}`
+        : digits.length === 11 && digits.startsWith("1")
+          ? `+${digits}`
+          : "";
+    if (!/^\+[1-9]\d{7,14}$/.test(e164)) {
+      return json({
+        ok: false,
+        error_code: "INVALID_TEST_DESTINATION",
+        error_message: `Numéro de test invalide (attendu E.164): ${rawDest}`,
+      }, 400);
+    }
+    const to = e164;
 
     // Create test run row up-front
     const { data: run } = await admin.from("sms_test_runs").insert({
@@ -59,9 +84,13 @@ Deno.serve(async (req) => {
     const stamp = new Date().toLocaleTimeString("fr-CA");
     const result = await sendSms({
       to,
-      body: `UNPRO · test de livraison SMS ${stamp}. Si vous lisez ceci, le pipeline fonctionne.`,
+      body: `UNPRO · test système ${stamp} — aucune action requise.`,
       message_type: "test",
       template_key: "sms_admin_test",
+      // Admin-only bypass: skip prospect mobile-enforcement Lookup entirely.
+      // The Twilio health test must never depend on phone_type of a prospect row.
+      strict_admin_override: true,
+      bypass_guard: true,
       metadata: { triggered_by: userId, source: "sms-admin-test", test_run_id: run?.id },
     });
 
