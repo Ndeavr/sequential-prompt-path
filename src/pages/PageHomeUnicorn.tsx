@@ -491,60 +491,7 @@ function LiveStatsCard() {
   );
 }
 
-/* ---------------- How it works ---------------- */
-function HowItWorksCards() {
-  const steps = [
-    { n: 1, title: "Décrivez la situation", desc: "Voix, texte ou photo — racontez ce qui se passe avec votre propriété." },
-    { n: 2, title: "Alex analyse", desc: "Alex comprend le contexte, identifie les risques et estime les coûts." },
-    { n: 3, title: "Recevez un plan d'action", desc: "Étapes claires, priorités et options expliquées avant toute décision." },
-    { n: 4, title: "Obtenez la bonne recommandation", desc: "Le professionnel le plus adapté à votre projet, au bon moment." },
-  ];
-  return (
-    <section className="px-4 mt-6 relative z-10">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-[16px] font-extrabold tracking-tight" style={{ color: "#0B1220" }}>
-          Comment fonctionne UNPRO
-        </h2>
-        <Link to="/comment-ca-marche" className="text-[12px] font-semibold" style={{ color: "#2563FF" }}>
-          Voir en détail
-        </Link>
-      </div>
-      <div className="flex gap-2 overflow-x-auto uc-no-scrollbar -mx-4 px-4 pb-2">
-        {steps.map((s, i) => (
-          <div key={s.n} className="flex items-stretch shrink-0">
-            <div
-              className="uc-glass-strong p-3 w-[180px] flex flex-col uc-hover-lift"
-              style={{ borderRadius: 22 }}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
-                  style={{
-                    background: "linear-gradient(135deg,#2563FF,#3B82F6)",
-                    boxShadow: "0 6px 14px -4px rgba(37,99,255,0.55)",
-                  }}
-                >
-                  {s.n}
-                </div>
-                <div className="text-[13px] font-bold leading-tight" style={{ color: "#0B1220" }}>
-                  {s.title}
-                </div>
-              </div>
-              <p className="text-[11px] leading-snug" style={{ color: "#667085" }}>
-                {s.desc}
-              </p>
-            </div>
-            {i < steps.length - 1 && (
-              <div className="self-center px-1">
-                <ArrowRight size={14} color="#94A3B8" />
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
+/* HowItWorksCards removed — replaced by <ContractorBookingDemo /> below. */
 
 /* ---------------- Contractor split ---------------- */
 function ContractorAippSplit() {
