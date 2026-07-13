@@ -237,6 +237,38 @@ export default function PageTunnelReality() {
           </div>
         </div>
 
+        {/* Repair panel — paid $1 activations without contractor/profile */}
+        <div className="rounded-2xl border border-border bg-white/[0.02] p-4 flex flex-wrap items-center gap-3 justify-between">
+          <div>
+            <div className="text-sm font-semibold flex items-center gap-2">
+              <Wrench className="w-4 h-4" /> Réparer les activations payées
+            </div>
+            <div className="text-xs opacity-70 mt-0.5">
+              {repairGaps
+                ? `${repairGaps.total_paid} paiements 1 $ · ${repairGaps.missing_contractor} sans entrepreneur · ${repairGaps.missing_profile} sans profil.`
+                : "Analyse des paiements 1 $…"}
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={scanRepair}
+              className="rounded-lg bg-white/10 border border-border px-3 py-1.5 text-sm inline-flex items-center gap-1"
+            >
+              <RefreshCw className="w-4 h-4" /> Rescanner
+            </button>
+            <button
+              onClick={runRepair}
+              disabled={repairing || (repairGaps?.missing_contractor === 0 && repairGaps?.missing_profile === 0)}
+              className="rounded-lg px-3 py-1.5 text-sm font-semibold inline-flex items-center gap-1 bg-emerald-500 text-white disabled:opacity-40"
+            >
+              {repairing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wrench className="w-4 h-4" />}
+              Réparer maintenant
+            </button>
+          </div>
+        </div>
+
+
+
         {/* Table */}
         <div className="rounded-2xl border border-border overflow-x-auto">
           <table className="min-w-full text-sm">
