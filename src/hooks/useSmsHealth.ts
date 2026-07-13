@@ -1,6 +1,7 @@
 /**
- * useSmsHealth — Reads v_sms_infrastructure_status + last sms_test_runs row.
- * Exposes runTestSms mutation invoking edge function `sms-admin-test`.
+ * useSmsHealth — Canonical: reads `public.get_sms_outbound_health()` RPC
+ * (single source of truth wrapping v_sms_infrastructure_status + sms_test_runs).
+ * Adds test cooldown (5 min) computed from lastTest.created_at.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,82 +9,78 @@ import { toast } from "sonner";
 
 export type SmsHealthStatus = "HEALTHY" | "WARNING" | "ERROR";
 
-export interface SmsInfrastructureStatus {
+export interface SmsOutboundHealth {
+  is_operational: boolean;
   status: SmsHealthStatus;
   last_callback_at: string | null;
   last_test_success_at: string | null;
+  valid_until: string | null;
   sent_24h: number | null;
   delivered_24h: number | null;
   failed_24h: number | null;
   delivery_rate_24h: number | null;
-}
-
-export interface LastTestRun {
-  id: string;
-  phone: string;
-  message_sid: string | null;
-  success: boolean;
-  callback_received: boolean;
-  sent_at: string | null;
-  delivered_at: string | null;
-  failed_at: string | null;
-  error: string | null;
-  created_at: string;
+  last_test_sid: string | null;
+  last_test_phone: string | null;
+  last_test_error: string | null;
+  reason: string | null;
 }
 
 export interface SmsHealthBundle {
-  status: SmsInfrastructureStatus;
-  lastTest: LastTestRun | null;
-  blockReason: string | null;
+  health: SmsOutboundHealth;
+  cooldownMs: number; // > 0 means test button should be disabled
 }
 
-function computeBlockReason(s: SmsInfrastructureStatus): string | null {
-  if (s.status === "HEALTHY") return null;
-  if (!s.last_callback_at) {
-    return "Aucun callback Twilio reçu. Le webhook `twilio-status-v2` n'a jamais confirmé une livraison. Envoyez un SMS test pour établir le canal.";
-  }
-  if (!s.last_test_success_at) {
-    return "Aucun test SMS réussi enregistré. Cliquez « Exécuter un test SMS » pour valider le pipeline.";
-  }
-  const ageH = (Date.now() - new Date(s.last_test_success_at).getTime()) / 36e5;
-  if (ageH > 24) {
-    return `Dernier test SMS réussi il y a ${ageH.toFixed(1)}h (>24h). Relancez un test pour rafraîchir la santé outbound.`;
-  }
-  if ((s.sent_24h ?? 0) > 10 && (s.delivery_rate_24h ?? 100) < 90) {
-    return `Taux de livraison 24 h à ${s.delivery_rate_24h}% (<90%). Trop d'échecs Twilio — vérifiez numéros et solde.`;
-  }
-  return "Outbound bloqué — raison inconnue. Consultez `v_sms_infrastructure_status`.";
+const COOLDOWN_MS = 5 * 60 * 1000;
+
+export function maskPhone(p: string | null | undefined): string {
+  if (!p) return "—";
+  const s = String(p).replace(/\s+/g, "");
+  if (s.length < 6) return s;
+  return `${s.slice(0, 3)}•••••${s.slice(-4)}`;
+}
+
+export function maskSid(sid: string | null | undefined): string {
+  if (!sid) return "—";
+  return sid.length > 10 ? `${sid.slice(0, 4)}…${sid.slice(-4)}` : sid;
 }
 
 export function useSmsHealth() {
   return useQuery<SmsHealthBundle>({
     queryKey: ["sms-health"],
     queryFn: async () => {
-      const [{ data: statusRow }, { data: lastRow }] = await Promise.all([
-        supabase.from("v_sms_infrastructure_status" as any).select("*").maybeSingle(),
-        supabase
-          .from("sms_test_runs")
-          .select("id,phone,message_sid,success,callback_received,sent_at,delivered_at,failed_at,error,created_at")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-      ]);
-      const status = (statusRow as unknown as SmsInfrastructureStatus | null) ?? {
+      const { data, error } = await supabase.rpc("get_sms_outbound_health" as any);
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      const health = (row ?? {
+        is_operational: false,
         status: "ERROR",
         last_callback_at: null,
         last_test_success_at: null,
+        valid_until: null,
         sent_24h: 0,
         delivered_24h: 0,
         failed_24h: 0,
         delivery_rate_24h: null,
-      };
-      return {
-        status,
-        lastTest: (lastRow as LastTestRun | null) ?? null,
-        blockReason: computeBlockReason(status),
-      };
+        last_test_sid: null,
+        last_test_phone: null,
+        last_test_error: null,
+        reason: "RPC indisponible.",
+      }) as SmsOutboundHealth;
+
+      // Cooldown computed from most recent test run
+      const { data: lastRun } = await supabase
+        .from("sms_test_runs")
+        .select("created_at")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const cooldownMs = lastRun?.created_at
+        ? Math.max(0, COOLDOWN_MS - (Date.now() - new Date(lastRun.created_at).getTime()))
+        : 0;
+
+      return { health, cooldownMs };
     },
-    refetchInterval: 30_000,
+    refetchInterval: 15_000,
   });
 }
 
@@ -107,7 +104,7 @@ export function useRunSmsTest() {
     },
     onSuccess: (data) => {
       if (data.ok) {
-        toast.success(`Test SMS envoyé (${data.status ?? "sent"}) — en attente du callback Twilio.`);
+        toast.success(`Test SMS envoyé (${data.status ?? "sent"}). En attente du callback Twilio…`);
       } else {
         toast.error(`Échec test SMS: ${data.error_message ?? data.error_code ?? "inconnu"}`);
       }

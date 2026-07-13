@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { CheckCircle2, Clock, Send, Lock } from "lucide-react";
 import { useSmsBatches, useSendBatch, useReviewBatch } from "@/hooks/useSmsBatches";
 import SmsHealthPanel from "@/components/admin/SmsHealthPanel";
+import EligibilityPanel from "@/components/admin/EligibilityPanel";
 import { useSmsHealth } from "@/hooks/useSmsHealth";
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
@@ -24,7 +25,7 @@ export default function PageAdminFirstDollarBatches() {
   const sendBatch = useSendBatch();
   const reviewBatch = useReviewBatch();
   const { data: health } = useSmsHealth();
-  const outboundBlocked = !!health && health.status.status !== "HEALTHY";
+  const outboundBlocked = !!health && !health.health.is_operational;
 
   const pendingReview = batches?.find(b => b.status !== "reviewed" && b.status === "sent");
 
@@ -46,6 +47,9 @@ export default function PageAdminFirstDollarBatches() {
         {/* SMS infrastructure health */}
         <SmsHealthPanel />
 
+        {/* Recipient eligibility breakdown */}
+        <EligibilityPanel />
+
         {/* Send panel */}
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
           <div className="flex items-center gap-3 mb-4">
@@ -64,7 +68,7 @@ export default function PageAdminFirstDollarBatches() {
             <div className="rounded-lg border border-rose-400/40 bg-rose-500/10 p-3 mb-4 flex items-start gap-2 text-sm text-rose-200">
               <Lock className="h-4 w-4 mt-0.5" />
               <div>
-                <b>Outbound bloqué.</b> {health?.blockReason ?? "Santé SMS insuffisante."} Utilisez « Exécuter un test SMS » ci-dessus pour débloquer.
+                <b>Outbound bloqué.</b> {health?.health.reason ?? "Santé SMS insuffisante."} Utilisez « Tester maintenant » ci-dessus pour débloquer.
               </div>
             </div>
           )}
