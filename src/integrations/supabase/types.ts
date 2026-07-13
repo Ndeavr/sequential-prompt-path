@@ -48936,6 +48936,7 @@ export type Database = {
           stripe_session_id: string | null
           subscription_id: string | null
           template_code: string | null
+          tracked_link_slug: string | null
           trade: string | null
           updated_at: string
         }
@@ -48972,6 +48973,7 @@ export type Database = {
           stripe_session_id?: string | null
           subscription_id?: string | null
           template_code?: string | null
+          tracked_link_slug?: string | null
           trade?: string | null
           updated_at?: string
         }
@@ -49008,6 +49010,7 @@ export type Database = {
           stripe_session_id?: string | null
           subscription_id?: string | null
           template_code?: string | null
+          tracked_link_slug?: string | null
           trade?: string | null
           updated_at?: string
         }
@@ -74865,47 +74868,65 @@ export type Database = {
       }
       sms_batches: {
         Row: {
+          blocked_reason: string | null
           clicked_count: number
+          completed_at: string | null
           converted_count: number
           created_at: string
           created_by: string | null
           delivered_count: number
+          failed_count: number
           id: string
           lead_ids: string[]
           notes: string | null
+          requested_count: number | null
           reviewed_at: string | null
+          selected_count: number | null
           sent_count: number
           size: number
+          started_at: string | null
           status: string
           template_distribution: Json
         }
         Insert: {
+          blocked_reason?: string | null
           clicked_count?: number
+          completed_at?: string | null
           converted_count?: number
           created_at?: string
           created_by?: string | null
           delivered_count?: number
+          failed_count?: number
           id?: string
           lead_ids?: string[]
           notes?: string | null
+          requested_count?: number | null
           reviewed_at?: string | null
+          selected_count?: number | null
           sent_count?: number
           size?: number
+          started_at?: string | null
           status?: string
           template_distribution?: Json
         }
         Update: {
+          blocked_reason?: string | null
           clicked_count?: number
+          completed_at?: string | null
           converted_count?: number
           created_at?: string
           created_by?: string | null
           delivered_count?: number
+          failed_count?: number
           id?: string
           lead_ids?: string[]
           notes?: string | null
+          requested_count?: number | null
           reviewed_at?: string | null
+          selected_count?: number | null
           sent_count?: number
           size?: number
+          started_at?: string | null
           status?: string
           template_distribution?: Json
         }
@@ -85280,6 +85301,24 @@ export type Database = {
       get_service_limit: {
         Args: { plan_code: string; service_type?: string }
         Returns: number
+      }
+      get_sms_outbound_health: {
+        Args: never
+        Returns: {
+          delivered_24h: number
+          delivery_rate_24h: number
+          failed_24h: number
+          is_operational: boolean
+          last_callback_at: string
+          last_test_error: string
+          last_test_phone: string
+          last_test_sid: string
+          last_test_success_at: string
+          reason: string
+          sent_24h: number
+          status: string
+          valid_until: string
+        }[]
       }
       get_territory_capacity: {
         Args: {
