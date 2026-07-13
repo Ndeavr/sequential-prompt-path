@@ -1,59 +1,163 @@
-# Débloquer Batch Sender — SMS Health visible + Test SMS 1-clic
+# First Dollar — Repair pipeline, expose eligibility, exécuter le premier vrai batch
 
-## Diagnostic (confirmé dans le code)
+Le blocage est maintenant réel visible (« Outbound bloqué. Aucun test SMS valide dans les dernières 24 h. ») et le bouton « Exécuter un test SMS » existe déjà (livré au tour précédent). Ce plan **complète** le tour précédent au lieu de recréer un système parallèle.
 
-- Message vient de `supabase/functions/_shared/smsHealth.ts` (`assertSmsHealthy`).
-- Vue lue : `public.v_sms_infrastructure_status` (migration `20260616144735_*`).
-- Règle de statut :
-  - `ERROR` si aucun callback Twilio (`sms_events_v2.webhook_received_at IS NULL`)
-  - `WARNING` si aucun `sms_test_runs.success = true` dans les 24 h
-  - `ERROR` si >10 SMS et taux livraison 24 h < 90 %
-  - Sinon `HEALTHY`
-- `first-dollar-send-batch` appelle `assertSmsHealthy()` → `WARNING`/`ERROR` = batch bloqué avec le texte affiché.
-- Un endpoint de test existe déjà : `supabase/functions/sms-admin-test/index.ts` (insère dans `sms_test_runs`, envoie via Twilio, met à jour `success` via `twilio-status-v2`). Il n'est juste pas exposé dans l'UI Batch Sender.
+## Phase 1 — Diagnostic canonique (confirmé)
 
-Cause réelle du blocage actuel : aucune ligne récente dans `sms_test_runs` avec `success=true` (test jamais lancé depuis >24 h), ou aucun callback Twilio reçu.
+Infrastructure canonique existante à **réutiliser**, aucun clone à créer :
 
-## Livrables (UI seulement, aucune nouvelle logique métier)
+| Rôle | Objet canonique |
+|---|---|
+| Test SMS admin | `supabase/functions/sms-admin-test/index.ts` |
+| Table de tests | `public.sms_test_runs` (colonnes `success`, `callback_received`, `delivered_at`, etc.) |
+| Journal de messages | `public.sms_events_v2` |
+| Callback Twilio | `supabase/functions/twilio-status-v2/index.ts` (met `success=true` seulement sur `delivered`) |
+| Vue santé | `public.v_sms_infrastructure_status` (`HEALTHY|WARNING|ERROR`) |
+| Garde envoi | `supabase/functions/_shared/smsHealth.ts` (`assertSmsHealthy`) |
+| Gate déjà appelé | `first-dollar-send-batch` (ligne 45) |
 
-### 1. Panneau Health en haut de `/admin/first-dollar/batches`
-Nouveau composant `SmsHealthPanel` qui lit `v_sms_infrastructure_status` + dernier `sms_test_runs`. Affiche :
+**Cause du 0 partout dans /admin/first-dollar** : le hook `useFirstDollarFunnel` filtre `launch_leads.created_at >= today` — les leads déjà scrappés hier ne comptent pas. Séparer *funnel event-based* (Today = événements du jour) de *stock leads*.
 
-- Statut global : Vert (HEALTHY) / Jaune (WARNING) / Rouge (ERROR)
-- Dernier callback Twilio (`last_callback_at`)
-- Dernier test SMS réussi (`last_test_success_at`)
-- Taux livraison 24 h
-- Dernier test : numéro, statut Twilio, `error_code`/`error_message`, horodatage
-- Raison exacte du blocage (mappe la règle de la vue en phrase claire)
-- Bouton **« Exécuter un test SMS »** → `supabase.functions.invoke('sms-admin-test')`, toast succès/échec, refetch health
+## Phase 2 — Canonical DB function `get_sms_outbound_health()`
 
-### 2. Message de blocage actionnable dans le Batch Sender
-Quand `useSendBatch` retourne bloqué, remplacer le toast opaque par un encart persistant :
-- Cause détectée (mappée depuis `health.status` + champs)
-- CTA « Exécuter un test SMS » (mêmes handlers que panneau)
-- Lien vers `/admin/outbound/email-health` déjà existant si dispo pour infra plus large (optionnel)
+Migration : créer `public.get_sms_outbound_health()` en wrapper de `v_sms_infrastructure_status` retournant :
 
-### 3. Hook `useSmsHealth`
-Nouveau `src/hooks/useSmsHealth.ts` :
-- Query `v_sms_infrastructure_status` + top 1 `sms_test_runs`
-- Mutation `runTestSms` → invoke `sms-admin-test`
-- Refetch 30 s
+```
+is_operational  bool     -- status = 'HEALTHY'
+status          text     -- HEALTHY|WARNING|ERROR
+last_test_at    timestamptz
+delivered_at    timestamptz  -- last_test_success_at
+valid_until     timestamptz  -- delivered_at + 24h
+error_code      text
+error_message   text
+provider_message_id text
+reason          text     -- humanized block cause
+```
 
-### 4. Aucune modification de la règle de garde
-On garde `assertSmsHealthy` inchangé. La correction est UX : rendre visible et exécutable ce qui débloque le flag (envoyer 1 test → Twilio callback → `success=true` → `HEALTHY` → batch autorisé).
+- Front (`useSmsHealth`) et backend (`assertSmsHealthy`) migrent tous deux vers cet unique appel RPC. Suppression de la duplication `computeBlockReason` côté client.
+
+## Phase 3 — Panneau Twilio Outbound Status (enrichir)
+
+Le `SmsHealthPanel` déjà en place gagne :
+
+- Ligne "Numéro destination test (masqué)" (dernier `sms_test_runs.phone` masqué `+1•••••1234`)
+- Ligne "SID Twilio (masqué)" pour `message_sid`
+- Ligne "Statut Twilio" (dernier `sms_events_v2.status` pour ce SID)
+- `valid_until` calculé (delivered_at + 24h)
+- Rate-limit visuel : « Prochain test disponible dans Xs » (bloque bouton si dernier test < 5 min)
+
+## Phase 4 — Validation callback Twilio (durcir)
+
+Ajouter validation `X-Twilio-Signature` optionnelle dans `twilio-status-v2` :
+
+- Nouveau secret `TWILIO_AUTH_TOKEN` déjà présent → valider signature HMAC-SHA1 du body + URL
+- Feature flag `TWILIO_STATUS_STRICT_VALIDATION=true` pour activer le rejet (sinon log-only pendant rollout)
+- Aucune régression : la fonction continue de tourner en log-only par défaut
+
+## Phase 5 — Panneau Recipients Eligibility
+
+Nouveau composant `EligibilityPanel` au-dessus du bouton « Envoyer 25 SMS », affichant les compteurs calculés côté edge function `first-dollar-eligibility` :
+
+```
+Total prospects            X
+├─ Numéro manquant         X
+├─ Ligne fixe (non SMS)    X
+├─ Déjà contactés          X
+├─ Opt-out                 X
+├─ Doublons (phone)        X
+├─ Bloqués (suppression)   X
+└─ Éligibles pour ce batch X
+```
+
+Requête basée sur `launch_leads` + `sms_events_v2` + suppression list. Si Éligibles = 0, affiche l'action « Lancer normalisation téléphone » qui invoque `launch-agent-enrich` existant.
+
+## Phase 6 — Renforcer `first-dollar-send-batch`
+
+- Remplacer `assertSmsHealthy()` par appel RPC `get_sms_outbound_health()` (canonical).
+- Ajouter verrou atomique : `UPDATE launch_leads SET sms_batch_id = :batch WHERE id IN (...) AND sms_batch_id IS NULL RETURNING id` — deux clics simultanés ne peuvent réclamer les mêmes leads.
+- Cap dur `size <= 25` (même si `body.size` > 25).
+- Générer un lien tracké unique par prospect : nouvelle colonne `launch_leads.tracked_link_slug` (uuid), inséré dans `[LINK]`. Redirection via edge `t/:slug` (existante ? sinon nouvelle `first-dollar-track`) qui log `contractor_funnel_events(event_type='sms_clicked')` puis 302 vers `/analyse/:slug`.
+- Batch statuses étendus : `validating|blocked|preparing|sending|completed|partial_failure|awaiting_review`.
+
+## Phase 7 — Modèle batch (réutiliser `sms_batches`)
+
+Ajouter via migration (ALTER TABLE) :
+- `requested_count int`, `selected_count int`, `failed_count int`, `blocked_reason text`, `started_at timestamptz`, `completed_at timestamptz`
+
+Pas de nouvelle table `outreach_batches` (le nom canonique du projet est `sms_batches` et `sms_events_v2` sert de messages).
+
+## Phase 8 — Funnel events canoniques
+
+Corriger `useFirstDollarFunnel` :
+
+- Onglet **Today** : lit `contractor_funnel_events.created_at >= today` par `event_type` — plus jamais basé sur `launch_leads.created_at`.
+- `sms_sent` ← count `sms_events_v2.status IN ('sent','delivered')` sur période
+- `sms_delivered` ← count `sms_events_v2.status='delivered'`
+- `payment_success` ← `billing_webhook_events.event_type='checkout.session.completed'` (webhook only)
+- `activated` ← `launch_leads.lead_status='ACTIVATED'`
+
+Insère `contractor_funnel_events` idempotent (`idempotency_key = twilio_sid | tracked_slug | event_type + lead_id`).
+
+## Phase 9 — Détails batch (drawer)
+
+Bouton « Voir détails » sur chaque ligne d'historique → drawer avec :
+- Table des messages du batch (join `sms_batches.lead_ids` × `sms_events_v2`)
+- Colonnes : contractor name, phone masqué, template A/B/C, statut Twilio, `sent_at`, `delivered_at`, `clicked_at`, `error_code`, `error_message`
+- Bouton « Réessayer les échecs admissibles » : appelle `first-dollar-send-batch` avec `retry_batch_id`, filtre `sms_events_v2.status IN ('failed','undelivered')` avec `error_code` récupérable.
+
+## Phase 10 — Messages d'erreur actionnables
+
+Remplacer les toasts génériques par bandeaux persistants sur `/admin/first-dollar/batches` :
+
+| État | Message | Action |
+|---|---|---|
+| Pas de test <24h | « No test Twilio livré dans les dernières 24h. » | « Tester maintenant » |
+| Test en cours | « Test envoyé, en attente confirmation Twilio. » | refetch auto 5s |
+| Test échec | « Erreur Twilio {code} — {message} » | Retry après cooldown |
+| 0 éligibles | « Aucun prospect mobile admissible. » | « Normaliser numéros » |
+| Batch partiel | « X envoyés, Y livrés, Z échecs. » | « Réessayer admissibles » |
+
+## Phase 11 — Sécurité & sûreté (already partly true, formalize)
+
+- Rate-limit test SMS : max 1 / 5 min (colonne calculée depuis `sms_test_runs.created_at`, appliquée UI + edge fn).
+- Cap dur `MAX 25 recipients` in `first-dollar-send-batch`.
+- Pause obligatoire après batch (déjà en place via `sms_batches.reviewed_at`).
+- STOP/opt-out : `sms_events_v2.status='opted_out'` exclut automatiquement (à ajouter dans requête eligibility).
+- Aucune donnée mock, aucun bypass de la règle 24h.
+
+## Phase 12 — Exécution & rapport
+
+Après merge :
+1. Ouvrir `/admin/first-dollar/batches`, cliquer « Exécuter un test SMS » — un SMS réel part au `ADMIN_TEST_PHONE`.
+2. Attendre callback Twilio (≤ 30s en général). Le panneau vire **Opérationnel** avec `valid_until` peuplé.
+3. Vérifier onglet Eligibility : si > 0 mobiles éligibles, cliquer « Envoyer 25 SMS ».
+4. Vérifier historique, SIDs Twilio, transitions `queued→sent→delivered`.
+5. Rapport final structuré : root cause, files, tables réutilisées, test SID masqué, éligibles, batch id, sent/delivered/failed, blocker résiduel.
 
 ## Fichiers touchés
 
-- `src/hooks/useSmsHealth.ts` (nouveau)
-- `src/components/admin/SmsHealthPanel.tsx` (nouveau)
-- `src/pages/admin/PageAdminFirstDollarBatches.tsx` (insertion du panneau + encart d'erreur enrichi)
+**Migrations :**
+- `create function public.get_sms_outbound_health()` + GRANT
+- `ALTER TABLE sms_batches` : nouvelles colonnes
+- `ALTER TABLE launch_leads` : `tracked_link_slug uuid unique`
 
-## Hors scope
+**Edge functions (nouvelles) :**
+- `first-dollar-eligibility` — compteurs éligibilité
+- `first-dollar-track` — redirect + log clic
 
-- Pas de changement à la vue SQL, à `smsHealth.ts`, ni au seuil 24 h.
-- Pas de nouveau panneau global multi-canaux (Resend/Stripe/etc.) — seulement SMS ici, focus premier 1 $.
-- Pas de modification de `sms-admin-test` (fonctionne déjà).
+**Edge functions (modifiées) :**
+- `first-dollar-send-batch` — RPC health, cap 25, atomic claim, tracked links
+- `twilio-status-v2` — validation signature optionnelle
+- `sms-admin-test` — rate-limit 5 min
 
-## Critère de succès
+**Front :**
+- `src/hooks/useSmsHealth.ts` — bascule sur RPC canonique
+- `src/components/admin/SmsHealthPanel.tsx` — enrichir (numéro masqué, SID, valid_until, cooldown)
+- `src/components/admin/EligibilityPanel.tsx` (nouveau)
+- `src/components/admin/BatchDetailsDrawer.tsx` (nouveau)
+- `src/hooks/useFirstDollarFunnel.ts` — Today = event_time, tous stades event-based
+- `src/pages/admin/PageAdminFirstDollarBatches.tsx` — intégration panneaux + drawer
 
-Sur `/admin/first-dollar/batches` : je vois pourquoi c'est bloqué, je clique « Exécuter un test SMS », le test part vers `ADMIN_TEST_PHONE`, le callback Twilio arrive, la vue passe `HEALTHY`, le bouton « Envoyer 25 SMS » cesse de bloquer.
+## Critères de succès (identiques à la demande)
+
+Test SMS réel envoyé → callback delivered persisté → panneau Opérationnel → batch button actif → batch réel sans doublon → historique peuplé → statuts Twilio remontent → funnel event-driven → payment webhook only → aucune donnée fabriquée.
