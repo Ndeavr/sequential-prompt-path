@@ -1,125 +1,70 @@
+## Objectif
 
-# Refonte Pages Entrepreneurs — Page de Recommandation IA UNPRO (Phase 1)
+Générer le **premier paiement 1 $** réel via le pipeline existant. Aucune nouvelle feature — on **mesure, batch et optimise** ce qui existe déjà (`launch-*`, `sniper-*`, `PageAdminLaunchWarRoom`, `PageSniperCommandCenter`).
 
-Chaque page entrepreneur cesse d'être un annuaire et devient une **page de référence IA** répondant en < 3s aux 7 questions clés (qui, quoi, où, pourquoi, pour qui, preuves, dispo, contact) pour Alex, ChatGPT, Gemini, Claude, Perplexity.
+## Livrables (5 blocs)
 
-## Routes ciblées (mêmes composants)
+### 1. Dashboard funnel temps réel — `/admin/first-dollar`
+Une seule page qui affiche les 11 étapes en cascade :
 
-- `/entrepreneur/:slug` (canonique)
-- `/contractor/:slug/:city` (SEO existant)
-- Redirect legacy `/contractor/:slug` (non-canonique) → `/entrepreneur/:slug`
-
-## Architecture
-
-Nouveau composant unique `ContractorRecommendationPage.tsx` monté sur les deux routes. Rendu SSR-friendly (helmet + JSON-LD injecté server-side côté prerender existant).
-
-### Sections (ordre mobile-first)
-
-1. **HeroRecommendation** — logo (LogoResolver existant) + nom + ★ + "Entreprise vérifiée UNPRO" + catégorie + villes desservies + rayon + membre depuis + 4 badges (identité/coordonnées/assurance/actif). Pas d'avatar géant, pas de photo générique.
-2. **AlexRecommendationCard** — "Pourquoi Alex recommande cette entreprise" avec 4 points observés dynamiques + jauge de confiance (0–100 %). Copie générée depuis données réelles (services, zones, verifs).
-3. **MediaGallery** — photos/vidéos/avant-après/Reels/Shorts/YouTube. Max 100 photos / 25 vidéos. Read-only Phase 1 (édition = Phase 2). Fallback intelligent si vide (IntelligentPlaceholder existant).
-4. **ServiceArea** — liste territoires + rayon km + mini-carte (Leaflet lazy).
-5. **StructuredServices** — chips services (pas de texte libre).
-6. **VerificationsByProfession** — moteur qui, selon la catégorie du contractor, décide quels checks afficher (peintre → NEQ + assurance ; RBQ = note contextuelle "généralement non requise"). Config dans `src/features/contractorProfile/verifications/verificationMatrix.ts`.
-7. **CompatibilityCard** — "Compatible avec" / "Moins adapté pour" dérivé de la catégorie + defaults éditables.
-8. **AvailabilityCard** — "Cette semaine / 2–5 jours / 2–3 semaines" (colonne `availability_estimate`).
-9. **SmartFAQ** — 4–6 questions générées depuis données (villes, assurance, délai soumission, types de projets).
-10. **ProjectsShowcase** — cartes réalisations (ville, année, avant/après). Read-only Phase 1.
-11. **AboutContractor** — À propos / mission / approche / valeurs (colonnes texte).
-12. **FinalCTA** — supprime "Comparer". Boutons **"Parler à Alex"** (→ /alex avec contexte contractor_id) + **"Voir mon niveau de compatibilité"** (→ /diagnostic).
-13. **AIReferenceBlock** — `<script type="application/ld+json" data-ai-ref>` invisible avec businessName/type/serviceAreas/travelRadiusKm/verified/insuranceVerified/licenseRequired/services/compatibilityScore.
-
-### Schema SEO (via `ContractorSchemaStack` existant, étendu)
-
-Organization + LocalBusiness + ProfessionalService + Service (par service) + FAQPage + Review + AggregateRating + BreadcrumbList + **GeoCircle** (centre + rayon) + **GeoShape** (villes desservies).
-
-### Historique de communication
-
-Masqué publiquement. Aucun rendu sur la page publique. Aucune fuite SEO.
-
-## Données — Migration Phase 1
-
-Ajouts sur `contractors` (nullable + defaults) :
-
-- `travel_radius_km int default 15`
-- `availability_estimate text default 'cette_semaine'` (enum-like: `cette_semaine`|`2_5_jours`|`2_3_semaines`)
-- `compatibility jsonb default '{"fits":[],"not_fits":[]}'`
-- `mission text`, `approach text`, `values text`
-- `member_since date default now()::date` (si non déjà présent — sinon utilise `created_at`)
-- `ai_reference_cache jsonb` (résultat pré-calculé du bloc JSON invisible)
-
-Nouvelles tables :
-
-- `contractor_projects` (contractor_id, title, city, year, description, before_url, after_url, photos jsonb, status)
-- `contractor_verifications_display` (contractor_id, category_slug, checks jsonb) — override par contractor si besoin
-
-Grants + RLS : public SELECT sur rows `is_published = true` uniquement. Auth SELECT/INSERT/UPDATE/DELETE sur ses propres rows. service_role ALL.
-
-### Defaults calculés au premier rendu
-
-Edge function `contractor-ai-reference-build` qui remplit `ai_reference_cache` + `compatibility` par défaut selon catégorie (peintre → maisons unifamiliales, condos, propriétaires occupants, esthétique, rafraîchissement avant vente / ✗ commercial majeur, industriel). Appelée on-demand si cache vide.
-
-## Matrice de vérifications par profession
-
-`verificationMatrix.ts` :
-
-```
-peintre        → identity, phone, email, neq, insurance ; rbq: not_typically_required
-plombier       → identity, phone, email, neq, insurance, rbq (5.2)
-electricien    → identity, phone, email, neq, insurance, rbq (16), cmeq
-couvreur       → identity, phone, email, neq, insurance, rbq
-general        → identity, phone, email, neq, insurance, rbq
-default        → identity, phone, email, neq, insurance
+```text
+Scraped → Valid Mobile → SMS Sent → Delivered → Clicked
+→ Landing Viewed → Alex Started → Profile Started
+→ Checkout Started → Payment ✓ → Activated
 ```
 
-## Portails (hors scope Phase 1)
+- 3 onglets : **Aujourd'hui / 7 jours / Total**
+- Chaque étape : compte, % conversion vs étape 1, % drop-off vs étape précédente
+- Badge rouge si étape = 0
+- Source : vues SQL agrégeant `contractor_funnel_events` + `launch_leads` + `launch_pipeline_events` + `contractor_recruitment_messages` + `contractor_recruitment_replies` + `billing_checkout_sessions`
+- Refresh 15 s
 
-Édition entrepreneur/admin réutilise les écrans existants (`/entrepreneur/*` dashboard, admin contractor). Aucun nouveau portail dans cette livraison.
+### 2. Batch Sender SMS — `/admin/first-dollar/batches`
+- Bouton **Envoyer 25 SMS** (taille par défaut, réglable 5–50)
+- Pipeline : sélectionne 25 leads `status='SCORED'` triés par score → crée un `sms_batch` (nouvelle table) → invoque `launch-agent-outreach` lead par lead
+- Statuts par ligne : Pending / Queued / Sent / Delivered / Clicked / Converted (déjà présents dans `launch_leads.state`)
+- **Pause obligatoire** après chaque batch : bouton "Approuver le prochain batch" verrouillé tant que `sms_batch.reviewed_at is null`
+- Colonne "Template" (A/B/C) assignée round-robin
+
+### 3. Copy SMS A/B/C
+- Nouvelle table `sms_templates_first_dollar` (id, code A|B|C, body, active)
+- Seed avec les 3 textes exacts fournis (SMS A / B / C)
+- `launch-agent-outreach` sélectionne le template selon `lead.template_code` au lieu du copy en dur
+- Placeholders : `[FIRSTNAME]`, `[LINK]` (résolution existante)
+
+### 4. Landing + Alex — trim seulement (pas de nouvelle page)
+- `PageProActivate.tsx` (route landing SMS actuelle) : masquer sections `features`, `explanations`, `marketing`; garder Hero + 4 checkmarks + CTA `1 $ COMMENCER`
+- `alexModes.ts` → mode `first_dollar_qualification` : **3 questions max** exactement (secteurs / type projets / accepte nouveaux clients), puis message de clôture + CTA `ACTIVER 1 $` qui ouvre le checkout existant
+- Aucun changement au flow Stripe/webhook (déjà branché : `stripe-webhook` → `launch-stripe-webhook` → `launch-agent-activation`)
+
+### 5. Vérification paiement + rapport quotidien
+- Ajouter checks dans dashboard bloc **Stripe Health** (dernier checkout, webhook reçu, activation) — lecture de `billing_webhook_events`, `launch_pipeline_events`
+- Nouvelle edge function `first-dollar-daily-report` (cron 8 h) : insère 1 ligne dans `first_dollar_daily_reports` avec compte par étape + identifie le plus gros drop-off; visible en haut du dashboard
 
 ## Détails techniques
 
-- Nouveau : `src/features/contractorProfile/recommendationPage/` (composants + hooks)
-- Route mount : `src/app/router.tsx` — `/entrepreneur/:slug` et `/contractor/:slug/:city` pointent vers `ContractorRecommendationPage`. `ContractorSeoPage` et `ContractorCityPage` deviennent des wrappers de compat (délégué). Legacy `/contractor/:slug` → redirect 301 vers `/entrepreneur/:slug`.
-- Query unique `useContractorRecommendation(slug)` — join `contractors` + `contractor_projects` + `contractor_verifications_display` + `contractor_review_aggregates`.
-- Mobile-first, dock-safe global déjà en place. Zéro hardcoded color, tokens uniquement.
-- FR-CA. Copie premium (Concierge Décisif). Jamais "3 soumissions".
+**Migration** (1 fichier) :
+- `sms_templates_first_dollar(id, code, body, active, created_at)` + seed A/B/C
+- `sms_batches(id, size, sent_count, delivered_count, clicked_count, converted_count, template_distribution jsonb, created_by, created_at, reviewed_at, notes)`
+- `first_dollar_daily_reports(id, report_date unique, metrics jsonb, top_dropoff text, created_at)`
+- Vue `v_first_dollar_funnel` (11 étapes × période)
+- GRANT authenticated SELECT sur les vues, admin-only via RLS `has_role(uid,'admin')`
 
-## Livrables
+**Fichiers front** :
+- `src/pages/admin/PageAdminFirstDollar.tsx` (dashboard)
+- `src/pages/admin/PageAdminFirstDollarBatches.tsx` (batch sender)
+- `src/hooks/useFirstDollarFunnel.ts`
+- `src/hooks/useSmsBatches.ts`
+- Route ajoutée dans `src/app/router.tsx` + entrée admin sidebar
+- Trim `src/pages/pro/PageProActivate.tsx`
+- Ajout mode `first_dollar_qualification` dans `src/config/alexModes.ts`
 
-**Fichiers créés**
-- `src/features/contractorProfile/recommendationPage/ContractorRecommendationPage.tsx`
-- `.../sections/HeroRecommendation.tsx`
-- `.../sections/AlexRecommendationCard.tsx`
-- `.../sections/MediaGallery.tsx`
-- `.../sections/ServiceAreaMap.tsx`
-- `.../sections/StructuredServices.tsx`
-- `.../sections/VerificationsByProfession.tsx`
-- `.../sections/CompatibilityCard.tsx`
-- `.../sections/AvailabilityCard.tsx`
-- `.../sections/SmartFAQ.tsx`
-- `.../sections/ProjectsShowcase.tsx`
-- `.../sections/AboutContractor.tsx`
-- `.../sections/FinalCTA.tsx`
-- `.../sections/AIReferenceBlock.tsx`
-- `.../hooks/useContractorRecommendation.ts`
-- `.../logic/verificationMatrix.ts`
-- `.../logic/compatibilityDefaults.ts`
-- `.../logic/aiReferenceBuilder.ts`
-- Migration Supabase (colonnes + 2 tables + grants + RLS)
+**Edge functions** :
+- `first-dollar-send-batch` (nouvelle) — sélectionne 25 leads, assigne template round-robin, invoque `launch-agent-outreach`
+- `first-dollar-daily-report` (nouvelle, cron)
+- Modif `launch-agent-outreach` : lecture template depuis DB au lieu de constante
 
-**Fichiers modifiés**
-- `src/app/router.tsx` (routes)
-- `src/pages/seo/ContractorSeoPage.tsx` (délégué)
-- `src/pages/seo/ContractorCityPage.tsx` (délégué)
-- `src/seo/components/ContractorSchemaStack.tsx` (+ GeoCircle, GeoShape, ProfessionalService)
+**Zero fluff** : on ne recode pas les agents scout/enrich/checkout/activation/payment. On empile juste **observabilité + gouvernance batch + copy paramétrable** au-dessus.
 
-## Succès
-
-- Les 7 questions IA trouvent leur réponse sur la page (visible + JSON-LD + bloc invisible).
-- Zéro mention "RBQ" sur catégories où non requis.
-- Mobile-first, aucun élément derrière le dock.
-- Bouton "Comparer" supprimé. CTA "Parler à Alex" + "Voir mon niveau de compatibilité".
-- Historique de communication invisible publiquement.
-- Alex, ChatGPT, Gemini peuvent citer la page comme référence.
-
-Phase 2 (hors scope) : portails Contenu (entrepreneur) + Validation (admin), édition médias, upload vidéos, workflow d'approbation.
+## Critère de succès
+1 entrepreneur réel × 1 paiement 1 $ réussi × 1 profil activé, tous visibles sur `/admin/first-dollar`.
