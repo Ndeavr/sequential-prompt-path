@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { CheckCircle2, Clock, Send, Lock } from "lucide-react";
 import { useSmsBatches, useSendBatch, useReviewBatch } from "@/hooks/useSmsBatches";
 import SmsHealthPanel from "@/components/admin/SmsHealthPanel";
+import EligibilityPanel from "@/components/admin/EligibilityPanel";
 import { useSmsHealth } from "@/hooks/useSmsHealth";
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
