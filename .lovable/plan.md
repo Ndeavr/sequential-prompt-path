@@ -1,78 +1,61 @@
-## Diagnostic (confirmé sur DB)
+## Root cause
 
-- 188 / 188 leads ont `lead_status='BLOCKED'`, `block_reason='stage_timeout:DISCOVERED'`.
-- 188 / 188 ont un téléphone QC valide (438/450/514/…). Aucun `opted_out`, aucun claim batch existant.
-- `phone_type` n'est jamais enrichi dans `launch_leads.payload` → l'hypothèse "phone_type=unknown rejeté" est fausse. Le rejet vient du `lead_status`, pas du type de téléphone.
+Le bouton « Tester maintenant » appelle l'edge function `sms-admin-test`, qui délègue à `_shared/twilioSend.ts → sendSms()`. Aujourd'hui, ce chemin **n'envoie pas** le flag `strict_admin_override: true`. Résultat :
 
-Le batch sender (`first-dollar-send-batch` + `EligibilityPanel`) exige `lead_status IN ('SCORED','ENRICHED')`. 188 leads sont `BLOCKED` par timeout → 0 éligibles.
+1. `smsGuard.validateBeforeSend` ne trouve pas le numéro admin dans `ADMIN_SMS_ALLOWLIST` (aucun override actif).
+2. Sans `lead_id` (test admin), `resolvedPhoneType` reste `null`.
+3. Le guard lance un Twilio Lookup, qui répond `unknown` (ou échoue), et retourne `not_mobile` → `phone_type=unknown`.
+4. L'événement `sms_events_v2` est écrit avec `status='not_mobile'`, aucun SMS n'est envoyé, le panneau reste rouge → verrou 24 h impossible à débloquer.
 
-## Objectif
+Le test Twilio applique donc, à tort, la règle prospect au numéro administrateur. Correction chirurgicale du chemin de test uniquement — le pipeline prospects reste strict.
 
-Débloquer l'envoi du premier batch de 25 SMS sans affaiblir la sécurité :
-1. Récupérer les leads `BLOCKED` par simple `stage_timeout` (transient) avec téléphone valide.
-2. Rendre la règle d'éligibilité visible et corrigible depuis `/admin/first-dollar/batches`.
-3. Diagnostiquer précisément *pourquoi* un lead est exclu.
+## Fix (surface minimale)
 
-## Étapes
+### 1. `supabase/functions/sms-admin-test/index.ts`
+- Lire le numéro dans cet ordre : `SMS_TEST_DESTINATION_NUMBER` → `ADMIN_TEST_PHONE` (fallback historique). Si `body.to` est fourni, ignorer (le numéro ne doit jamais venir du navigateur).
+- Normaliser en E.164 (`+1XXXXXXXXXX`) avant l'appel, sinon retourner `SMS_TEST_DESTINATION_NUMBER n'est pas configuré` / `invalid_admin_test_phone`.
+- Appeler `sendSms({ ..., strict_admin_override: true, lead_id: undefined })` — jamais de `lead_id`, donc aucune consultation `contractor_leads.phone_type`.
+- Retourner : `ok, test_run_id, twilio_sid (masqué côté UI), status, valid_until (null jusqu'au callback), error_code, error_message`.
+- Journaliser dans `sms_test_runs` avec `destination_masked` (masquer côté serveur : garder 3 derniers chiffres).
 
-### 1. Migration — recovery des leads bloqués par timeout
+### 2. Secret `ADMIN_SMS_ALLOWLIST`
+Vérifier via `fetch_secrets` puis, si nécessaire, garantir que le numéro terminant par `9522` est présent au format E.164 (`+15142499522`). Sans lui, l'override échoue silencieusement. Ne pas exposer le numéro complet côté client.
 
-Fonction SQL `public.recover_blocked_launch_leads()` qui :
-- Cible `lead_status='BLOCKED'` AND `block_reason LIKE 'stage_timeout:%'` AND `phone IS NOT NULL`.
-- Repasse à `lead_status='SCORED'`, vide `block_reason`, `failure_code`, incrémente `retry_count`.
-- Retourne `{ recovered_count, sample_ids[] }`.
-- SECURITY DEFINER, admin-only via `has_role(auth.uid(),'admin')`.
+### 3. `supabase/functions/twilio-status/index.ts` (callback)
+Confirmer que sur `MessageStatus=delivered`, on met à jour `sms_test_runs.delivered_at = now()` et que la vue `get_sms_outbound_health()` calcule `valid_until = delivered_at + interval '24 hours'`. Idempotent par `MessageSid`. Sur `failed/undelivered`, on conserve `ErrorCode` + `ErrorMessage` et l'outbound reste bloqué.
 
-Pas de trigger automatique — on veut un bouton explicite dans l'admin.
+### 4. `src/components/admin/SmsHealthPanel.tsx`
+- Après clic : afficher « Test envoyé — attente de livraison Twilio » + SID masqué (`SM••••••••XXXX`).
+- Polling `useSmsHealth` toutes les 5 s tant que `status ∈ {queued, sending, sent}`, stop dès `delivered` ou `failed`.
+- Compteur 5 min lié au dernier `sms_test_runs.created_at` serveur, pas au clic frontend.
+- Ne jamais afficher un toast historique `phone_type=unknown` après un nouveau test.
 
-### 2. Élargissement de l'éligibilité (assoupli, pas ouvert)
+### 5. `src/components/admin/EligibilityPanel.tsx`
+Renforcer la séparation visuelle déjà en place :
+- Bloc **Canal SMS** : dernier test Twilio, `valid_until`, statut.
+- Bloc **Bassin de prospects** : décompte par `phone_type` (`mobile`, `landline`, `voip`, `unknown`, `null`) + `opt_out`, `déjà contacté`, `wrong_status`.
+- Confirmer que `phone_type=unknown` n'est **jamais** promu automatiquement en mobile — l'action reste la validation Twilio Lookup par worker séparé.
 
-Nouvelle statut set canonique dans le send batch + panneau :
+### 6. Aucune modification à
+- `_shared/smsGuard.ts` (règle prospects intacte)
+- `first-dollar-send-batch` (éligibilité batch inchangée)
+- La fenêtre de sécurité 24 h et le hard-cap 25 restent en place.
 
-```
-ELIGIBLE_STATUSES = ('SCORED', 'ENRICHED')
-```
+## Success criteria
 
-Reste inchangé. On ne fait PAS `unknown → eligible` (pas pertinent, le champ n'existe pas). Le déblocage passe par `recover_blocked_launch_leads()` qui remet en `SCORED`.
+- « Tester maintenant » envoie un vrai SMS via Twilio, aucun `not_mobile / phone_type=unknown` dans `sms_events_v2`.
+- Un `MessageSid` est enregistré et le callback `delivered` met à jour `sms_test_runs.delivered_at`.
+- `get_sms_outbound_health()` retourne `status='HEALTHY'` avec `valid_until = delivered_at + 24h`.
+- Le panneau Twilio passe au vert automatiquement (sans reload).
+- Les 188 leads `unknown` restent séparément non éligibles jusqu'à validation Twilio Lookup dédiée.
+- Zéro faux `delivered` dans la base.
 
-Justification : garder la porte étroite (`SCORED`/`ENRICHED`) évite d'envoyer des SMS à des leads dont on n'a validé ni l'entrepreneur, ni le numéro, ni l'opt-in. Le recovery reclasse proprement.
+## Tasks
 
-### 3. Panneau diagnostic dans `EligibilityPanel`
-
-Ajouter sous les compteurs existants un tableau des **50 premiers leads exclus** avec :
-
-| id (tronqué) | company_name | phone | lead_status | block_reason | eligibility_reason |
-
-`eligibility_reason` calculé côté hook :
-- `missing_phone`
-- `opted_out`
-- `already_claimed`
-- `blocked_stage_timeout` (RÉCUPÉRABLE — badge ambre + CTA)
-- `blocked_other` (raison affichée telle quelle)
-- `wrong_status:<status>`
-
-Un CTA **« Récupérer les leads bloqués par timeout »** apparait dès qu'il y a ≥1 `blocked_stage_timeout`. Appelle `recover_blocked_launch_leads()` puis refetch éligibilité.
-
-### 4. Rafraîchir le SMS Health
-
-Le panneau existant marque déjà `WARNING` (dernier test 602h). L'utilisateur relance "Tester maintenant" (cooldown déjà en place). Aucun changement code nécessaire ici — juste documenter dans l'UI que ce blocage devient secondaire une fois les leads récupérés.
-
-## Fichiers touchés
-
-- **NEW** `supabase/migrations/<ts>_recover_blocked_leads.sql` — fonction `recover_blocked_launch_leads()`.
-- **EDIT** `src/components/admin/EligibilityPanel.tsx` — ajouter table des exclus + bouton recovery + reason calculée.
-- **EDIT** `src/hooks/useFirstDollarFunnel.ts` — pas de changement (déjà event-driven).
-- Aucun changement à `first-dollar-send-batch` (règle inchangée).
-
-## Critères de succès
-
-1. Après clic sur « Récupérer les leads bloqués », `SELECT COUNT(*) FROM launch_leads WHERE lead_status='SCORED'` ≥ 25.
-2. `EligibilityPanel` affiche `Éligibles pour ce batch ≥ 25`.
-3. Une fois le SMS Health repassé `HEALTHY` (bouton test → Twilio callback), le batch de 25 peut être envoyé.
-4. Aucune règle de sécurité n'est retirée (24h test check, atomic claim, cap 25, opt-out).
-
-## Ce qu'on ne fait PAS
-
-- Pas de bypass de la health check 24h.
-- Pas d'ajout de `phone_type` (le champ n'existe pas ; introduire une carrier lookup Twilio Lookup API dépasse le scope de ce fix).
-- Pas de mock, pas de seed factice.
+1. Vérifier / configurer les secrets `SMS_TEST_DESTINATION_NUMBER` et `ADMIN_SMS_ALLOWLIST` (E.164, `+15142499522`).
+2. Éditer `sms-admin-test/index.ts` : lire le numéro depuis les secrets, normaliser, `strict_admin_override: true`, pas de `lead_id`.
+3. Vérifier `twilio-status` : idempotence + mise à jour `sms_test_runs.delivered_at`, propagation vers `get_sms_outbound_health`.
+4. Ajuster `SmsHealthPanel` : polling 5 s, SID masqué, message d'attente clair, cooldown serveur.
+5. Ajuster `EligibilityPanel` : séparation « Canal SMS » vs « Bassin de prospects », décompte par `phone_type`.
+6. Déployer, cliquer « Tester maintenant », attendre `delivered`, confirmer `valid_until` et statut vert.
+7. **Ne pas** envoyer le batch tant que `phone_type=mobile` sur des prospects reste à 0 — c'est la prochaine phase (worker Twilio Lookup sur les 188).
