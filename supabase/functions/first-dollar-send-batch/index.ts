@@ -51,7 +51,9 @@ Deno.serve(async (req) => {
   }
 
   const body = await req.json().catch(() => ({} as any));
-  const size = Math.min(Math.max(Number(body.size ?? 25), 1), 100);
+  // Hard cap: never exceed 25 recipients per approved batch, regardless of input.
+  const requestedSize = Math.max(1, Number(body.size ?? 25));
+  const size = Math.min(requestedSize, 25);
   const force = Boolean(body.force);
   const sb = adminClient();
 
@@ -90,12 +92,13 @@ Deno.serve(async (req) => {
     );
   }
 
-  // Select candidate leads
+  // Select candidate leads — filter out already-claimed (sms_batch_id IS NULL)
   const { data: leads } = await sb
     .from("launch_leads")
     .select("*")
     .in("lead_status", ["SCORED", "ENRICHED"])
     .not("phone", "is", null)
+    .is("sms_batch_id", null)
     .order("last_event_at", { ascending: true })
     .limit(size);
 
@@ -109,12 +112,16 @@ Deno.serve(async (req) => {
   // Create batch record
   const leadIds = leads.map((l: any) => l.id);
   const distribution: Record<string, number> = {};
+  const now = new Date().toISOString();
   const { data: batch, error: batchErr } = await sb
     .from("sms_batches")
     .insert({
       size: leads.length,
+      requested_count: requestedSize,
+      selected_count: leads.length,
       lead_ids: leadIds,
       status: "sending",
+      started_at: now,
       template_distribution: distribution,
     })
     .select("id")
@@ -123,6 +130,28 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ ok: false, error: batchErr?.message ?? "batch_insert_failed" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
+  // Atomic claim: only take leads still un-claimed. Prevents duplicate sends
+  // if two clicks fire simultaneously.
+  const { data: claimed } = await sb
+    .from("launch_leads")
+    .update({ sms_batch_id: batch.id })
+    .in("id", leadIds)
+    .is("sms_batch_id", null)
+    .select("id");
+  const claimedIds = new Set(((claimed ?? []) as any[]).map(r => r.id));
+  const claimedLeads = leads.filter((l: any) => claimedIds.has(l.id));
+  if (claimedLeads.length === 0) {
+    await sb.from("sms_batches").update({
+      status: "sent",
+      completed_at: new Date().toISOString(),
+      blocked_reason: "ALL_LEADS_CLAIMED_BY_OTHER_BATCH",
+    }).eq("id", batch.id);
+    return new Response(
+      JSON.stringify({ ok: false, blocked: true, reason: "ALL_LEADS_CLAIMED_BY_OTHER_BATCH" }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 
