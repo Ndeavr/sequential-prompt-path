@@ -1802,6 +1802,7 @@ export const AppRouter = () => (
          <Route path="/admin/command-center/territories" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageCommandCenterTerritories /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/seo-index-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSeoIndexHealth /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/sms-debug" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSmsDebug /></Suspense></UniversalRouteGuard>} />
+          <Route path="/admin/outreach-funnel" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageOutreachFunnel /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/contractor-generator-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageContractorGeneratorHealth /></Suspense></UniversalRouteGuard>} />
 
           <Route path="/admin/memory-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageMemoryHealth /></Suspense></UniversalRouteGuard>} />
