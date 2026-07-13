@@ -85542,6 +85542,7 @@ export type Database = {
         }
         Returns: string
       }
+      recover_blocked_launch_leads: { Args: never; Returns: Json }
       refresh_appointment_value_matrix: { Args: never; Returns: Json }
       reject_company: {
         Args: { _actor_id: string; _company_id: string; _notes?: string }
