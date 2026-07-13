@@ -218,10 +218,10 @@ Deno.serve(async (req) => {
     );
 
     // Last events
-    const lastSms = await lastTs("acq_sms_logs", "created_at", (q) => q.eq("is_simulation", false));
+    const lastSms = await lastTs("acq_sms_logs", "created_at", (q) => q.eq("is_simulation", false).eq("is_test_e2e", false));
     const lastClick = await lastTs("click_events", "occurred_at");
     const lastPaid = await lastTs("prospects", "activation_paid_at", (q) =>
-      q.not("activation_paid_at", "is", null).not("campaign_id", "is", null),
+      q.eq("is_test_e2e", false).not("activation_paid_at", "is", null).not("campaign_id", "is", null),
     );
 
     const stages: StageResult[] = [
