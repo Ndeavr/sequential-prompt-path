@@ -192,23 +192,34 @@ Deno.serve(async (req) => {
               // Ensure a contractors row exists (best-effort — table shape varies)
               let cId: string | null = (prospect.contractor_id as string) || null;
               if (!cId) {
-                try {
-                  const { data: created } = await supabase
-                    .from("contractors")
-                    .insert({
-                      business_name: prospect.business_name,
-                      city: prospect.main_city,
-                      phone: prospect.telephone,
-                      email: prospect.email,
-                      status: "active",
-                      source: "sms_outreach",
-                    } as never)
-                    .select("id")
-                    .maybeSingle();
-                  cId = (created?.id as string) ?? null;
-                } catch (e) {
-                  console.warn("[stripe-webhook] contractor upsert soft-failed", (e as Error).message);
+                // No auth user exists yet for SMS-outreach prospects — create an
+                // unclaimed contractor row with a placeholder user_id. When the
+                // prospect signs up later, the account is reconciled by matching
+                // prospects.contractor_id → contractors.id and updating user_id.
+                const placeholderUserId = crypto.randomUUID();
+                const { data: created, error: insertErr } = await supabase
+                  .from("contractors")
+                  .insert({
+                    user_id: placeholderUserId,
+                    business_name: prospect.business_name ?? "Entreprise à activer",
+                    city: prospect.main_city ?? null,
+                    phone: prospect.telephone ?? null,
+                    email: prospect.email ?? null,
+                    specialty: prospect.service ?? null,
+                    account_status: "active",
+                    activation_status: "activated",
+                    onboarding_status: "sms_outreach_paid",
+                  } as never)
+                  .select("id")
+                  .maybeSingle();
+                if (insertErr) {
+                  console.error(
+                    "[stripe-webhook] contractor insert failed",
+                    insertErr.message,
+                    insertErr.details,
+                  );
                 }
+                cId = (created?.id as string) ?? null;
               }
 
               // Compute recommendable
