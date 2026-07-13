@@ -194,6 +194,12 @@ const PageCheckoutStripe = lazyWithRetry(() => import("@/pages/checkout/PageChec
 const PageCheckoutSuccess = lazyWithRetry(() => import("@/pages/checkout/PageCheckoutSuccess"));
 const PageActivationStart = lazyWithRetry(() => import("@/pages/checkout/PageActivationStart"));
 const SolicitationActivationPage = lazyWithRetry(() => import("@/pages/SolicitationActivationPage"));
+const PageShortLinkRedirect = lazyWithRetry(() => import("@/pages/invitation/PageShortLinkRedirect"));
+const PageInvitationLanding = lazyWithRetry(() => import("@/pages/invitation/PageInvitationLanding"));
+const PageInvitationEdit = lazyWithRetry(() => import("@/pages/invitation/PageInvitationEdit"));
+const PageInvitationActivate = lazyWithRetry(() => import("@/pages/invitation/PageInvitationActivate"));
+const PageOutreachActivationSuccess = lazyWithRetry(() => import("@/pages/invitation/PageOutreachActivationSuccess"));
+const PageOutreachFunnel = lazyWithRetry(() => import("@/pages/admin/PageOutreachFunnel"));
 const AdminSolicitationPage = lazyWithRetry(() => import("@/pages/admin/AdminSolicitationPage"));
 const PageAdminOutreachErrors = lazyWithRetry(() => import("@/pages/admin/PageAdminOutreachErrors"));
 const PageAdminProviderHealth = lazyWithRetry(() => import("@/pages/admin/PageAdminProviderHealth"));
