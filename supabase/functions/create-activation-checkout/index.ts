@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
     // Best-effort event log (table may not exist in all envs).
     try {
       await supabase.from("prospect_page_events").insert({
-        slug, event_type: "checkout_started", metadata: { session_id: session.id },
+        slug: effectiveSlug, event_type: "checkout_started", metadata: { session_id: session.id, landing_token: landing_token ?? null },
       });
     } catch (_) { /* ignore */ }
 
