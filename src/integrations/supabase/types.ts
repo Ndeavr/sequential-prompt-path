@@ -68017,6 +68017,8 @@ export type Database = {
           slug: string | null
           source: string | null
           status: string | null
+          stripe_customer_id: string | null
+          stripe_session_id: string | null
           telephone: string | null
           updated_at: string | null
           url_google: string | null
@@ -68056,6 +68058,8 @@ export type Database = {
           slug?: string | null
           source?: string | null
           status?: string | null
+          stripe_customer_id?: string | null
+          stripe_session_id?: string | null
           telephone?: string | null
           updated_at?: string | null
           url_google?: string | null
@@ -68095,6 +68099,8 @@ export type Database = {
           slug?: string | null
           source?: string | null
           status?: string | null
+          stripe_customer_id?: string | null
+          stripe_session_id?: string | null
           telephone?: string | null
           updated_at?: string | null
           url_google?: string | null

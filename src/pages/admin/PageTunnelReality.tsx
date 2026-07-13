@@ -6,7 +6,7 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertOctagon, Copy, Loader2, RefreshCw, Send } from "lucide-react";
+import { AlertOctagon, Copy, Loader2, RefreshCw, Send, Wrench } from "lucide-react";
 import { toast } from "sonner";
 
 type Win = "24h" | "7d" | "30d";
@@ -51,6 +51,36 @@ export default function PageTunnelReality() {
   const [window, setWindow] = useState<Win>("7d");
   const [dryRun, setDryRun] = useState(true);
   const [relancing, setRelancing] = useState(false);
+  const [repairGaps, setRepairGaps] = useState<{ total_paid: number; missing_contractor: number; missing_profile: number } | null>(null);
+  const [repairing, setRepairing] = useState(false);
+
+  const scanRepair = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("repair-paid-contractor-activation", { body: {} });
+      if (error) throw error;
+      setRepairGaps(data as any);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    }
+  }, []);
+
+  const runRepair = async () => {
+    setRepairing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("repair-paid-contractor-activation", {
+        body: { sweep: true, limit: 200 },
+      });
+      if (error) throw error;
+      const r = data as any;
+      toast.success(`Réparation — scannés ${r.scanned} · réparés ${r.repaired}`);
+      await scanRepair();
+      load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setRepairing(false);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -68,9 +98,10 @@ export default function PageTunnelReality() {
 
   useEffect(() => {
     load();
+    scanRepair();
     const id = setInterval(load, 30_000);
     return () => clearInterval(id);
-  }, [load]);
+  }, [load, scanRepair]);
 
   const runRelances = async () => {
     setRelancing(true);
@@ -205,6 +236,38 @@ export default function PageTunnelReality() {
             </button>
           </div>
         </div>
+
+        {/* Repair panel — paid $1 activations without contractor/profile */}
+        <div className="rounded-2xl border border-border bg-white/[0.02] p-4 flex flex-wrap items-center gap-3 justify-between">
+          <div>
+            <div className="text-sm font-semibold flex items-center gap-2">
+              <Wrench className="w-4 h-4" /> Réparer les activations payées
+            </div>
+            <div className="text-xs opacity-70 mt-0.5">
+              {repairGaps
+                ? `${repairGaps.total_paid} paiements 1 $ · ${repairGaps.missing_contractor} sans entrepreneur · ${repairGaps.missing_profile} sans profil.`
+                : "Analyse des paiements 1 $…"}
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={scanRepair}
+              className="rounded-lg bg-white/10 border border-border px-3 py-1.5 text-sm inline-flex items-center gap-1"
+            >
+              <RefreshCw className="w-4 h-4" /> Rescanner
+            </button>
+            <button
+              onClick={runRepair}
+              disabled={repairing || (repairGaps?.missing_contractor === 0 && repairGaps?.missing_profile === 0)}
+              className="rounded-lg px-3 py-1.5 text-sm font-semibold inline-flex items-center gap-1 bg-emerald-500 text-white disabled:opacity-40"
+            >
+              {repairing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wrench className="w-4 h-4" />}
+              Réparer maintenant
+            </button>
+          </div>
+        </div>
+
+
 
         {/* Table */}
         <div className="rounded-2xl border border-border overflow-x-auto">
