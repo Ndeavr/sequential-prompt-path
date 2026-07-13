@@ -4,6 +4,7 @@
  */
 import { useEffect } from "react";
 import { getEnglishCounterpart, getFrenchCounterpart } from "@/seo/services/canonicalManager";
+import { DEFAULT_OG_IMAGE } from "@/seo/ogImage";
 
 interface SeoHeadProps {
   title: string;
@@ -78,16 +79,16 @@ const SeoHead = ({
     setMeta("og:site_name", "UNPRO", "property");
     setMeta("og:url", canonicalUrl, "property");
     setMeta("og:locale", lang === "en-CA" ? "en_CA" : "fr_CA", "property");
-    if (ogImage) {
-      setMeta("og:image", ogImage, "property");
-      setMeta("og:image:width", "1200", "property");
-      setMeta("og:image:height", "630", "property");
-    }
+    const effectiveOgImage = ogImage || DEFAULT_OG_IMAGE;
+    setMeta("og:image", effectiveOgImage, "property");
+    setMeta("og:image:width", "1200", "property");
+    setMeta("og:image:height", "630", "property");
+    setMeta("og:image:alt", "UNPRO — Trouvez le bon entrepreneur. Recommandé par l'IA.", "property");
 
-    setMeta("twitter:card", ogImage ? "summary_large_image" : "summary");
+    setMeta("twitter:card", "summary_large_image");
     setMeta("twitter:title", title);
     setMeta("twitter:description", description);
-    if (ogImage) setMeta("twitter:image", ogImage);
+    setMeta("twitter:image", effectiveOgImage);
   }, [title, description, canonical, noindex, ogImage, ogType, englishCanonical, frenchCanonical, lang]);
 
   return null;
