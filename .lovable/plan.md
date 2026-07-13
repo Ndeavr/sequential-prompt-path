@@ -1,140 +1,99 @@
 
-# Tunnel SMS → Vente 1 $ — Câblage complet
+# Audit réel du tunnel SMS → 1 $ + relances automatiques
 
-Objectif : un prospect scrapé passe scraping → SMS → clic → page personnalisée → édition → checkout 1 $ → webhook → profil activé → recommandable, sans intervention manuelle et sans page morte.
+Objectif : passer du « tunnel câblé » au « tunnel qui vend ». Deux livrables :
 
-Base existante réutilisée (aucun doublon créé) :
-- Tables : `prospects` (source), `outreach_campaigns`, `outreach_recipients`, `outreach_messages`, `outreach_click_events`, `outreach_page_events`, `outreach_sms_events`, `contractor_activation_funnel`, `contractor_activation_events`, `contractor_activation_ledger`, `contractors`
-- Edge functions : `acq-send-outreach`, `track-outreach-click`, `create-activation-checkout`, `activation-confirm`, `stripe-webhook`, `outreach-repair-messaging`, `solicitation-track`
+1. Un cockpit qui affiche **les chiffres réels** de chaque étape et identifie le blocage #1.
+2. Un moteur de relances J+1 / J+3 / J+7 branché sur Twilio.
 
-## 1. Migration — colonnes et statuts manquants
+Pas de nouveau design. Pas de nouvelle page pour l'utilisateur. Tout est admin + backend.
 
-Ajout ciblé, sans nouvelle table :
+---
 
-- `prospects` : `landing_token text unique`, `funnel_status text default 'scraped'`, `funnel_status_updated_at timestamptz`, `contractor_id uuid references contractors(id)`, `activation_paid_at timestamptz`, `recommendable boolean default false`
-- `outreach_messages` : `short_link_token text unique`, `clicked_at timestamptz`, `landing_viewed_at timestamptz`
-- Nouvelle table légère `prospect_status_transitions` (audit append-only) : `prospect_id`, `contractor_id`, `campaign_id`, `message_id`, `previous_status`, `new_status`, `source`, `metadata jsonb`, `created_at`
-- Trigger sur `prospects.funnel_status` → insertion automatique dans `prospect_status_transitions`
-- Backfill `landing_token = encode(gen_random_bytes(12),'base64url')` sur prospects existants sans token
-- GRANTs + RLS : lecture admin seulement ; insertion par service_role via edge functions
-- Enum applicatif (TypeScript) `ProspectStatus` dans `src/types/outreachFunnel.ts` — pas de type Postgres pour rester flexible
+## 1. Cockpit `/admin/tunnel-reality`
 
-## 2. Lien SMS et redirection courte
+Une seule page, une seule question : *où s'arrête l'argent ?*
 
-- Template SMS unique via `acq-send-outreach` : URL courte `https://unpro.ca/r/{short_link_token}` (générée à l'insertion de `outreach_messages`)
-- Nouvelle route publique `/r/:token` (page React légère) qui appelle une nouvelle edge `outreach-shortlink-resolve` :
-  - Vérifie le token, log `outreach_click_events` + `clicked_at` sur le message, met le prospect en `sms_clicked` s'il ne l'est pas déjà
-  - Retourne `{ landing_token }` → redirection 302 côté client vers `/invitation/:landing_token`
-- Blocage : tout SMS sortant sans `short_link_token` est refusé par `acq-send-outreach`
+Tableau vertical à 14 lignes, chiffres agrégés sur 24 h / 7 j / 30 j (toggle) :
 
-## 3. Page `/invitation/:token`
-
-Nouvelle page publique `src/pages/invitation/PageInvitationLanding.tsx` (route publique, pas de guard) :
-
-- Charge le prospect via edge `invitation-resolve` (lit `prospects` par `landing_token`)
-- Log `landing_viewed` dans `outreach_page_events` + `prospects.funnel_status = 'landing_viewed'`
-- Rend une fiche préremplie : nom, catégorie, ville, téléphone, site web, territoires, source, statut vérification
-- Bloc valeur (« rendez-vous exclusifs, pas de leads partagés »)
-- CTA principal : `Activer ma fiche pour 1 $` → `/invitation/:token/activate`
-- CTA secondaire : `Vérifier mes informations` → `/invitation/:token/edit`
-- Token invalide → page 410 dédiée, jamais de redirection vers `/`
-
-## 4. Page `/invitation/:token/edit`
-
-- Formulaire prérempli (nom entreprise, responsable, mobile, email, site, catégorie, services, villes, rayon, RBQ + case « non fournie »/« non requise », années, photos, logo, disponibilités)
-- Sauvegarde progressive (debounce 800 ms) via edge `invitation-save-draft` → écrit dans `prospects` et miroir dans `contractor_activation_funnel`
-- Passe `funnel_status = 'profile_started'` au premier champ modifié
-- Réutilise composants existants (`AutocompleteInput`, upload) — pas de nouveau design
-
-## 5. Page `/invitation/:token/activate` + retour Stripe
-
-- Récap : entreprise, plan d'essai, 1,00 $ CAD, 7 jours, prix après essai (dyn depuis `contractor_plan_definitions`), taxes edge-calculées, prochaine date de prélèvement, annulation
-- CTA `Activer maintenant pour 1 $` appelle `create-activation-checkout` avec :
-  ```
-  metadata: { prospect_id, contractor_id, campaign_id, landing_token, source: "sms_outreach" }
-  success_url: /activation/success?session_id={CHECKOUT_SESSION_ID}
-  cancel_url:  /invitation/{landing_token}/activate?cancelled=true
-  ```
-- Statut → `checkout_started`
-- Nouvelle page `/activation/success` (nouvelle : `PageActivationSuccess.tsx`) : lit `session_id`, appelle `activation-confirm`, affiche confirmation + checklist + CTA « Compléter mon profil » / « Ajouter mes disponibilités ». Aucun retour vers `/`.
-
-## 6. Webhook Stripe — source de vérité
-
-Étendre `supabase/functions/stripe-webhook/index.ts` :
-
-- Vérifie signature (existant)
-- Sur `checkout.session.completed` avec `metadata.source = 'sms_outreach'` :
-  1. Récupère prospect via `landing_token`
-  2. Crée ou lie `contractor_id` (upsert `contractors` avec données du prospect)
-  3. Écrit `paid_1_dollar`, `activated_at`, `contractor_activation_ledger` + `contractor_activation_events`
-  4. Applique la règle « recommendable » (voir §7)
-  5. Envoie SMS + email de confirmation via `agent-send-outreach`
-  6. Log transition dans `prospect_status_transitions`
-- Gère aussi `payment_intent.succeeded`, `invoice.payment_succeeded/failed`, `customer.subscription.updated/deleted` pour maintenir le statut
-
-## 7. Règle « recommendable »
-
-Fonction pure `src/lib/outreach/isRecommendable.ts` appliquée par le webhook :
-
-```
-paymentConfirmed && businessNamePresent && categoryPresent &&
-(validMobile || validEmail) && atLeastOneServiceArea &&
-serviceCategoryMapped && profileIsPublic && !suspended
+```text
+Étape                          Total  Conv%  Dernière   Statut
+1. SMS envoyés (Twilio)        ...    —      ...        🟢/🟡/🔴
+2. SMS livrés                  ...    %/sent ...
+3. SMS échoués + raison top    ...    %      ...
+4. Clics short link            ...    %/deliv ...
+5. Landing ouverte             ...    %/click ...
+6. Compte créé                 ...    %      ...
+7. Checkout Stripe ouvert      ...    %      ...
+8. Paiement 1$ réussi          ...    %      ...
+9. Paiement 1$ échoué          ...    —      ...
+10. Profil complété            ...    %      ...
+11. Entrepreneur activé        ...    %      ...
+12. Recommandable par Alex     ...    %      ...
 ```
 
-- RBQ jamais bloquante si `rbq_not_required` ou `rbq_not_provided`
-- Statuts vérification : `verified | verification_pending | rbq_not_provided | rbq_not_required | suspended` (colonne `contractors.verification_status`)
+Chaque cellule est **une requête réelle** (pas un mock) :
+- SMS envoyés/livrés/échoués → `acq_sms_logs` + `outreach_sms_events` (source : Twilio webhooks déjà en place).
+- Clics → `click_events` + `outreach_clicks` filtrés `source=sms_outreach`.
+- Landing ouverte → `contractor_funnel_events` type `landing_view`.
+- Compte / paiement / activation → `checkout_sessions` + `billing_events_log` + `prospects.funnel_status`.
+- Recommandable → `prospects.recommendable = true`.
 
-## 8. Dédup + relances
+Règles de couleur (par étape, sur 7 j) :
+- 🔴 = 0 ou conversion sous seuil critique (livraison <70 %, clic <5 %, paiement <0.5 %).
+- 🟡 = sous seuil cible (livraison <90 %, clic <10 %, paiement <1 %).
+- 🟢 = au-dessus des seuils cibles listés dans le brief.
 
-- Dédup avant envoi (extension `acq-send-outreach`) : `dedupeKey = normalizedPhone + category + campaignId` ; refus si SMS livré < 7 j, prospect payé/activé, mobile invalide, fixe, opt-out, suspendu
-- Cron `daily-outreach-orchestrator` (existant) étendu avec 3 relances max sur 7 j :
-  - +4 h après clic sans paiement
-  - +24 h après vue sans checkout
-  - +2 h après checkout abandonné (lien `resume_checkout_link` = session Stripe existante ou `/invitation/:token/activate`)
-- Aucune relance après `paid_1_dollar`
+En haut de la page :
+- **Bandeau blocage #1** : première étape 🔴 dans l'ordre du funnel + raison top (`error_code` le plus fréquent sur 7 j).
+- Chip « Dernière vente réelle : il y a X h » basé sur `paid_1_dollar` transitions.
 
-## 9. Repair automatique
+Refresh 30 s. Bouton « Copier le rapport » (markdown des 14 lignes).
 
-Étendre `outreach-repair-messaging` (existant) — planifié via `cron.schedule` toutes les 6 h :
+## 2. Vue Postgres `v_tunnel_reality`
 
-- Prospects sans `landing_token` → génération + backfill
-- Messages sans `short_link_token` → génération
-- Détection ancien domaine / URL sans token dans `outreach_messages.body_rendered`
-- Checkout sans metadata `landing_token` → alerte
-- Paiement sans activation → re-run `activation-confirm`
-- Prospect bloqué > 48 h dans un statut intermédiaire → alerte
+Une seule vue matérialisée-friendly qui expose les 14 métriques × 3 fenêtres (24h/7j/30j) + `last_event_at` + `top_error`. Le front lit cette vue uniquement — pas de dizaines de requêtes en parallèle.
 
-## 10. Dashboard admin `/admin/outreach-funnel`
+`GRANT SELECT` à `authenticated` (page réservée aux admins via `RoleGuard`).
 
-Nouvelle page `src/pages/admin/PageOutreachFunnel.tsx` (distincte de `PageOutreachCommandCenter`) :
+## 3. Relances automatiques J+1 / J+3 / J+7
 
-- KPIs (13) alimentés par une vue SQL `v_outreach_funnel_kpis`
-- Vue pipeline horizontale, chaque étape cliquable → filtre la table
-- Table prospects avec colonnes demandées + filtres (campagne, ville, catégorie, statut, source, date, variante SMS)
-- Bouton `Tester le tunnel complet` → appelle nouvelle edge `outreach-e2e-test` qui simule scrap → SMS test (numéro interne env `OUTREACH_TEST_PHONE`) → clic → landing → checkout Stripe test → webhook → activation. Retourne PASS/FAIL par étape + cause.
-- Bandeau alertes rouges (livraison < 70 %, aucun SMS < 24 h, checkout sans activation, webhook en échec, page 404, lien générique détecté, > 10 prospects bloqués même statut)
+Edge function `outreach-relance-cron` déclenchée chaque heure via `pg_cron` :
 
-## 11. Routing App.tsx
+Cibles :
+- **J+1** : prospects `sms_sent` sans clic depuis 24 h.
+- **J+3** : prospects `clicked` sans paiement depuis 72 h.
+- **J+7** : prospects `checkout_started` sans paiement depuis 7 j **ou** J+3 sans conversion.
 
-Ajouts dans `src/app/App.tsx` (routes publiques) :
-- `/r/:token` → `PageShortLinkRedirect`
-- `/invitation/:token` → `PageInvitationLanding`
-- `/invitation/:token/edit` → `PageInvitationEdit`
-- `/invitation/:token/activate` → `PageInvitationActivate`
-- `/activation/success` → `PageActivationSuccess`
-- `/admin/outreach-funnel` → `PageOutreachFunnel` (admin guard)
+Règles :
+- Cap 3 relances max par prospect (colonne `relance_count` déjà utilisable via `prospects` ou nouvelle si absente).
+- Respect suppression list + fenêtre d'envoi (`outreach_send_windows`).
+- Chaque relance = un short link **régénéré** (nouveau token → tracking distinct par relance).
+- Log dans `acq_sms_logs` + transition dans `prospect_status_transitions` (`relance_j1`, `relance_j3`, `relance_j7`).
 
-## Ordre d'exécution
+Copie exacte (fr-CA, du brief utilisateur) :
 
-1. Migration (tokens, transitions, backfill, GRANTs)
-2. Edges : `outreach-shortlink-resolve`, `invitation-resolve`, `invitation-save-draft`, extension `create-activation-checkout` (metadata), extension `stripe-webhook` (activation + recommendable), extension `acq-send-outreach` (short-link + dédup), `outreach-e2e-test`
-3. Pages : `/r/:token`, `/invitation/:token`, `/edit`, `/activate`, `/activation/success`
-4. Repair : extension `outreach-repair-messaging` + cron
-5. Relances : extension `daily-outreach-orchestrator`
-6. Dashboard `/admin/outreach-funnel` + vue SQL KPIs
-7. Test E2E interne (bouton admin) sur un numéro réel avant activation en volume
+- J+1 : *« Toujours intéressé à être recommandé par l'IA d'UNPRO ? Activation 7 jours : 1 $. {link} »*
+- J+3 : *« Nous recherchons actuellement des entrepreneurs dans votre secteur. Activation : 1 $. {link} »*
+- J+7 : *« Dernier rappel. Votre profil peut être activé aujourd'hui pour 1 $. {link} »*
+
+## 4. Toggle sécurité
+
+Dans `/admin/tunnel-reality` :
+- Switch `dry_run` (par défaut ON) : la cron simule et écrit dans `acq_sms_logs` avec `status='simulated'` sans appeler Twilio.
+- Bouton « Envoyer les relances en attente maintenant » (dry ou live selon le switch).
+
+## Détails techniques
+
+- Migration : vue `v_tunnel_reality`, colonne `relance_count int default 0` sur `prospects` si absente, valeurs enum ajoutées à `prospect_status_transitions.event`.
+- Edge functions : `tunnel-reality-report` (calcul + top error) et `outreach-relance-cron` (envoi J+1/J+3/J+7).
+- Cron : `select cron.schedule('outreach-relance-hourly', '0 * * * *', $$ ... net.http_post ... $$)` inséré via `supabase--insert` (contient l'anon key), pas via migration.
+- Front : nouvelle page `src/pages/admin/PageTunnelReality.tsx` + route `/admin/tunnel-reality` + entrée sidebar admin.
+- Aucune modification aux pages `/invitation/*`, au webhook Stripe, ni au checkout.
 
 ## Critères de succès
 
-Un prospect scrapé reçoit un SMS avec lien court unique → ouvre `/invitation/:token` préremplie → édite → paie 1 $ → webhook active → statut `recommendable` → visible dans `/admin/outreach-funnel`. Zéro redirection vers `/`, zéro page morte, zéro action manuelle.
+- `/admin/tunnel-reality` affiche 14 valeurs numériques réelles issues de la DB (jamais de mock).
+- Le bandeau nomme la 1re étape 🔴 et la raison top.
+- La cron J+1/J+3/J+7 tourne, respecte le cap de 3, et est visible dans `acq_sms_logs`.
+- Toggle dry-run empêche tout envoi Twilio quand actif.
