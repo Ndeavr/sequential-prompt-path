@@ -23,6 +23,8 @@ export default function PageAdminFirstDollarBatches() {
   const { data: batches } = useSmsBatches(30);
   const sendBatch = useSendBatch();
   const reviewBatch = useReviewBatch();
+  const { data: health } = useSmsHealth();
+  const outboundBlocked = !!health && health.status.status !== "HEALTHY";
 
   const pendingReview = batches?.find(b => b.status !== "reviewed" && b.status === "sent");
 
