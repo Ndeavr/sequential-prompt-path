@@ -43,6 +43,9 @@ export default function PageAdminFirstDollarBatches() {
           <Link to="/admin/first-dollar" className="text-sm text-slate-400 hover:text-white">← Funnel</Link>
         </header>
 
+        {/* SMS infrastructure health */}
+        <SmsHealthPanel />
+
         {/* Send panel */}
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
           <div className="flex items-center gap-3 mb-4">
@@ -54,6 +57,15 @@ export default function PageAdminFirstDollarBatches() {
             <div className="rounded-lg border border-amber-400/40 bg-amber-500/10 p-3 mb-4 flex items-center gap-2 text-sm text-amber-200">
               <Lock className="h-4 w-4" />
               Batch précédent en attente de revue. Approuvez-le ci-dessous avant d'en envoyer un nouveau.
+            </div>
+          )}
+
+          {outboundBlocked && (
+            <div className="rounded-lg border border-rose-400/40 bg-rose-500/10 p-3 mb-4 flex items-start gap-2 text-sm text-rose-200">
+              <Lock className="h-4 w-4 mt-0.5" />
+              <div>
+                <b>Outbound bloqué.</b> {health?.blockReason ?? "Santé SMS insuffisante."} Utilisez « Exécuter un test SMS » ci-dessus pour débloquer.
+              </div>
             </div>
           )}
 
@@ -70,22 +82,23 @@ export default function PageAdminFirstDollarBatches() {
               />
             </div>
             <button
-              disabled={sendBatch.isPending || !!pendingReview}
+              disabled={sendBatch.isPending || !!pendingReview || outboundBlocked}
               onClick={() => sendBatch.mutate({ size })}
               className="px-6 py-2.5 rounded-lg bg-white text-slate-950 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100"
             >
               {sendBatch.isPending ? "Envoi…" : `Envoyer ${size} SMS`}
             </button>
-            {pendingReview && (
+            {(pendingReview || outboundBlocked) && (
               <button
                 onClick={() => sendBatch.mutate({ size, force: true })}
                 className="text-xs text-slate-500 hover:text-slate-300"
               >
-                Forcer (skip review)
+                Forcer (skip check)
               </button>
             )}
           </div>
         </div>
+
 
         {/* Batch list */}
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
