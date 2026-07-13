@@ -78,6 +78,19 @@ export default function PageTunnelReality() {
   const [showUnattributed, setShowUnattributed] = useState(false);
   const [repairGaps, setRepairGaps] = useState<{ total_paid: number; missing_contractor: number; missing_profile: number } | null>(null);
   const [repairing, setRepairing] = useState(false);
+  const [e2eGatePass, setE2eGatePass] = useState(false);
+
+  // Initial gate check
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke("tunnel-e2e-test", { body: { action: "gate" } });
+        if (!cancelled) setE2eGatePass(Boolean((data as any)?.gate_pass));
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const scanRepair = useCallback(async () => {
     try {
