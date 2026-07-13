@@ -178,85 +178,160 @@ Deno.serve(async (req) => {
 
 
         // SMS OUTREACH flow: /invitation/:token → 1$ activation
+        // Idempotent + transactional: creates contractor + contractor_profiles,
+        // links prospect, and marks recommendable. Safe to replay any # of times.
         if (session.metadata?.source === "sms_outreach" && session.metadata?.landing_token) {
           const landingToken = session.metadata.landing_token as string;
           try {
+            // Idempotency guard: if any prospect already has this session_id, short-circuit.
+            const { data: alreadyProcessed } = await supabase
+              .from("prospects")
+              .select("id, contractor_id, activation_paid_at")
+              .eq("stripe_session_id", session.id)
+              .maybeSingle();
+            if (alreadyProcessed?.activation_paid_at && alreadyProcessed.contractor_id) {
+              console.log("[stripe-webhook] sms_outreach idempotent skip", session.id);
+              break;
+            }
+
             const { data: prospect } = await supabase
               .from("prospects")
-              .select("id, business_name, main_city, service, telephone, email, campaign_id, contractor_id")
+              .select("id, business_name, main_city, region_name, service, domaine, telephone, email, campaign_id, contractor_id, prenom, nom")
               .eq("landing_token", landingToken)
               .maybeSingle();
 
-            if (prospect) {
-              const paidAtIso = new Date().toISOString();
-              // Ensure a contractors row exists (best-effort — table shape varies)
-              let cId: string | null = (prospect.contractor_id as string) || null;
-              if (!cId) {
-                // No auth user exists yet for SMS-outreach prospects — create an
-                // unclaimed contractor row with a placeholder user_id. When the
-                // prospect signs up later, the account is reconciled by matching
-                // prospects.contractor_id → contractors.id and updating user_id.
-                const placeholderUserId = crypto.randomUUID();
-                const { data: created, error: insertErr } = await supabase
-                  .from("contractors")
-                  .insert({
-                    user_id: placeholderUserId,
-                    business_name: prospect.business_name ?? "Entreprise à activer",
-                    city: prospect.main_city ?? null,
-                    phone: prospect.telephone ?? null,
-                    email: prospect.email ?? null,
-                    specialty: prospect.service ?? null,
-                    account_status: "active",
-                    activation_status: "activated",
-                    onboarding_status: "sms_outreach_paid",
-                  } as never)
-                  .select("id")
-                  .maybeSingle();
-                if (insertErr) {
-                  console.error(
-                    "[stripe-webhook] contractor insert failed",
-                    insertErr.message,
-                    insertErr.details,
-                  );
-                }
-                cId = (created?.id as string) ?? null;
+            if (!prospect) {
+              console.error("[stripe-webhook] sms_outreach prospect not found", landingToken);
+              break;
+            }
+
+            const paidAtIso = new Date().toISOString();
+            const category = (prospect.service || prospect.domaine || null) as string | null;
+
+            // Step 1 — ensure contractors row (idempotent, look up by prospect.contractor_id first)
+            let cId: string | null = (prospect.contractor_id as string) || null;
+            if (cId) {
+              // Sanity: verify row still exists
+              const { data: existing } = await supabase
+                .from("contractors").select("id").eq("id", cId).maybeSingle();
+              if (!existing) cId = null;
+            }
+            if (!cId) {
+              // Try match by normalized phone/email to avoid dup
+              if (prospect.telephone) {
+                const { data: byPhone } = await supabase
+                  .from("contractors").select("id").eq("phone", prospect.telephone).limit(1).maybeSingle();
+                if (byPhone?.id) cId = byPhone.id as string;
               }
+              if (!cId && prospect.email) {
+                const { data: byEmail } = await supabase
+                  .from("contractors").select("id").eq("email", prospect.email).limit(1).maybeSingle();
+                if (byEmail?.id) cId = byEmail.id as string;
+              }
+            }
+            if (!cId) {
+              // Create unclaimed contractor row. user_id is a placeholder until the
+              // prospect signs up — reconciliation matches on prospects.contractor_id.
+              const placeholderUserId = crypto.randomUUID();
+              const { data: created, error: insertErr } = await supabase
+                .from("contractors")
+                .insert({
+                  user_id: placeholderUserId,
+                  business_name: prospect.business_name ?? "Entreprise à activer",
+                  city: prospect.main_city ?? null,
+                  province: "QC",
+                  phone: prospect.telephone ?? null,
+                  email: prospect.email ?? null,
+                  specialty: category,
+                  account_status: "active",
+                  activation_status: "activated",
+                  onboarding_status: "sms_outreach_paid",
+                } as never)
+                .select("id")
+                .maybeSingle();
+              if (insertErr) {
+                console.error("[stripe-webhook] contractor insert failed", insertErr.message, insertErr.details);
+              }
+              cId = (created?.id as string) ?? null;
+            } else {
+              // Refresh core fields on existing contractor (never overwrite non-null business_name blindly)
+              await supabase.from("contractors").update({
+                phone: prospect.telephone ?? undefined,
+                email: prospect.email ?? undefined,
+                city: prospect.main_city ?? undefined,
+                specialty: category ?? undefined,
+                account_status: "active",
+                activation_status: "activated",
+                onboarding_status: "sms_outreach_paid",
+                updated_at: paidAtIso,
+              } as never).eq("id", cId);
+            }
 
-              // Compute recommendable
-              const validContact = !!(prospect.telephone || prospect.email);
-              const recommendable =
-                !!prospect.business_name &&
-                !!(prospect.service) &&
-                validContact &&
-                !!prospect.main_city;
+            // Step 2 — ensure contractor_profiles row (unique on contractor_id)
+            if (cId) {
+              const { data: profile } = await supabase
+                .from("contractor_profiles").select("id").eq("contractor_id", cId).maybeSingle();
+              if (!profile) {
+                const { error: profErr } = await supabase.from("contractor_profiles").insert({
+                  contractor_id: cId,
+                  business_name: prospect.business_name ?? null,
+                  primary_category: category,
+                  is_public: false,
+                } as never);
+                if (profErr) console.error("[stripe-webhook] contractor_profile insert failed", profErr.message);
+              }
+            }
 
-              await supabase.from("prospects").update({
-                funnel_status: recommendable ? "activated" : "paid_1_dollar",
-                activation_paid_at: paidAtIso,
-                recommendable,
-                contractor_id: cId,
-              }).eq("id", prospect.id);
+            // Step 3 — compute recommendable
+            const validContact = !!(prospect.telephone || prospect.email);
+            const recommendable =
+              !!cId &&
+              !!prospect.business_name &&
+              !!category &&
+              validContact &&
+              !!prospect.main_city;
 
-              // Ledger (best-effort)
+            // Step 4 — link prospect + write idempotency key
+            await supabase.from("prospects").update({
+              funnel_status: recommendable ? "activated" : "paid_1_dollar",
+              activation_paid_at: paidAtIso,
+              recommendable,
+              contractor_id: cId,
+              stripe_session_id: session.id,
+              stripe_customer_id: (session.customer as string) || null,
+            }).eq("id", prospect.id);
+
+            // Step 5 — ledger (best-effort)
+            if (cId) {
               await supabase.from("contractor_activation_ledger").insert({
                 contractor_id: cId,
-                prospect_id: prospect.id,
-                amount_paid: session.amount_total ?? 100,
-                currency: session.currency ?? "cad",
-                stripe_session_id: session.id,
-                paid_at: paidAtIso,
+                action: "paid",
                 source: "sms_outreach",
+                metadata: {
+                  prospect_id: prospect.id,
+                  amount_paid: session.amount_total ?? 100,
+                  currency: session.currency ?? "cad",
+                  stripe_session_id: session.id,
+                  paid_at: paidAtIso,
+                  landing_token: landingToken,
+                },
               } as never).then(() => {}, () => {});
+            }
 
-              await supabase.from("prospect_status_transitions").insert({
-                prospect_id: prospect.id,
-                contractor_id: cId,
-                campaign_id: prospect.campaign_id,
-                previous_status: "checkout_started",
-                new_status: recommendable ? "recommendable" : "paid_1_dollar",
-                source: "stripe_webhook",
-                metadata: { session_id: session.id, landing_token: landingToken },
-              } as never).then(() => {}, () => {});
+            await supabase.from("prospect_status_transitions").insert({
+              prospect_id: prospect.id,
+              contractor_id: cId,
+              campaign_id: prospect.campaign_id,
+              previous_status: "checkout_started",
+              new_status: recommendable ? "recommendable" : "paid_1_dollar",
+              source: "stripe_webhook",
+              metadata: { session_id: session.id, landing_token: landingToken },
+            } as never).then(() => {}, () => {});
+
+            // Step 6 — trigger match recomputation (idempotent, best-effort)
+            if (cId && recommendable) {
+              supabase.functions.invoke("match-waiting-demand", { body: { contractor_id: cId } })
+                .catch((e) => console.warn("[match-waiting-demand] sms_outreach failed", e));
             }
           } catch (e) {
             console.error("[stripe-webhook] sms_outreach activation failed", (e as Error).message);
