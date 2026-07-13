@@ -6,7 +6,7 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertOctagon, Copy, Loader2, RefreshCw, Send } from "lucide-react";
+import { AlertOctagon, Copy, Loader2, RefreshCw, Send, Wrench } from "lucide-react";
 import { toast } from "sonner";
 
 type Win = "24h" | "7d" | "30d";
@@ -51,6 +51,36 @@ export default function PageTunnelReality() {
   const [window, setWindow] = useState<Win>("7d");
   const [dryRun, setDryRun] = useState(true);
   const [relancing, setRelancing] = useState(false);
+  const [repairGaps, setRepairGaps] = useState<{ total_paid: number; missing_contractor: number; missing_profile: number } | null>(null);
+  const [repairing, setRepairing] = useState(false);
+
+  const scanRepair = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("repair-paid-contractor-activation", { body: {} });
+      if (error) throw error;
+      setRepairGaps(data as any);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    }
+  }, []);
+
+  const runRepair = async () => {
+    setRepairing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("repair-paid-contractor-activation", {
+        body: { sweep: true, limit: 200 },
+      });
+      if (error) throw error;
+      const r = data as any;
+      toast.success(`Réparation — scannés ${r.scanned} · réparés ${r.repaired}`);
+      await scanRepair();
+      load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setRepairing(false);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
