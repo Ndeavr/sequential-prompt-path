@@ -7,10 +7,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  AlertOctagon, AlertTriangle, Copy, FlaskConical, Loader2,
+  AlertOctagon, AlertTriangle, Copy, FlaskConical, Loader2, Lock,
   RefreshCw, Send, ShieldCheck, Wrench, X,
 } from "lucide-react";
 import { toast } from "sonner";
+import TunnelE2ETestPanel from "@/components/admin/TunnelE2ETestPanel";
 
 type Win = "24h" | "7d" | "30d";
 
