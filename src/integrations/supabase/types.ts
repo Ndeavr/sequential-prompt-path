@@ -763,6 +763,7 @@ export type Database = {
           id: string
           invitation_token: string | null
           is_simulation: boolean
+          is_test_e2e: boolean
           outreach_message_id: string | null
           prospect_id: string | null
           provider_message_id: string | null
@@ -780,6 +781,7 @@ export type Database = {
           id?: string
           invitation_token?: string | null
           is_simulation?: boolean
+          is_test_e2e?: boolean
           outreach_message_id?: string | null
           prospect_id?: string | null
           provider_message_id?: string | null
@@ -797,6 +799,7 @@ export type Database = {
           id?: string
           invitation_token?: string | null
           is_simulation?: boolean
+          is_test_e2e?: boolean
           outreach_message_id?: string | null
           prospect_id?: string | null
           provider_message_id?: string | null
@@ -68020,6 +68023,7 @@ export type Database = {
           has_reviews: boolean | null
           has_website: boolean | null
           id: string
+          is_test_e2e: boolean
           landing_token: string | null
           langue_preferee: string
           last_relance_at: string | null
@@ -68061,6 +68065,7 @@ export type Database = {
           has_reviews?: boolean | null
           has_website?: boolean | null
           id?: string
+          is_test_e2e?: boolean
           landing_token?: string | null
           langue_preferee?: string
           last_relance_at?: string | null
@@ -68102,6 +68107,7 @@ export type Database = {
           has_reviews?: boolean | null
           has_website?: boolean | null
           id?: string
+          is_test_e2e?: boolean
           landing_token?: string | null
           langue_preferee?: string
           last_relance_at?: string | null
@@ -80218,6 +80224,77 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      tunnel_e2e_tests: {
+        Row: {
+          business_name: string | null
+          category: string | null
+          city: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          first_name: string | null
+          id: string
+          invitation_token: string | null
+          landing_url: string | null
+          last_step: string | null
+          phone_e164: string
+          prospect_id: string | null
+          provider_message_id: string | null
+          reset_at: string | null
+          sms_error: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          business_name?: string | null
+          category?: string | null
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          invitation_token?: string | null
+          landing_url?: string | null
+          last_step?: string | null
+          phone_e164: string
+          prospect_id?: string | null
+          provider_message_id?: string | null
+          reset_at?: string | null
+          sms_error?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          business_name?: string | null
+          category?: string | null
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          invitation_token?: string | null
+          landing_url?: string | null
+          last_step?: string | null
+          phone_e164?: string
+          prospect_id?: string | null
+          provider_message_id?: string | null
+          reset_at?: string | null
+          sms_error?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tunnel_e2e_tests_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ui_accessibility_audit: {
         Row: {
