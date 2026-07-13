@@ -126,12 +126,22 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     };
   }
 
-  const guard = await validateBeforeSend({
-    supabase,
-    phone: input.to,
-    lead_id: input.lead_id ?? null,
-    strict_admin_override: input.strict_admin_override === true,
-  });
+  const bypassGuard = input.bypass_guard === true && input.strict_admin_override === true;
+  const guard = bypassGuard
+    ? {
+        ok: true as const,
+        normalized: input.to,
+        area_code: null as string | null,
+        country_code: input.to.startsWith("+1") ? "1" : null,
+        phone_type: "admin_test_bypass",
+        sms_guard_reason: "admin_test_bypass",
+      }
+    : await validateBeforeSend({
+        supabase,
+        phone: input.to,
+        lead_id: input.lead_id ?? null,
+        strict_admin_override: input.strict_admin_override === true,
+      });
   const body_hash = await hashBody(input.body);
   const message_preview = input.body.slice(0, 160);
 
