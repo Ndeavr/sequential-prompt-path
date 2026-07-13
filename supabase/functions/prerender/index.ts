@@ -23,7 +23,7 @@ function html(opts: {
   body: string; jsonLd?: object[]; ogImage?: string;
 }): Response {
   const schemas = (opts.jsonLd || []).map(s => `<script type="application/ld+json">${JSON.stringify(s)}</script>`).join("\n");
-  const ogImg = opts.ogImage || `${BASE}/og-default.png`;
+  const ogImg = opts.ogImage || `${BASE}/og/unpro-og-v3.jpg?v=20260712`;
   const page = `<!DOCTYPE html>
 <html lang="fr">
 <head>
