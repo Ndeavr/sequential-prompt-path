@@ -68,7 +68,7 @@ export function useSmsHealth() {
           .limit(1)
           .maybeSingle(),
       ]);
-      const status = (statusRow as SmsInfrastructureStatus | null) ?? {
+      const status = (statusRow as unknown as SmsInfrastructureStatus | null) ?? {
         status: "ERROR",
         last_callback_at: null,
         last_test_success_at: null,
