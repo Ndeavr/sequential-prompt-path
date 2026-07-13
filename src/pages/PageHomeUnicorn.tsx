@@ -699,7 +699,7 @@ export default function PageHomeUnicorn() {
           <PassportBackdrop />
           <PIMIntroBand />
         </section>
-        <HowItWorksCards />
+        <ContractorBookingDemo />
         <section className="relative">
           <ContractorsBackdrop />
           <ContractorAippSplit />
