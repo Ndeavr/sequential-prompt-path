@@ -98,9 +98,10 @@ export default function PageTunnelReality() {
 
   useEffect(() => {
     load();
+    scanRepair();
     const id = setInterval(load, 30_000);
     return () => clearInterval(id);
-  }, [load]);
+  }, [load, scanRepair]);
 
   const runRelances = async () => {
     setRelancing(true);
