@@ -7,7 +7,7 @@
  * image is replaced.
  *
  * Do not import per-variant assets or legacy filenames
- * (`/og-image.jpg`, `/og-default.png`, `/unpro-logo-master.png`).
+ * (`/og-image.jpg`, `/og-default.png`).
  */
 export const DEFAULT_OG_IMAGE =
   "https://unpro.ca/og/unpro-og-v3.jpg?v=20260712";

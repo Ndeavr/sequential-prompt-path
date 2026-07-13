@@ -41,7 +41,7 @@ export default function PageIaMaisonArticle({ slug: slugProp }: Props) {
       "@type": "Organization",
       name: "UNPRO",
       url: BASE,
-      logo: { "@type": "ImageObject", url: `${BASE}/unpro-logo-master.png` },
+      logo: { "@type": "ImageObject", url: `${BASE}/__l5e/assets-v1/a3c1d0e8-a6dd-413f-acf4-7ac488a303e0/unpro-logo-clean.png` },
     },
   };
   const faqSchema = {
