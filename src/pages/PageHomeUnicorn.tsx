@@ -10,7 +10,7 @@ import {
   Bell, ChevronDown, Mic, Image as ImageIcon, FileText, ChevronRight, RefreshCw,
   Home as HomeIcon, Hammer, Thermometer, Droplets, Building2, Zap, Wrench,
   BarChart3, ShieldCheck, Users, Clock, BadgeCheck, Star, ArrowRight,
-  QrCode, Menu, TrendingUp, User as UserIcon, Settings, LogOut, Sparkles, CheckCircle2,
+  QrCode, Menu, TrendingUp, User as UserIcon, Sparkles, CheckCircle2,
 } from "lucide-react";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import AlexOrbPremium from "@/components/home-unicorn/AlexOrbPremium";
@@ -26,15 +26,15 @@ import SocialProofContractorBlock from "@/components/first-customer-48h/SocialPr
 import SectionAIHomeIntelligence from "@/components/home-intelligence/SectionAIHomeIntelligence";
 import EntityDefinitionBlock from "@/components/home-intelligence/EntityDefinitionBlock";
 import { BRAND } from "@/config/branding";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
+import SwitchLanguagePillAnimated from "@/components/ui/SwitchLanguagePillAnimated";
+import ProfileMenu from "@/components/navigation/ProfileMenu";
+import QRShareSheet from "@/components/sharing/QRShareSheet";
+import DrawerNavigationMobileIntent from "@/components/navigation/DrawerNavigationMobileIntent";
+import { useNavigationContext } from "@/hooks/useNavigationContext";
+import type { UserRole } from "@/types/navigation";
 import "@/styles/unicorn-theme.css";
 import { usePopularQuestions } from "@/hooks/usePopularQuestions";
 import { logQuestion } from "@/services/popularQuestions";
@@ -44,6 +44,17 @@ const HeroBackdrop = memo(() => <IntelligenceBackground variant="hero" />);
 const PassportBackdrop = memo(() => <IntelligenceBackground variant="passport" />);
 const ContractorsBackdrop = memo(() => <IntelligenceBackground variant="contractors" />);
 const FooterBackdrop = memo(() => <IntelligenceBackground variant="footer" />);
+
+function getLogoDestination(role: UserRole | "guest"): string {
+  switch (role) {
+    case "homeowner": return "/dashboard";
+    case "contractor": return "/pro";
+    case "admin": return "/dashboard";
+    case "partner": return "/dashboard";
+    default: return "/";
+  }
+}
+
 
 /* ---------------- Header ---------------- */
 function HeaderFloatingGlass() {
