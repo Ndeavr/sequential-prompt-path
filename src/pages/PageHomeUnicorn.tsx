@@ -56,128 +56,109 @@ function getLogoDestination(role: UserRole | "guest"): string {
 }
 
 
-/* ---------------- Header ---------------- */
+/* ---------------- Header (single, functional, floating glass) ---------------- */
 function HeaderFloatingGlass() {
   const navigate = useNavigate();
+  const { lang, setLang } = useLanguage();
+  const { ctx, activeRole } = useNavigationContext();
+  const [shareOpen, setShareOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const logoTo = getLogoDestination((activeRole as UserRole | "guest") ?? "guest");
+  const unread = ctx?.system?.notificationsCount ?? 0;
+
   return (
-    <header className="px-3 md:px-4 pt-4 pb-2 sticky top-0 z-30">
-      <div className="flex items-center justify-between gap-1.5 min-w-0">
-        <div className="flex items-center flex-shrink-0">
-          <img
-            src={BRAND.logo}
-            alt="UNPRO"
-            className="h-10 md:h-12 w-auto min-h-0 object-contain"
-            draggable={false}
-          />
-        </div>
+    <>
+      <header className="px-3 md:px-4 pt-4 pb-2 sticky top-0 z-30">
+        <div className="flex items-center justify-between gap-1.5 min-w-0">
+          <Link to={logoTo} className="flex items-center flex-shrink-0" aria-label="UNPRO">
+            <img
+              src={BRAND.logo}
+              alt="UNPRO"
+              className="h-10 md:h-12 w-auto min-h-0 object-contain"
+              draggable={false}
+            />
+          </Link>
 
+          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+            {/* Language: mobile pill / desktop toggle */}
+            <div className="sm:hidden">
+              <SwitchLanguagePillAnimated lang={lang} onChange={setLang} />
+            </div>
+            <div className="hidden sm:block">
+              <LanguageToggle lang={lang} onChange={setLang} />
+            </div>
 
-        <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-          <div className="flex items-center gap-1 md:gap-2">
-            <span
-              className="uc-glass-strong rounded-xl px-2 md:px-3 py-1.5 md:py-2 flex items-center text-[11px] md:text-[12px] font-semibold flex-shrink-0 select-none"
-              style={{ borderRadius: 14, color: "#0B1220" }}
-              aria-label="Langue"
-            >
-              FR
-            </span>
+            {/* Notifications — only when signed-in context exists */}
+            {ctx && (
+              <button
+                onClick={() => navigate("/dashboard/notifications")}
+                className="uc-glass-strong rounded-xl w-9 h-9 md:w-10 md:h-10 flex items-center justify-center relative flex-shrink-0"
+                style={{ borderRadius: 14 }}
+                aria-label={lang === "en" ? "Notifications" : "Notifications"}
+              >
+                <Bell size={15} color="#0B1220" />
+                {unread > 0 && (
+                  <span
+                    className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
+                    style={{ background: "#2563FF", boxShadow: "0 0 0 2px white" }}
+                  />
+                )}
+              </button>
+            )}
+
+            {/* QR share sheet (same as SmartHeader) */}
             <button
-              onClick={() => navigate("/memory")}
-              className="uc-glass-strong rounded-xl w-9 h-9 md:w-10 md:h-10 flex items-center justify-center relative flex-shrink-0"
+              onClick={() => setShareOpen(true)}
+              className="uc-glass-strong rounded-xl w-9 h-9 md:w-10 md:h-10 flex items-center justify-center flex-shrink-0"
               style={{ borderRadius: 14 }}
-              aria-label="Notifications"
-            >
-              <Bell size={15} color="#0B1220" />
-              <span
-                className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
-                style={{ background: "#2563FF", boxShadow: "0 0 0 2px white" }}
-              />
-            </button>
-            <button
-              onClick={() => navigate("/qr")}
-              className="uc-glass-strong rounded-xl w-9 h-9 md:w-10 md:h-10 hidden sm:flex items-center justify-center flex-shrink-0"
-              style={{ borderRadius: 14 }}
-              aria-label="Mon QR Code"
+              aria-label={lang === "en" ? "Share" : "Partager"}
             >
               <QrCode size={15} color="#0B1220" />
             </button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className="uc-glass-strong rounded-xl pl-1 pr-1.5 md:pr-2 py-1 flex items-center gap-0.5 md:gap-1 flex-shrink-0"
-                  style={{ borderRadius: 14 }}
-                  aria-label="Profil"
-                >
-                  <span
-                    className="w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center text-[11px] md:text-[12px] font-bold text-white"
-                    style={{ background: "linear-gradient(135deg, #6366F1, #3B82F6)" }}
-                  >
-                    P
-                  </span>
-                  <ChevronDown size={12} color="#0B1220" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Mon espace</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/profile")}>
-                  <UserIcon size={15} className="mr-2" /> Mon profil
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/account")}>
-                  <Settings size={15} className="mr-2" /> Mon compte
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/qr")}>
-                  <QrCode size={15} className="mr-2" /> Mon QR Code
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/logout")}>
-                  <LogOut size={15} className="mr-2" /> Déconnexion
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <Sheet>
-            <SheetTrigger asChild>
-              <button
-                className="uc-glass-strong rounded-xl w-10 h-10 flex items-center justify-center flex-shrink-0"
-                style={{ borderRadius: 14 }}
-                aria-label="Menu"
+
+            {/* Auth state: profile menu or sign-in CTA */}
+            {ctx ? (
+              <div className="uc-glass-strong rounded-xl flex items-center flex-shrink-0" style={{ borderRadius: 14 }}>
+                <ProfileMenu />
+              </div>
+            ) : (
+              <Button
+                asChild
+                size="sm"
+                className="rounded-full h-9 text-[12px] px-3 font-bold btn-liquid-metal border-0"
               >
-                <Menu size={16} color="#0B1220" />
-              </button>
-            </SheetTrigger>
+                <Link to="/role">{lang === "en" ? "Sign In" : "Connexion"}</Link>
+              </Button>
+            )}
 
-            <SheetContent side="right" className="w-[82vw] max-w-[340px] p-0">
-              <SheetHeader className="px-5 pt-5 pb-3">
-                <SheetTitle className="text-left text-[18px]">Menu</SheetTitle>
-              </SheetHeader>
-              <nav className="px-3 pb-6 flex flex-col gap-1">
-                {[
-                  { to: "/", label: "Accueil", icon: HomeIcon },
-                  { to: "/dashboard", label: "Croissance", icon: TrendingUp },
-                  { to: "/alex", label: "Parler à Alex", icon: Sparkles },
-                  { to: "/profile", label: "Profil", icon: UserIcon },
-                  { to: "/account", label: "Compte", icon: Settings },
-                  { to: "/qr", label: "Mon QR Code", icon: QrCode },
-                  { to: "/logout", label: "Déconnexion", icon: LogOut },
-                ].map(({ to, label, icon: Icon }) => (
-                  <Link
-                    key={to}
-                    to={to}
-                    className="flex items-center gap-3 px-3 py-3 rounded-xl text-[14px] font-medium hover:bg-muted transition-colors"
-                  >
-                    <Icon size={18} className="text-muted-foreground" />
-                    {label}
-                  </Link>
-                ))}
-              </nav>
-            </SheetContent>
-          </Sheet>
+            {/* Mobile burger → shared role-aware drawer */}
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className="uc-glass-strong rounded-xl w-10 h-10 flex items-center justify-center flex-shrink-0 lg:hidden"
+              style={{ borderRadius: 14 }}
+              aria-label="Menu"
+            >
+              <Menu size={16} color="#0B1220" />
+            </button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
 
+      <QRShareSheet open={shareOpen} onOpenChange={setShareOpen} />
+
+      <AnimatePresence>
+        {drawerOpen && (
+          <DrawerNavigationMobileIntent
+            onClose={() => setDrawerOpen(false)}
+            ctx={ctx}
+            activeRole={activeRole}
+          />
+        )}
+      </AnimatePresence>
+    </>
   );
+}
+
 }
 
 /* ---------------- Hero ---------------- */
