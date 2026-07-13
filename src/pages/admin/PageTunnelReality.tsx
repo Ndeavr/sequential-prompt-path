@@ -581,7 +581,7 @@ export default function PageTunnelReality() {
               </button>
               <button
                 onClick={() => runRelances(false)}
-                disabled={!confirmChecked || relancing}
+                disabled={!confirmChecked || relancing || !e2eGatePass}
                 className="rounded-lg bg-red-500 text-white px-3 py-1.5 text-sm font-semibold inline-flex items-center gap-1 disabled:opacity-40"
               >
                 {relancing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
