@@ -22,10 +22,35 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { slug, email, source, utm } = (body ?? {}) as {
-      slug?: string; email?: string; source?: string; utm?: Record<string, string>;
+    const { slug, email, source, utm, landing_token } = (body ?? {}) as {
+      slug?: string; email?: string; source?: string; utm?: Record<string, string>; landing_token?: string;
     };
-    if (!slug) return json({ error: "missing_slug", stage: "validate" }, 400);
+
+    // NEW: sms_outreach flow — resolve prospect via landing_token
+    let outreachProspectId = "";
+    let outreachCampaignId = "";
+    let outreachSlug = slug;
+    if (landing_token) {
+      const supabaseEarly = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      );
+      const { data: p } = await supabaseEarly
+        .from("prospects")
+        .select("id, campaign_id, business_name, email")
+        .eq("landing_token", landing_token)
+        .maybeSingle();
+      if (p) {
+        outreachProspectId = p.id as string;
+        outreachCampaignId = (p.campaign_id as string) ?? "";
+        outreachSlug = outreachSlug || `outreach-${p.id}`;
+        // Mark checkout_started
+        await supabaseEarly.from("prospects").update({ funnel_status: "checkout_started" }).eq("id", p.id);
+      }
+    }
+
+    if (!outreachSlug) return json({ error: "missing_slug", stage: "validate" }, 400);
+    const effectiveSlug = outreachSlug;
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -34,19 +59,20 @@ Deno.serve(async (req) => {
 
     const isSprint =
       source === "isolation-qc" ||
-      String(slug).startsWith("sprint-") ||
-      String(slug).startsWith("isolation-");
+      String(effectiveSlug).startsWith("sprint-") ||
+      String(effectiveSlug).startsWith("isolation-");
+    const isOutreach = source === "sms_outreach" || !!landing_token;
 
     // Best-effort prospect lookup — never block checkout if not found.
-    let prospectId = "";
-    if (!isSprint) {
+    let prospectId = outreachProspectId;
+    if (!isSprint && !prospectId) {
       try {
         const wp = await supabase
-          .from("war_prospects").select("id").eq("slug", slug).maybeSingle();
+          .from("war_prospects").select("id").eq("slug", effectiveSlug).maybeSingle();
         if (wp.data?.id) prospectId = wp.data.id as string;
         if (!prospectId) {
           const legacy = await supabase
-            .from("prospect_pages").select("id").eq("slug", slug).maybeSingle();
+            .from("prospect_pages").select("id").eq("slug", effectiveSlug).maybeSingle();
           if (legacy.data?.id) prospectId = legacy.data.id as string;
         }
       } catch (_) { /* soft-fail — proceed to Stripe anyway */ }
@@ -57,10 +83,16 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     const origin = req.headers.get("origin") || "https://unpro.ca";
-    const successPath = isSprint
-      ? `/activation-success?session_id={CHECKOUT_SESSION_ID}&source=isolation-qc`
-      : `/activation-success?session_id={CHECKOUT_SESSION_ID}&slug=${encodeURIComponent(slug)}`;
-    const cancelPath = isSprint ? `/isolation-qc?canceled=1` : `/pro/${encodeURIComponent(slug)}?canceled=1`;
+    const successPath = isOutreach
+      ? `/activation/success?session_id={CHECKOUT_SESSION_ID}&token=${encodeURIComponent(landing_token || "")}`
+      : isSprint
+        ? `/activation-success?session_id={CHECKOUT_SESSION_ID}&source=isolation-qc`
+        : `/activation-success?session_id={CHECKOUT_SESSION_ID}&slug=${encodeURIComponent(effectiveSlug)}`;
+    const cancelPath = isOutreach
+      ? `/invitation/${encodeURIComponent(landing_token || "")}/activate?cancelled=true`
+      : isSprint
+        ? `/isolation-qc?canceled=1`
+        : `/pro/${encodeURIComponent(effectiveSlug)}?canceled=1`;
 
     let session;
     try {
@@ -92,10 +124,12 @@ Deno.serve(async (req) => {
           },
         },
         metadata: {
-          prospect_slug: slug,
+          prospect_slug: effectiveSlug,
           prospect_id: prospectId,
+          campaign_id: outreachCampaignId,
+          landing_token: landing_token ?? "",
           offer: "activation_7d",
-          source: source ?? "",
+          source: source ?? (isOutreach ? "sms_outreach" : ""),
           campaign_variant: utm?.camp ?? "",
           utm_city: utm?.city ?? "",
           utm_company: utm?.company ?? "",
@@ -111,7 +145,7 @@ Deno.serve(async (req) => {
     // Best-effort event log (table may not exist in all envs).
     try {
       await supabase.from("prospect_page_events").insert({
-        slug, event_type: "checkout_started", metadata: { session_id: session.id },
+        slug: effectiveSlug, event_type: "checkout_started", metadata: { session_id: session.id, landing_token: landing_token ?? null },
       });
     } catch (_) { /* ignore */ }
 

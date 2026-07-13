@@ -194,6 +194,12 @@ const PageCheckoutStripe = lazyWithRetry(() => import("@/pages/checkout/PageChec
 const PageCheckoutSuccess = lazyWithRetry(() => import("@/pages/checkout/PageCheckoutSuccess"));
 const PageActivationStart = lazyWithRetry(() => import("@/pages/checkout/PageActivationStart"));
 const SolicitationActivationPage = lazyWithRetry(() => import("@/pages/SolicitationActivationPage"));
+const PageShortLinkRedirect = lazyWithRetry(() => import("@/pages/invitation/PageShortLinkRedirect"));
+const PageInvitationLanding = lazyWithRetry(() => import("@/pages/invitation/PageInvitationLanding"));
+const PageInvitationEdit = lazyWithRetry(() => import("@/pages/invitation/PageInvitationEdit"));
+const PageInvitationActivate = lazyWithRetry(() => import("@/pages/invitation/PageInvitationActivate"));
+const PageOutreachActivationSuccess = lazyWithRetry(() => import("@/pages/invitation/PageOutreachActivationSuccess"));
+const PageOutreachFunnel = lazyWithRetry(() => import("@/pages/admin/PageOutreachFunnel"));
 const AdminSolicitationPage = lazyWithRetry(() => import("@/pages/admin/AdminSolicitationPage"));
 const PageAdminOutreachErrors = lazyWithRetry(() => import("@/pages/admin/PageAdminOutreachErrors"));
 const PageAdminProviderHealth = lazyWithRetry(() => import("@/pages/admin/PageAdminProviderHealth"));
@@ -1067,6 +1073,12 @@ export const AppRouter = () => (
         <Route path="/checkout/native/:planCode" element={<PageCheckoutNativeScrollable />} />
         <Route path="/activation" element={<Suspense fallback={<LazyFallback />}><SolicitationActivationPage /></Suspense>} />
         <Route path="/activation/start" element={<PageActivationStart />} />
+        {/* SMS → 1$ outreach tunnel — public routes */}
+        <Route path="/r/:token" element={<Suspense fallback={<LazyFallback />}><PageShortLinkRedirect /></Suspense>} />
+        <Route path="/invitation/:token" element={<Suspense fallback={<LazyFallback />}><PageInvitationLanding /></Suspense>} />
+        <Route path="/invitation/:token/edit" element={<Suspense fallback={<LazyFallback />}><PageInvitationEdit /></Suspense>} />
+        <Route path="/invitation/:token/activate" element={<Suspense fallback={<LazyFallback />}><PageInvitationActivate /></Suspense>} />
+        <Route path="/activation/success" element={<Suspense fallback={<LazyFallback />}><PageOutreachActivationSuccess /></Suspense>} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/pricing/proprietaires" element={<PricingHomeownersPage />} />
         <Route path="/pricing/entrepreneurs" element={<PricingContractorsPage />} />
@@ -1790,6 +1802,7 @@ export const AppRouter = () => (
          <Route path="/admin/command-center/territories" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageCommandCenterTerritories /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/seo-index-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSeoIndexHealth /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/sms-debug" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSmsDebug /></Suspense></UniversalRouteGuard>} />
+          <Route path="/admin/outreach-funnel" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageOutreachFunnel /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/contractor-generator-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageContractorGeneratorHealth /></Suspense></UniversalRouteGuard>} />
 
           <Route path="/admin/memory-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageMemoryHealth /></Suspense></UniversalRouteGuard>} />
