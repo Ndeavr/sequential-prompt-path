@@ -128,6 +128,8 @@ const PageProScoreInstant = lazyWithRetry(() => import("@/pages/pro/PageProScore
 const PageProActivate = lazyWithRetry(() => import("@/pages/pro/PageProActivate"));
 const PageProIsolationQC = lazyWithRetry(() => import("@/pages/pro/PageProIsolationQC"));
 const PageFirstDollarSprint = lazyWithRetry(() => import("@/pages/admin/PageFirstDollarSprint"));
+const PageAdminFirstDollar = lazyWithRetry(() => import("@/pages/admin/PageAdminFirstDollar"));
+const PageAdminFirstDollarBatches = lazyWithRetry(() => import("@/pages/admin/PageAdminFirstDollarBatches"));
 const PageProWelcome = lazyWithRetry(() => import("@/pages/pro/PageProWelcome"));
 const PageProPublicProfile = lazyWithRetry(() => import("@/pages/pro/PageProPublicProfile"));
 const PageProPrivateOnboarding = lazyWithRetry(() => import("@/pages/pro/PageProPrivateOnboarding"));
