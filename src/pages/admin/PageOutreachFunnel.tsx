@@ -37,7 +37,7 @@ export default function PageOutreachFunnel() {
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from("v_outreach_funnel_kpis" as any).select("*").maybeSingle();
-      setKpis(data as Kpis | null);
+      setKpis((data as unknown) as Kpis | null);
       setLoading(false);
     })();
   }, []);
