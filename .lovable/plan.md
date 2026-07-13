@@ -1,100 +1,71 @@
-# Remplacement global de l'image Open Graph UNPRO
+# Nettoyage complet de `unpro-logo-master.png` + explication du STATUS: ERROR
 
-Note importante sur la stack : ce projet est un **Vite + React SPA**, pas Next.js. Il n'y a pas de `app/layout.tsx` ni d'objet `metadata`. Les balises OG vivent dans :
+## Diagnostic
 
-1. `index.html` (fallback statique — ce que voient Facebook / LinkedIn / SMS / iMessage / X, qui n'exécutent pas JS)
-2. `src/seo/components/SeoHead.tsx` (mutation runtime pour Googlebot)
-3. `supabase/functions/prerender/index.ts` (HTML servi aux crawlers)
+Ce que tu vois n'est pas un bug de code — c'est un problème de **déploiement**.
 
-Je vais faire l'équivalent fonctionnel de la demande dans cette architecture.
+Les changements que j'ai poussés au tour précédent (`index.html`, `SeoHead.tsx`, `prerender`) vivent actuellement dans **le preview Lovable**, pas sur `https://unpro.ca`. L'outil `seo-og-inspect` fetch **le site publié**, qui sert encore l'ancien `index.html` compilé avant la mise à jour. C'est pour ça que :
 
-## 1. Nouvel asset OG
+- `og:image` = `unpro-logo-master.png` (ancien HTML compilé)
+- `twitter:image` = idem
+- STATUS: ERROR (mon test exige `unpro-og-v3.jpg` sur les deux champs)
 
-- Prendre l'image uploadée (mockup UNPRO, format paysage) et la recadrer en **1200×630** via `imagegen--edit_image` pour un vrai ratio OG (le mockup actuel n'a pas ce ratio).
-- Écrire dans `public/og/unpro-og-v3.jpg` (chemin exact demandé).
-- Ajouter aussi `public/og/unpro-og-v3.png` seulement si nécessaire; sinon on garde JPG.
+**Le vrai déblocage = republier le frontend.** Tant que ce n'est pas fait, aucun changement de balise n'apparaîtra sur le domaine live, quel que soit le nombre d'itérations.
 
-## 2. URL canonique OG unique
+Deux edge functions déployées côté serveur au tour précédent (`prerender`, `seo-og-inspect`) sont, elles, déjà live.
 
-Constante partagée :
-```
-https://unpro.ca/og/unpro-og-v3.jpg?v=20260712
-```
+## Sur les références `unpro-logo-master.png` restantes
 
-Ajouter `src/seo/ogImage.ts` exportant `DEFAULT_OG_IMAGE` pour que toutes les futures pages héritent automatiquement.
+Elles apparaissent encore à 5 endroits dans le code. **Aucune n'est utilisée comme `og:image` ou `twitter:image`** — je les ai grep-vérifiées :
 
-## 3. `index.html`
+| Fichier | Utilisation | Type |
+|---|---|---|
+| `index.html:55` | `Organization.logo` (JSON-LD Schema.org) | Logo de marque |
+| `public/knowledge-graph.json:10` | `Organization.logo` (JSON-LD) | Logo de marque |
+| `src/pages/ia-maison/PageIaMaisonArticle.tsx:44` | `Article.publisher.logo` (JSON-LD) | Logo publisher |
+| `src/pages/PageHomeUnicorn.tsx:710` | `Organization.logo` (JSON-LD) | Logo de marque |
+| `src/brand/unproIdentity.ts:43` | Identité de marque | Logo de marque |
 
-Remplacer les deux références actuelles :
-- `og:image` = `https://unpro.ca/unpro-logo-master.png`
-- `twitter:image` = `https://unpro.ca/unpro-logo-master.png`
+Ces champs Schema.org attendent **un logo carré transparent**, pas une carte OG social 1200×630. Y coller `unpro-og-v3.jpg` casserait la validation Google Rich Results ("Logo does not fit dimension requirements" / ratio).
 
-par la nouvelle URL avec `?v=20260712`, plus `og:image:width=1200` / `height=630` / `og:image:type=image/jpeg` / `og:image:alt`.
+Mais l'ordre est clair : ne plus jamais voir `unpro-logo-master.png` dans le codebase. Je remplace donc toutes ces occurrences par le **logo canonique CDN déjà en place** (`src/config/branding.ts` → `BRAND.logo` = `unpro-logo-blue.png.asset.json`), qui est le vrai logo carré de la marque.
 
-## 4. `SeoHead.tsx`
+## Changements exécutés en build
 
-- Importer `DEFAULT_OG_IMAGE` et l'utiliser comme fallback quand le prop `ogImage` est absent (aujourd'hui les pages sans `ogImage` n'écrivent aucune balise `og:image` → elles héritent d'`index.html`, ce qui est OK, mais on veut aussi couvrir les pages qui passent une image legacy).
-- Forcer `twitter:card = summary_large_image` dès qu'on a un fallback.
+1. `index.html:55` — remplacer `https://unpro.ca/unpro-logo-master.png` par l'URL CDN du logo canonique (`BRAND.logo` inliné)
+2. `public/knowledge-graph.json:10` — idem
+3. `src/pages/ia-maison/PageIaMaisonArticle.tsx:44` — importer `BRAND` et utiliser `BRAND.logo`
+4. `src/pages/PageHomeUnicorn.tsx:710` — idem
+5. `src/brand/unproIdentity.ts:43` — passer la valeur `logo` sur `BRAND.logo`
+6. `src/seo/ogImage.ts` — retirer la mention `unpro-logo-master.png` du commentaire
 
-## 5. `supabase/functions/prerender/index.ts`
+Puis :
+- `rg 'unpro-logo-master' .` doit retourner 0 résultat (hors `node_modules`)
+- `og:image` et `twitter:image` continuent de pointer vers `unpro-og-v3.jpg?v=20260712` (déjà fait au tour précédent)
 
-Remplacer le fallback `${BASE}/og-default.png` par `${BASE}/og/unpro-og-v3.jpg?v=20260712`. Redéployer la function.
+## Améliorations mineures `/admin/seo-health`
 
-## 6. Scan et nettoyage des références legacy
+- Bouton toggle **"Tester le preview Lovable"** qui remplace `https://unpro.ca` par l'URL preview courante dans les 7 routes-clés. Comme ça, tu peux valider **avant** de publier que le nouveau HTML est bien en place, puis publier en confiance.
+- Ligne d'info explicite : "Cet outil analyse le HTML rendu sur l'URL fournie. Un changement dans le code n'apparaît sur unpro.ca qu'après publication."
+- Le status devient **OK** dès que `og:image` ET `twitter:image` contiennent `unpro-og-v3.jpg` (déjà le cas de la logique actuelle).
 
-Rechercher et remplacer dans tout le repo (hors `node_modules`, `.lovable/`, migrations SQL historiques) les occurrences de :
-- `og-image.jpg`, `/og-image`, `og-default.png`
-- `unpro-logo-master.png` utilisé comme OG
-- anciens PNG "fleur-de-lys" / "infinity" s'il en reste
-- Anciennes images générées dynamiquement qui pointent encore vers du legacy
+## Rapport post-changement
 
-Zones connues à vérifier après scan :
-- `src/pages/ai/PageAiEntity.tsx`
-- `src/pages/blog/BlogArticlePage.tsx`
-- `src/pages/admin/share-images/PageShareImageGenerate.tsx`
-- `supabase/functions/aipp-v2-analyze/index.ts`
-- `supabase/functions/blog-image-generator/index.ts`
-- `supabase/functions/domain-intelligence/index.ts`
-- `public/llms-full.txt`, `public/sitemap-blog.xml`
+Je livre à la fin :
 
-Les pages qui **génèrent** une image dédiée (share cards blog, AI entity, share-image admin) gardent leur image dédiée — la consigne dit "unless a custom image is explicitly generated".
+| Fichier | Ancienne valeur | Nouvelle valeur | Route affectée |
+|---|---|---|---|
+| index.html | `.../unpro-logo-master.png` | `BRAND.logo` (CDN) | Toutes routes (JSON-LD Org sitewide) |
+| public/knowledge-graph.json | idem | idem | Sitewide |
+| PageIaMaisonArticle.tsx | idem | `${BRAND.logo}` | /ia-maison/:slug |
+| PageHomeUnicorn.tsx | idem | `BRAND.logo` | /home-unicorn |
+| src/brand/unproIdentity.ts | idem | `BRAND.logo` | Global |
 
-## 7. Cache-busting
+Zéro occurrence restante de `unpro-logo-master.png`.
 
-`?v=20260712` ajouté partout où l'URL est écrite en dur. Les crawlers social sont invalidés automatiquement puisque l'URL change.
+## Ce que je NE fais PAS
 
-## 8. Nouvelle page `/admin/seo-health`
+- Je ne remplace pas les logos JSON-LD par la carte OG 1200×630 — Google Rich Results rejette ça. Ce sont deux champs sémantiquement distincts.
+- Je ne peux pas forcer la publication du frontend — c'est une action côté toi (bouton Publish). Après le build ci-dessus, ce sera **le seul geste restant** pour que STATUS passe à OK sur `unpro.ca`.
 
-Fichier `src/pages/admin/PageAdminSeoHealth.tsx` + route dans le registre admin.
-
-Fonctionnalités :
-- Champ texte pour tester n'importe quelle URL du site
-- Bouton "Analyser" → appelle une nouvelle edge function `seo-og-inspect` qui :
-  - fetch l'URL cible (via prerender pour voir ce que voient les crawlers)
-  - extrait `og:title`, `og:description`, `og:image`, `twitter:image`, `twitter:card`, `canonical`
-  - retourne `ok` si `og:image` = URL v3 attendue, sinon `ERROR` + raison
-- Tableau récapitulatif des routes clés testées d'un coup :
-  `/`, `/entrepreneurs`, `/gestion-copropriete-quebec`, `/journal`, `/entrepreneur/:slug` (échantillon), `/ville/:slug` (échantillon), `/services/:slug` (échantillon), `/alex`, `/passeport-maison`, `/recommandations`
-- Colonnes : URL, OG title, OG description, OG image, Twitter image, Statut
-- Liens directs "Tester sur" → Facebook Sharing Debugger, LinkedIn Post Inspector, X Card Validator, Google Rich Results (préviews externes, ouverts dans un nouvel onglet — les crawlers eux-mêmes ne s'appellent pas côté serveur mais on fournit un lancement en un clic pour chaque plateforme)
-
-Note : Facebook / LinkedIn / X / Messenger / iMessage / Google Messages ne sont pas testables server-to-server sans clé API dédiée. On offre donc :
-- **Validation automatique** = fetch + parsing OG local (source de vérité identique à ce que le crawler lit)
-- **Validation manuelle en un clic** = liens vers les debuggers officiels de chaque plateforme préremplis avec l'URL
-
-## 9. Critères de succès vérifiés
-
-Après implémentation :
-- `rg` confirme 0 référence legacy (`og-image.jpg`, `unpro-logo-master.png` en OG, `og-default.png`)
-- `/admin/seo-health` retourne OK pour toutes les routes-clés
-- Preview SMS/iMessage = nouveau visuel (après refresh cache social via debuggers officiels)
-- Nouvelle page = héritage automatique via `DEFAULT_OG_IMAGE`
-
-## 10. Ce que je NE fais PAS
-
-- Pas de migration vers Next.js `app/layout.tsx` (n'existe pas dans ce projet)
-- Pas d'appel serveur non authentifié aux APIs Facebook/LinkedIn/X (nécessite tokens, hors scope)
-- Pas de suppression des images de partage dynamiques (blog, AI entity, share-image admin) — elles sont volontairement custom
-- Pas de changement au SMS outbound / Twilio pipeline (indépendant)
-
-Confirme et je passe en build.
+Confirme et je build.
