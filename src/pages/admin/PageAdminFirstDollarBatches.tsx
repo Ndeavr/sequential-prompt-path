@@ -64,7 +64,7 @@ export default function PageAdminFirstDollarBatches() {
             <div className="rounded-lg border border-rose-400/40 bg-rose-500/10 p-3 mb-4 flex items-start gap-2 text-sm text-rose-200">
               <Lock className="h-4 w-4 mt-0.5" />
               <div>
-                <b>Outbound bloqué.</b> {health?.blockReason ?? "Santé SMS insuffisante."} Utilisez « Exécuter un test SMS » ci-dessus pour débloquer.
+                <b>Outbound bloqué.</b> {health?.health.reason ?? "Santé SMS insuffisante."} Utilisez « Tester maintenant » ci-dessus pour débloquer.
               </div>
             </div>
           )}
