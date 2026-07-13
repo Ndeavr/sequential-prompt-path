@@ -1,71 +1,46 @@
-# Nettoyage complet de `unpro-logo-master.png` + explication du STATUS: ERROR
+## Decision
 
-## Diagnostic
+Keep `HeaderFloatingGlass` (white sticky glass, on `/` and `/index`) as the single visible header there. Hide `SmartHeader` only on those two routes. Everywhere else `SmartHeader` stays (those pages have no floating glass — removing it globally would leave them headerless).
 
-Ce que tu vois n'est pas un bug de code — c'est un problème de **déploiement**.
+Then port every real behavior from `SmartHeader` into `HeaderFloatingGlass` so nothing regresses.
 
-Les changements que j'ai poussés au tour précédent (`index.html`, `SeoHead.tsx`, `prerender`) vivent actuellement dans **le preview Lovable**, pas sur `https://unpro.ca`. L'outil `seo-og-inspect` fetch **le site publié**, qui sert encore l'ancien `index.html` compilé avant la mise à jour. C'est pour ça que :
+## Files touched
 
-- `og:image` = `unpro-logo-master.png` (ancien HTML compilé)
-- `twitter:image` = idem
-- STATUS: ERROR (mon test exige `unpro-og-v3.jpg` sur les deux champs)
+1. **`src/layouts/MainLayout.tsx`** — conditionally skip `<SmartHeader />` when `pathname === "/"` or `"/index"`. All other routes unchanged.
 
-**Le vrai déblocage = republier le frontend.** Tant que ce n'est pas fait, aucun changement de balise n'apparaîtra sur le domaine live, quel que soit le nombre d'itérations.
+2. **`src/pages/PageHomeUnicorn.tsx`** — rebuild the `HeaderFloatingGlass` component (lines 49–170) to be functional, not decorative:
 
-Deux edge functions déployées côté serveur au tour précédent (`prerender`, `seo-og-inspect`) sont, elles, déjà live.
+   | Current (fake) | New (wired) |
+   |---|---|
+   | Static `FR` pill | `SwitchLanguagePillAnimated` (mobile) / `LanguageToggle` (≥sm) bound to `useLanguage()` — active side gets solid blue bg, inactive stays readable, 44×44 tap target |
+   | Bell → `/memory` with hard-coded blue dot | `useNavigationContext()` → navigate `/dashboard/notifications`, dot only when `ctx.system.notificationsCount > 0`, `aria-label="Notifications"` |
+   | Static `P` avatar dropdown with hard-coded routes | `<ProfileMenu />` when authed, `Connexion` CTA (`/role`) when guest — same logic as SmartHeader |
+   | `QrCode` → `navigate("/qr")` | Opens `<QRShareSheet />` (same share sheet SmartHeader uses) |
+   | Logo → no link | `<Link to={getLogoDestination(activeRole)}>` (dashboard / pro / admin / `/`) |
+   | Hamburger with hand-written link list | Opens `<DrawerNavigationMobileIntent />` — same drawer as SmartHeader, role-aware, no duplicated bottom-nav items |
 
-## Sur les références `unpro-logo-master.png` restantes
+   Also: keep the glass panel styling (`uc-glass-strong`, sticky, `z-30`), keep the current 64 px height, keep the light-blue theme. Only the internals get real.
 
-Elles apparaissent encore à 5 endroits dans le code. **Aucune n'est utilisée comme `og:image` ou `twitter:image`** — je les ai grep-vérifiées :
+3. No changes to `SmartHeader`, `BottomDockGlass`, `ProfileMenu`, `LanguageToggle`, `QRShareSheet`, or any other consumer — they're reused as-is.
 
-| Fichier | Utilisation | Type |
-|---|---|---|
-| `index.html:55` | `Organization.logo` (JSON-LD Schema.org) | Logo de marque |
-| `public/knowledge-graph.json:10` | `Organization.logo` (JSON-LD) | Logo de marque |
-| `src/pages/ia-maison/PageIaMaisonArticle.tsx:44` | `Article.publisher.logo` (JSON-LD) | Logo publisher |
-| `src/pages/PageHomeUnicorn.tsx:710` | `Organization.logo` (JSON-LD) | Logo de marque |
-| `src/brand/unproIdentity.ts:43` | Identité de marque | Logo de marque |
+## Behavior after fix
 
-Ces champs Schema.org attendent **un logo carré transparent**, pas une carte OG social 1200×630. Y coller `unpro-og-v3.jpg` casserait la validation Google Rich Results ("Logo does not fit dimension requirements" / ratio).
+- `/` and `/index`: only the white floating glass header, now fully functional (FR/EN, QR share sheet, real bell with unread dot, real profile menu / auth CTA, role-aware drawer).
+- Any other route (dashboard, `/pro`, `/alex`, admin, etc.): unchanged — `SmartHeader` still renders.
+- No double header anywhere. No CSS-only hiding. No dead spacing (removing `SmartHeader` on home actually frees ~48 px above the hero — the floating glass is already offset by its own `pt-4`).
+- Bottom dock untouched.
 
-Mais l'ordre est clair : ne plus jamais voir `unpro-logo-master.png` dans le codebase. Je remplace donc toutes ces occurrences par le **logo canonique CDN déjà en place** (`src/config/branding.ts` → `BRAND.logo` = `unpro-logo-blue.png.asset.json`), qui est le vrai logo carré de la marque.
+## Verification
 
-## Changements exécutés en build
+- Load `/index` on 384 px viewport → one header, white glass, all icons tappable.
+- Toggle FR/EN → active side turns solid blue, page copy switches.
+- Tap bell → routes to `/dashboard/notifications`; dot only appears if unread count > 0.
+- Tap QR → `QRShareSheet` opens (same sheet as SmartHeader).
+- Tap avatar while signed in → `ProfileMenu` opens with real routes; while guest → shows `Connexion` CTA to `/role`.
+- Load `/dashboard` → `SmartHeader` still visible, no floating glass, no regression.
+- `rg "SmartHeader"` still returns exactly its definition + one gated usage in `MainLayout`.
 
-1. `index.html:55` — remplacer `https://unpro.ca/unpro-logo-master.png` par l'URL CDN du logo canonique (`BRAND.logo` inliné)
-2. `public/knowledge-graph.json:10` — idem
-3. `src/pages/ia-maison/PageIaMaisonArticle.tsx:44` — importer `BRAND` et utiliser `BRAND.logo`
-4. `src/pages/PageHomeUnicorn.tsx:710` — idem
-5. `src/brand/unproIdentity.ts:43` — passer la valeur `logo` sur `BRAND.logo`
-6. `src/seo/ogImage.ts` — retirer la mention `unpro-logo-master.png` du commentaire
+## Out of scope
 
-Puis :
-- `rg 'unpro-logo-master' .` doit retourner 0 résultat (hors `node_modules`)
-- `og:image` et `twitter:image` continuent de pointer vers `unpro-og-v3.jpg?v=20260712` (déjà fait au tour précédent)
-
-## Améliorations mineures `/admin/seo-health`
-
-- Bouton toggle **"Tester le preview Lovable"** qui remplace `https://unpro.ca` par l'URL preview courante dans les 7 routes-clés. Comme ça, tu peux valider **avant** de publier que le nouveau HTML est bien en place, puis publier en confiance.
-- Ligne d'info explicite : "Cet outil analyse le HTML rendu sur l'URL fournie. Un changement dans le code n'apparaît sur unpro.ca qu'après publication."
-- Le status devient **OK** dès que `og:image` ET `twitter:image` contiennent `unpro-og-v3.jpg` (déjà le cas de la logique actuelle).
-
-## Rapport post-changement
-
-Je livre à la fin :
-
-| Fichier | Ancienne valeur | Nouvelle valeur | Route affectée |
-|---|---|---|---|
-| index.html | `.../unpro-logo-master.png` | `BRAND.logo` (CDN) | Toutes routes (JSON-LD Org sitewide) |
-| public/knowledge-graph.json | idem | idem | Sitewide |
-| PageIaMaisonArticle.tsx | idem | `${BRAND.logo}` | /ia-maison/:slug |
-| PageHomeUnicorn.tsx | idem | `BRAND.logo` | /home-unicorn |
-| src/brand/unproIdentity.ts | idem | `BRAND.logo` | Global |
-
-Zéro occurrence restante de `unpro-logo-master.png`.
-
-## Ce que je NE fais PAS
-
-- Je ne remplace pas les logos JSON-LD par la carte OG 1200×630 — Google Rich Results rejette ça. Ce sont deux champs sémantiquement distincts.
-- Je ne peux pas forcer la publication du frontend — c'est une action côté toi (bouton Publish). Après le build ci-dessus, ce sera **le seul geste restant** pour que STATUS passe à OK sur `unpro.ca`.
-
-Confirme et je build.
+- No new `GlobalHeader` file — reusing the existing `HeaderFloatingGlass` avoids a route-wide refactor and keeps blast radius to two files.
+- No visual redesign of the glass panel — user asked to keep it as-is.
