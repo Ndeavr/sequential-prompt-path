@@ -47,6 +47,9 @@ export default function PageAdminFirstDollarBatches() {
         {/* SMS infrastructure health */}
         <SmsHealthPanel />
 
+        {/* Recipient eligibility breakdown */}
+        <EligibilityPanel />
+
         {/* Send panel */}
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
           <div className="flex items-center gap-3 mb-4">
