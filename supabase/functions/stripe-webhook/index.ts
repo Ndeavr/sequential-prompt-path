@@ -177,6 +177,82 @@ Deno.serve(async (req) => {
         }
 
 
+        // SMS OUTREACH flow: /invitation/:token → 1$ activation
+        if (session.metadata?.source === "sms_outreach" && session.metadata?.landing_token) {
+          const landingToken = session.metadata.landing_token as string;
+          try {
+            const { data: prospect } = await supabase
+              .from("prospects")
+              .select("id, business_name, main_city, service, telephone, email, campaign_id, contractor_id")
+              .eq("landing_token", landingToken)
+              .maybeSingle();
+
+            if (prospect) {
+              const paidAtIso = new Date().toISOString();
+              // Ensure a contractors row exists (best-effort — table shape varies)
+              let cId: string | null = (prospect.contractor_id as string) || null;
+              if (!cId) {
+                try {
+                  const { data: created } = await supabase
+                    .from("contractors")
+                    .insert({
+                      business_name: prospect.business_name,
+                      city: prospect.main_city,
+                      phone: prospect.telephone,
+                      email: prospect.email,
+                      status: "active",
+                      source: "sms_outreach",
+                    } as never)
+                    .select("id")
+                    .maybeSingle();
+                  cId = (created?.id as string) ?? null;
+                } catch (e) {
+                  console.warn("[stripe-webhook] contractor upsert soft-failed", (e as Error).message);
+                }
+              }
+
+              // Compute recommendable
+              const validContact = !!(prospect.telephone || prospect.email);
+              const recommendable =
+                !!prospect.business_name &&
+                !!(prospect.service) &&
+                validContact &&
+                !!prospect.main_city;
+
+              await supabase.from("prospects").update({
+                funnel_status: recommendable ? "activated" : "paid_1_dollar",
+                activation_paid_at: paidAtIso,
+                recommendable,
+                contractor_id: cId,
+              }).eq("id", prospect.id);
+
+              // Ledger (best-effort)
+              await supabase.from("contractor_activation_ledger").insert({
+                contractor_id: cId,
+                prospect_id: prospect.id,
+                amount_paid: session.amount_total ?? 100,
+                currency: session.currency ?? "cad",
+                stripe_session_id: session.id,
+                paid_at: paidAtIso,
+                source: "sms_outreach",
+              } as never).then(() => {}, () => {});
+
+              await supabase.from("prospect_status_transitions").insert({
+                prospect_id: prospect.id,
+                contractor_id: cId,
+                campaign_id: prospect.campaign_id,
+                previous_status: "checkout_started",
+                new_status: recommendable ? "recommendable" : "paid_1_dollar",
+                source: "stripe_webhook",
+                metadata: { session_id: session.id, landing_token: landingToken },
+              } as never).then(() => {}, () => {});
+            }
+          } catch (e) {
+            console.error("[stripe-webhook] sms_outreach activation failed", (e as Error).message);
+          }
+          break;
+        }
+
         // ACQUISITION PIPELINE flow: prospect-driven checkout (acq-create-checkout)
         if (session.metadata?.source === "acquisition_pipeline" && session.metadata?.prospect_id) {
           const prospectId = session.metadata.prospect_id;
