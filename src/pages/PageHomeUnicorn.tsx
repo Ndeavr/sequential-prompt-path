@@ -159,7 +159,7 @@ function HeaderFloatingGlass() {
   );
 }
 
-}
+
 
 /* ---------------- Hero ---------------- */
 function HeroAlexOrb({ onTalk }: { onTalk: (hint?: string) => void }) {
