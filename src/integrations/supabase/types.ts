@@ -56701,6 +56701,48 @@ export type Database = {
         }
         Relationships: []
       }
+      outreach_e2e_test_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          failure_reason: string | null
+          id: string
+          metadata: Json | null
+          overall_result: string
+          prospect_id: string | null
+          started_at: string
+          steps: Json
+          test_phone: string | null
+          triggered_by: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          failure_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          overall_result?: string
+          prospect_id?: string | null
+          started_at?: string
+          steps?: Json
+          test_phone?: string | null
+          triggered_by?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          failure_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          overall_result?: string
+          prospect_id?: string | null
+          started_at?: string
+          steps?: Json
+          test_phone?: string | null
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       outreach_email_events: {
         Row: {
           bounced_at: string | null
@@ -56947,6 +56989,7 @@ export type Database = {
           body_rendered: string | null
           campaign_id: string | null
           channel_type: string
+          clicked_at: string | null
           cta_urls: string[]
           delivered_at: string | null
           error_message: string | null
@@ -56954,6 +56997,7 @@ export type Database = {
           from_value: string | null
           has_tracked_cta: boolean
           id: string
+          landing_viewed_at: string | null
           message_status: string | null
           prospect_id: string | null
           provider_message_id: string | null
@@ -56963,6 +57007,7 @@ export type Database = {
           rendered_html: string | null
           sent_at: string | null
           sequence_step_id: string | null
+          short_link_token: string | null
           subject_rendered: string | null
           to_value: string | null
         }
@@ -56970,6 +57015,7 @@ export type Database = {
           body_rendered?: string | null
           campaign_id?: string | null
           channel_type: string
+          clicked_at?: string | null
           cta_urls?: string[]
           delivered_at?: string | null
           error_message?: string | null
@@ -56977,6 +57023,7 @@ export type Database = {
           from_value?: string | null
           has_tracked_cta?: boolean
           id?: string
+          landing_viewed_at?: string | null
           message_status?: string | null
           prospect_id?: string | null
           provider_message_id?: string | null
@@ -56986,6 +57033,7 @@ export type Database = {
           rendered_html?: string | null
           sent_at?: string | null
           sequence_step_id?: string | null
+          short_link_token?: string | null
           subject_rendered?: string | null
           to_value?: string | null
         }
@@ -56993,6 +57041,7 @@ export type Database = {
           body_rendered?: string | null
           campaign_id?: string | null
           channel_type?: string
+          clicked_at?: string | null
           cta_urls?: string[]
           delivered_at?: string | null
           error_message?: string | null
@@ -57000,6 +57049,7 @@ export type Database = {
           from_value?: string | null
           has_tracked_cta?: boolean
           id?: string
+          landing_viewed_at?: string | null
           message_status?: string | null
           prospect_id?: string | null
           provider_message_id?: string | null
@@ -57009,6 +57059,7 @@ export type Database = {
           rendered_html?: string | null
           sent_at?: string | null
           sequence_step_id?: string | null
+          short_link_token?: string | null
           subject_rendered?: string | null
           to_value?: string | null
         }
@@ -67514,6 +67565,53 @@ export type Database = {
           },
         ]
       }
+      prospect_status_transitions: {
+        Row: {
+          campaign_id: string | null
+          contractor_id: string | null
+          created_at: string
+          id: string
+          message_id: string | null
+          metadata: Json | null
+          new_status: string
+          previous_status: string | null
+          prospect_id: string | null
+          source: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          new_status: string
+          previous_status?: string | null
+          prospect_id?: string | null
+          source?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          new_status?: string
+          previous_status?: string | null
+          prospect_id?: string | null
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_status_transitions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prospect_web_assets: {
         Row: {
           asset_type: string
@@ -67885,27 +67983,33 @@ export type Database = {
       }
       prospects: {
         Row: {
+          activation_paid_at: string | null
           aipp_pre_score: number | null
           business_name: string
           campaign_id: string | null
           confidence_score: number | null
+          contractor_id: string | null
           country: string | null
           created_at: string | null
           dedup_status: string | null
           domaine: string | null
           email: string | null
+          funnel_status: string | null
+          funnel_status_updated_at: string | null
           has_email: boolean | null
           has_google_presence: boolean | null
           has_phone: boolean | null
           has_reviews: boolean | null
           has_website: boolean | null
           id: string
+          landing_token: string | null
           langue_preferee: string
           main_city: string | null
           nom: string | null
           prenom: string | null
           priority_level: string | null
           province: string | null
+          recommendable: boolean | null
           region_name: string | null
           service: string | null
           slug: string | null
@@ -67916,27 +68020,33 @@ export type Database = {
           url_google: string | null
         }
         Insert: {
+          activation_paid_at?: string | null
           aipp_pre_score?: number | null
           business_name: string
           campaign_id?: string | null
           confidence_score?: number | null
+          contractor_id?: string | null
           country?: string | null
           created_at?: string | null
           dedup_status?: string | null
           domaine?: string | null
           email?: string | null
+          funnel_status?: string | null
+          funnel_status_updated_at?: string | null
           has_email?: boolean | null
           has_google_presence?: boolean | null
           has_phone?: boolean | null
           has_reviews?: boolean | null
           has_website?: boolean | null
           id?: string
+          landing_token?: string | null
           langue_preferee?: string
           main_city?: string | null
           nom?: string | null
           prenom?: string | null
           priority_level?: string | null
           province?: string | null
+          recommendable?: boolean | null
           region_name?: string | null
           service?: string | null
           slug?: string | null
@@ -67947,27 +68057,33 @@ export type Database = {
           url_google?: string | null
         }
         Update: {
+          activation_paid_at?: string | null
           aipp_pre_score?: number | null
           business_name?: string
           campaign_id?: string | null
           confidence_score?: number | null
+          contractor_id?: string | null
           country?: string | null
           created_at?: string | null
           dedup_status?: string | null
           domaine?: string | null
           email?: string | null
+          funnel_status?: string | null
+          funnel_status_updated_at?: string | null
           has_email?: boolean | null
           has_google_presence?: boolean | null
           has_phone?: boolean | null
           has_reviews?: boolean | null
           has_website?: boolean | null
           id?: string
+          landing_token?: string | null
           langue_preferee?: string
           main_city?: string | null
           nom?: string | null
           prenom?: string | null
           priority_level?: string | null
           province?: string | null
+          recommendable?: boolean | null
           region_name?: string | null
           service?: string | null
           slug?: string | null
@@ -84332,6 +84448,25 @@ export type Database = {
           paid: number | null
           replied: number | null
           sent: number | null
+        }
+        Relationships: []
+      }
+      v_outreach_funnel_kpis: {
+        Row: {
+          activated: number | null
+          checkout_started: number | null
+          landing_viewed: number | null
+          paid_1_dollar: number | null
+          profile_started: number | null
+          ready_to_contact: number | null
+          recommendable: number | null
+          scraped: number | null
+          signup_started: number | null
+          sms_clicked: number | null
+          sms_delivered: number | null
+          sms_failed: number | null
+          sms_queued: number | null
+          sms_sent: number | null
         }
         Relationships: []
       }
