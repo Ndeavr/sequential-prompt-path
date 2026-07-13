@@ -159,15 +159,15 @@ Deno.serve(async (req) => {
   let sent = 0;
   let failed = 0;
 
-  for (let i = 0; i < leads.length; i++) {
-    const lead: any = leads[i];
+  for (let i = 0; i < claimedLeads.length; i++) {
+    const lead: any = claimedLeads[i];
     const tmpl = templates[i % templates.length];
     distribution[tmpl.code] = (distribution[tmpl.code] ?? 0) + 1;
 
-    // Tag lead with template + batch
+    // Tag lead with template (batch already claimed atomically above)
     await sb
       .from("launch_leads")
-      .update({ template_code: tmpl.code, sms_batch_id: batch.id })
+      .update({ template_code: tmpl.code })
       .eq("id", lead.id);
 
     try {
@@ -225,6 +225,8 @@ Deno.serve(async (req) => {
     .update({
       status: "sent",
       sent_count: sent,
+      failed_count: failed,
+      completed_at: new Date().toISOString(),
       template_distribution: distribution,
     })
     .eq("id", batch.id);
