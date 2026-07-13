@@ -84,6 +84,7 @@ Deno.serve(async (req) => {
     const { data, error } = await supabase
       .from("prospects")
       .select("id, business_name, telephone, langue_preferee, funnel_status, funnel_status_updated_at, last_relance_at, relance_count, landing_token")
+      .eq("is_test_e2e", false)
       .in("funnel_status", statuses)
       .lt("relance_count", 3)
       .lte("relance_count", maxCount)
