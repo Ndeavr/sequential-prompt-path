@@ -30,9 +30,30 @@ interface Section {
 
 export default function ScreenChecklist() {
   const navigate = useNavigate();
-  const { state, updateFunnel, completionBySection, overallCompletion, saving } = useActivationFunnel();
+  const { state, updateFunnel, completionBySection, overallCompletion, saving, funnelId, pollImportStatus } = useActivationFunnel();
   const [openSection, setOpenSection] = useState<string | null>("identity");
+  const [alexBusy, setAlexBusy] = useState(false);
+  const founder = useFounderSlots();
   useHesitationRescue({ screenKey: "checklist" });
+
+  const runAlexAutocomplete = async () => {
+    if (!funnelId || alexBusy) return;
+    setAlexBusy(true);
+    try {
+      const { error } = await supabase.functions.invoke("alex-autocomplete-profile", { body: { funnel_id: funnelId } });
+      if (error) throw error;
+      // Poll a few times to refresh state as steps complete
+      for (let i = 0; i < 8; i++) {
+        await new Promise((r) => setTimeout(r, 1500));
+        await pollImportStatus();
+      }
+      toast({ title: "Alex a complété votre profil", description: "Vérifiez chaque section ci-dessous — vous pouvez tout ajuster." });
+    } catch (e) {
+      toast({ title: "Alex n'a pas pu tout compléter", description: "Complétez les sections manuellement — vos données sont sauvegardées." , variant: "destructive" });
+    } finally {
+      setAlexBusy(false);
+    }
+  };
 
   const sections: Section[] = [
     { key: "identity", title: "Identité d'entreprise", icon: Building2, estimatedMin: 2, impactLabel: "Confiance", completionPercent: completionBySection.identity },
