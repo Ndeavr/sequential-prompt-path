@@ -1,77 +1,110 @@
 
-# Audit du funnel d'acquisition — lecture seule
+# Funnel Debug — Par Lead + Test E2E
 
-Objectif : ne rien reconstruire. Produire un rapport unique qui montre où le premier entrepreneur payé est bloqué, à partir des données déjà en base.
+Objectif unique : diagnostiquer et débloquer le premier entrepreneur payé 1 $. Aucune nouvelle fonctionnalité produit, uniquement observabilité + test réel.
 
-## Portée stricte
+## 1. Edge function `funnel-debug-leads` (GET)
 
-- Aucune migration.
-- Aucun nouveau design, aucune nouvelle fonctionnalité produit.
-- Aucun changement à Stripe, Twilio, ni aux pages publiques.
-- Une seule route admin ajoutée : `/admin/funnel-audit`.
-- Un edge function en lecture seule qui agrège les 30 derniers jours.
+Lecture seule. Agrège **par lead** (join sur `phone` / `contractor_id` / `session_id`) les 13 étapes canoniques :
 
-## Livrables
+`scraped` → `mobile_valid` → `sms_queued` → `sms_sent` → `sms_delivered` → `link_clicked` → `landing_view` → `alex_started` → `signup_started` → `signup_completed` → `checkout_opened` → `payment_completed` → `account_activated`
 
-1. **Edge function `funnel-audit-report`** (read-only, service_role)
-   Retourne un JSON avec, pour chaque étape des 30 derniers jours :
-   - `count`
-   - `conversion_from_previous` (%)
-   - `drop_from_previous` (%)
-   - `last_occurrence_at`
-   - `top_error` `{ code, message, count }`
-   - `sample_ids` (5 max, pour spot-check)
+Sources déjà existantes :
+- `launch_leads` : scraped, phone, category, city, mobile_valid
+- `sms_events_v2` : queued/sent/delivered/failed + provider_error
+- `contractor_funnel_events` : link_clicked, landing_view, alex_started, signup_*, checkout_*, payment_*, activation_*
+- `platform_operation_outcomes` : failure_code / block_reason par lead
 
-   Étapes couvertes (nom → source) :
-   ```text
-   scraped              → launch_leads / contractor_prospects (created_at)
-   mobile_valid         → launch_leads.phone présent + normalisable mobile QC
-   email_present        → launch_leads.email non nul
-   excluded_aggregators → launch_leads (source/domain in liste agrégateurs)
-   sms_queued           → sms_events_v2.status='queued'
-   sms_sent             → sms_events_v2.status='sent'
-   sms_delivered        → sms_events_v2.status='delivered'
-   sms_failed           → sms_events_v2.status in ('failed','undelivered')
-   link_clicked         → contractor_funnel_events.event_type in
-                          ('sms_clicked','link_clicked')
-   landing_view         → contractor_funnel_events.event_type in
-                          ('landing_view','landing_viewed','landing_viewed_first_dollar')
-   alex_started         → contractor_funnel_events.event_type='alex_started'
-   signup_started       → event_type in ('registration_started','signup_started','profile_started')
-   signup_completed     → event_type in ('registration_completed','signup_completed')
-   checkout_opened      → event_type in ('checkout_started','stripe_checkout_opened')
-   payment_success      → event_type in ('payment_success','stripe_payment_success','payment_succeeded')
-                          + fallback launch_leads.lead_status in ('PAID','ACTIVATED')
-   activated            → event_type in ('activation_completed','contractor_activated','activated')
-                          + fallback launch_leads.lead_status='ACTIVATED'
-   recommendable        → contractors.status='active' AND is_recommendable=true
-                          (fallback: contractor_profiles complet + plan actif)
-   ```
-   Prefill check séparé : sur un échantillon des 20 derniers `signup_started`, vérifier si `contractor_prospects` a `business_name / phone / category / city` → renvoyer `prefill_coverage_pct`.
+Sortie : `{ leads: [{ phone, category, city, steps: { [step]: { at, ok, error } }, first_break: {step, reason} }] }`. Trié par lead le plus avancé.
 
-2. **Page `/admin/funnel-audit`** (`src/pages/admin/AdminFunnelAudit.tsx`)
-   - Tableau vertical des étapes avec : nombre, %, drop-off, dernière occurrence relative, erreur dominante.
-   - Bandeau rouge : « Plus grand drop-off : {étape} (−X%) » calculé côté client.
-   - Card « Couverture préremplissage » avec % + 3 exemples anonymisés.
-   - Card « Derniers SMS livrés / échoués (7j) » : compte queued/sent/delivered/failed/undelivered.
-   - Aucun graphique fancy, du texte lisible dans le thème admin sombre existant.
-   - Bouton « Rafraîchir » (invalide le query).
+## 2. Edge function `funnel-debug-run-test` (POST)
 
-3. **Hook `useFunnelAudit`** (`src/hooks/useFunnelAudit.ts`)
-   - `useQuery` sur l'edge function, `refetchInterval: 60_000`.
+Exécute un test E2E réel sur un lead test dédié (ou fourni en body : `{ phone, name, category, city }`).
 
-4. **Entrée sidebar admin** (une ligne dans le registry admin existant) — pas de refonte de nav.
+Étapes séquentielles avec `reportOutcome()` à chaque succès/échec :
 
-## Détails techniques
+1. Insert (ou upsert) dans `launch_leads` (source=`funnel_debug_test`)
+2. Appel `acq-sms-send` avec le lead → capture messageSid
+3. Boucle poll (max 60 s) sur `sms_events_v2` pour statuts sent → delivered
+4. Renvoie un objet `trace` contenant chaque étape + timestamps + erreurs
+5. Écrit un enregistrement `funnel_debug_runs` (nouvelle table légère) pour historique
 
-- Edge function : Deno, import `https://esm.sh/@supabase/supabase-js@2.49.1`, CORS via `npm:@supabase/supabase-js@2/cors`, garde admin via `has_role(auth.uid(),'admin')`.
-- Fenêtre : `now() - interval '30 days'`, paramétrable par query `?days=30`.
-- Aucune écriture DB. Aucune notification. Aucun webhook touché.
-- Erreurs dominantes : agrégation `event_type` + `metadata->>'error_code'` (ou `sms_events_v2.error_code`) par étape, `ORDER BY count DESC LIMIT 1`.
+Le clic / landing / signup / checkout / activation ne peuvent pas être simulés côté serveur : la fonction retourne l’URL SMS générée + un token de suivi et la page admin affichera en temps réel la progression (polling toutes les 3 s) au fur et à mesure que l’humain (ou un headless futur) suit le lien.
 
-## Critères de succès
+## 3. Migration SQL minimale
 
-- `/admin/funnel-audit` affiche 15 lignes de chiffres réels lus depuis la base.
-- Le plus gros drop-off est identifié explicitement (bandeau).
-- Chaque étape montre : count, %, dernière occurrence, top erreur.
-- Aucun fichier de design public modifié, aucune migration créée.
+```sql
+create table public.funnel_debug_runs (
+  id uuid primary key default gen_random_uuid(),
+  started_by uuid references auth.users(id),
+  lead_phone text not null,
+  message_sid text,
+  trace jsonb not null default '[]',
+  status text not null default 'running',
+  first_break_step text,
+  first_break_reason text,
+  started_at timestamptz not null default now(),
+  finished_at timestamptz
+);
+grant select, insert, update on public.funnel_debug_runs to authenticated;
+grant all on public.funnel_debug_runs to service_role;
+alter table public.funnel_debug_runs enable row level security;
+create policy "admin read" on public.funnel_debug_runs for select
+  to authenticated using (public.has_role(auth.uid(), 'admin'));
+create policy "admin write" on public.funnel_debug_runs for all
+  to authenticated using (public.has_role(auth.uid(), 'admin'))
+  with check (public.has_role(auth.uid(), 'admin'));
+```
+
+## 4. Page `/admin/funnel-debug`
+
+- Header : compteur global (`X leads`, `Y payés`, `Z activés`) + bouton **« Tester le funnel complet »**.
+- Tableau leads (mobile-first, scroll horizontal) — 1 ligne par lead, 13 colonnes d’étape :
+  - Vert `✓ HH:mm` si événement présent
+  - Rouge `✗ raison` si `failure_code` connu sur cette étape
+  - Gris `—` si jamais déclenché
+  - Ligne surlignée en rouge sur la **première rupture**
+- Colonne détails : téléphone, catégorie, ville, `first_break_step` + raison lisible.
+- Drawer par lead : timeline complète (réutilise `EventTimeline`), payload brut, boutons « Renvoyer SMS », « Simuler landing » (dev only).
+- Bouton « Tester le funnel complet » :
+  - Ouvre une modale avec le lead test par défaut (ENV `FUNNEL_DEBUG_TEST_PHONE`, éditable).
+  - Appelle `funnel-debug-run-test`, affiche la trace live (auto-refresh 3 s pendant 5 min).
+  - À la fin : affiche le **premier point de rupture** en rouge + suggestion de correction (mapping `FailureCode` → action).
+
+## 5. Corrections automatiques possibles
+
+Le prompt demande « corriger automatiquement lorsque possible ». Périmètre limité aux corrections **sûres et déjà connues** :
+
+| Rupture détectée | Correction auto |
+|---|---|
+| `INVALID_PHONE` en masse | Marquer les leads `mobile_valid=false` (nettoyage) |
+| `sms_queued` mais pas `sms_sent` >10 min | Requeue via `acq-sms-send` (max 1 retry) |
+| `link_clicked` OK mais `landing_view` absent | Log warning + surligner : bug tracking front (pas de fix auto — nécessite code) |
+| `signup_completed` mais `checkout_opened` absent | Relancer email/SMS de checkout via `launch-agent-checkout-sender` |
+| `payment_completed` mais `account_activated` absent | Relancer `launch-agent-activation` |
+
+Chaque correction auto est journalisée dans `platform_operation_outcomes` (operation=`funnel_debug_auto_fix`).
+
+## 6. Sécurité
+
+- Toutes les fonctions vérifient `has_role(user, 'admin')` via `admin.auth.getUser(token)` (même pattern que `funnel-audit-report` corrigé).
+- Route `/admin/funnel-debug` sous `UniversalRouteGuard` role=admin.
+
+## 7. Livrables (aucun autre fichier touché)
+
+Nouveaux :
+- `supabase/functions/funnel-debug-leads/index.ts`
+- `supabase/functions/funnel-debug-run-test/index.ts`
+- `supabase/functions/funnel-debug-autofix/index.ts`
+- `supabase/migrations/<ts>_funnel_debug_runs.sql`
+- `src/hooks/useFunnelDebug.ts`
+- `src/pages/admin/AdminFunnelDebug.tsx`
+- `src/components/admin/funnel/LeadStepsRow.tsx`
+- `src/components/admin/funnel/TestFunnelModal.tsx`
+
+Édités :
+- `src/app/router.tsx` (route `/admin/funnel-debug`)
+
+## 8. Critère de succès
+
+Ouvrir `/admin/funnel-debug` → cliquer **Tester le funnel complet** avec le numéro fondateur → voir la ligne se remplir en temps réel jusqu’au premier `✗` rouge avec raison exploitable. Fin.
