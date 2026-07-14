@@ -1,6 +1,7 @@
 /**
  * Screen 7 — Plan Recommendation
- * AI recommendation + plan cards + social proof + sticky CTA.
+ * When Founder slots remain: single Founder card (1$/7d).
+ * Otherwise: legacy 3-plan grid.
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -11,8 +12,10 @@ import { cn } from "@/lib/utils";
 import FunnelLayout from "@/components/contractor-funnel/FunnelLayout";
 import { useActivationFunnel } from "@/hooks/useActivationFunnel";
 import { useHesitationRescue } from "@/hooks/useHesitationRescue";
+import { useFounderSlots } from "@/hooks/useFounderSlots";
 import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
+import FounderOfferCard from "@/features/founderMode/FounderOfferCard";
 
 const PLANS = CONTRACTOR_PLANS.map((p) => ({
   code: p.slug,
@@ -30,6 +33,7 @@ export default function ScreenPlan() {
   const { state, updateFunnel } = useActivationFunnel();
   const [selectedPlan, setSelectedPlan] = useState(state.selected_plan || "premium");
   const [showWhy, setShowWhy] = useState(false);
+  const founder = useFounderSlots();
   useHesitationRescue({ screenKey: "plan" });
 
   const handleSelectPlan = async (planCode: string) => {
@@ -41,6 +45,29 @@ export default function ScreenPlan() {
     updateFunnel({ selected_plan: selectedPlan, billing_cycle: "monthly" });
     navigate("/entrepreneur/activer/paiement");
   };
+
+  const handleActivateFounder = async () => {
+    await updateFunnel({ selected_plan: "founder", billing_cycle: "monthly" });
+    navigate("/entrepreneur/activer/paiement");
+  };
+
+  // FOUNDER PATH — show single card while slots remain
+  if (!founder.loading && founder.remaining > 0) {
+    return (
+      <FunnelLayout currentStep="plan_recommendation" showProgress={false}>
+        <div className="max-w-lg mx-auto pb-28 sm:pb-0">
+          <FounderOfferCard onActivate={handleActivateFounder} />
+          <StickyMobileCTA
+            label={`Activer — 1 $ · ${founder.remaining}/${founder.total} places`}
+            onClick={handleActivateFounder}
+            icon={<ArrowRight className="w-5 h-5 mr-2" />}
+          />
+        </div>
+      </FunnelLayout>
+    );
+  }
+
+
 
   return (
     <FunnelLayout currentStep="plan_recommendation" showProgress={false}>

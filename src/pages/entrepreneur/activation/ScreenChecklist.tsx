@@ -1,20 +1,23 @@
 /**
  * Screen 5 — Smart Completion Checklist
- * Accordion sections with completion %, time, impact + autosave + sticky CTA.
+ * "Alex complète mon profil" invokes real edge function; jump-to-payment at ≥70%.
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Check, ChevronDown, Building2, Shield, Wrench, MapPin, Image, Settings, Save } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, Building2, Shield, Wrench, MapPin, Image, Settings, Save, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useActivationFunnel } from "@/hooks/useActivationFunnel";
 import { useHesitationRescue } from "@/hooks/useHesitationRescue";
+import { useFounderSlots } from "@/hooks/useFounderSlots";
 import FunnelLayout from "@/components/contractor-funnel/FunnelLayout";
 import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 import EmptyStateFallback from "@/components/ui/EmptyStateFallback";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface Section {
   key: string;
@@ -27,9 +30,30 @@ interface Section {
 
 export default function ScreenChecklist() {
   const navigate = useNavigate();
-  const { state, updateFunnel, completionBySection, overallCompletion, saving } = useActivationFunnel();
+  const { state, updateFunnel, completionBySection, overallCompletion, saving, funnelId, pollImportStatus } = useActivationFunnel();
   const [openSection, setOpenSection] = useState<string | null>("identity");
+  const [alexBusy, setAlexBusy] = useState(false);
+  const founder = useFounderSlots();
   useHesitationRescue({ screenKey: "checklist" });
+
+  const runAlexAutocomplete = async () => {
+    if (!funnelId || alexBusy) return;
+    setAlexBusy(true);
+    try {
+      const { error } = await supabase.functions.invoke("alex-autocomplete-profile", { body: { funnel_id: funnelId } });
+      if (error) throw error;
+      // Poll a few times to refresh state as steps complete
+      for (let i = 0; i < 8; i++) {
+        await new Promise((r) => setTimeout(r, 1500));
+        await pollImportStatus();
+      }
+      toast({ title: "Alex a complété votre profil", description: "Vérifiez chaque section ci-dessous — vous pouvez tout ajuster." });
+    } catch (e) {
+      toast({ title: "Alex n'a pas pu tout compléter", description: "Complétez les sections manuellement — vos données sont sauvegardées." , variant: "destructive" });
+    } finally {
+      setAlexBusy(false);
+    }
+  };
 
   const sections: Section[] = [
     { key: "identity", title: "Identité d'entreprise", icon: Building2, estimatedMin: 2, impactLabel: "Confiance", completionPercent: completionBySection.identity },
@@ -106,6 +130,58 @@ export default function ScreenChecklist() {
             <span className="text-xs text-muted-foreground">~{totalMinutes} min restantes</span>
           )}
         </div>
+
+        {/* Alex — real autocomplete action */}
+        <motion.button
+          type="button"
+          onClick={runAlexAutocomplete}
+          disabled={alexBusy}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={cn(
+            "w-full mb-4 rounded-2xl border p-4 text-left transition-all",
+            alexBusy ? "border-primary/40 bg-primary/10" : "border-primary/30 bg-primary/5 hover:border-primary/50",
+          )}
+        >
+          <div className="flex items-center gap-3">
+            {alexBusy ? <Loader2 className="w-5 h-5 text-primary animate-spin shrink-0" /> : <Sparkles className="w-5 h-5 text-primary shrink-0" />}
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold text-foreground">
+                {alexBusy ? "Alex analyse votre entreprise…" : "Alex complète mon profil"}
+              </div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                {alexBusy
+                  ? "Site, Google Business, RBQ, NEQ, logo, photos, catégories, villes."
+                  : "Détection automatique : RBQ, NEQ, logo, photos, catégories, zones."}
+              </div>
+            </div>
+            {!alexBusy && <ArrowRight className="w-4 h-4 text-primary shrink-0" />}
+          </div>
+        </motion.button>
+
+        {/* Fast-path to payment when profile is credible */}
+        {overallCompletion >= 70 && founder.remaining > 0 && (
+          <motion.button
+            type="button"
+            onClick={() => navigate("/entrepreneur/activer/paiement")}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full mb-4 rounded-2xl border border-emerald-500/40 bg-emerald-500/5 p-4 text-left"
+          >
+            <div className="flex items-center gap-3">
+              <Check className="w-5 h-5 text-emerald-500 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-foreground">
+                  Profil prêt à {overallCompletion}% — activez pour 1 $
+                </div>
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  {founder.remaining}/{founder.total} places Fondateur restantes
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-emerald-500 shrink-0" />
+            </div>
+          </motion.button>
+        )}
 
         <div className="space-y-3">
           {sections.map((section) => (

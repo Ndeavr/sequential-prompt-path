@@ -44836,6 +44836,54 @@ export type Database = {
         }
         Relationships: []
       }
+      founder_activation_slots: {
+        Row: {
+          activated_at: string | null
+          claimed_at: string | null
+          contractor_id: string | null
+          created_at: string
+          funnel_id: string | null
+          id: string
+          metadata: Json
+          reserved_until: string | null
+          slot_number: number
+          status: string
+          stripe_session_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          claimed_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          funnel_id?: string | null
+          id?: string
+          metadata?: Json
+          reserved_until?: string | null
+          slot_number: number
+          status?: string
+          stripe_session_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          claimed_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          funnel_id?: string | null
+          id?: string
+          metadata?: Json
+          reserved_until?: string | null
+          slot_number?: number
+          status?: string
+          stripe_session_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       founder_health_checks: {
         Row: {
           auto_fixable: boolean
@@ -84754,6 +84802,14 @@ export type Database = {
         }
         Relationships: []
       }
+      v_founder_slots_public: {
+        Row: {
+          claimed: number | null
+          remaining: number | null
+          total: number | null
+        }
+        Relationships: []
+      }
       v_growth_engine_today: {
         Row: {
           activations_today: number | null
@@ -85757,6 +85813,18 @@ export type Database = {
       check_upgrade_recommendation: {
         Args: { _usage_id: string }
         Returns: undefined
+      }
+      claim_founder_slot: {
+        Args: {
+          p_contractor_id?: string
+          p_funnel_id: string
+          p_hold_minutes?: number
+          p_stripe_session_id?: string
+        }
+        Returns: {
+          slot_id: string
+          slot_number: number
+        }[]
       }
       claim_outreach_target: {
         Args: { p_id: string; p_token: string }
