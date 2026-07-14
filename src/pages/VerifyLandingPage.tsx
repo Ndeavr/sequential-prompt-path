@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import QRCodeCard from "@/components/sharing/QRCodeCard";
 import HeroBusinessVerifySearch from "@/components/verify/HeroBusinessVerifySearch";
 import InteractiveVerificationConsole from "@/components/verify/InteractiveVerificationConsole";
+import HeroVerifierIntake from "@/features/verifierEntrepreneur/HeroVerifierIntake";
+import { useVerifierResume } from "@/features/verifierEntrepreneur/useVerifierResume";
 import {
   Shield, Search, ArrowRight, Upload, FileText, Building2,
   Fingerprint, Eye, Phone, Globe, CheckCircle2, AlertCircle,
