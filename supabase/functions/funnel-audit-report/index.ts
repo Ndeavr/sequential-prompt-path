@@ -27,19 +27,20 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } },
     );
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: claimsErr } = await userClient.auth.getClaims(token);
-    if (claimsErr || !claims?.claims?.sub) return json({ error: "Unauthorized" }, 401);
+    const { data: userData, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userData?.user?.id) return json({ error: "Unauthorized" }, 401);
+    const userId = userData.user.id;
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
     const { data: isAdmin } = await admin.rpc("has_role", {
-      _user_id: claims.claims.sub,
+      _user_id: userId,
       _role: "admin",
     });
     if (!isAdmin) return json({ error: "Forbidden" }, 403);
+
 
     const url = new URL(req.url);
     const days = Math.min(90, Math.max(1, Number(url.searchParams.get("days") ?? 30)));
