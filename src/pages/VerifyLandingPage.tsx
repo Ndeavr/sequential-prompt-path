@@ -16,7 +16,7 @@ import QRCodeCard from "@/components/sharing/QRCodeCard";
 import HeroVerifierIntake from "@/features/verifierEntrepreneur/HeroVerifierIntake";
 import { useVerifierResume } from "@/features/verifierEntrepreneur/useVerifierResume";
 import {
-  Shield, Search, ArrowRight, Upload, FileText, Building2,
+  Shield, ArrowRight, Upload, FileText, Building2,
   Fingerprint, Eye, Phone, Globe, CheckCircle2, AlertCircle,
   MessageSquare, ShieldCheck, ShieldAlert, UserCheck, FileSearch,
   Scale, HelpCircle, ChevronRight, Zap, Lock, ExternalLink, QrCode,
