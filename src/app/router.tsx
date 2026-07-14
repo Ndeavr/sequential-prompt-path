@@ -1397,10 +1397,9 @@ export const AppRouter = () => (
         <Route path="/pro/setup" element={<ProtectedRoute requiredRole="contractor"><ProSetupWizard /></ProtectedRoute>} />
         <Route path="/pro/booking-settings" element={<ProtectedRoute requiredRole="contractor"><BookingSettingsPage /></ProtectedRoute>} />
 
-        {/* Growth · Review Intelligence™ */}
-        <Route path="/pro/review-intelligence" element={<PageReviewIntelligenceLanding />} />
-        <Route path="/pro/growth/reviews" element={<ProtectedRoute requiredRole="contractor"><PageReviewsDashboard /></ProtectedRoute>} />
-        <Route path="/review/:token" element={<PageReviewFlow />} />
+        {/* Growth · Review Intelligence™ (landing route lives above /pro/:slug) */}
+        <Route path="/pro/growth/reviews" element={<ProtectedRoute requiredRole="contractor"><Suspense fallback={<LazyFallback />}><PageReviewsDashboard /></Suspense></ProtectedRoute>} />
+        <Route path="/review/:token" element={<Suspense fallback={<LazyFallback />}><PageReviewFlow /></Suspense>} />
 
 
 
