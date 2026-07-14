@@ -27,6 +27,7 @@ const PageRecommendations = lazyWithRetry(() => import("@/pages/PageRecommendati
 const PageRegistrationSuccess = lazyWithRetry(() => import("@/pages/PageRegistrationSuccess"));
 import StaticContentPage from "@/pages/static/StaticContentPage";
 const PageAdminLiveRuns = lazyWithRetry(() => import("@/pages/admin/PageAdminLiveRuns"));
+const AdminFunnelAudit = lazyWithRetry(() => import("@/pages/admin/AdminFunnelAudit"));
 const PageContractorGeneratorHealth = lazyWithRetry(() => import("@/pages/admin/PageContractorGeneratorHealth"));
 const PageMemoryHealth = lazyWithRetry(() => import("@/pages/admin/PageMemoryHealth"));
 const PageRevenueReality = lazyWithRetry(() => import("@/pages/admin/PageRevenueReality"));
@@ -1068,6 +1069,7 @@ export const AppRouter = () => (
         <Route path="/activation-success" element={<Suspense fallback={<LazyFallback />}><PageProspectActivationSuccess /></Suspense>} />
         <Route path="/admin/live-runs" element={<Suspense fallback={<LazyFallback />}><PageAdminLiveRuns /></Suspense>} />
         <Route path="/admin/prospect-sms" element={<Suspense fallback={<LazyFallback />}><PageAdminProspectSMS /></Suspense>} />
+        <Route path="/admin/funnel-audit" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><AdminFunnelAudit /></Suspense></UniversalRouteGuard>} />
         <Route path="/book/:slug" element={<PublicBookingPage />} />
         <Route path="/book/:slug/:typeSlug" element={<PublicBookingPage />} />
         <Route path="/book/success" element={<BookingPaymentSuccess />} />
