@@ -49402,6 +49402,75 @@ export type Database = {
           },
         ]
       }
+      lead_funnel_sessions: {
+        Row: {
+          alex_started: boolean
+          alex_started_at: string | null
+          created_at: string
+          cta_clicked: boolean
+          cta_clicked_at: string | null
+          device_type: string | null
+          id: string
+          ip_hash: string | null
+          last_seen_at: string
+          lead_id: string | null
+          metadata: Json
+          opened_at: string
+          scroll_depth: number
+          session_id: string
+          signup_started: boolean
+          signup_started_at: string | null
+          source: string | null
+          time_on_page: number
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          alex_started?: boolean
+          alex_started_at?: string | null
+          created_at?: string
+          cta_clicked?: boolean
+          cta_clicked_at?: string | null
+          device_type?: string | null
+          id?: string
+          ip_hash?: string | null
+          last_seen_at?: string
+          lead_id?: string | null
+          metadata?: Json
+          opened_at?: string
+          scroll_depth?: number
+          session_id: string
+          signup_started?: boolean
+          signup_started_at?: string | null
+          source?: string | null
+          time_on_page?: number
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          alex_started?: boolean
+          alex_started_at?: string | null
+          created_at?: string
+          cta_clicked?: boolean
+          cta_clicked_at?: string | null
+          device_type?: string | null
+          id?: string
+          ip_hash?: string | null
+          last_seen_at?: string
+          lead_id?: string | null
+          metadata?: Json
+          opened_at?: string
+          scroll_depth?: number
+          session_id?: string
+          signup_started?: boolean
+          signup_started_at?: string | null
+          source?: string | null
+          time_on_page?: number
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       lead_packs: {
         Row: {
           display_order: number | null
