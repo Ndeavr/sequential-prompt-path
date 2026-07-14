@@ -951,6 +951,7 @@ serve(async (req) => {
     // ── 7. Save verification run ──
     const runData = {
       user_id: userId,
+      visitor_id: !userId ? (visitor_id || null) : null,
       input_type: inputType,
       raw_input: rawInput || "image_upload",
       normalized_phone: inputType === "phone" ? normalizedInput : null,
