@@ -804,9 +804,6 @@ serve(async (req) => {
       device_type,
       referrer,
       visitor_id,
-      input_city: inputCityFromBody,
-      input_website: inputWebsiteFromBody,
-      input_business_name: inputBusinessNameFromBody,
     } = body;
 
     const hasTextInput = input && typeof input === "string" && input.trim().length >= 2;
