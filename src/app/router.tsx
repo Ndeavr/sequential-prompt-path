@@ -108,6 +108,11 @@ const PageContractorAnalysisLive = lazyWithRetry(() => import("@/pages/contracto
 const PageContractorActivated = lazyWithRetry(() => import("@/pages/contractor/PageContractorActivated"));
 const PageContractorAIGrowth = lazyWithRetry(() => import("@/pages/contractor-growth/PageContractorAIGrowth"));
 
+// Growth · Review Intelligence™
+const PageReviewIntelligenceLanding = lazyWithRetry(() => import("@/pages/pro/growth/PageReviewIntelligenceLanding"));
+const PageReviewsDashboard = lazyWithRetry(() => import("@/pages/pro/growth/PageReviewsDashboard"));
+const PageReviewFlow = lazyWithRetry(() => import("@/pages/review/PageReviewFlow"));
+
 // Nuclear Close — Personalized prospect landing
 const PageProLandingNuclearClose = lazyWithRetry(() => import("@/pages/pro-landing/PageProLandingNuclearClose"));
 const PageGoShortLink = lazyWithRetry(() => import("@/pages/PageGoShortLink"));
