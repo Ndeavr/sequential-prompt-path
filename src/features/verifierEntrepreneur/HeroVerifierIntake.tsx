@@ -88,7 +88,7 @@ export default function HeroVerifierIntake() {
   const submit = useCallback(async () => {
     const parsed = formSchema.safeParse(form);
     if (!parsed.success) {
-      toast.error(parsed.error.errors[0]?.message ?? "Formulaire invalide");
+      toast.error(parsed.error.issues[0]?.message ?? "Formulaire invalide");
       return;
     }
     setSubmitting(true);
