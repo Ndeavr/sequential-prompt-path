@@ -1059,6 +1059,8 @@ export const AppRouter = () => (
         <Route path="/professionals" element={<ProfessionalsPage />} />
         <Route path="/entrepreneurs" element={<PageEntrepreneurJoin />} />
         <Route path="/entrepreneurs/disponibilite-categorie-specialite-ville" element={<ContractorAvailabilityPage />} />
+        {/* Static /pro/* routes MUST be declared before /pro/:slug to guarantee match precedence */}
+        <Route path="/pro/review-intelligence" element={<Suspense fallback={<LazyFallback />}><PageReviewIntelligenceLanding /></Suspense>} />
         <Route path="/pro/:slug" element={<Suspense fallback={<LazyFallback />}><PageProLandingNuclearClose /></Suspense>} />
         <Route path="/go/:slug" element={<Suspense fallback={<LazyFallback />}><PageGoShortLink /></Suspense>} />
         <Route path="/activation-success" element={<Suspense fallback={<LazyFallback />}><PageProspectActivationSuccess /></Suspense>} />
