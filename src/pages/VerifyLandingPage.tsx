@@ -114,6 +114,7 @@ const RISKS = [
 export default function VerifyLandingPage() {
   const navigate = useNavigate();
   const { openAlex } = useAlexVoice();
+  useVerifierResume();
 
   return (
     <MainLayout>
