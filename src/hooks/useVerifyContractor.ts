@@ -51,6 +51,7 @@ async function callVerify(payload: VerifyPayload): Promise<VerificationApiRespon
     image_base64: payload.image_base64,
     image_type: payload.image_type,
     verification_run_id: payload.verification_run_id,
+    visitor_id: payload.visitor_id,
   };
 
   const { data, error } = await supabase.functions.invoke("verify-contractor", {
