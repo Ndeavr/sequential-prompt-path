@@ -1,77 +1,86 @@
-# Conversion Truth Sprint — Premier Entrepreneur Payé 1$
+# Sprint Crédibilité + Offre Fondateur
 
-Objectif unique : identifier et éliminer le point exact qui bloque la première activation payée. Aucune nouvelle fonctionnalité, aucun redesign.
+Objectif : premier entrepreneur payé 1$. Le funnel fonctionne — corriger uniquement crédibilité + conversion.
 
-## Ce qui existe déjà (à réutiliser, pas recréer)
-- `/admin/funnel-debug` + `funnel-debug-leads` + `funnel-debug-run-test` → agrégation lead-par-lead + test E2E.
-- Tables : `launch_leads`, `sms_events_v2`, `contractor_funnel_events`, `platform_operation_outcomes`, `funnel_debug_runs`.
-- Edge `acq-sms-send` (Twilio), `launch-agent-checkout-sender`, `launch-agent-activation`.
+## 1. Score AIPP réel et justifié
 
-## Livrables (8 étapes)
+**Problème** : les 6 sous-scores (Visibilité 49, Confiance 43, Réputation 65, Contenu 53, Conversion 22, AEO 78) s'affichent sans preuve.
 
-### 1. Page `/admin/conversion-truth`
-Vue verticale "vérité brute" par lead avec les 17 étapes demandées. Chaque cellule = timestamp + session_id + device + source, colorée VERT/ROUGE/GRIS. Réutilise `funnel-debug-leads` — on étend la fonction pour retourner aussi `landing_visible_3s`, `cta_clicked`, `signup_started`, `signup_completed`, `stripe_success` (déjà dans `contractor_funnel_events` ou `platform_operation_outcomes`).
+**Correction (composant score preliminary uniquement)** :
+- Sur chaque carte de sous-score, afficher 2–4 facteurs bruts issus de `contractor_aipp_audits.evidence_snapshot` (ex : `✓ 312 avis Google · ✓ 4.8★ · ✗ 0 vidéos · ✗ RBQ manquante`).
+- Si un signal est absent dans l'evidence : afficher `Non détecté automatiquement` en gris, et **ne pas** compter le sous-score comme validé.
+- Aucun score n'est affiché si `confidence_level = low` — remplacer par "Analyse partielle — complétez pour obtenir votre score réel".
+- Réutiliser `aipp-real-scoring-engine` (déjà en place). Aucune nouvelle logique de calcul.
 
-### 2. Bandeau "CURRENT BLOCKER" en haut
-Calcul serveur : sur les 30 derniers jours, l'étape avec le plus gros drop-off (leads entrants − leads sortants / leads entrants). Un seul texte, exemple : *"Blocage principal : Lien jamais cliqué (92% des SMS livrés)"*. Rafraîchi à chaque chargement.
+## 2. Extraction — vérité stricte
 
-### 3. Audit tracking clics (STEP 2)
-Nouvel edge `conversion-tracking-audit` qui compare :
-- `sms_events_v2.status='delivered'` vs `contractor_funnel_events` type `link_clicked`
-- `link_clicked` vs `landing_view`
-Retourne les incohérences (`landing_view` sans `link_clicked` → `TRACKING_MISMATCH`). Affiché en carte rouge sur le dashboard.
+**Problème** : l'écran "Analyse" coche RBQ/Images/Services/Zones, puis l'écran suivant les affiche vides.
 
-Correction ciblée : vérifier que `/pro/:slug` (page landing SMS) émet bien `link_clicked` **avant** `landing_view` via `contractor_funnel_events`. Si l'événement manque dans le code de la page, l'ajouter (1 ligne d'insert).
+**Correction** :
+- La checklist d'analyse (Analyse en cours…) lit l'état réel de chaque champ de `contractors` / `contractor_import_snapshots` après le run, pas un `true` codé en dur.
+- Chaque ligne devient : `✓ Détecté` (valeur non vide) / `— Non détecté` (gris, jamais rouge).
+- Aucun signal n'est marqué ✓ tant que la donnée n'a pas atterri en base.
 
-### 4. Table `lead_funnel_sessions`
-Migration : `id, lead_id, session_id, ip_hash, user_agent, opened_at, time_on_page, scroll_depth, cta_clicked, alex_started, signup_started, created_at`. RLS admin lecture, service_role écriture, `authenticated` insert scoped par session.
+## 3. "Alex complète mon profil" — vraie action
 
-Instrumentation minimale sur la landing SMS existante (`/pro/:slug` ou `/entrepreneur/...`) : insert au mount, update périodique (scroll + time), update sur CTA. Aucun changement de design.
+**Problème** : le toast "Alex peut compléter ça pour vous" ne fait rien.
 
-### 5. Prefill landing (STEP 4)
-Vérifier la landing SMS actuelle. Si le token/slug ne préremplit pas Company/Category/City/Phone, câbler la lecture depuis `launch_leads` (via edge publique déjà en place ou nouveau `get-lead-preview`). Bloc d'accueil personnalisé : "Bonjour {Company} — profil préparé — 1$/7j". Pas de refonte, juste injection des champs.
+**Correction** :
+- Le bouton appelle une edge function `alex-autocomplete-profile` qui, pour le `contractor_id` courant, exécute en séquence les pipelines **déjà existants** :
+  - `aipp-pipeline-run` (crawl + Google Business + logo + photos + catégories + villes)
+  - Lookup RBQ (`rbq-status`) et NEQ (`extract-neq`) si numéro détecté sur site
+  - Merge dans `contractors` en respectant `contractor-identity-resolution` (jamais écraser un champ marqué `human_validated`)
+- UI : bouton passe en "Alex analyse votre site…" avec les 8 étapes cochées en temps réel via realtime sur `contractor_aipp_audits` / `contractors`.
+- Résultat visible : la barre `Complétez votre profil` passe de 14 % → 70 %+ en direct, sections RBQ/Services/Zones/Logo se remplissent.
+- Aucune promesse si l'edge échoue : toast d'erreur discret + rollback UI, pas de faux ✓.
 
-### 6. Table `sms_templates` + A/B (STEP 5)
-Migration : `sms_templates(id, variant, body, active, created_at)` avec seeds A et B. `acq-sms-send` sélectionne aléatoirement `active=true`, journalise le `variant_id` dans `sms_events_v2.metadata`. 
+## 4. Offre Fondateur 1 $ / 7 jours
 
-Vue `v_sms_variant_stats` : delivery_rate, click_rate, landing_rate, activation_rate par variant. Affichage sur dashboard. Aucune UI d'édition — modif via SQL suffit pour ce sprint.
+**Nouvelle table** `founder_activation_slots` (limite dure de 10 slots) :
+- champs : `slot_number` (1–10), `contractor_id nullable`, `claimed_at`, `stripe_subscription_id`, `status` (`open` | `reserved` | `active` | `expired`)
+- fonction SQL `claim_founder_slot(contractor_id)` avec `SELECT ... FOR UPDATE SKIP LOCKED` pour éviter la double-attribution.
+- Vue publique `v_founder_slots_public` : renvoie seulement `remaining` (int) et `total` (10).
 
-### 7. Bouton "Tester Funnel Réel" (STEP 6)
-Déjà présent via `funnel-debug-run-test`. On étend :
-- Après SMS envoyé, la fonction polle 5 min les `contractor_funnel_events` du lead test.
-- Retourne `first_failure_point` explicite : `SMS | LINK | LANDING | ALEX | SIGNUP | CHECKOUT | STRIPE | ACTIVATION`.
-- Bouton exposé aussi sur `/admin/conversion-truth` (pas seulement `/admin/funnel-debug`).
+**Prix / Stripe** :
+- Réutiliser `create-activation-checkout` existant (déjà 1 $). Étendre pour :
+  - vérifier `claim_founder_slot` avant de créer la Checkout Session
+  - créer une subscription Stripe : 1 $ maintenant, puis prix `Premium` (599 $) après 7 jours de trial (`trial_period_days: 7`)
+  - Metadata : `founder_slot_number`, `contractor_id`.
+- Webhook `stripe-webhook` : sur `checkout.session.completed`, marque le slot `active` et déclenche `launch-agent-activation`.
 
-### 8. Cartes KPI focus activation (STEP 8)
-En haut du dashboard, 7 chiffres 30j : Leads / SMS Delivered / Landing Visits / Alex Starts / Signups / Checkouts / **Paid Activations** (mis en évidence). Source unique = `funnel-debug-leads` agrégé.
+**Affichage écran plans** (remplacement en place, pas de nouvelle page) :
+- Si `remaining > 0` : masquer les 3 cartes 149/349/599, afficher une seule carte Fondateur :
+  - "Offre Fondateur · Valeur normale 599 $/mois · Aujourd'hui **1 $ pendant 7 jours**"
+  - Compteur live `X / 10 places restantes` (polling 10 s ou realtime sur la vue).
+  - CTA `Activer mon profil Fondateur — 1 $` → `create-activation-checkout`.
+- Si `remaining = 0` : fallback sur la grille 149/349/599 actuelle (aucun changement).
 
-## Corrections automatiques (quand possible)
-Dans le dashboard, pour chaque `first_break` détecté par lead, bouton "Corriger" :
-- `sms_queued` >10min → requeue via `acq-sms-send`.
-- `signup_completed` sans `checkout_opened` → relance `launch-agent-checkout-sender`.
-- `payment_completed` sans `account_activated` → relance `launch-agent-activation`.
-Chaque action journalisée dans `platform_operation_outcomes`.
+## 5. Raccourci vers paiement à 70 %+
 
-## Fichiers
+- Sur l'écran `Complétez votre profil`, un `useEffect` observe le pourcentage global.
+- Dès que `completion_pct ≥ 70` **et** que `remaining > 0`, afficher un CTA sticky :
+  `Profil prêt à 78 % — activez pour 1 $` → route paiement.
+- Ne pas rediriger automatiquement (respect utilisateur), un seul clic.
 
-**Nouveaux**
-- `supabase/migrations/*_conversion_truth.sql` — `lead_funnel_sessions` + `sms_templates` + view `v_sms_variant_stats`.
-- `supabase/functions/conversion-truth-dashboard/index.ts` — agrège leads + KPIs + blocker principal + variant stats.
-- `supabase/functions/conversion-tracking-audit/index.ts` — détection `TRACKING_MISMATCH`.
-- `supabase/functions/get-lead-preview/index.ts` (si nécessaire pour prefill public).
-- `src/pages/admin/AdminConversionTruth.tsx` + `src/hooks/useConversionTruth.ts`.
-- `src/components/admin/conversion/` : `BlockerBanner`, `KpiRow`, `LeadTruthRow`, `TrackingMismatchCard`, `VariantStatsCard`, `AutoFixButton`.
+## Détails techniques
 
-**Édités**
-- `supabase/functions/acq-sms-send/index.ts` — sélection variant + log variant_id.
-- Landing SMS existante (`/pro/:slug` ou équivalent) — instrumentation `lead_funnel_sessions` + émission explicite `link_clicked` / `landing_view` / `cta_clicked` si manquants + bloc prefill.
-- `supabase/functions/funnel-debug-run-test/index.ts` — retour `first_failure_point` normalisé.
-- `src/app/router.tsx` — route `/admin/conversion-truth` (guard admin).
+Fichiers touchés :
+- `src/pages/contractor-onboarding/…` (checklist analyse, écran score, écran complétion, écran plans) — présentation uniquement.
+- `src/components/aipp/PreliminaryScoreCard.tsx` (nouveaux "facteurs" par sous-score).
+- `src/features/founderMode/FounderOfferCard.tsx` (nouveau, remplace la grille quand `remaining > 0`).
+- `src/hooks/useFounderSlots.ts` (lecture `v_founder_slots_public`, realtime).
+- `src/hooks/useAlexAutocomplete.ts` (invoque `alex-autocomplete-profile`, écoute realtime).
+- `supabase/migrations/*` : table `founder_activation_slots` + seed 10 lignes + vue publique + fonction `claim_founder_slot` + GRANTs + RLS (SELECT anon sur la vue, RPC uniquement pour l'edge en service_role).
+- `supabase/functions/alex-autocomplete-profile/index.ts` (orchestre les pipelines existants).
+- `supabase/functions/create-activation-checkout/index.ts` (extension slot + trial 7j).
+- `supabase/functions/stripe-webhook/index.ts` (activation slot).
 
-## Critère de succès
-1. Le bandeau montre un blocker unique et actionnable.
-2. Le test "Tester Funnel Réel" désigne l'étape exacte qui casse.
-3. Après correction, un vrai entrepreneur atteint `account_activated` payé 1$.
+Non touchés : parcours, design des pages existantes, moteur de scoring, Alex voice, orchestrateurs.
 
-## Hors périmètre
-Aucune modif d'UI publique au-delà de l'instrumentation. Pas de nouveau design admin (réutilise composants shadcn existants). Pas d'IA supplémentaire.
+## Succès
+
+- Aucune coche verte n'apparaît sans donnée réelle en base.
+- Chaque sous-score AIPP montre ses facteurs.
+- Cliquer "Alex complète" fait passer le profil à ≥ 70 % en moins de 30 s.
+- Écran plans montre `Fondateur 1 $ · X/10` tant que des slots existent.
+- Un entrepreneur peut passer de clic SMS → payé 1 $ en moins de 2 min.
