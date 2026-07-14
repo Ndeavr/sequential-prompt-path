@@ -25,21 +25,14 @@ export function useFunnelAudit(days = 30) {
   return useQuery<FunnelAuditReport>({
     queryKey: ["funnel-audit", days],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("funnel-audit-report", {
-        method: "GET",
-        body: undefined,
-        headers: {},
-      } as never);
-      // supabase-js doesn't pass query params via invoke; fall back to fetch
-      if (error || !data) {
-        const { data: sess } = await supabase.auth.getSession();
-        const token = sess.session?.access_token;
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/funnel-audit-report?days=${days}`;
-        const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-        if (!res.ok) throw new Error(`Audit HTTP ${res.status}`);
-        return res.json();
-      }
-      return data as FunnelAuditReport;
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) throw new Error("Non authentifié");
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/funnel-audit-report?days=${days}`;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body?.error ?? `HTTP ${res.status}`);
+      return body as FunnelAuditReport;
     },
     refetchInterval: 60_000,
   });
