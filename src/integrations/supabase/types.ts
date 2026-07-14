@@ -45185,6 +45185,57 @@ export type Database = {
           },
         ]
       }
+      funnel_debug_runs: {
+        Row: {
+          finished_at: string | null
+          first_break_reason: string | null
+          first_break_step: string | null
+          id: string
+          lead_category: string | null
+          lead_city: string | null
+          lead_name: string | null
+          lead_phone: string
+          message_sid: string | null
+          started_at: string
+          started_by: string | null
+          status: string
+          trace: Json
+          updated_at: string
+        }
+        Insert: {
+          finished_at?: string | null
+          first_break_reason?: string | null
+          first_break_step?: string | null
+          id?: string
+          lead_category?: string | null
+          lead_city?: string | null
+          lead_name?: string | null
+          lead_phone: string
+          message_sid?: string | null
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          trace?: Json
+          updated_at?: string
+        }
+        Update: {
+          finished_at?: string | null
+          first_break_reason?: string | null
+          first_break_step?: string | null
+          id?: string
+          lead_category?: string | null
+          lead_city?: string | null
+          lead_name?: string | null
+          lead_phone?: string
+          message_sid?: string | null
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          trace?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       gated_unlock_events: {
         Row: {
           article_id: string
