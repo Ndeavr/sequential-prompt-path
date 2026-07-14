@@ -293,6 +293,7 @@ const PricingPage = lazyWithRetry(() => import("@/pages/PricingPage"));
 const PricingHomeownersPage = lazyWithRetry(() => import("@/pages/PricingHomeownersPage"));
 const PricingContractorsPage = lazyWithRetry(() => import("@/pages/PricingContractorsPage"));
 const PageHomeownerWelcome = lazyWithRetry(() => import("@/pages/proprietaire/PageHomeownerWelcome"));
+const PageVerificationReport = lazyWithRetry(() => import("@/pages/proprietaire/PageVerificationReport"));
 const AIPPScorePage = lazyWithRetry(() => import("@/pages/AIPPScorePage"));
 const MatchingResultsPage = lazyWithRetry(() => import("@/pages/MatchingResultsPage"));
 const ContractorComparisonPage = lazyWithRetry(() => import("@/pages/ContractorComparisonPage"));
@@ -1055,6 +1056,7 @@ export const AppRouter = () => (
         <Route path="/homeowners" element={<HomeownersPage />} />
         <Route path="/proprietaires" element={<HomeownersPage />} />
         <Route path="/proprietaire/bienvenue" element={<PageHomeownerWelcome />} />
+        <Route path="/proprietaire/verifications/:reportId" element={<PageVerificationReport />} />
         <Route path="/owner-universe" element={<OwnerMenuPreviewPage />} />
         <Route path="/professionals" element={<ProfessionalsPage />} />
         <Route path="/entrepreneurs" element={<PageEntrepreneurJoin />} />

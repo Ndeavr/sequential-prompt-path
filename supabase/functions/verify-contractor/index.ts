@@ -803,6 +803,7 @@ serve(async (req) => {
       source_page,
       device_type,
       referrer,
+      visitor_id,
     } = body;
 
     const hasTextInput = input && typeof input === "string" && input.trim().length >= 2;
@@ -950,6 +951,7 @@ serve(async (req) => {
     // ── 7. Save verification run ──
     const runData = {
       user_id: userId,
+      visitor_id: !userId ? (visitor_id || null) : null,
       input_type: inputType,
       raw_input: rawInput || "image_upload",
       normalized_phone: inputType === "phone" ? normalizedInput : null,

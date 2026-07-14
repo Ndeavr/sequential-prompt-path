@@ -13,10 +13,10 @@ import SeoFaqSection from "@/seo/components/SeoFaqSection";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import QRCodeCard from "@/components/sharing/QRCodeCard";
-import HeroBusinessVerifySearch from "@/components/verify/HeroBusinessVerifySearch";
-import InteractiveVerificationConsole from "@/components/verify/InteractiveVerificationConsole";
+import HeroVerifierIntake from "@/features/verifierEntrepreneur/HeroVerifierIntake";
+import { useVerifierResume } from "@/features/verifierEntrepreneur/useVerifierResume";
 import {
-  Shield, Search, ArrowRight, Upload, FileText, Building2,
+  Shield, ArrowRight, Upload, FileText, Building2,
   Fingerprint, Eye, Phone, Globe, CheckCircle2, AlertCircle,
   MessageSquare, ShieldCheck, ShieldAlert, UserCheck, FileSearch,
   Scale, HelpCircle, ChevronRight, Zap, Lock, ExternalLink, QrCode,
@@ -112,6 +112,7 @@ const RISKS = [
 export default function VerifyLandingPage() {
   const navigate = useNavigate();
   const { openAlex } = useAlexVoice();
+  useVerifierResume();
 
   return (
     <MainLayout>
@@ -151,14 +152,11 @@ export default function VerifyLandingPage() {
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, duration: 0.4 }}>
-              <InteractiveVerificationConsole />
+              <HeroVerifierIntake />
 
               <div className="flex flex-wrap justify-center gap-3 mt-5">
                 <Button variant="outline" size="sm" className="text-xs gap-1.5 rounded-full" onClick={() => navigate("/analyser-document")}>
                   <Upload className="w-3.5 h-3.5" /> Analyser une soumission
-                </Button>
-                <Button variant="ghost" size="sm" className="text-xs gap-1.5 rounded-full" onClick={() => navigate("/verifier-un-entrepreneur")}>
-                  <Search className="w-3.5 h-3.5" /> Vérification avancée
                 </Button>
               </div>
             </motion.div>
