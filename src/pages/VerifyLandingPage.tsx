@@ -13,8 +13,6 @@ import SeoFaqSection from "@/seo/components/SeoFaqSection";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import QRCodeCard from "@/components/sharing/QRCodeCard";
-import HeroBusinessVerifySearch from "@/components/verify/HeroBusinessVerifySearch";
-import InteractiveVerificationConsole from "@/components/verify/InteractiveVerificationConsole";
 import HeroVerifierIntake from "@/features/verifierEntrepreneur/HeroVerifierIntake";
 import { useVerifierResume } from "@/features/verifierEntrepreneur/useVerifierResume";
 import {
