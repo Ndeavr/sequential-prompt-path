@@ -86,11 +86,12 @@ Deno.serve(async (req) => {
         message_type: "test",
         template_key: "funnel_debug_test",
         lead_id: lead!.id,
-        adminOverride: true,
+        strict_admin_override: true,
+        bypass_guard: true,
         metadata: { funnel_debug: true, run_id: run?.id },
       });
-      messageSid = res?.messageSid ?? res?.sid ?? null;
-      push("sms_sent", !!messageSid, { messageSid, res });
+      messageSid = res?.twilio_sid ?? null;
+      push("sms_sent", !!messageSid, { messageSid, status: res?.status, error: res?.error_message });
     } catch (e) {
       push("sms_sent", false, { error: (e as Error).message });
     }
