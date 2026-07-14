@@ -108,6 +108,11 @@ const PageContractorAnalysisLive = lazyWithRetry(() => import("@/pages/contracto
 const PageContractorActivated = lazyWithRetry(() => import("@/pages/contractor/PageContractorActivated"));
 const PageContractorAIGrowth = lazyWithRetry(() => import("@/pages/contractor-growth/PageContractorAIGrowth"));
 
+// Growth · Review Intelligence™
+const PageReviewIntelligenceLanding = lazyWithRetry(() => import("@/pages/pro/growth/PageReviewIntelligenceLanding"));
+const PageReviewsDashboard = lazyWithRetry(() => import("@/pages/pro/growth/PageReviewsDashboard"));
+const PageReviewFlow = lazyWithRetry(() => import("@/pages/review/PageReviewFlow"));
+
 // Nuclear Close — Personalized prospect landing
 const PageProLandingNuclearClose = lazyWithRetry(() => import("@/pages/pro-landing/PageProLandingNuclearClose"));
 const PageGoShortLink = lazyWithRetry(() => import("@/pages/PageGoShortLink"));
@@ -1389,6 +1394,13 @@ export const AppRouter = () => (
         <Route path="/pro/notifications" element={<ProtectedRoute requiredRole="contractor"><NotificationsPage /></ProtectedRoute>} />
         <Route path="/pro/setup" element={<ProtectedRoute requiredRole="contractor"><ProSetupWizard /></ProtectedRoute>} />
         <Route path="/pro/booking-settings" element={<ProtectedRoute requiredRole="contractor"><BookingSettingsPage /></ProtectedRoute>} />
+
+        {/* Growth · Review Intelligence™ */}
+        <Route path="/pro/review-intelligence" element={<PageReviewIntelligenceLanding />} />
+        <Route path="/pro/growth/reviews" element={<ProtectedRoute requiredRole="contractor"><PageReviewsDashboard /></ProtectedRoute>} />
+        <Route path="/review/:token" element={<PageReviewFlow />} />
+
+
 
         {/* Admin */}
         <Route path="/admin/menu-intelligence" element={<ProtectedRoute requiredRole="admin"><MenuIntelligenceAdminPage /></ProtectedRoute>} />

@@ -70397,6 +70397,211 @@ export type Database = {
           },
         ]
       }
+      review_media: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          review_id: string
+          sort_order: number
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind?: string
+          review_id: string
+          sort_order?: number
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          review_id?: string
+          sort_order?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_media_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_reputation_scores: {
+        Row: {
+          ai_visibility_score: number | null
+          cleanliness: number | null
+          communication: number | null
+          contractor_id: string
+          education: number | null
+          problem_solved: number | null
+          professionalism: number | null
+          punctuality: number | null
+          quality: number | null
+          sample_size: number
+          top_dimensions: string[]
+          trust: number | null
+          updated_at: string
+          value: number | null
+        }
+        Insert: {
+          ai_visibility_score?: number | null
+          cleanliness?: number | null
+          communication?: number | null
+          contractor_id: string
+          education?: number | null
+          problem_solved?: number | null
+          professionalism?: number | null
+          punctuality?: number | null
+          quality?: number | null
+          sample_size?: number
+          top_dimensions?: string[]
+          trust?: number | null
+          updated_at?: string
+          value?: number | null
+        }
+        Update: {
+          ai_visibility_score?: number | null
+          cleanliness?: number | null
+          communication?: number | null
+          contractor_id?: string
+          education?: number | null
+          problem_solved?: number | null
+          professionalism?: number | null
+          punctuality?: number | null
+          quality?: number | null
+          sample_size?: number
+          top_dimensions?: string[]
+          trust?: number | null
+          updated_at?: string
+          value?: number | null
+        }
+        Relationships: []
+      }
+      review_request_sequence_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          last_error: string | null
+          request_id: string
+          run_at: string
+          status: string
+          step: number
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          request_id: string
+          run_at: string
+          status?: string
+          step: number
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          request_id?: string
+          run_at?: string
+          status?: string
+          step?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_request_sequence_jobs_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "review_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_requests: {
+        Row: {
+          city: string | null
+          completion_date: string | null
+          contractor_id: string
+          created_at: string
+          email: string | null
+          expires_at: string
+          homeowner_name: string
+          id: string
+          language: string
+          last_error: string | null
+          metadata: Json
+          opened_at: string | null
+          phone: string | null
+          project_type: string | null
+          published_at: string | null
+          sent_at: string | null
+          sequence_step: number
+          source: string
+          status: string
+          submitted_at: string | null
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          completion_date?: string | null
+          contractor_id: string
+          created_at?: string
+          email?: string | null
+          expires_at?: string
+          homeowner_name: string
+          id?: string
+          language?: string
+          last_error?: string | null
+          metadata?: Json
+          opened_at?: string | null
+          phone?: string | null
+          project_type?: string | null
+          published_at?: string | null
+          sent_at?: string | null
+          sequence_step?: number
+          source?: string
+          status?: string
+          submitted_at?: string | null
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          completion_date?: string | null
+          contractor_id?: string
+          created_at?: string
+          email?: string | null
+          expires_at?: string
+          homeowner_name?: string
+          id?: string
+          language?: string
+          last_error?: string | null
+          metadata?: Json
+          opened_at?: string | null
+          phone?: string | null
+          project_type?: string | null
+          published_at?: string | null
+          sent_at?: string | null
+          sequence_step?: number
+          source?: string
+          status?: string
+          submitted_at?: string | null
+          token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       review_theme_taxonomy: {
         Row: {
           created_at: string
@@ -70546,6 +70751,83 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      reviews_v2: {
+        Row: {
+          ai_generated_text: string | null
+          approved_text: string | null
+          city: string | null
+          contractor_id: string
+          created_at: string
+          google_click_at: string | null
+          google_publish_status: string
+          homeowner_name: string | null
+          id: string
+          is_verified: boolean
+          media_urls: string[]
+          metadata: Json
+          project_type: string | null
+          rating: number
+          raw_text: string | null
+          request_id: string | null
+          standout_tags: string[]
+          structured_scores: Json
+          updated_at: string
+          voice_transcript: string | null
+        }
+        Insert: {
+          ai_generated_text?: string | null
+          approved_text?: string | null
+          city?: string | null
+          contractor_id: string
+          created_at?: string
+          google_click_at?: string | null
+          google_publish_status?: string
+          homeowner_name?: string | null
+          id?: string
+          is_verified?: boolean
+          media_urls?: string[]
+          metadata?: Json
+          project_type?: string | null
+          rating: number
+          raw_text?: string | null
+          request_id?: string | null
+          standout_tags?: string[]
+          structured_scores?: Json
+          updated_at?: string
+          voice_transcript?: string | null
+        }
+        Update: {
+          ai_generated_text?: string | null
+          approved_text?: string | null
+          city?: string | null
+          contractor_id?: string
+          created_at?: string
+          google_click_at?: string | null
+          google_publish_status?: string
+          homeowner_name?: string | null
+          id?: string
+          is_verified?: boolean
+          media_urls?: string[]
+          metadata?: Json
+          project_type?: string | null
+          rating?: number
+          raw_text?: string | null
+          request_id?: string | null
+          standout_tags?: string[]
+          structured_scores?: Json
+          updated_at?: string
+          voice_transcript?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_v2_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "review_requests"
+            referencedColumns: ["id"]
           },
         ]
       }

@@ -1,94 +1,144 @@
-## Contexte
 
-Le tunnel `/admin/tunnel-reality` mélange aujourd'hui des événements incompatibles :
+# Review Intelligence™ — Standalone Revenue Product
 
-- **Stage 7 « Checkout Stripe ouvert »** compte **toutes** les lignes de `checkout_sessions` (96 lignes, plans `signature`/`pro`/`premium`/`recrue`). Aucune n'est un checkout SMS 1 $. Les « 5 » de l'écran = checkouts plan pro/premium créés en dehors du tunnel SMS.
-- La table `checkout_sessions` n'a **ni** `source`, `metadata`, `prospect_id`, `mode`. On ne peut donc pas filtrer par attribution SMS au niveau de la ligne.
-- La table `acq_sms_logs` n'a **ni** `is_simulation`, `campaign_id`, `prospect_id`, `outreach_message_id`. Le mode Dry-run est visuel uniquement, rien ne marque les envois simulés en base.
-- Le bandeau affiche « BLOCAGE #1 : SMS ENVOYÉS » alors que Dry-run est actif — c'est une simulation, pas une panne.
-- Le premier objectif est **de mesurer honnêtement** avant de relancer, pas d'envoyer des vrais SMS maintenant.
+Objectif : livrer une valeur immédiate au contracteur dès l'inscription à 1 $, indépendamment des rendez-vous UNPRO. Le contracteur importe ses clients existants, envoie des demandes d'avis, et voit sa réputation structurée en < 5 min.
 
-## Plan
+## 1. Navigation
 
-### 1. Attribution stricte des checkouts SMS (fix des « 5 checkouts fantômes »)
+Ajouter un cluster **Growth** dans `ContractorLayout` (sidebar + `MobileBottomNav`) :
+- Review Intelligence™ → `/pro/growth/reviews`
+- Project Showcase → `/pro/growth/showcase`
+- AI Visibility Score → `/pro/growth/ai-visibility`
+- Google Profile Health → `/pro/growth/google-health`
+- Reputation Analytics → `/pro/growth/analytics`
 
-Réécrire l'étape 7 de `tunnel-reality-report` pour compter **uniquement** les prospects ayant à la fois `stripe_session_id IS NOT NULL` **et** `funnel_status IN ('checkout_started','paid_1_dollar','activated','recommendable')` **et** `campaign_id IS NOT NULL` — puis joindre `checkout_sessions` sur `external_checkout_id = prospects.stripe_session_id` pour vérifier `checkout_status IN ('pending','paid')` et `selected_plan_code IN ('activation_1','sms_outreach')` (aucun plan pro/premium ne peut entrer).
+MVP livré maintenant : **Review Intelligence™** (les 4 autres restent des stubs "Bientôt" pour ne pas casser la nav).
 
-Idem pour l'étape 8 « Paiement 1 $ réussi » : garder le filtre `prospects.activation_paid_at IS NOT NULL AND stripe_session_id IS NOT NULL AND campaign_id IS NOT NULL`.
+Ajouter routes dans `src/config/routesConfig.ts` + `src/app/router.tsx`.
 
-Idem pour l'étape 9 « Paiement échoué » : filtrer par `prospects.stripe_session_id` (jointure), pas par `checkout_sessions` seule.
+## 2. Landing publique `/pro/review-intelligence`
 
-### 2. Compteur « Checkouts non attribués »
+Sections (Framer Motion, thème dark cinematic + glass tokens existants) :
+1. **Hero** — visuel Before/After ("Great service." → review structurée détaillée Isolation Solution Royal / R-51 / Terrebonne). CTA `Commencer pour 1 $` (→ checkout Recrue existant `create-checkout-session` avec metadata `product=review_intelligence`), CTA secondaire "Voir un exemple".
+2. **Demo animée** — mockup téléphone jouant en boucle : Send Request → SMS → Réponse homeowner → AI génère → Publication → Score contractor monte → Alex recommande. Composants React animés, pas de screenshots.
+3. **Value cards** — Better Reviews / More Trust / Better AI Visibility / Structured Reputation.
+4. **AI Visibility infographic** — flow glass cards + traits animés SVG.
+5. **Carousel comparaison** — Review générique vs Review Intelligence (project type, city, outcome, expertise mis en surbrillance).
+6. **CTA final** + FAQ courte.
 
-Ajouter dans la même edge function un bloc `unattributed_checkouts` retournant, sur 24h/7j/30j :
-- total de `checkout_sessions` dans la fenêtre
-- ventilation par `selected_plan_code`
-- combien ont un `prospects.stripe_session_id` correspondant (= attribué SMS)
-- reste = non attribués (plans pro/premium/signature, tests, ouvertures directes).
+Visuels générés via `imagegen` (hero abstract, transformation graphic, AI visibility flow, reputation mockup, growth graphic). Pas de stock.
 
-Sur `/admin/tunnel-reality`, ajouter une carte d'anomalie sous le bandeau blocage :
-- « X checkouts détectés hors tunnel SMS »
-- Bouton « Voir les sessions non attribuées » → drawer/table listant : id (masqué), `selected_plan_code`, `external_checkout_id` masqué, `checkout_status`, `created_at`, « attribué : oui/non ».
+## 3. Dashboard `/pro/growth/reviews`
 
-### 3. Séparer SIMULATION et RÉEL en base
+- KPI hero (6 cartes) : Reviews Collected, Verified, Avg Rating, Requests Sent, Google Conversion, AI Visibility Score.
+- Actions primaires :
+  - **Send Review Request** (modal : name, phone, email, project type, city, completion date).
+  - **Bulk Import** (upload CSV, mapping colonnes, preview, envoi automatique staggered).
+- Tableau des demandes envoyées avec statut (sent, opened, submitted, published, expired) + relances.
+- Onglets : Requests / Reviews / Analytics.
 
-Migration :
-- `acq_sms_logs` : ajouter `is_simulation boolean not null default false`, `prospect_id uuid`, `campaign_id uuid`, `outreach_message_id uuid`, `invitation_token text`, index sur `(is_simulation, status, created_at)`.
-- Backfill : marquer les lignes existantes `is_simulation = false` (elles sont réelles ou anciennes ; aucune vraie simulation avant aujourd'hui).
+## 4. Expérience homeowner `/review/:token`
 
-Modifier `outreach-relance-cron` :
-- Mode SIMULATION : écrire `acq_sms_logs` avec `status='simulated'`, `is_simulation=true`, sans appel Twilio.
-- Mode RÉEL : appeler Twilio, écrire `provider_message_id` (SID), attendre callback pour livraison.
+Route publique unauth, mobile-first, `.landing-warm` scope.
 
-Toutes les requêtes du rapport ajoutent `is_simulation = false` — les simulations ne rentrent **jamais** dans les compteurs réels.
+Étapes :
+1. Rating (grosses étoiles).
+2. Travail réalisé (préremplis depuis la demande, éditable).
+3. Ce qui a marqué — cards sélectionnables : Communication, Professionnalisme, Propreté, Pédagogie, Qualité, Respect, Valeur, Problème résolu.
+4. Expérience libre — texte + voix (MediaRecorder → transcription via edge function `review-transcribe` avec Gemini/Whisper via AI Gateway) + photos/vidéo (Supabase Storage bucket `review-media` public).
+5. **AI Draft** — edge function `review-generate-draft` (Gemini 2.5 Flash) produit review structurée. Actions : Approuver / Éditer / Réécrire plus court / plus long.
+6. **Publier sur Google** — connecter Google Business Profile via champ `contractors.google_place_id` + `google_review_url`. Écran : logo Google, copier texte, ouvrir URL, tracker click-through, statut `published`.
 
-### 4. Corriger le bandeau et l'UX Dry-run
+Voice + photo + video use `permissionManager` contextuel (mic sur clic bouton voix, camera sur clic upload).
 
-Dans `PageTunnelReality.tsx` :
-- Lire l'état `dry_run` (checkbox actuelle) et le remonter à l'edge function.
-- Quand Dry-run actif → bandeau vert/bleu **« MODE SIMULATION ACTIF · Aucun SMS réel »** + CTA « Préparer un envoi réel ». Ne **pas** afficher « BLOCAGE #1 : SMS ENVOYÉS ».
-- Quand Dry-run inactif ET Twilio en panne → bandeau rouge **« BLOCAGE : ENVOI SMS »** + cause exacte (lu depuis `get_sms_outbound_health` RPC déjà présent).
-- Le switch bascule entre deux libellés : « Simuler les relances » vs « Envoyer les relances RÉELLES ».
-- Confirmation obligatoire avant passage RÉEL : modal listant nb prospects, coût estimé (0.02 $/SMS), campagne, exclusions (fixes, doublons, désabonnés). Bouton principal désactivé tant que non coché « Je confirme envoyer de vrais SMS ».
+## 5. Backend (Supabase)
 
-### 5. Vue mobile en cartes empilées
+### Migration
+Nouvelles tables (public, avec GRANT explicites + RLS) :
+- `review_requests` (id, contractor_id, homeowner_name, phone, email, project_type, city, completion_date, token unique, status, sent_at, opened_at, submitted_at, published_at, expires_at, sequence_step).
+- `reviews_v2` (id, request_id, contractor_id, rating, structured_scores jsonb {communication, professionalism, cleanliness, education, quality, respect, value, problem_solved}, raw_text, ai_generated_text, approved_text, voice_transcript, media_urls text[], project_type, city, google_publish_status, google_click_at, created_at).
+- `review_reputation_scores` (contractor_id PK, communication, professionalism, cleanliness, trust, quality, education, value, problem_solved, updated_at, sample_size).
+- `review_request_sequence_jobs` (id, request_id, run_at, step, status).
+- `review_media` (id, review_id, url, kind, order).
 
-Sous `md`, remplacer la table 14 lignes par cartes verticales : étape, total, conversion, statut couleur, source, badge anomalie éventuelle. Garder la table sur desktop uniquement.
+RLS : contractors accèdent uniquement à leurs lignes ; token public sur `review_requests` par `token = current_setting('request.token')` via edge function ; service_role pour worker.
 
-### 6. Ne pas toucher (préserver ce qui marche)
+### Edge functions
+- `review-request-send` — crée request, envoie SMS via Twilio connector (24 h après completion, ou immédiat manuel).
+- `review-sequence-cron` — cron `*/15 * * * *` : relances J+3, J+7, stop après.
+- `review-token-resolve` — GET public retourne request + contractor branding.
+- `review-transcribe` — audio → texte.
+- `review-generate-draft` — assemble prompt (rating, work, standout, expérience, transcript) → review 60-120 mots FR structurée.
+- `review-submit` — persiste review, déclenche `review-reputation-worker`.
+- `review-reputation-worker` — extrait scores structurés (Gemini) + met à jour `review_reputation_scores` + `contractors.rating` + `aipp_score`.
+- `review-bulk-import` — parse CSV, dedupe, batch send avec throttle.
+- Étendre `stripe-webhook` : quand `product=review_intelligence` payé → activer accès dashboard Growth.
 
-- Le webhook Stripe et le flow de création `contractor` restent tels quels (corrigés dans le tour précédent).
-- Les pages `/invitation/*` et `verify-contractor-activation` restent identiques.
-- Aucune modification aux autres tunnels de paiement.
-- Aucun envoi réel de SMS déclenché automatiquement — le Dry-run reste ON par défaut.
+### Intégration UNPRO existante
+- Marquage `appointments.status = 'completed'` déclenche insert `review_requests` (trigger DB + edge function auto).
+- Alex prompt (`ai/alex/system-prompt-active`) : quand contractor a `sample_size >= 3`, injecter phrase "Basé sur N avis vérifiés, les propriétaires mentionnent [top 3 dimensions]…" au lieu de "4,9 étoiles".
 
-## Livrables techniques
+## 6. Profil contractor public
 
-- **Migration** : colonnes `is_simulation`, `prospect_id`, `campaign_id`, `outreach_message_id`, `invitation_token` sur `acq_sms_logs` + index.
-- **Edge function** `tunnel-reality-report` : requêtes réécrites avec attribution stricte + bloc `unattributed_checkouts`.
-- **Edge function** `outreach-relance-cron` : distinction stricte SIMULATION/RÉEL avec `is_simulation`.
-- **Frontend** `src/pages/admin/PageTunnelReality.tsx` :
-  - Bandeau conditionnel (simulation / blocage réel).
-  - Carte « Checkouts non attribués » + drawer table.
-  - Modal de confirmation avant envoi réel.
-  - Vue cartes empilées mobile.
+Composant `ReviewsReputationCard` : radial scores (Communication, Professionnalisme, Pédagogie, Qualité, Propreté, Ponctualité, Confiance) + masonry Pinterest-style `ReviewMediaGrid` (before/after photos, videos, project category, ville, date).
 
-## Critère de succès
+Injecté dans `/contractors/:id` sous les KPI existants.
 
-Après le fix, avec Dry-run activé, le cockpit doit afficher :
+## 7. Automation
 
+- Trigger : appointment completed → job 24 h → SMS → J+3 rappel → J+7 rappel final → stop.
+- Manual completion → même séquence.
+- Bulk import → étalé 1 SMS / 30 s pour respect Twilio + geo permissions.
+- Toutes les opérations passent par `reportOutcome()` + `withRetry()` (Production Reliability Framework).
+
+## 8. Design system
+
+- Landing publique : `.landing-warm` (F7F6F0) suivant Landing Warm Theme mémoire.
+- Dashboard + review flow : dark cinematic (#050816) + glass tokens (`--surface-glass`, blur 24px, radius 28px).
+- Motion : `transitions.default` (420 ms, easing premium), hover `translateY(-2px)`.
+- Typographie Inter, tracking -0.04em H1.
+- Utilities `.text-readable*` obligatoires (UI Readability Rule).
+- 5 visuels générés via imagegen premium (transformation, AI visibility, dashboard mockup, phone flow, growth graphic).
+
+## 9. Détails techniques
+
+```text
+src/pages/pro/growth/PageReviewIntelligenceLanding.tsx   (public)
+src/pages/pro/growth/PageReviewsDashboard.tsx
+src/pages/review/PageReviewFlow.tsx                       (public, /review/:token)
+src/features/reviewIntelligence/
+  components/{HeroBeforeAfter,DemoAnimated,ValueCards,AIVisibilityFlow,ReviewCarousel,SendRequestModal,BulkImportModal,ReviewsTable,ReputationRadial,ReviewMediaGrid}.tsx
+  hooks/{useReviewRequests,useReviewReputation,useReviewFlow}.ts
+  services/reviewIntelligenceClient.ts
+  types.ts
+supabase/functions/
+  review-request-send/
+  review-sequence-cron/
+  review-token-resolve/
+  review-transcribe/
+  review-generate-draft/
+  review-submit/
+  review-reputation-worker/
+  review-bulk-import/
+supabase/migrations/<ts>_review_intelligence.sql
 ```
-Bandeau : MODE SIMULATION ACTIF
-Étape 1  SMS envoyés (réels)         0
-Étape 4  Clics                       0
-Étape 5  Landing ouverte             0
-Étape 6  Compte créé                 0
-Étape 7  Checkout Stripe SMS         0   ← plus « 5 »
-Étape 8  Paiement 1 $ réussi         0
 
-Anomalie : 5 checkouts détectés hors tunnel SMS
-[Voir les sessions non attribuées]
-   → toutes plan pro/premium/signature, aucune attribution SMS.
-```
+- Storage bucket `review-media` public (fallback si politique workspace bloque → privé + signed URL).
+- Twilio via connector gateway (mémoire `twilio`). SMS EN/FR selon locale.
+- AI via Lovable AI Gateway (`google/gemini-3-flash-preview`) — pas de clé externe.
+- Toutes les tables passent `has_role`, RLS, GRANT.
+- Fallbacks Alex + gestion échecs SMS via `FailureCode`.
 
-Aucune relance réelle ne part avant validation admin explicite dans un modal de confirmation.
+## 10. Critères de succès (E2E)
+
+1. Contractor s'inscrit → paie 1 $ (Stripe metadata `review_intelligence`) → `/pro/growth/reviews` accessible.
+2. Import CSV 5 clients → 5 `review_requests` créés → 5 SMS envoyés (throttle).
+3. Homeowner clique → `/review/:token` → 5 étapes → AI génère draft → approuve → publie Google (redirection trackée).
+4. `reviews_v2` inséré → worker met à jour `review_reputation_scores` + `contractors.rating`.
+5. Alex recommande le contractor avec phrase basée sur reviews structurés (min 3 avis).
+6. Dashboard KPI reflète temps réel.
+
+## Hors scope (stubs uniquement)
+
+- Project Showcase, Google Profile Health détaillé, Reputation Analytics avancé — pages placeholder "Bientôt" avec teaser.
+
