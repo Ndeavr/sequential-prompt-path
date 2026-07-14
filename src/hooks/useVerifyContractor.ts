@@ -15,6 +15,7 @@ interface VerifyPayload {
   image_type?: EvidenceType;
   project_description?: string;
   verification_run_id?: string;
+  visitor_id?: string;
 }
 
 /**
