@@ -154,14 +154,11 @@ export default function VerifyLandingPage() {
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, duration: 0.4 }}>
-              <InteractiveVerificationConsole />
+              <HeroVerifierIntake />
 
               <div className="flex flex-wrap justify-center gap-3 mt-5">
                 <Button variant="outline" size="sm" className="text-xs gap-1.5 rounded-full" onClick={() => navigate("/analyser-document")}>
                   <Upload className="w-3.5 h-3.5" /> Analyser une soumission
-                </Button>
-                <Button variant="ghost" size="sm" className="text-xs gap-1.5 rounded-full" onClick={() => navigate("/verifier-un-entrepreneur")}>
-                  <Search className="w-3.5 h-3.5" /> Vérification avancée
                 </Button>
               </div>
             </motion.div>
