@@ -183,7 +183,7 @@ export default function AdminConversionTruth() {
         </CardContent>
       </Card>
 
-      <TestFunnelModal open={testOpen} onOpenChange={setTestOpen} />
+      {testOpen && <TestFunnelModal onClose={() => setTestOpen(false)} />}
     </div>
   );
 }
