@@ -1,20 +1,23 @@
 /**
  * Screen 5 — Smart Completion Checklist
- * Accordion sections with completion %, time, impact + autosave + sticky CTA.
+ * "Alex complète mon profil" invokes real edge function; jump-to-payment at ≥70%.
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Check, ChevronDown, Building2, Shield, Wrench, MapPin, Image, Settings, Save } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, Building2, Shield, Wrench, MapPin, Image, Settings, Save, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useActivationFunnel } from "@/hooks/useActivationFunnel";
 import { useHesitationRescue } from "@/hooks/useHesitationRescue";
+import { useFounderSlots } from "@/hooks/useFounderSlots";
 import FunnelLayout from "@/components/contractor-funnel/FunnelLayout";
 import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 import EmptyStateFallback from "@/components/ui/EmptyStateFallback";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface Section {
   key: string;
