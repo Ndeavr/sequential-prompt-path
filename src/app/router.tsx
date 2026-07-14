@@ -1069,6 +1069,7 @@ export const AppRouter = () => (
         <Route path="/activation-success" element={<Suspense fallback={<LazyFallback />}><PageProspectActivationSuccess /></Suspense>} />
         <Route path="/admin/live-runs" element={<Suspense fallback={<LazyFallback />}><PageAdminLiveRuns /></Suspense>} />
         <Route path="/admin/prospect-sms" element={<Suspense fallback={<LazyFallback />}><PageAdminProspectSMS /></Suspense>} />
+        <Route path="/admin/funnel-audit" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><AdminFunnelAudit /></Suspense></UniversalRouteGuard>} />
         <Route path="/book/:slug" element={<PublicBookingPage />} />
         <Route path="/book/:slug/:typeSlug" element={<PublicBookingPage />} />
         <Route path="/book/success" element={<BookingPaymentSuccess />} />
