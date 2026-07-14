@@ -36761,6 +36761,7 @@ export type Database = {
           admin_verified: boolean | null
           admin_verified_snapshot_score: number | null
           ambiguity_level: string | null
+          attached_at: string | null
           contractor_id: string | null
           created_at: string
           id: string
@@ -36794,6 +36795,7 @@ export type Database = {
           used_admin_verified_profile: boolean | null
           user_id: string | null
           verdict: Database["public"]["Enums"]["verification_verdict"] | null
+          visitor_id: string | null
           visual_trust_score: number | null
         }
         Insert: {
@@ -36801,6 +36803,7 @@ export type Database = {
           admin_verified?: boolean | null
           admin_verified_snapshot_score?: number | null
           ambiguity_level?: string | null
+          attached_at?: string | null
           contractor_id?: string | null
           created_at?: string
           id?: string
@@ -36834,6 +36837,7 @@ export type Database = {
           used_admin_verified_profile?: boolean | null
           user_id?: string | null
           verdict?: Database["public"]["Enums"]["verification_verdict"] | null
+          visitor_id?: string | null
           visual_trust_score?: number | null
         }
         Update: {
@@ -36841,6 +36845,7 @@ export type Database = {
           admin_verified?: boolean | null
           admin_verified_snapshot_score?: number | null
           ambiguity_level?: string | null
+          attached_at?: string | null
           contractor_id?: string | null
           created_at?: string
           id?: string
@@ -36874,6 +36879,7 @@ export type Database = {
           used_admin_verified_profile?: boolean | null
           user_id?: string | null
           verdict?: Database["public"]["Enums"]["verification_verdict"] | null
+          visitor_id?: string | null
           visual_trust_score?: number | null
         }
         Relationships: [
