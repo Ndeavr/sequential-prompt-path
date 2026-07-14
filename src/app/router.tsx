@@ -29,6 +29,7 @@ import StaticContentPage from "@/pages/static/StaticContentPage";
 const PageAdminLiveRuns = lazyWithRetry(() => import("@/pages/admin/PageAdminLiveRuns"));
 const AdminFunnelAudit = lazyWithRetry(() => import("@/pages/admin/AdminFunnelAudit"));
 const AdminFunnelDebug = lazyWithRetry(() => import("@/pages/admin/AdminFunnelDebug"));
+const AdminConversionTruth = lazyWithRetry(() => import("@/pages/admin/AdminConversionTruth"));
 const PageContractorGeneratorHealth = lazyWithRetry(() => import("@/pages/admin/PageContractorGeneratorHealth"));
 const PageMemoryHealth = lazyWithRetry(() => import("@/pages/admin/PageMemoryHealth"));
 const PageRevenueReality = lazyWithRetry(() => import("@/pages/admin/PageRevenueReality"));
