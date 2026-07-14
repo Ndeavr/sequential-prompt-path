@@ -192,17 +192,21 @@ export default function PageProLandingNuclearClose() {
     return <Navigate to="/pro" replace />;
   }
 
-  // ISR live-run tracking: link_clicked on mount, plan_viewed after 4s.
+  // ISR live-run tracking + conversion-truth instrumentation
   useEffect(() => {
-    if (!runId) return;
     import("@/integrations/supabase/client").then(({ supabase }) => {
-      supabase.functions.invoke("log-isr-event", { body: { run_id: runId, step: "link_clicked" } });
-      const t = setTimeout(() => {
-        supabase.functions.invoke("log-isr-event", { body: { run_id: runId, step: "plan_viewed" } });
-      }, 4000);
-      return () => clearTimeout(t);
+      if (runId) {
+        supabase.functions.invoke("log-isr-event", { body: { run_id: runId, step: "link_clicked" } });
+        setTimeout(() => {
+          supabase.functions.invoke("log-isr-event", { body: { run_id: runId, step: "plan_viewed" } });
+        }, 4000);
+      }
+      // Conversion truth funnel events (best-effort, non-blocking)
+      import("@/lib/conversionTruthTracker").then(({ trackLandingArrival }) => {
+        trackLandingArrival({ slug: slug ?? null, source: searchParams.get("src") ?? "sms" });
+      }).catch(() => {});
     });
-  }, [runId]);
+  }, [runId, slug]);
   const { speak, stop, isSpeaking, hasError } = useNuclearCloseFemaleVoice();
   const [prospect, setProspect] = useState<Prospect | null>(null);
   const [loading, setLoading] = useState(true);
