@@ -47,7 +47,7 @@ export default function ScreenPlan() {
   };
 
   const handleActivateFounder = async () => {
-    await updateFunnel({ selected_plan: "founder", billing_cycle: "founder_7d" });
+    await updateFunnel({ selected_plan: "founder", billing_cycle: "monthly" });
     navigate("/entrepreneur/activer/paiement");
   };
 
