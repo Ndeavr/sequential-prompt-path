@@ -6,12 +6,13 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, User, Star, FileText, Shield, CalendarDays, TrendingUp, LogOut, CreditCard, MapPin, Sparkles, MessageSquare, Inbox, Users, Wrench, UsersRound } from "lucide-react";
+import { LayoutDashboard, User, Star, FileText, Shield, CalendarDays, TrendingUp, LogOut, CreditCard, MapPin, Sparkles, MessageSquare, Inbox, Users, Wrench, UsersRound, Rocket } from "lucide-react";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import type { ReactNode } from "react";
 
 const navItems = [
   { to: "/pro", label: "Tableau de bord", icon: LayoutDashboard },
+  { to: "/pro/growth/reviews", label: "Review Intelligence™", icon: Rocket },
   { to: "/pro/incoming", label: "Projets entrants", icon: Inbox },
   { to: "/pro/inbox", label: "Inbox intelligent", icon: Sparkles },
   { to: "/pro/profile", label: "Mon profil", icon: User },
