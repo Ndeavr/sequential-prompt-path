@@ -77,19 +77,17 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: true, e164, status: "invalid", sms_eligible: false, message: "Numéro placeholder bloqué" }, 200, requestId);
     }
 
-    // Twilio Lookup v2 via gateway
-    const GATEWAY = "https://connector-gateway.lovable.dev/twilio";
-    const LOVABLE_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const TWILIO_KEY = Deno.env.get("TWILIO_API_KEY");
+    const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
+    const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
     let line_type = "unknown";
     let status = "unverified";
     let lookupError: string | null = null;
 
-    if (LOVABLE_KEY && TWILIO_KEY) {
+    if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN) {
       const ctrl = new AbortController();
       const timeout = setTimeout(() => ctrl.abort(), 12000);
-      const resp = await fetch(`${GATEWAY}/v2/PhoneNumbers/${encodeURIComponent(e164)}?Fields=line_type_intelligence`, {
-        headers: { Authorization: `Bearer ${LOVABLE_KEY}`, "X-Connection-Api-Key": TWILIO_KEY },
+      const resp = await fetch(`https://lookups.twilio.com/v2/PhoneNumbers/${encodeURIComponent(e164)}?Fields=line_type_intelligence`, {
+        headers: { Authorization: "Basic " + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`) },
         signal: ctrl.signal,
       });
       clearTimeout(timeout);
@@ -109,7 +107,7 @@ Deno.serve(async (req) => {
         console.error(lookupError);
       }
     } else {
-      lookupError = "Twilio Lookup credentials missing: LOVABLE_API_KEY or TWILIO_API_KEY";
+      lookupError = "Twilio Lookup credentials missing: TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN";
     }
 
     const sms_eligible = status === "valid_mobile" || status === "valid_sms_capable_voip";
