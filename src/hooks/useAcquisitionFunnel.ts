@@ -2,8 +2,7 @@
  * Hook — Acquisition Pipeline dashboard data.
  * Reads funnel events, coverage, rejection reasons, live prospect list.
  */
-import { useQuery } from "@tanstack/react-query";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export type FunnelRow = {
