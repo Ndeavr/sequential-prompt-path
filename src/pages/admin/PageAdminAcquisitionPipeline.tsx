@@ -127,12 +127,6 @@ export default function PageAdminAcquisitionPipeline() {
     return m;
   }, [funnel.data]);
 
-  const sourceCounts = useMemo(() => {
-    const m: Record<string, number> = {};
-    for (const r of funnel.data ?? []) m[r.source] = (m[r.source] ?? 0) + r.count;
-    return m;
-  }, [funnel.data]);
-
   const coverageMap = useMemo(() => {
     const m = new Map<string, number>();
     for (const r of coverage.data ?? []) m.set(`${r.city}||${r.category}`, r.verified_count);
