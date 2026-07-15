@@ -704,6 +704,7 @@ const AdminVerificationRunDetail = lazyWithRetry(() => import("@/pages/admin/Adm
 const AdminAlerts = lazyWithRetry(() => import("@/pages/admin/AdminAlerts"));
 const AdminNavAnalytics = lazyWithRetry(() => import("@/pages/admin/AdminNavAnalytics"));
 const AdminVerifiedContractors = lazyWithRetry(() => import("@/pages/admin/AdminVerifiedContractors"));
+const PageAdminAcquisitionPipelineNew = lazyWithRetry(() => import("@/pages/admin/PageAdminAcquisitionPipeline"));
 const AdminDuplicates = lazyWithRetry(() => import("@/pages/admin/AdminDuplicates"));
 const AdminAutomation = lazyWithRetry(() => import("@/pages/admin/AdminAutomation"));
 const PageAdminAutomationCommandCenter = lazyWithRetry(() => import("@/pages/admin/PageAdminAutomationCommandCenter"));
