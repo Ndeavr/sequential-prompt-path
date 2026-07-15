@@ -68,8 +68,35 @@ Deno.serve(async (req) => {
 
     const eligible = pool ?? [];
     if (dryRun) {
+      const { data: blocked } = await supabase
+        .from("verified_contractor_prospects")
+        .select("id, business_name, verification_status, phone_validation_status, phone_line_type, sms_eligible, data_quality_score, website_url, outreach_status, outreach_failure_reason")
+        .eq("outreach_status", "none")
+        .order("data_quality_score", { ascending: false })
+        .limit(20);
+
+      const blockers = (blocked ?? []).map((p) => {
+        let reason = "eligible";
+        if (!p.website_url) reason = "missing_website_url";
+        else if (p.data_quality_score < 80) reason = `quality_below_80:${p.data_quality_score}`;
+        else if (!p.sms_eligible) reason = `sms_not_eligible:${p.phone_validation_status}:${p.phone_line_type ?? "unknown"}`;
+        else if (!["valid_mobile", "valid_sms_capable_voip"].includes(p.phone_validation_status)) reason = `phone_status_blocked:${p.phone_validation_status}`;
+        return {
+          id: p.id,
+          business_name: p.business_name,
+          reason,
+          verification_status: p.verification_status,
+          phone_validation_status: p.phone_validation_status,
+          phone_line_type: p.phone_line_type,
+          sms_eligible: p.sms_eligible,
+          data_quality_score: p.data_quality_score,
+          failure: p.outreach_failure_reason,
+        };
+      }).filter((p) => p.reason !== "eligible");
+
       return jsonResponse({
         ok: true, dry_run: true, eligible_count: eligible.length, eligible,
+        blockers,
         message: eligible.length > 0 ? `${eligible.length} prospect(s) prêt(s)` : "Aucun prospect ne passe les critères d'envoi réel",
       }, 200, requestId);
     }
