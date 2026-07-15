@@ -1047,6 +1047,114 @@ export type Database = {
         }
         Relationships: []
       }
+      acquisition_daily_audits: {
+        Row: {
+          audit_date: string
+          completed_at: string | null
+          created_at: string
+          error: string | null
+          health_score: number
+          id: string
+          metrics: Json
+          recovery_actions: Json
+          root_causes: Json
+          started_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          audit_date?: string
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          health_score?: number
+          id?: string
+          metrics?: Json
+          recovery_actions?: Json
+          root_causes?: Json
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          audit_date?: string
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          health_score?: number
+          id?: string
+          metrics?: Json
+          recovery_actions?: Json
+          root_causes?: Json
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      acquisition_dead_queue_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          detected_at: string
+          id: string
+          metadata: Json
+          prospect_id: string | null
+          queue_state: string | null
+          reason: string | null
+          repair_attempts: number
+          resolved_at: string | null
+          root_cause: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          alert_type?: string
+          created_at?: string
+          detected_at?: string
+          id?: string
+          metadata?: Json
+          prospect_id?: string | null
+          queue_state?: string | null
+          reason?: string | null
+          repair_attempts?: number
+          resolved_at?: string | null
+          root_cause: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          detected_at?: string
+          id?: string
+          metadata?: Json
+          prospect_id?: string | null
+          queue_state?: string | null
+          reason?: string | null
+          repair_attempts?: number
+          resolved_at?: string | null
+          root_cause?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acquisition_dead_queue_alerts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_dead_queue_alerts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "verified_contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       acquisition_events: {
         Row: {
           channel: string
@@ -1302,6 +1410,139 @@ export type Database = {
         }
         Relationships: []
       }
+      acquisition_manual_import_batches: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          error_count: number
+          errors: Json
+          id: string
+          imported_count: number
+          queued_count: number
+          row_count: number
+          sent_count: number
+          source: string
+          started_at: string | null
+          status: string
+          updated_at: string
+          verified_count: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_count?: number
+          errors?: Json
+          id?: string
+          imported_count?: number
+          queued_count?: number
+          row_count?: number
+          sent_count?: number
+          source?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          verified_count?: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_count?: number
+          errors?: Json
+          id?: string
+          imported_count?: number
+          queued_count?: number
+          row_count?: number
+          sent_count?: number
+          source?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          verified_count?: number
+        }
+        Relationships: []
+      }
+      acquisition_manual_import_rows: {
+        Row: {
+          batch_id: string
+          category: string | null
+          city: string | null
+          company: string | null
+          contact: string | null
+          created_at: string
+          email: string | null
+          error: string | null
+          id: string
+          normalized: Json
+          phone: string | null
+          prospect_id: string | null
+          row_number: number
+          status: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          batch_id: string
+          category?: string | null
+          city?: string | null
+          company?: string | null
+          contact?: string | null
+          created_at?: string
+          email?: string | null
+          error?: string | null
+          id?: string
+          normalized?: Json
+          phone?: string | null
+          prospect_id?: string | null
+          row_number: number
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          batch_id?: string
+          category?: string | null
+          city?: string | null
+          company?: string | null
+          contact?: string | null
+          created_at?: string
+          email?: string | null
+          error?: string | null
+          id?: string
+          normalized?: Json
+          phone?: string | null
+          prospect_id?: string | null
+          row_number?: number
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acquisition_manual_import_rows_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "acquisition_manual_import_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acquisition_manual_import_rows_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_manual_import_rows_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "verified_contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       acquisition_pipeline_errors: {
         Row: {
           category: string
@@ -1409,6 +1650,13 @@ export type Database = {
           stage?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "acquisition_pipeline_events_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
           {
             foreignKeyName: "acquisition_pipeline_events_prospect_id_fkey"
             columns: ["prospect_id"]
@@ -1555,6 +1803,13 @@ export type Database = {
             foreignKeyName: "acquisition_queue_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_queue_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "verified_contractor_prospects"
             referencedColumns: ["id"]
           },
@@ -1641,6 +1896,13 @@ export type Database = {
             foreignKeyName: "acquisition_repair_log_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_repair_log_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "verified_contractor_prospects"
             referencedColumns: ["id"]
           },
@@ -1689,6 +1951,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      acquisition_source_health: {
+        Row: {
+          consecutive_zero_runs: number
+          created_at: string
+          fallback_started_at: string | null
+          found_24h: number
+          found_last_run: number
+          last_error_code: string | null
+          last_error_message: string | null
+          last_run_at: string | null
+          last_success_at: string | null
+          metadata: Json
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          consecutive_zero_runs?: number
+          created_at?: string
+          fallback_started_at?: string | null
+          found_24h?: number
+          found_last_run?: number
+          last_error_code?: string | null
+          last_error_message?: string | null
+          last_run_at?: string | null
+          last_success_at?: string | null
+          metadata?: Json
+          source: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          consecutive_zero_runs?: number
+          created_at?: string
+          fallback_started_at?: string | null
+          found_24h?: number
+          found_last_run?: number
+          last_error_code?: string | null
+          last_error_message?: string | null
+          last_run_at?: string | null
+          last_success_at?: string | null
+          metadata?: Json
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       acquisition_suppression_domains: {
         Row: {
@@ -26994,6 +27304,13 @@ export type Database = {
           merged_from?: Json
         }
         Relationships: [
+          {
+            foreignKeyName: "contractor_dedupe_log_kept_prospect_id_fkey"
+            columns: ["kept_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
           {
             foreignKeyName: "contractor_dedupe_log_kept_prospect_id_fkey"
             columns: ["kept_prospect_id"]
@@ -83028,6 +83345,13 @@ export type Database = {
             foreignKeyName: "verified_prospect_tokens_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "verified_prospect_tokens_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "verified_contractor_prospects"
             referencedColumns: ["id"]
           },
@@ -84635,6 +84959,34 @@ export type Database = {
         }
         Relationships: []
       }
+      v_acquisition_dead_queue: {
+        Row: {
+          business_name: string | null
+          category: string | null
+          city: string | null
+          email: string | null
+          last_action_at: string | null
+          outreach_status: string | null
+          phone_e164: string | null
+          prospect_id: string | null
+          queue_state: string | null
+          root_cause: string | null
+          verification_status: string | null
+          website_url: string | null
+        }
+        Relationships: []
+      }
+      v_acquisition_diagnostics_funnel: {
+        Row: {
+          conversion_from_previous_pct: number | null
+          count: number | null
+          label: string | null
+          previous_count: number | null
+          sort_order: number | null
+          step_key: string | null
+        }
+        Relationships: []
+      }
       v_acquisition_funnel_daily: {
         Row: {
           category: string | null
@@ -84949,6 +85301,23 @@ export type Database = {
           count: number | null
           reason_code: string | null
           sample_reason_text: string | null
+        }
+        Relationships: []
+      }
+      v_acquisition_source_health: {
+        Row: {
+          consecutive_zero_runs: number | null
+          display_status: string | null
+          fallback_started_at: string | null
+          found_24h: number | null
+          found_last_run: number | null
+          is_down: boolean | null
+          last_error_code: string | null
+          last_error_message: string | null
+          last_run_at: string | null
+          last_success_at: string | null
+          source: string | null
+          status: string | null
         }
         Relationships: []
       }
@@ -85787,6 +86156,17 @@ export type Database = {
           slot_class: string | null
           status: string | null
           trade_slug: string | null
+        }
+        Relationships: []
+      }
+      v_first_dollar_tracker: {
+        Row: {
+          first_activation_at: string | null
+          first_appointment_at: string | null
+          first_click_at: string | null
+          first_paid_at: string | null
+          first_sms_sent_at: string | null
+          next_missing_milestone: string | null
         }
         Relationships: []
       }
