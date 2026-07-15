@@ -175,6 +175,32 @@ export function useSendVerifiedBatch() {
   });
 }
 
+export function useRevenueProgress() {
+  return useQuery({
+    queryKey: ["revenue-progress"],
+    queryFn: async (): Promise<RevenueProgress | null> => {
+      const { data, error } = await supabase
+        .from("v_revenue_progress" as any)
+        .select("*")
+        .maybeSingle();
+      if (error) throw error;
+      return (data as unknown as RevenueProgress) ?? null;
+    },
+    refetchInterval: 15000,
+  });
+}
+
+export function useRunQueueWorker() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => invokeVerifiedFunction<any>("acquisition-queue-worker", {}),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["verified-prospects"] });
+      qc.invalidateQueries({ queryKey: ["revenue-progress"] });
+    },
+  });
+}
+
 export function statusLabel(p: VerifiedProspect): { label: string; tone: "ok" | "warn" | "err" | "info" } {
   if (p.outreach_status === "activated") return { label: "Activé 1 $", tone: "ok" };
   if (p.outreach_status === "clicked") return { label: "Cliqué", tone: "ok" };
@@ -184,10 +210,10 @@ export function statusLabel(p: VerifiedProspect): { label: string; tone: "ok" | 
   if (p.outreach_failure_reason?.startsWith("enrichment_no_pages_scanned")) return { label: "Site inaccessible", tone: "err" };
   if (p.outreach_failure_reason?.startsWith("enrichment_incomplete")) return { label: "Erreur enrichissement", tone: "warn" };
   if (p.outreach_failure_reason?.startsWith("Twilio Lookup")) return { label: "Erreur validation", tone: "err" };
-  if (p.phone_validation_status === "invalid") return { label: "Numéro invalide", tone: "err" };
-  if (p.phone_validation_status === "landline") return { label: "Ligne fixe — email requis", tone: "warn" };
-  if (p.phone_validation_status === "unverified") return { label: "Non vérifié", tone: "warn" };
+  if (p.sms_eligibility_tier === "A") return { label: "Tier A · Mobile", tone: "ok" };
+  if (p.sms_eligibility_tier === "B") return { label: "Tier B · VoIP SMS", tone: "ok" };
+  if (p.sms_eligibility_tier === "C") return { label: "Tier C · Vérifié 80+", tone: "ok" };
+  if (p.sms_eligibility_tier === "D") return { label: "Tier D · Email only", tone: "warn" };
   if (p.data_quality_score < 70) return { label: "À enrichir", tone: "warn" };
-  if (p.sms_eligible) return { label: "Prêt à envoyer", tone: "ok" };
   return { label: "En attente", tone: "info" };
 }
