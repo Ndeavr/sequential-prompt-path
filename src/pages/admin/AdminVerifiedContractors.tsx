@@ -31,13 +31,18 @@ const toneClass = {
 
 export default function AdminVerifiedContractors() {
   const { data, isLoading, refetch } = useVerifiedProspects();
+  const { data: revenue } = useRevenueProgress();
   const enrich = useEnrichProspect();
   const validate = useValidatePhone();
   const send = useSendVerifiedBatch();
+  const worker = useRunQueueWorker();
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const eligibleCount = (data ?? []).filter(p =>
-    p.sms_eligible && p.outreach_status === "none" && p.data_quality_score >= 80
+    ["A","B","C"].includes(p.sms_eligibility_tier ?? "") &&
+    p.outreach_status === "none" &&
+    p.data_quality_score >= 80 &&
+    p.verification_status === "verified"
   ).length;
 
   async function handleEnrich(p: VerifiedProspect) {
