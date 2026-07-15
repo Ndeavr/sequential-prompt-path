@@ -14,11 +14,13 @@ import {
   useEnrichProspect,
   useValidatePhone,
   useSendVerifiedBatch,
+  useRevenueProgress,
+  useRunQueueWorker,
   formatVerifiedFunctionError,
   statusLabel,
   type VerifiedProspect,
 } from "@/hooks/useVerifiedProspects";
-import { ExternalLink, RefreshCw, PhoneCall, Send, Sparkles } from "lucide-react";
+import { ExternalLink, RefreshCw, PhoneCall, Send, Sparkles, Zap } from "lucide-react";
 
 const toneClass = {
   ok: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30",
