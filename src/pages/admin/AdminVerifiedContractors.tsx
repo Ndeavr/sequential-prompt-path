@@ -134,6 +134,12 @@ export default function AdminVerifiedContractors() {
           <Send className="w-4 h-4 mr-2" />
           Envoyer lot réel ({eligibleCount})
         </Button>
+        <a
+          href="/admin/acquisition-pipeline"
+          className="inline-flex items-center rounded-md border border-border bg-card px-3 py-2 text-sm hover:bg-accent"
+        >
+          Voir le pipeline complet →
+        </a>
       </div>
 
       {isLoading ? <LoadingState /> : !data?.length ? (
