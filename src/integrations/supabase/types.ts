@@ -1203,6 +1203,13 @@ export type Database = {
             referencedRelation: "contractor_leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "acquisition_followup_queue_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
+            referencedColumns: ["id"]
+          },
         ]
       }
       acquisition_funnel_state: {
@@ -1858,6 +1865,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activation_sessions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
           },
           {
@@ -4385,6 +4399,13 @@ export type Database = {
             referencedRelation: "contractor_leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "agent_outreach_messages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
+            referencedColumns: ["id"]
+          },
         ]
       }
       agent_registry: {
@@ -5629,6 +5650,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_visibility_reports_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
           },
         ]
@@ -17827,6 +17855,13 @@ export type Database = {
             referencedRelation: "contractor_leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "booking_sessions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
+            referencedColumns: ["id"]
+          },
         ]
       }
       booking_slot_scores: {
@@ -18883,6 +18918,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_card_imports_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
           },
         ]
@@ -23330,6 +23372,13 @@ export type Database = {
             referencedRelation: "contractor_leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_activation_reminders_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
+            referencedColumns: ["id"]
+          },
         ]
       }
       contractor_ai_indexing_snapshots: {
@@ -26778,6 +26827,38 @@ export type Database = {
           },
         ]
       }
+      contractor_dedupe_log: {
+        Row: {
+          created_at: string
+          id: string
+          kept_prospect_id: string | null
+          match_signal: string | null
+          merged_from: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kept_prospect_id?: string | null
+          match_signal?: string | null
+          merged_from?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kept_prospect_id?: string | null
+          match_signal?: string | null
+          merged_from?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_dedupe_log_kept_prospect_id_fkey"
+            columns: ["kept_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "verified_contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_dispatch_stats: {
         Row: {
           acceptance_rate: number | null
@@ -27716,7 +27797,35 @@ export type Database = {
             referencedRelation: "contractor_leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_enriched_profiles_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: true
+            referencedRelation: "v_active_leads"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      contractor_enrichment_cache: {
+        Row: {
+          domain: string
+          fetched_at: string
+          id: string
+          payload: Json
+        }
+        Insert: {
+          domain: string
+          fetched_at?: string
+          id?: string
+          payload: Json
+        }
+        Update: {
+          domain?: string
+          fetched_at?: string
+          id?: string
+          payload?: Json
+        }
+        Relationships: []
       }
       contractor_entities: {
         Row: {
@@ -29711,6 +29820,8 @@ export type Database = {
           activation_status: string
           agent_paused_at: string | null
           ai_visibility_score: number | null
+          archived_at: string | null
+          archived_reason: string | null
           assigned_admin_id: string | null
           attributed_user_id: string | null
           attribution_type: string | null
@@ -29729,6 +29840,7 @@ export type Database = {
           created_by_role_code: string | null
           curiosity_slug: string | null
           curiosity_token: string | null
+          data_status: string
           do_not_contact: boolean
           email: string | null
           email_fallback_enabled: boolean
@@ -29796,6 +29908,7 @@ export type Database = {
           score_status: string
           sms_attempts: number
           sms_disabled: boolean
+          sms_eligible: boolean
           sms_failed_attempts: number
           sms_status: string | null
           sms_suppressed_at: string | null
@@ -29817,6 +29930,8 @@ export type Database = {
           activation_status?: string
           agent_paused_at?: string | null
           ai_visibility_score?: number | null
+          archived_at?: string | null
+          archived_reason?: string | null
           assigned_admin_id?: string | null
           attributed_user_id?: string | null
           attribution_type?: string | null
@@ -29835,6 +29950,7 @@ export type Database = {
           created_by_role_code?: string | null
           curiosity_slug?: string | null
           curiosity_token?: string | null
+          data_status?: string
           do_not_contact?: boolean
           email?: string | null
           email_fallback_enabled?: boolean
@@ -29902,6 +30018,7 @@ export type Database = {
           score_status?: string
           sms_attempts?: number
           sms_disabled?: boolean
+          sms_eligible?: boolean
           sms_failed_attempts?: number
           sms_status?: string | null
           sms_suppressed_at?: string | null
@@ -29923,6 +30040,8 @@ export type Database = {
           activation_status?: string
           agent_paused_at?: string | null
           ai_visibility_score?: number | null
+          archived_at?: string | null
+          archived_reason?: string | null
           assigned_admin_id?: string | null
           attributed_user_id?: string | null
           attribution_type?: string | null
@@ -29941,6 +30060,7 @@ export type Database = {
           created_by_role_code?: string | null
           curiosity_slug?: string | null
           curiosity_token?: string | null
+          data_status?: string
           do_not_contact?: boolean
           email?: string | null
           email_fallback_enabled?: boolean
@@ -30008,6 +30128,7 @@ export type Database = {
           score_status?: string
           sms_attempts?: number
           sms_disabled?: boolean
+          sms_eligible?: boolean
           sms_failed_attempts?: number
           sms_status?: string | null
           sms_suppressed_at?: string | null
@@ -31224,6 +31345,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "contractor_onboarding_messages_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "contractor_onboarding_messages_sequence_id_fkey"
             columns: ["sequence_id"]
             isOneToOne: false
@@ -31517,6 +31645,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_outreach_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
           },
         ]
@@ -38587,6 +38722,13 @@ export type Database = {
             referencedRelation: "contractor_leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "curiosity_funnel_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
+            referencedColumns: ["id"]
+          },
         ]
       }
       curiosity_sequences: {
@@ -38638,6 +38780,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curiosity_sequences_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
           },
         ]
@@ -49407,6 +49556,13 @@ export type Database = {
             referencedRelation: "contractor_leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "lead_deduplication_index_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
+            referencedColumns: ["id"]
+          },
         ]
       }
       lead_enrichment_data: {
@@ -49446,6 +49602,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_enrichment_data_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
           },
         ]
@@ -49750,6 +49913,13 @@ export type Database = {
             referencedRelation: "contractor_leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "lead_priority_scores_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
+            referencedColumns: ["id"]
+          },
         ]
       }
       lead_qualifications: {
@@ -49935,6 +50105,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_source_links_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
           },
         ]
@@ -53192,6 +53369,13 @@ export type Database = {
             columns: ["contractor_lead_id"]
             isOneToOne: false
             referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_sequences_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
           },
         ]
@@ -56797,6 +56981,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "outreach_delivery_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "outreach_delivery_logs_message_id_fkey"
             columns: ["message_id"]
             isOneToOne: false
@@ -57673,6 +57864,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_replies_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
           },
         ]
@@ -71916,6 +72114,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "scanner_sessions_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "scanner_sessions_session_mode_code_fkey"
             columns: ["session_mode_code"]
             isOneToOne: false
@@ -82463,6 +82668,155 @@ export type Database = {
           },
         ]
       }
+      verified_contractor_prospects: {
+        Row: {
+          address_source_url: string | null
+          business_name: string
+          category: string
+          city: string | null
+          created_at: string
+          data_quality_score: number
+          email: string | null
+          email_source_url: string | null
+          google_business_url: string | null
+          google_place_id: string | null
+          id: string
+          last_enriched_at: string | null
+          legal_name: string | null
+          outreach_clicked_at: string | null
+          outreach_delivered_at: string | null
+          outreach_failure_reason: string | null
+          outreach_sent_at: string | null
+          outreach_status: string
+          outreach_twilio_sid: string | null
+          phone_e164: string | null
+          phone_line_type: string | null
+          phone_primary: string | null
+          phone_secondary: string | null
+          phone_source_url: string | null
+          phone_validation_status: string
+          postal_code: string | null
+          rbq_number: string | null
+          rbq_source_url: string | null
+          service_areas: string[] | null
+          sms_eligible: boolean
+          source_urls: Json
+          street_address: string | null
+          updated_at: string
+          verification_status: string
+          verified_at: string | null
+          website_url: string | null
+        }
+        Insert: {
+          address_source_url?: string | null
+          business_name: string
+          category: string
+          city?: string | null
+          created_at?: string
+          data_quality_score?: number
+          email?: string | null
+          email_source_url?: string | null
+          google_business_url?: string | null
+          google_place_id?: string | null
+          id?: string
+          last_enriched_at?: string | null
+          legal_name?: string | null
+          outreach_clicked_at?: string | null
+          outreach_delivered_at?: string | null
+          outreach_failure_reason?: string | null
+          outreach_sent_at?: string | null
+          outreach_status?: string
+          outreach_twilio_sid?: string | null
+          phone_e164?: string | null
+          phone_line_type?: string | null
+          phone_primary?: string | null
+          phone_secondary?: string | null
+          phone_source_url?: string | null
+          phone_validation_status?: string
+          postal_code?: string | null
+          rbq_number?: string | null
+          rbq_source_url?: string | null
+          service_areas?: string[] | null
+          sms_eligible?: boolean
+          source_urls?: Json
+          street_address?: string | null
+          updated_at?: string
+          verification_status?: string
+          verified_at?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          address_source_url?: string | null
+          business_name?: string
+          category?: string
+          city?: string | null
+          created_at?: string
+          data_quality_score?: number
+          email?: string | null
+          email_source_url?: string | null
+          google_business_url?: string | null
+          google_place_id?: string | null
+          id?: string
+          last_enriched_at?: string | null
+          legal_name?: string | null
+          outreach_clicked_at?: string | null
+          outreach_delivered_at?: string | null
+          outreach_failure_reason?: string | null
+          outreach_sent_at?: string | null
+          outreach_status?: string
+          outreach_twilio_sid?: string | null
+          phone_e164?: string | null
+          phone_line_type?: string | null
+          phone_primary?: string | null
+          phone_secondary?: string | null
+          phone_source_url?: string | null
+          phone_validation_status?: string
+          postal_code?: string | null
+          rbq_number?: string | null
+          rbq_source_url?: string | null
+          service_areas?: string[] | null
+          sms_eligible?: boolean
+          source_urls?: Json
+          street_address?: string | null
+          updated_at?: string
+          verification_status?: string
+          verified_at?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      verified_prospect_tokens: {
+        Row: {
+          click_count: number
+          clicked_at: string | null
+          created_at: string
+          prospect_id: string
+          token: string
+        }
+        Insert: {
+          click_count?: number
+          clicked_at?: string | null
+          created_at?: string
+          prospect_id: string
+          token: string
+        }
+        Update: {
+          click_count?: number
+          clicked_at?: string | null
+          created_at?: string
+          prospect_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verified_prospect_tokens_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "verified_contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       visibility_scores: {
         Row: {
           company_id: string | null
@@ -84349,6 +84703,410 @@ export type Database = {
             columns: ["dedupe_matched_id"]
             isOneToOne: false
             referencedRelation: "v_sms_sprint_eligible"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_active_leads: {
+        Row: {
+          activation_status: string | null
+          agent_paused_at: string | null
+          ai_visibility_score: number | null
+          archived_at: string | null
+          archived_reason: string | null
+          assigned_admin_id: string | null
+          attributed_user_id: string | null
+          attribution_type: string | null
+          category_primary: string | null
+          category_secondary: string | null
+          city: string | null
+          clicked_at: string | null
+          company_confidence_score: number | null
+          company_failure_reason: string | null
+          company_name: string | null
+          company_name_normalized: string | null
+          contact_method: string | null
+          contractor_id: string | null
+          created_at: string | null
+          created_by: string | null
+          created_by_role_code: string | null
+          curiosity_slug: string | null
+          curiosity_token: string | null
+          data_status: string | null
+          do_not_contact: boolean | null
+          email: string | null
+          email_fallback_enabled: boolean | null
+          email_normalized: string | null
+          email_status: string | null
+          enrichment_attempts: number | null
+          enrichment_last_error: string | null
+          enrichment_last_run_at: string | null
+          enrichment_last_source: string | null
+          enrichment_status: string | null
+          failure_code: string | null
+          first_name: string | null
+          fit_reasons: Json | null
+          fit_score: number | null
+          full_name: string | null
+          funnel_type: string | null
+          id: string | null
+          language_primary: string | null
+          last_agent_run_at: string | null
+          last_email_at: string | null
+          last_name: string | null
+          last_sms_at: string | null
+          last_sms_attempt_at: string | null
+          last_sms_error_code: string | null
+          last_sms_status: string | null
+          lead_status: string | null
+          metadata_json: Json | null
+          mobile_phone: string | null
+          normalization_errors: Json | null
+          normalization_status: string | null
+          normalized_at: string | null
+          onboarding_started_at: string | null
+          onboarding_token: string | null
+          opened_at: string | null
+          outreach_status: string | null
+          overall_contact_confidence_score: number | null
+          paid_at: string | null
+          payment_started_at: string | null
+          payment_status: string | null
+          phone: string | null
+          phone_area_code: string | null
+          phone_carrier: string | null
+          phone_confidence_score: number | null
+          phone_e164: string | null
+          phone_failure_reason: string | null
+          phone_lookup_at: string | null
+          phone_lookup_http_status: number | null
+          phone_lookup_raw: Json | null
+          phone_normalization_status: string | null
+          phone_normalized: string | null
+          phone_original: string | null
+          phone_type: string | null
+          phone_validation_checked_at: string | null
+          phone_validation_status: string | null
+          pipeline_status: string | null
+          postal_code: string | null
+          priority_level: string | null
+          priority_score: number | null
+          profile_active_at: string | null
+          profile_status: string | null
+          province: string | null
+          recommended_plan_slug: string | null
+          role_title: string | null
+          scanner_session_id: string | null
+          score_status: string | null
+          sms_attempts: number | null
+          sms_disabled: boolean | null
+          sms_eligible: boolean | null
+          sms_failed_attempts: number | null
+          sms_status: string | null
+          sms_suppressed_at: string | null
+          sms_suppressed_reason: string | null
+          source_job_id: string | null
+          source_label: string | null
+          source_query_id: string | null
+          source_type: string | null
+          street_address: string | null
+          tentative_send: boolean | null
+          trade: string | null
+          unsubscribed_at: string | null
+          updated_at: string | null
+          validation_status: string | null
+          website_normalized: string | null
+          website_url: string | null
+        }
+        Insert: {
+          activation_status?: string | null
+          agent_paused_at?: string | null
+          ai_visibility_score?: number | null
+          archived_at?: string | null
+          archived_reason?: string | null
+          assigned_admin_id?: string | null
+          attributed_user_id?: string | null
+          attribution_type?: string | null
+          category_primary?: string | null
+          category_secondary?: string | null
+          city?: string | null
+          clicked_at?: string | null
+          company_confidence_score?: number | null
+          company_failure_reason?: string | null
+          company_name?: string | null
+          company_name_normalized?: string | null
+          contact_method?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          created_by_role_code?: string | null
+          curiosity_slug?: string | null
+          curiosity_token?: string | null
+          data_status?: string | null
+          do_not_contact?: boolean | null
+          email?: string | null
+          email_fallback_enabled?: boolean | null
+          email_normalized?: string | null
+          email_status?: string | null
+          enrichment_attempts?: number | null
+          enrichment_last_error?: string | null
+          enrichment_last_run_at?: string | null
+          enrichment_last_source?: string | null
+          enrichment_status?: string | null
+          failure_code?: string | null
+          first_name?: string | null
+          fit_reasons?: Json | null
+          fit_score?: number | null
+          full_name?: string | null
+          funnel_type?: string | null
+          id?: string | null
+          language_primary?: string | null
+          last_agent_run_at?: string | null
+          last_email_at?: string | null
+          last_name?: string | null
+          last_sms_at?: string | null
+          last_sms_attempt_at?: string | null
+          last_sms_error_code?: string | null
+          last_sms_status?: string | null
+          lead_status?: string | null
+          metadata_json?: Json | null
+          mobile_phone?: string | null
+          normalization_errors?: Json | null
+          normalization_status?: string | null
+          normalized_at?: string | null
+          onboarding_started_at?: string | null
+          onboarding_token?: string | null
+          opened_at?: string | null
+          outreach_status?: string | null
+          overall_contact_confidence_score?: number | null
+          paid_at?: string | null
+          payment_started_at?: string | null
+          payment_status?: string | null
+          phone?: string | null
+          phone_area_code?: string | null
+          phone_carrier?: string | null
+          phone_confidence_score?: number | null
+          phone_e164?: string | null
+          phone_failure_reason?: string | null
+          phone_lookup_at?: string | null
+          phone_lookup_http_status?: number | null
+          phone_lookup_raw?: Json | null
+          phone_normalization_status?: string | null
+          phone_normalized?: string | null
+          phone_original?: string | null
+          phone_type?: string | null
+          phone_validation_checked_at?: string | null
+          phone_validation_status?: string | null
+          pipeline_status?: string | null
+          postal_code?: string | null
+          priority_level?: string | null
+          priority_score?: number | null
+          profile_active_at?: string | null
+          profile_status?: string | null
+          province?: string | null
+          recommended_plan_slug?: string | null
+          role_title?: string | null
+          scanner_session_id?: string | null
+          score_status?: string | null
+          sms_attempts?: number | null
+          sms_disabled?: boolean | null
+          sms_eligible?: boolean | null
+          sms_failed_attempts?: number | null
+          sms_status?: string | null
+          sms_suppressed_at?: string | null
+          sms_suppressed_reason?: string | null
+          source_job_id?: string | null
+          source_label?: string | null
+          source_query_id?: string | null
+          source_type?: string | null
+          street_address?: string | null
+          tentative_send?: boolean | null
+          trade?: string | null
+          unsubscribed_at?: string | null
+          updated_at?: string | null
+          validation_status?: string | null
+          website_normalized?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          activation_status?: string | null
+          agent_paused_at?: string | null
+          ai_visibility_score?: number | null
+          archived_at?: string | null
+          archived_reason?: string | null
+          assigned_admin_id?: string | null
+          attributed_user_id?: string | null
+          attribution_type?: string | null
+          category_primary?: string | null
+          category_secondary?: string | null
+          city?: string | null
+          clicked_at?: string | null
+          company_confidence_score?: number | null
+          company_failure_reason?: string | null
+          company_name?: string | null
+          company_name_normalized?: string | null
+          contact_method?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          created_by_role_code?: string | null
+          curiosity_slug?: string | null
+          curiosity_token?: string | null
+          data_status?: string | null
+          do_not_contact?: boolean | null
+          email?: string | null
+          email_fallback_enabled?: boolean | null
+          email_normalized?: string | null
+          email_status?: string | null
+          enrichment_attempts?: number | null
+          enrichment_last_error?: string | null
+          enrichment_last_run_at?: string | null
+          enrichment_last_source?: string | null
+          enrichment_status?: string | null
+          failure_code?: string | null
+          first_name?: string | null
+          fit_reasons?: Json | null
+          fit_score?: number | null
+          full_name?: string | null
+          funnel_type?: string | null
+          id?: string | null
+          language_primary?: string | null
+          last_agent_run_at?: string | null
+          last_email_at?: string | null
+          last_name?: string | null
+          last_sms_at?: string | null
+          last_sms_attempt_at?: string | null
+          last_sms_error_code?: string | null
+          last_sms_status?: string | null
+          lead_status?: string | null
+          metadata_json?: Json | null
+          mobile_phone?: string | null
+          normalization_errors?: Json | null
+          normalization_status?: string | null
+          normalized_at?: string | null
+          onboarding_started_at?: string | null
+          onboarding_token?: string | null
+          opened_at?: string | null
+          outreach_status?: string | null
+          overall_contact_confidence_score?: number | null
+          paid_at?: string | null
+          payment_started_at?: string | null
+          payment_status?: string | null
+          phone?: string | null
+          phone_area_code?: string | null
+          phone_carrier?: string | null
+          phone_confidence_score?: number | null
+          phone_e164?: string | null
+          phone_failure_reason?: string | null
+          phone_lookup_at?: string | null
+          phone_lookup_http_status?: number | null
+          phone_lookup_raw?: Json | null
+          phone_normalization_status?: string | null
+          phone_normalized?: string | null
+          phone_original?: string | null
+          phone_type?: string | null
+          phone_validation_checked_at?: string | null
+          phone_validation_status?: string | null
+          pipeline_status?: string | null
+          postal_code?: string | null
+          priority_level?: string | null
+          priority_score?: number | null
+          profile_active_at?: string | null
+          profile_status?: string | null
+          province?: string | null
+          recommended_plan_slug?: string | null
+          role_title?: string | null
+          scanner_session_id?: string | null
+          score_status?: string | null
+          sms_attempts?: number | null
+          sms_disabled?: boolean | null
+          sms_eligible?: boolean | null
+          sms_failed_attempts?: number | null
+          sms_status?: string | null
+          sms_suppressed_at?: string | null
+          sms_suppressed_reason?: string | null
+          source_job_id?: string | null
+          source_label?: string | null
+          source_query_id?: string | null
+          source_type?: string | null
+          street_address?: string | null
+          tentative_send?: boolean | null
+          trade?: string | null
+          unsubscribed_at?: string | null
+          updated_at?: string | null
+          validation_status?: string | null
+          website_normalized?: string | null
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_leads_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_scanner_session_id_fkey"
+            columns: ["scanner_session_id"]
+            isOneToOne: false
+            referencedRelation: "scanner_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_source_job_id_fkey"
+            columns: ["source_job_id"]
+            isOneToOne: false
+            referencedRelation: "prospection_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_source_query_id_fkey"
+            columns: ["source_query_id"]
+            isOneToOne: false
+            referencedRelation: "prospection_queries"
             referencedColumns: ["id"]
           },
         ]
