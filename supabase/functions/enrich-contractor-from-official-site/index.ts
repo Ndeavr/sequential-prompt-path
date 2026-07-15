@@ -203,6 +203,40 @@ Deno.serve(async (req) => {
       .update(update).eq("id", prospect_id);
     if (updErr) throw new FunctionError(updErr.message, 500, "prospect_update_failed");
 
+    // Emit funnel events
+    const evtBase = {
+      prospect_id,
+      business_name: prospect.business_name,
+      city: prospect.city,
+      category: prospect.category,
+      source: prospect.source ?? "manual",
+    };
+    if (update.verification_status === "verified") {
+      await logPipelineEvent({ ...evtBase, stage: "verified", metadata: { quality } });
+    } else if (sourcePages.length === 0) {
+      await logPipelineEvent({
+        ...evtBase, stage: "rejected", reason_code: REASON.website_unreachable,
+        reason_text: pageFailures.map(f => `${f.url}=${f.reason}`).join("; ").slice(0, 500),
+      });
+      await supabase.from("verified_contractor_prospects").update({
+        rejection_reason_code: REASON.website_unreachable,
+        rejection_reason_text: (update.outreach_failure_reason as string) ?? null,
+        last_action_at: new Date().toISOString(),
+      }).eq("id", prospect_id);
+    } else if (quality < 80) {
+      await logPipelineEvent({
+        ...evtBase, stage: "rejected", reason_code: REASON.quality_below_80,
+        reason_text: `quality=${quality}, phone=${ph||!!prospect.phone_primary}, email=${em||!!prospect.email}`,
+      });
+      await supabase.from("verified_contractor_prospects").update({
+        rejection_reason_code: REASON.quality_below_80,
+        rejection_reason_text: `quality=${quality}`,
+        last_action_at: new Date().toISOString(),
+      }).eq("id", prospect_id);
+    } else {
+      await logPipelineEvent({ ...evtBase, stage: "enriched", metadata: { quality } });
+    }
+
     return jsonResponse({
       ok: true,
       found: { phones: phoneList, emails: emailList, rbq, postal, addressLine },
