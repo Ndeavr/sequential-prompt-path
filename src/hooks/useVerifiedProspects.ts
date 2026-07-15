@@ -26,6 +26,20 @@ export interface VerifiedProspect {
   verified_at: string | null;
   last_enriched_at: string | null;
   created_at: string;
+  sms_eligibility_tier?: "A" | "B" | "C" | "D" | null;
+  sms_eligibility_confidence?: "low" | "medium" | "high" | null;
+  eligibility_reason?: string | null;
+}
+
+export interface RevenueProgress {
+  verified_companies: number;
+  ready_for_sms: number;
+  ready_for_email: number;
+  contacted: number;
+  delivered: number;
+  clicked: number;
+  activated: number;
+  revenue_cents: number;
 }
 
 export class VerifiedFunctionError extends Error {
