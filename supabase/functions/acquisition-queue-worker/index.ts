@@ -106,11 +106,15 @@ async function runFallbackAcquisition(supabase: any, source: string, maxRows = 2
   }
 
   for (const row of rows) {
-    const { data, error } = await supabase
+    const { data: existing } = await supabase
       .from("verified_contractor_prospects")
-      .upsert(row, { onConflict: "phone_e164", ignoreDuplicates: false })
       .select("id,business_name,city,category,source")
+      .eq("phone_e164", row.phone_e164)
       .maybeSingle();
+    const write = existing?.id
+      ? await supabase.from("verified_contractor_prospects").update(row).eq("id", existing.id).select("id,business_name,city,category,source").maybeSingle()
+      : await supabase.from("verified_contractor_prospects").insert(row).select("id,business_name,city,category,source").maybeSingle();
+    const { data, error } = write;
     if (error) {
       await emitEvent(supabase, { stage: "rejected", source, reason_code: "fallback_insert_failed", reason_text: error.message, business_name: row.business_name, city: row.city, category: row.category });
       continue;
@@ -131,7 +135,7 @@ async function detectAndRepairDeadQueue(supabase: any) {
   let alerts = 0;
   let repaired = 0;
   for (const row of dead ?? []) {
-    await supabase.from("acquisition_dead_queue_alerts").upsert({
+    const alertPayload = {
       prospect_id: row.prospect_id,
       alert_type: "OUTREACH_BLOCKED",
       status: "repairing",
@@ -140,7 +144,18 @@ async function detectAndRepairDeadQueue(supabase: any) {
       queue_state: row.queue_state,
       repair_attempts: 1,
       updated_at: new Date().toISOString(),
-    }, { onConflict: "prospect_id" });
+    };
+    const { data: existingAlert } = await supabase
+      .from("acquisition_dead_queue_alerts")
+      .select("id")
+      .eq("prospect_id", row.prospect_id)
+      .in("status", ["open", "repairing"])
+      .maybeSingle();
+    if (existingAlert?.id) {
+      await supabase.from("acquisition_dead_queue_alerts").update(alertPayload).eq("id", existingAlert.id);
+    } else {
+      await supabase.from("acquisition_dead_queue_alerts").insert(alertPayload);
+    }
     alerts += 1;
 
     if (["queue_state_mismatch", "eligibility_mismatch"].includes(row.root_cause)) {
