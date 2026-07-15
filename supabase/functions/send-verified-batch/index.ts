@@ -150,13 +150,26 @@ Deno.serve(async (req) => {
           outreach_status: "sent",
           outreach_twilio_sid: parsed.sid,
           outreach_sent_at: new Date().toISOString(),
+          last_action_at: new Date().toISOString(),
         }).eq("id", p.id);
+        await logPipelineEvent({
+          prospect_id: p.id, business_name: p.business_name, city: p.city, category: (p as any).category,
+          source: (p as any).source, stage: "contacted", metadata: { sid: parsed.sid, channel: "sms" },
+        });
         results.push({ id: p.id, sid: parsed.sid, to: p.phone_e164, status: "sent" });
       } else {
         await supabase.from("verified_contractor_prospects").update({
           outreach_status: "failed",
           outreach_failure_reason: twBody.slice(0, 500),
+          rejection_reason_code: REASON.sms_not_eligible,
+          rejection_reason_text: twBody.slice(0, 300),
+          last_action_at: new Date().toISOString(),
         }).eq("id", p.id);
+        await logPipelineEvent({
+          prospect_id: p.id, business_name: p.business_name, city: p.city, category: (p as any).category,
+          source: (p as any).source, stage: "rejected", reason_code: REASON.sms_not_eligible,
+          reason_text: twBody.slice(0, 300),
+        });
         results.push({ id: p.id, status: "failed", error: twBody.slice(0, 200) });
       }
     }
