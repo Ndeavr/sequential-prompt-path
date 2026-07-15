@@ -27,12 +27,19 @@ function normalizeSource(source: string) {
   return SOURCES.includes(source) ? source : "website";
 }
 
-function syntheticWebsite(company: string, city: string) {
-  return `https://example.invalid/${encodeURIComponent(company.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""))}-${encodeURIComponent(city.toLowerCase())}`;
+function normalizePhone(raw: string | null | undefined) {
+  if (!raw) return null;
+  const d = String(raw).replace(/\D/g, "");
+  if (d.length === 10) return `+1${d}`;
+  if (d.length === 11 && d.startsWith("1")) return `+${d}`;
+  return String(raw).startsWith("+") ? String(raw) : null;
 }
 
-function syntheticPhone(seed: number) {
-  return `+1514${String(2000000 + seed).slice(0, 7)}`;
+function normalizeWebsite(raw: string | null | undefined) {
+  if (!raw) return null;
+  const value = String(raw).trim();
+  if (!value) return null;
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
 }
 
 async function recordSourceRun(supabase: any, source: string, found: number, error?: { code: string; message: string }) {
@@ -75,34 +82,102 @@ async function runFallbackAcquisition(supabase: any, source: string, maxRows = 2
 
   let inserted = 0;
   const rows: Array<Record<string, unknown>> = [];
-  for (const city of TARGET_CITIES) {
-    for (const category of TARGET_CATEGORIES) {
-      if (rows.length >= maxRows) break;
-      const seed = Math.abs(`${source}:${city}:${category}`.split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0));
-      const business = `${category.replace(/\b\w/g, c => c.toUpperCase())} ${city} Pro ${seed % 97}`;
+
+  const { data: contractorLeads } = await supabase
+    .from("contractor_leads")
+    .select("id,company_name,email,phone,mobile_phone,phone_e164,website_url,city,category_primary,trade,source_type,created_at")
+    .not("company_name", "is", null)
+    .or("phone.not.is.null,phone_e164.not.is.null,mobile_phone.not.is.null")
+    .order("created_at", { ascending: false })
+    .limit(maxRows);
+  for (const lead of contractorLeads ?? []) {
+    rows.push({
+      business_name: lead.company_name,
+      legal_name: lead.company_name,
+      category: lead.category_primary ?? lead.trade,
+      city: lead.city,
+      website_url: normalizeWebsite(lead.website_url),
+      phone_primary: normalizePhone(lead.phone_e164 ?? lead.mobile_phone ?? lead.phone) ?? lead.phone ?? lead.mobile_phone,
+      phone_e164: normalizePhone(lead.phone_e164 ?? lead.mobile_phone ?? lead.phone),
+      phone_line_type: "unknown",
+      phone_validation_status: "unknown",
+      sms_eligible: true,
+      email: lead.email,
+      verification_status: "verified",
+      data_quality_score: normalizeWebsite(lead.website_url) ? 85 : 80,
+      source,
+      source_urls: { fallback: true, source_table: "contractor_leads", source_id: lead.id, generated_at: now },
+      verified_at: now,
+      last_enriched_at: now,
+      last_action_at: now,
+      outreach_status: "none",
+    });
+  }
+
+  if (rows.length < maxRows) {
+    const { data: prospects } = await supabase
+      .from("contractor_prospects")
+      .select("id,business_name,email,phone,phone_e164,website_url,city,trade,source,created_at")
+      .not("business_name", "is", null)
+      .or("phone.not.is.null,phone_e164.not.is.null")
+      .order("created_at", { ascending: false })
+      .limit(maxRows - rows.length);
+    for (const lead of prospects ?? []) {
       rows.push({
-        business_name: business,
-        legal_name: business,
-        category,
-        city,
-        website_url: syntheticWebsite(business, city),
-        phone_primary: syntheticPhone(seed),
-        phone_e164: syntheticPhone(seed),
+        business_name: lead.business_name,
+        legal_name: lead.business_name,
+        category: lead.trade,
+        city: lead.city,
+        website_url: normalizeWebsite(lead.website_url),
+        phone_primary: normalizePhone(lead.phone_e164 ?? lead.phone) ?? lead.phone,
+        phone_e164: normalizePhone(lead.phone_e164 ?? lead.phone),
         phone_line_type: "unknown",
         phone_validation_status: "unknown",
         sms_eligible: true,
-        email: `contact+${seed}@example.invalid`,
+        email: lead.email,
         verification_status: "verified",
-        data_quality_score: 82,
+        data_quality_score: normalizeWebsite(lead.website_url) ? 85 : 80,
         source,
-        source_urls: { fallback: true, query: `${category} ${city}`, generated_at: now },
+        source_urls: { fallback: true, source_table: "contractor_prospects", source_id: lead.id, generated_at: now },
         verified_at: now,
         last_enriched_at: now,
         last_action_at: now,
         outreach_status: "none",
       });
     }
-    if (rows.length >= maxRows) break;
+  }
+
+  if (rows.length < maxRows) {
+    const { data: prospects } = await supabase
+      .from("contractors_prospects")
+      .select("id,business_name,email,phone,website,city,category,source,created_at")
+      .not("business_name", "is", null)
+      .not("phone", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(maxRows - rows.length);
+    for (const lead of prospects ?? []) {
+      rows.push({
+        business_name: lead.business_name,
+        legal_name: lead.business_name,
+        category: lead.category,
+        city: lead.city,
+        website_url: normalizeWebsite(lead.website),
+        phone_primary: normalizePhone(lead.phone) ?? lead.phone,
+        phone_e164: normalizePhone(lead.phone),
+        phone_line_type: "unknown",
+        phone_validation_status: "unknown",
+        sms_eligible: true,
+        email: lead.email,
+        verification_status: "verified",
+        data_quality_score: normalizeWebsite(lead.website) ? 85 : 80,
+        source,
+        source_urls: { fallback: true, source_table: "contractors_prospects", source_id: lead.id, generated_at: now },
+        verified_at: now,
+        last_enriched_at: now,
+        last_action_at: now,
+        outreach_status: "none",
+      });
+    }
   }
 
   for (const row of rows) {
