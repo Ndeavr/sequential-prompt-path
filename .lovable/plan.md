@@ -1,88 +1,70 @@
-# Autonomous Revenue Engine — jusqu'au premier 1 $
+# Acquisition Pipeline — Visibilité totale + Worker qui ne s'arrête jamais
 
-Objectif unique : passer d'un système bloqué par `sms_not_eligible` à un moteur auto-diagnostiquant, auto-réparant, qui continue jusqu'à la première activation payée. Aucune nouvelle UI avant que la boucle envoie réellement.
+## Diagnostic
 
-## 1. Logique d'éligibilité SMS revue (débloque Réno-Toit)
+La capture confirme : `Verified = 1` (Réno-Toit), `Ready = 0`. Le système ne montre ni combien d'entreprises sont scrapées, ni pourquoi elles échouent. Le worker s'arrête dès qu'il n'y a rien à envoyer. Résultat : aucune visibilité, aucun débit.
 
-Nouvelle colonne `sms_eligibility_tier` sur `verified_contractor_prospects` :
-- `A` — `line_type = mobile` → SMS auto
-- `B` — `line_type = voip` capable → SMS auto
-- `C` — `line_type in ('unknown', null)` MAIS `verification_status = verified` ET `data_quality_score >= 80` ET (email OU phone extrait du site officiel) → `sms_eligibility_confidence = high`, SMS auto sous quota
-- `D` — landline confirmé → email only
+## Objectif
 
-`send-verified-batch` accepte désormais A + B + C. Le filtre `sms_eligible = true` est remplacé par `sms_eligibility_tier in ('A','B','C')`.
+1. Voir en temps réel chaque étape du funnel d'acquisition (source → scraped → enriched → verified → ready → contacted → activated).
+2. Voir *pourquoi* chaque prospect est rejeté.
+3. Worker qui continue à scraper tant que `verified < 100` par (catégorie × région), et non tant qu'il y a un lot SMS à envoyer.
 
-## 2. File d'attente d'acquisition unifiée
+## Périmètre
 
-Nouvelle table `acquisition_queue` :
-- `prospect_id`, `state` (`new` → `verified` → `ready_sms` / `ready_email` → `contacted` → `clicked` → `activated` / `failed`)
-- `next_action_at`, `attempt_count`, `last_error`, `channel`
-- Transitions via `src/lib/reliability/stateMachine.ts` (canonique, jamais silencieuses)
+Uniquement admin/acquisition. Aucun changement à Alex, Stripe, landing, matching, scoring homeowner.
 
-Cron `*/5 * * * *` déclenche `acquisition-queue-worker` qui traite le prochain prospect disponible. Jamais bloqué par un échec unitaire.
+---
 
-## 3. Auto-réparation (max 3 tentatives par échec)
+## 1. Backend — pipeline_events + rejections
 
-Nouvelle table `acquisition_repair_log` : `error`, `root_cause`, `repair_attempt`, `repair_result`, `timestamp`.
+**Migration** :
+- Nouvelle table `acquisition_pipeline_events` (source, stage `scraped|enriching|verified|ready_sms|ready_email|contacted|clicked|activated|rejected|duplicate`, prospect_id, reason_code, reason_text, city, category, created_at). Un event à chaque transition.
+- Ajouter colonnes sur `verified_contractor_prospects` si absentes : `source` (`google_business|rbq|website|facebook|manual`), `rejection_reason_code`, `rejection_reason_text`, `last_action_at`.
+- Vue `v_acquisition_funnel_daily` : compte par stage × source × city × category sur 24h.
+- Vue `v_acquisition_coverage` : count `verified` par (category, city) → montre où on est <100.
+- RLS admin-only. GRANTs `authenticated` + `service_role`.
 
-Escalade automatique quand une étape échoue :
-1. Ré-enrichissement (rescrape site officiel)
-2. Recherche téléphone alternatif (about, contact, mentions légales)
-3. Bascule email
-4. Génération landing personnalisée + email
-5. Follow-up email J+2
+**Instrumenter** les edge functions existantes (`enrich-contractor-from-official-site`, `validate-contractor-phone`, `send-verified-batch`, `acquisition-queue-worker`) pour émettre un event à chaque décision (accept/reject + reason_code canonique : `phone_invalid`, `no_email`, `quality_below_80`, `duplicate_neq`, `duplicate_phone`, `outside_target_zone`, `category_unknown`, `enrichment_failed`, `sms_not_eligible`, `landline_only`, etc.).
 
-Si taux de livraison SMS < 10 % sur 24 h → bascule automatique du batch en canal email.
+## 2. Worker — mode "coverage 100"
 
-## 4. Framework d'expérimentation
+Refactorer `acquisition-queue-worker` :
+- Config `TARGET_COVERAGE_PER_CELL = 100`, `TARGET_CATEGORIES = ['toiture','isolation','plomberie','peinture','electricite','renovation']`, `TARGET_CITIES = ['Montreal','Laval','Terrebonne','Repentigny','Longueuil','Saint-Jerome','Blainville','Boisbriand']`.
+- Boucle : pour chaque cellule (cat × ville) où `verified_count < 100`, lancer scraping (Google Places + RBQ public + sites web via Firecrawl) jusqu'à atteindre le seuil ou épuiser la source.
+- Ne s'arrête PAS si `ready_batch = 0` — continue à scraper.
+- Émet un event `scraped` par entreprise trouvée, même si rejetée ensuite.
+- Rapport de fin de cycle (JSON logué + inséré dans `acquisition_pipeline_events` type `worker_cycle`) : found, enriched, verified, ready_sms, ready_email, rejected par reason, duplicates.
 
-Nouvelle table `outreach_experiments` :
-- `variant`, `channel`, `sent`, `delivered`, `clicked`, `activated`, `cost_cents`, `revenue_cents`
-- Vue `v_experiment_winners` avec score bayésien simple
+## 3. Frontend — /admin/acquisition-pipeline
 
-Le worker choisit la variante gagnante automatiquement (>3 clics minimum, sinon rotation équilibrée).
+Nouvelle page `PageAdminAcquisitionPipeline.tsx` (dark admin theme, mobile-first) :
 
-## 5. First Revenue Mode
+**Bloc Sources (5 cards)** : Google Business, RBQ, Sites web, Facebook, Import manuel → count 24h + total.
 
-Flag global `FIRST_REVENUE_MODE = true` (dans `src/lib/launch/founderMode.ts` ou table `system_state`). Effets :
-- Priorité totale : contractors vérifiés (site + tél + email) → outreach immédiat
-- Désactive les gates de perfection (score parfait, ligne 100 % mobile)
-- KPI unique remonté au sommet : `paid_activation_count`
+**Bloc Statistiques (7 tuiles)** : Trouvées, Enrichies, Validées, Prêtes SMS, Prêtes Email, Rejetées, Doublons.
 
-Se coupe automatiquement dès `paid_activation_count >= 1` et déclenche un rapport `first_revenue_incident_report`.
+**Bloc Couverture** : grille catégorie × ville, cellule verte si ≥100 vérifiées, orange si 20-99, rouge si <20. Clic → filtre la liste.
 
-## 6. Revenue Command Center (remplace le compteur "Prospects verified")
+**Bloc Rejets** : top 10 raisons de rejet 24h (reason_code → count) — révèle si c'est `phone_invalid` (99%) ou `no_email` (99%) etc.
 
-Nouvelle page `/admin/revenue-progress` (ou refonte du header de `/admin/verified-contractors`) — affichage seul, aucune nouvelle logique :
-- Verified companies
-- Ready for SMS (A+B+C)
-- Ready for Email
-- Contacted / Delivered / Clicked
-- **Activated** (KPI principal)
-- Revenue $ + progression vers premier 1 $
+**Liste complète** : table paginée (React Query, filtres source/stage/city/category/reason). Colonnes : Entreprise, Ville, Catégorie, Téléphone, Email, Source, Score, Statut (badge), Dernière action (relative time). Ligne rouge pour `rejected` avec tooltip reason_text.
 
-## 7. Périmètre exclu
+**Timeline live** : dernier 50 events (auto-refresh 10s) — voir le funnel bouger en direct.
 
-- Pas de refonte landing, Alex, Stripe, matching, scoring IA
-- Pas de nouveau dashboard tant qu'aucun SMS réel n'est parti
-- Pas d'ajout d'overrides manuels
+Hook `useAcquisitionPipeline()` qui interroge `v_acquisition_funnel_daily`, `v_acquisition_coverage`, `acquisition_pipeline_events`, `verified_contractor_prospects`.
 
-## Détails techniques
+Route ajoutée dans `router.tsx` sous `/admin/acquisition-pipeline`, lien dans le sidebar admin.
 
-**Migration :**
-- `verified_contractor_prospects` : ajouter `sms_eligibility_tier` (`A|B|C|D|null`), `sms_eligibility_confidence` (`low|medium|high`)
-- Trigger : recalcul du tier à chaque update de `line_type`/`data_quality_score`/`verification_status`
-- Nouvelles tables : `acquisition_queue`, `acquisition_repair_log`, `outreach_experiments` + GRANT + RLS admin-only
-- Vue `v_revenue_progress` agrégée
+## 4. Critère d'arrêt
 
-**Edge Functions :**
-- `send-verified-batch` : nouveau filtre tiers, log expérience, incrémente `sent`
-- `acquisition-queue-worker` (nouveau) : boucle FSM, appelle enrich/validate/send, écrit repair_log, respecte quota
-- `first-revenue-report` (nouveau) : déclenché sur premier `activated`
+- Page `/admin/acquisition-pipeline` affiche des compteurs non-nuls pour Trouvées / Enrichies / Rejetées.
+- Un cycle du worker autonome produit au moins 20 events `scraped` par cellule.
+- Le top des raisons de rejet est visible → on sait quoi corriger ensuite.
 
-**Frontend :**
-- `useVerifiedProspects` : afficher `sms_eligibility_tier` + raison
-- Nouveau bandeau Revenue Progress en tête de `/admin/verified-contractors`
+## Détails techniques (dev only)
 
-**Critère d'arrêt du chantier :**
-Au moins 1 SMS réel envoyé automatiquement par le worker à Réno-Toit (tier C) via le nouveau filtre, et queue en progression continue sans intervention. La boucle continue ensuite jusqu'au premier `activated`.
+- Nouveaux fichiers : `supabase/migrations/<ts>_acquisition_pipeline.sql`, `src/pages/admin/PageAdminAcquisitionPipeline.tsx`, `src/hooks/useAcquisitionPipeline.ts`, `src/components/admin/acquisition/*` (SourceCard, FunnelStats, CoverageGrid, RejectionReasons, EventTimeline, ProspectPipelineTable).
+- Modifiés : 4 edge functions (émettre events), `router.tsx`, sidebar admin.
+- Reason codes centralisés dans `supabase/functions/_shared/acquisitionReasons.ts` + miroir dans `src/config/acquisitionReasons.ts`.
+- Pas de nouvelle dépendance externe. Firecrawl/RBQ scraping utilise les connecteurs déjà en place.
