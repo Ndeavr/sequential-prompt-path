@@ -1460,6 +1460,56 @@ export type Database = {
         }
         Relationships: []
       }
+      acquisition_queue: {
+        Row: {
+          attempt_count: number
+          channel: string | null
+          created_at: string
+          experiment_id: string | null
+          id: string
+          last_error: string | null
+          next_action_at: string
+          payload: Json
+          prospect_id: string | null
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          channel?: string | null
+          created_at?: string
+          experiment_id?: string | null
+          id?: string
+          last_error?: string | null
+          next_action_at?: string
+          payload?: Json
+          prospect_id?: string | null
+          state?: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          channel?: string | null
+          created_at?: string
+          experiment_id?: string | null
+          id?: string
+          last_error?: string | null
+          next_action_at?: string
+          payload?: Json
+          prospect_id?: string | null
+          state?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acquisition_queue_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "verified_contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       acquisition_recovery_queue: {
         Row: {
           attempts: number
@@ -1501,6 +1551,50 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      acquisition_repair_log: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          metadata: Json
+          prospect_id: string | null
+          repair_attempt: number
+          repair_result: string | null
+          root_cause: string | null
+          step: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          metadata?: Json
+          prospect_id?: string | null
+          repair_attempt?: number
+          repair_result?: string | null
+          root_cause?: string | null
+          step: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          metadata?: Json
+          prospect_id?: string | null
+          repair_attempt?: number
+          repair_result?: string | null
+          root_cause?: string | null
+          step?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acquisition_repair_log_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "verified_contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       acquisition_run_steps: {
         Row: {
@@ -57198,6 +57292,57 @@ export type Database = {
         }
         Relationships: []
       }
+      outreach_experiments: {
+        Row: {
+          activated: number
+          channel: string
+          clicked: number
+          cost_cents: number
+          created_at: string
+          delivered: number
+          id: string
+          is_active: boolean
+          is_winner: boolean
+          revenue_cents: number
+          sent: number
+          template_key: string | null
+          updated_at: string
+          variant: string
+        }
+        Insert: {
+          activated?: number
+          channel: string
+          clicked?: number
+          cost_cents?: number
+          created_at?: string
+          delivered?: number
+          id?: string
+          is_active?: boolean
+          is_winner?: boolean
+          revenue_cents?: number
+          sent?: number
+          template_key?: string | null
+          updated_at?: string
+          variant: string
+        }
+        Update: {
+          activated?: number
+          channel?: string
+          clicked?: number
+          cost_cents?: number
+          created_at?: string
+          delivered?: number
+          id?: string
+          is_active?: boolean
+          is_winner?: boolean
+          revenue_cents?: number
+          sent?: number
+          template_key?: string | null
+          updated_at?: string
+          variant?: string
+        }
+        Relationships: []
+      }
       outreach_followup_rules: {
         Row: {
           action_json: Json | null
@@ -82676,6 +82821,7 @@ export type Database = {
           city: string | null
           created_at: string
           data_quality_score: number
+          eligibility_reason: string | null
           email: string | null
           email_source_url: string | null
           google_business_url: string | null
@@ -82699,6 +82845,8 @@ export type Database = {
           rbq_number: string | null
           rbq_source_url: string | null
           service_areas: string[] | null
+          sms_eligibility_confidence: string | null
+          sms_eligibility_tier: string | null
           sms_eligible: boolean
           source_urls: Json
           street_address: string | null
@@ -82714,6 +82862,7 @@ export type Database = {
           city?: string | null
           created_at?: string
           data_quality_score?: number
+          eligibility_reason?: string | null
           email?: string | null
           email_source_url?: string | null
           google_business_url?: string | null
@@ -82737,6 +82886,8 @@ export type Database = {
           rbq_number?: string | null
           rbq_source_url?: string | null
           service_areas?: string[] | null
+          sms_eligibility_confidence?: string | null
+          sms_eligibility_tier?: string | null
           sms_eligible?: boolean
           source_urls?: Json
           street_address?: string | null
@@ -82752,6 +82903,7 @@ export type Database = {
           city?: string | null
           created_at?: string
           data_quality_score?: number
+          eligibility_reason?: string | null
           email?: string | null
           email_source_url?: string | null
           google_business_url?: string | null
@@ -82775,6 +82927,8 @@ export type Database = {
           rbq_number?: string | null
           rbq_source_url?: string | null
           service_areas?: string[] | null
+          sms_eligibility_confidence?: string | null
+          sms_eligibility_tier?: string | null
           sms_eligible?: boolean
           source_urls?: Json
           street_address?: string | null
@@ -86082,6 +86236,19 @@ export type Database = {
           neighborhood: string | null
           work_date: string | null
           work_type: string | null
+        }
+        Relationships: []
+      }
+      v_revenue_progress: {
+        Row: {
+          activated: number | null
+          clicked: number | null
+          contacted: number | null
+          delivered: number | null
+          ready_for_email: number | null
+          ready_for_sms: number | null
+          revenue_cents: number | null
+          verified_companies: number | null
         }
         Relationships: []
       }

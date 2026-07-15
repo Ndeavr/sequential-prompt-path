@@ -1,139 +1,88 @@
-## Diagnostic actuel
+# Autonomous Revenue Engine — jusqu'au premier 1 $
 
-Le blocage est confirmé avant Twilio/SMS : les fonctions backend appelées depuis `/admin/verified-contractors` ne sont pas disponibles côté backend déployé.
+Objectif unique : passer d'un système bloqué par `sms_not_eligible` à un moteur auto-diagnostiquant, auto-réparant, qui continue jusqu'à la première activation payée. Aucune nouvelle UI avant que la boucle envoie réellement.
 
-Preuves observées :
+## 1. Logique d'éligibilité SMS revue (débloque Réno-Toit)
 
-```text
-POST /functions/v1/enrich-contractor-from-official-site
-→ navigateur: Failed to fetch
+Nouvelle colonne `sms_eligibility_tier` sur `verified_contractor_prospects` :
+- `A` — `line_type = mobile` → SMS auto
+- `B` — `line_type = voip` capable → SMS auto
+- `C` — `line_type in ('unknown', null)` MAIS `verification_status = verified` ET `data_quality_score >= 80` ET (email OU phone extrait du site officiel) → `sms_eligibility_confidence = high`, SMS auto sous quota
+- `D` — landline confirmé → email only
 
-Test backend direct:
-/enrich-contractor-from-official-site → 404 Requested function was not found
-/validate-contractor-phone → 404 Requested function was not found
-/send-verified-batch → 404 Requested function was not found
-```
+`send-verified-batch` accepte désormais A + B + C. Le filtre `sms_eligible = true` est remplacé par `sms_eligibility_tier in ('A','B','C')`.
 
-La fiche Réno-Toit existe, mais reste bloquée :
+## 2. File d'attente d'acquisition unifiée
 
-```text
-verification_status = needs_enrichment
-phone_validation_status = unverified
-sms_eligible = false
-data_quality_score = 65
-outreach_status = none
-```
+Nouvelle table `acquisition_queue` :
+- `prospect_id`, `state` (`new` → `verified` → `ready_sms` / `ready_email` → `contacted` → `clicked` → `activated` / `failed`)
+- `next_action_at`, `attempt_count`, `last_error`, `channel`
+- Transitions via `src/lib/reliability/stateMachine.ts` (canonique, jamais silencieuses)
 
-Donc `Envoyer lot réel (0)` est cohérent : aucune fiche ne peut passer le filtre strict.
+Cron `*/5 * * * *` déclenche `acquisition-queue-worker` qui traite le prochain prospect disponible. Jamais bloqué par un échec unitaire.
 
-## Plan de correction strict
+## 3. Auto-réparation (max 3 tentatives par échec)
 
-### 1. Déployer les fonctions manquantes
-Déployer uniquement les fonctions nécessaires à cette chaîne :
+Nouvelle table `acquisition_repair_log` : `error`, `root_cause`, `repair_attempt`, `repair_result`, `timestamp`.
 
-```text
-enrich-contractor-from-official-site
-validate-contractor-phone
-send-verified-batch
-```
+Escalade automatique quand une étape échoue :
+1. Ré-enrichissement (rescrape site officiel)
+2. Recherche téléphone alternatif (about, contact, mentions légales)
+3. Bascule email
+4. Génération landing personnalisée + email
+5. Follow-up email J+2
 
-Puis vérifier directement que chaque fonction répond autrement qu’en 404.
+Si taux de livraison SMS < 10 % sur 24 h → bascule automatique du batch en canal email.
 
-### 2. Rendre les erreurs lisibles dans l’admin
-Modifier seulement le hook/page admin des prospects vérifiés pour afficher :
+## 4. Framework d'expérimentation
 
-```text
-Function: enrich-contractor-from-official-site
-Status: 404 / 401 / 500 / timeout / network
-Message: ...
-Request ID: ... si disponible
-```
+Nouvelle table `outreach_experiments` :
+- `variant`, `channel`, `sent`, `delivered`, `clicked`, `activated`, `cost_cents`, `revenue_cents`
+- Vue `v_experiment_winners` avec score bayésien simple
 
-Au lieu de :
+Le worker choisit la variante gagnante automatiquement (>3 clics minimum, sinon rotation équilibrée).
 
-```text
-Failed to send a request to the Edge Function
-```
+## 5. First Revenue Mode
 
-Si le navigateur reçoit encore `Failed to fetch`, l’UI affichera une cause exploitable :
+Flag global `FIRST_REVENUE_MODE = true` (dans `src/lib/launch/founderMode.ts` ou table `system_state`). Effets :
+- Priorité totale : contractors vérifiés (site + tél + email) → outreach immédiat
+- Désactive les gates de perfection (score parfait, ligne 100 % mobile)
+- KPI unique remonté au sommet : `paid_activation_count`
 
-```text
-Appel impossible: fonction non déployée, CORS ou réseau bloqué.
-```
+Se coupe automatiquement dès `paid_activation_count >= 1` et déclenche un rapport `first_revenue_incident_report`.
 
-### 3. Durcir les réponses backend
-Dans les 3 fonctions :
+## 6. Revenue Command Center (remplace le compteur "Prospects verified")
 
-- CORS présent sur `OPTIONS`, succès et erreurs
-- validation claire de `prospect_id`
-- validation claire des variables backend requises
-- timeouts courts et explicites pour scraping externe
-- réponse JSON standardisée :
+Nouvelle page `/admin/revenue-progress` (ou refonte du header de `/admin/verified-contractors`) — affichage seul, aucune nouvelle logique :
+- Verified companies
+- Ready for SMS (A+B+C)
+- Ready for Email
+- Contacted / Delivered / Clicked
+- **Activated** (KPI principal)
+- Revenue $ + progression vers premier 1 $
 
-```json
-{
-  "ok": false,
-  "function": "enrich-contractor-from-official-site",
-  "status": 500,
-  "message": "...",
-  "request_id": "..."
-}
-```
+## 7. Périmètre exclu
 
-### 4. Corriger la progression réelle du prospect
-Après enrichissement réussi :
+- Pas de refonte landing, Alex, Stripe, matching, scoring IA
+- Pas de nouveau dashboard tant qu'aucun SMS réel n'est parti
+- Pas d'ajout d'overrides manuels
 
-- conserver uniquement les données réellement trouvées
-- inscrire les URLs sources scannées
-- mettre à jour `data_quality_score`
-- passer `verification_status` à `verified` seulement si les critères réels sont atteints
+## Détails techniques
 
-Après validation téléphone :
+**Migration :**
+- `verified_contractor_prospects` : ajouter `sms_eligibility_tier` (`A|B|C|D|null`), `sms_eligibility_confidence` (`low|medium|high`)
+- Trigger : recalcul du tier à chaque update de `line_type`/`data_quality_score`/`verification_status`
+- Nouvelles tables : `acquisition_queue`, `acquisition_repair_log`, `outreach_experiments` + GRANT + RLS admin-only
+- Vue `v_revenue_progress` agrégée
 
-- normaliser `phone_e164`
-- identifier mobile / VoIP SMS / ligne fixe / invalide
-- mettre `sms_eligible = true` uniquement pour mobile ou VoIP SMS-compatible
+**Edge Functions :**
+- `send-verified-batch` : nouveau filtre tiers, log expérience, incrémente `sent`
+- `acquisition-queue-worker` (nouveau) : boucle FSM, appelle enrich/validate/send, écrit repair_log, respecte quota
+- `first-revenue-report` (nouveau) : déclenché sur premier `activated`
 
-### 5. Valider avec la fiche existante
-Tester Réno-Toit de bout en bout :
+**Frontend :**
+- `useVerifiedProspects` : afficher `sms_eligibility_tier` + raison
+- Nouveau bandeau Revenue Progress en tête de `/admin/verified-contractors`
 
-```text
-Enrichir
-→ récupérer téléphone/email/source ou afficher cause précise
-
-Valider
-→ phone_validation_status réel
-→ sms_eligible true/false réel
-
-Dry-run
-→ eligible_count > 0 seulement si la fiche est vraiment envoyable
-```
-
-### 6. Confirmer le critère de reprise acquisition
-Arrêt du correctif seulement quand au moins une de ces deux situations est vraie :
-
-```text
-A) 1 prospect atteint verified + sms_eligible = true
-   → Envoyer lot réel affiche au moins (1)
-```
-
-ou
-
-```text
-B) le prospect est rejeté avec une raison précise et actionnable
-   ex: ligne fixe, site inaccessible, aucun email/téléphone trouvé, score < 80
-```
-
-## Hors périmètre
-
-Je ne toucherai pas à :
-
-- landing pages
-- Alex
-- Stripe
-- scoring IA
-- matching
-- redesign
-- nouveau dashboard
-
-Objectif unique : rendre la chaîne `Prospect → Enrichissement → Validation → Vérifié → Lot réel` vérifiable et non bloquée par une erreur opaque.
+**Critère d'arrêt du chantier :**
+Au moins 1 SMS réel envoyé automatiquement par le worker à Réno-Toit (tier C) via le nouveau filtre, et queue en progression continue sans intervention. La boucle continue ensuite jusqu'au premier `activated`.

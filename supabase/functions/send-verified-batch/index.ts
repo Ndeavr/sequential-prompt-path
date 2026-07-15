@@ -52,16 +52,17 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(url, serviceKey);
 
-    // STRICT filter
+    // Tier-based filter (A = mobile, B = VoIP SMS-capable, C = verified+unknown w/ quality>=80). D = email-only, excluded here.
     const { data: pool, error } = await supabase
       .from("verified_contractor_prospects")
-      .select("id, business_name, phone_e164, phone_validation_status, sms_eligible, data_quality_score, website_url, city, outreach_status")
-      .eq("sms_eligible", true)
+      .select("id, business_name, phone_e164, phone_validation_status, phone_line_type, sms_eligibility_tier, sms_eligibility_confidence, data_quality_score, website_url, city, outreach_status, verification_status")
+      .in("sms_eligibility_tier", ["A", "B", "C"])
       .eq("outreach_status", "none")
+      .eq("verification_status", "verified")
       .gte("data_quality_score", 80)
       .not("phone_e164", "is", null)
       .not("website_url", "is", null)
-      .in("phone_validation_status", ["valid_mobile", "valid_sms_capable_voip"])
+      .order("sms_eligibility_tier", { ascending: true })
       .order("data_quality_score", { ascending: false })
       .limit(limit);
     if (error) throw new FunctionError(error.message, 500, "eligible_query_failed");
@@ -70,34 +71,36 @@ Deno.serve(async (req) => {
     if (dryRun) {
       const { data: blocked } = await supabase
         .from("verified_contractor_prospects")
-        .select("id, business_name, verification_status, phone_validation_status, phone_line_type, sms_eligible, data_quality_score, website_url, outreach_status, outreach_failure_reason")
+        .select("id, business_name, verification_status, phone_validation_status, phone_line_type, sms_eligibility_tier, sms_eligibility_confidence, eligibility_reason, data_quality_score, website_url, outreach_status, outreach_failure_reason")
         .eq("outreach_status", "none")
         .order("data_quality_score", { ascending: false })
         .limit(20);
 
-      const blockers = (blocked ?? []).map((p) => {
+      const blockers = (blocked ?? []).map((p: any) => {
         let reason = "eligible";
         if (!p.website_url) reason = "missing_website_url";
+        else if (p.verification_status !== "verified") reason = `not_verified:${p.verification_status}`;
         else if (p.data_quality_score < 80) reason = `quality_below_80:${p.data_quality_score}`;
-        else if (!p.sms_eligible) reason = `sms_not_eligible:${p.phone_validation_status}:${p.phone_line_type ?? "unknown"}`;
-        else if (!["valid_mobile", "valid_sms_capable_voip"].includes(p.phone_validation_status)) reason = `phone_status_blocked:${p.phone_validation_status}`;
+        else if (!["A", "B", "C"].includes(p.sms_eligibility_tier ?? "")) {
+          reason = `tier_blocked:${p.sms_eligibility_tier ?? "none"}:${p.eligibility_reason ?? "unknown"}`;
+        }
         return {
-          id: p.id,
-          business_name: p.business_name,
-          reason,
+          id: p.id, business_name: p.business_name, reason,
           verification_status: p.verification_status,
+          sms_eligibility_tier: p.sms_eligibility_tier,
+          sms_eligibility_confidence: p.sms_eligibility_confidence,
+          eligibility_reason: p.eligibility_reason,
           phone_validation_status: p.phone_validation_status,
           phone_line_type: p.phone_line_type,
-          sms_eligible: p.sms_eligible,
           data_quality_score: p.data_quality_score,
           failure: p.outreach_failure_reason,
         };
-      }).filter((p) => p.reason !== "eligible");
+      }).filter((p: any) => p.reason !== "eligible");
 
       return jsonResponse({
         ok: true, dry_run: true, eligible_count: eligible.length, eligible,
         blockers,
-        message: eligible.length > 0 ? `${eligible.length} prospect(s) prêt(s)` : "Aucun prospect ne passe les critères d'envoi réel",
+        message: eligible.length > 0 ? `${eligible.length} prospect(s) prêt(s) (tiers A/B/C)` : "Aucun prospect ne passe les critères d'envoi réel",
       }, 200, requestId);
     }
 
