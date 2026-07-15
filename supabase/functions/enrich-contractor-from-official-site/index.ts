@@ -11,6 +11,7 @@ const corsHeaders = {
 };
 
 const CANDIDATE_PATHS = ["", "/contact", "/nous-joindre", "/contactez-nous", "/a-propos", "/about"];
+const FUNCTION_NAME = "enrich-contractor-from-official-site";
 
 const RBQ_RE = /\b\d{4}[-\s]?\d{4}[-\s]?\d{2}\b/;
 const QC_POSTAL_RE = /\b([A-Z]\d[A-Z])[ -]?(\d[A-Z]\d)\b/;
@@ -18,7 +19,24 @@ const EMAIL_RE = /[\w.+-]+@[\w-]+\.[\w.-]+/g;
 const TEL_HREF_RE = /href=["']tel:([^"']+)["']/gi;
 const MAILTO_RE = /href=["']mailto:([^"']+)["']/gi;
 
-async function fetchText(url: string): Promise<string | null> {
+class FunctionError extends Error {
+  status: number;
+  code: string;
+  constructor(message: string, status = 500, code = "function_error") {
+    super(message);
+    this.status = status;
+    this.code = code;
+  }
+}
+
+function jsonResponse(body: Record<string, unknown>, status = 200, requestId = crypto.randomUUID()) {
+  return new Response(JSON.stringify({ function: FUNCTION_NAME, request_id: requestId, ...body }), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json", "x-request-id": requestId },
+  });
+}
+
+async function fetchText(url: string): Promise<{ text: string | null; reason?: string }> {
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 8000);
@@ -28,11 +46,13 @@ async function fetchText(url: string): Promise<string | null> {
       signal: ctrl.signal,
     });
     clearTimeout(t);
-    if (!r.ok) return null;
+    if (!r.ok) return { text: null, reason: `http_${r.status}` };
     const ct = r.headers.get("content-type") ?? "";
-    if (!ct.includes("text")) return null;
-    return await r.text();
-  } catch { return null; }
+    if (!ct.includes("text")) return { text: null, reason: `content_type_${ct || "unknown"}` };
+    return { text: await r.text() };
+  } catch (e) {
+    return { text: null, reason: e instanceof DOMException && e.name === "AbortError" ? "timeout_8s" : "fetch_failed" };
+  }
 }
 
 function normalizePhone(raw: string): string | null {
@@ -58,28 +78,32 @@ function scoreQuality(fields: {
 }
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { prospect_id } = await req.json();
-    if (!prospect_id) throw new Error("prospect_id required");
+    const { prospect_id } = await req.json().catch(() => ({}));
+    if (!prospect_id) throw new FunctionError("prospect_id required", 400, "missing_prospect_id");
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    const url = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !serviceKey) {
+      throw new FunctionError("Backend credentials missing: SUPABASE_URL or service role key", 500, "missing_backend_credentials");
+    }
+
+    const supabase = createClient(url, serviceKey);
 
     const { data: prospect, error: fetchErr } = await supabase
       .from("verified_contractor_prospects")
       .select("*")
       .eq("id", prospect_id)
       .single();
-    if (fetchErr || !prospect) throw new Error(fetchErr?.message ?? "prospect not found");
-    if (!prospect.website_url) throw new Error("no website_url to enrich from");
+    if (fetchErr || !prospect) throw new FunctionError(fetchErr?.message ?? "prospect not found", 404, "prospect_not_found");
+    if (!prospect.website_url) throw new FunctionError("no website_url to enrich from", 422, "missing_website_url");
 
     let origin: URL;
     try { origin = new URL(prospect.website_url); }
-    catch { throw new Error(`invalid website_url: ${prospect.website_url}`); }
+    catch { throw new FunctionError(`invalid website_url: ${prospect.website_url}`, 422, "invalid_website_url"); }
 
     const phones = new Set<string>();
     const emails = new Set<string>();
@@ -87,10 +111,15 @@ Deno.serve(async (req) => {
     let postal: string | null = null;
     let addressLine: string | null = null;
     const sourcePages: string[] = [];
+    const pageFailures: Array<{ url: string; reason: string }> = [];
 
     for (const p of CANDIDATE_PATHS) {
       const url = new URL(p || "/", origin).toString();
-      const html = await fetchText(url);
+      const { text: html, reason } = await fetchText(url);
+      if (!html) {
+        pageFailures.push({ url, reason: reason ?? "unknown" });
+        continue;
+      }
       if (!html) continue;
       sourcePages.push(url);
 
@@ -120,7 +149,8 @@ Deno.serve(async (req) => {
 
     const update: Record<string, unknown> = {
       last_enriched_at: new Date().toISOString(),
-      source_urls: { ...(prospect.source_urls ?? {}), pages: sourcePages },
+      source_urls: { ...(prospect.source_urls ?? {}), pages: sourcePages, page_failures: pageFailures },
+      outreach_failure_reason: null,
     };
     let ph = false, em = false, ad = false, rb = false;
     if (phoneList.length > 0) {
@@ -156,24 +186,34 @@ Deno.serve(async (req) => {
       services: (prospect.service_areas ?? []).length > 0,
     });
     update.data_quality_score = quality;
+    if (sourcePages.length === 0) {
+      update.verification_status = "needs_enrichment";
+      update.outreach_failure_reason = `enrichment_no_pages_scanned: ${pageFailures.map(f => `${f.url}=${f.reason}`).join("; ").slice(0, 430)}`;
+    }
     if (quality >= 70 && (ph || prospect.phone_primary) && (prospect.city || postal)) {
       update.verification_status = "verified";
       update.verified_at = new Date().toISOString();
+    } else if (sourcePages.length > 0) {
+      update.verification_status = "needs_enrichment";
+      update.outreach_failure_reason = `enrichment_incomplete: quality=${quality}, phone=${Boolean(ph || prospect.phone_primary)}, email=${Boolean(em || prospect.email)}, city_or_postal=${Boolean(prospect.city || postal)}`;
     }
 
     const { error: updErr } = await supabase.from("verified_contractor_prospects")
       .update(update).eq("id", prospect_id);
-    if (updErr) throw new Error(updErr.message);
+    if (updErr) throw new FunctionError(updErr.message, 500, "prospect_update_failed");
 
-    return new Response(JSON.stringify({
+    return jsonResponse({
       ok: true,
       found: { phones: phoneList, emails: emailList, rbq, postal, addressLine },
       quality_score: quality,
       pages_scanned: sourcePages.length,
-    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      page_failures: pageFailures,
+      verification_status: update.verification_status ?? prospect.verification_status,
+      message: sourcePages.length === 0 ? "Impossible d'accéder au site source" : "Enrichissement terminé",
+    }, 200, requestId);
   } catch (e) {
-    return new Response(JSON.stringify({ error: (e as Error).message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const err = e instanceof FunctionError ? e : new FunctionError((e as Error).message);
+    console.error(`[${requestId}] ${FUNCTION_NAME} failed`, { code: err.code, status: err.status, message: err.message });
+    return jsonResponse({ ok: false, code: err.code, message: err.message, error: err.message }, err.status, requestId);
   }
 });
