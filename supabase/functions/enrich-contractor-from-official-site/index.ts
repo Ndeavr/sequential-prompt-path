@@ -4,6 +4,7 @@
  * Never invents data. Writes only fields it actually found, with source URL.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { logPipelineEvent, REASON } from "../_shared/acquisitionPipeline.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
