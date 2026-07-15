@@ -3,6 +3,7 @@
  * Reads funnel events, coverage, rejection reasons, live prospect list.
  */
 import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export type FunnelRow = {
@@ -205,6 +206,40 @@ export function useLatestAcquisitionAudit() {
         .maybeSingle();
       if (error) throw error;
       return data as DailyAuditRow | null;
+    },
+  });
+}
+
+export function useRunDailyAcquisitionAudit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("daily-acquisition-audit", { body: {} });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["latest-acquisition-audit"] });
+      qc.invalidateQueries({ queryKey: ["acq-diagnostics-funnel"] });
+      qc.invalidateQueries({ queryKey: ["first-dollar-tracker"] });
+    },
+  });
+}
+
+export function useImportContractors() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ rows, auto_send = true }: { rows: Array<Record<string, unknown>>; auto_send?: boolean }) => {
+      const { data, error } = await supabase.functions.invoke("import-contractors", { body: { rows, auto_send } });
+      if (error) throw error;
+      return data as any;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["acq-source-health"] });
+      qc.invalidateQueries({ queryKey: ["acq-diagnostics-funnel"] });
+      qc.invalidateQueries({ queryKey: ["acq-coverage"] });
+      qc.invalidateQueries({ queryKey: ["acq-recent-events"] });
+      qc.invalidateQueries({ queryKey: ["first-dollar-tracker"] });
     },
   });
 }
