@@ -84,9 +84,28 @@ export default function AdminVerifiedContractors() {
   return (
     <AdminLayout>
       <PageHeader
-        title="Prospects vérifiés"
-        description="Vraies entreprises, coordonnées vérifiables. Aucun placeholder n'est envoyable."
+        title="Revenue Progress — jusqu'au premier 1 $"
+        description="Vraies entreprises, coordonnées vérifiables. Le worker autonome pousse jusqu'à l'activation payée."
       />
+
+      {revenue && (
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+          {[
+            ["Vérifiés", revenue.verified_companies, "text-foreground"],
+            ["Prêts SMS", revenue.ready_for_sms, "text-blue-500"],
+            ["Prêts Email", revenue.ready_for_email, "text-amber-500"],
+            ["Contactés", revenue.contacted, "text-foreground"],
+            ["Livrés", revenue.delivered, "text-emerald-500"],
+            ["Cliqués", revenue.clicked, "text-emerald-500"],
+            ["Activés 1$", revenue.activated, revenue.activated > 0 ? "text-emerald-400" : "text-red-500"],
+          ].map(([label, value, cls]) => (
+            <div key={label as string} className="rounded-xl border border-border bg-card p-3">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+              <div className={`text-2xl font-semibold mt-1 ${cls as string}`}>{value as number}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-3 mb-6">
         <Button variant="outline" onClick={() => refetch()}>
@@ -94,6 +113,18 @@ export default function AdminVerifiedContractors() {
         </Button>
         <Button variant="outline" onClick={handleDryRun}>
           <Sparkles className="w-4 h-4 mr-2" /> Test (dry-run)
+        </Button>
+        <Button
+          variant="outline"
+          onClick={async () => {
+            try {
+              const r = await worker.mutateAsync();
+              toast.success(`Worker: ${r?.enqueued ?? 0} enqueue(s), ${r?.ready_sms ?? 0} prêt(s) SMS`);
+            } catch (e: any) { toast.error("Worker échoué", { description: formatVerifiedFunctionError(e) }); }
+          }}
+          disabled={worker.isPending}
+        >
+          <Zap className="w-4 h-4 mr-2" /> Lancer worker autonome
         </Button>
         <Button
           onClick={handleSend}
