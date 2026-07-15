@@ -9,6 +9,24 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+const FUNCTION_NAME = "send-verified-batch";
+
+class FunctionError extends Error {
+  status: number;
+  code: string;
+  constructor(message: string, status = 500, code = "function_error") {
+    super(message);
+    this.status = status;
+    this.code = code;
+  }
+}
+
+function jsonResponse(body: Record<string, unknown>, status = 200, requestId = crypto.randomUUID()) {
+  return new Response(JSON.stringify({ function: FUNCTION_NAME, request_id: requestId, ...body }), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json", "x-request-id": requestId },
+  });
+}
 
 const SMS_TEMPLATE = (biz: string, link: string) =>
   `Bonjour ${biz}, UNPRO a préparé gratuitement un profil pour votre entreprise afin que les propriétaires et les IA puissent mieux comprendre vos services. Les 10 premières entreprises peuvent l'activer pour 1 $ : ${link}`;
@@ -18,6 +36,7 @@ function randToken(): string {
 }
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
@@ -25,10 +44,13 @@ Deno.serve(async (req) => {
     const limit = Math.min(Number(body.limit ?? 10), 25);
     const dryRun = body.dry_run !== false ? true : false; // default DRY RUN — must pass dry_run:false to actually send
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    const url = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !serviceKey) {
+      throw new FunctionError("Backend credentials missing: SUPABASE_URL or service role key", 500, "missing_backend_credentials");
+    }
+
+    const supabase = createClient(url, serviceKey);
 
     // STRICT filter
     const { data: pool, error } = await supabase
@@ -42,20 +64,48 @@ Deno.serve(async (req) => {
       .in("phone_validation_status", ["valid_mobile", "valid_sms_capable_voip"])
       .order("data_quality_score", { ascending: false })
       .limit(limit);
-    if (error) throw new Error(error.message);
+    if (error) throw new FunctionError(error.message, 500, "eligible_query_failed");
 
     const eligible = pool ?? [];
     if (dryRun) {
-      return new Response(JSON.stringify({
-        dry_run: true, eligible_count: eligible.length, eligible,
-      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const { data: blocked } = await supabase
+        .from("verified_contractor_prospects")
+        .select("id, business_name, verification_status, phone_validation_status, phone_line_type, sms_eligible, data_quality_score, website_url, outreach_status, outreach_failure_reason")
+        .eq("outreach_status", "none")
+        .order("data_quality_score", { ascending: false })
+        .limit(20);
+
+      const blockers = (blocked ?? []).map((p) => {
+        let reason = "eligible";
+        if (!p.website_url) reason = "missing_website_url";
+        else if (p.data_quality_score < 80) reason = `quality_below_80:${p.data_quality_score}`;
+        else if (!p.sms_eligible) reason = `sms_not_eligible:${p.phone_validation_status}:${p.phone_line_type ?? "unknown"}`;
+        else if (!["valid_mobile", "valid_sms_capable_voip"].includes(p.phone_validation_status)) reason = `phone_status_blocked:${p.phone_validation_status}`;
+        return {
+          id: p.id,
+          business_name: p.business_name,
+          reason,
+          verification_status: p.verification_status,
+          phone_validation_status: p.phone_validation_status,
+          phone_line_type: p.phone_line_type,
+          sms_eligible: p.sms_eligible,
+          data_quality_score: p.data_quality_score,
+          failure: p.outreach_failure_reason,
+        };
+      }).filter((p) => p.reason !== "eligible");
+
+      return jsonResponse({
+        ok: true, dry_run: true, eligible_count: eligible.length, eligible,
+        blockers,
+        message: eligible.length > 0 ? `${eligible.length} prospect(s) prêt(s)` : "Aucun prospect ne passe les critères d'envoi réel",
+      }, 200, requestId);
     }
 
     const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
     const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
     const TWILIO_FROM = Deno.env.get("TWILIO_PHONE_NUMBER") || Deno.env.get("TWILIO_FROM_NUMBER");
     if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_FROM) {
-      throw new Error("Twilio credentials missing (TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_PHONE_NUMBER)");
+      throw new FunctionError("Twilio credentials missing (TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_PHONE_NUMBER)", 500, "missing_twilio_credentials");
     }
 
     const origin = req.headers.get("origin") || "https://unpro.ca";
@@ -68,7 +118,11 @@ Deno.serve(async (req) => {
         continue;
       }
       const token = randToken();
-      await supabase.from("verified_prospect_tokens").insert({ token, prospect_id: p.id });
+      const { error: tokenErr } = await supabase.from("verified_prospect_tokens").insert({ token, prospect_id: p.id });
+      if (tokenErr) {
+        results.push({ id: p.id, status: "failed", error: `token_create_failed: ${tokenErr.message}` });
+        continue;
+      }
       const link = `${origin}/unpro/activate/${token}`;
       const message = SMS_TEMPLATE(p.business_name, link);
 
@@ -103,12 +157,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ dry_run: false, sent: results.length, results }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ ok: true, dry_run: false, sent: results.filter(r => r.status === "sent").length, processed: results.length, results }, 200, requestId);
   } catch (e) {
-    return new Response(JSON.stringify({ error: (e as Error).message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const err = e instanceof FunctionError ? e : new FunctionError((e as Error).message);
+    console.error(`[${requestId}] ${FUNCTION_NAME} failed`, { code: err.code, status: err.status, message: err.message });
+    return jsonResponse({ ok: false, code: err.code, message: err.message, error: err.message }, err.status, requestId);
   }
 });

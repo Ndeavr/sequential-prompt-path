@@ -14,6 +14,7 @@ import {
   useEnrichProspect,
   useValidatePhone,
   useSendVerifiedBatch,
+  formatVerifiedFunctionError,
   statusLabel,
   type VerifiedProspect,
 } from "@/hooks/useVerifiedProspects";
@@ -43,7 +44,7 @@ export default function AdminVerifiedContractors() {
       const r = await enrich.mutateAsync(p.id);
       toast.success(`Enrichi (${r?.quality_score ?? "?"}/100) — ${r?.pages_scanned ?? 0} pages scannées`);
     } catch (e: any) {
-      toast.error(`Enrichissement échoué: ${e.message}`);
+      toast.error("Enrichissement échoué", { description: formatVerifiedFunctionError(e) });
     } finally { setBusyId(null); }
   }
 
@@ -53,7 +54,7 @@ export default function AdminVerifiedContractors() {
       const r = await validate.mutateAsync(p.id);
       toast.success(`Numéro: ${r?.status ?? "inconnu"}`);
     } catch (e: any) {
-      toast.error(`Validation échouée: ${e.message}`);
+      toast.error("Validation échouée", { description: formatVerifiedFunctionError(e) });
     } finally { setBusyId(null); }
   }
 
@@ -61,7 +62,7 @@ export default function AdminVerifiedContractors() {
     try {
       const r = await send.mutateAsync({ limit: 10, dry_run: true });
       toast.info(`${r?.eligible_count ?? 0} prospect(s) éligible(s) — prêt à envoyer`);
-    } catch (e: any) { toast.error(`Test échoué: ${e.message}`); }
+    } catch (e: any) { toast.error("Test échoué", { description: formatVerifiedFunctionError(e) }); }
   }
 
   async function handleSend() {
@@ -70,7 +71,7 @@ export default function AdminVerifiedContractors() {
       const r = await send.mutateAsync({ limit: 10, dry_run: false });
       toast.success(`${r?.sent ?? 0} SMS envoyé(s). Voir la table pour les SID Twilio.`);
       refetch();
-    } catch (e: any) { toast.error(`Envoi échoué: ${e.message}`); }
+    } catch (e: any) { toast.error("Envoi échoué", { description: formatVerifiedFunctionError(e) }); }
   }
 
   return (
@@ -150,7 +151,14 @@ export default function AdminVerifiedContractors() {
                       ) : <span className="text-muted-foreground text-xs">—</span>}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={`text-[11px] border ${toneClass[s.tone]}`}>{s.label}</Badge>
+                      <div className="space-y-1">
+                        <Badge variant="outline" className={`text-[11px] border ${toneClass[s.tone]}`}>{s.label}</Badge>
+                        {p.outreach_failure_reason && (
+                          <div className="max-w-[220px] truncate text-[10px] text-muted-foreground" title={p.outreach_failure_reason}>
+                            {p.outreach_failure_reason}
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
