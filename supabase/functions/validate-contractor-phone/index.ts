@@ -82,6 +82,7 @@ Deno.serve(async (req) => {
     let line_type = "unknown";
     let status = "unverified";
     let lookupError: string | null = null;
+    let lookupDetails: Record<string, unknown> | null = null;
 
     if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN) {
       const ctrl = new AbortController();
@@ -96,11 +97,20 @@ Deno.serve(async (req) => {
         try {
           const j = JSON.parse(body);
           const t = j?.line_type_intelligence?.type as string | undefined;
+          lookupDetails = {
+            valid: j?.valid,
+            validation_errors: j?.validation_errors,
+            line_type_intelligence: j?.line_type_intelligence ?? null,
+          };
           if (t === "mobile") { line_type = "mobile"; status = "valid_mobile"; }
           else if (t === "nonFixedVoip") { line_type = "voip"; status = "valid_sms_capable_voip"; }
           else if (t === "fixedVoip") { line_type = "voip"; status = "valid_sms_capable_voip"; }
           else if (t === "landline") { line_type = "landline"; status = "landline"; }
-          else { line_type = "unknown"; status = "unverified"; }
+          else {
+            line_type = "unknown";
+            status = "unverified";
+            lookupError = `Twilio Lookup returned no SMS-capable line type: ${t ?? "missing"}`;
+          }
         } catch { lookupError = "Réponse Twilio Lookup illisible"; }
       } else {
         lookupError = `Twilio Lookup ${resp.status}: ${body.slice(0, 300)}`;
@@ -121,7 +131,7 @@ Deno.serve(async (req) => {
     }).eq("id", prospect_id);
     if (updateErr) throw new FunctionError(updateErr.message, 500, "prospect_update_failed");
 
-    return jsonResponse({ ok: true, e164, status, line_type, sms_eligible, lookup_error: lookupError }, 200, requestId);
+    return jsonResponse({ ok: true, e164, status, line_type, sms_eligible, lookup_error: lookupError, lookup_details: lookupDetails }, 200, requestId);
   } catch (e) {
     const err = e instanceof FunctionError ? e : new FunctionError((e as Error).message);
     console.error(`[${requestId}] ${FUNCTION_NAME} failed`, { code: err.code, status: err.status, message: err.message });
