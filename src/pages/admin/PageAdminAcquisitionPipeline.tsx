@@ -7,11 +7,13 @@ import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Loader2, RefreshCw } from "lucide-react";
 import {
+  useAcquisitionSourceHealth,
   useFunnelDaily,
   useCoverage,
   useRejectionReasons,
   useRecentEvents,
   usePipelineProspects,
+  useFirstDollarTracker,
 } from "@/hooks/useAcquisitionFunnel";
 import {
   ACQUISITION_REASONS,
@@ -36,24 +38,92 @@ function StatTile({ label, value, tone = "default" }: { label: string; value: nu
   );
 }
 
+function SourceHealthTable({ rows }: { rows: ReturnType<typeof useAcquisitionSourceHealth>["data"] }) {
+  const ordered = rows ?? [];
+  const statusClass: Record<string, string> = {
+    HEALTHY: "text-emerald-300",
+    DEGRADED: "text-amber-300",
+    "SCRAPER DOWN": "text-rose-300",
+    "FALLBACK RUNNING": "text-cyan-300",
+  };
+  return (
+    <div className="overflow-x-auto rounded-2xl border border-white/10">
+      <table className="w-full text-xs">
+        <thead className="bg-white/[0.04] text-white/60">
+          <tr>
+            <th className="text-left px-3 py-2">Source</th>
+            <th className="text-left px-3 py-2">Statut</th>
+            <th className="text-left px-3 py-2">Dernier run</th>
+            <th className="text-right px-3 py-2">Trouvées</th>
+            <th className="text-left px-3 py-2">Erreur</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ordered.map((row) => (
+            <tr key={row.source} className="border-t border-white/5">
+              <td className="px-3 py-2 font-medium">{SOURCE_LABELS[row.source] ?? row.source}</td>
+              <td className={`px-3 py-2 font-semibold ${statusClass[row.display_status] ?? "text-white/70"}`}>
+                {row.display_status}
+              </td>
+              <td className="px-3 py-2 text-white/60">
+                {row.last_run_at ? formatDistanceToNow(new Date(row.last_run_at), { addSuffix: true, locale: fr }) : "Jamais"}
+              </td>
+              <td className="px-3 py-2 text-right font-semibold">{row.is_down ? "—" : row.found_24h}</td>
+              <td className="px-3 py-2 text-white/60 max-w-[260px] truncate" title={row.last_error_message ?? ""}>
+                {row.last_error_message ?? "—"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function FirstDollarMini({ tracker }: { tracker: ReturnType<typeof useFirstDollarTracker>["data"] }) {
+  const milestones = [
+    ["First SMS Sent", tracker?.first_sms_sent_at],
+    ["First Click", tracker?.first_click_at],
+    ["First Activation", tracker?.first_activation_at],
+    ["First $1 Payment", tracker?.first_paid_at],
+    ["First Appointment", tracker?.first_appointment_at],
+  ];
+  return (
+    <section>
+      <h2 className="text-xs uppercase tracking-wide text-white/40 mb-2">First Dollar Tracker</h2>
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+        {milestones.map(([label, at]) => (
+          <div key={label as string} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="text-[11px] uppercase tracking-wide text-white/50">{label}</div>
+            <div className={`mt-2 text-sm font-semibold ${at ? "text-emerald-300" : "text-amber-300"}`}>
+              {at ? formatDistanceToNow(new Date(at as string), { addSuffix: true, locale: fr }) : "En attente"}
+            </div>
+          </div>
+        ))}
+      </div>
+      {tracker?.next_missing_milestone && tracker.next_missing_milestone !== "Scale" && (
+        <div className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
+          Blocage revenu actuel : {tracker.next_missing_milestone}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function PageAdminAcquisitionPipeline() {
   const [filters, setFilters] = useState<{ stage?: string; source?: string; city?: string; category?: string; reason?: string }>({});
 
+  const sourceHealth = useAcquisitionSourceHealth();
   const funnel = useFunnelDaily();
   const coverage = useCoverage();
   const rejections = useRejectionReasons();
   const events = useRecentEvents(50);
   const prospects = usePipelineProspects(filters);
+  const firstDollar = useFirstDollarTracker();
 
   const stageCounts = useMemo(() => {
     const m: Record<string, number> = {};
     for (const r of funnel.data ?? []) m[r.stage] = (m[r.stage] ?? 0) + r.count;
-    return m;
-  }, [funnel.data]);
-
-  const sourceCounts = useMemo(() => {
-    const m: Record<string, number> = {};
-    for (const r of funnel.data ?? []) m[r.source] = (m[r.source] ?? 0) + r.count;
     return m;
   }, [funnel.data]);
 
@@ -92,13 +162,11 @@ export default function PageAdminAcquisitionPipeline() {
 
         {/* Sources */}
         <section>
-          <h2 className="text-xs uppercase tracking-wide text-white/40 mb-2">Sources (24h)</h2>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {["google_business","rbq","website","facebook","manual"].map((s) => (
-              <StatTile key={s} label={SOURCE_LABELS[s]} value={sourceCounts[s] ?? 0} />
-            ))}
-          </div>
+          <h2 className="text-xs uppercase tracking-wide text-white/40 mb-2">Santé des sources d'acquisition</h2>
+          <SourceHealthTable rows={sourceHealth.data} />
         </section>
+
+        <FirstDollarMini tracker={firstDollar.data} />
 
         {/* Funnel stats */}
         <section>

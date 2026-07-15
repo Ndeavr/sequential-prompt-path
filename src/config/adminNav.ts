@@ -9,7 +9,7 @@ import {
   Activity, Sparkles, Brain, Cpu, Bell, Heart, ScrollText, Settings,
   Ban, TestTube, Rocket, BarChart3, Wand2, Bot, FileText, Star,
   Tag, MapPin, Grid3X3, Network, Zap, Camera, ImageIcon, Send,
-  Inbox, Server, Target, Palette, FolderOpen, LayoutList,
+  Inbox, Server, Target, Palette, FolderOpen, LayoutList, AlertTriangle, Upload,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -32,6 +32,9 @@ export const adminNavGroups: NavGroup[] = [
       { to: "/admin/verification", label: "Qualification", icon: SearchCheck },
       { to: "/admin/validation", label: "Activation", icon: ShieldCheck },
       { to: "/admin/verified-contractors", label: "Active Members", icon: Shield },
+      { to: "/admin/acquisition-pipeline", label: "Acquisition Health", icon: Activity },
+      { to: "/admin/acquisition-diagnostics", label: "Diagnostics", icon: AlertTriangle },
+      { to: "/admin/import-contractors", label: "Import", icon: Upload },
       { to: "/admin/contractors", label: "All Contractors", icon: Briefcase },
     ],
   },
