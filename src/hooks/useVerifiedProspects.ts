@@ -28,6 +28,94 @@ export interface VerifiedProspect {
   created_at: string;
 }
 
+export class VerifiedFunctionError extends Error {
+  functionName: string;
+  status: number | "network";
+  requestId: string | null;
+  details: unknown;
+
+  constructor(args: {
+    functionName: string;
+    status: number | "network";
+    message: string;
+    requestId?: string | null;
+    details?: unknown;
+  }) {
+    super(args.message);
+    this.name = "VerifiedFunctionError";
+    this.functionName = args.functionName;
+    this.status = args.status;
+    this.requestId = args.requestId ?? null;
+    this.details = args.details;
+  }
+}
+
+export function formatVerifiedFunctionError(error: unknown): string {
+  if (error instanceof VerifiedFunctionError) {
+    return [
+      `Function: ${error.functionName}`,
+      `Status: ${error.status}`,
+      `Message: ${error.message}`,
+      error.requestId ? `Request ID: ${error.requestId}` : null,
+    ].filter(Boolean).join("\n");
+  }
+
+  const message = error instanceof Error ? error.message : "Erreur inconnue";
+  return `Message: ${message}`;
+}
+
+async function invokeVerifiedFunction<T>(functionName: string, body: Record<string, unknown>): Promise<T> {
+  const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token ?? anonKey;
+
+  if (!baseUrl || !anonKey) {
+    throw new VerifiedFunctionError({
+      functionName,
+      status: "network",
+      message: "Configuration navigateur manquante: URL backend ou clé publique absente.",
+    });
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/functions/v1/${functionName}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: anonKey,
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (networkError) {
+    throw new VerifiedFunctionError({
+      functionName,
+      status: "network",
+      message: "Appel impossible: fonction non déployée, CORS ou réseau bloqué.",
+      details: networkError,
+    });
+  }
+
+  const requestId = response.headers.get("x-request-id");
+  const text = await response.text();
+  let payload: any = null;
+  try { payload = text ? JSON.parse(text) : null; } catch { payload = { raw: text }; }
+
+  if (!response.ok || payload?.ok === false) {
+    throw new VerifiedFunctionError({
+      functionName,
+      status: response.status,
+      message: payload?.message || payload?.error || response.statusText || "Fonction backend en échec.",
+      requestId: payload?.request_id || requestId,
+      details: payload,
+    });
+  }
+
+  return payload as T;
+}
+
 export function useVerifiedProspects() {
   return useQuery({
     queryKey: ["verified-prospects"],
@@ -47,11 +135,7 @@ export function useEnrichProspect() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (prospect_id: string) => {
-      const { data, error } = await supabase.functions.invoke("enrich-contractor-from-official-site", {
-        body: { prospect_id },
-      });
-      if (error) throw error;
-      return data;
+      return invokeVerifiedFunction<any>("enrich-contractor-from-official-site", { prospect_id });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["verified-prospects"] }),
   });
@@ -61,11 +145,7 @@ export function useValidatePhone() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (prospect_id: string) => {
-      const { data, error } = await supabase.functions.invoke("validate-contractor-phone", {
-        body: { prospect_id },
-      });
-      if (error) throw error;
-      return data;
+      return invokeVerifiedFunction<any>("validate-contractor-phone", { prospect_id });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["verified-prospects"] }),
   });
@@ -75,11 +155,7 @@ export function useSendVerifiedBatch() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ limit, dry_run }: { limit: number; dry_run: boolean }) => {
-      const { data, error } = await supabase.functions.invoke("send-verified-batch", {
-        body: { limit, dry_run },
-      });
-      if (error) throw error;
-      return data;
+      return invokeVerifiedFunction<any>("send-verified-batch", { limit, dry_run });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["verified-prospects"] }),
   });
@@ -91,6 +167,9 @@ export function statusLabel(p: VerifiedProspect): { label: string; tone: "ok" | 
   if (p.outreach_status === "delivered") return { label: "Livré", tone: "ok" };
   if (p.outreach_status === "sent") return { label: "Envoyé", tone: "info" };
   if (p.outreach_status === "failed") return { label: "Échec Twilio", tone: "err" };
+  if (p.outreach_failure_reason?.startsWith("enrichment_no_pages_scanned")) return { label: "Site inaccessible", tone: "err" };
+  if (p.outreach_failure_reason?.startsWith("enrichment_incomplete")) return { label: "Erreur enrichissement", tone: "warn" };
+  if (p.outreach_failure_reason?.startsWith("Twilio Lookup")) return { label: "Erreur validation", tone: "err" };
   if (p.phone_validation_status === "invalid") return { label: "Numéro invalide", tone: "err" };
   if (p.phone_validation_status === "landline") return { label: "Ligne fixe — email requis", tone: "warn" };
   if (p.phone_validation_status === "unverified") return { label: "Non vérifié", tone: "warn" };
