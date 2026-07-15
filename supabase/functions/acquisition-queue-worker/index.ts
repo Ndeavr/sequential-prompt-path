@@ -92,6 +92,16 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Emit worker cycle summary event
+    await supabase.from("acquisition_pipeline_events").insert({
+      stage: "worker_cycle",
+      metadata: {
+        enqueued: events.length,
+        ready_sms: readySms ?? 0,
+        sms_result: smsResult,
+      },
+    });
+
     return jsonResponse({
       ok: true,
       enqueued: events.length,

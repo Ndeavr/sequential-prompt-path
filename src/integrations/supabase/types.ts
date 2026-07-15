@@ -1368,6 +1368,56 @@ export type Database = {
         }
         Relationships: []
       }
+      acquisition_pipeline_events: {
+        Row: {
+          business_name: string | null
+          category: string | null
+          city: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          prospect_id: string | null
+          reason_code: string | null
+          reason_text: string | null
+          source: string | null
+          stage: string
+        }
+        Insert: {
+          business_name?: string | null
+          category?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          prospect_id?: string | null
+          reason_code?: string | null
+          reason_text?: string | null
+          source?: string | null
+          stage: string
+        }
+        Update: {
+          business_name?: string | null
+          category?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          prospect_id?: string | null
+          reason_code?: string | null
+          reason_text?: string | null
+          source?: string | null
+          stage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acquisition_pipeline_events_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "verified_contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       acquisition_pipeline_logs: {
         Row: {
           created_at: string
@@ -82827,6 +82877,7 @@ export type Database = {
           google_business_url: string | null
           google_place_id: string | null
           id: string
+          last_action_at: string | null
           last_enriched_at: string | null
           legal_name: string | null
           outreach_clicked_at: string | null
@@ -82844,10 +82895,13 @@ export type Database = {
           postal_code: string | null
           rbq_number: string | null
           rbq_source_url: string | null
+          rejection_reason_code: string | null
+          rejection_reason_text: string | null
           service_areas: string[] | null
           sms_eligibility_confidence: string | null
           sms_eligibility_tier: string | null
           sms_eligible: boolean
+          source: string | null
           source_urls: Json
           street_address: string | null
           updated_at: string
@@ -82868,6 +82922,7 @@ export type Database = {
           google_business_url?: string | null
           google_place_id?: string | null
           id?: string
+          last_action_at?: string | null
           last_enriched_at?: string | null
           legal_name?: string | null
           outreach_clicked_at?: string | null
@@ -82885,10 +82940,13 @@ export type Database = {
           postal_code?: string | null
           rbq_number?: string | null
           rbq_source_url?: string | null
+          rejection_reason_code?: string | null
+          rejection_reason_text?: string | null
           service_areas?: string[] | null
           sms_eligibility_confidence?: string | null
           sms_eligibility_tier?: string | null
           sms_eligible?: boolean
+          source?: string | null
           source_urls?: Json
           street_address?: string | null
           updated_at?: string
@@ -82909,6 +82967,7 @@ export type Database = {
           google_business_url?: string | null
           google_place_id?: string | null
           id?: string
+          last_action_at?: string | null
           last_enriched_at?: string | null
           legal_name?: string | null
           outreach_clicked_at?: string | null
@@ -82926,10 +82985,13 @@ export type Database = {
           postal_code?: string | null
           rbq_number?: string | null
           rbq_source_url?: string | null
+          rejection_reason_code?: string | null
+          rejection_reason_text?: string | null
           service_areas?: string[] | null
           sms_eligibility_confidence?: string | null
           sms_eligibility_tier?: string | null
           sms_eligible?: boolean
+          source?: string | null
           source_urls?: Json
           street_address?: string | null
           updated_at?: string
@@ -84562,6 +84624,27 @@ export type Database = {
         }
         Relationships: []
       }
+      v_acquisition_coverage: {
+        Row: {
+          category: string | null
+          city: string | null
+          contacted_count: number | null
+          ready_count: number | null
+          total_count: number | null
+          verified_count: number | null
+        }
+        Relationships: []
+      }
+      v_acquisition_funnel_daily: {
+        Row: {
+          category: string | null
+          city: string | null
+          count: number | null
+          source: string | null
+          stage: string | null
+        }
+        Relationships: []
+      }
       v_acquisition_queues: {
         Row: {
           acquisition_priority_score: number | null
@@ -84860,6 +84943,14 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      v_acquisition_rejection_reasons: {
+        Row: {
+          count: number | null
+          reason_code: string | null
+          sample_reason_text: string | null
+        }
+        Relationships: []
       }
       v_active_leads: {
         Row: {
