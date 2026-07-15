@@ -30,7 +30,6 @@ const PageAdminLiveRuns = lazyWithRetry(() => import("@/pages/admin/PageAdminLiv
 const AdminFunnelAudit = lazyWithRetry(() => import("@/pages/admin/AdminFunnelAudit"));
 const AdminFunnelDebug = lazyWithRetry(() => import("@/pages/admin/AdminFunnelDebug"));
 const AdminConversionTruth = lazyWithRetry(() => import("@/pages/admin/AdminConversionTruth"));
-const AdminVerifiedContractors = lazyWithRetry(() => import("@/pages/admin/AdminVerifiedContractors"));
 const PageContractorGeneratorHealth = lazyWithRetry(() => import("@/pages/admin/PageContractorGeneratorHealth"));
 const PageMemoryHealth = lazyWithRetry(() => import("@/pages/admin/PageMemoryHealth"));
 const PageRevenueReality = lazyWithRetry(() => import("@/pages/admin/PageRevenueReality"));
