@@ -4,6 +4,7 @@
  * Blocks any prospect that is not sms_eligible / not mobile / lacks source.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { logPipelineEvent, REASON } from "../_shared/acquisitionPipeline.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
