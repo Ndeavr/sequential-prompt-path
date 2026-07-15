@@ -9,7 +9,7 @@ import {
   Activity, Sparkles, Brain, Cpu, Bell, Heart, ScrollText, Settings,
   Ban, TestTube, Rocket, BarChart3, Wand2, Bot, FileText, Star,
   Tag, MapPin, Grid3X3, Network, Zap, Camera, ImageIcon, Send,
-  Inbox, Server, Target, Palette, FolderOpen, LayoutList,
+  Inbox, Server, Target, Palette, FolderOpen, LayoutList, AlertTriangle, Upload,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
