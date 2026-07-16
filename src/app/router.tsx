@@ -47,6 +47,7 @@ const PageAdminProspectSMS = lazyWithRetry(() => import("@/pages/admin/PageAdmin
 const PageFounderVerification = lazyWithRetry(() => import("@/pages/admin/PageFounderVerification"));
 const PageSmsHealth = lazyWithRetry(() => import("@/pages/admin/PageSmsHealth"));
 const PageAdminSystemTime = lazyWithRetry(() => import("@/pages/admin/PageAdminSystemTime"));
+const PageAdminSystemIntegrity = lazyWithRetry(() => import("@/pages/admin/PageAdminSystemIntegrity"));
 const PageCuriosityLanding = lazyWithRetry(() => import("@/pages/curiosity/PageCuriosityLanding"));
 const PageSendWindowPolicy = lazyWithRetry(() => import("@/pages/admin/PageSendWindowPolicy"));
 
