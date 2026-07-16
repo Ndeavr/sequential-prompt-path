@@ -15,7 +15,7 @@ import {
   Ban, TestTube, Rocket, BarChart3, Wand2, Bot, FileText, Star,
   Tag, MapPin, Grid3X3, Network, Zap, Camera, ImageIcon, Send,
   Inbox, Server, Target, Palette, FolderOpen, LayoutList, AlertTriangle,
-  Upload, HandCoins, UserCheck, Handshake, Radio, Gauge,
+  Upload, HandCoins, UserCheck, Handshake, Radio, Gauge, Clock,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
