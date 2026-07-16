@@ -4285,6 +4285,147 @@ export type Database = {
         }
         Relationships: []
       }
+      affiliate_activation_links: {
+        Row: {
+          activated_user_id: string | null
+          affiliate_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          metadata: Json
+          prospect_id: string
+          single_use: boolean
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          activated_user_id?: string | null
+          affiliate_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          metadata?: Json
+          prospect_id: string
+          single_use?: boolean
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          activated_user_id?: string | null
+          affiliate_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          metadata?: Json
+          prospect_id?: string
+          single_use?: boolean
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_activation_links_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_activities: {
+        Row: {
+          activity_type: string
+          affiliate_id: string
+          created_at: string
+          id: string
+          metadata: Json
+          note: string | null
+          outcome: string | null
+          prospect_id: string
+        }
+        Insert: {
+          activity_type: string
+          affiliate_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          note?: string | null
+          outcome?: string | null
+          prospect_id: string
+        }
+        Update: {
+          activity_type?: string
+          affiliate_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          note?: string | null
+          outcome?: string | null
+          prospect_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_activities_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_assignments: {
+        Row: {
+          affiliate_id: string
+          assigned_at: string
+          created_at: string
+          id: string
+          last_activity_at: string | null
+          lost_reason: string | null
+          priority: number
+          prospect_id: string
+          recommended_plan_slug: string | null
+          status: string
+          updated_at: string
+          won_at: string | null
+        }
+        Insert: {
+          affiliate_id: string
+          assigned_at?: string
+          created_at?: string
+          id?: string
+          last_activity_at?: string | null
+          lost_reason?: string | null
+          priority?: number
+          prospect_id: string
+          recommended_plan_slug?: string | null
+          status?: string
+          updated_at?: string
+          won_at?: string | null
+        }
+        Update: {
+          affiliate_id?: string
+          assigned_at?: string
+          created_at?: string
+          id?: string
+          last_activity_at?: string | null
+          lost_reason?: string | null
+          priority?: number
+          prospect_id?: string
+          recommended_plan_slug?: string | null
+          status?: string
+          updated_at?: string
+          won_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_assignments_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affiliate_attributions: {
         Row: {
           confidence_score: number | null
@@ -4383,6 +4524,62 @@ export type Database = {
             columns: ["link_id"]
             isOneToOne: false
             referencedRelation: "affiliate_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_commissions: {
+        Row: {
+          affiliate_id: string
+          contractor_user_id: string | null
+          created_at: string
+          first_payment_at: string | null
+          id: string
+          last_payment_at: string | null
+          metadata: Json
+          monthly_commission_cents: number
+          plan_slug: string
+          prospect_id: string | null
+          status: string
+          total_paid_cents: number
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id: string
+          contractor_user_id?: string | null
+          created_at?: string
+          first_payment_at?: string | null
+          id?: string
+          last_payment_at?: string | null
+          metadata?: Json
+          monthly_commission_cents?: number
+          plan_slug: string
+          prospect_id?: string | null
+          status?: string
+          total_paid_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string
+          contractor_user_id?: string | null
+          created_at?: string
+          first_payment_at?: string | null
+          id?: string
+          last_payment_at?: string | null
+          metadata?: Json
+          monthly_commission_cents?: number
+          plan_slug?: string
+          prospect_id?: string | null
+          status?: string
+          total_paid_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_commissions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_prospects"
             referencedColumns: ["id"]
           },
         ]
@@ -4490,6 +4687,98 @@ export type Database = {
             columns: ["affiliate_id"]
             isOneToOne: false
             referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_profiles: {
+        Row: {
+          active: boolean
+          commission_rate: number
+          created_at: string
+          display_name: string
+          phone: string | null
+          timezone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          commission_rate?: number
+          created_at?: string
+          display_name: string
+          phone?: string | null
+          timezone?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          commission_rate?: number
+          created_at?: string
+          display_name?: string
+          phone?: string | null
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      affiliate_proposals: {
+        Row: {
+          affiliate_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          monthly_price_cents: number
+          opened_at: string | null
+          paid_at: string | null
+          payload: Json
+          prospect_id: string
+          recommended_plan_slug: string
+          single_use: boolean
+          token_hash: string
+          updated_at: string
+          used_at: string | null
+        }
+        Insert: {
+          affiliate_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          monthly_price_cents: number
+          opened_at?: string | null
+          paid_at?: string | null
+          payload?: Json
+          prospect_id: string
+          recommended_plan_slug: string
+          single_use?: boolean
+          token_hash: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Update: {
+          affiliate_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          monthly_price_cents?: number
+          opened_at?: string | null
+          paid_at?: string | null
+          payload?: Json
+          prospect_id?: string
+          recommended_plan_slug?: string
+          single_use?: boolean
+          token_hash?: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_proposals_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_prospects"
             referencedColumns: ["id"]
           },
         ]
@@ -38337,6 +38626,7 @@ export type Database = {
         Row: {
           ai_score: number | null
           aipp_score: number | null
+          assigned_affiliate_id: string | null
           branding_score: number | null
           business_name: string
           category: string | null
@@ -38368,6 +38658,7 @@ export type Database = {
           needs_review: boolean
           notes: string | null
           outreach_status: string
+          owner_user_id: string | null
           paid_intent_confidence: number | null
           phone: string | null
           priority_tier: string
@@ -38401,6 +38692,7 @@ export type Database = {
         Insert: {
           ai_score?: number | null
           aipp_score?: number | null
+          assigned_affiliate_id?: string | null
           branding_score?: number | null
           business_name: string
           category?: string | null
@@ -38432,6 +38724,7 @@ export type Database = {
           needs_review?: boolean
           notes?: string | null
           outreach_status?: string
+          owner_user_id?: string | null
           paid_intent_confidence?: number | null
           phone?: string | null
           priority_tier?: string
@@ -38465,6 +38758,7 @@ export type Database = {
         Update: {
           ai_score?: number | null
           aipp_score?: number | null
+          assigned_affiliate_id?: string | null
           branding_score?: number | null
           business_name?: string
           category?: string | null
@@ -38496,6 +38790,7 @@ export type Database = {
           needs_review?: boolean
           notes?: string | null
           outreach_status?: string
+          owner_user_id?: string | null
           paid_intent_confidence?: number | null
           phone?: string | null
           priority_tier?: string
@@ -57843,34 +58138,52 @@ export type Database = {
       }
       outreach_logs: {
         Row: {
+          body_snapshot: string | null
+          channel: string
           clicked: boolean | null
+          clicked_at: string | null
           converted: boolean | null
+          converted_at: string | null
           created_at: string
           email_sent: boolean | null
           id: string
           lead_id: string | null
           opened: boolean | null
+          prospect_id: string | null
           sent_at: string | null
+          template_id: string | null
         }
         Insert: {
+          body_snapshot?: string | null
+          channel?: string
           clicked?: boolean | null
+          clicked_at?: string | null
           converted?: boolean | null
+          converted_at?: string | null
           created_at?: string
           email_sent?: boolean | null
           id?: string
           lead_id?: string | null
           opened?: boolean | null
+          prospect_id?: string | null
           sent_at?: string | null
+          template_id?: string | null
         }
         Update: {
+          body_snapshot?: string | null
+          channel?: string
           clicked?: boolean | null
+          clicked_at?: string | null
           converted?: boolean | null
+          converted_at?: string | null
           created_at?: string
           email_sent?: boolean | null
           id?: string
           lead_id?: string | null
           opened?: boolean | null
+          prospect_id?: string | null
           sent_at?: string | null
+          template_id?: string | null
         }
         Relationships: [
           {
@@ -57878,6 +58191,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "entrepreneur_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_logs_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_prospects"
             referencedColumns: ["id"]
           },
         ]
@@ -87508,6 +87828,7 @@ export type Database = {
         Returns: undefined
       }
       is_admin: { Args: never; Returns: boolean }
+      is_affiliate: { Args: { _user_id: string }; Returns: boolean }
       is_syndicate_admin: {
         Args: { _syndicate_id: string; _user_id: string }
         Returns: boolean
@@ -87720,10 +88041,12 @@ export type Database = {
         }
         Returns: Json
       }
+      resolve_activation_link: { Args: { _token: string }; Returns: Json }
       resolve_curiosity_slug: {
         Args: { _slug: string; _token: string }
         Returns: Json
       }
+      resolve_proposal_link: { Args: { _token: string }; Returns: Json }
       resolve_qr_token: { Args: { _token: string }; Returns: Json }
       rpc_acquisition_intelligence_summary: { Args: never; Returns: Json }
       rpc_get_cluster_fill_ratio: {
@@ -87881,7 +88204,7 @@ export type Database = {
         | "partially_verified"
         | "verified"
         | "disputed"
-      app_role: "homeowner" | "contractor" | "admin" | "partner"
+      app_role: "homeowner" | "contractor" | "admin" | "partner" | "affiliate"
       appointment_status:
         | "requested"
         | "under_review"
@@ -88179,7 +88502,7 @@ export const Constants = {
         "verified",
         "disputed",
       ],
-      app_role: ["homeowner", "contractor", "admin", "partner"],
+      app_role: ["homeowner", "contractor", "admin", "partner", "affiliate"],
       appointment_status: [
         "requested",
         "under_review",
