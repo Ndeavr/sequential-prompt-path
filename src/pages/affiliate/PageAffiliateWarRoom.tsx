@@ -23,6 +23,7 @@ import { formatPrice } from "@/lib/formatPrice";
 import { PhoneCall, MousePointerClick, FileText, CreditCard, DollarSign, ArrowRight, Plus, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddLeadSheet } from "@/features/affiliate/addLead/AddLeadSheet";
+import { AssignedLeadsList } from "@/features/affiliate/warRoom/AssignedLeadsList";
 
 type Assignment = {
   id: string;
