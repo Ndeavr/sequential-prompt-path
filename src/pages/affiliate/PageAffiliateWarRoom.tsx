@@ -9,17 +9,20 @@
  *  - Who is waiting on payment?
  *  - How much potential commission is on my desk?
  */
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAffiliateSelf } from "@/hooks/useAffiliateSelf";
 import {
   aggregatePipeline,
   recommendPlan,
 } from "@/features/affiliate/revenueMath";
 import { formatPrice } from "@/lib/formatPrice";
-import { PhoneCall, MousePointerClick, FileText, CreditCard, DollarSign, ArrowRight } from "lucide-react";
+import { PhoneCall, MousePointerClick, FileText, CreditCard, DollarSign, ArrowRight, Plus, Camera } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AddLeadSheet } from "@/features/affiliate/addLead/AddLeadSheet";
 
 type Assignment = {
   id: string;
