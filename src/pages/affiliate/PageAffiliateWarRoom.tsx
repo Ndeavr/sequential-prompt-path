@@ -213,6 +213,24 @@ export default function PageAffiliateWarRoom() {
           )}
         </section>
 
+        {/* Assigned leads with 1-click SMS perso */}
+        {affiliate && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-foreground">Mes prospects (SMS 1-clic)</h2>
+              <span className="text-xs text-muted-foreground">Contact direct depuis mon téléphone</span>
+            </div>
+            <AssignedLeadsList
+              affiliate={{
+                id: affiliate.id,
+                first_name: (affiliate as any).first_name ?? null,
+                name: affiliate.name,
+                referral_code: affiliate.referral_code,
+              }}
+            />
+          </section>
+        )}
+
         {/* Waiting proposal */}
         {buckets.proposalSent.length > 0 && (
           <section className="space-y-3">
