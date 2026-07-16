@@ -30741,8 +30741,10 @@ export type Database = {
           archived_at: string | null
           archived_reason: string | null
           assigned_admin_id: string | null
+          assigned_affiliate_id: string | null
           attributed_user_id: string | null
           attribution_type: string | null
+          business_card_url: string | null
           category_primary: string | null
           category_secondary: string | null
           city: string | null
@@ -30751,10 +30753,13 @@ export type Database = {
           company_failure_reason: string | null
           company_name: string | null
           company_name_normalized: string | null
+          consent_channel: string | null
+          consent_to_contact: string | null
           contact_method: string
           contractor_id: string | null
           created_at: string
           created_by: string | null
+          created_by_affiliate_id: string | null
           created_by_role_code: string | null
           curiosity_slug: string | null
           curiosity_token: string | null
@@ -30769,6 +30774,8 @@ export type Database = {
           enrichment_last_run_at: string | null
           enrichment_last_source: string | null
           enrichment_status: string
+          extraction_confidence: Json | null
+          extraction_raw: Json | null
           failure_code: string | null
           first_name: string | null
           fit_reasons: Json | null
@@ -30851,8 +30858,10 @@ export type Database = {
           archived_at?: string | null
           archived_reason?: string | null
           assigned_admin_id?: string | null
+          assigned_affiliate_id?: string | null
           attributed_user_id?: string | null
           attribution_type?: string | null
+          business_card_url?: string | null
           category_primary?: string | null
           category_secondary?: string | null
           city?: string | null
@@ -30861,10 +30870,13 @@ export type Database = {
           company_failure_reason?: string | null
           company_name?: string | null
           company_name_normalized?: string | null
+          consent_channel?: string | null
+          consent_to_contact?: string | null
           contact_method?: string
           contractor_id?: string | null
           created_at?: string
           created_by?: string | null
+          created_by_affiliate_id?: string | null
           created_by_role_code?: string | null
           curiosity_slug?: string | null
           curiosity_token?: string | null
@@ -30879,6 +30891,8 @@ export type Database = {
           enrichment_last_run_at?: string | null
           enrichment_last_source?: string | null
           enrichment_status?: string
+          extraction_confidence?: Json | null
+          extraction_raw?: Json | null
           failure_code?: string | null
           first_name?: string | null
           fit_reasons?: Json | null
@@ -30961,8 +30975,10 @@ export type Database = {
           archived_at?: string | null
           archived_reason?: string | null
           assigned_admin_id?: string | null
+          assigned_affiliate_id?: string | null
           attributed_user_id?: string | null
           attribution_type?: string | null
+          business_card_url?: string | null
           category_primary?: string | null
           category_secondary?: string | null
           city?: string | null
@@ -30971,10 +30987,13 @@ export type Database = {
           company_failure_reason?: string | null
           company_name?: string | null
           company_name_normalized?: string | null
+          consent_channel?: string | null
+          consent_to_contact?: string | null
           contact_method?: string
           contractor_id?: string | null
           created_at?: string
           created_by?: string | null
+          created_by_affiliate_id?: string | null
           created_by_role_code?: string | null
           curiosity_slug?: string | null
           curiosity_token?: string | null
@@ -30989,6 +31008,8 @@ export type Database = {
           enrichment_last_run_at?: string | null
           enrichment_last_source?: string | null
           enrichment_status?: string
+          extraction_confidence?: Json | null
+          extraction_raw?: Json | null
           failure_code?: string | null
           first_name?: string | null
           fit_reasons?: Json | null
@@ -31066,6 +31087,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "contractor_leads_assigned_affiliate_id_fkey"
+            columns: ["assigned_affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "contractor_leads_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
@@ -31113,6 +31141,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_created_by_affiliate_id_fkey"
+            columns: ["created_by_affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "contractor_leads_scanner_session_id_fkey"
@@ -88204,6 +88239,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_affiliate: { Args: { _user_id: string }; Returns: boolean }
+      is_affiliate_owner: { Args: { _affiliate_id: string }; Returns: boolean }
       is_syndicate_admin: {
         Args: { _syndicate_id: string; _user_id: string }
         Returns: boolean

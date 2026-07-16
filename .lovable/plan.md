@@ -1,133 +1,152 @@
-# PHASE 2 — System Integrity Engine
 
-Objectif : UNPRO s'auto-audite en permanence et n'affiche que des états vérifiés. Identifier exactement où le tunnel se bloque entre Scraping → SMS → Clic → Compte → Paiement 1 $ → Activation → Rendez-vous.
+# Ajout de leads par affilié — War Room
+
+Objectif : permettre à un affilié (Lorraine) d'ajouter un prospect en < 30 s depuis son téléphone, via 4 canaux, avec extraction IA, validation humaine, détection de doublons et attribution automatique.
 
 ---
 
-## 1. Verification Status Engine
+## 1. Entrée UI — War Room affilié
 
-Table `contractor_verification_status` (une ligne par entrepreneur) avec pour chaque dimension un statut `verified | partial | missing` + `last_checked_at` + `evidence jsonb` :
+Emplacement : `src/pages/affiliate/PageAffiliateWarRoom.tsx` (ou équivalent existant).
 
-- `identity` — nom légal vs saisi
-- `rbq` — API Régie du bâtiment (active / expire < 60j / invalide)
-- `neq` — Registraire des entreprises (confirmé / introuvable / invalide)
-- `website` — HTTP 200 + contenu scrappé
-- `google_business` — Place ID + rating + reviews
-- `reviews_imported` — count vs source
-- `photos` — count ≥ 10 / 1-9 / 0
-- `insurance` — document uploadé + validé humain
+- Bouton principal en haut : **+ Ajouter un prospect** (sticky sur mobile).
+- **FAB caméra flottant** en bas à droite (mobile) → ouvre directement le mode Photo de carte.
+- Au clic sur le bouton principal → `<AddLeadSheet>` (Drawer bottom sur mobile, Dialog desktop) avec 4 tuiles :
+  1. Saisie rapide
+  2. Photo de carte d'affaires
+  3. Importer photo/fichier
+  4. Depuis un site Web
 
-Edge function `verification-status-refresh` (cron horaire + on-demand) recalcule chaque dimension à partir de sources réelles. Aucun fallback simulé — si la source échoue, statut reste `unknown` avec `FailureCode.SOURCE_UNAVAILABLE`.
+---
 
-Composant `<VerificationBadgeStack contractorId>` remplace toutes les pastilles "Vérifié" hardcodées dans le profil entrepreneur, l'admin et l'affichage propriétaire.
+## 2. Les 4 modes de capture
 
-## 2. Business Analysis Engine
+### Mode 1 — Saisie rapide
+Composant : `<QuickEntryForm>`.
+- Champs : entreprise, contact, téléphone, courriel, site, ville, catégorie, note, source du lead.
+- Téléphone : `useNormalizedInput('phone')` (existant) — accepte tous formats, normalise en E.164.
+- Courriel : `useNormalizedInput('email')`. Site : `useNormalizedInput('url')`. Ville : autocomplete `AutocompleteInput` (portal).
+- Catégorie : select basé sur `activities_primary`.
+- Boutons finaux : Enregistrer / Enregistrer + SMS perso / Enregistrer + Appeler.
 
-Edge function `business-analysis` appelée par Alex et par le refresh :
+### Mode 2 — Photo de carte d'affaires
+Composant : `<BusinessCardCapture>`.
+- Input `<input type="file" accept="image/*" capture="environment">` — mobile propose caméra + galerie.
+- Upload direct vers bucket Storage `business-cards` (privé, RLS affilié).
+- Appel edge `extract-business-card` (Gemini 2.5 Flash vision) → JSON structuré.
+- Écran de validation `<ExtractedLeadReview>` : chaque champ éditable, badge de confiance par champ.
+- Actions : Corriger / Ajouter le prospect.
+- **Règle** : jamais de création silencieuse — validation humaine obligatoire.
 
-Calcule 7 signaux (présence web, réputation, complétude profil, cohérence données, couverture géo, qualité contenu, ancienneté) → stocke dans `contractor_business_analysis` avec `found[]`, `missing[]`, `recommended_actions[]`.
+### Mode 3 — Import fichier
+Composant : `<FileImportFlow>`.
+- Accepte : JPG, PNG, HEIC, PDF, CSV, XLSX.
+- Détection type MIME :
+  - Image/PDF → edge `extract-business-card` (batch si multi-pages).
+  - CSV/XLSX → parse client avec PapaParse / SheetJS → mapping colonnes `<ColumnMapper>` (auto-détection heuristique).
+- Rapport final : détectés / prêts / doublons / invalides. Écran de validation groupée avant insert.
 
-Component `<BusinessAnalysisPanel>` affiche uniquement les champs réellement calculés. Si donnée absente → « Non disponible » (jamais de placeholder).
+### Mode 4 — Depuis un site Web
+Composant : `<WebsiteEnrichment>`.
+- Champ unique intelligent : accepte URL, nom d'entreprise, ou téléphone.
+- Edge function `enrich-lead-from-web` :
+  - Firecrawl scrape (formats `markdown`, `branding`, `links`).
+  - Extraction Gemini : nom légal, tél, courriel, adresse, villes desservies, catégorie, services, réseaux sociaux, Google Business, RBQ, dirigeants.
+  - Cross-check RBQ/NEQ via `verification-status-refresh` déjà en place.
+- Écran de validation identique au mode 2.
+- **Ne jamais écraser** les valeurs déjà saisies par l'affilié.
 
-## 3. System Integrity Monitor — `/admin/system-integrity`
+---
 
-Nouvelle page admin avec 6 cartes temps réel alimentées par des vues SQL sur `platform_operation_outcomes` (dernières 24 h) :
+## 3. Détection de doublons (transverse)
 
-- **Scraping** — trouvées / rejetées / validées
-- **SMS** — envoyés / livrés / échoués / taux
-- **Email** — envoyés / ouverts / cliqués / échecs
-- **Onboarding** — visites / comptes / essais 1 $ / conversions
-- **Stripe** — paiements OK/KO, webhooks reçus vs attendus
-- **Matching** — demandes / compatibles / rendez-vous créés
+Edge function `lead-dedupe-check` appelée avant tout INSERT :
+- Match sur : téléphone E.164, email, domaine site, nom normalisé + ville, RBQ, NEQ.
+- Retour : `{ match: contractor|null, similarity, existing_owner, last_contact_at, status }`.
+- UI `<DuplicateWarning>` : Voir le prospect / Fusionner / Annuler.
 
-Chaque carte a un état `healthy | degraded | down` basé sur seuils configurables (`system_integrity_thresholds`).
+---
 
-## 4. Global Health Score
+## 4. Attribution & consentement
 
-Vue `v_system_health_score` : moyenne pondérée des 6 cartes → 0-100.
+Tous les leads ajoutés en manuel → insert dans `contractor_leads` (existant) avec :
+- `created_by_affiliate_id` = affilié courant
+- `assigned_affiliate_id` = affilié courant
+- `lead_source` = `affiliate_manual`
+- `consent_channel` (obligatoire) : `business_card` | `in_person` | `referral` | `public_website` | `public_directory` | `event` | `existing_client` | `other`
+- `consent_to_contact` : `yes` | `no` | `unknown` — pilote les actions disponibles (SMS bloqué si `no`).
 
-- 90-100 vert · 70-89 jaune · 0-69 rouge
+---
 
-Widget `<SystemHealthBadge>` en header admin. Historique 30 j dans `system_health_snapshots` (cron horaire).
+## 5. Actions post-création
 
-## 5. Auto-Repair Engine
+Modal succès `<LeadCreatedActions>` :
+- SMS perso → `sms:` deep link avec message pré-rempli.
+- Appeler → `tel:` deep link.
+- Envoyer invitation UNPRO → edge existante `send-affiliate-invite`.
+- Ajouter note / Programmer suivi.
 
-Edge function `auto-repair-tick` (cron `0 * * * *`) :
+---
 
-- Ping Twilio, Resend, Stripe, edge functions clés, cron jobs
-- Sur échec → tentative réparation via `withRetry` (déjà en place)
-- Journalise dans `auto_repair_attempts` (succès / échec / raison)
-- Si irréparable → insert dans `automation_blockers` + SMS admin (via `admin_sms_recipients` déjà créé)
+## 6. Fiche lead
 
-Cockpit dans `/admin/system-integrity` liste les tentatives et blockers ouverts.
+Extension `<LeadDetailDrawer>` déjà présent (Command Center) pour afficher :
+photo originale carte, source, données extraites vs saisies, historique modifications, SMS préparés, appels, suivis, statut onboarding, plan suggéré, commission potentielle, propriétaire.
 
-## 6. First 1 $ Tracker
+---
 
-Widget permanent en haut de `/admin/system-integrity` et `/admin/launch-war-room` :
-
-Étapes suivies via `platform_operation_outcomes` filtrées par première conversion :
+## Technique — récapitulatif
 
 ```text
-[ ] Prospect identifié
-[ ] SMS livré
-[ ] Clic
-[ ] Compte créé
-[ ] Paiement 1 $
-[ ] Profil activé
-[ ] Première demande compatible
-[ ] Premier rendez-vous
+Frontend
+  src/pages/affiliate/PageAffiliateWarRoom.tsx          (bouton + FAB)
+  src/features/affiliate/addLead/
+    AddLeadSheet.tsx
+    QuickEntryForm.tsx
+    BusinessCardCapture.tsx
+    FileImportFlow.tsx
+    WebsiteEnrichment.tsx
+    ExtractedLeadReview.tsx
+    ColumnMapper.tsx
+    DuplicateWarning.tsx
+    LeadCreatedActions.tsx
+    useAddLead.ts        (orchestrateur : dedupe → insert → outcome)
+
+Edge functions (Supabase)
+  extract-business-card    (Gemini vision, JPG/PNG/HEIC/PDF)
+  enrich-lead-from-web     (Firecrawl + Gemini)
+  lead-dedupe-check        (SQL similarity + RBQ/NEQ)
+  (réutilise) verification-status-refresh, send-affiliate-invite
+
+Storage
+  business-cards/ (privé, RLS: affilié = owner)
+
+DB (migration)
+  ALTER TABLE contractor_leads ADD
+    created_by_affiliate_id uuid,
+    assigned_affiliate_id uuid,
+    consent_channel text,
+    consent_to_contact text,
+    business_card_url text,
+    extraction_raw jsonb,
+    extraction_confidence jsonb;
+  INDEX sur phone_e164, email, domain, rbq_number, neq
+  RLS: affilié lit/écrit ses propres leads; admin full.
+  GRANTs standards.
+
+Reliability
+  reportOutcome() sur chaque étape (extract, enrich, dedupe, insert)
+  FailureCode: EXTRACTION_LOW_CONFIDENCE, DUPLICATE_FOUND, SOURCE_UNAVAILABLE
 ```
-
-Chaque étape affiche l'ID du premier lead qui l'a atteinte et l'horodatage (America/Toronto). Étape bloquante mise en évidence avec la `FailureCode` la plus fréquente.
-
-## 7. No Fake Data Policy
-
-Ajout d'un lint `content-guard/no-fake-verified.ts` qui interdit les chaînes hardcodées "Vérifié", "Analysé", "Compatible" dans les composants d'affichage entrepreneur/propriétaire hors du `<VerificationBadgeStack>`. Scan CI → `ui_accessibility_audit`-style table `content_integrity_audit`.
-
-Tous les composants existants affichant un statut sans source réelle sont convertis :
-- `EntrepreneurProfileHeader` → utilise `contractor_verification_status`
-- `SmartRecommendationCard` (compat) → n'affiche score que si `compatibility_memory` a du signal réel
-- Cartes appointments → « Aucun rendez-vous disponible » si `bookings` vide
-
----
-
-## Détails techniques
-
-**Migrations** (une seule) :
-- Tables : `contractor_verification_status`, `contractor_business_analysis`, `system_integrity_thresholds`, `system_health_snapshots`, `auto_repair_attempts`, `content_integrity_audit`
-- Vues : `v_pipeline_scraping_health`, `v_pipeline_sms_health`, `v_pipeline_email_health`, `v_pipeline_onboarding_health`, `v_pipeline_stripe_health`, `v_pipeline_matching_health`, `v_system_health_score`, `v_first_paid_contractor_funnel`
-- GRANT authenticated (via `has_role(admin)`) + service_role
-- RLS : admin only pour tables integrity ; contractor peut lire son propre `verification_status`
-
-**Edge functions** :
-- `verification-status-refresh` (cron 0 * * * * + on-demand)
-- `business-analysis` (on-demand par Alex/admin)
-- `auto-repair-tick` (cron 0 * * * *)
-- `system-integrity-snapshot` (cron 0 * * * *)
-
-Toutes utilisent `_shared/reliability.ts` (FailureCode, reportOutcome) et `_shared/timezone.ts` pour les timestamps.
-
-**Frontend** :
-- `src/pages/admin/PageAdminSystemIntegrity.tsx`
-- `src/features/systemIntegrity/` : `VerificationBadgeStack`, `BusinessAnalysisPanel`, `SystemHealthBadge`, `First1DollarTracker`, `AutoRepairFeed`, `IntegrityCard`
-- Hook `useSystemIntegrity()` (React Query, 30 s refetch + Realtime sur `platform_operation_outcomes`)
-- Entrée dans `src/config/adminNav.ts` sous cluster "System"
-
-**Politique No-Fake** : nouveau règle `content-guard/rules.ts` — CI bloque les libellés interdits hors composants whitelistés.
 
 ---
 
 ## Critères de succès
 
-- `/admin/system-integrity` charge en < 2 s et reflète les 6 pipelines en temps réel
-- Aucun composant public n'affiche « Vérifié » sans ligne correspondante dans `contractor_verification_status` avec `status = 'verified'`
-- Le tracker Premier 1 $ montre l'étape actuelle de blocage avec la `FailureCode` dominante
-- `auto-repair-tick` produit au moins une tentative journalisée par heure ; un incident Twilio/Stripe simulé déclenche un blocker + SMS admin
-- Lint CI échoue sur toute nouvelle chaîne hardcodée "Vérifié / Analysé / Compatible" hors whitelist
-- Score `v_system_health_score` visible en header admin, code couleur exact
-
-## Hors périmètre (phases suivantes)
-
-- Import automatique documents assurance (OCR) — Phase 3
-- Analyse concurrentielle des sites web (SEO comparatif) — Phase 3
-- Auto-répartition intelligente des rendez-vous — Phase 4
+- Parcours photo → SMS envoyé < 30 s sur mobile.
+- Aucune création silencieuse : écran de validation systématique quand extraction IA impliquée.
+- Aucun doublon créé sans warning explicite.
+- Attribution `affiliate_manual` visible dans `/admin/affiliates` + commission liée à l'affilié.
+- Consentement journalisé; SMS bloqué si `consent_to_contact = no`.
+- Téléphones acceptés dans tous formats, stockés en E.164, affichés `(514) 123-4567`.
+- FAB caméra atteignable en 1 tap depuis la War Room.
