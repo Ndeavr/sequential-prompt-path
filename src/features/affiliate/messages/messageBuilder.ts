@@ -37,14 +37,15 @@ export function buildPersonalSms(ctx: MessageContext, variant: SmsVariantKey = D
   const companyOrPros = company ? `des pros comme ${company}` : "les entrepreneurs locaux";
   const companyOrYou = company ? `${company}` : "vous";
 
-  let text = v.template
-    .replaceAll("{greeting}", greeting)
-    .replaceAll("{affiliate_first_name}", affiliateFirst)
-    .replaceAll("{company_line}", companyLine)
-    .replaceAll("{city_line}", cityLine)
-    .replaceAll("{company_or_pros}", companyOrPros)
-    .replaceAll("{company_or_you}", companyOrYou)
-    .replaceAll("{link}", ctx.activationLink);
+  const repl = (s: string, k: string, v: string) => s.split(k).join(v);
+  let text = v.template;
+  text = repl(text, "{greeting}", greeting);
+  text = repl(text, "{affiliate_first_name}", affiliateFirst);
+  text = repl(text, "{company_line}", companyLine);
+  text = repl(text, "{city_line}", cityLine);
+  text = repl(text, "{company_or_pros}", companyOrPros);
+  text = repl(text, "{company_or_you}", companyOrYou);
+  text = repl(text, "{link}", ctx.activationLink);
 
   // Safety net — strip any leftover placeholders
   text = text.replace(/\{[a-z_]+\}/gi, "").replace(/\s{2,}/g, " ").trim();
