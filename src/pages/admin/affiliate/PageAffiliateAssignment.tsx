@@ -78,7 +78,7 @@ export default function PageAffiliateAssignment() {
 
   const affiliateMap = useMemo(() => {
     const m = new Map<string, string>();
-    (affiliates.data ?? []).forEach((a) => m.set(a.user_id, a.display_name));
+    (affiliates.data ?? []).forEach((a) => m.set(a.id, a.display_name));
     return m;
   }, [affiliates.data]);
 
