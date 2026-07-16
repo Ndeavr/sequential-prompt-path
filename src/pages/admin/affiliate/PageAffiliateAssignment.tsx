@@ -26,10 +26,10 @@ interface Prospect {
 }
 
 interface Affiliate {
-  user_id: string;
+  id: string;
   display_name: string;
-  active: boolean;
-  commission_rate: number;
+  city: string | null;
+  commission_pct: number | null;
 }
 
 export default function PageAffiliateAssignment() {
@@ -41,15 +41,20 @@ export default function PageAffiliateAssignment() {
   const [targetAffiliate, setTargetAffiliate] = useState<string>("");
 
   const affiliates = useQuery({
-    queryKey: ["affiliate-profiles-active"],
+    queryKey: ["affiliates-active"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("affiliate_profiles")
-        .select("user_id, display_name, active, commission_rate")
-        .eq("active", true)
-        .order("display_name");
+      const { data, error } = await (supabase as any)
+        .from("affiliates")
+        .select("id, name, first_name, last_name, primary_city, commission_pct, status")
+        .in("status", ["active", "training", "admin"])
+        .order("name");
       if (error) throw error;
-      return (data ?? []) as Affiliate[];
+      return ((data ?? []) as any[]).map((a) => ({
+        id: a.id,
+        display_name: [a.first_name, a.last_name].filter(Boolean).join(" ").trim() || a.name || "Sans nom",
+        city: a.primary_city ?? null,
+        commission_pct: a.commission_pct ?? null,
+      })) as Affiliate[];
     },
   });
 
@@ -73,7 +78,7 @@ export default function PageAffiliateAssignment() {
 
   const affiliateMap = useMemo(() => {
     const m = new Map<string, string>();
-    (affiliates.data ?? []).forEach((a) => m.set(a.user_id, a.display_name));
+    (affiliates.data ?? []).forEach((a) => m.set(a.id, a.display_name));
     return m;
   }, [affiliates.data]);
 
@@ -160,8 +165,8 @@ export default function PageAffiliateAssignment() {
               </SelectTrigger>
               <SelectContent>
                 {(affiliates.data ?? []).map((a) => (
-                  <SelectItem key={a.user_id} value={a.user_id}>
-                    {a.display_name} · {Math.round(a.commission_rate * 100)}%
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.display_name}{a.city ? ` · ${a.city}` : ""} · {a.commission_pct ?? 20}%
                   </SelectItem>
                 ))}
                 {affiliates.data?.length === 0 && (

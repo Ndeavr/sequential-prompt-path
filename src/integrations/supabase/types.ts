@@ -4391,6 +4391,60 @@ export type Database = {
           },
         ]
       }
+      affiliate_applications: {
+        Row: {
+          city: string | null
+          created_at: string
+          email: string
+          experience: string | null
+          first_name: string
+          id: string
+          last_name: string | null
+          notes: string | null
+          phone: string | null
+          province: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          email: string
+          experience?: string | null
+          first_name: string
+          id?: string
+          last_name?: string | null
+          notes?: string | null
+          phone?: string | null
+          province?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          email?: string
+          experience?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string | null
+          notes?: string | null
+          phone?: string | null
+          province?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       affiliate_assignments: {
         Row: {
           affiliate_id: string
@@ -4955,12 +5009,19 @@ export type Database = {
           name: string
           phone: string | null
           primary_city: string | null
+          province: string | null
           referral_code: string
           service_radius_km: number | null
           status: string
+          territories: string[] | null
+          total_assigned: number
           total_clicks: number
+          total_commissions_cents: number
+          total_contacted: number
           total_conversions: number
+          total_converted: number
           total_revenue_cents: number
+          total_trials: number
           updated_at: string
           user_id: string | null
         }
@@ -4980,12 +5041,19 @@ export type Database = {
           name: string
           phone?: string | null
           primary_city?: string | null
+          province?: string | null
           referral_code: string
           service_radius_km?: number | null
           status?: string
+          territories?: string[] | null
+          total_assigned?: number
           total_clicks?: number
+          total_commissions_cents?: number
+          total_contacted?: number
           total_conversions?: number
+          total_converted?: number
           total_revenue_cents?: number
+          total_trials?: number
           updated_at?: string
           user_id?: string | null
         }
@@ -5005,12 +5073,19 @@ export type Database = {
           name?: string
           phone?: string | null
           primary_city?: string | null
+          province?: string | null
           referral_code?: string
           service_radius_km?: number | null
           status?: string
+          territories?: string[] | null
+          total_assigned?: number
           total_clicks?: number
+          total_commissions_cents?: number
+          total_contacted?: number
           total_conversions?: number
+          total_converted?: number
           total_revenue_cents?: number
+          total_trials?: number
           updated_at?: string
           user_id?: string | null
         }
@@ -22312,6 +22387,62 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      commissions: {
+        Row: {
+          affiliate_id: string
+          approved_at: string | null
+          commission_cents: number
+          contractor_id: string | null
+          created_at: string
+          id: string
+          lead_id: string | null
+          notes: string | null
+          paid_at: string | null
+          plan: string | null
+          sale_cents: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id: string
+          approved_at?: string | null
+          commission_cents?: number
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          paid_at?: string | null
+          plan?: string | null
+          sale_cents?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string
+          approved_at?: string | null
+          commission_cents?: number
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          paid_at?: string | null
+          plan?: string | null
+          sale_cents?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commissions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       communication_fallback_queue: {
         Row: {
