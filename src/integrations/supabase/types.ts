@@ -39338,7 +39338,15 @@ export type Database = {
           verified_email?: string | null
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contractors_prospects_assigned_affiliate_id_fkey"
+            columns: ["assigned_affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contractors_trust: {
         Row: {
