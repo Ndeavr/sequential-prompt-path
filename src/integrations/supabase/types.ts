@@ -16252,6 +16252,45 @@ export type Database = {
         }
         Relationships: []
       }
+      auto_repair_attempts: {
+        Row: {
+          attempted_at: string
+          check_type: string
+          created_at: string
+          error_message: string | null
+          id: string
+          latency_ms: number | null
+          metadata: Json
+          repair_action: string | null
+          status: string
+          target: string
+        }
+        Insert: {
+          attempted_at?: string
+          check_type: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          metadata?: Json
+          repair_action?: string | null
+          status: string
+          target: string
+        }
+        Update: {
+          attempted_at?: string
+          check_type?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          metadata?: Json
+          repair_action?: string | null
+          status?: string
+          target?: string
+        }
+        Relationships: []
+      }
       automation_action_logs: {
         Row: {
           action_label: string | null
@@ -25807,6 +25846,60 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      contractor_business_analysis: {
+        Row: {
+          computed_at: string
+          content_quality: number | null
+          contractor_id: string
+          created_at: string
+          data_consistency: number | null
+          found: Json
+          geo_coverage: number | null
+          id: string
+          missing: Json
+          profile_completeness: number | null
+          recommended_actions: Json
+          reputation_score: number | null
+          seniority_score: number | null
+          updated_at: string
+          web_presence_score: number | null
+        }
+        Insert: {
+          computed_at?: string
+          content_quality?: number | null
+          contractor_id: string
+          created_at?: string
+          data_consistency?: number | null
+          found?: Json
+          geo_coverage?: number | null
+          id?: string
+          missing?: Json
+          profile_completeness?: number | null
+          recommended_actions?: Json
+          reputation_score?: number | null
+          seniority_score?: number | null
+          updated_at?: string
+          web_presence_score?: number | null
+        }
+        Update: {
+          computed_at?: string
+          content_quality?: number | null
+          contractor_id?: string
+          created_at?: string
+          data_consistency?: number | null
+          found?: Json
+          geo_coverage?: number | null
+          id?: string
+          missing?: Json
+          profile_completeness?: number | null
+          recommended_actions?: Json
+          reputation_score?: number | null
+          seniority_score?: number | null
+          updated_at?: string
+          web_presence_score?: number | null
+        }
+        Relationships: []
       }
       contractor_businesses: {
         Row: {
@@ -38148,6 +38241,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      contractor_verification_status: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          dimension: string
+          evidence: Json
+          failure_code: string | null
+          id: string
+          last_checked_at: string
+          last_success_at: string | null
+          source: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          dimension: string
+          evidence?: Json
+          failure_code?: string | null
+          id?: string
+          last_checked_at?: string
+          last_success_at?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          dimension?: string
+          evidence?: Json
+          failure_code?: string | null
+          id?: string
+          last_checked_at?: string
+          last_success_at?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       contractor_verifications_display: {
         Row: {
@@ -80808,6 +80943,33 @@ export type Database = {
         }
         Relationships: []
       }
+      system_health_snapshots: {
+        Row: {
+          captured_at: string
+          created_at: string
+          id: string
+          overall_score: number
+          pipeline_scores: Json
+          status: string
+        }
+        Insert: {
+          captured_at?: string
+          created_at?: string
+          id?: string
+          overall_score: number
+          pipeline_scores?: Json
+          status: string
+        }
+        Update: {
+          captured_at?: string
+          created_at?: string
+          id?: string
+          overall_score?: number
+          pipeline_scores?: Json
+          status?: string
+        }
+        Relationships: []
+      }
       system_incidents: {
         Row: {
           component_name: string
@@ -80844,6 +81006,36 @@ export type Database = {
           severity?: string
           status?: string
           summary?: string
+        }
+        Relationships: []
+      }
+      system_integrity_thresholds: {
+        Row: {
+          degraded_min: number
+          description: string | null
+          healthy_min: number
+          metric_label: string | null
+          pipeline_key: string
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          degraded_min?: number
+          description?: string | null
+          healthy_min?: number
+          metric_label?: string | null
+          pipeline_key: string
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          degraded_min?: number
+          description?: string | null
+          healthy_min?: number
+          metric_label?: string | null
+          pipeline_key?: string
+          updated_at?: string
+          weight?: number
         }
         Relationships: []
       }
@@ -86598,6 +86790,19 @@ export type Database = {
         }
         Relationships: []
       }
+      v_first_paid_contractor_funnel: {
+        Row: {
+          account_created_at: string | null
+          activated_at: string | null
+          clicked_at: string | null
+          first_booking_at: string | null
+          first_match_at: string | null
+          payment_at: string | null
+          prospect_identified_at: string | null
+          sms_delivered_at: string | null
+        }
+        Relationships: []
+      }
       v_first_revenue_snapshot: {
         Row: {
           activations_30d: number | null
@@ -86962,6 +87167,15 @@ export type Database = {
         }
         Relationships: []
       }
+      v_pipeline_email_health: {
+        Row: {
+          delivered: number | null
+          delivery_rate: number | null
+          failed: number | null
+          total: number | null
+        }
+        Relationships: []
+      }
       v_pipeline_funnel_counts: {
         Row: {
           activated: number | null
@@ -86976,6 +87190,24 @@ export type Database = {
           recommendable: number | null
           scraped: number | null
           sent: number | null
+        }
+        Relationships: []
+      }
+      v_pipeline_matching_health: {
+        Row: {
+          bookings: number | null
+          match_rate: number | null
+          matches_attempted: number | null
+          matches_succeeded: number | null
+        }
+        Relationships: []
+      }
+      v_pipeline_onboarding_health: {
+        Row: {
+          accounts: number | null
+          activations: number | null
+          conversion_rate: number | null
+          visits: number | null
         }
         Relationships: []
       }
@@ -87047,6 +87279,24 @@ export type Database = {
           },
         ]
       }
+      v_pipeline_scraping_health: {
+        Row: {
+          rejected: number | null
+          success_rate: number | null
+          total: number | null
+          validated: number | null
+        }
+        Relationships: []
+      }
+      v_pipeline_sms_health: {
+        Row: {
+          delivered: number | null
+          delivery_rate: number | null
+          failed: number | null
+          total: number | null
+        }
+        Relationships: []
+      }
       v_pipeline_stage_metrics_24h: {
         Row: {
           blocked_count: number | null
@@ -87057,6 +87307,15 @@ export type Database = {
           stage_key: string | null
           success_count: number | null
           total_count: number | null
+        }
+        Relationships: []
+      }
+      v_pipeline_stripe_health: {
+        Row: {
+          failed: number | null
+          succeeded: number | null
+          success_rate: number | null
+          total: number | null
         }
         Relationships: []
       }
@@ -87374,6 +87633,14 @@ export type Database = {
           retry_count?: number | null
           session_id?: string | null
           stripe_event_id?: string | null
+        }
+        Relationships: []
+      }
+      v_system_health_score: {
+        Row: {
+          overall_score: number | null
+          pipeline_scores: Json | null
+          status: string | null
         }
         Relationships: []
       }
