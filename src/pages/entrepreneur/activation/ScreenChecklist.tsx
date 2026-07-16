@@ -163,7 +163,10 @@ export default function ScreenChecklist() {
         {overallCompletion >= 70 && founder.remaining > 0 && (
           <motion.button
             type="button"
-            onClick={() => navigate("/entrepreneur/activer/paiement")}
+            onClick={async () => {
+              await updateFunnel({ selected_plan: "founder", billing_cycle: "monthly" });
+              navigate("/entrepreneur/activer/paiement");
+            }}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             className="w-full mb-4 rounded-2xl border border-emerald-500/40 bg-emerald-500/5 p-4 text-left"
