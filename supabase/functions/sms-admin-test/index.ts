@@ -3,6 +3,8 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { sendSms } from "../_shared/twilioSend.ts";
+import { formatQcTime } from "../_shared/timezone.ts";
+import { assertAdminOnlySms } from "../_shared/adminSmsGuard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -81,10 +83,27 @@ Deno.serve(async (req) => {
       triggered_by: userId, phone: to, queued_at: new Date().toISOString(),
     }).select("id").single();
 
-    const stamp = new Date().toLocaleTimeString("fr-CA");
+    const stamp = formatQcTime(new Date());
+    const body = `UNPRO · test système ${stamp} — aucune action requise.`;
+
+    // Admin-only monitoring SMS: refuse if recipient not in the admin whitelist.
+    const guard = await assertAdminOnlySms(admin, body, to);
+    if (!guard.allowed) {
+      await admin.from("sms_test_runs").update({
+        failed_at: new Date().toISOString(),
+        error: `admin_guard:${guard.reason ?? "blocked"}`,
+        updated_at: new Date().toISOString(),
+      }).eq("id", run!.id);
+      return json({
+        ok: false,
+        error_code: "ADMIN_ONLY_SMS_BLOCKED",
+        error_message: `Destinataire non autorisé pour un SMS de monitoring (${guard.reason ?? "not_whitelisted"}).`,
+      }, 403);
+    }
+
     const result = await sendSms({
       to,
-      body: `UNPRO · test système ${stamp} — aucune action requise.`,
+      body,
       message_type: "test",
       template_key: "sms_admin_test",
       // Admin-only bypass: skip prospect mobile-enforcement Lookup entirely.
