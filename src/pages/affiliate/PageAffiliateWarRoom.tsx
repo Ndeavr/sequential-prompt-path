@@ -106,15 +106,25 @@ export default function PageAffiliateWarRoom() {
   const pipeline = aggregatePipeline(potentialPlans);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24">
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-        <header className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Salle de guerre affilié
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Votre journée en un coup d'œil. Priorité au revenu.
-          </p>
+        <header className="flex items-start justify-between gap-3">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              Salle de guerre affilié
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Votre journée en un coup d'œil. Priorité au revenu.
+            </p>
+          </div>
+          {affiliate && (
+            <Button
+              onClick={() => { setAddMode("picker"); setAddOpen(true); }}
+              className="h-11 shadow-sm"
+            >
+              <Plus className="h-4 w-4 mr-1" /> Ajouter un prospect
+            </Button>
+          )}
         </header>
 
         {/* Top stats */}
