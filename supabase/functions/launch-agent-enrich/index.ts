@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
       // Pull richer data from outbound_companies if external_ref matches
       const { data: company } = await sb
         .from("outbound_companies")
-        .select("website, email, phone, google_place_id, review_count, rating")
+        .select("website_url, email, phone, google_place_id, review_count, rating")
         .eq("id", (lead as any).external_ref)
         .maybeSingle();
 
@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
         business_name: (lead as any).company_name ?? (company as any)?.company_name ?? null,
         email: (company as any)?.email ?? (lead as any).email ?? null,
         phone: (company as any)?.phone ?? (lead as any).phone ?? null,
-        website: (company as any)?.website ?? null,
+        website: (company as any)?.website_url ?? null,
         google_rating: (company as any)?.rating ?? null,
         google_reviews_count: (company as any)?.review_count ?? null,
         city: (lead as any).city ?? null,
