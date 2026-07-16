@@ -93,25 +93,18 @@ Deno.serve(async (req) => {
       if (list.data.length > 0) customerId = list.data[0].id;
     }
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: "subscription",
       customer: customerId,
       customer_email: customerId ? undefined : effectiveEmail,
-      line_items: [
-        { price: offer.stripe_recurring_price_id, quantity: 1 },
-      ],
+      line_items: [{ price: offer.stripe_recurring_price_id, quantity: 1 }],
       subscription_data: {
         trial_period_days: offer.trial_days,
-        // 1 $ activation is billed immediately on the first (trial) invoice
-        // via add_invoice_items — Stripe issues the first invoice at session
-        // completion so the customer is charged 1 $ today, nothing during
-        // the 7-day trial, then the recurring price kicks in.
-        // See https://stripe.com/docs/api/checkout/sessions/create#create_checkout_session-subscription_data-billing_cycle_anchor
       },
-      // add_invoice_items lives at the top level of Checkout Session
-      // creation for subscription mode and is applied to the first invoice.
-      // deno-lint-ignore no-explicit-any
-      ...(({ add_invoice_items: [{ price: offer.stripe_activation_price_id, quantity: 1 }] }) as any),
+      // 1 $ activation billed on the first (trial) invoice — issued immediately.
+      add_invoice_items: [
+        { price: offer.stripe_activation_price_id, quantity: 1 },
+      ],
       automatic_tax: { enabled: true },
       tax_id_collection: { enabled: true },
       ...(customerId ? { customer_update: { address: "auto", name: "auto" } } : {}),
@@ -134,7 +127,9 @@ Deno.serve(async (req) => {
         recurring_amount_cents: String(offer.recurring_amount_cents),
         trial_days: String(offer.trial_days),
       },
-    });
+    };
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     return json({
       url: session.url,
