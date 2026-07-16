@@ -9,17 +9,20 @@
  *  - Who is waiting on payment?
  *  - How much potential commission is on my desk?
  */
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAffiliateSelf } from "@/hooks/useAffiliateSelf";
 import {
   aggregatePipeline,
   recommendPlan,
 } from "@/features/affiliate/revenueMath";
 import { formatPrice } from "@/lib/formatPrice";
-import { PhoneCall, MousePointerClick, FileText, CreditCard, DollarSign, ArrowRight } from "lucide-react";
+import { PhoneCall, MousePointerClick, FileText, CreditCard, DollarSign, ArrowRight, Plus, Camera } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AddLeadSheet } from "@/features/affiliate/addLead/AddLeadSheet";
 
 type Assignment = {
   id: string;
@@ -57,6 +60,9 @@ function StatTile({ icon: Icon, label, value, tone = "default" }: any) {
 
 export default function PageAffiliateWarRoom() {
   const { user } = useAuth();
+  const { data: affiliate } = useAffiliateSelf();
+  const [addOpen, setAddOpen] = useState(false);
+  const [addMode, setAddMode] = useState<"picker" | "card">("picker");
 
   const { data: rows, isLoading } = useQuery({
     queryKey: ["affiliate-assignments", user?.id],
@@ -100,15 +106,25 @@ export default function PageAffiliateWarRoom() {
   const pipeline = aggregatePipeline(potentialPlans);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24">
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-        <header className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Salle de guerre affilié
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Votre journée en un coup d'œil. Priorité au revenu.
-          </p>
+        <header className="flex items-start justify-between gap-3">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              Salle de guerre affilié
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Votre journée en un coup d'œil. Priorité au revenu.
+            </p>
+          </div>
+          {affiliate && (
+            <Button
+              onClick={() => { setAddMode("picker"); setAddOpen(true); }}
+              className="h-11 shadow-sm"
+            >
+              <Plus className="h-4 w-4 mr-1" /> Ajouter un prospect
+            </Button>
+          )}
         </header>
 
         {/* Top stats */}
@@ -221,6 +237,27 @@ export default function PageAffiliateWarRoom() {
           </section>
         )}
       </div>
+
+      {/* Floating camera FAB — mobile-first quick scan */}
+      {affiliate && (
+        <button
+          type="button"
+          onClick={() => { setAddMode("card"); setAddOpen(true); }}
+          className="fixed bottom-5 right-5 z-40 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center active:scale-95 transition"
+          aria-label="Scanner une carte d'affaires"
+        >
+          <Camera className="h-6 w-6" />
+        </button>
+      )}
+
+      {affiliate && (
+        <AddLeadSheet
+          open={addOpen}
+          onOpenChange={setAddOpen}
+          affiliateId={affiliate.id}
+          initialMode={addMode}
+        />
+      )}
     </div>
   );
 }
