@@ -47,6 +47,7 @@ const PageAdminProspectSMS = lazyWithRetry(() => import("@/pages/admin/PageAdmin
 const PageFounderVerification = lazyWithRetry(() => import("@/pages/admin/PageFounderVerification"));
 const PageSmsHealth = lazyWithRetry(() => import("@/pages/admin/PageSmsHealth"));
 const PageAdminSystemTime = lazyWithRetry(() => import("@/pages/admin/PageAdminSystemTime"));
+const PageAdminSystemIntegrity = lazyWithRetry(() => import("@/pages/admin/PageAdminSystemIntegrity"));
 const PageCuriosityLanding = lazyWithRetry(() => import("@/pages/curiosity/PageCuriosityLanding"));
 const PageSendWindowPolicy = lazyWithRetry(() => import("@/pages/admin/PageSendWindowPolicy"));
 
@@ -1584,6 +1585,7 @@ export const AppRouter = () => (
         <Route path="/admin/voice-health" element={<ProtectedRoute requiredRole="admin"><PageVoiceHealth /></ProtectedRoute>} />
         <Route path="/admin/sms-health" element={<ProtectedRoute requiredRole="admin"><PageSmsHealth /></ProtectedRoute>} />
         <Route path="/admin/system-time" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminSystemTime /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/system-integrity" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminSystemIntegrity /></Suspense></ProtectedRoute>} />
         <Route path="/ia/:slug" element={<PageCuriosityLanding />} />
         <Route path="/admin/outbound/send-windows" element={<ProtectedRoute requiredRole="admin"><PageSendWindowPolicy /></ProtectedRoute>} />
         <Route path="/admin/system-health/alex-voice" element={<ProtectedRoute requiredRole="admin"><PageVoiceHealth /></ProtectedRoute>} />
