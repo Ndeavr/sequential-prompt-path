@@ -237,6 +237,27 @@ export default function PageAffiliateWarRoom() {
           </section>
         )}
       </div>
+
+      {/* Floating camera FAB — mobile-first quick scan */}
+      {affiliate && (
+        <button
+          type="button"
+          onClick={() => { setAddMode("card"); setAddOpen(true); }}
+          className="fixed bottom-5 right-5 z-40 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center active:scale-95 transition"
+          aria-label="Scanner une carte d'affaires"
+        >
+          <Camera className="h-6 w-6" />
+        </button>
+      )}
+
+      {affiliate && (
+        <AddLeadSheet
+          open={addOpen}
+          onOpenChange={setAddOpen}
+          affiliateId={affiliate.id}
+          initialMode={addMode}
+        />
+      )}
     </div>
   );
 }
