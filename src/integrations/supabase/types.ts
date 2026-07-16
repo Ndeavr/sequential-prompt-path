@@ -3659,6 +3659,24 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_sms_recipients: {
+        Row: {
+          created_at: string
+          label: string | null
+          phone: string
+        }
+        Insert: {
+          created_at?: string
+          label?: string | null
+          phone: string
+        }
+        Update: {
+          created_at?: string
+          label?: string | null
+          phone?: string
+        }
+        Relationships: []
+      }
       admin_system_checks: {
         Row: {
           affected_count: number
@@ -81572,6 +81590,39 @@ export type Database = {
         }
         Relationships: []
       }
+      timezone_health_checks: {
+        Row: {
+          checked_at: string
+          db_qc: string | null
+          db_utc: string | null
+          drift_ms: number | null
+          edge_utc: string | null
+          id: string
+          notes: string | null
+          status: string
+        }
+        Insert: {
+          checked_at?: string
+          db_qc?: string | null
+          db_utc?: string | null
+          drift_ms?: number | null
+          edge_utc?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+        }
+        Update: {
+          checked_at?: string
+          db_qc?: string | null
+          db_utc?: string | null
+          drift_ms?: number | null
+          edge_utc?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       title_tests: {
         Row: {
           article_id: string
@@ -88020,6 +88071,7 @@ export type Database = {
         }
         Returns: string
       }
+      qc_now: { Args: never; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {

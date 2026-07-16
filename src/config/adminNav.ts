@@ -15,7 +15,7 @@ import {
   Ban, TestTube, Rocket, BarChart3, Wand2, Bot, FileText, Star,
   Tag, MapPin, Grid3X3, Network, Zap, Camera, ImageIcon, Send,
   Inbox, Server, Target, Palette, FolderOpen, LayoutList, AlertTriangle,
-  Upload, HandCoins, UserCheck, Handshake, Radio, Gauge,
+  Upload, HandCoins, UserCheck, Handshake, Radio, Gauge, Clock,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -80,6 +80,7 @@ export const adminNavGroups: NavGroup[] = [
     items: [
       { to: "/admin/alerts", label: "Alerts", icon: Bell },
       { to: "/admin/operations", label: "Health", icon: Heart },
+      { to: "/admin/system-time", label: "Time Health", icon: Clock },
       { to: "/admin/ui-health", label: "UI Health", icon: Gauge },
       { to: "/admin/outbound/logs", label: "Logs", icon: ScrollText },
       { to: "/admin/outbound/settings", label: "Settings", icon: Settings },
