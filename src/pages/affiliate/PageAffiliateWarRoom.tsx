@@ -60,6 +60,9 @@ function StatTile({ icon: Icon, label, value, tone = "default" }: any) {
 
 export default function PageAffiliateWarRoom() {
   const { user } = useAuth();
+  const { data: affiliate } = useAffiliateSelf();
+  const [addOpen, setAddOpen] = useState(false);
+  const [addMode, setAddMode] = useState<"picker" | "card">("picker");
 
   const { data: rows, isLoading } = useQuery({
     queryKey: ["affiliate-assignments", user?.id],
