@@ -1,124 +1,78 @@
-# UNPRO Affiliate Recruitment Operating System V1 (+ Module 16)
+# Security Lockdown — Before Affiliate Rollout
 
-Build a protected affiliate portal that turns scraped contractor data into paying UNPRO contractors, with SMS visibility, one-click proposals, $1/7-day Stripe activation, recurring 20% commissions, and a **Revenue Intelligence Panel** that shows every affiliate exactly what each contractor is worth to them.
+Fix the 4 critical scanner findings and lock down every table the affiliate system will touch. No new UI, no cloud upgrade. One migration + a few edge-function-only reads.
 
-Success story: Lorraine logs in at `/affiliate/dashboard` and within 10 seconds sees who to call today, what SMS was sent, who clicked, who's waiting on a proposal or payment, her current commission, **and her full potential commission pipeline**. On each contractor page she sees the recommended plan and exact monthly / annual / lifetime commission if she closes them today.
+## Scope
 
-## Scope decisions
+**In:** RLS + policies + token hashing + public-safe views on prospect/recruitment/token/checkout tables. Admin bypass via existing `has_role(auth.uid(),'admin')`. Affiliate role placeholder (policies wired now, login flow ships next milestone).
 
-- Reuse existing acquisition pipeline (`contractor_leads`, `verified_contractor_prospects`, `acquisition-queue-worker`, `enrich-contractor-from-official-site`, `send-verified-batch`, `daily-acquisition-audit`) — no new scraping.
-- Add an **affiliate assignment + workflow + revenue-intelligence layer** on top of existing lead tables + a dedicated affiliate portal UI.
-- Auth: reuse existing Supabase auth (magic link + phone OTP in `LoginPageUnpro`) — add `affiliate` role + dedicated login route.
-- SMS: reuse existing outbound infra; expose message history read-only to the assigned affiliate.
-- Payments: existing Stripe seamless payments — new $1 / 7-day activation SKU.
-- All commission math is **client-side derived** from `affiliates.commission_rate` × canonical plan prices in `src/config/contractorPlans.ts` (Recrue 0, Pro 349, Premium 599, Elite 999, Signature 1799). One helper, one source of truth.
+**Out:** Affiliate dashboard, SMS history UI, commission engine, cloud upgrade — all deferred until this lockdown is green.
 
-## Data model (new / extended, all with RLS + GRANTs)
+## Findings addressed
 
-New tables:
+1. `contractors_prospects` — phone/email/legal_name publicly enumerable via `landing_slug` policy.
+2. `verified_prospect_tokens` — `USING (true)` exposes every token.
+3. `contractor_recruitment_checkout_sessions` — Stripe session ids readable by anon.
+4. `contractor_recruitment_offers` — `magic_token IS NOT NULL` check lets anon read all offers.
 
-- `affiliates` — `user_id`, `slug`, name, email, phone, `territory` (jsonb: cities/regions), `commission_rate` (default 0.20), `avg_contractor_lifetime_months` (default 24), `active`, `bio`, `photo_url`.
-- `affiliate_assignments` — `affiliate_id`, `contractor_lead_id`, `assigned_at`, unique(contractor_lead_id).
-- `affiliate_activities` — timeline: type (call/note/proposal_sent/follow_up), notes, outcome, `next_action_at`.
-- `affiliate_proposals` — snapshot: score, strengths, opportunities, preview_url, offer, sent_at, email_status.
-- `affiliate_activation_links` — Stripe session id, url, status, paid_at, contractor_lead_id, affiliate_id.
-- `affiliate_commissions` — affiliate_id, contractor_lead_id, stripe_subscription_id, amount_cents, status (pending/approved/paid), period_start/end.
+## Changes (single migration)
 
-Extend contractor lead tables:
-- `unpro_score` (0-100), `score_breakdown` (jsonb), `score_summary` (text, AI), `ai_strengths` (jsonb), `ai_opportunities` (jsonb).
-- `recommended_plan` enum (recrue/pro/premium/elite/signature), `recommended_plan_reason` (text), `demand_level` (low/medium/high), `territory_size` (small/medium/large).
-- `workflow_status`: discovered → enriched → validated → sms_sent → sms_clicked → assigned → called → proposal_sent → trial_started → paid → active → inactive.
-- `assigned_affiliate_id` (FK).
+### 1. `contractors_prospects`
+- Drop `public_read_prospect_by_slug_safe`.
+- Create `public.v_prospect_public` (SECURITY INVOKER) exposing only: `id, landing_slug, business_name, city, region, category, unpro_score, status`. **No phone, email, legal_name.**
+- Landing pages read the view; base table SELECT restricted to `has_role(auth.uid(),'admin')` OR `has_role(auth.uid(),'affiliate') AND assigned_affiliate_id = auth.uid()`.
+- Add `assigned_affiliate_id uuid` if missing.
 
-Add `affiliate` to the app_role enum. RLS: affiliates only see leads where `assigned_affiliate_id = <their id>`; admins see everything; commissions strictly scoped by `affiliate_id`.
+### 2. `verified_prospect_tokens`
+- Drop open SELECT policy.
+- New RPC `public.resolve_prospect_token(_token text)` SECURITY DEFINER: hashes input, matches `token_hash`, returns prospect id + minimal payload only if not expired/used.
+- Store `token_hash` (sha256) instead of raw token; add `expires_at`, `used_at`, `single_use boolean default true`. Backfill hashes from existing values then drop raw column.
+- Base table: SELECT only for admin.
 
-## Backend / edge functions
+### 3. `contractor_recruitment_checkout_sessions`
+- Drop `USING (true)` SELECT policy.
+- SELECT: admin only. Writes: service_role only (edge function `stripe-activation-webhook`).
+- Client never queries directly — status surfaced via edge function `get-checkout-status` keyed by hashed session token.
 
-1. `contractor-scoring-engine` — computes `unpro_score` + breakdown + AI summary (Gemini via Lovable AI).
-2. `contractor-plan-recommender` — **new**. Inputs: review count, demand_level, territory_size, category, coverage, response rate, company maturity. Outputs: `recommended_plan` + short reason. Runs after scoring and on lead updates. Deterministic rule table + AI-written reason.
-3. `contractor-discovery-scheduler` — cron nightly, orchestrates existing scrapers, re-scores + re-recommends.
-4. `assign-leads-to-affiliates` — territory match, 25/day cap.
-5. `affiliate-priority-ranker` — today's 25-lead list, ranked by clicked > score > review count > demand > no prior contact.
-6. `generate-proposal` — proposal payload + preview URL + transactional email.
-7. `create-activation-checkout` — Stripe $1/7d then recurring; carries `{ affiliate_id, contractor_lead_id }` metadata.
-8. `stripe-activation-webhook` — `checkout.session.completed` → paid; `invoice.paid` → write `affiliate_commissions` at affiliate's rate.
-9. `affiliate-sms-history` — read-only SMS log for a lead (delivery + click), scoped by assignment.
-10. `generate-plan-talking-points` — **Module 16**. Given lead + recommended plan → objection-helper bullets (fit, visibility gains, expected appointment volume, score weaknesses, upgrade opportunities). AI, cached.
+### 4. `contractor_recruitment_offers`
+- Drop broken token-null policy.
+- New RPC `public.get_offer_by_token(_token text)` SECURITY DEFINER validating hashed token + expiry, returning offer payload.
+- Base table SELECT: admin only.
 
-## Frontend routes (affiliate portal)
+### 5. Cross-cutting on all affiliate-touching tables
+Tables: `contractor_leads`, `affiliate_assignments`, `affiliate_activities`, `affiliate_proposals`, `affiliate_activation_links`, `affiliate_commissions`, `contractors_prospects`, `verified_prospect_tokens`, `contractor_recruitment_offers`, `contractor_recruitment_checkout_sessions`, plus any `outreach_logs` / `sms_*` tables that reference prospects.
 
-Guarded by `RoleGuard allowedRoles={['affiliate']}` in a new `AffiliateLayout`.
+For each:
+- `ENABLE ROW LEVEL SECURITY` (verify).
+- Revoke all from `anon`. Grant `SELECT,INSERT,UPDATE,DELETE` to `authenticated`, `ALL` to `service_role`.
+- Policies:
+  - **Admin:** `has_role(auth.uid(),'admin')` full access.
+  - **Affiliate:** SELECT/UPDATE where `assigned_affiliate_id = auth.uid()` (or joined via `affiliate_assignments`).
+  - **Contractor:** SELECT own row on `contractors_prospects` / lead where `owner_user_id = auth.uid()`.
+  - **Anon:** no policies.
 
-- `/affiliate/login`
-- `/affiliate/dashboard` — 6 KPI cards + **`PotentialCommissionPipeline`** widget (Module 16 dashboard summary).
-- `/affiliate/call-list` — today's 25 with 🔥/⭐.
-- `/affiliate/company/:id` — contractor workspace + **`AffiliateRevenueIntelligencePanel`** (sticky right on desktop, top on mobile).
-- `/affiliate/company/:id/profile-builder`
-- `/company-preview/:slug` — public
-- `/affiliate/proposals`
-- `/affiliate/commissions`
-- `/:affiliateSlug` — optional public page
+### 6. Activation & proposal links
+- `affiliate_activation_links` / `affiliate_proposals`: store `token_hash` only, add `expires_at` (default now()+7 days), `used_at`, `single_use`.
+- Resolver RPCs (`resolve_activation_link`, `resolve_proposal_link`) SECURITY DEFINER validate hash + expiry + single-use, then mark `used_at`.
 
-Admin: extend `/admin/acquisition` (Found/Validated/SMS/Clicked/Called/Trial/Paid/MRR + alerts) and add `/admin/affiliates` (CRUD, commission rate, territory, manual assign).
+### 7. Phone masking helper
+- SQL function `public.mask_phone(text)` returning `•••-•••-1234`; used by any admin-facing lower-privilege view if needed later.
 
-## Module 16 — Affiliate Revenue Intelligence Panel
+## Edge function updates
+- `stripe-activation-webhook`: writes to checkout_sessions with service role (already the case — verify).
+- New/updated `get-checkout-status`, `resolve-prospect-token`, `redeem-activation-link`: thin wrappers over the SECURITY DEFINER RPCs, called from public landings.
+- Remove any client-side supabase-js reads against the 4 locked tables; replace with RPC/edge calls.
 
-New component `AffiliateRevenueIntelligencePanel` on `/affiliate/company/:id`:
+## Verification (post-deploy)
+1. `supabase--linter` clean on the four findings.
+2. Manual anon curl: `select * from contractors_prospects` → permission denied; `v_prospect_public` → rows without PII.
+3. Anon call to `resolve_prospect_token` with bogus token → null; valid token → payload.
+4. `security--run_security_scan` — all 4 criticals resolved; MCP warning noted separately (out of scope).
+5. Mark findings fixed via `security--manage_security_finding` with explanations.
+6. Update `@security-memory` with the new invariants (token hashing, view usage, no client reads on locked tables).
 
-- **Recommended Plan** — big card with plan name, "Best fit…" tagline, estimated appointments/month (from plan rules).
-- **Why This Plan** — score, review count, demand level, territory size, current recommendation (from `recommended_plan_reason`).
-- **Revenue Opportunity table** — all 5 plans + monthly price.
-- **Affiliate Commission Preview table** — monthly commission per plan = `plan_price × commission_rate`.
-- **Annual Commission Preview** — `plan_price × 12 × commission_rate`.
-- **Lifetime Value Estimate** — `plan_price × commission_rate × avg_contractor_lifetime_months` (default 24).
-- **AI Upgrade Recommendation** — reason narrative (Pro vs Premium upgrade logic).
-- **Affiliate Motivation Widget** — large green card: "Close this contractor today" + potential monthly / annual / lifetime commission for the recommended plan.
-- **Objection Helper** — button "Show Talking Points" → calls `generate-plan-talking-points`, renders bullet list.
+## Cloud instance
+Not touched. 64% disk IO is not blocking acquisition; upgrading is deferred until acquisition produces paying contractors.
 
-Dashboard addition (`/affiliate/dashboard`), **`PotentialCommissionPipeline`** card:
-- "N contractors assigned"
-- Potential Monthly = Σ(recommended_plan_price × commission_rate) across active assignments
-- Potential Annual = Monthly × 12
-- Potential Lifetime = Monthly × avg_contractor_lifetime_months
-
-All math lives in `src/features/affiliate/revenueMath.ts` with unit tests.
-
-## Key UI components
-
-- `AffiliateHeader`, `KpiCard`, `PotentialCommissionPipeline`
-- `PriorityCallTable`, `ContractorScoreRing`
-- `SmsHistoryTimeline`, `AiCallAssistantPanel`
-- `ProfileBuilderForm`, `LivePreviewCard`
-- `ProposalGeneratorButton`, `ActivationLinkButton`
-- `CommissionTable`
-- **Module 16:** `AffiliateRevenueIntelligencePanel`, `PlanRecommendationCard`, `CommissionMatrixTable`, `MotivationWidget`, `TalkingPointsDrawer`
-
-## Build order (revenue-first)
-
-1. Migrations: affiliates, assignments, extended lead fields (incl. `recommended_plan`), roles, RLS, GRANTs. Seed Lorraine.
-2. `/affiliate/login` + role redirect + `AffiliateLayout` + guard.
-3. Scoring engine + AI summary on existing verified leads.
-4. **Plan recommender** + revenue math helper + unit tests.
-5. Assignment + priority ranker cron; dashboard KPIs + **PotentialCommissionPipeline** live.
-6. Call list + contractor workspace + SMS history + **AffiliateRevenueIntelligencePanel**.
-7. AI Call Assistant + Talking Points + Profile Builder + Live Preview.
-8. Proposal generator + email.
-9. Stripe $1/7d activation + webhook + commission writer.
-10. Commissions page + admin acquisition MRR/alerts + public affiliate page.
-
-## Technical details
-
-- Priority = 100·clicked + 40·(unpro_score/100) + min(review_count,200)/10 + 20·high_demand + 15·no_human_contact.
-- 25/day cap in ranker.
-- SMS visibility from existing `outreach_sms_events` / `outbound_sent_messages`, filtered by lead phone + assignment.
-- AI via Lovable AI Gateway (Gemini 2.5 Flash) — scoring summary, plan reason, talking points.
-- Stripe metadata `{ affiliate_id, contractor_lead_id, product: "activation_1$_7d" }`; webhook is the sole source of truth for commissions.
-- Public `/:affiliateSlug` added last with reserved-slug list.
-
-## Out of scope for V1
-
-- New scraping sources beyond current pipeline.
-- Sub-affiliate hierarchies.
-- In-app calling/VoIP.
-- Full CRM (custom fields, pipelines).
-- Multi-language toggle (French only).
+## Deliverable
+One migration + edge function edits + type regen. No dashboard changes in this pass. After approval, next milestone is affiliate auth + daily call list.

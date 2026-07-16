@@ -18,11 +18,8 @@ export default function PageContractorJoinOffer() {
   useEffect(() => {
     if (!token) return;
     (async () => {
-      const { data, error: err } = await supabase
-        .from("contractor_recruitment_offers")
-        .select("*, contractor_prospects(business_name, city, category_slug, owner_name, review_count, review_rating), recruitment_clusters(name, region_name)")
-        .eq("magic_token", token)
-        .maybeSingle();
+      const { data, error: err } = await (supabase as any)
+        .rpc("get_recruitment_offer_by_token", { _token: token });
       if (err || !data) setError("Offre introuvable ou expirée");
       else setOffer(data);
       setLoading(false);

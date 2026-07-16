@@ -11,11 +11,8 @@ export default function PageContractorPublicMagicAccess() {
   useEffect(() => {
     if (!magicToken) return;
     (async () => {
-      const { data } = await supabase
-        .from("contractor_recruitment_offers")
-        .select("magic_token")
-        .eq("magic_token", magicToken)
-        .maybeSingle();
+      const { data } = await (supabase as any)
+        .rpc("get_recruitment_offer_by_token", { _token: magicToken });
       if (data) {
         navigate(`/join/${magicToken}`, { replace: true });
       } else {
