@@ -44,12 +44,12 @@ Deno.serve(async (req) => {
     // Instead, compute drift only using edge vs dbQc offset expectations.
     dbUtc = new Date().toISOString();
 
-    // Expected offset America/Toronto: -4h (EDT) or -5h (EST). Compute what we see:
+    // Expected offset America/Toronto: -4h (EDT) or -5h (EST). Compare magnitudes.
     const parts = qcParts(edgeUtc);
     const asIfLocal = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
-    const observedOffsetMin = Math.round((edgeUtc.getTime() - asIfLocal) / 60000);
-    // Valid offsets for America/Toronto: -240 (EDT) or -300 (EST)
-    if (observedOffsetMin !== -240 && observedOffsetMin !== -300) {
+    const observedOffsetMin = Math.round((asIfLocal - edgeUtc.getTime()) / 60000);
+    const abs = Math.abs(observedOffsetMin);
+    if (abs !== 240 && abs !== 300) {
       status = "drift";
       notes = `unexpected_offset_min=${observedOffsetMin}`;
     }
