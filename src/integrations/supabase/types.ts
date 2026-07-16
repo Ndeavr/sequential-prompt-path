@@ -4659,6 +4659,58 @@ export type Database = {
           },
         ]
       }
+      affiliate_lead_events: {
+        Row: {
+          affiliate_id: string
+          channel: string | null
+          created_at: string
+          event_type: string
+          id: string
+          lead_id: string
+          payload: Json
+        }
+        Insert: {
+          affiliate_id: string
+          channel?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          lead_id: string
+          payload?: Json
+        }
+        Update: {
+          affiliate_id?: string
+          channel?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          lead_id?: string
+          payload?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_lead_events_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_lead_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_lead_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affiliate_links: {
         Row: {
           affiliate_id: string
@@ -4702,6 +4754,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "affiliate_links_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_message_templates: {
+        Row: {
+          affiliate_id: string
+          body: string
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          updated_at: string
+          variant: string | null
+        }
+        Insert: {
+          affiliate_id: string
+          body: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          updated_at?: string
+          variant?: string | null
+        }
+        Update: {
+          affiliate_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          updated_at?: string
+          variant?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_message_templates_affiliate_id_fkey"
             columns: ["affiliate_id"]
             isOneToOne: false
             referencedRelation: "affiliates"
@@ -4847,13 +4940,23 @@ export type Database = {
       }
       affiliates: {
         Row: {
+          admin_notes: string | null
+          allowed_categories: string[] | null
+          commission_flat_cents: number | null
+          commission_pct: number | null
           commission_rate: number
           created_at: string
+          daily_quota: number | null
           email: string | null
+          first_name: string | null
           id: string
+          last_name: string | null
           metadata: Json | null
           name: string
+          phone: string | null
+          primary_city: string | null
           referral_code: string
+          service_radius_km: number | null
           status: string
           total_clicks: number
           total_conversions: number
@@ -4862,13 +4965,23 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          admin_notes?: string | null
+          allowed_categories?: string[] | null
+          commission_flat_cents?: number | null
+          commission_pct?: number | null
           commission_rate?: number
           created_at?: string
+          daily_quota?: number | null
           email?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           metadata?: Json | null
           name: string
+          phone?: string | null
+          primary_city?: string | null
           referral_code: string
+          service_radius_km?: number | null
           status?: string
           total_clicks?: number
           total_conversions?: number
@@ -4877,13 +4990,23 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          admin_notes?: string | null
+          allowed_categories?: string[] | null
+          commission_flat_cents?: number | null
+          commission_pct?: number | null
           commission_rate?: number
           created_at?: string
+          daily_quota?: number | null
           email?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           metadata?: Json | null
           name?: string
+          phone?: string | null
+          primary_city?: string | null
           referral_code?: string
+          service_radius_km?: number | null
           status?: string
           total_clicks?: number
           total_conversions?: number
@@ -30756,6 +30879,7 @@ export type Database = {
           consent_channel: string | null
           consent_to_contact: string | null
           contact_method: string
+          contact_status: string | null
           contractor_id: string | null
           created_at: string
           created_by: string | null
@@ -30785,6 +30909,8 @@ export type Database = {
           id: string
           language_primary: string | null
           last_agent_run_at: string | null
+          last_contacted_at: string | null
+          last_contacted_by: string | null
           last_email_at: string | null
           last_name: string | null
           last_sms_at: string | null
@@ -30794,6 +30920,7 @@ export type Database = {
           lead_status: string
           metadata_json: Json | null
           mobile_phone: string | null
+          next_follow_up_at: string | null
           normalization_errors: Json | null
           normalization_status: string | null
           normalized_at: string | null
@@ -30805,6 +30932,8 @@ export type Database = {
           paid_at: string | null
           payment_started_at: string | null
           payment_status: string
+          personal_sms_opened_at: string | null
+          personal_sms_sent_at: string | null
           phone: string | null
           phone_area_code: string | null
           phone_carrier: string | null
@@ -30873,6 +31002,7 @@ export type Database = {
           consent_channel?: string | null
           consent_to_contact?: string | null
           contact_method?: string
+          contact_status?: string | null
           contractor_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -30902,6 +31032,8 @@ export type Database = {
           id?: string
           language_primary?: string | null
           last_agent_run_at?: string | null
+          last_contacted_at?: string | null
+          last_contacted_by?: string | null
           last_email_at?: string | null
           last_name?: string | null
           last_sms_at?: string | null
@@ -30911,6 +31043,7 @@ export type Database = {
           lead_status?: string
           metadata_json?: Json | null
           mobile_phone?: string | null
+          next_follow_up_at?: string | null
           normalization_errors?: Json | null
           normalization_status?: string | null
           normalized_at?: string | null
@@ -30922,6 +31055,8 @@ export type Database = {
           paid_at?: string | null
           payment_started_at?: string | null
           payment_status?: string
+          personal_sms_opened_at?: string | null
+          personal_sms_sent_at?: string | null
           phone?: string | null
           phone_area_code?: string | null
           phone_carrier?: string | null
@@ -30990,6 +31125,7 @@ export type Database = {
           consent_channel?: string | null
           consent_to_contact?: string | null
           contact_method?: string
+          contact_status?: string | null
           contractor_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -31019,6 +31155,8 @@ export type Database = {
           id?: string
           language_primary?: string | null
           last_agent_run_at?: string | null
+          last_contacted_at?: string | null
+          last_contacted_by?: string | null
           last_email_at?: string | null
           last_name?: string | null
           last_sms_at?: string | null
@@ -31028,6 +31166,7 @@ export type Database = {
           lead_status?: string
           metadata_json?: Json | null
           mobile_phone?: string | null
+          next_follow_up_at?: string | null
           normalization_errors?: Json | null
           normalization_status?: string | null
           normalized_at?: string | null
@@ -31039,6 +31178,8 @@ export type Database = {
           paid_at?: string | null
           payment_started_at?: string | null
           payment_status?: string
+          personal_sms_opened_at?: string | null
+          personal_sms_sent_at?: string | null
           phone?: string | null
           phone_area_code?: string | null
           phone_carrier?: string | null
