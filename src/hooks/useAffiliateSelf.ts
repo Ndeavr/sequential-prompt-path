@@ -9,6 +9,7 @@ export interface AffiliateSelf {
   id: string;
   user_id: string | null;
   name: string;
+  first_name: string | null;
   referral_code: string;
 }
 
