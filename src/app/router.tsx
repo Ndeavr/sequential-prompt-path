@@ -832,6 +832,8 @@ const PageAdminProspectExecutionRunDetail = lazyWithRetry(() => import("@/pages/
 
 // Affiliate Tracking
 const PageAffiliateDashboard = lazyWithRetry(() => import("@/pages/admin/affiliate/PageAffiliateDashboard"));
+const PageAffiliateWarRoom = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateWarRoom"));
+const PageAffiliateCompanyWorkspace = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateCompanyWorkspace"));
 
 // Email Audit Center
 const PageEmailAuditCenter = lazyWithRetry(() => import("@/pages/admin/email-health/PageEmailAuditCenter"));
@@ -1694,6 +1696,8 @@ export const AppRouter = () => (
         <Route path="/admin/prospect-execution" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminProspectExecutionDashboard /></Suspense></ProtectedRoute>} />
         <Route path="/admin/prospect-execution/:runId" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminProspectExecutionRunDetail /></Suspense></ProtectedRoute>} />
         <Route path="/admin/affiliates" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAffiliateDashboard /></Suspense></ProtectedRoute>} />
+        <Route path="/affiliate" element={<ProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliateWarRoom /></Suspense></ProtectedRoute>} />
+        <Route path="/affiliate/company/:id" element={<ProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliateCompanyWorkspace /></Suspense></ProtectedRoute>} />
         <Route path="/admin/email-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailHealthCenterV2 /></Suspense></ProtectedRoute>} />
         <Route path="/admin/email-health-legacy" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailAuditCenter /></Suspense></ProtectedRoute>} />
         <Route path="/admin/email-audit-history" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailAuditHistory /></Suspense></ProtectedRoute>} />
