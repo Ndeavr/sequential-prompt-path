@@ -1,263 +1,124 @@
-A — PROMPT LOVABLE FINAL
+# UNPRO Affiliate Recruitment Operating System V1 (+ Module 16)
 
-1. CONTEXT
-Build only the acquisition repair system required to reach the first paid 1$ contractor activation.
+Build a protected affiliate portal that turns scraped contractor data into paying UNPRO contractors, with SMS visibility, one-click proposals, $1/7-day Stripe activation, recurring 20% commissions, and a **Revenue Intelligence Panel** that shows every affiliate exactly what each contractor is worth to them.
 
-Confirmed current state from backend data:
-- `acquisition_pipeline_events` = 0 total.
-- `verified_contractor_prospects` = 1 total.
-- `acquisition_queue.ready_sms` = 1, but `send-verified-batch` returns 0 eligible because the only prospect is already marked `outreach_status = sent`.
-- Google Business / RBQ / Website / Facebook show 0 because the dashboard reads event counts, and no source events exist.
-- The current worker does not scrape. It only enqueues existing verified prospects and triggers SMS when ready exists.
-- No source health state exists, so a dead scraper appears as `0` instead of `SCRAPER DOWN`.
+Success story: Lorraine logs in at `/affiliate/dashboard` and within 10 seconds sees who to call today, what SMS was sent, who clicked, who's waiting on a proposal or payment, her current commission, **and her full potential commission pipeline**. On each contractor page she sees the recommended plan and exact monthly / annual / lifetime commission if she closes them today.
 
-2. OBJECTIVE
-Implement a self-healing acquisition engine that detects dead sources, diagnoses funnel blockers, repairs/retries automatically, imports contractors fast, and tracks progress to:
+## Scope decisions
 
-```text
-Found Leads > 0
-SMS Sent > 0
-Clicks > 0
-Paid Contractors > 0
-First appointment generated
-```
+- Reuse existing acquisition pipeline (`contractor_leads`, `verified_contractor_prospects`, `acquisition-queue-worker`, `enrich-contractor-from-official-site`, `send-verified-batch`, `daily-acquisition-audit`) — no new scraping.
+- Add an **affiliate assignment + workflow + revenue-intelligence layer** on top of existing lead tables + a dedicated affiliate portal UI.
+- Auth: reuse existing Supabase auth (magic link + phone OTP in `LoginPageUnpro`) — add `affiliate` role + dedicated login route.
+- SMS: reuse existing outbound infra; expose message history read-only to the assigned affiliate.
+- Payments: existing Stripe seamless payments — new $1 / 7-day activation SKU.
+- All commission math is **client-side derived** from `affiliates.commission_rate` × canonical plan prices in `src/config/contractorPlans.ts` (Recrue 0, Pro 349, Premium 599, Elite 999, Signature 1799). One helper, one source of truth.
 
-3. USERS
-- Admin only.
-- Acquisition operator.
-- Founder / revenue owner.
+## Data model (new / extended, all with RLS + GRANTs)
 
-4. DELIVERABLES
+New tables:
 
-Backend/database:
-- Create `acquisition_source_health`.
-- Create `acquisition_dead_queue_alerts`.
-- Create `acquisition_daily_audits`.
-- Create `acquisition_manual_import_batches`.
-- Create `acquisition_manual_import_rows`.
-- Create views:
-  - `v_acquisition_source_health`
-  - `v_acquisition_diagnostics_funnel`
-  - `v_first_dollar_tracker`
-  - `v_acquisition_dead_queue`
+- `affiliates` — `user_id`, `slug`, name, email, phone, `territory` (jsonb: cities/regions), `commission_rate` (default 0.20), `avg_contractor_lifetime_months` (default 24), `active`, `bio`, `photo_url`.
+- `affiliate_assignments` — `affiliate_id`, `contractor_lead_id`, `assigned_at`, unique(contractor_lead_id).
+- `affiliate_activities` — timeline: type (call/note/proposal_sent/follow_up), notes, outcome, `next_action_at`.
+- `affiliate_proposals` — snapshot: score, strengths, opportunities, preview_url, offer, sent_at, email_status.
+- `affiliate_activation_links` — Stripe session id, url, status, paid_at, contractor_lead_id, affiliate_id.
+- `affiliate_commissions` — affiliate_id, contractor_lead_id, stripe_subscription_id, amount_cents, status (pending/approved/paid), period_start/end.
 
-Functions:
-- Refactor `acquisition-queue-worker` into source-aware acquisition loop.
-- Create `daily-acquisition-audit`.
-- Create `import-contractors`.
-- Add/extend fallback acquisition inside worker using validated query packs when a source returns 0 for 24h.
-- Add `EdgeRuntime.waitUntil` for background repair/retry work.
+Extend contractor lead tables:
+- `unpro_score` (0-100), `score_breakdown` (jsonb), `score_summary` (text, AI), `ai_strengths` (jsonb), `ai_opportunities` (jsonb).
+- `recommended_plan` enum (recrue/pro/premium/elite/signature), `recommended_plan_reason` (text), `demand_level` (low/medium/high), `territory_size` (small/medium/large).
+- `workflow_status`: discovered → enriched → validated → sms_sent → sms_clicked → assigned → called → proposal_sent → trial_started → paid → active → inactive.
+- `assigned_affiliate_id` (FK).
 
-Admin UI:
-- Replace current source cards on `/admin/acquisition-pipeline` with source health cards.
-- Create `/admin/acquisition-diagnostics`.
-- Create `/admin/import-contractors`.
-- Add `First Dollar Tracker` widget.
+Add `affiliate` to the app_role enum. RLS: affiliates only see leads where `assigned_affiliate_id = <their id>`; admins see everything; commissions strictly scoped by `affiliate_id`.
 
-5. LOGIC
+## Backend / edge functions
 
-Acquisition Source Health:
-- Track each source: `google_business`, `rbq`, `facebook`, `website`, `manual`.
-- Store:
-  - `status`: `healthy | degraded | scraper_down | fallback_running`
-  - `last_run_at`
-  - `last_success_at`
-  - `found_last_run`
-  - `found_24h`
-  - `consecutive_zero_runs`
-  - `last_error_code`
-  - `last_error_message`
-- UI rule:
-  - If source has no recent run or failed run, show `SCRAPER DOWN`.
-  - Never display a silent `0` for a dead source.
+1. `contractor-scoring-engine` — computes `unpro_score` + breakdown + AI summary (Gemini via Lovable AI).
+2. `contractor-plan-recommender` — **new**. Inputs: review count, demand_level, territory_size, category, coverage, response rate, company maturity. Outputs: `recommended_plan` + short reason. Runs after scoring and on lead updates. Deterministic rule table + AI-written reason.
+3. `contractor-discovery-scheduler` — cron nightly, orchestrates existing scrapers, re-scores + re-recommends.
+4. `assign-leads-to-affiliates` — territory match, 25/day cap.
+5. `affiliate-priority-ranker` — today's 25-lead list, ranked by clicked > score > review count > demand > no prior contact.
+6. `generate-proposal` — proposal payload + preview URL + transactional email.
+7. `create-activation-checkout` — Stripe $1/7d then recurring; carries `{ affiliate_id, contractor_lead_id }` metadata.
+8. `stripe-activation-webhook` — `checkout.session.completed` → paid; `invoice.paid` → write `affiliate_commissions` at affiliate's rate.
+9. `affiliate-sms-history` — read-only SMS log for a lead (delivery + click), scoped by assignment.
+10. `generate-plan-talking-points` — **Module 16**. Given lead + recommended plan → objection-helper bullets (fit, visibility gains, expected appointment volume, score weaknesses, upgrade opportunities). AI, cached.
 
-Funnel Diagnostics:
-- Build the canonical funnel:
+## Frontend routes (affiliate portal)
 
-```text
-Found → Enriched → Validated → SMS Ready → Contacted → Clicked → Activated → Paid
-```
+Guarded by `RoleGuard allowedRoles={['affiliate']}` in a new `AffiliateLayout`.
 
-- Display counts and conversion percentage between every step.
-- Read from real tables only:
-  - found/enriched/validated from acquisition events + verified prospects.
-  - SMS ready from acquisition queue + eligibility fields.
-  - contacted from SMS logs/outreach status.
-  - clicked from click tracking tables.
-  - activated from activation/account events.
-  - paid from 1$ payment/activation tables.
+- `/affiliate/login`
+- `/affiliate/dashboard` — 6 KPI cards + **`PotentialCommissionPipeline`** widget (Module 16 dashboard summary).
+- `/affiliate/call-list` — today's 25 with 🔥/⭐.
+- `/affiliate/company/:id` — contractor workspace + **`AffiliateRevenueIntelligencePanel`** (sticky right on desktop, top on mobile).
+- `/affiliate/company/:id/profile-builder`
+- `/company-preview/:slug` — public
+- `/affiliate/proposals`
+- `/affiliate/commissions`
+- `/:affiliateSlug` — optional public page
 
-Dead Queue Detector:
-- Every worker run scans validated leads/prospects where:
-  - verified/validated = true
-  - SMS/email not sent
-  - age > 30 minutes
-- Create `OUTREACH_BLOCKED` alert with root cause:
-  - `missing_phone`
-  - `missing_email`
-  - `missing_website`
-  - `eligibility_mismatch`
-  - `queue_state_mismatch`
-  - `send_function_error`
-  - `missing_message_token`
-  - `provider_blocked`
+Admin: extend `/admin/acquisition` (Found/Validated/SMS/Clicked/Called/Trial/Paid/MRR + alerts) and add `/admin/affiliates` (CRUD, commission rate, territory, manual assign).
 
-Auto Recovery:
-- If a source returns 0 for 24h, set source to `fallback_running` and run fallback query packs:
-  - categories: isolation, roofing, electrician, plumber, hvac, painting, landscaping
-  - cities: Laval, Montreal, Longueuil, Terrebonne, Repentigny, Mirabel, Blainville, Mascouche
-- Populate the acquisition queue automatically.
-- Emit `scraped`, `enriching`, `enriched`, `verified`, `ready_sms`, `rejected`, `worker_cycle` events.
-- Keep running even if one source fails.
+## Module 16 — Affiliate Revenue Intelligence Panel
 
-Manual Import Acceleration:
-- `/admin/import-contractors` accepts CSV, Excel, copy/paste.
-- Required columns:
-  - Company
-  - Contact
-  - Phone
-  - Email
-  - Website
-  - City
-  - Category
-- On import:
-  - normalize phone/email/website/city/category
-  - upsert into verified prospects or contractor lead table
-  - enrich from website when available
-  - compute eligibility
-  - queue for outreach
-  - trigger send automatically if eligible
-- No extra admin click after import submit.
+New component `AffiliateRevenueIntelligencePanel` on `/affiliate/company/:id`:
 
-Revenue Mode:
-- First Dollar Tracker displays timestamps for:
-  - First SMS Sent
-  - First Click
-  - First Activation
-  - First 1$ Payment
-  - First Appointment
-- If any milestone is missing, show the exact blocking step and next automatic repair.
+- **Recommended Plan** — big card with plan name, "Best fit…" tagline, estimated appointments/month (from plan rules).
+- **Why This Plan** — score, review count, demand level, territory size, current recommendation (from `recommended_plan_reason`).
+- **Revenue Opportunity table** — all 5 plans + monthly price.
+- **Affiliate Commission Preview table** — monthly commission per plan = `plan_price × commission_rate`.
+- **Annual Commission Preview** — `plan_price × 12 × commission_rate`.
+- **Lifetime Value Estimate** — `plan_price × commission_rate × avg_contractor_lifetime_months` (default 24).
+- **AI Upgrade Recommendation** — reason narrative (Pro vs Premium upgrade logic).
+- **Affiliate Motivation Widget** — large green card: "Close this contractor today" + potential monthly / annual / lifetime commission for the recommended plan.
+- **Objection Helper** — button "Show Talking Points" → calls `generate-plan-talking-points`, renders bullet list.
 
-Daily Self Audit:
-- `daily-acquisition-audit` runs every morning.
-- Checks:
-  - source health
-  - enrichment health
-  - validation health
-  - SMS health
-  - click tracking
-  - payment activation
-- Produces score:
-  - `98/100 Healthy`
-  - `42/100 Critical Failure`
-- Stores root causes and recovery actions.
+Dashboard addition (`/affiliate/dashboard`), **`PotentialCommissionPipeline`** card:
+- "N contractors assigned"
+- Potential Monthly = Σ(recommended_plan_price × commission_rate) across active assignments
+- Potential Annual = Monthly × 12
+- Potential Lifetime = Monthly × avg_contractor_lifetime_months
 
-6. DATA
+All math lives in `src/features/affiliate/revenueMath.ts` with unit tests.
 
-Create migration with explicit grants and admin-only RLS for:
-- `acquisition_source_health`
-- `acquisition_dead_queue_alerts`
-- `acquisition_daily_audits`
-- `acquisition_manual_import_batches`
-- `acquisition_manual_import_rows`
+## Key UI components
 
-Update views:
-- Fix `v_acquisition_coverage.ready_count` to include `acquisition_queue.state IN ('ready_sms','ready_email')`, not only prospect `outreach_status`.
-- Add source health view so UI separates `0 found` from `source not running`.
-- Add diagnostics funnel view with step-to-step conversion.
+- `AffiliateHeader`, `KpiCard`, `PotentialCommissionPipeline`
+- `PriorityCallTable`, `ContractorScoreRing`
+- `SmsHistoryTimeline`, `AiCallAssistantPanel`
+- `ProfileBuilderForm`, `LivePreviewCard`
+- `ProposalGeneratorButton`, `ActivationLinkButton`
+- `CommissionTable`
+- **Module 16:** `AffiliateRevenueIntelligencePanel`, `PlanRecommendationCard`, `CommissionMatrixTable`, `MotivationWidget`, `TalkingPointsDrawer`
 
-7. UI/UX
+## Build order (revenue-first)
 
-Keep dark admin theme.
-No redesign beyond required diagnosis.
-No animations.
-No decorative dashboard work.
+1. Migrations: affiliates, assignments, extended lead fields (incl. `recommended_plan`), roles, RLS, GRANTs. Seed Lorraine.
+2. `/affiliate/login` + role redirect + `AffiliateLayout` + guard.
+3. Scoring engine + AI summary on existing verified leads.
+4. **Plan recommender** + revenue math helper + unit tests.
+5. Assignment + priority ranker cron; dashboard KPIs + **PotentialCommissionPipeline** live.
+6. Call list + contractor workspace + SMS history + **AffiliateRevenueIntelligencePanel**.
+7. AI Call Assistant + Talking Points + Profile Builder + Live Preview.
+8. Proposal generator + email.
+9. Stripe $1/7d activation + webhook + commission writer.
+10. Commissions page + admin acquisition MRR/alerts + public affiliate page.
 
-Replace source cards with:
+## Technical details
 
-```text
-Source | Status | Last Run | Found | Error
-```
+- Priority = 100·clicked + 40·(unpro_score/100) + min(review_count,200)/10 + 20·high_demand + 15·no_human_contact.
+- 25/day cap in ranker.
+- SMS visibility from existing `outreach_sms_events` / `outbound_sent_messages`, filtered by lead phone + assignment.
+- AI via Lovable AI Gateway (Gemini 2.5 Flash) — scoring summary, plan reason, talking points.
+- Stripe metadata `{ affiliate_id, contractor_lead_id, product: "activation_1$_7d" }`; webhook is the sole source of truth for commissions.
+- Public `/:affiliateSlug` added last with reserved-slug list.
 
-Status labels:
-- `HEALTHY`
-- `DEGRADED`
-- `SCRAPER DOWN`
-- `FALLBACK RUNNING`
+## Out of scope for V1
 
-Create `/admin/acquisition-diagnostics`:
-- Funnel table with counts and conversion %.
-- Root-cause panel.
-- Dead queue alerts.
-- First Dollar Tracker.
-
-Create `/admin/import-contractors`:
-- Paste area + file upload.
-- Column mapping preview.
-- Import progress.
-- Auto-validate/enrich/queue/send result.
-
-8. COMPONENTS
-
-Build or refactor:
-- `AcquisitionSourceHealthTable`
-- `AcquisitionDiagnosticsFunnel`
-- `DeadQueueAlertsPanel`
-- `FirstDollarTracker`
-- `DailyAuditScoreCard`
-- `ImportContractorsPanel`
-- `ImportPreviewTable`
-- `ImportRunProgress`
-
-9. ACTIONS
-
-Implement functions/actions:
-- `scan_source_health`
-- `mark_scraper_down`
-- `run_fallback_acquisition`
-- `detect_dead_queue`
-- `repair_queue_state`
-- `compute_acquisition_funnel`
-- `import_contractors`
-- `auto_validate_imported_contractor`
-- `auto_queue_imported_contractor`
-- `auto_send_imported_contractor`
-- `run_daily_acquisition_audit`
-
-10. CONSTRAINTS
-
-- No unrelated acquisition feature.
-- No dashboard redesign beyond diagnostic replacement.
-- No animations.
-- No fake counts.
-- No silent zeros.
-- No manual “test this” workflow.
-- No stopping because one source or SMS provider returns unknown.
-- Keep using existing acquisition tables and functions where possible.
-- Use backend migrations for schema changes.
-- Add grants and RLS to every new table.
-- Use protected backend functions for service-level writes.
-- Do not expose secret keys in client code.
-
-11. SUCCESS
-
-Done when backend and UI prove:
-- At least one source reports real health or `SCRAPER DOWN` with root cause.
-- `/admin/acquisition-diagnostics` shows conversion between every funnel step.
-- Dead validated prospects older than 30 minutes create `OUTREACH_BLOCKED` alerts.
-- A manual import can validate, enrich, queue, and attempt send without extra clicks.
-- Daily audit stores a health score and root causes.
-- First Dollar Tracker shows exact missing milestone.
-- The system no longer displays silent `0` when acquisition is actually broken.
-
-12. TASKS
-
-1. Create backend migration for source health, dead queue alerts, audits, import batches/rows, and diagnostic views.
-2. Refactor `acquisition-queue-worker` so it runs source health checks, dead queue detection, fallback acquisition, queue repair, and event logging.
-3. Create `daily-acquisition-audit` function with health score and root-cause output.
-4. Create `import-contractors` function for CSV/Excel/copy-paste ingestion, validation, enrichment, queuing, and send trigger.
-5. Replace `/admin/acquisition-pipeline` source cards with the source health table and First Dollar Tracker.
-6. Create `/admin/acquisition-diagnostics` with funnel conversion, blocker panel, audit score, and dead queue alerts.
-7. Create `/admin/import-contractors` with upload/paste import and automated processing.
-8. Deploy functions and validate through backend function calls and database reads.
-9. Confirm the next live state clearly shows either active lead discovery or the exact scraper/source failure blocking revenue.
+- New scraping sources beyond current pipeline.
+- Sub-affiliate hierarchies.
+- In-app calling/VoIP.
+- Full CRM (custom fields, pipelines).
+- Multi-language toggle (French only).
