@@ -17370,6 +17370,63 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_offers: {
+        Row: {
+          activation_amount_cents: number
+          billing_interval: string
+          created_at: string
+          currency: string
+          id: string
+          is_active: boolean
+          max_founder_spots: number | null
+          name: string
+          offer_code: string
+          recurring_amount_cents: number
+          stripe_activation_price_id: string | null
+          stripe_recurring_price_id: string | null
+          tax_behavior: string
+          terms_version: string
+          trial_days: number
+          updated_at: string
+        }
+        Insert: {
+          activation_amount_cents?: number
+          billing_interval?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          is_active?: boolean
+          max_founder_spots?: number | null
+          name: string
+          offer_code: string
+          recurring_amount_cents?: number
+          stripe_activation_price_id?: string | null
+          stripe_recurring_price_id?: string | null
+          tax_behavior?: string
+          terms_version?: string
+          trial_days?: number
+          updated_at?: string
+        }
+        Update: {
+          activation_amount_cents?: number
+          billing_interval?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          is_active?: boolean
+          max_founder_spots?: number | null
+          name?: string
+          offer_code?: string
+          recurring_amount_cents?: number
+          stripe_activation_price_id?: string | null
+          stripe_recurring_price_id?: string | null
+          tax_behavior?: string
+          terms_version?: string
+          trial_days?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       billing_webhook_events: {
         Row: {
           delivery_status: string
