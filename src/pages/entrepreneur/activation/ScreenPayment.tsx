@@ -33,8 +33,12 @@ export default function ScreenPayment() {
   const [processing, setProcessing] = useState(false);
   useHesitationRescue({ screenKey: "payment" });
 
+  // FOUNDER PATH: 1 $ today, 7-day trial, then 599 $/mo — never 688,70 $.
+  const isFounder = (state.selected_plan || "").toLowerCase() === "founder";
+
   const plan = PLAN_DETAILS[state.selected_plan || "premium"] || PLAN_DETAILS["premium"];
-  const price = plan.monthly;
+  const price = isFounder ? 1 : plan.monthly;
+  const recurringPrice = 599; // Founder trial converts to Premium — from billing_offers.founder_premium_7d
   const tps = Math.round(price * TPS_RATE * 100) / 100;
   const tvq = Math.round(price * TVQ_RATE * 100) / 100;
   const total = Math.round((price + tps + tvq) * 100) / 100;
@@ -43,6 +47,27 @@ export default function ScreenPayment() {
   const handlePay = async () => {
     setProcessing(true);
     try {
+      if (isFounder) {
+        // Dedicated function: subscription + trial 7d + 1$ add_invoice_items.
+        const { data, error } = await supabase.functions.invoke("create-founder-activation-checkout", {
+          body: {
+            offer_code: "founder_premium_7d",
+            onboarding_session_id: state.id || undefined,
+            success_path: "/entrepreneur/activer/succes",
+            cancel_path: "/entrepreneur/activer/paiement",
+          },
+        });
+        if (error) throw error;
+        if (!data?.url) throw new Error("checkout_url_missing");
+        // Integrity guard: never let the browser start a session that claims > 2 $ today.
+        if ((data.expected_today_cents ?? 0) > 200) {
+          throw new Error("Montant d'activation Fondateur incorrect. Aucun paiement lancé.");
+        }
+        await updateFunnel({ stripe_session_id: data.session_id });
+        redirectToCheckout(data.url);
+        return;
+      }
+
       const planCode = state.selected_plan || "premium";
       const billingCycle = state.billing_cycle || "yearly";
       const { data, error } = await supabase.functions.invoke("create-stripe-checkout-session", {
@@ -79,21 +104,35 @@ export default function ScreenPayment() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-2xl font-bold text-foreground mb-1">Finaliser le paiement</h1>
-        <p className="text-sm text-muted-foreground mb-6">Activez votre profil UNPRO</p>
+        <h1 className="text-2xl font-bold text-foreground mb-1">
+          {isFounder ? "Finaliser l'activation" : "Finaliser le paiement"}
+        </h1>
+        <p className="text-sm text-muted-foreground mb-6">
+          {isFounder ? "Activez votre profil UNPRO Fondateur" : "Activez votre profil UNPRO"}
+        </p>
 
         {/* Plan summary */}
         <div className="rounded-xl border border-border/50 bg-card/50 p-4 mb-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-bold text-foreground">Plan {plan.name}</h3>
+            <h3 className="text-lg font-bold text-foreground">
+              {isFounder ? "Offre Fondateur Premium" : `Plan ${plan.name}`}
+            </h3>
             <div className="text-right">
               <span className="text-2xl font-bold text-foreground">{price}$</span>
-              <span className="text-xs text-muted-foreground">/mois</span>
+              <span className="text-xs text-muted-foreground">{isFounder ? " aujourd'hui" : "/mois"}</span>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Facturation {state.billing_cycle === "yearly" ? "annuelle" : "mensuelle"}
-          </p>
+          {isFounder ? (
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <p>7 jours d'accès Fondateur</p>
+              <p>Puis <span className="font-semibold text-foreground">{recurringPrice} $/mois + taxes</span></p>
+              <p>Annulable en tout temps avant le renouvellement</p>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Facturation {state.billing_cycle === "yearly" ? "annuelle" : "mensuelle"}
+            </p>
+          )}
           {savings > 0 && (
             <p className="text-xs text-emerald-500 font-medium mt-1">Économie de {savings}$/an</p>
           )}
@@ -102,7 +141,8 @@ export default function ScreenPayment() {
         {/* Tax breakdown */}
         <div className="rounded-xl border border-border/30 bg-card/30 p-3 mb-4 space-y-1">
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Sous-total</span><span>{price.toFixed(2)}$</span>
+            <span>{isFounder ? "Activation aujourd'hui" : "Sous-total"}</span>
+            <span>{price.toFixed(2)}$</span>
           </div>
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>TPS (5%)</span><span>{tps.toFixed(2)}$</span>
@@ -111,34 +151,46 @@ export default function ScreenPayment() {
             <span>TVQ (9,975%)</span><span>{tvq.toFixed(2)}$</span>
           </div>
           <div className="border-t border-border/30 pt-1 mt-1 flex justify-between text-sm font-semibold text-foreground">
-            <span>Total</span><span>{total.toFixed(2)}$/mois</span>
+            <span>{isFounder ? "À payer aujourd'hui" : "Total"}</span>
+            <span>{total.toFixed(2)}${isFounder ? "" : "/mois"}</span>
           </div>
+          {isFounder && (
+            <p className="pt-1 text-[11px] text-muted-foreground">
+              Prochain paiement : {recurringPrice} $ + taxes dans 7 jours. Annulez avant pour éviter la facturation.
+            </p>
+          )}
         </div>
 
-        {/* Coupon */}
-        <div className="flex gap-2 mb-4">
-          <div className="relative flex-1">
-            <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Code promo" value={coupon} onChange={(e) => setCoupon(e.target.value)} className="pl-9" />
+        {/* Coupon — hidden on Founder path (fixed 1 $ offer) */}
+        {!isFounder && (
+          <div className="flex gap-2 mb-4">
+            <div className="relative flex-1">
+              <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Code promo" value={coupon} onChange={(e) => setCoupon(e.target.value)} className="pl-9" />
+            </div>
+            <Button variant="outline" size="sm" disabled={!coupon}>Appliquer</Button>
           </div>
-          <Button variant="outline" size="sm" disabled={!coupon}>Appliquer</Button>
-        </div>
+        )}
 
         {/* What happens next */}
         <div className="rounded-xl border border-border/30 bg-card/30 p-3 mb-4">
-          <p className="text-xs font-medium text-foreground mb-2">Après le paiement:</p>
+          <p className="text-xs font-medium text-foreground mb-2">Après le paiement :</p>
           <ul className="space-y-1 text-xs text-muted-foreground">
             <li className="flex items-center gap-1.5">
               <ArrowRight className="w-3 h-3 text-primary shrink-0" />
-              Votre profil vérifié sera activé immédiatement
+              Votre profil Fondateur sera activé immédiatement
             </li>
             <li className="flex items-center gap-1.5">
               <ArrowRight className="w-3 h-3 text-primary shrink-0" />
-              Vous commencez à recevoir des rendez-vous
+              Vous pourrez compléter et vérifier vos informations
             </li>
             <li className="flex items-center gap-1.5">
               <ArrowRight className="w-3 h-3 text-primary shrink-0" />
-              Annulez en tout temps, sans frais cachés
+              Vous deviendrez admissible aux demandes compatibles disponibles dans votre territoire
+            </li>
+            <li className="flex items-center gap-1.5">
+              <ArrowRight className="w-3 h-3 text-primary shrink-0" />
+              Annulation libre avant le prochain renouvellement
             </li>
           </ul>
         </div>
@@ -170,12 +222,14 @@ export default function ScreenPayment() {
           disabled={processing}
         >
           {processing ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CreditCard className="w-5 h-5 mr-2" />}
-          Payer {total.toFixed(2)}$/mois
+          {isFounder
+            ? `Payer ${total.toFixed(2)}$ et activer mon profil`
+            : `Payer ${total.toFixed(2)}$/mois`}
         </Button>
       </motion.div>
 
       <StickyMobileCTA
-        label={`Payer ${total.toFixed(2)}$/mois`}
+        label={isFounder ? `Payer ${total.toFixed(2)}$ et activer` : `Payer ${total.toFixed(2)}$/mois`}
         onClick={handlePay}
         disabled={processing}
         loading={processing}
