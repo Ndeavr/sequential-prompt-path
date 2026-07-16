@@ -87342,6 +87342,45 @@ export type Database = {
           visits: number
         }[]
       }
+      get_audit_landing_by_slug: {
+        Args: { _slug: string }
+        Returns: {
+          ai_score: number
+          aipp_score: number
+          branding_score: number
+          business_name: string
+          category: string
+          city: string
+          competitor_gap: Json
+          content_score: number
+          conversion_score: number
+          diagnostic: Json
+          diagnostic_summary: string
+          domain: string
+          estimated_monthly_loss_max: number
+          estimated_monthly_loss_min: number
+          id: string
+          is_running_ads: boolean
+          landing_slug: string
+          landing_url: string
+          local_score: number
+          loom_script: string
+          loom_status: string
+          paid_intent_confidence: number
+          priority_tier: string
+          quick_wins: Json
+          region: string
+          reviews_score: number
+          score_confidence: number
+          screenshot_mobile_url: string
+          screenshot_url: string
+          seo_score: number
+          status: string
+          subcategory: string
+          trust_score: number
+          website: string
+        }[]
+      }
       get_avg_job_value: {
         Args: {
           p_city_slug?: string
@@ -87406,6 +87445,10 @@ export type Database = {
       get_profile_completeness: { Args: { p_user_id: string }; Returns: Json }
       get_profile_completion: {
         Args: { _contractor_id: string }
+        Returns: Json
+      }
+      get_recruitment_offer_by_token: {
+        Args: { _token: string }
         Returns: Json
       }
       get_secondary_category_limit: {
