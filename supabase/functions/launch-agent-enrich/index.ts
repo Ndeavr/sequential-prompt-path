@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
         business_name: (lead as any).company_name ?? (company as any)?.company_name ?? null,
         email: (company as any)?.email ?? (lead as any).email ?? null,
         phone: (company as any)?.phone ?? (lead as any).phone ?? null,
-        website: (company as any)?.website ?? null,
+        website: (company as any)?.website_url ?? null,
         google_rating: (company as any)?.rating ?? null,
         google_reviews_count: (company as any)?.review_count ?? null,
         city: (lead as any).city ?? null,
