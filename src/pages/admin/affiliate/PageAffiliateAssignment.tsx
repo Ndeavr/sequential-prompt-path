@@ -165,8 +165,8 @@ export default function PageAffiliateAssignment() {
               </SelectTrigger>
               <SelectContent>
                 {(affiliates.data ?? []).map((a) => (
-                  <SelectItem key={a.user_id} value={a.user_id}>
-                    {a.display_name} · {Math.round(a.commission_rate * 100)}%
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.display_name}{a.city ? ` · ${a.city}` : ""} · {a.commission_pct ?? 20}%
                   </SelectItem>
                 ))}
                 {affiliates.data?.length === 0 && (
