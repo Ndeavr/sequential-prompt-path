@@ -9,6 +9,7 @@ export interface AffiliateSelf {
   id: string;
   user_id: string | null;
   name: string;
+  first_name: string | null;
   referral_code: string;
 }
 
@@ -20,7 +21,7 @@ export function useAffiliateSelf() {
     queryFn: async (): Promise<AffiliateSelf | null> => {
       const { data, error } = await (supabase as any)
         .from("affiliates")
-        .select("id, user_id, name, referral_code")
+        .select("id, user_id, name, first_name, referral_code")
         .eq("user_id", user!.id)
         .maybeSingle();
       if (error) throw error;
