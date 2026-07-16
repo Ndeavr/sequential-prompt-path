@@ -3,7 +3,8 @@
  */
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Tag, Loader2 } from "lucide-react";
+import { X, Tag, Loader2, Zap } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -98,7 +99,38 @@ export default function FormCouponAdminCreate({ onClose }: Props) {
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-5">
+          {/* Presets rapides */}
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Zap className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-semibold">Modèles rapides</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { label: "1 mois gratuit", patch: { discount_type: "percentage", discount_value: 100, duration_type: "repeating", duration_in_months: 1, label: "1 mois gratuit" } },
+                { label: "3 mois gratuits", patch: { discount_type: "percentage", discount_value: 100, duration_type: "repeating", duration_in_months: 3, label: "3 mois gratuits" } },
+                { label: "6 mois gratuits", patch: { discount_type: "percentage", discount_value: 100, duration_type: "repeating", duration_in_months: 6, label: "6 mois gratuits" } },
+                { label: "1 an gratuit", patch: { discount_type: "percentage", discount_value: 100, duration_type: "repeating", duration_in_months: 12, label: "1 an gratuit" } },
+                { label: "50 % à vie", patch: { discount_type: "percentage", discount_value: 50, duration_type: "forever", label: "50 % à vie" } },
+                { label: "-25 % (1x)", patch: { discount_type: "percentage", discount_value: 25, duration_type: "once", label: "Rabais 25 %" } },
+                { label: "Activation 1 $", patch: { discount_type: "amount", discount_value: 14800, duration_type: "once", label: "Activation à 1 $" } },
+              ].map((p) => (
+                <Button
+                  key={p.label}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setForm((prev) => ({ ...prev, ...p.patch }))}
+                  className="h-7 text-[11px]"
+                >
+                  {p.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
           {/* Code & Label */}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label>Code *</Label>

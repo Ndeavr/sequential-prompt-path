@@ -28,6 +28,20 @@ export interface AdminTool {
 
 export const ADMIN_TOOLS: AdminTool[] = [
   {
+    id: "coupons",
+    label: "Codes promo",
+    description: "Créer et gérer les coupons (mois gratuit, 1 an gratuit, rabais, offres fondateur).",
+    route: "/admin/coupons",
+    category: "revenue",
+    risk_level: "safe",
+    automation_available: false,
+    requires_approval: false,
+    related_tables: ["coupons", "coupon_redemptions"],
+    primary_metric: "coupons actifs",
+    recommended_action: "Créer un modèle rapide (1 mois gratuit, 1 an gratuit) et le partager.",
+  },
+  {
+
     id: "normalization",
     label: "Normalisation des leads",
     description: "Dry-run / apply nettoyage universel (email, téléphone, site, entreprise).",
