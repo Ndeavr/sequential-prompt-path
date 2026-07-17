@@ -9,19 +9,26 @@ import { reportOutcome, BlockReason } from "../_shared/reliability.ts";
 const FN_URL = (name: string) => `${Deno.env.get("SUPABASE_URL")}/functions/v1/${name}`;
 const SRK = () => Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-async function invoke(name: string, body: Record<string, unknown> = {}) {
+async function invoke(name: string, body: Record<string, unknown> = {}, timeoutMs = 20000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const r = await fetch(FN_URL(name), {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SRK()}` },
       body: JSON.stringify(body),
+      signal: ctrl.signal,
     });
     const txt = await r.text();
     return { ok: r.ok, status: r.status, body: txt };
   } catch (e) {
-    return { ok: false, status: 0, body: String(e) };
+    const msg = (e as any)?.name === "AbortError" ? `timeout after ${timeoutMs}ms` : String(e);
+    return { ok: false, status: 0, body: msg };
+  } finally {
+    clearTimeout(t);
   }
 }
+
 
 async function surfaceSubAgentBlockers(
   sb: ReturnType<typeof adminClient>,
