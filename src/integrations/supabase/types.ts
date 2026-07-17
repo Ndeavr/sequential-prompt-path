@@ -4490,6 +4490,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "affiliate_assignments_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "affiliate_assignments_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
@@ -88432,6 +88439,13 @@ export type Database = {
         Returns: Json
       }
       get_contractor_public_profile: { Args: { _slug: string }; Returns: Json }
+      get_launch_lead_status_counts: {
+        Args: never
+        Returns: {
+          count: number
+          lead_status: string
+        }[]
+      }
       get_outreach_target: {
         Args: { p_slug?: string; p_token?: string }
         Returns: {
