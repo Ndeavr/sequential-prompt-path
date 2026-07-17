@@ -85,30 +85,36 @@ Deno.serve(async (req) => {
   // 1) Reap stalled leads first so the operator sees blockers immediately
   try { await sb.rpc("mark_stale_launch_leads"); } catch (_e) { /* non-fatal */ }
 
-  // 2) Count leads per state to drive scout backfill
-  const { data: counts } = await sb.from("launch_leads").select("lead_status");
+  // 2) Count leads per state via aggregate RPC (avoids full table scan)
+  const { data: countRows } = await sb.rpc("get_launch_lead_status_counts");
   const byStatus: Record<string, number> = {};
-  for (const row of counts ?? []) byStatus[(row as any).lead_status] = (byStatus[(row as any).lead_status] ?? 0) + 1;
+  for (const row of (countRows ?? []) as any[]) byStatus[row.lead_status] = Number(row.count);
 
   const discoveredQueue = byStatus.DISCOVERED ?? 0;
   const messagedReady = (byStatus.ENRICHED ?? 0) + (byStatus.SCORED ?? 0);
 
-  const results: Record<string, { ok: boolean; status: number; body: string }> = {};
+  // Build agent invocations conditionally, then run in parallel with per-agent timeouts
+  const jobs: Array<[string, Promise<{ ok: boolean; status: number; body: string }>]> = [];
+  if (discoveredQueue < 100) jobs.push(["scout", invoke("launch-agent-scout", { batch: 25 })]);
+  jobs.push(["enrich", invoke("launch-agent-enrich", { batch: 20 })]);
+  jobs.push(["visibility", invoke("launch-agent-visibility", { batch: 20 })]);
+  if (messagedReady > 0) jobs.push(["outreach", invoke("launch-agent-outreach", { batch: 30 })]);
+  jobs.push(["delivery-monitor", invoke("launch-agent-delivery-monitor", {})]);
+  jobs.push(["reply-detector", invoke("launch-agent-reply-detector", {})]);
+  jobs.push(["sales-closer", invoke("launch-agent-sales-closer", { batch: 10 })]);
+  jobs.push(["payment-monitor", invoke("launch-agent-payment-monitor", {})]);
 
-  if (discoveredQueue < 100) {
-    results.scout = await invoke("launch-agent-scout", { batch: 25 });
-  }
-  results.enrich = await invoke("launch-agent-enrich", { batch: 20 });
-  results.visibility = await invoke("launch-agent-visibility", { batch: 20 });
-  if (messagedReady > 0) {
-    results.outreach = await invoke("launch-agent-outreach", { batch: 30 });
-  }
-  results["delivery-monitor"] = await invoke("launch-agent-delivery-monitor", {});
-  results["reply-detector"] = await invoke("launch-agent-reply-detector", {});
-  results["sales-closer"] = await invoke("launch-agent-sales-closer", { batch: 10 });
-  results["payment-monitor"] = await invoke("launch-agent-payment-monitor", {});
+  const settled = await Promise.allSettled(jobs.map(([, p]) => p));
+  const results: Record<string, { ok: boolean; status: number; body: string }> = {};
+  jobs.forEach(([name], i) => {
+    const s = settled[i];
+    results[name] = s.status === "fulfilled"
+      ? s.value
+      : { ok: false, status: 0, body: `rejected: ${String((s as any).reason).slice(0, 200)}` };
+  });
 
   await surfaceSubAgentBlockers(sb, results);
+
 
   // 3) Fake-success prevention — only "achieved" if at least one agent moved work
   const anyOk = Object.values(results).some(r => r.ok);
