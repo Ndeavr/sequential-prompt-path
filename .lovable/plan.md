@@ -1,70 +1,97 @@
-## Objectif
 
-Livrer un vrai CRM affiliés (admin + affilié) capable de recruter des entrepreneurs UNPRO, envoyer SMS perso, suivre le pipeline et payer les commissions. Livraison en 4 sprints. Ce plan commence par le **Sprint A** qui débloque le bug bloquant `/admin/affiliates/assign` ("Aucun affilié actif") et pose les fondations pour tout le reste.
+## Audit — existant à réutiliser
 
-## Bug immédiat à corriger (Sprint A, jour 1)
+Tables déjà en place : `affiliates`, `affiliate_profiles`, `affiliate_applications`, `affiliate_assignments`, `affiliate_links`, `affiliate_clicks`, `affiliate_sessions`, `affiliate_attributions`, `affiliate_conversions`, `affiliate_commissions`, `affiliate_activities`, `affiliate_lead_events`, `affiliate_message_templates`, `affiliate_proposals`, `commissions`, `contractor_leads` (avec attribution affilié), `referral_events`, `profiles.referral_code`, `profiles.affiliate_code`, `user_roles`.
 
-`PageAffiliateAssignment.tsx` interroge `affiliate_profiles` (table quasi vide, ancien schéma) au lieu de `affiliates` (table canonique). C'est pour ça que la liste est vide. On bascule sur `affiliates` filtrée par `status='active'` et on utilise `affiliates.id` comme cible d'assignation. On aligne aussi `contractors_prospects.assigned_affiliate_id` pour référencer `affiliates.id`.
+Pages / composants déjà en place :
+- Public : `/partners`, `/partenaires/:slug` (PageSignaturePartner), `ReferralLandingPage`, `/ambassadeurs`.
+- Affilié connecté : `/affiliate` (War Room), `/affiliate/company/:id`.
+- Admin : `/admin/affiliates` (Hub 10 onglets), `/admin/affiliates/dashboard`, `/admin/affiliates/assign`.
+- Modules : `AddLeadSheet` (4 modes), `PersonalSmsSheet`, `LeadActionBar`, `AssignedLeadsList`, `AffiliateRevenueIntelligencePanel`, `PotentialCommissionPipeline`, `useAffiliateTracking`, `useReferralAttribution`, `useReferralProfile`, `BecomeRoleCTA`, edge functions `extract-business-card`, `enrich-lead-from-web`, `lead-dedupe-check`.
 
-## Sprint A — Fondations + Assignation qui marche
+Ce qui manque : page publique `/affilies` de conversion, flow d'auto-activation (utilisateur connecté ou nouveau), page perso dynamique par slug, onglet propriétaire dans l'ajout de recommandation, mini dashboard affilié pour non-admin (utilise composants existants), config admin des taux de commission.
 
-1. **Migration DB** (ajouts idempotents, aucune donnée détruite) :
-   - `affiliates` : ajouter `last_name`, `province`, `territories text[]`, `total_assigned/contacted/trials/converted int`, `total_commissions_cents int`. Élargir `status` (`pending|active|suspended|training|admin`).
-   - Nouvelle table `affiliate_applications` (candidatures) + RLS (insert public via edge, select admin).
-   - Nouvelle table `commissions` (id, affiliate_id, contractor_id, plan, sale_cents, commission_cents, status `pending|approved|paid`, dates).
-   - Étendre `contractor_leads` : `created_by_affiliate_id`, `assigned_affiliate_id` déjà présents → s'assurer que **tout lead créé par un affilié dans AddLeadSheet** met les deux (déjà fait dans `useAddLead.insertLead`, vérifier).
-   - View `v_affiliate_kpis` (par affilié : total_assigned, contacted, trials, conversions, revenue, commissions).
-   - GRANT + RLS strict (affilié voit ses données, admin voit tout via `has_role('admin')`).
+## Livrables (ce qu'on ajoute vs réutilise)
 
-2. **Fix `/admin/affiliates/assign`** :
-   - Requête vers `affiliates` (`id, first_name, last_name, name, primary_city, status, commission_pct`) filtrée `status IN ('active','training','admin')`.
-   - Affichage nom + ville + %.
-   - Assignation écrit dans `contractors_prospects.assigned_affiliate_id` **et** dans `contractor_leads.assigned_affiliate_id` si le prospect existe déjà comme lead (upsert par téléphone/email).
-   - Historisation dans `affiliate_lead_events` (`event_type='assigned'`).
+### 1. Page publique `/affilies` (nouvelle)
+`src/pages/affiliate/PageAffiliesPublic.tsx` + route publique.
+- Hero + parcours 4 étapes.
+- 3 cartes (Entrepreneur / Propriétaire / Partenaire) avec CTAs.
+- FAQ (8 questions).
+- Bloc "Déjà affilié ? Voir mon tableau de bord" → `/affiliate`.
+- Design premium UNPRO, mobile-first, glass léger, contraste AA, tokens sémantiques (respect `mem://standards/ui-readability-rule`).
+- SEO : titre, meta, canonical.
 
-3. **Nouveau `/admin/affiliates`** avec onglets (shell + 2 onglets fonctionnels d'abord) :
-   - Dashboard : cartes KPI globales (affiliés actifs, prospects assignés, essais 1$, abonnements, revenus, commissions dues), graphique 30j.
-   - Affiliés : table (nom, ville, tél, email, prospects, essais, conversions, revenus, commissions, statut) + bouton **+ Ajouter affilié**.
-   - Onglets Prospects / Assignations / Applications / Commissions / Paiements / Leaderboard / Documents / Paramètres présents en shell (skeleton "à venir") pour éviter les liens morts.
+### 2. Activation affilié multirôle (nouveau, sans nouveau compte)
+`src/pages/affiliate/PageAffilieActivation.tsx` (route `/affilies/activer`).
+- Si `useAuth().user` existe : formulaire court (type d'affilié, méthode préférée, ville, langue, consentement) préremplit depuis `profiles`. À la soumission :
+  1. `user_roles` : upsert rôle `affiliate`.
+  2. `affiliates` : upsert (user_id, type, territoire, slug généré depuis full_name / entreprise, referral_code depuis `profiles.referral_code` ou généré).
+  3. Bienvenue toast, redirection `/affiliate`.
+- Si non connecté : formulaire complet (prénom/nom/email/tel/ville/langue/type/entreprise?/site?/consentement) → auth OTP existante → même flux d'activation.
+- Utilise `BecomeRoleCTA` pattern déjà en place (upsert user_roles).
 
-4. **Créer un affilié** (`+ Ajouter affilié`) :
-   - Form : prénom, nom, tél, email, ville, territoires (multi), catégories (multi), commission %, quota, statut.
-   - Edge function `admin-create-affiliate` : crée `auth.users` (invite email), insère `affiliates` avec `user_id` et `referral_code` auto-généré, envoie SMS/email d'invitation avec lien magic.
+Boutons "Activer" ajoutés aussi dans :
+- `PageProProfile` (entrepreneur connecté) — encart "Programme affilié".
+- `PageAccount` propriétaire — même encart.
 
-## Sprint B — War Room affilié complète
+### 3. Page perso dynamique `/a/:slug` (nouveau)
+`src/pages/affiliate/PageAffiliePublicProfile.tsx` (route publique).
+- Résout `slug` via table `affiliates` (colonne `slug` ou `public_slug` — vérifier, sinon ajouter migration).
+- Affiche : nom public (respect préférence d'affichage), pitch UNPRO, deux formulaires courts (Entrepreneur recommandé / Propriétaire recommandé — onglets), bouton "Partager cette page", code promo si présent.
+- La soumission crée un `contractor_leads` (côté entrepreneur) ou un enregistrement `referral_events` + lead propriétaire (côté homeowner) avec `assigned_affiliate_id = affiliate.id`, attribution UTM.
+- La route `/lorraine` existante continue de fonctionner via redirection `/lorraine` → `/a/lorraine` (ou route legacy conservée pointant vers la même page).
 
-Route `/affiliate/war-room` (existe partiellement) enrichie :
+### 4. Formulaire recommandation unifié (améliore l'existant)
+`src/features/affiliate/addLead/AddLeadSheet.tsx` : ajouter onglet "Propriétaire recommandé" à côté d'"Entrepreneur". Champs minimaux propriétaire (prénom, tel/email, ville, besoin, moment, consentement). Utilise même dédupe (`lead-dedupe-check` étendue si besoin).
 
-- Top bar : *Aujourd'hui — 25 prospects · 8 contactés · 2 essais · 120 $ commissions potentielles* (données réelles via `v_affiliate_kpis`).
-- Liste prospects triée priorité (score × recency × statut).
-- Bouton flottant **📷 Scanner carte** ouvre `BusinessCardCapture` déjà présent.
-- Bouton **+ Ajouter prospect** ouvre `AddLeadSheet` (déjà fait). Vérifier `created_by_affiliate_id + assigned_affiliate_id` remplis.
-- Sur chaque carte : SMS perso (déjà), Appeler, SMS UNPRO (Twilio), Email, WhatsApp, Notes, Statut.
-- Statuts étendus : `new|contacted|sms_sent|called|callback|interested|trial_1dollar|premium|elite|refused|lost`.
-- Fiche prospect `/affiliate/leads/:id` : Entreprise, Acquisition, Onboarding, Notes, Historique (events chronologiques), Plan suggéré, Commission potentielle.
+### 5. Dashboard affilié `/affiliate` (améliore l'existant)
+Réutilise `PageAffiliateWarRoom`. Ajouts :
+- KPIs top : recommandations aujourd'hui/semaine, inscriptions démarrées, activations, commissions pending/approved/paid, revenu potentiel/total (`AffiliateRevenueIntelligencePanel` + `PotentialCommissionPipeline` déjà présents).
+- Pipeline standardisé (tous les statuts listés dans la demande) via `contractor_leads.lead_status` + `affiliate_conversions`.
+- Actions rapides : `LeadActionBar` (déjà là) + note, relance, générer lien de paiement (via `create-founder-activation-checkout` existante), copier lien perso.
 
-## Sprint C — Commissions & paiements
+### 6. Admin `/admin/affiliates` (améliore l'existant)
+Onglets déjà présents (10). Compléter uniquement :
+- Onglet "Taux & règles" : CRUD sur `commission_rules` (nouvelle table minimale si absente) — taux par plan, fixe/pourcentage, unique/récurrent, bonus, durée d'attribution, période de validation.
+- Onglet "Commissions" : approuver/refuser/marquer payé (utilise `affiliate_commissions` existante).
+- Statuts affilié standardisés (`application_started` → `inactive`).
 
-- Cron `compute-commissions` : sur `checkout_sessions.status='paid'`, si `contractor` a `assigned_affiliate_id`, créer ligne `commissions` (montant selon plan × `commission_pct`).
-- `/affiliate/commissions` : mois/trim./année, par plan, statut.
-- `/admin/affiliates/commissions` : approbation en masse, export CSV/Stripe/QuickBooks.
-- `/admin/affiliates/payouts` : lots de paiement, statut, exports.
+### 7. Attribution & commissions (câblage)
+- `useAffiliateTracking` déjà installé au niveau app : conserver.
+- À la conversion (activation Stripe validée) : edge function existante de webhook Stripe → créer `affiliate_commissions` en `pending` en fonction des règles `commission_rules` et de l'`affiliate_attributions` liée. Si aucune règle configurée, aucune commission n'est créée (aucun taux inventé).
+- Empêcher auto-référencement (`referrer_user_id != referred_user_id`), doublon, commission sur remboursement (webhook `charge.refunded` → passer commission à `voided`).
 
-## Sprint D — Leaderboard, applications, documents, settings
+### 8. Migration SQL (minimale)
+Ajoute uniquement ce qui manque :
+- `affiliates.slug` (unique, nullable) si absent + backfill depuis referral_code ou full_name.
+- `affiliates.display_preference` (`full_name` | `first_name` | `business` | `neutral`).
+- `affiliates.affiliate_type` enum (`contractor` | `homeowner` | `partner` | `rep` | `creator` | `other`) si absent.
+- Table `commission_rules` (plan_slug, rate_type, rate_value, recurring, bonus_cents, attribution_days, validation_days, active). Grants + RLS admin-only écriture, lecture authenticated.
+- Table `affiliate_settings` (singleton) pour durée d'attribution et fenêtre de validation par défaut.
+- RLS sur toutes les vues affilié : l'affilié ne voit que ses lignes (`assigned_affiliate_id = affiliate_of(auth.uid())`), l'admin voit tout via `has_role`.
 
-- `/affiliate/leaderboard` + `/admin/affiliates/leaderboard` (par conversions / revenus / commissions).
-- Page publique `/affiliate/apply` → `affiliate_applications`. Admin approuve → crée affilié (réutilise edge du Sprint A).
-- `/admin/affiliates/documents` : bibliothèque PDF (scripts, présentation, FAQ) via storage bucket privé.
-- `/admin/affiliates/settings` : règles d'assignation (ville → catégorie → affilié), quotas globaux, seuils de charge.
+### 9. Sécurité / permissions
+- Vérifier RLS de : `contractor_leads`, `affiliate_commissions`, `affiliate_conversions`, `affiliate_attributions`, `referral_events`, `commission_rules`.
+- Journal d'audit : `affiliate_lead_events` déjà présent — étendre pour commission approve/reject/pay.
 
-## Détails techniques
+## Détails techniques (résumé)
 
-- **RLS** : `affiliate_owner(affiliate_id)` sur toutes les tables affilié ; admin via `has_role`.
-- **Reliability** : chaque action passe par `reportOutcome()` avec `FailureCode` (déjà en place pour SMS perso).
-- **Attribution** : tout lead ajouté par affilié écrit obligatoirement `created_by_affiliate_id=assigned_affiliate_id=<self.id>`. Un job nightly reprocess les leads orphelins créés par un user affilié.
-- **Aucune perte de données** : migrations additives, `affiliate_profiles` conservée en lecture seule (deprecated) le temps de migrer les 0 lignes existantes.
-- **Mobile-first** : boutons ≥ 48px, deep links `sms:` / `tel:` / `whatsapp://`, bouton caméra flottant persistant sur War Room.
+```text
+/affilies              → PageAffiliesPublic (nouveau, public)
+/affilies/activer      → PageAffilieActivation (nouveau, auth aware)
+/a/:slug               → PageAffiliePublicProfile (nouveau, public)
+/lorraine              → redirect 301 vers /a/lorraine (legacy safe)
+/affiliate             → PageAffiliateWarRoom (amélioré: KPIs + pipeline)
+/admin/affiliates      → PageAffiliatesHub (onglet Règles/Taux + Commissions)
+```
 
-## Livraison
+Hooks nouveaux : `useAffiliateActivation`, `useAffiliateBySlug`, `useAffiliateCommissionRules`.
+Aucun autre composant/table dupliqué. Aucun compte séparé. Aucun texte fictif ni taux inventé.
 
-Sprint A d'abord (bugfix + fondations + `/admin/affiliates` shell + création d'affilié) — ~1 gros commit. Puis on enchaîne B → C → D à ta demande.
+## Critères de succès
+Ceux listés dans la demande (§17) — un propriétaire ou entrepreneur connecté peut activer son statut d'affilié sans recréer de compte, `/lorraine` reste fonctionnel, pipeline et commissions branchés sur les vraies tables, admin peut configurer les taux, RLS scopée par affilié.
+
+## Hors scope (à confirmer avant build)
+- Paiements de commissions (versement) — on marque `paid` manuellement ; l'intégration Stripe Connect payouts n'est pas incluse.
+- Refonte du module Partenaires (`/partners`, `/partenaires/:slug`) : conservé tel quel, il coexiste avec Affiliés.
