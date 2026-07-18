@@ -1709,6 +1709,10 @@ export const AppRouter = () => (
         <Route path="/admin/affiliates/assign" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAffiliateAssignment /></Suspense></ProtectedRoute>} />
         <Route path="/affiliate" element={<ProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliateWarRoom /></Suspense></ProtectedRoute>} />
         <Route path="/affiliate/company/:id" element={<ProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliateCompanyWorkspace /></Suspense></ProtectedRoute>} />
+        <Route path="/affilies" element={<Suspense fallback={<LazyFallback />}><PageAffiliesPublic /></Suspense>} />
+        <Route path="/affilies/activer" element={<Suspense fallback={<LazyFallback />}><PageAffilieActivation /></Suspense>} />
+        <Route path="/a/:slug" element={<Suspense fallback={<LazyFallback />}><PageAffiliePublicProfile /></Suspense>} />
+        <Route path="/lorraine" element={<Navigate to="/a/lorraine" replace />} />
         <Route path="/admin/email-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailHealthCenterV2 /></Suspense></ProtectedRoute>} />
         <Route path="/admin/email-health-legacy" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailAuditCenter /></Suspense></ProtectedRoute>} />
         <Route path="/admin/email-audit-history" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailAuditHistory /></Suspense></ProtectedRoute>} />
