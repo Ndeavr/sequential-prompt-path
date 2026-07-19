@@ -4999,26 +4999,61 @@ export type Database = {
           },
         ]
       }
+      affiliate_settings: {
+        Row: {
+          auto_approve_activations: boolean
+          created_at: string
+          default_attribution_days: number
+          default_validation_days: number
+          id: boolean
+          updated_at: string
+        }
+        Insert: {
+          auto_approve_activations?: boolean
+          created_at?: string
+          default_attribution_days?: number
+          default_validation_days?: number
+          id?: boolean
+          updated_at?: string
+        }
+        Update: {
+          auto_approve_activations?: boolean
+          created_at?: string
+          default_attribution_days?: number
+          default_validation_days?: number
+          id?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       affiliates: {
         Row: {
           admin_notes: string | null
+          affiliate_type: string
           allowed_categories: string[] | null
+          avatar_url: string | null
+          bio: string | null
+          business_name: string | null
           commission_flat_cents: number | null
           commission_pct: number | null
           commission_rate: number
           created_at: string
           daily_quota: number | null
+          display_preference: string
           email: string | null
           first_name: string | null
           id: string
           last_name: string | null
           metadata: Json | null
           name: string
+          payout_method: string | null
           phone: string | null
+          preferred_language: string
           primary_city: string | null
           province: string | null
           referral_code: string
           service_radius_km: number | null
+          slug: string | null
           status: string
           territories: string[] | null
           total_assigned: number
@@ -5031,26 +5066,35 @@ export type Database = {
           total_trials: number
           updated_at: string
           user_id: string | null
+          website_url: string | null
         }
         Insert: {
           admin_notes?: string | null
+          affiliate_type?: string
           allowed_categories?: string[] | null
+          avatar_url?: string | null
+          bio?: string | null
+          business_name?: string | null
           commission_flat_cents?: number | null
           commission_pct?: number | null
           commission_rate?: number
           created_at?: string
           daily_quota?: number | null
+          display_preference?: string
           email?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
           metadata?: Json | null
           name: string
+          payout_method?: string | null
           phone?: string | null
+          preferred_language?: string
           primary_city?: string | null
           province?: string | null
           referral_code: string
           service_radius_km?: number | null
+          slug?: string | null
           status?: string
           territories?: string[] | null
           total_assigned?: number
@@ -5063,26 +5107,35 @@ export type Database = {
           total_trials?: number
           updated_at?: string
           user_id?: string | null
+          website_url?: string | null
         }
         Update: {
           admin_notes?: string | null
+          affiliate_type?: string
           allowed_categories?: string[] | null
+          avatar_url?: string | null
+          bio?: string | null
+          business_name?: string | null
           commission_flat_cents?: number | null
           commission_pct?: number | null
           commission_rate?: number
           created_at?: string
           daily_quota?: number | null
+          display_preference?: string
           email?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
           metadata?: Json | null
           name?: string
+          payout_method?: string | null
           phone?: string | null
+          preferred_language?: string
           primary_city?: string | null
           province?: string | null
           referral_code?: string
           service_radius_km?: number | null
+          slug?: string | null
           status?: string
           territories?: string[] | null
           total_assigned?: number
@@ -5095,6 +5148,7 @@ export type Database = {
           total_trials?: number
           updated_at?: string
           user_id?: string | null
+          website_url?: string | null
         }
         Relationships: []
       }
@@ -22392,6 +22446,51 @@ export type Database = {
           scarcity_threshold_tight?: number
           size_multiplier?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      commission_rules: {
+        Row: {
+          active: boolean
+          attribution_days: number
+          bonus_cents: number
+          created_at: string
+          id: string
+          notes: string | null
+          plan_slug: string
+          rate_type: string
+          rate_value: number
+          recurring: boolean
+          updated_at: string
+          validation_days: number
+        }
+        Insert: {
+          active?: boolean
+          attribution_days?: number
+          bonus_cents?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          plan_slug: string
+          rate_type: string
+          rate_value?: number
+          recurring?: boolean
+          updated_at?: string
+          validation_days?: number
+        }
+        Update: {
+          active?: boolean
+          attribution_days?: number
+          bonus_cents?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          plan_slug?: string
+          rate_type?: string
+          rate_value?: number
+          recurring?: boolean
+          updated_at?: string
+          validation_days?: number
         }
         Relationships: []
       }
