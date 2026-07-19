@@ -841,6 +841,10 @@ const PageAffiliateAssignment = lazyWithRetry(() => import("@/pages/admin/affili
 const PageAffiliesPublic = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliesPublic"));
 const PageAffilieActivation = lazyWithRetry(() => import("@/pages/affiliate/PageAffilieActivation"));
 const PageAffiliePublicProfile = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliePublicProfile"));
+const PageAffiliateLogin = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateLogin"));
+const PageAffiliateShortLink = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateShortLink"));
+const PageAdminAffiliateNew = lazyWithRetry(() => import("@/pages/admin/affiliate/PageAdminAffiliateNew"));
+const PageAffiliateProspectImport = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateProspectImport"));
 
 // Email Audit Center
 const PageEmailAuditCenter = lazyWithRetry(() => import("@/pages/admin/email-health/PageEmailAuditCenter"));
