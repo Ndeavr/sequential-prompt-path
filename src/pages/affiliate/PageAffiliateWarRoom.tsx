@@ -20,9 +20,10 @@ import {
   recommendPlan,
 } from "@/features/affiliate/revenueMath";
 import { formatPrice } from "@/lib/formatPrice";
-import { PhoneCall, MousePointerClick, FileText, CreditCard, DollarSign, ArrowRight, Plus, Camera } from "lucide-react";
+import { PhoneCall, MousePointerClick, FileText, CreditCard, DollarSign, ArrowRight, Plus, Camera, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddLeadSheet } from "@/features/affiliate/addLead/AddLeadSheet";
+import { AffiliateHeaderMenu } from "@/features/affiliate/components/AffiliateHeaderMenu";
 import { AssignedLeadsList } from "@/features/affiliate/warRoom/AssignedLeadsList";
 
 type Assignment = {
@@ -118,14 +119,26 @@ export default function PageAffiliateWarRoom() {
               Votre journée en un coup d'œil. Priorité au revenu.
             </p>
           </div>
-          {affiliate && (
-            <Button
-              onClick={() => { setAddMode("picker"); setAddOpen(true); }}
-              className="h-11 shadow-sm"
-            >
-              <Plus className="h-4 w-4 mr-1" /> Ajouter un prospect
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {affiliate && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => (window.location.href = "/affiliate/prospects/import")}
+                  className="h-11"
+                >
+                  <Upload className="h-4 w-4 mr-1" /> Importer
+                </Button>
+                <Button
+                  onClick={() => { setAddMode("picker"); setAddOpen(true); }}
+                  className="h-11 shadow-sm"
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Ajouter un prospect
+                </Button>
+              </>
+            )}
+            <AffiliateHeaderMenu affiliateSlug={(affiliate as any)?.slug} />
+          </div>
         </header>
 
         {/* Top stats */}

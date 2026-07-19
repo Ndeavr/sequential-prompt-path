@@ -3447,6 +3447,50 @@ export type Database = {
           },
         ]
       }
+      admin_impersonations: {
+        Row: {
+          actions: Json
+          admin_user_id: string
+          affiliate_id: string
+          created_at: string
+          ended_at: string | null
+          id: string
+          ip: string | null
+          reason: string | null
+          started_at: string
+        }
+        Insert: {
+          actions?: Json
+          admin_user_id: string
+          affiliate_id: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          ip?: string | null
+          reason?: string | null
+          started_at?: string
+        }
+        Update: {
+          actions?: Json
+          admin_user_id?: string
+          affiliate_id?: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          ip?: string | null
+          reason?: string | null
+          started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_impersonations_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_import_conflicts: {
         Row: {
           created_at: string
@@ -4720,6 +4764,156 @@ export type Database = {
           },
         ]
       }
+      affiliate_import_batches: {
+        Row: {
+          affiliate_id: string
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          duplicate_rows: number
+          file_name: string | null
+          id: string
+          imported_rows: number
+          invalid_rows: number
+          source_type: string
+          status: string
+          total_rows: number
+          valid_rows: number
+        }
+        Insert: {
+          affiliate_id: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          duplicate_rows?: number
+          file_name?: string | null
+          id?: string
+          imported_rows?: number
+          invalid_rows?: number
+          source_type: string
+          status?: string
+          total_rows?: number
+          valid_rows?: number
+        }
+        Update: {
+          affiliate_id?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          duplicate_rows?: number
+          file_name?: string | null
+          id?: string
+          imported_rows?: number
+          invalid_rows?: number
+          source_type?: string
+          status?: string
+          total_rows?: number
+          valid_rows?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_import_batches_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_import_rows: {
+        Row: {
+          batch_id: string
+          created_at: string
+          duplicate_prospect_id: string | null
+          error_messages: Json | null
+          id: string
+          imported_prospect_id: string | null
+          normalized_data: Json
+          raw_data: Json
+          validation_status: string
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          duplicate_prospect_id?: string | null
+          error_messages?: Json | null
+          id?: string
+          imported_prospect_id?: string | null
+          normalized_data?: Json
+          raw_data?: Json
+          validation_status?: string
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          duplicate_prospect_id?: string | null
+          error_messages?: Json | null
+          id?: string
+          imported_prospect_id?: string | null
+          normalized_data?: Json
+          raw_data?: Json
+          validation_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_import_rows_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_import_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_invitations: {
+        Row: {
+          affiliate_id: string
+          channel: string
+          expires_at: string | null
+          id: string
+          opened_at: string | null
+          sent_at: string
+          sent_by: string | null
+          sent_to: string
+          short_url: string
+          status: string
+          used_at: string | null
+        }
+        Insert: {
+          affiliate_id: string
+          channel: string
+          expires_at?: string | null
+          id?: string
+          opened_at?: string | null
+          sent_at?: string
+          sent_by?: string | null
+          sent_to: string
+          short_url: string
+          status?: string
+          used_at?: string | null
+        }
+        Update: {
+          affiliate_id?: string
+          channel?: string
+          expires_at?: string | null
+          id?: string
+          opened_at?: string | null
+          sent_at?: string
+          sent_by?: string | null
+          sent_to?: string
+          short_url?: string
+          status?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_invitations_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affiliate_lead_events: {
         Row: {
           affiliate_id: string
@@ -5028,9 +5222,11 @@ export type Database = {
       }
       affiliates: {
         Row: {
+          activated_at: string | null
           admin_notes: string | null
           affiliate_type: string
           allowed_categories: string[] | null
+          archived_at: string | null
           avatar_url: string | null
           bio: string | null
           business_name: string | null
@@ -5043,18 +5239,23 @@ export type Database = {
           email: string | null
           first_name: string | null
           id: string
+          invited_at: string | null
+          last_login_at: string | null
           last_name: string | null
           metadata: Json | null
           name: string
           payout_method: string | null
+          permissions: Json
           phone: string | null
           preferred_language: string
           primary_city: string | null
           province: string | null
           referral_code: string
           service_radius_km: number | null
+          short_login_token: string | null
           slug: string | null
           status: string
+          suspended_at: string | null
           territories: string[] | null
           total_assigned: number
           total_clicks: number
@@ -5069,9 +5270,11 @@ export type Database = {
           website_url: string | null
         }
         Insert: {
+          activated_at?: string | null
           admin_notes?: string | null
           affiliate_type?: string
           allowed_categories?: string[] | null
+          archived_at?: string | null
           avatar_url?: string | null
           bio?: string | null
           business_name?: string | null
@@ -5084,18 +5287,23 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           id?: string
+          invited_at?: string | null
+          last_login_at?: string | null
           last_name?: string | null
           metadata?: Json | null
           name: string
           payout_method?: string | null
+          permissions?: Json
           phone?: string | null
           preferred_language?: string
           primary_city?: string | null
           province?: string | null
           referral_code: string
           service_radius_km?: number | null
+          short_login_token?: string | null
           slug?: string | null
           status?: string
+          suspended_at?: string | null
           territories?: string[] | null
           total_assigned?: number
           total_clicks?: number
@@ -5110,9 +5318,11 @@ export type Database = {
           website_url?: string | null
         }
         Update: {
+          activated_at?: string | null
           admin_notes?: string | null
           affiliate_type?: string
           allowed_categories?: string[] | null
+          archived_at?: string | null
           avatar_url?: string | null
           bio?: string | null
           business_name?: string | null
@@ -5125,18 +5335,23 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           id?: string
+          invited_at?: string | null
+          last_login_at?: string | null
           last_name?: string | null
           metadata?: Json | null
           name?: string
           payout_method?: string | null
+          permissions?: Json
           phone?: string | null
           preferred_language?: string
           primary_city?: string | null
           province?: string | null
           referral_code?: string
           service_radius_km?: number | null
+          short_login_token?: string | null
           slug?: string | null
           status?: string
+          suspended_at?: string | null
           territories?: string[] | null
           total_assigned?: number
           total_clicks?: number
