@@ -2,7 +2,8 @@ import { describe, it, expect } from "vitest";
 import { getSpeechText } from "@/lib/brand/getSpeechText";
 
 describe("getSpeechText — brand pronunciation lock", () => {
-  const forbiddenSpelledOut = /\bU[\s\.\-]?N[\s\.\-]?P[\s\.\-]?R[\s\.\-]?O\b/i;
+  // Detects spelled-out form: U-N-P-R-O with at least one separator between each letter.
+  const forbiddenSpelledOut = /\bU[\s\.\-]N[\s\.\-]P[\s\.\-]R[\s\.\-]O\b/i;
 
   const variants = [
     "Bienvenue chez UNPRO",

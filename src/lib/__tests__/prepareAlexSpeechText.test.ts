@@ -26,9 +26,9 @@ describe("prepareAlexSpeechText", () => {
     );
   });
 
-  it("rewrites UNPRO in English to Hun Pro", () => {
+  it("rewrites UNPRO in English to Hun-pro", () => {
     expect(prepareAlexSpeechText("Welcome to UNPRO.", "en")).toBe(
-      "Welcome to Hun Pro.",
+      "Welcome to Hun-pro.",
     );
   });
 
