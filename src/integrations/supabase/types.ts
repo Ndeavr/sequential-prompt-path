@@ -32827,6 +32827,45 @@ export type Database = {
           },
         ]
       }
+      contractor_onboarding_events: {
+        Row: {
+          actor: string
+          contractor_id: string
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          from_state: Database["public"]["Enums"]["onboarding_state"] | null
+          id: string
+          metadata: Json
+          retry_count: number
+          to_state: Database["public"]["Enums"]["onboarding_state"]
+        }
+        Insert: {
+          actor?: string
+          contractor_id: string
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          from_state?: Database["public"]["Enums"]["onboarding_state"] | null
+          id?: string
+          metadata?: Json
+          retry_count?: number
+          to_state: Database["public"]["Enums"]["onboarding_state"]
+        }
+        Update: {
+          actor?: string
+          contractor_id?: string
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          from_state?: Database["public"]["Enums"]["onboarding_state"] | null
+          id?: string
+          metadata?: Json
+          retry_count?: number
+          to_state?: Database["public"]["Enums"]["onboarding_state"]
+        }
+        Relationships: []
+      }
       contractor_onboarding_messages: {
         Row: {
           body: string
@@ -32969,6 +33008,64 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      contractor_onboarding_states: {
+        Row: {
+          activated_at: string | null
+          blocked_reason: string | null
+          confidence_score: number | null
+          contractor_id: string
+          created_at: string
+          id: string
+          live_at: string | null
+          metadata: Json
+          next_action_at: string | null
+          previous_state: Database["public"]["Enums"]["onboarding_state"] | null
+          readiness_score: number | null
+          retry_count: number
+          state: Database["public"]["Enums"]["onboarding_state"]
+          stuck_since: string | null
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          blocked_reason?: string | null
+          confidence_score?: number | null
+          contractor_id: string
+          created_at?: string
+          id?: string
+          live_at?: string | null
+          metadata?: Json
+          next_action_at?: string | null
+          previous_state?:
+            | Database["public"]["Enums"]["onboarding_state"]
+            | null
+          readiness_score?: number | null
+          retry_count?: number
+          state?: Database["public"]["Enums"]["onboarding_state"]
+          stuck_since?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          blocked_reason?: string | null
+          confidence_score?: number | null
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          live_at?: string | null
+          metadata?: Json
+          next_action_at?: string | null
+          previous_state?:
+            | Database["public"]["Enums"]["onboarding_state"]
+            | null
+          readiness_score?: number | null
+          retry_count?: number
+          state?: Database["public"]["Enums"]["onboarding_state"]
+          stuck_since?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -89347,6 +89444,22 @@ export type Database = {
       nav_menu_type: "top" | "bottom" | "hamburger"
       nav_page_status: "draft" | "fallback_only" | "published"
       neq_status: "active" | "inactive" | "struck_off" | "not_found" | "unknown"
+      onboarding_state:
+        | "SCRAPED"
+        | "VALIDATING"
+        | "CONTACTABLE"
+        | "NEEDS_REVIEW"
+        | "INVITED"
+        | "LANDED"
+        | "REGISTERING"
+        | "OTP_VERIFIED"
+        | "PAYMENT_COMPLETE"
+        | "ACTIVATED"
+        | "PROFILE_ENRICHMENT"
+        | "VERIFIED"
+        | "RECOMMENDATION_ELIGIBLE"
+        | "LIVE"
+        | "STUCK"
       platform_business_outcome:
         | "achieved"
         | "blocked"
@@ -89656,6 +89769,23 @@ export const Constants = {
       nav_menu_type: ["top", "bottom", "hamburger"],
       nav_page_status: ["draft", "fallback_only", "published"],
       neq_status: ["active", "inactive", "struck_off", "not_found", "unknown"],
+      onboarding_state: [
+        "SCRAPED",
+        "VALIDATING",
+        "CONTACTABLE",
+        "NEEDS_REVIEW",
+        "INVITED",
+        "LANDED",
+        "REGISTERING",
+        "OTP_VERIFIED",
+        "PAYMENT_COMPLETE",
+        "ACTIVATED",
+        "PROFILE_ENRICHMENT",
+        "VERIFIED",
+        "RECOMMENDATION_ELIGIBLE",
+        "LIVE",
+        "STUCK",
+      ],
       platform_business_outcome: [
         "achieved",
         "blocked",
