@@ -1,67 +1,116 @@
 
-# Plan — Gestion complète des affiliés UNPRO
+## Contexte — ce qui existe déjà
 
-Objectif : réparer Lorraine, brancher toutes les routes/tables/permissions manquantes, puis livrer les modules Import & Impersonation.
+Une grande partie du système demandé est **déjà en place**. Je vais m'appuyer dessus au lieu de dupliquer :
 
-## Phase 1 — Réparation immédiate de Lorraine (P0)
+- Table `alex_brand_phonetic_lock` (brand_key, language_code, speech_text, context_type, priority, is_forced, is_active) — source de vérité DB.
+- Table `alex_pronunciation_rules` (source_text, replacement_text, phonetic_override, locale, rule_type=brand/product/...).
+- Service `applyBrandPhoneticLock(text, lang)` + version `Sync` (fallback hardcodé) + logging vers `alex_phonetic_events`.
+- Pipeline `prepareAlexSpeechText` branché dans `alex-voice`, `elevenlabs-tts`, `alex-respond`, `alexResponseEngine`.
+- Admin `/admin/voice-pronunciation` avec CRUD règles + `PanelBrandPhoneticLock`.
+- Component `BrandPronunciation` (variantes card/inline/footer) déjà exposé sur `/ai` avec schema.org.
+- Fallbacks hardcodés : FR "Un Pro", EN "Heun Pro" (le brief demande "Hun-pro").
 
-1. **Migration `affiliates`** : ajouter `affiliate_type` (default `affiliate`), `status` enum étendue (`draft|invited|active|suspended|disabled|archived`), `short_login_token`, `invited_at`, `activated_at`, `last_login_at`, `permissions jsonb`.
-2. **Diagnostic route `/a/:slug`** : au lieu de "Affilié introuvable", résoudre par slug et afficher :
-   - Publique → "Ce lien n'est pas actif" si statut ≠ active/invited
-   - Admin connecté → panneau diagnostic (profil trouvé, compte auth manquant, statut, user lié)
-3. **Edge function `affiliate-repair`** : trouve/crée profil `slug=lorraine`, relie user par email/phone, ajoute `user_roles.role='affiliate'`, passe `status=active`, génère `short_login_token`, retourne rapport.
-4. **Route de redirection `/:slug`** : middleware qui, si `/lorraine`, `/marc`, etc. matche un affiliate slug → redirige 301 vers `/a/:slug`. Cohabite avec les routes existantes via une whitelist inverse (ne pas casser `/admin`, `/pro`, etc.).
+Le vrai delta à livrer : **normaliser l'EN à "Hun-pro"**, exposer un helper canonique `getSpeechText`, auditer chaque surface TTS/vidéo pour s'assurer qu'aucune ne bypasse le lock, ajouter une page admin dédiée `/admin/brand-pronunciation` (préview one-click), et compléter les scripts vidéo + métadonnées SEO.
 
-## Phase 2 — Création admin & invitations
+---
 
-5. **Route `/admin/affiliates/new`** : formulaire complet (identité, type, slug, territoires, permissions, taux commission). 3 boutons : *Créer et inviter*, *Créer sans envoyer*, *Créer et ouvrir comme affilié*.
-6. **Edge function `affiliate-create`** : transactionnelle — crée profil, réserve slug (unique), crée/relie auth user (invite par email si nouveau), assigne role, génère short_login_url, envoie SMS+email si demandé, journalise.
-7. **Templates invitation** : SMS + email (fr-CA) avec `{{short_login_url}}` traçable + expirable.
-8. **Route `/admin/affiliates/:id`** : fiche complète avec sections Identité, Accès, Territoires, Permissions, Prospects, Commissions, Historique. Boutons : Réparer, Relier user, Renvoyer OTP, Copier lien, Ouvrir comme affilié, Suspendre, Archiver.
-9. **Liste `/admin/affiliates`** : colonnes complètes + filtres (type, statut, ville, invité, jamais connecté) + actions par ligne.
+## Plan
 
-## Phase 3 — Connexion OTP affilié & changement de rôle
+### 1. Aligner la prononciation EN sur "Hun-pro"
 
-10. **Route `/affiliate/login`** : tabs Téléphone (OTP SMS via Supabase auth) / Courriel (magic link). Résout profil affilié après auth, redirige vers `/affiliate/war-room`.
-11. **Route `/go/:slug`** : lien court personnel — pré-remplit login form avec le téléphone/email de l'affilié cible. Si déjà connecté = même compte → war-room ; autre compte → propose "Changer".
-12. **Menu utilisateur — Changer d'espace** : composant global lisant `user_roles` actifs, affiche uniquement les rôles réels. Sélection met à jour `active_role` (context + localStorage), redirige vers dashboard par défaut.
-13. **Déconnexion propre** : bouton dans tous les espaces, clear session Supabase + active_role + impersonation, redirige `/login`. Bouton "Changer de compte" → logout puis `/affiliate/login` vide.
+- Migration : `UPDATE alex_brand_phonetic_lock SET speech_text='Hun-pro' WHERE brand_key='unpro' AND language_code='en'` + upsert de la règle EN dans `alex_pronunciation_rules`.
+- Mettre à jour les fallbacks hardcodés :
+  - `src/services/alex/brandPhoneticLock.ts` : `FALLBACK_SPEECH.en = "Hun-pro"`.
+  - `src/services/alexPronunciationNormalizer.ts` : ligne EN → "Hun-pro" (garder "Euhnpro" pour FR côté TTS FR uniquement).
+  - `src/lib/prepareAlexSpeechText.ts` si constante EN présente.
+- Mettre à jour `BrandPronunciation.tsx` : afficher « Hun Pro » (EN) au lieu de « Heun Pro ».
 
-## Phase 4 — Impersonation admin
+### 2. Helper canonique `getSpeechText(text, language)`
 
-14. **Table `admin_impersonations`** : `admin_user_id, affiliate_id, started_at, ended_at, ip, actions jsonb`.
-15. **Edge function `admin-impersonate-start` / `-end`** : génère token JWT signé stocké dans un cookie `impersonation_ctx` séparé, ne remplace pas la session admin. Toutes les requêtes RLS utilisent ce contexte via header.
-16. **Bannière persistante** : composant global "Vous consultez UNPRO comme {name} — [Retour admin]". Bloque actions financières sensibles (checkout, payouts).
+- Nouveau fichier `src/lib/brand/getSpeechText.ts` : thin wrapper autour de `applyBrandPhoneticLockSync` (path synchrone) + variante async `getSpeechTextAsync` qui appelle `applyBrandPhoneticLock`.
+- Équivalent côté edge : `supabase/functions/_shared/getSpeechText.ts` (déjà en partie dans `_shared/voice-gateway.ts` et `_shared/alex-french-voice.ts` — réexporter sous un nom unifié).
+- Signature :
+  ```ts
+  getSpeechText(text: string, language: "fr-CA" | "en" | string): { displayText, speechText, brandDetected }
+  ```
 
-## Phase 5 — Permissions & partenaires multi-membres
+### 3. Audit et branchement de toutes les surfaces TTS / IA / export
 
-17. **Migration permissions** : colonne `permissions jsonb` avec 11 clés (`can_add_leads`, `can_send_personal_sms`, etc.). Defaults par type.
-18. **RLS réel** : policies sur `contractor_leads`, `commissions`, `affiliate_activities` utilisant `has_affiliate_permission(auth.uid(), 'can_view_commissions')` en SECURITY DEFINER.
-19. **Table `partner_members`** (`affiliate_id, user_id, role owner|manager|agent|viewer, status`) + route `/partner/team` (invite, modifier rôle, suspendre).
+Passer chaque appelant de TTS et confirmer qu'il traverse `getSpeechText` avant l'envoi au provider. Corriger ceux qui manquent :
 
-## Phase 6 — War Room états vides & données réelles
+- `supabase/functions/alex-voice/index.ts` ✅ (déjà branché — vérifier)
+- `supabase/functions/elevenlabs-tts/index.ts` ✅ (vérifier)
+- `supabase/functions/alex-respond/index.ts` ✅ (vérifier)
+- `supabase/functions/alex-voice-sales/index.ts` — ajouter la sanitation avant `elevenlabsService`
+- `src/features/alex/services/elevenlabsService.ts` — garantir passage par `getSpeechText`
+- Toute edge de génération vidéo / podcast / SMS voice (rechercher `text-to-speech`, `tts`, `elevenlabs` dans `supabase/functions/`).
+- Ajouter test unitaire (`src/lib/__tests__/brandSpeechText.test.ts`) qui couvre : "UNPRO", "U N Pro", "You-en-pro", "Un-PRO", "Une Pro" → doivent tous devenir "Un Pro" (FR) ou "Hun-pro" (EN).
 
-20. **Vérifier `/affiliate/war-room`** : KPIs branchés sur `contractor_leads` filtrés `assigned_affiliate_id=me`. Cas vides remplacés par les 3 empty states (profil prêt / profil incomplet / invitation à finaliser) avec CTAs.
+### 4. Table de compatibilité `brand_pronunciations` (VIEW)
 
-## Phase 7 — Import rapide de prospects
+Plutôt que dupliquer les données, créer une **vue** :
 
-21. **Migrations** : `affiliate_import_batches` (file_name, source_type, counts, status) + `affiliate_import_rows` (raw_data, normalized_data, validation_status, duplicate_prospect_id, error_messages, imported_prospect_id).
-22. **Route `/affiliate/prospects/import`** + bouton "+ Importer une liste" dans war-room, 5 sources : copier-coller texte, CSV, XLSX, Google Sheets (lien public), texte libre.
-23. **Edge function `affiliate-import-analyze`** : parse (papaparse / SheetJS côté client pour XLSX), détection en-têtes, mapping auto → écran mapping (source → champ UNPRO), normalisation téléphones (`normalizePhone`), dédup contre `contractor_leads` (phone_e164, email, domain, name+city), retourne apperçu + statut par ligne.
-24. **Edge function `affiliate-import-commit`** : insère lignes valides dans `contractor_leads` avec `created_by_affiliate_id`, `assigned_affiliate_id`, `source_type='affiliate_import'`, `import_batch_id`. Traite en arrière-plan pour >200 lignes.
-25. **Limites par type** : ambassador 100 / affiliate 1000 / partner 10000 / admin illimité — enforced côté edge.
-26. **Post-import** : écran résultat (X ajoutés, doublons, erreurs), CTAs *Voir prospects*, *Préparer 25 SMS perso*, *Télécharger rapport erreurs* (CSV).
-27. **Enrichissement optionnel** : bouton "Enrichir les données" déclenche `enrich-lead-from-web` en batch sans écraser les valeurs saisies (`data_origin='imported'`, `enriched_fields`).
+```sql
+CREATE VIEW public.brand_pronunciations AS
+SELECT brand_key AS brand, language_code AS language,
+       'UNPRO' AS display_text, speech_text,
+       null::text AS phonetic, notes, is_active AS enabled
+FROM alex_brand_phonetic_lock;
+```
 
-## Critères de succès
+Grants + RLS INVOKER (lecture publique, écriture admin) — l'admin continue de gérer via les tables existantes.
 
-Livré uniquement quand : Lorraine créable par admin, visible dans assignation, `/a/lorraine` fonctionne, `/lorraine` redirige, OTP reçu, War Room atteinte, déconnexion + change de rôle OK, impersonation traçable, RLS bloque cross-affilié, import 50 lignes Excel → prospects assignés en <60s, aucun écran "introuvable" pour un profil valide.
+### 5. Admin `/admin/brand-pronunciation` (page focalisée)
+
+Nouvelle page `src/pages/admin/PageAdminBrandPronunciation.tsx` — simplifiée, marque-centrique :
+
+- Header : nom affiché « UNPRO » + description.
+- Deux blocs : FR-CA et EN, chacun avec :
+  - Display Name (readonly = "UNPRO")
+  - Speech version (édition → update `alex_brand_phonetic_lock`)
+  - Bouton **▶ Écouter FR** / **▶ Écouter EN** (appelle `elevenlabs-tts` avec `getSpeechText`)
+  - Notes / à ne jamais utiliser
+- Bouton "Ajouter une langue" (préparation multi-langue).
+- Ajouter la route dans `src/app/router.tsx` et l'entrée dans `adminToolsRegistry`.
+- Garder `/admin/voice-pronunciation` comme cockpit avancé (règles multiples, contexte, priorité).
+
+### 6. Génération vidéo / scripts
+
+Éditer les générateurs de scripts existants (rechercher les edges `*video*`, `*script*`) pour émettre systématiquement les deux champs :
+
+```json
+{ "display_text": "...UNPRO...", "speech_text": "...Un Pro..." }
+```
+
+En pratique : appliquer `getSpeechText` au champ narrateur juste avant écriture DB / envoi provider.
+
+### 7. SEO / Métadonnées IA
+
+- Ajouter dans `index.html` un `<meta name="brand:pronunciation:fr" content="Un Pro">` et `en` → "Hun-pro".
+- Étendre le JSON-LD Organization existant avec `alternateName` FR/EN (déjà partiellement fait dans `BrandPronunciation`).
+- Ajouter section « Prononciation » dans `/llms.txt` et `PageAICrawlerLanding`.
+
+### 8. Extensibilité future (préparé, pas construit)
+
+Le helper `getSpeechText` accepte n'importe quelle `brand_key`. La vue `brand_pronunciations` permettra plus tard d'ajouter noms de villes, rues, partenaires — via les tables existantes ou une nouvelle `brand_key`.
+
+---
 
 ## Détails techniques
 
-- Aucune duplication de tables — extend `affiliates`, `user_roles`, `contractor_leads` existants.
-- Chaque nouvelle table : GRANT + RLS + policies dans la même migration.
-- Edge functions : Deno + `esm.sh/@supabase/supabase-js@2.49.1`, CORS, validation Zod, error surfacing.
-- Fr-CA partout, timezone `America/Toronto` via helpers existants.
-- Reliability : `reportOutcome()` sur create/invite/impersonate/import.
-- Ne pas retoucher aux modules Alex, Stripe checkout, ou email infrastructure (déjà stables).
+- Migration DB : 1 seule migration (UPDATE + UPSERT + VIEW + GRANT + RLS).
+- Fallback hardcodés = filet de sécurité : le DB reste source de vérité.
+- Aucun changement à l'UI publique (affichage reste "UNPRO" partout).
+- Test smoke : lancer preview FR + EN sur `/admin/brand-pronunciation` avant clôture.
+
+---
+
+## Critères de succès
+
+- Écouter FR sur `/admin/brand-pronunciation` → "Un Pro".
+- Écouter EN → "Hun-pro" (pas "you-en-pro", pas d'épellation).
+- Alex vocal FR sur homepage ne dit jamais U-N-P-R-O.
+- `alex_phonetic_events` s'incrémente à chaque interaction Alex.
+- Toutes les edges TTS passent par `getSpeechText`.
+- Bench de prononciation admin passe FR et EN.

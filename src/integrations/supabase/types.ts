@@ -85995,6 +85995,39 @@ export type Database = {
         }
         Relationships: []
       }
+      brand_pronunciations: {
+        Row: {
+          brand: string | null
+          display_text: string | null
+          enabled: boolean | null
+          language: string | null
+          notes: string | null
+          phonetic: string | null
+          speech_text: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          brand?: string | null
+          display_text?: never
+          enabled?: boolean | null
+          language?: string | null
+          notes?: string | null
+          phonetic?: never
+          speech_text?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          brand?: string | null
+          display_text?: never
+          enabled?: boolean | null
+          language?: string | null
+          notes?: string | null
+          phonetic?: never
+          speech_text?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       ccai_answer_matrix: {
         Row: {
           answer_code: string | null

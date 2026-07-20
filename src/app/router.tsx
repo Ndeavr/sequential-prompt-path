@@ -516,6 +516,7 @@ const AdminZoneValueMap = lazyWithRetry(() => import("@/pages/admin/AdminZoneVal
 const AdminVoiceControlPage = lazyWithRetry(() => import("@/pages/admin/AdminVoiceControlPage"));
 const AdminVoiceOptimizerPage = lazyWithRetry(() => import("@/pages/admin/AdminVoiceOptimizerPage"));
 const PageAdminVoicePronunciation = lazyWithRetry(() => import("@/pages/admin/PageAdminVoicePronunciation"));
+const PageAdminBrandPronunciation = lazyWithRetry(() => import("@/pages/admin/PageAdminBrandPronunciation"));
 const PageNoMatchFallback = lazyWithRetry(() => import("@/pages/PageNoMatchFallback"));
 const PageAdminNoMatchMonitoring = lazyWithRetry(() => import("@/pages/admin/PageAdminNoMatchMonitoring"));
 const EntrepreneurVoiceSalesPage = lazyWithRetry(() => import("@/pages/entrepreneur/EntrepreneurVoiceSalesPage"));
@@ -1585,6 +1586,7 @@ export const AppRouter = () => (
         <Route path="/admin/voice-optimizer" element={<ProtectedRoute requiredRole="admin"><AdminVoiceOptimizerPage /></ProtectedRoute>} />
         <Route path="/admin/voice-optimizer/:id" element={<ProtectedRoute requiredRole="admin"><AdminVoiceOptimizerPage /></ProtectedRoute>} />
         <Route path="/admin/voice-pronunciation" element={<ProtectedRoute requiredRole="admin"><PageAdminVoicePronunciation /></ProtectedRoute>} />
+        <Route path="/admin/brand-pronunciation" element={<ProtectedRoute requiredRole="admin"><PageAdminBrandPronunciation /></ProtectedRoute>} />
         <Route path="/admin/alex/voice" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexVoice /></ProtectedRoute>} />
         <Route path="/admin/alex/voice/tests" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexVoice /></ProtectedRoute>} />
         <Route path="/admin/alex/context" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexContext /></ProtectedRoute>} />
