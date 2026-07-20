@@ -171,6 +171,19 @@ export const ADMIN_TOOLS: AdminTool[] = [
     primary_metric: "événements visuels",
     recommended_action: "Ouvrir /admin/site-health",
   },
+  {
+    id: "brand_pronunciation",
+    label: "Prononciation de marque UNPRO",
+    description: "Verrou phonétique FR/EN utilisé par toutes les voix IA, TTS, vidéos et exports. UNPRO ne doit jamais être épelé.",
+    route: "/admin/brand-pronunciation",
+    category: "trust",
+    risk_level: "safe",
+    automation_available: false,
+    requires_approval: false,
+    related_tables: ["alex_brand_phonetic_lock", "alex_pronunciation_rules", "brand_pronunciations"],
+    primary_metric: "prononciations verrouillées",
+    recommended_action: "Ouvrir /admin/brand-pronunciation",
+  },
 ];
 
 export const TOOLS_BY_CATEGORY = ADMIN_TOOLS.reduce<Record<string, AdminTool[]>>((acc, t) => {
