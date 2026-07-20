@@ -75,18 +75,38 @@ export default function PageAdminBrandPronunciation() {
 
   const playPreview = async (lang: "fr" | "en", text: string) => {
     setPlayingLang(lang);
+    let objectUrl: string | null = null;
     try {
       const { speechText } = getSpeechText(text, lang === "fr" ? "fr-CA" : "en");
-      const { data, error } = await supabase.functions.invoke("elevenlabs-tts", {
-        body: { text: speechText, language: lang },
-      });
-      if (error) throw error;
-      const b64 = (data as any)?.audioContent || (data as any)?.audio;
-      if (!b64) throw new Error("Aucun audio retourné");
-      const audio = new Audio(`data:audio/mpeg;base64,${b64}`);
-      audio.onended = () => setPlayingLang(null);
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ text: speechText, language: lang }),
+        },
+      );
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => "");
+        throw new Error(errText || `HTTP ${resp.status}`);
+      }
+      const blob = await resp.blob();
+      if (!blob.size) throw new Error("Aucun audio retourné");
+      objectUrl = URL.createObjectURL(blob);
+      const audio = new Audio(objectUrl);
+      const cleanup = () => {
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+        setPlayingLang(null);
+      };
+      audio.onended = cleanup;
+      audio.onerror = cleanup;
       await audio.play();
     } catch (e: any) {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
       toast.error(`Prévisualisation impossible : ${e?.message ?? e}`);
       setPlayingLang(null);
     }
