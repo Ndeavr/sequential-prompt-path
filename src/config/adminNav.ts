@@ -81,6 +81,7 @@ export const adminNavGroups: NavGroup[] = [
       { to: "/admin/alerts", label: "Alerts", icon: Bell },
       { to: "/admin/operations", label: "Health", icon: Heart },
       { to: "/admin/system-integrity", label: "System Integrity", icon: ShieldCheck },
+      { to: "/admin/onboarding-orchestrator", label: "Onboarding Orchestrator", icon: ShieldCheck },
       { to: "/admin/system-time", label: "Time Health", icon: Clock },
       { to: "/admin/ui-health", label: "UI Health", icon: Gauge },
       { to: "/admin/outbound/logs", label: "Logs", icon: ScrollText },
