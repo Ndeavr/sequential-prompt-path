@@ -24,7 +24,7 @@ export default function PageAippPublic() {
       if (!page || (token && page.public_token !== token)) { setLoading(false); return; }
 
       const [{ data: c }, { data: score }, { data: services }, { data: media }] = await Promise.all([
-        supabase.from("acq_contractors").select("*").eq("id", page.contractor_id).single(),
+        supabase.from("acq_contractors").select("id, company_name, slug, website, city, province, rbq_number, neq_number, logo_url, description, status, source, created_at, updated_at").eq("id", page.contractor_id).single(),
         supabase.from("acq_contractor_scores").select("*").eq("contractor_id", page.contractor_id).maybeSingle(),
         supabase.from("acq_contractor_services").select("*").eq("contractor_id", page.contractor_id),
         supabase.from("acq_contractor_media").select("*").eq("contractor_id", page.contractor_id).order("sort_order"),
@@ -68,7 +68,7 @@ export default function PageAippPublic() {
           <p className="text-muted-foreground max-w-2xl mx-auto">{c.description}</p>
           <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground">
             {c.city && <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {c.city}</span>}
-            {c.phone && <span className="flex items-center gap-1"><Phone className="w-4 h-4" /> {c.phone}</span>}
+            
             {c.website && <a href={c.website} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:underline"><Globe className="w-4 h-4" /> Site web</a>}
             {c.rbq_number && <Badge variant="outline">RBQ {c.rbq_number}</Badge>}
           </div>
