@@ -43,7 +43,7 @@ export function prepareAlexSpeechText(
     // standalone UNPRO → Un Pro
     out = out.replace(/\bUNPRO\b/gi, "Un Pro");
   } else {
-    out = out.replace(/\bUNPRO\b/gi, "Hun Pro");
+    out = out.replace(/\bUNPRO\b/gi, "Hun-pro");
   }
 
   return out;

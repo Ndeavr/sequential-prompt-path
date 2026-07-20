@@ -15,7 +15,7 @@ export default function BrandPronunciation({ variant = "card", className = "" }:
       <span className={`text-sm ${className}`}>
         <strong>UNPRO</strong>{" "}
         <span className="opacity-80">
-          — prononcé « Un&nbsp;Pro » (FR) / "Hun&nbsp;Pro" (EN). Signifie « Le #1 Professionnel ».
+          — prononcé « Un&nbsp;Pro » (FR) / "Hun-pro" (EN). Signifie « Le #1 Professionnel ».
         </span>
       </span>
     );
@@ -25,7 +25,7 @@ export default function BrandPronunciation({ variant = "card", className = "" }:
     return (
       <div className={`text-[12px] leading-relaxed opacity-70 ${className}`}>
         <div>
-          <strong className="tracking-wide">UNPRO</strong> · prononcé « Un&nbsp;Pro » (FR) / "Hun&nbsp;Pro" (EN)
+          <strong className="tracking-wide">UNPRO</strong> · prononcé « Un&nbsp;Pro » (FR) / "Hun-pro" (EN)
         </div>
         <div>Signifie : Le #1 Professionnel — The #1 Professional</div>
       </div>
@@ -51,7 +51,7 @@ export default function BrandPronunciation({ variant = "card", className = "" }:
           UNPRO
         </span>
         <meta itemProp="alternateName" content="Un Pro" />
-        <meta itemProp="alternateName" content="Hun Pro" />
+        <meta itemProp="alternateName" content="Hun-pro" />
         <meta itemProp="alternateName" content="The #1 Professional" />
       </div>
 
@@ -61,7 +61,7 @@ export default function BrandPronunciation({ variant = "card", className = "" }:
             Prononciation
           </dt>
           <dd className="mt-1">
-            « <strong>Un&nbsp;Pro</strong> » en français · "<strong>Hun&nbsp;Pro</strong>" in English
+            « <strong>Un&nbsp;Pro</strong> » en français · "<strong>Hun-pro</strong>" in English
           </dd>
         </div>
         <div>
