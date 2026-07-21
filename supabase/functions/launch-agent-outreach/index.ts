@@ -7,6 +7,7 @@ import { assertSmsHealthy } from "../_shared/smsHealth.ts";
 import { corsHeaders, adminClient, transitionLead, logLaunchEvent, isFounderModeActive } from "../_shared/launch.ts";
 import { reportOutcome, FailureCode, BlockReason } from "../_shared/reliability.ts";
 import { sendSms as sendSmsCanonical } from "../_shared/twilioSend.ts";
+import { callCommercialSendGate } from "../_shared/caslEvidence.ts";
 
 function firstName(name?: string | null): string {
   if (!name) return "Bonjour";
