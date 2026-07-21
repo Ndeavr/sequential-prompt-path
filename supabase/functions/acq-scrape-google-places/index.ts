@@ -223,6 +223,23 @@ Deno.serve(async (req) => {
           touchedIds.push(match.matchedId);
           if (hasChanges) counters.enriched_existing++;
           else counters.skipped_duplicate++;
+
+          // Refresh CASL provenance on the existing prospect too.
+          try {
+            await captureScrapeEvidenceForProfile(supabase, {
+              contractor_prospect_id: match.matchedId,
+              phone: fresh.phone ?? null,
+              email: null,
+              source_url: fresh.google_business_url ?? `https://www.google.com/maps/place/?q=place_id:${placeId}`,
+              source_type: "google_business_profile",
+              source_publisher: "Google Places",
+              business_relevance_explanation: `Publicly listed business in category "${trade}" in ${fresh.city}, QC.`,
+              page_content_for_hash: JSON.stringify(p),
+              capture_agent: "acq-scrape-google-places",
+            });
+          } catch (e) {
+            console.warn("[casl] refresh capture failed", (e as Error).message);
+          }
         }
         continue;
       }
