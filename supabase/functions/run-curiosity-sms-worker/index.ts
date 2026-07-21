@@ -6,6 +6,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { sendSms } from "../_shared/twilioSend.ts";
 import { CURIOSITY_STEPS, CURIOSITY_TOTAL_STEPS, buildCuriosityUrl } from "../_shared/curiosityTemplates.ts";
 import { gateLeadForOutreach } from "../_shared/leadValidation.ts";
+import { callCommercialSendGate } from "../_shared/caslEvidence.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
