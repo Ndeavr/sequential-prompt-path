@@ -13,6 +13,7 @@ import {
   buildEnrichmentPatch,
   normalizeDomain,
 } from "../_shared/dedupeEngine.ts";
+import { captureScrapeEvidenceForProfile } from "../_shared/caslEvidence.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
