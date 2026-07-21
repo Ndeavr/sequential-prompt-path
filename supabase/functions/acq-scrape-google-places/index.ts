@@ -13,6 +13,7 @@ import {
   buildEnrichmentPatch,
   normalizeDomain,
 } from "../_shared/dedupeEngine.ts";
+import { captureScrapeEvidenceForProfile } from "../_shared/caslEvidence.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -222,6 +223,23 @@ Deno.serve(async (req) => {
           touchedIds.push(match.matchedId);
           if (hasChanges) counters.enriched_existing++;
           else counters.skipped_duplicate++;
+
+          // Refresh CASL provenance on the existing prospect too.
+          try {
+            await captureScrapeEvidenceForProfile(supabase, {
+              contractor_prospect_id: match.matchedId,
+              phone: fresh.phone ?? null,
+              email: null,
+              source_url: fresh.google_business_url ?? `https://www.google.com/maps/place/?q=place_id:${placeId}`,
+              source_type: "google_business_profile",
+              source_publisher: "Google Places",
+              business_relevance_explanation: `Publicly listed business in category "${trade}" in ${fresh.city}, QC.`,
+              page_content_for_hash: JSON.stringify(p),
+              capture_agent: "acq-scrape-google-places",
+            });
+          } catch (e) {
+            console.warn("[casl] refresh capture failed", (e as Error).message);
+          }
         }
         continue;
       }
@@ -252,6 +270,24 @@ Deno.serve(async (req) => {
       }
 
       touchedIds.push(ins.id);
+
+      // CASL evidence — Google Business Profile is a publicly conspicuous source.
+      // Persist provenance for every phone / email observed on this profile.
+      try {
+        await captureScrapeEvidenceForProfile(supabase, {
+          contractor_prospect_id: ins.id,
+          phone: fresh.phone ?? null,
+          email: null,
+          source_url: fresh.google_business_url ?? `https://www.google.com/maps/place/?q=place_id:${placeId}`,
+          source_type: "google_business_profile",
+          source_publisher: "Google Places",
+          business_relevance_explanation: `Publicly listed business in category "${trade}" in ${fresh.city}, QC. UNPRO offer targets contractors in this trade.`,
+          page_content_for_hash: JSON.stringify(p),
+          capture_agent: "acq-scrape-google-places",
+        });
+      } catch (e) {
+        console.warn("[casl] capture failed", (e as Error).message);
+      }
 
       if (match.band === "MEDIUM") {
         counters.possible_duplicate++;

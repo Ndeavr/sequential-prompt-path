@@ -14,6 +14,7 @@ import { corsHeaders, adminClient, logLaunchEvent } from "../_shared/launch.ts";
 import { resolvePlacesKey } from "../_shared/launchKeys.ts";
 import { reportOutcome, BlockReason, FailureCode } from "../_shared/reliability.ts";
 import { placesSearchTextRaw, googleConnectorAvailable } from "../_shared/googleMapsConnector.ts";
+import { captureScrapeEvidenceForProfile } from "../_shared/caslEvidence.ts";
 
 const PRIORITY_TRADES = [
   "isolation", "toiture", "fondation", "drain", "drain francais",
@@ -135,7 +136,29 @@ async function googlePlacesRefill(sb: ReturnType<typeof adminClient>): Promise<{
   const seen = new Set((existing ?? []).map((r: any) => r.google_place_id));
   const fresh = rows.filter(r => !seen.has(r.google_place_id));
   if (fresh.length > 0) {
-    await sb.from("outbound_companies").insert(fresh);
+    const { data: inserted } = await sb.from("outbound_companies")
+      .insert(fresh)
+      .select("id, google_place_id, phone, email");
+    // CASL evidence — publicly conspicuous Google Business Profile.
+    for (const row of inserted ?? []) {
+      const raw = results.find((r: any) => String(r.place_id ?? "") === row.google_place_id);
+      if (!raw) continue;
+      try {
+        await captureScrapeEvidenceForProfile(sb, {
+          outbound_company_id: row.id,
+          phone: row.phone ?? null,
+          email: row.email ?? null,
+          source_url: `https://www.google.com/maps/place/?q=place_id:${row.google_place_id}`,
+          source_type: "google_business_profile",
+          source_publisher: "Google Places",
+          business_relevance_explanation: `Publicly listed business in category "${trade}" in ${city}, QC. UNPRO offer targets contractors in this trade.`,
+          page_content_for_hash: JSON.stringify(raw),
+          capture_agent: "launch-agent-scout",
+        });
+      } catch (e) {
+        console.warn("[casl] launch-scout capture failed", (e as Error).message);
+      }
+    }
   }
   await sb.from("launch_mode_state").update({ scout_cursor: next, current_trade: trade, current_city: city }).eq("id", true);
   return { inserted_into_pool: fresh.length, query, trade, city };

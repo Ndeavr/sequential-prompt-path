@@ -21165,8 +21165,11 @@ export type Database = {
       }
       casl_consent_evidence: {
         Row: {
+          auto_captured: boolean
           business_relevance_explanation: string | null
+          capture_agent: string | null
           contractor_lead_id: string | null
+          contractor_prospect_id: string | null
           created_at: string
           created_by: string | null
           destination_normalized: string
@@ -21177,6 +21180,7 @@ export type Database = {
           invalidated_reason: string | null
           is_valid: boolean
           lawful_basis: string
+          outbound_company_id: string | null
           page_sha256: string | null
           refusal_statement_found: boolean
           refusal_statement_snippet: string | null
@@ -21190,8 +21194,11 @@ export type Database = {
           verification_method: string | null
         }
         Insert: {
+          auto_captured?: boolean
           business_relevance_explanation?: string | null
+          capture_agent?: string | null
           contractor_lead_id?: string | null
+          contractor_prospect_id?: string | null
           created_at?: string
           created_by?: string | null
           destination_normalized: string
@@ -21202,6 +21209,7 @@ export type Database = {
           invalidated_reason?: string | null
           is_valid?: boolean
           lawful_basis: string
+          outbound_company_id?: string | null
           page_sha256?: string | null
           refusal_statement_found?: boolean
           refusal_statement_snippet?: string | null
@@ -21215,8 +21223,11 @@ export type Database = {
           verification_method?: string | null
         }
         Update: {
+          auto_captured?: boolean
           business_relevance_explanation?: string | null
+          capture_agent?: string | null
           contractor_lead_id?: string | null
+          contractor_prospect_id?: string | null
           created_at?: string
           created_by?: string | null
           destination_normalized?: string
@@ -21227,6 +21238,7 @@ export type Database = {
           invalidated_reason?: string | null
           is_valid?: boolean
           lawful_basis?: string
+          outbound_company_id?: string | null
           page_sha256?: string | null
           refusal_statement_found?: boolean
           refusal_statement_snippet?: string | null
@@ -21260,6 +21272,41 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_commercial_send_eligibility"
             referencedColumns: ["contractor_lead_id"]
+          },
+          {
+            foreignKeyName: "casl_consent_evidence_contractor_prospect_id_fkey"
+            columns: ["contractor_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "casl_consent_evidence_contractor_prospect_id_fkey"
+            columns: ["contractor_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "casl_consent_evidence_contractor_prospect_id_fkey"
+            columns: ["contractor_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "casl_consent_evidence_contractor_prospect_id_fkey"
+            columns: ["contractor_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "casl_consent_evidence_outbound_company_id_fkey"
+            columns: ["outbound_company_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_companies"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -31542,6 +31589,7 @@ export type Database = {
           attributed_user_id: string | null
           attribution_type: string | null
           business_card_url: string | null
+          business_name: string | null
           category_primary: string | null
           category_secondary: string | null
           city: string | null
@@ -31668,6 +31716,7 @@ export type Database = {
           attributed_user_id?: string | null
           attribution_type?: string | null
           business_card_url?: string | null
+          business_name?: string | null
           category_primary?: string | null
           category_secondary?: string | null
           city?: string | null
@@ -31794,6 +31843,7 @@ export type Database = {
           attributed_user_id?: string | null
           attribution_type?: string | null
           business_card_url?: string | null
+          business_name?: string | null
           category_primary?: string | null
           category_secondary?: string | null
           city?: string | null
@@ -89340,6 +89390,16 @@ export type Database = {
       get_upgrade_recommendations: {
         Args: { _contractor_id: string }
         Returns: Json
+      }
+      has_casl_evidence_for_destination: {
+        Args: {
+          p_destination_normalized: string
+          p_destination_type: string
+          p_lead_id?: string
+          p_outbound_id?: string
+          p_prospect_id?: string
+        }
+        Returns: boolean
       }
       has_role: {
         Args: {

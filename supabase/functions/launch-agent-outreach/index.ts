@@ -7,6 +7,7 @@ import { assertSmsHealthy } from "../_shared/smsHealth.ts";
 import { corsHeaders, adminClient, transitionLead, logLaunchEvent, isFounderModeActive } from "../_shared/launch.ts";
 import { reportOutcome, FailureCode, BlockReason } from "../_shared/reliability.ts";
 import { sendSms as sendSmsCanonical } from "../_shared/twilioSend.ts";
+import { callCommercialSendGate } from "../_shared/caslEvidence.ts";
 
 function firstName(name?: string | null): string {
   if (!name) return "Bonjour";
@@ -56,6 +57,29 @@ Deno.serve(async (req) => {
 
     try {
       await transitionLead((lead as any).id, "MESSAGING", {}, "launch-agent-outreach");
+
+      // ── CASL / suppression gate — commercial outreach ONLY ─────────────
+      const gate = await callCommercialSendGate({
+        contractor_lead_id: (lead as any).id,
+        destination_type: "phone_sms",
+        destination: phone,
+        campaign_id: (lead as any).campaign_id ?? null,
+        sender_identity: { name: "UNPRO", unsubscribe_footer: true },
+      });
+      if (!gate.pass) {
+        blocked++;
+        await sb.from("launch_leads").update({
+          lead_status: "BLOCKED",
+          block_reason: `CASL_GATE:${gate.blocked_reasons.join(",") || "unknown"}`,
+          last_event_at: new Date().toISOString(),
+        }).eq("id", (lead as any).id);
+        await logLaunchEvent({
+          lead_id: (lead as any).id, agent: "launch-agent-outreach", event: "gate_block",
+          success: false, message: gate.blocked_reasons.join(","), payload: { decisions: gate.decisions },
+        });
+        continue;
+      }
+
       const sms = buildSms(lead);
       const r = await sendSms(phone, sms, (lead as any).id);
       if (r.ok) {
@@ -63,7 +87,10 @@ Deno.serve(async (req) => {
           attempts: ((lead as any).attempts ?? 0) + 1,
           payload: {
             ...((lead as any).payload ?? {}),
-            outreach: { message: sms, sid: r.sid, sent_at: new Date().toISOString(), founder_mode: founder },
+            outreach: {
+              message: sms, sid: r.sid, sent_at: new Date().toISOString(), founder_mode: founder,
+              casl_evidence_id: gate.evidence_id, gate_decisions: gate.decisions,
+            },
           },
         }, "launch-agent-outreach");
         sent++;
