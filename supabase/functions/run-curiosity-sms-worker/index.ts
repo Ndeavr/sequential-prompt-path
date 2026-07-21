@@ -115,13 +115,44 @@ async function processOne(sb: ReturnType<typeof createClient>, seq: any, c: Coun
     c.messages_skipped++; return;
   }
 
+  // ── CASL / suppression gate — commercial outreach ONLY ─────────────────
+  const gate = await callCommercialSendGate({
+    contractor_lead_id: lead.id,
+    destination_type: "phone_sms",
+    destination: phoneRaw,
+    campaign_id: seq.id,
+    sender_identity: { name: "UNPRO", unsubscribe_footer: true },
+  });
+  if (!gate.pass) {
+    await sb.from("curiosity_funnel_events").insert({
+      lead_id: lead.id,
+      slug: lead.curiosity_slug,
+      event_type: "sms_blocked",
+      metadata: {
+        reason: "casl_gate",
+        stage: "pre_send",
+        blocked_reasons: gate.blocked_reasons,
+        decisions: gate.decisions,
+      },
+    });
+    await sb.from("curiosity_sequences").update({
+      status: "failed",
+      failure_code: `casl_gate:${gate.blocked_reasons[0] ?? "unknown"}`,
+    }).eq("id", seq.id);
+    c.messages_skipped++;
+    return;
+  }
+
   const result = await sendSms({
     to: phoneRaw,
     body,
     message_type: "outreach",
     template_key: `curiosity_step_${def.step}`,
     lead_id: lead.id,
-    metadata: { sequence_id: seq.id, step: def.step, funnel: "ai_score_curiosity" },
+    metadata: {
+      sequence_id: seq.id, step: def.step, funnel: "ai_score_curiosity",
+      casl_evidence_id: gate.evidence_id,
+    },
     attempt_number: 1,
   });
 
