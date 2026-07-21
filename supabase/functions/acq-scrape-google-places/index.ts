@@ -254,6 +254,24 @@ Deno.serve(async (req) => {
 
       touchedIds.push(ins.id);
 
+      // CASL evidence — Google Business Profile is a publicly conspicuous source.
+      // Persist provenance for every phone / email observed on this profile.
+      try {
+        await captureScrapeEvidenceForProfile(supabase, {
+          contractor_prospect_id: ins.id,
+          phone: fresh.phone ?? null,
+          email: null,
+          source_url: fresh.google_business_url ?? `https://www.google.com/maps/place/?q=place_id:${placeId}`,
+          source_type: "google_business_profile",
+          source_publisher: "Google Places",
+          business_relevance_explanation: `Publicly listed business in category "${trade}" in ${fresh.city}, QC. UNPRO offer targets contractors in this trade.`,
+          page_content_for_hash: JSON.stringify(p),
+          capture_agent: "acq-scrape-google-places",
+        });
+      } catch (e) {
+        console.warn("[casl] capture failed", (e as Error).message);
+      }
+
       if (match.band === "MEDIUM") {
         counters.possible_duplicate++;
         await supabase.from("prospect_dedupe_reviews").insert({
