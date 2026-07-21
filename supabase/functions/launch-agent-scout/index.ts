@@ -14,6 +14,7 @@ import { corsHeaders, adminClient, logLaunchEvent } from "../_shared/launch.ts";
 import { resolvePlacesKey } from "../_shared/launchKeys.ts";
 import { reportOutcome, BlockReason, FailureCode } from "../_shared/reliability.ts";
 import { placesSearchTextRaw, googleConnectorAvailable } from "../_shared/googleMapsConnector.ts";
+import { captureScrapeEvidenceForProfile } from "../_shared/caslEvidence.ts";
 
 const PRIORITY_TRADES = [
   "isolation", "toiture", "fondation", "drain", "drain francais",
