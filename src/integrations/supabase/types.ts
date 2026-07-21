@@ -764,6 +764,7 @@ export type Database = {
           invitation_token: string | null
           is_simulation: boolean
           is_test_e2e: boolean
+          message_purpose: Database["public"]["Enums"]["message_purpose"] | null
           outreach_message_id: string | null
           prospect_id: string | null
           provider_message_id: string | null
@@ -782,6 +783,9 @@ export type Database = {
           invitation_token?: string | null
           is_simulation?: boolean
           is_test_e2e?: boolean
+          message_purpose?:
+            | Database["public"]["Enums"]["message_purpose"]
+            | null
           outreach_message_id?: string | null
           prospect_id?: string | null
           provider_message_id?: string | null
@@ -800,6 +804,9 @@ export type Database = {
           invitation_token?: string | null
           is_simulation?: boolean
           is_test_e2e?: boolean
+          message_purpose?:
+            | Database["public"]["Enums"]["message_purpose"]
+            | null
           outreach_message_id?: string | null
           prospect_id?: string | null
           provider_message_id?: string | null
@@ -1317,6 +1324,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acquisition_followup_queue_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
           },
         ]
       }
@@ -2327,6 +2341,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activation_sessions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
           },
           {
             foreignKeyName: "activation_sessions_reply_id_fkey"
@@ -4964,6 +4985,13 @@ export type Database = {
             referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "affiliate_lead_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
+          },
         ]
       }
       affiliate_links: {
@@ -5640,6 +5668,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_outreach_messages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
           },
         ]
       }
@@ -6893,6 +6928,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_visibility_reports_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
           },
         ]
       }
@@ -19193,6 +19235,13 @@ export type Database = {
             referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "booking_sessions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
+          },
         ]
       }
       booking_slot_scores: {
@@ -20258,6 +20307,13 @@ export type Database = {
             referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "business_card_imports_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
+          },
         ]
       }
       business_entities: {
@@ -21106,6 +21162,106 @@ export type Database = {
           trade_slug?: string
         }
         Relationships: []
+      }
+      casl_consent_evidence: {
+        Row: {
+          business_relevance_explanation: string | null
+          contractor_lead_id: string | null
+          created_at: string
+          created_by: string | null
+          destination_normalized: string
+          destination_type: string
+          expires_at: string | null
+          id: string
+          invalidated_at: string | null
+          invalidated_reason: string | null
+          is_valid: boolean
+          lawful_basis: string
+          page_sha256: string | null
+          refusal_statement_found: boolean
+          refusal_statement_snippet: string | null
+          retrieved_at: string | null
+          reviewer_id: string | null
+          reviewer_notes: string | null
+          screenshot_storage_key: string | null
+          source_publisher: string | null
+          source_type: string | null
+          source_url: string | null
+          verification_method: string | null
+        }
+        Insert: {
+          business_relevance_explanation?: string | null
+          contractor_lead_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination_normalized: string
+          destination_type: string
+          expires_at?: string | null
+          id?: string
+          invalidated_at?: string | null
+          invalidated_reason?: string | null
+          is_valid?: boolean
+          lawful_basis: string
+          page_sha256?: string | null
+          refusal_statement_found?: boolean
+          refusal_statement_snippet?: string | null
+          retrieved_at?: string | null
+          reviewer_id?: string | null
+          reviewer_notes?: string | null
+          screenshot_storage_key?: string | null
+          source_publisher?: string | null
+          source_type?: string | null
+          source_url?: string | null
+          verification_method?: string | null
+        }
+        Update: {
+          business_relevance_explanation?: string | null
+          contractor_lead_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination_normalized?: string
+          destination_type?: string
+          expires_at?: string | null
+          id?: string
+          invalidated_at?: string | null
+          invalidated_reason?: string | null
+          is_valid?: boolean
+          lawful_basis?: string
+          page_sha256?: string | null
+          refusal_statement_found?: boolean
+          refusal_statement_snippet?: string | null
+          retrieved_at?: string | null
+          reviewer_id?: string | null
+          reviewer_notes?: string | null
+          screenshot_storage_key?: string | null
+          source_publisher?: string | null
+          source_type?: string | null
+          source_url?: string | null
+          verification_method?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "casl_consent_evidence_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "casl_consent_evidence_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "casl_consent_evidence_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
+          },
+        ]
       }
       categories: {
         Row: {
@@ -24810,6 +24966,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_activation_reminders_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
           },
         ]
       }
@@ -29297,6 +29460,13 @@ export type Database = {
             referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_enriched_profiles_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: true
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
+          },
         ]
       }
       contractor_enrichment_cache: {
@@ -31308,6 +31478,58 @@ export type Database = {
         }
         Relationships: []
       }
+      contractor_lead_compliance_notes: {
+        Row: {
+          contractor_lead_id: string
+          created_at: string
+          created_by: string | null
+          evidence: Json
+          finding: string
+          id: string
+          note_type: string
+        }
+        Insert: {
+          contractor_lead_id: string
+          created_at?: string
+          created_by?: string | null
+          evidence?: Json
+          finding: string
+          id?: string
+          note_type: string
+        }
+        Update: {
+          contractor_lead_id?: string
+          created_at?: string
+          created_by?: string | null
+          evidence?: Json
+          finding?: string
+          id?: string
+          note_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_lead_compliance_notes_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_lead_compliance_notes_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_lead_compliance_notes_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
+          },
+        ]
+      }
       contractor_leads: {
         Row: {
           activation_status: string
@@ -31328,6 +31550,9 @@ export type Database = {
           company_failure_reason: string | null
           company_name: string | null
           company_name_normalized: string | null
+          compliance_review_flagged_at: string | null
+          compliance_review_reason: string | null
+          compliance_review_required: boolean
           consent_channel: string | null
           consent_to_contact: string | null
           contact_method: string
@@ -31451,6 +31676,9 @@ export type Database = {
           company_failure_reason?: string | null
           company_name?: string | null
           company_name_normalized?: string | null
+          compliance_review_flagged_at?: string | null
+          compliance_review_reason?: string | null
+          compliance_review_required?: boolean
           consent_channel?: string | null
           consent_to_contact?: string | null
           contact_method?: string
@@ -31574,6 +31802,9 @@ export type Database = {
           company_failure_reason?: string | null
           company_name?: string | null
           company_name_normalized?: string | null
+          compliance_review_flagged_at?: string | null
+          compliance_review_reason?: string | null
+          compliance_review_required?: boolean
           consent_channel?: string | null
           consent_to_contact?: string | null
           contact_method?: string
@@ -32937,6 +33168,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "contractor_onboarding_messages_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
+          },
+          {
             foreignKeyName: "contractor_onboarding_messages_sequence_id_fkey"
             columns: ["sequence_id"]
             isOneToOne: false
@@ -33296,6 +33534,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_outreach_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
           },
         ]
       }
@@ -40428,6 +40673,13 @@ export type Database = {
             referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "curiosity_funnel_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
+          },
         ]
       }
       curiosity_sequences: {
@@ -40487,6 +40739,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curiosity_sequences_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
           },
         ]
       }
@@ -51262,6 +51521,13 @@ export type Database = {
             referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "lead_deduplication_index_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
+          },
         ]
       }
       lead_enrichment_data: {
@@ -51309,6 +51575,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_enrichment_data_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
           },
         ]
       }
@@ -51619,6 +51892,13 @@ export type Database = {
             referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "lead_priority_scores_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
+          },
         ]
       }
       lead_qualifications: {
@@ -51812,6 +52092,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_source_links_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
           },
         ]
       }
@@ -55077,6 +55364,13 @@ export type Database = {
             referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onboarding_sequences_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
+          },
         ]
       }
       opportunity_allocations: {
@@ -57909,6 +58203,7 @@ export type Database = {
           id: string
           lead_id: string
           mailbox_id: string | null
+          message_purpose: Database["public"]["Enums"]["message_purpose"] | null
           mission_id: string | null
           provider_message_id: string | null
           sent_at: string | null
@@ -57923,6 +58218,9 @@ export type Database = {
           id?: string
           lead_id: string
           mailbox_id?: string | null
+          message_purpose?:
+            | Database["public"]["Enums"]["message_purpose"]
+            | null
           mission_id?: string | null
           provider_message_id?: string | null
           sent_at?: string | null
@@ -57937,6 +58235,9 @@ export type Database = {
           id?: string
           lead_id?: string
           mailbox_id?: string | null
+          message_purpose?:
+            | Database["public"]["Enums"]["message_purpose"]
+            | null
           mission_id?: string | null
           provider_message_id?: string | null
           sent_at?: string | null
@@ -58685,6 +58986,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_delivery_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
           },
           {
             foreignKeyName: "outreach_delivery_logs_message_id_fkey"
@@ -59647,6 +59955,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_active_leads"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_replies_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
           },
         ]
       }
@@ -73896,6 +74211,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "scanner_sessions_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
+          },
+          {
             foreignKeyName: "scanner_sessions_session_mode_code_fkey"
             columns: ["session_mode_code"]
             isOneToOne: false
@@ -86319,6 +86641,16 @@ export type Database = {
         }
         Relationships: []
       }
+      suppression_index: {
+        Row: {
+          normalized_email: string | null
+          normalized_phone: string | null
+          occurred_at: string | null
+          reason: string | null
+          source_table: string | null
+        }
+        Relationships: []
+      }
       v_acquisition_contacts_unified: {
         Row: {
           activation_status: string | null
@@ -87184,6 +87516,51 @@ export type Database = {
           unknown: number | null
           voip: number | null
           with_email: number | null
+        }
+        Relationships: []
+      }
+      v_commercial_send_eligibility: {
+        Row: {
+          company_name: string | null
+          compliance_review_reason: string | null
+          compliance_review_required: boolean | null
+          contractor_lead_id: string | null
+          email: string | null
+          email_suppressed: boolean | null
+          last_sms_at: string | null
+          mobile_phone: string | null
+          phone: string | null
+          phone_suppressed: boolean | null
+          valid_email_evidence_count: number | null
+          valid_phone_evidence_count: number | null
+        }
+        Insert: {
+          company_name?: string | null
+          compliance_review_reason?: string | null
+          compliance_review_required?: boolean | null
+          contractor_lead_id?: string | null
+          email?: string | null
+          email_suppressed?: never
+          last_sms_at?: string | null
+          mobile_phone?: string | null
+          phone?: string | null
+          phone_suppressed?: never
+          valid_email_evidence_count?: never
+          valid_phone_evidence_count?: never
+        }
+        Update: {
+          company_name?: string | null
+          compliance_review_reason?: string | null
+          compliance_review_required?: boolean | null
+          contractor_lead_id?: string | null
+          email?: string | null
+          email_suppressed?: never
+          last_sms_at?: string | null
+          mobile_phone?: string | null
+          phone?: string | null
+          phone_suppressed?: never
+          valid_email_evidence_count?: never
+          valid_phone_evidence_count?: never
         }
         Relationships: []
       }
@@ -88978,6 +89355,8 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_affiliate: { Args: { _user_id: string }; Returns: boolean }
       is_affiliate_owner: { Args: { _affiliate_id: string }; Returns: boolean }
+      is_email_suppressed: { Args: { p_email: string }; Returns: boolean }
+      is_phone_suppressed: { Args: { p_phone: string }; Returns: boolean }
       is_syndicate_admin: {
         Args: { _syndicate_id: string; _user_id: string }
         Returns: boolean
@@ -89431,6 +89810,12 @@ export type Database = {
         | "completed"
         | "failed"
         | "partial"
+      message_purpose:
+        | "commercial_outreach"
+        | "transactional"
+        | "authentication"
+        | "service_notification"
+        | "internal_test"
       nav_event_type:
         | "menu_click"
         | "bottom_nav_click"
@@ -89754,6 +90139,13 @@ export const Constants = {
         "completed",
         "failed",
         "partial",
+      ],
+      message_purpose: [
+        "commercial_outreach",
+        "transactional",
+        "authentication",
+        "service_notification",
+        "internal_test",
       ],
       nav_event_type: [
         "menu_click",
