@@ -12,9 +12,9 @@ import { toast } from "sonner";
 
 const ROLE_LABELS: Record<string, { label: string; icon: any; to: string }> = {
   homeowner: { label: "Espace propriétaire", icon: Home, to: "/dashboard" },
-  contractor: { label: "Espace entrepreneur", icon: Briefcase, to: "/pro/dashboard" },
+  contractor: { label: "Espace entrepreneur", icon: Briefcase, to: "/pro" },
   affiliate: { label: "Espace affilié", icon: UserCircle2, to: "/affiliate" },
-  partner: { label: "Espace partenaire", icon: LayoutDashboard, to: "/partner/dashboard" },
+  partner: { label: "Espace partenaire", icon: LayoutDashboard, to: "/partners" },
   admin: { label: "Administration", icon: Shield, to: "/admin" },
 };
 
