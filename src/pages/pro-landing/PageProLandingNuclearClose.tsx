@@ -300,7 +300,7 @@ export default function PageProLandingNuclearClose() {
       .catch(() => setVoiceArmed(false));
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#060B14] text-white">
+    <div className="alex-immersive relative min-h-screen overflow-hidden bg-[#060B14] text-white">
       <Helmet>
         <title>{prospect.company_name} — Analyse UNPRO Laval</title>
         <meta
