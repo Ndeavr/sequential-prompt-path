@@ -361,7 +361,7 @@ export default function PageProLandingNuclearClose() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl"
+          className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-white/15 bg-[#0F1A2E] p-4 shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
         >
           <div className="relative h-10 w-10 shrink-0">
             <div
@@ -369,15 +369,15 @@ export default function PageProLandingNuclearClose() {
                 isSpeaking ? "animate-ping" : ""
               } opacity-40`}
             />
-            <div className="absolute inset-1 grid place-items-center rounded-full bg-gradient-to-br from-primary to-fuchsia-500 text-sm font-semibold">
+            <div className="absolute inset-1 grid place-items-center rounded-full bg-gradient-to-br from-primary to-fuchsia-500 text-sm font-semibold text-white">
               A
             </div>
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs uppercase tracking-wider text-white/50">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-white/80">
               Alex · Analyse vocale en direct
             </p>
-            <p className="truncate text-sm text-white/85">
+            <p className="truncate text-sm text-white">
               {isSpeaking ? "En train de vous parler…" : voiceArmed ? "Audio prêt" : "Touchez pour activer le son"}
             </p>
           </div>
@@ -386,7 +386,7 @@ export default function PageProLandingNuclearClose() {
               variant="secondary"
               size="sm"
               onClick={() => (isSpeaking ? stop() : playFull())}
-              className="bg-white/10 text-white hover:bg-white/20"
+              className="bg-white/15 text-white hover:bg-white/25"
             >
               {isSpeaking ? (
                 <>
@@ -405,13 +405,13 @@ export default function PageProLandingNuclearClose() {
                 stop();
                 playRecap();
               }}
-              className="bg-primary/20 text-white hover:bg-primary/30 border border-primary/30"
+              className="bg-primary/25 text-white hover:bg-primary/35 border border-primary/40"
             >
               <Sparkles className="mr-1.5 h-4 w-4" /> Résumé 60s
             </Button>
           </div>
           {hasError && (
-            <p className="w-full text-xs text-rose-300">
+            <p className="w-full text-xs text-rose-100">
               Audio indisponible — la lecture du contenu reste accessible ci-dessous.
             </p>
           )}
