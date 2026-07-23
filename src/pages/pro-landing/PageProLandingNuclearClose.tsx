@@ -419,7 +419,7 @@ export default function PageProLandingNuclearClose() {
 
         {/* Score grid */}
         <section className="mt-10">
-          <h2 className="mb-4 text-xs uppercase tracking-wider text-white/50">
+          <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-wider text-white/80">
             Votre diagnostic en 5 dimensions
           </h2>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
