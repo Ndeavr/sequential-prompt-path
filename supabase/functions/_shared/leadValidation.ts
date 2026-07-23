@@ -4,6 +4,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { classifyPhone, lookupPhone, type PhoneValidationStatus } from "./phoneValidation.ts";
 import { classifyCompany } from "./companyValidation.ts";
+import {
+  classifyOfficialSiteState,
+  enqueueOfficialSiteCrawlIfNeeded,
+  isEnrichmentPending,
+} from "./officialSiteGate.ts";
 
 export type ValidationStatus =
   | "pending_validation"
