@@ -4,6 +4,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { classifyPhone, lookupPhone, type PhoneValidationStatus } from "./phoneValidation.ts";
 import { classifyCompany } from "./companyValidation.ts";
+import {
+  classifyOfficialSiteState,
+  enqueueOfficialSiteCrawlIfNeeded,
+  isEnrichmentPending,
+} from "./officialSiteGate.ts";
 
 export type ValidationStatus =
   | "pending_validation"
@@ -68,6 +73,10 @@ export async function validateLead(
     phone?: string | null;
     mobile_phone?: string | null;
     do_not_contact?: boolean | null;
+    website_url?: string | null;
+    official_domain?: string | null;
+    official_site_status?: string | null;
+    email?: string | null;
   },
 ): Promise<ValidateLeadResult> {
   // 1. Company
@@ -120,6 +129,28 @@ export async function validateLead(
 
   const overall = Math.round(0.5 * company.score + 0.5 * phoneScore);
 
+  // 3b. Official-site enrichment gate — do NOT finalize missing_phone before
+  // the official website has had a terminal crawl. See officialSiteGate.ts.
+  let enrichmentPending = false;
+  if (!raw || phoneReason === "missing_phone") {
+    const state = classifyOfficialSiteState({
+      phone: null,
+      email: lead.email ?? null,
+      website_url: lead.website_url ?? null,
+      official_domain: lead.official_domain ?? null,
+      official_site_status: lead.official_site_status ?? null,
+    });
+    if (isEnrichmentPending(state)) {
+      enrichmentPending = true;
+      // Fire-and-forget idempotent enqueue. Never throws.
+      enqueueOfficialSiteCrawlIfNeeded(sb, {
+        id: lead.id,
+        official_domain: lead.official_domain ?? null,
+        website_url: lead.website_url ?? null,
+      }).catch(() => {});
+    }
+  }
+
   // 4. Status decision (priority order)
   let status: ValidationStatus = "needs_review";
   let blockReason: BlockReason | null = null;
@@ -137,6 +168,12 @@ export async function validateLead(
   } else if (phoneStatus === "landline") {
     status = "invalid_phone";
     blockReason = "landline";
+  } else if (enrichmentPending) {
+    // Official-site crawl is required/queued/running/retryable — keep the
+    // record in pending_validation so downstream never treats it as
+    // terminal missing_phone. Not eligible for outreach either.
+    status = "pending_validation";
+    blockReason = null;
   } else if (phoneStatus === "invalid_phone") {
     status = "invalid_phone";
     blockReason = (phoneReason as BlockReason) || "invalid_format";
