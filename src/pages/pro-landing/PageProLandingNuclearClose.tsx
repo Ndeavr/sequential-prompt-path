@@ -106,27 +106,27 @@ function ScoreCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
     >
-      <Card className="relative overflow-hidden border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl">
+      <Card className="relative overflow-hidden border-white/15 bg-[#0F1A2E] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
         <div
-          className="pointer-events-none absolute inset-0 opacity-30"
+          className="pointer-events-none absolute inset-0 opacity-40"
           style={{ background: accent }}
           aria-hidden
         />
         <div className="relative flex items-start justify-between">
           <div>
-            <p className="text-xs uppercase tracking-wider text-white/60">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-white/80">
               {label}
             </p>
             <p className="mt-2 text-3xl font-semibold text-white tabular-nums">
               {value}
-              <span className="text-sm text-white/50">/100</span>
+              <span className="text-sm text-white/70">/100</span>
             </p>
           </div>
-          <div className="text-white/70">{icon}</div>
+          <div className="text-white/90">{icon}</div>
         </div>
-        <div className="relative mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+        <div className="relative mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
           <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-primary to-primary/60"
+            className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70"
             initial={{ width: 0 }}
             animate={{ width: `${value}%` }}
             transition={{ duration: 1, delay: delay + 0.2, ease: "easeOut" }}
