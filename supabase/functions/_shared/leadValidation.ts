@@ -73,6 +73,10 @@ export async function validateLead(
     phone?: string | null;
     mobile_phone?: string | null;
     do_not_contact?: boolean | null;
+    website_url?: string | null;
+    official_domain?: string | null;
+    official_site_status?: string | null;
+    email?: string | null;
   },
 ): Promise<ValidateLeadResult> {
   // 1. Company
