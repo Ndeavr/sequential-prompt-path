@@ -151,20 +151,24 @@ Deno.serve(async (req) => {
       .filter(p => !p.ok)
       .map(p => ({ url: p.url, status: p.status, reason: p.reason }));
 
-    const { data: run, error: runErr } = await supabase.from("official_site_crawl_runs").insert({
-      contractor_lead_id: lead_id ?? null,
-      prospect_id: prospect_id ?? null,
-      canonical_domain: resolved.canonical,
-      status,
-      pages_attempted: summary.pages_attempted.length,
-      pages_ok: summary.ok_pages.length,
-      had_transient_failure: summary.had_transient_failure,
-      page_failures: pageFailures,
-      summary: { field_count: summary.fields.length, methods: [...new Set(summary.fields.map(f => f.method))] },
-      started_at: runStart,
-      finished_at: finishedAt,
-    }).select("id").maybeSingle();
-    if (runErr) throw new Error(`run_insert_failed: ${runErr.message}`);
+    let run: { id: string } | null = null;
+    if (!dry_run) {
+      const { data: runData, error: runErr } = await supabase.from("official_site_crawl_runs").insert({
+        contractor_lead_id: lead_id ?? null,
+        prospect_id: prospect_id ?? null,
+        canonical_domain: resolved.canonical,
+        status,
+        pages_attempted: summary.pages_attempted.length,
+        pages_ok: summary.ok_pages.length,
+        had_transient_failure: summary.had_transient_failure,
+        page_failures: pageFailures,
+        summary: { field_count: summary.fields.length, methods: [...new Set(summary.fields.map(f => f.method))] },
+        started_at: runStart,
+        finished_at: finishedAt,
+      }).select("id").maybeSingle();
+      if (runErr) throw new Error(`run_insert_failed: ${runErr.message}`);
+      run = runData ?? null;
+    }
 
     // 5. Insert evidence rows (dedup by (kind, normalized_value, method))
     const evidenceRows: any[] = [];
