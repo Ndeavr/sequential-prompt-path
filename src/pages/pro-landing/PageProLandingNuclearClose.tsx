@@ -264,8 +264,8 @@ export default function PageProLandingNuclearClose() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#060B14]">
-        <p className="animate-pulse text-white/60">Préparation de votre analyse…</p>
+      <div className="alex-immersive flex min-h-screen items-center justify-center bg-[#060B14]">
+        <p className="animate-pulse text-white/80">Préparation de votre analyse…</p>
       </div>
     );
   }
