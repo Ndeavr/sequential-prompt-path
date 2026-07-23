@@ -149,7 +149,9 @@ export default function AdminCommercialEligibility() {
       if (metaRes.error) throw metaRes.error;
       const metaById = new Map<string, LeadMeta>();
       (metaRes.data as LeadMeta[]).forEach((m) => metaById.set(m.id, m));
-      const rows = (eligRes.data as EligibilityRow[]).map((r) => evaluate(r, metaById.get(r.contractor_lead_id)));
+      const rows = ((eligRes.data as unknown) as EligibilityRow[]).map((r) =>
+        evaluate(r, metaById.get(r.contractor_lead_id)),
+      );
       return rows;
     },
     staleTime: 30_000,
