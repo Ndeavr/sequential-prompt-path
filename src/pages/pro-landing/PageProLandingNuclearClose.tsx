@@ -147,21 +147,21 @@ function MissedLeadsChart({ missed }: { missed: number }) {
   }, [missed]);
   const max = Math.max(...months);
   return (
-    <Card className="border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl">
+    <Card className="border-white/15 bg-[#0F1A2E] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs uppercase tracking-wider text-white/60">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-white/80">
             Opportunités manquées (mensuel)
           </p>
           <p className="mt-1 text-4xl font-semibold text-white tabular-nums">
             ~{missed}
           </p>
-          <p className="mt-1 flex items-center gap-1 text-sm text-rose-300">
+          <p className="mt-1 flex items-center gap-1 text-sm text-rose-200">
             <TrendingDown className="h-3.5 w-3.5" />
             Tendance qui s'aggrave
           </p>
         </div>
-        <div className="rounded-full bg-rose-500/10 px-3 py-1 text-xs text-rose-200">
+        <div className="rounded-full bg-rose-500/20 px-3 py-1 text-xs font-medium text-rose-100">
           12 derniers mois
         </div>
       </div>
@@ -172,7 +172,7 @@ function MissedLeadsChart({ missed }: { missed: number }) {
             initial={{ height: 0 }}
             animate={{ height: `${(v / max) * 100}%` }}
             transition={{ duration: 0.6, delay: 0.4 + i * 0.04 }}
-            className="flex-1 rounded-sm bg-gradient-to-t from-rose-500/40 to-rose-300/80"
+            className="flex-1 rounded-sm bg-gradient-to-t from-rose-500/60 to-rose-300/90"
           />
         ))}
       </div>
