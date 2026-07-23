@@ -322,14 +322,14 @@ export default function PageProLandingNuclearClose() {
 
       <main className="relative mx-auto max-w-6xl px-5 pb-16 pt-10 md:pt-16">
         {/* Top trust bar */}
-        <div className="mb-8 flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-wider text-white/50">
-          <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1">
+        <div className="mb-8 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-white/80">
+          <span className="rounded-full border border-white/20 bg-white/[0.08] px-3 py-1">
             Québec · Laval
           </span>
-          <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1">
+          <span className="rounded-full border border-white/20 bg-white/[0.08] px-3 py-1">
             Analyse IA · Live
           </span>
-          <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-emerald-200">
+          <span className="rounded-full border border-emerald-400/40 bg-emerald-400/15 px-3 py-1 text-emerald-100">
             Territoire exclusif
           </span>
         </div>
