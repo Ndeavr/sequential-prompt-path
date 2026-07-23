@@ -31617,7 +31617,9 @@ export type Database = {
           email: string | null
           email_fallback_enabled: boolean
           email_normalized: string | null
+          email_source_url: string | null
           email_status: string | null
+          email_trust_state: string | null
           enrichment_attempts: number
           enrichment_last_error: string | null
           enrichment_last_run_at: string | null
@@ -31644,11 +31646,15 @@ export type Database = {
           last_sms_status: string | null
           lead_status: string
           metadata_json: Json | null
+          missing_contact_after_crawl: boolean
           mobile_phone: string | null
           next_follow_up_at: string | null
           normalization_errors: Json | null
           normalization_status: string | null
           normalized_at: string | null
+          official_domain: string | null
+          official_site_checked_at: string | null
+          official_site_status: string | null
           onboarding_started_at: string | null
           onboarding_token: string | null
           opened_at: string | null
@@ -31671,6 +31677,8 @@ export type Database = {
           phone_normalization_status: string | null
           phone_normalized: string | null
           phone_original: string | null
+          phone_source_url: string | null
+          phone_trust_state: string | null
           phone_type: string | null
           phone_validation_checked_at: string | null
           phone_validation_status: string
@@ -31746,7 +31754,9 @@ export type Database = {
           email?: string | null
           email_fallback_enabled?: boolean
           email_normalized?: string | null
+          email_source_url?: string | null
           email_status?: string | null
+          email_trust_state?: string | null
           enrichment_attempts?: number
           enrichment_last_error?: string | null
           enrichment_last_run_at?: string | null
@@ -31773,11 +31783,15 @@ export type Database = {
           last_sms_status?: string | null
           lead_status?: string
           metadata_json?: Json | null
+          missing_contact_after_crawl?: boolean
           mobile_phone?: string | null
           next_follow_up_at?: string | null
           normalization_errors?: Json | null
           normalization_status?: string | null
           normalized_at?: string | null
+          official_domain?: string | null
+          official_site_checked_at?: string | null
+          official_site_status?: string | null
           onboarding_started_at?: string | null
           onboarding_token?: string | null
           opened_at?: string | null
@@ -31800,6 +31814,8 @@ export type Database = {
           phone_normalization_status?: string | null
           phone_normalized?: string | null
           phone_original?: string | null
+          phone_source_url?: string | null
+          phone_trust_state?: string | null
           phone_type?: string | null
           phone_validation_checked_at?: string | null
           phone_validation_status?: string
@@ -31875,7 +31891,9 @@ export type Database = {
           email?: string | null
           email_fallback_enabled?: boolean
           email_normalized?: string | null
+          email_source_url?: string | null
           email_status?: string | null
+          email_trust_state?: string | null
           enrichment_attempts?: number
           enrichment_last_error?: string | null
           enrichment_last_run_at?: string | null
@@ -31902,11 +31920,15 @@ export type Database = {
           last_sms_status?: string | null
           lead_status?: string
           metadata_json?: Json | null
+          missing_contact_after_crawl?: boolean
           mobile_phone?: string | null
           next_follow_up_at?: string | null
           normalization_errors?: Json | null
           normalization_status?: string | null
           normalized_at?: string | null
+          official_domain?: string | null
+          official_site_checked_at?: string | null
+          official_site_status?: string | null
           onboarding_started_at?: string | null
           onboarding_token?: string | null
           opened_at?: string | null
@@ -31929,6 +31951,8 @@ export type Database = {
           phone_normalization_status?: string | null
           phone_normalized?: string | null
           phone_original?: string | null
+          phone_source_url?: string | null
+          phone_trust_state?: string | null
           phone_type?: string | null
           phone_validation_checked_at?: string | null
           phone_validation_status?: string
@@ -55261,6 +55285,186 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      official_site_crawl_runs: {
+        Row: {
+          canonical_domain: string
+          contractor_lead_id: string | null
+          created_at: string
+          finished_at: string | null
+          had_transient_failure: boolean
+          id: string
+          page_failures: Json
+          pages_attempted: number
+          pages_ok: number
+          prospect_id: string | null
+          reason: string | null
+          started_at: string
+          status: string
+          summary: Json
+        }
+        Insert: {
+          canonical_domain: string
+          contractor_lead_id?: string | null
+          created_at?: string
+          finished_at?: string | null
+          had_transient_failure?: boolean
+          id?: string
+          page_failures?: Json
+          pages_attempted?: number
+          pages_ok?: number
+          prospect_id?: string | null
+          reason?: string | null
+          started_at?: string
+          status: string
+          summary?: Json
+        }
+        Update: {
+          canonical_domain?: string
+          contractor_lead_id?: string | null
+          created_at?: string
+          finished_at?: string | null
+          had_transient_failure?: boolean
+          id?: string
+          page_failures?: Json
+          pages_attempted?: number
+          pages_ok?: number
+          prospect_id?: string | null
+          reason?: string | null
+          started_at?: string
+          status?: string
+          summary?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "official_site_crawl_runs_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "official_site_crawl_runs_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "official_site_crawl_runs_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
+          },
+          {
+            foreignKeyName: "official_site_crawl_runs_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "official_site_crawl_runs_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "verified_contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      official_site_enrichment_evidence: {
+        Row: {
+          canonical_domain: string
+          content_hash: string | null
+          contractor_lead_id: string | null
+          created_at: string
+          extraction_method: string
+          fetched_at: string
+          field_kind: string
+          id: string
+          normalized_value: string | null
+          page_language: string | null
+          page_title: string | null
+          prospect_id: string | null
+          raw_value: string
+          snippet: string | null
+          source_url: string
+          trust_state: string
+        }
+        Insert: {
+          canonical_domain: string
+          content_hash?: string | null
+          contractor_lead_id?: string | null
+          created_at?: string
+          extraction_method: string
+          fetched_at?: string
+          field_kind: string
+          id?: string
+          normalized_value?: string | null
+          page_language?: string | null
+          page_title?: string | null
+          prospect_id?: string | null
+          raw_value: string
+          snippet?: string | null
+          source_url: string
+          trust_state?: string
+        }
+        Update: {
+          canonical_domain?: string
+          content_hash?: string | null
+          contractor_lead_id?: string | null
+          created_at?: string
+          extraction_method?: string
+          fetched_at?: string
+          field_kind?: string
+          id?: string
+          normalized_value?: string | null
+          page_language?: string | null
+          page_title?: string | null
+          prospect_id?: string | null
+          raw_value?: string
+          snippet?: string | null
+          source_url?: string
+          trust_state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "official_site_enrichment_evidence_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "official_site_enrichment_evidence_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "official_site_enrichment_evidence_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "v_commercial_send_eligibility"
+            referencedColumns: ["contractor_lead_id"]
+          },
+          {
+            foreignKeyName: "official_site_enrichment_evidence_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "official_site_enrichment_evidence_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "verified_contractor_prospects"
             referencedColumns: ["id"]
           },
         ]
