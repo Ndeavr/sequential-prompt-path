@@ -168,8 +168,12 @@ export async function lookupPhoneTypeCached(
       .maybeSingle();
     if (cached?.line_type && cached.validated_at) {
       const ageDays = (Date.now() - new Date(cached.validated_at as string).getTime()) / 86400000;
-      if (ageDays < 90) return normalizeLineType(cached.line_type as string);
+      if (ageDays < 90) {
+        if (cached.line_type === "unknown_ca_lookup_restricted") return null;
+        return normalizeLineType(cached.line_type as string);
+      }
     }
+
 
     const SID = Deno.env.get("TWILIO_ACCOUNT_SID");
     const TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
@@ -182,11 +186,18 @@ export async function lookupPhoneTypeCached(
 
     const lti = body?.line_type_intelligence ?? {};
     const rawType = String(lti.type ?? "").toLowerCase();
-    const normalized = normalizeLineType(rawType);
+    // Twilio returns HTTP 200 with error_code 60601 embedded in line_type_intelligence
+    // when the account lacks Canadian carrier-data authorization (CLNPC/NPAC). This is
+    // NOT proof the number cannot receive SMS. Cache the restriction distinctly and
+    // return null so the guard falls through instead of stamping the lead as verified_not_mobile.
+    const ltiErr = (lti as any)?.error_code;
+    const isCanadaRestricted = String(ltiErr) === "60601" && (body?.country_code === "CA" || e164.startsWith("+1"));
+    const cachedType = isCanadaRestricted ? "unknown_ca_lookup_restricted" : (rawType || "unknown");
+    const normalized = isCanadaRestricted ? null : normalizeLineType(rawType);
 
     await supabase.from("phone_carrier_cache").upsert({
       normalized_phone: e164,
-      line_type: rawType || "unknown",
+      line_type: cachedType,
       carrier: lti.carrier_name ?? null,
       country_code: body?.country_code ?? null,
       raw_payload: body,
@@ -199,6 +210,7 @@ export async function lookupPhoneTypeCached(
     return null;
   }
 }
+
 
 function normalizeLineType(raw: string): "mobile" | "landline" | "voip" | "unknown" {
   const r = (raw ?? "").toLowerCase();
