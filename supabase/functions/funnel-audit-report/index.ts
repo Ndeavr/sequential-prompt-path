@@ -196,6 +196,19 @@ Deno.serve(async (req) => {
       };
     }
 
+    // ---------- Real production pipeline (contractor_leads) ----------
+    // The `launch_leads` table above only sees the "sprint" pipeline. The 20-stage
+    // real acquisition flow lives in contractor_prospects → contractor_leads →
+    // sms_events_v2 → acquisition_tracking_links → outreach_replies →
+    // billing_checkout_sessions. We compute it independently and expose it as
+    // `real_pipeline` in the response. All counts come from real production rows.
+    const realPipeline = await computeRealPipeline(admin, since);
+
+    // Optional dry-run canary preview — never sends, only lists eligible leads.
+    const canaryPreview = url.searchParams.get("canary_preview") === "1"
+      ? await previewCanaryBatch(admin, Math.min(20, Math.max(1, Number(url.searchParams.get("canary_limit") ?? 5))))
+      : null;
+
     return json({
       window_days: days,
       generated_at: new Date().toISOString(),
@@ -204,6 +217,8 @@ Deno.serve(async (req) => {
       prefill_coverage: prefillCoverage,
       sms_7d_summary: sevenDaySmsSummary(sms as any[]),
       stages,
+      real_pipeline: realPipeline,
+      canary_preview: canaryPreview,
     });
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
