@@ -49,6 +49,15 @@ export function useContractorHumanCallout() {
     // Never show the human callout on post-payment / profile surfaces.
     const EXCLUDED_PREFIXES = ["/pro/welcome", "/pro/profile", "/pro/onboarding", "/contractor/activated"];
     if (EXCLUDED_PREFIXES.some((p) => path === p || path.startsWith(p + "/") || path.startsWith(p))) return;
+    // Never show the floating "Appeler" callout on personalized sniper landings (/pro/:slug).
+    // These pages already carry their own dedicated CTAs and voice narration; the modal
+    // creates visual noise and competes with the primary conversion path.
+    const RESERVED_PRO_DASHBOARD = new Set([
+      "welcome", "dashboard", "profile", "leads", "appointments", "reviews", "billing",
+      "territories", "documents", "account", "aipp-score", "domain-intelligence", "onboarding",
+    ]);
+    const proLandingMatch = path.match(/^\/pro\/([^/]+)\/?$/);
+    if (proLandingMatch && !RESERVED_PRO_DASHBOARD.has(proLandingMatch[1].toLowerCase())) return;
     if (!isContractorSurface(path, window.location.search)) return;
 
     let lastInputAt = 0;

@@ -106,27 +106,27 @@ function ScoreCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
     >
-      <Card className="relative overflow-hidden border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl">
+      <Card className="relative overflow-hidden border-white/15 bg-[#0F1A2E] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
         <div
-          className="pointer-events-none absolute inset-0 opacity-30"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 opacity-25"
           style={{ background: accent }}
           aria-hidden
         />
         <div className="relative flex items-start justify-between">
           <div>
-            <p className="text-xs uppercase tracking-wider text-white/60">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-white/80">
               {label}
             </p>
             <p className="mt-2 text-3xl font-semibold text-white tabular-nums">
               {value}
-              <span className="text-sm text-white/50">/100</span>
+              <span className="text-sm text-white/70">/100</span>
             </p>
           </div>
-          <div className="text-white/70">{icon}</div>
+          <div className="text-white/90">{icon}</div>
         </div>
-        <div className="relative mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+        <div className="relative mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
           <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-primary to-primary/60"
+            className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70"
             initial={{ width: 0 }}
             animate={{ width: `${value}%` }}
             transition={{ duration: 1, delay: delay + 0.2, ease: "easeOut" }}
@@ -147,21 +147,21 @@ function MissedLeadsChart({ missed }: { missed: number }) {
   }, [missed]);
   const max = Math.max(...months);
   return (
-    <Card className="border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl">
+    <Card className="border-white/15 bg-[#0F1A2E] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs uppercase tracking-wider text-white/60">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-white/80">
             Opportunités manquées (mensuel)
           </p>
           <p className="mt-1 text-4xl font-semibold text-white tabular-nums">
             ~{missed}
           </p>
-          <p className="mt-1 flex items-center gap-1 text-sm text-rose-300">
+          <p className="mt-1 flex items-center gap-1 text-sm text-rose-200">
             <TrendingDown className="h-3.5 w-3.5" />
             Tendance qui s'aggrave
           </p>
         </div>
-        <div className="rounded-full bg-rose-500/10 px-3 py-1 text-xs text-rose-200">
+        <div className="rounded-full bg-rose-500/20 px-3 py-1 text-xs font-medium text-rose-100">
           12 derniers mois
         </div>
       </div>
@@ -172,7 +172,7 @@ function MissedLeadsChart({ missed }: { missed: number }) {
             initial={{ height: 0 }}
             animate={{ height: `${(v / max) * 100}%` }}
             transition={{ duration: 0.6, delay: 0.4 + i * 0.04 }}
-            className="flex-1 rounded-sm bg-gradient-to-t from-rose-500/40 to-rose-300/80"
+            className="flex-1 rounded-sm bg-gradient-to-t from-rose-500/60 to-rose-300/90"
           />
         ))}
       </div>
@@ -264,15 +264,15 @@ export default function PageProLandingNuclearClose() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#060B14]">
-        <p className="animate-pulse text-white/60">Préparation de votre analyse…</p>
+      <div className="alex-immersive flex min-h-screen items-center justify-center bg-[#060B14]">
+        <p className="animate-pulse text-white/80">Préparation de votre analyse…</p>
       </div>
     );
   }
 
   if (notFound || !prospect) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#060B14] px-6 text-center">
+      <div className="alex-immersive flex min-h-screen flex-col items-center justify-center gap-4 bg-[#060B14] px-6 text-center">
         <h1 className="text-2xl font-semibold text-white">Lien expiré</h1>
         <p className="max-w-md text-white/60">
           Cette analyse personnalisée n'est plus disponible. Découvrez UNPRO
@@ -300,7 +300,7 @@ export default function PageProLandingNuclearClose() {
       .catch(() => setVoiceArmed(false));
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#060B14] text-white">
+    <div className="alex-immersive relative min-h-screen overflow-hidden bg-[#060B14] text-white">
       <Helmet>
         <title>{prospect.company_name} — Analyse UNPRO Laval</title>
         <meta
@@ -322,14 +322,14 @@ export default function PageProLandingNuclearClose() {
 
       <main className="relative mx-auto max-w-6xl px-5 pb-16 pt-10 md:pt-16">
         {/* Top trust bar */}
-        <div className="mb-8 flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-wider text-white/50">
-          <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1">
+        <div className="mb-8 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-white/80">
+          <span className="rounded-full border border-white/20 bg-white/[0.08] px-3 py-1">
             Québec · Laval
           </span>
-          <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1">
+          <span className="rounded-full border border-white/20 bg-white/[0.08] px-3 py-1">
             Analyse IA · Live
           </span>
-          <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-emerald-200">
+          <span className="rounded-full border border-emerald-400/40 bg-emerald-400/15 px-3 py-1 text-emerald-100">
             Territoire exclusif
           </span>
         </div>
@@ -341,15 +341,15 @@ export default function PageProLandingNuclearClose() {
           transition={{ duration: 0.6 }}
           className="max-w-3xl"
         >
-          <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-white/70">
+          <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.08] px-3 py-1 text-xs text-white/90">
             <Sparkles className="h-3 w-3 text-primary" />
             Préparé pour {prospect.company_name}
           </p>
-          <h1 className="text-balance text-3xl font-semibold leading-tight md:text-5xl">
+          <h1 className="text-balance text-3xl font-semibold leading-tight text-white md:text-5xl">
             {prospect.company_name}, vous perdez probablement de la demande
             locale à {prospect.city}.
           </h1>
-          <p className="mt-4 max-w-2xl text-base text-white/70 md:text-lg">
+          <p className="mt-4 max-w-2xl text-base text-white/85 md:text-lg">
             UNPRO aide les entrepreneurs en {CATEGORY_LABEL_FR[prospect.category] ?? prospect.category}{" "}
             à recevoir des rendez-vous qualifiés et exclusifs — pas des soumissions
             partagées au rabais.
@@ -361,7 +361,7 @@ export default function PageProLandingNuclearClose() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl"
+          className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-white/15 bg-[#0F1A2E] p-4 shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
         >
           <div className="relative h-10 w-10 shrink-0">
             <div
@@ -369,15 +369,15 @@ export default function PageProLandingNuclearClose() {
                 isSpeaking ? "animate-ping" : ""
               } opacity-40`}
             />
-            <div className="absolute inset-1 grid place-items-center rounded-full bg-gradient-to-br from-primary to-fuchsia-500 text-sm font-semibold">
+            <div className="absolute inset-1 grid place-items-center rounded-full bg-gradient-to-br from-primary to-fuchsia-500 text-sm font-semibold text-white">
               A
             </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs uppercase tracking-wider text-white/50">
+          <div className="min-w-0 flex-1 basis-full sm:basis-auto">
+            <p className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-wider text-white/80">
               Alex · Analyse vocale en direct
             </p>
-            <p className="truncate text-sm text-white/85">
+            <p className="truncate text-sm text-white">
               {isSpeaking ? "En train de vous parler…" : voiceArmed ? "Audio prêt" : "Touchez pour activer le son"}
             </p>
           </div>
@@ -386,7 +386,7 @@ export default function PageProLandingNuclearClose() {
               variant="secondary"
               size="sm"
               onClick={() => (isSpeaking ? stop() : playFull())}
-              className="bg-white/10 text-white hover:bg-white/20"
+              className="bg-white/15 text-white hover:bg-white/25"
             >
               {isSpeaking ? (
                 <>
@@ -405,13 +405,13 @@ export default function PageProLandingNuclearClose() {
                 stop();
                 playRecap();
               }}
-              className="bg-primary/20 text-white hover:bg-primary/30 border border-primary/30"
+              className="bg-primary/25 text-white hover:bg-primary/35 border border-primary/40"
             >
               <Sparkles className="mr-1.5 h-4 w-4" /> Résumé 60s
             </Button>
           </div>
           {hasError && (
-            <p className="w-full text-xs text-rose-300">
+            <p className="w-full text-xs text-rose-100">
               Audio indisponible — la lecture du contenu reste accessible ci-dessous.
             </p>
           )}
@@ -419,7 +419,7 @@ export default function PageProLandingNuclearClose() {
 
         {/* Score grid */}
         <section className="mt-10">
-          <h2 className="mb-4 text-xs uppercase tracking-wider text-white/50">
+          <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-wider text-white/80">
             Votre diagnostic en 5 dimensions
           </h2>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
@@ -507,54 +507,54 @@ export default function PageProLandingNuclearClose() {
         {/* CTAs */}
         <section className="mt-10 grid gap-3 md:grid-cols-3">
           <Card
-            className="group cursor-pointer border-primary/30 bg-gradient-to-br from-primary/15 to-primary/5 p-6 backdrop-blur-xl transition hover:from-primary/25"
+            className="group cursor-pointer border-primary/40 bg-gradient-to-br from-primary/25 to-primary/10 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition hover:from-primary/35"
             onClick={() =>
               handleCta("join_now", "/pricing/entrepreneurs?from=nuclear&utm_source=sniper")
             }
           >
-            <p className="text-xs uppercase tracking-wider text-white/60">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-white/85">
               Recommandé
             </p>
-            <h3 className="mt-1 text-xl font-semibold">Rejoindre maintenant</h3>
-            <p className="mt-1 text-sm text-white/70">
+            <h3 className="mt-1 text-xl font-semibold text-white">Rejoindre maintenant</h3>
+            <p className="mt-1 text-sm text-white/85">
               Activez votre territoire exclusif. Rendez-vous qualifiés dès cette
               semaine.
             </p>
-            <div className="mt-4 inline-flex items-center text-sm font-medium text-primary">
+            <div className="mt-4 inline-flex items-center text-sm font-medium text-primary-foreground">
               Voir les plans <ArrowRight className="ml-1 h-4 w-4 transition group-hover:translate-x-0.5" />
             </div>
           </Card>
 
           <Card
-            className="group cursor-pointer border-amber-400/20 bg-gradient-to-br from-amber-400/15 to-amber-400/5 p-6 backdrop-blur-xl transition hover:from-amber-400/25"
+            className="group cursor-pointer border-amber-400/40 bg-gradient-to-br from-amber-400/25 to-amber-400/10 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition hover:from-amber-400/35"
             onClick={() =>
               handleCta("founder_offer", "/founder?from=nuclear&utm_source=sniper")
             }
           >
-            <p className="text-xs uppercase tracking-wider text-amber-200/80">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-100">
               30 places maximum
             </p>
-            <h3 className="mt-1 text-xl font-semibold">Offre Fondateur</h3>
-            <p className="mt-1 text-sm text-white/70">
+            <h3 className="mt-1 text-xl font-semibold text-white">Offre Fondateur</h3>
+            <p className="mt-1 text-sm text-white/85">
               Paiement unique. Avantage 10 ans. Priorité territoire.
             </p>
-            <div className="mt-4 inline-flex items-center text-sm font-medium text-amber-200">
+            <div className="mt-4 inline-flex items-center text-sm font-medium text-amber-100">
               Vérifier la disponibilité <ArrowRight className="ml-1 h-4 w-4" />
             </div>
           </Card>
 
           <Card
-            className="group cursor-pointer border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl transition hover:bg-white/[0.07]"
+            className="group cursor-pointer border-white/20 bg-[#0F1A2E] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition hover:bg-[#132139]"
             onClick={() => handleCta("ask_questions", "/alex?from=nuclear")}
           >
-            <p className="text-xs uppercase tracking-wider text-white/60">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-white/80">
               Pas pressé ?
             </p>
-            <h3 className="mt-1 text-xl font-semibold">Poser des questions</h3>
-            <p className="mt-1 text-sm text-white/70">
+            <h3 className="mt-1 text-xl font-semibold text-white">Poser des questions</h3>
+            <p className="mt-1 text-sm text-white/85">
               Discutez avec Alex. Aucune pression. Aucune carte requise.
             </p>
-            <div className="mt-4 inline-flex items-center text-sm font-medium text-white/80">
+            <div className="mt-4 inline-flex items-center text-sm font-medium text-white">
               Démarrer la conversation{" "}
               <MessageCircle className="ml-1 h-4 w-4" />
             </div>
@@ -565,17 +565,17 @@ export default function PageProLandingNuclearClose() {
         <SocialProofFloating />
 
         {/* Trust strip */}
-        <section className="mt-10 grid grid-cols-2 gap-3 text-xs text-white/60 md:grid-cols-4">
-          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+        <section className="mt-10 grid grid-cols-2 gap-3 text-xs text-white/90 md:grid-cols-4">
+          <div className="rounded-xl border border-white/15 bg-white/[0.06] p-3">
             🛡️ Aucune soumission partagée
           </div>
-          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+          <div className="rounded-xl border border-white/15 bg-white/[0.06] p-3">
             🎯 Opportunités exclusives
           </div>
-          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+          <div className="rounded-xl border border-white/15 bg-white/[0.06] p-3">
             ⚡ IA québécoise
           </div>
-          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+          <div className="rounded-xl border border-white/15 bg-white/[0.06] p-3">
             🔒 Territoire limité
           </div>
         </section>
