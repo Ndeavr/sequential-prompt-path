@@ -740,6 +740,7 @@ const AdminSeoDominationDashboard = lazyWithRetry(() => import("@/pages/admin/Ad
 const AdminMarketEngine = lazyWithRetry(() => import("@/pages/admin/AdminMarketEngine"));
 const AdminNexusDashboard = lazyWithRetry(() => import("@/pages/admin/AdminNexusDashboard"));
 const AdminDispatchCenter = lazyWithRetry(() => import("@/pages/admin/AdminDispatchCenter"));
+const AdminCommercialEligibility = lazyWithRetry(() => import("@/pages/admin/AdminCommercialEligibility"));
 const AdminDomainIntelligence = lazyWithRetry(() => import("@/pages/admin/AdminDomainIntelligence"));
 const PageDomainHealthDashboard = lazyWithRetry(() => import("@/pages/admin/PageDomainHealthDashboard"));
 const AdminBulkArticlesPage = lazyWithRetry(() => import("@/pages/admin/AdminBulkArticlesPage"));
