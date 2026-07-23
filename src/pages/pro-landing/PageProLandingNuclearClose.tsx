@@ -373,8 +373,8 @@ export default function PageProLandingNuclearClose() {
               A
             </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-white/80">
+          <div className="min-w-0 flex-1 basis-full sm:basis-auto">
+            <p className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-wider text-white/80">
               Alex · Analyse vocale en direct
             </p>
             <p className="truncate text-sm text-white">
