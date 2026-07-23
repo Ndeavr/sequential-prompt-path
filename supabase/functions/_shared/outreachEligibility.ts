@@ -4,6 +4,8 @@
 // Callers can use assertCanX (throws SkipError) for guard-clause style, or
 // canX for boolean checks in orchestrators.
 
+import { classifyOfficialSiteState, isEnrichmentPending } from "./officialSiteGate.ts";
+
 export type SkipReason =
   | "not_eligible"
   | "not_mobile"
@@ -12,7 +14,8 @@ export type SkipReason =
   | "low_score"
   | "do_not_contact"
   | "missing_phone"
-  | "missing_email";
+  | "missing_email"
+  | "enrichment_pending";
 
 export class SkipError extends Error {
   reason: SkipReason;
@@ -31,12 +34,29 @@ export interface EligibilityInput {
   acquisition_priority_score?: number | null;
   phone?: string | null;
   email?: string | null;
+  website_url?: string | null;
+  official_domain?: string | null;
+  official_site_status?: string | null;
+}
+
+function pendingEnrichment(p: EligibilityInput): boolean {
+  const state = classifyOfficialSiteState({
+    phone: p.phone ?? null,
+    email: p.email ?? null,
+    website_url: p.website_url ?? null,
+    official_domain: p.official_domain ?? null,
+    official_site_status: p.official_site_status ?? null,
+  });
+  return isEnrichmentPending(state);
 }
 
 export function canSendSMS(p: EligibilityInput): SkipReason | null {
   if (p.do_not_contact) return "do_not_contact";
   if (!p.outreach_eligible) return "not_eligible";
-  if (!p.phone) return "missing_phone";
+  if (!p.phone) {
+    if (pendingEnrichment(p)) return "enrichment_pending";
+    return "missing_phone";
+  }
   if (p.phone_type !== "mobile") return "not_mobile";
   return null;
 }
@@ -44,7 +64,10 @@ export function canSendSMS(p: EligibilityInput): SkipReason | null {
 export function canSendEmail(p: EligibilityInput): SkipReason | null {
   if (p.do_not_contact) return "do_not_contact";
   if (!p.outreach_eligible) return "not_eligible";
-  if (!p.email) return "missing_email";
+  if (!p.email) {
+    if (pendingEnrichment(p)) return "enrichment_pending";
+    return "missing_email";
+  }
   if (p.aggregator_email) return "aggregator";
   return null;
 }
