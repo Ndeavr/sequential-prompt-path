@@ -272,7 +272,7 @@ export default function PageProLandingNuclearClose() {
 
   if (notFound || !prospect) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#060B14] px-6 text-center">
+      <div className="alex-immersive flex min-h-screen flex-col items-center justify-center gap-4 bg-[#060B14] px-6 text-center">
         <h1 className="text-2xl font-semibold text-white">Lien expiré</h1>
         <p className="max-w-md text-white/60">
           Cette analyse personnalisée n'est plus disponible. Découvrez UNPRO
