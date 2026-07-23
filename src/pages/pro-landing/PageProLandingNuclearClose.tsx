@@ -341,15 +341,15 @@ export default function PageProLandingNuclearClose() {
           transition={{ duration: 0.6 }}
           className="max-w-3xl"
         >
-          <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-white/70">
+          <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.08] px-3 py-1 text-xs text-white/90">
             <Sparkles className="h-3 w-3 text-primary" />
             Préparé pour {prospect.company_name}
           </p>
-          <h1 className="text-balance text-3xl font-semibold leading-tight md:text-5xl">
+          <h1 className="text-balance text-3xl font-semibold leading-tight text-white md:text-5xl">
             {prospect.company_name}, vous perdez probablement de la demande
             locale à {prospect.city}.
           </h1>
-          <p className="mt-4 max-w-2xl text-base text-white/70 md:text-lg">
+          <p className="mt-4 max-w-2xl text-base text-white/85 md:text-lg">
             UNPRO aide les entrepreneurs en {CATEGORY_LABEL_FR[prospect.category] ?? prospect.category}{" "}
             à recevoir des rendez-vous qualifiés et exclusifs — pas des soumissions
             partagées au rabais.
