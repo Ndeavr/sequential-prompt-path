@@ -80,47 +80,54 @@ Deno.serve(async (req) => {
     }
 
     if (!candidateDomain) {
-      // Record no_official_domain and stop — do NOT flip missing_* here.
-      const { data: run } = await supabase.from("official_site_crawl_runs").insert({
-        contractor_lead_id: lead_id ?? null,
-        prospect_id: prospect_id ?? null,
-        canonical_domain: "",
-        status: "no_official_domain",
-        reason: "no_website_on_record",
-        finished_at: new Date().toISOString(),
-      }).select("id").maybeSingle();
-      if (lead_id) {
-        await supabase.from("contractor_leads").update({
-          official_site_status: "no_official_domain",
-          official_site_checked_at: new Date().toISOString(),
-        }).eq("id", lead_id);
+      let runId: string | null = null;
+      if (!dry_run) {
+        const { data: run } = await supabase.from("official_site_crawl_runs").insert({
+          contractor_lead_id: lead_id ?? null,
+          prospect_id: prospect_id ?? null,
+          canonical_domain: "",
+          status: "no_official_domain",
+          reason: "no_website_on_record",
+          finished_at: new Date().toISOString(),
+        }).select("id").maybeSingle();
+        runId = run?.id ?? null;
+        if (lead_id) {
+          await supabase.from("contractor_leads").update({
+            official_site_status: "no_official_domain",
+            official_site_checked_at: new Date().toISOString(),
+          }).eq("id", lead_id);
+        }
       }
-      return jr({ ok: true, run_id: run?.id, status: "no_official_domain" }, 200, rid);
+      return jr({ ok: true, run_id: runId, status: "no_official_domain", dry_run: !!dry_run }, 200, rid);
     }
 
     const resolved = resolveOfficialDomain(candidateDomain);
     if (!resolved.canonical) {
       const status = resolved.is_blocked ? "blocked" : "no_official_domain";
-      const { data: run } = await supabase.from("official_site_crawl_runs").insert({
-        contractor_lead_id: lead_id ?? null,
-        prospect_id: prospect_id ?? null,
-        canonical_domain: resolved.host ?? candidateDomain,
-        status,
-        reason: resolved.reason ?? "unresolvable",
-        finished_at: new Date().toISOString(),
-      }).select("id").maybeSingle();
-      if (lead_id) {
-        await supabase.from("contractor_leads").update({
-          official_site_status: status,
-          official_site_checked_at: new Date().toISOString(),
-        }).eq("id", lead_id);
+      let runId: string | null = null;
+      if (!dry_run) {
+        const { data: run } = await supabase.from("official_site_crawl_runs").insert({
+          contractor_lead_id: lead_id ?? null,
+          prospect_id: prospect_id ?? null,
+          canonical_domain: resolved.host ?? candidateDomain,
+          status,
+          reason: resolved.reason ?? "unresolvable",
+          finished_at: new Date().toISOString(),
+        }).select("id").maybeSingle();
+        runId = run?.id ?? null;
+        if (lead_id) {
+          await supabase.from("contractor_leads").update({
+            official_site_status: status,
+            official_site_checked_at: new Date().toISOString(),
+          }).eq("id", lead_id);
+        }
       }
-      return jr({ ok: true, run_id: run?.id, status, canonical_domain: resolved.host }, 200, rid);
+      return jr({ ok: true, run_id: runId, status, canonical_domain: resolved.host, dry_run: !!dry_run }, 200, rid);
     }
 
     // 2. Crawl
     const runStart = new Date().toISOString();
-    if (lead_id) {
+    if (!dry_run && lead_id) {
       await supabase.from("contractor_leads").update({
         official_site_status: "crawling",
         official_domain: resolved.canonical,
