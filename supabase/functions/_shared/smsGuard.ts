@@ -168,8 +168,12 @@ export async function lookupPhoneTypeCached(
       .maybeSingle();
     if (cached?.line_type && cached.validated_at) {
       const ageDays = (Date.now() - new Date(cached.validated_at as string).getTime()) / 86400000;
-      if (ageDays < 90) return normalizeLineType(cached.line_type as string);
+      if (ageDays < 90) {
+        if (cached.line_type === "unknown_ca_lookup_restricted") return null;
+        return normalizeLineType(cached.line_type as string);
+      }
     }
+
 
     const SID = Deno.env.get("TWILIO_ACCOUNT_SID");
     const TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
