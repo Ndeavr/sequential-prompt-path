@@ -27,7 +27,7 @@ function isBotOrPrefetch(req: Request, hintFromClient?: boolean): boolean {
   if (purpose.includes("prefetch") || purpose.includes("preview")) return true;
   const ua = (req.headers.get("user-agent") || "").toLowerCase();
   if (!ua) return true;
-  return /bot|crawler|spider|preview|slackbot|discordbot|whatsapp|facebookexternalhit|twitterbot|linkedinbot|telegrambot|skypeuripreview|embedly|quora link preview|pinterest|redditbot|applebot|bingpreview|google-inspection|googlebot|petalbot|semrushbot|ahrefsbot|dotbot|okhttp|python-requests|curl|wget|headless/i.test(ua);
+  return /unpro-qa|bot|crawler|spider|preview|slackbot|discordbot|whatsapp|facebookexternalhit|twitterbot|linkedinbot|telegrambot|skypeuripreview|embedly|quora link preview|pinterest|redditbot|applebot|bingpreview|google-inspection|googlebot|petalbot|semrushbot|ahrefsbot|dotbot|okhttp|python-requests|curl|wget|headless/i.test(ua);
 }
 
 function maskDest(url: string | null | undefined): string | null {

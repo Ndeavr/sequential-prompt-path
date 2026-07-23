@@ -4,7 +4,7 @@
 //
 // No auth required — this is the public entry from sniper-email CTA.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,6 +22,18 @@ interface ResolveRequest {
 
 function clamp(n: number, min = 0, max = 100): number {
   return Math.max(min, Math.min(max, Math.round(n)));
+}
+
+function isUuid(value: string | undefined | null): value is string {
+  return !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function isSideEffectFreeVisit(req: Request, userAgent?: string | null): boolean {
+  const purpose = (req.headers.get("purpose") || req.headers.get("sec-purpose") || "").toLowerCase();
+  if (purpose.includes("prefetch") || purpose.includes("preview")) return true;
+  const ua = (userAgent || req.headers.get("user-agent") || "").toLowerCase();
+  if (!ua) return true;
+  return /unpro-qa|bot|crawler|spider|preview|slackbot|discordbot|whatsapp|facebookexternalhit|twitterbot|linkedinbot|telegrambot|skypeuripreview|embedly|pinterest|redditbot|applebot|bingpreview|googlebot|headless|curl|wget/i.test(ua);
 }
 
 // Heuristic scoring fallback when DB scores missing.
@@ -97,7 +109,7 @@ Deno.serve(async (req: Request) => {
     if (token) query = query.eq("tracking_token", token);
     else if (slug) query = query.eq("slug", slug);
 
-    const { data: prospect, error: fetchErr } = await query.maybeSingle();
+    const { data: warProspect, error: fetchErr } = await query.maybeSingle();
 
     if (fetchErr) {
       console.error("[pro-landing-resolve] fetch error", fetchErr);
@@ -107,12 +119,66 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    let prospect = warProspect;
+    let sourceTable: "war_prospects" | "contractor_prospects" = "war_prospects";
+
+    // Current first-dollar SMS links resolve to /pro/<contractor_prospects.id>.
+    // Preserve the original war_prospects behavior, but recover canonical
+    // contractor_prospects UUID destinations without requiring a duplicate row.
+    if (!prospect && isUuid(slug)) {
+      const { data: contractorProspect, error: contractorErr } = await supabase
+        .from("contractor_prospects")
+        .select("id, business_name, category_slug, trade, city, website_url, phone, email, review_rating, review_count, google_business_url, address, postal_code, acquisition_score, priority_score, aipp_score")
+        .eq("id", slug)
+        .maybeSingle();
+
+      if (contractorErr) {
+        console.error("[pro-landing-resolve] contractor prospect fetch error", contractorErr);
+        return new Response(
+          JSON.stringify({ error: "lookup failed" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (contractorProspect) {
+        sourceTable = "contractor_prospects";
+        prospect = {
+          id: contractorProspect.id,
+          company_name: contractorProspect.business_name,
+          category: contractorProspect.category_slug ?? contractorProspect.trade ?? "general",
+          city: contractorProspect.city ?? "Québec",
+          website: contractorProspect.website_url,
+          phone: contractorProspect.phone,
+          email: contractorProspect.email,
+          rating: contractorProspect.review_rating,
+          reviews_count: contractorProspect.review_count,
+          facebook_url: null,
+          instagram_url: null,
+          google_maps_url: contractorProspect.google_business_url,
+          address: contractorProspect.address,
+          postal_code: contractorProspect.postal_code,
+          lead_score: contractorProspect.acquisition_score ?? contractorProspect.priority_score ?? contractorProspect.aipp_score,
+          slug: contractorProspect.id,
+          tracking_token: token ?? null,
+          visibility_score: null,
+          trust_score: null,
+          conversion_score: null,
+          speed_score: null,
+          opportunity_score: null,
+          estimated_missed_leads_monthly: null,
+          landing_views_count: 0,
+        };
+      }
+    }
+
     if (!prospect) {
       return new Response(
         JSON.stringify({ error: "not_found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    const sideEffectFree = isSideEffectFreeVisit(req, user_agent);
 
     // Derive scores (use DB values if present, fallback to heuristics)
     const derived = deriveScores(prospect);
@@ -127,8 +193,10 @@ Deno.serve(async (req: Request) => {
 
     // Persist derived scores if missing
     if (
-      prospect.visibility_score == null ||
-      prospect.estimated_missed_leads_monthly == null
+      sourceTable === "war_prospects" &&
+      !sideEffectFree &&
+      (prospect.visibility_score == null ||
+        prospect.estimated_missed_leads_monthly == null)
     ) {
       await supabase
         .from("war_prospects")
@@ -144,18 +212,20 @@ Deno.serve(async (req: Request) => {
     }
 
     // Log the landing view
-    await supabase.from("pro_landing_views").insert({
-      prospect_id: prospect.id,
-      slug: prospect.slug,
-      tracking_token: token ?? null,
-      user_agent: user_agent ?? null,
-      referrer: referrer ?? null,
-    });
+    if (!sideEffectFree) {
+      await supabase.from("pro_landing_views").insert({
+        prospect_id: prospect.id,
+        slug: prospect.slug,
+        tracking_token: token ?? null,
+        user_agent: user_agent ?? null,
+        referrer: referrer ?? null,
+      });
+    }
 
     // Safety net for Stage 3 of the Critical Path Audit: if the user reached
     // this landing via a tokenized share/SMS, also record a click event so the
     // funnel doesn't show 0 when the /r/ redirect was bypassed.
-    if (token) {
+    if (token && !sideEffectFree) {
       try {
         await supabase.from("outreach_click_events").insert({
           clicked_url: `pro_landing:${prospect.slug}`,
@@ -167,13 +237,15 @@ Deno.serve(async (req: Request) => {
     }
 
     // Increment view counter (non-blocking semantics ok)
-    await supabase
-      .from("war_prospects")
-      .update({
-        landing_views_count: (prospect.landing_views_count ?? 0) + 1,
-        last_landing_view_at: new Date().toISOString(),
-      })
-      .eq("id", prospect.id);
+    if (sourceTable === "war_prospects" && !sideEffectFree) {
+      await supabase
+        .from("war_prospects")
+        .update({
+          landing_views_count: (prospect.landing_views_count ?? 0) + 1,
+          last_landing_view_at: new Date().toISOString(),
+        })
+        .eq("id", prospect.id);
+    }
 
     // Sanitized public payload (NO email, NO phone exposed to wire)
     const payload = {
