@@ -108,7 +108,7 @@ function ScoreCard({
     >
       <Card className="relative overflow-hidden border-white/15 bg-[#0F1A2E] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
         <div
-          className="pointer-events-none absolute inset-0 opacity-40"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 opacity-25"
           style={{ background: accent }}
           aria-hidden
         />
