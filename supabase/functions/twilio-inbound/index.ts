@@ -22,9 +22,12 @@ const corsHeaders = {
 };
 
 function classify(body: string): string {
-  const b = body.toLowerCase().trim();
-  if (/\b(stop|arret|arrêt|unsubscribe|cancel|end|quit)\b/.test(b)) return "stop";
+  const b = body.toLowerCase().trim().replace(/[!.?,;:]+$/g, "");
+  if (/\b(stop|arret|arrêt|unsubscribe|cancel|end|quit|desabonner|désabonner)\b/.test(b)) return "stop";
   if (/\b(help|aide|info)\b/.test(b)) return "help";
+  // Simple positive acknowledgements — must route to onboarding.
+  // Match short one-word replies and common French/English affirmations.
+  if (/^(oui|yes|y|ok|okay|okey|d'accord|daccord|correct|parfait|allons-y|go|sure|oui svp|oui merci|ouais|ya|yeah|yep|yup|absolument|certainement|volontiers|intéressé|interesse|interessé|intéressée|interessee|ca m'intéresse|ça m'intéresse|ca minteresse|je suis intéressé|je suis interesse|dites-m'en plus|dis m'en plus|plus d'info|plus dinfo|expliquez|explique|allo|hello|salut|bonjour|hi|hey)$/.test(b)) return "positive";
   if (/\b(entrepreneur|pro|contracteur)\b/.test(b)) return "contractor_intent";
   if (/\b(propri[ée]taire|proprio|maison|condo)\b/.test(b)) return "homeowner_intent";
   if (/\b(rdv|rendez-vous|booking|appointment)\b/.test(b)) return "appointment_request";
