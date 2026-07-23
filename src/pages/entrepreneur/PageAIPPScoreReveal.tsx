@@ -40,10 +40,8 @@ export default function PageAIPPScoreReveal() {
     async function load() {
       // Try DB first
       if (token && token !== "local") {
-        const { data } = await supabase
-          .from("alex_score_reveal_sessions")
-          .select("id, score_global")
-          .eq("session_token", token)
+        const { data } = await (supabase as any)
+          .rpc("get_alex_score_reveal_session", { _session_token: token })
           .maybeSingle();
 
         if (data) {
