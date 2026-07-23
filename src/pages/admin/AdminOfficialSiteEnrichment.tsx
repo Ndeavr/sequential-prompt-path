@@ -85,11 +85,11 @@ export default function AdminOfficialSiteEnrichment() {
     queryFn: async () => {
       const { data: leads, error } = await supabase
         .from("contractor_leads")
-        .select("id,company_name,city,category,phone,phone_e164,email,website_url,official_domain,official_site_status,official_site_checked_at,missing_contact_after_crawl")
+        .select("id,company_name,city,category_primary,phone,phone_e164,email,website_url,official_domain,official_site_status,official_site_checked_at,missing_contact_after_crawl")
         .order("created_at", { ascending: false })
         .limit(5000);
       if (error) throw error;
-      const rows = (leads ?? []) as LeadRow[];
+      const rows = ((leads ?? []) as any[]).map(r => ({ ...r, category: r.category_primary ?? null })) as LeadRow[];
 
       const ids = rows.map(r => r.id);
       const runsByLead = new Map<string, CrawlRow[]>();
