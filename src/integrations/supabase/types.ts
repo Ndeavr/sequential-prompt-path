@@ -89475,6 +89475,13 @@ export type Database = {
           visits: number
         }[]
       }
+      get_alex_score_reveal_session: {
+        Args: { _session_token: string }
+        Returns: {
+          id: string
+          score_global: number
+        }[]
+      }
       get_audit_landing_by_slug: {
         Args: { _slug: string }
         Returns: {
