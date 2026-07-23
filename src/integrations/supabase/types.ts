@@ -31692,8 +31692,10 @@ export type Database = {
           sms_status: string | null
           sms_suppressed_at: string | null
           sms_suppressed_reason: string | null
+          source_company_id: string | null
           source_job_id: string | null
           source_label: string | null
+          source_prospect_id: string | null
           source_query_id: string | null
           source_type: string
           street_address: string | null
@@ -31819,8 +31821,10 @@ export type Database = {
           sms_status?: string | null
           sms_suppressed_at?: string | null
           sms_suppressed_reason?: string | null
+          source_company_id?: string | null
           source_job_id?: string | null
           source_label?: string | null
+          source_prospect_id?: string | null
           source_query_id?: string | null
           source_type?: string
           street_address?: string | null
@@ -31946,8 +31950,10 @@ export type Database = {
           sms_status?: string | null
           sms_suppressed_at?: string | null
           sms_suppressed_reason?: string | null
+          source_company_id?: string | null
           source_job_id?: string | null
           source_label?: string | null
+          source_prospect_id?: string | null
           source_query_id?: string | null
           source_type?: string
           street_address?: string | null
@@ -32031,10 +32037,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "contractor_leads_source_company_fk"
+            columns: ["source_company_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_companies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "contractor_leads_source_job_id_fkey"
             columns: ["source_job_id"]
             isOneToOne: false
             referencedRelation: "prospection_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_source_prospect_fk"
+            columns: ["source_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_source_prospect_fk"
+            columns: ["source_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_queues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_source_prospect_fk"
+            columns: ["source_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_concierge_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_source_prospect_fk"
+            columns: ["source_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_sprint_eligible"
             referencedColumns: ["id"]
           },
           {
