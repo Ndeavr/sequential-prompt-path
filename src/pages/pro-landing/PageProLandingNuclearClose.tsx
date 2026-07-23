@@ -507,54 +507,54 @@ export default function PageProLandingNuclearClose() {
         {/* CTAs */}
         <section className="mt-10 grid gap-3 md:grid-cols-3">
           <Card
-            className="group cursor-pointer border-primary/30 bg-gradient-to-br from-primary/15 to-primary/5 p-6 backdrop-blur-xl transition hover:from-primary/25"
+            className="group cursor-pointer border-primary/40 bg-gradient-to-br from-primary/25 to-primary/10 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition hover:from-primary/35"
             onClick={() =>
               handleCta("join_now", "/pricing/entrepreneurs?from=nuclear&utm_source=sniper")
             }
           >
-            <p className="text-xs uppercase tracking-wider text-white/60">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-white/85">
               Recommandé
             </p>
-            <h3 className="mt-1 text-xl font-semibold">Rejoindre maintenant</h3>
-            <p className="mt-1 text-sm text-white/70">
+            <h3 className="mt-1 text-xl font-semibold text-white">Rejoindre maintenant</h3>
+            <p className="mt-1 text-sm text-white/85">
               Activez votre territoire exclusif. Rendez-vous qualifiés dès cette
               semaine.
             </p>
-            <div className="mt-4 inline-flex items-center text-sm font-medium text-primary">
+            <div className="mt-4 inline-flex items-center text-sm font-medium text-primary-foreground">
               Voir les plans <ArrowRight className="ml-1 h-4 w-4 transition group-hover:translate-x-0.5" />
             </div>
           </Card>
 
           <Card
-            className="group cursor-pointer border-amber-400/20 bg-gradient-to-br from-amber-400/15 to-amber-400/5 p-6 backdrop-blur-xl transition hover:from-amber-400/25"
+            className="group cursor-pointer border-amber-400/40 bg-gradient-to-br from-amber-400/25 to-amber-400/10 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition hover:from-amber-400/35"
             onClick={() =>
               handleCta("founder_offer", "/founder?from=nuclear&utm_source=sniper")
             }
           >
-            <p className="text-xs uppercase tracking-wider text-amber-200/80">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-100">
               30 places maximum
             </p>
-            <h3 className="mt-1 text-xl font-semibold">Offre Fondateur</h3>
-            <p className="mt-1 text-sm text-white/70">
+            <h3 className="mt-1 text-xl font-semibold text-white">Offre Fondateur</h3>
+            <p className="mt-1 text-sm text-white/85">
               Paiement unique. Avantage 10 ans. Priorité territoire.
             </p>
-            <div className="mt-4 inline-flex items-center text-sm font-medium text-amber-200">
+            <div className="mt-4 inline-flex items-center text-sm font-medium text-amber-100">
               Vérifier la disponibilité <ArrowRight className="ml-1 h-4 w-4" />
             </div>
           </Card>
 
           <Card
-            className="group cursor-pointer border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl transition hover:bg-white/[0.07]"
+            className="group cursor-pointer border-white/20 bg-[#0F1A2E] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition hover:bg-[#132139]"
             onClick={() => handleCta("ask_questions", "/alex?from=nuclear")}
           >
-            <p className="text-xs uppercase tracking-wider text-white/60">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-white/80">
               Pas pressé ?
             </p>
-            <h3 className="mt-1 text-xl font-semibold">Poser des questions</h3>
-            <p className="mt-1 text-sm text-white/70">
+            <h3 className="mt-1 text-xl font-semibold text-white">Poser des questions</h3>
+            <p className="mt-1 text-sm text-white/85">
               Discutez avec Alex. Aucune pression. Aucune carte requise.
             </p>
-            <div className="mt-4 inline-flex items-center text-sm font-medium text-white/80">
+            <div className="mt-4 inline-flex items-center text-sm font-medium text-white">
               Démarrer la conversation{" "}
               <MessageCircle className="ml-1 h-4 w-4" />
             </div>
