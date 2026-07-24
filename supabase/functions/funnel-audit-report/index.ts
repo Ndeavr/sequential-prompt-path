@@ -215,9 +215,22 @@ Deno.serve(async (req) => {
     // `real_pipeline` in the response. All counts come from real production rows.
     const realPipeline = await computeRealPipeline(admin, since);
 
+    // Optional action: auto-repair missing landing pages (idempotent, no SMS).
+    const action = url.searchParams.get("action");
+    let repairResult: any = null;
+    if (action === "repair_landings") {
+      const limit = Math.min(10, Math.max(1, Number(url.searchParams.get("limit") ?? 5)));
+      repairResult = await repairMissingLandings(admin, limit);
+    }
+
     // Optional dry-run canary preview — never sends, only lists eligible leads.
     const canaryPreview = url.searchParams.get("canary_preview") === "1"
       ? await previewCanaryBatch(admin, Math.min(20, Math.max(1, Number(url.searchParams.get("canary_limit") ?? 5))))
+      : null;
+
+    // Aggregate readiness across top eligible candidates (bounded, read-only).
+    const canaryReadiness = (canaryPreview || action === "repair_landings")
+      ? await computeCanaryReadiness(admin, 100)
       : null;
 
     return json({
@@ -230,6 +243,8 @@ Deno.serve(async (req) => {
       stages,
       real_pipeline: realPipeline,
       canary_preview: canaryPreview,
+      canary_readiness: canaryReadiness,
+      repair_result: repairResult,
     });
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
