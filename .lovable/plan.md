@@ -1,71 +1,71 @@
+## Root cause (confirmed against production DB)
 
-# Repair Acquisition Pipeline → First Real $1
+Three concrete Postgres errors are being logged as `promotion_insert_failed` / `fallback_insert_failed` in `acquisition_pipeline_events` over the last 24h:
 
-## Root cause (traced, not guessed)
+| # | Count | PG error | Real cause |
+|---|---|---|---|
+| 1 | **824** | `null value in column "verification_status" ... violates not-null constraint` (23502) | Column is `NOT NULL DEFAULT 'needs_enrichment'`. `acquisition-queue-worker/promoteProspect` explicitly inserts `verification_status: null`, overriding the default. |
+| 2 | **380** | `null value in column "category" ... violates not-null constraint` | `category` is `NOT NULL`. Candidates coming from sources whose category didn't map (raw string, e.g. `"plumber"` vs `"plombier"`, or missing) reach the insert with `null`. |
+| 3 | **228** | `violates check constraint "verified_contractor_prospects_phone_validation_status_check"` | Allowed values are `valid_mobile|valid_sms_capable_voip|landline|invalid|disconnected|unverified`. Other writers (`acq-phone-backfill`, `_shared/phoneValidation`, some fallback inserter) write `verified_mobile`, `verified_not_mobile`, `verified`, `lookup_failed`, `invalid_format` — none of which pass the check. |
 
-Real dashboard state on `verified_contractor_prospects` (last 15 rows):
-- `phone_line_type = 'unknown'` on every recent row
-- `phone_validation_status = 'unverified'`
-- `sms_eligibility_tier = null`
-- `verification_status = 'verified'` (set by an older backfill) while `sms_eligible = true`
+Plomberie Expert KF & Fils Inc reproduces #1: the row is built, `verification_status: null` is sent, Postgres rejects, promotion is aborted, no SMS is attempted.
 
-`send-verified-batch` filters on `sms_eligibility_tier IN ('A','B','C') AND verification_status='verified' AND data_quality_score>=80 AND website_url NOT NULL`. Every promoted row is missing tier → **100% gated → QUARANTINED = 1, SMS_SENT = 0**.
+The current event only stores `reason_text` + `metadata.pg_code`, so `error.details`, `error.hint`, target table, operation, prospect_id and run_id are not persisted — the operator only sees `"promotion_insert_failed"`.
 
-`acquisition-queue-worker.promoteProspect` inserts rows with `phone_line_type=null, verification_status=null`, then relies on the LIVE branch to call `twilio-lookup-phone`. But `verificationIsFresh()` short-circuits when older rows already have `verification_status='verified'` (set by the earlier backfill) even though `phone_line_type` is still `null`/`unknown` — so **Twilio Lookup is skipped and the row is left with no tier**. That is why `TWILIO_LOOKUPS_EXECUTED = 0` after launch.
+## Fix plan (P0, no scope creep)
 
-Second bug: `promoteProspect` returns the existing row without patching stale fields, so any row created by other paths (`run-live-acquisition`, backfills) is never healed.
+Scope: only the promotion insert path, the fallback insert enum, error persistence, idempotency, and one-prospect replay. **No** landing/scraper/Twilio/scoring/dashboard-style changes.
 
-Third bug: quarantine event is written with `reason_code = null`, so the Admin only shows the word `QUARANTINED` with no reason.
+### 1. `supabase/functions/acquisition-queue-worker/index.ts` — primary promotion insert
+- Remove `verification_status: null` from the insert row; let the `'needs_enrichment'` default apply. Keep the healing branch that resets `verification_status` back to `'needs_enrichment'` (not `null`) when a stale row is detected.
+- Skip the candidate before the insert when `category` is empty. Emit a distinct `reason_code = 'category_missing'` event (not `promotion_insert_failed`) so it stops polluting the counter.
+- Normalize category once at the top of the candidate loop using the existing FR/EN map (`plumber`→`plombier`, `roofer`→`toiture`, `insulation`→`isolation`, etc.). If still unknown, emit `category_unmapped` and skip.
+- Persist the full DB error on every insert failure via a new helper `logDbFailure(op, table, err, ctx, lead)` that writes to `acquisition_pipeline_events.metadata` all of: `pg_code`, `pg_message`, `pg_details`, `pg_hint`, `table`, `operation`, `prospect_id`, `run_id`, `payload_keys`.
 
-Nothing is wrong with Twilio credentials themselves — `Réno-Toit` was sent as Tier C proving the send path works.
+### 2. Fallback path — check-constraint violation
+- Audit the three writers that set `phone_validation_status` outside the allowed enum (`_shared/phoneValidation.ts`, `acq-phone-backfill/index.ts`, `acq-normalize-repair/index.ts`) and map their outputs to the DB-allowed values:
+  - `verified_mobile` → `valid_mobile`
+  - `verified_not_mobile` → `landline`
+  - `verified` (generic) → `valid_mobile` when line_type=mobile, else `landline`
+  - `lookup_failed` / `invalid_format` → `invalid`
+- No schema change; the constraint is correct.
 
-## Fix (edge-function only, no schema redesign)
+### 3. Idempotency (already partial, complete it)
+- Add a Postgres unique index migration on `verified_contractor_prospects(phone_e164) WHERE phone_e164 IS NOT NULL` if not already present, and switch the insert to `.upsert(row, { onConflict: 'phone_e164', ignoreDuplicates: false })` returning the existing row. This closes the race where two workers promote the same phone twice.
+- Reuse existing verification: keep the current `verificationIsFresh` gate — do not re-call Twilio Lookup when `phone_line_type ∈ {mobile,landline,voip}` and `sms_eligibility_tier ∈ {A,B,C,D}`.
 
-### 1. `_shared/acquisitionPipeline.ts`
-- Add canonical `QUARANTINE_REASON` constants covering: `missing_phone`, `invalid_phone`, `landline`, `voip_unverified`, `lookup_failed`, `lookup_timeout`, `casl_failed`, `historically_contacted`, `send_gate_failed`, `tier_blocked`, `promotion_insert_failed`, `api_error`.
-- Extend `logPipelineEvent` helper with `metadata.reason_detail` so every rejection has a machine + human reason.
+### 4. Run status must reflect reality
+- In the worker, when 100% of candidates fail promotion for a given `run_id`, mark `acquisition_pipeline_runs.status = 'blocked'` (not `running`/`succeeded`) and store the aggregated top DB error on the run row.
+- In `PageAdminAcquisitionPipeline.tsx`, render `blocked` runs with the raw DB error + required next action; no other UI change.
 
-### 2. `acquisition-queue-worker/index.ts` (promotion + lookup path)
-- Tighten `verificationIsFresh`: require BOTH `verification_status='verified'` AND `phone_line_type IN ('mobile','landline','voip')` AND `sms_eligibility_tier IN ('A','B','C','D')`. Anything else → force a Twilio Lookup pass.
-- In `promoteProspect`, when the existing row has `phone_line_type IS NULL` OR `sms_eligibility_tier IS NULL`, reset `verification_status = null` on the returned struct so the LIVE branch re-runs Lookup instead of trusting stale flags.
-- After Lookup: always write `phone_line_type`, `phone_validation_status`, `sms_eligibility_tier`, `sms_eligible`, `eligibility_reason`, `verification_status`, `verified_at`, `last_action_at`. On Lookup HTTP error or timeout write explicit `rejection_reason_code` from the new constants and emit a `stage='quarantined'` event with the reason.
-- Add a real 12-step `emitEvent` sequence for every prospect (`matched → promoted → historical_check → lookup_requested → lookup_result → tier_classified → send_attempted → sms_queued → sms_delivered → clicked → signup → paid`) so the Admin timeline strip renders real state instead of derived counts.
+### 5. One-prospect proof
+- Add a tiny admin action `Replay one prospect (KF)` that:
+  1. Looks up Plomberie Expert KF & Fils Inc in `contractor_prospects`.
+  2. Calls `acquisition-queue-worker` in targeted mode with `prospect_ids: [<id>]`, `dry_run: false`, `limit: 1`.
+  3. Waits for the run to finish and displays the 12-stage strip.
+- Success gate to display in Admin: `verified=1, promoted=1, queued=1, sms_attempted=1, sms_sent=1 OR twilio_error_code=<code>`. Any earlier stage failure blocks the run.
 
-### 3. `send-verified-batch/index.ts`
-- Never silently skip: for every ID passed in `prospect_ids` that fails the gate, write a `stage='quarantined'` event with the exact reason (`tier_blocked:<tier>`, `not_verified:<status>`, `quality_below_80:<score>`, `missing_website_url`, `already_<status>`) and mirror the reason into `verified_contractor_prospects.rejection_reason_code/text`.
-- On Twilio 4xx/5xx, store `outreach_twilio_sid=null`, `outreach_failure_reason=<body slice>`, `rejection_reason_code='twilio_<http_status>'`, and emit `stage='rejected'` with the parsed Twilio error code (21610 opt-out, 21614 invalid, 30003 unreachable, …) so the dashboard shows a real cause.
-- Emit `stage='contacted'` + `metadata={sid, to_masked, from}` on 2xx (already present, keep).
+### 6. Safe replay of the backlog
+- After the KF proof succeeds, add an admin action `Replay failed promotions (24h)` that:
+  - Selects distinct `phone_e164` from `acquisition_pipeline_events` where `reason_code IN ('promotion_insert_failed','fallback_insert_failed','category_missing','category_unmapped')` in the last 24h and not already `outreach_status IN ('sent','delivered','clicked','activated')`.
+  - Feeds them to the repaired worker in batches of 25.
+  - Idempotent upsert + existing `history_prospect_contacted` gate prevents duplicate SMS.
 
-### 4. Retry surface (Admin API)
-- Extend `acquisition-queue-worker` to accept `action` values: `retry_lookup`, `retry_promotion`, `retry_send`, `retry_campaign`. Each takes `prospect_ids[]` and re-executes only the requested step against existing rows (no duplicates, idempotent).
+## Verification (must all pass before declaring success)
 
-### 5. Twilio inbound + status webhooks
-- `twilio-sms-status`/`twilio-status-webhook`: on every callback update `verified_contractor_prospects.outreach_status` (`queued → sent → delivered → failed`), write `outreach_delivered_at`, and emit corresponding `stage='delivered' | 'failed'` event with SID and Twilio `ErrorCode`.
+1. Manual reproduce → real DB error persisted with `pg_code=23502` and `details/hint` fields (not just `promotion_insert_failed`).
+2. Deploy → replay KF alone → row appears in `verified_contractor_prospects` with `verification_status='needs_enrichment'`, then progresses to `valid_mobile`, then SMS attempted.
+3. Admin shows `sms_sent=1` **or** an explicit Twilio Messaging error code on the KF row.
+4. Backlog replay processes ≥ 100 previously failed rows without emitting a single new `promotion_insert_failed` and without any duplicate SMS (`select phone_e164, count(*) from outreach_sms_logs where sent_at > now()-interval '1h' group by 1 having count(*)>1` returns 0 rows).
+5. `acquisition_pipeline_runs.status` correctly reads `blocked` when a run has 0 successful promotions.
 
-### 6. Admin — `/admin/acquisition-pipeline`
-- Add per-prospect trace drawer that reads `acquisition_pipeline_events` filtered by `prospect_id`, rendering the 12 steps with `success | failure | timestamp | reason_code | raw metadata`.
-- Replace the plain "QUARANTINED" pill with the resolved `reason_code` from the latest event.
-- Add per-campaign row: success %, avg duration, failure stage, "Retry Lookup / Retry SMS / Retry Promotion / Open logs / Twilio SID".
-- Rejection reasons view already exists (`v_acquisition_rejection_reasons`) — surface it grouped for the current run.
+## Files touched (planned)
 
-### 7. Verification steps (real data, no mocks)
-After deploy, from Admin `/admin/acquisition-pipeline`:
-1. Run `Aperçu 3 prospects` on Laval × plombier → expect the current 8 Laval plumbers listed with real reasons.
-2. Launch `Ville=Laval, Catégorie=plombier` (dry_run=false, limit=3).
-3. Confirm event stream fires: promoted → lookup_requested → lookup_result(type=mobile) → tier_classified(A) → send_attempted → contacted(sid=SMxxx).
-4. Poll Twilio status webhook → `delivered`.
-5. First real recipient clicks the `/unpro/activate/:token` link → `clicked` stage.
-6. Signup + Stripe $1 → `signup`, `paid`, `activated`.
+- `supabase/functions/acquisition-queue-worker/index.ts` — insert row, error logger, category normalization, upsert, run-status write.
+- `supabase/functions/_shared/phoneValidation.ts` — map to DB-allowed enum values.
+- `supabase/functions/acq-phone-backfill/index.ts` — same enum mapping.
+- `supabase/functions/acq-normalize-repair/index.ts` — same enum mapping.
+- `src/pages/admin/PageAdminAcquisitionPipeline.tsx` — two buttons (replay one KF, replay 24h backlog), blocked-run rendering.
+- One migration: unique partial index on `verified_contractor_prospects(phone_e164)` (idempotent `IF NOT EXISTS`).
 
-Stop and surface the exact failing external request only if Twilio / Stripe returns an unrecoverable error.
-
-## Files touched (only these)
-- `supabase/functions/_shared/acquisitionPipeline.ts`
-- `supabase/functions/acquisition-queue-worker/index.ts`
-- `supabase/functions/send-verified-batch/index.ts`
-- `supabase/functions/twilio-sms-status/index.ts` (and the equivalent status webhook already in use)
-- `src/pages/admin/PageAdminAcquisitionPipeline.tsx` + `src/hooks/useFunnelAudit.ts` (trace drawer, real reasons, retry buttons)
-- No schema changes required (`acquisition_pipeline_events`, `verified_contractor_prospects`, `contractor_prospects` already have the needed columns).
-
-## Success criteria
-Real campaign on Laval × plombier produces, in `acquisition_pipeline_events`, non-zero counts for every stage from `matched` through `paid`, mirrored in the Admin strip, using existing production prospects. Every quarantine row carries a machine-readable reason. First `verified_contractor_prospects.outreach_status='delivered'` + first `acq_subscriptions` row at $1 = done.
+Out of scope (untouched): landing page, scraper, scoring, Twilio Lookup logic, dashboard styling, SEO, sitemap, AI corpus.
