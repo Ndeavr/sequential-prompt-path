@@ -354,27 +354,46 @@ type PromotedProspect = {
   is_new: boolean;
 };
 
-async function promoteProspect(supabase: any, ctx: RunContext, lead: CandidateLead): Promise<PromotedProspect | null> {
-  const { data: existing, error: readErr } = await supabase
+async function promoteProspect(
+  supabase: any,
+  ctx: RunContext,
+  lead: CandidateLead,
+): Promise<{ prospect: PromotedProspect | null; reason?: string; detail?: string }> {
+  // Use LIMIT(1) instead of maybeSingle() — several verified_contractor_prospects
+  // rows may share the same phone_e164 (legacy backfills), which crashed maybeSingle
+  // and silently quarantined every candidate.
+  const { data: existingRows, error: readErr } = await supabase
     .from("verified_contractor_prospects")
     .select("id,business_name,city,category,phone_e164,phone_line_type,verification_status,verified_at,sms_eligibility_tier,sms_eligible,outreach_status,source,website_url,email")
     .eq("phone_e164", lead.phone_e164)
-    .maybeSingle();
+    .order("verified_at", { ascending: false, nullsFirst: false })
+    .limit(1);
   if (readErr) {
     console.error("[promote] read failed", readErr);
-    return null;
+    return { prospect: null, reason: "read_failed", detail: readErr.message };
   }
+  const existing = existingRows && existingRows.length > 0 ? existingRows[0] : null;
 
   const now = new Date().toISOString();
 
   if (existing?.id) {
-    // Update ONLY missing/stale fields. Preserve verification + outreach state.
+    // Heal stale/backfilled rows: if the tier or line_type is missing we MUST
+    // force a fresh Twilio Lookup, so downgrade verification_status here.
+    const stale = !existing.phone_line_type
+      || !["mobile", "landline", "voip"].includes(existing.phone_line_type)
+      || !existing.sms_eligibility_tier
+      || !["A", "B", "C", "D"].includes(existing.sms_eligibility_tier);
+
     const patch: Record<string, unknown> = { updated_at: now };
     if (!existing.website_url && lead.website_url) patch.website_url = lead.website_url;
     if (!existing.city && lead.city) patch.city = lead.city;
     if (!existing.category && lead.category) patch.category = lead.category;
     if (!existing.email && lead.email) patch.email = lead.email;
     if (!existing.source) patch.source = lead.source;
+    if (stale && existing.verification_status === "verified") {
+      patch.verification_status = null;
+      patch.phone_validation_status = "unverified";
+    }
 
     if (Object.keys(patch).length > 1) {
       await supabase.from("verified_contractor_prospects").update(patch).eq("id", existing.id);
@@ -386,9 +405,21 @@ async function promoteProspect(supabase: any, ctx: RunContext, lead: CandidateLe
       category: existing.category,
       source: existing.source,
       stage: "promoted",
-      metadata: { existing: true, source_table: lead.source_table, source_id: lead.source_id, patch_keys: Object.keys(patch) },
+      metadata: {
+        existing: true,
+        source_table: lead.source_table,
+        source_id: lead.source_id,
+        patch_keys: Object.keys(patch),
+        forced_re_verification: stale,
+      },
     });
-    return { ...(existing as any), is_new: false };
+    const returned = { ...(existing as any) };
+    if (stale) {
+      returned.verification_status = null;
+      returned.phone_line_type = existing.phone_line_type ?? null;
+      returned.sms_eligibility_tier = existing.sms_eligibility_tier ?? null;
+    }
+    return { prospect: { ...returned, is_new: false } };
   }
 
   // Insert new — verification_status intentionally NULL (must be verified by Twilio).
