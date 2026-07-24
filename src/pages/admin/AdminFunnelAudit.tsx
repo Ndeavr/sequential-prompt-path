@@ -66,7 +66,14 @@ function StageRow({ s, index }: { s: FunnelStage; index: number }) {
 
 export default function AdminFunnelAudit() {
   const [days, setDays] = useState(30);
+  const [previewOn, setPreviewOn] = useState(false);
   const { data, isLoading, error, refetch, isFetching } = useFunnelAudit(days);
+  const {
+    data: canaryData,
+    isFetching: canaryFetching,
+    error: canaryError,
+    refetch: refetchCanary,
+  } = useFunnelAudit(days, { canary: previewOn, canaryLimit: 3 });
 
   return (
     <AdminLayout>
@@ -75,7 +82,7 @@ export default function AdminFunnelAudit() {
         description="Chiffres réels des 30 derniers jours — scraping → paiement → activation. Lecture seule."
       />
 
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         {[7, 30, 90].map((d) => (
           <Button
             key={d}
@@ -86,10 +93,26 @@ export default function AdminFunnelAudit() {
             {d}j
           </Button>
         ))}
-        <div className="flex-1" />
+        <div className="hidden flex-1 sm:block" />
         <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isFetching}>
           <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
           Rafraîchir
+        </Button>
+        <Button
+          size="sm"
+          variant={previewOn ? "outline" : "default"}
+          className="w-full sm:w-auto"
+          onClick={() => {
+            if (previewOn) {
+              setPreviewOn(false);
+            } else {
+              setPreviewOn(true);
+              setTimeout(() => refetchCanary(), 0);
+            }
+          }}
+          disabled={canaryFetching}
+        >
+          {previewOn ? "Masquer l'aperçu" : "Aperçu 3 prospects réels"}
         </Button>
       </div>
 
@@ -98,6 +121,98 @@ export default function AdminFunnelAudit() {
         <Card className="border-red-500/30 bg-red-500/5">
           <CardContent className="py-4 text-sm text-red-200">
             Erreur : {(error as Error).message}
+          </CardContent>
+        </Card>
+      )}
+
+      {previewOn && (
+        <Card className="mb-6 border-amber-400/30 bg-amber-500/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex flex-wrap items-center gap-2 text-sm font-medium">
+              Aperçu canary (lecture seule)
+              <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200">
+                NO SMS was sent
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {canaryFetching && <div className="text-xs text-white/60">Chargement de l'aperçu…</div>}
+            {canaryError && (
+              <div className="text-xs text-red-300">Erreur : {(canaryError as Error).message}</div>
+            )}
+            {!canaryFetching && canaryData?.canary_preview && (
+              <>
+                <div className="mb-3 text-[11px] text-white/60">
+                  {canaryData.canary_preview.disclaimer ?? "NO SMS was sent."} · éligibles :{" "}
+                  <span className="font-semibold text-white/90">
+                    {canaryData.canary_preview.would_send_count ?? canaryData.canary_preview.would_send?.length ?? 0}
+                  </span>
+                </div>
+                {canaryData.canary_preview.error && (
+                  <div className="mb-2 text-xs text-red-300">
+                    {canaryData.canary_preview.error}
+                  </div>
+                )}
+                {(canaryData.canary_preview.would_send ?? []).length === 0 ? (
+                  <div className="text-xs text-white/50">Aucun prospect éligible.</div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                    {canaryData.canary_preview.would_send.map((lead) => (
+                      <div
+                        key={lead.lead_id}
+                        className="rounded-md border border-white/10 bg-black/20 p-3 text-xs"
+                      >
+                        <div className="mb-1 text-sm font-semibold text-white/90">
+                          {lead.business ?? "—"}
+                        </div>
+                        <dl className="space-y-1 text-white/70">
+                          <div className="flex justify-between gap-2">
+                            <dt className="text-white/40">Ville</dt>
+                            <dd className="text-right">{lead.city ?? "—"}</dd>
+                          </div>
+                          <div className="flex justify-between gap-2">
+                            <dt className="text-white/40">Catégorie</dt>
+                            <dd className="text-right">{lead.category ?? "—"}</dd>
+                          </div>
+                          <div className="flex justify-between gap-2">
+                            <dt className="text-white/40">Téléphone</dt>
+                            <dd className="text-right tabular-nums">{lead.phone ?? "—"}</dd>
+                          </div>
+                          <div className="flex justify-between gap-2">
+                            <dt className="text-white/40">CASL</dt>
+                            <dd className="max-w-[60%] truncate text-right" title={lead.evidence_source_url ?? ""}>
+                              {lead.evidence_source_url ?? "—"}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-2">
+                            <dt className="text-white/40">Méthode</dt>
+                            <dd className="text-right">{lead.verification_method ?? "—"}</dd>
+                          </div>
+                          <div className="flex justify-between gap-2">
+                            <dt className="text-white/40">Récupéré</dt>
+                            <dd className="text-right">{relTime(lead.evidence_retrieved_at)}</dd>
+                          </div>
+                          <div className="flex justify-between gap-2">
+                            <dt className="text-white/40">Contact ant.</dt>
+                            <dd className="text-right">{lead.prior_contact_status ?? "aucun"}</dd>
+                          </div>
+                          <div className="flex justify-between gap-2">
+                            <dt className="text-white/40">Exclusion</dt>
+                            <dd className="text-right">{lead.exclusion_reason ?? "—"}</dd>
+                          </div>
+                          <div className="flex justify-between gap-2">
+                            <dt className="text-white/40">Landing</dt>
+                            <dd className="max-w-[60%] truncate text-right" title={lead.landing_url ?? ""}>
+                              {lead.landing_url ?? "—"}
+                            </dd>
+                          </div>
+                        </dl>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </CardContent>
         </Card>
       )}

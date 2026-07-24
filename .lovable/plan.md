@@ -1,44 +1,37 @@
-## Diagnostic Matrix — Configured Ref `cl…` (verified)
+## Scope
 
-Run four independent read-only probes against the ref actually wired into the app, plus a Lovable Cloud lifecycle check. No mutations, no password reset, no code changes. All secrets stay sanitized (ref masked to `cl…pff`, passwords never printed).
+Wire the existing `funnel-audit-report` canary preview into `/admin/funnel-audit`. No new page, no new endpoint, no writes, no outreach.
 
-### Step 1 — Baseline
-- `supabase--cloud_status` → capture lifecycle state (ACTIVE_HEALTHY vs COMING_UP/UNHEALTHY/etc.). Distinguishes "Supavisor incident" from "project restarting/paused".
+## Files
 
-### Step 2 — Four independent probes
-Executed in parallel where possible; each records `path`, `ref`, `result`, `SQLSTATE or HTTP`, `latency_ms`, `conclusion`.
+**`src/hooks/useFunnelAudit.ts`** — extend the existing hook to optionally request the canary preview.
+- Accept a second arg `{ canary?: boolean; canaryLimit?: number }`.
+- When `canary` is true, append `&canary_preview=1&canary_limit=<n>` to the existing URL.
+- Extend `FunnelAuditReport` type with an optional `canary_preview` field mirroring the edge function's response (`mode`, `limit`, `would_send_count`, `would_send[]`, `disclaimer`, optional `error`).
+- Query key includes `canary` + `canaryLimit` so preview data caches separately from the default audit. `refetchInterval` stays 60s for the default; disable auto-refetch when canary is on.
 
-1. **Authenticated PostgREST** — `GET /rest/v1/platform_operation_outcomes?select=id&limit=1` with `apikey` + `Authorization: Bearer <anon>`. Overrides the earlier "unauthenticated 401 ≠ healthy" assumption.
-2. **Transaction pooler `:6543`** — `psql "…pooler.supabase.com:6543/postgres?sslmode=require" -c "select 1"` with `connect_timeout=8`, `statement_timeout=5s`. User `postgres.clmaqdnphbndvmmqvpff` (verified against configured ref).
-3. **Session pooler `:5432`** — same host, port 5432, same short timeouts, `select 1`.
-4. **Direct DB `:5432` (IPv6)** — `db.clmaqdnphbndvmmqvpff.supabase.co:5432` only if `getent ahostsv6` returns an address; otherwise record `skipped: no_ipv6`.
+**`src/pages/admin/AdminFunnelAudit.tsx`** — mobile-first button + inline result panel. No layout redesign.
+- Add local state `previewOn` (default false).
+- Add a full-width button "Aperçu 3 prospects réels" in the existing toolbar row (stacks above the day chips on mobile via `flex-wrap`). Click sets `previewOn = true` and triggers a second `useFunnelAudit(days, { canary: true, canaryLimit: 3 })` call. A "Masquer l'aperçu" button hides it.
+- Render a new `<Card>` below the existing dropoff alert (only when `previewOn` and preview data exists) titled "Aperçu canary (lecture seule)" showing:
+  - The disclaimer badge: **"NO SMS was sent"** (styled as amber pill).
+  - `would_send_count` counter.
+  - A vertical stack of lead cards (single column on mobile, 3 cols ≥md) rendering, per lead: business, city, category, phone, CASL evidence (source_url + retrieved_at + verification_method), prior contact status (from `last_sms_at`/`lead_status`), exclusion reason (if `error` present or lead is missing evidence), landing URL (`unpro.ca/r/<token>` when available, otherwise "—").
+  - Empty state: "Aucun prospect éligible" if `would_send_count === 0`.
+- No mutation, no side effect. Data pulled entirely from the existing edge function response.
 
-Each probe captures the full sanitized error, SQLSTATE when Postgres answers, and HTTP status when PostgREST answers.
+## Backend
 
-### Step 3 — Branching, per rules 7–10
-- **Auth'd PostgREST OK** → pull real production counts via Data API even if SQL pooler stays down:
-  `contractor_prospects`, `contractor_leads`, `casl_consent_evidence`, `outreach_delivery_events`, `launch_leads`, `platform_operation_outcomes` (last 24 h). Report counts in the final matrix.
-- **Session pooler OK** → note that the queued CASL bridge migration is safe to apply via `:5432` (session mode supports DDL). Do NOT apply it in this turn — surface it as the next approved action.
-- **Transaction pooler OK, session down** → note DDL must wait for session mode; DML is fine.
-- **All three fail with correct ref** → classify as project-specific Supavisor/DB incident and request `supabase--restart` approval. Do NOT touch the DB password unless a probe returns SQLSTATE `28P01`.
+`supabase/functions/funnel-audit-report/index.ts` — read-only field additions inside `previewCanaryBatch` only, to expose `city`, `category`, `prior_contact_status`, `exclusion_reason`, `landing_url` from data already fetched by `v_commercial_send_eligibility` + one existing lookup. No new tables, no writes, no new routes. If any field is unavailable in the view, return `null`; the UI shows "—". Skip this change if all requested fields can be derived client-side from the current payload — decide during implementation after re-reading the view columns.
 
-### Step 4 — Edge Function independence
-List any queued edge-function deployments that don't touch the DB at cold-start (pure webhook validators, static responders). None will be deployed this turn — just enumerated, since the user asked they may proceed independently and I want approval before any deploy.
+## Verification
 
-### Step 5 — Final report (compact matrix)
-Single table:
+1. `/admin/funnel-audit` loads unchanged when button not pressed (default audit table + KPIs intact, 60s auto-refresh preserved).
+2. Tapping the button at 390px viewport reveals the preview card without horizontal scroll; three lead cards stack vertically; disclaimer is visible above the list.
+3. Response payload confirms `disclaimer === "NO SMS was sent…"` and `would_send.length ≤ 3`.
+4. No network calls to Twilio, Stripe, or write endpoints (verified via network panel).
+5. Hiding the preview returns the page to its original state.
 
-```text
-path                          | ref     | result | code    | latency | conclusion
-authenticated PostgREST       | cl…pff  | …      | HTTP …  | … ms    | …
-transaction pooler :6543      | cl…pff  | …      | SQLST … | … ms    | …
-session pooler :5432          | cl…pff  | …      | SQLST … | … ms    | …
-direct db :5432 (IPv6)        | cl…pff  | …      | SQLST … | … ms    | …
-```
-Plus: Cloud lifecycle state, production counts (if Data API works), correct-ref confirmation, and a single-line verdict (`project-specific incident` / `Supavisor DDL only` / `fully healthy` / `paused-INACTIVE` / other).
+## Out of scope
 
-### Explicit non-goals this turn
-- No migration apply, no backfill, no scrape, no SMS, no Stripe session, no global unpause.
-- No password reset, no rotation, no destructive recovery.
-- No code edits — pure diagnostics.
-- No `c1…` probes (ruled out by hex-verified `.env`).
+Any change to outreach workers, cron jobs, other admin pages, styling tokens, or the funnel table logic.
