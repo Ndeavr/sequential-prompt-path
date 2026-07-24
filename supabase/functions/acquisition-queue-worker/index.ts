@@ -391,7 +391,7 @@ async function promoteProspect(
     if (!existing.email && lead.email) patch.email = lead.email;
     if (!existing.source) patch.source = lead.source;
     if (stale && existing.verification_status === "verified") {
-      patch.verification_status = null;
+      patch.verification_status = "needs_enrichment";
       patch.phone_validation_status = "unverified";
     }
 
@@ -422,20 +422,36 @@ async function promoteProspect(
     return { prospect: { ...returned, is_new: false } };
   }
 
-  // Insert new — verification_status intentionally NULL (must be verified by Twilio).
-  const row = {
+  // Defensive: category is NOT NULL in DB. Skip with distinct code so the
+  // failure counter isn't polluted by promotion_insert_failed.
+  const safeCategory = (lead.category ?? "").trim();
+  if (!safeCategory) {
+    await emitEvent(supabase, ctx, {
+      business_name: lead.business_name,
+      city: lead.city,
+      source: lead.source,
+      stage: "rejected",
+      reason_code: "category_missing",
+      reason_text: "candidate has empty category; insert would violate NOT NULL",
+      metadata: { phone_e164: lead.phone_e164, source_table: lead.source_table, source_id: lead.source_id, run_id: ctx.run_id },
+    });
+    return { prospect: null, reason: "category_missing" };
+  }
+
+  // Insert new — omit verification_status so the DB default 'needs_enrichment'
+  // applies (NOT NULL). Omit phone_line_type so its default (NULL) applies.
+  // phone_validation_status must be one of the allowed enum values; 'unverified' is valid.
+  const row: Record<string, unknown> = {
     business_name: lead.business_name,
     legal_name: lead.business_name,
-    category: lead.category,
+    category: safeCategory,
     city: lead.city,
     website_url: lead.website_url,
     phone_primary: lead.phone_e164,
     phone_e164: lead.phone_e164,
-    phone_line_type: null,
     phone_validation_status: "unverified",
     sms_eligible: false,
     email: lead.email,
-    verification_status: null,
     data_quality_score: lead.website_url ? 85 : 80,
     source: lead.source,
     source_urls: { source_table: lead.source_table, source_id: lead.source_id, promoted_at: now, run_id: ctx.run_id },
@@ -443,24 +459,38 @@ async function promoteProspect(
     last_action_at: now,
     outreach_status: "none",
   };
-  const { data: inserted, error: insErr } = await supabase
+  // Idempotent: unique partial index verified_prospects_phone_uk on phone_e164
+  const { data: upserted, error: insErr } = await supabase
     .from("verified_contractor_prospects")
-    .insert(row)
+    .upsert(row, { onConflict: "phone_e164", ignoreDuplicates: false })
     .select("id,business_name,city,category,phone_e164,phone_line_type,verification_status,verified_at,sms_eligibility_tier,sms_eligible,outreach_status,source,website_url,email")
-    .maybeSingle();
+    .limit(1);
   if (insErr) {
+    const err = insErr as any;
     await emitEvent(supabase, ctx, {
       business_name: lead.business_name,
       city: lead.city,
-      category: lead.category,
+      category: safeCategory,
       source: lead.source,
       stage: "rejected",
       reason_code: "promotion_insert_failed",
       reason_text: insErr.message,
-      metadata: { pg_code: (insErr as any).code ?? null, phone_e164: lead.phone_e164 },
+      metadata: {
+        pg_code: err.code ?? null,
+        pg_details: err.details ?? null,
+        pg_hint: err.hint ?? null,
+        target_table: "verified_contractor_prospects",
+        operation: "upsert",
+        phone_e164: lead.phone_e164,
+        run_id: ctx.run_id,
+        source_table: lead.source_table,
+        source_id: lead.source_id,
+        payload_keys: Object.keys(row),
+      },
     });
     return { prospect: null, reason: "promotion_insert_failed", detail: insErr.message };
   }
+  const inserted = upserted && upserted.length > 0 ? upserted[0] : null;
   if (!inserted?.id) return { prospect: null, reason: "promotion_insert_returned_null" };
   await emitEvent(supabase, ctx, {
     prospect_id: inserted.id,
@@ -469,7 +499,7 @@ async function promoteProspect(
     category: inserted.category,
     source: inserted.source,
     stage: "promoted",
-    metadata: { existing: false, source_table: lead.source_table, source_id: lead.source_id },
+    metadata: { existing: false, source_table: lead.source_table, source_id: lead.source_id, run_id: ctx.run_id },
   });
   return { prospect: { ...(inserted as any), is_new: true } };
 }
@@ -570,7 +600,7 @@ function mapEligibility(phone_type: "mobile" | "landline" | "voip" | "unknown"):
     case "landline":
       return { sms_eligibility_tier: "D", sms_eligible: false, verification_status: "verified" };
     default:
-      return { sms_eligibility_tier: null, sms_eligible: false, verification_status: "unknown" };
+      return { sms_eligibility_tier: null, sms_eligible: false, verification_status: "needs_enrichment" };
   }
 }
 
@@ -873,8 +903,11 @@ Deno.serve(async (req) => {
         await supabase
           .from("verified_contractor_prospects")
           .update({
-            verification_status: "lookup_failed",
-            phone_validation_status: "lookup_failed",
+            // 'lookup_failed' is NOT in the enum check for these columns.
+            // Use allowed values: verification_status ∈ (verified|needs_enrichment|invalid|duplicate);
+            // phone_validation_status ∈ (valid_mobile|valid_sms_capable_voip|landline|invalid|disconnected|unverified).
+            verification_status: "needs_enrichment",
+            phone_validation_status: "unverified",
             sms_eligible: false,
             sms_eligibility_tier: null,
             rejection_reason_code: "lookup_provider_failed",
@@ -899,11 +932,16 @@ Deno.serve(async (req) => {
 
       const elig = mapEligibility(lookup.phone_type);
       const nowIso = new Date().toISOString();
+      const phoneValStatus =
+        lookup.phone_type === "mobile" ? "valid_mobile" :
+        lookup.phone_type === "voip"   ? "valid_sms_capable_voip" :
+        lookup.phone_type === "landline" ? "landline" :
+        "unverified";
       await supabase
         .from("verified_contractor_prospects")
         .update({
           phone_line_type: lookup.phone_type,
-          phone_validation_status: lookup.phone_type === "unknown" ? "unverified" : "verified",
+          phone_validation_status: phoneValStatus,
           sms_eligible: elig.sms_eligible,
           sms_eligibility_tier: elig.sms_eligibility_tier,
           verification_status: elig.verification_status,
