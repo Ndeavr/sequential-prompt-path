@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, XCircle, ExternalLink, Loader2 } from "lucide-react";
 
-const EXPECTED_OG_IMAGE = "https://unpro.ca/og/unpro-og-v3.jpg?v=20260712";
+const EXPECTED_OG_IMAGE = "https://unpro.ca/og/unpro-og-v4.jpg?v=20260724";
 
 const KEY_ROUTES = [
   { label: "Accueil", url: "https://unpro.ca/" },
