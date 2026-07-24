@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
       if (missingIds.length > 0) {
         const { data: skipped } = await supabase
           .from("verified_contractor_prospects")
-          .select("id, business_name, verification_status, phone_line_type, sms_eligibility_tier, outreach_status, data_quality_score, website_url, eligibility_reason")
+          .select("id, business_name, city, category, source, verification_status, phone_line_type, sms_eligibility_tier, outreach_status, data_quality_score, website_url, eligibility_reason")
           .in("id", missingIds);
         for (const p of skipped ?? []) {
           let reason = "unknown_ineligibility";
@@ -92,6 +92,33 @@ Deno.serve(async (req) => {
           else if ((p.data_quality_score ?? 0) < 80) reason = `quality_below_80:${p.data_quality_score}`;
           else if (p.outreach_status !== "none") reason = `already_${p.outreach_status}`;
           else if (!["A", "B", "C"].includes(p.sms_eligibility_tier ?? "")) reason = `tier_blocked:${p.sms_eligibility_tier ?? "none"}`;
+          // Persist a machine-readable reason on the row so the Admin drawer
+          // shows the real cause instead of a generic "QUARANTINED" pill.
+          await supabase
+            .from("verified_contractor_prospects")
+            .update({
+              rejection_reason_code: reason,
+              rejection_reason_text: reason,
+              last_action_at: new Date().toISOString(),
+            })
+            .eq("id", p.id);
+          await logPipelineEvent({
+            prospect_id: p.id,
+            business_name: p.business_name,
+            city: p.city,
+            category: p.category,
+            source: p.source,
+            stage: "quarantined",
+            reason_code: reason,
+            reason_text: reason,
+            metadata: {
+              verification_status: p.verification_status,
+              sms_eligibility_tier: p.sms_eligibility_tier,
+              phone_line_type: p.phone_line_type,
+              data_quality_score: p.data_quality_score,
+              has_website: !!p.website_url,
+            },
+          });
           missingResults.push({ id: p.id, business_name: p.business_name, status: "skipped_by_gate", skipped: reason });
         }
       }
