@@ -203,7 +203,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    return jsonResponse({ ok: true, dry_run: false, sent: results.filter(r => r.status === "sent").length, processed: results.length, results }, 200, requestId);
+    const allResults = [...results, ...missingResults];
+    return jsonResponse({ ok: true, dry_run: false, sent: allResults.filter(r => r.status === "sent").length, processed: allResults.length, results: allResults }, 200, requestId);
   } catch (e) {
     const err = e instanceof FunctionError ? e : new FunctionError((e as Error).message);
     console.error(`[${requestId}] ${FUNCTION_NAME} failed`, { code: err.code, status: err.status, message: err.message });
