@@ -932,11 +932,16 @@ Deno.serve(async (req) => {
 
       const elig = mapEligibility(lookup.phone_type);
       const nowIso = new Date().toISOString();
+      const phoneValStatus =
+        lookup.phone_type === "mobile" ? "valid_mobile" :
+        lookup.phone_type === "voip"   ? "valid_sms_capable_voip" :
+        lookup.phone_type === "landline" ? "landline" :
+        "unverified";
       await supabase
         .from("verified_contractor_prospects")
         .update({
           phone_line_type: lookup.phone_type,
-          phone_validation_status: lookup.phone_type === "unknown" ? "unverified" : "verified",
+          phone_validation_status: phoneValStatus,
           sms_eligible: elig.sms_eligible,
           sms_eligibility_tier: elig.sms_eligibility_tier,
           verification_status: elig.verification_status,
