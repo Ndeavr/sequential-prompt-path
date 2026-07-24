@@ -1,37 +1,49 @@
-## Scope
+## Root cause
 
-Wire the existing `funnel-audit-report` canary preview into `/admin/funnel-audit`. No new page, no new endpoint, no writes, no outreach.
+The canary preview cards show empty `city`, `category`, and `landing_url` because `previewCanaryBatch` in `supabase/functions/funnel-audit-report/index.ts` only selects `company_name`, `mobile_phone`, `phone` from `v_commercial_send_eligibility` and CASL evidence — never joins `contractor_leads` for city/category and never resolves a public landing URL. The eligibility view + `contractor_leads` already carry that data (or can derive it), and `pro-landing-resolve` already generates `/pro/:slug` pages. Nothing new to build — repair the preview + add a per-lead readiness gate reusing the existing `commercial-send-gate` and `pro-landing-resolve`.
 
-## Files
+## Scope (repair-only, no new tables/routes/functions)
 
-**`src/hooks/useFunnelAudit.ts`** — extend the existing hook to optionally request the canary preview.
-- Accept a second arg `{ canary?: boolean; canaryLimit?: number }`.
-- When `canary` is true, append `&canary_preview=1&canary_limit=<n>` to the existing URL.
-- Extend `FunnelAuditReport` type with an optional `canary_preview` field mirroring the edge function's response (`mode`, `limit`, `would_send_count`, `would_send[]`, `disclaimer`, optional `error`).
-- Query key includes `canary` + `canaryLimit` so preview data caches separately from the default audit. `refetchInterval` stays 60s for the default; disable auto-refetch when canary is on.
+### 1. Enrich canary preview response
+File: `supabase/functions/funnel-audit-report/index.ts` → `previewCanaryBatch`
+- Left-join `contractor_leads` (by `contractor_lead_id`) to pull `city`, `category`/`trade`, `slug`, `google_place_id`, `postal_code`, `address`.
+- Derive missing `city` in-function from postal code / address / Google Place cache (read-only fallbacks already available on the row).
+- Derive missing `category` from `trade` → UNPRO category mapping already used by `acquisition-queue-worker`.
+- Compute `landing_url = ${SITE_URL}/pro/${slug}` when slug exists; otherwise mark `landing_status: "pending_generation"` (do not write here — surfaced to UI as a repair action).
+- Add per-lead `readiness`: `{ status: "ready" | "missing_landing" | "missing_city" | "missing_category" | "missing_phone" | "casl_pending", checks: { phone, casl, city, category, landing } }`.
+- Keep the existing `disclaimer` and NO-SEND behavior.
 
-**`src/pages/admin/AdminFunnelAudit.tsx`** — mobile-first button + inline result panel. No layout redesign.
-- Add local state `previewOn` (default false).
-- Add a full-width button "Aperçu 3 prospects réels" in the existing toolbar row (stacks above the day chips on mobile via `flex-wrap`). Click sets `previewOn = true` and triggers a second `useFunnelAudit(days, { canary: true, canaryLimit: 3 })` call. A "Masquer l'aperçu" button hides it.
-- Render a new `<Card>` below the existing dropoff alert (only when `previewOn` and preview data exists) titled "Aperçu canary (lecture seule)" showing:
-  - The disclaimer badge: **"NO SMS was sent"** (styled as amber pill).
-  - `would_send_count` counter.
-  - A vertical stack of lead cards (single column on mobile, 3 cols ≥md) rendering, per lead: business, city, category, phone, CASL evidence (source_url + retrieved_at + verification_method), prior contact status (from `last_sms_at`/`lead_status`), exclusion reason (if `error` present or lead is missing evidence), landing URL (`unpro.ca/r/<token>` when available, otherwise "—").
-  - Empty state: "Aucun prospect éligible" if `would_send_count === 0`.
-- No mutation, no side effect. Data pulled entirely from the existing edge function response.
+### 2. Add read-only aggregate to the audit response
+Same file, top-level report:
+- `canary_readiness`: `{ eligible, ready_now, missing_city, missing_category, missing_landing, missing_phone, ready_pct }` computed from the same eligibility view (bounded, e.g. top 100 candidates) — reuses existing query, no new table.
 
-## Backend
+### 3. Add opt-in "Auto-repair missing landings" action (reuses existing generator)
+Same file, guarded by `?action=repair_landings&limit=N` (admin JWT required, N ≤ 10, no SMS):
+- For each eligible lead with no slug, call the existing `pro-landing-resolve` (or the existing slug-generation path it uses) to produce/persist a slug on `contractor_leads`.
+- Return before/after readiness counts. Purely idempotent, no outreach side effects.
 
-`supabase/functions/funnel-audit-report/index.ts` — read-only field additions inside `previewCanaryBatch` only, to expose `city`, `category`, `prior_contact_status`, `exclusion_reason`, `landing_url` from data already fetched by `v_commercial_send_eligibility` + one existing lookup. No new tables, no writes, no new routes. If any field is unavailable in the view, return `null`; the UI shows "—". Skip this change if all requested fields can be derived client-side from the current payload — decide during implementation after re-reading the view columns.
+### 4. Admin UI wiring (no new page)
+File: `src/pages/admin/AdminFunnelAudit.tsx` + `src/hooks/useFunnelAudit.ts`
+- Render the enriched preview fields: City, Category, Landing (as clickable URL when present, "Génération requise" pill when missing), and a per-card readiness chip (🟢 Ready / 🟠 Missing landing / 🔴 Missing phone …) with a checklist of the 5 checks.
+- Replace all `—` placeholders with explicit `Manquant`, `En cours d'enrichissement`, `Généré automatiquement`, or `Vérifié`.
+- Add two buttons next to "Aperçu 3 prospects réels":
+  - "Auto-réparer les landings manquants (max 10)" → calls the new `?action=repair_landings` mode, re-fetches preview.
+  - "Valider la production (3 prospects)" → runs the same eligibility fetch and displays a single `READY TO SEND` / `BLOCKED: …` verdict per lead (uses existing `commercial-send-gate` in dry-run — no send).
+- Show the `canary_readiness` aggregate as a compact stat strip above the preview cards.
 
-## Verification
+### 5. No changes to
+- `contractor_leads` schema, RLS, cron jobs, Twilio/Stripe/Resend integrations, sender code, sitemaps, SEO, AI corpus, `/pro/:slug` runtime.
+- No new tables, no new edge functions, no new routes.
 
-1. `/admin/funnel-audit` loads unchanged when button not pressed (default audit table + KPIs intact, 60s auto-refresh preserved).
-2. Tapping the button at 390px viewport reveals the preview card without horizontal scroll; three lead cards stack vertically; disclaimer is visible above the list.
-3. Response payload confirms `disclaimer === "NO SMS was sent…"` and `would_send.length ≤ 3`.
-4. No network calls to Twilio, Stripe, or write endpoints (verified via network panel).
-5. Hiding the preview returns the page to its original state.
+## Verification (real data only, no SMS)
 
-## Out of scope
+1. `GET /functions/v1/funnel-audit-report?canary_preview=1&canary_limit=3` — every card returns non-null `city`, `category`, `landing_url` OR an explicit `readiness.status` explaining the gap.
+2. `canary_readiness` counts match hand-tallied query on `v_commercial_send_eligibility` (spot check 3 rows via `supabase--read_query`).
+3. `?action=repair_landings&limit=3` — 3 previously-missing slugs become present; preview re-run shows their `landing_url` populated and `HTTP 200` on `/pro/:slug` (curl check via exec).
+4. `commercial-send-gate` dry-run on the same 3 leads returns `allowed: true` → UI shows `READY TO SEND`.
+5. Admin UI at 390 / 984 / 1280 px: chips, checklist, and buttons render without overflow; disclaimer "NO SMS was sent" remains.
 
-Any change to outreach workers, cron jobs, other admin pages, styling tokens, or the funnel table logic.
+## Deliverable
+Plain enriched canary that tells the operator exactly which real contractors are ready to send now and which single field is blocking each of the rest — with a one-click, non-outreach landing repair that reuses `pro-landing-resolve`. First real $1 send stays a manual, explicit action taken from `/admin/acquisition-pipeline` after readiness reaches 🟢.
+
+Not in this run (explicit, per your P0/P1 boundary): the real end-to-end $1 send + Stripe activation walk-through (task 8). That requires the readiness gate above to first show ≥1 🟢 lead in production; I'll execute it as the next step once you approve this repair.
