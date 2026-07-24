@@ -29,10 +29,10 @@ export default function PageHomeVariantC() {
   return (
     <>
       <Helmet>
-        <title>Trouvez le bon entrepreneur — UNPRO</title>
+        <title>UNPRO | Votre plateforme d'intelligence résidentielle propulsée par l'IA</title>
         <meta
           name="description"
-          content="Pas le plus visible. Pas le moins cher. Le bon. UNPRO recommande l'entrepreneur qui correspond réellement à votre projet."
+          content="UNPRO aide les propriétaires à prendre de meilleures décisions de rénovation grâce à l'IA, à des recommandations personnalisées et au jumelage avec le bon entrepreneur — pas seulement trois soumissions."
         />
         <link rel="canonical" href="https://unpro.ca/" />
       </Helmet>

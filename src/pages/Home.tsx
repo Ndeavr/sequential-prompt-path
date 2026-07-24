@@ -49,17 +49,18 @@ const Home = () => {
   return (
     <MainLayout>
       <Helmet>
-        <title>UNPRO — Le registre intelligent des entrepreneurs RBQ au Québec</title>
+        <title>UNPRO | Votre plateforme d'intelligence résidentielle propulsée par l'IA</title>
         <meta
           name="description"
-          content="UNPRO aide les propriétaires à vérifier, comprendre et sélectionner les bons entrepreneurs RBQ grâce à l'intelligence artificielle, aux avis et aux signaux de confiance réels."
+          content="UNPRO aide les propriétaires à prendre de meilleures décisions de rénovation grâce à l'IA, à des recommandations personnalisées et au jumelage avec le bon entrepreneur — pas seulement trois soumissions."
         />
-        <meta property="og:title" content="UNPRO — Le registre intelligent des entrepreneurs RBQ au Québec" />
+        <meta property="og:title" content="UNPRO | Votre plateforme d'intelligence résidentielle propulsée par l'IA" />
         <meta
           property="og:description"
-          content="Vérifier, comprendre et sélectionner les bons entrepreneurs RBQ. Données structurées, avis, territoires desservis — par UNPRO."
+          content="Décisions de rénovation plus intelligentes grâce à l'IA, recommandations personnalisées et jumelage exclusif avec le bon entrepreneur."
         />
         <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://unpro.ca/og/unpro-og-v4.jpg?v=20260724" />
         <link rel="canonical" href="https://unpro.ca" />
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>

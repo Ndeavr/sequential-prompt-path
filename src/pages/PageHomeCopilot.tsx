@@ -26,30 +26,31 @@ export default function PageHomeCopilot() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Service",
-    name: "UNPRO — Passeport Maison",
+    name: "UNPRO",
     description:
-      "UNPRO crée le Passeport Maison de votre propriété : historique, entretiens, garanties, factures et professionnels au même endroit pour prendre de meilleures décisions.",
+      "UNPRO aide les propriétaires à prendre de meilleures décisions de rénovation grâce à l'IA, à des recommandations personnalisées et au jumelage avec le bon entrepreneur — pas seulement trois soumissions.",
     url: "https://unpro.ca",
     areaServed: { "@type": "Place", name: "Quebec" },
     provider: { "@type": "Organization", name: "UNPRO", url: "https://unpro.ca" },
-    serviceType: "Home Intelligence Platform",
+    serviceType: "AI Home Intelligence Platform",
   };
 
   return (
     <MainLayout>
       <Helmet>
-        <title>UNPRO — Passeport Maison : l'intelligence de votre propriété</title>
+        <title>UNPRO | Votre plateforme d'intelligence résidentielle propulsée par l'IA</title>
         <meta
           name="description"
-          content="Votre Passeport Maison conserve l'historique de votre propriété pour planifier les entretiens, anticiper les dépenses et prendre de meilleures décisions."
+          content="UNPRO aide les propriétaires à prendre de meilleures décisions de rénovation grâce à l'IA, à des recommandations personnalisées et au jumelage avec le bon entrepreneur — pas seulement trois soumissions."
         />
-        <meta property="og:title" content="UNPRO — Passeport Maison : l'intelligence de votre propriété" />
+        <meta property="og:title" content="UNPRO | Votre plateforme d'intelligence résidentielle propulsée par l'IA" />
         <meta
           property="og:description"
-          content="Historique, entretiens, garanties, factures et professionnels — au même endroit. Prenez de meilleures décisions pour votre maison."
+          content="Décisions de rénovation plus intelligentes grâce à l'IA, recommandations personnalisées et jumelage exclusif avec le bon entrepreneur."
         />
         <meta property="og:type" content="website" />
-        <meta name="theme-color" content="#050A12" />
+        <meta property="og:image" content="https://unpro.ca/og/unpro-og-v4.jpg?v=20260724" />
+        <meta name="theme-color" content="#060B14" />
         <link rel="canonical" href="https://unpro.ca" />
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
       </Helmet>
