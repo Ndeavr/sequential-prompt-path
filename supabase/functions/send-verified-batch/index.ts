@@ -42,7 +42,10 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const limit = Math.min(Number(body.limit ?? 10), 25);
+    const prospectIds: string[] | null = Array.isArray(body.prospect_ids) && body.prospect_ids.length > 0
+      ? body.prospect_ids.map(String)
+      : null;
+    const limit = Math.min(Number(body.limit ?? (prospectIds?.length ?? 10)), 50);
     const dryRun = body.dry_run !== false ? true : false; // default DRY RUN — must pass dry_run:false to actually send
 
     const url = Deno.env.get("SUPABASE_URL");
@@ -54,7 +57,8 @@ Deno.serve(async (req) => {
     const supabase = createClient(url, serviceKey);
 
     // Tier-based filter (A = mobile, B = VoIP SMS-capable, C = verified+unknown w/ quality>=80). D = email-only, excluded here.
-    const { data: pool, error } = await supabase
+    // When prospect_ids is supplied, scope strictly to those IDs (still enforcing all eligibility + gate rules below).
+    let query = supabase
       .from("verified_contractor_prospects")
       .select("id, business_name, phone_e164, phone_validation_status, phone_line_type, sms_eligibility_tier, sms_eligibility_confidence, data_quality_score, website_url, city, outreach_status, verification_status")
       .in("sms_eligibility_tier", ["A", "B", "C"])
@@ -66,7 +70,32 @@ Deno.serve(async (req) => {
       .order("sms_eligibility_tier", { ascending: true })
       .order("data_quality_score", { ascending: false })
       .limit(limit);
+    if (prospectIds) query = query.in("id", prospectIds);
+    const { data: pool, error } = await query;
     if (error) throw new FunctionError(error.message, 500, "eligible_query_failed");
+
+    // If caller supplied specific prospect_ids, compute the per-ID skipped reasons for IDs
+    // that didn't survive the eligibility filter so the caller can log them.
+    const missingResults: Array<Record<string, unknown>> = [];
+    if (prospectIds) {
+      const returnedIds = new Set((pool ?? []).map((r: any) => r.id));
+      const missingIds = prospectIds.filter((id) => !returnedIds.has(id));
+      if (missingIds.length > 0) {
+        const { data: skipped } = await supabase
+          .from("verified_contractor_prospects")
+          .select("id, business_name, verification_status, phone_line_type, sms_eligibility_tier, outreach_status, data_quality_score, website_url, eligibility_reason")
+          .in("id", missingIds);
+        for (const p of skipped ?? []) {
+          let reason = "unknown_ineligibility";
+          if (!p.website_url) reason = "missing_website_url";
+          else if (p.verification_status !== "verified") reason = `not_verified:${p.verification_status ?? "null"}`;
+          else if ((p.data_quality_score ?? 0) < 80) reason = `quality_below_80:${p.data_quality_score}`;
+          else if (p.outreach_status !== "none") reason = `already_${p.outreach_status}`;
+          else if (!["A", "B", "C"].includes(p.sms_eligibility_tier ?? "")) reason = `tier_blocked:${p.sms_eligibility_tier ?? "none"}`;
+          missingResults.push({ id: p.id, business_name: p.business_name, status: "skipped_by_gate", skipped: reason });
+        }
+      }
+    }
 
     const eligible = pool ?? [];
     if (dryRun) {
@@ -100,7 +129,7 @@ Deno.serve(async (req) => {
 
       return jsonResponse({
         ok: true, dry_run: true, eligible_count: eligible.length, eligible,
-        blockers,
+        blockers, skipped: missingResults,
         message: eligible.length > 0 ? `${eligible.length} prospect(s) prêt(s) (tiers A/B/C)` : "Aucun prospect ne passe les critères d'envoi réel",
       }, 200, requestId);
     }
@@ -174,7 +203,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    return jsonResponse({ ok: true, dry_run: false, sent: results.filter(r => r.status === "sent").length, processed: results.length, results }, 200, requestId);
+    const allResults = [...results, ...missingResults];
+    return jsonResponse({ ok: true, dry_run: false, sent: allResults.filter(r => r.status === "sent").length, processed: allResults.length, results: allResults }, 200, requestId);
   } catch (e) {
     const err = e instanceof FunctionError ? e : new FunctionError((e as Error).message);
     console.error(`[${requestId}] ${FUNCTION_NAME} failed`, { code: err.code, status: err.status, message: err.message });

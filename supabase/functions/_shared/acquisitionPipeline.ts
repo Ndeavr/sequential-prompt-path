@@ -7,15 +7,26 @@ export type PipelineStage =
   | "scraped"
   | "enriching"
   | "enriched"
+  | "queued"
+  | "promoted"
   | "verified"
+  | "verification_reused"
+  | "excluded_history"
+  | "quarantined"
+  | "lookup_failed"
   | "ready_sms"
   | "ready_email"
   | "contacted"
+  | "sms_attempted"
+  | "sms_sent"
   | "delivered"
   | "clicked"
   | "activated"
+  | "paid"
+  | "failed"
   | "rejected"
   | "duplicate"
+  | "dry_run_preview"
   | "worker_cycle";
 
 export const REASON = {
@@ -35,6 +46,12 @@ export const REASON = {
   no_contact_info: "no_contact_info",
   timeout: "timeout",
   unknown: "unknown",
+  history_delivery_logs: "history_delivery_logs",
+  history_contractor_leads: "history_contractor_leads",
+  history_prospect_contacted: "history_prospect_contacted",
+  lookup_unknown_type: "lookup_unknown_type",
+  lookup_provider_failed: "lookup_provider_failed",
+  fair_selection_empty: "fair_selection_empty",
 } as const;
 
 export type ReasonCode = keyof typeof REASON;
@@ -76,4 +93,36 @@ export async function logPipelineEvent(evt: PipelineEventInput): Promise<void> {
   } catch (err) {
     console.error("[pipeline-event] failed", err);
   }
+}
+
+// -----------------------------------------------------------------------------
+// Category normalization — one canonical bucket, many equivalent labels.
+// Used by autonomous + targeted acquisition paths so operator input matches
+// live production data whether it was captured in EN, FR or as a slug.
+// -----------------------------------------------------------------------------
+export const CATEGORY_SYNONYMS: Record<string, string[]> = {
+  plumber: ["plumber", "plumbing", "plombier", "plomberie", "drainage", "drainage de fondations", "excavation et drainage"],
+  roofing: ["roofing", "toiture", "couvreur", "couvreurs"],
+  electrician: ["electrician", "electrical", "electricite", "électricien", "electricien", "électricité"],
+  hvac: ["hvac", "chauffage", "climatisation", "ventilation", "chauffage et climatisation", "thermopompes", "climatisation et chauffage (thermopompes)", "climatisation/chauffage", "chauffage, climatisation et ventilation", "chauffage, ventilation, climatisation", "climatisation, chauffage, ventilation", "chauffage, ventilation et climatisation"],
+  isolation: ["isolation", "insulation", "isolation acoustique", "acoustique", "insonorisation"],
+  painting: ["painting", "peinture", "peintre"],
+  landscaping: ["landscaping", "paysagement", "paysagiste", "aménagement paysager", "amenagement paysager"],
+  renovation: ["renovation", "rénovation", "rénovation générale", "renovation generale", "rénovation résidentielle", "rénovation de cuisine", "rénovation de salle de bain", "rénovation de sous-sol", "rénovation et construction", "entrepreneur général", "entrepreneur general", "construction et rénovation résidentielle", "cuisine et salle de bain", "armoires de cuisines"],
+  excavation: ["excavation", "fondation", "béton", "beton"],
+  decontamination: ["decontamination", "décontamination", "restauration après sinistre"],
+};
+
+export function normalizeCategoryInput(input: string | null | undefined): { bucket: string; synonyms: string[] } | null {
+  if (!input) return null;
+  const key = String(input).trim().toLowerCase();
+  if (!key) return null;
+  // Exact bucket match first
+  if (CATEGORY_SYNONYMS[key]) return { bucket: key, synonyms: CATEGORY_SYNONYMS[key] };
+  // Search inside synonym lists
+  for (const [bucket, syns] of Object.entries(CATEGORY_SYNONYMS)) {
+    if (syns.some((s) => s.toLowerCase() === key)) return { bucket, synonyms: syns };
+  }
+  // Unknown: treat as literal single-value match
+  return { bucket: key, synonyms: [key] };
 }

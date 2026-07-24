@@ -1,11 +1,14 @@
 /**
  * /admin/acquisition-pipeline — Real-time acquisition funnel visibility.
  * Sources, funnel stats, coverage grid, rejection reasons, live event feed, prospect table.
+ * Adds a "Campagne ciblée" launcher (city × category) that drives the same
+ * autonomous pipeline in scoped mode with a per-run 12-stage progression strip.
  */
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw, Play, Eye } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   useAcquisitionSourceHealth,
   useFunnelDaily,
@@ -24,6 +27,47 @@ import {
 
 const TARGET_CATEGORIES = ["toiture", "isolation", "plomberie", "peinture", "electricite", "renovation"];
 const TARGET_CITIES = ["Montreal", "Laval", "Terrebonne", "Repentigny", "Longueuil", "Saint-Jerome", "Blainville", "Boisbriand"];
+
+const CAMPAIGN_CATEGORIES: Array<{ value: string; label: string }> = [
+  { value: "plumber", label: "Plomberie" },
+  { value: "roofing", label: "Toiture" },
+  { value: "electrician", label: "Électricité" },
+  { value: "hvac", label: "CVAC" },
+  { value: "isolation", label: "Isolation" },
+  { value: "painting", label: "Peinture" },
+  { value: "landscaping", label: "Paysagement" },
+  { value: "renovation", label: "Rénovation" },
+];
+
+const STAGE_STRIP: Array<{ key: string; label: string; downstream?: boolean }> = [
+  { key: "queued", label: "Queued" },
+  { key: "promoted", label: "Promoted" },
+  { key: "verification_reused", label: "Vérif. réutilisée" },
+  { key: "verified", label: "Vérifié (Twilio)" },
+  { key: "excluded_history", label: "Exclus (hist.)" },
+  { key: "quarantined", label: "Quarantaine" },
+  { key: "sms_attempted", label: "SMS tenté" },
+  { key: "sms_sent", label: "SMS envoyé" },
+  { key: "delivered", label: "Livré", downstream: true },
+  { key: "clicked", label: "Cliqué", downstream: true },
+  { key: "activated", label: "Activé", downstream: true },
+  { key: "paid", label: "Payé 1 $", downstream: true },
+];
+
+type CampaignPreview = {
+  ok: boolean;
+  run_id?: string;
+  mode?: string;
+  city?: string | null;
+  category?: string | null;
+  counts?: Record<string, number>;
+  prospects?: any[];
+  prepared_prospect_ids?: string[];
+  sms_result?: any;
+  message?: string;
+};
+
+
 
 function StatTile({ label, value, tone = "default" }: { label: string; value: number | string; tone?: "default" | "success" | "danger" | "warn" }) {
   const toneCls =
@@ -110,6 +154,247 @@ function FirstDollarMini({ tracker }: { tracker: ReturnType<typeof useFirstDolla
   );
 }
 
+// ---------------------------------------------------------------------------
+// CampaignLauncher — city × category preview + live launch, with a per-run
+// 12-stage strip fed from acquisition_pipeline_events tagged with run_id.
+// Additive: does NOT alter existing monitoring below.
+// ---------------------------------------------------------------------------
+function CampaignLauncher() {
+  const [city, setCity] = useState<string>("Laval");
+  const [category, setCategory] = useState<string>("plumber");
+  const [limit, setLimit] = useState<number>(25);
+  const [busy, setBusy] = useState<"preview" | "launch" | null>(null);
+  const [preview, setPreview] = useState<CampaignPreview | null>(null);
+  const [launched, setLaunched] = useState<CampaignPreview | null>(null);
+  const [stageCounts, setStageCounts] = useState<Record<string, number>>({});
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const runId = launched?.run_id;
+
+  const call = useCallback(async (dry_run: boolean) => {
+    setBusy(dry_run ? "preview" : "launch");
+    try {
+      const { data, error } = await supabase.functions.invoke("acquisition-queue-worker", {
+        body: { dry_run, campaign: { city, category, limit } },
+      });
+      if (error) throw error;
+      const resp = data as CampaignPreview;
+      if (dry_run) { setPreview(resp); setLaunched(null); setStageCounts({}); }
+      else { setLaunched(resp); }
+      return resp;
+    } catch (e: any) {
+      const errResp: CampaignPreview = { ok: false, message: e?.message ?? String(e) };
+      if (dry_run) setPreview(errResp); else setLaunched(errResp);
+      return errResp;
+    } finally {
+      setBusy(null);
+    }
+  }, [city, category, limit]);
+
+  // Poll stage counts for the current run_id
+  useEffect(() => {
+    if (!runId) return;
+    let cancelled = false;
+    const load = async () => {
+      const { data } = await supabase
+        .from("acquisition_pipeline_events")
+        .select("stage, metadata")
+        .contains("metadata", { run_id: runId })
+        .limit(500);
+      if (cancelled) return;
+      const m: Record<string, number> = {};
+      for (const row of (data ?? []) as any[]) m[row.stage] = (m[row.stage] ?? 0) + 1;
+      setStageCounts(m);
+    };
+    load();
+    const t = setInterval(load, 15_000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, [runId]);
+
+  const previewCounts = preview?.counts ?? {};
+  const canLaunch = !!preview?.ok && ((previewCounts.potentially_sms_eligible ?? 0) + (previewCounts.verification_reused ?? 0)) > 0;
+
+  return (
+    <section>
+      <h2 className="text-xs uppercase tracking-wide text-white/40 mb-2">Campagne ciblée · Ville × Catégorie</h2>
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <label className="text-xs">
+            <span className="text-white/50">Ville</span>
+            <select
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              className="mt-1 w-full rounded-xl bg-white/[0.06] border border-white/10 px-3 py-2 text-sm"
+            >
+              {TARGET_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </label>
+          <label className="text-xs">
+            <span className="text-white/50">Catégorie</span>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="mt-1 w-full rounded-xl bg-white/[0.06] border border-white/10 px-3 py-2 text-sm"
+            >
+              {CAMPAIGN_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+          </label>
+          <label className="text-xs">
+            <span className="text-white/50">Limite (max 50)</span>
+            <input
+              type="number"
+              min={1}
+              max={50}
+              value={limit}
+              onChange={(e) => setLimit(Math.max(1, Math.min(50, Number(e.target.value) || 1)))}
+              className="mt-1 w-full rounded-xl bg-white/[0.06] border border-white/10 px-3 py-2 text-sm"
+            />
+          </label>
+          <div className="flex items-end gap-2">
+            <button
+              onClick={() => call(true)}
+              disabled={busy !== null}
+              className="flex-1 rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-xs flex items-center justify-center gap-2 hover:bg-white/[0.09] disabled:opacity-50"
+            >
+              {busy === "preview" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Eye className="w-3.5 h-3.5" />}
+              Aperçu
+            </button>
+            <button
+              onClick={() => setConfirmOpen(true)}
+              disabled={!canLaunch || busy !== null}
+              className="flex-1 rounded-xl border border-emerald-400/30 bg-emerald-500/15 px-3 py-2 text-xs flex items-center justify-center gap-2 hover:bg-emerald-500/25 disabled:opacity-40"
+            >
+              {busy === "launch" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+              Lancer
+            </button>
+          </div>
+        </div>
+
+        {preview && (
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-xs space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="uppercase tracking-wide text-white/50">Aperçu (aucun envoi)</span>
+              {preview.run_id && <span className="font-mono text-[10px] text-white/40">run {preview.run_id.slice(0, 8)}</span>}
+            </div>
+            {!preview.ok && (
+              <div className="text-rose-300">Erreur : {preview.message}</div>
+            )}
+            {preview.ok && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {Object.entries(previewCounts).map(([k, v]) => (
+                  <div key={k} className="rounded-lg bg-white/[0.03] border border-white/5 px-2 py-1.5">
+                    <div className="text-[10px] uppercase text-white/40">{k}</div>
+                    <div className="text-sm font-semibold">{v}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {preview.ok && Array.isArray(preview.prospects) && preview.prospects.length > 0 && (
+              <details className="mt-2">
+                <summary className="cursor-pointer text-white/60">Voir {preview.prospects.length} prospects</summary>
+                <div className="mt-2 divide-y divide-white/5">
+                  {preview.prospects.map((p: any, i: number) => (
+                    <div key={i} className="py-1.5 flex items-center gap-2 text-[11px]">
+                      <span className="flex-1 truncate">{p.business_name} · {p.city ?? "?"} · {p.category ?? "?"}</span>
+                      <span className="text-white/50 font-mono">{p.phone_e164_masked ?? ""}</span>
+                      <span className={
+                        p.bucket === "verification_reused" ? "text-emerald-300"
+                        : p.bucket === "historically_excluded" ? "text-rose-300"
+                        : "text-amber-300"
+                      }>
+                        {p.bucket}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
+          </div>
+        )}
+
+        {confirmOpen && (
+          <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 text-xs space-y-2">
+            <div className="font-semibold text-amber-200">Confirmer le lancement réel</div>
+            <div className="text-amber-100/80">
+              Cette action déclenche la vérification Twilio, les mises à jour de statut et l'envoi SMS
+              pour les prospects préparés dans ce run. Les destinations déjà contactées sont exclues.
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={async () => { setConfirmOpen(false); await call(false); }}
+                className="rounded-lg bg-emerald-500/25 border border-emerald-400/40 px-3 py-1.5 hover:bg-emerald-500/40"
+              >
+                Confirmer et lancer
+              </button>
+              <button
+                onClick={() => setConfirmOpen(false)}
+                className="rounded-lg bg-white/[0.06] border border-white/10 px-3 py-1.5 hover:bg-white/[0.1]"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        )}
+
+        {launched && (
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="uppercase tracking-wide text-white/50">Run en cours · {launched.mode} · {launched.city} × {launched.category}</span>
+              {launched.run_id && <span className="font-mono text-[10px] text-white/40">run {launched.run_id.slice(0, 8)}</span>}
+            </div>
+            {!launched.ok && <div className="text-rose-300">Erreur : {launched.message}</div>}
+
+            {/* 12-stage strip */}
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
+              {STAGE_STRIP.map((s) => {
+                const n = stageCounts[s.key] ?? 0;
+                let cls = "bg-white/[0.03] border-white/10 text-white/50";
+                let state = s.downstream ? "waiting_downstream" : "zero_eligible";
+                if (n > 0) {
+                  state = "completed";
+                  if (s.key === "excluded_history" || s.key === "quarantined" || s.key === "failed") {
+                    cls = "bg-rose-500/10 border-rose-400/30 text-rose-200";
+                  } else if (s.downstream) {
+                    cls = "bg-emerald-500/15 border-emerald-400/30 text-emerald-200";
+                  } else {
+                    cls = "bg-emerald-500/10 border-emerald-400/30 text-emerald-200";
+                  }
+                } else if (s.downstream) {
+                  cls = "bg-amber-500/5 border-amber-400/20 text-amber-200/70";
+                }
+                return (
+                  <div key={s.key} className={`rounded-lg border px-2 py-1.5 ${cls}`} title={state}>
+                    <div className="text-[10px] uppercase opacity-80">{s.label}</div>
+                    <div className="text-sm font-semibold">{n}</div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {launched.counts && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {Object.entries(launched.counts).map(([k, v]) => (
+                  <div key={k} className="rounded-lg bg-white/[0.03] border border-white/5 px-2 py-1.5">
+                    <div className="text-[10px] uppercase text-white/40">{k}</div>
+                    <div className="text-sm font-semibold">{v}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {launched.sms_result && (
+              <div className="text-white/60">
+                SMS: {launched.sms_result.sent ?? 0} envoyé(s) · {launched.sms_result.processed ?? 0} traité(s)
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+
 export default function PageAdminAcquisitionPipeline() {
   const [filters, setFilters] = useState<{ stage?: string; source?: string; city?: string; category?: string; reason?: string }>({});
 
@@ -167,6 +452,8 @@ export default function PageAdminAcquisitionPipeline() {
         </section>
 
         <FirstDollarMini tracker={firstDollar.data} />
+
+        <CampaignLauncher />
 
         {/* Funnel stats */}
         <section>
