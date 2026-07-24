@@ -600,7 +600,7 @@ function mapEligibility(phone_type: "mobile" | "landline" | "voip" | "unknown"):
     case "landline":
       return { sms_eligibility_tier: "D", sms_eligible: false, verification_status: "verified" };
     default:
-      return { sms_eligibility_tier: null, sms_eligible: false, verification_status: "unknown" };
+      return { sms_eligibility_tier: null, sms_eligible: false, verification_status: "needs_enrichment" };
   }
 }
 
