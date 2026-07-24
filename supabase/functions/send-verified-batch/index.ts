@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
 
       return jsonResponse({
         ok: true, dry_run: true, eligible_count: eligible.length, eligible,
-        blockers,
+        blockers, skipped: missingResults,
         message: eligible.length > 0 ? `${eligible.length} prospect(s) prêt(s) (tiers A/B/C)` : "Aucun prospect ne passe les critères d'envoi réel",
       }, 200, requestId);
     }
