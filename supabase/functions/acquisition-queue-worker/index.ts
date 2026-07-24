@@ -391,7 +391,7 @@ async function promoteProspect(
     if (!existing.email && lead.email) patch.email = lead.email;
     if (!existing.source) patch.source = lead.source;
     if (stale && existing.verification_status === "verified") {
-      patch.verification_status = null;
+      patch.verification_status = "needs_enrichment";
       patch.phone_validation_status = "unverified";
     }
 
