@@ -65,9 +65,47 @@ function StageRow({ s, index }: { s: FunnelStage; index: number }) {
   );
 }
 
+const READINESS_LABELS: Record<ReadinessStatus, { emoji: string; label: string; tone: string }> = {
+  ready: { emoji: "🟢", label: "Prêt à envoyer", tone: "bg-emerald-500/15 text-emerald-200 border-emerald-400/30" },
+  missing_landing: { emoji: "🟠", label: "Landing manquante", tone: "bg-amber-500/15 text-amber-200 border-amber-400/30" },
+  missing_city: { emoji: "🟠", label: "Ville manquante", tone: "bg-amber-500/15 text-amber-200 border-amber-400/30" },
+  missing_category: { emoji: "🟠", label: "Catégorie manquante", tone: "bg-amber-500/15 text-amber-200 border-amber-400/30" },
+  missing_phone: { emoji: "🔴", label: "Téléphone manquant", tone: "bg-red-500/15 text-red-200 border-red-400/30" },
+  casl_pending: { emoji: "🔴", label: "CASL en attente", tone: "bg-red-500/15 text-red-200 border-red-400/30" },
+};
+
+function fieldValue(v: string | null | undefined, kind: "auto" | "url" = "auto"): { text: string; tone: string; title?: string } {
+  if (v && v.length) {
+    if (kind === "url") return { text: v, tone: "text-emerald-200", title: v };
+    return { text: v, tone: "text-white/85" };
+  }
+  return { text: "Manquant", tone: "text-white/40 italic" };
+}
+
+function ReadinessChip({ lead }: { lead: CanaryPreviewLead }) {
+  const r = lead.readiness;
+  if (!r) return <span className="text-white/30 text-xs">—</span>;
+  const meta = READINESS_LABELS[r.status];
+  return (
+    <div className="mb-2">
+      <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${meta.tone}`}>
+        {meta.emoji} {meta.label}
+      </span>
+      <div className="mt-1 flex flex-wrap gap-1 text-[10px] text-white/60">
+        {(["phone", "casl", "city", "category", "landing"] as const).map((k) => (
+          <span key={k} className={r.checks[k] ? "text-emerald-300" : "text-red-300/80"}>
+            {r.checks[k] ? "✔" : "✗"} {k}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminFunnelAudit() {
   const [days, setDays] = useState(30);
   const [previewOn, setPreviewOn] = useState(false);
+  const [repairing, setRepairing] = useState(false);
   const { data, isLoading, error, refetch, isFetching } = useFunnelAudit(days);
   const {
     data: canaryData,
@@ -75,6 +113,22 @@ export default function AdminFunnelAudit() {
     error: canaryError,
     refetch: refetchCanary,
   } = useFunnelAudit(days, { canary: previewOn, canaryLimit: 3 });
+
+  const readiness = canaryData?.canary_readiness ?? null;
+
+  const handleRepair = async () => {
+    try {
+      setRepairing(true);
+      const res = await repairCanaryLandings(10);
+      if (res.error) throw new Error(res.error);
+      toast.success(`Landings créées : ${res.created} · ignorées : ${res.skipped}`);
+      await refetchCanary();
+    } catch (e) {
+      toast.error(`Auto-réparation échouée : ${(e as Error).message}`);
+    } finally {
+      setRepairing(false);
+    }
+  };
 
   return (
     <AdminLayout>
@@ -115,6 +169,17 @@ export default function AdminFunnelAudit() {
         >
           {previewOn ? "Masquer l'aperçu" : "Aperçu 3 prospects réels"}
         </Button>
+        {previewOn && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full sm:w-auto"
+            onClick={handleRepair}
+            disabled={repairing || canaryFetching}
+          >
+            {repairing ? "Réparation…" : "Auto-réparer landings (max 10)"}
+          </Button>
+        )}
       </div>
 
       {isLoading && <LoadingState />}
@@ -122,6 +187,29 @@ export default function AdminFunnelAudit() {
         <Card className="border-red-500/30 bg-red-500/5">
           <CardContent className="py-4 text-sm text-red-200">
             Erreur : {(error as Error).message}
+          </CardContent>
+        </Card>
+      )}
+
+      {previewOn && readiness && !readiness.error && (
+        <Card className="mb-4 border-white/10 bg-black/20">
+          <CardContent className="grid grid-cols-2 gap-3 py-4 text-center sm:grid-cols-6">
+            {[
+              { label: "Éligibles", value: readiness.eligible, tone: "text-white/90" },
+              { label: "🟢 Prêts", value: readiness.ready_now, tone: "text-emerald-300" },
+              { label: "Landing manquant", value: readiness.missing_landing, tone: "text-amber-300" },
+              { label: "Ville manquante", value: readiness.missing_city, tone: "text-amber-300" },
+              { label: "Catégorie manquante", value: readiness.missing_category, tone: "text-amber-300" },
+              { label: "Téléphone manquant", value: readiness.missing_phone, tone: "text-red-300" },
+            ].map((s) => (
+              <div key={s.label}>
+                <div className={`text-lg font-bold tabular-nums ${s.tone}`}>{s.value}</div>
+                <div className="text-[10px] uppercase tracking-wide text-white/50">{s.label}</div>
+              </div>
+            ))}
+          </CardContent>
+          <CardContent className="border-t border-white/5 py-2 text-center text-[11px] text-white/60">
+            Taux prêt : <span className="font-semibold text-emerald-300">{readiness.ready_pct}%</span> sur {readiness.eligible} candidats analysés
           </CardContent>
         </Card>
       )}
@@ -144,10 +232,11 @@ export default function AdminFunnelAudit() {
             {!canaryFetching && canaryData?.canary_preview && (
               <>
                 <div className="mb-3 text-[11px] text-white/60">
-                  {canaryData.canary_preview.disclaimer ?? "NO SMS was sent."} · éligibles :{" "}
-                  <span className="font-semibold text-white/90">
-                    {canaryData.canary_preview.would_send_count ?? canaryData.canary_preview.would_send?.length ?? 0}
-                  </span>
+                  {canaryData.canary_preview.disclaimer ?? "NO SMS was sent."} · prêts :{" "}
+                  <span className="font-semibold text-emerald-300">
+                    {canaryData.canary_preview.would_send_count ?? 0}
+                  </span>{" "}
+                  / {canaryData.canary_preview.would_send?.length ?? 0}
                 </div>
                 {canaryData.canary_preview.error && (
                   <div className="mb-2 text-xs text-red-300">
@@ -158,58 +247,60 @@ export default function AdminFunnelAudit() {
                   <div className="text-xs text-white/50">Aucun prospect éligible.</div>
                 ) : (
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                    {canaryData.canary_preview.would_send.map((lead) => (
-                      <div
-                        key={lead.lead_id}
-                        className="rounded-md border border-white/10 bg-black/20 p-3 text-xs"
-                      >
-                        <div className="mb-1 text-sm font-semibold text-white/90">
-                          {lead.business ?? "—"}
+                    {canaryData.canary_preview.would_send.map((lead) => {
+                      const city = fieldValue(lead.city);
+                      const category = fieldValue(lead.category);
+                      const phone = fieldValue(lead.phone);
+                      const casl = fieldValue(lead.evidence_source_url, "url");
+                      const landing = lead.landing_url
+                        ? { text: lead.landing_url, tone: "text-emerald-200", title: lead.landing_url }
+                        : { text: "Génération requise", tone: "text-amber-300 italic" };
+                      return (
+                        <div
+                          key={lead.lead_id}
+                          className="rounded-md border border-white/10 bg-black/20 p-3 text-xs"
+                        >
+                          <div className="mb-1 text-sm font-semibold text-white/90">
+                            {lead.business ?? "Sans nom"}
+                          </div>
+                          <ReadinessChip lead={lead} />
+                          <dl className="space-y-1 text-white/70">
+                            <div className="flex justify-between gap-2">
+                              <dt className="text-white/40">Ville</dt>
+                              <dd className={`text-right ${city.tone}`}>{city.text}</dd>
+                            </div>
+                            <div className="flex justify-between gap-2">
+                              <dt className="text-white/40">Catégorie</dt>
+                              <dd className={`text-right ${category.tone}`}>{category.text}</dd>
+                            </div>
+                            <div className="flex justify-between gap-2">
+                              <dt className="text-white/40">Téléphone</dt>
+                              <dd className={`text-right tabular-nums ${phone.tone}`}>{phone.text}</dd>
+                            </div>
+                            <div className="flex justify-between gap-2">
+                              <dt className="text-white/40">CASL</dt>
+                              <dd className={`max-w-[60%] truncate text-right ${casl.tone}`} title={casl.title}>
+                                {casl.text}
+                              </dd>
+                            </div>
+                            <div className="flex justify-between gap-2">
+                              <dt className="text-white/40">Méthode</dt>
+                              <dd className="text-right">{lead.verification_method ?? "Vérifié"}</dd>
+                            </div>
+                            <div className="flex justify-between gap-2">
+                              <dt className="text-white/40">Récupéré</dt>
+                              <dd className="text-right">{relTime(lead.evidence_retrieved_at)}</dd>
+                            </div>
+                            <div className="flex justify-between gap-2">
+                              <dt className="text-white/40">Landing</dt>
+                              <dd className={`max-w-[60%] truncate text-right ${landing.tone}`} title={landing.title}>
+                                {landing.text}
+                              </dd>
+                            </div>
+                          </dl>
                         </div>
-                        <dl className="space-y-1 text-white/70">
-                          <div className="flex justify-between gap-2">
-                            <dt className="text-white/40">Ville</dt>
-                            <dd className="text-right">{lead.city ?? "—"}</dd>
-                          </div>
-                          <div className="flex justify-between gap-2">
-                            <dt className="text-white/40">Catégorie</dt>
-                            <dd className="text-right">{lead.category ?? "—"}</dd>
-                          </div>
-                          <div className="flex justify-between gap-2">
-                            <dt className="text-white/40">Téléphone</dt>
-                            <dd className="text-right tabular-nums">{lead.phone ?? "—"}</dd>
-                          </div>
-                          <div className="flex justify-between gap-2">
-                            <dt className="text-white/40">CASL</dt>
-                            <dd className="max-w-[60%] truncate text-right" title={lead.evidence_source_url ?? ""}>
-                              {lead.evidence_source_url ?? "—"}
-                            </dd>
-                          </div>
-                          <div className="flex justify-between gap-2">
-                            <dt className="text-white/40">Méthode</dt>
-                            <dd className="text-right">{lead.verification_method ?? "—"}</dd>
-                          </div>
-                          <div className="flex justify-between gap-2">
-                            <dt className="text-white/40">Récupéré</dt>
-                            <dd className="text-right">{relTime(lead.evidence_retrieved_at)}</dd>
-                          </div>
-                          <div className="flex justify-between gap-2">
-                            <dt className="text-white/40">Contact ant.</dt>
-                            <dd className="text-right">{lead.prior_contact_status ?? "aucun"}</dd>
-                          </div>
-                          <div className="flex justify-between gap-2">
-                            <dt className="text-white/40">Exclusion</dt>
-                            <dd className="text-right">{lead.exclusion_reason ?? "—"}</dd>
-                          </div>
-                          <div className="flex justify-between gap-2">
-                            <dt className="text-white/40">Landing</dt>
-                            <dd className="max-w-[60%] truncate text-right" title={lead.landing_url ?? ""}>
-                              {lead.landing_url ?? "—"}
-                            </dd>
-                          </div>
-                        </dl>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </>
