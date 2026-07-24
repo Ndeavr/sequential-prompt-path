@@ -1,11 +1,14 @@
 /**
  * /admin/acquisition-pipeline — Real-time acquisition funnel visibility.
  * Sources, funnel stats, coverage grid, rejection reasons, live event feed, prospect table.
+ * Adds a "Campagne ciblée" launcher (city × category) that drives the same
+ * autonomous pipeline in scoped mode with a per-run 12-stage progression strip.
  */
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw, Play, Eye } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   useAcquisitionSourceHealth,
   useFunnelDaily,
@@ -24,6 +27,47 @@ import {
 
 const TARGET_CATEGORIES = ["toiture", "isolation", "plomberie", "peinture", "electricite", "renovation"];
 const TARGET_CITIES = ["Montreal", "Laval", "Terrebonne", "Repentigny", "Longueuil", "Saint-Jerome", "Blainville", "Boisbriand"];
+
+const CAMPAIGN_CATEGORIES: Array<{ value: string; label: string }> = [
+  { value: "plumber", label: "Plomberie" },
+  { value: "roofing", label: "Toiture" },
+  { value: "electrician", label: "Électricité" },
+  { value: "hvac", label: "CVAC" },
+  { value: "isolation", label: "Isolation" },
+  { value: "painting", label: "Peinture" },
+  { value: "landscaping", label: "Paysagement" },
+  { value: "renovation", label: "Rénovation" },
+];
+
+const STAGE_STRIP: Array<{ key: string; label: string; downstream?: boolean }> = [
+  { key: "queued", label: "Queued" },
+  { key: "promoted", label: "Promoted" },
+  { key: "verification_reused", label: "Vérif. réutilisée" },
+  { key: "verified", label: "Vérifié (Twilio)" },
+  { key: "excluded_history", label: "Exclus (hist.)" },
+  { key: "quarantined", label: "Quarantaine" },
+  { key: "sms_attempted", label: "SMS tenté" },
+  { key: "sms_sent", label: "SMS envoyé" },
+  { key: "delivered", label: "Livré", downstream: true },
+  { key: "clicked", label: "Cliqué", downstream: true },
+  { key: "activated", label: "Activé", downstream: true },
+  { key: "paid", label: "Payé 1 $", downstream: true },
+];
+
+type CampaignPreview = {
+  ok: boolean;
+  run_id?: string;
+  mode?: string;
+  city?: string | null;
+  category?: string | null;
+  counts?: Record<string, number>;
+  prospects?: any[];
+  prepared_prospect_ids?: string[];
+  sms_result?: any;
+  message?: string;
+};
+
+
 
 function StatTile({ label, value, tone = "default" }: { label: string; value: number | string; tone?: "default" | "success" | "danger" | "warn" }) {
   const toneCls =
