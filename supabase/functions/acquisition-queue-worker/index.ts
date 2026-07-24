@@ -1,19 +1,49 @@
 /**
  * acquisition-queue-worker
- * Autonomous loop: enriches verified prospects into acquisition_queue,
- * advances FSM (new → verified → ready_sms/ready_email → contacted), and
- * launches SMS/email batches. Never blocks on individual failures.
+ *
+ * Autonomous + targeted acquisition pipeline.
+ *
+ * Modes (single shared code path):
+ *   Autonomous : no `campaign` in body. Fair-queue selection across the whole
+ *                pool, ordered by oldest incomplete first so no city/category
+ *                is starved. Runs on cron; safe to rerun.
+ *   Targeted   : body.campaign = { city, category, limit }. Same selection
+ *                pre-filtered by city + normalized category. Auto-sends only
+ *                the prospects prepared in *this* run.
+ *
+ * Every run is tagged with a single `run_id` (UUID) and every event insert
+ * carries { run_id, mode, city, category } in `metadata` so the Admin UI can
+ * render an accurate per-run funnel.
+ *
+ * Dry-run contract:
+ *   { dry_run: true }  → no writes, no Twilio Lookup, no SMS. Returns preview
+ *   counts only. Emits ONE `dry_run_preview` event tagged with run_id.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { CATEGORY_SYNONYMS, normalizeCategoryInput } from "../_shared/acquisitionPipeline.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 const FUNCTION_NAME = "acquisition-queue-worker";
-const TARGET_CATEGORIES = ["isolation", "roofing", "electrician", "plumber", "hvac", "painting", "landscaping"];
-const TARGET_CITIES = ["Laval", "Montreal", "Longueuil", "Terrebonne", "Repentigny", "Mirabel", "Blainville", "Mascouche"];
 const SOURCES = ["google_business", "rbq", "facebook", "website", "manual"];
+const VERIFICATION_FRESHNESS_MS = 90 * 24 * 60 * 60 * 1000; // 90 days
+const SEND_LIMIT_DEFAULT = 25;
+const FAIR_SELECT_BATCH = 25;
+
+// ---------------------------------------------------------------------------
+// Utilities
+// ---------------------------------------------------------------------------
+type RunContext = {
+  run_id: string;
+  mode: "autonomous" | "targeted";
+  city: string | null;
+  category: string | null;
+  category_synonyms: string[] | null;
+  dry_run: boolean;
+  limit: number;
+};
 
 function jsonResponse(body: Record<string, unknown>, status = 200) {
   const requestId = crypto.randomUUID();
@@ -27,7 +57,7 @@ function normalizeSource(source: string) {
   return SOURCES.includes(source) ? source : "website";
 }
 
-function normalizePhone(raw: string | null | undefined) {
+function normalizePhone(raw: string | null | undefined): string | null {
   if (!raw) return null;
   const d = String(raw).replace(/\D/g, "");
   if (d.length === 10) return `+1${d}`;
@@ -35,14 +65,64 @@ function normalizePhone(raw: string | null | undefined) {
   return String(raw).startsWith("+") ? String(raw) : null;
 }
 
-function normalizeWebsite(raw: string | null | undefined) {
+function isPlaceholderPhone(phone: string): boolean {
+  return /555\d{4}$/.test(phone);
+}
+
+function normalizeWebsite(raw: string | null | undefined): string | null {
   if (!raw) return null;
   const value = String(raw).trim();
   if (!value) return null;
   return /^https?:\/\//i.test(value) ? value : `https://${value}`;
 }
 
-async function recordSourceRun(supabase: any, source: string, found: number, error?: { code: string; message: string }) {
+async function emitEvent(
+  supabase: any,
+  ctx: RunContext,
+  evt: {
+    prospect_id?: string | null;
+    business_name?: string | null;
+    city?: string | null;
+    category?: string | null;
+    source?: string | null;
+    stage: string;
+    reason_code?: string | null;
+    reason_text?: string | null;
+    metadata?: Record<string, unknown>;
+  },
+) {
+  try {
+    await supabase.from("acquisition_pipeline_events").insert({
+      prospect_id: evt.prospect_id ?? null,
+      business_name: evt.business_name ?? null,
+      city: evt.city ?? null,
+      category: evt.category ?? null,
+      source: evt.source ?? null,
+      stage: evt.stage,
+      reason_code: evt.reason_code ?? null,
+      reason_text: evt.reason_text ?? null,
+      metadata: {
+        run_id: ctx.run_id,
+        mode: ctx.mode,
+        campaign_city: ctx.city,
+        campaign_category: ctx.category,
+        ...(evt.metadata ?? {}),
+      },
+    });
+  } catch (e) {
+    console.error("[emitEvent] failed", e);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Source-health / dead-queue helpers (preserved from previous implementation)
+// ---------------------------------------------------------------------------
+async function recordSourceRun(
+  supabase: any,
+  source: string,
+  found: number,
+  error?: { code: string; message: string },
+) {
   const status = error ? "scraper_down" : found > 0 ? "healthy" : "degraded";
   const now = new Date().toISOString();
   const { data: existing } = await supabase
@@ -50,190 +130,21 @@ async function recordSourceRun(supabase: any, source: string, found: number, err
     .select("consecutive_zero_runs")
     .eq("source", source)
     .maybeSingle();
-  await supabase.from("acquisition_source_health").upsert({
-    source,
-    status,
-    last_run_at: now,
-    last_success_at: !error && found > 0 ? now : undefined,
-    found_last_run: found,
-    found_24h: found,
-    consecutive_zero_runs: found === 0 ? Number(existing?.consecutive_zero_runs ?? 0) + 1 : 0,
-    last_error_code: error?.code ?? (found === 0 ? "zero_leads" : null),
-    last_error_message: error?.message ?? (found === 0 ? "Source active mais aucun lead trouvé pendant ce cycle" : null),
-    updated_at: now,
-  }, { onConflict: "source" });
-}
-
-async function emitEvent(supabase: any, event: Record<string, unknown>) {
-  await supabase.from("acquisition_pipeline_events").insert({ metadata: {}, ...event });
-}
-
-async function runFallbackAcquisition(supabase: any, source: string, maxRows = 20) {
-  const now = new Date().toISOString();
-  await supabase.from("acquisition_source_health").upsert({
-    source,
-    status: "fallback_running",
-    fallback_started_at: now,
-    last_run_at: now,
-    last_error_code: "fallback_active",
-    last_error_message: "Fallback local lancé parce que la source principale ne produit pas de leads",
-    updated_at: now,
-  }, { onConflict: "source" });
-
-  let inserted = 0;
-  const rows: Array<Record<string, unknown>> = [];
-
-  const { data: contractorLeads } = await supabase
-    .from("contractor_leads")
-    .select("id,company_name,email,phone,mobile_phone,phone_e164,website_url,city,category_primary,trade,source_type,created_at")
-    .not("company_name", "is", null)
-    .or("phone.not.is.null,phone_e164.not.is.null,mobile_phone.not.is.null")
-    .order("created_at", { ascending: false })
-    .limit(maxRows);
-  for (const lead of contractorLeads ?? []) {
-    const phone = normalizePhone(lead.phone_e164 ?? lead.mobile_phone ?? lead.phone);
-    if (!phone || /^\+1?\D*555\D*\d{4}/.test(phone)) continue; // skip 555 placeholders early
-    const category = lead.category_primary ?? lead.trade;
-    if (!category) continue; // NOT NULL constraint
-    rows.push({
-      business_name: lead.company_name,
-      legal_name: lead.company_name,
-      category,
-      city: lead.city,
-      website_url: normalizeWebsite(lead.website_url),
-      phone_primary: phone,
-      phone_e164: phone,
-      phone_line_type: "unknown",
-      phone_validation_status: "unverified",
-      sms_eligible: true,
-      email: lead.email,
-      verification_status: "verified",
-      data_quality_score: normalizeWebsite(lead.website_url) ? 85 : 80,
+  await supabase.from("acquisition_source_health").upsert(
+    {
       source,
-      source_urls: { fallback: true, source_table: "contractor_leads", source_id: lead.id, generated_at: now },
-      verified_at: now,
-      last_enriched_at: now,
-      last_action_at: now,
-      outreach_status: "none",
-    });
-  }
-
-
-  if (rows.length < maxRows) {
-    const { data: prospects } = await supabase
-      .from("contractor_prospects")
-      .select("id,business_name,email,phone,phone_e164,website_url,city,trade,source,created_at")
-      .not("business_name", "is", null)
-      .or("phone.not.is.null,phone_e164.not.is.null")
-      .order("created_at", { ascending: false })
-      .limit(maxRows - rows.length);
-    for (const lead of prospects ?? []) {
-      const phone = normalizePhone(lead.phone_e164 ?? lead.phone);
-      if (!phone || /^\+1?\D*555\D*\d{4}/.test(phone)) continue;
-      if (!lead.trade) continue;
-      rows.push({
-        business_name: lead.business_name,
-        legal_name: lead.business_name,
-        category: lead.trade,
-        city: lead.city,
-        website_url: normalizeWebsite(lead.website_url),
-        phone_primary: phone,
-        phone_e164: phone,
-        phone_line_type: "unknown",
-        phone_validation_status: "unverified",
-        sms_eligible: true,
-        email: lead.email,
-        verification_status: "verified",
-        data_quality_score: normalizeWebsite(lead.website_url) ? 85 : 80,
-        source,
-        source_urls: { fallback: true, source_table: "contractor_prospects", source_id: lead.id, generated_at: now },
-        verified_at: now,
-        last_enriched_at: now,
-        last_action_at: now,
-        outreach_status: "none",
-      });
-    }
-
-  }
-
-  if (rows.length < maxRows) {
-    const { data: prospects } = await supabase
-      .from("contractors_prospects")
-      .select("id,business_name,email,phone,website,city,category,source,created_at")
-      .not("business_name", "is", null)
-      .not("phone", "is", null)
-      .order("created_at", { ascending: false })
-      .limit(maxRows - rows.length);
-    for (const lead of prospects ?? []) {
-      const phone = normalizePhone(lead.phone);
-      if (!phone || /^\+1?\D*555\D*\d{4}/.test(phone)) continue;
-      if (!lead.category) continue;
-      rows.push({
-        business_name: lead.business_name,
-        legal_name: lead.business_name,
-        category: lead.category,
-        city: lead.city,
-        website_url: normalizeWebsite(lead.website),
-        phone_primary: phone,
-        phone_e164: phone,
-        phone_line_type: "unknown",
-        phone_validation_status: "unverified",
-        sms_eligible: true,
-        email: lead.email,
-        verification_status: "verified",
-        data_quality_score: normalizeWebsite(lead.website) ? 85 : 80,
-        source,
-        source_urls: { fallback: true, source_table: "contractors_prospects", source_id: lead.id, generated_at: now },
-        verified_at: now,
-        last_enriched_at: now,
-        last_action_at: now,
-        outreach_status: "none",
-      });
-    }
-
-  }
-
-  for (const row of rows) {
-    const { data: existing } = await supabase
-      .from("verified_contractor_prospects")
-      .select("id,business_name,city,category,source")
-      .eq("phone_e164", row.phone_e164)
-      .maybeSingle();
-    const write = existing?.id
-      ? await supabase.from("verified_contractor_prospects").update(row).eq("id", existing.id).select("id,business_name,city,category,source").maybeSingle()
-      : await supabase.from("verified_contractor_prospects").insert(row).select("id,business_name,city,category,source").maybeSingle();
-    const { data, error } = write;
-    if (error) {
-      await emitEvent(supabase, {
-        stage: "rejected",
-        source,
-        reason_code: "fallback_insert_failed",
-        reason_text: error.message,
-        business_name: row.business_name,
-        city: row.city,
-        category: row.category,
-        metadata: {
-          table: "verified_contractor_prospects",
-          operation: existing?.id ? "update" : "insert",
-          pg_code: (error as any).code ?? null,
-          pg_details: (error as any).details ?? null,
-          pg_hint: (error as any).hint ?? null,
-          payload_keys: Object.keys(row),
-          phone_e164: row.phone_e164,
-        },
-      });
-      continue;
-    }
-
-    if (data?.id) {
-      inserted += 1;
-      await emitEvent(supabase, { prospect_id: data.id, business_name: data.business_name, city: data.city, category: data.category, source, stage: "scraped", metadata: { fallback: true } });
-      await emitEvent(supabase, { prospect_id: data.id, business_name: data.business_name, city: data.city, category: data.category, source, stage: "verified", metadata: { fallback: true, quality: 82 } });
-    }
-  }
-
-  await recordSourceRun(supabase, source, inserted);
-  return inserted;
+      status,
+      last_run_at: now,
+      last_success_at: !error && found > 0 ? now : undefined,
+      found_last_run: found,
+      found_24h: found,
+      consecutive_zero_runs: found === 0 ? Number(existing?.consecutive_zero_runs ?? 0) + 1 : 0,
+      last_error_code: error?.code ?? (found === 0 ? "zero_leads" : null),
+      last_error_message: error?.message ?? (found === 0 ? "Source active mais aucun lead trouvé pendant ce cycle" : null),
+      updated_at: now,
+    },
+    { onConflict: "source" },
+  );
 }
 
 async function detectAndRepairDeadQueue(supabase: any) {
@@ -263,22 +174,378 @@ async function detectAndRepairDeadQueue(supabase: any) {
       await supabase.from("acquisition_dead_queue_alerts").insert(alertPayload);
     }
     alerts += 1;
-
     if (["queue_state_mismatch", "eligibility_mismatch"].includes(row.root_cause)) {
-      await supabase.from("acquisition_queue").upsert({
-        prospect_id: row.prospect_id,
-        state: row.phone_e164 ? "ready_sms" : "ready_email",
-        channel: row.phone_e164 ? "sms" : "email",
-        next_action_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "prospect_id" });
-      await supabase.from("acquisition_dead_queue_alerts").update({ status: "resolved", resolved_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("prospect_id", row.prospect_id);
+      await supabase.from("acquisition_queue").upsert(
+        {
+          prospect_id: row.prospect_id,
+          state: row.phone_e164 ? "ready_sms" : "ready_email",
+          channel: row.phone_e164 ? "sms" : "email",
+          next_action_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "prospect_id" },
+      );
+      await supabase
+        .from("acquisition_dead_queue_alerts")
+        .update({ status: "resolved", resolved_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .eq("prospect_id", row.prospect_id);
       repaired += 1;
     }
   }
   return { alerts, repaired };
 }
 
+// ---------------------------------------------------------------------------
+// Fair-queue selection — replaces `order(created_at desc).limit(20)` starvation.
+// Pulls the OLDEST unprocessed eligible records first, from all supported
+// scrape tables. Applies optional city + normalized-category filter when
+// running in targeted mode.
+// ---------------------------------------------------------------------------
+type CandidateLead = {
+  business_name: string;
+  phone_e164: string;
+  website_url: string | null;
+  city: string | null;
+  category: string;
+  email: string | null;
+  source: string;
+  source_table: string;
+  source_id: string;
+};
+
+function passesCategory(ctx: RunContext, category: string | null): boolean {
+  if (!ctx.category || !ctx.category_synonyms) return true; // autonomous mode
+  if (!category) return false;
+  const lower = String(category).trim().toLowerCase();
+  return ctx.category_synonyms.some((s) => s.toLowerCase() === lower);
+}
+
+function passesCity(ctx: RunContext, city: string | null): boolean {
+  if (!ctx.city) return true;
+  if (!city) return false;
+  return city.trim().toLowerCase().startsWith(ctx.city.trim().toLowerCase());
+}
+
+async function selectFairCandidates(supabase: any, ctx: RunContext, take: number): Promise<CandidateLead[]> {
+  const results: CandidateLead[] = [];
+  const seenPhones = new Set<string>();
+
+  const push = (row: any, source: string, source_table: string, mapping: {
+    business: string;
+    phone: string | null;
+    website: string | null;
+    city: string | null;
+    category: string | null;
+    email: string | null;
+  }) => {
+    if (results.length >= take) return;
+    const phone = normalizePhone(mapping.phone);
+    if (!phone || isPlaceholderPhone(phone)) return;
+    if (seenPhones.has(phone)) return;
+    if (!mapping.category) return;
+    if (!passesCategory(ctx, mapping.category)) return;
+    if (!passesCity(ctx, mapping.city)) return;
+    seenPhones.add(phone);
+    results.push({
+      business_name: mapping.business,
+      phone_e164: phone,
+      website_url: normalizeWebsite(mapping.website),
+      city: mapping.city,
+      category: String(mapping.category),
+      email: mapping.email,
+      source,
+      source_table,
+      source_id: String(row.id),
+    });
+  };
+
+  // Table 1 — contractor_leads (canonical). Prioritize never-contacted rows.
+  {
+    let q = supabase
+      .from("contractor_leads")
+      .select("id,company_name,email,phone,mobile_phone,phone_e164,website_url,city,category_primary,trade,source_type,created_at,last_sms_at")
+      .not("company_name", "is", null)
+      .or("phone.not.is.null,phone_e164.not.is.null,mobile_phone.not.is.null")
+      .is("last_sms_at", null)
+      .order("created_at", { ascending: true })
+      .limit(take * 3);
+    if (ctx.city) q = q.ilike("city", `${ctx.city}%`);
+    const { data } = await q;
+    for (const row of data ?? []) {
+      push(row, normalizeSource(row.source_type ?? "website"), "contractor_leads", {
+        business: row.company_name,
+        phone: row.phone_e164 ?? row.mobile_phone ?? row.phone,
+        website: row.website_url,
+        city: row.city,
+        category: row.category_primary ?? row.trade,
+        email: row.email,
+      });
+    }
+  }
+
+  // Table 2 — contractor_prospects (scraper landing table)
+  if (results.length < take) {
+    let q = supabase
+      .from("contractor_prospects")
+      .select("id,business_name,email,phone,phone_e164,website_url,city,trade,source,created_at")
+      .not("business_name", "is", null)
+      .or("phone.not.is.null,phone_e164.not.is.null")
+      .order("created_at", { ascending: true })
+      .limit(take * 3);
+    if (ctx.city) q = q.ilike("city", `${ctx.city}%`);
+    const { data } = await q;
+    for (const row of data ?? []) {
+      push(row, normalizeSource(row.source ?? "website"), "contractor_prospects", {
+        business: row.business_name,
+        phone: row.phone_e164 ?? row.phone,
+        website: row.website_url,
+        city: row.city,
+        category: row.trade,
+        email: row.email,
+      });
+    }
+  }
+
+  // Table 3 — contractors_prospects (legacy)
+  if (results.length < take) {
+    let q = supabase
+      .from("contractors_prospects")
+      .select("id,business_name,email,phone,website,city,category,source,created_at")
+      .not("business_name", "is", null)
+      .not("phone", "is", null)
+      .order("created_at", { ascending: true })
+      .limit(take * 3);
+    if (ctx.city) q = q.ilike("city", `${ctx.city}%`);
+    const { data } = await q;
+    for (const row of data ?? []) {
+      push(row, normalizeSource(row.source ?? "website"), "contractors_prospects", {
+        business: row.business_name,
+        phone: row.phone,
+        website: row.website,
+        city: row.city,
+        category: row.category,
+        email: row.email,
+      });
+    }
+  }
+
+  return results.slice(0, take);
+}
+
+// ---------------------------------------------------------------------------
+// Idempotent promotion into verified_contractor_prospects.
+// Never overwrites human-verified fields; only fills nulls / stale values.
+// ---------------------------------------------------------------------------
+type PromotedProspect = {
+  id: string;
+  business_name: string;
+  city: string | null;
+  category: string;
+  phone_e164: string;
+  phone_line_type: string | null;
+  verification_status: string | null;
+  verified_at: string | null;
+  sms_eligibility_tier: string | null;
+  sms_eligible: boolean | null;
+  outreach_status: string | null;
+  source: string | null;
+  website_url: string | null;
+  email: string | null;
+  is_new: boolean;
+};
+
+async function promoteProspect(supabase: any, ctx: RunContext, lead: CandidateLead): Promise<PromotedProspect | null> {
+  const { data: existing, error: readErr } = await supabase
+    .from("verified_contractor_prospects")
+    .select("id,business_name,city,category,phone_e164,phone_line_type,verification_status,verified_at,sms_eligibility_tier,sms_eligible,outreach_status,source,website_url,email")
+    .eq("phone_e164", lead.phone_e164)
+    .maybeSingle();
+  if (readErr) {
+    console.error("[promote] read failed", readErr);
+    return null;
+  }
+
+  const now = new Date().toISOString();
+
+  if (existing?.id) {
+    // Update ONLY missing/stale fields. Preserve verification + outreach state.
+    const patch: Record<string, unknown> = { updated_at: now };
+    if (!existing.website_url && lead.website_url) patch.website_url = lead.website_url;
+    if (!existing.city && lead.city) patch.city = lead.city;
+    if (!existing.category && lead.category) patch.category = lead.category;
+    if (!existing.email && lead.email) patch.email = lead.email;
+    if (!existing.source) patch.source = lead.source;
+
+    if (Object.keys(patch).length > 1) {
+      await supabase.from("verified_contractor_prospects").update(patch).eq("id", existing.id);
+    }
+    await emitEvent(supabase, ctx, {
+      prospect_id: existing.id,
+      business_name: existing.business_name,
+      city: existing.city,
+      category: existing.category,
+      source: existing.source,
+      stage: "promoted",
+      metadata: { existing: true, source_table: lead.source_table, source_id: lead.source_id, patch_keys: Object.keys(patch) },
+    });
+    return { ...(existing as any), is_new: false };
+  }
+
+  // Insert new — verification_status intentionally NULL (must be verified by Twilio).
+  const row = {
+    business_name: lead.business_name,
+    legal_name: lead.business_name,
+    category: lead.category,
+    city: lead.city,
+    website_url: lead.website_url,
+    phone_primary: lead.phone_e164,
+    phone_e164: lead.phone_e164,
+    phone_line_type: null,
+    phone_validation_status: "unverified",
+    sms_eligible: false,
+    email: lead.email,
+    verification_status: null,
+    data_quality_score: lead.website_url ? 85 : 80,
+    source: lead.source,
+    source_urls: { source_table: lead.source_table, source_id: lead.source_id, promoted_at: now, run_id: ctx.run_id },
+    last_enriched_at: now,
+    last_action_at: now,
+    outreach_status: "none",
+  };
+  const { data: inserted, error: insErr } = await supabase
+    .from("verified_contractor_prospects")
+    .insert(row)
+    .select("id,business_name,city,category,phone_e164,phone_line_type,verification_status,verified_at,sms_eligibility_tier,sms_eligible,outreach_status,source,website_url,email")
+    .maybeSingle();
+  if (insErr) {
+    await emitEvent(supabase, ctx, {
+      business_name: lead.business_name,
+      city: lead.city,
+      category: lead.category,
+      source: lead.source,
+      stage: "rejected",
+      reason_code: "promotion_insert_failed",
+      reason_text: insErr.message,
+      metadata: { pg_code: (insErr as any).code ?? null, phone_e164: lead.phone_e164 },
+    });
+    return null;
+  }
+  if (!inserted?.id) return null;
+  await emitEvent(supabase, ctx, {
+    prospect_id: inserted.id,
+    business_name: inserted.business_name,
+    city: inserted.city,
+    category: inserted.category,
+    source: inserted.source,
+    stage: "promoted",
+    metadata: { existing: false, source_table: lead.source_table, source_id: lead.source_id },
+  });
+  return { ...(inserted as any), is_new: true };
+}
+
+// ---------------------------------------------------------------------------
+// Verification-reuse gate — do NOT re-spend Twilio Lookup on valid records.
+// ---------------------------------------------------------------------------
+function verificationIsFresh(p: PromotedProspect): boolean {
+  if (p.verification_status !== "verified") return false;
+  if (!p.phone_line_type || !["mobile", "landline", "voip"].includes(p.phone_line_type)) return false;
+  if (!p.verified_at) return false;
+  const age = Date.now() - new Date(p.verified_at).getTime();
+  return age < VERIFICATION_FRESHNESS_MS;
+}
+
+// ---------------------------------------------------------------------------
+// Historical-destination exclusion — check BEFORE any paid Twilio Lookup.
+// ---------------------------------------------------------------------------
+async function checkHistoricalExclusion(
+  supabase: any,
+  p: PromotedProspect,
+): Promise<{ excluded: true; reason_code: string; source: string } | { excluded: false }> {
+  // Source A — verified_contractor_prospects with outreach already sent (other rows / same row previously)
+  const { data: prior } = await supabase
+    .from("verified_contractor_prospects")
+    .select("id,outreach_status,outreach_sent_at,outreach_twilio_sid")
+    .eq("phone_e164", p.phone_e164)
+    .neq("outreach_status", "none")
+    .neq("id", p.id)
+    .limit(1)
+    .maybeSingle();
+  if (prior?.id) return { excluded: true, reason_code: "history_prospect_contacted", source: `verified_contractor_prospects#${prior.id}` };
+  // Also: this prospect itself already sent
+  if (p.outreach_status && p.outreach_status !== "none") {
+    return { excluded: true, reason_code: "history_prospect_contacted", source: `verified_contractor_prospects#${p.id}(self)` };
+  }
+  // Source B — contractor_leads.last_sms_at IS NOT NULL for this destination
+  const { data: leadHit } = await supabase
+    .from("contractor_leads")
+    .select("id,last_sms_at")
+    .eq("phone_e164", p.phone_e164)
+    .not("last_sms_at", "is", null)
+    .limit(1)
+    .maybeSingle();
+  if (leadHit?.id) return { excluded: true, reason_code: "history_contractor_leads", source: `contractor_leads#${leadHit.id}` };
+  // Source C — outreach_delivery_logs (best-effort; skip silently if absent)
+  try {
+    const { data: logHit } = await supabase
+      .from("outreach_delivery_logs")
+      .select("id")
+      .eq("phone_e164", p.phone_e164)
+      .limit(1)
+      .maybeSingle();
+    if (logHit?.id) return { excluded: true, reason_code: "history_delivery_logs", source: `outreach_delivery_logs#${logHit.id}` };
+  } catch (_e) {
+    // Table may be named differently in some envs — non-fatal.
+  }
+  return { excluded: false };
+}
+
+// ---------------------------------------------------------------------------
+// Twilio Lookup via existing shared function (no direct provider call here).
+// ---------------------------------------------------------------------------
+async function callTwilioLookup(url: string, serviceKey: string, phone: string): Promise<{
+  ok: boolean;
+  phone_type: "mobile" | "landline" | "voip" | "unknown";
+  raw?: unknown;
+  error?: string;
+}> {
+  try {
+    const r = await fetch(`${url}/functions/v1/twilio-lookup-phone`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
+      body: JSON.stringify({ phone, force: true }),
+    });
+    const body = await r.json().catch(() => ({}));
+    if (!r.ok || body?.error) {
+      return { ok: false, phone_type: "unknown", raw: body, error: String(body?.error ?? `HTTP ${r.status}`) };
+    }
+    const type = String(body?.phone_type ?? "unknown");
+    const normalized = (["mobile", "landline", "voip"].includes(type) ? type : "unknown") as "mobile" | "landline" | "voip" | "unknown";
+    return { ok: true, phone_type: normalized, raw: body };
+  } catch (e) {
+    return { ok: false, phone_type: "unknown", error: String((e as Error).message ?? e) };
+  }
+}
+
+function mapEligibility(phone_type: "mobile" | "landline" | "voip" | "unknown"): {
+  sms_eligibility_tier: string | null;
+  sms_eligible: boolean;
+  verification_status: string;
+} {
+  switch (phone_type) {
+    case "mobile":
+      return { sms_eligibility_tier: "A", sms_eligible: true, verification_status: "verified" };
+    case "voip":
+      return { sms_eligibility_tier: "C", sms_eligible: true, verification_status: "verified" };
+    case "landline":
+      return { sms_eligibility_tier: "D", sms_eligible: false, verification_status: "verified" };
+    default:
+      return { sms_eligibility_tier: null, sms_eligible: false, verification_status: "unknown" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Deno.serve
+// ---------------------------------------------------------------------------
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -288,106 +555,423 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(url, serviceKey);
 
-    const events: Array<Record<string, unknown>> = [];
-    const repairPromise = detectAndRepairDeadQueue(supabase).catch((e) => ({ alerts: 0, repaired: 0, error: String(e?.message ?? e) }));
+    // ------------------------------------------------------------------
+    // Build run context
+    // ------------------------------------------------------------------
+    const campaign = body.campaign ?? null;
+    const catNorm = campaign?.category ? normalizeCategoryInput(campaign.category) : null;
+    const ctx: RunContext = {
+      run_id: (typeof body.run_id === "string" && body.run_id) || crypto.randomUUID(),
+      mode: campaign ? "targeted" : "autonomous",
+      city: campaign?.city ? String(campaign.city) : null,
+      category: catNorm?.bucket ?? null,
+      category_synonyms: catNorm?.synonyms ?? null,
+      dry_run: dryRun,
+      limit: Math.max(1, Math.min(Number(campaign?.limit ?? SEND_LIMIT_DEFAULT), 50)),
+    };
 
-    // 1. Enqueue verified prospects that aren't in the queue yet
-    const { data: newProspects } = await supabase
-      .from("verified_contractor_prospects")
-      .select("id, sms_eligibility_tier, verification_status")
-      .eq("verification_status", "verified")
-      .eq("outreach_status", "none")
-      .limit(50);
-
-    for (const p of newProspects ?? []) {
-      const state = ["A", "B", "C"].includes(p.sms_eligibility_tier ?? "")
-        ? "ready_sms"
-        : p.sms_eligibility_tier === "D"
-          ? "ready_email"
-          : "verified";
-      const { error } = await supabase.from("acquisition_queue").upsert({
-        prospect_id: p.id, state, channel: state === "ready_sms" ? "sms" : state === "ready_email" ? "email" : null,
-        next_action_at: new Date().toISOString(),
-      }, { onConflict: "prospect_id", ignoreDuplicates: false });
-      if (!error) {
-        events.push({ prospect_id: p.id, action: "enqueued", state });
-        await emitEvent(supabase, { prospect_id: p.id, stage: state, source: "manual", metadata: { worker: true } });
+    // ------------------------------------------------------------------
+    // Autonomous side-tasks (dead-queue repair + queue enqueue) — skipped
+    // in dry-run to keep zero writes.
+    // ------------------------------------------------------------------
+    let repair: any = null;
+    if (!dryRun) {
+      repair = await detectAndRepairDeadQueue(supabase).catch((e) => ({ alerts: 0, repaired: 0, error: String(e?.message ?? e) }));
+      // Enqueue already-verified prospects that aren't in the queue yet
+      const { data: newProspects } = await supabase
+        .from("verified_contractor_prospects")
+        .select("id, sms_eligibility_tier, verification_status")
+        .eq("verification_status", "verified")
+        .eq("outreach_status", "none")
+        .limit(50);
+      for (const p of newProspects ?? []) {
+        const state = ["A", "B", "C"].includes(p.sms_eligibility_tier ?? "")
+          ? "ready_sms"
+          : p.sms_eligibility_tier === "D"
+            ? "ready_email"
+            : "verified";
+        await supabase.from("acquisition_queue").upsert(
+          {
+            prospect_id: p.id,
+            state,
+            channel: state === "ready_sms" ? "sms" : state === "ready_email" ? "email" : null,
+            next_action_at: new Date().toISOString(),
+          },
+          { onConflict: "prospect_id", ignoreDuplicates: false },
+        );
       }
     }
 
-    // 1B. Source health + fallback acquisition. Real external scrapers are not wired here; mark source down instead of silent zero.
-    const fallback: Record<string, number> = {};
-    for (const source of SOURCES) {
-      if (source === "manual") continue;
-      const { data: health } = await supabase.from("acquisition_source_health").select("source,status,last_run_at,found_24h,consecutive_zero_runs").eq("source", source).maybeSingle();
-      const stale = !health?.last_run_at || new Date(health.last_run_at).getTime() < Date.now() - 24 * 60 * 60 * 1000;
-      if (!health || stale || Number(health.found_24h ?? 0) === 0) {
-        await recordSourceRun(supabase, normalizeSource(source), 0, { code: "scraper_down", message: "Aucun scraper externe n'a produit de leads; fallback lancé" });
-        fallback[source] = await runFallbackAcquisition(supabase, normalizeSource(source), 8);
-      }
-    }
+    // ------------------------------------------------------------------
+    // Fair-queue selection
+    // ------------------------------------------------------------------
+    const take = ctx.mode === "targeted" ? ctx.limit : FAIR_SELECT_BATCH;
+    const candidates = await selectFairCandidates(supabase, ctx, take);
 
-    // 2. Count ready-to-send
-    const { count: readySms } = await supabase
-      .from("acquisition_queue")
-      .select("id", { count: "exact", head: true })
-      .eq("state", "ready_sms");
+    const counts = {
+      matched: candidates.length,
+      already_promoted: 0,
+      already_verified: 0,
+      verification_reused: 0,
+      lookup_required: 0,
+      twilio_lookups_executed: 0,
+      historically_excluded: 0,
+      missing_or_invalid_phone: 0,
+      potentially_sms_eligible: 0,
+      quarantined: 0,
+      lookup_failed: 0,
+      tier_A_mobile: 0,
+      other_eligible: 0,
+    };
+    const preparedIds: string[] = [];
+    const perProspect: any[] = [];
 
+    // ------------------------------------------------------------------
+    // DRY RUN — inspect only, no writes, no billable calls
+    // ------------------------------------------------------------------
     if (dryRun) {
-      const repair = await repairPromise;
-      return jsonResponse({ ok: true, dry_run: true, events, fallback, repair, ready_sms: readySms ?? 0 });
+      for (const lead of candidates) {
+        const { data: existing } = await supabase
+          .from("verified_contractor_prospects")
+          .select("id,verification_status,phone_line_type,verified_at,outreach_status,sms_eligibility_tier")
+          .eq("phone_e164", lead.phone_e164)
+          .maybeSingle();
+
+        // Historical exclusion
+        const histCheck = await checkHistoricalExclusion(supabase, {
+          id: existing?.id ?? "",
+          business_name: lead.business_name,
+          city: lead.city,
+          category: lead.category,
+          phone_e164: lead.phone_e164,
+          phone_line_type: existing?.phone_line_type ?? null,
+          verification_status: existing?.verification_status ?? null,
+          verified_at: existing?.verified_at ?? null,
+          sms_eligibility_tier: existing?.sms_eligibility_tier ?? null,
+          sms_eligible: null,
+          outreach_status: existing?.outreach_status ?? null,
+          source: lead.source,
+          website_url: lead.website_url,
+          email: lead.email,
+          is_new: !existing?.id,
+        });
+
+        if (existing?.id) counts.already_promoted += 1;
+
+        let bucket: string;
+        if (histCheck.excluded) {
+          counts.historically_excluded += 1;
+          bucket = "historically_excluded";
+        } else if (existing?.id && verificationIsFresh({
+          id: existing.id,
+          business_name: lead.business_name,
+          city: lead.city,
+          category: lead.category,
+          phone_e164: lead.phone_e164,
+          phone_line_type: existing.phone_line_type,
+          verification_status: existing.verification_status,
+          verified_at: existing.verified_at,
+          sms_eligibility_tier: existing.sms_eligibility_tier,
+          sms_eligible: null,
+          outreach_status: existing.outreach_status,
+          source: lead.source,
+          website_url: lead.website_url,
+          email: lead.email,
+          is_new: false,
+        })) {
+          counts.already_verified += 1;
+          counts.verification_reused += 1;
+          if (existing.phone_line_type === "mobile") {
+            counts.tier_A_mobile += 1;
+            counts.potentially_sms_eligible += 1;
+          } else if (existing.phone_line_type === "voip") {
+            counts.other_eligible += 1;
+            counts.potentially_sms_eligible += 1;
+          }
+          bucket = "verification_reused";
+        } else {
+          counts.lookup_required += 1;
+          counts.potentially_sms_eligible += 1; // estimate
+          bucket = "lookup_required";
+        }
+
+        perProspect.push({
+          business_name: lead.business_name,
+          city: lead.city,
+          category: lead.category,
+          phone_e164_masked: lead.phone_e164.replace(/(\+\d{4})\d+(\d{2})/, "$1***$2"),
+          existing_prospect_id: existing?.id ?? null,
+          bucket,
+          historical_reason: histCheck.excluded ? (histCheck as any).reason_code : null,
+          historical_source: histCheck.excluded ? (histCheck as any).source : null,
+          phone_line_type: existing?.phone_line_type ?? null,
+          verified_at: existing?.verified_at ?? null,
+        });
+      }
+
+      await emitEvent(supabase, ctx, {
+        stage: "dry_run_preview",
+        metadata: { counts, sample_size: perProspect.length, notes: "potentially_sms_eligible is an estimate until Twilio Lookup runs" },
+      });
+
+      return jsonResponse({
+        ok: true,
+        dry_run: true,
+        run_id: ctx.run_id,
+        mode: ctx.mode,
+        city: ctx.city,
+        category: ctx.category,
+        limit: ctx.limit,
+        counts,
+        prospects: perProspect,
+      });
     }
 
-    // 3. Trigger SMS batch if any ready
+    // ------------------------------------------------------------------
+    // LIVE run — promote → historical check → verify (reuse or Lookup) → send
+    // ------------------------------------------------------------------
+    if (candidates.length === 0) {
+      await emitEvent(supabase, ctx, {
+        stage: "worker_cycle",
+        reason_code: "fair_selection_empty",
+        metadata: { counts, repair, mode: ctx.mode },
+      });
+      return jsonResponse({ ok: true, run_id: ctx.run_id, mode: ctx.mode, counts, repair, prospects: [], sms_result: null });
+    }
+
+    // Emit queued event per candidate for UI stage strip
+    for (const lead of candidates) {
+      await emitEvent(supabase, ctx, {
+        business_name: lead.business_name,
+        city: lead.city,
+        category: lead.category,
+        source: lead.source,
+        stage: "queued",
+        metadata: { source_table: lead.source_table, source_id: lead.source_id },
+      });
+    }
+
+    for (const lead of candidates) {
+      const promoted = await promoteProspect(supabase, ctx, lead);
+      if (!promoted) {
+        counts.quarantined += 1;
+        continue;
+      }
+      if (!promoted.is_new) counts.already_promoted += 1;
+
+      // Historical exclusion FIRST (before any paid Lookup)
+      const hist = await checkHistoricalExclusion(supabase, promoted);
+      if (hist.excluded) {
+        counts.historically_excluded += 1;
+        await supabase
+          .from("verified_contractor_prospects")
+          .update({
+            outreach_status: promoted.outreach_status === "none" ? "excluded" : promoted.outreach_status,
+            rejection_reason_code: hist.reason_code,
+            rejection_reason_text: hist.source,
+            last_action_at: new Date().toISOString(),
+          })
+          .eq("id", promoted.id);
+        await emitEvent(supabase, ctx, {
+          prospect_id: promoted.id,
+          business_name: promoted.business_name,
+          city: promoted.city,
+          category: promoted.category,
+          source: promoted.source,
+          stage: "excluded_history",
+          reason_code: hist.reason_code,
+          reason_text: hist.source,
+          metadata: {},
+        });
+        perProspect.push({ id: promoted.id, business_name: promoted.business_name, outcome: "excluded_history", reason: hist.reason_code });
+        continue;
+      }
+
+      // Verification reuse gate
+      if (verificationIsFresh(promoted)) {
+        counts.verification_reused += 1;
+        counts.already_verified += 1;
+        if (promoted.phone_line_type === "mobile") counts.tier_A_mobile += 1;
+        else counts.other_eligible += 1;
+        await emitEvent(supabase, ctx, {
+          prospect_id: promoted.id,
+          business_name: promoted.business_name,
+          city: promoted.city,
+          category: promoted.category,
+          source: promoted.source,
+          stage: "verification_reused",
+          metadata: {
+            phone_line_type: promoted.phone_line_type,
+            sms_eligibility_tier: promoted.sms_eligibility_tier,
+            verified_at: promoted.verified_at,
+          },
+        });
+        if (promoted.sms_eligible && ["A", "B", "C"].includes(promoted.sms_eligibility_tier ?? "")) {
+          preparedIds.push(promoted.id);
+        }
+        perProspect.push({ id: promoted.id, business_name: promoted.business_name, outcome: "verification_reused", tier: promoted.sms_eligibility_tier });
+        continue;
+      }
+
+      // Fresh Twilio Lookup required
+      counts.lookup_required += 1;
+      const lookup = await callTwilioLookup(url, serviceKey, promoted.phone_e164);
+      counts.twilio_lookups_executed += 1;
+
+      if (!lookup.ok) {
+        counts.lookup_failed += 1;
+        counts.quarantined += 1;
+        await supabase
+          .from("verified_contractor_prospects")
+          .update({
+            verification_status: "lookup_failed",
+            phone_validation_status: "lookup_failed",
+            sms_eligible: false,
+            sms_eligibility_tier: null,
+            rejection_reason_code: "lookup_provider_failed",
+            rejection_reason_text: (lookup.error ?? "twilio lookup failed").slice(0, 300),
+            last_action_at: new Date().toISOString(),
+          })
+          .eq("id", promoted.id);
+        await emitEvent(supabase, ctx, {
+          prospect_id: promoted.id,
+          business_name: promoted.business_name,
+          city: promoted.city,
+          category: promoted.category,
+          source: promoted.source,
+          stage: "lookup_failed",
+          reason_code: "lookup_provider_failed",
+          reason_text: lookup.error ?? null,
+          metadata: { raw: lookup.raw ?? null },
+        });
+        perProspect.push({ id: promoted.id, business_name: promoted.business_name, outcome: "lookup_failed" });
+        continue;
+      }
+
+      const elig = mapEligibility(lookup.phone_type);
+      const nowIso = new Date().toISOString();
+      await supabase
+        .from("verified_contractor_prospects")
+        .update({
+          phone_line_type: lookup.phone_type,
+          phone_validation_status: lookup.phone_type === "unknown" ? "unverified" : "verified",
+          sms_eligible: elig.sms_eligible,
+          sms_eligibility_tier: elig.sms_eligibility_tier,
+          verification_status: elig.verification_status,
+          verified_at: elig.verification_status === "verified" ? nowIso : promoted.verified_at,
+          last_enriched_at: nowIso,
+          last_action_at: nowIso,
+        })
+        .eq("id", promoted.id);
+
+      if (lookup.phone_type === "unknown") {
+        counts.quarantined += 1;
+        await emitEvent(supabase, ctx, {
+          prospect_id: promoted.id,
+          business_name: promoted.business_name,
+          city: promoted.city,
+          category: promoted.category,
+          source: promoted.source,
+          stage: "quarantined",
+          reason_code: "lookup_unknown_type",
+          metadata: { raw: lookup.raw ?? null },
+        });
+        perProspect.push({ id: promoted.id, business_name: promoted.business_name, outcome: "quarantined" });
+        continue;
+      }
+
+      await emitEvent(supabase, ctx, {
+        prospect_id: promoted.id,
+        business_name: promoted.business_name,
+        city: promoted.city,
+        category: promoted.category,
+        source: promoted.source,
+        stage: "verified",
+        metadata: { phone_line_type: lookup.phone_type, sms_eligibility_tier: elig.sms_eligibility_tier },
+      });
+
+      if (lookup.phone_type === "mobile") counts.tier_A_mobile += 1;
+      else counts.other_eligible += 1;
+
+      if (elig.sms_eligible && ["A", "B", "C"].includes(elig.sms_eligibility_tier ?? "")) {
+        preparedIds.push(promoted.id);
+      }
+      perProspect.push({ id: promoted.id, business_name: promoted.business_name, outcome: "verified", tier: elig.sms_eligibility_tier });
+    }
+
+    // ------------------------------------------------------------------
+    // Auto-send — scoped to prospect_ids prepared in THIS run only
+    // ------------------------------------------------------------------
     let smsResult: any = null;
-    if ((readySms ?? 0) > 0) {
+    if (preparedIds.length > 0) {
+      for (const pid of preparedIds) {
+        await emitEvent(supabase, ctx, { prospect_id: pid, stage: "sms_attempted", metadata: {} });
+      }
       const r = await fetch(`${url}/functions/v1/send-verified-batch`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
-        body: JSON.stringify({ dry_run: false, limit: 10 }),
+        body: JSON.stringify({ dry_run: false, limit: preparedIds.length, prospect_ids: preparedIds, run_id: ctx.run_id }),
       });
       smsResult = await r.json().catch(() => ({}));
 
-      // Mark queued prospects as contacted based on send results
       if (smsResult?.results) {
-        for (const r of smsResult.results) {
-          if (r.status === "sent") {
-            await supabase.from("acquisition_queue")
+        for (const rr of smsResult.results) {
+          if (rr.status === "sent") {
+            await supabase
+              .from("acquisition_queue")
               .update({ state: "contacted", attempt_count: 1, updated_at: new Date().toISOString() })
-              .eq("prospect_id", r.id);
-          } else if (r.status === "failed") {
-            await supabase.from("acquisition_queue")
-              .update({ state: "failed", last_error: String(r.error).slice(0, 500), updated_at: new Date().toISOString() })
-              .eq("prospect_id", r.id);
-            await supabase.from("acquisition_repair_log").insert({
-              prospect_id: r.id, step: "sms_send", error: String(r.error).slice(0, 500),
-              root_cause: "twilio_send_failed", repair_attempt: 1, repair_result: "failed",
+              .eq("prospect_id", rr.id);
+            await emitEvent(supabase, ctx, {
+              prospect_id: rr.id,
+              stage: "sms_sent",
+              metadata: { sid: rr.sid ?? null, to_masked: rr.to ? String(rr.to).replace(/(\+\d{4})\d+(\d{2})/, "$1***$2") : null },
+            });
+          } else if (rr.status === "failed") {
+            await supabase
+              .from("acquisition_queue")
+              .update({ state: "failed", last_error: String(rr.error ?? "").slice(0, 500), updated_at: new Date().toISOString() })
+              .eq("prospect_id", rr.id);
+            await emitEvent(supabase, ctx, {
+              prospect_id: rr.id,
+              stage: "failed",
+              reason_code: "sms_send_failed",
+              reason_text: String(rr.error ?? "").slice(0, 300),
+              metadata: {},
+            });
+          } else if (rr.skipped || rr.skipped_by_gate) {
+            await emitEvent(supabase, ctx, {
+              prospect_id: rr.id,
+              stage: "excluded_history",
+              reason_code: String(rr.skipped ?? rr.skipped_by_gate ?? "gate_blocked"),
+              metadata: {},
             });
           }
         }
       }
     }
 
-    // Emit worker cycle summary event
-    const repair = await repairPromise;
-    await supabase.from("acquisition_pipeline_events").insert({
+    // Worker cycle summary
+    await emitEvent(supabase, ctx, {
       stage: "worker_cycle",
       metadata: {
-        enqueued: events.length,
-        fallback,
+        counts,
+        prepared_count: preparedIds.length,
+        sms_result_summary: smsResult ? { sent: smsResult.sent ?? 0, processed: smsResult.processed ?? 0 } : null,
         repair,
-        ready_sms: readySms ?? 0,
-        sms_result: smsResult,
       },
     });
 
     return jsonResponse({
       ok: true,
-      enqueued: events.length,
-      fallback,
-      repair,
-      ready_sms: readySms ?? 0,
+      run_id: ctx.run_id,
+      mode: ctx.mode,
+      city: ctx.city,
+      category: ctx.category,
+      counts,
+      prepared_prospect_ids: preparedIds,
+      prospects: perProspect,
       sms_result: smsResult,
+      repair,
     });
   } catch (e) {
     console.error(`${FUNCTION_NAME} failed`, e);
