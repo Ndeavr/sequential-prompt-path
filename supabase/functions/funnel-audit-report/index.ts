@@ -143,10 +143,20 @@ Deno.serve(async (req) => {
     ];
 
     const anchor = raw[0].count || 1;
+    // Stages whose count is orthogonal (not a subset of previous stage). They
+    // should not compute conversion/drop from the linear funnel, and the next
+    // stage must skip over them when computing its own denominator.
+    const orthogonalKeys = new Set(["excluded_aggregators", "email_present"]);
     const stages: Stage[] = raw.map((r, i) => {
-      const prev = i === 0 ? null : raw[i - 1].count;
-      const convFromPrev = prev && prev > 0 ? Math.round((r.count / prev) * 1000) / 10 : null;
-      const dropFromPrev = prev && prev > 0 ? Math.round(((prev - r.count) / prev) * 1000) / 10 : null;
+      let prev: number | null = null;
+      for (let j = i - 1; j >= 0; j--) {
+        if (orthogonalKeys.has(raw[j].key)) continue;
+        prev = raw[j].count;
+        break;
+      }
+      const isOrthogonal = orthogonalKeys.has(r.key);
+      const convFromPrev = !isOrthogonal && prev && prev > 0 ? Math.round((r.count / prev) * 1000) / 10 : null;
+      const dropFromPrev = !isOrthogonal && prev && prev > 0 ? Math.round(((prev - r.count) / prev) * 1000) / 10 : null;
       return {
         key: r.key,
         label: r.label,
@@ -157,6 +167,7 @@ Deno.serve(async (req) => {
         top_error: r.err,
       };
     });
+
 
     // Biggest drop-off (skip stage 0 and stages where prev is 0)
     let biggest: { key: string; label: string; drop_pct: number; from: number; to: number } | null = null;
