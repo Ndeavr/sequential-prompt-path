@@ -1,49 +1,145 @@
-## Root cause
+## Objective
 
-The canary preview cards show empty `city`, `category`, and `landing_url` because `previewCanaryBatch` in `supabase/functions/funnel-audit-report/index.ts` only selects `company_name`, `mobile_phone`, `phone` from `v_commercial_send_eligibility` and CASL evidence — never joins `contractor_leads` for city/category and never resolves a public landing URL. The eligibility view + `contractor_leads` already carry that data (or can derive it), and `pro-landing-resolve` already generates `/pro/:slug` pages. Nothing new to build — repair the preview + add a per-lead readiness gate reusing the existing `commercial-send-gate` and `pro-landing-resolve`.
+Repair the existing autonomous acquisition pipeline so every qualified scraped prospect flows automatically through promotion → verification → eligibility → outreach. The city × category launcher is an added operator control on top — never the only path.
 
-## Scope (repair-only, no new tables/routes/functions)
+## Root cause recap
 
-### 1. Enrich canary preview response
-File: `supabase/functions/funnel-audit-report/index.ts` → `previewCanaryBatch`
-- Left-join `contractor_leads` (by `contractor_lead_id`) to pull `city`, `category`/`trade`, `slug`, `google_place_id`, `postal_code`, `address`.
-- Derive missing `city` in-function from postal code / address / Google Place cache (read-only fallbacks already available on the row).
-- Derive missing `category` from `trade` → UNPRO category mapping already used by `acquisition-queue-worker`.
-- Compute `landing_url = ${SITE_URL}/pro/${slug}` when slug exists; otherwise mark `landing_status: "pending_generation"` (do not write here — surfaced to UI as a repair action).
-- Add per-lead `readiness`: `{ status: "ready" | "missing_landing" | "missing_city" | "missing_category" | "missing_phone" | "casl_pending", checks: { phone, casl, city, category, landing } }`.
-- Keep the existing `disclaimer` and NO-SEND behavior.
+1. `acquisition-queue-worker` fallback selection uses global `order(created_at desc).limit(20)` → starves older Laval / plombier records.
+2. Promotion into `verified_contractor_prospects` writes `phone_line_type='unknown'` + no `sms_eligibility_tier`, and sets `verification_status='verified'` unconditionally → false positive verification and empty send queue.
+3. `twilio-lookup-phone` is wired only to `contacts`, never called on newly promoted prospects.
+4. `send-verified-batch` has no way to be scoped to a specific run's prospect IDs.
+5. No `run_id` correlation — Admin UI cannot render a real per-run funnel.
 
-### 2. Add read-only aggregate to the audit response
-Same file, top-level report:
-- `canary_readiness`: `{ eligible, ready_now, missing_city, missing_category, missing_landing, missing_phone, ready_pct }` computed from the same eligibility view (bounded, e.g. top 100 candidates) — reuses existing query, no new table.
+## Plan
 
-### 3. Add opt-in "Auto-repair missing landings" action (reuses existing generator)
-Same file, guarded by `?action=repair_landings&limit=N` (admin JWT required, N ≤ 10, no SMS):
-- For each eligible lead with no slug, call the existing `pro-landing-resolve` (or the existing slug-generation path it uses) to produce/persist a slug on `contractor_leads`.
-- Return before/after readiness counts. Purely idempotent, no outreach side effects.
+### 1. Autonomous mode — fair queue selection (primary repair)
 
-### 4. Admin UI wiring (no new page)
-File: `src/pages/admin/AdminFunnelAudit.tsx` + `src/hooks/useFunnelAudit.ts`
-- Render the enriched preview fields: City, Category, Landing (as clickable URL when present, "Génération requise" pill when missing), and a per-card readiness chip (🟢 Ready / 🟠 Missing landing / 🔴 Missing phone …) with a checklist of the 5 checks.
-- Replace all `—` placeholders with explicit `Manquant`, `En cours d'enrichissement`, `Généré automatiquement`, or `Vérifié`.
-- Add two buttons next to "Aperçu 3 prospects réels":
-  - "Auto-réparer les landings manquants (max 10)" → calls the new `?action=repair_landings` mode, re-fetches preview.
-  - "Valider la production (3 prospects)" → runs the same eligibility fetch and displays a single `READY TO SEND` / `BLOCKED: …` verdict per lead (uses existing `commercial-send-gate` in dry-run — no send).
-- Show the `canary_readiness` aggregate as a compact stat strip above the preview cards.
+In `acquisition-queue-worker`, replace the current fallback:
+- Drop global `order(created_at desc).limit(20)`.
+- Select unprocessed eligible prospects using existing status fields, prioritizing in this order:
+  1. Incomplete-but-eligible records (`verification_status IS NULL` OR stale) with a valid `phone_e164`.
+  2. Oldest never-attempted records (`outreach_status='none'` OR NULL) — `order(created_at asc)`.
+  3. Retryable failures (`acquisition_repair_log` with `repair_result='failed'` and attempts < 3) — respecting existing backoff.
+- Apply the same normalization, exclusion (555, missing category, historical destinations), promotion and verification path used by targeted mode. One code path.
 
-### 5. No changes to
-- `contractor_leads` schema, RLS, cron jobs, Twilio/Stripe/Resend integrations, sender code, sitemaps, SEO, AI corpus, `/pro/:slug` runtime.
-- No new tables, no new edge functions, no new routes.
+### 2. Targeted campaign mode — same code path, scoped
 
-## Verification (real data only, no SMS)
+Accept:
+```json
+{ "campaign": { "city": "Laval", "category": "plumber", "limit": 25 }, "dry_run": false }
+```
+- Pre-filter the same selection query with city + normalized category before the shared processing loop runs. No divergent logic.
 
-1. `GET /functions/v1/funnel-audit-report?canary_preview=1&canary_limit=3` — every card returns non-null `city`, `category`, `landing_url` OR an explicit `readiness.status` explaining the gap.
-2. `canary_readiness` counts match hand-tallied query on `v_commercial_send_eligibility` (spot check 3 rows via `supabase--read_query`).
-3. `?action=repair_landings&limit=3` — 3 previously-missing slugs become present; preview re-run shows their `landing_url` populated and `HTTP 200` on `/pro/:slug` (curl check via exec).
-4. `commercial-send-gate` dry-run on the same 3 leads returns `allowed: true` → UI shows `READY TO SEND`.
-5. Admin UI at 390 / 984 / 1280 px: chips, checklist, and buttons render without overflow; disclaimer "NO SMS was sent" remains.
+### 3. Category normalization
 
-## Deliverable
-Plain enriched canary that tells the operator exactly which real contractors are ready to send now and which single field is blocking each of the rest — with a one-click, non-outreach landing repair that reuses `pro-landing-resolve`. First real $1 send stays a manual, explicit action taken from `/admin/acquisition-pipeline` after readiness reaches 🟢.
+Build a small normalizer inside the worker mapping the operator input to all canonical equivalents present in production. First run a live inspection of distinct `contractor_leads.category_primary` and `.trade` values, then build the map. Seed:
+- `plumber` ↔ `plumbing`, `plombier`, `plomberie`
+- `roofing` ↔ `toiture`, `couvreur`
+- `electrician` ↔ `électricien`, `electricite`, `electrical`
+- (extend for each `TARGET_CATEGORIES` entry after inspection)
+Matching: `.or("category_primary.in.(...)", "trade.in.(...)")` case-insensitive via `ilike` on lowered set. Applied only to targeted mode; autonomous mode processes all.
 
-Not in this run (explicit, per your P0/P1 boundary): the real end-to-end $1 send + Stripe activation walk-through (task 8). That requires the readiness gate above to first show ≥1 🟢 lead in production; I'll execute it as the next step once you approve this repair.
+### 4. Idempotent promotion
+
+`promoteProspect(lead)`:
+- Compute canonical dedup key: normalized `phone_e164` + slugified `company_name`.
+- Look up existing row in `verified_contractor_prospects` by that key.
+- If exists: **update only null/stale fields** (`website_url`, `city`, `category` if null, `updated_at`). Never overwrite `casl_evidence_id`, `verification_status`, `verification_verified_at`, `outreach_status`, `outreach_history`, `sms_eligibility_tier`, `phone_line_type` when already set.
+- If new: insert with `verification_status=null` (not `verified`).
+- Emit `promoted` event exactly once per run (dedup by `(run_id, prospect_id)`).
+
+### 5. Verification reuse gate — do not spend Twilio credits on valid records
+
+Before calling `twilio-lookup-phone`, evaluate:
+```
+reuseVerification =
+  phone_e164 present AND unchanged since verification
+  AND phone_line_type ∈ {mobile, landline, voip}
+  AND verification_status = 'verified'
+  AND verified_at within existing freshness window (reuse the same constant already used by the send gate; if none is defined, use 90 days matching twilio-lookup-phone contacts cache)
+```
+- If `reuseVerification` → skip Lookup, emit `verification_reused` event, proceed to eligibility mapping using stored fields.
+- Otherwise call `twilio-lookup-phone` (server-to-server) and apply eligibility mapping.
+
+### 6. Correct eligibility mapping
+
+After a Lookup call (or reuse):
+- `mobile` → `sms_eligibility_tier='A'`, `sms_eligible=true`, `verification_status='verified'`, `verified_at=now()`.
+- `voip` → `tier='C'` only if current send-gate policy allows (read the gate constant; if it disallows, treat as quarantine); `sms_eligible=false` unless allowed.
+- `landline` → `tier='D'`, `sms_eligible=false` (email path).
+- `unknown` → quarantine: `verification_status='unknown'`, `sms_eligible=false`, do NOT set `verified`.
+- Lookup failure → quarantine with `verification_status='lookup_failed'` and `last_error_code`/`last_error_message` stored; mark `retryable=true` if provider returned a transient error, else false.
+Store provider raw result in `metadata` on `acquisition_pipeline_events` (never in Admin UI card).
+
+### 7. Historical-destination exclusion before paid Lookup
+
+Before Lookup, cross-check normalized `phone_e164` against:
+- `outreach_delivery_logs` (any status),
+- `contractor_leads.last_sms_at IS NOT NULL`,
+- `verified_contractor_prospects.outreach_status <> 'none'`.
+If any match → emit `excluded_history` with source, skip Lookup and skip send.
+The existing centralized `commercial-send-gate` remains the final authority before send; not bypassed, not duplicated.
+
+### 8. Dry-run contract (no writes, no billable calls)
+
+For `{ dry_run: true }`:
+- No insert into `verified_contractor_prospects`, no update to verification fields, no `twilio-lookup-phone` invocation (even cached — skip entirely), no SMS, no outreach history mutation.
+- Return counts: `matched`, `already_promoted`, `already_verified`, `lookup_required`, `historically_excluded`, `missing_or_invalid_phone`, `potentially_sms_eligible` (labeled `estimate=true`), `quarantined`.
+- Emit a single `dry_run_preview` event tagged with `run_id`.
+
+### 9. Scoped send
+
+Update `supabase/functions/send-verified-batch/index.ts`:
+- Accept optional `prospect_ids: string[]`. When present, add `.in('id', prospect_ids)` to the selection; ignore global limit if smaller than array length; still preserve CASL gate, commercial-send-gate, throttling, quiet hours, dedup.
+- Return one result entry per supplied ID (including `skipped_by_gate` reasons) so the worker can update per-prospect state.
+Worker auto-send invocation always passes the exact `prospect_ids` collected in the current run — no unscoped calls after targeted mode.
+
+### 10. Single `run_id` correlation
+
+- Worker generates one `run_id = crypto.randomUUID()` at entry.
+- Every event insert includes `metadata.run_id`, `metadata.city`, `metadata.category`, `metadata.mode ∈ {autonomous, targeted}`.
+- Stages allowed to be written by the worker: `queued`, `promoted`, `verification_reused`, `verified`, `excluded_history`, `quarantined`, `sms_attempted`, `sms_sent`, `failed`.
+- Stages `delivered`, `clicked`, `activated`, `paid` remain owned by existing downstream webhooks (`twilio-status`, tracking-link click handler, Stripe webhook). The worker never marks them.
+- Worker returns `run_id` in JSON response.
+
+### 11. Admin UI — additive, non-breaking
+
+Edit existing `src/pages/admin/AdminAcquisitionPipeline.tsx` (+ its hook). Add one card `Campagne ciblée` beside current monitoring (nothing removed):
+- Selects: **Ville** (distinct `contractor_leads.city`), **Catégorie** (from `TARGET_CATEGORIES` with FR labels), numeric **Limite** (max 50).
+- Buttons: `Aperçu` (dry_run true) → shows preview counts + confirmation modal. `Lancer` (dry_run false) — enabled only if preview shows ≥1 potentially eligible or `verification_reused`.
+- Displays `run_id`, real counts, exclusion & failure reasons.
+- 12-stage strip fed from `acquisition_pipeline_events WHERE metadata->>'run_id' = $run_id`, each stage rendered as one of: `completed`, `processing`, `waiting_downstream` (for delivered/clicked/activated/paid), `failed`, `excluded`, `zero_eligible`. Never fake a success on a stage that has not emitted an event.
+- Refresh button + auto-poll every 15 s while `processing` or `waiting_downstream`.
+
+### 12. Production verification (real data, no mock)
+
+After deploy:
+1. Call worker `dry_run=true` autonomous → report counts, confirm older records now surface.
+2. Call worker `dry_run=true` `campaign={city:Laval,category:plumber,limit:25}` → return exact real counts.
+3. Confirm existing `verification_status='verified'` Laval plombiers show up as `verification_reused` and trigger 0 Twilio Lookup calls.
+4. If at least one destination legally proceeds, run `dry_run=false` for targeted mode; otherwise stop and report exact reason per prospect.
+5. Verify `/admin/acquisition-pipeline` renders the run correctly.
+6. Report: matched, promoted, verification_reused, twilio_lookups_executed, tier_A_mobile, other_eligible, historically_excluded, quarantined, sms_attempted, twilio_accepted, immediate_failures, pending_delivery.
+
+## Files to change
+
+- `supabase/functions/acquisition-queue-worker/index.ts` — fair selection, shared promotion loop, verification-reuse gate, run_id, correct eligibility mapping, scoped send call, dry-run contract, campaign filter.
+- `supabase/functions/send-verified-batch/index.ts` — accept `prospect_ids`, return per-ID result.
+- `src/pages/admin/AdminAcquisitionPipeline.tsx` (+ existing hook) — add campaign card + 12-stage strip; keep current monitoring intact.
+
+No new tables. No migration. No schema change. No new endpoints. Existing gate, webhooks and downstream workflows untouched.
+
+## Out of scope (explicit)
+
+Stripe, landing generator, SEO, sitemap, `contractor_leads` schema, scraping sources, CASL evidence capture, `commercial-send-gate` internals, downstream webhooks.
+
+## Success criteria (all required)
+
+- Autonomous processing advances older Laval/plombier records without operator input.
+- Targeted launcher works and reuses the same code path.
+- Existing valid verifications are reused; zero Twilio Lookup credit spent on those.
+- No SQL intervention required.
+- Rerunning the worker produces zero duplicates.
+- At least one real eligible Laval plumber receives a live SMS attempt, OR every matched prospect has a precise auditable exclusion reason with `run_id`.
+- Delivered / clicked / activated / paid are populated only by existing downstream webhooks.
+- `/admin/acquisition-pipeline` accurately displays the run.
