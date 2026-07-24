@@ -391,6 +391,74 @@ async function computeRealPipeline(admin: any, since: string) {
 }
 
 // ---------- Canary dry-run preview (NO SEND) ----------
+const SITE_URL = (Deno.env.get("SITE_URL") ?? "https://unpro.ca").replace(/\/+$/, "");
+
+// Minimal trade → UNPRO category mapping (reuses tokens already used in acquisition-queue-worker).
+function mapTradeToCategory(trade: string | null | undefined, primary: string | null | undefined): string | null {
+  const src = (primary || trade || "").toString().toLowerCase().trim();
+  if (!src) return null;
+  if (/plomb/.test(src)) return "plomberie";
+  if (/électr|electr/.test(src)) return "electricite";
+  if (/toit|couv/.test(src)) return "toiture";
+  if (/chauff|hvac|clim/.test(src)) return "chauffage-climatisation";
+  if (/peintur/.test(src)) return "peinture";
+  if (/cuisi/.test(src)) return "cuisine";
+  if (/salle.*bain|salle_de_bain|bath/.test(src)) return "salle-de-bain";
+  if (/renov|rénov/.test(src)) return "renovation-generale";
+  if (/construc/.test(src)) return "construction";
+  if (/paysag/.test(src)) return "paysagement";
+  if (/décks|deck|patio/.test(src)) return "terrasse-patio";
+  return src.replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || null;
+}
+
+function slugify(s: string): string {
+  return (s || "")
+    .toString()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 60);
+}
+
+async function enrichLead(admin: any, leadId: string) {
+  const { data } = await admin
+    .from("contractor_leads")
+    .select("id,business_name,company_name,city,trade,category_primary,postal_code,mobile_phone,phone")
+    .eq("id", leadId)
+    .maybeSingle();
+  return data;
+}
+
+async function findWarProspect(admin: any, phone: string | null, companyName: string | null) {
+  if (phone) {
+    const { data } = await admin
+      .from("war_prospects")
+      .select("id,slug,city,category,phone,company_name")
+      .eq("phone", phone).limit(1).maybeSingle();
+    if (data) return data;
+  }
+  if (companyName) {
+    const { data } = await admin
+      .from("war_prospects")
+      .select("id,slug,city,category,phone,company_name")
+      .eq("company_name", companyName).limit(1).maybeSingle();
+    if (data) return data;
+  }
+  return null;
+}
+
+function computeReadiness(enrich: {
+  phone: boolean; casl: boolean; city: boolean; category: boolean; landing: boolean;
+}) {
+  if (!enrich.phone) return "missing_phone";
+  if (!enrich.casl) return "casl_pending";
+  if (!enrich.city) return "missing_city";
+  if (!enrich.category) return "missing_category";
+  if (!enrich.landing) return "missing_landing";
+  return "ready";
+}
+
 async function previewCanaryBatch(admin: any, limit: number) {
   const { data: eligible, error } = await admin
     .from("v_commercial_send_eligibility")
@@ -402,28 +470,139 @@ async function previewCanaryBatch(admin: any, limit: number) {
     .limit(limit);
   if (error) return { error: error.message, would_send: [] };
 
-  const withEvidence = await Promise.all((eligible ?? []).map(async (l: any) => {
-    const { data: ev } = await admin
-      .from("casl_consent_evidence")
-      .select("source_url,source_type,retrieved_at,verification_method")
-      .eq("contractor_lead_id", l.contractor_lead_id)
-      .eq("is_valid", true).limit(1).maybeSingle();
+  const withDetails = await Promise.all((eligible ?? []).map(async (l: any) => {
+    const [ev, lead] = await Promise.all([
+      admin
+        .from("casl_consent_evidence")
+        .select("source_url,source_type,retrieved_at,verification_method")
+        .eq("contractor_lead_id", l.contractor_lead_id)
+        .eq("is_valid", true).limit(1).maybeSingle(),
+      enrichLead(admin, l.contractor_lead_id),
+    ]);
+    const phone = l.mobile_phone || l.phone || lead?.mobile_phone || lead?.phone || null;
+    const companyName = l.company_name || lead?.company_name || lead?.business_name || null;
+    const city = lead?.city || null;
+    const category = mapTradeToCategory(lead?.trade, lead?.category_primary);
+    const war = await findWarProspect(admin, phone, companyName);
+    const slug = war?.slug ?? null;
+    const landing_url = slug ? `${SITE_URL}/pro/${slug}` : null;
+
+    const checks = {
+      phone: !!phone,
+      casl: !!ev.data?.source_url,
+      city: !!city,
+      category: !!category,
+      landing: !!landing_url,
+    };
+    const status = computeReadiness(checks);
+
     return {
       lead_id: l.contractor_lead_id,
-      business: l.company_name,
-      phone: l.mobile_phone || l.phone,
-      evidence_source_url: ev?.source_url ?? null,
-      evidence_retrieved_at: ev?.retrieved_at ?? null,
-      verification_method: ev?.verification_method ?? null,
+      business: companyName,
+      city,
+      category,
+      phone,
+      evidence_source_url: ev.data?.source_url ?? null,
+      evidence_retrieved_at: ev.data?.retrieved_at ?? null,
+      verification_method: ev.data?.verification_method ?? null,
+      landing_url,
+      landing_status: landing_url ? "verified" : "pending_generation",
+      readiness: { status, checks },
     };
   }));
 
   return {
     mode: "dry_run",
     limit,
-    would_send_count: withEvidence.length,
-    would_send: withEvidence,
+    would_send_count: withDetails.filter((d) => d.readiness.status === "ready").length,
+    would_send: withDetails,
     disclaimer: "NO SMS was sent. This is a preview of what a canary batch would target if triggered.",
   };
 }
+
+// ---------- Aggregate readiness across top 100 eligible ----------
+async function computeCanaryReadiness(admin: any, sampleSize: number) {
+  const { data: eligible, error } = await admin
+    .from("v_commercial_send_eligibility")
+    .select("contractor_lead_id,company_name,phone,mobile_phone,phone_suppressed,compliance_review_required,valid_phone_evidence_count,last_sms_at")
+    .eq("compliance_review_required", false)
+    .gt("valid_phone_evidence_count", 0)
+    .or("phone_suppressed.is.null,phone_suppressed.eq.false")
+    .is("last_sms_at", null)
+    .limit(sampleSize);
+  if (error) return { error: error.message };
+
+  const rows = eligible ?? [];
+  const counters = { eligible: rows.length, ready_now: 0, missing_city: 0, missing_category: 0, missing_landing: 0, missing_phone: 0 };
+
+  for (const r of rows) {
+    const [lead, war] = await Promise.all([
+      enrichLead(admin, r.contractor_lead_id),
+      findWarProspect(admin, r.mobile_phone || r.phone, r.company_name),
+    ]);
+    const phone = !!(r.mobile_phone || r.phone);
+    const city = !!lead?.city;
+    const category = !!mapTradeToCategory(lead?.trade, lead?.category_primary);
+    const landing = !!war?.slug;
+
+    if (!phone) counters.missing_phone++;
+    else if (!city) counters.missing_city++;
+    else if (!category) counters.missing_category++;
+    else if (!landing) counters.missing_landing++;
+    else counters.ready_now++;
+  }
+
+  const ready_pct = counters.eligible
+    ? Math.round((counters.ready_now / counters.eligible) * 1000) / 10
+    : 0;
+
+  return { ...counters, ready_pct };
+}
+
+// ---------- Auto-repair: create war_prospects landing rows for eligible leads ----------
+async function repairMissingLandings(admin: any, limit: number) {
+  const { data: eligible, error } = await admin
+    .from("v_commercial_send_eligibility")
+    .select("contractor_lead_id,company_name,phone,mobile_phone")
+    .eq("compliance_review_required", false)
+    .gt("valid_phone_evidence_count", 0)
+    .or("phone_suppressed.is.null,phone_suppressed.eq.false")
+    .is("last_sms_at", null)
+    .limit(limit * 3);
+  if (error) return { error: error.message, created: 0 };
+
+  const created: Array<{ lead_id: string; slug: string }> = [];
+  const skipped: Array<{ lead_id: string; reason: string }> = [];
+
+  for (const r of eligible ?? []) {
+    if (created.length >= limit) break;
+    const phone = r.mobile_phone || r.phone || null;
+    const companyName = r.company_name || null;
+    if (!companyName) { skipped.push({ lead_id: r.contractor_lead_id, reason: "no_company_name" }); continue; }
+    const existing = await findWarProspect(admin, phone, companyName);
+    if (existing?.slug) continue;
+
+    const lead = await enrichLead(admin, r.contractor_lead_id);
+    const city = lead?.city || "Laval";
+    const category = mapTradeToCategory(lead?.trade, lead?.category_primary);
+    if (!category) { skipped.push({ lead_id: r.contractor_lead_id, reason: "no_category" }); continue; }
+
+    const slug = `${slugify(companyName)}-${r.contractor_lead_id.slice(0, 6)}`;
+    const { error: insErr } = await admin.from("war_prospects").insert({
+      company_name: companyName,
+      category,
+      city,
+      phone,
+      slug,
+      status: "prepared",
+      source: "canary_repair",
+      postal_code: lead?.postal_code ?? null,
+    });
+    if (insErr) { skipped.push({ lead_id: r.contractor_lead_id, reason: insErr.message }); continue; }
+    created.push({ lead_id: r.contractor_lead_id, slug });
+  }
+
+  return { requested: limit, created: created.length, skipped: skipped.length, created_landings: created, skips: skipped };
+}
+
 
