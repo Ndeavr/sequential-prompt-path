@@ -783,9 +783,25 @@ Deno.serve(async (req) => {
     }
 
     for (const lead of candidates) {
-      const promoted = await promoteProspect(supabase, ctx, lead);
+      const promoteResult = await promoteProspect(supabase, ctx, lead);
+      const promoted = promoteResult.prospect;
       if (!promoted) {
         counts.quarantined += 1;
+        await emitEvent(supabase, ctx, {
+          business_name: lead.business_name,
+          city: lead.city,
+          category: lead.category,
+          source: lead.source,
+          stage: "quarantined",
+          reason_code: promoteResult.reason ?? "promotion_failed",
+          reason_text: promoteResult.detail ?? null,
+          metadata: { phone_e164: lead.phone_e164 },
+        });
+        perProspect.push({
+          business_name: lead.business_name,
+          outcome: "quarantined",
+          reason: promoteResult.reason ?? "promotion_failed",
+        });
         continue;
       }
       if (!promoted.is_new) counts.already_promoted += 1;
