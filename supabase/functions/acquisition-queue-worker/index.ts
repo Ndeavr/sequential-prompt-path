@@ -459,9 +459,9 @@ async function promoteProspect(
       reason_text: insErr.message,
       metadata: { pg_code: (insErr as any).code ?? null, phone_e164: lead.phone_e164 },
     });
-    return null;
+    return { prospect: null, reason: "promotion_insert_failed", detail: insErr.message };
   }
-  if (!inserted?.id) return null;
+  if (!inserted?.id) return { prospect: null, reason: "promotion_insert_returned_null" };
   await emitEvent(supabase, ctx, {
     prospect_id: inserted.id,
     business_name: inserted.business_name,
@@ -471,7 +471,7 @@ async function promoteProspect(
     stage: "promoted",
     metadata: { existing: false, source_table: lead.source_table, source_id: lead.source_id },
   });
-  return { ...(inserted as any), is_new: true };
+  return { prospect: { ...(inserted as any), is_new: true } };
 }
 
 // ---------------------------------------------------------------------------
