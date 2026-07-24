@@ -128,16 +128,19 @@ async function runFallbackAcquisition(supabase: any, source: string, maxRows = 2
       .order("created_at", { ascending: false })
       .limit(maxRows - rows.length);
     for (const lead of prospects ?? []) {
+      const phone = normalizePhone(lead.phone_e164 ?? lead.phone);
+      if (!phone || /^\+1?\D*555\D*\d{4}/.test(phone)) continue;
+      if (!lead.trade) continue;
       rows.push({
         business_name: lead.business_name,
         legal_name: lead.business_name,
         category: lead.trade,
         city: lead.city,
         website_url: normalizeWebsite(lead.website_url),
-        phone_primary: normalizePhone(lead.phone_e164 ?? lead.phone) ?? lead.phone,
-        phone_e164: normalizePhone(lead.phone_e164 ?? lead.phone),
+        phone_primary: phone,
+        phone_e164: phone,
         phone_line_type: "unknown",
-        phone_validation_status: "unknown",
+        phone_validation_status: "unverified",
         sms_eligible: true,
         email: lead.email,
         verification_status: "verified",
@@ -150,6 +153,7 @@ async function runFallbackAcquisition(supabase: any, source: string, maxRows = 2
         outreach_status: "none",
       });
     }
+
   }
 
   if (rows.length < maxRows) {
