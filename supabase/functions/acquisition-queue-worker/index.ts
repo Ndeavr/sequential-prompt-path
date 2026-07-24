@@ -903,8 +903,11 @@ Deno.serve(async (req) => {
         await supabase
           .from("verified_contractor_prospects")
           .update({
-            verification_status: "lookup_failed",
-            phone_validation_status: "lookup_failed",
+            // 'lookup_failed' is NOT in the enum check for these columns.
+            // Use allowed values: verification_status ∈ (verified|needs_enrichment|invalid|duplicate);
+            // phone_validation_status ∈ (valid_mobile|valid_sms_capable_voip|landline|invalid|disconnected|unverified).
+            verification_status: "needs_enrichment",
+            phone_validation_status: "unverified",
             sms_eligible: false,
             sms_eligibility_tier: null,
             rejection_reason_code: "lookup_provider_failed",
