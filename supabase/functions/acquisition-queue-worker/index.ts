@@ -662,11 +662,13 @@ Deno.serve(async (req) => {
     // ------------------------------------------------------------------
     if (dryRun) {
       for (const lead of candidates) {
-        const { data: existing } = await supabase
+        const { data: existingRows } = await supabase
           .from("verified_contractor_prospects")
           .select("id,verification_status,phone_line_type,verified_at,outreach_status,sms_eligibility_tier")
           .eq("phone_e164", lead.phone_e164)
-          .maybeSingle();
+          .order("verified_at", { ascending: false, nullsFirst: false })
+          .limit(1);
+        const existing = existingRows && existingRows.length > 0 ? existingRows[0] : null;
 
         // Historical exclusion
         const histCheck = await checkHistoricalExclusion(supabase, {
