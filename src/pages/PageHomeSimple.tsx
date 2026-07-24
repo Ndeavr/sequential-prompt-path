@@ -26,29 +26,30 @@ export default function PageHomeSimple() {
     "@type": "Service",
     name: "UNPRO",
     description:
-      "Alex, l'IA d'UNPRO, vous aide à estimer, comprendre, comparer et trouver le bon professionnel pour votre projet maison au Québec.",
+      "UNPRO aide les propriétaires à prendre de meilleures décisions de rénovation grâce à l'IA, à des recommandations personnalisées et au jumelage avec le bon entrepreneur — pas seulement trois soumissions.",
     url: "https://unpro.ca",
     areaServed: { "@type": "Place", name: "Quebec" },
     provider: { "@type": "Organization", name: "UNPRO", url: "https://unpro.ca" },
-    serviceType: "Recommandation entrepreneur résidentiel par IA",
+    serviceType: "AI Home Intelligence Platform",
   };
 
   return (
     <AlexProvider>
       <MainLayout>
         <Helmet>
-          <title>UNPRO — Parlez à Alex | Le bon pro recommandé par IA au Québec</title>
+          <title>UNPRO | Votre plateforme d'intelligence résidentielle propulsée par l'IA</title>
           <meta
             name="description"
-            content="Décrivez votre problème à Alex. L'IA d'UNPRO trouve le bon professionnel québécois et planifie le rendez-vous. Pas de magasinage, une seule recommandation."
+            content="UNPRO aide les propriétaires à prendre de meilleures décisions de rénovation grâce à l'IA, à des recommandations personnalisées et au jumelage avec le bon entrepreneur — pas seulement trois soumissions."
           />
-          <meta property="og:title" content="UNPRO — Parlez à Alex" />
+          <meta property="og:title" content="UNPRO | Votre plateforme d'intelligence résidentielle propulsée par l'IA" />
           <meta
             property="og:description"
-            content="Pas de leads partagés. Pas de magasinage. Une seule recommandation, un rendez-vous rapide."
+            content="Décisions de rénovation plus intelligentes grâce à l'IA, recommandations personnalisées et jumelage exclusif avec le bon entrepreneur."
           />
           <meta property="og:type" content="website" />
-          <meta name="theme-color" content="#02060d" />
+          <meta property="og:image" content="https://unpro.ca/og/unpro-og-v4.jpg?v=20260724" />
+          <meta name="theme-color" content="#060B14" />
           <link rel="canonical" href="https://unpro.ca" />
           <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         </Helmet>
