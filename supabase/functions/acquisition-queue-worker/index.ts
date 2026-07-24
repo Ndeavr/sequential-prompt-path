@@ -204,9 +204,27 @@ async function runFallbackAcquisition(supabase: any, source: string, maxRows = 2
       : await supabase.from("verified_contractor_prospects").insert(row).select("id,business_name,city,category,source").maybeSingle();
     const { data, error } = write;
     if (error) {
-      await emitEvent(supabase, { stage: "rejected", source, reason_code: "fallback_insert_failed", reason_text: error.message, business_name: row.business_name, city: row.city, category: row.category });
+      await emitEvent(supabase, {
+        stage: "rejected",
+        source,
+        reason_code: "fallback_insert_failed",
+        reason_text: error.message,
+        business_name: row.business_name,
+        city: row.city,
+        category: row.category,
+        metadata: {
+          table: "verified_contractor_prospects",
+          operation: existing?.id ? "update" : "insert",
+          pg_code: (error as any).code ?? null,
+          pg_details: (error as any).details ?? null,
+          pg_hint: (error as any).hint ?? null,
+          payload_keys: Object.keys(row),
+          phone_e164: row.phone_e164,
+        },
+      });
       continue;
     }
+
     if (data?.id) {
       inserted += 1;
       await emitEvent(supabase, { prospect_id: data.id, business_name: data.business_name, city: data.city, category: data.category, source, stage: "scraped", metadata: { fallback: true } });
