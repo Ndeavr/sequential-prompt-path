@@ -354,27 +354,46 @@ type PromotedProspect = {
   is_new: boolean;
 };
 
-async function promoteProspect(supabase: any, ctx: RunContext, lead: CandidateLead): Promise<PromotedProspect | null> {
-  const { data: existing, error: readErr } = await supabase
+async function promoteProspect(
+  supabase: any,
+  ctx: RunContext,
+  lead: CandidateLead,
+): Promise<{ prospect: PromotedProspect | null; reason?: string; detail?: string }> {
+  // Use LIMIT(1) instead of maybeSingle() — several verified_contractor_prospects
+  // rows may share the same phone_e164 (legacy backfills), which crashed maybeSingle
+  // and silently quarantined every candidate.
+  const { data: existingRows, error: readErr } = await supabase
     .from("verified_contractor_prospects")
     .select("id,business_name,city,category,phone_e164,phone_line_type,verification_status,verified_at,sms_eligibility_tier,sms_eligible,outreach_status,source,website_url,email")
     .eq("phone_e164", lead.phone_e164)
-    .maybeSingle();
+    .order("verified_at", { ascending: false, nullsFirst: false })
+    .limit(1);
   if (readErr) {
     console.error("[promote] read failed", readErr);
-    return null;
+    return { prospect: null, reason: "read_failed", detail: readErr.message };
   }
+  const existing = existingRows && existingRows.length > 0 ? existingRows[0] : null;
 
   const now = new Date().toISOString();
 
   if (existing?.id) {
-    // Update ONLY missing/stale fields. Preserve verification + outreach state.
+    // Heal stale/backfilled rows: if the tier or line_type is missing we MUST
+    // force a fresh Twilio Lookup, so downgrade verification_status here.
+    const stale = !existing.phone_line_type
+      || !["mobile", "landline", "voip"].includes(existing.phone_line_type)
+      || !existing.sms_eligibility_tier
+      || !["A", "B", "C", "D"].includes(existing.sms_eligibility_tier);
+
     const patch: Record<string, unknown> = { updated_at: now };
     if (!existing.website_url && lead.website_url) patch.website_url = lead.website_url;
     if (!existing.city && lead.city) patch.city = lead.city;
     if (!existing.category && lead.category) patch.category = lead.category;
     if (!existing.email && lead.email) patch.email = lead.email;
     if (!existing.source) patch.source = lead.source;
+    if (stale && existing.verification_status === "verified") {
+      patch.verification_status = null;
+      patch.phone_validation_status = "unverified";
+    }
 
     if (Object.keys(patch).length > 1) {
       await supabase.from("verified_contractor_prospects").update(patch).eq("id", existing.id);
@@ -386,9 +405,21 @@ async function promoteProspect(supabase: any, ctx: RunContext, lead: CandidateLe
       category: existing.category,
       source: existing.source,
       stage: "promoted",
-      metadata: { existing: true, source_table: lead.source_table, source_id: lead.source_id, patch_keys: Object.keys(patch) },
+      metadata: {
+        existing: true,
+        source_table: lead.source_table,
+        source_id: lead.source_id,
+        patch_keys: Object.keys(patch),
+        forced_re_verification: stale,
+      },
     });
-    return { ...(existing as any), is_new: false };
+    const returned = { ...(existing as any) };
+    if (stale) {
+      returned.verification_status = null;
+      returned.phone_line_type = existing.phone_line_type ?? null;
+      returned.sms_eligibility_tier = existing.sms_eligibility_tier ?? null;
+    }
+    return { prospect: { ...returned, is_new: false } };
   }
 
   // Insert new — verification_status intentionally NULL (must be verified by Twilio).
@@ -428,9 +459,9 @@ async function promoteProspect(supabase: any, ctx: RunContext, lead: CandidateLe
       reason_text: insErr.message,
       metadata: { pg_code: (insErr as any).code ?? null, phone_e164: lead.phone_e164 },
     });
-    return null;
+    return { prospect: null, reason: "promotion_insert_failed", detail: insErr.message };
   }
-  if (!inserted?.id) return null;
+  if (!inserted?.id) return { prospect: null, reason: "promotion_insert_returned_null" };
   await emitEvent(supabase, ctx, {
     prospect_id: inserted.id,
     business_name: inserted.business_name,
@@ -440,7 +471,7 @@ async function promoteProspect(supabase: any, ctx: RunContext, lead: CandidateLe
     stage: "promoted",
     metadata: { existing: false, source_table: lead.source_table, source_id: lead.source_id },
   });
-  return { ...(inserted as any), is_new: true };
+  return { prospect: { ...(inserted as any), is_new: true } };
 }
 
 // ---------------------------------------------------------------------------
@@ -631,11 +662,13 @@ Deno.serve(async (req) => {
     // ------------------------------------------------------------------
     if (dryRun) {
       for (const lead of candidates) {
-        const { data: existing } = await supabase
+        const { data: existingRows } = await supabase
           .from("verified_contractor_prospects")
           .select("id,verification_status,phone_line_type,verified_at,outreach_status,sms_eligibility_tier")
           .eq("phone_e164", lead.phone_e164)
-          .maybeSingle();
+          .order("verified_at", { ascending: false, nullsFirst: false })
+          .limit(1);
+        const existing = existingRows && existingRows.length > 0 ? existingRows[0] : null;
 
         // Historical exclusion
         const histCheck = await checkHistoricalExclusion(supabase, {
@@ -752,9 +785,25 @@ Deno.serve(async (req) => {
     }
 
     for (const lead of candidates) {
-      const promoted = await promoteProspect(supabase, ctx, lead);
+      const promoteResult = await promoteProspect(supabase, ctx, lead);
+      const promoted = promoteResult.prospect;
       if (!promoted) {
         counts.quarantined += 1;
+        await emitEvent(supabase, ctx, {
+          business_name: lead.business_name,
+          city: lead.city,
+          category: lead.category,
+          source: lead.source,
+          stage: "quarantined",
+          reason_code: promoteResult.reason ?? "promotion_failed",
+          reason_text: promoteResult.detail ?? null,
+          metadata: { phone_e164: lead.phone_e164 },
+        });
+        perProspect.push({
+          business_name: lead.business_name,
+          outcome: "quarantined",
+          reason: promoteResult.reason ?? "promotion_failed",
+        });
         continue;
       }
       if (!promoted.is_new) counts.already_promoted += 1;
