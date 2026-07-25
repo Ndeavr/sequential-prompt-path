@@ -928,10 +928,18 @@ Deno.serve(async (req) => {
             verified_at: promoted.verified_at,
           },
         });
-        if (promoted.sms_eligible && ["A", "B", "C"].includes(promoted.sms_eligibility_tier ?? "")) {
+        const smsEligibleTier = ["A", "B", "C"].includes(promoted.sms_eligibility_tier ?? "");
+        const emailOnlyFallback = !smsEligibleTier && !!promoted.email;
+        if ((promoted.sms_eligible && smsEligibleTier) || emailOnlyFallback) {
           preparedIds.push(promoted.id);
         }
-        perProspect.push({ id: promoted.id, business_name: promoted.business_name, outcome: "verification_reused", tier: promoted.sms_eligibility_tier });
+        perProspect.push({
+          id: promoted.id,
+          business_name: promoted.business_name,
+          outcome: "verification_reused",
+          tier: promoted.sms_eligibility_tier,
+          channel_planned: smsEligibleTier ? "sms" : (emailOnlyFallback ? "email" : "none"),
+        });
         continue;
       }
 
