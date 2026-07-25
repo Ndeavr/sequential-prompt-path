@@ -915,8 +915,10 @@ Deno.serve(async (req) => {
     // ------------------------------------------------------------------
     // Fair-queue selection
     // ------------------------------------------------------------------
-    const take = ctx.mode === "targeted" ? ctx.limit : FAIR_SELECT_BATCH;
-    const candidates = await selectFairCandidates(supabase, ctx, take);
+    const take = ctx.mode === "autonomous" ? FAIR_SELECT_BATCH : ctx.limit;
+    const candidates = ctx.mode === "deterministic"
+      ? await selectDeterministicCandidates(supabase, ctx, take)
+      : await selectFairCandidates(supabase, ctx, take);
 
     const counts = {
       matched: candidates.length,
