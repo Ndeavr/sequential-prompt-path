@@ -85155,12 +85155,17 @@ export type Database = {
           address_source_url: string | null
           business_name: string
           category: string
+          channel_used: string | null
           city: string | null
           created_at: string
           data_quality_score: number
           eligibility_reason: string | null
           email: string | null
+          email_failure_reason: string | null
+          email_provider_message_id: string | null
+          email_sent_at: string | null
           email_source_url: string | null
+          fallback_reason: string | null
           google_business_url: string | null
           google_place_id: string | null
           id: string
@@ -85200,12 +85205,17 @@ export type Database = {
           address_source_url?: string | null
           business_name: string
           category: string
+          channel_used?: string | null
           city?: string | null
           created_at?: string
           data_quality_score?: number
           eligibility_reason?: string | null
           email?: string | null
+          email_failure_reason?: string | null
+          email_provider_message_id?: string | null
+          email_sent_at?: string | null
           email_source_url?: string | null
+          fallback_reason?: string | null
           google_business_url?: string | null
           google_place_id?: string | null
           id?: string
@@ -85245,12 +85255,17 @@ export type Database = {
           address_source_url?: string | null
           business_name?: string
           category?: string
+          channel_used?: string | null
           city?: string | null
           created_at?: string
           data_quality_score?: number
           eligibility_reason?: string | null
           email?: string | null
+          email_failure_reason?: string | null
+          email_provider_message_id?: string | null
+          email_sent_at?: string | null
           email_source_url?: string | null
+          fallback_reason?: string | null
           google_business_url?: string | null
           google_place_id?: string | null
           id?: string
