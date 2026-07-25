@@ -973,7 +973,7 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const elig = mapEligibility(lookup.phone_type);
+      const elig = mapEligibility(lookup.phone_type, lookup.number_valid);
       const nowIso = new Date().toISOString();
       const phoneValStatus =
         lookup.phone_type === "mobile" ? "valid_mobile" :
@@ -994,7 +994,10 @@ Deno.serve(async (req) => {
         })
         .eq("id", promoted.id);
 
-      if (lookup.phone_type === "unknown") {
+      // Only quarantine when the number itself is invalid AND there is no email.
+      // LTI-unavailable (Canada) still returns lookup.phone_type='unknown' but
+      // lookup.number_valid=true — we no longer quarantine that path.
+      if (lookup.phone_type === "unknown" && !lookup.number_valid && !promoted.email) {
         counts.quarantined += 1;
         await emitEvent(supabase, ctx, {
           prospect_id: promoted.id,
@@ -1003,8 +1006,8 @@ Deno.serve(async (req) => {
           category: promoted.category,
           source: promoted.source,
           stage: "quarantined",
-          reason_code: "lookup_unknown_type",
-          metadata: { raw: lookup.raw ?? null },
+          reason_code: "invalid_phone_no_email",
+          metadata: { raw: lookup.raw ?? null, lti_available: lookup.lti_available },
         });
         perProspect.push({ id: promoted.id, business_name: promoted.business_name, outcome: "quarantined" });
         continue;
@@ -1017,16 +1020,31 @@ Deno.serve(async (req) => {
         category: promoted.category,
         source: promoted.source,
         stage: "verified",
-        metadata: { phone_line_type: lookup.phone_type, sms_eligibility_tier: elig.sms_eligibility_tier },
+        metadata: {
+          phone_line_type: lookup.phone_type,
+          sms_eligibility_tier: elig.sms_eligibility_tier,
+          lti_available: lookup.lti_available,
+          number_valid: lookup.number_valid,
+        },
       });
 
       if (lookup.phone_type === "mobile") counts.tier_A_mobile += 1;
       else counts.other_eligible += 1;
 
-      if (elig.sms_eligible && ["A", "B", "C"].includes(elig.sms_eligibility_tier ?? "")) {
+      // Prepare for send whenever we have ANY viable channel: SMS-eligible tier
+      // OR a landline/unknown with an email on file (email-only fallback).
+      const smsEligibleTier = ["A", "B", "C"].includes(elig.sms_eligibility_tier ?? "");
+      const emailOnlyFallback = !smsEligibleTier && !!promoted.email;
+      if ((elig.sms_eligible && smsEligibleTier) || emailOnlyFallback) {
         preparedIds.push(promoted.id);
       }
-      perProspect.push({ id: promoted.id, business_name: promoted.business_name, outcome: "verified", tier: elig.sms_eligibility_tier });
+      perProspect.push({
+        id: promoted.id,
+        business_name: promoted.business_name,
+        outcome: "verified",
+        tier: elig.sms_eligibility_tier,
+        channel_planned: smsEligibleTier ? "sms" : (emailOnlyFallback ? "email" : "none"),
+      });
     }
 
     // ------------------------------------------------------------------
