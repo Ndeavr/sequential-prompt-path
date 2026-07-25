@@ -766,12 +766,15 @@ async function checkHistoricalExclusion(
     .limit(1)
     .maybeSingle();
   if (leadHit?.id) return { excluded: true, reason_code: "history_contractor_leads", source: `contractor_leads#${leadHit.id}` };
-  // Source C — outreach_delivery_logs (best-effort; skip silently if absent)
+  // Source C — outreach_delivery_logs (best-effort; skip silently if absent).
+  // NOTE: outreach_delivery_logs stores the destination in `recipient_normalized`
+  // (E.164 for SMS). The legacy `phone_e164` column does NOT exist on this table
+  // and querying it caused the duplicate-SMS guard to silently fail.
   try {
     const { data: logHit } = await supabase
       .from("outreach_delivery_logs")
       .select("id")
-      .eq("phone_e164", p.phone_e164)
+      .eq("recipient_normalized", p.phone_e164)
       .limit(1)
       .maybeSingle();
     if (logHit?.id) return { excluded: true, reason_code: "history_delivery_logs", source: `outreach_delivery_logs#${logHit.id}` };
