@@ -856,16 +856,29 @@ Deno.serve(async (req) => {
     // Build run context
     // ------------------------------------------------------------------
     const campaign = body.campaign ?? null;
+    const rawTarget = body.target ?? null;
+    const target: DeterministicTarget | null = rawTarget && typeof rawTarget === "object" ? {
+      contractor_lead_id: rawTarget.contractor_lead_id ?? null,
+      contractor_prospect_id: rawTarget.contractor_prospect_id ?? null,
+      contractors_prospect_id: rawTarget.contractors_prospect_id ?? null,
+      business_name_exact: rawTarget.business_name_exact ?? null,
+      business_name_ilike: rawTarget.business_name_ilike ?? null,
+      phone_e164: rawTarget.phone_e164 ?? null,
+      email: rawTarget.email ?? null,
+    } : null;
+    const hasTarget = !!target && Object.values(target).some((v) => v !== null && v !== "");
     const catNorm = campaign?.category ? normalizeCategoryInput(campaign.category) : null;
     const ctx: RunContext = {
       run_id: (typeof body.run_id === "string" && body.run_id) || crypto.randomUUID(),
-      mode: campaign ? "targeted" : "autonomous",
+      mode: hasTarget ? "deterministic" : (campaign ? "targeted" : "autonomous"),
       city: campaign?.city ? String(campaign.city) : null,
       category: catNorm?.bucket ?? null,
       category_synonyms: catNorm?.synonyms ?? null,
       dry_run: dryRun,
-      limit: Math.max(1, Math.min(Number(campaign?.limit ?? SEND_LIMIT_DEFAULT), 50)),
+      limit: Math.max(1, Math.min(Number(body.limit ?? campaign?.limit ?? SEND_LIMIT_DEFAULT), 50)),
+      target: hasTarget ? target : null,
     };
+
 
     // ------------------------------------------------------------------
     // Autonomous side-tasks (dead-queue repair + queue enqueue) — skipped
