@@ -737,6 +737,11 @@ export default function PageAdminAcquisitionPipeline() {
 
         <CampaignLauncher />
 
+        <DeterministicTargetingPanel />
+
+        <ReconciliationTable />
+
+
         {/* Funnel stats */}
         <section>
           <h2 className="text-xs uppercase tracking-wide text-white/40 mb-2">Statistiques du funnel</h2>
