@@ -344,6 +344,188 @@ async function selectFairCandidates(supabase: any, ctx: RunContext, take: number
 }
 
 // ---------------------------------------------------------------------------
+// Deterministic candidate selection — bypasses scoring/last_sms_at gating.
+// Pulls ONLY rows matching the explicit filters (contractor IDs, exact/ilike
+// business name, phone E.164, or email) across the three source tables.
+// Category/city are NOT applied here — deterministic mode trusts the caller.
+// ---------------------------------------------------------------------------
+async function selectDeterministicCandidates(
+  supabase: any,
+  ctx: RunContext,
+  take: number,
+): Promise<CandidateLead[]> {
+  const t = ctx.target;
+  if (!t) return [];
+  const results: CandidateLead[] = [];
+  const seenPhones = new Set<string>();
+
+  const pushRow = (
+    row: any,
+    source: string,
+    source_table: string,
+    mapping: {
+      business: string;
+      phone: string | null;
+      website: string | null;
+      city: string | null;
+      category: string | null;
+      email: string | null;
+    },
+  ) => {
+    if (results.length >= take) return;
+    const phone = normalizePhone(mapping.phone);
+    if (!phone || isPlaceholderPhone(phone)) return;
+    if (seenPhones.has(phone)) return;
+    seenPhones.add(phone);
+    results.push({
+      business_name: mapping.business,
+      phone_e164: phone,
+      website_url: normalizeWebsite(mapping.website),
+      city: mapping.city,
+      category: String(mapping.category ?? "unknown"),
+      email: mapping.email,
+      source,
+      source_table,
+      source_id: String(row.id),
+    });
+  };
+
+  const applyFilters = (q: any, cols: { business: string; phone: string; email: string }) => {
+    if (t.business_name_exact) q = q.eq(cols.business, t.business_name_exact);
+    else if (t.business_name_ilike) q = q.ilike(cols.business, `%${t.business_name_ilike}%`);
+    if (t.phone_e164) {
+      const p = normalizePhone(t.phone_e164);
+      if (p) q = q.or(`${cols.phone}.eq.${p},phone_e164.eq.${p}`);
+    }
+    if (t.email) q = q.eq(cols.email, t.email);
+    return q;
+  };
+
+  // contractor_leads
+  if (results.length < take) {
+    if (t.contractor_lead_id) {
+      const { data } = await supabase
+        .from("contractor_leads")
+        .select("id,company_name,email,phone,mobile_phone,phone_e164,website_url,city,category_primary,trade,source_type")
+        .eq("id", t.contractor_lead_id)
+        .limit(1);
+      for (const row of data ?? []) {
+        pushRow(row, normalizeSource(row.source_type ?? "website"), "contractor_leads", {
+          business: row.company_name,
+          phone: row.phone_e164 ?? row.mobile_phone ?? row.phone,
+          website: row.website_url,
+          city: row.city,
+          category: row.category_primary ?? row.trade,
+          email: row.email,
+        });
+      }
+    }
+    if (results.length < take && (t.business_name_exact || t.business_name_ilike || t.phone_e164 || t.email)) {
+      let q = supabase
+        .from("contractor_leads")
+        .select("id,company_name,email,phone,mobile_phone,phone_e164,website_url,city,category_primary,trade,source_type")
+        .not("company_name", "is", null)
+        .limit(take);
+      q = applyFilters(q, { business: "company_name", phone: "phone", email: "email" });
+      const { data } = await q;
+      for (const row of data ?? []) {
+        pushRow(row, normalizeSource(row.source_type ?? "website"), "contractor_leads", {
+          business: row.company_name,
+          phone: row.phone_e164 ?? row.mobile_phone ?? row.phone,
+          website: row.website_url,
+          city: row.city,
+          category: row.category_primary ?? row.trade,
+          email: row.email,
+        });
+      }
+    }
+  }
+
+  // contractor_prospects
+  if (results.length < take) {
+    if (t.contractor_prospect_id) {
+      const { data } = await supabase
+        .from("contractor_prospects")
+        .select("id,business_name,email,phone,phone_e164,website_url,city,trade,source")
+        .eq("id", t.contractor_prospect_id)
+        .limit(1);
+      for (const row of data ?? []) {
+        pushRow(row, normalizeSource(row.source ?? "website"), "contractor_prospects", {
+          business: row.business_name,
+          phone: row.phone_e164 ?? row.phone,
+          website: row.website_url,
+          city: row.city,
+          category: row.trade,
+          email: row.email,
+        });
+      }
+    }
+    if (results.length < take && (t.business_name_exact || t.business_name_ilike || t.phone_e164 || t.email)) {
+      let q = supabase
+        .from("contractor_prospects")
+        .select("id,business_name,email,phone,phone_e164,website_url,city,trade,source")
+        .not("business_name", "is", null)
+        .limit(take);
+      q = applyFilters(q, { business: "business_name", phone: "phone", email: "email" });
+      const { data } = await q;
+      for (const row of data ?? []) {
+        pushRow(row, normalizeSource(row.source ?? "website"), "contractor_prospects", {
+          business: row.business_name,
+          phone: row.phone_e164 ?? row.phone,
+          website: row.website_url,
+          city: row.city,
+          category: row.trade,
+          email: row.email,
+        });
+      }
+    }
+  }
+
+  // contractors_prospects (legacy)
+  if (results.length < take) {
+    if (t.contractors_prospect_id) {
+      const { data } = await supabase
+        .from("contractors_prospects")
+        .select("id,business_name,email,phone,website,city,category,source")
+        .eq("id", t.contractors_prospect_id)
+        .limit(1);
+      for (const row of data ?? []) {
+        pushRow(row, normalizeSource(row.source ?? "website"), "contractors_prospects", {
+          business: row.business_name,
+          phone: row.phone,
+          website: row.website,
+          city: row.city,
+          category: row.category,
+          email: row.email,
+        });
+      }
+    }
+    if (results.length < take && (t.business_name_exact || t.business_name_ilike || t.phone_e164 || t.email)) {
+      let q = supabase
+        .from("contractors_prospects")
+        .select("id,business_name,email,phone,website,city,category,source")
+        .not("business_name", "is", null)
+        .not("phone", "is", null)
+        .limit(take);
+      q = applyFilters(q, { business: "business_name", phone: "phone", email: "email" });
+      const { data } = await q;
+      for (const row of data ?? []) {
+        pushRow(row, normalizeSource(row.source ?? "website"), "contractors_prospects", {
+          business: row.business_name,
+          phone: row.phone,
+          website: row.website,
+          city: row.city,
+          category: row.category,
+          email: row.email,
+        });
+      }
+    }
+  }
+
+  return results.slice(0, take);
+}
+
+// ---------------------------------------------------------------------------
 // Idempotent promotion into verified_contractor_prospects.
 // Never overwrites human-verified fields; only fills nulls / stale values.
 // ---------------------------------------------------------------------------
