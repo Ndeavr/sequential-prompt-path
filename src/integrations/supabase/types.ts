@@ -85159,17 +85159,21 @@ export type Database = {
           city: string | null
           created_at: string
           data_quality_score: number
+          delivery_status: string | null
           eligibility_reason: string | null
           email: string | null
+          email_error_message: string | null
           email_failure_reason: string | null
           email_provider_message_id: string | null
           email_sent_at: string | null
           email_source_url: string | null
           fallback_reason: string | null
+          fallback_timestamp: string | null
           google_business_url: string | null
           google_place_id: string | null
           id: string
           last_action_at: string | null
+          last_attempt_at: string | null
           last_enriched_at: string | null
           legal_name: string | null
           outreach_clicked_at: string | null
@@ -85189,10 +85193,14 @@ export type Database = {
           rbq_source_url: string | null
           rejection_reason_code: string | null
           rejection_reason_text: string | null
+          retry_count: number
           service_areas: string[] | null
           sms_eligibility_confidence: string | null
           sms_eligibility_tier: string | null
           sms_eligible: boolean
+          sms_error_code: string | null
+          sms_error_message: string | null
+          sms_provider_message_id: string | null
           source: string | null
           source_urls: Json
           street_address: string | null
@@ -85209,17 +85217,21 @@ export type Database = {
           city?: string | null
           created_at?: string
           data_quality_score?: number
+          delivery_status?: string | null
           eligibility_reason?: string | null
           email?: string | null
+          email_error_message?: string | null
           email_failure_reason?: string | null
           email_provider_message_id?: string | null
           email_sent_at?: string | null
           email_source_url?: string | null
           fallback_reason?: string | null
+          fallback_timestamp?: string | null
           google_business_url?: string | null
           google_place_id?: string | null
           id?: string
           last_action_at?: string | null
+          last_attempt_at?: string | null
           last_enriched_at?: string | null
           legal_name?: string | null
           outreach_clicked_at?: string | null
@@ -85239,10 +85251,14 @@ export type Database = {
           rbq_source_url?: string | null
           rejection_reason_code?: string | null
           rejection_reason_text?: string | null
+          retry_count?: number
           service_areas?: string[] | null
           sms_eligibility_confidence?: string | null
           sms_eligibility_tier?: string | null
           sms_eligible?: boolean
+          sms_error_code?: string | null
+          sms_error_message?: string | null
+          sms_provider_message_id?: string | null
           source?: string | null
           source_urls?: Json
           street_address?: string | null
@@ -85259,17 +85275,21 @@ export type Database = {
           city?: string | null
           created_at?: string
           data_quality_score?: number
+          delivery_status?: string | null
           eligibility_reason?: string | null
           email?: string | null
+          email_error_message?: string | null
           email_failure_reason?: string | null
           email_provider_message_id?: string | null
           email_sent_at?: string | null
           email_source_url?: string | null
           fallback_reason?: string | null
+          fallback_timestamp?: string | null
           google_business_url?: string | null
           google_place_id?: string | null
           id?: string
           last_action_at?: string | null
+          last_attempt_at?: string | null
           last_enriched_at?: string | null
           legal_name?: string | null
           outreach_clicked_at?: string | null
@@ -85289,10 +85309,14 @@ export type Database = {
           rbq_source_url?: string | null
           rejection_reason_code?: string | null
           rejection_reason_text?: string | null
+          retry_count?: number
           service_areas?: string[] | null
           sms_eligibility_confidence?: string | null
           sms_eligibility_tier?: string | null
           sms_eligible?: boolean
+          sms_error_code?: string | null
+          sms_error_message?: string | null
+          sms_provider_message_id?: string | null
           source?: string | null
           source_urls?: Json
           street_address?: string | null

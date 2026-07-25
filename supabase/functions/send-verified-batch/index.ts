@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
     // email on file (email-only fallback path).
     let query = supabase
       .from("verified_contractor_prospects")
-      .select("id, business_name, phone_e164, phone_validation_status, phone_line_type, sms_eligibility_tier, sms_eligibility_confidence, data_quality_score, website_url, city, category, source, email, outreach_status, verification_status")
+      .select("id, business_name, phone_e164, phone_validation_status, phone_line_type, sms_eligibility_tier, sms_eligibility_confidence, data_quality_score, website_url, city, category, source, email, outreach_status, verification_status, retry_count")
       .eq("outreach_status", "none")
       .eq("verification_status", "verified")
       .gte("data_quality_score", 80)
@@ -330,13 +330,22 @@ Deno.serve(async (req) => {
 
       // -------- Persist outcome --------
       const nowIso = new Date().toISOString();
+      const prevRetry = Number((p as any).retry_count ?? 0);
+      const fallbackTs = fallbackReason ? nowIso : null;
       if (channelUsed === "sms") {
         await supabase.from("verified_contractor_prospects").update({
           outreach_status: "sent",
           outreach_twilio_sid: smsSid,
+          sms_provider_message_id: smsSid,
           outreach_sent_at: nowIso,
           channel_used: "sms",
+          delivery_status: "sent",
           fallback_reason: null,
+          fallback_timestamp: null,
+          sms_error_code: null,
+          sms_error_message: null,
+          retry_count: prevRetry + 1,
+          last_attempt_at: nowIso,
           last_action_at: nowIso,
         }).eq("id", p.id);
         await logPipelineEvent({
@@ -351,8 +360,14 @@ Deno.serve(async (req) => {
           email_provider_message_id: resendId,
           email_sent_at: nowIso,
           channel_used: "email",
+          delivery_status: "sent_email",
           fallback_reason: fallbackReason,
+          fallback_timestamp: fallbackTs,
+          sms_error_code: twilioErrorCode != null ? String(twilioErrorCode) : null,
+          sms_error_message: smsErrorBody,
           outreach_failure_reason: smsErrorBody, // preserve why SMS was skipped if applicable
+          retry_count: prevRetry + 1,
+          last_attempt_at: nowIso,
           last_action_at: nowIso,
         }).eq("id", p.id);
         await logPipelineEvent({
@@ -379,8 +394,15 @@ Deno.serve(async (req) => {
           outreach_status: "failed",
           outreach_failure_reason: (smsErrorBody ?? emailError ?? finalErr).slice(0, 500),
           email_failure_reason: emailError,
+          email_error_message: emailError,
+          sms_error_code: twilioErrorCode != null ? String(twilioErrorCode) : null,
+          sms_error_message: smsErrorBody,
           channel_used: null,
+          delivery_status: "failed",
           fallback_reason: fallbackReason,
+          fallback_timestamp: fallbackTs,
+          retry_count: prevRetry + 1,
+          last_attempt_at: nowIso,
           rejection_reason_code: REASON.sms_not_eligible,
           rejection_reason_text: finalErr.slice(0, 300),
           last_action_at: nowIso,
@@ -403,6 +425,7 @@ Deno.serve(async (req) => {
         });
       }
     }
+
 
     const allResults = [...results, ...missingResults];
     const sent = allResults.filter((r) => r.status === "sent").length;

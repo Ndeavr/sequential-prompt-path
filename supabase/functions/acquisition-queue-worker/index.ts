@@ -35,14 +35,25 @@ const FAIR_SELECT_BATCH = 25;
 // ---------------------------------------------------------------------------
 // Utilities
 // ---------------------------------------------------------------------------
+type DeterministicTarget = {
+  contractor_lead_id?: string | null;
+  contractor_prospect_id?: string | null;
+  contractors_prospect_id?: string | null;
+  business_name_exact?: string | null;
+  business_name_ilike?: string | null;
+  phone_e164?: string | null;
+  email?: string | null;
+};
+
 type RunContext = {
   run_id: string;
-  mode: "autonomous" | "targeted";
+  mode: "autonomous" | "targeted" | "deterministic";
   city: string | null;
   category: string | null;
   category_synonyms: string[] | null;
   dry_run: boolean;
   limit: number;
+  target: DeterministicTarget | null;
 };
 
 function jsonResponse(body: Record<string, unknown>, status = 200) {
@@ -326,6 +337,188 @@ async function selectFairCandidates(supabase: any, ctx: RunContext, take: number
         category: row.category,
         email: row.email,
       });
+    }
+  }
+
+  return results.slice(0, take);
+}
+
+// ---------------------------------------------------------------------------
+// Deterministic candidate selection — bypasses scoring/last_sms_at gating.
+// Pulls ONLY rows matching the explicit filters (contractor IDs, exact/ilike
+// business name, phone E.164, or email) across the three source tables.
+// Category/city are NOT applied here — deterministic mode trusts the caller.
+// ---------------------------------------------------------------------------
+async function selectDeterministicCandidates(
+  supabase: any,
+  ctx: RunContext,
+  take: number,
+): Promise<CandidateLead[]> {
+  const t = ctx.target;
+  if (!t) return [];
+  const results: CandidateLead[] = [];
+  const seenPhones = new Set<string>();
+
+  const pushRow = (
+    row: any,
+    source: string,
+    source_table: string,
+    mapping: {
+      business: string;
+      phone: string | null;
+      website: string | null;
+      city: string | null;
+      category: string | null;
+      email: string | null;
+    },
+  ) => {
+    if (results.length >= take) return;
+    const phone = normalizePhone(mapping.phone);
+    if (!phone || isPlaceholderPhone(phone)) return;
+    if (seenPhones.has(phone)) return;
+    seenPhones.add(phone);
+    results.push({
+      business_name: mapping.business,
+      phone_e164: phone,
+      website_url: normalizeWebsite(mapping.website),
+      city: mapping.city,
+      category: String(mapping.category ?? "unknown"),
+      email: mapping.email,
+      source,
+      source_table,
+      source_id: String(row.id),
+    });
+  };
+
+  const applyFilters = (q: any, cols: { business: string; phone: string; email: string }) => {
+    if (t.business_name_exact) q = q.eq(cols.business, t.business_name_exact);
+    else if (t.business_name_ilike) q = q.ilike(cols.business, `%${t.business_name_ilike}%`);
+    if (t.phone_e164) {
+      const p = normalizePhone(t.phone_e164);
+      if (p) q = q.or(`${cols.phone}.eq.${p},phone_e164.eq.${p}`);
+    }
+    if (t.email) q = q.eq(cols.email, t.email);
+    return q;
+  };
+
+  // contractor_leads
+  if (results.length < take) {
+    if (t.contractor_lead_id) {
+      const { data } = await supabase
+        .from("contractor_leads")
+        .select("id,company_name,email,phone,mobile_phone,phone_e164,website_url,city,category_primary,trade,source_type")
+        .eq("id", t.contractor_lead_id)
+        .limit(1);
+      for (const row of data ?? []) {
+        pushRow(row, normalizeSource(row.source_type ?? "website"), "contractor_leads", {
+          business: row.company_name,
+          phone: row.phone_e164 ?? row.mobile_phone ?? row.phone,
+          website: row.website_url,
+          city: row.city,
+          category: row.category_primary ?? row.trade,
+          email: row.email,
+        });
+      }
+    }
+    if (results.length < take && (t.business_name_exact || t.business_name_ilike || t.phone_e164 || t.email)) {
+      let q = supabase
+        .from("contractor_leads")
+        .select("id,company_name,email,phone,mobile_phone,phone_e164,website_url,city,category_primary,trade,source_type")
+        .not("company_name", "is", null)
+        .limit(take);
+      q = applyFilters(q, { business: "company_name", phone: "phone", email: "email" });
+      const { data } = await q;
+      for (const row of data ?? []) {
+        pushRow(row, normalizeSource(row.source_type ?? "website"), "contractor_leads", {
+          business: row.company_name,
+          phone: row.phone_e164 ?? row.mobile_phone ?? row.phone,
+          website: row.website_url,
+          city: row.city,
+          category: row.category_primary ?? row.trade,
+          email: row.email,
+        });
+      }
+    }
+  }
+
+  // contractor_prospects
+  if (results.length < take) {
+    if (t.contractor_prospect_id) {
+      const { data } = await supabase
+        .from("contractor_prospects")
+        .select("id,business_name,email,phone,phone_e164,website_url,city,trade,source")
+        .eq("id", t.contractor_prospect_id)
+        .limit(1);
+      for (const row of data ?? []) {
+        pushRow(row, normalizeSource(row.source ?? "website"), "contractor_prospects", {
+          business: row.business_name,
+          phone: row.phone_e164 ?? row.phone,
+          website: row.website_url,
+          city: row.city,
+          category: row.trade,
+          email: row.email,
+        });
+      }
+    }
+    if (results.length < take && (t.business_name_exact || t.business_name_ilike || t.phone_e164 || t.email)) {
+      let q = supabase
+        .from("contractor_prospects")
+        .select("id,business_name,email,phone,phone_e164,website_url,city,trade,source")
+        .not("business_name", "is", null)
+        .limit(take);
+      q = applyFilters(q, { business: "business_name", phone: "phone", email: "email" });
+      const { data } = await q;
+      for (const row of data ?? []) {
+        pushRow(row, normalizeSource(row.source ?? "website"), "contractor_prospects", {
+          business: row.business_name,
+          phone: row.phone_e164 ?? row.phone,
+          website: row.website_url,
+          city: row.city,
+          category: row.trade,
+          email: row.email,
+        });
+      }
+    }
+  }
+
+  // contractors_prospects (legacy)
+  if (results.length < take) {
+    if (t.contractors_prospect_id) {
+      const { data } = await supabase
+        .from("contractors_prospects")
+        .select("id,business_name,email,phone,website,city,category,source")
+        .eq("id", t.contractors_prospect_id)
+        .limit(1);
+      for (const row of data ?? []) {
+        pushRow(row, normalizeSource(row.source ?? "website"), "contractors_prospects", {
+          business: row.business_name,
+          phone: row.phone,
+          website: row.website,
+          city: row.city,
+          category: row.category,
+          email: row.email,
+        });
+      }
+    }
+    if (results.length < take && (t.business_name_exact || t.business_name_ilike || t.phone_e164 || t.email)) {
+      let q = supabase
+        .from("contractors_prospects")
+        .select("id,business_name,email,phone,website,city,category,source")
+        .not("business_name", "is", null)
+        .not("phone", "is", null)
+        .limit(take);
+      q = applyFilters(q, { business: "business_name", phone: "phone", email: "email" });
+      const { data } = await q;
+      for (const row of data ?? []) {
+        pushRow(row, normalizeSource(row.source ?? "website"), "contractors_prospects", {
+          business: row.business_name,
+          phone: row.phone,
+          website: row.website,
+          city: row.city,
+          category: row.category,
+          email: row.email,
+        });
+      }
     }
   }
 
@@ -663,16 +856,29 @@ Deno.serve(async (req) => {
     // Build run context
     // ------------------------------------------------------------------
     const campaign = body.campaign ?? null;
+    const rawTarget = body.target ?? null;
+    const target: DeterministicTarget | null = rawTarget && typeof rawTarget === "object" ? {
+      contractor_lead_id: rawTarget.contractor_lead_id ?? null,
+      contractor_prospect_id: rawTarget.contractor_prospect_id ?? null,
+      contractors_prospect_id: rawTarget.contractors_prospect_id ?? null,
+      business_name_exact: rawTarget.business_name_exact ?? null,
+      business_name_ilike: rawTarget.business_name_ilike ?? null,
+      phone_e164: rawTarget.phone_e164 ?? null,
+      email: rawTarget.email ?? null,
+    } : null;
+    const hasTarget = !!target && Object.values(target).some((v) => v !== null && v !== "");
     const catNorm = campaign?.category ? normalizeCategoryInput(campaign.category) : null;
     const ctx: RunContext = {
       run_id: (typeof body.run_id === "string" && body.run_id) || crypto.randomUUID(),
-      mode: campaign ? "targeted" : "autonomous",
+      mode: hasTarget ? "deterministic" : (campaign ? "targeted" : "autonomous"),
       city: campaign?.city ? String(campaign.city) : null,
       category: catNorm?.bucket ?? null,
       category_synonyms: catNorm?.synonyms ?? null,
       dry_run: dryRun,
-      limit: Math.max(1, Math.min(Number(campaign?.limit ?? SEND_LIMIT_DEFAULT), 50)),
+      limit: Math.max(1, Math.min(Number(body.limit ?? campaign?.limit ?? SEND_LIMIT_DEFAULT), 50)),
+      target: hasTarget ? target : null,
     };
+
 
     // ------------------------------------------------------------------
     // Autonomous side-tasks (dead-queue repair + queue enqueue) — skipped
@@ -709,8 +915,10 @@ Deno.serve(async (req) => {
     // ------------------------------------------------------------------
     // Fair-queue selection
     // ------------------------------------------------------------------
-    const take = ctx.mode === "targeted" ? ctx.limit : FAIR_SELECT_BATCH;
-    const candidates = await selectFairCandidates(supabase, ctx, take);
+    const take = ctx.mode === "autonomous" ? FAIR_SELECT_BATCH : ctx.limit;
+    const candidates = ctx.mode === "deterministic"
+      ? await selectDeterministicCandidates(supabase, ctx, take)
+      : await selectFairCandidates(supabase, ctx, take);
 
     const counts = {
       matched: candidates.length,
