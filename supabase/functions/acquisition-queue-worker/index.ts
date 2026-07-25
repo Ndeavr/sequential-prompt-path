@@ -594,6 +594,8 @@ async function checkHistoricalExclusion(
 async function callTwilioLookup(url: string, serviceKey: string, phone: string): Promise<{
   ok: boolean;
   phone_type: "mobile" | "landline" | "voip" | "unknown";
+  number_valid: boolean;
+  lti_available: boolean;
   raw?: unknown;
   error?: string;
 }> {
@@ -605,17 +607,23 @@ async function callTwilioLookup(url: string, serviceKey: string, phone: string):
     });
     const body = await r.json().catch(() => ({}));
     if (!r.ok || body?.error) {
-      return { ok: false, phone_type: "unknown", raw: body, error: String(body?.error ?? `HTTP ${r.status}`) };
+      return { ok: false, phone_type: "unknown", number_valid: false, lti_available: false, raw: body, error: String(body?.error ?? `HTTP ${r.status}`) };
     }
     const type = String(body?.phone_type ?? "unknown");
     const normalized = (["mobile", "landline", "voip"].includes(type) ? type : "unknown") as "mobile" | "landline" | "voip" | "unknown";
-    return { ok: true, phone_type: normalized, raw: body };
+    return {
+      ok: true,
+      phone_type: normalized,
+      number_valid: body?.number_valid === true || body?.phone_verified === true,
+      lti_available: body?.lti_available === true,
+      raw: body,
+    };
   } catch (e) {
-    return { ok: false, phone_type: "unknown", error: String((e as Error).message ?? e) };
+    return { ok: false, phone_type: "unknown", number_valid: false, lti_available: false, error: String((e as Error).message ?? e) };
   }
 }
 
-function mapEligibility(phone_type: "mobile" | "landline" | "voip" | "unknown"): {
+function mapEligibility(phone_type: "mobile" | "landline" | "voip" | "unknown", number_valid: boolean): {
   sms_eligibility_tier: string | null;
   sms_eligible: boolean;
   verification_status: string;
@@ -624,10 +632,17 @@ function mapEligibility(phone_type: "mobile" | "landline" | "voip" | "unknown"):
     case "mobile":
       return { sms_eligibility_tier: "A", sms_eligible: true, verification_status: "verified" };
     case "voip":
-      return { sms_eligibility_tier: "C", sms_eligible: true, verification_status: "verified" };
+      return { sms_eligibility_tier: "B", sms_eligible: true, verification_status: "verified" };
     case "landline":
+      // Landline: still "verified" so email fallback path can pick it up.
       return { sms_eligibility_tier: "D", sms_eligible: false, verification_status: "verified" };
     default:
+      // Unknown line type (typical for CA when LTI is unavailable).
+      // If the number is structurally valid we still verify and let the trigger
+      // assign tier C, which means "attempt SMS with automatic email fallback".
+      if (number_valid) {
+        return { sms_eligibility_tier: "C", sms_eligible: true, verification_status: "verified" };
+      }
       return { sms_eligibility_tier: null, sms_eligible: false, verification_status: "needs_enrichment" };
   }
 }
