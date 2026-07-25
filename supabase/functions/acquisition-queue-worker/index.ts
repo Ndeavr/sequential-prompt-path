@@ -35,14 +35,25 @@ const FAIR_SELECT_BATCH = 25;
 // ---------------------------------------------------------------------------
 // Utilities
 // ---------------------------------------------------------------------------
+type DeterministicTarget = {
+  contractor_lead_id?: string | null;
+  contractor_prospect_id?: string | null;
+  contractors_prospect_id?: string | null;
+  business_name_exact?: string | null;
+  business_name_ilike?: string | null;
+  phone_e164?: string | null;
+  email?: string | null;
+};
+
 type RunContext = {
   run_id: string;
-  mode: "autonomous" | "targeted";
+  mode: "autonomous" | "targeted" | "deterministic";
   city: string | null;
   category: string | null;
   category_synonyms: string[] | null;
   dry_run: boolean;
   limit: number;
+  target: DeterministicTarget | null;
 };
 
 function jsonResponse(body: Record<string, unknown>, status = 200) {
