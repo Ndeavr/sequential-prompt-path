@@ -58,9 +58,62 @@ Deno.serve(async (req) => {
     try {
       await transitionLead((lead as any).id, "MESSAGING", {}, "launch-agent-outreach");
 
+      // ── Resolve/attach a canonical contractor_leads row ────────────────
+      // The CASL gate requires an existing contractor_leads id (its FK target
+      // for evidence). launch_leads is a separate discovery table, so we
+      // upsert-map the destination phone to a contractor_leads row before
+      // calling the gate. If none exists AND cannot be created (missing
+      // required identity), we block with a clear observable reason instead
+      // of cascading the misleading `lead_not_found` error.
+      const normalizedPhone = String(phone).replace(/\D/g, "").slice(-10);
+      const phoneE164 = normalizedPhone.length === 10 ? `+1${normalizedPhone}` : phone;
+      let contractorLeadId: string | null = null;
+      {
+        const { data: existing } = await sb
+          .from("contractor_leads")
+          .select("id")
+          .eq("phone_e164", phoneE164)
+          .limit(1)
+          .maybeSingle();
+        if (existing?.id) {
+          contractorLeadId = existing.id as string;
+        } else if ((lead as any).company_name) {
+          const { data: inserted } = await sb
+            .from("contractor_leads")
+            .insert({
+              company_name: (lead as any).company_name,
+              phone: phone,
+              phone_e164: phoneE164,
+              email: (lead as any).email ?? null,
+              city: (lead as any).city ?? null,
+              trade: (lead as any).trade ?? null,
+              category_primary: (lead as any).trade ?? null,
+              source_type: "launch_leads",
+              source_ref: (lead as any).id,
+              pipeline_status: "scraped",
+            })
+            .select("id")
+            .maybeSingle();
+          contractorLeadId = inserted?.id ?? null;
+        }
+      }
+      if (!contractorLeadId) {
+        blocked++;
+        await sb.from("launch_leads").update({
+          lead_status: "BLOCKED",
+          block_reason: "NO_MATCHING_CONTRACTOR_LEAD",
+          last_event_at: new Date().toISOString(),
+        }).eq("id", (lead as any).id);
+        await logLaunchEvent({
+          lead_id: (lead as any).id, agent: "launch-agent-outreach", event: "gate_block",
+          success: false, message: "no_matching_contractor_lead",
+        });
+        continue;
+      }
+
       // ── CASL / suppression gate — commercial outreach ONLY ─────────────
       const gate = await callCommercialSendGate({
-        contractor_lead_id: (lead as any).id,
+        contractor_lead_id: contractorLeadId,
         destination_type: "phone_sms",
         destination: phone,
         campaign_id: (lead as any).campaign_id ?? null,
