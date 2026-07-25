@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
     // email on file (email-only fallback path).
     let query = supabase
       .from("verified_contractor_prospects")
-      .select("id, business_name, phone_e164, phone_validation_status, phone_line_type, sms_eligibility_tier, sms_eligibility_confidence, data_quality_score, website_url, city, category, source, email, outreach_status, verification_status")
+      .select("id, business_name, phone_e164, phone_validation_status, phone_line_type, sms_eligibility_tier, sms_eligibility_confidence, data_quality_score, website_url, city, category, source, email, outreach_status, verification_status, retry_count")
       .eq("outreach_status", "none")
       .eq("verification_status", "verified")
       .gte("data_quality_score", 80)
