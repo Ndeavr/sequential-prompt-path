@@ -394,6 +394,288 @@ function CampaignLauncher() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// DeterministicTargetingPanel — target a single contractor by ID / exact name /
+// phone / email. Bypasses fair-queue scoring and category/city filters.
+// Same worker endpoint; runs in mode="deterministic".
+// ---------------------------------------------------------------------------
+type TargetFilter = "business_name_exact" | "business_name_ilike" | "phone_e164" | "email" | "contractor_lead_id";
+
+function DeterministicTargetingPanel() {
+  const [filter, setFilter] = useState<TargetFilter>("business_name_ilike");
+  const [value, setValue] = useState("");
+  const [busy, setBusy] = useState<"preview" | "launch" | null>(null);
+  const [result, setResult] = useState<CampaignPreview | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const call = useCallback(async (dry_run: boolean) => {
+    if (!value.trim()) return;
+    setBusy(dry_run ? "preview" : "launch");
+    try {
+      const target: Record<string, string> = { [filter]: value.trim() };
+      const { data, error } = await supabase.functions.invoke("acquisition-queue-worker", {
+        body: { dry_run, target, limit: 5 },
+      });
+      if (error) throw error;
+      setResult(data as CampaignPreview);
+    } catch (e: any) {
+      setResult({ ok: false, message: e?.message ?? String(e) });
+    } finally {
+      setBusy(null);
+    }
+  }, [filter, value]);
+
+  const canLaunch = !!result?.ok && ((result.counts?.potentially_sms_eligible ?? 0) + (result.counts?.verification_reused ?? 0)) > 0;
+
+  return (
+    <section>
+      <h2 className="text-xs uppercase tracking-wide text-white/40 mb-2">Ciblage déterministe · Un contractor précis</h2>
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr_auto_auto] gap-2">
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value as TargetFilter)}
+            className="rounded-xl bg-white/[0.06] border border-white/10 px-3 py-2 text-sm"
+          >
+            <option value="business_name_ilike">Nom entreprise (contient)</option>
+            <option value="business_name_exact">Nom entreprise (exact)</option>
+            <option value="phone_e164">Téléphone (E.164)</option>
+            <option value="email">Email</option>
+            <option value="contractor_lead_id">contractor_leads.id</option>
+          </select>
+          <input
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder={
+              filter === "phone_e164" ? "+15145714880"
+              : filter === "email" ? "info@example.ca"
+              : filter === "contractor_lead_id" ? "uuid"
+              : "Plomberie Expert"
+            }
+            className="rounded-xl bg-white/[0.06] border border-white/10 px-3 py-2 text-sm"
+          />
+          <button
+            onClick={() => call(true)}
+            disabled={busy !== null || !value.trim()}
+            className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-xs flex items-center gap-2 hover:bg-white/[0.09] disabled:opacity-50"
+          >
+            {busy === "preview" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Eye className="w-3.5 h-3.5" />}
+            Aperçu
+          </button>
+          <button
+            onClick={() => setConfirmOpen(true)}
+            disabled={!canLaunch || busy !== null}
+            className="rounded-xl border border-emerald-400/30 bg-emerald-500/15 px-3 py-2 text-xs flex items-center gap-2 hover:bg-emerald-500/25 disabled:opacity-40"
+          >
+            {busy === "launch" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+            Lancer
+          </button>
+        </div>
+
+        {result && (
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-xs space-y-2">
+            {!result.ok && <div className="text-rose-300">Erreur : {result.message}</div>}
+            {result.ok && (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="uppercase tracking-wide text-white/50">Résultat · mode {result.mode}</span>
+                  {result.run_id && <span className="font-mono text-[10px] text-white/40">run {result.run_id.slice(0, 8)}</span>}
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {Object.entries(result.counts ?? {}).map(([k, v]) => (
+                    <div key={k} className="rounded-lg bg-white/[0.03] border border-white/5 px-2 py-1.5">
+                      <div className="text-[10px] uppercase text-white/40">{k}</div>
+                      <div className="text-sm font-semibold">{v}</div>
+                    </div>
+                  ))}
+                </div>
+                {Array.isArray(result.prospects) && result.prospects.length > 0 && (
+                  <div className="mt-2 divide-y divide-white/5">
+                    {result.prospects.map((p: any, i: number) => (
+                      <div key={i} className="py-1.5 text-[11px] flex items-center gap-2">
+                        <span className="flex-1 truncate">{p.business_name} · {p.city ?? "?"} · {p.category ?? "?"}</span>
+                        <span className="text-white/50 font-mono">{p.phone_e164_masked ?? ""}</span>
+                        <span className="text-amber-300">{p.bucket}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {result.sms_result && (
+                  <div className="text-white/60">
+                    SMS: {result.sms_result.sent_sms ?? result.sms_result.sent ?? 0} · Email fallback: {result.sms_result.sent_email ?? 0} · traités: {result.sms_result.processed ?? 0}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {confirmOpen && (
+          <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 text-xs space-y-2">
+            <div className="font-semibold text-amber-200">Confirmer envoi réel</div>
+            <div className="text-amber-100/80">
+              Cette action vérifie le numéro, envoie le SMS et bascule automatiquement sur email si le SMS échoue.
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={async () => { setConfirmOpen(false); await call(false); }}
+                className="rounded-lg bg-emerald-500/25 border border-emerald-400/40 px-3 py-1.5 hover:bg-emerald-500/40"
+              >
+                Confirmer et envoyer
+              </button>
+              <button onClick={() => setConfirmOpen(false)} className="rounded-lg bg-white/[0.06] border border-white/10 px-3 py-1.5 hover:bg-white/[0.1]">
+                Annuler
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ReconciliationTable — searchable per-contractor delivery outcome view.
+// Reads verified_contractor_prospects directly; no writes.
+// ---------------------------------------------------------------------------
+type ReconRow = {
+  id: string;
+  business_name: string | null;
+  city: string | null;
+  category: string | null;
+  phone_e164: string | null;
+  email: string | null;
+  channel_used: string | null;
+  delivery_status: string | null;
+  sms_provider_message_id: string | null;
+  outreach_twilio_sid: string | null;
+  sms_error_code: string | null;
+  sms_error_message: string | null;
+  email_provider_message_id: string | null;
+  email_error_message: string | null;
+  fallback_reason: string | null;
+  fallback_timestamp: string | null;
+  retry_count: number | null;
+  last_attempt_at: string | null;
+  outreach_status: string | null;
+  outreach_sent_at: string | null;
+};
+
+function ReconciliationTable() {
+  const [q, setQ] = useState("");
+  const [rows, setRows] = useState<ReconRow[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const load = useCallback(async (search: string) => {
+    setLoading(true);
+    try {
+      const cols = "id,business_name,city,category,phone_e164,email,channel_used,delivery_status,sms_provider_message_id,outreach_twilio_sid,sms_error_code,sms_error_message,email_provider_message_id,email_error_message,fallback_reason,fallback_timestamp,retry_count,last_attempt_at,outreach_status,outreach_sent_at";
+      let query = supabase
+        .from("verified_contractor_prospects")
+        .select(cols)
+        .not("last_attempt_at", "is", null)
+        .order("last_attempt_at", { ascending: false })
+        .limit(50);
+      const s = search.trim();
+      if (s) {
+        const like = `%${s}%`;
+        query = query.or(`business_name.ilike.${like},phone_e164.ilike.${like},email.ilike.${like}`);
+      }
+      const { data } = await query;
+      setRows((data ?? []) as ReconRow[]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(""); }, [load]);
+
+  return (
+    <section>
+      <div className="flex items-center gap-2 mb-2">
+        <h2 className="text-xs uppercase tracking-wide text-white/40 flex-1">Réconciliation multicanal · dernières tentatives</h2>
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") load(q); }}
+          placeholder="Nom, téléphone, email"
+          className="rounded-xl bg-white/[0.06] border border-white/10 px-3 py-1.5 text-xs w-64"
+        />
+        <button
+          onClick={() => load(q)}
+          className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-1.5 text-xs hover:bg-white/[0.09]"
+        >
+          {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Rechercher"}
+        </button>
+      </div>
+      <div className="overflow-x-auto rounded-2xl border border-white/10">
+        <table className="w-full text-xs">
+          <thead className="bg-white/[0.04] text-white/60">
+            <tr>
+              <th className="text-left px-3 py-2">Entreprise</th>
+              <th className="text-left px-3 py-2">Canal</th>
+              <th className="text-left px-3 py-2">Statut</th>
+              <th className="text-left px-3 py-2">Provider ID</th>
+              <th className="text-left px-3 py-2">Fallback</th>
+              <th className="text-left px-3 py-2">Erreurs</th>
+              <th className="text-center px-3 py-2">Retry</th>
+              <th className="text-left px-3 py-2">Dernière tentative</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 && (
+              <tr><td colSpan={8} className="px-3 py-6 text-center text-white/40">
+                {loading ? "Chargement…" : "Aucune tentative enregistrée."}
+              </td></tr>
+            )}
+            {rows.map((r) => {
+              const providerId = r.channel_used === "sms"
+                ? (r.sms_provider_message_id ?? r.outreach_twilio_sid ?? "—")
+                : r.channel_used === "email"
+                  ? (r.email_provider_message_id ?? "—")
+                  : "—";
+              const err = r.sms_error_code || r.sms_error_message || r.email_error_message
+                ? `${r.sms_error_code ? `[${r.sms_error_code}] ` : ""}${r.sms_error_message ?? ""}${r.email_error_message ? ` · email: ${r.email_error_message}` : ""}`
+                : "—";
+              const statusCls = r.delivery_status === "sent" || r.delivery_status === "sent_email"
+                ? "text-emerald-300"
+                : r.delivery_status === "failed" ? "text-rose-300" : "text-white/60";
+              return (
+                <tr key={r.id} className="border-t border-white/5 align-top">
+                  <td className="px-3 py-2">
+                    <div className="font-medium">{r.business_name ?? "—"}</div>
+                    <div className="text-[10px] text-white/50">{r.city ?? "?"} · {r.category ?? "?"}</div>
+                    <div className="text-[10px] text-white/40 font-mono">{r.phone_e164 ?? r.email ?? "—"}</div>
+                  </td>
+                  <td className="px-3 py-2 text-white/70">{r.channel_used ?? "—"}</td>
+                  <td className={`px-3 py-2 font-semibold ${statusCls}`}>{r.delivery_status ?? r.outreach_status ?? "—"}</td>
+                  <td className="px-3 py-2 font-mono text-[10px] text-white/60 max-w-[180px] truncate" title={providerId}>{providerId}</td>
+                  <td className="px-3 py-2 text-white/60">
+                    {r.fallback_reason ?? "—"}
+                    {r.fallback_timestamp && (
+                      <div className="text-[10px] text-white/40">
+                        {formatDistanceToNow(new Date(r.fallback_timestamp), { addSuffix: true, locale: fr })}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-rose-300 max-w-[220px] truncate" title={err}>{err}</td>
+                  <td className="px-3 py-2 text-center text-white/70">{r.retry_count ?? 0}</td>
+                  <td className="px-3 py-2 text-white/50">
+                    {r.last_attempt_at
+                      ? formatDistanceToNow(new Date(r.last_attempt_at), { addSuffix: true, locale: fr })
+                      : "—"}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+
 
 export default function PageAdminAcquisitionPipeline() {
   const [filters, setFilters] = useState<{ stage?: string; source?: string; city?: string; category?: string; reason?: string }>({});
