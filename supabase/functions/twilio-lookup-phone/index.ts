@@ -64,7 +64,13 @@ serve(async (req) => {
     else if (rawType === "landline") phone_type = "landline";
     else if (rawType.includes("voip")) phone_type = "voip";
 
-    const phone_verified = body?.valid === true || !!lti.type;
+    // LTI availability: some countries (notably CA) return error 60601 or an empty
+    // type even for perfectly valid numbers. In that case we STILL consider the
+    // number verified for downstream use — the SMS pipeline will attempt SMS and
+    // fall back to email if delivery fails.
+    const lti_available = !!lti.type;
+    const number_valid = body?.valid === true;
+    const phone_verified = number_valid || lti_available;
 
     if (contact_id) {
       await supa.from("contacts").update({
@@ -75,7 +81,16 @@ serve(async (req) => {
       }).eq("id", contact_id);
     }
 
-    return json({ cached: false, phone_e164: e164, phone_type, phone_verified, carrier: lti.carrier_name ?? null, debug: { lti_type: lti.type ?? null, lti_error_code: lti.error_code ?? null, valid: body?.valid ?? null } });
+    return json({
+      cached: false,
+      phone_e164: e164,
+      phone_type,
+      phone_verified,
+      number_valid,
+      lti_available,
+      carrier: lti.carrier_name ?? null,
+      debug: { lti_type: lti.type ?? null, lti_error_code: lti.error_code ?? null, valid: body?.valid ?? null },
+    });
   } catch (e) {
     return json({ error: String((e as Error).message ?? e), phone_type: "unknown" }, 500);
   }
