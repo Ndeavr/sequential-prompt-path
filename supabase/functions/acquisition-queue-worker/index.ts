@@ -459,14 +459,42 @@ async function promoteProspect(
     last_action_at: now,
     outreach_status: "none",
   };
-  // Idempotent: unique partial index verified_prospects_phone_uk on phone_e164
-  const { data: upserted, error: insErr } = await supabase
-    .from("verified_contractor_prospects")
-    .upsert(row, { onConflict: "phone_e164", ignoreDuplicates: false })
-    .select("id,business_name,city,category,phone_e164,phone_line_type,verification_status,verified_at,sms_eligibility_tier,sms_eligible,outreach_status,source,website_url,email")
-    .limit(1);
-  if (insErr) {
-    const err = insErr as any;
+  // Idempotent: partial unique index verified_prospects_phone_uk (WHERE phone_e164 IS NOT NULL)
+  // ON CONFLICT with a partial index requires an index-predicate inference the JS client cannot emit,
+  // so we do select-then-insert-or-update manually.
+  let inserted: any = null;
+  let opError: any = null;
+  let operation: "insert" | "update" = "insert";
+  const returningCols = "id,business_name,city,category,phone_e164,phone_line_type,verification_status,verified_at,sms_eligibility_tier,sms_eligible,outreach_status,source,website_url,email";
+  if (lead.phone_e164) {
+    const { data: existing } = await supabase
+      .from("verified_contractor_prospects")
+      .select("id")
+      .eq("phone_e164", lead.phone_e164)
+      .limit(1);
+    if (existing && existing.length > 0) {
+      operation = "update";
+      const { data: updated, error: updErr } = await supabase
+        .from("verified_contractor_prospects")
+        .update({ ...row, updated_at: now })
+        .eq("id", existing[0].id)
+        .select(returningCols)
+        .limit(1);
+      inserted = updated?.[0] ?? null;
+      opError = updErr;
+    }
+  }
+  if (!inserted && !opError) {
+    const { data: insData, error: insErr2 } = await supabase
+      .from("verified_contractor_prospects")
+      .insert(row)
+      .select(returningCols)
+      .limit(1);
+    inserted = insData?.[0] ?? null;
+    opError = insErr2;
+  }
+  if (opError) {
+    const err = opError as any;
     await emitEvent(supabase, ctx, {
       business_name: lead.business_name,
       city: lead.city,
@@ -474,13 +502,13 @@ async function promoteProspect(
       source: lead.source,
       stage: "rejected",
       reason_code: "promotion_insert_failed",
-      reason_text: insErr.message,
+      reason_text: opError.message,
       metadata: {
         pg_code: err.code ?? null,
         pg_details: err.details ?? null,
         pg_hint: err.hint ?? null,
         target_table: "verified_contractor_prospects",
-        operation: "upsert",
+        operation,
         phone_e164: lead.phone_e164,
         run_id: ctx.run_id,
         source_table: lead.source_table,
@@ -488,10 +516,10 @@ async function promoteProspect(
         payload_keys: Object.keys(row),
       },
     });
-    return { prospect: null, reason: "promotion_insert_failed", detail: insErr.message };
+    return { prospect: null, reason: "promotion_insert_failed", detail: opError.message };
   }
-  const inserted = upserted && upserted.length > 0 ? upserted[0] : null;
   if (!inserted?.id) return { prospect: null, reason: "promotion_insert_returned_null" };
+
   await emitEvent(supabase, ctx, {
     prospect_id: inserted.id,
     business_name: inserted.business_name,

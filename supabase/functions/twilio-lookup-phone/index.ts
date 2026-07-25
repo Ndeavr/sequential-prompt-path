@@ -75,7 +75,7 @@ serve(async (req) => {
       }).eq("id", contact_id);
     }
 
-    return json({ cached: false, phone_e164: e164, phone_type, phone_verified, carrier: lti.carrier_name ?? null });
+    return json({ cached: false, phone_e164: e164, phone_type, phone_verified, carrier: lti.carrier_name ?? null, debug: { lti_type: lti.type ?? null, lti_error_code: lti.error_code ?? null, valid: body?.valid ?? null } });
   } catch (e) {
     return json({ error: String((e as Error).message ?? e), phone_type: "unknown" }, 500);
   }
