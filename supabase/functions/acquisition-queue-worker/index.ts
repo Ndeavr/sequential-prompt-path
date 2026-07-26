@@ -850,7 +850,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const body = await req.json().catch(() => ({}));
-    const dryRun = body.dry_run === true;
+    // Honor dry_run at both top level and inside campaign payload (Admin UI passes it inside campaign).
+    const dryRun = body.dry_run === true || body?.campaign?.dry_run === true;
     const url = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(url, serviceKey);
