@@ -737,6 +737,8 @@ export default function PageAdminAcquisitionPipeline() {
 
         <CampaignLauncher />
 
+        <RevenueTimelinePanel initialQuery="Electro Pompe" />
+
         <DeterministicTargetingPanel />
 
         <ReconciliationTable />
