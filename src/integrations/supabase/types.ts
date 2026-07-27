@@ -88258,9 +88258,15 @@ export type Database = {
       }
       v_first_dollar_tracker: {
         Row: {
+          active_business_name: string | null
+          active_contractor_lead_id: string | null
+          active_prospect_id: string | null
+          active_provider_message_id: string | null
+          attribution_warning: string | null
           first_activation_at: string | null
           first_appointment_at: string | null
           first_click_at: string | null
+          first_contractor_activation_at: string | null
           first_delivery_at: string | null
           first_paid_at: string | null
           first_sms_sent_at: string | null

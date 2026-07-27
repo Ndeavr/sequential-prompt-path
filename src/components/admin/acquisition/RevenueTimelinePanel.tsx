@@ -35,6 +35,8 @@ type Response = {
   stages?: Stage[];
   external_blockers?: Array<Record<string, unknown>>;
   next_action?: string;
+  conversion_next_action?: string | null;
+  technical_next_action?: string | null;
 };
 
 const STATUS_STYLE: Record<StageStatus, string> = {
@@ -159,10 +161,17 @@ export function RevenueTimelinePanel({ initialQuery = "" }: { initialQuery?: str
               </div>
             )}
 
-            {/* Next action */}
-            {resp.next_action && (
+            {/* Split next actions: conversion vs technical */}
+            {(resp.conversion_next_action || resp.next_action) && (
               <div className="rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-                Prochaine action : {resp.next_action}
+                <span className="font-semibold">Prochaine conversion attendue&nbsp;:</span>{" "}
+                {resp.conversion_next_action ?? resp.next_action}
+              </div>
+            )}
+            {resp.technical_next_action && (
+              <div className="rounded-xl border border-sky-400/30 bg-sky-500/10 px-3 py-2 text-xs text-sky-100">
+                <span className="font-semibold">Action technique&nbsp;:</span>{" "}
+                {resp.technical_next_action}
               </div>
             )}
 

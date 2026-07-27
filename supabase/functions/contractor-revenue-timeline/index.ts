@@ -265,16 +265,45 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Next required operator action (first pending/blocked)
-    const nextStage = stages.find((s) => s.status === "pending" || s.status === "blocked" || s.status === "failed");
-    const nextAction = nextStage?.next_action ?? nextStage?.label ?? "Aucune action pendante.";
+    // Split next actions: conversion (revenue-blocking) vs technical (telemetry / config)
+    const CONVERSION_KEYS = new Set([
+      "sms_sent",
+      "clicked",
+      "registration_started",
+      "otp_verified",
+      "checkout_created",
+      "paid_1_dollar",
+      "activated",
+    ]);
+    const conversionStage = stages.find(
+      (s) => CONVERSION_KEYS.has(s.key) && (s.status === "pending" || s.status === "blocked" || s.status === "failed"),
+    );
+    const CONVERSION_ACTION_FR: Record<string, string> = {
+      sms_sent: "Envoyer le SMS d'activation",
+      clicked: "Attendre le clic sur le lien d'activation",
+      registration_started: "Attendre l'ouverture de l'inscription",
+      otp_verified: "Attendre la vérification OTP",
+      checkout_created: "Attendre l'ouverture du checkout Stripe",
+      paid_1_dollar: "Attendre le paiement Stripe de 1 $ CAD",
+      activated: "Finaliser l'activation contractor",
+    };
+    const conversionNextAction = conversionStage
+      ? CONVERSION_ACTION_FR[conversionStage.key] ?? conversionStage.label
+      : "Aucune action de conversion en attente.";
+
+    const technicalNextAction = externalBlockers.length > 0
+      ? String(externalBlockers[0].account_setting ?? externalBlockers[0].message ?? "Vérifier la configuration provider.")
+      : null;
 
     return json({
       ok: true,
       subject,
       stages,
       external_blockers: externalBlockers,
-      next_action: nextAction,
+      conversion_next_action: conversionNextAction,
+      technical_next_action: technicalNextAction,
+      // Deprecated field kept temporarily for older UI clients; do NOT rely on it.
+      next_action: conversionNextAction,
       sources: {
         events_count: events.length,
         delivery_logs_count: deliveryLogs.length,

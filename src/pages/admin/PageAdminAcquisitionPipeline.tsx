@@ -129,57 +129,103 @@ function FirstDollarMini({ tracker }: { tracker: ReturnType<typeof useFirstDolla
   const milestones: Array<[string, string | null | undefined]> = [
     ["1er SMS envoyé", tracker?.first_sms_sent_at],
     ["1re livraison confirmée", tracker?.first_delivery_at],
-    ["1er clic sur le lien", tracker?.first_click_at],
-    ["1re inscription", tracker?.first_activation_at],
-    ["1er paiement 1 $", tracker?.first_paid_at],
-    ["1er rendez-vous", tracker?.first_appointment_at],
+    ["1er clic (lié)", tracker?.first_click_at],
+    ["1re inscription (liée)", tracker?.first_activation_at],
+    ["1er paiement 1 $ (lié)", tracker?.first_paid_at],
+    ["1re activation (liée)", tracker?.first_contractor_activation_at],
+    ["1er rendez-vous (lié)", tracker?.first_appointment_at],
   ];
 
-  const blockerLabelFr: Record<string, string> = {
-    "First SMS Sent": "envoyer le 1er SMS de ce lancement",
-    "First Click": "obtenir le 1er clic sur le lien d'activation",
-    "First Activation": "obtenir la 1re inscription contractor",
-    "First $1 Payment": "obtenir le 1er paiement Stripe de 1 $ CAD",
-    "First Appointment": "obtenir le 1er rendez-vous facturable",
+  const nextActionFr: Record<string, string> = {
+    "First SMS Sent": "Envoyer le 1er SMS de ce lancement",
+    "First Click": "Clic sur le lien d'activation",
+    "First Registration": "Inscription contractor (compte créé)",
+    "First $1 Payment": "Paiement Stripe de 1 $ CAD",
+    "First Activation": "Activation contractor",
+    "First Appointment": "Premier rendez-vous facturable",
   };
-  const conversionBlocker =
+  const conversionNextAction =
     tracker?.next_missing_milestone && tracker.next_missing_milestone !== "Scale"
-      ? blockerLabelFr[tracker.next_missing_milestone] ?? tracker.next_missing_milestone
+      ? nextActionFr[tracker.next_missing_milestone] ?? tracker.next_missing_milestone
       : null;
+
+  const emptyLabel =
+    tracker?.attribution_warning === "attribution_lead_missing"
+      ? "Attribution manquante"
+      : "En attente";
 
   return (
     <section>
-      <div className="flex items-baseline justify-between mb-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-2 mb-2">
         <h2 className="text-xs uppercase tracking-wide text-white/40">
           First Dollar Tracker · lancement en cours
         </h2>
         {tracker?.run_started_at && (
           <span className="text-[11px] text-white/50">
-            Suivi depuis&nbsp;: {new Date(tracker.run_started_at).toLocaleString("fr-CA", {
+            Suivi depuis&nbsp;:{" "}
+            {new Date(tracker.run_started_at).toLocaleString("fr-CA", {
               dateStyle: "medium",
               timeStyle: "short",
             })}
           </span>
         )}
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+
+      {tracker?.active_prospect_id && (
+        <div className="mb-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-2 text-[11px] text-white/60">
+          <span className="text-white/80 font-semibold">
+            {tracker.active_business_name ?? "Prospect actif"}
+          </span>
+          {" · "}
+          prospect&nbsp;<code className="text-white/70">{tracker.active_prospect_id.slice(0, 8)}</code>
+          {tracker.active_contractor_lead_id && (
+            <>
+              {" · "}lead&nbsp;
+              <code className="text-white/70">{tracker.active_contractor_lead_id.slice(0, 8)}</code>
+            </>
+          )}
+          {tracker.active_provider_message_id && (
+            <>
+              {" · "}SID&nbsp;
+              <code className="text-white/70">
+                {tracker.active_provider_message_id.slice(0, 10)}…
+              </code>
+            </>
+          )}
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
         {milestones.map(([label, at]) => (
           <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <div className="text-[11px] uppercase tracking-wide text-white/50">{label}</div>
             <div className={`mt-2 text-sm font-semibold ${at ? "text-emerald-300" : "text-amber-300"}`}>
               {at
                 ? formatDistanceToNow(new Date(at), { addSuffix: true, locale: fr })
-                : "En attente"}
+                : emptyLabel}
             </div>
           </div>
         ))}
       </div>
-      {conversionBlocker && (
+
+      {conversionNextAction && (
         <div className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
           <div className="font-semibold">Prochaine conversion attendue</div>
-          <div className="opacity-90">Action opérateur&nbsp;: {conversionBlocker}.</div>
+          <div className="opacity-90">Action opérateur&nbsp;: {conversionNextAction}.</div>
         </div>
       )}
+
+      {tracker?.attribution_warning === "attribution_lead_missing" && (
+        <div className="mt-2 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">
+          <div className="font-semibold">Attribution incomplète</div>
+          <div className="opacity-90">
+            Aucun contractor lead n'est lié au prospect actif (ni par <code>source_prospect_id</code>,
+            ni par téléphone E.164). Les jalons downstream restent « attribution manquante » jusqu'à
+            réconciliation.
+          </div>
+        </div>
+      )}
+
       {tracker?.telemetry_warning === "delivery_callback_missing" && (
         <div className="mt-2 rounded-2xl border border-sky-400/20 bg-sky-400/10 px-4 py-3 text-sm text-sky-200">
           <div className="font-semibold">Avertissement télémétrie</div>
