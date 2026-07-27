@@ -228,10 +228,10 @@ function FirstDollarMini({ tracker }: { tracker: ReturnType<typeof useFirstDolla
 
       {tracker?.telemetry_warning === "delivery_callback_missing" && (
         <div className="mt-2 rounded-2xl border border-sky-400/20 bg-sky-400/10 px-4 py-3 text-sm text-sky-200">
-          <div className="font-semibold">Avertissement télémétrie</div>
+          <div className="font-semibold">Action technique&nbsp;: Réparer StatusCallback Twilio</div>
           <div className="opacity-90">
-            StatusCallback Twilio manquant — les SMS partent mais la livraison n'est pas confirmée.
-            Corriger l'URL de callback dans le Messaging Service Twilio. Ne bloque pas la conversion.
+            Les SMS partent mais aucun callback de livraison n'est reçu. Ne bloque pas la conversion —
+            corriger l'URL StatusCallback sur le Messaging Service Twilio pour restaurer la confirmation de livraison.
           </div>
         </div>
       )}
