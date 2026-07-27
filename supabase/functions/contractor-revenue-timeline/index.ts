@@ -259,7 +259,7 @@ Deno.serve(async (req) => {
         provider: "Twilio",
         code: "NO_STATUS_CALLBACK",
         message: `SID ${twilioSid} envoyé mais aucun callback reçu dans outreach_delivery_logs.`,
-        account_setting: "Vérifier StatusCallback URL sur le Messaging Service Twilio.",
+        account_setting: "Réparer StatusCallback Twilio",
         affected_stage: "delivered",
         fallback_available: false,
       });
