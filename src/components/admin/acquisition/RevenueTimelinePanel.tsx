@@ -35,6 +35,8 @@ type Response = {
   stages?: Stage[];
   external_blockers?: Array<Record<string, unknown>>;
   next_action?: string;
+  conversion_next_action?: string | null;
+  technical_next_action?: string | null;
 };
 
 const STATUS_STYLE: Record<StageStatus, string> = {
