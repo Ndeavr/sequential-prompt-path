@@ -70,11 +70,17 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const client = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
-    const { data, error } = await client
+    // Guard against slow/hung DB view — 3s cap, otherwise fall back to seasonal
+    const queryPromise = client
       .from("v_popular_questions_7d")
       .select("normalized_label, topic, intent, weighted_score")
       .order("weighted_score", { ascending: false })
       .limit(limit);
+    const timeoutPromise = new Promise<{ data: null; error: Error }>((resolve) =>
+      setTimeout(() => resolve({ data: null, error: new Error("db_timeout") }), 3000),
+    );
+    const { data, error } = (await Promise.race([queryPromise, timeoutPromise])) as
+      | { data: any[] | null; error: any };
 
     const items: ResultItem[] = [];
     if (!error && Array.isArray(data)) {
