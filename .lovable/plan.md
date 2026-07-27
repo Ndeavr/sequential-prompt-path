@@ -1,71 +1,44 @@
-# UNPRO — Multi-Channel Acquisition Hardening + Deterministic Targeting
+## Objective
+Verify and finalize the strict-attribution First Dollar Tracker so it anchors on Electro Pompe only and never surfaces historical clicks/activations. Publish only after verification.
 
-## Scope
-Extend the existing acquisition pipeline (already partially LTI-decoupled in the previous turn) so it:
-1. Targets a specific contractor on demand (deterministic mode).
-2. Never stops on Twilio Lookup/NPAC failures.
-3. Automatically falls back from SMS to Resend email.
-4. Persists full audit + reconciliation data visible in Admin.
+## Current state (verified last turn)
+- `v_first_dollar_tracker` redefined: anchors on the most recent active prospect with a real Twilio SID (Electro Pompe, prospect `aa4ebd75…`, lead `dd9f83bb…`, phone `+14503285551`, SID `SM7770bec70bfd1ea15d88ef8b13a3888b`), and links each downstream milestone via prospect_id / lead_id / tracking token / provider_message_id / phone — no MIN() over history, no date-only attribution.
+- `contractor-revenue-timeline` edge function returns `conversion_next_action` and `technical_next_action` separately (deployed).
+- `RevenueTimelinePanel.tsx` and `FirstDollarMini` in `PageAdminAcquisitionPipeline.tsx` consume the new fields.
+- Latest read of the view confirms: `next_missing_milestone = First Click`, `telemetry_warning = delivery_callback_missing`, historical click correctly ignored.
 
-No new tables, no parallel systems, no rebuilds. Reuses `acquisition-queue-worker`, `send-verified-batch`, `twilio-lookup-phone`, `outreach-resend-send`, `verified_contractor_prospects`, `acquisition_pipeline_events`.
+## Remaining work
 
-## Current state (already done in previous turn)
-- `twilio-lookup-phone` returns `number_valid` + `lti_available`.
-- `acquisition-queue-worker` maps unknown-but-valid CA numbers to Tier C instead of quarantining.
-- `compute_sms_eligibility_tier` trigger relaxed for Tier C.
-- `send-verified-batch` already has partial SMS→email fallback logic (per prior turn's summary).
+### 1. Full audit for any residual MIN()/date-only attribution
+- Grep `src/hooks/useAcquisitionFunnel.ts`, `src/hooks/useFirstDollarFunnel.ts`, `src/features/systemIntegrity/First1DollarTracker.tsx`, `src/components/admin/outreach/FirstRevenueTracker.tsx`, and any other tracker/funnel reader for `min(`, `MIN(`, or timestamp-only fallbacks.
+- Confirm no consumer of the tracker falls back to `contractor_funnel_events`, `launch_leads`, or `sms_events_v2` counts when the linked-milestone value is null. Any such fallback must be removed for the active-run panel (period cards used elsewhere can keep their own counts, out of scope).
 
-## Work remaining
+### 2. Verify the exact required copy is rendered
+- `FirstDollarMini` (and `RevenueTimelinePanel` for Electro Pompe) must show:
+  - FIRST SMS SENT → success, real timestamp, masked SID.
+  - DELIVERY → pending (telemetry warning `delivery_callback_missing`).
+  - CLICK / REGISTRATION / OTP / CHECKOUT / PAYMENT / ACTIVATION → pending (attribution manquante where no linkage).
+  - `conversion_next_action` = "Clic sur le lien d'activation".
+  - `technical_next_action` = "Réparer StatusCallback Twilio".
+- Adjust the edge function's French mapping if the current wording differs.
 
-### 1. Deterministic targeting (`acquisition-queue-worker`)
-Add optional filters accepted in the `campaign` payload:
-- `contractor_lead_id`, `contractor_prospect_id`
-- `business_name_exact`, `business_name_ilike`
-- `phone_e164`, `email`
+### 3. Runtime verification before publish
+- Re-query `v_first_dollar_tracker` and `contractor-revenue-timeline?prospect_id=aa4ebd75…`; confirm no historical click or activation is marked complete.
+- Load `/admin/acquisition-pipeline` via Playwright at 390 / 984 / 1280 widths; screenshot the First Dollar block and the Revenue Timeline panel; confirm the two-action bandeau shows the exact required strings and no green historical stages.
 
-Rules:
-- If any deterministic filter is set → bypass scoring, process only matches, never substitute.
-- Log `selection_mode: 'deterministic' | 'scored'`, filter used, chosen row id, and scoring values (when scored) into `acquisition_pipeline_events`.
+### 4. Publish
+- Only after step 3 passes on all three widths, publish the front-end. If any historical click/activation still appears, stop and repair before publishing.
 
-### 2. Multi-channel delivery (`send-verified-batch`)
-Confirm and finalize the existing SMS-first + Resend-fallback flow:
-- Tier A/B/C → attempt SMS; on recoverable Twilio errors (21610 opt-out, 30003/30005/30006 unreachable, 30008 unknown, timeout, 5xx) → email fallback.
-- Tier D or SMS permanent failure (21211 invalid, 21614 not mobile, landline confirmed) → email-only.
-- Persist per attempt: `channel_used`, `sms_attempted`, `sms_provider_message_id`, `sms_error_code`, `sms_error_message`, `email_sent`, `email_provider`, `email_provider_message_id`, `fallback_reason`, `fallback_timestamp`, `delivery_status`, `retry_count`, `last_attempt_at`.
-- Migration: add any of the above columns to `verified_contractor_prospects` that are still missing (idempotent `ADD COLUMN IF NOT EXISTS`).
+## Files expected to change
+- Possibly `supabase/functions/contractor-revenue-timeline/index.ts` (copy tweak only, if wording drift).
+- Possibly `src/pages/admin/PageAdminAcquisitionPipeline.tsx` or `src/components/admin/acquisition/RevenueTimelinePanel.tsx` (copy/fallback tightening).
+- No DB migration expected — the view already enforces strict attribution.
 
-### 3. Retry classification
-Central helper in `send-verified-batch`:
-- Recoverable → increment `retry_count`, requeue with backoff (max configurable, default 3).
-- Permanent (invalid number, landline confirmed, opt-out) → mark terminal, skip retry, email fallback if email exists.
+## Out of scope
+SEO, sitemaps, AI corpus, outreach send logic, role switcher, affiliate flow, other funnel period views.
 
-### 4. Immutable audit log
-One row per outbound attempt in `acquisition_pipeline_events` with stage `outreach_attempt` containing: contractor id, business, channel, fallback reason, provider IDs, provider raw response, outcome. Never mutated.
-
-### 5. Admin UI (`PageAdminAcquisitionPipeline.tsx` + hooks)
-Two additions only — no new pages:
-- **Business targeting panel**: inputs (business name / email / phone / contractor id) + "Exécuter sur ce contractor" button → calls the worker with deterministic filters.
-- **Reconciliation table**: contractor, primary channel, fallback channel, Twilio SID, Resend msg id, delivery status, open, click, registration, payment, failure reason, retry count. Searchable. Sourced from `verified_contractor_prospects` joined with `acquisition_pipeline_events`.
-
-### 6. Production safeguards
-Worker + batch sender wrap every provider call in try/catch that logs + continues to next candidate. No global stop on NPAC/Lookup/timeout/Resend outage.
-
-### 7. End-to-end verification
-Live run with `{ city: "Laval", category: "plombier", limit: 1, business_name_exact: "Plomberie Expert KF & Fils Inc" }` (or user-provided). Return full reconciliation: selected row + reason, Twilio SID + status, fallback decision, Resend id if used, final status, DB updates, audit entry.
-
-## Files to change
-- `supabase/functions/acquisition-queue-worker/index.ts` — deterministic filters + scoring bypass + selection logging.
-- `supabase/functions/send-verified-batch/index.ts` — finalize retry classification + column writes.
-- `supabase/migrations/<new>.sql` — additive columns (only those still missing) on `verified_contractor_prospects`.
-- `src/pages/admin/PageAdminAcquisitionPipeline.tsx` + related hook — targeting panel + reconciliation table.
-
-## Out of scope (per user)
-No SEO, sitemap, AI corpus, content, affiliates, role-switcher, or unrelated systems. No new tables. No new edge functions.
-
-## Verification checklist
-- Deterministic filter with fake id → 0 processed, no substitution.
-- Deterministic filter with real business → exactly that row processed.
-- CA number with LTI unavailable → SMS attempted, on failure email fallback fires, both IDs stored.
-- Landline with email → email-only, no SMS attempted, no retry.
-- Twilio outage simulated (bad key) → worker continues, all rows fall back to email.
-- Reconciliation UI shows every field for each attempt.
+## Success criteria
+- Tracker shows Electro Pompe as the sole active run.
+- No stage marked complete without an explicit linkage to prospect/lead/token/SID/phone.
+- Exact French `conversion_next_action` and `technical_next_action` strings render.
+- Verified at 390 / 984 / 1280 before publish.
