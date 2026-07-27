@@ -88261,9 +88261,12 @@ export type Database = {
           first_activation_at: string | null
           first_appointment_at: string | null
           first_click_at: string | null
+          first_delivery_at: string | null
           first_paid_at: string | null
           first_sms_sent_at: string | null
           next_missing_milestone: string | null
+          run_started_at: string | null
+          telemetry_warning: string | null
         }
         Relationships: []
       }
