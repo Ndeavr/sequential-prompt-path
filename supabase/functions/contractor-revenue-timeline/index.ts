@@ -280,7 +280,7 @@ Deno.serve(async (req) => {
     );
     const CONVERSION_ACTION_FR: Record<string, string> = {
       sms_sent: "Envoyer le SMS d'activation",
-      clicked: "Attendre le clic sur le lien d'activation",
+      clicked: "Clic sur le lien d'activation",
       registration_started: "Attendre l'ouverture de l'inscription",
       otp_verified: "Attendre la vérification OTP",
       checkout_created: "Attendre l'ouverture du checkout Stripe",
