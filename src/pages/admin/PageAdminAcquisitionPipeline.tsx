@@ -126,29 +126,67 @@ function SourceHealthTable({ rows }: { rows: ReturnType<typeof useAcquisitionSou
 }
 
 function FirstDollarMini({ tracker }: { tracker: ReturnType<typeof useFirstDollarTracker>["data"] }) {
-  const milestones = [
-    ["First SMS Sent", tracker?.first_sms_sent_at],
-    ["First Click", tracker?.first_click_at],
-    ["First Activation", tracker?.first_activation_at],
-    ["First $1 Payment", tracker?.first_paid_at],
-    ["First Appointment", tracker?.first_appointment_at],
+  const milestones: Array<[string, string | null | undefined]> = [
+    ["1er SMS envoyé", tracker?.first_sms_sent_at],
+    ["1re livraison confirmée", tracker?.first_delivery_at],
+    ["1er clic sur le lien", tracker?.first_click_at],
+    ["1re inscription", tracker?.first_activation_at],
+    ["1er paiement 1 $", tracker?.first_paid_at],
+    ["1er rendez-vous", tracker?.first_appointment_at],
   ];
+
+  const blockerLabelFr: Record<string, string> = {
+    "First SMS Sent": "envoyer le 1er SMS de ce lancement",
+    "First Click": "obtenir le 1er clic sur le lien d'activation",
+    "First Activation": "obtenir la 1re inscription contractor",
+    "First $1 Payment": "obtenir le 1er paiement Stripe de 1 $ CAD",
+    "First Appointment": "obtenir le 1er rendez-vous facturable",
+  };
+  const conversionBlocker =
+    tracker?.next_missing_milestone && tracker.next_missing_milestone !== "Scale"
+      ? blockerLabelFr[tracker.next_missing_milestone] ?? tracker.next_missing_milestone
+      : null;
+
   return (
     <section>
-      <h2 className="text-xs uppercase tracking-wide text-white/40 mb-2">First Dollar Tracker</h2>
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+      <div className="flex items-baseline justify-between mb-2">
+        <h2 className="text-xs uppercase tracking-wide text-white/40">
+          First Dollar Tracker · lancement en cours
+        </h2>
+        {tracker?.run_started_at && (
+          <span className="text-[11px] text-white/50">
+            Suivi depuis&nbsp;: {new Date(tracker.run_started_at).toLocaleString("fr-CA", {
+              dateStyle: "medium",
+              timeStyle: "short",
+            })}
+          </span>
+        )}
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         {milestones.map(([label, at]) => (
-          <div key={label as string} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <div className="text-[11px] uppercase tracking-wide text-white/50">{label}</div>
             <div className={`mt-2 text-sm font-semibold ${at ? "text-emerald-300" : "text-amber-300"}`}>
-              {at ? formatDistanceToNow(new Date(at as string), { addSuffix: true, locale: fr }) : "En attente"}
+              {at
+                ? formatDistanceToNow(new Date(at), { addSuffix: true, locale: fr })
+                : "En attente"}
             </div>
           </div>
         ))}
       </div>
-      {tracker?.next_missing_milestone && tracker.next_missing_milestone !== "Scale" && (
+      {conversionBlocker && (
         <div className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
-          Blocage revenu actuel : {tracker.next_missing_milestone}
+          <div className="font-semibold">Prochaine conversion attendue</div>
+          <div className="opacity-90">Action opérateur&nbsp;: {conversionBlocker}.</div>
+        </div>
+      )}
+      {tracker?.telemetry_warning === "delivery_callback_missing" && (
+        <div className="mt-2 rounded-2xl border border-sky-400/20 bg-sky-400/10 px-4 py-3 text-sm text-sky-200">
+          <div className="font-semibold">Avertissement télémétrie</div>
+          <div className="opacity-90">
+            StatusCallback Twilio manquant — les SMS partent mais la livraison n'est pas confirmée.
+            Corriger l'URL de callback dans le Messaging Service Twilio. Ne bloque pas la conversion.
+          </div>
         </div>
       )}
     </section>
