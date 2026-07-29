@@ -254,6 +254,7 @@ const PageAdminNormalization = lazyWithRetry(() => import("@/pages/admin/PageAdm
 const PageAdminOps = lazyWithRetry(() => import("@/pages/admin/PageAdminOps"));
 const PageAdminSiteHealth = lazyWithRetry(() => import("@/pages/admin/PageAdminSiteHealth"));
 const AdminLaunchWarRoom = lazyWithRetry(() => import("@/pages/admin/AdminLaunchWarRoom"));
+const PageAdminLaunchControl = lazyWithRetry(() => import("@/pages/admin/PageAdminLaunchControl"));
 const PageAdminCriticalPathAudit = lazyWithRetry(() => import("@/pages/admin/PageAdminCriticalPathAudit"));
 const AdminUIHealthMonitor = lazyWithRetry(() => import("@/pages/admin/AdminUIHealthMonitor"));
 const Search = lazyWithRetry(() => import("@/pages/Search"));
@@ -1445,6 +1446,7 @@ export const AppRouter = () => (
         <Route path="/admin/alex/voice-lab" element={<ProtectedRoute requiredRole="admin"><PageVoiceLab /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
         <Route path="/admin/launch-war-room" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><AdminLaunchWarRoom /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/launch-control" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminLaunchControl /></Suspense></ProtectedRoute>} />
         <Route path="/admin/critical-path-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminCriticalPathAudit /></Suspense></ProtectedRoute>} />
         <Route path="/admin/ui-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><AdminUIHealthMonitor /></Suspense></ProtectedRoute>} />
         <Route path="/admin/google-project-audit" element={<ProtectedRoute requiredRole="admin"><PageGoogleProjectUsageAudit /></ProtectedRoute>} />
