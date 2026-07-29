@@ -1,76 +1,70 @@
-## Mission
+## Inspection Only — Revenue Funnel Status (America/Toronto, 29 juil. 2026 13:40 EDT)
 
-Get the first real $1 contractor activations today. Freeze all non-revenue work. Every change below exists only to remove a blocker between "scraped" and "activated".
+**⚠️ Note :** `v_launch_funnel` a expiré (timeout DB Supabase intermittent pendant l'inspection). Compteurs « aujourd'hui » ci-dessous dérivés de `v_first_dollar_tracker` + `v_pipeline_funnel_counts` (all-time) + observations directes. Marqué UNVERIFIED lorsque non prouvé.
 
-Success today = 20 invitations sent, 5 registrations, 3 OTPs, 2 payments, 2 activations.
+### 1) Compteurs
 
-## Scope
+| Étape | Aujourd'hui | All-time (`v_pipeline_funnel_counts`) |
+|---|---|---|
+| Scraped | UNVERIFIED | 263 |
+| Contactable | UNVERIFIED | 260 |
+| SMS envoyé | ≥1 (run actif à 15:56 UTC) | 27 |
+| SMS livré | 0 (callback Twilio manquant) | 0 |
+| Email envoyé | UNVERIFIED | n/a dans cette vue |
+| Landing visits | 0 (aucun `first_click_at`) | n/a |
+| Registration démarré/complété | 0 / 0 | outreach_queued 8 |
+| OTP complété | UNVERIFIED | n/a |
+| Stripe checkout ouvert | 0 aujourd'hui | payment_started 2 |
+| $1 payé | 0 aujourd'hui | paid 1 (historique) |
+| Contractor activé | 0 aujourd'hui | activated 0 |
 
-In: Launch Control Center, manual campaign mode, manual activation, SMS+email backup, per-contractor timeline, dead-lead quarantine, post-payment welcome, friction removal on registration/OTP/checkout, end-to-end test button, revenue wall, kill switch on non-revenue work.
+### 2) Run actif (`v_first_dollar_tracker`)
 
-Out: redesigns, new marketing pages, SEO, AI corpus, sitemap, role switcher, affiliate polish, any UI change that does not touch the click→pay→activate path.
+- Prospect : **E.B. Plomberie inc.** (`816ccccf-…`)
+- SID SMS : `SM91c8d48009ff9215033771be2671e6ca`
+- Run démarré : `2026-07-29 15:56:11 UTC`
+- `first_sms_sent_at` ✅ 15:56 UTC
+- `first_delivery_at` ⛔ null → `telemetry_warning: delivery_callback_missing`
+- `first_click_at` ⛔ null → **next_missing_milestone: First Click**
+- `first_paid_at`, `first_contractor_activation_at`, `first_appointment_at` ⛔ null
+- `attribution_warning: attribution_lead_missing` (aucun `contractor_lead_id` lié au prospect actif)
 
-## Steps
+Note : l'ancienne cible « Electro Pompe » (`aa4ebd75…`) n'est plus le run actif ; nouveau prospect substitué.
 
-### 1. Launch Control Center — `/admin/launch-control`
-Single mobile-first page. One data source: reuse `v_first_dollar_tracker` + `contractor-revenue-timeline` + `acquisition_pipeline_events`. Refresh every 10s. 12 counters for today (America/Toronto midnight):
-scraped, valid_phone, sms_sent, sms_delivered, email_sent, email_opened, landing_visits, registrations_started, otp_completed, checkout_opened, paid_1dollar, activated.
-Any counter flat >10min → red halo + "blocker" chip that links to the exact stage in the timeline panel. No new components if `RevenueTimelinePanel` + `FirstDollarMini` already cover it — extend, don't duplicate.
+### 3) Composants demandés — état vérifié dans le code
 
-### 2. Manual Campaign Mode
-Reuse existing `CampaignLauncher` on `/admin/acquisition-pipeline`. Add: province + city + category + count (default 25) → Preview → Send Now. Preview calls existing `acquisition-queue-worker` in `dry_run=true` deterministic mode; Send Now flips `dry_run=false`. No new endpoint.
+| # | Composant | État |
+|---|---|---|
+| 1 | `/admin/launch-control` | ✅ Déployé — route + lazy + nav (`router.tsx:1449`, `adminNav.ts:30`, `PageAdminLaunchControl.tsx` 10 573 o) |
+| 2 | RevenueWall dans AdminLayout | ✅ Monté (`AdminLayout.tsx:17,180`) |
+| 3 | Manual campaign Preview → Send Now | ⛔ **MANQUANT** — `src/components/admin/acquisition/CampaignLauncher.tsx` n'existe pas. Aucun composant « Preview → Send Now » trouvé |
+| 4 | Manual activation backup | ⚠️ PARTIEL — `admin-create-contractor-manual`, `activate-contractor-plan` existent ; aucune fonction dédiée `admin-manual-activate` ni bouton UI trouvé sur Launch Control |
+| 5 | SMS-failure email fallback | ✅ Implémenté dans `send-verified-batch/index.ts` (via `outreach-resend-send`, ligne 317) + fn `email-fallback-dispatch` déployée |
+| 6 | Per-contractor timeline avec erreurs exactes | ✅ `supabase/functions/contractor-revenue-timeline/index.ts` + `RevenueTimelinePanel.tsx` (vérifié sessions antérieures) |
+| 7 | Dead-lead quarantine | ✅ Logique de quarantaine présente dans `acquisition-queue-worker`, `send-verified-batch`, `_shared/acquisitionPipeline.ts` |
+| 8 | Post-payment welcome + Alex start | ⚠️ UNVERIFIED — 4 webhooks Stripe existent (`stripe-webhook`, `stripe-unpro-webhook`, `stripe-isr-webhook`, `founder-stripe-test-flow`) mais l'enchaînement welcome-email + auto-Alex-start non inspecté cette session |
+| 9 | Run Full Test E2E button | ⚠️ PARTIEL — fn `acq-full-test` déployée + invoke présent dans `PageAdminAcquisition.tsx:65` ; **pas de bouton sur `/admin/launch-control`** |
 
-### 3. Manual Activation Backup
-On every contractor row in `/admin/launch-control` and existing reconciliation table: "Activer manuellement" button → new edge fn `admin-manual-activate` that (a) marks the lead paid with `payment_source='manual_admin'`, (b) calls the existing activation path used by the Stripe webhook, (c) logs to `admin_activation_logs`. Founder override, audit-logged.
+### 4) Ce qui est confirmé fonctionnel
+- Envoi SMS Tier C (Canada sans LTI) — un vrai SMS parti aujourd'hui à 15:56 UTC vers E.B. Plomberie.
+- Tracker ancré par identité (prospect_id + SID) — pas de fuite historique.
+- Fallback email Resend câblé dans `send-verified-batch`.
+- Launch Control + RevenueWall live.
+- Timeline edge fn opérationnelle.
 
-### 4. Emergency SMS Template
-Register one short template in `campaign_message_templates` (or existing equivalent) exactly as specified. Set as default for the launch campaign. No changes to `send-verified-batch` other than template selection.
+### 5) Ce qui manque / non implémenté
+- Composant UI **CampaignLauncher** (Preview → Send Now).
+- Bouton **Run Full Test** sur `/admin/launch-control` (existe seulement sur `PageAdminAcquisition`).
+- Bouton **Activer manuellement** sur Launch Control (fonctions edge existent, pas de câblage UI vérifié).
+- **Twilio StatusCallback** non configuré → aucun `delivered` n'arrive → `first_delivery_at` reste null.
+- Lien `contractor_lead_id` ↔ `verified_contractor_prospects` pour le run actif (`attribution_lead_missing`).
 
-### 5. Email Backup on SMS Failure
-`send-verified-batch` already has Tier C SMS→email fallback. Extend: on any SMS non-2xx / non-queued Twilio response, or if delivery status hasn't advanced in 5 min, auto-enqueue Resend email using existing `send-contractor-invitation-email` function. Idempotent by `(lead_id, channel)`.
+### 6) Premier vrai bloqueur pour $1 aujourd'hui
+**Aucun clic humain sur le lien SMS** envoyé à E.B. Plomberie à 15:56 UTC (`first_click_at = null`, `clicked all-time = 0`). Toute la chaîne aval (registration → OTP → Stripe → activation) est en attente de ce clic. Bloqueur secondaire non-bloquant : Twilio StatusCallback (empêche seulement la confirmation `delivered`, pas le clic).
 
-### 6. Per-Contractor Timeline
-Reuse `contractor-revenue-timeline`. On failed step, require `failure_reason` populated from `acquisition_pipeline_events.error_code` — never "Unknown error". If missing, show the raw provider payload snippet. Timeline drawer opens from any launch-control row.
+### 7) Prochaine action opérateur unique
+Confirmer par téléphone/canal direct que le destinataire d'E.B. Plomberie a reçu le SMS et l'inviter à cliquer le lien d'activation (contact humain de vérification) — c'est le seul geste qui débloque la suite du funnel sans envoyer de nouveau SMS ni changer de code.
 
-### 7. Kill Dead Leads
-Add `quarantine_reason` writer in `acquisition-queue-worker` for: invalid_phone, no_website, duplicate_phone_or_neq, no_public_business. Set `retry_blocked=true` so the fair-queue worker skips them permanently. Surface count in Launch Control.
+---
 
-### 8. Post-Payment Welcome
-On successful Stripe webhook → redirect target `/activation/welcome` shows "🎉 Bienvenue chez UNPRO" and auto-starts Alex within 500ms (reuse existing Alex auto-start hook, no new voice code). No intermediate loading page.
-
-### 9. Remove Friction on Register → OTP → Pay
-Audit the current `/e/:leadId` → register → OTP → checkout path only. Remove any optional field, tutorial modal, or extra confirmation between the invitation link and Stripe. Target: ≤90s. Any field not required for Stripe or activation is deleted from this path only.
-
-### 10. End-to-End Test Button
-Admin-only button on Launch Control → new edge fn `run-full-activation-test`: creates test contractor with `is_test=true`, sends invitation to a founder-owned email, generates OTP via existing path, opens Stripe test-mode checkout, completes payment via test card token, verifies activation row. Returns green/red report + failing step. Test contractors excluded from all counters.
-
-### 11. Revenue Wall
-Header component on every `/admin/*` page: "Aujourd'hui: $X / $5 — Y contrats restants". Data from `v_first_dollar_tracker`. One component, injected in `AdminLayout`.
-
-### 12. Definition of Done Guard
-Add `docs/standards/REVENUE_ONLY_MODE.md` extending `FEATURE_FREEZE.md`: until `paid_1dollar >= 2` for the day, agent must refuse feature work and identify the blocking step with evidence from `acquisition_pipeline_events`.
-
-## Files (touch list, no rewrites)
-
-- New: `src/pages/admin/PageAdminLaunchControl.tsx`, `src/components/admin/launch/*` (KPI grid, RevenueWall, TimelineDrawer if not reusable), `docs/standards/REVENUE_ONLY_MODE.md`.
-- New edge fns: `admin-manual-activate`, `run-full-activation-test`.
-- Extend: `supabase/functions/acquisition-queue-worker/index.ts` (quarantine writer), `send-verified-batch/index.ts` (auto-email on SMS fail), `contractor-revenue-timeline/index.ts` (mandatory failure reasons).
-- Extend: `src/pages/admin/PageAdminAcquisitionPipeline.tsx` (province/city/category/count on CampaignLauncher), `src/layouts/AdminLayout.tsx` (RevenueWall header), post-Stripe redirect page `src/pages/activation/PageActivationWelcome.tsx`.
-- Migration: add `retry_blocked`, `quarantine_reason` on `verified_contractor_prospects` if missing; `is_test` flag on contractors + leads; index for today-scoped counters.
-
-## Verification order (must run in this order, stop on first red)
-
-1. Deploy migrations + edge fns.
-2. Run "End-to-End Test" button → must go green.
-3. Manual campaign: Laval / plombier / 3 real prospects, `dry_run=false`.
-4. Launch Control shows sms_sent ≥ 1 within 60s.
-5. Click one link on a founder phone → landing_visits +1, registrations +1, otp +1, checkout +1, paid +1, activated +1 within 90s.
-6. Only after (5) is green: scale campaign to 25.
-
-If any step fails: stop, open the timeline for that lead, capture the exact `error_code`, ship the minimum fix, retry from step 2.
-
-## Non-negotiables
-
-- No new features outside this list.
-- No UI change that doesn't shorten the click→pay path.
-- Every counter and blocker traces to a real row in `acquisition_pipeline_events` or `v_first_dollar_tracker`. No mocked data. No estimated numbers.
+*Aucun code modifié, aucun envoi effectué, aucune donnée créée pendant cette inspection.*
