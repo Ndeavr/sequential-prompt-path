@@ -14,6 +14,7 @@ import {
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import BannerSystemEnvironmentStatus from "@/components/admin/system/BannerSystemEnvironmentStatus";
 import SmsInfrastructureBanner from "@/components/admin/SmsInfrastructureBanner";
+import RevenueWall from "@/components/admin/RevenueWall";
 import { adminNavGroups, type NavGroup, type NavLeaf } from "@/config/adminNav";
 import { useAdminPageTracking } from "@/hooks/useAdminPageTracking";
 import type { ReactNode } from "react";
