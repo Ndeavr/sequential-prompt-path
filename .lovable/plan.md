@@ -1,70 +1,46 @@
-## Inspection Only — Revenue Funnel Status (America/Toronto, 29 juil. 2026 13:40 EDT)
+## Constat vérifié (lecture seule, aujourd'hui)
 
-**⚠️ Note :** `v_launch_funnel` a expiré (timeout DB Supabase intermittent pendant l'inspection). Compteurs « aujourd'hui » ci-dessous dérivés de `v_first_dollar_tracker` + `v_pipeline_funnel_counts` (all-time) + observations directes. Marqué UNVERIFIED lorsque non prouvé.
+- `v_first_dollar_tracker` choisit encore le « lancement actif » par **date seule** : `ORDER BY outreach_sent_at DESC LIMIT 1` sur `verified_contractor_prospects`.
+- Conséquence vérifiée : le prospect actif n'est **plus** Electro Pompe mais **E.B. Plomberie inc.** (`816ccccf…`, SID `SM91c8d480…`, envoyé 2026-07-29 15:56 UTC), car un batch de 25 SMS a été envoyé aujourd'hui.
+- Pour ces prospects récents : `outreach_delivered_at` et `outreach_clicked_at` sont `NULL` (aucun clic, aucune livraison confirmée).
 
-### 1) Compteurs
+Donc le défaut réel restant n'est pas un `MIN()` historique, c'est **la sélection du run actif par date**. C'est exactement ce que la demande vise à supprimer.
 
-| Étape | Aujourd'hui | All-time (`v_pipeline_funnel_counts`) |
-|---|---|---|
-| Scraped | UNVERIFIED | 263 |
-| Contactable | UNVERIFIED | 260 |
-| SMS envoyé | ≥1 (run actif à 15:56 UTC) | 27 |
-| SMS livré | 0 (callback Twilio manquant) | 0 |
-| Email envoyé | UNVERIFIED | n/a dans cette vue |
-| Landing visits | 0 (aucun `first_click_at`) | n/a |
-| Registration démarré/complété | 0 / 0 | outreach_queued 8 |
-| OTP complété | UNVERIFIED | n/a |
-| Stripe checkout ouvert | 0 aujourd'hui | payment_started 2 |
-| $1 payé | 0 aujourd'hui | paid 1 (historique) |
-| Contractor activé | 0 aujourd'hui | activated 0 |
+## Objectif
 
-### 2) Run actif (`v_first_dollar_tracker`)
+Supprimer toute sélection par date et ancrer le tracker sur un prospect actif **explicite**, avec toutes les étapes aval liées par identité (prospect_id / lead_id / token / SID / téléphone) et jamais par simple horodatage.
 
-- Prospect : **E.B. Plomberie inc.** (`816ccccf-…`)
-- SID SMS : `SM91c8d48009ff9215033771be2671e6ca`
-- Run démarré : `2026-07-29 15:56:11 UTC`
-- `first_sms_sent_at` ✅ 15:56 UTC
-- `first_delivery_at` ⛔ null → `telemetry_warning: delivery_callback_missing`
-- `first_click_at` ⛔ null → **next_missing_milestone: First Click**
-- `first_paid_at`, `first_contractor_activation_at`, `first_appointment_at` ⛔ null
-- `attribution_warning: attribution_lead_missing` (aucun `contractor_lead_id` lié au prospect actif)
+## Ce qui sera construit
 
-Note : l'ancienne cible « Electro Pompe » (`aa4ebd75…`) n'est plus le run actif ; nouveau prospect substitué.
+1. **Ancrage explicite du run**
+   - Ajouter une table de configuration mono-ligne `first_dollar_active_run` (prospect_id, lead_id, phone_e164, twilio_sid, label, is_active, timestamps + RLS admin/service_role + GRANTs).
+   - Seed avec Electro Pompe : `aa4ebd75…`, `dd9f83bb…`, `+14503285551`, `SM7770bec70bfd1ea15d88ef8b13a3888b`.
+   - Redéfinir `v_first_dollar_tracker` pour lire ce pin. **Aucun `ORDER BY … DESC LIMIT 1`, aucun `MIN()` global, aucune fenêtre par date.**
 
-### 3) Composants demandés — état vérifié dans le code
+2. **Attribution stricte des jalons**
+   - FIRST SMS → `success` (SID épinglé présent).
+   - DELIVERY → `pending` tant que `outreach_delivered_at` du prospect épinglé est NULL.
+   - CLICK → `pending` sauf événement de clic joint explicitement au prospect_id, au lead_id, au tracking token du run, ou au SID.
+   - Registration / OTP / Stripe checkout / Payment / Activation → `pending` sauf lien explicite au même prospect ou lead. Aucun `EXISTS` global, aucun `created_at > date`.
 
-| # | Composant | État |
-|---|---|---|
-| 1 | `/admin/launch-control` | ✅ Déployé — route + lazy + nav (`router.tsx:1449`, `adminNav.ts:30`, `PageAdminLaunchControl.tsx` 10 573 o) |
-| 2 | RevenueWall dans AdminLayout | ✅ Monté (`AdminLayout.tsx:17,180`) |
-| 3 | Manual campaign Preview → Send Now | ⛔ **MANQUANT** — `src/components/admin/acquisition/CampaignLauncher.tsx` n'existe pas. Aucun composant « Preview → Send Now » trouvé |
-| 4 | Manual activation backup | ⚠️ PARTIEL — `admin-create-contractor-manual`, `activate-contractor-plan` existent ; aucune fonction dédiée `admin-manual-activate` ni bouton UI trouvé sur Launch Control |
-| 5 | SMS-failure email fallback | ✅ Implémenté dans `send-verified-batch/index.ts` (via `outreach-resend-send`, ligne 317) + fn `email-fallback-dispatch` déployée |
-| 6 | Per-contractor timeline avec erreurs exactes | ✅ `supabase/functions/contractor-revenue-timeline/index.ts` + `RevenueTimelinePanel.tsx` (vérifié sessions antérieures) |
-| 7 | Dead-lead quarantine | ✅ Logique de quarantaine présente dans `acquisition-queue-worker`, `send-verified-batch`, `_shared/acquisitionPipeline.ts` |
-| 8 | Post-payment welcome + Alex start | ⚠️ UNVERIFIED — 4 webhooks Stripe existent (`stripe-webhook`, `stripe-unpro-webhook`, `stripe-isr-webhook`, `founder-stripe-test-flow`) mais l'enchaînement welcome-email + auto-Alex-start non inspecté cette session |
-| 9 | Run Full Test E2E button | ⚠️ PARTIEL — fn `acq-full-test` déployée + invoke présent dans `PageAdminAcquisition.tsx:65` ; **pas de bouton sur `/admin/launch-control`** |
+3. **Textes d'action**
+   - `conversion_next_action` = « Clic sur le lien d'activation »
+   - `technical_next_action` = « Réparer StatusCallback Twilio »
+   - Alignement identique dans `supabase/functions/contractor-revenue-timeline/index.ts`.
 
-### 4) Ce qui est confirmé fonctionnel
-- Envoi SMS Tier C (Canada sans LTI) — un vrai SMS parti aujourd'hui à 15:56 UTC vers E.B. Plomberie.
-- Tracker ancré par identité (prospect_id + SID) — pas de fuite historique.
-- Fallback email Resend câblé dans `send-verified-batch`.
-- Launch Control + RevenueWall live.
-- Timeline edge fn opérationnelle.
+4. **Affichage admin**
+   - `src/hooks/useAcquisitionFunnel.ts` et `src/pages/admin/PageAdminAcquisitionPipeline.tsx` : afficher le nom + identifiants masqués du prospect épinglé, les deux prochaines actions séparées, et un badge « Run épinglé » pour qu'aucun opérateur ne confonde avec l'historique.
 
-### 5) Ce qui manque / non implémenté
-- Composant UI **CampaignLauncher** (Preview → Send Now).
-- Bouton **Run Full Test** sur `/admin/launch-control` (existe seulement sur `PageAdminAcquisition`).
-- Bouton **Activer manuellement** sur Launch Control (fonctions edge existent, pas de câblage UI vérifié).
-- **Twilio StatusCallback** non configuré → aucun `delivered` n'arrive → `first_delivery_at` reste null.
-- Lien `contractor_lead_id` ↔ `verified_contractor_prospects` pour le run actif (`attribution_lead_missing`).
+5. **Vérification avant publication**
+   - Requête de contrôle : le tracker doit retourner Electro Pompe, SMS = success, tous les jalons aval = pending, et zéro clic/activation hérité.
+   - Si un clic ou une activation historique apparaît encore, **pas de publication** ; correction de la jointure d'abord.
 
-### 6) Premier vrai bloqueur pour $1 aujourd'hui
-**Aucun clic humain sur le lien SMS** envoyé à E.B. Plomberie à 15:56 UTC (`first_click_at = null`, `clicked all-time = 0`). Toute la chaîne aval (registration → OTP → Stripe → activation) est en attente de ce clic. Bloqueur secondaire non-bloquant : Twilio StatusCallback (empêche seulement la confirmation `delivered`, pas le clic).
+## Détails techniques
 
-### 7) Prochaine action opérateur unique
-Confirmer par téléphone/canal direct que le destinataire d'E.B. Plomberie a reçu le SMS et l'inviter à cliquer le lien d'activation (contact humain de vérification) — c'est le seul geste qui débloque la suite du funnel sans envoyer de nouveau SMS ni changer de code.
+- Migration : création `public.first_dollar_active_run` (+ GRANT authenticated/service_role, RLS admin), seed Electro Pompe, `CREATE OR REPLACE VIEW public.v_first_dollar_tracker` en `SECURITY INVOKER`.
+- Edge function `contractor-revenue-timeline` : lire le pin au lieu du dernier envoi.
+- Aucun autre système touché (pas d'outreach, pas de SEO, pas de Stripe, aucun envoi).
 
----
+## Point à confirmer
 
-*Aucun code modifié, aucun envoi effectué, aucune donnée créée pendant cette inspection.*
+Aujourd'hui 25 SMS réels ont été envoyés (dont E.B. Plomberie). Épingler Electro Pompe rendra le tracker volontairement aveugle à ce batch. La table de pin permet de basculer en une ligne. Je procède avec Electro Pompe comme demandé sauf indication contraire.
