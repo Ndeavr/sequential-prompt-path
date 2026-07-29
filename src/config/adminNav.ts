@@ -27,6 +27,7 @@ export const adminNavGroups: NavGroup[] = [
     key: "business", label: "Business", icon: LayoutDashboard,
     items: [
       { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/admin/launch-control", label: "Launch Control", icon: Rocket },
       { to: "/admin/launch-war-room", label: "Launch War Room", icon: Rocket },
       { to: "/admin/pricing", label: "Revenue", icon: DollarSign },
       { to: "/admin/appointments", label: "Appointments", icon: CalendarDays },
