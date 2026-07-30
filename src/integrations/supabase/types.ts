@@ -46806,6 +46806,42 @@ export type Database = {
           },
         ]
       }
+      first_dollar_active_run: {
+        Row: {
+          contractor_lead_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          phone_e164: string | null
+          prospect_id: string | null
+          provider_message_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          contractor_lead_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          phone_e164?: string | null
+          prospect_id?: string | null
+          provider_message_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contractor_lead_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          phone_e164?: string | null
+          prospect_id?: string | null
+          provider_message_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       first_dollar_daily_reports: {
         Row: {
           created_at: string
@@ -72240,6 +72276,63 @@ export type Database = {
         }
         Relationships: []
       }
+      recruitment_controls: {
+        Row: {
+          affiliate_assignment_enabled: boolean
+          autonomous_enqueue_enabled: boolean
+          created_at: string
+          email_enabled: boolean
+          global_enabled: boolean
+          id: string
+          lock_ttl_seconds: number
+          max_daily_global: number
+          max_daily_per_channel: number
+          max_daily_per_city_category: number
+          notes: string | null
+          prospect_cooldown_days: number
+          retries_enabled: boolean
+          singleton: boolean
+          sms_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          affiliate_assignment_enabled?: boolean
+          autonomous_enqueue_enabled?: boolean
+          created_at?: string
+          email_enabled?: boolean
+          global_enabled?: boolean
+          id?: string
+          lock_ttl_seconds?: number
+          max_daily_global?: number
+          max_daily_per_channel?: number
+          max_daily_per_city_category?: number
+          notes?: string | null
+          prospect_cooldown_days?: number
+          retries_enabled?: boolean
+          singleton?: boolean
+          sms_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          affiliate_assignment_enabled?: boolean
+          autonomous_enqueue_enabled?: boolean
+          created_at?: string
+          email_enabled?: boolean
+          global_enabled?: boolean
+          id?: string
+          lock_ttl_seconds?: number
+          max_daily_global?: number
+          max_daily_per_channel?: number
+          max_daily_per_city_category?: number
+          notes?: string | null
+          prospect_cooldown_days?: number
+          retries_enabled?: boolean
+          singleton?: boolean
+          sms_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       recruitment_events: {
         Row: {
           created_at: string | null
@@ -72314,6 +72407,200 @@ export type Database = {
           source?: string | null
           status?: string | null
           work_mode?: string | null
+        }
+        Relationships: []
+      }
+      recruitment_orchestrator_locks: {
+        Row: {
+          acquired_at: string
+          expires_at: string
+          lock_key: string
+          owner_label: string | null
+          owner_run_id: string | null
+          released_at: string | null
+        }
+        Insert: {
+          acquired_at?: string
+          expires_at: string
+          lock_key: string
+          owner_label?: string | null
+          owner_run_id?: string | null
+          released_at?: string | null
+        }
+        Update: {
+          acquired_at?: string
+          expires_at?: string
+          lock_key?: string
+          owner_label?: string | null
+          owner_run_id?: string | null
+          released_at?: string | null
+        }
+        Relationships: []
+      }
+      recruitment_run_items: {
+        Row: {
+          business_name: string | null
+          category: string | null
+          channel: string | null
+          city: string | null
+          contractor_lead_id: string | null
+          created_at: string
+          edge_function: string | null
+          existing_campaign_id: string | null
+          existing_queue_id: string | null
+          id: string
+          idempotency_key: string | null
+          lock_key: string | null
+          phone_e164: string | null
+          prospect_id: string | null
+          provider_id: string | null
+          reason_code: string | null
+          reason_text: string | null
+          retry_count: number
+          run_id: string
+          stage: string
+          status: string
+        }
+        Insert: {
+          business_name?: string | null
+          category?: string | null
+          channel?: string | null
+          city?: string | null
+          contractor_lead_id?: string | null
+          created_at?: string
+          edge_function?: string | null
+          existing_campaign_id?: string | null
+          existing_queue_id?: string | null
+          id?: string
+          idempotency_key?: string | null
+          lock_key?: string | null
+          phone_e164?: string | null
+          prospect_id?: string | null
+          provider_id?: string | null
+          reason_code?: string | null
+          reason_text?: string | null
+          retry_count?: number
+          run_id: string
+          stage: string
+          status: string
+        }
+        Update: {
+          business_name?: string | null
+          category?: string | null
+          channel?: string | null
+          city?: string | null
+          contractor_lead_id?: string | null
+          created_at?: string
+          edge_function?: string | null
+          existing_campaign_id?: string | null
+          existing_queue_id?: string | null
+          id?: string
+          idempotency_key?: string | null
+          lock_key?: string | null
+          phone_e164?: string | null
+          prospect_id?: string | null
+          provider_id?: string | null
+          reason_code?: string | null
+          reason_text?: string | null
+          retry_count?: number
+          run_id?: string
+          stage?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_run_items_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_runs"
+            referencedColumns: ["run_id"]
+          },
+        ]
+      }
+      recruitment_runs: {
+        Row: {
+          category: string | null
+          channel: string | null
+          city: string | null
+          claimed_count: number
+          completed_at: string | null
+          compliance_blocked_count: number
+          created_at: string
+          delegated_function: string | null
+          delegated_run_id: string | null
+          duplicate_count: number
+          eligible_count: number
+          error_summary: string | null
+          idempotency_key: string | null
+          lock_key: string | null
+          mode: string
+          queued_count: number
+          requested_by: string | null
+          requested_limit: number
+          result: Json
+          run_id: string
+          sent_count: number
+          skipped_count: number
+          source: string
+          started_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          channel?: string | null
+          city?: string | null
+          claimed_count?: number
+          completed_at?: string | null
+          compliance_blocked_count?: number
+          created_at?: string
+          delegated_function?: string | null
+          delegated_run_id?: string | null
+          duplicate_count?: number
+          eligible_count?: number
+          error_summary?: string | null
+          idempotency_key?: string | null
+          lock_key?: string | null
+          mode: string
+          queued_count?: number
+          requested_by?: string | null
+          requested_limit?: number
+          result?: Json
+          run_id?: string
+          sent_count?: number
+          skipped_count?: number
+          source?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          channel?: string | null
+          city?: string | null
+          claimed_count?: number
+          completed_at?: string | null
+          compliance_blocked_count?: number
+          created_at?: string
+          delegated_function?: string | null
+          delegated_run_id?: string | null
+          duplicate_count?: number
+          eligible_count?: number
+          error_summary?: string | null
+          idempotency_key?: string | null
+          lock_key?: string | null
+          mode?: string
+          queued_count?: number
+          requested_by?: string | null
+          requested_limit?: number
+          result?: Json
+          run_id?: string
+          sent_count?: number
+          skipped_count?: number
+          source?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -88865,6 +89152,25 @@ export type Database = {
         }
         Relationships: []
       }
+      v_recruitment_coverage_gaps: {
+        Row: {
+          avg_urgency: number | null
+          category: string | null
+          city: string | null
+          estimated_revenue: number | null
+          gap_score: number | null
+          homeowner_count: number | null
+          last_signal_at: string | null
+          opportunity_score: number | null
+          pressure_score: number | null
+          score_reasons: Json | null
+          supply_count: number | null
+          target_priority_score: number | null
+          total_projects: number | null
+          waiting_count: number | null
+        }
+        Relationships: []
+      }
       v_renovation_activity_map: {
         Row: {
           city: string | null
@@ -89407,6 +89713,15 @@ export type Database = {
         Args: { p_id: string; p_token: string }
         Returns: undefined
       }
+      claim_recruitment_lock: {
+        Args: {
+          p_lock_key: string
+          p_owner_label: string
+          p_run_id: string
+          p_ttl_seconds?: number
+        }
+        Returns: Json
+      }
       compute_email_system_status: { Args: never; Returns: Json }
       compute_extra_appointment_value: {
         Args: {
@@ -89918,6 +90233,10 @@ export type Database = {
       reject_prospect: {
         Args: { _actor_id?: string; _notes?: string; _prospect_id: string }
         Returns: undefined
+      }
+      release_recruitment_lock: {
+        Args: { p_lock_key: string; p_run_id: string }
+        Returns: boolean
       }
       repair_mojibake_text: { Args: { input: string }; Returns: string }
       reserve_promo_code_redemption: {
