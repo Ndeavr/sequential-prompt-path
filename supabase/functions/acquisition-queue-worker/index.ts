@@ -275,7 +275,56 @@ async function filterAlreadyContacted(
   const fresh = pool.filter((c) => !contacted.has(c.phone_e164));
   // Never return an empty batch just because the pool was fully contacted:
   // downstream still enforces the hard exclusion, so fall back to the raw pool.
-  return (fresh.length > 0 ? fresh : pool).slice(0, take);
+  const selected = (fresh.length > 0 ? fresh : pool).slice(0, take);
+  return await backfillCaslEvidence(supabase, selected);
+}
+
+// CASL evidence backfill — the same business often exists in several source
+// tables and only one of them carries the website (the consent evidence used by
+// send-verified-batch). Merge that evidence by destination phone so a candidate
+// is never gate-blocked for `missing_website_url` when the data already exists.
+async function backfillCaslEvidence(supabase: any, leads: CandidateLead[]): Promise<CandidateLead[]> {
+  const missing = leads.filter((l) => !l.website_url || !l.email);
+  if (missing.length === 0) return leads;
+  const phones = missing.map((l) => l.phone_e164);
+  const evidence = new Map<string, { website: string | null; email: string | null }>();
+
+  const merge = (phone: string | null, website: string | null, email: string | null) => {
+    const p = normalizePhone(phone);
+    if (!p) return;
+    const cur = evidence.get(p) ?? { website: null, email: null };
+    if (!cur.website && website) cur.website = normalizeWebsite(website);
+    if (!cur.email && email) cur.email = email;
+    evidence.set(p, cur);
+  };
+
+  const { data: cp } = await supabase
+    .from("contractor_prospects")
+    .select("phone,phone_e164,website_url,email")
+    .or(`phone_e164.in.(${phones.join(",")}),phone.in.(${phones.join(",")})`);
+  for (const r of cp ?? []) merge(r.phone_e164 ?? r.phone, r.website_url, r.email);
+
+  const { data: cl } = await supabase
+    .from("contractor_leads")
+    .select("phone_e164,website_url,email")
+    .in("phone_e164", phones);
+  for (const r of cl ?? []) merge(r.phone_e164, r.website_url, r.email);
+
+  const { data: vp } = await supabase
+    .from("verified_contractor_prospects")
+    .select("phone_e164,website_url,email")
+    .in("phone_e164", phones);
+  for (const r of vp ?? []) merge(r.phone_e164, r.website_url, r.email);
+
+  return leads.map((l) => {
+    const e = evidence.get(l.phone_e164);
+    if (!e) return l;
+    return {
+      ...l,
+      website_url: l.website_url ?? e.website,
+      email: l.email ?? e.email,
+    };
+  });
 }
 
 async function selectFairCandidates(supabase: any, ctx: RunContext, take: number): Promise<CandidateLead[]> {
