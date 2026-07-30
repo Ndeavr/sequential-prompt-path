@@ -1,46 +1,34 @@
-## Constat vérifié (lecture seule, aujourd'hui)
+## Constat vérifié (lecture seule, maintenant)
 
-- `v_first_dollar_tracker` choisit encore le « lancement actif » par **date seule** : `ORDER BY outreach_sent_at DESC LIMIT 1` sur `verified_contractor_prospects`.
-- Conséquence vérifiée : le prospect actif n'est **plus** Electro Pompe mais **E.B. Plomberie inc.** (`816ccccf…`, SID `SM91c8d480…`, envoyé 2026-07-29 15:56 UTC), car un batch de 25 SMS a été envoyé aujourd'hui.
-- Pour ces prospects récents : `outreach_delivered_at` et `outreach_clicked_at` sont `NULL` (aucun clic, aucune livraison confirmée).
-
-Donc le défaut réel restant n'est pas un `MIN()` historique, c'est **la sélection du run actif par date**. C'est exactement ce que la demande vise à supprimer.
+- Les objets créés par la migration existent bien : `recruitment_controls`, `recruitment_runs`, `recruitment_run_items`, `recruitment_orchestrator_locks`, `v_recruitment_coverage_gaps`. Le blocage « schema cache » n'est plus visible côté base.
+- La ligne unique de `recruitment_controls` est en état sûr : `global_enabled = false`, `autonomous_enqueue_enabled = false`, `sms_enabled = true`, `email_enabled = true`, limites 25 global / 25 par canal / 10 par ville×catégorie, TTL de lease 900s, cooldown prospect 30 jours.
 
 ## Objectif
 
-Supprimer toute sélection par date et ancrer le tracker sur un prospect actif **explicite**, avec toutes les étapes aval liées par identité (prospect_id / lead_id / token / SID / téléphone) et jamais par simple horodatage.
+Relancer le dry run de `recruitment-orchestrator` pour Laval × plombier × limit 5, sans aucun envoi et sans toucher au run épinglé Electro Pompe.
 
-## Ce qui sera construit
+## Ce qui sera exécuté
 
-1. **Ancrage explicite du run**
-   - Ajouter une table de configuration mono-ligne `first_dollar_active_run` (prospect_id, lead_id, phone_e164, twilio_sid, label, is_active, timestamps + RLS admin/service_role + GRANTs).
-   - Seed avec Electro Pompe : `aa4ebd75…`, `dd9f83bb…`, `+14503285551`, `SM7770bec70bfd1ea15d88ef8b13a3888b`.
-   - Redéfinir `v_first_dollar_tracker` pour lire ce pin. **Aucun `ORDER BY … DESC LIMIT 1`, aucun `MIN()` global, aucune fenêtre par date.**
+1. **Dry run**
+   - Appel `POST /functions/v1/recruitment-orchestrator` avec `{"mode":"dry_run","city":"Laval","category":"plombier","limit":5}`.
+   - Vérifier que la réponse contient : opportunité retenue, clé d'idempotence calculée, lease acquis puis relâché, liste des prospects candidats avec raison d'éligibilité/rejet.
 
-2. **Attribution stricte des jalons**
-   - FIRST SMS → `success` (SID épinglé présent).
-   - DELIVERY → `pending` tant que `outreach_delivered_at` du prospect épinglé est NULL.
-   - CLICK → `pending` sauf événement de clic joint explicitement au prospect_id, au lead_id, au tracking token du run, ou au SID.
-   - Registration / OTP / Stripe checkout / Payment / Activation → `pending` sauf lien explicite au même prospect ou lead. Aucun `EXISTS` global, aucun `created_at > date`.
+2. **Vérification du comportement kill switch**
+   - Si le dry run est refusé parce que `global_enabled = false`, confirmer que le refus est bien un blocage *explicite et actionnable* (et non une erreur silencieuse), puis relancer en dry run avec le contournement prévu pour la simulation — le dry run doit pouvoir simuler sans activer l'automatisation live.
 
-3. **Textes d'action**
-   - `conversion_next_action` = « Clic sur le lien d'activation »
-   - `technical_next_action` = « Réparer StatusCallback Twilio »
-   - Alignement identique dans `supabase/functions/contractor-revenue-timeline/index.ts`.
+3. **Contrôle d'idempotence**
+   - Relancer immédiatement le même dry run et confirmer qu'aucun doublon n'est créé dans `recruitment_run_items` (même clé d'idempotence → réutilisation, pas de nouvelle ligne).
 
-4. **Affichage admin**
-   - `src/hooks/useAcquisitionFunnel.ts` et `src/pages/admin/PageAdminAcquisitionPipeline.tsx` : afficher le nom + identifiants masqués du prospect épinglé, les deux prochaines actions séparées, et un badge « Run épinglé » pour qu'aucun opérateur ne confonde avec l'historique.
-
-5. **Vérification avant publication**
-   - Requête de contrôle : le tracker doit retourner Electro Pompe, SMS = success, tous les jalons aval = pending, et zéro clic/activation hérité.
-   - Si un clic ou une activation historique apparaît encore, **pas de publication** ; correction de la jointure d'abord.
+4. **Contrôles de non-régression**
+   - `first_dollar_active_run` inchangé (Electro Pompe toujours épinglé).
+   - Aucun SMS, aucun email, aucune ligne dans les tables d'envoi.
+   - Logs de la fonction lus intégralement pour détecter toute erreur masquée.
 
 ## Détails techniques
 
-- Migration : création `public.first_dollar_active_run` (+ GRANT authenticated/service_role, RLS admin), seed Electro Pompe, `CREATE OR REPLACE VIEW public.v_first_dollar_tracker` en `SECURITY INVOKER`.
-- Edge function `contractor-revenue-timeline` : lire le pin au lieu du dernier envoi.
-- Aucun autre système touché (pas d'outreach, pas de SEO, pas de Stripe, aucun envoi).
+- Aucune migration nouvelle sauf si le dry run révèle un blocage structurel (dans ce cas je m'arrête et je le rapporte avant de modifier la base).
+- Aucun passage en live : `dry_run` uniquement. Le test live limit 1 reste une étape séparée à autoriser après un dry run propre.
 
-## Point à confirmer
+## Résultat attendu
 
-Aujourd'hui 25 SMS réels ont été envoyés (dont E.B. Plomberie). Épingler Electro Pompe rendra le tracker volontairement aveugle à ce batch. La table de pin permet de basculer en une ligne. Je procède avec Electro Pompe comme demandé sauf indication contraire.
+Un rapport concis : opportunité sélectionnée, N prospects candidats avec raisons, lease OK, idempotence OK, zéro envoi, run épinglé intact.
