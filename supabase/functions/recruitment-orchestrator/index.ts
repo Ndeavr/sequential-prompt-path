@@ -200,7 +200,7 @@ Deno.serve(async (req) => {
     const { error: runErr } = await supabase.from("recruitment_runs").insert({
       run_id: runId, mode, city: targetCity, category: targetCategory, channel,
       requested_limit: limit, status: "running", lock_key: lockKey,
-      idempotency_key: mode === "dry_run" ? `${runIdemKey}:${runId}` : runIdemKey,
+      idempotency_key: mode === "dry_run" ? `${runIdemKey}:${runId}` : effectiveIdemKey,
       source, requested_by, delegated_function: "acquisition-queue-worker",
       result: { province, opportunity: gaps?.[0] ?? null, limits },
     });
