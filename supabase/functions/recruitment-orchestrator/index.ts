@@ -169,18 +169,29 @@ Deno.serve(async (req) => {
     }
 
     // ---------------------------------------------------------------
-    // 3. Idempotency — same request, same Toronto day = no new work
+    // 3. Idempotency — same request, same Toronto day = no new work.
+    // A prior run that produced ZERO sends (blocked / gated) does NOT burn the
+    // day: once the blocker is fixed, a retry is allowed under a suffixed key.
     // ---------------------------------------------------------------
-    const { data: priorRun } = await supabase
-      .from("recruitment_runs").select("*").eq("idempotency_key", runIdemKey).maybeSingle();
+    let effectiveIdemKey = runIdemKey;
+    const { data: priorRuns } = await supabase
+      .from("recruitment_runs").select("*").like("idempotency_key", `${runIdemKey}%`)
+      .order("created_at", { ascending: false });
+    const priorRun = priorRuns?.[0] ?? null;
     if (priorRun && mode !== "dry_run") {
-      return json({
-        ok: true, idempotent_skip: true, already_processed: true,
-        reason_code: "already_processed",
-        reason_text: `Un run identique existe déjà aujourd'hui (${runIdemKey}).`,
-        run_id: priorRun.run_id, previous_run: priorRun, new_sends: 0, limits,
-      });
+      const producedSends = Number(priorRun.sent_count ?? 0) > 0;
+      const stillRunning = priorRun.status === "running";
+      if (producedSends || stillRunning) {
+        return json({
+          ok: true, idempotent_skip: true, already_processed: true,
+          reason_code: "already_processed",
+          reason_text: `Un run identique existe déjà aujourd'hui (${runIdemKey}).`,
+          run_id: priorRun.run_id, previous_run: priorRun, new_sends: 0, limits,
+        });
+      }
+      effectiveIdemKey = `${runIdemKey}:retry${(priorRuns?.length ?? 1)}`;
     }
+
 
     // ---------------------------------------------------------------
     // 4. Run registry entry
