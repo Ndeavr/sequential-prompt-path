@@ -237,9 +237,51 @@ function passesCity(ctx: RunContext, city: string | null): boolean {
   return city.trim().toLowerCase().startsWith(ctx.city.trim().toLowerCase());
 }
 
+// Pool oversampling: already-contacted destinations must NOT consume the run
+// limit. We gather a larger pool, drop historical duplicates, then cap to `take`.
+async function filterAlreadyContacted(
+  supabase: any,
+  pool: CandidateLead[],
+  take: number,
+): Promise<CandidateLead[]> {
+  if (pool.length === 0) return pool;
+  const phones = pool.map((c) => c.phone_e164);
+  const contacted = new Set<string>();
+
+  const { data: priorProspects } = await supabase
+    .from("verified_contractor_prospects")
+    .select("phone_e164,outreach_status")
+    .in("phone_e164", phones)
+    .neq("outreach_status", "none");
+  for (const r of priorProspects ?? []) if (r.phone_e164) contacted.add(r.phone_e164);
+
+  const { data: priorLeads } = await supabase
+    .from("contractor_leads")
+    .select("phone_e164,last_sms_at")
+    .in("phone_e164", phones)
+    .not("last_sms_at", "is", null);
+  for (const r of priorLeads ?? []) if (r.phone_e164) contacted.add(r.phone_e164);
+
+  try {
+    const { data: priorLogs } = await supabase
+      .from("outreach_delivery_logs")
+      .select("recipient_normalized")
+      .in("recipient_normalized", phones);
+    for (const r of priorLogs ?? []) if (r.recipient_normalized) contacted.add(r.recipient_normalized);
+  } catch (_e) {
+    // non-fatal — downstream checkHistoricalExclusion remains the hard guard
+  }
+
+  const fresh = pool.filter((c) => !contacted.has(c.phone_e164));
+  // Never return an empty batch just because the pool was fully contacted:
+  // downstream still enforces the hard exclusion, so fall back to the raw pool.
+  return (fresh.length > 0 ? fresh : pool).slice(0, take);
+}
+
 async function selectFairCandidates(supabase: any, ctx: RunContext, take: number): Promise<CandidateLead[]> {
   const results: CandidateLead[] = [];
   const seenPhones = new Set<string>();
+  const poolCap = Math.max(take * 10, 50);
 
   const push = (row: any, source: string, source_table: string, mapping: {
     business: string;
