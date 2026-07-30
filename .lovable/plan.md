@@ -1,34 +1,44 @@
-## Constat vérifié (lecture seule, maintenant)
+## Constat vérifié
 
-- Les objets créés par la migration existent bien : `recruitment_controls`, `recruitment_runs`, `recruitment_run_items`, `recruitment_orchestrator_locks`, `v_recruitment_coverage_gaps`. Le blocage « schema cache » n'est plus visible côté base.
-- La ligne unique de `recruitment_controls` est en état sûr : `global_enabled = false`, `autonomous_enqueue_enabled = false`, `sms_enabled = true`, `email_enabled = true`, limites 25 global / 25 par canal / 10 par ville×catégorie, TTL de lease 900s, cooldown prospect 30 jours.
+- `recruitment-orchestrator` supporte bien `mode: "execute_controlled_test"` (seul mode où `provider_calls_made = true` et où l'envoi réel est délégué avec `dry_run: false`).
+- Le mode live est bloqué tant que `recruitment_controls.global_enabled = false` (état actuel constaté au dry run) — le refus est explicite, pas silencieux.
+- Le lease d'orchestration et la clé d'idempotence stable (sans suffixe `run_id`) ne s'appliquent qu'hors dry run : c'est ce qui garantit l'absence de doublons.
 
 ## Objectif
 
-Relancer le dry run de `recruitment-orchestrator` pour Laval × plombier × limit 5, sans aucun envoi et sans toucher au run épinglé Electro Pompe.
+Envoyer exactement 1 sollicitation réelle à un plombier de Laval, sans doublon, sans toucher au run épinglé Electro Pompe.
 
-## Ce qui sera exécuté
+## Exécution
 
-1. **Dry run**
-   - Appel `POST /functions/v1/recruitment-orchestrator` avec `{"mode":"dry_run","city":"Laval","category":"plombier","limit":5}`.
-   - Vérifier que la réponse contient : opportunité retenue, clé d'idempotence calculée, lease acquis puis relâché, liste des prospects candidats avec raison d'éligibilité/rejet.
+1. **Pré-vol (lecture seule)**
+   - Relire `recruitment_controls` (kill switch, canaux, limites).
+   - Confirmer `system_environment_state.kill_switch_active = false`.
+   - Re-jouer le dry run limit 1 pour figer le prospect candidat exact (nom, ville, téléphone, preuve CASL) et l'afficher avant tout envoi.
 
-2. **Vérification du comportement kill switch**
-   - Si le dry run est refusé parce que `global_enabled = false`, confirmer que le refus est bien un blocage *explicite et actionnable* (et non une erreur silencieuse), puis relancer en dry run avec le contournement prévu pour la simulation — le dry run doit pouvoir simuler sans activer l'automatisation live.
+2. **Activation minimale et réversible**
+   - Passer `global_enabled = true` uniquement (l'`autonomous_enqueue_enabled` reste `false` : pas d'automatisation continue).
+   - Limites resserrées pour ce run : 1 global / 1 par canal / 1 par ville×catégorie.
 
-3. **Contrôle d'idempotence**
-   - Relancer immédiatement le même dry run et confirmer qu'aucun doublon n'est créé dans `recruitment_run_items` (même clé d'idempotence → réutilisation, pas de nouvelle ligne).
+3. **Run live**
+   - `POST /functions/v1/recruitment-orchestrator` avec `{"mode":"execute_controlled_test","city":"Laval","category":"plombier","limit":1}`.
+   - Vérifier : lease acquis puis relâché, 1 seule ligne dans `recruitment_run_items`, statut de délégation, SID Twilio réel (ou fallback email si SMS rejeté).
 
-4. **Contrôles de non-régression**
-   - `first_dollar_active_run` inchangé (Electro Pompe toujours épinglé).
-   - Aucun SMS, aucun email, aucune ligne dans les tables d'envoi.
-   - Logs de la fonction lus intégralement pour détecter toute erreur masquée.
+4. **Contrôle anti-doublon**
+   - Relancer immédiatement le même appel : la clé d'idempotence doit réutiliser le run existant, aucun second envoi, aucune nouvelle ligne.
+   - Vérifier côté envoi qu'aucun second SMS/email n'existe pour le même destinataire normalisé.
+
+5. **Retour à l'état sûr**
+   - Remettre `global_enabled = false` et restaurer les limites d'origine (25/25/10) après le test.
+
+6. **Non-régression**
+   - `first_dollar_active_run` inchangé (Electro Pompe épinglé).
+   - Lecture intégrale des logs de la fonction pour détecter toute erreur masquée.
 
 ## Détails techniques
 
-- Aucune migration nouvelle sauf si le dry run révèle un blocage structurel (dans ce cas je m'arrête et je le rapporte avant de modifier la base).
-- Aucun passage en live : `dry_run` uniquement. Le test live limit 1 reste une étape séparée à autoriser après un dry run propre.
+- Aucune modification de code n'est prévue. Les seuls écrits sont sur `recruitment_controls` (activation puis désactivation) et les tables de run/envoi produites par le run lui-même.
+- Si le run échoue au stade envoi (Twilio/Resend), je m'arrête, je remets le kill switch, et je rapporte le code d'échec canonique exact sans réessayer en boucle.
 
 ## Résultat attendu
 
-Un rapport concis : opportunité sélectionnée, N prospects candidats avec raisons, lease OK, idempotence OK, zéro envoi, run épinglé intact.
+Rapport court : prospect ciblé, canal utilisé, SID/ID d'envoi réel, idempotence confirmée (2e appel = 0 envoi), contrôles remis en position sûre, run épinglé intact.
