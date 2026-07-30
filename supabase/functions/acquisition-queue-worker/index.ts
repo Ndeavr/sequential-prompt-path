@@ -291,7 +291,7 @@ async function selectFairCandidates(supabase: any, ctx: RunContext, take: number
     category: string | null;
     email: string | null;
   }) => {
-    if (results.length >= take) return;
+    if (results.length >= poolCap) return;
     const phone = normalizePhone(mapping.phone);
     if (!phone || isPlaceholderPhone(phone)) return;
     if (seenPhones.has(phone)) return;
@@ -321,7 +321,7 @@ async function selectFairCandidates(supabase: any, ctx: RunContext, take: number
       .or("phone.not.is.null,phone_e164.not.is.null,mobile_phone.not.is.null")
       .is("last_sms_at", null)
       .order("created_at", { ascending: true })
-      .limit(take * 3);
+      .limit(poolCap);
     if (ctx.city) q = q.ilike("city", `${ctx.city}%`);
     const { data } = await q;
     for (const row of data ?? []) {
@@ -337,14 +337,14 @@ async function selectFairCandidates(supabase: any, ctx: RunContext, take: number
   }
 
   // Table 2 — contractor_prospects (scraper landing table)
-  if (results.length < take) {
+  if (results.length < poolCap) {
     let q = supabase
       .from("contractor_prospects")
       .select("id,business_name,email,phone,phone_e164,website_url,city,trade,source,created_at")
       .not("business_name", "is", null)
       .or("phone.not.is.null,phone_e164.not.is.null")
       .order("created_at", { ascending: true })
-      .limit(take * 3);
+      .limit(poolCap);
     if (ctx.city) q = q.ilike("city", `${ctx.city}%`);
     const { data } = await q;
     for (const row of data ?? []) {
@@ -360,14 +360,14 @@ async function selectFairCandidates(supabase: any, ctx: RunContext, take: number
   }
 
   // Table 3 — contractors_prospects (legacy)
-  if (results.length < take) {
+  if (results.length < poolCap) {
     let q = supabase
       .from("contractors_prospects")
       .select("id,business_name,email,phone,website,city,category,source,created_at")
       .not("business_name", "is", null)
       .not("phone", "is", null)
       .order("created_at", { ascending: true })
-      .limit(take * 3);
+      .limit(poolCap);
     if (ctx.city) q = q.ilike("city", `${ctx.city}%`);
     const { data } = await q;
     for (const row of data ?? []) {
@@ -382,7 +382,7 @@ async function selectFairCandidates(supabase: any, ctx: RunContext, take: number
     }
   }
 
-  return results.slice(0, take);
+  return await filterAlreadyContacted(supabase, results, take);
 }
 
 // ---------------------------------------------------------------------------
