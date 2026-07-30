@@ -237,9 +237,100 @@ function passesCity(ctx: RunContext, city: string | null): boolean {
   return city.trim().toLowerCase().startsWith(ctx.city.trim().toLowerCase());
 }
 
+// Pool oversampling: already-contacted destinations must NOT consume the run
+// limit. We gather a larger pool, drop historical duplicates, then cap to `take`.
+async function filterAlreadyContacted(
+  supabase: any,
+  pool: CandidateLead[],
+  take: number,
+): Promise<CandidateLead[]> {
+  if (pool.length === 0) return pool;
+  const phones = pool.map((c) => c.phone_e164);
+  const contacted = new Set<string>();
+
+  const { data: priorProspects } = await supabase
+    .from("verified_contractor_prospects")
+    .select("phone_e164,outreach_status")
+    .in("phone_e164", phones)
+    .neq("outreach_status", "none");
+  for (const r of priorProspects ?? []) if (r.phone_e164) contacted.add(r.phone_e164);
+
+  const { data: priorLeads } = await supabase
+    .from("contractor_leads")
+    .select("phone_e164,last_sms_at")
+    .in("phone_e164", phones)
+    .not("last_sms_at", "is", null);
+  for (const r of priorLeads ?? []) if (r.phone_e164) contacted.add(r.phone_e164);
+
+  try {
+    const { data: priorLogs } = await supabase
+      .from("outreach_delivery_logs")
+      .select("recipient_normalized")
+      .in("recipient_normalized", phones);
+    for (const r of priorLogs ?? []) if (r.recipient_normalized) contacted.add(r.recipient_normalized);
+  } catch (_e) {
+    // non-fatal — downstream checkHistoricalExclusion remains the hard guard
+  }
+
+  const fresh = pool.filter((c) => !contacted.has(c.phone_e164));
+  // Never return an empty batch just because the pool was fully contacted:
+  // downstream still enforces the hard exclusion, so fall back to the raw pool.
+  const selected = (fresh.length > 0 ? fresh : pool).slice(0, take);
+  return await backfillCaslEvidence(supabase, selected);
+}
+
+// CASL evidence backfill — the same business often exists in several source
+// tables and only one of them carries the website (the consent evidence used by
+// send-verified-batch). Merge that evidence by destination phone so a candidate
+// is never gate-blocked for `missing_website_url` when the data already exists.
+async function backfillCaslEvidence(supabase: any, leads: CandidateLead[]): Promise<CandidateLead[]> {
+  const missing = leads.filter((l) => !l.website_url || !l.email);
+  if (missing.length === 0) return leads;
+  const phones = missing.map((l) => l.phone_e164);
+  const evidence = new Map<string, { website: string | null; email: string | null }>();
+
+  const merge = (phone: string | null, website: string | null, email: string | null) => {
+    const p = normalizePhone(phone);
+    if (!p) return;
+    const cur = evidence.get(p) ?? { website: null, email: null };
+    if (!cur.website && website) cur.website = normalizeWebsite(website);
+    if (!cur.email && email) cur.email = email;
+    evidence.set(p, cur);
+  };
+
+  const { data: cp } = await supabase
+    .from("contractor_prospects")
+    .select("phone,phone_e164,website_url,email")
+    .or(`phone_e164.in.(${phones.join(",")}),phone.in.(${phones.join(",")})`);
+  for (const r of cp ?? []) merge(r.phone_e164 ?? r.phone, r.website_url, r.email);
+
+  const { data: cl } = await supabase
+    .from("contractor_leads")
+    .select("phone_e164,website_url,email")
+    .in("phone_e164", phones);
+  for (const r of cl ?? []) merge(r.phone_e164, r.website_url, r.email);
+
+  const { data: vp } = await supabase
+    .from("verified_contractor_prospects")
+    .select("phone_e164,website_url,email")
+    .in("phone_e164", phones);
+  for (const r of vp ?? []) merge(r.phone_e164, r.website_url, r.email);
+
+  return leads.map((l) => {
+    const e = evidence.get(l.phone_e164);
+    if (!e) return l;
+    return {
+      ...l,
+      website_url: l.website_url ?? e.website,
+      email: l.email ?? e.email,
+    };
+  });
+}
+
 async function selectFairCandidates(supabase: any, ctx: RunContext, take: number): Promise<CandidateLead[]> {
   const results: CandidateLead[] = [];
   const seenPhones = new Set<string>();
+  const poolCap = Math.max(take * 10, 50);
 
   const push = (row: any, source: string, source_table: string, mapping: {
     business: string;
@@ -249,7 +340,7 @@ async function selectFairCandidates(supabase: any, ctx: RunContext, take: number
     category: string | null;
     email: string | null;
   }) => {
-    if (results.length >= take) return;
+    if (results.length >= poolCap) return;
     const phone = normalizePhone(mapping.phone);
     if (!phone || isPlaceholderPhone(phone)) return;
     if (seenPhones.has(phone)) return;
@@ -279,7 +370,7 @@ async function selectFairCandidates(supabase: any, ctx: RunContext, take: number
       .or("phone.not.is.null,phone_e164.not.is.null,mobile_phone.not.is.null")
       .is("last_sms_at", null)
       .order("created_at", { ascending: true })
-      .limit(take * 3);
+      .limit(poolCap);
     if (ctx.city) q = q.ilike("city", `${ctx.city}%`);
     const { data } = await q;
     for (const row of data ?? []) {
@@ -295,14 +386,14 @@ async function selectFairCandidates(supabase: any, ctx: RunContext, take: number
   }
 
   // Table 2 — contractor_prospects (scraper landing table)
-  if (results.length < take) {
+  if (results.length < poolCap) {
     let q = supabase
       .from("contractor_prospects")
       .select("id,business_name,email,phone,phone_e164,website_url,city,trade,source,created_at")
       .not("business_name", "is", null)
       .or("phone.not.is.null,phone_e164.not.is.null")
       .order("created_at", { ascending: true })
-      .limit(take * 3);
+      .limit(poolCap);
     if (ctx.city) q = q.ilike("city", `${ctx.city}%`);
     const { data } = await q;
     for (const row of data ?? []) {
@@ -318,14 +409,14 @@ async function selectFairCandidates(supabase: any, ctx: RunContext, take: number
   }
 
   // Table 3 — contractors_prospects (legacy)
-  if (results.length < take) {
+  if (results.length < poolCap) {
     let q = supabase
       .from("contractors_prospects")
       .select("id,business_name,email,phone,website,city,category,source,created_at")
       .not("business_name", "is", null)
       .not("phone", "is", null)
       .order("created_at", { ascending: true })
-      .limit(take * 3);
+      .limit(poolCap);
     if (ctx.city) q = q.ilike("city", `${ctx.city}%`);
     const { data } = await q;
     for (const row of data ?? []) {
@@ -340,7 +431,7 @@ async function selectFairCandidates(supabase: any, ctx: RunContext, take: number
     }
   }
 
-  return results.slice(0, take);
+  return await filterAlreadyContacted(supabase, results, take);
 }
 
 // ---------------------------------------------------------------------------
