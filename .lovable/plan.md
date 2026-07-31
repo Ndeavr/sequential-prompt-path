@@ -1,44 +1,41 @@
-## Constat vérifié
+## Root cause (verified before any change)
 
-- `recruitment-orchestrator` supporte bien `mode: "execute_controlled_test"` (seul mode où `provider_calls_made = true` et où l'envoi réel est délégué avec `dry_run: false`).
-- Le mode live est bloqué tant que `recruitment_controls.global_enabled = false` (état actuel constaté au dry run) — le refus est explicite, pas silencieux.
-- Le lease d'orchestration et la clé d'idempotence stable (sans suffixe `run_id`) ne s'appliquent qu'hors dry run : c'est ce qui garantit l'absence de doublons.
+The activation link is generated and stored correctly — the **page simply does not exist**.
 
-## Objectif
+Evidence from inspection:
 
-Envoyer exactement 1 sollicitation réelle à un plombier de Laval, sans doublon, sans toucher au run épinglé Electro Pompe.
+1. **Route `/unpro/activate/:token` does NOT exist.** `src/app/router.tsx` defines `/pro/activate`, `/invitation/:token/activate`, `/r/:token`, but no `/unpro/activate/*`. The hosting SPA fallback serves `index.html`, React Router hits the catch-all, and the contractor sees "Page non disponible". Not a 404 from hosting — an unmatched client route.
+2. **Token IS created before the SMS.** `supabase/functions/send-verified-batch/index.ts` → `ensureActivationLink()` inserts the token, then builds `${origin}/unpro/activate/${token}`.
+3. **Token IS stored.** Table `verified_prospect_tokens` (token, prospect_id, created_at, clicked_at, click_count) holds **234 rows**, most recent 2026-07-31.
+4. **Lookup query does not exist yet.** No edge function or client code reads `verified_prospect_tokens` — nothing ever resolves token → contractor.
+5. **Token expiry is not a factor.** There is no expiry column; tokens never expire today.
+6. **Auth/middleware is not blocking.** No guard is involved because no route matches at all.
+7. So: unmatched SPA route, not a server 404 and not RLS.
 
-## Exécution
+## What to build
 
-1. **Pré-vol (lecture seule)**
-   - Relire `recruitment_controls` (kill switch, canaux, limites).
-   - Confirmer `system_environment_state.kill_switch_active = false`.
-   - Re-jouer le dry run limit 1 pour figer le prospect candidat exact (nom, ville, téléphone, preuve CASL) et l'afficher avant tout envoi.
+### 1. Public token resolver (Edge Function `activation-token-resolve`)
+- Input `{ token }`, service-role read (anonymous-safe, `verify_jwt = false`).
+- Join `verified_prospect_tokens` → `verified_contractor_prospects` (business_name, city, category, phone_e164, email, website).
+- Records the click: `clicked_at` (first only), `click_count + 1`, and `verified_contractor_prospects.outreach_clicked_at` — this also unblocks the "Clic sur le lien d'activation" milestone in the First Dollar tracker.
+- Returns `{ ok, prospect: {...} }` or `{ ok:false, reason: "token_not_found" }` — never leaks PII beyond the prospect's own business data.
 
-2. **Activation minimale et réversible**
-   - Passer `global_enabled = true` uniquement (l'`autonomous_enqueue_enabled` reste `false` : pas d'automatisation continue).
-   - Limites resserrées pour ce run : 1 global / 1 par canal / 1 par ville×catégorie.
+### 2. Activation page `/unpro/activate/:token`
+- New `src/pages/activation/PageUnproActivate.tsx`, registered as a **public** route (no AuthGuard/RoleGuard), lazy-loaded like siblings.
+- States: loading → resolved → invalid token → error, all in fr-CA, no placeholder copy.
+- Resolved view: contractor's business name + city, the value proposition, and the **1 $ / 7 jours** CTA.
+- CTA calls the existing `create-activation-checkout` with the prospect context (slug derived from the prospect, plus email when known), then redirects via `redirectToCheckout`.
+- Success returns to the existing `PageProspectActivationSuccess` flow (`activation-confirm`), which already issues the dashboard magic link.
+- Invalid-token view offers a direct fallback path instead of a dead end.
 
-3. **Run live**
-   - `POST /functions/v1/recruitment-orchestrator` avec `{"mode":"execute_controlled_test","city":"Laval","category":"plombier","limit":1}`.
-   - Vérifier : lease acquis puis relâché, 1 seule ligne dans `recruitment_run_items`, statut de délégation, SID Twilio réel (ou fallback email si SMS rejeté).
+### 3. Checkout wiring
+- `create-activation-checkout` gains an `activation_token` branch resolving `verified_prospect_tokens` → prospect, so payment metadata carries `prospect_id` and the activation is attributable end-to-end. Existing `slug` and `landing_token` branches stay untouched.
 
-4. **Contrôle anti-doublon**
-   - Relancer immédiatement le même appel : la clé d'idempotence doit réutiliser le run existant, aucun second envoi, aucune nouvelle ligne.
-   - Vérifier côté envoi qu'aucun second SMS/email n'existe pour le même destinataire normalisé.
+## End-to-end validation (real data, no mocks)
+1. Create a real token for one Laval prospect and open the production URL — confirm the activation page renders with the real business name.
+2. Verify `clicked_at` / `click_count` / `outreach_clicked_at` update in the database.
+3. Send one real SMS (limit 1, existing controlled-test path) and open the received link on mobile width 390px.
+4. Run the $1 Stripe checkout to payment confirmation, then verify `activation-confirm` returns the access link and the First Dollar tracker advances past "Clic sur le lien d'activation".
 
-5. **Retour à l'état sûr**
-   - Remettre `global_enabled = false` et restaurer les limites d'origine (25/25/10) après le test.
-
-6. **Non-régression**
-   - `first_dollar_active_run` inchangé (Electro Pompe épinglé).
-   - Lecture intégrale des logs de la fonction pour détecter toute erreur masquée.
-
-## Détails techniques
-
-- Aucune modification de code n'est prévue. Les seuls écrits sont sur `recruitment_controls` (activation puis désactivation) et les tables de run/envoi produites par le run lui-même.
-- Si le run échoue au stade envoi (Twilio/Resend), je m'arrête, je remets le kill switch, et je rapporte le code d'échec canonique exact sans réessayer en boucle.
-
-## Résultat attendu
-
-Rapport court : prospect ciblé, canal utilisé, SID/ID d'envoi réel, idempotence confirmée (2e appel = 0 envoi), contrôles remis en position sûre, run épinglé intact.
+## Out of scope
+No changes to SEO/sitemap/corpus, no new outreach campaigns beyond the single controlled test SMS, no changes to the pinned First Dollar run.
