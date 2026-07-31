@@ -22,14 +22,33 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { slug, email, source, utm, landing_token } = (body ?? {}) as {
-      slug?: string; email?: string; source?: string; utm?: Record<string, string>; landing_token?: string;
+    const { slug, email, source, utm, landing_token, activation_token } = (body ?? {}) as {
+      slug?: string; email?: string; source?: string; utm?: Record<string, string>; landing_token?: string; activation_token?: string;
     };
 
     // NEW: sms_outreach flow — resolve prospect via landing_token
     let outreachProspectId = "";
     let outreachCampaignId = "";
     let outreachSlug = slug;
+
+    // /unpro/activate/:token flow — resolve the verified prospect from the SMS token.
+    let activationProspectId = "";
+    if (activation_token) {
+      const svc = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      );
+      const { data: tk } = await svc
+        .from("verified_prospect_tokens")
+        .select("prospect_id")
+        .eq("token", activation_token)
+        .maybeSingle();
+      if (tk?.prospect_id) {
+        activationProspectId = tk.prospect_id as string;
+        outreachSlug = outreachSlug || `activation-${activationProspectId}`;
+      }
+    }
+
     if (landing_token) {
       const supabaseEarly = createClient(
         Deno.env.get("SUPABASE_URL")!,
