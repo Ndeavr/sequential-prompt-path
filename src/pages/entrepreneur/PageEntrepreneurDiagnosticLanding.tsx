@@ -37,14 +37,14 @@ import { cn } from "@/lib/utils";
 const SURFACE =
   "rounded-[24px] border border-white/[0.08] bg-[rgba(9,14,28,0.88)] shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl";
 const INPUT_BASE =
-  "h-14 min-h-[56px] rounded-[18px] bg-white/[0.04] border border-white/10 text-white placeholder:text-white/30 text-[15px] focus-visible:border-[#2563EB] focus-visible:ring-2 focus-visible:ring-[#2563EB]/40 focus-visible:shadow-[0_0_0_4px_rgba(37,99,235,0.18)] transition-shadow";
+  "h-14 min-h-[56px] rounded-[18px] bg-white/[0.04] border border-white/10 text-white placeholder:text-white/75 text-[15px] focus-visible:border-[#2563EB] focus-visible:ring-2 focus-visible:ring-[#2563EB]/40 focus-visible:shadow-[0_0_0_4px_rgba(37,99,235,0.18)] transition-shadow";
 const PRIMARY_CTA =
   "inline-flex items-center justify-center gap-2 h-[58px] min-h-[58px] rounded-[18px] px-6 text-[17px] font-semibold text-white bg-[linear-gradient(90deg,#2563EB,#7C3AED)] shadow-[0_10px_30px_rgba(37,99,235,0.35)] hover:brightness-110 active:brightness-95 transition disabled:opacity-50 disabled:cursor-not-allowed";
 const GHOST_CTA =
   "inline-flex items-center justify-center gap-2 h-[58px] min-h-[58px] rounded-[18px] px-6 text-[17px] font-semibold text-white/85 border border-white/15 bg-white/[0.03] hover:bg-white/[0.06] transition";
 
 const LABEL =
-  "text-[11px] font-medium uppercase tracking-[0.14em] text-white/55 flex items-center gap-2";
+  "text-[11px] font-medium uppercase tracking-[0.14em] text-white/75 flex items-center gap-2";
 
 // ───────────────────────────── intake state ─────────────────────────────
 
@@ -332,7 +332,7 @@ function Hero() {
       <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05]">
         Plus de contrats.
         <br />
-        <span className="text-white/55">Moins de soumissions.</span>
+        <span className="text-white/75">Moins de soumissions.</span>
       </h1>
       <p className="text-[15px] sm:text-[17px] text-white/72 max-w-2xl mx-auto leading-relaxed">
         UNPRO analyse votre visibilité, votre réputation et votre capacité actuelle. En moins
@@ -408,7 +408,7 @@ function ProgressBar({ step }: { step: number }) {
           className="h-full rounded-full bg-[linear-gradient(90deg,#2563EB,#7C3AED)] shadow-[0_0_18px_rgba(124,58,237,0.45)]"
         />
       </div>
-      <div className="mt-2 flex justify-between text-[11px] uppercase tracking-[0.14em] text-white/40">
+      <div className="mt-2 flex justify-between text-[11px] uppercase tracking-[0.14em] text-white/75">
         <span>Étape {step + 1} / 3</span>
         <span>{Math.round(pct)} %</span>
       </div>
@@ -501,7 +501,7 @@ function Step0Identification({
         />
       </FieldGroup>
 
-      <div className="flex items-center gap-2 pt-2 text-[12px] text-white/48">
+      <div className="flex items-center gap-2 pt-2 text-[12px] text-white/75">
         <Lock className="w-3.5 h-3.5" />
         <span>Aucune carte requise · Analyse privée · Données non partagées</span>
       </div>
@@ -707,7 +707,7 @@ function VerificationFlow({
                   Vérifier l'entreprise
                 </button>
                 {!canVerify && (
-                  <p className="text-[12px] text-white/48 mt-3">
+                  <p className="text-[12px] text-white/75 mt-3">
                     Entrez au moins le nom + le site web ou le téléphone pour démarrer.
                   </p>
                 )}
@@ -725,7 +725,7 @@ function VerificationFlow({
                         "text-[14px] flex items-start gap-2 transition-colors",
                         status === "done" && "text-white/80",
                         status === "active" && "text-white",
-                        status === "pending" && "text-white/35",
+                        status === "pending" && "text-white/75",
                       )}
                     >
                       {status === "done" ? (
@@ -752,13 +752,13 @@ function VerificationFlow({
                   <ConfirmRow label="Adresse" value="" />
                   <ConfirmRow label="RBQ" value="" />
                   <div className="flex items-center justify-between pt-2.5 mt-1 border-t border-white/8">
-                    <span className="text-[11px] uppercase tracking-[0.14em] text-white/48">Confiance</span>
+                    <span className="text-[11px] uppercase tracking-[0.14em] text-white/75">Confiance</span>
                     <span
                       className={cn(
                         "text-[11px] font-semibold px-2.5 py-1 rounded-full border",
                         confidence === "High" && "border-emerald-400/40 text-emerald-300 bg-emerald-400/10",
                         confidence === "Medium" && "border-amber-400/40 text-amber-300 bg-amber-400/10",
-                        confidence === "Low" && "border-white/20 text-white/60 bg-white/5",
+                        confidence === "Low" && "border-white/20 text-white/75 bg-white/5",
                       )}
                     >
                       {confidence}
@@ -776,7 +776,7 @@ function VerificationFlow({
                     Non, corriger
                   </button>
                 </div>
-                <p className="text-[11px] text-white/40">
+                <p className="text-[11px] text-white/75">
                   Résultat provisoire. Les signaux affichés sont à confirmer après l'analyse complète.
                 </p>
               </div>
@@ -806,8 +806,8 @@ function ConfirmRow({ label, value }: { label: string; value: string }) {
   const present = value.trim().length > 0;
   return (
     <div className="flex items-baseline justify-between gap-3 text-[14px]">
-      <span className="text-[11px] uppercase tracking-[0.14em] text-white/48">{label}</span>
-      <span className={cn("text-right truncate max-w-[60%]", present ? "text-white/90" : "text-white/35 italic")}>
+      <span className="text-[11px] uppercase tracking-[0.14em] text-white/75">{label}</span>
+      <span className={cn("text-right truncate max-w-[60%]", present ? "text-white/90" : "text-white/75 italic")}>
         {present ? value : "Donnée non confirmée pour l'instant"}
       </span>
     </div>
@@ -858,7 +858,7 @@ function AippRevealSection({
               >
                 {aipp.score}
               </motion.div>
-              <div className="text-[13px] text-white/48 mt-1 tabular-nums">/ 100</div>
+              <div className="text-[13px] text-white/75 mt-1 tabular-nums">/ 100</div>
             </div>
           </div>
 
@@ -963,11 +963,11 @@ function RevenueProjectionCard({
 
       <div className="mt-5 space-y-3">
         <div className="rounded-2xl bg-white/[0.03] border border-white/8 p-4">
-          <div className="text-[11px] uppercase tracking-[0.14em] text-white/48">Aujourd'hui</div>
+          <div className="text-[11px] uppercase tracking-[0.14em] text-white/75">Aujourd'hui</div>
           <div className="text-[22px] font-bold text-white mt-1 break-words">
             ~{form.projectsPerMonth} contrats / mois
           </div>
-          <div className="text-[14px] text-white/64 mt-0.5">
+          <div className="text-[14px] text-white/75 mt-0.5">
             ≈ {fmt(projection.currentMonthly)} $ / mois
           </div>
         </div>
@@ -1027,7 +1027,7 @@ function PlanRecommendationCard({
             {plan.name}
           </h3>
           {plan.subtitle && (
-            <div className="text-[14px] text-white/64 mt-1 break-words">{plan.subtitle}</div>
+            <div className="text-[14px] text-white/75 mt-1 break-words">{plan.subtitle}</div>
           )}
         </div>
 
@@ -1036,7 +1036,7 @@ function PlanRecommendationCard({
           <div className="text-[40px] sm:text-[44px] font-black tabular-nums text-white leading-none">
             {plan.monthlyPrice} $
           </div>
-          <div className="text-[13px] text-white/56">/ mois CAD</div>
+          <div className="text-[13px] text-white/75">/ mois CAD</div>
         </div>
 
         {/* reasons */}
@@ -1053,7 +1053,7 @@ function PlanRecommendationCard({
         {plan.features && plan.features.length > 0 && (
           <div className="mt-5 grid sm:grid-cols-2 gap-2">
             {plan.features.slice(0, 6).map((f) => (
-              <div key={f} className="text-[12px] text-white/56 flex items-center gap-1.5">
+              <div key={f} className="text-[12px] text-white/75 flex items-center gap-1.5">
                 <ChevronRight className="w-3 h-3 text-[#93C5FD] shrink-0" />
                 <span className="truncate">{f}</span>
               </div>
@@ -1071,7 +1071,7 @@ function PlanRecommendationCard({
           </Link>
         </div>
 
-        <div className="mt-5 flex items-center gap-2 text-[12px] text-white/48">
+        <div className="mt-5 flex items-center gap-2 text-[12px] text-white/75">
           <ShieldCheck className="w-3.5 h-3.5" />
           <span>Aucun engagement · Annulable en 1 clic</span>
         </div>
@@ -1096,7 +1096,7 @@ function TrustStrip() {
             <it.icon className="w-5 h-5 text-[#93C5FD]" />
           </div>
           <div className="text-[14px] font-semibold text-white mt-3">{it.label}</div>
-          <div className="text-[12px] text-white/64 mt-1 leading-relaxed">{it.desc}</div>
+          <div className="text-[12px] text-white/75 mt-1 leading-relaxed">{it.desc}</div>
         </div>
       ))}
     </div>

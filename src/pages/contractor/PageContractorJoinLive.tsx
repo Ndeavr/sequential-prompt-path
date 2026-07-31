@@ -47,7 +47,7 @@ export default function PageContractorJoinLive() {
           <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">
             Activez votre profil UNPRO en moins de 2 minutes.
           </h1>
-          <p className="mt-3 text-white/60 text-[15px] leading-snug">
+          <p className="mt-3 text-white/75 text-[15px] leading-snug">
             Entrez votre site web, votre RBQ, votre NEQ ou votre numéro de
             téléphone. On extrait, on analyse et on bâtit votre profil
             intelligent.
@@ -66,7 +66,7 @@ export default function PageContractorJoinLive() {
                 autoCorrect="off"
                 spellCheck={false}
                 disabled={busy}
-                className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4 text-base text-white placeholder:text-white/30 outline-none focus:border-amber-400/60 focus:bg-white/[0.06] transition"
+                className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4 text-base text-white placeholder:text-white/75 outline-none focus:border-amber-400/60 focus:bg-white/[0.06] transition"
               />
             </div>
             <button
@@ -83,7 +83,7 @@ export default function PageContractorJoinLive() {
             )}
           </form>
 
-          <p className="mt-6 text-center text-xs text-white/40">
+          <p className="mt-6 text-center text-xs text-white/75">
             Aucune carte requise pour l'analyse. Profil activable au tarif
             Fondateur.
           </p>

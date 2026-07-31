@@ -173,7 +173,7 @@ const WHY_PAY = [
 /* ─── Badge Component ─── */
 function PlanBadge({ label, type }: { label: string; type: "popular" | "premium" | "neutral" }) {
   const styles = {
-    popular: "bg-primary/15 text-primary border-primary/25",
+    popular: "bg-primary text-primary-foreground border-primary",
     premium: "bg-secondary/15 text-secondary border-secondary/25",
     neutral: "bg-muted text-muted-foreground border-border/50",
   };
@@ -302,7 +302,7 @@ function CardPlan({ plan, index }: { plan: Plan; index: number }) {
               {plan.cta} <ArrowRight className="h-4 w-4 ml-1.5" />
             </Button>
           )}
-          <p className="text-[11px] text-muted-foreground/70 text-center">{plan.microcopy}</p>
+          <p className="text-[11px] text-muted-foreground text-center">{plan.microcopy}</p>
         </div>
       </div>
     </motion.div>

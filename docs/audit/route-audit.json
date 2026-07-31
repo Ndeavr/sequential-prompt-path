@@ -1,0 +1,2063 @@
+[
+  {
+    "route": "/",
+    "url": "/",
+    "viewport": "360x800",
+    "group": "public",
+    "unresolved_params": [],
+    "status": "contrast",
+    "contrast_violations": 5,
+    "worst_contrast": 4.5,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [
+      "CTA intercepté par a.flex-1.flex"
+    ],
+    "text_length": 2589,
+    "theme_scope": "alex-immersive",
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Parler à Alex\nRéponse en 2 minutes",
+      "href": null,
+      "disabled": false,
+      "intercepted": true,
+      "interceptor": "a.flex-1.flex"
+    },
+    "final_url": "/",
+    "contrast_nodes": [
+      {
+        "selector": "a[href=\"/\"] > span",
+        "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.94 (foreground color: #2563ff, background color: #c8c9cc, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+        "html": "<span>Accueil</span>"
+      },
+      {
+        "selector": "a[href$=\"dashboard\"] > span",
+        "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3 (foreground color: #667085, background color: #c8c9cc, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+        "html": "<span>Maison</span>"
+      },
+      {
+        "selector": ".text-\\[\\#2563FF\\]",
+        "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.94 (foreground color: #2563ff, background color: #c8c9cc, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+        "html": "<span class=\"text-[11px] font-semibold text-[#2563FF] mt-0.5\">Alex</span>"
+      },
+      {
+        "selector": "a[href$=\"projects\"] > span",
+        "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.08 (foreground color: #667085, background color: #c8ccd0, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+        "html": "<span>Projets</span>"
+      },
+      {
+        "selector": "a[href$=\"account\"] > span",
+        "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.08 (foreground color: #667085, background color: #c8ccd0, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+        "html": "<span>Profil</span>"
+      }
+    ]
+  },
+  {
+    "route": "/",
+    "url": "/",
+    "viewport": "390x844",
+    "group": "public",
+    "unresolved_params": [],
+    "status": "contrast",
+    "contrast_violations": 5,
+    "worst_contrast": 4.5,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [
+      "CTA intercepté par div.grid.grid-cols-5"
+    ],
+    "text_length": 2589,
+    "theme_scope": "alex-immersive",
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Parler à Alex\nRéponse en 2 minutes",
+      "href": null,
+      "disabled": false,
+      "intercepted": true,
+      "interceptor": "div.grid.grid-cols-5"
+    },
+    "final_url": "/",
+    "contrast_nodes": [
+      {
+        "selector": "a[href=\"/\"] > span",
+        "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.94 (foreground color: #2563ff, background color: #c8c9cc, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+        "html": "<span>Accueil</span>"
+      },
+      {
+        "selector": "a[href$=\"dashboard\"] > span",
+        "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3 (foreground color: #667085, background color: #c8c9cc, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+        "html": "<span>Maison</span>"
+      },
+      {
+        "selector": ".text-\\[\\#2563FF\\]",
+        "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.94 (foreground color: #2563ff, background color: #c8c9cc, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+        "html": "<span class=\"text-[11px] font-semibold text-[#2563FF] mt-0.5\">Alex</span>"
+      },
+      {
+        "selector": "a[href$=\"projects\"] > span",
+        "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.08 (foreground color: #667085, background color: #c8ccd0, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+        "html": "<span>Projets</span>"
+      },
+      {
+        "selector": "a[href$=\"account\"] > span",
+        "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.08 (foreground color: #667085, background color: #c8ccd0, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+        "html": "<span>Profil</span>"
+      }
+    ]
+  },
+  {
+    "route": "/",
+    "url": "/",
+    "viewport": "412x915",
+    "group": "public",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 2589,
+    "theme_scope": "alex-immersive",
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Parler à Alex\nRéponse en 2 minutes",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/",
+    "url": "/",
+    "viewport": "1366x768",
+    "group": "public",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 2555,
+    "theme_scope": "alex-immersive",
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Parler à Alex\nRéponse en 2 minutes",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/",
+    "url": "/",
+    "viewport": "1920x1080",
+    "group": "public",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 2536,
+    "theme_scope": "alex-immersive",
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Parler à Alex\nRéponse en 2 minutes",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/contractor/activated",
+    "url": "/contractor/activated",
+    "viewport": "360x800",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [
+      "aucun CTA détecté"
+    ],
+    "text_length": 88,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": null,
+    "final_url": "/contractor/activated",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/contractor/activated",
+    "url": "/contractor/activated",
+    "viewport": "390x844",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [
+      "aucun CTA détecté"
+    ],
+    "text_length": 88,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": null,
+    "final_url": "/contractor/activated",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/contractor/activated",
+    "url": "/contractor/activated",
+    "viewport": "412x915",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [
+      "aucun CTA détecté"
+    ],
+    "text_length": 88,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": null,
+    "final_url": "/contractor/activated",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/contractor/activated",
+    "url": "/contractor/activated",
+    "viewport": "1366x768",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [
+      "aucun CTA détecté"
+    ],
+    "text_length": 88,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": null,
+    "final_url": "/contractor/activated",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/contractor/activated",
+    "url": "/contractor/activated",
+    "viewport": "1920x1080",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [
+      "aucun CTA détecté"
+    ],
+    "text_length": 88,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": null,
+    "final_url": "/contractor/activated",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/contractor/analysis",
+    "url": "/contractor/analysis",
+    "viewport": "360x800",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 65,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Recommencer",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/contractor/analysis",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/contractor/analysis",
+    "url": "/contractor/analysis",
+    "viewport": "390x844",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 65,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Recommencer",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/contractor/analysis",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/contractor/analysis",
+    "url": "/contractor/analysis",
+    "viewport": "412x915",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 65,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Recommencer",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/contractor/analysis",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/contractor/analysis",
+    "url": "/contractor/analysis",
+    "viewport": "1366x768",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 65,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Recommencer",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/contractor/analysis",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/contractor/analysis",
+    "url": "/contractor/analysis",
+    "viewport": "1920x1080",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 65,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Recommencer",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/contractor/analysis",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/contractor/join",
+    "url": "/contractor/join",
+    "viewport": "360x800",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 342,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Lancer l'analyse",
+      "href": null,
+      "disabled": true,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/contractor/join",
+    "info": [
+      "CTA en attente de saisie ou de contexte"
+    ],
+    "contrast_nodes": []
+  },
+  {
+    "route": "/contractor/join",
+    "url": "/contractor/join",
+    "viewport": "390x844",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 342,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Lancer l'analyse",
+      "href": null,
+      "disabled": true,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/contractor/join",
+    "info": [
+      "CTA en attente de saisie ou de contexte"
+    ],
+    "contrast_nodes": []
+  },
+  {
+    "route": "/contractor/join",
+    "url": "/contractor/join",
+    "viewport": "412x915",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 342,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Lancer l'analyse",
+      "href": null,
+      "disabled": true,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/contractor/join",
+    "info": [
+      "CTA en attente de saisie ou de contexte"
+    ],
+    "contrast_nodes": []
+  },
+  {
+    "route": "/contractor/join",
+    "url": "/contractor/join",
+    "viewport": "1366x768",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 342,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Lancer l'analyse",
+      "href": null,
+      "disabled": true,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/contractor/join",
+    "info": [
+      "CTA en attente de saisie ou de contexte"
+    ],
+    "contrast_nodes": []
+  },
+  {
+    "route": "/contractor/join",
+    "url": "/contractor/join",
+    "viewport": "1920x1080",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 342,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Lancer l'analyse",
+      "href": null,
+      "disabled": true,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/contractor/join",
+    "info": [
+      "CTA en attente de saisie ou de contexte"
+    ],
+    "contrast_nodes": []
+  },
+  {
+    "route": "/entrepreneur",
+    "url": "/entrepreneur",
+    "viewport": "360x800",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 1128,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Vérifier l'entreprise",
+      "href": null,
+      "disabled": true,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/entrepreneur",
+    "info": [
+      "CTA en attente de saisie ou de contexte"
+    ],
+    "contrast_nodes": []
+  },
+  {
+    "route": "/entrepreneur",
+    "url": "/entrepreneur",
+    "viewport": "390x844",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 1128,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Vérifier l'entreprise",
+      "href": null,
+      "disabled": true,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/entrepreneur",
+    "info": [
+      "CTA en attente de saisie ou de contexte"
+    ],
+    "contrast_nodes": []
+  },
+  {
+    "route": "/entrepreneur",
+    "url": "/entrepreneur",
+    "viewport": "412x915",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 1128,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Vérifier l'entreprise",
+      "href": null,
+      "disabled": true,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/entrepreneur",
+    "info": [
+      "CTA en attente de saisie ou de contexte"
+    ],
+    "contrast_nodes": []
+  },
+  {
+    "route": "/entrepreneur",
+    "url": "/entrepreneur",
+    "viewport": "1366x768",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 1128,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Vérifier l'entreprise",
+      "href": null,
+      "disabled": true,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/entrepreneur",
+    "info": [
+      "CTA en attente de saisie ou de contexte"
+    ],
+    "contrast_nodes": []
+  },
+  {
+    "route": "/entrepreneur",
+    "url": "/entrepreneur",
+    "viewport": "1920x1080",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 1128,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Vérifier l'entreprise",
+      "href": null,
+      "disabled": true,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/entrepreneur",
+    "info": [
+      "CTA en attente de saisie ou de contexte"
+    ],
+    "contrast_nodes": []
+  },
+  {
+    "route": "/entrepreneur/devis-personnalise",
+    "url": "/entrepreneur/devis-personnalise",
+    "viewport": "360x800",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 272,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Continuer",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/entrepreneur/devis-personnalise",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/entrepreneur/devis-personnalise",
+    "url": "/entrepreneur/devis-personnalise",
+    "viewport": "390x844",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 272,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Continuer",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/entrepreneur/devis-personnalise",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/entrepreneur/devis-personnalise",
+    "url": "/entrepreneur/devis-personnalise",
+    "viewport": "412x915",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 272,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Continuer",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/entrepreneur/devis-personnalise",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/entrepreneur/devis-personnalise",
+    "url": "/entrepreneur/devis-personnalise",
+    "viewport": "1366x768",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 272,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Continuer",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/entrepreneur/devis-personnalise",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/entrepreneur/devis-personnalise",
+    "url": "/entrepreneur/devis-personnalise",
+    "viewport": "1920x1080",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 272,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Continuer",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/entrepreneur/devis-personnalise",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/login",
+    "url": "/login",
+    "viewport": "360x800",
+    "group": "auth",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 262,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Continuer avec Google",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/login",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/login",
+    "url": "/login",
+    "viewport": "390x844",
+    "group": "auth",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 262,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Continuer avec Google",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/login",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/login",
+    "url": "/login",
+    "viewport": "412x915",
+    "group": "auth",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 262,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Continuer avec Google",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/login",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/login",
+    "url": "/login",
+    "viewport": "1366x768",
+    "group": "auth",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 262,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Continuer avec Google",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/login",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/login",
+    "url": "/login",
+    "viewport": "1920x1080",
+    "group": "auth",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 262,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Continuer avec Google",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/login",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pricing",
+    "url": "/pricing",
+    "viewport": "360x800",
+    "group": "conversion",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 5102,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Commencer gratuitement",
+      "href": "/signup?redirect=/proprietaire/bienvenue?plan=discovery",
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pricing/proprietaires",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pricing",
+    "url": "/pricing",
+    "viewport": "390x844",
+    "group": "conversion",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 5102,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Commencer gratuitement",
+      "href": "/signup?redirect=/proprietaire/bienvenue?plan=discovery",
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pricing/proprietaires",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pricing",
+    "url": "/pricing",
+    "viewport": "412x915",
+    "group": "conversion",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 5102,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Commencer gratuitement",
+      "href": "/signup?redirect=/proprietaire/bienvenue?plan=discovery",
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pricing/proprietaires",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pricing",
+    "url": "/pricing",
+    "viewport": "1366x768",
+    "group": "conversion",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 5102,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Commencer gratuitement",
+      "href": "/signup?redirect=/proprietaire/bienvenue?plan=discovery",
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pricing/proprietaires",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pricing",
+    "url": "/pricing",
+    "viewport": "1920x1080",
+    "group": "conversion",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 5102,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Commencer gratuitement",
+      "href": "/signup?redirect=/proprietaire/bienvenue?plan=discovery",
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pricing/proprietaires",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pro/activate",
+    "url": "/pro/activate",
+    "viewport": "360x800",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 625,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Activer mon profil pour 1 $",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pro/activate",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pro/activate",
+    "url": "/pro/activate",
+    "viewport": "390x844",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 625,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Activer mon profil pour 1 $",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pro/activate",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pro/activate",
+    "url": "/pro/activate",
+    "viewport": "412x915",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 625,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Activer mon profil pour 1 $",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pro/activate",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pro/activate",
+    "url": "/pro/activate",
+    "viewport": "1366x768",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 625,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Activer mon profil pour 1 $",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pro/activate",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pro/activate",
+    "url": "/pro/activate",
+    "viewport": "1920x1080",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 625,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Activer mon profil pour 1 $",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pro/activate",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pro/score",
+    "url": "/pro/score",
+    "viewport": "360x800",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 264,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Analyser mon entreprise",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pro/score",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pro/score",
+    "url": "/pro/score",
+    "viewport": "390x844",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 264,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Analyser mon entreprise",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pro/score",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pro/score",
+    "url": "/pro/score",
+    "viewport": "412x915",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 264,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Analyser mon entreprise",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pro/score",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pro/score",
+    "url": "/pro/score",
+    "viewport": "1366x768",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 264,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Analyser mon entreprise",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pro/score",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pro/score",
+    "url": "/pro/score",
+    "viewport": "1920x1080",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 264,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Analyser mon entreprise",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pro/score",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pro/welcome",
+    "url": "/pro/welcome",
+    "viewport": "360x800",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 370,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Préparation…",
+      "href": null,
+      "disabled": true,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pro/welcome",
+    "info": [
+      "CTA en attente de saisie ou de contexte"
+    ],
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pro/welcome",
+    "url": "/pro/welcome",
+    "viewport": "390x844",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 370,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Préparation…",
+      "href": null,
+      "disabled": true,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pro/welcome",
+    "info": [
+      "CTA en attente de saisie ou de contexte"
+    ],
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pro/welcome",
+    "url": "/pro/welcome",
+    "viewport": "412x915",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 370,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Préparation…",
+      "href": null,
+      "disabled": true,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pro/welcome",
+    "info": [
+      "CTA en attente de saisie ou de contexte"
+    ],
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pro/welcome",
+    "url": "/pro/welcome",
+    "viewport": "1366x768",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 370,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Préparation…",
+      "href": null,
+      "disabled": true,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pro/welcome",
+    "info": [
+      "CTA en attente de saisie ou de contexte"
+    ],
+    "contrast_nodes": []
+  },
+  {
+    "route": "/pro/welcome",
+    "url": "/pro/welcome",
+    "viewport": "1920x1080",
+    "group": "contractor",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 370,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Préparation…",
+      "href": null,
+      "disabled": true,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/pro/welcome",
+    "info": [
+      "CTA en attente de saisie ou de contexte"
+    ],
+    "contrast_nodes": []
+  },
+  {
+    "route": "/role",
+    "url": "/role",
+    "viewport": "360x800",
+    "group": "auth",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 311,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Propriétaire\n\nMaison, condo, projet",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/role",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/role",
+    "url": "/role",
+    "viewport": "390x844",
+    "group": "auth",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 311,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Propriétaire\n\nMaison, condo, projet",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/role",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/role",
+    "url": "/role",
+    "viewport": "412x915",
+    "group": "auth",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 311,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Propriétaire\n\nMaison, condo, projet",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/role",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/role",
+    "url": "/role",
+    "viewport": "1366x768",
+    "group": "auth",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 311,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Propriétaire\n\nMaison, condo, projet",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/role",
+    "contrast_nodes": []
+  },
+  {
+    "route": "/role",
+    "url": "/role",
+    "viewport": "1920x1080",
+    "group": "auth",
+    "unresolved_params": [],
+    "status": "ok",
+    "contrast_violations": 0,
+    "worst_contrast": null,
+    "console_errors": [
+      "WebSocket connection to 'wss://localhost/?token=7oOdrTcAejWR' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s  \n    at App (http://localhost:8080/src/app/App.tsx?t=1785526822680:33:5)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at StableBackgroundLayerImpl\n    at AppErrorBoundary (http://localhost:8080/src/components/errors/AppErrorBoundary.tsx:144:9)",
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `App`. \n    at Providers (http://localhost:8080/src/app/providers.tsx:56:29)\n    at AppErrorBoundary (http://localhost:8080/src/component"
+    ],
+    "network_errors": [],
+    "notes": [],
+    "text_length": 311,
+    "theme_scope": null,
+    "body_bg": "rgba(0, 0, 0, 0)",
+    "scroll_blocked": false,
+    "h_overflow": false,
+    "cta": {
+      "label": "Propriétaire\n\nMaison, condo, projet",
+      "href": null,
+      "disabled": false,
+      "intercepted": false,
+      "interceptor": null
+    },
+    "final_url": "/role",
+    "contrast_nodes": []
+  }
+]

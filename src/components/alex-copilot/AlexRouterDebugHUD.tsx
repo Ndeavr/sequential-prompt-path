@@ -50,7 +50,7 @@ export default function AlexRouterDebugHUD() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-4 right-4 z-[200] rounded-full bg-card/90 backdrop-blur border border-border/40 px-2.5 py-1 text-[10px] font-mono text-muted-foreground hover:text-foreground shadow-lg"
+        className="fixed bottom-4 right-4 z-[200] rounded-full bg-card/90 backdrop-blur border border-border/40 px-2.5 py-1 text-[10px] font-mono text-foreground hover:text-foreground shadow-lg"
         title="Alex Router HUD"
       >
         🧭 {trace?.winningRoute ?? "router"}

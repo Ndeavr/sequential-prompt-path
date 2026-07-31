@@ -1,41 +1,63 @@
-## Root cause (verified before any change)
+## Ce que j'ai vérifié avant d'écrire ce plan
 
-The activation link is generated and stored correctly — the **page simply does not exist**.
+- `src/app/router.tsx` déclare **890 routes** (1 934 lignes). Un audit manuel page par page est impossible : il faut un crawler.
+- Un système de monitoring accessibilité **existe déjà** : `axe-core@4.12` est installé, la table `ui_accessibility_audit` et la page `/admin/ui-health` (`AdminUIHealthMonitor.tsx`) sont en place. Je l'étends, je n'en crée pas un deuxième.
+- Un cockpit funnel existe déjà : `PageAdminCriticalPathAudit.tsx` (7 étapes prospect → payment_ok → reward_visible), plus `PageAdminRevenuePathAudit`, `PageAdminGoLivePaymentHealth`, `PageAdminUnproStripeHealth`. Le rapport « Santé conversion 1 $ » sera une vue consolidée de ces sources, pas un nouveau système.
+- Les scopes de thème sombre `.alex-immersive` / `.admin-theme` sont définis dans `index.css` (l.122, 298, 1114). La règle mémoire existante est déjà : toute page à fond sombre **doit** wrapper sa racine dans un de ces scopes, sinon les tokens du thème clair rendent le texte invisible. Les captures fournies correspondent exactement à ce symptôme (cartes claires + texte hérité, sections qui changent de thème).
+- Je n'ai **pas** encore confirmé, page par page, quelles routes violent cette règle : c'est précisément ce que le crawler produira. Je n'affirme aucune cause par page avant sa mesure.
 
-Evidence from inspection:
+## Stratégie
 
-1. **Route `/unpro/activate/:token` does NOT exist.** `src/app/router.tsx` defines `/pro/activate`, `/invitation/:token/activate`, `/r/:token`, but no `/unpro/activate/*`. The hosting SPA fallback serves `index.html`, React Router hits the catch-all, and the contractor sees "Page non disponible". Not a 404 from hosting — an unmatched client route.
-2. **Token IS created before the SMS.** `supabase/functions/send-verified-batch/index.ts` → `ensureActivationLink()` inserts the token, then builds `${origin}/unpro/activate/${token}`.
-3. **Token IS stored.** Table `verified_prospect_tokens` (token, prospect_id, created_at, clicked_at, click_count) holds **234 rows**, most recent 2026-07-31.
-4. **Lookup query does not exist yet.** No edge function or client code reads `verified_prospect_tokens` — nothing ever resolves token → contractor.
-5. **Token expiry is not a factor.** There is no expiry column; tokens never expire today.
-6. **Auth/middleware is not blocking.** No guard is involved because no route matches at all.
-7. So: unmatched SPA route, not a server 404 and not RLS.
+Un seul run ne peut pas valider 890 routes de bout en bout. Le plan est découpé pour livrer immédiatement la valeur revenu (parcours 1 $) et industrialiser le reste.
 
-## What to build
+```text
+Phase 1  Moteur d'audit (crawler + registre)      → mesure, aucune correction
+Phase 2  Correction des causes racines            → tokens/scopes/overlays
+Phase 3  Parcours 1 $ E2E prouvé                  → SMS → activation → Stripe → dashboard
+Phase 4  Rapport admin consolidé + re-crawl        → preuve
+```
 
-### 1. Public token resolver (Edge Function `activation-token-resolve`)
-- Input `{ token }`, service-role read (anonymous-safe, `verify_jwt = false`).
-- Join `verified_prospect_tokens` → `verified_contractor_prospects` (business_name, city, category, phone_e164, email, website).
-- Records the click: `clicked_at` (first only), `click_count + 1`, and `verified_contractor_prospects.outreach_clicked_at` — this also unblocks the "Clic sur le lien d'activation" milestone in the First Dollar tracker.
-- Returns `{ ok, prospect: {...} }` or `{ ok:false, reason: "token_not_found" }` — never leaks PII beyond the prospect's own business data.
+### Phase 1 — Moteur d'audit de routes
 
-### 2. Activation page `/unpro/activate/:token`
-- New `src/pages/activation/PageUnproActivate.tsx`, registered as a **public** route (no AuthGuard/RoleGuard), lazy-loaded like siblings.
-- States: loading → resolved → invalid token → error, all in fr-CA, no placeholder copy.
-- Resolved view: contractor's business name + city, the value proposition, and the **1 $ / 7 jours** CTA.
-- CTA calls the existing `create-activation-checkout` with the prospect context (slug derived from the prospect, plus email when known), then redirects via `redirectToCheckout`.
-- Success returns to the existing `PageProspectActivationSuccess` flow (`activation-confirm`), which already issues the dashboard magic link.
-- Invalid-token view offers a direct fallback path instead of a dead end.
+- Script Playwright `scripts/audit/route-audit.ts` : extraction des routes depuis `router.tsx` + `routeRegistry.ts`, résolution des paramètres dynamiques avec de vraies valeurs de production (slug entrepreneur, token d'activation, ville/catégorie).
+- Pour chaque route, capture : rendu HTTP/SPA, violations axe-core (contraste, focus, noms accessibles), scroll réel jusqu'au dernier élément, overlays interceptant les clics (`elementFromPoint` au centre du CTA), erreurs console, requêtes 4xx/5xx, CTA principal détecté + destination, présence d'un skeleton jamais remplacé.
+- Trois breakpoints au premier passage : 390×844, 1366×768, 1920×1080 ; 360×800 et 412×915 sur les routes du funnel uniquement.
+- Résultats persistés dans la table existante `ui_accessibility_audit` (colonnes complémentaires si nécessaire), pas dans une nouvelle table.
+- Sortie complémentaire : registre `docs/audit/route-registry.md` (URL, source du lien, rôle requis, thème, statut, contraste, scroll, CTA, destination, erreurs, blocage conversion, statut corrigé) et mise à jour de `docs/broken-links-audit.md`.
 
-### 3. Checkout wiring
-- `create-activation-checkout` gains an `activation_token` branch resolving `verified_prospect_tokens` → prospect, so payment metadata carries `prospect_id` and the activation is attributable end-to-end. Existing `slug` and `landing_token` branches stay untouched.
+### Phase 2 — Correction des causes, pas des symptômes
 
-## End-to-end validation (real data, no mocks)
-1. Create a real token for one Laval prospect and open the production URL — confirm the activation page renders with the real business name.
-2. Verify `clicked_at` / `click_count` / `outreach_clicked_at` update in the database.
-3. Send one real SMS (limit 1, existing controlled-test path) and open the received link on mobile width 390px.
-4. Run the $1 Stripe checkout to payment confirmation, then verify `activation-confirm` returns the access link and the First Dollar tracker advances past "Clic sur le lien d'activation".
+Priorisée par le classement du crawler, jamais par correctif global :
 
-## Out of scope
-No changes to SEO/sitemap/corpus, no new outreach campaigns beyond the single controlled test SMS, no changes to the pinned First Dollar run.
+- **Scope de thème manquant** : ajout de `.alex-immersive` / `.admin-theme` / `.landing-warm` sur les racines fautives. C'est l'hypothèse principale pour les captures, à confirmer par la mesure.
+- **Surfaces sans couleur de texte explicite** : chaque `Card`/`Dialog`/`Drawer`/`Sheet`/`Table`/`Select` qui hérite d'un texte incompatible reçoit sa paire surface + foreground via tokens sémantiques ; aucune couleur brute (`text-white`, `text-gray-*`, hex) ne subsiste dans les fichiers touchés.
+- **Tokens** : consolidation de la source unique (background, surface, elevated, text primary/secondary/muted, border, input, primary, destructive, success, warning, focus ring) dans `index.css`, sans redéfinir les thèmes déjà corrects.
+- **Blocages d'affichage** : `overflow:hidden` sur html/body/layouts, `100vh`/`max-height` coupants, z-index et overlays fantômes, header fixe couvrant le CTA, safe-area mobile, restauration du scroll après fermeture de modal, gardes d'auth en boucle, boutons désactivés sans explication.
+- Si le thème clair/sombre n'est pas réellement supporté sur une page de conversion, la variante incomplète est désactivée proprement au profit du thème UNPRO officiel ; aucune page de conversion ne dépend de `prefers-color-scheme`.
+
+### Phase 3 — Parcours du premier 1 $, prouvé de bout en bout
+
+Chaîne testée en conditions réelles avec Stripe en mode test :
+
+lien SMS/courriel → `/unpro/activate/:token` → rapport AIPP → CTA unique → auth/OTP → offre « Activation 7 jours — 1 $ » → session Stripe → paiement test → webhook → statut d'abonnement → activation → dashboard → confirmation → audit log.
+
+- Conservation de `utm_*`, `campaign_id`, `prospect_id`, `referral_id` à chaque saut, y compris à travers l'authentification ; retour à la destination initiale, jamais à l'accueil.
+- Le CTA du rapport AIPP est vérifié comme menant réellement à l'offre 1 $ (les captures montrent le bloc « PLAN RECOMMANDÉ » coupé en bas — à confirmer comme scroll bloqué ou CTA hors écran).
+- États distincts et honnêtes : pending / payé / échoué / annulé / lien expiré / webhook en attente, chacun avec la prochaine action utile et une reprise sans recommencer le parcours. Aucun succès affiché sans confirmation serveur.
+- **Vérité des chiffres** : les pourcentages « Gains rapides » (+22 % d'appels, +18 % de confiance…) visibles dans les captures sont audités. S'ils ne proviennent pas d'une méthodologie documentée en base, ils sont remplacés par des bénéfices qualitatifs ou explicitement étiquetés comme estimations.
+- Aucun SMS ni campagne réelle déclenché : uniquement des tokens et comptes de test.
+
+### Phase 4 — Rapport admin « Santé conversion 1 $ »
+
+Onglet ajouté à `/admin/ui-health`, alimenté par les sources existantes (`ui_accessibility_audit`, `PageAdminCriticalPathAudit`, health Stripe/webhook) : pages testées, pages illisibles, liens cassés, erreurs console, erreurs Edge Functions, dernière session Stripe, dernier webhook réussi, dernier paiement, activations en attente, blocage actuel, prochaine action prioritaire.
+
+## Détails techniques
+
+- Réutilisation stricte : tables, webhooks, politiques RLS et fonctions existants. Migration uniquement si le crawler a besoin de colonnes supplémentaires sur `ui_accessibility_audit`.
+- Tests ajoutés : crawl de routes, liens cassés, contraste, scroll, clavier, mobile, console, 4xx/5xx, E2E 1 $, retours Stripe, lien expiré, post-auth, compte déjà activé.
+- Le run pinné « First Dollar » (Electro Pompe) n'est pas modifié.
+- Hors périmètre : SEO, sitemaps, corpus IA, nouvelles campagnes sortantes.
+
+## Livraison et preuve
+
+Rapport final : routes testées et leur statut, causes racines identifiées, fichiers corrigés, migrations éventuelles, captures avant/après aux breakpoints mobile et desktop, et trace E2E du paiement 1 $. Rien n'est déclaré « corrigé » sans cette preuve ; si un service externe bloque (Stripe, Twilio, webhook), j'indique le service, la requête, le code d'erreur exact et l'action humaine requise.
