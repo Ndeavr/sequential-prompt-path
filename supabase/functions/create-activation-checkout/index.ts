@@ -151,6 +151,7 @@ Deno.serve(async (req) => {
           prospect_id: prospectId,
           campaign_id: outreachCampaignId,
           landing_token: landing_token ?? "",
+          activation_token: activation_token ?? "",
           offer: "activation_7d",
           source: source ?? (isOutreach ? "sms_outreach" : ""),
           campaign_variant: utm?.camp ?? "",
