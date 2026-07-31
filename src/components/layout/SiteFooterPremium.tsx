@@ -57,12 +57,14 @@ function Column({ title, items }: { title: string; items: FooterLink[] }) {
   );
 }
 
+// `alex-immersive` switches the semantic tokens to the dark palette. Without it
+// `text-foreground` resolves to the light theme and the whole footer renders
+// near-black on near-black (measured contrast 1.05).
 export default function SiteFooterPremium() {
   return (
     <footer
       aria-label="Pied de page UNPRO"
-      className="relative border-t border-white/10"
-      style={{ backgroundColor: "#050816" }}
+      className="alex-immersive relative border-t border-white/10"
     >
       <div className="mx-auto max-w-7xl px-6 pt-16 md:pt-20 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-20">
         {/* Brand block */}

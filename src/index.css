@@ -33,7 +33,7 @@
     --primary: 222 100% 57%;
     --primary-foreground: 0 0% 100%;
     --primary-glow: 217 91% 60%;
-    --secondary: 217 91% 60%;
+    --secondary: 217 86% 45%;
     --secondary-foreground: 0 0% 100%;
     --accent: 200 100% 87%;
     --accent-foreground: 222 49% 9%;
@@ -48,7 +48,7 @@
     --popover-foreground: 222 49% 9%;
 
     --muted: 220 60% 96%;
-    --muted-foreground: 220 13% 46%;
+    --muted-foreground: 220 14% 38%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
