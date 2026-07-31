@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     const isOutreach = source === "sms_outreach" || !!landing_token;
 
     // Best-effort prospect lookup — never block checkout if not found.
-    let prospectId = outreachProspectId;
+    let prospectId = outreachProspectId || activationProspectId;
     if (!isSprint && !prospectId) {
       try {
         const wp = await supabase
@@ -102,16 +102,20 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     const origin = req.headers.get("origin") || "https://unpro.ca";
-    const successPath = isOutreach
-      ? `/activation/success?session_id={CHECKOUT_SESSION_ID}&token=${encodeURIComponent(landing_token || "")}`
-      : isSprint
-        ? `/activation-success?session_id={CHECKOUT_SESSION_ID}&source=isolation-qc`
-        : `/activation-success?session_id={CHECKOUT_SESSION_ID}&slug=${encodeURIComponent(effectiveSlug)}`;
-    const cancelPath = isOutreach
-      ? `/invitation/${encodeURIComponent(landing_token || "")}/activate?cancelled=true`
-      : isSprint
-        ? `/isolation-qc?canceled=1`
-        : `/pro/${encodeURIComponent(effectiveSlug)}?canceled=1`;
+    const successPath = activation_token
+      ? `/activation-success?session_id={CHECKOUT_SESSION_ID}&slug=${encodeURIComponent(effectiveSlug)}`
+      : isOutreach
+        ? `/activation/success?session_id={CHECKOUT_SESSION_ID}&token=${encodeURIComponent(landing_token || "")}`
+        : isSprint
+          ? `/activation-success?session_id={CHECKOUT_SESSION_ID}&source=isolation-qc`
+          : `/activation-success?session_id={CHECKOUT_SESSION_ID}&slug=${encodeURIComponent(effectiveSlug)}`;
+    const cancelPath = activation_token
+      ? `/unpro/activate/${encodeURIComponent(activation_token)}?canceled=1`
+      : isOutreach
+        ? `/invitation/${encodeURIComponent(landing_token || "")}/activate?cancelled=true`
+        : isSprint
+          ? `/isolation-qc?canceled=1`
+          : `/pro/${encodeURIComponent(effectiveSlug)}?canceled=1`;
 
     let session;
     try {
