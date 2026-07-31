@@ -22,14 +22,33 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { slug, email, source, utm, landing_token } = (body ?? {}) as {
-      slug?: string; email?: string; source?: string; utm?: Record<string, string>; landing_token?: string;
+    const { slug, email, source, utm, landing_token, activation_token } = (body ?? {}) as {
+      slug?: string; email?: string; source?: string; utm?: Record<string, string>; landing_token?: string; activation_token?: string;
     };
 
     // NEW: sms_outreach flow — resolve prospect via landing_token
     let outreachProspectId = "";
     let outreachCampaignId = "";
     let outreachSlug = slug;
+
+    // /unpro/activate/:token flow — resolve the verified prospect from the SMS token.
+    let activationProspectId = "";
+    if (activation_token) {
+      const svc = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      );
+      const { data: tk } = await svc
+        .from("verified_prospect_tokens")
+        .select("prospect_id")
+        .eq("token", activation_token)
+        .maybeSingle();
+      if (tk?.prospect_id) {
+        activationProspectId = tk.prospect_id as string;
+        outreachSlug = outreachSlug || `activation-${activationProspectId}`;
+      }
+    }
+
     if (landing_token) {
       const supabaseEarly = createClient(
         Deno.env.get("SUPABASE_URL")!,
@@ -64,7 +83,7 @@ Deno.serve(async (req) => {
     const isOutreach = source === "sms_outreach" || !!landing_token;
 
     // Best-effort prospect lookup — never block checkout if not found.
-    let prospectId = outreachProspectId;
+    let prospectId = outreachProspectId || activationProspectId;
     if (!isSprint && !prospectId) {
       try {
         const wp = await supabase
@@ -83,16 +102,20 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     const origin = req.headers.get("origin") || "https://unpro.ca";
-    const successPath = isOutreach
-      ? `/activation/success?session_id={CHECKOUT_SESSION_ID}&token=${encodeURIComponent(landing_token || "")}`
-      : isSprint
-        ? `/activation-success?session_id={CHECKOUT_SESSION_ID}&source=isolation-qc`
-        : `/activation-success?session_id={CHECKOUT_SESSION_ID}&slug=${encodeURIComponent(effectiveSlug)}`;
-    const cancelPath = isOutreach
-      ? `/invitation/${encodeURIComponent(landing_token || "")}/activate?cancelled=true`
-      : isSprint
-        ? `/isolation-qc?canceled=1`
-        : `/pro/${encodeURIComponent(effectiveSlug)}?canceled=1`;
+    const successPath = activation_token
+      ? `/activation-success?session_id={CHECKOUT_SESSION_ID}&slug=${encodeURIComponent(effectiveSlug)}`
+      : isOutreach
+        ? `/activation/success?session_id={CHECKOUT_SESSION_ID}&token=${encodeURIComponent(landing_token || "")}`
+        : isSprint
+          ? `/activation-success?session_id={CHECKOUT_SESSION_ID}&source=isolation-qc`
+          : `/activation-success?session_id={CHECKOUT_SESSION_ID}&slug=${encodeURIComponent(effectiveSlug)}`;
+    const cancelPath = activation_token
+      ? `/unpro/activate/${encodeURIComponent(activation_token)}?canceled=1`
+      : isOutreach
+        ? `/invitation/${encodeURIComponent(landing_token || "")}/activate?cancelled=true`
+        : isSprint
+          ? `/isolation-qc?canceled=1`
+          : `/pro/${encodeURIComponent(effectiveSlug)}?canceled=1`;
 
     let session;
     try {
@@ -128,6 +151,7 @@ Deno.serve(async (req) => {
           prospect_id: prospectId,
           campaign_id: outreachCampaignId,
           landing_token: landing_token ?? "",
+          activation_token: activation_token ?? "",
           offer: "activation_7d",
           source: source ?? (isOutreach ? "sms_outreach" : ""),
           campaign_variant: utm?.camp ?? "",

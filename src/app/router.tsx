@@ -206,6 +206,7 @@ const PageCheckoutSuccess = lazyWithRetry(() => import("@/pages/checkout/PageChe
 const PageActivationStart = lazyWithRetry(() => import("@/pages/checkout/PageActivationStart"));
 const SolicitationActivationPage = lazyWithRetry(() => import("@/pages/SolicitationActivationPage"));
 const PageShortLinkRedirect = lazyWithRetry(() => import("@/pages/invitation/PageShortLinkRedirect"));
+const PageUnproActivate = lazyWithRetry(() => import("@/pages/activation/PageUnproActivate"));
 const PageInvitationLanding = lazyWithRetry(() => import("@/pages/invitation/PageInvitationLanding"));
 const PageInvitationEdit = lazyWithRetry(() => import("@/pages/invitation/PageInvitationEdit"));
 const PageInvitationActivate = lazyWithRetry(() => import("@/pages/invitation/PageInvitationActivate"));
@@ -1113,6 +1114,7 @@ export const AppRouter = () => (
         <Route path="/activation/start" element={<PageActivationStart />} />
         {/* SMS → 1$ outreach tunnel — public routes */}
         <Route path="/r/:token" element={<Suspense fallback={<LazyFallback />}><PageShortLinkRedirect /></Suspense>} />
+        <Route path="/unpro/activate/:token" element={<Suspense fallback={<LazyFallback />}><PageUnproActivate /></Suspense>} />
         <Route path="/invitation/:token" element={<Suspense fallback={<LazyFallback />}><PageInvitationLanding /></Suspense>} />
         <Route path="/invitation/:token/edit" element={<Suspense fallback={<LazyFallback />}><PageInvitationEdit /></Suspense>} />
         <Route path="/invitation/:token/activate" element={<Suspense fallback={<LazyFallback />}><PageInvitationActivate /></Suspense>} />
