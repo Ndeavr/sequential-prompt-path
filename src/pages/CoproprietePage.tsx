@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import MainLayout from "@/layouts/MainLayout";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -72,7 +74,25 @@ const CoproprietePage = () => {
 
   return (
     <MainLayout>
+      <Helmet>
+        <title>Gestion de copropriété intelligente | UNPRO Condo</title>
+        <meta
+          name="description"
+          content="Anticipez les cotisations spéciales et planifiez le fonds de prévoyance de votre syndicat avec l'analyse de santé d'immeuble UNPRO, conforme à la Loi 16."
+        />
+        <link rel="canonical" href="https://unpro.ca/copropriete" />
+        <meta property="og:title" content="Gestion de copropriété intelligente | UNPRO Condo" />
+        <meta
+          property="og:description"
+          content="Analyse de santé d'immeuble, planification du fonds de prévoyance et conformité Loi 16 pour les syndicats de copropriété au Québec."
+        />
+        <meta property="og:url" content="https://unpro.ca/copropriete" />
+        <meta property="og:type" content="website" />
+        <script type="application/ld+json">{JSON.stringify(coproprieteSchema)}</script>
+      </Helmet>
+
       {/* ═══ HERO ═══ */}
+
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-secondary/5 pt-12 pb-20 sm:pt-20 sm:pb-28">
         {/* Decorative */}
         <div className="pointer-events-none absolute inset-0">
