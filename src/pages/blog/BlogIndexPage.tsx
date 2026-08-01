@@ -10,6 +10,8 @@ import { motion } from "framer-motion";
 import { CalendarDays, Clock, ArrowRight, Tag } from "lucide-react";
 import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
+import PriorityTopicLinks from "@/seo/components/PriorityTopicLinks";
+
 
 const CATEGORIES = [
   { key: "all", label: "Tous" },
@@ -183,6 +185,9 @@ export default function BlogIndexPage() {
           </div>
         </motion.div>
       </div>
+
+      <PriorityTopicLinks />
     </>
+
   );
 }

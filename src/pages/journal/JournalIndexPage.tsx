@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowRight, Sparkles } from "lucide-react";
+import PriorityTopicLinks from "@/seo/components/PriorityTopicLinks";
+
 
 const TIER_LABEL: Record<string, string> = {
   flagship: "Thèse fondatrice",
@@ -149,6 +151,9 @@ export default function JournalIndexPage() {
           </a>
         </div>
       </section>
+
+      <PriorityTopicLinks variant="dark" />
     </main>
+
   );
 }
