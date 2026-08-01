@@ -29,9 +29,10 @@ export const SEO_GUIDES: SeoGuide[] = [
         content: "Au Québec, tout entrepreneur en construction doit détenir une licence de la RBQ (Régie du bâtiment du Québec). Vérifiez le numéro de licence directement sur le site de la RBQ. Assurez-vous aussi que l'entrepreneur possède une assurance responsabilité civile valide. Demandez une preuve écrite avant de signer quoi que ce soit.",
       },
       {
-        heading: "Obtenez au moins 3 soumissions détaillées",
-        content: "Ne vous contentez jamais d'une seule soumission. Obtenez au minimum 3 soumissions écrites et détaillées. Chaque soumission devrait inclure : le type de matériaux, la superficie, les travaux préparatoires, la garantie offerte, le calendrier prévu et le prix total ventilé. Méfiez-vous des soumissions verbales ou vagues.",
+        heading: "Exigez une soumission écrite et détaillée",
+        content: "Une soumission verbale ou vague ne vous protège pas. Exigez un document écrit qui précise le type de matériaux, la superficie, les travaux préparatoires, la garantie offerte, le calendrier prévu et le prix total ventilé. Un entrepreneur sérieux fournit ce niveau de détail sans hésiter — c'est un meilleur indicateur de fiabilité que le simple fait d'empiler des prix concurrents.",
       },
+
       {
         heading: "Évaluez l'expérience et la réputation",
         content: "Recherchez des avis en ligne, demandez des références de projets similaires et vérifiez depuis combien de temps l'entreprise est active. Un couvreur établi depuis plusieurs années avec de bonnes évaluations est généralement un choix plus sûr qu'un nouvel arrivant offrant le prix le plus bas.",
@@ -110,7 +111,79 @@ export const SEO_GUIDES: SeoGuide[] = [
     relatedProblems: ["fissure-fondation", "infiltration-sous-sol"],
     ctaText: "Trouvez un spécialiste en fondation vérifié",
   },
+  {
+    slug: "entretien-drain-francais",
+    title: "Entretien du drain français : guide complet pour le Québec",
+    metaTitle: "Entretien du drain français au Québec | Guide UNPRO",
+    metaDescription:
+      "Signes d'un drain français bouché, fréquence de nettoyage, coûts au Québec et gestes préventifs pour éviter l'infiltration au sous-sol. Guide UNPRO.",
+    intro:
+      "Le drain français est la première ligne de défense de votre fondation contre l'eau. Au Québec, les cycles de gel-dégel, l'argile et l'ocre ferreuse l'obstruent plus vite qu'ailleurs. Ce guide explique comment reconnaître un drain qui faiblit, à quelle fréquence l'entretenir et ce qu'un entretien coûte réellement.",
+    sections: [
+      {
+        heading: "À quoi sert un drain français",
+        content:
+          "Installé au pied de la fondation, le drain français capte l'eau du sol et la dirige vers un puisard ou l'égout pluvial. Tant qu'il fonctionne, la pression hydrostatique reste faible contre vos murs de fondation. Dès qu'il s'obstrue, l'eau stagne, la pression augmente et cherche la moindre fissure pour entrer au sous-sol.",
+      },
+      {
+        heading: "Les signes qu'un drain français est bouché",
+        content:
+          "Surveillez : un sous-sol humide ou une odeur de moisi persistante après la pluie, des efflorescences blanchâtres sur le béton, de l'eau qui perle au joint entre le plancher et le mur, un puisard qui se déclenche rarement malgré de fortes pluies, ou un terrain détrempé le long de la fondation. Une infiltration qui revient au même endroit deux printemps de suite est un signal fort.",
+      },
+      {
+        heading: "L'ocre ferreuse : le facteur québécois",
+        content:
+          "Dans plusieurs régions du Québec, une bactérie réagit avec le fer présent dans le sol et forme un dépôt gélatineux orangé qui colmate le drain. Un drain touché par l'ocre ferreuse peut s'obstruer en 5 à 10 ans plutôt qu'en 30. Si vous voyez un résidu orange dans le puisard, faites inspecter le drain sans attendre.",
+      },
+      {
+        heading: "Fréquence d'entretien recommandée",
+        content:
+          "Faites inspecter le drain par caméra tous les 5 ans en conditions normales, et tous les 2 ans en présence d'ocre ferreuse ou d'un sol argileux. Un nettoyage à haute pression est généralement requis lorsque l'inspection montre plus de 30 % d'obstruction. Gardez le rapport d'inspection : il rassure les acheteurs à la revente.",
+      },
+      {
+        heading: "Coûts typiques au Québec",
+        content:
+          "Une inspection par caméra coûte généralement entre 300 $ et 600 $. Un nettoyage à haute pression se situe entre 800 $ et 2 000 $ selon la longueur et le degré d'obstruction. Le remplacement complet d'un drain, qui exige l'excavation du périmètre, dépasse souvent 15 000 $ — d'où l'intérêt d'un entretien préventif.",
+      },
+      {
+        heading: "Gestes préventifs qui prolongent la vie du drain",
+        content:
+          "Prolongez les descentes de gouttière à au moins 1,5 m de la fondation, maintenez une pente positive du terrain vers l'extérieur, évitez de planter des arbres à racines agressives près de la maison, testez le puisard chaque printemps et déneigez les sorties de drain. Ces gestes réduisent directement la charge d'eau que le drain doit évacuer.",
+      },
+    ],
+    faqs: [
+      {
+        question: "À quelle fréquence nettoyer un drain français ?",
+        answer:
+          "Tous les 5 ans en conditions normales, et tous les 2 ans si votre secteur est touché par l'ocre ferreuse ou si le sol est argileux. L'inspection par caméra détermine si un nettoyage est réellement nécessaire.",
+      },
+      {
+        question: "Combien coûte le nettoyage d'un drain français au Québec ?",
+        answer:
+          "Comptez généralement de 800 $ à 2 000 $ pour un nettoyage à haute pression, et de 300 $ à 600 $ pour une inspection par caméra seule. Le prix varie selon la longueur du drain et le degré d'obstruction.",
+      },
+      {
+        question: "Peut-on nettoyer un drain français soi-même ?",
+        answer:
+          "Non. Le nettoyage exige un jet à haute pression et une caméra d'inspection ; un équipement mal utilisé peut perforer un drain en PVC ou déplacer les joints. L'entretien préventif du terrain, lui, se fait très bien soi-même.",
+      },
+      {
+        question: "Quelle est la durée de vie d'un drain français ?",
+        answer:
+          "De 25 à 40 ans pour un drain bien entretenu, mais de 5 à 10 ans seulement lorsque l'ocre ferreuse est présente et qu'aucun entretien n'est fait.",
+      },
+      {
+        question: "Mon sous-sol est humide : est-ce forcément le drain ?",
+        answer:
+          "Pas nécessairement. Une humidité élevée peut aussi venir d'une ventilation insuffisante ou de la condensation. Une infiltration localisée et récurrente au bas des murs pointe par contre fortement vers le drain.",
+      },
+    ],
+    relatedServices: ["drain-francais", "impermeabilisation-fondation", "sous-sol"],
+    relatedProblems: ["drain-francais-bloque", "infiltration-sous-sol", "fissure-fondation"],
+    ctaText: "Faites évaluer l'état de votre drain français",
+  },
 ];
+
 
 export const getGuideBySlug = (slug: string): SeoGuide | undefined =>
   SEO_GUIDES.find((g) => g.slug === slug);
