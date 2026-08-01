@@ -26,7 +26,22 @@ const fadeUp = {
 };
 const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.1 } } };
 
+/* ─── Structured data ─── */
+const coproprieteSchema = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "Analyse de santé d'immeuble UNPRO Condo",
+  serviceType: "Gestion et planification de copropriété",
+  description:
+    "Analyse prédictive de l'état d'un immeuble en copropriété : planification du fonds de prévoyance, anticipation des cotisations spéciales et conformité à la Loi 16 au Québec.",
+  url: "https://unpro.ca/copropriete",
+  areaServed: { "@type": "AdministrativeArea", name: "Québec, Canada" },
+  audience: { "@type": "Audience", audienceType: "Syndicats de copropriété" },
+  provider: { "@type": "Organization", name: "UNPRO", url: "https://unpro.ca" },
+};
+
 /* ─── Data ─── */
+
 const problems = [
   { icon: AlertTriangle, text: "Cotisations spéciales imprévues", color: "text-destructive" },
   { icon: Wrench, text: "Travaux urgents non planifiés", color: "text-warning" },
