@@ -146,7 +146,39 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Second pass — reconcile any non-final acq_sms_logs row (second touch,
+    // relances) that has a Twilio SID but no confirmed outcome yet.
+    const { data: pendingLogs } = await supabase
+      .from("acq_sms_logs")
+      .select("id, provider_message_id, status, relance_kind")
+      .not("provider_message_id", "is", null)
+      .in("status", ["queued", "accepted", "sending", "sent"])
+      .limit(500);
+
+    const relanceTally: Record<string, number> = {};
+
+    for (const log of pendingLogs ?? []) {
+      try {
+        const res = await fetch(
+          `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages/${log.provider_message_id}.json`,
+          { headers: { Authorization: auth } },
+        );
+        if (!res.ok) continue;
+        const msg = (await res.json()) as TwilioMessage;
+        const st = msg.status ?? "unknown";
+        relanceTally[st] = (relanceTally[st] ?? 0) + 1;
+        await supabase
+          .from("acq_sms_logs")
+          .update({
+            status: st,
+            error: msg.error_message ?? (msg.error_code ? String(msg.error_code) : null),
+          })
+          .eq("id", log.id);
+      } catch { /* skip */ }
+    }
+
     const checked = results.length;
+
     const deliveredCount = Object.entries(tally)
       .filter(([k]) => DELIVERED.has(k))
       .reduce((a, [, v]) => a + v, 0);
