@@ -189,9 +189,11 @@ Deno.serve(async (req) => {
       delivered: deliveredCount,
       delivery_rate: checked ? Math.round((deliveredCount / checked) * 100) : 0,
       status_breakdown: tally,
+      relance_status_breakdown: relanceTally,
       error_codes: errorCodes,
       sample: results.slice(0, 25),
     });
+
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
