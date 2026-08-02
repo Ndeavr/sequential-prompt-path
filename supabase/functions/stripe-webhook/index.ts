@@ -339,6 +339,52 @@ Deno.serve(async (req) => {
           break;
         }
 
+        // $1 ACTIVATION flow (create-activation-checkout): the live acquisition
+        // pool is verified_contractor_prospects. Without this branch a real $1
+        // payment is invisible to the cockpit.
+        if (
+          session.metadata?.activation_token ||
+          session.metadata?.offer === "activation_7d"
+        ) {
+          const activationToken = session.metadata?.activation_token || null;
+          const vProspectId = session.metadata?.prospect_id || null;
+          try {
+            if (vProspectId) {
+              await supabase
+                .from("verified_contractor_prospects")
+                .update({
+                  outreach_status: "paid",
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("id", vProspectId);
+            }
+            await supabase.from("unpro_payment_activation_audit").insert({
+              prospect_id: vProspectId,
+              stripe_event_id: event.id,
+              checkout_session_id: session.id,
+              payment_intent_id: (session.payment_intent as string) || null,
+              action: "dollar_activation",
+              result: "success",
+              new_status: "activated",
+              amount_cents: session.amount_total ?? null,
+              metadata: {
+                activation_token: activationToken,
+                source: session.metadata?.source ?? null,
+                slug: session.metadata?.prospect_slug ?? null,
+              },
+            });
+            console.log("[stripe-webhook] $1 activation recorded", {
+              prospect_id: vProspectId,
+              session: session.id,
+            });
+          } catch (e) {
+            console.error("[stripe-webhook] activation_7d handling failed", (e as Error).message);
+          }
+          break;
+        }
+
+
+
         // ACQUISITION PIPELINE flow: prospect-driven checkout (acq-create-checkout)
         if (session.metadata?.source === "acquisition_pipeline" && session.metadata?.prospect_id) {
           const prospectId = session.metadata.prospect_id;
