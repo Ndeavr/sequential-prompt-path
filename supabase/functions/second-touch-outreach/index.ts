@@ -61,9 +61,8 @@ Deno.serve(async (req) => {
     // Candidates: Twilio-confirmed delivered, never clicked, not yet second-touched.
     const { data: candidates, error: candErr } = await supabase
       .from("verified_contractor_prospects")
-      .select("id, business_name, city, phone_e164, outreach_status, outreach_clicked_at")
+      .select("id, business_name, city, phone_e164, outreach_status")
       .eq("outreach_status", "delivered")
-      .is("outreach_clicked_at", null)
       .not("phone_e164", "is", null)
       .limit(200);
 
@@ -75,7 +74,7 @@ Deno.serve(async (req) => {
     const [{ data: tokens }, { data: already }, { data: optOuts }] = await Promise.all([
       supabase.from("verified_prospect_tokens").select("token, prospect_id, clicked_at").in("prospect_id", ids),
       supabase.from("acq_sms_logs").select("prospect_id").eq("relance_kind", RELANCE_KIND).in("prospect_id", ids),
-      supabase.from("sms_opt_outs").select("phone"),
+      supabase.from("sms_opt_outs").select("normalized_phone"),
     ]);
 
     const tokenBy = new Map<string, { token: string; clicked_at: string | null }>();
@@ -83,7 +82,7 @@ Deno.serve(async (req) => {
       tokenBy.set(t.prospect_id as string, { token: t.token as string, clicked_at: t.clicked_at as string | null });
     }
     const done = new Set((already ?? []).map((r) => r.prospect_id as string));
-    const optedOut = new Set((optOuts ?? []).map((r) => String(r.phone)));
+    const optedOut = new Set((optOuts ?? []).map((r) => String(r.normalized_phone)));
 
     const eligible = (candidates ?? []).filter((c) => {
       const tk = tokenBy.get(c.id as string);
@@ -124,7 +123,7 @@ Deno.serve(async (req) => {
 
       try {
         const res = await fetch(
-          `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages/${""}`.replace(/\/$/, "") + ".json",
+          `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
           {
             method: "POST",
             headers: { Authorization: auth, "Content-Type": "application/x-www-form-urlencoded" },
