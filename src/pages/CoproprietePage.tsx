@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import MainLayout from "@/layouts/MainLayout";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +26,22 @@ const fadeUp = {
 };
 const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.1 } } };
 
+/* ─── Structured data ─── */
+const coproprieteSchema = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "Analyse de santé d'immeuble UNPRO Condo",
+  serviceType: "Gestion et planification de copropriété",
+  description:
+    "Analyse prédictive de l'état d'un immeuble en copropriété : planification du fonds de prévoyance, anticipation des cotisations spéciales et conformité à la Loi 16 au Québec.",
+  url: "https://unpro.ca/copropriete",
+  areaServed: { "@type": "AdministrativeArea", name: "Québec, Canada" },
+  audience: { "@type": "Audience", audienceType: "Syndicats de copropriété" },
+  provider: { "@type": "Organization", name: "UNPRO", url: "https://unpro.ca" },
+};
+
 /* ─── Data ─── */
+
 const problems = [
   { icon: AlertTriangle, text: "Cotisations spéciales imprévues", color: "text-destructive" },
   { icon: Wrench, text: "Travaux urgents non planifiés", color: "text-warning" },
@@ -72,7 +89,25 @@ const CoproprietePage = () => {
 
   return (
     <MainLayout>
+      <Helmet>
+        <title>Gestion de copropriété intelligente | UNPRO Condo</title>
+        <meta
+          name="description"
+          content="Anticipez les cotisations spéciales et planifiez le fonds de prévoyance de votre syndicat avec l'analyse de santé d'immeuble UNPRO, conforme à la Loi 16."
+        />
+        <link rel="canonical" href="https://unpro.ca/copropriete" />
+        <meta property="og:title" content="Gestion de copropriété intelligente | UNPRO Condo" />
+        <meta
+          property="og:description"
+          content="Analyse de santé d'immeuble, planification du fonds de prévoyance et conformité Loi 16 pour les syndicats de copropriété au Québec."
+        />
+        <meta property="og:url" content="https://unpro.ca/copropriete" />
+        <meta property="og:type" content="website" />
+        <script type="application/ld+json">{JSON.stringify(coproprieteSchema)}</script>
+      </Helmet>
+
       {/* ═══ HERO ═══ */}
+
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-secondary/5 pt-12 pb-20 sm:pt-20 sm:pb-28">
         {/* Decorative */}
         <div className="pointer-events-none absolute inset-0">

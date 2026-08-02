@@ -74,7 +74,7 @@ function HeaderFloatingGlass() {
           <Link to={logoTo} className="flex items-center flex-shrink-0" aria-label="UNPRO">
             <img
               src={BRAND.logo}
-              alt="UNPRO"
+              alt="UNPRO — intelligence artificielle pour votre maison"
               className="h-10 md:h-12 w-auto min-h-0 object-contain"
               draggable={false}
             />
@@ -667,15 +667,17 @@ export default function PageHomeUnicorn() {
         <title>UNPRO — L'intelligence artificielle pour votre maison</title>
         <meta
           name="description"
-          content="UNPRO aide les propriétaires québécois à identifier les problèmes, comprendre les risques, analyser les soumissions et prendre de meilleures décisions pour leur propriété grâce à Alex, l'assistant IA résidentiel."
+          content="Identifiez les problèmes de votre propriété, comprenez les risques et analysez vos soumissions avec Alex, l'assistant IA résidentiel québécois."
         />
         <meta property="og:title" content="UNPRO — L'intelligence artificielle pour votre maison" />
         <meta
           property="og:description"
           content="Identifier les problèmes, comprendre les risques et prendre de meilleures décisions pour votre propriété."
         />
+        <meta property="og:url" content="https://unpro.ca/" />
         <meta name="theme-color" content="#F7FAFF" />
-        <link rel="canonical" href="https://unpro.ca" />
+        <link rel="canonical" href="https://unpro.ca/" />
+
         <script type="application/ld+json">{JSON.stringify(serviceSchema)}</script>
         <script type="application/ld+json">{JSON.stringify(orgSchema)}</script>
       </Helmet>

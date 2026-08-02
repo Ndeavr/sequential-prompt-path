@@ -1,8 +1,11 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowRight, Sparkles } from "lucide-react";
+import PriorityTopicLinks from "@/seo/components/PriorityTopicLinks";
+import { DEFAULT_OG_IMAGE } from "@/seo/ogImage";
+
 
 const TIER_LABEL: Record<string, string> = {
   flagship: "Thèse fondatrice",
@@ -11,17 +14,13 @@ const TIER_LABEL: Record<string, string> = {
   essay: "Essai",
 };
 
+const JOURNAL_TITLE = "UNPRO Intelligence Journal — Thèses d'infrastructure";
+const JOURNAL_DESCRIPTION =
+  "Le UNPRO Intelligence Journal publie les thèses d'infrastructure d'UNPRO sur la propriété résidentielle, l'IA opérationnelle et l'économie de la confiance.";
+const JOURNAL_URL = "https://unpro.ca/journal";
+
 export default function JournalIndexPage() {
-  useEffect(() => {
-    document.title = "UNPRO Intelligence Journal — Thèses d'infrastructure";
-    const meta = document.querySelector('meta[name="description"]') ?? (() => {
-      const m = document.createElement("meta");
-      m.setAttribute("name", "description");
-      document.head.appendChild(m);
-      return m;
-    })();
-    meta.setAttribute("content", "Le UNPRO Intelligence Journal publie les thèses d'infrastructure d'UNPRO sur la propriété résidentielle, l'IA opérationnelle et l'économie de la confiance.");
-  }, []);
+
 
   const { data: articles = [] } = useQuery({
     queryKey: ["journal-index"],
@@ -48,6 +47,18 @@ export default function JournalIndexPage() {
 
   return (
     <main className="min-h-screen bg-[#060B14] text-white">
+      <Helmet>
+        <title>{JOURNAL_TITLE}</title>
+        <meta name="description" content={JOURNAL_DESCRIPTION} />
+        <link rel="canonical" href={JOURNAL_URL} />
+        <meta property="og:title" content={JOURNAL_TITLE} />
+        <meta property="og:description" content={JOURNAL_DESCRIPTION} />
+        <meta property="og:url" content={JOURNAL_URL} />
+        <meta property="og:image" content={DEFAULT_OG_IMAGE} />
+        <meta name="twitter:title" content={JOURNAL_TITLE} />
+        <meta name="twitter:description" content={JOURNAL_DESCRIPTION} />
+      </Helmet>
+
       {/* Hero */}
       <section className="border-b border-white/5">
         <div className="max-w-6xl mx-auto px-6 py-20 md:py-32">
@@ -149,6 +160,9 @@ export default function JournalIndexPage() {
           </a>
         </div>
       </section>
+
+      <PriorityTopicLinks variant="dark" />
     </main>
+
   );
 }
