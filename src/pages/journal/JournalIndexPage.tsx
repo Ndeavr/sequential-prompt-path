@@ -47,6 +47,18 @@ export default function JournalIndexPage() {
 
   return (
     <main className="min-h-screen bg-[#060B14] text-white">
+      <Helmet>
+        <title>{JOURNAL_TITLE}</title>
+        <meta name="description" content={JOURNAL_DESCRIPTION} />
+        <link rel="canonical" href={JOURNAL_URL} />
+        <meta property="og:title" content={JOURNAL_TITLE} />
+        <meta property="og:description" content={JOURNAL_DESCRIPTION} />
+        <meta property="og:url" content={JOURNAL_URL} />
+        <meta property="og:image" content={DEFAULT_OG_IMAGE} />
+        <meta name="twitter:title" content={JOURNAL_TITLE} />
+        <meta name="twitter:description" content={JOURNAL_DESCRIPTION} />
+      </Helmet>
+
       {/* Hero */}
       <section className="border-b border-white/5">
         <div className="max-w-6xl mx-auto px-6 py-20 md:py-32">
