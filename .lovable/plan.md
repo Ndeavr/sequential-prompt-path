@@ -1,41 +1,61 @@
-## Where unpro.ca stands (source: Semrush, CA database)
+## Situation (measured, not assumed)
 
-| Metric | Value |
+| Signal | Reality |
 |---|---|
-| Organic keywords | 81 |
-| Estimated organic traffic | ~0/mo |
-| Best position | 48 (`désamiantage terrebonne`) |
-| Pages ranking | mostly `/s/{service}-{ville}` programmatic pages |
+| SMS sent (Jul 25–31) | 234, all with Twilio SIDs |
+| Deliveries recorded | 0 |
+| Human clicks | 1 |
+| $1 payments | 0 |
+| Sending controls | OFF since Jul 30 |
+| Fresh sendable prospects | 6 |
 
-Diagnosis: the programmatic SEO engine is working — 81 keywords are being picked up across real Quebec service+city terms, several with genuine demand (`drain français saint-hyacinthe` 720/mo, `rénovation cuisine saint-jean-sur-richelieu` 390/mo, `analyse moisissure mirabel` 320/mo, `loi 16 copropriété` 1 000/mo). But **every single one sits at position 48-96**, i.e. page 5-10. Nothing is on page 1-2, so traffic is effectively zero. The site is indexed but not competitive.
+The pipeline **sends**. What is unproven is everything after the send: delivery, click, checkout, payment. Zero deliveries recorded across 234 messages is the single most dangerous unknown — it could mean carrier filtering (nothing ever arrived) or just a missing status webhook. That question gets answered first, because every downstream fix depends on the answer.
 
-The stored SEO findings are **stale** (last scan 2026-07-07, 5 failing findings against an older commit) — they are not a current diagnosis of the project.
+## Step 1 — Delivery truth (no new sends)
 
-## Plan
+Pull real status for the 234 existing SIDs directly from Twilio and write it back.
 
-### 1. Fresh SEO scan
-Run a new SEO review so findings reflect the current commit instead of the July 7 snapshot.
+- New edge function `twilio-delivery-reconcile`: batch-fetch message status for every `outreach_twilio_sid`, persist `delivered / undelivered / failed` + error code into `verified_contractor_prospects.outreach_delivered_at` / `outreach_failure_reason`, and mirror rows into `acq_sms_logs`.
+- Register the Twilio status-callback webhook so future sends self-reconcile.
 
-### 2. Fix per-page metadata (currently duplicated)
-The stale scan flagged duplicate titles/descriptions and identical social tags sitewide. Verify against the current code, then:
-- Ensure every programmatic `/s/:slug` and `/problems/:problem/:city` page emits a unique `<title>` under 60 chars and a unique description, built from service + city.
-- Add self-referencing `og:url` per route (today only the static index.html og tags exist for non-JS crawlers).
+**Gate:** if delivery rate is near zero with error codes 30032/30007/60601, the problem is carrier registration, not copy — the run pivots to email-first (Step 4) instead of burning more SMS.
 
-### 3. Concentrate authority instead of spreading it
-30k+ thin programmatic pages at position 60+ is the classic symptom of no internal link equity per page. Fix the category, not one page:
-- Pick the ~20 highest-demand service×city combos already ranking (drain français, moisissure, fissure fondation, désamiantage, rénovation cuisine) and deepen those pages: real FAQ, price ranges, local proof, contractor entities.
-- Add internal links from `/journal` and `/blog` articles into those 20 pages so crawl equity flows to them.
+## Step 2 — Prove the money path with a real card
 
-### 4. Own `loi 16 copropriété` (1 000/mo, position 96)
-Highest-volume term the site already touches, and it maps directly to the condo-manager product. Expand `/blog/loi-16-condo-quebec-obligations-syndicats` into a full compliance guide with FAQPage + Article schema, and link it from the condo surfaces.
+Before scaling outreach, walk one token end-to-end:
 
-### 5. Add the French-drain guide flagged by Semrush
-Create `/guides/entretien-drain-francais` (signs of failure, maintenance steps), interlinked with the `drain-francais-{ville}` pages that already rank.
+`/unpro/activate/:token` → `activation-token-resolve` → `create-activation-checkout` → Stripe → webhook → payment row.
+
+- Confirm the Stripe webhook actually writes to `contractor_recruitment_payments` / `unpro_payment_activation_audit` (both are currently empty — this path has never completed in production).
+- Run one live $1 charge on a real card, then refund it. This converts "first dollar" from a hope into a verified mechanism.
+
+## Step 3 — Re-arm sending with safe caps
+
+Flip `recruitment_controls`: `global_enabled=true`, `autonomous_enqueue_enabled=true`, keep `max_daily_global=25`, cooldown intact. Add an explicit admin kill-switch read on every send.
+
+## Step 4 — Second touch on the 234 (the fastest revenue)
+
+These contractors are already scraped, verified and phone-validated. They cost nothing to reach again.
+
+- **Delivered but unclicked** → one short second-touch SMS with a rewritten one-line hook and a clean `unpro.ca/r/:token` link.
+- **Undelivered / no email-less** → Resend email fallback with the same activation link (`RESEND_API_KEY` is live).
+- Every touch writes a `click_events`-linked tracking token so attribution is unambiguous.
+
+## Step 5 — Refill the pool
+
+Run the Google Places scraper (`GOOGLE_PLACES_API_KEY` is present) for 2 city × category cells with the strongest prior response, enrich to `verified` + `sms_eligible`, and feed the 25/day queue.
+
+## Step 6 — Live reconciliation
+
+Extend `/admin/launch-control` with a single truth strip: **Sent → Delivered → Clicked → Checkout opened → Paid**, sourced from the reconciled tables, refreshing every 10 s. Stop the run the moment the first payment lands and report the contractor, SID, and Stripe charge ID.
 
 ## Technical notes
-- Metadata work stays in `src/seo/components/SeoHead.tsx` and the programmatic page components — no change to `canonicalManager` rules or the domain strategy.
-- No sitemap regeneration, no `lastmod` fabrication; sitemaps already index the relevant paths.
-- Classic Vite SPA: `<Helmet>` head changes are visible to Googlebot but not to non-JS social crawlers. Accurate per-page social previews would need SSR — [what the upgrade gives you](https://lovable.dev/blog/building-apps-using-tanstack-start).
 
-## Scope check
-Steps 4 and 5 create new content pages. Tell me if you want the review + technical fixes only (steps 1-3), or the full set.
+- New: `supabase/functions/twilio-delivery-reconcile/index.ts`, Twilio status-callback handler.
+- Modified: `send-verified-batch` (attach status callback URL), Stripe webhook handler (persist activation payments), `PageAdminLaunchControl.tsx` (reconciliation strip).
+- No changes to SEO, sitemap, AI corpus, or content systems.
+- No new SMS is sent until Step 1 returns delivery truth and Step 2 proves the payment path.
+
+## Definition of done
+
+A real contractor, reached by this pipeline today, has a Stripe charge of $1.00 recorded in the database and visible on `/admin/launch-control` — with the full Sent → Delivered → Clicked → Paid chain reconciled for that one prospect.
