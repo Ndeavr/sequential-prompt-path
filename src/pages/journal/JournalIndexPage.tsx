@@ -1,9 +1,10 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowRight, Sparkles } from "lucide-react";
 import PriorityTopicLinks from "@/seo/components/PriorityTopicLinks";
+import { DEFAULT_OG_IMAGE } from "@/seo/ogImage";
 
 
 const TIER_LABEL: Record<string, string> = {
@@ -13,17 +14,13 @@ const TIER_LABEL: Record<string, string> = {
   essay: "Essai",
 };
 
+const JOURNAL_TITLE = "UNPRO Intelligence Journal — Thèses d'infrastructure";
+const JOURNAL_DESCRIPTION =
+  "Le UNPRO Intelligence Journal publie les thèses d'infrastructure d'UNPRO sur la propriété résidentielle, l'IA opérationnelle et l'économie de la confiance.";
+const JOURNAL_URL = "https://unpro.ca/journal";
+
 export default function JournalIndexPage() {
-  useEffect(() => {
-    document.title = "UNPRO Intelligence Journal — Thèses d'infrastructure";
-    const meta = document.querySelector('meta[name="description"]') ?? (() => {
-      const m = document.createElement("meta");
-      m.setAttribute("name", "description");
-      document.head.appendChild(m);
-      return m;
-    })();
-    meta.setAttribute("content", "Le UNPRO Intelligence Journal publie les thèses d'infrastructure d'UNPRO sur la propriété résidentielle, l'IA opérationnelle et l'économie de la confiance.");
-  }, []);
+
 
   const { data: articles = [] } = useQuery({
     queryKey: ["journal-index"],
