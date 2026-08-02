@@ -288,6 +288,19 @@ async function handleCheckoutCompleted(
     }
   }
 
+  // The live acquisition pool lives in verified_contractor_prospects — mark it
+  // paid even when no contractor record exists yet (outreach-driven activation).
+  if (prospectId) {
+    await sb
+      .from("verified_contractor_prospects")
+      .update({
+        outreach_status: "paid",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", prospectId);
+  }
+
+
   await auditRow(sb, {
     contractor_id: contractorId,
     prospect_id: prospectId,
