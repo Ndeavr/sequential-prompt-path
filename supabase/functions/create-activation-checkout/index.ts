@@ -147,6 +147,12 @@ Deno.serve(async (req) => {
           },
         },
         metadata: {
+          // REQUIRED by stripe-unpro-webhook (checkUnproMetadata). Without these
+          // two keys every activation payment is quarantined and never recorded.
+          platform: "unpro",
+          brand: "unpro",
+          offer_code: "contractor_activation_1_dollar",
+          activation_type: "activation_7d",
           prospect_slug: effectiveSlug,
           prospect_id: prospectId,
           campaign_id: outreachCampaignId,
@@ -158,6 +164,7 @@ Deno.serve(async (req) => {
           utm_city: utm?.city ?? "",
           utm_company: utm?.company ?? "",
         },
+
         locale: "fr",
       });
     } catch (stripeErr: any) {
