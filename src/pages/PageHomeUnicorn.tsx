@@ -74,7 +74,7 @@ function HeaderFloatingGlass() {
           <Link to={logoTo} className="flex items-center flex-shrink-0" aria-label="UNPRO">
             <img
               src={BRAND.logo}
-              alt="UNPRO"
+              alt="UNPRO — intelligence artificielle pour votre maison"
               className="h-10 md:h-12 w-auto min-h-0 object-contain"
               draggable={false}
             />
