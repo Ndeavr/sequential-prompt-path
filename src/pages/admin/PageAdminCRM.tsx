@@ -102,10 +102,87 @@ export default function PageAdminCRM() {
               Qui a besoin d'attention, pourquoi, et quoi faire — actualisé aux 10 secondes.
             </p>
           </div>
-          <Button size="sm" variant="outline" onClick={reload} className="h-9">
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Actualiser
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant={operatorMode ? "default" : "outline"}
+              className="h-9"
+              onClick={() => setOperatorMode((v) => !v)}
+            >
+              <Target className="h-4 w-4 mr-2" /> Mode opérateur
+            </Button>
+            <Button size="sm" variant="outline" onClick={reload} className="h-9">
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Actualiser
+            </Button>
+          </div>
         </div>
+
+        {/* Tableau des revenus */}
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+          {[
+            { label: "Revenu aujourd'hui", value: `${((scoreboard?.revenue_today_cents ?? 0) / 100).toFixed(2)} $` },
+            { label: "Hier", value: `${((scoreboard?.revenue_yesterday_cents ?? 0) / 100).toFixed(2)} $` },
+            { label: "7 jours", value: `${((scoreboard?.revenue_7d_cents ?? 0) / 100).toFixed(2)} $` },
+            { label: "30 jours", value: `${((scoreboard?.revenue_30d_cents ?? 0) / 100).toFixed(2)} $` },
+            { label: "Activations aujourd'hui", value: scoreboard?.activations_today ?? 0 },
+            { label: "Activations totales", value: scoreboard?.activations_total ?? 0 },
+          ].map((c) => (
+            <Card key={c.label} className="border-primary/20">
+              <CardContent className="p-3">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground truncate">{c.label}</p>
+                <p className="text-lg font-bold tabular-nums mt-1">{c.value}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* File prioritaire du mode opérateur */}
+        {operatorMode && queue.length > 0 && (
+          <Card className="border-primary/40">
+            <CardContent className="p-3 space-y-2">
+              <p className="text-xs font-semibold flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5 text-primary" /> File prioritaire — 10 prochaines actions
+              </p>
+              <div className="space-y-1.5">
+                {queue.map((r, i) => (
+                  <div key={r.prospect_id} className="flex items-center gap-2 rounded-md border border-border/50 p-2">
+                    <span className="text-xs font-bold tabular-nums w-5 text-muted-foreground">{i + 1}</span>
+                    <button className="min-w-0 flex-1 text-left" onClick={() => setDrawerId(r.prospect_id)}>
+                      <p className="text-sm font-medium truncate">{r.business_name ?? "—"}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">
+                        {BLOCKED_REASON_LABELS[r.blocked_reason] ?? r.blocked_reason} · {r.activation_probability} % ·
+                        {" "}{expectedValue(r).toFixed(2)} $ attendus
+                      </p>
+                    </button>
+                    <Button
+                      size="sm"
+                      className="h-8 text-[11px] shrink-0"
+                      disabled={busy !== null}
+                      onClick={async () => {
+                        setBusy(r.prospect_id + r.next_best_action);
+                        try {
+                          const res = await runCrmAction(r.next_best_action, [r.prospect_id], { reason: "operator_mode" });
+                          if (res.failed > 0) toast.error("Action échouée");
+                          else if (res.skipped > 0) toast.info("Déjà effectuée aujourd'hui");
+                          else toast.success("Action exécutée");
+                          reload();
+                        } catch (e: any) {
+                          toast.error("Action échouée", { description: e?.message });
+                        } finally {
+                          setBusy(null);
+                        }
+                      }}
+                    >
+                      {busy === r.prospect_id + r.next_best_action && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+                      {NEXT_ACTION_LABELS[r.next_best_action] ?? r.next_best_action}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
 
         {/* KPI */}
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-9 gap-2">
