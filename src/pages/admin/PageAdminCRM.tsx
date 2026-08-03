@@ -339,11 +339,19 @@ function ProspectCard({
               {[row.city, row.category].filter(Boolean).join(" · ") || "—"}
             </p>
           </button>
-          <span className={`text-sm font-bold tabular-nums ${tone}`}>{row.priority_score}</span>
+          <div className="text-right shrink-0">
+            <span className={`text-sm font-bold tabular-nums ${tone}`}>{row.priority_score}</span>
+            <p className="text-[10px] text-muted-foreground tabular-nums">
+              {row.activation_probability} % · {expectedValue(row).toFixed(0)} $
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-1">
           <Badge variant="outline" className="text-[9px]">{row.current_stage}</Badge>
+          <Badge variant="secondary" className="text-[9px]">
+            {BLOCKED_REASON_LABELS[row.blocked_reason] ?? row.blocked_reason}
+          </Badge>
           {row.no_email && <Badge variant="outline" className="text-[9px]">sans courriel</Badge>}
           {row.phone_invalid && <Badge variant="outline" className="text-[9px]">tél. invalide</Badge>}
           {row.opted_out && <Badge variant="destructive" className="text-[9px]">désabonné</Badge>}
