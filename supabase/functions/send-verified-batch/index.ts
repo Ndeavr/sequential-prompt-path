@@ -265,7 +265,7 @@ Deno.serve(async (req) => {
       const shouldTrySms = smsEligibleTier && hasValidPhone && hasTwilio;
 
       // Build a single activation link both channels will share.
-      const { token, link, error: linkErr } = await ensureActivationLink(supabase, origin, p.id);
+      const { token, link, error: linkErr } = await ensureActivationLink(supabase, origin, p.id, campaignId);
       if (linkErr) {
         results.push({ id: p.id, status: "failed", error: linkErr, channel_used: null });
         continue;
