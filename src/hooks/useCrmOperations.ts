@@ -170,7 +170,7 @@ export function useCrmProspects(refreshMs = 10_000) {
 
   const load = useCallback(async () => {
     const { data } = await (supabase as any)
-      .from("v_crm_prospects")
+      .from("v_crm_next_action")
       .select("*")
       .order("priority_score", { ascending: false })
       .order("last_activity_at", { ascending: false })
