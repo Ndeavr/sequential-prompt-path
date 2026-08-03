@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
         }
 
         // Resolve or create an activation token/link when needed.
-        const needsLink = ["payment_email", "payment_sms", "resume_checkout", "new_checkout", "onboarding_email", "send_email"];
+        const needsLink = ["payment_email", "payment_sms", "second_sms", "resume_checkout", "new_checkout", "onboarding_email", "send_email"];
         let link = "";
         if (needsLink.includes(action)) {
           const { data: tok } = await sb
