@@ -41,12 +41,14 @@ const kpiCards = (k: ReturnType<typeof useCrmProspects>["kpis"]) => [
 
 export default function PageAdminCRM() {
   const { rows, loading, reload, stageCounts, kpis } = useCrmProspects(10_000);
+  const { data: scoreboard } = useRevenueScoreboard(15_000);
   const [stage, setStage] = useState<string>("all");
   const [filter, setFilter] = useState<SmartFilter>("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [drawerId, setDrawerId] = useState<string | null>(null);
+  const [operatorMode, setOperatorMode] = useState(false);
 
   const filtered = useMemo(() => {
     let out = applySmartFilter(rows, filter);
@@ -59,8 +61,19 @@ export default function PageAdminCRM() {
           .some((v) => String(v).toLowerCase().includes(q)),
       );
     }
+    if (operatorMode) {
+      out = out
+        .filter((r) => !r.paid_at && !r.opted_out && r.next_best_action !== "none")
+        .sort((a, b) => expectedValue(b) - expectedValue(a));
+    }
     return out;
-  }, [rows, filter, stage, search]);
+  }, [rows, filter, stage, search, operatorMode]);
+
+  const queue = useMemo(
+    () => (operatorMode ? filtered.slice(0, 10) : []),
+    [operatorMode, filtered],
+  );
+
 
   const bulk = async (action: string) => {
     if (selected.length === 0) return;
