@@ -1157,6 +1157,13 @@ export type Database = {
             foreignKeyName: "acquisition_dead_queue_alerts_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_prospect_funnel"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_dead_queue_alerts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "verified_contractor_prospects"
             referencedColumns: ["id"]
           },
@@ -1552,6 +1559,13 @@ export type Database = {
             foreignKeyName: "acquisition_manual_import_rows_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_prospect_funnel"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_manual_import_rows_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "verified_contractor_prospects"
             referencedColumns: ["id"]
           },
@@ -1669,6 +1683,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_pipeline_events_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_prospect_funnel"
             referencedColumns: ["prospect_id"]
           },
           {
@@ -1824,6 +1845,13 @@ export type Database = {
             foreignKeyName: "acquisition_queue_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_prospect_funnel"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_queue_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "verified_contractor_prospects"
             referencedColumns: ["id"]
           },
@@ -1911,6 +1939,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_repair_log_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_prospect_funnel"
             referencedColumns: ["prospect_id"]
           },
           {
@@ -28551,6 +28586,13 @@ export type Database = {
             columns: ["kept_prospect_id"]
             isOneToOne: false
             referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "contractor_dedupe_log_kept_prospect_id_fkey"
+            columns: ["kept_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_prospect_funnel"
             referencedColumns: ["prospect_id"]
           },
           {
@@ -55407,6 +55449,13 @@ export type Database = {
             foreignKeyName: "official_site_crawl_runs_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_prospect_funnel"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "official_site_crawl_runs_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "verified_contractor_prospects"
             referencedColumns: ["id"]
           },
@@ -55494,6 +55543,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "official_site_enrichment_evidence_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_prospect_funnel"
             referencedColumns: ["prospect_id"]
           },
           {
@@ -85616,24 +85672,30 @@ export type Database = {
       }
       verified_prospect_tokens: {
         Row: {
+          campaign_id: string | null
           click_count: number
           clicked_at: string | null
           created_at: string
           prospect_id: string
+          sms_log_id: string | null
           token: string
         }
         Insert: {
+          campaign_id?: string | null
           click_count?: number
           clicked_at?: string | null
           created_at?: string
           prospect_id: string
+          sms_log_id?: string | null
           token: string
         }
         Update: {
+          campaign_id?: string | null
           click_count?: number
           clicked_at?: string | null
           created_at?: string
           prospect_id?: string
+          sms_log_id?: string | null
           token?: string
         }
         Relationships: [
@@ -85642,6 +85704,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "verified_prospect_tokens_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_prospect_funnel"
             referencedColumns: ["prospect_id"]
           },
           {
@@ -88100,6 +88169,28 @@ export type Database = {
         }
         Relationships: []
       }
+      v_campaign_funnel: {
+        Row: {
+          campaign_id: string | null
+          campaign_name: string | null
+          checkout_opened: number | null
+          clicked: number | null
+          delivered: number | null
+          failed: number | null
+          first_sent_at: string | null
+          landing: number | null
+          last_activity_at: string | null
+          no_callback: number | null
+          otp_verified: number | null
+          paid: number | null
+          prospects: number | null
+          registered: number | null
+          revenue_cents: number | null
+          sent: number | null
+          undelivered: number | null
+        }
+        Relationships: []
+      }
       v_capacity_live: {
         Row: {
           active_pros: number | null
@@ -89149,6 +89240,47 @@ export type Database = {
           public_status?: string | null
           slug?: string | null
           year_built?: number | null
+        }
+        Relationships: []
+      }
+      v_prospect_funnel: {
+        Row: {
+          alex_started_at: string | null
+          business_name: string | null
+          campaign_id: string | null
+          category: string | null
+          checkout_at: string | null
+          city: string | null
+          click_count: number | null
+          clicked_at: string | null
+          current_stage: string | null
+          delivered_at: string | null
+          email: string | null
+          landing_at: string | null
+          last_activity_at: string | null
+          last_error: string | null
+          last_sent_at: string | null
+          last_sid: string | null
+          last_status: string | null
+          otp_requested_at: string | null
+          otp_verified_at: string | null
+          outreach_status: string | null
+          paid_at: string | null
+          phone_e164: string | null
+          phone_line_type: string | null
+          phone_validation_status: string | null
+          prospect_id: string | null
+          registered_at: string | null
+          revenue_cents: number | null
+          scraped_at: string | null
+          sent_at: string | null
+          sms_delivered: number | null
+          sms_eligibility_tier: string | null
+          sms_failed: number | null
+          sms_no_callback: number | null
+          sms_sent: number | null
+          sms_undelivered: number | null
+          validated_at: string | null
         }
         Relationships: []
       }

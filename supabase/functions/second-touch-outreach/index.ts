@@ -122,12 +122,20 @@ Deno.serve(async (req) => {
       let error: string | null = null;
 
       try {
+        const statusCallback =
+          `${Deno.env.get("SUPABASE_URL")}/functions/v1/engagement-webhook-twilio` +
+          `?prospect_id=${encodeURIComponent(String(p.id))}`;
         const res = await fetch(
           `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
           {
             method: "POST",
             headers: { Authorization: auth, "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({ To: String(p.phone_e164), From: from!, Body: message }),
+            body: new URLSearchParams({
+              To: String(p.phone_e164),
+              From: from!,
+              Body: message,
+              StatusCallback: statusCallback,
+            }),
           },
         );
         const payload = await res.json();
@@ -140,6 +148,7 @@ Deno.serve(async (req) => {
       } catch (e) {
         error = e instanceof Error ? e.message : String(e);
       }
+
 
       await supabase.from("acq_sms_logs").insert({
         prospect_id: p.id,

@@ -101,12 +101,16 @@ async function ensureActivationLink(
   supabase: ReturnType<typeof createClient>,
   origin: string,
   prospectId: string,
+  campaignId?: string | null,
 ): Promise<{ token: string; link: string; error?: string }> {
   const token = randToken();
-  const { error } = await supabase.from("verified_prospect_tokens").insert({ token, prospect_id: prospectId });
+  const { error } = await supabase
+    .from("verified_prospect_tokens")
+    .insert({ token, prospect_id: prospectId, campaign_id: campaignId ?? null });
   if (error) return { token, link: "", error: `token_create_failed: ${error.message}` };
   return { token, link: `${origin}/unpro/activate/${token}` };
 }
+
 
 async function sendEmailViaResend(
   url: string,
@@ -143,6 +147,10 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
+    const campaignId: string | null = typeof body.campaign_id === "string" &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.campaign_id)
+      ? body.campaign_id
+      : null;
     const prospectIds: string[] | null = Array.isArray(body.prospect_ids) && body.prospect_ids.length > 0
       ? body.prospect_ids.map(String)
       : null;
@@ -257,7 +265,7 @@ Deno.serve(async (req) => {
       const shouldTrySms = smsEligibleTier && hasValidPhone && hasTwilio;
 
       // Build a single activation link both channels will share.
-      const { token, link, error: linkErr } = await ensureActivationLink(supabase, origin, p.id);
+      const { token, link, error: linkErr } = await ensureActivationLink(supabase, origin, p.id, campaignId);
       if (linkErr) {
         results.push({ id: p.id, status: "failed", error: linkErr, channel_used: null });
         continue;
@@ -284,7 +292,14 @@ Deno.serve(async (req) => {
               "Content-Type": "application/x-www-form-urlencoded",
               Authorization: "Basic " + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`),
             },
-            body: new URLSearchParams({ To: p.phone_e164, From: TWILIO_FROM!, Body: message }),
+            body: new URLSearchParams({
+              To: p.phone_e164,
+              From: TWILIO_FROM!,
+              Body: message,
+              StatusCallback:
+                `${url}/functions/v1/engagement-webhook-twilio?prospect_id=${encodeURIComponent(p.id)}` +
+                (campaignId ? `&campaign_id=${encodeURIComponent(campaignId)}` : ""),
+            }),
           },
         );
         const twBody = await twResp.text();
@@ -348,6 +363,17 @@ Deno.serve(async (req) => {
           last_attempt_at: nowIso,
           last_action_at: nowIso,
         }).eq("id", p.id);
+        await supabase.from("acq_sms_logs").insert({
+          prospect_id: p.id,
+          recipient_phone: String(p.phone_e164),
+          body: SMS_TEMPLATE(p.business_name, link),
+          status: "sent",
+          provider_message_id: smsSid,
+          sent_at: nowIso,
+          campaign_id: campaignId,
+          relance_kind: "first_touch",
+          message_purpose: "commercial_outreach",
+        });
         await logPipelineEvent({
           prospect_id: p.id, business_name: p.business_name, city: p.city, category: p.category,
           source: p.source, stage: "contacted",

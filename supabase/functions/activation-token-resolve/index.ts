@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
 
     const { data: row, error } = await supabase
       .from("verified_prospect_tokens")
-      .select("token, prospect_id, created_at, clicked_at, click_count")
+      .select("token, prospect_id, created_at, clicked_at, click_count, campaign_id")
       .eq("token", token)
       .maybeSingle();
 
@@ -64,6 +64,32 @@ Deno.serve(async (req) => {
         .from("verified_contractor_prospects")
         .update({ outreach_clicked_at: now, last_action_at: now })
         .eq("id", prospect.id);
+
+      // Canonical funnel events: click + landing view (idempotent per token).
+      await supabase.rpc("record_engagement_event", {
+        _event_type: "clicked",
+        _channel: "sms",
+        _status: "clicked",
+        _provider: "unpro",
+        _tracking_id: token,
+        _prospect_id: prospect.id,
+        _destination_url: `/unpro/activate/${token}`,
+        _source_table: "verified_prospect_tokens",
+        _source_row_id: token,
+        _metadata: { campaign_id: row.campaign_id ?? null },
+        _idempotency_key: `click:${token}`,
+      });
+      await supabase.rpc("record_engagement_event", {
+        _event_type: "landing_viewed",
+        _channel: "web",
+        _status: "landing_viewed",
+        _provider: "unpro",
+        _tracking_id: token,
+        _prospect_id: prospect.id,
+        _destination_url: `/unpro/activate/${token}`,
+        _metadata: { campaign_id: row.campaign_id ?? null },
+        _idempotency_key: `landing:${token}`,
+      });
     } catch (e) {
       console.error("[activation-token-resolve] click_track_failed", String(e));
     }
@@ -71,6 +97,7 @@ Deno.serve(async (req) => {
     return json({
       ok: true,
       token,
+      campaign_id: row.campaign_id ?? null,
       first_click: !row.clicked_at,
       prospect: {
         id: prospect.id,
