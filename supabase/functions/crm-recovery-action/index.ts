@@ -150,7 +150,15 @@ Deno.serve(async (req) => {
 
         switch (action) {
           case "validate_phone":
-            result = await invokeFn("contact-verification-enqueue", { prospect_ids: [pid] });
+            result = await invokeFn("contact-verification-enqueue", {
+              business_name: p.business_name,
+              phone: p.phone_e164,
+              email: p.email,
+              category: p.category,
+              city: p.city,
+              source_lead_id: pid,
+              source_table: "verified_contractor_prospects",
+            });
             break;
 
           case "retry_sms":
