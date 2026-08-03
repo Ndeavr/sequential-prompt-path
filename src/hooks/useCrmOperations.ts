@@ -1,6 +1,6 @@
 /**
  * UNPRO — CRM operations hooks.
- * Source of truth: v_crm_prospects (superset of v_prospect_funnel). No mock data.
+ * Source of truth: v_crm_next_action (v_crm_prospects + scoring). No mock data.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,7 +48,42 @@ export type CrmProspect = {
   paid_today: boolean;
   activated_this_week: boolean;
   recoverable_revenue_cents: number;
+  /** Scoring layer (v_crm_next_action) */
+  activation_probability: number;
+  estimated_value_cents: number;
+  blocked_reason: string;
+  next_best_action: string;
 };
+
+export const BLOCKED_REASON_LABELS: Record<string, string> = {
+  aucun: "Aucun blocage",
+  desabonne: "Désabonné",
+  paiement_non_complete: "Paiement non complété",
+  inscription_sans_paiement: "Inscrit sans paiement",
+  clic_sans_inscription: "Clic sans inscription",
+  ligne_fixe: "Ligne fixe (SMS impossible)",
+  a2p_non_enregistre: "Routage A2P bloqué",
+  sms_non_livre: "SMS non livré",
+  livre_sans_clic: "Livré sans clic",
+  sms_sans_accuse: "SMS sans accusé",
+  aucun_canal: "Aucun canal joignable",
+  non_valide: "Non validé",
+  jamais_contacte: "Jamais contacté",
+};
+
+export const NEXT_ACTION_LABELS: Record<string, string> = {
+  none: "Aucune action",
+  second_sms: "Envoyer 2e SMS",
+  onboarding_email: "Courriel onboarding",
+  send_email: "Rappel courriel",
+  payment_email: "Courriel paiement",
+};
+
+/** Expected value in dollars = probabilité × valeur estimée. */
+export function expectedValue(r: CrmProspect): number {
+  return (r.activation_probability / 100) * (r.estimated_value_cents / 100);
+}
+
 
 export const CRM_STAGES: { key: string; label: string }[] = [
   { key: "scraped", label: "Scrapé" },
@@ -135,7 +170,7 @@ export function useCrmProspects(refreshMs = 10_000) {
 
   const load = useCallback(async () => {
     const { data } = await (supabase as any)
-      .from("v_crm_prospects")
+      .from("v_crm_next_action")
       .select("*")
       .order("priority_score", { ascending: false })
       .order("last_activity_at", { ascending: false })
@@ -274,4 +309,34 @@ export function actionsForStage(r: CrmProspect): { action: string; label: string
     { action: "retry_sms", label: "Envoyer SMS" },
     { action: "onboarding_email", label: "Courriel", disabled: !r.has_email },
   ];
+}
+
+export type RevenueScoreboard = {
+  revenue_today_cents: number;
+  revenue_yesterday_cents: number;
+  revenue_7d_cents: number;
+  revenue_30d_cents: number;
+  activations_today: number;
+  activations_total: number;
+};
+
+/** Live revenue scoreboard (v_revenue_scoreboard). */
+export function useRevenueScoreboard(refreshMs = 15_000) {
+  const [data, setData] = useState<RevenueScoreboard | null>(null);
+
+  const load = useCallback(async () => {
+    const { data: rows } = await (supabase as any)
+      .from("v_revenue_scoreboard")
+      .select("*")
+      .maybeSingle();
+    setData((rows ?? null) as RevenueScoreboard | null);
+  }, []);
+
+  useEffect(() => {
+    load();
+    const t = setInterval(load, refreshMs);
+    return () => clearInterval(t);
+  }, [load, refreshMs]);
+
+  return { data, reload: load };
 }

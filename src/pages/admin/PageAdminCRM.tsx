@@ -13,15 +13,19 @@ import { toast } from "sonner";
 import {
   CRM_STAGES,
   SMART_FILTERS,
+  BLOCKED_REASON_LABELS,
+  NEXT_ACTION_LABELS,
   applySmartFilter,
   actionsForStage,
+  expectedValue,
   runCrmAction,
   useCrmProspects,
+  useRevenueScoreboard,
   type CrmProspect,
   type SmartFilter,
 } from "@/hooks/useCrmOperations";
 import CrmProspectDrawer from "@/components/admin/crm/CrmProspectDrawer";
-import { RefreshCw, Search, Loader2, AlertTriangle } from "lucide-react";
+import { RefreshCw, Search, Loader2, AlertTriangle, Target, Zap } from "lucide-react";
 
 const kpiCards = (k: ReturnType<typeof useCrmProspects>["kpis"]) => [
   { label: "Revenu aujourd'hui", value: `${k.revenueToday.toFixed(2)} $` },
@@ -37,12 +41,14 @@ const kpiCards = (k: ReturnType<typeof useCrmProspects>["kpis"]) => [
 
 export default function PageAdminCRM() {
   const { rows, loading, reload, stageCounts, kpis } = useCrmProspects(10_000);
+  const { data: scoreboard } = useRevenueScoreboard(15_000);
   const [stage, setStage] = useState<string>("all");
   const [filter, setFilter] = useState<SmartFilter>("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [drawerId, setDrawerId] = useState<string | null>(null);
+  const [operatorMode, setOperatorMode] = useState(false);
 
   const filtered = useMemo(() => {
     let out = applySmartFilter(rows, filter);
@@ -55,8 +61,19 @@ export default function PageAdminCRM() {
           .some((v) => String(v).toLowerCase().includes(q)),
       );
     }
+    if (operatorMode) {
+      out = out
+        .filter((r) => !r.paid_at && !r.opted_out && r.next_best_action !== "none")
+        .sort((a, b) => expectedValue(b) - expectedValue(a));
+    }
     return out;
-  }, [rows, filter, stage, search]);
+  }, [rows, filter, stage, search, operatorMode]);
+
+  const queue = useMemo(
+    () => (operatorMode ? filtered.slice(0, 10) : []),
+    [operatorMode, filtered],
+  );
+
 
   const bulk = async (action: string) => {
     if (selected.length === 0) return;
@@ -85,10 +102,87 @@ export default function PageAdminCRM() {
               Qui a besoin d'attention, pourquoi, et quoi faire — actualisé aux 10 secondes.
             </p>
           </div>
-          <Button size="sm" variant="outline" onClick={reload} className="h-9">
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Actualiser
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant={operatorMode ? "default" : "outline"}
+              className="h-9"
+              onClick={() => setOperatorMode((v) => !v)}
+            >
+              <Target className="h-4 w-4 mr-2" /> Mode opérateur
+            </Button>
+            <Button size="sm" variant="outline" onClick={reload} className="h-9">
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Actualiser
+            </Button>
+          </div>
         </div>
+
+        {/* Tableau des revenus */}
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+          {[
+            { label: "Revenu aujourd'hui", value: `${((scoreboard?.revenue_today_cents ?? 0) / 100).toFixed(2)} $` },
+            { label: "Hier", value: `${((scoreboard?.revenue_yesterday_cents ?? 0) / 100).toFixed(2)} $` },
+            { label: "7 jours", value: `${((scoreboard?.revenue_7d_cents ?? 0) / 100).toFixed(2)} $` },
+            { label: "30 jours", value: `${((scoreboard?.revenue_30d_cents ?? 0) / 100).toFixed(2)} $` },
+            { label: "Activations aujourd'hui", value: scoreboard?.activations_today ?? 0 },
+            { label: "Activations totales", value: scoreboard?.activations_total ?? 0 },
+          ].map((c) => (
+            <Card key={c.label} className="border-primary/20">
+              <CardContent className="p-3">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground truncate">{c.label}</p>
+                <p className="text-lg font-bold tabular-nums mt-1">{c.value}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* File prioritaire du mode opérateur */}
+        {operatorMode && queue.length > 0 && (
+          <Card className="border-primary/40">
+            <CardContent className="p-3 space-y-2">
+              <p className="text-xs font-semibold flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5 text-primary" /> File prioritaire — 10 prochaines actions
+              </p>
+              <div className="space-y-1.5">
+                {queue.map((r, i) => (
+                  <div key={r.prospect_id} className="flex items-center gap-2 rounded-md border border-border/50 p-2">
+                    <span className="text-xs font-bold tabular-nums w-5 text-muted-foreground">{i + 1}</span>
+                    <button className="min-w-0 flex-1 text-left" onClick={() => setDrawerId(r.prospect_id)}>
+                      <p className="text-sm font-medium truncate">{r.business_name ?? "—"}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">
+                        {BLOCKED_REASON_LABELS[r.blocked_reason] ?? r.blocked_reason} · {r.activation_probability} % ·
+                        {" "}{expectedValue(r).toFixed(2)} $ attendus
+                      </p>
+                    </button>
+                    <Button
+                      size="sm"
+                      className="h-8 text-[11px] shrink-0"
+                      disabled={busy !== null}
+                      onClick={async () => {
+                        setBusy(r.prospect_id + r.next_best_action);
+                        try {
+                          const res = await runCrmAction(r.next_best_action, [r.prospect_id], { reason: "operator_mode" });
+                          if (res.failed > 0) toast.error("Action échouée");
+                          else if (res.skipped > 0) toast.info("Déjà effectuée aujourd'hui");
+                          else toast.success("Action exécutée");
+                          reload();
+                        } catch (e: any) {
+                          toast.error("Action échouée", { description: e?.message });
+                        } finally {
+                          setBusy(null);
+                        }
+                      }}
+                    >
+                      {busy === r.prospect_id + r.next_best_action && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+                      {NEXT_ACTION_LABELS[r.next_best_action] ?? r.next_best_action}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
 
         {/* KPI */}
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-9 gap-2">
@@ -245,11 +339,19 @@ function ProspectCard({
               {[row.city, row.category].filter(Boolean).join(" · ") || "—"}
             </p>
           </button>
-          <span className={`text-sm font-bold tabular-nums ${tone}`}>{row.priority_score}</span>
+          <div className="text-right shrink-0">
+            <span className={`text-sm font-bold tabular-nums ${tone}`}>{row.priority_score}</span>
+            <p className="text-[10px] text-muted-foreground tabular-nums">
+              {row.activation_probability} % · {expectedValue(row).toFixed(0)} $
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-1">
           <Badge variant="outline" className="text-[9px]">{row.current_stage}</Badge>
+          <Badge variant="secondary" className="text-[9px]">
+            {BLOCKED_REASON_LABELS[row.blocked_reason] ?? row.blocked_reason}
+          </Badge>
           {row.no_email && <Badge variant="outline" className="text-[9px]">sans courriel</Badge>}
           {row.phone_invalid && <Badge variant="outline" className="text-[9px]">tél. invalide</Badge>}
           {row.opted_out && <Badge variant="destructive" className="text-[9px]">désabonné</Badge>}

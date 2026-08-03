@@ -46,6 +46,17 @@ Deno.serve(async (req) => {
     const now = Date.now();
     const age = (ts: string | null) => (ts ? now - new Date(ts).getTime() : Infinity);
 
+    // Cooldown: never repeat the same automated action on the same prospect
+    // within 7 days (crm-recovery-action only dedupes within the same day).
+    const cooldownSince = new Date(now - H(24 * 7)).toISOString();
+    const { data: recent } = await sb
+      .from("crm_action_log")
+      .select("prospect_id, action")
+      .gte("created_at", cooldownSince);
+    const recentActions = new Set(
+      (recent ?? []).map((r: Row) => `${r.prospect_id}:${r.action}`),
+    );
+
     const rules: Array<{ name: string; action: string; match: (r: Row) => boolean }> = [
       {
         name: "delivered_48h_no_click",
@@ -68,6 +79,15 @@ Deno.serve(async (req) => {
         match: (r) => !!r.registered_at && !r.paid_at && r.has_email && age(r.registered_at) > H(24),
       },
       {
+        name: "undelivered_landline_email",
+        action: "onboarding_email",
+        match: (r) =>
+          r.sms_undelivered > 0 &&
+          r.has_email &&
+          typeof r.last_error === "string" &&
+          /30006|30003|30005/.test(r.last_error),
+      },
+      {
         name: "failed_sms_with_email",
         action: "onboarding_email",
         match: (r) => (r.sms_failed > 0 || r.sms_undelivered > 0) && r.has_email,
@@ -79,7 +99,12 @@ Deno.serve(async (req) => {
 
     for (const rule of rules) {
       const targets = rows
-        .filter((r) => !claimed.has(r.prospect_id) && rule.match(r))
+        .filter(
+          (r) =>
+            !claimed.has(r.prospect_id) &&
+            !recentActions.has(`${r.prospect_id}:${rule.action}`) &&
+            rule.match(r),
+        )
         .slice(0, perRule);
       targets.forEach((r) => claimed.add(r.prospect_id));
 
