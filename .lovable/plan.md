@@ -1,61 +1,75 @@
-## Situation (measured, not assumed)
+# Close the loop: Twilio → first $1, measured end to end
 
-| Signal | Reality |
+## Measured current state
+
+| Signal | Reality (verified now) |
 |---|---|
-| SMS sent (Jul 25–31) | 234, all with Twilio SIDs |
-| Deliveries recorded | 0 |
-| Human clicks | 1 |
-| $1 payments | 0 |
-| Sending controls | OFF since Jul 30 |
-| Fresh sendable prospects | 6 |
+| Prospects with a Twilio SID | 234 |
+| `acq_sms_logs` rows / with final status | 284 / 257 |
+| Delivered (reconciled) | 146 |
+| Tokens clicked | 4 (41 raw click events) |
+| Engagement events | 309 |
+| Activation payments recorded | 0 |
 
-The pipeline **sends**. What is unproven is everything after the send: delivery, click, checkout, payment. Zero deliveries recorded across 234 messages is the single most dangerous unknown — it could mean carrier filtering (nothing ever arrived) or just a missing status webhook. That question gets answered first, because every downstream fix depends on the answer.
+Confirmed by reading the code:
 
-## Step 1 — Delivery truth (no new sends)
+- `_shared/twilioSend.ts` attaches `StatusCallback` → `twilio-status`, which writes only to `sms_messages`.
+- The two functions that actually send the outreach batches — `send-verified-batch` and `second-touch-outreach` — build their Twilio form **without** `StatusCallback`. That is why delivery only ever appears through the manual `twilio-delivery-reconcile` sweep.
+- `engagement-webhook-twilio` already updates `acq_sms_logs` by `provider_message_id` and is the correct canonical status sink.
+- The `idempotency_key` unique index on `pipeline_engagement_events` now exists, so `record_engagement_event` no longer blocks SMS logging.
+- Six overlapping Twilio status handlers exist (`twilio-status`, `-webhook`, `-v2`, `-sms-status`, `-status-events`, `engagement-webhook-twilio`). Nothing new gets created; one is designated canonical and the senders point at it.
 
-Pull real status for the 234 existing SIDs directly from Twilio and write it back.
+## What gets built
 
-- New edge function `twilio-delivery-reconcile`: batch-fetch message status for every `outreach_twilio_sid`, persist `delivered / undelivered / failed` + error code into `verified_contractor_prospects.outreach_delivered_at` / `outreach_failure_reason`, and mirror rows into `acq_sms_logs`.
-- Register the Twilio status-callback webhook so future sends self-reconcile.
+### 1. Delivery status (canonical callback)
 
-**Gate:** if delivery rate is near zero with error codes 30032/30007/60601, the problem is carrier registration, not copy — the run pivots to email-first (Step 4) instead of burning more SMS.
+- Designate `engagement-webhook-twilio` as the single status sink. Extend it to persist `MessageStatus`, `ErrorCode`, `ErrorMessage`, timestamps to `acq_sms_logs`, mirror `outreach_delivered_at` / `outreach_failure_reason` on `verified_contractor_prospects`, and emit a `pipeline_engagement_events` row (idempotency key = `sid:status`).
+- Attach `StatusCallback` (with `campaign_id`, `prospect_id`, `message_id` as query params) in `send-verified-batch` and `second-touch-outreach`.
+- Keep `twilio-delivery-reconcile` as the backfill/repair path only.
 
-## Step 2 — Prove the money path with a real card
+### 2. Click tracking
 
-Before scaling outreach, walk one token end-to-end:
+- Every outbound link carries campaign, prospect and message identity. `verified_prospect_tokens` gains `campaign_id`, `sms_log_id`; the resolver (`activation-token-resolve`) stamps them onto the click event.
+- Funnel events written to the existing `pipeline_engagement_events` (no new table): `landing_viewed`, `registration_started`, `otp_requested`, `otp_verified`, `checkout_opened`, `payment_succeeded` — emitted from the pages/functions that already run those steps.
 
-`/unpro/activate/:token` → `activation-token-resolve` → `create-activation-checkout` → Stripe → webhook → payment row.
+### 3. One funnel view
 
-- Confirm the Stripe webhook actually writes to `contractor_recruitment_payments` / `unpro_payment_activation_audit` (both are currently empty — this path has never completed in production).
-- Run one live $1 charge on a real card, then refund it. This converts "first dollar" from a hope into a verified mechanism.
+A single SQL view `v_campaign_funnel` joins campaign → sms log → delivery → click → landing → registration → OTP → Stripe → activation, per campaign and per prospect. All dashboards read from it; no parallel counting logic.
 
-## Step 3 — Re-arm sending with safe caps
+### 4. Admin analytics (extend, don't redesign)
 
-Flip `recruitment_controls`: `global_enabled=true`, `autonomous_enqueue_enabled=true`, keep `max_daily_global=25`, cooldown intact. Add an explicit admin kill-switch read on every send.
+`/admin/launch-control` gains a campaign table fed by `v_campaign_funnel`: Sent, Delivered, Delivery %, Undelivered, Failed, Clicked, CTR, Registrations, OTP verified, Stripe opened, Paid, Conversion %, Revenue, cost per signup / per activation, remaining eligible prospects. Auto-refresh on the existing 10 s interval.
 
-## Step 4 — Second touch on the 234 (the fastest revenue)
+### 5. Individual timeline
 
-These contractors are already scraped, verified and phone-validated. They cost nothing to reach again.
+`contractor-revenue-timeline` is extended to return the full per-prospect chain (scraped → validated → lookup → sent → delivered → clicked → landing → registered → OTP → paid → activated → Alex started → last activity) and rendered as a timeline in the existing prospect drawer.
 
-- **Delivered but unclicked** → one short second-touch SMS with a rewritten one-line hook and a clean `unpro.ca/r/:token` link.
-- **Undelivered / no email-less** → Resend email fallback with the same activation link (`RESEND_API_KEY` is live).
-- Every touch writes a `click_events`-linked tracking token so attribution is unambiguous.
+### 6. Follow-up automation
 
-## Step 5 — Refill the pool
+Rules added to the existing `daily-outreach-orchestrator` / `acquisition-followup-tick`, each guarded by a unique `idempotency_key` so a reminder can never fire twice:
+- delivered + no click after 48 h → second SMS (reuses `second-touch-outreach`)
+- clicked + no registration after 24 h → reminder
+- registered + no payment after 24 h → Alex reminder
+- paid → onboarding + welcome email (Resend) + activation completed
 
-Run the Google Places scraper (`GOOGLE_PLACES_API_KEY` is present) for 2 city × category cells with the strongest prior response, enrich to `verified` + `sms_eligible`, and feed the 25/day queue.
+### 7. Daily health report
 
-## Step 6 — Live reconciliation
+Extend `first-dollar-daily-report` (already scheduled) to grade Green / Warning / Critical across scraper, enrichment, Twilio auth, status callbacks, tracking, Resend, Stripe, edge functions, queues, campaigns, prospects waiting, failures, revenue yesterday, new activations — each with an actionable diagnostic string.
 
-Extend `/admin/launch-control` with a single truth strip: **Sent → Delivered → Clicked → Checkout opened → Paid**, sourced from the reconciled tables, refreshing every 10 s. Stop the run the moment the first payment lands and report the contractor, SID, and Stripe charge ID.
+### 8. Exception center
+
+New admin route `/admin/operations-health` grouping live exceptions: failed SMS, undelivered, no callback (SID with no terminal status), bad phone, no click, no registration, payment abandoned, webhook failures. Each row shows reason, contractor, recommended fix, and a retry button wired to the existing repair functions.
 
 ## Technical notes
 
-- New: `supabase/functions/twilio-delivery-reconcile/index.ts`, Twilio status-callback handler.
-- Modified: `send-verified-batch` (attach status callback URL), Stripe webhook handler (persist activation payments), `PageAdminLaunchControl.tsx` (reconciliation strip).
-- No changes to SEO, sitemap, AI corpus, or content systems.
-- No new SMS is sent until Step 1 returns delivery truth and Step 2 proves the payment path.
+- New: `v_campaign_funnel` view, `PageAdminOperationsHealth.tsx`, columns `campaign_id`/`sms_log_id` on `verified_prospect_tokens`, indexes on `campaign_id`, `contractor_id`, `provider_message_id`, `created_at`.
+- Modified: `engagement-webhook-twilio`, `send-verified-batch`, `second-touch-outreach`, `activation-token-resolve`, `contractor-revenue-timeline`, `first-dollar-daily-report`, `daily-outreach-orchestrator`, `PageAdminLaunchControl.tsx`.
+- No new SMS/campaign/event tables. No changes to SEO, sitemap, AI corpus or content systems.
+
+## Verification
+
+One real 25-message campaign, then confirm in order: Twilio accepts → status callback received and stored → click tracked with campaign identity → landing/registration/OTP events present → Stripe checkout opened and paid event recorded → dashboard and timeline both reflect it. Any step that fails is fixed before the run is called complete.
 
 ## Definition of done
 
-A real contractor, reached by this pipeline today, has a Stripe charge of $1.00 recorded in the database and visible on `/admin/launch-control` — with the full Sent → Delivered → Clicked → Paid chain reconciled for that one prospect.
+The dashboard answers, from live data: sent, delivered, clicked, registered, activated, revenue, and the exact stage where each lost prospect exited.
