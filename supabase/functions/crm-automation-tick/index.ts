@@ -46,6 +46,17 @@ Deno.serve(async (req) => {
     const now = Date.now();
     const age = (ts: string | null) => (ts ? now - new Date(ts).getTime() : Infinity);
 
+    // Cooldown: never repeat the same automated action on the same prospect
+    // within 7 days (crm-recovery-action only dedupes within the same day).
+    const cooldownSince = new Date(now - H(24 * 7)).toISOString();
+    const { data: recent } = await sb
+      .from("crm_action_log")
+      .select("prospect_id, action")
+      .gte("created_at", cooldownSince);
+    const recentActions = new Set(
+      (recent ?? []).map((r: Row) => `${r.prospect_id}:${r.action}`),
+    );
+
     const rules: Array<{ name: string; action: string; match: (r: Row) => boolean }> = [
       {
         name: "delivered_48h_no_click",
