@@ -292,7 +292,14 @@ Deno.serve(async (req) => {
               "Content-Type": "application/x-www-form-urlencoded",
               Authorization: "Basic " + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`),
             },
-            body: new URLSearchParams({ To: p.phone_e164, From: TWILIO_FROM!, Body: message }),
+            body: new URLSearchParams({
+              To: p.phone_e164,
+              From: TWILIO_FROM!,
+              Body: message,
+              StatusCallback:
+                `${url}/functions/v1/engagement-webhook-twilio?prospect_id=${encodeURIComponent(p.id)}` +
+                (campaignId ? `&campaign_id=${encodeURIComponent(campaignId)}` : ""),
+            }),
           },
         );
         const twBody = await twResp.text();
