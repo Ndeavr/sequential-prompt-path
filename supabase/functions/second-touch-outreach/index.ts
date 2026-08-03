@@ -63,12 +63,16 @@ Deno.serve(async (req) => {
     }
 
     // Candidates: Twilio-confirmed delivered, never clicked, not yet second-touched.
-    const { data: candidates, error: candErr } = await supabase
+    // When prospect_ids is provided (CRM recovery action), target those exactly.
+    let candQuery = supabase
       .from("verified_contractor_prospects")
       .select("id, business_name, city, phone_e164, outreach_status")
-      .eq("outreach_status", "delivered")
       .not("phone_e164", "is", null)
       .limit(200);
+    candQuery = targetIds
+      ? candQuery.in("id", targetIds)
+      : candQuery.eq("outreach_status", "delivered");
+    const { data: candidates, error: candErr } = await candQuery;
 
     if (candErr) return json({ error: "read_failed", details: candErr.message }, 500);
 
