@@ -13,15 +13,19 @@ import { toast } from "sonner";
 import {
   CRM_STAGES,
   SMART_FILTERS,
+  BLOCKED_REASON_LABELS,
+  NEXT_ACTION_LABELS,
   applySmartFilter,
   actionsForStage,
+  expectedValue,
   runCrmAction,
   useCrmProspects,
+  useRevenueScoreboard,
   type CrmProspect,
   type SmartFilter,
 } from "@/hooks/useCrmOperations";
 import CrmProspectDrawer from "@/components/admin/crm/CrmProspectDrawer";
-import { RefreshCw, Search, Loader2, AlertTriangle } from "lucide-react";
+import { RefreshCw, Search, Loader2, AlertTriangle, Target, Zap } from "lucide-react";
 
 const kpiCards = (k: ReturnType<typeof useCrmProspects>["kpis"]) => [
   { label: "Revenu aujourd'hui", value: `${k.revenueToday.toFixed(2)} $` },
