@@ -35,10 +35,14 @@ Deno.serve(async (req) => {
   try {
     let dryRun = true;
     let limit = 10;
+    let targetIds: string[] | null = null;
     try {
       const body = await req.json();
       if (body?.dry_run === false) dryRun = false;
       if (typeof body?.limit === "number") limit = Math.min(Math.max(body.limit, 1), 25);
+      if (Array.isArray(body?.prospect_ids) && body.prospect_ids.length > 0) {
+        targetIds = body.prospect_ids.map(String).slice(0, 25);
+      }
     } catch { /* defaults */ }
 
     const supabase = createClient(
