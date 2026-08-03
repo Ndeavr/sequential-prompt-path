@@ -147,6 +147,10 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
+    const campaignId: string | null = typeof body.campaign_id === "string" &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.campaign_id)
+      ? body.campaign_id
+      : null;
     const prospectIds: string[] | null = Array.isArray(body.prospect_ids) && body.prospect_ids.length > 0
       ? body.prospect_ids.map(String)
       : null;
