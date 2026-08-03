@@ -173,12 +173,29 @@ Deno.serve(async (req) => {
     }
 
 
+    // Canonical funnel event — checkout opened.
+    try {
+      await supabase.rpc("record_engagement_event", {
+        _event_type: "checkout_opened",
+        _channel: "web",
+        _status: "checkout_opened",
+        _provider: "stripe",
+        _prospect_id: prospectId || null,
+        _destination_url: session.url ?? null,
+        _source_table: "stripe_checkout_sessions",
+        _source_row_id: session.id,
+        _metadata: { campaign_id: outreachCampaignId ?? null, slug: effectiveSlug },
+        _idempotency_key: `checkout_opened:${session.id}`,
+      });
+    } catch (_) { /* ignore */ }
+
     // Best-effort event log (table may not exist in all envs).
     try {
       await supabase.from("prospect_page_events").insert({
         slug: effectiveSlug, event_type: "checkout_started", metadata: { session_id: session.id, landing_token: landing_token ?? null },
       });
     } catch (_) { /* ignore */ }
+
 
     return json({ url: session.url, session_id: session.id });
   } catch (e: any) {
