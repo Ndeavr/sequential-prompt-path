@@ -363,6 +363,17 @@ Deno.serve(async (req) => {
           last_attempt_at: nowIso,
           last_action_at: nowIso,
         }).eq("id", p.id);
+        await supabase.from("acq_sms_logs").insert({
+          prospect_id: p.id,
+          recipient_phone: String(p.phone_e164),
+          body: SMS_TEMPLATE(p.business_name, link),
+          status: "sent",
+          provider_message_id: smsSid,
+          sent_at: nowIso,
+          campaign_id: campaignId,
+          relance_kind: "first_touch",
+          message_purpose: "commercial_outreach",
+        });
         await logPipelineEvent({
           prospect_id: p.id, business_name: p.business_name, city: p.city, category: p.category,
           source: p.source, stage: "contacted",
