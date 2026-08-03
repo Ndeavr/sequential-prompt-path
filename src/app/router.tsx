@@ -254,6 +254,7 @@ const PageAdminRecoverySprint = lazyWithRetry(() => import("@/pages/admin/PageAd
 const PageAdminNormalization = lazyWithRetry(() => import("@/pages/admin/PageAdminNormalization"));
 const PageAdminOps = lazyWithRetry(() => import("@/pages/admin/PageAdminOps"));
 const PageAdminOperationsHealth = lazyWithRetry(() => import("@/pages/admin/PageAdminOperationsHealth"));
+const PageAdminCRM = lazyWithRetry(() => import("@/pages/admin/PageAdminCRM"));
 const PageAdminSiteHealth = lazyWithRetry(() => import("@/pages/admin/PageAdminSiteHealth"));
 const AdminLaunchWarRoom = lazyWithRetry(() => import("@/pages/admin/AdminLaunchWarRoom"));
 const PageAdminLaunchControl = lazyWithRetry(() => import("@/pages/admin/PageAdminLaunchControl"));
@@ -1627,6 +1628,8 @@ export const AppRouter = () => (
         <Route path="/admin/recovery-sprint" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminRecoverySprint /></Suspense></ProtectedRoute>} />
         <Route path="/admin/normalization" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminNormalization /></Suspense></ProtectedRoute>} />
         <Route path="/admin/operations-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOperationsHealth /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/crm" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminCRM /></Suspense></ProtectedRoute>} />
+
         <Route path="/admin/ops" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOps /></Suspense></ProtectedRoute>} />
         <Route path="/admin/site-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminSiteHealth /></Suspense></ProtectedRoute>} />
 

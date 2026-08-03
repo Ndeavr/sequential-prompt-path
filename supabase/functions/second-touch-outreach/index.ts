@@ -35,10 +35,14 @@ Deno.serve(async (req) => {
   try {
     let dryRun = true;
     let limit = 10;
+    let targetIds: string[] | null = null;
     try {
       const body = await req.json();
       if (body?.dry_run === false) dryRun = false;
       if (typeof body?.limit === "number") limit = Math.min(Math.max(body.limit, 1), 25);
+      if (Array.isArray(body?.prospect_ids) && body.prospect_ids.length > 0) {
+        targetIds = body.prospect_ids.map(String).slice(0, 25);
+      }
     } catch { /* defaults */ }
 
     const supabase = createClient(
@@ -59,12 +63,16 @@ Deno.serve(async (req) => {
     }
 
     // Candidates: Twilio-confirmed delivered, never clicked, not yet second-touched.
-    const { data: candidates, error: candErr } = await supabase
+    // When prospect_ids is provided (CRM recovery action), target those exactly.
+    let candQuery = supabase
       .from("verified_contractor_prospects")
       .select("id, business_name, city, phone_e164, outreach_status")
-      .eq("outreach_status", "delivered")
       .not("phone_e164", "is", null)
       .limit(200);
+    candQuery = targetIds
+      ? candQuery.in("id", targetIds)
+      : candQuery.eq("outreach_status", "delivered");
+    const { data: candidates, error: candErr } = await candQuery;
 
     if (candErr) return json({ error: "read_failed", details: candErr.message }, 500);
 
