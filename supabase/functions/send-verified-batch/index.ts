@@ -101,12 +101,16 @@ async function ensureActivationLink(
   supabase: ReturnType<typeof createClient>,
   origin: string,
   prospectId: string,
+  campaignId?: string | null,
 ): Promise<{ token: string; link: string; error?: string }> {
   const token = randToken();
-  const { error } = await supabase.from("verified_prospect_tokens").insert({ token, prospect_id: prospectId });
+  const { error } = await supabase
+    .from("verified_prospect_tokens")
+    .insert({ token, prospect_id: prospectId, campaign_id: campaignId ?? null });
   if (error) return { token, link: "", error: `token_create_failed: ${error.message}` };
   return { token, link: `${origin}/unpro/activate/${token}` };
 }
+
 
 async function sendEmailViaResend(
   url: string,
