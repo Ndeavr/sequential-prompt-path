@@ -48,7 +48,42 @@ export type CrmProspect = {
   paid_today: boolean;
   activated_this_week: boolean;
   recoverable_revenue_cents: number;
+  /** Scoring layer (v_crm_next_action) */
+  activation_probability: number;
+  estimated_value_cents: number;
+  blocked_reason: string;
+  next_best_action: string;
 };
+
+export const BLOCKED_REASON_LABELS: Record<string, string> = {
+  aucun: "Aucun blocage",
+  desabonne: "Désabonné",
+  paiement_non_complete: "Paiement non complété",
+  inscription_sans_paiement: "Inscrit sans paiement",
+  clic_sans_inscription: "Clic sans inscription",
+  ligne_fixe: "Ligne fixe (SMS impossible)",
+  a2p_non_enregistre: "Routage A2P bloqué",
+  sms_non_livre: "SMS non livré",
+  livre_sans_clic: "Livré sans clic",
+  sms_sans_accuse: "SMS sans accusé",
+  aucun_canal: "Aucun canal joignable",
+  non_valide: "Non validé",
+  jamais_contacte: "Jamais contacté",
+};
+
+export const NEXT_ACTION_LABELS: Record<string, string> = {
+  none: "Aucune action",
+  second_sms: "Envoyer 2e SMS",
+  onboarding_email: "Courriel onboarding",
+  send_email: "Rappel courriel",
+  payment_email: "Courriel paiement",
+};
+
+/** Expected value in dollars = probabilité × valeur estimée. */
+export function expectedValue(r: CrmProspect): number {
+  return (r.activation_probability / 100) * (r.estimated_value_cents / 100);
+}
+
 
 export const CRM_STAGES: { key: string; label: string }[] = [
   { key: "scraped", label: "Scrapé" },
