@@ -49,12 +49,49 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Attribution passed through the StatusCallback URL query string.
+    const url = new URL(req.url);
+    const prospectIdParam = url.searchParams.get("prospect_id");
+    const campaignIdParam = url.searchParams.get("campaign_id");
+    const isUuid = (v: string | null) =>
+      !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+    const prospectId = isUuid(prospectIdParam) ? prospectIdParam : null;
+    const campaignId = isUuid(campaignIdParam) ? campaignIdParam : null;
+
+    const nowIso = new Date().toISOString();
+
     // Update the underlying SMS log (idempotent — trigger dedupes engagement)
     const patch: Record<string, unknown> = { status: mapped };
-    if (mapped === "sent") patch.sent_at = new Date().toISOString();
+    if (mapped === "sent") patch.sent_at = nowIso;
     if (errorMessage || errorCode) patch.error = errorMessage ?? `TWILIO_${errorCode}`;
+    if (campaignId) patch.campaign_id = campaignId;
 
-    await supabase.from("acq_sms_logs").update(patch).eq("provider_message_id", sid);
+    const { data: logRows } = await supabase
+      .from("acq_sms_logs")
+      .update(patch)
+      .eq("provider_message_id", sid)
+      .select("id, prospect_id");
+
+    const resolvedProspectId =
+      (logRows?.[0]?.prospect_id as string | undefined) ?? prospectId ?? null;
+
+    // Mirror terminal delivery states onto the prospect so the funnel is truthful.
+    if (resolvedProspectId && ["delivered", "undelivered", "failed"].includes(mapped)) {
+      const prospectPatch: Record<string, unknown> = {
+        outreach_status: mapped,
+        last_action_at: nowIso,
+      };
+      if (mapped === "delivered") prospectPatch.outreach_delivered_at = nowIso;
+      if (mapped !== "delivered") {
+        prospectPatch.outreach_failure_reason = errorCode
+          ? `TWILIO_${errorCode}`
+          : (errorMessage ?? mapped);
+      }
+      await supabase
+        .from("verified_contractor_prospects")
+        .update(prospectPatch)
+        .eq("id", resolvedProspectId);
+    }
 
     // Belt-and-suspenders: also record engagement directly (idempotency key handles dupes)
     await supabase.rpc("record_engagement_event", {
@@ -63,10 +100,14 @@ Deno.serve(async (req) => {
       _status: mapped,
       _provider: "twilio",
       _provider_message_id: sid,
+      _prospect_id: resolvedProspectId,
+      _source_table: "acq_sms_logs",
+      _source_row_id: (logRows?.[0]?.id as string | undefined) ?? null,
       _error_code: errorCode ? `TWILIO_${errorCode}` : null,
       _error_message: errorMessage,
-      _metadata: params,
+      _metadata: { ...params, campaign_id: campaignId },
     });
+
 
     return new Response(JSON.stringify({ ok: true, sid, status: mapped }), {
       headers: { ...cors, "Content-Type": "application/json" },
