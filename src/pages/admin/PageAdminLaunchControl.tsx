@@ -9,6 +9,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFirstDollarTracker } from "@/hooks/useAcquisitionFunnel";
+import { useCampaignFunnel } from "@/hooks/useCampaignFunnel";
+import CampaignFunnelTable from "@/components/admin/launch/CampaignFunnelTable";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -97,6 +99,7 @@ export default function PageAdminLaunchControl() {
 
   const paidToday = today?.payments_today ?? 0;
   const activatedToday = today?.activations_today ?? 0;
+  const { rows: campaigns, loading: campaignsLoading } = useCampaignFunnel();
   const goal = 2;
   const remaining = Math.max(0, goal - paidToday);
 
@@ -158,6 +161,14 @@ export default function PageAdminLaunchControl() {
         </div>
       </div>
 
+      {/* Campaign funnel — Sent → Delivered → Clicked → Registered → Checkout → Paid */}
+      <div>
+        <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+          Par campagne · SMS → livraison → clic → inscription → checkout → payé
+        </h2>
+        <CampaignFunnelTable rows={campaigns} loading={campaignsLoading} />
+      </div>
+
       {/* Active run */}
       <Card>
         <CardContent className="p-4 space-y-3">
@@ -214,6 +225,11 @@ export default function PageAdminLaunchControl() {
         <Button asChild size="lg" className="h-12">
           <Link to="/admin/acquisition-pipeline">
             <Rocket className="h-4 w-4 mr-2" /> Lancer une campagne
+          </Link>
+        </Button>
+        <Button asChild size="lg" variant="outline" className="h-12">
+          <Link to="/admin/operations-health">
+            <AlertCircle className="h-4 w-4 mr-2" /> Santé des opérations
           </Link>
         </Button>
         <Button asChild size="lg" variant="outline" className="h-12">
