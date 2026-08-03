@@ -373,6 +373,21 @@ Deno.serve(async (req) => {
                 slug: session.metadata?.prospect_slug ?? null,
               },
             });
+            await supabase.rpc("record_engagement_event", {
+              _event_type: "payment_succeeded",
+              _channel: "web",
+              _status: "paid",
+              _provider: "stripe",
+              _prospect_id: vProspectId,
+              _source_table: "unpro_payment_activation_audit",
+              _source_row_id: session.id,
+              _metadata: {
+                amount_cents: session.amount_total ?? null,
+                campaign_id: session.metadata?.campaign_id ?? null,
+                activation_token: activationToken,
+              },
+              _idempotency_key: `payment_succeeded:${session.id}`,
+            });
             console.log("[stripe-webhook] $1 activation recorded", {
               prospect_id: vProspectId,
               session: session.id,
