@@ -1157,6 +1157,13 @@ export type Database = {
             foreignKeyName: "acquisition_dead_queue_alerts_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_dead_queue_alerts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_prospect_funnel"
             referencedColumns: ["prospect_id"]
           },
@@ -1559,6 +1566,13 @@ export type Database = {
             foreignKeyName: "acquisition_manual_import_rows_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_manual_import_rows_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_prospect_funnel"
             referencedColumns: ["prospect_id"]
           },
@@ -1683,6 +1697,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_pipeline_events_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_crm_prospects"
             referencedColumns: ["prospect_id"]
           },
           {
@@ -1845,6 +1866,13 @@ export type Database = {
             foreignKeyName: "acquisition_queue_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_queue_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_prospect_funnel"
             referencedColumns: ["prospect_id"]
           },
@@ -1939,6 +1967,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_repair_log_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_crm_prospects"
             referencedColumns: ["prospect_id"]
           },
           {
@@ -28592,6 +28627,13 @@ export type Database = {
             foreignKeyName: "contractor_dedupe_log_kept_prospect_id_fkey"
             columns: ["kept_prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "contractor_dedupe_log_kept_prospect_id_fkey"
+            columns: ["kept_prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_prospect_funnel"
             referencedColumns: ["prospect_id"]
           },
@@ -40685,6 +40727,102 @@ export type Database = {
           tester_email?: string
           tester_phone?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      crm_action_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          idempotency_key: string | null
+          payload: Json
+          prospect_id: string | null
+          reason: string | null
+          result: string | null
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          idempotency_key?: string | null
+          payload?: Json
+          prospect_id?: string | null
+          reason?: string | null
+          result?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          idempotency_key?: string | null
+          payload?: Json
+          prospect_id?: string | null
+          reason?: string | null
+          result?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      crm_prospect_notes: {
+        Row: {
+          author_id: string | null
+          created_at: string
+          id: string
+          note: string
+          prospect_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          created_at?: string
+          id?: string
+          note: string
+          prospect_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string
+          prospect_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      crm_prospect_tags: {
+        Row: {
+          author_id: string | null
+          created_at: string
+          id: string
+          prospect_id: string
+          tag: string
+        }
+        Insert: {
+          author_id?: string | null
+          created_at?: string
+          id?: string
+          prospect_id: string
+          tag: string
+        }
+        Update: {
+          author_id?: string | null
+          created_at?: string
+          id?: string
+          prospect_id?: string
+          tag?: string
         }
         Relationships: []
       }
@@ -55449,6 +55587,13 @@ export type Database = {
             foreignKeyName: "official_site_crawl_runs_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "official_site_crawl_runs_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_prospect_funnel"
             referencedColumns: ["prospect_id"]
           },
@@ -55543,6 +55688,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "official_site_enrichment_evidence_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_crm_prospects"
             referencedColumns: ["prospect_id"]
           },
           {
@@ -85710,6 +85862,13 @@ export type Database = {
             foreignKeyName: "verified_prospect_tokens_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "verified_prospect_tokens_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_prospect_funnel"
             referencedColumns: ["prospect_id"]
           },
@@ -88572,6 +88731,69 @@ export type Database = {
         }
         Relationships: []
       }
+      v_crm_prospects: {
+        Row: {
+          activated_this_week: boolean | null
+          alex_started_at: string | null
+          business_name: string | null
+          campaign_id: string | null
+          category: string | null
+          checkout_at: string | null
+          city: string | null
+          click_count: number | null
+          clicked_at: string | null
+          current_stage: string | null
+          data_quality_score: number | null
+          delivered_at: string | null
+          email: string | null
+          emails_sent: number | null
+          google_business_url: string | null
+          has_email: boolean | null
+          health_score: number | null
+          hours_since_last_activity: number | null
+          is_duplicate: boolean | null
+          landing_at: string | null
+          last_activity_at: string | null
+          last_email_at: string | null
+          last_error: string | null
+          last_sent_at: string | null
+          last_sid: string | null
+          last_status: string | null
+          missing_gbp: boolean | null
+          missing_rbq: boolean | null
+          needs_action: boolean | null
+          no_email: boolean | null
+          no_website: boolean | null
+          opted_out: boolean | null
+          otp_requested_at: string | null
+          otp_verified_at: string | null
+          outreach_status: string | null
+          paid_at: string | null
+          paid_today: boolean | null
+          phone_e164: string | null
+          phone_invalid: boolean | null
+          phone_line_type: string | null
+          phone_validation_status: string | null
+          priority_score: number | null
+          prospect_id: string | null
+          rbq_number: string | null
+          recoverable_revenue_cents: number | null
+          registered_at: string | null
+          revenue_cents: number | null
+          scraped_at: string | null
+          sent_at: string | null
+          sms_delivered: number | null
+          sms_eligibility_tier: string | null
+          sms_failed: number | null
+          sms_no_callback: number | null
+          sms_sent: number | null
+          sms_undelivered: number | null
+          tags: string[] | null
+          validated_at: string | null
+          website_url: string | null
+        }
+        Relationships: []
+      }
       v_email_cta_health: {
         Row: {
           clicked: number | null
@@ -89885,6 +90107,16 @@ export type Database = {
       consume_generation_credit: {
         Args: { _generation_type?: string; _user_id: string }
         Returns: Json
+      }
+      crm_prospect_timeline: {
+        Args: { _prospect_id: string }
+        Returns: {
+          detail: string
+          kind: string
+          label: string
+          meta: Json
+          occurred_at: string
+        }[]
       }
       current_contractor_id: { Args: never; Returns: string }
       current_partner_id: { Args: { _user_id: string }; Returns: string }
