@@ -208,10 +208,15 @@ Deno.serve(async (req) => {
             break;
 
           case "schedule_followup":
-            await sb.from("acquisition_followup_queue").insert({
+            // Scheduled intent lives in the audit log; the automation tick reads it.
+            await sb.from("crm_action_log").insert({
               prospect_id: pid,
-              scheduled_for: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+              action: "scheduled_followup",
+              source,
               reason: reason ?? "crm_manual",
+              status: "scheduled",
+              payload: { scheduled_for: new Date(Date.now() + 24 * 3600 * 1000).toISOString() },
+              actor_id: actorId,
             });
             result = "scheduled_24h";
             break;
