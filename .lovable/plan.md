@@ -1,61 +1,61 @@
-# Revenue Command Center — Get the First $1 Activation
+# UNPRO Revenue Operator Mode — First $1 Activation
 
-No new product features. This plan consolidates what already exists into one page, adds a preflight gate that blocks sending when the activation path is broken, and adds a one-click end-to-end test.
+Operating mode change, not a feature plan. From here on the only KPI is: **one real contractor receives the message, understands the value, activates, and pays $1.** Assume the product already has enough features to earn that dollar. My job is to find and remove the single biggest obstacle to revenue, then re-evaluate.
 
-## What already exists (verified)
+## 0 — Lock the operating mode (first action)
 
-- `/admin/launch-control` — Launch Control page reading `v_launch_funnel`, `v_pipeline_funnel_counts`, `v_first_dollar_tracker`, plus a campaign funnel table.
-- `v_prospect_funnel` — already carries per-prospect timestamps for scrape, phone validation, SMS sent/delivered/failed, last Twilio error, click, landing, registration, OTP, checkout, paid, revenue, and `current_stage`.
-- Edge functions for every step: `activation-token-resolve`, `create-activation-checkout`, `stripe-webhook`, `second-touch-outreach`, `recruitment-orchestrator`, plus many health probes.
-- Current production totals from `v_pipeline_funnel_counts`: scraped 263, contactable 260, sent 27, delivered 0, clicked 0, payment_started 2, paid 1, activated 0.
+Write two memory rules so this survives every future session:
 
-Two things stand out and must be resolved before any new send: aggregate `delivered`/`clicked` read 0 while per-prospect delivery data exists in `v_prospect_funnel` (the aggregate view and the per-prospect view disagree), and `paid = 1` with `activated = 0` (a payment did not produce an active contractor). Both are unconfirmed as to cause — diagnosing them is step 1, before any UI work.
+- **Core rule:** "UNPRO operates in Revenue Operator mode. Only KPI = first real $1 contractor activation. Assume features are sufficient; identify and remove the single largest revenue blocker instead of building. No new features unless they directly raise today's probability of a paid activation."
+- **Constraint memory:** never rebuild existing systems — inspect, reuse, repair; replace only when repair is impossible.
 
-## Phase 1 — Reconcile truth (blocking)
+Every future task gets tested against one question: does this increase the probability of the first $1 today? If no, it goes to a backlog file and is not built.
 
-1. Compare `v_pipeline_funnel_counts` against `v_prospect_funnel` row by row and identify which one is wrong.
-2. Trace the single `paid` row end to end: Stripe session, webhook event, activation write. Determine exactly why it is not `activated`, and repair that path.
-3. Repair the losing view/function so one canonical 12-stage source exists.
+## 1 — Daily loop (the actual work)
 
-No SMS is sent until both are green.
+Each session runs this loop, and only this loop:
 
-## Phase 2 — Revenue Command Center
+```text
+inspect production funnel
+  -> rank blockers by lost revenue probability
+  -> fix the single largest one
+  -> verify with real production data
+  -> re-evaluate
+```
 
-Rebuild `/admin/launch-control` as the single war room (no new route, existing links keep working). One vertical funnel, 12 stages:
+No parallel feature work. No polish. One blocker at a time.
 
-scraped → eligible → phone validated → SMS sent → SMS delivered → link opened → activation page loaded → registration started → registration completed → checkout opened → $1 paid → activated
+## 2 — First inspection pass (this session)
 
-Per stage: count, conversion % from the previous stage, last timestamp, last error text, and a Fix action that deep-links to the prospect drawer or triggers the relevant repair function. Refresh every 10s. All numbers from the canonical view — nothing computed client-side.
+Two contradictions in production data must be resolved before anything else, because every decision downstream depends on knowing the truth:
 
-## Phase 3 — Root cause codes
+- Aggregate counters report 27 SMS sent but 0 delivered and 0 clicked, while the per-prospect funnel view carries real delivery data. One of the two is lying. Until this is settled, "nobody clicks" cannot be distinguished from "the counter is broken", and I could rewrite a perfectly good SMS for nothing.
+- One prospect is recorded as paid but zero are activated. A payment that did not become an active contractor is the single most expensive failure in the system. Trace that one record end to end: Stripe session, webhook delivery, activation write.
 
-Add a `failure_code` + `failure_reason` + `recommended_fix` resolution to the per-prospect view/function, derived from data already stored (Twilio error codes, missing token, unresolved token, no checkout session, no webhook event, no activation row). The command center and CRM drawer show the human explanation, never a generic error.
+Both are diagnostics on existing systems, not new construction.
 
-## Phase 4 — Preflight gate
+## 3 — Blocker ranking, in the order revenue is lost
 
-New edge function `revenue-preflight` running seven checks: activation route responds 200, a live token resolves, activation page loads anonymously, Stripe key reachable, webhook endpoint responds, Twilio credentials valid, database reachable. It writes a pass/fail snapshot row.
+Once the numbers are trustworthy, walk the funnel from the money backwards and fix the first stage that is actually leaking:
 
-Send paths (`second-touch-outreach`, `recruitment-orchestrator`, campaign launcher) call it first and refuse to send when any critical check fails, returning the blocking reason. The command center shows the gate state at the top.
+1. **Paid but not activated** — worst case, money taken without delivery. Highest priority.
+2. **Clicked but not paid** — landing and activation friction. I open the link on a phone as a contractor would and remove every click that isn't required to reach checkout.
+3. **Delivered but not clicked** — SMS copy, CTA, sender trust. Rewrite and A/B against the existing template performance table.
+4. **Sent but not delivered** — Twilio landline/carrier failures. Route those prospects to email instead of burning them.
+5. **Eligible but not sent** — targeting and queue starvation. Rank by likelihood to pay (recent reviews, no website, weak AI readiness, high-demand category and city) and work the top of that list first.
 
-## Phase 5 — One-click full revenue test
+Only the stage that is currently costing the most gets worked. The rest wait.
 
-`Run Full Revenue Test` button calling a new `revenue-e2e-test` function: create a temporary test contractor, mint a token, verify the link returns 200, resolve it, open a Stripe checkout in test mode, confirm the webhook, confirm the contractor flips to active, then clean up the test record. Returns a pass/fail line per step, rendered as a checklist.
+## 4 — What I will not do
 
-## Phase 6 — Activation page speed and clarity
+No SEO, sitemap, AI corpus, content, or Alex work. No redesigns. No new admin pages unless a page is the only way to see a blocker. No refactors. Existing tools (Launch Control, CRM, funnel views, orchestrator) get repaired and reused, never rebuilt.
 
-Audit `/unpro/activate/:token` only: confirm anonymous access, no auth wall, first screen states profile already created, AI analysis done, $1 activates everything, ~2 minutes. Remove any click that is not required to reach checkout.
+## 5 — Definition of done
 
-## Phase 7 — Drop-off analytics
-
-A drop-off panel on the command center computing per-stage loss % from the canonical view, and highlighting the single largest bottleneck with the prospects stuck there.
+Not a green build. Done is: a real contractor gets the SMS, opens the link, activates, pays $1, the webhook fires, the contractor is active in production, and the tracker shows 1 activation. Until that row exists, the work is not finished.
 
 ## Technical notes
 
-- Canonical data: one view (`v_prospect_funnel`) plus one aggregate derived from it; delete or fix the aggregate that disagrees.
-- New edge functions: `revenue-preflight`, `revenue-e2e-test`. New table: `revenue_preflight_runs` (with GRANTs and admin-only RLS).
-- Modified: `PageAdminLaunchControl.tsx`, `second-touch-outreach`, `recruitment-orchestrator`, the aggregate funnel view, the activation/webhook path found broken in Phase 1.
-- Untouched: SEO, sitemap, AI corpus, content, Alex, all non-revenue admin pages.
-
-## Definition of done
-
-Not "it compiles". Done means: a real contractor receives an SMS, opens the link, registers, pays $1, the Stripe webhook fires, the contractor becomes active in production, and the Revenue Command Center shows 1 activation.
+- Diagnosis first, using `v_prospect_funnel`, `v_pipeline_funnel_counts`, `v_first_dollar_tracker`, `sms_events_v2`, `contractor_funnel_events`, Stripe events, and Twilio callback rows. Real rows only — no estimates.
+- Fixes are surgical edits to existing edge functions (`activation-token-resolve`, `create-activation-checkout`, `stripe-webhook`, `second-touch-outreach`, `recruitment-orchestrator`) and the views that disagree.
+- Memory writes: one Core rule plus one constraint entry in the project memory index.
