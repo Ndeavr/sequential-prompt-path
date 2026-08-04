@@ -68,6 +68,14 @@ export default function PageSafeFallbackRedirect() {
 
   // Log the broken link event
   useEffect(() => {
+    // Explicit console trace: distinguishes a stale cached bundle (a known
+    // route landing here) from a genuinely unknown path.
+    // eslint-disable-next-line no-console
+    console.error("[ROUTE_FALLBACK_404]", {
+      pathname,
+      href: typeof window !== "undefined" ? window.location.href : null,
+      isActivationLink: pathname.startsWith("/unpro/activate/"),
+    });
     logBrokenLinkEvent({
       attemptedPath: pathname,
       resolvedPath: resolution.targetPath,

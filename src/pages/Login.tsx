@@ -22,6 +22,11 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Auth-server failure surfaced by AuthErrorCatcher (e.g. provider handshake failed)
+  const returnParams = new URLSearchParams(location.search);
+  const authError = returnParams.get("auth_error");
+  const authErrorDescription = returnParams.get("auth_error_description");
+
   // Redirect if already authenticated
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -77,6 +82,18 @@ const Login = () => {
           </CardHeader>
 
           <CardContent className="space-y-1 pb-8">
+            {authError && (
+              <div
+                role="alert"
+                className="mb-4 rounded-xl px-4 py-3 text-sm"
+                style={{ background: "hsl(0 72% 97%)", border: "1px solid hsl(0 72% 88%)", color: "hsl(0 62% 32%)" }}
+              >
+                <p className="font-semibold">La connexion n'a pas abouti.</p>
+                <p className="mt-1">{authErrorDescription || authError}</p>
+                <p className="mt-1 text-xs opacity-80">Code : {authError}</p>
+              </div>
+            )}
+
             {/* OAuth buttons - primary */}
             <OAuthButtons />
 

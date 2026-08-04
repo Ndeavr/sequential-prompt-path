@@ -32,11 +32,13 @@ export default function PageUnproActivate() {
   const [prospect, setProspect] = useState<ResolvedProspect | null>(null);
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
+  const [reason, setReason] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     if (!token) {
       setState("invalid");
+      setReason("missing_token");
       return;
     }
     (async () => {
@@ -46,20 +48,36 @@ export default function PageUnproActivate() {
         });
         if (cancelled) return;
         if (error || !data?.ok) {
-          const reason = (data as { reason?: string } | null)?.reason;
-          setState(reason === "lookup_failed" || reason === "internal_error" ? "error" : "invalid");
+          const serverReason =
+            (data as { reason?: string } | null)?.reason ?? (error ? "network_error" : "unknown");
+          // eslint-disable-next-line no-console
+          console.error("[ACTIVATION_RESOLVE_FAILED]", { token, reason: serverReason, error });
+          setReason(serverReason);
+          setState(
+            serverReason === "lookup_failed" ||
+              serverReason === "internal_error" ||
+              serverReason === "network_error"
+              ? "error"
+              : "invalid"
+          );
           return;
         }
         setProspect(data.prospect as ResolvedProspect);
         setState("ready");
-      } catch {
-        if (!cancelled) setState("error");
+      } catch (e) {
+        if (!cancelled) {
+          // eslint-disable-next-line no-console
+          console.error("[ACTIVATION_RESOLVE_THREW]", e);
+          setReason("client_exception");
+          setState("error");
+        }
       }
     })();
     return () => {
       cancelled = true;
     };
   }, [token]);
+
 
   async function handleActivate() {
     if (!prospect) return;
@@ -116,6 +134,7 @@ export default function PageUnproActivate() {
             >
               Activer mon profil <ArrowRight className="h-4 w-4" />
             </Link>
+            {reason && <p className="mt-4 text-[11px] text-white/40">Réf. : {reason}</p>}
           </div>
         )}
 
@@ -128,6 +147,7 @@ export default function PageUnproActivate() {
             <Button onClick={() => window.location.reload()} className="rounded-2xl bg-white text-[#050816] hover:bg-white/90">
               Réessayer
             </Button>
+            {reason && <p className="mt-4 text-[11px] text-white/40">Réf. : {reason}</p>}
           </div>
         )}
 

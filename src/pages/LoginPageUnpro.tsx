@@ -4,20 +4,40 @@
  * Post-login routing centralized via useAuthReturn (AuthReturnManager).
  */
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAuthReturn } from "@/hooks/useAuthReturn";
 import AuthCardUnpro from "@/components/auth/AuthCardUnpro";
 import OAuthButtons from "@/components/auth/OAuthButtons";
 import PhoneOtpForm from "@/components/auth/PhoneOtpForm";
 import LoginMagicLinkForm from "@/components/auth/LoginMagicLinkForm";
 import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
-import { Smartphone, Mail, Lock, CheckCircle2, ArrowRight } from "lucide-react";
+import { Smartphone, Mail, Lock, CheckCircle2, ArrowRight, AlertTriangle } from "lucide-react";
 
 export default function LoginPageUnpro() {
   const [mode, setMode] = useState<"main" | "phone" | "email">("main");
   const { destination, goNow, showFallback, redirected } = useAuthReturn({ auto: true, delayMs: 350 });
+  const [searchParams] = useSearchParams();
+  const authError = searchParams.get("auth_error");
+  const authErrorDescription = searchParams.get("auth_error_description");
 
   return (
     <AuthCardUnpro title="Trouvez le bon pro. Plus vite." subtitle="Connexion rapide et sécurisée">
+      {authError && !redirected && (
+        <div
+          role="alert"
+          className="mb-4 flex gap-3 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-foreground"
+        >
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+          <div>
+            <p className="font-semibold">La connexion n'a pas abouti.</p>
+            <p className="mt-1 text-muted-foreground">
+              {authErrorDescription || "Le fournisseur d'identité a refusé la demande."}
+            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground/80">Réf. : {authError}</p>
+          </div>
+        </div>
+      )}
+
       {redirected && (
         <div className="flex flex-col items-center justify-center py-6 gap-3">
           <CheckCircle2 className="h-10 w-10 text-green-400" />

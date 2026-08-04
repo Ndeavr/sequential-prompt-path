@@ -39,26 +39,54 @@ Deno.serve(async (req) => {
       console.error("[activation-token-resolve] token_lookup_failed", error.message);
       return json({ ok: false, reason: "lookup_failed" }, 500);
     }
-    if (!row) return json({ ok: false, reason: "token_not_found" }, 404);
+
+    // Messaging apps sometimes truncate the link. Fall back to a prefix match
+    // when the prefix is long enough to be unambiguous AND resolves to exactly
+    // one token.
+    let resolved = row;
+    if (!resolved && token.length >= 10) {
+      const { data: candidates, error: prefixError } = await supabase
+        .from("verified_prospect_tokens")
+        .select("token, prospect_id, created_at, clicked_at, click_count, campaign_id")
+        .like("token", `${token}%`)
+        .limit(2);
+
+      if (prefixError) {
+        console.error("[activation-token-resolve] prefix_lookup_failed", prefixError.message);
+      } else if (candidates && candidates.length === 1) {
+        resolved = candidates[0];
+        console.log("[activation-token-resolve] resolved_by_prefix", token);
+      } else if (candidates && candidates.length > 1) {
+        console.warn("[activation-token-resolve] ambiguous_prefix", token);
+        return json({ ok: false, reason: "token_ambiguous" }, 404);
+      }
+    }
+
+    if (!resolved) {
+      console.warn("[activation-token-resolve] token_not_found", token);
+      return json({ ok: false, reason: "token_not_found" }, 404);
+    }
+
 
     const { data: prospect } = await supabase
       .from("verified_contractor_prospects")
       .select("id, business_name, legal_name, city, category, email, website_url, phone_e164")
-      .eq("id", row.prospect_id)
+      .eq("id", resolved.prospect_id)
       .maybeSingle();
 
     if (!prospect) return json({ ok: false, reason: "prospect_not_found" }, 404);
 
     // Record the click (best-effort — never block the page render).
     const now = new Date().toISOString();
+    const realToken = resolved.token;
     try {
       await supabase
         .from("verified_prospect_tokens")
         .update({
-          clicked_at: row.clicked_at ?? now,
-          click_count: (row.click_count ?? 0) + 1,
+          clicked_at: resolved.clicked_at ?? now,
+          click_count: (resolved.click_count ?? 0) + 1,
         })
-        .eq("token", token);
+        .eq("token", realToken);
 
       await supabase
         .from("verified_contractor_prospects")
@@ -71,24 +99,24 @@ Deno.serve(async (req) => {
         _channel: "sms",
         _status: "clicked",
         _provider: "unpro",
-        _tracking_id: token,
+        _tracking_id: realToken,
         _prospect_id: prospect.id,
-        _destination_url: `/unpro/activate/${token}`,
+        _destination_url: `/unpro/activate/${realToken}`,
         _source_table: "verified_prospect_tokens",
-        _source_row_id: token,
-        _metadata: { campaign_id: row.campaign_id ?? null },
-        _idempotency_key: `click:${token}`,
+        _source_row_id: realToken,
+        _metadata: { campaign_id: resolved.campaign_id ?? null },
+        _idempotency_key: `click:${realToken}`,
       });
       await supabase.rpc("record_engagement_event", {
         _event_type: "landing_viewed",
         _channel: "web",
         _status: "landing_viewed",
         _provider: "unpro",
-        _tracking_id: token,
+        _tracking_id: realToken,
         _prospect_id: prospect.id,
-        _destination_url: `/unpro/activate/${token}`,
-        _metadata: { campaign_id: row.campaign_id ?? null },
-        _idempotency_key: `landing:${token}`,
+        _destination_url: `/unpro/activate/${realToken}`,
+        _metadata: { campaign_id: resolved.campaign_id ?? null },
+        _idempotency_key: `landing:${realToken}`,
       });
     } catch (e) {
       console.error("[activation-token-resolve] click_track_failed", String(e));
@@ -96,9 +124,9 @@ Deno.serve(async (req) => {
 
     return json({
       ok: true,
-      token,
-      campaign_id: row.campaign_id ?? null,
-      first_click: !row.clicked_at,
+      token: resolved.token,
+      campaign_id: resolved.campaign_id ?? null,
+      first_click: !resolved.clicked_at,
       prospect: {
         id: prospect.id,
         business_name: prospect.business_name ?? prospect.legal_name ?? null,
