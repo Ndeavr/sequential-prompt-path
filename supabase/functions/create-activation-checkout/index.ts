@@ -165,8 +165,14 @@ Deno.serve(async (req) => {
           utm_company: utm?.company ?? "",
         },
 
-        locale: "fr",
+        // REVENUE-CRITICAL: Stripe Adaptive Pricing was showing a
+        // "Choisir la devise — 0,74 $US / 1,00 $CA" selector with USD preselected
+        // to Québec contractors on a 1 $ CA offer. It destroyed trust at the
+        // exact moment of payment. CAD only, always.
+        adaptive_pricing: { enabled: false },
+        locale: "fr-CA",
       });
+
     } catch (stripeErr: any) {
       console.error("[create-activation-checkout] stripe_error", stripeErr?.message || stripeErr);
       return json({ error: "stripe_error", detail: stripeErr?.message || String(stripeErr), stage: "stripe_create" }, 502);
