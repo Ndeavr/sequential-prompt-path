@@ -81,7 +81,7 @@ export default function BottomDockGlass() {
       <Link
         to={item.to}
         className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium transition-colors"
-        style={{ color: active ? "#2563FF" : "#667085" }}
+        style={{ color: active ? "hsl(var(--primary-tint))" : "hsl(var(--muted-foreground))" }}
       >
         <Icon size={20} strokeWidth={active ? 2.4 : 1.9} />
         <span>{item.label}</span>
@@ -126,7 +126,7 @@ export default function BottomDockGlass() {
             >
               <Sparkles size={18} strokeWidth={2.2} />
             </button>
-            <span className="text-[11px] font-semibold text-[#2563FF] mt-0.5">Alex</span>
+            <span className="text-[11px] font-semibold text-primary-tint mt-0.5">Alex</span>
           </div>
 
           <Tab item={right[0]} />

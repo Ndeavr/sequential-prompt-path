@@ -145,6 +145,7 @@ export default function PageProScoreInstant() {
                     style={{
                       borderColor: "rgba(11,18,32,0.12)",
                       background: "#FAFAF7",
+                      color: "#0B1220",
                     }}
                   />
                 </label>

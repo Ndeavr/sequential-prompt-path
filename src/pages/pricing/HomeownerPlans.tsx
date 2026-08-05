@@ -173,8 +173,8 @@ const WHY_PAY = [
 /* ─── Badge Component ─── */
 function PlanBadge({ label, type }: { label: string; type: "popular" | "premium" | "neutral" }) {
   const styles = {
-    popular: "bg-primary text-primary-foreground border-primary",
-    premium: "bg-secondary/15 text-secondary border-secondary/25",
+    popular: "bg-primary-strong text-primary-foreground border-primary-strong",
+    premium: "bg-secondary/15 text-secondary-tint border-secondary/25",
     neutral: "bg-muted text-muted-foreground border-border/50",
   };
   return (
@@ -293,9 +293,9 @@ function CardPlan({ plan, index }: { plan: Plan; index: number }) {
               onClick={() => plan.onCheckout?.()}
               className={`w-full rounded-xl text-sm font-bold ${
                 isPopular
-                  ? "shadow-glow bg-primary hover:bg-primary/90"
+                  ? "shadow-glow bg-primary-strong hover:bg-primary-strong/90"
                   : isPremium
-                  ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+                  ? "bg-secondary-strong hover:bg-secondary-strong/90 text-secondary-foreground"
                   : ""
               }`}
             >

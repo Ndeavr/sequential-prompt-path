@@ -40,11 +40,17 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          /* Accessible filled surface — white text reaches WCAG AA on it. */
+          strong: "hsl(var(--primary-strong, var(--primary)))",
+          tint: "hsl(var(--primary-tint, var(--primary)))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
+          strong: "hsl(var(--secondary-strong, var(--secondary)))",
+          tint: "hsl(var(--secondary-tint, var(--secondary)))",
         },
+
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
