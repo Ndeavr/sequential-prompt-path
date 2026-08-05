@@ -65,7 +65,7 @@ export default function LanguageToggle({ lang, onChange, className = "" }: Langu
       <motion.div
         layout
         transition={{ type: "spring", stiffness: 500, damping: 32 }}
-        className="absolute top-0.5 h-[calc(100%-4px)] w-[calc(50%-2px)] rounded-full bg-primary shadow-sm"
+        className="absolute top-0.5 h-[calc(100%-4px)] w-[calc(50%-2px)] rounded-full bg-primary-strong shadow-sm"
         style={{ left: isFr ? 2 : "calc(50% + 0px)" }}
       />
       <button

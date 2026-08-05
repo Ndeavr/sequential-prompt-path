@@ -117,16 +117,32 @@
   }
 
   /* ═══════════════════════════════════════════════
-     ADMIN / IMMERSIVE SCOPE — keeps dark cinematic palette
+     DEFAULT UNPRO THEME — cinematic dark.
+     This is the ONLY default. It matches the dark background layer
+     painted app-wide by <StableBackgroundLayer>, so any page using
+     `text-foreground` / `bg-card` is readable without a wrapper.
+     `.admin-theme` and `.alex-immersive` are kept as aliases so existing
+     markup keeps working, but they no longer diverge from the default.
      ═══════════════════════════════════════════════ */
+  :root,
   .admin-theme,
   .alex-immersive {
     --primary: 222 100% 60%;
     --primary-foreground: 0 0% 100%;
+    /* Filled surfaces: darker so white label text clears WCAG AA (7.0:1).
+       `--primary` stays bright because it is also used as accent TEXT on the
+       dark background, where a dark blue would be unreadable. */
+    --primary-strong: 222 100% 45%;
     --secondary: 252 100% 68%;
     --secondary-foreground: 0 0% 100%;
+    --secondary-strong: 252 100% 56%;
+    /* Tints: brand-hued TEXT on dark/tinted surfaces, AA-safe. */
+    --primary-tint: 222 100% 78%;
+    --secondary-tint: 252 100% 82%;
+
     --accent: 195 100% 52%;
     --accent-foreground: 0 0% 100%;
+
     --background: 226 63% 5%;
     --foreground: 216 30% 95%;
     --card: 222 40% 7%;
@@ -172,9 +188,71 @@
     --sidebar-accent: 222 25% 10%;
     --sidebar-accent-foreground: 216 30% 95%;
     --sidebar-border: 222 20% 12%;
+    --sidebar-primary: 222 100% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-ring: 222 100% 60%;
+    --gradient-bg: radial-gradient(1100px 700px at 80% -10%, hsl(210 100% 50% / 0.14), transparent 60%),
+                   radial-gradient(900px 600px at -10% 30%, hsl(195 100% 52% / 0.08), transparent 65%),
+                   linear-gradient(180deg, #050816 0%, #050816 100%);
     background: hsl(var(--background));
     color: hsl(var(--foreground));
   }
+
+  /* ═══════════════════════════════════════════════
+     WARM LIGHT SCOPE — public/editorial pages (`.landing-warm`).
+     Opaque warm surface so it fully covers the global dark layer,
+     with a complete light token set for WCAG-safe contrast.
+     ═══════════════════════════════════════════════ */
+  .landing-warm {
+    --background: 48 24% 96%;         /* #F7F6F0 */
+    --foreground: 222 47% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 8%;
+    --primary: 222 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-strong: 222 100% 45%;
+    --primary-tint: 222 100% 38%;
+    --secondary-tint: 217 86% 32%;
+    --secondary: 217 86% 42%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-strong: 217 86% 38%;
+
+    --muted: 45 20% 92%;
+    --muted-foreground: 220 14% 32%;
+    --accent: 200 90% 42%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 44%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 153 72% 30%;
+    --success-foreground: 0 0% 100%;
+    --warning: 32 90% 34%;
+    --warning-foreground: 0 0% 100%;
+    --border: 45 14% 84%;
+    --input: 45 14% 86%;
+    --ring: 222 100% 50%;
+
+    --text-primary: 222 47% 8%;
+    --text-body: 222 30% 16%;
+    --text-secondary: 220 14% 28%;
+    --text-muted: 220 14% 34%;
+    --text-disabled: 220 10% 48%;
+    --surface-primary: 0 0% 100%;
+    --surface-secondary: 45 20% 93%;
+
+    --glass-bg: hsl(0 0% 100% / 0.86);
+    --glass-border: hsl(222 30% 10% / 0.10);
+    --glass-highlight: linear-gradient(180deg, hsl(0 0% 100% / 0.9) 0%, transparent 45%);
+    --glass-metal-bg: linear-gradient(135deg, hsl(0 0% 100% / 0.92), hsl(48 24% 97% / 0.86));
+    --glass-metal-border: hsl(222 30% 10% / 0.10);
+
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    position: relative;
+    z-index: 0;
+  }
+
 
   /* ═══════════════════════════════════════════════
      INTEL SCOPE — UNPRO AI Trust Layer (bronze + black + electric blue)

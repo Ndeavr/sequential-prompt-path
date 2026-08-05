@@ -1,6 +1,6 @@
 # UNPRO — Registre d'audit des routes
 
-Généré le 2026-07-31T19:44:07.754Z — base `http://localhost:8080` — périmètre `revenue` — 60 mesures.
+Généré le 2026-08-05T16:47:53.793Z — base `http://localhost:8080` — périmètre `revenue` — 60 mesures.
 
 | Route | Vue | Groupe | Statut | Contraste (viol.) | Pire ratio | Scroll | CTA | Destination | Notes |
 |---|---|---|---|---|---|---|---|---|---|
@@ -8,7 +8,7 @@ Généré le 2026-07-31T19:44:07.754Z — base `http://localhost:8080` — péri
 Réponse en 2 min | — | CTA intercepté par a.flex-1.flex |
 | `/` | 390x844 | public | contrast | 5 | 4.5 | ok | Parler à Alex
 Réponse en 2 min | — | CTA intercepté par div.grid.grid-cols-5 |
-| `/` | 412x915 | public | ok | 0 | — | ok | Parler à Alex
+| `/` | 412x915 | public | contrast | 5 | 4.5 | ok | Parler à Alex
 Réponse en 2 min | — | — |
 | `/` | 1366x768 | public | ok | 0 | — | ok | Parler à Alex
 Réponse en 2 min | — | — |
