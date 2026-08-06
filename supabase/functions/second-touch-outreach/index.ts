@@ -12,16 +12,26 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const RELANCE_KIND = "second_touch";
+const CLICK_RECOVERY_KIND = "click_recovery";
+const ALLOWED_KINDS = new Set([RELANCE_KIND, CLICK_RECOVERY_KIND]);
 const BASE = "https://unpro.ca";
 
-function buildMessage(businessName: string, token: string): string {
+function buildMessage(businessName: string, token: string, kind: string): string {
   const name = (businessName || "").trim().slice(0, 40);
+  if (kind === CLICK_RECOVERY_KIND) {
+    return (
+      `UNPRO — ${name} : votre lien d'activation est prêt. ` +
+      `7 jours pour 1,00 $ CA : ${BASE}/unpro/activate/${token}\n` +
+      `Répondez STOP pour ne plus recevoir de messages.`
+    );
+  }
   return (
     `UNPRO — ${name}: votre profil est prêt. ` +
     `Activez-le 7 jours pour 1 $ : ${BASE}/unpro/activate/${token}\n` +
     `Répondez STOP pour ne plus recevoir de messages.`
   );
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
