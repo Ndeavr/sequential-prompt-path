@@ -12,16 +12,26 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const RELANCE_KIND = "second_touch";
+const CLICK_RECOVERY_KIND = "click_recovery";
+const ALLOWED_KINDS = new Set([RELANCE_KIND, CLICK_RECOVERY_KIND]);
 const BASE = "https://unpro.ca";
 
-function buildMessage(businessName: string, token: string): string {
+function buildMessage(businessName: string, token: string, kind: string): string {
   const name = (businessName || "").trim().slice(0, 40);
+  if (kind === CLICK_RECOVERY_KIND) {
+    return (
+      `UNPRO — ${name} : votre lien d'activation est prêt. ` +
+      `7 jours pour 1,00 $ CA : ${BASE}/unpro/activate/${token}\n` +
+      `Répondez STOP pour ne plus recevoir de messages.`
+    );
+  }
   return (
     `UNPRO — ${name}: votre profil est prêt. ` +
     `Activez-le 7 jours pour 1 $ : ${BASE}/unpro/activate/${token}\n` +
     `Répondez STOP pour ne plus recevoir de messages.`
   );
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -36,9 +46,13 @@ Deno.serve(async (req) => {
     let dryRun = true;
     let limit = 10;
     let targetIds: string[] | null = null;
+    let relanceKind = RELANCE_KIND;
     try {
       const body = await req.json();
       if (body?.dry_run === false) dryRun = false;
+      if (typeof body?.relance_kind === "string" && ALLOWED_KINDS.has(body.relance_kind)) {
+        relanceKind = body.relance_kind;
+      }
       if (typeof body?.limit === "number") limit = Math.min(Math.max(body.limit, 1), 25);
       if (Array.isArray(body?.prospect_ids) && body.prospect_ids.length > 0) {
         targetIds = body.prospect_ids.map(String).slice(0, 25);
@@ -81,7 +95,7 @@ Deno.serve(async (req) => {
 
     const [{ data: tokens }, { data: already }, { data: optOuts }] = await Promise.all([
       supabase.from("verified_prospect_tokens").select("token, prospect_id, clicked_at").in("prospect_id", ids),
-      supabase.from("acq_sms_logs").select("prospect_id").eq("relance_kind", RELANCE_KIND).in("prospect_id", ids),
+      supabase.from("acq_sms_logs").select("prospect_id").eq("relance_kind", relanceKind).in("prospect_id", ids),
       supabase.from("sms_opt_outs").select("normalized_phone"),
     ]);
 
@@ -92,9 +106,14 @@ Deno.serve(async (req) => {
     const done = new Set((already ?? []).map((r) => r.prospect_id as string));
     const optedOut = new Set((optOuts ?? []).map((r) => String(r.normalized_phone)));
 
+    // Targeted mode (explicit prospect_ids): recovering prospects who ALREADY
+    // clicked is the whole point, so the clicked_at filter is skipped there.
+    const skipClickedFilter = Boolean(targetIds);
     const eligible = (candidates ?? []).filter((c) => {
       const tk = tokenBy.get(c.id as string);
-      return tk && !tk.clicked_at && !done.has(c.id as string) && !optedOut.has(String(c.phone_e164));
+      if (!tk) return false;
+      if (!skipClickedFilter && tk.clicked_at) return false;
+      return !done.has(c.id as string) && !optedOut.has(String(c.phone_e164));
     });
 
     const batch = eligible.slice(0, limit);
@@ -111,7 +130,7 @@ Deno.serve(async (req) => {
 
     for (const p of batch) {
       const tk = tokenBy.get(p.id as string)!;
-      const message = buildMessage(p.business_name as string, tk.token);
+      const message = buildMessage(p.business_name as string, tk.token, relanceKind);
 
       if (dryRun) {
         attempts.push({
@@ -166,7 +185,7 @@ Deno.serve(async (req) => {
         provider_message_id: providerId,
         error,
         sent_at: new Date().toISOString(),
-        relance_kind: RELANCE_KIND,
+        relance_kind: relanceKind,
         message_purpose: "commercial_outreach",
       });
 
@@ -183,6 +202,7 @@ Deno.serve(async (req) => {
     return json({
       ok: true,
       dry_run: dryRun,
+      relance_kind: relanceKind,
       eligible: eligible.length,
       attempted: attempts.length,
       sent: attempts.filter((a) => a.provider_message_id).length,
