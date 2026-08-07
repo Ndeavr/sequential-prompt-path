@@ -37,6 +37,37 @@ function randToken() {
   return crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "").slice(0, 8);
 }
 
+const esc = (s: unknown) =>
+  String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
+
+function shell(body: string, ctaLabel: string, ctaUrl: string) {
+  return `<div style="font-family:Inter,Arial,sans-serif;background:#ffffff;color:#111;padding:24px;max-width:560px">
+${body}
+<p style="margin:24px 0"><a href="${esc(ctaUrl)}" style="display:inline-block;padding:14px 22px;background:#0F62FE;color:#fff;text-decoration:none;border-radius:10px;font-weight:600">${esc(ctaLabel)}</a></p>
+<p style="color:#666;font-size:12px">Alex d'UNPRO — plateforme d'intelligence résidentielle québécoise.</p>
+</div>`;
+}
+
+function outreachHtml(name: unknown, city: unknown, category: unknown, link: string) {
+  return shell(
+    `<h2 style="margin:0 0 12px">Bonjour ${esc(name ?? "")}</h2>
+<p>Nous recevons des demandes en ${esc(category ?? "services résidentiels")} à ${esc(city ?? "votre région")} et votre entreprise correspond au profil recherché.</p>
+<p>Activez votre accès pour <strong>1,00 $ CA</strong> (7 jours) et recevez vos premiers rendez-vous.</p>`,
+    "Activer pour 1 $",
+    link,
+  );
+}
+
+function checkoutHtml(name: unknown, link: string) {
+  return shell(
+    `<h2 style="margin:0 0 12px">${esc(name ?? "Votre entreprise")} — il reste une étape</h2>
+<p>Votre activation UNPRO n'a pas été complétée. Le paiement est de <strong>1,00 $ CA</strong> pour 7 jours.</p>`,
+    "Terminer mon activation",
+    link,
+  );
+}
+
+
 async function invokeFn(name: string, body: unknown) {
   const r = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
     method: "POST",
