@@ -302,7 +302,17 @@ Deno.serve(async (req) => {
 
       results.push({ prospect_id: pid, action, status, result: result.slice(0, 400) });
 
-      await sb.from("crm_action_log").insert({
+      // Notes are repeatable by design — an operator can add several the same
+      // day. Reusing the daily `idem` key made the 2nd note collide on the
+      // unique index and fail. Only the once-per-day OUTBOUND actions may
+      // claim the stable key.
+      const repeatable = action === "note" || action === "add_note";
+      const logKey =
+        status === "success" && !dryRun && !repeatable
+          ? idem
+          : `${idem}:${crypto.randomUUID().slice(0, 8)}`;
+
+      const { error: logErr } = await sb.from("crm_action_log").insert({
         prospect_id: pid,
         action,
         source,
@@ -311,8 +321,12 @@ Deno.serve(async (req) => {
         result: result.slice(0, 1000),
         payload: { dry_run: dryRun, ...payloadExtra },
         actor_id: actorId,
-        idempotency_key: status === "success" && !dryRun ? idem : `${idem}:${crypto.randomUUID().slice(0, 8)}`,
+        idempotency_key: logKey,
       });
+      if (logErr) {
+        // The audit write must never silently disappear.
+        console.error(`[crm-recovery-action] audit log insert failed (${action}/${pid}):`, logErr.message);
+      }
     }
 
     return json({
