@@ -1,9 +1,12 @@
 /**
  * UNPRO — Dynamic Plan Catalog Hook
- * Fetches plan data from plan_catalog table (single source of truth).
+ * Reads the canonical contractor catalog from `plans` (audience = 'contractor').
+ * `plans` is the ONLY source of truth for prices and Stripe price IDs.
+ * Marketing copy (features, pitch) comes from src/config/contractorPlans.ts.
  */
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
 
 export type BillingInterval = "month" | "year";
 
@@ -36,37 +39,45 @@ export interface CatalogPlan {
 
 async function fetchPlanCatalog(): Promise<CatalogPlan[]> {
   const { data, error } = await supabase
-    .from("plan_catalog")
+    .from("plans")
     .select("*")
+    .eq("audience", "contractor")
     .eq("active", true)
-    .order("position_rank", { ascending: true });
+    .order("tier_rank", { ascending: true });
 
   if (error) throw error;
 
-  return (data ?? []).map((row: any) => ({
-    id: row.id,
-    code: row.code,
-    name: row.name,
-    monthlyPrice: row.monthly_price ?? 0,
-    yearlyPrice: row.annual_price ?? 0,
-    oneTimePrice: row.one_time_price ?? 0,
-    billingMode: (row.billing_mode ?? "subscription") as BillingMode,
-    stripeMonthlyPriceId: row.stripe_monthly_price_id ?? "",
-    stripeYearlyPriceId: row.stripe_yearly_price_id ?? "",
-    tagline: row.tagline ?? row.short_pitch ?? "",
-    features: Array.isArray(row.features_json) ? row.features_json : [],
-    appointmentsIncluded: row.appointments_included ?? 0,
-    appointmentsRangeMin: row.appointments_range_min ?? 0,
-    appointmentsRangeMax: row.appointments_range_max ?? 0,
-    projectSizes: Array.isArray(row.project_sizes) ? row.project_sizes : [],
-    appointmentNotes: Array.isArray(row.appointment_notes) ? row.appointment_notes : [],
-    highlighted: row.highlighted ?? false,
-    priorityLevel: row.priority_level ?? 1,
-    matchingBoost: row.matching_boost ?? 0,
-    badgeText: row.badge_text ?? "",
-    shortPitch: row.short_pitch ?? "",
-    positionRank: row.position_rank ?? 0,
-  }));
+  return (data ?? []).map((row: any) => {
+    const copy = CONTRACTOR_PLANS.find((p) => p.slug === row.code);
+    const monthly = row.monthly_price ?? 0;
+    return {
+      id: row.id,
+      code: row.code,
+      name: row.name,
+      monthlyPrice: monthly,
+      // Yearly = 10 months when not explicitly priced (2 months offered).
+      yearlyPrice: row.yearly_price && row.yearly_price > 0 ? row.yearly_price : monthly * 10,
+      oneTimePrice: row.one_time_price ?? 0,
+      billingMode: (row.billing_interval === "one_time"
+        ? "one_time"
+        : "subscription") as BillingMode,
+      stripeMonthlyPriceId: row.stripe_monthly_price_id ?? "",
+      stripeYearlyPriceId: row.stripe_yearly_price_id ?? "",
+      tagline: row.tagline ?? copy?.subtitle ?? "",
+      features: copy?.features ?? [],
+      appointmentsIncluded: row.appointments_included ?? copy?.appointmentsIncluded ?? 0,
+      appointmentsRangeMin: row.appointments_included ?? 0,
+      appointmentsRangeMax: row.appointments_included ?? 0,
+      projectSizes: [],
+      appointmentNotes: [],
+      highlighted: !!copy?.featured,
+      priorityLevel: row.booking_priority ?? 1,
+      matchingBoost: Number(row.recommendation_multiplier ?? 0),
+      badgeText: copy?.eyebrow ?? "",
+      shortPitch: copy?.description ?? row.tagline ?? "",
+      positionRank: row.tier_rank ?? 0,
+    };
+  });
 }
 
 export function usePlanCatalog() {

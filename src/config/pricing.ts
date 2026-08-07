@@ -43,11 +43,16 @@ export const CANONICAL_PLAN_SLUGS: readonly ContractorPlanSlug[] = Object.freeze
 
 /** Display labels for canonical plans (use in menus, badges, admin). */
 export const CANONICAL_PLAN_LABELS: Record<ContractorPlanSlug, string> = Object.freeze({
-  recrue: "Recrue",
+  presence: "Présence",
+  local: "Local",
+  croissance: "Croissance",
   pro: "Pro",
   premium: "Premium",
-  elite: "Élite",
-  signature: "Signature",
+  domination: "Domination",
+  // legacy aliases (never shown in new UI)
+  recrue: "Présence",
+  elite: "Premium",
+  signature: "Domination",
 });
 
 /**

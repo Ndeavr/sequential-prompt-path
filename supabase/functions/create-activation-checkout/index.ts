@@ -22,8 +22,8 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { slug, email, source, utm, landing_token, activation_token } = (body ?? {}) as {
-      slug?: string; email?: string; source?: string; utm?: Record<string, string>; landing_token?: string; activation_token?: string;
+    const { slug, email, source, utm, landing_token, activation_token, plan_code, quote_id } = (body ?? {}) as {
+      slug?: string; email?: string; source?: string; utm?: Record<string, string>; landing_token?: string; activation_token?: string; plan_code?: string; quote_id?: string;
     };
 
     // NEW: sms_outreach flow — resolve prospect via landing_token
@@ -117,61 +117,136 @@ Deno.serve(async (req) => {
           ? `/isolation-qc?canceled=1`
           : `/pro/${encodeURIComponent(effectiveSlug)}?canceled=1`;
 
+    // ── $1 entry offer ─────────────────────────────────────────────────────
+    // When a plan is selected (plan_code or quote_id), the contractor pays 1 $
+    // today and the chosen plan starts automatically after 7 days.
+    // Without a plan, we keep the legacy one-time 1 $ activation (no renewal),
+    // so every SMS link already in the wild keeps working exactly as promised.
+    let trialPlan: {
+      code: string;
+      name: string;
+      monthly_price: number;
+      stripe_monthly_price_id: string | null;
+    } | null = null;
+    let resolvedQuoteId = quote_id ?? "";
+
+    try {
+      let wantedCode = plan_code ?? "";
+      if (!wantedCode && quote_id) {
+        const { data: q } = await supabase
+          .from("contractor_pricing_quotes")
+          .select("recommended_plan")
+          .eq("id", quote_id)
+          .maybeSingle();
+        wantedCode = (q?.recommended_plan as string) ?? "";
+      }
+      if (wantedCode) {
+        const { data: p } = await supabase
+          .from("plans")
+          .select("code,name,monthly_price,stripe_monthly_price_id")
+          .eq("audience", "contractor")
+          .eq("active", true)
+          .eq("code", wantedCode)
+          .maybeSingle();
+        if (p?.stripe_monthly_price_id) trialPlan = p as typeof trialPlan;
+      }
+    } catch (_) { /* soft-fail — fall back to the one-time offer */ }
+
+    const trialDays = 7;
+    const baseMetadata: Record<string, string> = {
+      // REQUIRED by stripe-unpro-webhook (checkUnproMetadata). Without these
+      // two keys every activation payment is quarantined and never recorded.
+      platform: "unpro",
+      brand: "unpro",
+      offer_code: "contractor_activation_1_dollar",
+      activation_type: trialPlan ? "activation_trial_to_plan" : "activation_7d",
+      plan_code: trialPlan?.code ?? "",
+      quote_id: resolvedQuoteId,
+      prospect_slug: effectiveSlug,
+      prospect_id: prospectId,
+      campaign_id: outreachCampaignId,
+      landing_token: landing_token ?? "",
+      activation_token: activation_token ?? "",
+      offer: "activation_7d",
+      source: source ?? (isOutreach ? "sms_outreach" : ""),
+      campaign_variant: utm?.camp ?? "",
+      utm_city: utm?.city ?? "",
+      utm_company: utm?.company ?? "",
+    };
+
     let session;
     try {
-      session = await stripe.checkout.sessions.create({
-        mode: "payment",
-        line_items: [{
-          quantity: 1,
-          price_data: {
-            currency: "cad",
-            unit_amount: 100,
-            product_data: {
-              name: "UNPRO — Activation 7 jours (paiement unique)",
-              description:
-                "1 $ aujourd'hui. Aucun renouvellement automatique. Vous choisirez votre plan pendant l'essai.",
-            },
-          },
-        }],
+      const common = {
         customer_email: email || undefined,
         success_url: `${origin}${successPath}`,
         cancel_url: `${origin}${cancelPath}`,
-        payment_intent_data: {
-          description:
-            "UNPRO Activation 7 jours — paiement unique de 1 $ CA. Aucun abonnement créé.",
-        },
-        custom_text: {
-          submit: {
-            message:
-              "Paiement unique de 1 $ CA. Aucun abonnement — vous choisirez votre plan pendant les 7 jours d'essai.",
-          },
-        },
-        metadata: {
-          // REQUIRED by stripe-unpro-webhook (checkUnproMetadata). Without these
-          // two keys every activation payment is quarantined and never recorded.
-          platform: "unpro",
-          brand: "unpro",
-          offer_code: "contractor_activation_1_dollar",
-          activation_type: "activation_7d",
-          prospect_slug: effectiveSlug,
-          prospect_id: prospectId,
-          campaign_id: outreachCampaignId,
-          landing_token: landing_token ?? "",
-          activation_token: activation_token ?? "",
-          offer: "activation_7d",
-          source: source ?? (isOutreach ? "sms_outreach" : ""),
-          campaign_variant: utm?.camp ?? "",
-          utm_city: utm?.city ?? "",
-          utm_company: utm?.company ?? "",
-        },
-
+        metadata: baseMetadata,
         // REVENUE-CRITICAL: Stripe Adaptive Pricing was showing a
         // "Choisir la devise — 0,74 $US / 1,00 $CA" selector with USD preselected
         // to Québec contractors on a 1 $ CA offer. It destroyed trust at the
         // exact moment of payment. CAD only, always.
         adaptive_pricing: { enabled: false },
-        locale: "fr-CA",
-      });
+        locale: "fr-CA" as const,
+      };
+
+      session = trialPlan
+        ? await stripe.checkout.sessions.create({
+            ...common,
+            mode: "subscription",
+            // Trial + setup-fee pattern: the 1 $ one-time item is invoiced and
+            // collected today, the plan itself starts billing after the trial.
+            line_items: [
+              {
+                quantity: 1,
+                price_data: {
+                  currency: "cad",
+                  unit_amount: 100,
+                  product_data: {
+                    name: `UNPRO — Activation ${trialDays} jours (${trialPlan.name})`,
+                    description: `1 $ CA aujourd'hui, puis ${Math.round(trialPlan.monthly_price / 100)} $ CA / mois après ${trialDays} jours.`,
+                  },
+                },
+              },
+              { price: trialPlan.stripe_monthly_price_id!, quantity: 1 },
+            ],
+            subscription_data: {
+              trial_period_days: trialDays,
+              description: `UNPRO ${trialPlan.name} — 1 $ CA pour ${trialDays} jours, puis ${Math.round(trialPlan.monthly_price / 100)} $ CA / mois.`,
+              metadata: baseMetadata,
+            },
+            custom_text: {
+              submit: {
+                message: `1 $ CA aujourd'hui. Votre plan ${trialPlan.name} (${Math.round(trialPlan.monthly_price / 100)} $ CA / mois) démarre dans ${trialDays} jours. Annulable en tout temps.`,
+              },
+            },
+          })
+        : await stripe.checkout.sessions.create({
+            ...common,
+            mode: "payment",
+            line_items: [{
+              quantity: 1,
+              price_data: {
+                currency: "cad",
+                unit_amount: 100,
+                product_data: {
+                  name: "UNPRO — Activation 7 jours (paiement unique)",
+                  description:
+                    "1 $ aujourd'hui. Aucun renouvellement automatique. Vous choisirez votre plan pendant l'essai.",
+                },
+              },
+            }],
+            payment_intent_data: {
+              description:
+                "UNPRO Activation 7 jours — paiement unique de 1 $ CA. Aucun abonnement créé.",
+            },
+            custom_text: {
+              submit: {
+                message:
+                  "Paiement unique de 1 $ CA. Aucun abonnement — vous choisirez votre plan pendant les 7 jours d'essai.",
+              },
+            },
+          });
+
 
     } catch (stripeErr: any) {
       console.error("[create-activation-checkout] stripe_error", stripeErr?.message || stripeErr);

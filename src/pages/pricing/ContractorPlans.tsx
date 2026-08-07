@@ -37,14 +37,20 @@ const fadeUp = {
 };
 
 const PLAN_ICONS: Record<string, React.ElementType> = {
+  presence: Sprout,
+  local: HardHat,
+  croissance: TrendingUp,
+  pro: Star,
+  premium: Crown,
+  domination: Shield,
+  // legacy
   recrue: Sprout,
-  pro: TrendingUp,
-  premium: Star,
   elite: Crown,
   signature: Shield,
 };
 
-const SIGNATURE_CODES = ["signature"];
+// Plans sold on application (territory exclusivity) rather than instant checkout.
+const SIGNATURE_CODES = ["domination", "signature"];
 
 // ─── Subscription card (Pro / Premium / Élite / Signature) ───
 function PlanCard({
