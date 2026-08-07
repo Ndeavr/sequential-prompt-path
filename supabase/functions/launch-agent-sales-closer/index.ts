@@ -6,36 +6,48 @@ import { corsHeaders, adminClient, transitionLead, logLaunchEvent } from "../_sh
 import { reportOutcome, FailureCode } from "../_shared/reliability.ts";
 import { sendSms as sendSmsCanonical } from "../_shared/twilioSend.ts";
 
-const PLANS = {
-  Recrue:    { amount: 14900, label: "Recrue" },
-  Pro:       { amount: 34900, label: "Pro" },
-  Premium:   { amount: 59900, label: "Premium" },
-  Elite:     { amount: 99900, label: "Élite" },
-  Signature: { amount: 179900, label: "Signature" },
-} as const;
+// CANONICAL PRICING — plan codes only; amounts and Stripe price IDs come from
+// `public.plans` via _shared/planCatalog.ts. No hardcoded amounts here.
+import { resolvePlan, planLineItem, planMetadata } from "../_shared/planCatalog.ts";
 
-function recommendPlan(score: number): keyof typeof PLANS {
-  if (score >= 80) return "Pro";
-  if (score >= 60) return "Premium";
-  if (score >= 40) return "Elite";
-  return "Pro"; // safe default for low-visibility (lots of upside)
+/** Returns a CANONICAL plan code (see public.plans). */
+function recommendPlan(score: number): string {
+  if (score >= 80) return "pro";
+  if (score >= 60) return "premium";
+  if (score >= 40) return "domination";
+  return "pro"; // safe default for low-visibility (lots of upside)
 }
 
-async function createCheckout(lead: any, planKey: keyof typeof PLANS): Promise<string | null> {
+async function createCheckout(lead: any, planKey: string): Promise<string | null> {
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
   if (!stripeKey) return null;
-  const plan = PLANS[planKey];
+
+  let plan;
+  try {
+    plan = await resolvePlan(adminClient(), planKey);
+  } catch (e) {
+    console.error("[sales-closer] plan resolution failed:", e instanceof Error ? e.message : e);
+    return null;
+  }
+
+  let item;
+  try {
+    item = planLineItem(plan, "month");
+  } catch (e) {
+    console.error("[sales-closer] stripe price missing:", e instanceof Error ? e.message : e);
+    return null;
+  }
+
   const params = new URLSearchParams();
   params.append("mode", "subscription");
   params.append("line_items[0][quantity]", "1");
-  params.append("line_items[0][price_data][currency]", "cad");
-  params.append("line_items[0][price_data][unit_amount]", String(plan.amount));
-  params.append("line_items[0][price_data][recurring][interval]", "month");
-  params.append("line_items[0][price_data][product_data][name]", `UNPRO ${plan.label}`);
+  params.append("line_items[0][price]", item.price);
   params.append("success_url", "https://app.unpro.ca/entrepreneur/active?launch=1");
   params.append("cancel_url", "https://app.unpro.ca/entrepreneur");
   params.append("metadata[launch_lead_id]", lead.id);
-  params.append("metadata[plan]", planKey);
+  for (const [k, v] of Object.entries(planMetadata(plan))) {
+    params.append(`metadata[${k}]`, String(v));
+  }
   if (lead.email) params.append("customer_email", lead.email);
 
   const r = await fetch("https://api.stripe.com/v1/checkout/sessions", {

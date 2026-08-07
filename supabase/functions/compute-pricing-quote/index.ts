@@ -208,17 +208,24 @@ Deno.serve(async (req) => {
     const citySlug = slug(body.city);
     const tradeSlug = slug(body.trade_primary);
     const sources: Record<string, unknown> = {};
+    // Signal read failures must be visible, not swallowed. Every missing signal
+    // is reported so the quote's confidence can be judged.
+    const signalErrors: Record<string, string> = {};
     let signalCount = 0;
 
     let demandFactor = 1.0;
     let competitionFactor = 1.0;
 
-    const { data: md } = await svc
+    const { data: md, error: mdErr } = await svc
       .from("market_demand")
       .select("total_projects,supply_count,gap_score,pressure_score")
       .ilike("city", body.city)
       .ilike("category", body.trade_primary)
       .maybeSingle();
+    if (mdErr) {
+      signalErrors.market_demand = mdErr.message;
+      console.error("[compute-pricing-quote] market_demand read failed:", mdErr.message);
+    }
 
     if (md) {
       signalCount++;
@@ -242,12 +249,16 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { data: grid } = await svc
+    const { data: grid, error: gridErr } = await svc
       .from("city_service_demand_grid")
       .select("demand_score,supply_score,gap_score")
       .eq("city_slug", citySlug)
       .eq("trade_slug", tradeSlug)
       .maybeSingle();
+    if (gridErr) {
+      signalErrors.city_service_demand_grid = gridErr.message;
+      console.error("[compute-pricing-quote] demand grid read failed:", gridErr.message);
+    }
 
     if (grid) {
       signalCount++;
@@ -262,6 +273,32 @@ Deno.serve(async (req) => {
           w.demand_factor_max,
         );
       }
+    }
+
+    // ---------- Cluster pricing multiplier (city::trade) ----------
+    // Canonical column is `value_multiplier` (NOT `multiplier`).
+    let clusterMultiplier = 1.0;
+    const clusterKey = `${citySlug}::${tradeSlug}`;
+    const { data: clusterRow, error: clusterErr } = await svc
+      .from("cluster_pricing_multipliers")
+      .select("cluster_key,cluster_value_tier,value_multiplier,scarcity_override_multiplier,demand_score")
+      .eq("cluster_key", clusterKey)
+      .eq("is_active", true)
+      .maybeSingle();
+    if (clusterErr) {
+      signalErrors.cluster_pricing_multipliers = clusterErr.message;
+      console.error("[compute-pricing-quote] cluster multiplier read failed:", clusterErr.message);
+    } else if (clusterRow) {
+      signalCount++;
+      sources.cluster_pricing = clusterRow;
+      const raw = Number(
+        (clusterRow as any).scarcity_override_multiplier ??
+          (clusterRow as any).value_multiplier ??
+          1,
+      );
+      if (Number.isFinite(raw) && raw > 0) clusterMultiplier = clamp(raw, 0.8, 1.5);
+    } else {
+      sources.cluster_pricing = { status: "no_row", cluster_key: clusterKey };
     }
 
     // ---------- Territory availability ----------
@@ -280,8 +317,11 @@ Deno.serve(async (req) => {
           (avail as any).lock_status === "locked" ||
           Number((avail as any).remaining_slots ?? 1) <= 0;
       }
-    } catch (_) {
-      availability = { status: "insufficient_data" };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      signalErrors.territory_availability = msg;
+      console.error("[compute-pricing-quote] territory_availability rpc failed:", msg);
+      availability = { status: "insufficient_data", error: msg };
     }
 
     // ---------- Capacity factor ----------
@@ -329,7 +369,8 @@ Deno.serve(async (req) => {
           capacityFactor *
           territoryMultiplier *
           seasonality *
-          objectiveMultiplier,
+          objectiveMultiplier *
+          clusterMultiplier,
         0.85,
         1.35,
       ),
@@ -362,11 +403,14 @@ Deno.serve(async (req) => {
       territory_multiplier: round2(territoryMultiplier),
       seasonality_multiplier: round2(seasonality),
       objective_multiplier: round2(objectiveMultiplier),
+      cluster_multiplier: round2(clusterMultiplier),
       market_multiplier: marketMultiplier,
       utilization: round2(utilization),
       extra_appointments: extraAppointments,
       signal_count: signalCount,
       sources,
+      signal_errors: signalErrors,
+      degraded: Object.keys(signalErrors).length > 0,
     };
 
     const breakdown = {

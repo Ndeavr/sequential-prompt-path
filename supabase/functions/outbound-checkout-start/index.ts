@@ -9,21 +9,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface PlanDef { name: string; amount: number; recurring: boolean; }
-const PLANS: Record<string, PlanDef> = {
-  recrue:    { name: "UNPRO Recrue",    amount: 14900,  recurring: true },
-  pro:       { name: "UNPRO Pro",       amount: 34900,  recurring: true },
-  premium:   { name: "UNPRO Premium",   amount: 59900,  recurring: true },
-  elite:     { name: "UNPRO Élite",     amount: 99900,  recurring: true },
-  signature: { name: "UNPRO Signature", amount: 179900, recurring: true },
-};
+// CANONICAL PRICING — never hardcode amounts here. See _shared/planCatalog.ts.
+import { resolvePlan, planLineItem, planMetadata, planErrorResponse } from "../_shared/planCatalog.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const { slug, token, plan_code } = await req.json();
-    if (!slug || !token || !plan_code || !PLANS[plan_code]) {
+    if (!slug || !token || !plan_code) {
       return new Response(JSON.stringify({ error: "slug, token, plan_code requis" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -55,7 +49,12 @@ serve(async (req) => {
       .from("outbound_companies").select("email, company_name").eq("id", landing.company_id).maybeSingle();
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, { apiVersion: "2025-08-27.basil" });
-    const plan = PLANS[plan_code];
+    let plan;
+    try {
+      plan = await resolvePlan(supabase, plan_code);
+    } catch (e) {
+      return planErrorResponse(e, corsHeaders);
+    }
 
     const origin = req.headers.get("origin") || "https://unpro.ca";
     const successUrl = `${origin}/pro/diagnostic/${slug}/merci?session_id={CHECKOUT_SESSION_ID}&t=${token}`;
@@ -64,39 +63,30 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       mode: plan.recurring ? "subscription" : "payment",
       customer_email: company?.email || undefined,
-      line_items: [{
-        price_data: {
-          currency: "cad",
-          product_data: { name: plan.name },
-          unit_amount: plan.amount,
-          ...(plan.recurring ? { recurring: { interval: "month" } } : {}),
-        },
-        quantity: 1,
-      }],
+      line_items: [planLineItem(plan, "month")],
       success_url: successUrl,
       cancel_url: cancelUrl,
-      metadata: {
+      metadata: planMetadata(plan, {
         source: "outbound_landing",
         landing_id: landing.id,
         lead_id: landing.lead_id ?? "",
         company_id: landing.company_id ?? "",
-        plan_code,
         slug,
-      },
+      }),
     });
 
     // Mark checkout started
     await supabase.from("outbound_landing_pages").update({
       checkout_started_at: new Date().toISOString(),
       checkout_session_id: session.id,
-      checkout_plan_code: plan_code,
+      checkout_plan_code: plan.code,
     }).eq("id", landing.id);
 
     if (landing.lead_id) {
       await supabase.from("outbound_events").insert({
         lead_id: landing.lead_id,
         event_type: "checkout_started",
-        event_value: plan_code,
+        event_value: plan.code,
         event_payload: { session_id: session.id },
       });
     }

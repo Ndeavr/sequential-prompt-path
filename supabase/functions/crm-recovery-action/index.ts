@@ -279,13 +279,21 @@ Deno.serve(async (req) => {
             break;
           }
 
-          case "note": {
+          // UI sends "add_note"; keep "note" as a backwards-compatible alias.
+          case "note":
+          case "add_note": {
             const note = String(payloadExtra.note ?? "").trim();
             if (!note) throw new Error("missing_note");
-            await sb.from("crm_prospect_notes").insert({ prospect_id: pid, note, author_id: actorId });
+            const { error: noteErr } = await sb
+              .from("crm_prospect_notes")
+              .insert({ prospect_id: pid, note, author_id: actorId });
+            if (noteErr) throw new Error(`note_insert_failed: ${noteErr.message}`);
             result = "note_added";
             break;
           }
+
+          default:
+            throw new Error(`unknown_action:${action}`);
         }
       } catch (e) {
         status = "failed";

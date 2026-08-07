@@ -20,15 +20,12 @@ interface GrowthProfileInput {
   seasonality_notes?: string;
 }
 
-const PLAN_BASE_PRICES_CENTS: Record<string, number> = {
-  recrue: 14900,
-  pro: 34900,
-  premium: 59900,
-  elite: 99900,
-  signature: 179900,
-};
-const PLAN_ORDER = ["recrue", "pro", "premium", "elite", "signature"];
-const planIdx = (s: string) => Math.max(0, PLAN_ORDER.indexOf(s));
+// CANONICAL PRICING — base prices are loaded at runtime from `public.plans`.
+// See _shared/planCatalog.ts. No hardcoded amounts.
+import { canonicalPlanCode } from "../_shared/planCatalog.ts";
+
+const PLAN_ORDER = ["presence", "local", "croissance", "pro", "premium", "domination"];
+const planIdx = (s: string) => Math.max(0, PLAN_ORDER.indexOf(canonicalPlanCode(s)));
 const maxPlan = (a: string, b: string) => (planIdx(a) >= planIdx(b) ? a : b);
 const clamp = (n: number, mn: number, mx: number) => Math.max(mn, Math.min(mx, n));
 
@@ -106,7 +103,7 @@ Deno.serve(async (req) => {
         rarityScore: Math.round(avg("rarity_score")),
         exclusivitySlotsTotal: marketRows.reduce((a: number, r: any) => a + r.exclusivity_slots_total, 0),
         exclusivitySlotsTaken: marketRows.reduce((a: number, r: any) => a + r.exclusivity_slots_taken, 0),
-        recommendedMinPlan: marketRows.reduce((a: string, r: any) => maxPlan(a, r.recommended_min_plan), "recrue"),
+        recommendedMinPlan: marketRows.reduce((a: string, r: any) => maxPlan(a, canonicalPlanCode(r.recommended_min_plan)), "presence"),
         seasonalityMultiplier: avg("seasonality_multiplier"),
       };
     } else {
@@ -157,18 +154,40 @@ Deno.serve(async (req) => {
 
     // Plan selection
     const ticketUsd = profile.avg_ticket_cents / 100;
+    // Canonical base prices from the single source of truth.
+    const { data: planRows, error: planErr } = await admin
+      .from("plans")
+      .select("code, monthly_price, active")
+      .eq("audience", "contractor")
+      .eq("active", true);
+    if (planErr) {
+      return new Response(
+        JSON.stringify({ error: `plan_catalog_unavailable: ${planErr.message}` }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const PLAN_BASE_PRICES_CENTS: Record<string, number> = {};
+    for (const row of planRows ?? []) {
+      PLAN_BASE_PRICES_CENTS[(row as any).code] = (row as any).monthly_price ?? 0;
+    }
+
     let plan: string;
-    if (profile.monthly_capacity < 5) plan = "recrue";
-    else if (marketScore < 40) plan = "pro";
+    if (profile.monthly_capacity < 5) plan = "presence";
     else if (marketScore < 70) plan = "pro";
     else if (profile.wants_exclusivity && aggregated.exclusivitySlotsTaken < aggregated.exclusivitySlotsTotal)
-      plan = ticketUsd > 8000 ? "signature" : "elite";
-    else if (ticketUsd > 10000) plan = "elite";
-    else plan = "premium";
-    plan = maxPlan(plan, aggregated.recommendedMinPlan);
-    if (override?.forced_plan_slug) plan = override.forced_plan_slug;
+      plan = ticketUsd > 8000 ? "domination" : "premium";
+    else if (ticketUsd > 10000) plan = "premium";
+    else plan = "croissance";
+    plan = canonicalPlanCode(maxPlan(plan, aggregated.recommendedMinPlan));
+    if (override?.forced_plan_slug) plan = canonicalPlanCode(override.forced_plan_slug);
 
-    const basePrice = PLAN_BASE_PRICES_CENTS[plan] ?? 34900;
+    const basePrice = PLAN_BASE_PRICES_CENTS[plan];
+    if (!basePrice) {
+      return new Response(
+        JSON.stringify({ error: `plan_price_missing: ${plan}` }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
     const marketMod =
       (aggregated.competitionScore * c.competition_weight +
         aggregated.demandScore * c.demand_weight +
@@ -188,7 +207,7 @@ Deno.serve(async (req) => {
     finalPrice = clamp(Math.round(finalPrice), c.min_price_floor_cents, c.max_price_ceiling_cents);
 
     // Appointments & revenue
-    const planMult: Record<string, number> = { recrue: 0.4, pro: 0.7, premium: 1.0, elite: 1.4, signature: 1.8 };
+    const planMult: Record<string, number> = { presence: 0.3, local: 0.4, croissance: 0.55, pro: 0.7, premium: 1.0, domination: 1.8 };
     const target = profile.monthly_capacity * (planMult[plan] ?? 1) * (0.6 + 0.4 * (aggregated.demandScore / 100));
     const apptMin = Math.max(1, Math.round(target * 0.7));
     const apptMax = Math.max(2, Math.round(target * 1.1));

@@ -33,7 +33,7 @@ function score(row: any): number {
   const cat = (row.category || row.category_slug || "").toLowerCase();
   s += CATEGORY_PRIORITY[cat] ?? 0;
   if ((row.reviews_count ?? 0) > 20) s += 2;
-  if (row.website || row.facebook_url) s += 1;
+  if (row.website) s += 1;
   if (row.rbq || row.rbq_number) s += 2;
   return s;
 }
@@ -46,12 +46,25 @@ Deno.serve(async (req) => {
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     // Pull candidate pool from contractors + contractor_prospects.
+    // NOTE: column names differ between the two tables.
+    //   contractors        -> website,     rbq_number
+    //   contractor_prospects -> website_url, rbq, review_count
     const [conRes, proRes] = await Promise.all([
       sb.from("contractors").select("id, business_name, city, phone, email, website, rbq_number").limit(500),
-      sb.from("contractor_prospects").select("id, business_name, city, phone, email, website, category_slug, reviews_count, rbq_number").limit(500),
+      sb.from("contractor_prospects").select("id, business_name, city, phone, email, website_url, category_slug, review_count, rbq").limit(500),
     ]);
+    if (conRes.error) return json({ error: `contractors_query_failed: ${conRes.error.message}` }, 500);
+    if (proRes.error) return json({ error: `prospects_query_failed: ${proRes.error.message}` }, 500);
     const contractors = (conRes.data ?? []).map((r: any) => ({ ...r, source: "contractor", contractor_id: r.id, company_name: r.business_name }));
-    const prospects = (proRes.data ?? []).map((r: any) => ({ ...r, source: "prospect", company_name: r.business_name, category: r.category_slug }));
+    const prospects = (proRes.data ?? []).map((r: any) => ({
+      ...r,
+      source: "prospect",
+      company_name: r.business_name,
+      category: r.category_slug,
+      website: r.website_url ?? null,
+      reviews_count: r.review_count ?? 0,
+      rbq_number: r.rbq ?? null,
+    }));
     const pool = [...contractors, ...prospects];
 
     // Existing active phones to skip.
@@ -90,7 +103,19 @@ Deno.serve(async (req) => {
     });
     const chosen = deduped.slice(0, target);
 
-    if (chosen.length === 0) return json({ inserted: 0, rejected_by_guard: rejectedByGuard, note: "no eligible candidates" });
+    const diagnostics = {
+      pool_contractors: contractors.length,
+      pool_prospects: prospects.length,
+      pool_total: pool.length,
+      passed_phone_guard: candidates.length,
+      after_dedupe: deduped.length,
+      already_in_queue: skip.size,
+      rejected_by_guard: rejectedByGuard,
+    };
+
+    if (chosen.length === 0) {
+      return json({ inserted: 0, note: "no eligible candidates", diagnostics });
+    }
 
     const rows = chosen.map((c) => ({
       contractor_id: c.contractor_id,
@@ -105,9 +130,14 @@ Deno.serve(async (req) => {
       tracking_slug: slug(),
       status: "queued",
     }));
+
+    if (body?.dry_run === true) {
+      return json({ inserted: 0, dry_run: true, would_insert: rows.length, diagnostics, sample: rows.slice(0, 5) });
+    }
+
     const { error } = await sb.from("contractor_outreach_queue").insert(rows);
     if (error) return json({ error: error.message }, 500);
-    return json({ inserted: rows.length, rejected_by_guard: rejectedByGuard, sample: rows.slice(0, 3) });
+    return json({ inserted: rows.length, diagnostics, sample: rows.slice(0, 3) });
   } catch (e: any) {
     return json({ error: String(e?.message ?? e) }, 500);
   }
