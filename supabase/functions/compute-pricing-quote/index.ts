@@ -269,8 +269,8 @@ Deno.serve(async (req) => {
     let saturated = false;
     try {
       const { data: avail } = await svc.rpc("territory_availability", {
-        p_trade: tradeSlug,
-        p_city: body.city,
+        _trade: tradeSlug,
+        _city: body.city,
       });
       if (avail) {
         availability = avail as Record<string, unknown>;
