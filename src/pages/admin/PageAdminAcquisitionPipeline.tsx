@@ -10,6 +10,8 @@ import { fr } from "date-fns/locale";
 import { Loader2, RefreshCw, Play, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { RevenueTimelinePanel } from "@/components/admin/acquisition/RevenueTimelinePanel";
+import { AutonomousRecruitmentPanel } from "@/components/admin/acquisition/AutonomousRecruitmentPanel";
+
 import {
   useAcquisitionSourceHealth,
   useFunnelDaily,
