@@ -101,12 +101,14 @@ export interface UpgradeBreakEven {
 
 // ── Constants ──────────────────────────────────────────────────────
 
+// CANONICAL PRICING — derived from src/config/contractorPlans.ts (mirrors
+// public.plans). Never hardcode a plan price here.
 export const PLAN_PRICES: Record<PlanCode, number> = {
-  recrue: 149,
-  pro: 349,
-  premium: 599,
-  elite: 999,
-  signature: 1799,
+  recrue: PLAN_PRICE_MAP.recrue,
+  pro: PLAN_PRICE_MAP.pro,
+  premium: PLAN_PRICE_MAP.premium,
+  elite: PLAN_PRICE_MAP.elite,
+  signature: PLAN_PRICE_MAP.signature,
 };
 
 export const PLAN_LABELS: Record<PlanCode, string> = {
