@@ -13,7 +13,7 @@ type Msg =
 interface Props {
   answers: IsrAnswers;
   onAnswer: (key: IsrAnswerKey, value: string) => void;
-  recommended: "Signature" | null;
+  recommended: "Domination" | null;
 }
 
 export default function IsrAlexConversation({ answers, onAnswer, recommended }: Props) {

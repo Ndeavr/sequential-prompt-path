@@ -31,6 +31,13 @@ import {
   MOCK_PHOTO_PROBLEM,
 } from "@/components/alex-conversation/types";
 import { audioEngine } from "@/services/audioEngineUNPRO";
+import { PLAN_PRICE_MAP, resolvePlanSlug } from "@/config/contractorPlans";
+
+/** Canonical monthly price (CAD) for any plan slug, legacy slugs included. */
+const CONTRACTOR_PLAN_PRICES = PLAN_PRICE_MAP;
+function contractorPlanPrice(slug: string): number {
+  return PLAN_PRICE_MAP[resolvePlanSlug(slug)] ?? PLAN_PRICE_MAP.croissance;
+}
 import { classifyIntent, isEntrepreneurIntent, type AlexIntent } from "@/services/alexIntentClassifier";
 import { AlexMemoryStore, createEmptyMemory } from "@/services/alexMemoryEngine";
 import { resolveRoute, type AlexRoute } from "@/services/alexRouteEngine";
@@ -126,7 +133,7 @@ function detectAnalysisIntent(text: string): IntentMatch | null {
     return {
       intent: "stripe_payment_inline",
         response: "Merci! Votre profil est prêt. Procédons au paiement pour activer votre plan Pro.",
-        data: { planCode: "pro", planName: "Pro", price: 349, interval: "monthly" },
+        data: { planCode: "pro", planName: "Pro", price: CONTRACTOR_PLAN_PRICES.pro, interval: "monthly" },
     };
   }
 
@@ -412,7 +419,7 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
         emitSafe("alex", "Parfait. J'ouvre l'activation maintenant. Après paiement, on continue votre fiche, vos zones, spécialités et disponibilités.", "stripe_payment_inline" as InlineCardType, {
           planCode,
           planName: planCode.charAt(0).toUpperCase() + planCode.slice(1),
-          price: planCode === "recrue" ? 149 : planCode === "premium" ? 599 : planCode === "elite" ? 999 : planCode === "signature" ? 1799 : 349,
+          price: contractorPlanPrice(planCode),
           interval: "monthly",
         });
         setIsThinking(false);
@@ -650,7 +657,7 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
 
     if (intent === "contractor_payment_checkout") {
       emitSafe("alex", "Procédons au paiement. Entrez vos informations de carte ci-dessous.", "stripe_payment_inline" as InlineCardType, {
-        planCode: "pro", planName: "Pro", price: 349, interval: "monthly",
+        planCode: "pro", planName: "Pro", price: CONTRACTOR_PLAN_PRICES.pro, interval: "monthly",
       });
       setIsThinking(false);
       return;

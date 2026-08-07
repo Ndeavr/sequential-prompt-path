@@ -35,7 +35,7 @@ export default function PageIsrDemoSuccess() {
   return (
     <div className="min-h-screen bg-[#050816] text-white relative overflow-hidden">
       <Helmet>
-        <title>Signature activé — Démo ISR</title>
+        <title>Domination activé — Démo ISR</title>
         <meta name="robots" content="noindex,nofollow" />
       </Helmet>
 
@@ -48,12 +48,12 @@ export default function PageIsrDemoSuccess() {
         <div className="rounded-[28px] border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6 sm:p-8">
           <div className="text-[11px] uppercase tracking-[0.25em] text-emerald-300/80">Démo ISR</div>
           <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
-            Signature activé — Démo ISR complétée
+            Domination activé — Démo ISR complétée
           </h1>
 
           <dl className="mt-6 grid grid-cols-1 gap-3 text-sm">
             <Row label="Entreprise" value={snap?.contractor_name ?? "Isolation Solution Royal"} />
-            <Row label="Plan" value={snap?.selected_plan ?? "Signature"} />
+            <Row label="Plan" value={snap?.selected_plan ?? "Domination"} />
             <Row
               label="Paiement démo"
               value={

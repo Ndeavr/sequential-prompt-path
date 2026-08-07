@@ -93,7 +93,7 @@ export default function PageAdminClusterPlanProjectSizeMatrix() {
         <div>
           <h2 className="text-lg font-semibold text-foreground mb-3">Revenu par plan (potentiel annuel)</h2>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-            {(["recrue", "pro", "premium", "elite", "signature"] as const).map(plan => {
+            {(["presence", "local", "croissance", "pro", "premium", "domination"] as const).map(plan => {
               const planRows = rows.filter(r => r.plan === plan);
               const total = planRows.reduce((s, r) => s + r.revenueIfFullAnnual, 0);
               const current = planRows.reduce((s, r) => s + r.revenueCurrentAnnual, 0);

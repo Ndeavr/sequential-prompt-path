@@ -46,7 +46,9 @@ Après le taux de fermeture :
 Calcule et recommande le plan basé sur :
 - Revenus visés / valeur moyenne de projet = rendez-vous nécessaires
 - Ajusté par taux de fermeture
-- Match avec plan_catalog: Recrue(149$), Pro(349$), Premium(599$), Élite(999$), Signature(1799$)
+- Plans UNPRO (mensuel): Présence(49$), Local(79$), Croissance(149$), Pro(299$), Premium(599$), Domination(1499$)
+- Offre d'entrée: 1 $ pour 7 jours, puis le plan choisi
+- Si le besoin est atypique (territoire, exclusivité, capacité), propose le plan personnalisé calculé par UNPRO
 
 Dis clairement : "Je vous recommande le plan [X]. Vous recevez [Y] rendez-vous qualifiés par mois."
 
@@ -87,13 +89,14 @@ serve(async (req) => {
 
     // Load plans for context
     const { data: plans } = await sb
-      .from("plan_catalog")
-      .select("code, name, monthly_price, appointments_range_min, appointments_range_max")
+      .from("plans")
+      .select("code, name, monthly_price, appointments_included")
       .eq("active", true)
-      .order("position_rank");
+      .eq("audience", "contractor")
+      .order("tier_rank");
 
-    const planContext = plans?.map(p => 
-      `${p.name} (${p.monthly_price}$/mois, ${p.appointments_range_min}-${p.appointments_range_max} RDV)`
+    const planContext = plans?.map(p =>
+      `${p.name} (${Math.round((p.monthly_price ?? 0) / 100)}$/mois, ${p.appointments_included ?? 0} RDV inclus)`
     ).join("\n") || "";
 
     // Log event if session exists
@@ -114,12 +117,11 @@ serve(async (req) => {
       const closeRate = qualification_data.close_rate / 100;
       const rdvNeeded = Math.ceil((qualification_data.monthly_revenue_goal / avgJob) / closeRate);
       
-      const matchedPlan = plans?.find(p => 
-        rdvNeeded >= (p.appointments_range_min || 0) && rdvNeeded <= (p.appointments_range_max || 999)
-      ) || plans?.[plans.length - 1];
-      
+      const matchedPlan = plans?.find(p => (p.appointments_included ?? 0) >= rdvNeeded)
+        || plans?.[(plans?.length ?? 1) - 1];
+
       if (matchedPlan) {
-        recommendationHint = `\n\nCONTEXTE CALCULÉ: L'entrepreneur a besoin de ~${rdvNeeded} RDV/mois. Plan recommandé: ${matchedPlan.name} (${matchedPlan.monthly_price}$/mois).`;
+        recommendationHint = `\n\nCONTEXTE CALCULÉ: L'entrepreneur a besoin de ~${rdvNeeded} RDV/mois. Plan recommandé: ${matchedPlan.name} (${Math.round((matchedPlan.monthly_price ?? 0) / 100)}$/mois).`;
       }
     }
 

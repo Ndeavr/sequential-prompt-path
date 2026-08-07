@@ -27,12 +27,19 @@ import { redirectToCheckout } from "@/lib/redirectToCheckout";
 import { toast } from "sonner";
 
 const PLAN_LABEL: Record<string, string> = {
-  recrue: "Recrue",
+  presence: "Présence",
+  local: "Local",
+  croissance: "Croissance",
   pro: "Pro",
   premium: "Premium",
-  elite: "Élite",
-  signature: "Signature",
+  domination: "Domination",
+  // legacy codes still returned by older quotes
+  recrue: "Présence",
+  elite: "Premium",
+  signature: "Domination",
 };
+
+const PLAN_ORDER = ["presence", "local", "croissance", "pro", "premium", "domination"];
 
 export default function PageContractorPersonalizedPlan() {
   const { quoteId } = useParams<{ quoteId: string }>();
@@ -71,7 +78,7 @@ export default function PageContractorPersonalizedPlan() {
       const targetPrice =
         targetPlan === quote.recommended_plan
           ? quote.recommended_monthly_price
-          : targetPlan === "recrue" || planCode === "recrue"
+          : targetPlan === "presence" || planCode === "presence"
             ? quote.min_monthly_price
             : quote.max_monthly_price;
       const isRecommended = targetPlan === quote.recommended_plan;
@@ -105,8 +112,8 @@ export default function PageContractorPersonalizedPlan() {
 
   const triadPlans = useMemo(() => {
     if (!quote) return [];
-    const order = ["recrue", "pro", "premium", "elite", "signature"];
-    const idx = order.indexOf(quote.recommended_plan);
+    const order = PLAN_ORDER;
+    const idx = Math.max(0, order.indexOf(quote.recommended_plan));
     const down = order[Math.max(0, idx - 1)];
     const up = order[Math.min(order.length - 1, idx + 1)];
     return [
@@ -366,7 +373,7 @@ export default function PageContractorPersonalizedPlan() {
         <div className="max-w-2xl mx-auto flex gap-2">
           {waitlisted ? (
             <button
-              onClick={() => handleActivate("recrue")}
+              onClick={() => handleActivate("presence")}
               disabled={checkoutLoading}
               className="flex-1 h-14 rounded-[18px] bg-amber-500 text-black font-semibold flex items-center justify-center disabled:opacity-60"
             >

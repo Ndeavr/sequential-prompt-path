@@ -74,10 +74,10 @@ export const ISR_QUESTIONS: IsrQuestion[] = [
 ];
 
 export const ISR_PLANS = [
-  { name: "Pro", price: 349, tag: "Démarrage" },
-  { name: "Premium", price: 599, tag: "Croissance" },
-  { name: "Élite", price: 999, tag: "Performance" },
-  { name: "Signature", price: 1799, tag: "Domination IA" },
+  { name: "Croissance", price: 149, tag: "Démarrage" },
+  { name: "Pro", price: 299, tag: "Accélération" },
+  { name: "Premium", price: 599, tag: "Performance" },
+  { name: "Domination", price: 1499, tag: "Domination IA" },
 ] as const;
 
 export const ISR_SIGNATURE_FEATURES = [
@@ -94,16 +94,16 @@ export const ISR_PROMO_CODE = "ISR_SIGNATURE_TEST";
 
 export type IsrAnswers = Partial<Record<IsrAnswerKey, string>>;
 
-export function recommendPlan(a: IsrAnswers): "Signature" | null {
+export function recommendPlan(a: IsrAnswers): "Domination" | null {
   if (!a.capacity || !a.territory || !a.project_type || !a.objective || !a.ai_priority) {
     return null;
   }
-  // Per product rule: never downgrade after intent. ISR demo always lands on Signature.
-  return "Signature";
+  // Per product rule: never downgrade after intent. ISR demo always lands on Domination.
+  return "Domination";
 }
 
 export const ISR_RECOMMENDATION_REASON =
-  "ISR couvre plusieurs services d'entretoit à forte valeur, plusieurs territoires et peut transformer les rendez-vous qualifiés en contrats rentables. Le plan Signature maximise la visibilité IA, la priorité territoriale et le volume de rendez-vous exclusifs.";
+  "ISR couvre plusieurs services d'entretoit à forte valeur, plusieurs territoires et peut transformer les rendez-vous qualifiés en contrats rentables. Le plan Domination maximise la visibilité IA, la priorité territoriale et le volume de rendez-vous exclusifs.";
 
 export const ISR_NO_DOWNGRADE_LINE =
   "Vu les objectifs ISR, je ne recommande pas de réduire le plan. Le risque serait de manquer des opportunités qualifiées dans vos territoires prioritaires.";
