@@ -1,7 +1,7 @@
 import { ISR_PLANS } from "@/config/isrDemoConfig";
 
 interface Props {
-  recommended: "Signature" | null;
+  recommended: "Domination" | null;
 }
 
 export default function IsrPlanGrid({ recommended }: Props) {

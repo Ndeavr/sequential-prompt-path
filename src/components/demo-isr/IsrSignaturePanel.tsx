@@ -35,7 +35,7 @@ export default function IsrSignaturePanel({ demoRunId }: Props) {
         "create-isr-demo-checkout",
         {
           body: {
-            plan: "Signature",
+            plan: "Domination",
             promo_code: ISR_PROMO_CODE,
             contractor_name: ISR_BRAND.company,
             demo_run_id: demoRunId,
@@ -58,11 +58,11 @@ export default function IsrSignaturePanel({ demoRunId }: Props) {
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="text-[11px] uppercase tracking-[0.2em] text-amber-300/80">Plan recommandé</div>
-          <div className="mt-1 text-2xl font-semibold tracking-[-0.03em]">Signature</div>
+          <div className="mt-1 text-2xl font-semibold tracking-[-0.03em]">Domination</div>
         </div>
         <div className="text-right">
           <div className={`text-2xl font-semibold ${isValid ? "text-white/40 line-through" : "text-white"}`}>
-            1 799$<span className="text-sm font-normal text-white/40">/mois</span>
+            1 499 $<span className="text-sm font-normal text-white/40">/mois</span>
           </div>
           {isValid && (
             <div className="text-2xl font-semibold text-amber-300">
@@ -103,7 +103,7 @@ export default function IsrSignaturePanel({ demoRunId }: Props) {
         </div>
         {promoState === "valid" && (
           <div className="mt-2 text-xs text-emerald-300">
-            Code appliqué: Signature activé à 1$ pour cette démo.
+            Code appliqué: Domination activé à 1$ pour cette démo.
           </div>
         )}
         {promoState === "invalid" && (
@@ -112,7 +112,7 @@ export default function IsrSignaturePanel({ demoRunId }: Props) {
       </div>
 
       <div className="mt-5 text-[11px] text-white/45">
-        Ce test active uniquement une transaction démo à 1$. Le plan Signature réel demeure 1 799$/mois.
+        Ce test active uniquement une transaction démo à 1$. Le plan Domination réel demeure 1 499 $/mois.
       </div>
 
       <button
@@ -120,7 +120,7 @@ export default function IsrSignaturePanel({ demoRunId }: Props) {
         disabled={!isValid || loading}
         className="mt-3 w-full rounded-[18px] bg-amber-300 px-5 py-3.5 text-sm font-semibold text-[#050816] hover:-translate-y-0.5 transition-all duration-[420ms] [transition-timing-function:cubic-bezier(.22,1,.36,1)] disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0"
       >
-        {loading ? "Ouverture du paiement…" : "Activer Signature pour 1$"}
+        {loading ? "Ouverture du paiement…" : "Activer Domination pour 1$"}
       </button>
 
       {error && <div className="mt-2 text-xs text-red-300">{error}</div>}

@@ -3,7 +3,13 @@
  * Canonical types for the AI Visibility OS plan matrix.
  */
 
-export type PlanCode = "recrue" | "pro" | "premium" | "elite" | "signature";
+export type PlanCode =
+  | "presence"
+  | "local"
+  | "croissance"
+  | "pro"
+  | "premium"
+  | "domination";
 
 export type FeatureKey =
   | "ai_index_priority"
@@ -13,7 +19,9 @@ export type FeatureKey =
   | "territory_lock"
   | "priority_dispatch"
   | "analytics_advanced"
-  | "priority_support";
+  | "priority_support"
+  | "exclusivity"
+  | "service_cities_max";
 
 export interface Plan {
   id: string;

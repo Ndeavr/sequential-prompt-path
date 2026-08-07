@@ -10,7 +10,7 @@ export default function IsrIdentityCard() {
           <div className="text-sm text-white/60">{ISR_BRAND.legal}</div>
         </div>
         <span className="rounded-full border border-amber-300/40 bg-amber-300/10 px-3 py-1 text-[11px] font-medium text-amber-200">
-          Signature target
+          Domination target
         </span>
       </div>
       <div className="mt-4 grid grid-cols-1 gap-2 text-sm text-white/80">

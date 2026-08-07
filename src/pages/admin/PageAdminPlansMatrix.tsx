@@ -11,8 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatPriceCents } from "@/lib/formatPrice";
+import EntitlementsPanel from "./plans/EntitlementsPanel";
 
-type Tab = "matrix" | "multipliers" | "health";
+type Tab = "matrix" | "multipliers" | "health" | "entitlements";
 
 export default function PageAdminPlansMatrix() {
   const { data, isLoading, refetch } = usePlanMatrix();
@@ -118,6 +119,7 @@ export default function PageAdminPlansMatrix() {
               { id: "matrix", label: "Matrice Features" },
               { id: "multipliers", label: "Multipliers IA" },
               { id: "health", label: "Health par plan" },
+              { id: "entitlements", label: "Entitlements & refus" },
             ] as { id: Tab; label: string }[]
           ).map((t) => (
             <button
@@ -150,6 +152,8 @@ export default function PageAdminPlansMatrix() {
           />
         ) : tab === "multipliers" ? (
           <MultipliersPanel plans={plans} busy={busy} onUpdate={updatePlanMultiplier} />
+        ) : tab === "entitlements" ? (
+          <EntitlementsPanel />
         ) : (
           <HealthPanel plans={plans} />
         )}

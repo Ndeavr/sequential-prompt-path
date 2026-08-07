@@ -1,33 +1,63 @@
 /**
  * Hook to check the current contractor's subscription plan.
- * Returns plan info and whether specific features are unlocked.
+ * Canonical source of truth: public.contractor_plan_code() → public.plans.
+ * Legacy plan codes (recrue / elite / signature) are resolved server-side.
  */
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
-export type PlanCode = "recrue" | "pro" | "premium" | "elite" | "signature";
+export type PlanCode =
+  | "presence"
+  | "local"
+  | "croissance"
+  | "pro"
+  | "premium"
+  | "domination";
 
-const PLAN_HIERARCHY: PlanCode[] = ["recrue", "pro", "premium", "elite", "signature"];
+const PLAN_HIERARCHY: PlanCode[] = [
+  "presence",
+  "local",
+  "croissance",
+  "pro",
+  "premium",
+  "domination",
+];
+
+const LEGACY_ALIAS: Record<string, PlanCode> = {
+  recrue: "presence",
+  elite: "premium",
+  signature: "domination",
+};
 
 interface ContractorPlanData {
   contractorId: string | null;
   planCode: PlanCode;
-  isSignature: boolean;
-  isEliteOrAbove: boolean;
+  planSource: string | null;
+  trialEndsAt: string | null;
+  isOnTrial: boolean;
+  isDomination: boolean;
   isPremiumOrAbove: boolean;
+  isCroissanceOrAbove: boolean;
   isLoading: boolean;
   canAccessBooking: boolean;
   planLabel: string;
 }
 
 const PLAN_LABELS: Record<PlanCode, string> = {
-  recrue: "Recrue",
+  presence: "Présence",
+  local: "Local",
+  croissance: "Croissance",
   pro: "Pro",
   premium: "Premium",
-  elite: "Élite",
-  signature: "Signature",
+  domination: "Domination",
 };
+
+function normalize(code: string | null | undefined): PlanCode {
+  if (!code) return "presence";
+  if (LEGACY_ALIAS[code]) return LEGACY_ALIAS[code];
+  return (PLAN_HIERARCHY.includes(code as PlanCode) ? code : "presence") as PlanCode;
+}
 
 export function useContractorPlan(): ContractorPlanData {
   const { session } = useAuth();
@@ -37,45 +67,52 @@ export function useContractorPlan(): ContractorPlanData {
     queryFn: async () => {
       if (!session?.user?.id) return null;
 
-      // Get contractor
       const { data: contractor } = await supabase
         .from("contractors")
         .select("id")
         .eq("user_id", session.user.id)
-        .single();
+        .maybeSingle();
 
-      if (!contractor) return null;
+      // Canonical plan resolution (handles trials, legacy codes, no subscription)
+      const { data: resolved } = await supabase.rpc("contractor_plan_code" as any, {
+        _user_id: session.user.id,
+      });
 
-      // Get active subscription — plan_id stores the plan code string
       const { data: sub } = await supabase
         .from("contractor_subscriptions")
-        .select("plan_id")
-        .eq("contractor_id", contractor.id)
+        .select("plan_id, plan_source, trial_ends_at")
+        .eq("contractor_id", contractor?.id ?? "")
         .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       return {
-        contractorId: contractor.id,
-        planCode: (sub?.plan_id as PlanCode) ?? "recrue",
+        contractorId: contractor?.id ?? null,
+        planCode: normalize((resolved as string | null) ?? (sub?.plan_id as string | null)),
+        planSource: (sub as any)?.plan_source ?? null,
+        trialEndsAt: (sub as any)?.trial_ends_at ?? null,
       };
     },
     enabled: !!session?.user?.id,
     staleTime: 60_000,
   });
 
-  const planCode = data?.planCode ?? "recrue";
+  const planCode = data?.planCode ?? "presence";
   const planIndex = PLAN_HIERARCHY.indexOf(planCode);
+  const trialEndsAt = data?.trialEndsAt ?? null;
 
   return {
     contractorId: data?.contractorId ?? null,
     planCode,
-    isSignature: planCode === "signature",
-    isEliteOrAbove: planIndex >= PLAN_HIERARCHY.indexOf("elite"),
+    planSource: data?.planSource ?? null,
+    trialEndsAt,
+    isOnTrial: !!trialEndsAt && new Date(trialEndsAt).getTime() > Date.now(),
+    isDomination: planCode === "domination",
     isPremiumOrAbove: planIndex >= PLAN_HIERARCHY.indexOf("premium"),
+    isCroissanceOrAbove: planIndex >= PLAN_HIERARCHY.indexOf("croissance"),
     isLoading,
-    canAccessBooking: planCode === "signature",
+    canAccessBooking: planIndex >= PLAN_HIERARCHY.indexOf("local"),
     planLabel: PLAN_LABELS[planCode],
   };
 }

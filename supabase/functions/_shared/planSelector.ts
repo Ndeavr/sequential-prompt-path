@@ -2,10 +2,10 @@
  * UNPRO — Plan auto-selector for the Autonomous Launch Engine.
  * Deterministic mapping of opportunity signals → recommended contractor plan.
  *
- * Plans (cents): Recrue 14900, Pro 34900, Premium 59900, Élite 99900.
+ * Plans (cents): Présence 4900, Local 7900, Croissance 14900, Pro 29900, Premium 59900, Domination 149900.
  */
 
-export type PlanSlug = "recrue" | "pro" | "premium" | "elite";
+export type PlanSlug = "presence" | "local" | "croissance" | "pro" | "premium" | "domination";
 
 export interface PlanInputs {
   aipp_score?: number | null;       // 0-100
@@ -24,10 +24,12 @@ export interface PlanRecommendation {
 }
 
 const PRICE_CENTS: Record<PlanSlug, number> = {
-  recrue: 14900,
-  pro: 34900,
+  presence: 4900,
+  local: 7900,
+  croissance: 14900,
+  pro: 29900,
   premium: 59900,
-  elite: 99900,
+  domination: 149900,
 };
 
 const HIGH_DEMAND_CITIES = new Set([
@@ -47,8 +49,8 @@ export function selectPlan(input: PlanInputs): PlanRecommendation {
   // 1. Dominant / exclusive territory → Élite
   if (input.is_exclusive_territory || dominant) {
     return {
-      plan: "elite",
-      cents: PRICE_CENTS.elite,
+      plan: "domination",
+      cents: PRICE_CENTS.domination,
       rationale: dominant
         ? `Acteur dominant (${reviews} avis, ${rating}/5)`
         : "Territoire exclusif disponible",
@@ -67,8 +69,8 @@ export function selectPlan(input: PlanInputs): PlanRecommendation {
   // 3. Strong reviews but weak AI visibility → Pro
   if (reviewsStrong && score < 60) {
     return {
-      plan: "pro",
-      cents: PRICE_CENTS.pro,
+      plan: "croissance",
+      cents: PRICE_CENTS.croissance,
       rationale: `Réputation forte mais visibilité IA faible (score ${score})`,
     };
   }
@@ -84,20 +86,22 @@ export function selectPlan(input: PlanInputs): PlanRecommendation {
 
   // 5. Default — small market / low signals → Recrue
   return {
-    plan: "recrue",
-    cents: PRICE_CENTS.recrue,
+    plan: "presence",
+    cents: PRICE_CENTS.presence,
     rationale: reviews === 0
-      ? "Aucun avis Google — démarrer avec Recrue"
+      ? "Aucun avis Google — démarrer avec Présence"
       : `Signaux limités (score ${score}, ${reviews} avis)`,
   };
 }
 
 export function planLabel(plan: PlanSlug): string {
   return ({
-    recrue: "Recrue",
+    presence: "Présence",
+    local: "Local",
+    croissance: "Croissance",
     pro: "Pro",
     premium: "Premium",
-    elite: "Élite",
+    domination: "Domination",
   })[plan];
 }
 

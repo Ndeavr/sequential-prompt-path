@@ -64,17 +64,20 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Look up Stripe price ID from plan_catalog
+    // Canonical source of truth: public.plans (legacy codes resolved server-side)
+    const { data: canonical } = await serviceClient.rpc("canonical_plan_code", { _code: planId });
+    const resolvedPlanCode = (canonical as string | null) || planId;
+
     const priceColumn = interval === "year" ? "stripe_yearly_price_id" : "stripe_monthly_price_id";
     const { data: planRow, error: planError } = await serviceClient
-      .from("plan_catalog")
-      .select(`code, name, ${priceColumn}`)
-      .eq("code", planId)
+      .from("plans")
+      .select(`code, name, monthly_price, yearly_price, ${priceColumn}`)
+      .eq("code", resolvedPlanCode)
       .eq("active", true)
       .maybeSingle();
 
     if (planError || !planRow) {
-      console.error("[create-checkout-session] plan_catalog lookup failed", { planId, interval, planError });
+      console.error("[create-checkout-session] plans lookup failed", { planId, resolvedPlanCode, interval, planError });
       return new Response(JSON.stringify({ error: "Invalid plan", code: "invalid_plan", planId, details: planError?.message }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -82,7 +85,7 @@ Deno.serve(async (req) => {
     }
 
     const resolvedPriceId = (planRow as any)[priceColumn];
-    const planName = (planRow as any).name || (planId.charAt(0).toUpperCase() + planId.slice(1));
+    const planName = (planRow as any).name || (resolvedPlanCode.charAt(0).toUpperCase() + resolvedPlanCode.slice(1));
     const stripeProductId: string | null = null;
 
     // ── PERSONALIZED QUOTE OVERRIDE ──
@@ -108,7 +111,7 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (q.recommended_plan !== planId) {
+      if ((await serviceClient.rpc("canonical_plan_code", { _code: q.recommended_plan })).data !== resolvedPlanCode) {
         return new Response(
           JSON.stringify({
             error: "Désaccord plan/devis détecté.",
@@ -137,7 +140,7 @@ Deno.serve(async (req) => {
             event_type: "pricing_mismatch",
             metadata: {
               quote_id: quoteId,
-              plan_id: planId,
+              plan_id: resolvedPlanCode,
               displayed: displayedPriceCents,
               server: personalizedPriceCents,
             },
@@ -234,7 +237,7 @@ Deno.serve(async (req) => {
       if (
         promoResult.eligible_plan_codes &&
         Array.isArray(promoResult.eligible_plan_codes) &&
-        !promoResult.eligible_plan_codes.includes(planId)
+        !promoResult.eligible_plan_codes.includes(resolvedPlanCode)
       ) {
         // Reverse reservation
         await serviceClient
@@ -263,8 +266,8 @@ Deno.serve(async (req) => {
         .from("checkout_sessions")
         .insert({
           contractor_profile_id: contractor.id,
-          selected_plan_code: planId,
-          selected_plan_name: planId.charAt(0).toUpperCase() + planId.slice(1),
+          selected_plan_code: resolvedPlanCode,
+          selected_plan_name: resolvedPlanCode.charAt(0).toUpperCase() + resolvedPlanCode.slice(1),
           billing_cycle: interval === "year" ? "yearly" : "monthly",
           base_price: 0,
           subtotal_before_discount: 0,
@@ -298,7 +301,7 @@ Deno.serve(async (req) => {
         .from("contractors")
         .update({
           status: "active",
-          subscription_plan: planId,
+          subscription_plan: resolvedPlanCode,
         })
         .eq("id", contractor.id);
 
@@ -306,7 +309,7 @@ Deno.serve(async (req) => {
       await serviceClient.from("contractor_subscriptions").upsert(
         {
           contractor_id: contractor.id,
-          plan_id: planId,
+          plan_id: resolvedPlanCode,
           billing_interval: interval,
           status: "active",
           current_period_start: new Date().toISOString(),
@@ -388,7 +391,7 @@ Deno.serve(async (req) => {
       line_items: lineItems,
       metadata: {
         contractor_id: contractor.id,
-        plan_id: planId,
+        plan_id: resolvedPlanCode,
         billing_interval: interval,
         ...(quoteId && { quote_id: String(quoteId) }),
         ...(redemptionId && { redemption_id: redemptionId }),
@@ -401,7 +404,7 @@ Deno.serve(async (req) => {
       subscription_data: {
         metadata: {
           contractor_id: contractor.id,
-          plan_id: planId,
+          plan_id: resolvedPlanCode,
           billing_interval: interval,
           ...(quoteId && { quote_id: String(quoteId) }),
         },
@@ -410,7 +413,7 @@ Deno.serve(async (req) => {
 
     if (isEmbedded) {
       checkoutConfig.ui_mode = "embedded";
-      checkoutConfig.return_url = returnUrl || `${req.headers.get("origin")}/pro/onboarding?plan=${planId}&checkout=success&session_id={CHECKOUT_SESSION_ID}`;
+      checkoutConfig.return_url = returnUrl || `${req.headers.get("origin")}/pro/onboarding?plan=${resolvedPlanCode}&checkout=success&session_id={CHECKOUT_SESSION_ID}`;
     } else {
       checkoutConfig.success_url = successUrl || `${req.headers.get("origin")}/pro/billing?success=true`;
       checkoutConfig.cancel_url = cancelUrl || `${req.headers.get("origin")}/pro/billing?canceled=true`;
@@ -442,7 +445,7 @@ Deno.serve(async (req) => {
     // Create checkout_sessions record
     await serviceClient.from("checkout_sessions").insert({
       contractor_profile_id: contractor.id,
-      selected_plan_code: planId,
+      selected_plan_code: resolvedPlanCode,
       selected_plan_name: planName,
       billing_cycle: interval === "year" ? "yearly" : "monthly",
       external_checkout_id: session.id,

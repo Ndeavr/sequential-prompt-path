@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
+import { checkEntitlement, entitlementDeniedResponse } from '../_shared/entitlements.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -73,12 +74,33 @@ serve(async (req) => {
     }
 
     if (action === 'confirm') {
+      // Canonical entitlement enforcement: booking_direct with monthly volume limit.
+      const periodStart = new Date()
+      periodStart.setUTCDate(1)
+      periodStart.setUTCHours(0, 0, 0, 0)
+      const { count: confirmedThisMonth } = await serviceSupabase
+        .from('appointments')
+        .select('id', { count: 'exact', head: true })
+        .eq('contractor_id', contractor.id)
+        .eq('contractor_confirmed', true)
+        .gte('created_at', periodStart.toISOString())
+
+      const access = await checkEntitlement(serviceSupabase, {
+        userId,
+        contractorId: contractor.id,
+        featureKey: 'booking_direct',
+        usage: confirmedThisMonth ?? 0,
+        surface: 'contractor-manage-appointment',
+        context: { appointment_id: appointmentId },
+      })
+      if (!access.allowed) return entitlementDeniedResponse(access, corsHeaders)
+
       const { error } = await serviceSupabase
         .from('appointments')
         .update({ contractor_confirmed: true, status: 'confirmed' })
         .eq('id', appointmentId)
       if (error) return new Response(JSON.stringify({ ok: false, error: error.message }), { status: 500, headers: corsHeaders })
-      return new Response(JSON.stringify({ ok: true, action }), { headers: corsHeaders })
+      return new Response(JSON.stringify({ ok: true, action, plan_code: access.plan_code, remaining: access.unlimited ? null : Math.max(0, access.limit - (confirmedThisMonth ?? 0) - 1) }), { headers: corsHeaders })
     }
 
     if (action === 'cancel') {
@@ -119,21 +141,17 @@ serve(async (req) => {
         await serviceSupabase.from('leads').update({ status: 'closed' }).eq('id', appointment.lead_id)
       }
 
-      // Auto Review Request Engine — Premium+ only
+      // Auto Review Request Engine — gated by the canonical plan matrix
       try {
-        const { data: sub } = await serviceSupabase
-          .from('contractor_subscriptions')
-          .select('plan_id')
-          .eq('contractor_id', contractor.id)
-          .eq('status', 'active')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
+        const reviewAccess = await checkEntitlement(serviceSupabase, {
+          userId,
+          contractorId: contractor.id,
+          featureKey: 'priority_support',
+          surface: 'contractor-manage-appointment:auto-review',
+          context: { appointment_id: appointmentId },
+        })
 
-        const plan = sub?.plan_id ?? 'recrue'
-        const premiumPlus = ['premium', 'elite', 'signature']
-
-        if (premiumPlus.includes(plan)) {
+        if (reviewAccess.allowed) {
           await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-feedback-request`, {
             method: 'POST',
             headers: {
