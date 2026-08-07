@@ -176,6 +176,69 @@ Deno.serve(async (req) => {
           });
         }
 
+        // HOMEOWNER PLANS: activate entitlements immediately after payment.
+        // Idempotent — replaying the event just re-affirms the active row.
+        if (session.metadata?.plan_type === "homeowner") {
+          const hoUserId = session.metadata?.user_id ?? null;
+          const hoPlanCode = session.metadata?.plan_code ?? null;
+          const stripeSubId = session.subscription ? String(session.subscription) : null;
+
+          if (hoUserId && hoPlanCode) {
+            let periodStart: string | null = null;
+            let periodEnd: string | null = null;
+            if (stripeSubId) {
+              try {
+                const s = await stripe.subscriptions.retrieve(stripeSubId);
+                const p = getSubscriptionPeriod(s as Stripe.Subscription);
+                periodStart = p.start;
+                periodEnd = p.end;
+              } catch (e) {
+                console.error("[stripe-webhook] homeowner subscription fetch failed", e);
+              }
+            }
+
+            const patch = {
+              user_id: hoUserId,
+              plan_code: hoPlanCode,
+              status: "active",
+              stripe_customer_id: session.customer ? String(session.customer) : null,
+              stripe_subscription_id: stripeSubId,
+              stripe_checkout_session_id: session.id,
+              current_period_start: periodStart,
+              current_period_end: periodEnd,
+              cancel_at_period_end: false,
+              updated_at: new Date().toISOString(),
+            };
+
+            const { data: existingHo } = await supabase
+              .from("homeowner_subscriptions")
+              .select("id")
+              .eq("user_id", hoUserId)
+              .eq("plan_code", hoPlanCode)
+              .order("updated_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (existingHo?.id) {
+              await supabase.from("homeowner_subscriptions").update(patch).eq("id", existingHo.id);
+            } else {
+              await supabase.from("homeowner_subscriptions").insert(patch);
+            }
+
+            // Any other homeowner plan for this user is superseded.
+            await supabase
+              .from("homeowner_subscriptions")
+              .update({ status: "canceled", updated_at: new Date().toISOString() })
+              .eq("user_id", hoUserId)
+              .neq("plan_code", hoPlanCode)
+              .in("status", ["active", "trialing", "pending"]);
+
+            console.log("[stripe-webhook] homeowner plan activated", hoUserId, hoPlanCode);
+          } else {
+            console.warn("[stripe-webhook] homeowner checkout without user_id metadata", session.id);
+          }
+        }
+
 
         // SMS OUTREACH flow: /invitation/:token → 1$ activation
         // Idempotent + transactional: creates contractor + contractor_profiles,
@@ -769,6 +832,20 @@ Deno.serve(async (req) => {
           .from("contractor_subscriptions")
           .update(updateData)
           .eq("stripe_subscription_id", subscription.id);
+
+        // Homeowner plans: renewal, cancellation scheduling and status sync.
+        if (subscription.metadata?.plan_type === "homeowner") {
+          await supabase
+            .from("homeowner_subscriptions")
+            .update({
+              status: subscription.status,
+              current_period_start: period.start,
+              current_period_end: period.end,
+              cancel_at_period_end: subscription.cancel_at_period_end,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("stripe_subscription_id", subscription.id);
+        }
         break;
       }
 
@@ -779,6 +856,13 @@ Deno.serve(async (req) => {
           .from("contractor_subscriptions")
           .update({ status: "canceled", updated_at: new Date().toISOString() })
           .eq("stripe_subscription_id", subscription.id);
+
+        // Homeowner plans revert to Découverte as soon as the subscription ends.
+        await supabase
+          .from("homeowner_subscriptions")
+          .update({ status: "canceled", updated_at: new Date().toISOString() })
+          .eq("stripe_subscription_id", subscription.id);
+
 
         // Deactivate contractor
         const { data: sub } = await supabase

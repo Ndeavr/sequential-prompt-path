@@ -63817,6 +63817,8 @@ export type Database = {
           active: boolean
           ai_index_priority: number
           appointments_included: number
+          audience: string
+          billing_interval: string
           booking_priority: number
           citation_boost: number
           code: string
@@ -63827,6 +63829,8 @@ export type Database = {
           one_time_price: number
           recommendation_multiplier: number
           seo_boost: number
+          stripe_monthly_price_id: string | null
+          stripe_yearly_price_id: string | null
           tagline: string | null
           territory_radius_km: number
           tier_rank: number
@@ -63839,6 +63843,8 @@ export type Database = {
           active?: boolean
           ai_index_priority?: number
           appointments_included?: number
+          audience?: string
+          billing_interval?: string
           booking_priority?: number
           citation_boost?: number
           code: string
@@ -63849,6 +63855,8 @@ export type Database = {
           one_time_price?: number
           recommendation_multiplier?: number
           seo_boost?: number
+          stripe_monthly_price_id?: string | null
+          stripe_yearly_price_id?: string | null
           tagline?: string | null
           territory_radius_km?: number
           tier_rank?: number
@@ -63861,6 +63869,8 @@ export type Database = {
           active?: boolean
           ai_index_priority?: number
           appointments_included?: number
+          audience?: string
+          billing_interval?: string
           booking_priority?: number
           citation_boost?: number
           code?: string
@@ -63871,6 +63881,8 @@ export type Database = {
           one_time_price?: number
           recommendation_multiplier?: number
           seo_boost?: number
+          stripe_monthly_price_id?: string | null
+          stripe_yearly_price_id?: string | null
           tagline?: string | null
           territory_radius_km?: number
           tier_rank?: number
@@ -90528,6 +90540,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      homeowner_feature_access: {
+        Args: { _feature_key: string; _user_id: string }
+        Returns: Json
+      }
+      homeowner_plan_code: { Args: { _user_id: string }; Returns: string }
       increment_stripe_event_retry: {
         Args: { p_event_id: string }
         Returns: undefined

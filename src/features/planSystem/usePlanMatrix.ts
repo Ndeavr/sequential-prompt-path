@@ -11,6 +11,7 @@ async function fetchPlans(): Promise<Plan[]> {
     .from("plans" as any)
     .select("*")
     .eq("active", true)
+    .eq("audience", "contractor")
     .order("tier_rank", { ascending: true });
   if (error) throw error;
   return (data ?? []).map((r: any) => ({

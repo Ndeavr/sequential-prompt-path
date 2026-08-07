@@ -12,6 +12,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import HomeownerCheckoutDrawer from "@/components/pricing/HomeownerCheckoutDrawer";
+import { useHomeownerPlan, normalizeHomeownerPlanCode } from "@/features/planSystem/useHomeownerPlan";
 import {
   Accordion,
   AccordionContent,
@@ -192,7 +193,7 @@ function FeatureValue({ value, highlight }: { value: string; highlight?: boolean
 }
 
 /* ─── Plan Card ─── */
-function CardPlan({ plan, index }: { plan: Plan; index: number }) {
+function CardPlan({ plan, index, isCurrent }: { plan: Plan; index: number; isCurrent?: boolean }) {
   const Icon = plan.icon;
   const isPopular = plan.popular;
   const isPremium = plan.premium;
@@ -275,7 +276,11 @@ function CardPlan({ plan, index }: { plan: Plan; index: number }) {
 
         {/* CTA */}
         <div className="mt-auto space-y-2">
-          {plan.price === 0 ? (
+          {isCurrent ? (
+            <Button size="lg" variant="outline" className="w-full rounded-xl text-sm font-bold" disabled>
+              Votre plan actuel
+            </Button>
+          ) : plan.price === 0 ? (
             <Button
               asChild
               size="lg"
@@ -339,6 +344,7 @@ function ComparisonMatrix() {
 
 /* ─── Main Component ─── */
 export default function HomeownerPlans() {
+  const { planCode: currentPlanCode } = useHomeownerPlan();
   const [showComparison, setShowComparison] = useState(false);
   const [checkoutPlan, setCheckoutPlan] = useState<{ code: "plus" | "signature"; name: string; price: number } | null>(null);
 
@@ -367,7 +373,12 @@ export default function HomeownerPlans() {
       {/* ─── PLAN CARDS ─── */}
       <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-5 md:gap-4 mb-16 md:items-stretch">
         {plansWithCheckout.map((plan, i) => (
-          <CardPlan key={plan.code} plan={plan} index={i} />
+          <CardPlan
+            key={plan.code}
+            plan={plan}
+            index={i}
+            isCurrent={normalizeHomeownerPlanCode(plan.code.replace("homeowners_", "")) === currentPlanCode && !(plan.price === 0 && currentPlanCode !== "home_decouverte")}
+          />
         ))}
       </div>
 
