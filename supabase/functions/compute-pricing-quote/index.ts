@@ -405,6 +405,7 @@ Deno.serve(async (req) => {
     const roiEstimate =
       finalPrice > 0 ? Number((revenuePotential / (finalPrice / 100)).toFixed(2)) : 0;
 
+    // Scarcity is exposed as a first-class factor (v2).
     const factors = {
       demand_factor: round2(demandFactor),
       competition_factor: round2(competitionFactor),
