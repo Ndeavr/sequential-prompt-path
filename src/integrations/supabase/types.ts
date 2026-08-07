@@ -34539,25 +34539,31 @@ export type Database = {
         Row: {
           aipp_optimization_fee: number
           appointment_package_fee: number
+          availability: Json
           average_project_value: number
           base_platform_fee: number
           breakdown: Json
+          business_objective: string | null
           city: string | null
           company_name: string | null
           contractor_id: string | null
           created_at: string
+          data_status: string
           estimated_close_rate: number
           estimated_monthly_revenue_potential: number
           exclusivity_fee: number
+          factors: Json
           id: string
           input_payload: Json
           max_monthly_price: number
           min_monthly_price: number
           pricing_status: Database["public"]["Enums"]["pricing_quote_status"]
+          pricing_version: string
           recommended_monthly_price: number
           recommended_plan: string
           roi_estimate: number
           seasonality_multiplier: number
+          service_cities: string[]
           stripe_checkout_session_id: string | null
           target_monthly_appointments: number
           territory_cluster: string | null
@@ -34565,29 +34571,36 @@ export type Database = {
           trade_primary: string | null
           updated_at: string
           user_id: string | null
+          wants_exclusivity: boolean
         }
         Insert: {
           aipp_optimization_fee?: number
           appointment_package_fee?: number
+          availability?: Json
           average_project_value?: number
           base_platform_fee?: number
           breakdown?: Json
+          business_objective?: string | null
           city?: string | null
           company_name?: string | null
           contractor_id?: string | null
           created_at?: string
+          data_status?: string
           estimated_close_rate?: number
           estimated_monthly_revenue_potential?: number
           exclusivity_fee?: number
+          factors?: Json
           id?: string
           input_payload?: Json
           max_monthly_price?: number
           min_monthly_price?: number
           pricing_status?: Database["public"]["Enums"]["pricing_quote_status"]
+          pricing_version?: string
           recommended_monthly_price?: number
           recommended_plan?: string
           roi_estimate?: number
           seasonality_multiplier?: number
+          service_cities?: string[]
           stripe_checkout_session_id?: string | null
           target_monthly_appointments?: number
           territory_cluster?: string | null
@@ -34595,29 +34608,36 @@ export type Database = {
           trade_primary?: string | null
           updated_at?: string
           user_id?: string | null
+          wants_exclusivity?: boolean
         }
         Update: {
           aipp_optimization_fee?: number
           appointment_package_fee?: number
+          availability?: Json
           average_project_value?: number
           base_platform_fee?: number
           breakdown?: Json
+          business_objective?: string | null
           city?: string | null
           company_name?: string | null
           contractor_id?: string | null
           created_at?: string
+          data_status?: string
           estimated_close_rate?: number
           estimated_monthly_revenue_potential?: number
           exclusivity_fee?: number
+          factors?: Json
           id?: string
           input_payload?: Json
           max_monthly_price?: number
           min_monthly_price?: number
           pricing_status?: Database["public"]["Enums"]["pricing_quote_status"]
+          pricing_version?: string
           recommended_monthly_price?: number
           recommended_plan?: string
           roi_estimate?: number
           seasonality_multiplier?: number
+          service_cities?: string[]
           stripe_checkout_session_id?: string | null
           target_monthly_appointments?: number
           territory_cluster?: string | null
@@ -34625,6 +34645,7 @@ export type Database = {
           trade_primary?: string | null
           updated_at?: string
           user_id?: string | null
+          wants_exclusivity?: boolean
         }
         Relationships: [
           {
