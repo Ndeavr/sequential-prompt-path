@@ -22,8 +22,8 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { slug, email, source, utm, landing_token, activation_token } = (body ?? {}) as {
-      slug?: string; email?: string; source?: string; utm?: Record<string, string>; landing_token?: string; activation_token?: string;
+    const { slug, email, source, utm, landing_token, activation_token, plan_code, quote_id } = (body ?? {}) as {
+      slug?: string; email?: string; source?: string; utm?: Record<string, string>; landing_token?: string; activation_token?: string; plan_code?: string; quote_id?: string;
     };
 
     // NEW: sms_outreach flow — resolve prospect via landing_token
