@@ -31,6 +31,9 @@ const ACTIONS = new Set([
   "archive",
   "tag",
   "note",
+  // The CRM drawer sends "add_note"; both names hit the same handler.
+  "add_note",
+
 ]);
 
 function randToken() {
