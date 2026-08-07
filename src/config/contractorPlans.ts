@@ -1,13 +1,26 @@
 /**
- * UNPRO — Contractor Plans: Single Source of Truth
- * All contractor pricing flows MUST import from this file.
- * No hardcoded prices anywhere else.
+ * UNPRO — Contractor Plans: Single Source of Truth (v2026.08-growth)
  *
- * Standard plans: Recrue=149, Pro=349, Premium=599, Élite=999, Signature=1799
- * Founder offers: Élite Fondateur=19995, Signature Fondateur=29995 (one-time)
+ * Canonical catalog (monthly, CAD):
+ *   Présence 49 · Local 79 · Croissance 149 · Pro 299 · Premium 599 · Domination 1499
+ *
+ * Prices mirror public.plans (audience = 'contractor'). Use `useContractorPlans()`
+ * when live DB values are required; this file is the static fallback + type source.
+ * Legacy slugs (recrue, elite, signature) remain resolvable through LEGACY_PLAN_ALIAS.
  */
 
-export type ContractorPlanSlug = "recrue" | "pro" | "premium" | "elite" | "signature";
+export type ContractorPlanSlug =
+  | "presence"
+  | "local"
+  | "croissance"
+  | "pro"
+  | "premium"
+  | "domination"
+  // legacy slugs kept resolvable for older flows
+  | "recrue"
+  | "elite"
+  | "signature";
+
 export type BillingInterval = "month" | "year";
 
 export interface ContractorPlan {
@@ -35,137 +48,181 @@ export interface FounderOffer {
   cta: string;
 }
 
+/** $1 entry offer applied to every plan. */
+export const TRIAL_OFFER = {
+  priceDollars: 1,
+  days: 7,
+  label: "1 $ pour 7 jours",
+  note: "Puis votre plan mensuel. Annulable en tout temps.",
+} as const;
+
 export const CONTRACTOR_PLANS: ContractorPlan[] = [
   {
-    slug: "recrue",
-    name: "Recrue",
-    monthlyPrice: 149,
-    subtitle: "Vous existez",
-    description: "Présence de base dans l'écosystème UNPRO pour démarrer proprement avec une présence crédible.",
-    cta: "Activer Recrue",
+    slug: "presence",
+    name: "Présence",
+    monthlyPrice: 49,
+    subtitle: "Vous existez dans l'écosystème",
+    description:
+      "Votre entreprise devient visible et vérifiable dans l'intelligence UNPRO.",
+    cta: "Activer Présence",
     featured: false,
     appointmentsIncluded: 0,
     features: [
-      "Profil UNPRO",
-      "Présence dans l'écosystème IA",
+      "Profil UNPRO vérifié",
+      "Présence dans les réponses IA",
       "Réception de demandes de base",
     ],
   },
   {
-    slug: "pro",
-    name: "Pro",
-    monthlyPrice: 349,
-    subtitle: "Vous recevez des opportunités",
-    description: "Vous entrez dans le système avec des demandes qualifiées et une meilleure visibilité.",
-    cta: "Activer Pro",
+    slug: "local",
+    name: "Local",
+    monthlyPrice: 79,
+    subtitle: "Vos premiers rendez-vous",
+    description:
+      "Visibilité locale prioritaire dans votre ville et vos premiers rendez-vous confirmés.",
+    cta: "Activer Local",
+    featured: false,
+    appointmentsIncluded: 2,
+    features: [
+      "2 rendez-vous inclus",
+      "Priorité locale dans votre ville",
+      "Profil optimisé (AIPP)",
+    ],
+  },
+  {
+    slug: "croissance",
+    name: "Croissance",
+    monthlyPrice: 149,
+    subtitle: "Quelques projets de plus chaque mois",
+    description:
+      "Un flux régulier de rendez-vous qualifiés et des statistiques pour piloter votre croissance.",
+    cta: "Activer Croissance",
     featured: false,
     appointmentsIncluded: 5,
     features: [
       "5 rendez-vous inclus",
       "Demandes qualifiées",
-      "Profil optimisé (AIPP)",
-      "Statistiques de base",
+      "Statistiques avancées",
+      "Optimisation AIPP continue",
+    ],
+  },
+  {
+    slug: "pro",
+    name: "Pro",
+    monthlyPrice: 299,
+    subtitle: "Votre agenda se remplit",
+    eyebrow: "Plan le plus populaire",
+    description:
+      "Rendez-vous confirmés directement à l'agenda, priorité de répartition dans votre secteur.",
+    cta: "Activer Pro",
+    featured: true,
+    appointmentsIncluded: 12,
+    features: [
+      "12 rendez-vous inclus",
+      "Rendez-vous directs à l'agenda",
+      "Synchronisation calendrier",
+      "Priorité de répartition",
+      "Notifications instantanées",
     ],
   },
   {
     slug: "premium",
     name: "Premium",
     monthlyPrice: 599,
-    subtitle: "Votre agenda commence à se remplir",
-    eyebrow: "Plan le plus populaire",
-    description: "Des rendez-vous confirmés arrivent directement dans votre calendrier selon vos disponibilités.",
-    cta: "Passer à Premium",
-    featured: true,
-    appointmentsIncluded: 10,
-    features: [
-      "10 rendez-vous inclus",
-      "Rendez-vous directs à l'agenda",
-      "Synchronisation Google Calendar",
-      "Gestion des disponibilités",
-      "Notifications instantanées",
-    ],
-  },
-  {
-    slug: "elite",
-    name: "Élite",
-    monthlyPrice: 999,
-    subtitle: "Votre agenda devient optimisé",
-    description: "UNPRO protège votre temps avec l'optimisation des routes, des distances et des buffers.",
-    cta: "Activer Élite",
+    subtitle: "Volume élevé, agenda optimisé",
+    description:
+      "Optimisation des routes, des distances et des buffers pour protéger chaque journée.",
+    cta: "Activer Premium",
     featured: false,
     appointmentsIncluded: 25,
     features: [
       "25 rendez-vous inclus",
-      "Tout Premium",
-      "Optimisation des routes",
-      "Calcul de distance entre chaque rendez-vous",
-      "Buffers automatiques entre déplacements",
-      "Priorité sur les plages rentables",
+      "Tout Pro",
+      "Optimisation des routes et distances",
+      "Buffers automatiques",
+      "Support prioritaire",
     ],
   },
   {
-    slug: "signature",
-    name: "Signature",
-    monthlyPrice: 1799,
+    slug: "domination",
+    name: "Domination",
+    monthlyPrice: 1499,
     subtitle: "Vous contrôlez votre marché",
-    description: "Orchestration IA complète de l'agenda et du territoire pour maximiser chaque journée.",
-    cta: "Activer Signature",
+    description:
+      "Exclusivité de territoire et orchestration IA complète de votre agenda et de votre visibilité.",
+    cta: "Activer Domination",
     featured: false,
-    appointmentsIncluded: 50,
+    appointmentsIncluded: 60,
     features: [
-      "50 rendez-vous inclus",
-      "Tout Élite",
-      "Optimisation avancée en temps réel",
+      "60 rendez-vous inclus",
+      "Tout Premium",
+      "Exclusivité de territoire",
       "Regroupement intelligent par secteur",
-      "Priorisation des rendez-vous à haute valeur",
-      "Accès exclusif / limité par territoire",
-      "Visibilité maximale IA (AIPP MAX)",
+      "Priorisation des projets à haute valeur",
+      "Visibilité IA maximale (AIPP MAX)",
     ],
   },
 ];
 
+/** Legacy slug → canonical slug. Keeps older flows working after the refactor. */
+export const LEGACY_PLAN_ALIAS: Record<string, ContractorPlanSlug> = {
+  recrue: "presence",
+  elite: "premium",
+  signature: "domination",
+};
+
+export function resolvePlanSlug(slug: string): ContractorPlanSlug {
+  return (LEGACY_PLAN_ALIAS[slug] ?? slug) as ContractorPlanSlug;
+}
+
 export const FOUNDER_OFFERS: FounderOffer[] = [
   {
-    slug: "elite-founder",
-    name: "Élite Fondateur",
-    basePlanSlug: "elite",
+    slug: "premium-founder",
+    name: "Premium Fondateur",
+    basePlanSlug: "premium",
     priceOneTime: 19995,
     termYears: 10,
     billingType: "one_time",
     inventoryLimited: true,
-    description: "Accès Fondateur Élite verrouillé pour 10 ans.",
-    cta: "Réserver Élite Fondateur",
+    description: "Accès Fondateur Premium verrouillé pour 10 ans.",
+    cta: "Réserver Premium Fondateur",
   },
   {
-    slug: "signature-founder",
-    name: "Signature Fondateur",
-    basePlanSlug: "signature",
+    slug: "domination-founder",
+    name: "Domination Fondateur",
+    basePlanSlug: "domination",
     priceOneTime: 29995,
     termYears: 10,
     billingType: "one_time",
     inventoryLimited: true,
-    description: "Accès Fondateur Signature verrouillé pour 10 ans.",
-    cta: "Réserver Signature Fondateur",
+    description: "Accès Fondateur Domination verrouillé pour 10 ans.",
+    cta: "Réserver Domination Fondateur",
   },
 ];
 
-/** Lookup a contractor plan by slug */
+/** Lookup a contractor plan by slug (legacy slugs resolve to their replacement). */
 export function getContractorPlan(slug: string): ContractorPlan | undefined {
-  return CONTRACTOR_PLANS.find((p) => p.slug === slug);
+  const canonical = resolvePlanSlug(slug);
+  return CONTRACTOR_PLANS.find((p) => p.slug === canonical);
 }
 
 /** Get the recommended plan slug */
 export function getRecommendedPlanSlug(): ContractorPlanSlug {
-  return "premium";
+  return "pro";
 }
 
-/** Price lookup map for calculators */
+/** Price lookup map for calculators (legacy keys aliased to the new prices). */
 export const PLAN_PRICE_MAP: Record<ContractorPlanSlug, number> = {
-  recrue: 149,
-  pro: 349,
+  presence: 49,
+  local: 79,
+  croissance: 149,
+  pro: 299,
   premium: 599,
-  elite: 999,
-  signature: 1799,
+  domination: 1499,
+  // legacy aliases
+  recrue: 49,
+  elite: 599,
+  signature: 1499,
 };
 
 /** Format dollars to display string (fr-CA, e.g. "1 300 $"). */
