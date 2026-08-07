@@ -1124,6 +1124,14 @@ export const AppRouter = () => (
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/pricing/proprietaires" element={<PricingHomeownersPage />} />
         <Route path="/pricing/entrepreneurs" element={<PricingContractorsPage />} />
+        {/* Canonical upgrade surface (with feature + return context) */}
+        <Route path="/upgrade" element={<PageUpgradeHomeowner />} />
+        <Route path="/proprietaires/abonnement" element={<PageUpgradeHomeowner />} />
+        <Route path="/compte/abonnement" element={<PageUpgradeHomeowner />} />
+        {/* Legacy /tarifs links used across emails, checkout and SMS */}
+        <Route path="/tarifs" element={<PricingHomeownersPage />} />
+        <Route path="/tarifs/proprietaires" element={<PricingHomeownersPage />} />
+        <Route path="/tarifs/entrepreneurs" element={<PricingContractorsPage />} />
         <Route path="/aipp-score" element={<AIPPScorePage />} />
         <Route path="/audit-aipp" element={<PageAuditAIPPv2 />} />
         <Route path="/audit-aipp/results/:auditId" element={<PageAuditResultsAIPPv2 />} />
