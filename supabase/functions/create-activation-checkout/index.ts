@@ -193,7 +193,22 @@ Deno.serve(async (req) => {
         ? await stripe.checkout.sessions.create({
             ...common,
             mode: "subscription",
-            line_items: [{ price: trialPlan.stripe_monthly_price_id!, quantity: 1 }],
+            // Trial + setup-fee pattern: the 1 $ one-time item is invoiced and
+            // collected today, the plan itself starts billing after the trial.
+            line_items: [
+              {
+                quantity: 1,
+                price_data: {
+                  currency: "cad",
+                  unit_amount: 100,
+                  product_data: {
+                    name: `UNPRO — Activation ${trialDays} jours (${trialPlan.name})`,
+                    description: `1 $ CA aujourd'hui, puis ${Math.round(trialPlan.monthly_price / 100)} $ CA / mois après ${trialDays} jours.`,
+                  },
+                },
+              },
+              { price: trialPlan.stripe_monthly_price_id!, quantity: 1 },
+            ],
             subscription_data: {
               trial_period_days: trialDays,
               description: `UNPRO ${trialPlan.name} — 1 $ CA pour ${trialDays} jours, puis ${Math.round(trialPlan.monthly_price / 100)} $ CA / mois.`,
