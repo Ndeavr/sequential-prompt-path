@@ -91537,6 +91537,51 @@ export type Database = {
         }
         Relationships: []
       }
+      v_territory_capacity_admin: {
+        Row: {
+          admin_reserved: number | null
+          available: number | null
+          city: string | null
+          id: string | null
+          lock_status: string | null
+          occupied: number | null
+          paid_contractors: number | null
+          pricing_multiplier: number | null
+          scarcity_level: string | null
+          total_capacity: number | null
+          trade: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          admin_reserved?: never
+          available?: never
+          city?: string | null
+          id?: string | null
+          lock_status?: string | null
+          occupied?: never
+          paid_contractors?: never
+          pricing_multiplier?: never
+          scarcity_level?: never
+          total_capacity?: number | null
+          trade?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          admin_reserved?: never
+          available?: never
+          city?: string | null
+          id?: string | null
+          lock_status?: string | null
+          occupied?: never
+          paid_contractors?: never
+          pricing_multiplier?: never
+          scarcity_level?: never
+          total_capacity?: number | null
+          trade?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       vw_jve_trade_estimation_defaults: {
         Row: {
           city_slug: string | null
@@ -92360,6 +92405,10 @@ export type Database = {
       territory_availability: {
         Args: { _city: string; _trade: string }
         Returns: Json
+      }
+      territory_paid_occupancy: {
+        Args: { _city: string; _trade: string }
+        Returns: number
       }
       track_affiliate_conversion: {
         Args: {

@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Loader2, RefreshCw, Activity, MapPin, Lock, Wrench, Flame } from "lucide-react";
 import { runCapacitySnapshot } from "@/services/capacity";
 import { toast } from "sonner";
+import SellableCapacityPanel from "@/components/admin/SellableCapacityPanel";
 
 interface LiveRow {
   trade_slug: string; city_slug: string; final_cap: number; active_pros: number;
@@ -123,13 +124,18 @@ export default function PageAdminCapacityFramework() {
         ))}
       </div>
 
-      <Tabs defaultValue="cities">
+      <Tabs defaultValue="sellable">
         <TabsList>
+          <TabsTrigger value="sellable">Places vendables</TabsTrigger>
           <TabsTrigger value="cities">Villes majeures</TabsTrigger>
           <TabsTrigger value="trades">Métiers</TabsTrigger>
           <TabsTrigger value="exclusivity">Exclusivité</TabsTrigger>
           <TabsTrigger value="all">Tout (heatmap)</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="sellable">
+          <SellableCapacityPanel />
+        </TabsContent>
 
         <TabsContent value="cities" className="space-y-4">
           {MAJOR.map((slug) => {
