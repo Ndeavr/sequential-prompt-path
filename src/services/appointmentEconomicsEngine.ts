@@ -3,6 +3,7 @@
  * Handles included appointments, extra pricing, usage tracking, upgrade logic.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { PLAN_PRICE_MAP } from "@/config/contractorPlans";
 
 // ── Types ──────────────────────────────────────────────────────────
 
