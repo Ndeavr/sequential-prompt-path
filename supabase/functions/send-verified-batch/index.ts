@@ -231,24 +231,67 @@ Deno.serve(async (req) => {
     }
 
     const eligible = pool ?? [];
+
+    // ---------------------------------------------------------------
+    // Cross-automation duplicate guard.
+    // Several automations (acquisition-queue-worker, second-touch-outreach,
+    // launch-agent-outreach, crm-automation-tick, solicitation-send-sms) can
+    // legitimately target the same contractor. acq_sms_logs is the single
+    // canonical send log, so it is the only safe place to detect an overlap.
+    // Any phone already contacted inside the window is skipped here, whatever
+    // automation produced that contact.
+    // ---------------------------------------------------------------
+    const DUP_GUARD_HOURS = Number(Deno.env.get("OUTREACH_DUP_GUARD_HOURS") ?? 24);
+    const dupSince = new Date(Date.now() - DUP_GUARD_HOURS * 3600_000).toISOString();
+    const phonesInBatch = eligible.map((p: any) => p.phone_e164).filter(Boolean).map(String);
+    const idsInBatch = eligible.map((p: any) => p.id).filter(Boolean).map(String);
+    const recentlyContactedPhones = new Set<string>();
+    const recentlyContactedIds = new Set<string>();
+    if (phonesInBatch.length > 0 || idsInBatch.length > 0) {
+      const { data: recentLogs } = await supabase
+        .from("acq_sms_logs")
+        .select("recipient_phone, prospect_id, created_at")
+        .gte("created_at", dupSince)
+        .or(
+          [
+            phonesInBatch.length ? `recipient_phone.in.(${phonesInBatch.join(",")})` : null,
+            idsInBatch.length ? `prospect_id.in.(${idsInBatch.join(",")})` : null,
+          ].filter(Boolean).join(","),
+        );
+      for (const row of recentLogs ?? []) {
+        if (row.recipient_phone) recentlyContactedPhones.add(String(row.recipient_phone));
+        if (row.prospect_id) recentlyContactedIds.add(String(row.prospect_id));
+      }
+    }
+    const isRecentlyContacted = (p: any) =>
+      recentlyContactedIds.has(String(p.id)) ||
+      (!!p.phone_e164 && recentlyContactedPhones.has(String(p.phone_e164)));
+
     if (dryRun) {
       const previews = eligible.map((p: any) => {
         const smsEligibleTier = ["A", "B", "C"].includes(p.sms_eligibility_tier ?? "");
+        const dup = isRecentlyContacted(p);
         return {
           id: p.id,
           business_name: p.business_name,
           tier: p.sms_eligibility_tier,
           phone_line_type: p.phone_line_type,
           has_email: !!p.email,
-          channel_planned: smsEligibleTier ? "sms" : (p.email ? "email" : "none"),
+          duplicate_guard: dup,
+          channel_planned: dup ? "none" : (smsEligibleTier ? "sms" : (p.email ? "email" : "none")),
+          skip_reason: dup ? `duplicate_recent_contact_${DUP_GUARD_HOURS}h` : null,
         };
       });
+      const dupCount = previews.filter((p) => p.duplicate_guard).length;
       return jsonResponse({
-        ok: true, dry_run: true, eligible_count: eligible.length, eligible: previews,
+        ok: true, dry_run: true, eligible_count: eligible.length - dupCount,
+        duplicate_skipped_count: dupCount,
+        eligible: previews,
         skipped: missingResults,
-        message: eligible.length > 0 ? `${eligible.length} prospect(s) prêt(s)` : "Aucun prospect éligible",
+        message: eligible.length > 0 ? `${eligible.length - dupCount} prospect(s) prêt(s)` : "Aucun prospect éligible",
       }, 200, requestId);
     }
+
 
     const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
     const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
@@ -260,9 +303,22 @@ Deno.serve(async (req) => {
     const results: Array<Record<string, unknown>> = [];
 
     for (const p of eligible) {
+      // Hard stop: another automation already contacted this candidate inside
+      // the guard window. No provider call, no log row, no second contact.
+      if (isRecentlyContacted(p)) {
+        results.push({
+          id: p.id,
+          business_name: p.business_name,
+          status: "skipped_duplicate",
+          skipped: `duplicate_recent_contact_${DUP_GUARD_HOURS}h`,
+          channel_used: null,
+        });
+        continue;
+      }
       const smsEligibleTier = ["A", "B", "C"].includes(p.sms_eligibility_tier ?? "");
       const hasValidPhone = !!p.phone_e164 && !/555\d{4}$/.test(p.phone_e164);
       const shouldTrySms = smsEligibleTier && hasValidPhone && hasTwilio;
+
 
       // Build a single activation link both channels will share.
       const { token, link, error: linkErr } = await ensureActivationLink(supabase, origin, p.id, campaignId);
