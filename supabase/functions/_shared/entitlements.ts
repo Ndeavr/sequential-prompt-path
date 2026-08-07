@@ -116,7 +116,7 @@ export function entitlementDeniedResponse(
       limit: result.limit,
       usage: result.usage ?? null,
       upgrade_target: result.upgrade_target ?? null,
-      upgrade_url: "/entrepreneur/tarifs",
+      upgrade_url: "/tarifs/entrepreneurs",
       custom_plan_url: "/entrepreneur/devis-personnalise",
     }),
     { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
