@@ -49,22 +49,50 @@ export default function PricingContractorsPage() {
       >
         <PricingHero />
 
+        {/* $1 entry offer + personalized plan — above the catalog, always visible */}
+        <section className="max-w-4xl mx-auto px-5 -mt-2 mb-8">
+          <div className="rounded-3xl border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-accent/10 p-5 md:p-7">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-2">
+              Offre d'entrée
+            </p>
+            <h2 className="text-xl md:text-2xl font-bold text-foreground mb-1.5">
+              {TRIAL_OFFER.label} — essayez UNPRO avant de payer votre plan
+            </h2>
+            <p className="text-sm text-muted-foreground mb-5">
+              {TRIAL_OFFER.note} Chaque plan ci-dessous démarre avec la même offre.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link
+                to="/entrepreneur/devis-personnalise"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5"
+              >
+                <Sparkles className="h-4 w-4" />
+                Créer mon plan avec Alex
+              </Link>
+              <a
+                href="#plans"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-border/60 bg-card px-5 py-3.5 text-sm font-semibold text-foreground transition-transform hover:-translate-y-0.5"
+              >
+                Voir les plans standards
+                <ArrowRight className="h-4 w-4" />
+              </a>
+            </div>
+          </div>
+        </section>
+
         {session && preSelectedPlan && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="max-w-4xl mx-auto px-5 -mt-4 mb-6"
+            className="max-w-4xl mx-auto px-5 mb-6"
           >
             <div className="rounded-2xl bg-gradient-to-r from-primary/10 via-card to-accent/10 border border-primary/20 p-5 md:p-6">
               <p className="text-sm font-bold text-foreground mb-1">
-                📊 Selon vos objectifs, le plan{" "}
-                <span className="text-primary capitalize">
-                  {session.recommendedPlan === "elite" ? "Élite"
-                    : session.recommendedPlan === "premium" ? "Premium"
-                    : session.recommendedPlan === "pro" ? "Pro"
-                    : session.recommendedPlan === "signature" ? "Signature"
-                    : session.recommendedPlan === "recrue" ? "Recrue"
-                    : session.recommendedPlan}
+                Selon vos objectifs, le plan{" "}
+                <span className="text-primary">
+                  {CANONICAL_PLAN_LABELS[
+                    resolvePlanSlug(session.recommendedPlan)
+                  ] ?? session.recommendedPlan}
                 </span>{" "}
                 est le plus adapté.
               </p>
@@ -83,7 +111,7 @@ export default function PricingContractorsPage() {
           </motion.div>
         )}
 
-        <div ref={contractorRef}>
+        <div ref={contractorRef} id="plans">
           <ContractorPlans preSelectedPlan={preSelectedPlan} />
         </div>
         <SubscriptionExplainer />
