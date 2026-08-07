@@ -301,9 +301,11 @@ Deno.serve(async (req) => {
       sources.cluster_pricing = { status: "no_row", cluster_key: clusterKey };
     }
 
-    // ---------- Territory availability ----------
+    // ---------- Territory availability + scarcity ----------
     let availability: Record<string, unknown> = {};
     let saturated = false;
+    // Neutral until real configured capacity is found (never invent scarcity).
+    let scarcityMultiplier = 1.0;
     try {
       const { data: avail } = await svc.rpc("territory_availability", {
         _trade: tradeSlug,
@@ -312,7 +314,11 @@ Deno.serve(async (req) => {
       if (avail) {
         availability = avail as Record<string, unknown>;
         sources.territory = avail;
-        if ((avail as any).status === "verified") signalCount++;
+        if ((avail as any).status === "verified") {
+          signalCount++;
+          const raw = Number((avail as any).scarcity_multiplier ?? 1);
+          if (Number.isFinite(raw) && raw > 0) scarcityMultiplier = clamp(raw, 1, 1.35);
+        }
         saturated =
           (avail as any).lock_status === "locked" ||
           Number((avail as any).remaining_slots ?? 1) <= 0;
@@ -323,6 +329,7 @@ Deno.serve(async (req) => {
       console.error("[compute-pricing-quote] territory_availability rpc failed:", msg);
       availability = { status: "insufficient_data", error: msg };
     }
+
 
     // ---------- Capacity factor ----------
     const cap = Math.max(1, body.monthly_capacity ?? 1);
@@ -370,11 +377,13 @@ Deno.serve(async (req) => {
           territoryMultiplier *
           seasonality *
           objectiveMultiplier *
-          clusterMultiplier,
+          clusterMultiplier *
+          scarcityMultiplier,
         0.85,
-        1.35,
+        1.45,
       ),
     );
+
 
     let finalPrice = clamp(Math.round(subtotal * marketMultiplier), minCents, maxCents);
     let finalPlanCode = plan.code;
@@ -396,6 +405,7 @@ Deno.serve(async (req) => {
     const roiEstimate =
       finalPrice > 0 ? Number((revenuePotential / (finalPrice / 100)).toFixed(2)) : 0;
 
+    // Scarcity is exposed as a first-class factor (v2).
     const factors = {
       demand_factor: round2(demandFactor),
       competition_factor: round2(competitionFactor),
@@ -404,7 +414,11 @@ Deno.serve(async (req) => {
       seasonality_multiplier: round2(seasonality),
       objective_multiplier: round2(objectiveMultiplier),
       cluster_multiplier: round2(clusterMultiplier),
+      scarcity_multiplier: round2(scarcityMultiplier),
+      scarcity_level: (availability as any)?.scarcity_level ?? "unknown",
+      remaining_slots: (availability as any)?.remaining_slots ?? null,
       market_multiplier: marketMultiplier,
+
       utilization: round2(utilization),
       extra_appointments: extraAppointments,
       signal_count: signalCount,
