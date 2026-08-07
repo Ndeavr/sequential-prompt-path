@@ -822,7 +822,10 @@ export default function PageAdminAcquisitionPipeline() {
           <SourceHealthTable rows={sourceHealth.data} />
         </section>
 
+        <AutonomousRecruitmentPanel />
+
         <FirstDollarMini tracker={firstDollar.data} />
+
 
         <CampaignLauncher />
 
