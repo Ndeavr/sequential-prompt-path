@@ -62,15 +62,26 @@ export default function CrmProspectDrawer({ prospect, open, onClose, onRefresh }
     if (!note.trim()) return;
     setBusy("note");
     try {
-      await runCrmAction("add_note", [prospect.prospect_id], { payload: { note: note.trim() } });
+      const r = await runCrmAction("add_note", [prospect.prospect_id], { payload: { note: note.trim() } });
+      // The function returns per-prospect results; a transport success can still
+      // carry a failed write. Never claim the note was saved without checking.
+      if (r?.failed > 0) {
+        const detail = r.results?.[0]?.result ?? "Erreur inconnue";
+        toast.error("Note non enregistrée", { description: String(detail) });
+        return;
+      }
       setNote("");
-      const { data } = await (supabase as any)
+      const { data, error } = await (supabase as any)
         .from("crm_prospect_notes")
         .select("*")
         .eq("prospect_id", prospect.prospect_id)
         .order("created_at", { ascending: false });
-      setNotes(data ?? []);
-      toast.success("Note ajoutée");
+      if (error) {
+        toast.error("Note enregistrée, relecture impossible", { description: error.message });
+      } else {
+        setNotes(data ?? []);
+        toast.success("Note ajoutée");
+      }
     } catch (e: any) {
       toast.error("Note non enregistrée", { description: e?.message });
     } finally {
