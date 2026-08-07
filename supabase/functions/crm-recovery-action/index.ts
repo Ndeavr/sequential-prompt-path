@@ -173,34 +173,36 @@ Deno.serve(async (req) => {
           case "send_email":
           case "onboarding_email": {
             if (!p.email) throw new Error("no_email");
-            result = await invokeFn("send-transactional-email", {
-              templateName: "prospect-outreach",
-              recipientEmail: p.email,
-              idempotencyKey: `crm-${idem}`,
-              templateData: {
-                companyName: p.business_name,
-                city: p.city,
-                category: p.category,
-                activationUrl: link,
-              },
+            // Canonical outbound path: outreach-resend-send (alex@mail.unpro.ca).
+            // The legacy Lovable Emails path (send-transactional-email) is disabled
+            // for this project (403 "Emails disabled for this project") and would
+            // dead-letter silently, so it is never used for recruitment email.
+            result = await invokeFn("outreach-resend-send", {
+              to: p.email,
+              subject: `${p.business_name ?? "Votre entreprise"} — votre activation UNPRO est prête`,
+              message_id: `crm-${idem}`,
+              template_name: "prospect-outreach",
+              cta_url: link,
+              html: outreachHtml(p.business_name, p.city, p.category, link),
+              tags: { campaign: "crm_recovery", action },
             });
             break;
           }
 
           case "payment_email": {
             if (!p.email) throw new Error("no_email");
-            result = await invokeFn("send-transactional-email", {
-              templateName: "incomplete-checkout-followup",
-              recipientEmail: p.email,
-              idempotencyKey: `crm-${idem}`,
-              templateData: {
-                firstName: p.business_name,
-                planName: "Activation 1 $",
-                checkoutUrl: link,
-              },
+            result = await invokeFn("outreach-resend-send", {
+              to: p.email,
+              subject: "Il reste une étape : activez pour 1 $",
+              message_id: `crm-${idem}`,
+              template_name: "incomplete-checkout-followup",
+              cta_url: link,
+              html: checkoutHtml(p.business_name, link),
+              tags: { campaign: "crm_recovery", action },
             });
             break;
           }
+
 
           case "resume_checkout":
           case "new_checkout":
