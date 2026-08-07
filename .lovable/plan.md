@@ -1,54 +1,43 @@
-# Débloquer l'approvisionnement : prospects réellement contactables
+# Fermer les 7 constats de production
 
-Le goulot n'est plus l'envoi. Il est en amont : la découverte et l'enrichissement ne produisent plus d'inventaire contactable. Ce plan répare la chaîne existante — aucun nouveau scraper, aucune nouvelle table de prospects, aucune modification des expéditeurs sécurisés (`send-verified-batch`, `second-touch-outreach`, garde anti-doublon 24 h, Stripe 1 $).
+## Ce que la vérification montre déjà (avant tout changement)
 
-## Ce que l'inspection montre aujourd'hui (données de production)
+Vérifié en base et dans le code cette session :
 
-- `verified_contractor_prospects` : 256 lignes, dont seulement **17 jamais contactées**. 219 sont en tier C, 31 en `needs_enrichment`. L'inventaire est simplement épuisé — plus personne de neuf à contacter.
-- Numéros douteux : ils ne viennent pas de Google Places (178 lignes, aucune anomalie). Ils viennent de la normalisation : `normalizePhone` dans `acquisition-queue-worker` accepte **n'importe quelle chaîne commençant par `+`** sans valider le format nord-américain. Un `+10000000000` traverse donc jusqu'à Twilio Lookup et brûle une vérification pour rien.
-- Barrière site web : `send-verified-batch` filtre avec `website_url IS NOT NULL`, et le code de rejet `missing_website_url` s'applique même quand une fiche Google Business publique existe. C'est exactement le défaut décrit : les petits entrepreneurs locaux sans site sont éliminés.
-- Meilleure opportunité réelle calculée en production : **Laval × isolation** (offre = 0, score d'opportunité 44,8). Laval × thermopompe/HVAC n'a pas de signal de demande mesuré. La découverte visera donc Laval × isolation + Laval × thermopompe en second lot.
+1. **Prix Pro 299 $ vs 349 $** — `create-checkout-session` lit maintenant `public.plans` (plus `plan_catalog`) et `plans.pro.monthly_price = 29900` avec le prix Stripe `price_1U1eB1…`. Corrigé, à re-tester puis marquer résolu.
+2. **Nouveaux plans non achetables** — `plans` contient `presence`, `local`, `croissance`, `pro`, `premium`, `domination`, tous actifs avec un ID de prix Stripe mensuel. Corrigé, à re-tester.
+3. **Devis territoriaux** — `compute-pricing-quote` utilise bien `value_multiplier` et n'interroge plus `saturation_band` (la saturation vient de `territory_availability`). Corrigé.
+5. **File de sollicitation** — `solicitation-build-queue` lit `website_url` / `review_count`. Corrigé.
+7. **Statut « payé » écrasé** — le trigger `trg_monotonic_outreach_status` existe sur `verified_contractor_prospects`. Corrigé.
 
-## Ce qui sera fait
+## Ce qui reste réellement cassé
 
-### 1. Assainissement des numéros avant Twilio (cause racine)
-Durcir `normalizePhone` dans `acquisition-queue-worker` : validation NANP stricte (indicatif régional 2-9, central 2-9, 10 chiffres), rejet des séquences répétées et des plages fictives, en plus du filtre `555` déjà présent. Tout rejet est compté avec la raison `phone_invalid_format` au lieu d'être envoyé à Lookup. Même règle appliquée au moment de la promotion vers `verified_contractor_prospects`.
+### A. Sauvegarde des notes CRM (constat 6) — cause racine confirmée
+La table `crm_prospect_notes` a bien la sécurité au niveau des lignes et une règle d'accès pour les admins connectés, mais **aucune permission d'accès n'a été accordée** aux rôles applicatifs. Résultat : chaque écriture est refusée avant même d'évaluer la règle. Même situation à vérifier pour `crm_action_log`.
 
-### 2. Portillon de conformité fondé sur la provenance, pas sur le site web
-La preuve d'entreprise publique devient : `website_url` **ou** `google_business_url` **ou** une preuve CASL enregistrée (`captureScrapeEvidenceForProfile` écrit déjà cette provenance pour chaque fiche Google Places). Modifications :
-- `send-verified-batch` : remplacer `.not("website_url","is",null)` par le critère de provenance ci-dessus.
-- Codes de rejet : `missing_website_url` devient `missing_public_provenance`, émis seulement si aucune des trois preuves n'existe.
-- Aucun changement au reste de la logique d'envoi, aux quotas, ni à la garde 24 h.
+Correctif : une migration qui accorde lecture/écriture aux utilisateurs authentifiés et l'accès complet au rôle de service sur ces deux tables. Aucun changement de logique métier.
 
-### 3. Découverte contrôlée (25–50 entrepreneurs réels)
-Exécution de la fonction canonique `acq-scrape-google-places` sur Laval × isolation puis Laval × thermopompe. Pour chaque prospect, persistance de la provenance déjà supportée par le code : nom, catégorie, ville, URL source publique, site web si disponible, téléphone brut, téléphone E.164, résultat/type de vérification, tier SMS, courriel public si disponible, horodatage d'enrichissement, statut de conformité et raison exacte de rejet. Aucune coordonnée inventée ou déduite.
+### B. Facturation annuelle impossible (écart trouvé pendant l'audit)
+Dans `plans`, `stripe_yearly_price_id` est vide pour les six plans. Si l'écran de tarification propose le paiement annuel, `create-checkout-session` renvoie « Price not configured ». Correctif : créer les prix annuels Stripe pour les six plans aux montants déjà en base (490 / 790 / 1490 / 2990 / 5990 / 14990 $) et enregistrer les identifiants dans `plans`.
 
-Déduplication avant toute dépense d'enrichissement : `dedupeEngine` existant, plus contrôle contre `contractor_prospects`, `contractor_leads`, `verified_contractor_prospects`, `acq_sms_logs` (14 jours), opt-out, quarantaine et comptes payants.
+### C. Découverte Google Places (constat 4) — blocage externe
+Le disjoncteur est en place et signale l'état de la source. Les erreurs 502 proviennent du quota Google épuisé côté compte, pas du code. Action de ce run : relancer un appel réel pour capturer le code d'erreur exact et le consigner, puis rapporter soit « corrigé », soit « blocage externe » avec la preuve (le quota ne peut pas être relevé depuis l'application).
 
-### 4. Enrichissement par les fonctions canoniques
-Passage par `acq-enrich-prospect` / `enrich-official-website` puis `twilio-lookup-phone`, uniquement sur les numéros ayant survécu à l'assainissement. Le trigger `compute_sms_eligibility_tier` attribue le tier (A/B/C/D) sans modification. Objectif : **au moins 5 prospects réellement contactables**, pas « 50 scrapés ».
+## Vérifications exécutées après correctifs
 
-### 5. Vue et panneau Supply Health
-Nouvelle vue SQL `v_supply_health_funnel` comptant, pour aujourd'hui, chaque étape avec sa perte motivée :
-
-```text
-découverts → dédupliqués → source publique valide → preuve de contact publique
-→ téléphone normalisé → téléphone vérifié → tier SMS ou courriel valide
-→ éligible CASL → prêt au recrutement
-```
-
-Panneau proéminent en haut de `/admin/acquisition-pipeline`. Si éligible = 0, le panneau affiche explicitement le goulot courant (par exemple « 0 numéro mobile vérifié — source de découverte à élargir ») au lieu d'un état « sain ».
-
-### 6. Test réel contrôlé
-Un seul premier contact réel, réclamé par l'orchestrateur autonome existant (aucun appel direct à l'expéditeur). Vérification de l'acceptation et de la livraison Twilio, puis rejeu de la même requête d'orchestration pour prouver zéro doublon. Le recrutement horaire autonome reste actif ensuite, sous les quotas et protections existants.
+- Créer une session de paiement réelle pour chaque plan actif (`presence` → `domination`) et confirmer le montant exact en CAD côté Stripe.
+- Enregistrer une note CRM depuis `/admin/crm` et confirmer la ligne en base.
+- Rejouer la réconciliation Twilio sur un prospect marqué payé et confirmer que le statut reste payé.
+- Appeler `solicitation-build-queue` en mode simulation et confirmer un pool de prospects non nul.
+- Appeler `compute-pricing-quote` sur une ville configurée et confirmer que le multiplicateur territorial n'est plus la valeur par défaut.
 
 ## Détails techniques
 
-Fichiers touchés :
-- `supabase/functions/acquisition-queue-worker/index.ts` — validation NANP, comptage `phone_invalid_format`.
-- `supabase/functions/send-verified-batch/index.ts` — critère de provenance (défaut d'intégration), nouveau code de rejet. Aucun changement à la garde 24 h ni à la logique d'envoi.
-- Migration : vue `v_supply_health_funnel` (SECURITY INVOKER) + GRANT `authenticated`.
-- `src/components/admin/acquisition/SupplyHealthPanel.tsx` (nouveau) + montage dans `PageAdminAcquisitionPipeline.tsx`.
-- Aucune modification à `second-touch-outreach`, `recruitment-orchestrator`, Stripe, ou au First Dollar Tracker épinglé.
+- Migration : `GRANT` sur `public.crm_prospect_notes` et `public.crm_action_log` (authenticated + service_role).
+- Stripe : création des 6 prix annuels via l'API Stripe, puis `UPDATE public.plans SET stripe_yearly_price_id = …`.
+- Aucun système parallèle créé, aucune modification des garde-fous anti-doublon de recrutement.
+- Chaque constat sera clos via l'outil de suivi avec la mention corrigé / obsolète / faux positif et sa preuve.
 
-Le rapport final donnera les noms et comptes réels : découverts, dédupliqués, rejetés par raison, vérifiés, éligibles, candidat testé, SID Twilio, résultat de livraison, résultat du rejeu, et le blocage externe restant s'il y en a un.
+## Rapport final attendu
+
+Disposition 7/7, fichiers et fonctions modifiés, tests exécutés, résultat acquisition, résultat paiement, blocages externes, prêt à publier oui/non, prêt pour le premier 1 $ oui/non.
