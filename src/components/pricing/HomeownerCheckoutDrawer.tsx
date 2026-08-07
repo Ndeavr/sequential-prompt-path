@@ -127,7 +127,7 @@ export default function HomeownerCheckoutDrawer({
           {!session && (
             <div className="text-center pt-1">
               <Link
-                to={`/auth?redirect=/tarifs?tab=proprietaires`}
+                to={`/auth?redirect=${encodeURIComponent("/pricing/proprietaires")}`}
                 className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
               >
                 <LogIn className="h-3.5 w-3.5" />
