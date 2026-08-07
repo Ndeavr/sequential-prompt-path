@@ -832,6 +832,20 @@ Deno.serve(async (req) => {
           .from("contractor_subscriptions")
           .update(updateData)
           .eq("stripe_subscription_id", subscription.id);
+
+        // Homeowner plans: renewal, cancellation scheduling and status sync.
+        if (subscription.metadata?.plan_type === "homeowner") {
+          await supabase
+            .from("homeowner_subscriptions")
+            .update({
+              status: subscription.status,
+              current_period_start: period.start,
+              current_period_end: period.end,
+              cancel_at_period_end: subscription.cancel_at_period_end,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("stripe_subscription_id", subscription.id);
+        }
         break;
       }
 
@@ -842,6 +856,13 @@ Deno.serve(async (req) => {
           .from("contractor_subscriptions")
           .update({ status: "canceled", updated_at: new Date().toISOString() })
           .eq("stripe_subscription_id", subscription.id);
+
+        // Homeowner plans revert to Découverte as soon as the subscription ends.
+        await supabase
+          .from("homeowner_subscriptions")
+          .update({ status: "canceled", updated_at: new Date().toISOString() })
+          .eq("stripe_subscription_id", subscription.id);
+
 
         // Deactivate contractor
         const { data: sub } = await supabase
