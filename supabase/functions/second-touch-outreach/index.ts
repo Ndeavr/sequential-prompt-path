@@ -93,10 +93,16 @@ Deno.serve(async (req) => {
     const ids = (candidates ?? []).map((c) => c.id);
     if (ids.length === 0) return json({ ok: true, eligible: 0, attempts: [] });
 
-    const [{ data: tokens }, { data: already }, { data: optOuts }] = await Promise.all([
+    // Cross-automation duplicate guard window: any contact logged in
+    // acq_sms_logs by ANY automation inside this window blocks a new send.
+    const DUP_GUARD_HOURS = Number(Deno.env.get("OUTREACH_DUP_GUARD_HOURS") ?? 24);
+    const dupSince = new Date(Date.now() - DUP_GUARD_HOURS * 3600_000).toISOString();
+
+    const [{ data: tokens }, { data: already }, { data: optOuts }, { data: recentLogs }] = await Promise.all([
       supabase.from("verified_prospect_tokens").select("token, prospect_id, clicked_at").in("prospect_id", ids),
       supabase.from("acq_sms_logs").select("prospect_id").eq("relance_kind", relanceKind).in("prospect_id", ids),
       supabase.from("sms_opt_outs").select("normalized_phone"),
+      supabase.from("acq_sms_logs").select("prospect_id, recipient_phone").gte("created_at", dupSince).in("prospect_id", ids),
     ]);
 
     const tokenBy = new Map<string, { token: string; clicked_at: string | null }>();
@@ -105,18 +111,27 @@ Deno.serve(async (req) => {
     }
     const done = new Set((already ?? []).map((r) => r.prospect_id as string));
     const optedOut = new Set((optOuts ?? []).map((r) => String(r.normalized_phone)));
+    const recentIds = new Set((recentLogs ?? []).map((r) => String(r.prospect_id)));
+    const recentPhones = new Set((recentLogs ?? []).map((r) => String(r.recipient_phone)));
 
     // Targeted mode (explicit prospect_ids): recovering prospects who ALREADY
     // clicked is the whole point, so the clicked_at filter is skipped there.
     const skipClickedFilter = Boolean(targetIds);
+    let duplicateSkipped = 0;
     const eligible = (candidates ?? []).filter((c) => {
       const tk = tokenBy.get(c.id as string);
       if (!tk) return false;
       if (!skipClickedFilter && tk.clicked_at) return false;
-      return !done.has(c.id as string) && !optedOut.has(String(c.phone_e164));
+      if (done.has(c.id as string) || optedOut.has(String(c.phone_e164))) return false;
+      if (recentIds.has(String(c.id)) || recentPhones.has(String(c.phone_e164))) {
+        duplicateSkipped += 1;
+        return false;
+      }
+      return true;
     });
 
     const batch = eligible.slice(0, limit);
+
 
     const sid = Deno.env.get("TWILIO_ACCOUNT_SID");
     const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
@@ -204,6 +219,8 @@ Deno.serve(async (req) => {
       dry_run: dryRun,
       relance_kind: relanceKind,
       eligible: eligible.length,
+      duplicate_skipped: duplicateSkipped,
+
       attempted: attempts.length,
       sent: attempts.filter((a) => a.provider_message_id).length,
       attempts,
