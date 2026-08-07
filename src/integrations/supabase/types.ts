@@ -30728,9 +30728,15 @@ export type Database = {
       contractor_growth_profiles: {
         Row: {
           availability_score: number
+          average_project_value: number | null
           avg_ticket_cents: number
-          contractor_id: string
+          budget_comfort_cents: number | null
+          business_objective: string | null
+          completeness: number
+          contractor_id: string | null
           created_at: string
+          data_sources: Json
+          desired_monthly_projects: number | null
           generated_at: string | null
           generated_plan_id: string | null
           id: string
@@ -30738,20 +30744,32 @@ export type Database = {
           monthly_capacity: number
           preferred_job_types: string[]
           preferred_territories: string[]
+          primary_city: string | null
           quality_vs_volume: number
           response_speed_minutes: number | null
           seasonality_notes: string | null
+          service_categories: string[]
+          service_cities: string[]
+          service_radius_km: number | null
+          session_id: string | null
           target_growth_percent: number
           teams_count: number
+          trade: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
           wants_exclusivity: boolean
         }
         Insert: {
           availability_score?: number
+          average_project_value?: number | null
           avg_ticket_cents?: number
-          contractor_id: string
+          budget_comfort_cents?: number | null
+          business_objective?: string | null
+          completeness?: number
+          contractor_id?: string | null
           created_at?: string
+          data_sources?: Json
+          desired_monthly_projects?: number | null
           generated_at?: string | null
           generated_plan_id?: string | null
           id?: string
@@ -30759,20 +30777,32 @@ export type Database = {
           monthly_capacity?: number
           preferred_job_types?: string[]
           preferred_territories?: string[]
+          primary_city?: string | null
           quality_vs_volume?: number
           response_speed_minutes?: number | null
           seasonality_notes?: string | null
+          service_categories?: string[]
+          service_cities?: string[]
+          service_radius_km?: number | null
+          session_id?: string | null
           target_growth_percent?: number
           teams_count?: number
+          trade?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           wants_exclusivity?: boolean
         }
         Update: {
           availability_score?: number
+          average_project_value?: number | null
           avg_ticket_cents?: number
-          contractor_id?: string
+          budget_comfort_cents?: number | null
+          business_objective?: string | null
+          completeness?: number
+          contractor_id?: string | null
           created_at?: string
+          data_sources?: Json
+          desired_monthly_projects?: number | null
           generated_at?: string | null
           generated_plan_id?: string | null
           id?: string
@@ -30780,13 +30810,19 @@ export type Database = {
           monthly_capacity?: number
           preferred_job_types?: string[]
           preferred_territories?: string[]
+          primary_city?: string | null
           quality_vs_volume?: number
           response_speed_minutes?: number | null
           seasonality_notes?: string | null
+          service_categories?: string[]
+          service_cities?: string[]
+          service_radius_km?: number | null
+          session_id?: string | null
           target_growth_percent?: number
           teams_count?: number
+          trade?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           wants_exclusivity?: boolean
         }
         Relationships: []
@@ -64455,6 +64491,51 @@ export type Database = {
           },
         ]
       }
+      pricing_config: {
+        Row: {
+          active: boolean
+          created_at: string
+          default_plan_code: string
+          id: string
+          max_monthly_cents: number
+          min_monthly_cents: number
+          notes: string | null
+          pricing_version: string
+          trial_days: number
+          trial_price_cents: number
+          updated_at: string
+          weights: Json
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          default_plan_code?: string
+          id?: string
+          max_monthly_cents?: number
+          min_monthly_cents?: number
+          notes?: string | null
+          pricing_version: string
+          trial_days?: number
+          trial_price_cents?: number
+          updated_at?: string
+          weights?: Json
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          default_plan_code?: string
+          id?: string
+          max_monthly_cents?: number
+          min_monthly_cents?: number
+          notes?: string | null
+          pricing_version?: string
+          trial_days?: number
+          trial_price_cents?: number
+          updated_at?: string
+          weights?: Json
+        }
+        Relationships: []
+      }
       pricing_decisions: {
         Row: {
           adjusted_price: number
@@ -90870,6 +90951,10 @@ export type Database = {
           processed: number
           total_events: number
         }[]
+      }
+      territory_availability: {
+        Args: { _city: string; _trade: string }
+        Returns: Json
       }
       track_affiliate_conversion: {
         Args: {
