@@ -14,13 +14,8 @@ import {
   logLaunchEvent, transitionLead,
 } from "../_shared/launch.ts";
 
-const PLAN_AMOUNTS_CENTS: Record<string, { name: string; amount: number; recurring: boolean }> = {
-  recrue:   { name: "UNPRO Recrue",   amount: 14900,  recurring: true },
-  pro:      { name: "UNPRO Pro",      amount: 34900,  recurring: true },
-  premium:  { name: "UNPRO Premium",  amount: 59900,  recurring: true },
-  elite:    { name: "UNPRO Élite",    amount: 99900,  recurring: true },
-  signature:{ name: "UNPRO Signature",amount: 179900, recurring: true },
-};
+// CANONICAL PRICING — never hardcode amounts here. See _shared/planCatalog.ts.
+import { resolvePlan, planLineItem, planMetadata } from "../_shared/planCatalog.ts";
 
 const AGENT = "launch-agent-checkout-sender";
 const BATCH = 5;
@@ -58,41 +53,38 @@ serve(async (req) => {
     const results: any[] = [];
     for (const lead of leads ?? []) {
       try {
-        const planCode = lead.recommended_plan as string;
-        const plan = PLAN_AMOUNTS_CENTS[planCode];
-        if (!plan) {
-          await logLaunchEvent({ lead_id: lead.id, agent: AGENT, event: "skip", success: false, message: `Unknown plan: ${planCode}` });
+        const requestedPlan = lead.recommended_plan as string;
+        let plan;
+        try {
+          plan = await resolvePlan(sb, requestedPlan);
+        } catch (planErr) {
+          await logLaunchEvent({
+            lead_id: lead.id, agent: AGENT, event: "skip", success: false,
+            message: `Plan non résolu (${requestedPlan}): ${planErr instanceof Error ? planErr.message : String(planErr)}`,
+          });
           continue;
         }
+        const planCode = plan.code;
 
         const session = await stripe.checkout.sessions.create({
           mode: plan.recurring ? "subscription" : "payment",
           customer_email: lead.email ?? undefined,
-          line_items: [{
-            price_data: {
-              currency: "cad",
-              product_data: { name: plan.name },
-              unit_amount: plan.amount,
-              ...(plan.recurring ? { recurring: { interval: "month" as const } } : {}),
-            },
-            quantity: 1,
-          }],
+          line_items: [planLineItem(plan, "month")],
           success_url: "https://unpro.ca/entrepreneur/onboarding?step=post_payment&plan=" + planCode + "&launch=1",
           cancel_url: "https://unpro.ca/?alex=resume&launch=1",
-          metadata: {
+          metadata: planMetadata(plan, {
             launch_lead_id: lead.id,
-            plan_code: planCode,
             source: "launch_mode",
             company: lead.company_name ?? "",
             trade: lead.trade ?? "",
             city: lead.city ?? "",
-          },
+          }),
         });
 
         await sb.from("launch_leads").update({
           stripe_session_id: session.id,
           checkout_url: session.url,
-          recommended_plan_cents: plan.amount,
+          recommended_plan_cents: plan.monthlyPrice,
         }).eq("id", lead.id);
 
         // Best-effort outreach: invoke existing outbound channel
@@ -112,7 +104,7 @@ serve(async (req) => {
         await logLaunchEvent({
           lead_id: lead.id, agent: AGENT, event: "checkout_sent", success: true,
           message: `Plan ${planCode} → ${session.url}`,
-          payload: { session_id: session.id, plan: planCode, amount_cents: plan.amount },
+          payload: { session_id: session.id, plan: planCode, amount_cents: plan.monthlyPrice },
         });
 
         results.push({ lead_id: lead.id, session_id: session.id, ok: true });

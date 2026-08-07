@@ -6,14 +6,18 @@ import { Loader2, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useContractorStore } from "./contractorStore";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
+// CANONICAL PRICING — never hardcode a price here. Single source:
+// src/config/contractorPlans.ts (mirrors public.plans).
+import { CANONICAL_PLAN_LABELS, PLAN_PRICE_MAP, type ContractorPlanSlug } from "@/config/pricing";
 
-const PLAN_LABELS: Record<string, { name: string; price: number }> = {
-  recrue: { name: "Recrue", price: 149 },
-  pro: { name: "Pro", price: 349 },
-  premium: { name: "Premium", price: 599 },
-  elite: { name: "Élite", price: 999 },
-  signature: { name: "Signature", price: 1799 },
-};
+function planMeta(code: string): { name: string; price: number } {
+  const slug = (code || "").toLowerCase() as ContractorPlanSlug;
+  const price = PLAN_PRICE_MAP[slug];
+  if (price === undefined) {
+    return { name: CANONICAL_PLAN_LABELS.pro, price: PLAN_PRICE_MAP.pro };
+  }
+  return { name: CANONICAL_PLAN_LABELS[slug] ?? slug, price };
+}
 
 interface Props {
   actionId: string;
@@ -23,7 +27,7 @@ interface Props {
 export default function CheckoutPanel({ plan_code }: Props) {
   const [busy, setBusy] = useState(false);
   const profile = useContractorStore((s) => s.profile);
-  const meta = PLAN_LABELS[plan_code] || PLAN_LABELS.premium;
+  const meta = planMeta(plan_code);
 
   async function activate() {
     setBusy(true);

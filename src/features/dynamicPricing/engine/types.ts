@@ -1,3 +1,5 @@
+import { PLAN_PRICE_MAP } from "@/config/contractorPlans";
+
 export type PlanSlug = "recrue" | "pro" | "premium" | "elite" | "signature" | "custom";
 
 export interface GrowthProfile {
@@ -75,12 +77,14 @@ export interface PlanRecommendation {
   };
 }
 
+// CANONICAL PRICING — derived from src/config/contractorPlans.ts (mirrors
+// public.plans). Never hardcode a plan price here.
 export const PLAN_BASE_PRICES_CENTS: Record<Exclude<PlanSlug, "custom">, number> = {
-  recrue: 14900,
-  pro: 34900,
-  premium: 59900,
-  elite: 99900,
-  signature: 179900,
+  recrue: PLAN_PRICE_MAP.recrue * 100,
+  pro: PLAN_PRICE_MAP.pro * 100,
+  premium: PLAN_PRICE_MAP.premium * 100,
+  elite: PLAN_PRICE_MAP.elite * 100,
+  signature: PLAN_PRICE_MAP.signature * 100,
 };
 
 export const PLAN_ORDER: PlanSlug[] = ["recrue", "pro", "premium", "elite", "signature"];

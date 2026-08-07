@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
 
     const { data: prospects, error: readErr } = await supabase
       .from("verified_contractor_prospects")
-      .select("id, business_name, phone_e164, outreach_twilio_sid, outreach_sent_at")
+      .select("id, business_name, phone_e164, outreach_twilio_sid, outreach_sent_at, outreach_status")
       .not("outreach_twilio_sid", "is", null)
       .order("outreach_sent_at", { ascending: false })
       .limit(limit);
@@ -63,6 +63,7 @@ Deno.serve(async (req) => {
     const tally: Record<string, number> = {};
     const errorCodes: Record<string, number> = {};
     const results: Array<Record<string, unknown>> = [];
+    let preservedTerminal = 0;
 
     for (const p of prospects ?? []) {
       const msgSid = p.outreach_twilio_sid as string;
@@ -99,18 +100,35 @@ Deno.serve(async (req) => {
       const delivered = DELIVERED.has(status);
       const failed = FAILED.has(status);
 
+      // Twilio truth belongs in delivery_status (message transport layer).
+      // outreach_status is the BUSINESS lifecycle and must never be regressed
+      // by a transport update — the DB trigger enforce_monotonic_outreach_status
+      // is the hard guarantee; this check avoids pointless writes.
+      const TERMINAL_LIFECYCLE = new Set([
+        "clicked", "registered", "payment_started", "paid", "activated",
+      ]);
+      const currentLifecycle = String((p as any).outreach_status ?? "").toLowerCase();
+      const lifecycleIsTerminal = TERMINAL_LIFECYCLE.has(currentLifecycle);
+
+      const update: Record<string, unknown> = {
+        delivery_status: status,
+        outreach_delivered_at: delivered
+          ? (msg.date_sent ?? p.outreach_sent_at ?? new Date().toISOString())
+          : null,
+        outreach_failure_reason: failed
+          ? `${status}${msg.error_code ? ` (${msg.error_code}: ${msg.error_message ?? ""})` : ""}`
+          : null,
+        updated_at: new Date().toISOString(),
+      };
+      if (!lifecycleIsTerminal) {
+        update.outreach_status = delivered ? "delivered" : failed ? "failed" : "sent";
+      } else {
+        preservedTerminal++;
+      }
+
       await supabase
         .from("verified_contractor_prospects")
-        .update({
-          outreach_delivered_at: delivered
-            ? (msg.date_sent ?? p.outreach_sent_at ?? new Date().toISOString())
-            : null,
-          outreach_failure_reason: failed
-            ? `${status}${msg.error_code ? ` (${msg.error_code}: ${msg.error_message ?? ""})` : ""}`
-            : null,
-          outreach_status: delivered ? "delivered" : failed ? "failed" : "sent",
-          updated_at: new Date().toISOString(),
-        })
+        .update(update)
         .eq("id", p.id);
 
       // Mirror into acq_sms_logs (idempotent on provider_message_id).
@@ -188,6 +206,7 @@ Deno.serve(async (req) => {
       checked,
       delivered: deliveredCount,
       delivery_rate: checked ? Math.round((deliveredCount / checked) * 100) : 0,
+      preserved_terminal_lifecycle: preservedTerminal,
       status_breakdown: tally,
       relance_status_breakdown: relanceTally,
       error_codes: errorCodes,

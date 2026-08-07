@@ -279,13 +279,21 @@ Deno.serve(async (req) => {
             break;
           }
 
-          case "note": {
+          // UI sends "add_note"; keep "note" as a backwards-compatible alias.
+          case "note":
+          case "add_note": {
             const note = String(payloadExtra.note ?? "").trim();
             if (!note) throw new Error("missing_note");
-            await sb.from("crm_prospect_notes").insert({ prospect_id: pid, note, author_id: actorId });
+            const { error: noteErr } = await sb
+              .from("crm_prospect_notes")
+              .insert({ prospect_id: pid, note, author_id: actorId });
+            if (noteErr) throw new Error(`note_insert_failed: ${noteErr.message}`);
             result = "note_added";
             break;
           }
+
+          default:
+            throw new Error(`unknown_action:${action}`);
         }
       } catch (e) {
         status = "failed";
@@ -294,7 +302,17 @@ Deno.serve(async (req) => {
 
       results.push({ prospect_id: pid, action, status, result: result.slice(0, 400) });
 
-      await sb.from("crm_action_log").insert({
+      // Notes are repeatable by design — an operator can add several the same
+      // day. Reusing the daily `idem` key made the 2nd note collide on the
+      // unique index and fail. Only the once-per-day OUTBOUND actions may
+      // claim the stable key.
+      const repeatable = action === "note" || action === "add_note";
+      const logKey =
+        status === "success" && !dryRun && !repeatable
+          ? idem
+          : `${idem}:${crypto.randomUUID().slice(0, 8)}`;
+
+      const { error: logErr } = await sb.from("crm_action_log").insert({
         prospect_id: pid,
         action,
         source,
@@ -303,8 +321,12 @@ Deno.serve(async (req) => {
         result: result.slice(0, 1000),
         payload: { dry_run: dryRun, ...payloadExtra },
         actor_id: actorId,
-        idempotency_key: status === "success" && !dryRun ? idem : `${idem}:${crypto.randomUUID().slice(0, 8)}`,
+        idempotency_key: logKey,
       });
+      if (logErr) {
+        // The audit write must never silently disappear.
+        console.error(`[crm-recovery-action] audit log insert failed (${action}/${pid}):`, logErr.message);
+      }
     }
 
     return json({

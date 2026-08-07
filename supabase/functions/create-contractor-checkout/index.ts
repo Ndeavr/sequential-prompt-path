@@ -1,17 +1,23 @@
 /**
  * create-contractor-checkout — Stripe Checkout for contractor plans.
  *
- * Source of truth: src/config/contractorPlans.ts
- *  - Recurring monthly: recrue $149, pro $349, premium $599, elite $999, signature $1799
- *  - One-time founder lifetime: founder_elite_10y $19995, founder_signature_10y $29995
+ * CANONICAL PRICING: `public.plans` via ../_shared/planCatalog.ts.
+ * Legacy codes (recrue|elite|signature) are resolved to their canonical
+ * successors (presence|premium|domination).
  *
- * Reads existing Stripe price IDs from `plan_catalog` (per the dynamic
- * pricing memory). Falls back to creating an inline price on the fly only if missing,
- * so a fresh project still works end-to-end.
+ * There is deliberately NO inline price fallback for recurring plans: a missing
+ * Stripe price ID must fail loudly instead of charging a stale hardcoded amount.
+ * (Root cause of the "UI $299 / Stripe $349" defect.)
+ *
+ * Only the one-time Founder lifetime offers, absent from the recurring catalog,
+ * are declared locally.
  */
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import {
+  resolvePlan, planLineItem, planMetadata, planErrorResponse, canonicalPlanCode,
+} from "../_shared/planCatalog.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,24 +25,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-type PlanCode =
-  | "recrue" | "pro" | "premium" | "elite" | "signature"
-  | "founder_elite_10y" | "founder_signature_10y";
-
-interface PlanDef {
-  name: string;
-  amount: number; // cents CAD
-  recurring: boolean;
-}
-
-const PLANS: Record<PlanCode, PlanDef> = {
-  recrue:                { name: "UNPRO Recrue",              amount: 14900,   recurring: true  },
-  pro:                   { name: "UNPRO Pro",                 amount: 34900,   recurring: true  },
-  premium:               { name: "UNPRO Premium",             amount: 59900,   recurring: true  },
-  elite:                 { name: "UNPRO Élite",               amount: 99900,   recurring: true  },
-  signature:             { name: "UNPRO Signature",           amount: 179900,  recurring: true  },
-  founder_elite_10y:     { name: "UNPRO Élite Fondateur 10 ans",     amount: 1999500, recurring: false },
-  founder_signature_10y: { name: "UNPRO Signature Fondateur 10 ans", amount: 2999500, recurring: false },
+const FOUNDER_ONE_TIME: Record<string, { name: string; amount: number }> = {
+  founder_elite_10y:     { name: "UNPRO Élite Fondateur 10 ans",     amount: 1999500 },
+  founder_signature_10y: { name: "UNPRO Signature Fondateur 10 ans", amount: 2999500 },
 };
 
 function logStep(step: string, details?: any) {
@@ -56,25 +47,50 @@ serve(async (req) => {
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
     const body = await req.json().catch(() => ({}));
-    const planCode = body?.plan_code as PlanCode | undefined;
-    if (!planCode || !PLANS[planCode]) {
+    const requestedCode = String(body?.plan_code ?? "").trim().toLowerCase();
+    if (!requestedCode) {
       return new Response(
-        JSON.stringify({ error: `Plan inconnu : ${planCode}` }),
+        JSON.stringify({ error: "Plan manquant.", error_code: "plan_code_missing" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
-    const plan = PLANS[planCode];
+
+    const supabaseService = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    );
+
+    const founder = FOUNDER_ONE_TIME[requestedCode];
+    let canonical: Awaited<ReturnType<typeof resolvePlan>> | null = null;
+    if (!founder) {
+      try {
+        canonical = await resolvePlan(supabaseService, requestedCode);
+      } catch (e) {
+        logStep("Plan resolution failed", { requestedCode, error: String(e) });
+        return planErrorResponse(e, corsHeaders);
+      }
+    }
+
+    const planCode = founder ? requestedCode : canonical!.code;
+    const planName = founder ? founder.name : canonical!.name;
+    const planAmount = founder ? founder.amount : canonical!.monthlyPrice;
+    const recurring = !founder;
 
     // GUARDRAIL — Un plan Fondateur ne peut JAMAIS être une réduction surprise.
     // Tout code "founder_*" doit être one-time (paiement unique 10 ans).
-    // Tout plan mensuel doit utiliser un code régulier (recrue|pro|premium|elite|signature).
-    if (planCode.startsWith("founder_") && plan.recurring) {
+    if (requestedCode.startsWith("founder_") && recurring) {
       return new Response(
         JSON.stringify({ error: "Les plans Fondateurs sont en paiement unique uniquement." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
-    logStep("Plan resolved", { planCode, amount: plan.amount, recurring: plan.recurring });
+    logStep("Plan resolved", {
+      requestedCode,
+      planCode,
+      canonicalized: canonicalPlanCode(requestedCode),
+      amount: planAmount,
+      recurring,
+    });
 
     // Auth — optional (guests redirected to auth on the front end usually,
     // but we still allow guest checkout via Stripe email entry).
@@ -98,30 +114,6 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Try to find existing Stripe price via plan_catalog table (best-effort).
-    // Canonical columns: stripe_monthly_price_id, stripe_yearly_price_id.
-    // One-time prices are not stored in plan_catalog — use inline price_data fallback.
-    let priceId: string | undefined;
-    try {
-      const supabaseService = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      );
-      const { data: catalogRow, error: catErr } = await supabaseService
-        .from("plan_catalog")
-        .select("stripe_monthly_price_id, stripe_yearly_price_id")
-        .eq("code", planCode)
-        .maybeSingle();
-      if (catErr) {
-        logStep("plan_catalog lookup error", { error: catErr.message });
-      } else if (plan.recurring) {
-        priceId = catalogRow?.stripe_monthly_price_id ?? undefined;
-        if (priceId) logStep("Found Stripe price in plan_catalog", { priceId });
-      }
-    } catch (e) {
-      logStep("plan_catalog lookup skipped", { error: (e as Error).message });
-    }
-
     // Reuse customer if email known
     let customerId: string | undefined;
     if (userEmail) {
@@ -136,31 +128,46 @@ serve(async (req) => {
     const successUrl = `${origin}/entrepreneur/onboarding?step=post_payment&plan=${planCode}`;
     const cancelUrl = `${origin}/?alex=resume&plan=${planCode}`;
 
-    // Build line items: prefer existing price_id, otherwise inline price_data.
-    const lineItem: Stripe.Checkout.SessionCreateParams.LineItem = priceId
-      ? { price: priceId, quantity: 1 }
-      : {
-          price_data: {
-            currency: "cad",
-            product_data: { name: plan.name },
-            unit_amount: plan.amount,
-            ...(plan.recurring ? { recurring: { interval: "month" } } : {}),
-          },
-          quantity: 1,
-        };
+    // Recurring plans MUST use the catalog Stripe price ID (no inline amount that
+    // can drift from the UI). One-time Founder offers use inline price_data.
+    let lineItem: Stripe.Checkout.SessionCreateParams.LineItem;
+    if (canonical) {
+      try {
+        lineItem = planLineItem(canonical, "month");
+      } catch (e) {
+        logStep("Stripe price missing", { planCode, error: String(e) });
+        return planErrorResponse(e, corsHeaders);
+      }
+    } else {
+      lineItem = {
+        price_data: {
+          currency: "cad",
+          product_data: { name: planName },
+          unit_amount: planAmount,
+        },
+        quantity: 1,
+      };
+    }
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : userEmail,
-      mode: plan.recurring ? "subscription" : "payment",
+      mode: recurring ? "subscription" : "payment",
       line_items: [lineItem],
       success_url: successUrl,
       cancel_url: cancelUrl,
-      metadata: {
-        plan_code: planCode,
-        user_id: userId ?? "guest",
-        source: "alex_chat_contractor_onboarding",
-      },
+      metadata: canonical
+        ? planMetadata(canonical, {
+            user_id: userId ?? "guest",
+            source: "alex_chat_contractor_onboarding",
+          })
+        : {
+            plan_code: planCode,
+            plan_name: planName,
+            plan_amount_cents: String(planAmount),
+            user_id: userId ?? "guest",
+            source: "alex_chat_contractor_onboarding",
+          },
     });
 
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
