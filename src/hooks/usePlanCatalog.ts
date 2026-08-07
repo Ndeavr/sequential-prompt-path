@@ -1,9 +1,12 @@
 /**
  * UNPRO — Dynamic Plan Catalog Hook
- * Fetches plan data from plan_catalog table (single source of truth).
+ * Reads the canonical contractor catalog from `plans` (audience = 'contractor').
+ * `plans` is the ONLY source of truth for prices and Stripe price IDs.
+ * Marketing copy (features, pitch) comes from src/config/contractorPlans.ts.
  */
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
 
 export type BillingInterval = "month" | "year";
 
