@@ -319,13 +319,20 @@ Deno.serve(async (req) => {
     const aipp = aippFee(body.current_ai_visibility_score);
 
     const subtotal = base + apptPkg + exclusivity + aipp;
+    // Compounding six factors can double the price; the blended multiplier is
+    // clamped so the personalized price stays within a defensible band of the
+    // plan's published price.
     const marketMultiplier = round2(
-      demandFactor *
-        competitionFactor *
-        capacityFactor *
-        territoryMultiplier *
-        seasonality *
-        objectiveMultiplier,
+      clamp(
+        demandFactor *
+          competitionFactor *
+          capacityFactor *
+          territoryMultiplier *
+          seasonality *
+          objectiveMultiplier,
+        0.85,
+        1.35,
+      ),
     );
 
     let finalPrice = clamp(Math.round(subtotal * marketMultiplier), minCents, maxCents);
