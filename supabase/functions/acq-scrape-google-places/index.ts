@@ -15,6 +15,9 @@ import {
 } from "../_shared/dedupeEngine.ts";
 import { captureScrapeEvidenceForProfile } from "../_shared/caslEvidence.ts";
 
+/** acquisition_source_health.source vocabulary entry for Google Places. */
+const SOURCE_KEY = "google_business";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -85,12 +88,15 @@ Deno.serve(async (req) => {
       "places.primaryType","places.location","places.addressComponents",
     ].join(",");
 
+    // `acquisition_source_health.source` is constrained to a fixed vocabulary;
+    // Google Places reports under "google_business". Status vocabulary is
+    // healthy | degraded | scraper_down | fallback_running.
     // Circuit breaker: if Google reported quota exhaustion recently, stop the
     // retry storm instead of hammering the API and returning opaque 502s.
     const { data: healthRow } = await supabase
       .from("acquisition_source_health")
       .select("status, last_error_code, metadata")
-      .eq("source", "google_places")
+      .eq("source", SOURCE_KEY)
       .maybeSingle();
     const breakerUntil = (healthRow?.metadata as any)?.breaker_until as string | undefined;
     if (breakerUntil && new Date(breakerUntil) > new Date()) {
@@ -159,9 +165,9 @@ Deno.serve(async (req) => {
         const breaker = isQuota || isBilling
           ? new Date(Date.now() + 60 * 60 * 1000).toISOString()
           : null;
-        await supabase.from("acquisition_source_health").upsert({
-          source: "google_places",
-          status: "blocked",
+        const { error: healthErr } = await supabase.from("acquisition_source_health").upsert({
+          source: SOURCE_KEY,
+          status: isQuota || isBilling ? "degraded" : "scraper_down",
           last_run_at: new Date().toISOString(),
           found_last_run: 0,
           last_error_code: errorCode,
@@ -173,6 +179,9 @@ Deno.serve(async (req) => {
             ...(breaker ? { breaker_until: breaker } : {}),
           },
         }, { onConflict: "source" });
+        if (healthErr) {
+          console.error("[acq-scrape-google-places] health upsert failed:", healthErr.message);
+        }
 
         return new Response(
           JSON.stringify({
@@ -202,9 +211,9 @@ Deno.serve(async (req) => {
     }
 
     // Successful call clears the breaker.
-    await supabase.from("acquisition_source_health").upsert({
-      source: "google_places",
-      status: "healthy",
+    const { error: okHealthErr } = await supabase.from("acquisition_source_health").upsert({
+      source: SOURCE_KEY,
+      status: allPlaces.length > 0 ? "healthy" : "degraded",
       last_run_at: new Date().toISOString(),
       last_success_at: new Date().toISOString(),
       found_last_run: allPlaces.length,
@@ -212,6 +221,9 @@ Deno.serve(async (req) => {
       last_error_message: null,
       metadata: {},
     }, { onConflict: "source" });
+    if (okHealthErr) {
+      console.error("[acq-scrape-google-places] health upsert failed:", okHealthErr.message);
+    }
 
     const candidates = allPlaces.slice(0, limit);
 
