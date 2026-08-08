@@ -255,6 +255,7 @@ const PageAdminNormalization = lazyWithRetry(() => import("@/pages/admin/PageAdm
 const PageAdminOps = lazyWithRetry(() => import("@/pages/admin/PageAdminOps"));
 const PageAdminOperationsHealth = lazyWithRetry(() => import("@/pages/admin/PageAdminOperationsHealth"));
 const PageAdminCRM = lazyWithRetry(() => import("@/pages/admin/PageAdminCRM"));
+const PageAdminScout = lazyWithRetry(() => import("@/pages/admin/PageAdminScout"));
 const PageAdminSiteHealth = lazyWithRetry(() => import("@/pages/admin/PageAdminSiteHealth"));
 const AdminLaunchWarRoom = lazyWithRetry(() => import("@/pages/admin/AdminLaunchWarRoom"));
 const PageAdminLaunchControl = lazyWithRetry(() => import("@/pages/admin/PageAdminLaunchControl"));
