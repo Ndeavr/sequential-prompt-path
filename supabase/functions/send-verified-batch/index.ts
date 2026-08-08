@@ -326,7 +326,7 @@ Deno.serve(async (req) => {
         });
         continue;
       }
-      const smsEligibleTier = ["A", "B", "C"].includes(p.sms_eligibility_tier ?? "");
+      const smsEligibleTier = !forceEmail && ["A", "B", "C"].includes(p.sms_eligibility_tier ?? "");
       const hasValidPhone = !!p.phone_e164 && !/555\d{4}$/.test(p.phone_e164);
       const shouldTrySms = smsEligibleTier && hasValidPhone && hasTwilio;
 
