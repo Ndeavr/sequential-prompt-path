@@ -326,3 +326,30 @@ async function bumpSession(
     error_count: (data.error_count ?? 0) + (d.error ?? 0),
   }).eq("id", sessionId);
 }
+
+/**
+ * Write the discovery into the canonical acquisition event log.
+ * `channel` and `event_type` are constrained by acquisition_events_*_check, so
+ * Scout reuses the allowed 'system' / 'scraped' pair; the Scout-specific
+ * semantics live in metadata.kind. `source_row_id` is the capture id, which
+ * satisfies uq_acq_events_source (source_table, source_row_id, event_type).
+ */
+async function logAcquisitionEvent(
+  admin: ReturnType<typeof createClient>,
+  prospectId: string,
+  captureId: string | undefined,
+  metadata: Record<string, unknown>,
+) {
+  const { error } = await admin.from("acquisition_events").insert({
+    prospect_id: prospectId,
+    channel: "system",
+    event_type: "scraped",
+    provider: "system",
+    source_table: "scout_captures",
+    source_row_id: captureId ?? null,
+    metadata: { source: "unpro_scout", platform: "facebook_group", ...metadata },
+  });
+  // Never fail the capture on telemetry, but never hide the failure either.
+  if (error) console.error("[scout-ingest] acquisition_event insert failed", error.message);
+}
+
