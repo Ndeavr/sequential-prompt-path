@@ -183,8 +183,10 @@ Deno.serve(async (req) => {
     };
 
     if (!hasContactPoint(signals)) {
-      await admin.from("scout_captures").insert({ ...captureRow, dedupe_status: "error", error: "no_contact_point" });
-      await bumpSession(admin, sessionId, { captured: 1, error: 1 });
+      // Not an error — chit-chat with no contact point is the common case in a
+      // group feed. Recorded as 'skipped' so the operator stats stay honest.
+      await admin.from("scout_captures").insert({ ...captureRow, dedupe_status: "skipped", error: "no_contact_point" });
+      await bumpSession(admin, sessionId, { captured: 1 });
       return json({ status: "skipped", reason: "no_contact_point" });
     }
 
