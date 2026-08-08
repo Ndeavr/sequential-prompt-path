@@ -156,6 +156,9 @@ Deno.serve(async (req) => {
       : null;
     const limit = Math.min(Number(body.limit ?? (prospectIds?.length ?? 10)), 50);
     const dryRun = body.dry_run !== false ? true : false;
+    // Opt-in email-only wave: used for prospects whose SMS channel is proven
+    // dead (landline 30006 / A2P 30034). Never sends SMS in this mode.
+    const forceEmail = String(body.channel ?? "").toLowerCase() === "email";
 
     const url = Deno.env.get("SUPABASE_URL");
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -170,15 +173,23 @@ Deno.serve(async (req) => {
     let query = supabase
       .from("verified_contractor_prospects")
       .select("id, business_name, phone_e164, phone_validation_status, phone_line_type, sms_eligibility_tier, sms_eligibility_confidence, data_quality_score, website_url, city, category, source, email, outreach_status, verification_status, retry_count")
-      .eq("outreach_status", "none")
       .eq("verification_status", "verified")
       .gte("data_quality_score", 80)
       .not("website_url", "is", null)
-      .or("sms_eligibility_tier.in.(A,B,C),and(sms_eligibility_tier.eq.D,email.not.is.null),and(sms_eligibility_tier.is.null,email.not.is.null)")
       .order("sms_eligibility_tier", { ascending: true, nullsFirst: false })
       .order("data_quality_score", { ascending: false })
       .limit(limit);
+    if (forceEmail) {
+      // A hard-failed SMS attempt never reached a human, so these rows stay
+      // contactable on the email channel only. Paid/activated are excluded.
+      query = query.in("outreach_status", ["none", "failed"]).not("email", "is", null);
+    } else {
+      query = query
+        .eq("outreach_status", "none")
+        .or("sms_eligibility_tier.in.(A,B,C),and(sms_eligibility_tier.eq.D,email.not.is.null),and(sms_eligibility_tier.is.null,email.not.is.null)");
+    }
     if (prospectIds) query = query.in("id", prospectIds);
+
     const { data: pool, error } = await query;
     if (error) throw new FunctionError(error.message, 500, "eligible_query_failed");
 
@@ -269,7 +280,7 @@ Deno.serve(async (req) => {
 
     if (dryRun) {
       const previews = eligible.map((p: any) => {
-        const smsEligibleTier = ["A", "B", "C"].includes(p.sms_eligibility_tier ?? "");
+        const smsEligibleTier = !forceEmail && ["A", "B", "C"].includes(p.sms_eligibility_tier ?? "");
         const dup = isRecentlyContacted(p);
         return {
           id: p.id,
@@ -315,7 +326,7 @@ Deno.serve(async (req) => {
         });
         continue;
       }
-      const smsEligibleTier = ["A", "B", "C"].includes(p.sms_eligibility_tier ?? "");
+      const smsEligibleTier = !forceEmail && ["A", "B", "C"].includes(p.sms_eligibility_tier ?? "");
       const hasValidPhone = !!p.phone_e164 && !/555\d{4}$/.test(p.phone_e164);
       const shouldTrySms = smsEligibleTier && hasValidPhone && hasTwilio;
 
