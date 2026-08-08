@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
       const v = visionRaw as Record<string, any>;
       const merged = parseScoutText(
         [rawText, v.company_name, v.phone, v.mobile_phone, v.email, v.website_url, v.city].filter(Boolean).join("\n"),
-        body.author_name ?? [v.contact_first_name, v.contact_last_name].filter(Boolean).join(" ") || null,
+        body.author_name ?? ([v.contact_first_name, v.contact_last_name].filter(Boolean).join(" ") || null),
       );
       signals = {
         ...merged,
