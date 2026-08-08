@@ -20,6 +20,7 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const token = String((body as { token?: string })?.token ?? "").trim();
+    const trackEvent = String((body as { event?: string })?.event ?? "").trim();
     if (!token || token.length > 128) {
       return json({ ok: false, reason: "invalid_token" }, 400);
     }
@@ -28,6 +29,37 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    // Lightweight tracking mode: record an intermediate funnel step (e.g. the
+    // "Activer mon profil" tap) without re-resolving or re-counting the click.
+    if (trackEvent) {
+      const allowed = new Set(["checkout_cta_clicked", "checkout_cta_failed"]);
+      if (!allowed.has(trackEvent)) return json({ ok: false, reason: "unsupported_event" }, 400);
+      try {
+        const { data: tk } = await supabase
+          .from("verified_prospect_tokens")
+          .select("prospect_id")
+          .eq("token", token)
+          .maybeSingle();
+        await supabase.rpc("record_engagement_event", {
+          _event_type: trackEvent,
+          _channel: "web",
+          _status: trackEvent,
+          _provider: "unpro",
+          _tracking_id: token,
+          _prospect_id: tk?.prospect_id ?? null,
+          _source_table: "verified_prospect_tokens",
+          _source_row_id: token,
+          _metadata: { surface: "unpro_activate" },
+          _idempotency_key: `${trackEvent}:${token}:${Math.floor(Date.now() / 60000)}`,
+        });
+      } catch (e) {
+        console.error("[activation-token-resolve] track_failed", e);
+      }
+      return json({ ok: true, tracked: trackEvent });
+    }
+
+
 
     const { data: row, error } = await supabase
       .from("verified_prospect_tokens")
