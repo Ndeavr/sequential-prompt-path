@@ -241,12 +241,15 @@ Deno.serve(async (req) => {
       }
       await admin.from("verified_contractor_prospects").update(patch).eq("id", existingId);
 
-      await admin.from("scout_captures").insert({
+      const { data: dupCapture } = await admin.from("scout_captures").insert({
         ...captureRow, dedupe_status: "duplicate", dedupe_signal: signal, prospect_id: existingId,
-      });
-      await admin.from("acquisition_events").insert({
-        prospect_id: existingId, channel: "scout", event_type: "rediscovered",
-        source_table: "scout_captures", metadata: { signal, group_name: body.group_name ?? null, intent_score: signals.intent_score },
+      }).select("id").single();
+      // Canonical acquisition event. `channel`/`event_type` are constrained by
+      // acquisition_events_*_check — Scout uses the allowed 'system'/'scraped'
+      // pair and carries its own semantics in metadata.kind.
+      await logAcquisitionEvent(admin, existingId, dupCapture?.id, {
+        kind: "scout_rediscovered", signal, group_name: body.group_name ?? null,
+        intent_score: signals.intent_score, extraction_mode: mode,
       });
       await bumpSession(admin, sessionId, { captured: 1, duplicate: 1 });
       return json({ status: "duplicate", prospect_id: existingId, signal, intent_score: signals.intent_score });
