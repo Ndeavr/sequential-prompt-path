@@ -280,7 +280,7 @@ Deno.serve(async (req) => {
 
     if (dryRun) {
       const previews = eligible.map((p: any) => {
-        const smsEligibleTier = ["A", "B", "C"].includes(p.sms_eligibility_tier ?? "");
+        const smsEligibleTier = !forceEmail && ["A", "B", "C"].includes(p.sms_eligibility_tier ?? "");
         const dup = isRecentlyContacted(p);
         return {
           id: p.id,
