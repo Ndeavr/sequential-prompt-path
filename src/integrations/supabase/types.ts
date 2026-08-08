@@ -89595,6 +89595,20 @@ export type Database = {
         }
         Relationships: []
       }
+      v_activation_funnel: {
+        Row: {
+          checkouts_opened: number | null
+          cta_clicks: number | null
+          day: string | null
+          landing_views: number | null
+          link_clicks: number | null
+          payments: number | null
+          sms_delivered: number | null
+          sms_sent: number | null
+          sms_undelivered: number | null
+        }
+        Relationships: []
+      }
       v_active_leads: {
         Row: {
           activation_status: string | null
