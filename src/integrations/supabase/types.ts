@@ -76565,6 +76565,190 @@ export type Database = {
         }
         Relationships: []
       }
+      scout_captures: {
+        Row: {
+          author_name: string | null
+          captured_at: string
+          category: string | null
+          city: string | null
+          company_name: string | null
+          confidence: number
+          contact_name: string | null
+          created_at: string
+          dedupe_signal: string | null
+          dedupe_status: string
+          email: string | null
+          error: string | null
+          extracted: Json
+          extraction_mode: string
+          group_name: string | null
+          id: string
+          intent_evidence: string | null
+          intent_score: number
+          phone_e164: string | null
+          post_url: string | null
+          prospect_id: string | null
+          raw_text: string | null
+          rbq_number: string | null
+          session_id: string | null
+          source_platform: string
+          source_url: string | null
+          user_id: string
+          website_url: string | null
+        }
+        Insert: {
+          author_name?: string | null
+          captured_at?: string
+          category?: string | null
+          city?: string | null
+          company_name?: string | null
+          confidence?: number
+          contact_name?: string | null
+          created_at?: string
+          dedupe_signal?: string | null
+          dedupe_status?: string
+          email?: string | null
+          error?: string | null
+          extracted?: Json
+          extraction_mode?: string
+          group_name?: string | null
+          id?: string
+          intent_evidence?: string | null
+          intent_score?: number
+          phone_e164?: string | null
+          post_url?: string | null
+          prospect_id?: string | null
+          raw_text?: string | null
+          rbq_number?: string | null
+          session_id?: string | null
+          source_platform?: string
+          source_url?: string | null
+          user_id: string
+          website_url?: string | null
+        }
+        Update: {
+          author_name?: string | null
+          captured_at?: string
+          category?: string | null
+          city?: string | null
+          company_name?: string | null
+          confidence?: number
+          contact_name?: string | null
+          created_at?: string
+          dedupe_signal?: string | null
+          dedupe_status?: string
+          email?: string | null
+          error?: string | null
+          extracted?: Json
+          extraction_mode?: string
+          group_name?: string | null
+          id?: string
+          intent_evidence?: string | null
+          intent_score?: number
+          phone_e164?: string | null
+          post_url?: string | null
+          prospect_id?: string | null
+          raw_text?: string | null
+          rbq_number?: string | null
+          session_id?: string | null
+          source_platform?: string
+          source_url?: string | null
+          user_id?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scout_captures_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "scout_captures_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_crm_next_action"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "scout_captures_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "scout_captures_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_prospect_funnel"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "scout_captures_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "verified_contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_captures_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "scout_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scout_sessions: {
+        Row: {
+          captured_count: number
+          created_at: string
+          duplicate_count: number
+          ended_at: string | null
+          error_count: number
+          group_name: string | null
+          group_url: string | null
+          id: string
+          new_count: number
+          started_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          captured_count?: number
+          created_at?: string
+          duplicate_count?: number
+          ended_at?: string | null
+          error_count?: number
+          group_name?: string | null
+          group_url?: string | null
+          id?: string
+          new_count?: number
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          captured_count?: number
+          created_at?: string
+          duplicate_count?: number
+          ended_at?: string | null
+          error_count?: number
+          group_name?: string | null
+          group_url?: string | null
+          id?: string
+          new_count?: number
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       scrape_runs: {
         Row: {
           city: string | null
@@ -87153,6 +87337,9 @@ export type Database = {
           google_business_url: string | null
           google_place_id: string | null
           id: string
+          intent_evidence: string | null
+          intent_signal_score: number
+          intent_source: string | null
           last_action_at: string | null
           last_attempt_at: string | null
           last_enriched_at: string | null
@@ -87211,6 +87398,9 @@ export type Database = {
           google_business_url?: string | null
           google_place_id?: string | null
           id?: string
+          intent_evidence?: string | null
+          intent_signal_score?: number
+          intent_source?: string | null
           last_action_at?: string | null
           last_attempt_at?: string | null
           last_enriched_at?: string | null
@@ -87269,6 +87459,9 @@ export type Database = {
           google_business_url?: string | null
           google_place_id?: string | null
           id?: string
+          intent_evidence?: string | null
+          intent_signal_score?: number
+          intent_source?: string | null
           last_action_at?: string | null
           last_attempt_at?: string | null
           last_enriched_at?: string | null
@@ -91186,6 +91379,21 @@ export type Database = {
           revenue_7d_cents: number | null
           revenue_today_cents: number | null
           revenue_yesterday_cents: number | null
+        }
+        Relationships: []
+      }
+      v_scout_source_performance: {
+        Row: {
+          clicked: number | null
+          contacted: number | null
+          detected: number | null
+          duplicates: number | null
+          group_name: string | null
+          high_intent: number | null
+          new_prospects: number | null
+          paid: number | null
+          unique_prospects: number | null
+          verified: number | null
         }
         Relationships: []
       }
