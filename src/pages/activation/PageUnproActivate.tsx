@@ -79,10 +79,18 @@ export default function PageUnproActivate() {
   }, [token]);
 
 
+  function track(event: "checkout_cta_clicked" | "checkout_cta_failed") {
+    // Fire-and-forget: instrumentation must never delay or block the payment.
+    void supabase.functions
+      .invoke("activation-token-resolve", { body: { token, event } })
+      .catch(() => undefined);
+  }
+
   async function handleActivate() {
     if (!prospect) return;
     setPaying(true);
     setPayError(null);
+    track("checkout_cta_clicked");
     try {
       const { data, error } = await supabase.functions.invoke("create-activation-checkout", {
         body: {
@@ -92,16 +100,19 @@ export default function PageUnproActivate() {
         },
       });
       if (error || !data?.url) {
+        track("checkout_cta_failed");
         setPayError("Paiement indisponible pour l'instant. Réessayez dans quelques secondes.");
         return;
       }
       redirectToCheckout(data.url as string);
     } catch {
+      track("checkout_cta_failed");
       setPayError("Paiement indisponible pour l'instant. Réessayez dans quelques secondes.");
     } finally {
       setPaying(false);
     }
   }
+
 
   const company = prospect?.business_name?.trim() || "votre entreprise";
   const cityLine = prospect?.city ? ` · ${prospect.city}` : "";
