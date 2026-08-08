@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
           author_name: body.author_name ?? null, raw_text: rawText, extraction_mode: "image",
           dedupe_status: "error", error: `vision_failed: ${vres.error.message ?? "unknown"}`,
         });
-        if (sessionId) await admin.rpc("noop").catch(() => {});
+        await bumpSession(admin, sessionId, { captured: 1, error: 1 });
         return json({ status: "error", reason: "vision_failed" }, 200);
       }
       visionRaw = (vres.data as Record<string, unknown>) ?? {};
