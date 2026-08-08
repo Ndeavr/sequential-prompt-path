@@ -380,11 +380,21 @@ function CampaignLauncher() {
             <button
               onClick={() => setConfirmOpen(true)}
               disabled={!canLaunch || busy !== null}
+              title={
+                execMode !== "live"
+                  ? "Passez en mode LIVE pour exécuter un envoi de production"
+                  : !preview?.ok
+                    ? "Lancez d'abord un aperçu"
+                    : eligibleNow === 0
+                      ? "Aucun prospect éligible dans cet aperçu"
+                      : undefined
+              }
               className="flex-1 rounded-xl border border-emerald-400/30 bg-emerald-500/15 px-3 py-2 text-xs flex items-center justify-center gap-2 hover:bg-emerald-500/25 disabled:opacity-40"
             >
               {busy === "launch" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
-              Lancer
+              Lancer en LIVE
             </button>
+
           </div>
         </div>
 
