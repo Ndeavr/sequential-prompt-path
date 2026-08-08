@@ -69,8 +69,32 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const mode: string = ["dry_run", "enqueue", "execute_controlled_test"].includes(body.mode)
-      ? body.mode : "dry_run";
+    // PRODUCTION MODE RESOLUTION.
+    // Historical bug: any unrecognised mode (the hourly cron sent
+    // mode:"autonomous") silently degraded to "dry_run", so production runs
+    // never sent anything. Unknown modes are now rejected explicitly, and the
+    // live aliases below map to the single canonical execution mode.
+    const MODE_ALIASES: Record<string, string> = {
+      dry_run: "dry_run",
+      preview: "dry_run",
+      enqueue: "enqueue",
+      execute_controlled_test: "execute_controlled_test",
+      live: "execute_controlled_test",
+      execute: "execute_controlled_test",
+      autonomous: "execute_controlled_test",
+    };
+    const rawMode = typeof body.mode === "string" ? body.mode.trim().toLowerCase() : "";
+    if (rawMode && !MODE_ALIASES[rawMode]) {
+      return json({
+        ok: false,
+        blocked: true,
+        reason_code: "invalid_mode",
+        reason_text: `Mode inconnu "${rawMode}". Modes valides : dry_run, enqueue, live (execute_controlled_test).`,
+      }, 400);
+    }
+    // Absent mode stays DRY RUN — live execution must always be explicit.
+    const mode: string = rawMode ? MODE_ALIASES[rawMode] : "dry_run";
+
     const province: string = String(body.province ?? "QC");
     const city: string | null = body.city ? String(body.city) : null;
     const category: string | null = body.category ? String(body.category) : null;

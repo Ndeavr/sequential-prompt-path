@@ -259,6 +259,8 @@ function CampaignLauncher() {
   const [launched, setLaunched] = useState<CampaignPreview | null>(null);
   const [stageCounts, setStageCounts] = useState<Record<string, number>>({});
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [execMode, setExecMode] = useState<"dry_run" | "live">("dry_run");
+
 
   const runId = launched?.run_id;
 
@@ -303,13 +305,38 @@ function CampaignLauncher() {
   }, [runId]);
 
   const previewCounts = preview?.counts ?? {};
-  const canLaunch = !!preview?.ok && ((previewCounts.potentially_sms_eligible ?? 0) + (previewCounts.verification_reused ?? 0)) > 0;
+  const eligibleNow = (previewCounts.potentially_sms_eligible ?? 0) + (previewCounts.verification_reused ?? 0);
+  // LIVE execution requires: mode = LIVE + a successful preview + at least one
+  // prospect that passed every eligibility check (compliance, dedupe, Twilio).
+  const canLaunch = execMode === "live" && !!preview?.ok && eligibleNow > 0;
 
   return (
     <section>
       <h2 className="text-xs uppercase tracking-wide text-white/40 mb-2">Campagne ciblée · Ville × Catégorie</h2>
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-4">
+      <div className={`rounded-2xl border p-4 space-y-4 ${execMode === "live" ? "border-emerald-400/30 bg-emerald-500/[0.04]" : "border-white/10 bg-white/[0.03]"}`}>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex rounded-xl border border-white/10 bg-white/[0.04] p-0.5">
+            <button
+              onClick={() => setExecMode("dry_run")}
+              className={`rounded-lg px-3 py-1.5 text-xs ${execMode === "dry_run" ? "bg-white/[0.14] text-white" : "text-white/50 hover:text-white/80"}`}
+            >
+              DRY RUN
+            </button>
+            <button
+              onClick={() => setExecMode("live")}
+              className={`rounded-lg px-3 py-1.5 text-xs ${execMode === "live" ? "bg-emerald-500/30 text-emerald-100" : "text-white/50 hover:text-white/80"}`}
+            >
+              LIVE
+            </button>
+          </div>
+          <span className="text-[11px] text-white/50">
+            {execMode === "live"
+              ? "Exécution de production : vérification Twilio, écritures et envoi SMS réels après validation des règles d'éligibilité."
+              : "Aperçu seulement : aucune écriture, aucun appel Twilio, aucun envoi."}
+          </span>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+
           <label className="text-xs">
             <span className="text-white/50">Ville</span>
             <select
@@ -353,11 +380,21 @@ function CampaignLauncher() {
             <button
               onClick={() => setConfirmOpen(true)}
               disabled={!canLaunch || busy !== null}
+              title={
+                execMode !== "live"
+                  ? "Passez en mode LIVE pour exécuter un envoi de production"
+                  : !preview?.ok
+                    ? "Lancez d'abord un aperçu"
+                    : eligibleNow === 0
+                      ? "Aucun prospect éligible dans cet aperçu"
+                      : undefined
+              }
               className="flex-1 rounded-xl border border-emerald-400/30 bg-emerald-500/15 px-3 py-2 text-xs flex items-center justify-center gap-2 hover:bg-emerald-500/25 disabled:opacity-40"
             >
               {busy === "launch" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
-              Lancer
+              Lancer en LIVE
             </button>
+
           </div>
         </div>
 
