@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      width: 320px; margin: 0; font-family: Inter, -apple-system, sans-serif;
+      background: #050816; color: #F4F6FB;
+    }
+    .wrap { padding: 18px 16px 16px; }
+    .brand { display:flex; align-items:center; gap:8px; font-weight:700; letter-spacing:-0.02em; font-size:15px; }
+    .dot { width:8px;height:8px;border-radius:999px;background:#2ED17A; }
+    .dot.off { background:#5A6478; }
+    .sub { color:#9AA6BF; font-size:11px; margin-top:2px; }
+    .card { background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+            border-radius:16px; padding:12px; margin-top:14px; }
+    .grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; text-align:center; }
+    .k { font-size:18px; font-weight:700; }
+    .l { font-size:10px; color:#9AA6BF; margin-top:2px; }
+    button { width:100%; border:none; border-radius:14px; padding:12px; font-weight:600;
+             font-size:13px; cursor:pointer; margin-top:10px; transition:transform .2s; }
+    button:hover { transform: translateY(-1px); }
+    .primary { background:#0F62FE; color:#fff; }
+    .ghost { background: rgba(255,255,255,0.06); color:#F4F6FB; }
+    input { width:100%; box-sizing:border-box; background:rgba(255,255,255,0.05);
+            border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px;
+            color:#F4F6FB; font-size:12px; }
+    .msg { font-size:11px; margin-top:10px; min-height:14px; }
+    .err { color:#FF8A8A; } .ok { color:#2ED17A; } .muted { color:#9AA6BF; }
+    a { color:#6FA8FF; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand"><span id="dot" class="dot off"></span> UNPRO Scout</div>
+    <div class="sub" id="ctx">Ouvrez un groupe Facebook</div>
+
+    <div class="card" id="authCard">
+      <div class="l" style="margin-bottom:6px">Jeton d'accès UNPRO (admin)</div>
+      <input id="token" type="password" placeholder="Coller le jeton depuis /admin/scout" />
+      <button class="primary" id="save">Connecter</button>
+      <div class="msg muted">Aucune clé de service. Votre propre session admin uniquement.</div>
+    </div>
+
+    <div class="card" id="statsCard" hidden>
+      <div class="grid">
+        <div><div class="k" id="s-captured">0</div><div class="l">Capturés</div></div>
+        <div><div class="k" id="s-new">0</div><div class="l">Nouveaux</div></div>
+        <div><div class="k" id="s-dup">0</div><div class="l">Doublons</div></div>
+        <div><div class="k" id="s-err">0</div><div class="l">Erreurs</div></div>
+      </div>
+    </div>
+
+    <button class="primary" id="start" hidden>Démarrer la capture</button>
+    <button class="ghost" id="pause" hidden>Mettre en pause</button>
+    <button class="ghost" id="stop" hidden>Terminer la session</button>
+    <div class="msg" id="msg"></div>
+    <div class="msg muted">Vous faites défiler. Scout lit seulement ce qui est déjà affiché.</div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
