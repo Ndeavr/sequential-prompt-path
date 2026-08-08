@@ -270,12 +270,38 @@ Deno.serve(async (req) => {
       });
     } catch (_) { /* ignore */ }
 
+    // REVENUE-CRITICAL: persist the session so click -> checkout -> paid is
+    // reconcilable without calling Stripe. Without this row the funnel between
+    // the activation page and the payment is invisible.
+    try {
+      await supabase.from("billing_checkout_sessions").insert({
+        stripe_checkout_session_id: session.id,
+        amount_total: 100,
+        currency: "cad",
+        checkout_status: "open",
+        payment_status: "unpaid",
+        plan_code: trialPlan?.code ?? "activation_7d",
+        metadata_json: {
+          prospect_id: prospectId || null,
+          activation_token: activation_token ?? null,
+          landing_token: landing_token ?? null,
+          slug: effectiveSlug,
+          campaign_id: outreachCampaignId || null,
+          source: source ?? null,
+          checkout_url: session.url ?? null,
+        },
+      });
+    } catch (e) {
+      console.error("[create-activation-checkout] session_persist_failed", e);
+    }
+
     // Best-effort event log (table may not exist in all envs).
     try {
       await supabase.from("prospect_page_events").insert({
         slug: effectiveSlug, event_type: "checkout_started", metadata: { session_id: session.id, landing_token: landing_token ?? null },
       });
     } catch (_) { /* ignore */ }
+
 
 
     return json({ url: session.url, session_id: session.id });
