@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
       const v = visionRaw as Record<string, any>;
       const merged = parseScoutText(
         [rawText, v.company_name, v.phone, v.mobile_phone, v.email, v.website_url, v.city].filter(Boolean).join("\n"),
-        body.author_name ?? [v.contact_first_name, v.contact_last_name].filter(Boolean).join(" ") || null,
+        body.author_name ?? ([v.contact_first_name, v.contact_last_name].filter(Boolean).join(" ") || null),
       );
       signals = {
         ...merged,
@@ -183,8 +183,10 @@ Deno.serve(async (req) => {
     };
 
     if (!hasContactPoint(signals)) {
-      await admin.from("scout_captures").insert({ ...captureRow, dedupe_status: "error", error: "no_contact_point" });
-      await bumpSession(admin, sessionId, { captured: 1, error: 1 });
+      // Not an error — chit-chat with no contact point is the common case in a
+      // group feed. Recorded as 'skipped' so the operator stats stay honest.
+      await admin.from("scout_captures").insert({ ...captureRow, dedupe_status: "skipped", error: "no_contact_point" });
+      await bumpSession(admin, sessionId, { captured: 1 });
       return json({ status: "skipped", reason: "no_contact_point" });
     }
 
@@ -241,12 +243,15 @@ Deno.serve(async (req) => {
       }
       await admin.from("verified_contractor_prospects").update(patch).eq("id", existingId);
 
-      await admin.from("scout_captures").insert({
+      const { data: dupCapture } = await admin.from("scout_captures").insert({
         ...captureRow, dedupe_status: "duplicate", dedupe_signal: signal, prospect_id: existingId,
-      });
-      await admin.from("acquisition_events").insert({
-        prospect_id: existingId, channel: "scout", event_type: "rediscovered",
-        source_table: "scout_captures", metadata: { signal, group_name: body.group_name ?? null, intent_score: signals.intent_score },
+      }).select("id").single();
+      // Canonical acquisition event. `channel`/`event_type` are constrained by
+      // acquisition_events_*_check — Scout uses the allowed 'system'/'scraped'
+      // pair and carries its own semantics in metadata.kind.
+      await logAcquisitionEvent(admin, existingId, dupCapture?.id, {
+        kind: "scout_rediscovered", signal, group_name: body.group_name ?? null,
+        intent_score: signals.intent_score, extraction_mode: mode,
       });
       await bumpSession(admin, sessionId, { captured: 1, duplicate: 1 });
       return json({ status: "duplicate", prospect_id: existingId, signal, intent_score: signals.intent_score });
@@ -291,13 +296,12 @@ Deno.serve(async (req) => {
       return json({ status: "error", reason: insErr.message }, 200);
     }
 
-    await admin.from("scout_captures").insert({
+    const { data: newCapture } = await admin.from("scout_captures").insert({
       ...captureRow, dedupe_status: "new", prospect_id: created.id,
-    });
-    await admin.from("acquisition_events").insert({
-      prospect_id: created.id, channel: "scout", event_type: "discovered",
-      source_table: "scout_captures",
-      metadata: { group_name: body.group_name ?? null, extraction_mode: mode, intent_score: signals.intent_score, intent_evidence: signals.intent_evidence },
+    }).select("id").single();
+    await logAcquisitionEvent(admin, created.id, newCapture?.id, {
+      kind: "scout_discovered", group_name: body.group_name ?? null, extraction_mode: mode,
+      intent_score: signals.intent_score, intent_evidence: signals.intent_evidence,
     });
     await bumpSession(admin, sessionId, { captured: 1, created: 1 });
 
@@ -324,3 +328,30 @@ async function bumpSession(
     error_count: (data.error_count ?? 0) + (d.error ?? 0),
   }).eq("id", sessionId);
 }
+
+/**
+ * Write the discovery into the canonical acquisition event log.
+ * `channel` and `event_type` are constrained by acquisition_events_*_check, so
+ * Scout reuses the allowed 'system' / 'scraped' pair; the Scout-specific
+ * semantics live in metadata.kind. `source_row_id` is the capture id, which
+ * satisfies uq_acq_events_source (source_table, source_row_id, event_type).
+ */
+async function logAcquisitionEvent(
+  admin: ReturnType<typeof createClient>,
+  prospectId: string,
+  captureId: string | undefined,
+  metadata: Record<string, unknown>,
+) {
+  const { error } = await admin.from("acquisition_events").insert({
+    prospect_id: prospectId,
+    channel: "system",
+    event_type: "scraped",
+    provider: "system",
+    source_table: "scout_captures",
+    source_row_id: captureId ?? null,
+    metadata: { source: "unpro_scout", platform: "facebook_group", ...metadata },
+  });
+  // Never fail the capture on telemetry, but never hide the failure either.
+  if (error) console.error("[scout-ingest] acquisition_event insert failed", error.message);
+}
+
