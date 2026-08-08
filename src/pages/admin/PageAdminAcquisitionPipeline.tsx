@@ -259,6 +259,8 @@ function CampaignLauncher() {
   const [launched, setLaunched] = useState<CampaignPreview | null>(null);
   const [stageCounts, setStageCounts] = useState<Record<string, number>>({});
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [execMode, setExecMode] = useState<"dry_run" | "live">("dry_run");
+
 
   const runId = launched?.run_id;
 
