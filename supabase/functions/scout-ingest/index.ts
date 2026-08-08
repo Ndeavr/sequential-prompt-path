@@ -294,13 +294,12 @@ Deno.serve(async (req) => {
       return json({ status: "error", reason: insErr.message }, 200);
     }
 
-    await admin.from("scout_captures").insert({
+    const { data: newCapture } = await admin.from("scout_captures").insert({
       ...captureRow, dedupe_status: "new", prospect_id: created.id,
-    });
-    await admin.from("acquisition_events").insert({
-      prospect_id: created.id, channel: "scout", event_type: "discovered",
-      source_table: "scout_captures",
-      metadata: { group_name: body.group_name ?? null, extraction_mode: mode, intent_score: signals.intent_score, intent_evidence: signals.intent_evidence },
+    }).select("id").single();
+    await logAcquisitionEvent(admin, created.id, newCapture?.id, {
+      kind: "scout_discovered", group_name: body.group_name ?? null, extraction_mode: mode,
+      intent_score: signals.intent_score, intent_evidence: signals.intent_evidence,
     });
     await bumpSession(admin, sessionId, { captured: 1, created: 1 });
 
