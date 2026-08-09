@@ -133,6 +133,7 @@ export function recommendPlan(input: PlanRecommendationInput): PlanRecommendatio
   if (reviews > 0) confidence += 0.15;
   if (city) confidence += 0.1;
   if (input.category) confidence += 0.1;
+  if (goalAppointments > 0) confidence += 0.25;
   confidence = Math.min(1, confidence);
 
   // ── Upward adjustments (each +1 rank max, additive, capped below) ─────────
@@ -196,7 +197,7 @@ export function recommendPlan(input: PlanRecommendationInput): PlanRecommendatio
   }
 
   // Guard 3 — a weak score can never land above Croissance, whatever the boosts.
-  if (score < 60 && rank > 3) {
+  if (hasScore && score < 60 && rank > 3) {
     rank = 3;
     cappedByGuard = true;
     factors.push("Garde-fou : score faible (<60) → plafonné à Croissance");
