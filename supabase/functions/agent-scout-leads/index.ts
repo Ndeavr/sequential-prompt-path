@@ -18,9 +18,12 @@ Deno.serve(async (req) => {
   const triggeredBy = body.triggered_by ?? "cron";
 
   const result = await recordAgentRun("scout-leads", async (db) => {
-    let discovered = 0; let skipped = 0;
+    let discovered = 0; let skipped = 0; let cacheHits = 0;
+    let paused: { error_code?: string; retry_after?: string } | null = null;
     for (const t of targets) {
+      if (paused) break;
       for (const city of t.cities) {
+        if (paused) break;
         const ok = await checkAndConsumeQuota(db, "scrape", "trade_city", `${t.trade}:${city}`, 50);
         if (!ok) { skipped++; continue; }
         try {
@@ -30,15 +33,23 @@ Deno.serve(async (req) => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
             },
-            body: JSON.stringify({ trade: t.trade, city, limit: 10 }),
+            body: JSON.stringify({ trade: t.trade, city, limit: 10, caller: "agent-scout-leads" }),
           });
           const j = await r.json().catch(() => ({}));
+          // Circuit breaker open → stop the whole sweep instead of burning
+          // one blocked call per target.
+          if (j?.blocked) {
+            paused = { error_code: j.error_code, retry_after: j.retry_after };
+            break;
+          }
+          if (j?.discovery?.cache_hit) cacheHits++;
           discovered += j.discovered ?? j.inserted ?? 0;
         } catch (_) { /* swallow per-target errors, run continues */ }
       }
     }
-    return { discovered, skipped, targets_count: targets.length };
+    return { discovered, skipped, cache_hits: cacheHits, discovery_paused: Boolean(paused), pause_reason: paused, targets_count: targets.length };
   }, triggeredBy, { targets });
+
 
   return new Response(JSON.stringify(result), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },

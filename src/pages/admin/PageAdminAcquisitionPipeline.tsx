@@ -11,6 +11,7 @@ import { Loader2, RefreshCw, Play, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { RevenueTimelinePanel } from "@/components/admin/acquisition/RevenueTimelinePanel";
 import { AutonomousRecruitmentPanel } from "@/components/admin/acquisition/AutonomousRecruitmentPanel";
+import { DiscoveryHealthPanel } from "@/components/admin/acquisition/DiscoveryHealthPanel";
 
 import {
   useAcquisitionSourceHealth,
@@ -860,6 +861,8 @@ export default function PageAdminAcquisitionPipeline() {
           <h2 className="text-xs uppercase tracking-wide text-white/40 mb-2">Santé des sources d'acquisition</h2>
           <SourceHealthTable rows={sourceHealth.data} />
         </section>
+
+        <DiscoveryHealthPanel />
 
         <AutonomousRecruitmentPanel />
 

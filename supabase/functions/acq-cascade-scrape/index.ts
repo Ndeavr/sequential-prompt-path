@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${serviceKey}`,
       },
-      body: JSON.stringify({ trade, city, limit, dry_run: false }),
+      body: JSON.stringify({ trade, city, limit, dry_run: false, caller: "acq-cascade-scrape" }),
     });
 
     const placesData = await placesResp.json();
@@ -51,6 +51,26 @@ Deno.serve(async (req) => {
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
+    // Discovery paused by the circuit breaker (quota/billing/auth) is NOT a
+    // pipeline failure — the cascade ends cleanly so recruitment keeps running
+    // on existing inventory.
+    if (placesData?.blocked) {
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          discovery_paused: true,
+          step: "google_places",
+          error_code: placesData.error_code,
+          retry_after: placesData.retry_after,
+          remediation: placesData.remediation,
+          inserted: 0,
+          enriched: [],
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
 
     // Dedupe ne bloque jamais l'enrichissement : tous les IDs touchés sont cascadés
     const touchedIds: string[] = placesData.touched_ids ?? placesData.inserted_ids ?? [];
