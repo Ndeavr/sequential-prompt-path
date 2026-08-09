@@ -172,13 +172,17 @@ Deno.serve(async (req) => {
     // email on file (email-only fallback path).
     let query = supabase
       .from("verified_contractor_prospects")
-      .select("id, business_name, phone_e164, phone_validation_status, phone_line_type, sms_eligibility_tier, sms_eligibility_confidence, data_quality_score, website_url, city, category, source, email, outreach_status, verification_status, retry_count")
+      .select("id, business_name, phone_e164, phone_validation_status, phone_line_type, sms_eligibility_tier, sms_eligibility_confidence, data_quality_score, website_url, google_business_url, google_place_id, phone_source_url, city, category, source, email, outreach_status, verification_status, retry_count")
       .eq("verification_status", "verified")
       .gte("data_quality_score", 80)
-      .not("website_url", "is", null)
+      // CASL provenance gate: a standalone website is NOT required, but a
+      // verifiable public business source is. Any of website / Google Business
+      // listing / Google place id / documented phone source URL qualifies.
+      .or("website_url.not.is.null,google_business_url.not.is.null,google_place_id.not.is.null,phone_source_url.not.is.null")
       .order("sms_eligibility_tier", { ascending: true, nullsFirst: false })
       .order("data_quality_score", { ascending: false })
       .limit(limit);
+
     if (forceEmail) {
       // A hard-failed SMS attempt never reached a human, so these rows stay
       // contactable on the email channel only. Paid/activated are excluded.
@@ -201,15 +205,19 @@ Deno.serve(async (req) => {
       if (missingIds.length > 0) {
         const { data: skipped } = await supabase
           .from("verified_contractor_prospects")
-          .select("id, business_name, city, category, source, verification_status, phone_line_type, sms_eligibility_tier, outreach_status, data_quality_score, website_url, email, eligibility_reason")
+          .select("id, business_name, city, category, source, verification_status, phone_line_type, sms_eligibility_tier, outreach_status, data_quality_score, website_url, google_business_url, google_place_id, phone_source_url, email, eligibility_reason")
           .in("id", missingIds);
         for (const p of skipped ?? []) {
           let reason = "unknown_ineligibility";
-          if (!p.website_url) reason = "missing_website_url";
+          const hasProvenance = Boolean(
+            p.website_url || p.google_business_url || p.google_place_id || p.phone_source_url,
+          );
+          if (!hasProvenance) reason = "missing_public_provenance";
           else if (p.verification_status !== "verified") reason = `not_verified:${p.verification_status ?? "null"}`;
           else if ((p.data_quality_score ?? 0) < 80) reason = `quality_below_80:${p.data_quality_score}`;
           else if (p.outreach_status !== "none") reason = `already_${p.outreach_status}`;
           else if (!["A", "B", "C"].includes(p.sms_eligibility_tier ?? "") && !p.email) reason = `no_channel_available:tier=${p.sms_eligibility_tier ?? "none"}_no_email`;
+
           await supabase
             .from("verified_contractor_prospects")
             .update({
