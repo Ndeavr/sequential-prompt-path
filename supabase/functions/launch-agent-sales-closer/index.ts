@@ -9,13 +9,26 @@ import { sendSms as sendSmsCanonical } from "../_shared/twilioSend.ts";
 // CANONICAL PRICING — plan codes only; amounts and Stripe price IDs come from
 // `public.plans` via _shared/planCatalog.ts. No hardcoded amounts here.
 import { resolvePlan, planLineItem, planMetadata } from "../_shared/planCatalog.ts";
+import { recommendPlan } from "../_shared/planRecommendation.ts";
 
-/** Returns a CANONICAL plan code (see public.plans). */
-function recommendPlan(score: number): string {
-  if (score >= 80) return "pro";
-  if (score >= 60) return "premium";
-  if (score >= 40) return "domination";
-  return "pro"; // safe default for low-visibility (lots of upside)
+/**
+ * Returns a CANONICAL plan code via the single recommendation engine.
+ * NEVER add score→plan logic here: `_shared/planRecommendation.ts` owns it and
+ * guarantees monotonicity (a lower score can never yield a costlier plan).
+ */
+function recommendPlanForLead(lead: any): { plan: string; rationale: string; confidence: number } {
+  const v = lead?.payload?.visibility ?? {};
+  const rec = recommendPlan({
+    visibilityScore: typeof v.score === "number" ? v.score : null,
+    reviewCount: v.review_count ?? lead?.payload?.review_count ?? null,
+    googleRating: v.rating ?? lead?.payload?.rating ?? null,
+    city: lead?.city ?? lead?.payload?.city ?? null,
+    category: lead?.category ?? lead?.trade ?? null,
+    competitorCount: lead?.payload?.competitor_count ?? null,
+    remainingSlots: lead?.payload?.remaining_slots ?? null,
+    monthlyAppointmentGoal: lead?.payload?.monthly_appointment_goal ?? null,
+  });
+  return { plan: rec.plan, rationale: rec.rationale, confidence: rec.confidence };
 }
 
 async function createCheckout(lead: any, planKey: string): Promise<string | null> {
@@ -84,8 +97,8 @@ Deno.serve(async (req) => {
   let sent = 0, failed = 0;
   for (const lead of leads ?? []) {
     try {
-      const score = (lead as any).payload?.visibility?.score ?? 50;
-      const planKey = recommendPlan(score);
+      const reco = recommendPlanForLead(lead);
+      const planKey = reco.plan;
       const url = await createCheckout(lead, planKey);
       if (!url) {
         failed++;
@@ -101,7 +114,13 @@ Deno.serve(async (req) => {
       await transitionLead((lead as any).id, "CHECKOUT_SENT", {
         payload: {
           ...((lead as any).payload ?? {}),
-          checkout: { url, plan: planKey, sent_at: new Date().toISOString() },
+          checkout: {
+            url,
+            plan: planKey,
+            plan_rationale: reco.rationale,
+            plan_confidence: reco.confidence,
+            sent_at: new Date().toISOString(),
+          },
         },
       }, "launch-agent-sales-closer");
       sent++;

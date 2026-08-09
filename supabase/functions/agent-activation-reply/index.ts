@@ -13,14 +13,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type PlanCode = "recrue" | "pro" | "premium" | "elite" | "signature";
+import { recommendPlan, type CanonicalPlanCode } from "../_shared/planRecommendation.ts";
 
+type PlanCode = CanonicalPlanCode;
+
+/** Canonical, monotonic. See _shared/planRecommendation.ts. */
 function pickPlan(aippScore: number | null | undefined): PlanCode {
-  const s = aippScore ?? 50;
-  if (s >= 80) return "elite";
-  if (s >= 65) return "premium";
-  if (s >= 50) return "pro";
-  return "recrue";
+  return recommendPlan({ visibilityScore: aippScore ?? null }).plan;
 }
 
 async function classifyIntent(reply: string): Promise<{ intent: string; confidence: number }> {

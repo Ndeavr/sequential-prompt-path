@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { recommendPlanFromCapacity } from "../_shared/planRecommendation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -97,12 +98,9 @@ function extractSignals(message: string, session: any) {
   return updates;
 }
 
+/** Canonical capacity-based recommendation (monotonic, guarded). */
 function recommendPlan(rdvMonthly: number): string {
-  if (rdvMonthly <= 3) return "recrue";
-  if (rdvMonthly <= 8) return "pro";
-  if (rdvMonthly <= 15) return "premium";
-  if (rdvMonthly <= 25) return "elite";
-  return "signature";
+  return recommendPlanFromCapacity(rdvMonthly).plan;
 }
 
 serve(async (req) => {
