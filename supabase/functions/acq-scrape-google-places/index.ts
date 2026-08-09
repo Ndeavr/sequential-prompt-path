@@ -2,10 +2,11 @@
  * acq-scrape-google-places
  *
  * Scrape Google Places (New API) pour un métier × ville.
+ * Accès provider via `_shared/placesGateway.ts` (cache → dedupe → circuit breaker).
  * Utilise dedupeEngine pour scorer chaque candidat (HIGH/MEDIUM/LOW/NONE)
  * et choisir entre INSERT, ENRICH_EXISTING ou flag possible_duplicate.
  *
- * Body: { trade: string, city: string, limit?: number, dry_run?: boolean }
+ * Body: { trade, city, limit?, dry_run?, force_refresh?, caller? }
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import {
@@ -14,28 +15,15 @@ import {
   normalizeDomain,
 } from "../_shared/dedupeEngine.ts";
 import { captureScrapeEvidenceForProfile } from "../_shared/caslEvidence.ts";
-
-/** acquisition_source_health.source vocabulary entry for Google Places. */
-const SOURCE_KEY = "google_business";
+import { searchPlacesResilient, type PlaceResult } from "../_shared/placesGateway.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface PlaceResult {
-  id: string;
-  displayName?: { text: string };
-  formattedAddress?: string;
-  nationalPhoneNumber?: string;
-  websiteUri?: string;
-  googleMapsUri?: string;
-  rating?: number;
-  userRatingCount?: number;
-  primaryType?: string;
-  location?: { latitude: number; longitude: number };
-  addressComponents?: Array<{ longText: string; shortText: string; types: string[] }>;
-}
+
+
 
 function extractCity(p: PlaceResult, fallback: string): string {
   const comp = p.addressComponents?.find((c) => c.types.includes("locality"));
@@ -50,23 +38,13 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-    const mapsConnectorKey = Deno.env.get("GOOGLE_MAPS_API_KEY");
-    const legacyApiKey = Deno.env.get("GOOGLE_PLACES_SERVER_KEY") || Deno.env.get("GOOGLE_PLACES_API_KEY");
-    const useConnectorGateway = Boolean(lovableKey && mapsConnectorKey);
-
-    if (!useConnectorGateway && !legacyApiKey) {
-      return new Response(
-        JSON.stringify({ error: "GOOGLE_PLACES_API_KEY missing" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
     const body = await req.json();
     const trade = String(body.trade ?? "").trim();
     const city = String(body.city ?? "").trim();
     const limit = Math.min(Number(body.limit ?? 20), 60);
     const dryRun = Boolean(body.dry_run ?? false);
+    const forceRefresh = Boolean(body.force_refresh ?? false);
+    const caller = String(body.caller ?? "acq-scrape-google-places");
 
     if (!trade || !city) {
       return new Response(JSON.stringify({ error: "trade and city required" }), {
@@ -79,159 +57,45 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const url = useConnectorGateway
-      ? "https://connector-gateway.lovable.dev/google_maps/places/v1/places:searchText"
-      : "https://places.googleapis.com/v1/places:searchText";
-    const fieldMask = [
-      "places.id","places.displayName","places.formattedAddress","places.nationalPhoneNumber",
-      "places.websiteUri","places.googleMapsUri","places.rating","places.userRatingCount",
-      "places.primaryType","places.location","places.addressComponents",
-    ].join(",");
+    // Canonical resilient access layer: cache → dedupe → circuit breaker → API.
+    const search = await searchPlacesResilient(supabase, { trade, city, limit, caller, forceRefresh });
 
-    // `acquisition_source_health.source` is constrained to a fixed vocabulary;
-    // Google Places reports under "google_business". Status vocabulary is
-    // healthy | degraded | scraper_down | fallback_running.
-    // Circuit breaker: if Google reported quota exhaustion recently, stop the
-    // retry storm instead of hammering the API and returning opaque 502s.
-    const { data: healthRow } = await supabase
-      .from("acquisition_source_health")
-      .select("status, last_error_code, metadata")
-      .eq("source", SOURCE_KEY)
-      .maybeSingle();
-    const breakerUntil = (healthRow?.metadata as any)?.breaker_until as string | undefined;
-    if (breakerUntil && new Date(breakerUntil) > new Date()) {
+    if (!search.ok) {
+      // Non-fatal for the pipeline: discovery is paused, recruitment continues
+      // on existing inventory. 200-with-blocked keeps orchestrators alive.
       return new Response(
         JSON.stringify({
-          error: "google_places_quota_exhausted",
-          blocker: "external",
-          retry_after: breakerUntil,
-          remediation:
-            "Google Places API daily quota (SearchTextRequest per day) is exhausted for the linked Google Cloud project. Raise the quota at https://cloud.google.com/docs/quotas/help/request_increase or wait for the daily reset (midnight US/Pacific).",
+          ok: false,
+          blocked: true,
+          discovery_paused: true,
+          error: "google_places_unavailable",
+          error_code: search.error_code,
+          retry_after: search.retry_after,
+          remediation: search.remediation,
+          detail: search.detail,
+          found: 0,
+          inserted: 0,
+          touched_ids: [],
         }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const allPlaces: PlaceResult[] = [];
-    let pageToken: string | undefined;
-    let pages = 0;
-    while (allPlaces.length < limit && pages < 3) {
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(useConnectorGateway
-            ? { Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": mapsConnectorKey! }
-            : { "X-Goog-Api-Key": legacyApiKey! }),
-          "X-Goog-FieldMask": fieldMask + (pageToken ? "" : ",nextPageToken"),
-        },
-        body: JSON.stringify({
-          textQuery: `${trade} ${city} Québec`,
-          languageCode: "fr-CA",
-          regionCode: "CA",
-          pageSize: Math.min(20, limit - allPlaces.length),
-          ...(pageToken ? { pageToken } : {}),
-        }),
-      });
-      if (!resp.ok) {
-        const raw = await resp.text();
-        let parsed: any = null;
-        try { parsed = JSON.parse(raw); } catch { /* non-JSON */ }
-        const gErr = parsed?.error ?? {};
-        const gStatus: string = gErr.status ?? "";
-        const gMessage: string = gErr.message ?? raw.slice(0, 500);
-
-        const isQuota = resp.status === 429 || gStatus === "RESOURCE_EXHAUSTED";
-        const isAuth = resp.status === 401 || resp.status === 403 || gStatus === "PERMISSION_DENIED";
-        const isBilling = /billing/i.test(gMessage);
-
-        const errorCode = isQuota
-          ? "quota_exhausted"
-          : isBilling
-            ? "billing_disabled"
-            : isAuth
-              ? "auth_or_api_not_enabled"
-              : `http_${resp.status}`;
-
-        const remediation = isQuota
-          ? "Google Places daily quota (SearchTextRequest per day) exhausted. Request a higher quota in Google Cloud Console (IAM & Admin → Quotas) or wait for the daily reset at midnight US/Pacific."
-          : isBilling
-            ? "Enable billing on the Google Cloud project backing the Places API key."
-            : isAuth
-              ? "The Places API (New) is not enabled for this key, or the key is restricted. Enable 'Places API (New)' and allow the server IP/referrer."
-              : `Unexpected Google Places response (HTTP ${resp.status}). Inspect detail.`;
-
-        // Persist the real blocker so admin sees it, and arm the breaker on quota.
-        const breaker = isQuota || isBilling
-          ? new Date(Date.now() + 60 * 60 * 1000).toISOString()
-          : null;
-        const { error: healthErr } = await supabase.from("acquisition_source_health").upsert({
-          source: SOURCE_KEY,
-          status: isQuota || isBilling ? "degraded" : "scraper_down",
-          last_run_at: new Date().toISOString(),
-          found_last_run: 0,
-          last_error_code: errorCode,
-          last_error_message: gMessage.slice(0, 1000),
-          metadata: {
-            http_status: resp.status,
-            google_status: gStatus,
-            remediation,
-            ...(breaker ? { breaker_until: breaker } : {}),
-          },
-        }, { onConflict: "source" });
-        if (healthErr) {
-          console.error("[acq-scrape-google-places] health upsert failed:", healthErr.message);
-        }
-
-        return new Response(
-          JSON.stringify({
-            error: "google_places_failed",
-            error_code: errorCode,
-            blocker: isQuota || isBilling || isAuth ? "external" : "unknown",
-            http_status: resp.status,
-            google_status: gStatus,
-            detail: gMessage,
-            remediation,
-            ...(breaker ? { retry_after: breaker } : {}),
-          }),
-          // Propagate the real upstream class instead of masking everything as 502.
-          {
-            status: isQuota ? 429 : isAuth ? 403 : 502,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          },
-        );
-      }
-      const data = await resp.json();
-      const places = (data.places ?? []) as PlaceResult[];
-      allPlaces.push(...places);
-      pageToken = data.nextPageToken;
-      pages++;
-      if (!pageToken) break;
-      await new Promise((r) => setTimeout(r, 2000));
-    }
-
-    // Successful call clears the breaker.
-    const { error: okHealthErr } = await supabase.from("acquisition_source_health").upsert({
-      source: SOURCE_KEY,
-      status: allPlaces.length > 0 ? "healthy" : "degraded",
-      last_run_at: new Date().toISOString(),
-      last_success_at: new Date().toISOString(),
-      found_last_run: allPlaces.length,
-      last_error_code: null,
-      last_error_message: null,
-      metadata: {},
-    }, { onConflict: "source" });
-    if (okHealthErr) {
-      console.error("[acq-scrape-google-places] health upsert failed:", okHealthErr.message);
-    }
-
-    const candidates = allPlaces.slice(0, limit);
+    const candidates = search.places.slice(0, limit);
+    const sourceMeta = {
+      source: search.source,
+      cache_hit: search.cache_hit,
+      stale: search.stale,
+      external_calls: search.external_calls,
+      calls_avoided: search.calls_avoided,
+    };
 
     if (dryRun) {
       return new Response(
         JSON.stringify({
           dry_run: true,
           found: candidates.length,
+          discovery: sourceMeta,
           sample: candidates.slice(0, 5).map((p) => ({
             name: p.displayName?.text, address: p.formattedAddress,
             phone: p.nationalPhoneNumber, website: p.websiteUri,
@@ -413,6 +277,7 @@ Deno.serve(async (req) => {
         trade,
         city,
         found: candidates.length,
+        discovery: sourceMeta,
         ...counters,
         touched_ids: touchedIds,
       }),

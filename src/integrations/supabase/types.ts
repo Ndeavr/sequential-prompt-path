@@ -64523,6 +64523,99 @@ export type Database = {
           },
         ]
       }
+      places_api_calls: {
+        Row: {
+          cache_hit: boolean
+          caller: string | null
+          calls_avoided: number
+          city_norm: string | null
+          created_at: string
+          error_code: string | null
+          external_calls: number
+          id: string
+          outcome: string
+          provider: string
+          result_count: number
+          trade_norm: string | null
+        }
+        Insert: {
+          cache_hit?: boolean
+          caller?: string | null
+          calls_avoided?: number
+          city_norm?: string | null
+          created_at?: string
+          error_code?: string | null
+          external_calls?: number
+          id?: string
+          outcome: string
+          provider?: string
+          result_count?: number
+          trade_norm?: string | null
+        }
+        Update: {
+          cache_hit?: boolean
+          caller?: string | null
+          calls_avoided?: number
+          city_norm?: string | null
+          created_at?: string
+          error_code?: string | null
+          external_calls?: number
+          id?: string
+          outcome?: string
+          provider?: string
+          result_count?: number
+          trade_norm?: string | null
+        }
+        Relationships: []
+      }
+      places_query_cache: {
+        Row: {
+          cache_key: string
+          city_norm: string
+          created_at: string
+          expires_at: string
+          fetched_at: string
+          hit_count: number
+          id: string
+          provider: string
+          query_text: string
+          result_count: number
+          results: Json
+          trade_norm: string
+          updated_at: string
+        }
+        Insert: {
+          cache_key: string
+          city_norm: string
+          created_at?: string
+          expires_at?: string
+          fetched_at?: string
+          hit_count?: number
+          id?: string
+          provider?: string
+          query_text: string
+          result_count?: number
+          results?: Json
+          trade_norm: string
+          updated_at?: string
+        }
+        Update: {
+          cache_key?: string
+          city_norm?: string
+          created_at?: string
+          expires_at?: string
+          fetched_at?: string
+          hit_count?: number
+          id?: string
+          provider?: string
+          query_text?: string
+          result_count?: number
+          results?: Json
+          trade_norm?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       plan_activations: {
         Row: {
           activated_at: string | null
@@ -72485,6 +72578,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      provider_circuit_state: {
+        Row: {
+          failure_count: number
+          kill_switch: boolean
+          last_error_code: string | null
+          last_error_message: string | null
+          last_success_at: string | null
+          opened_at: string | null
+          provider: string
+          remediation: string | null
+          retry_after: string | null
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          failure_count?: number
+          kill_switch?: boolean
+          last_error_code?: string | null
+          last_error_message?: string | null
+          last_success_at?: string | null
+          opened_at?: string | null
+          provider: string
+          remediation?: string | null
+          retry_after?: string | null
+          state?: string
+          updated_at?: string
+        }
+        Update: {
+          failure_count?: number
+          kill_switch?: boolean
+          last_error_code?: string | null
+          last_error_message?: string | null
+          last_success_at?: string | null
+          opened_at?: string | null
+          provider?: string
+          remediation?: string | null
+          retry_after?: string | null
+          state?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       provider_health_checks: {
         Row: {
@@ -91231,6 +91366,28 @@ export type Database = {
           succeeded: number | null
           success_rate: number | null
           total: number | null
+        }
+        Relationships: []
+      }
+      v_places_discovery_health: {
+        Row: {
+          cache_entries_fresh: number | null
+          cache_hit_rate_pct: number | null
+          cache_hits_24h: number | null
+          calls_24h: number | null
+          calls_avoided_24h: number | null
+          errors_24h: number | null
+          external_calls_24h: number | null
+          failure_count: number | null
+          kill_switch: boolean | null
+          last_error_code: string | null
+          last_error_message: string | null
+          last_success_at: string | null
+          provider: string | null
+          remediation: string | null
+          results_24h: number | null
+          retry_after: string | null
+          state: string | null
         }
         Relationships: []
       }
