@@ -21,7 +21,7 @@ import { resolveAlexMode } from "@/config/alexModes";
 
 describe("pricing — single source of truth", () => {
   it("only exposes canonical slugs (recrue/pro/premium/elite/signature)", () => {
-    expect(CANONICAL_PLAN_SLUGS).toEqual(["recrue", "pro", "premium", "elite", "signature"]);
+    expect(CANONICAL_PLAN_SLUGS).toEqual(["presence", "local", "croissance", "pro", "premium", "domination"]);
   });
 
   it("never includes legacy plan names in catalog", () => {
