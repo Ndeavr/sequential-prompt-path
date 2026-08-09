@@ -55,8 +55,8 @@ export const CONTRACTOR_OBJECTIVES: readonly ContractorObjectiveChip[] = Object.
   { key: "more_calls",     label: "Plus d'appels",       recommendedPlan: "pro" },
   { key: "more_quotes",    label: "Plus de soumissions", recommendedPlan: "premium" },
   { key: "fill_schedule",  label: "Remplir mon agenda",  recommendedPlan: "premium" },
-  { key: "premium_jobs",   label: "Jobs rentables",      recommendedPlan: "elite" },
-  { key: "dominate_city",  label: "Dominer ma ville",    recommendedPlan: "signature" },
+  { key: "premium_jobs",   label: "Jobs rentables",      recommendedPlan: "premium" },
+  { key: "dominate_city",  label: "Dominer ma ville",    recommendedPlan: "domination" },
 ]);
 
 /**

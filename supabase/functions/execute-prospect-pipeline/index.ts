@@ -3,6 +3,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { recommendPlan as canonicalRecommendPlan } from "../_shared/planRecommendation.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -281,27 +282,12 @@ Deno.serve(async (req: Request) => {
         .maybeSingle();
 
       const score = aipp?.score_global ?? 40;
-      let recommendedPlan = "starter";
-      let reason = "Score modéré — plan de base recommandé";
-      let foundersShown = false;
-      let signatureShown = false;
-
-      if (score >= 70) {
-        recommendedPlan = "elite";
-        reason = "Score élevé — le prospect a un bon potentiel digital";
-      } else if (score >= 50) {
-        recommendedPlan = "growth";
-        reason = "Score moyen — plan intermédiaire pour maximiser le ROI";
-        foundersShown = true;
-      } else {
-        foundersShown = true;
-      }
-
-      if (score >= 80) {
-        signatureShown = true;
-        recommendedPlan = "signature";
-        reason = "Score très élevé — profil premium, offre Signature recommandée";
-      }
+      const reco = canonicalRecommendPlan({ visibilityScore: aipp?.score_global ?? null });
+      const recommendedPlan = reco.plan;
+      const reason = reco.rationale;
+      // Founder offer is shown to entry/mid tiers; top tier gets the exclusivity pitch.
+      const foundersShown = reco.rank <= 3;
+      const signatureShown = reco.rank >= 6;
 
       await supabase.from("prospect_plan_sessions").insert({
         prospect_id,

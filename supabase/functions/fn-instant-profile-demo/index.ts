@@ -9,6 +9,7 @@
  * No auth required. No DB write required (demo-grade — caller can persist).
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { recommendPlan as canonicalRecommendPlan } from "../_shared/planRecommendation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -244,17 +245,14 @@ function computeRevenueGap(score: number, rating: number): { lost_min: number; l
   };
 }
 
+/**
+ * Canonical recommendation. Prices are resolved from `public.plans` by the
+ * checkout path — never hardcoded here (this function used to advertise stale
+ * $349 / $599 amounts for renamed tiers).
+ */
 function recommendPlan(score: number, reviewCount: number) {
-  if (score < 35 || reviewCount < 5) {
-    return { code: "recrue", label: "Recrue", price_monthly: 99, reason: "Démarrage rapide pour bâtir vos premiers signaux." };
-  }
-  if (score < 55) {
-    return { code: "pro", label: "Pro", price_monthly: 199, reason: "Vous avez la base — il manque la machine de conversion." };
-  }
-  if (score < 75) {
-    return { code: "premium", label: "Premium", price_monthly: 349, reason: "Vous êtes prêt pour 10 RDV qualifiés/mois et la domination locale." };
-  }
-  return { code: "elite", label: "Elite", price_monthly: 599, reason: "Opérateur fort — verrouillez votre territoire." };
+  const rec = canonicalRecommendPlan({ visibilityScore: score, reviewCount });
+  return { code: rec.plan, label: rec.label, reason: rec.rationale, confidence: rec.confidence };
 }
 
 Deno.serve(async (req) => {

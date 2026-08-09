@@ -106,20 +106,35 @@ function seasonalityFor(priority: string | undefined, month: number): number {
 }
 
 /** Deterministic plan selection driven by required volume + objective. */
+/**
+ * Plan selection — CAPACITY FIRST, then at most ONE tier of uplift for
+ * exclusivity / domination objectives.
+ *
+ * GUARD: an objective alone can never jump a contractor to the most expensive
+ * plan. Only a contractor whose real appointment demand already reaches the
+ * top tier (or is one tier below it) can be offered the top tier. This is the
+ * defect that offered Domination ($1,499/mo) to an 8-appointment contractor.
+ */
 function pickPlan(input: Input, plans: PlanRow[]): PlanRow {
   const ordered = [...plans].sort((a, b) => a.tier_rank - b.tier_rank);
   const target = Math.max(0, input.target_monthly_appointments ?? 0);
   const objective = input.business_objective ?? "grow";
 
-  if (input.wants_exclusivity || objective === "exclusivity" || objective === "dominate") {
-    return ordered[ordered.length - 1];
-  }
   if (objective === "visibility" && target <= 1) return ordered[0];
 
-  // Smallest plan whose included appointments cover the target.
-  const fit = ordered.find((p) => (p.appointments_included ?? 0) >= target);
-  if (fit) return fit;
-  return ordered[ordered.length - 1];
+  // Smallest plan whose included appointments cover the real target.
+  const fitIndex = ordered.findIndex((p) => (p.appointments_included ?? 0) >= target);
+  let index = fitIndex >= 0 ? fitIndex : ordered.length - 1;
+
+  const wantsTopEnd =
+    input.wants_exclusivity || objective === "exclusivity" || objective === "dominate";
+  if (wantsTopEnd) index = Math.min(index + 1, ordered.length - 1);
+
+  // Hard cap: no automatic jump to the priciest plan on objective alone.
+  if (index === ordered.length - 1 && fitIndex >= 0 && fitIndex < ordered.length - 2) {
+    index = ordered.length - 2;
+  }
+  return ordered[index];
 }
 
 function aippFee(score: number | undefined | null): number {

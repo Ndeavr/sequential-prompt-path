@@ -4,6 +4,7 @@
 // back to activation_pipeline_runs in real time. Failsafe: any single module
 // failure flips partial_confidence=true but never stops the pipeline.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { recommendPlan as canonicalRecommendPlan, planRank } from "../_shared/planRecommendation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -120,26 +121,14 @@ function recommendPlan(score: number, signals: Record<string, unknown>): {
   plan: string;
   reason: string;
 } {
-  const reviews = Number(signals?.review_count ?? 0);
-  if (score >= 70 && reviews >= 50) {
-    return {
-      plan: "elite",
-      reason:
-        "Présence numérique solide. Le plan Élite vous donne la priorité territoire pour convertir cette autorité en rendez-vous qualifiés.",
-    };
-  }
-  if (score >= 50) {
-    return {
-      plan: "premium",
-      reason:
-        "Bonne base. Le plan Premium maximise votre visibilité IA et votre volume de rendez-vous qualifiés sans surcharger votre capacité.",
-    };
-  }
-  return {
-    plan: "pro",
-    reason:
-      "Point de départ idéal pour valider le canal. Le plan Pro active vos premiers rendez-vous qualifiés rapidement.",
-  };
+  const rec = canonicalRecommendPlan({
+    visibilityScore: score,
+    reviewCount: Number(signals?.review_count ?? 0),
+    googleRating: Number(signals?.rating ?? 0),
+    city: (signals?.city as string) ?? null,
+    category: (signals?.category as string) ?? null,
+  });
+  return { plan: rec.plan, reason: rec.rationale };
 }
 
 Deno.serve(async (req) => {
@@ -253,10 +242,12 @@ Deno.serve(async (req) => {
 
         // Phase 4: Plan recommendation
         const { plan, reason } = recommendPlan(total, signals);
-        const projectedAppointments = plan === "elite"
+        const projectedAppointments = planRank(plan as any) >= 6
           ? 50
-          : plan === "premium"
+          : planRank(plan as any) >= 5
           ? 25
+          : planRank(plan as any) >= 4
+          ? 15
           : 10;
         await patch(supabase, runId!, {
           recommended_plan: plan,
