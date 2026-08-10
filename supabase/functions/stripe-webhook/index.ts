@@ -411,17 +411,141 @@ Deno.serve(async (req) => {
         ) {
           const activationToken = session.metadata?.activation_token || null;
           const vProspectId = session.metadata?.prospect_id || null;
+          let activatedContractorId: string | null = null;
           try {
+            // 1 — close the checkout session record (cockpit truth).
+            await supabase
+              .from("billing_checkout_sessions")
+              .update({
+                checkout_status: "complete",
+                payment_status: "paid",
+                stripe_customer_id: (session.customer as string) || null,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("stripe_checkout_session_id", session.id);
+
+            // 2 — mark the prospect paid.
+            let prospect: any = null;
             if (vProspectId) {
-              await supabase
+              const { data: p, error: pErr } = await supabase
                 .from("verified_contractor_prospects")
-                .update({
-                  outreach_status: "paid",
-                  updated_at: new Date().toISOString(),
-                })
+                .select("id, business_name, legal_name, city, category, email, phone_e164, website_url")
+                .eq("id", vProspectId)
+                .maybeSingle();
+              if (pErr) console.error("[stripe-webhook] prospect fetch failed", pErr.message);
+              prospect = p ?? null;
+              const { error: upErr } = await supabase
+                .from("verified_contractor_prospects")
+                // 'activated' is the terminal value allowed by the table CHECK.
+                .update({ outreach_status: "activated" })
                 .eq("id", vProspectId);
+              if (upErr) console.error("[stripe-webhook] prospect status update failed", upErr.message);
             }
+
+            // 3 — create/activate the contractor account (idempotent).
+            if (prospect) {
+              const phone = prospect.phone_e164 ?? null;
+              const email = prospect.email ?? session.customer_details?.email ?? null;
+              let existing: { id: string } | null = null;
+              if (phone) {
+                const { data } = await supabase
+                  .from("contractors").select("id").eq("phone", phone).limit(1).maybeSingle();
+                existing = (data as any) ?? null;
+              }
+              if (!existing && email) {
+                const { data } = await supabase
+                  .from("contractors").select("id").eq("email", email).limit(1).maybeSingle();
+                existing = (data as any) ?? null;
+              }
+              if (!existing) {
+                // contractors.user_id is NOT NULL — provision (or reuse) the auth
+                // account for the payer before creating the contractor record.
+                let ownerUserId: string | null = null;
+                if (email) {
+                  const { data: createdUser, error: userErr } =
+                    await supabase.auth.admin.createUser({
+                      email,
+                      email_confirm: true,
+                      user_metadata: {
+                        business_name: prospect.business_name ?? null,
+                        source: "stripe_activation_1_dollar",
+                      },
+                    });
+                  if (createdUser?.user?.id) {
+                    ownerUserId = createdUser.user.id;
+                  } else {
+                    // Already registered — look the account up by email.
+                    console.warn("[stripe-webhook] createUser fallback", userErr?.message);
+                    const { data: list } = await supabase
+                      .from("profiles").select("user_id").eq("email", email).limit(1).maybeSingle();
+                    ownerUserId = (list as any)?.user_id ?? null;
+                  }
+                }
+                if (!ownerUserId) {
+                  console.error("[stripe-webhook] cannot provision contractor: no owner user", { email });
+                } else {
+                  await supabase.from("user_roles")
+                    .upsert({ user_id: ownerUserId, role: "contractor" }, { onConflict: "user_id,role" });
+                  const { data: created, error: createErr } = await supabase
+                    .from("contractors")
+                    .insert({
+                      user_id: ownerUserId,
+                      business_name: prospect.business_name ?? prospect.legal_name ?? "Entrepreneur UNPRO",
+                      specialty: prospect.category ?? null,
+                      city: prospect.city ?? null,
+                      province: "QC",
+                      phone,
+                      email,
+                      website: prospect.website_url ?? null,
+                      verification_status: "pending",
+                      account_status: "active",
+                      activation_status: "active",
+                      onboarding_status: "payment_completed",
+                      is_published: true,
+                      is_discoverable: true,
+                    })
+                    .select("id")
+                    .maybeSingle();
+                  if (createErr) {
+                    console.error("[stripe-webhook] activation contractor insert failed", createErr.message);
+                  } else {
+                    existing = (created as any) ?? null;
+                  }
+                }
+              } else {
+                await supabase.from("contractors").update({
+                  account_status: "active",
+                  activation_status: "active",
+                  onboarding_status: "payment_completed",
+                  is_published: true,
+                  is_discoverable: true,
+                  updated_at: new Date().toISOString(),
+                }).eq("id", existing.id);
+              }
+              activatedContractorId = existing?.id ?? null;
+
+              if (activatedContractorId) {
+                await supabase
+                  .from("billing_checkout_sessions")
+                  .update({ contractor_id: activatedContractorId })
+                  .eq("stripe_checkout_session_id", session.id);
+                await supabase.rpc("activate_contractor_unified", {
+                  p_contractor_id: activatedContractorId,
+                  p_source: "stripe_activation_1_dollar",
+                  p_plan_id: session.metadata?.plan_code || "activation_7d",
+                  p_actor: null,
+                  p_metadata: {
+                    checkout_session_id: session.id,
+                    activation_token: activationToken,
+                    prospect_id: vProspectId,
+                  },
+                }).then(() => {}, (e: unknown) =>
+                  console.warn("[stripe-webhook] activate_contractor_unified soft-fail", String(e)));
+              }
+            }
+
             await supabase.from("unpro_payment_activation_audit").insert({
+              contractor_id: activatedContractorId,
               prospect_id: vProspectId,
               stripe_event_id: event.id,
               checkout_session_id: session.id,
@@ -430,29 +554,38 @@ Deno.serve(async (req) => {
               result: "success",
               new_status: "activated",
               amount_cents: session.amount_total ?? null,
+              currency: session.currency ?? "cad",
               metadata: {
                 activation_token: activationToken,
                 source: session.metadata?.source ?? null,
                 slug: session.metadata?.prospect_slug ?? null,
+                contractor_id: activatedContractorId,
               },
             });
+
+            // Canonical funnel event. v_activation_funnel counts event_type='paid',
+            // so this MUST be 'paid' — 'payment_succeeded' was invisible to the cockpit.
             await supabase.rpc("record_engagement_event", {
-              _event_type: "payment_succeeded",
+              _event_type: "paid",
               _channel: "web",
               _status: "paid",
               _provider: "stripe",
               _prospect_id: vProspectId,
-              _source_table: "unpro_payment_activation_audit",
+              _contractor_id: activatedContractorId,
+              _tracking_id: activationToken,
+              _source_table: "billing_checkout_sessions",
               _source_row_id: session.id,
               _metadata: {
                 amount_cents: session.amount_total ?? null,
                 campaign_id: session.metadata?.campaign_id ?? null,
                 activation_token: activationToken,
+                contractor_id: activatedContractorId,
               },
-              _idempotency_key: `payment_succeeded:${session.id}`,
+              _idempotency_key: `paid:${session.id}`,
             });
             console.log("[stripe-webhook] $1 activation recorded", {
               prospect_id: vProspectId,
+              contractor_id: activatedContractorId,
               session: session.id,
             });
           } catch (e) {
