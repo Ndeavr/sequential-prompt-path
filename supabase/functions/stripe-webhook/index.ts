@@ -436,7 +436,8 @@ Deno.serve(async (req) => {
               prospect = p ?? null;
               const { error: upErr } = await supabase
                 .from("verified_contractor_prospects")
-                .update({ outreach_status: "paid" })
+                // 'activated' is the terminal value allowed by the table CHECK.
+                .update({ outreach_status: "activated" })
                 .eq("id", vProspectId);
               if (upErr) console.error("[stripe-webhook] prospect status update failed", upErr.message);
             }
