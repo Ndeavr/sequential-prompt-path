@@ -389,7 +389,7 @@ async function selectFairCandidates(supabase: any, ctx: RunContext, take: number
   if (results.length < poolCap) {
     let q = supabase
       .from("contractor_prospects")
-      .select("id,business_name,email,phone,phone_e164,website_url,city,trade,source,created_at")
+      .select("id,business_name,email,phone,phone_e164,website_url,city,trade,category_slug,source,created_at")
       .not("business_name", "is", null)
       .or("phone.not.is.null,phone_e164.not.is.null")
       .order("created_at", { ascending: true })
@@ -402,10 +402,13 @@ async function selectFairCandidates(supabase: any, ctx: RunContext, take: number
         phone: row.phone_e164 ?? row.phone,
         website: row.website_url,
         city: row.city,
-        category: row.trade,
+        // `trade` is frequently null on scraped rows while `category_slug` is
+        // always populated — falling back keeps 75+ real prospects in the pool.
+        category: row.trade ?? row.category_slug,
         email: row.email,
       });
     }
+
   }
 
   // Table 3 — contractors_prospects (legacy)
@@ -537,7 +540,7 @@ async function selectDeterministicCandidates(
     if (t.contractor_prospect_id) {
       const { data } = await supabase
         .from("contractor_prospects")
-        .select("id,business_name,email,phone,phone_e164,website_url,city,trade,source")
+        .select("id,business_name,email,phone,phone_e164,website_url,city,trade,category_slug,source")
         .eq("id", t.contractor_prospect_id)
         .limit(1);
       for (const row of data ?? []) {
@@ -546,7 +549,7 @@ async function selectDeterministicCandidates(
           phone: row.phone_e164 ?? row.phone,
           website: row.website_url,
           city: row.city,
-          category: row.trade,
+          category: row.trade ?? row.category_slug,
           email: row.email,
         });
       }
@@ -554,7 +557,7 @@ async function selectDeterministicCandidates(
     if (results.length < take && (t.business_name_exact || t.business_name_ilike || t.phone_e164 || t.email)) {
       let q = supabase
         .from("contractor_prospects")
-        .select("id,business_name,email,phone,phone_e164,website_url,city,trade,source")
+        .select("id,business_name,email,phone,phone_e164,website_url,city,trade,category_slug,source")
         .not("business_name", "is", null)
         .limit(take);
       q = applyFilters(q, { business: "business_name", phone: "phone", email: "email" });
@@ -565,7 +568,7 @@ async function selectDeterministicCandidates(
           phone: row.phone_e164 ?? row.phone,
           website: row.website_url,
           city: row.city,
-          category: row.trade,
+          category: row.trade ?? row.category_slug,
           email: row.email,
         });
       }
