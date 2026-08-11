@@ -1171,6 +1171,13 @@ export type Database = {
             foreignKeyName: "acquisition_dead_queue_alerts_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_manual_contact_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_dead_queue_alerts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_prospect_funnel"
             referencedColumns: ["prospect_id"]
           },
@@ -1587,6 +1594,13 @@ export type Database = {
             foreignKeyName: "acquisition_manual_import_rows_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_manual_contact_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_manual_import_rows_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_prospect_funnel"
             referencedColumns: ["prospect_id"]
           },
@@ -1725,6 +1739,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_pipeline_events_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_manual_contact_queue"
             referencedColumns: ["prospect_id"]
           },
           {
@@ -1901,6 +1922,13 @@ export type Database = {
             foreignKeyName: "acquisition_queue_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_manual_contact_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_queue_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_prospect_funnel"
             referencedColumns: ["prospect_id"]
           },
@@ -2009,6 +2037,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_repair_log_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_manual_contact_queue"
             referencedColumns: ["prospect_id"]
           },
           {
@@ -3671,6 +3706,13 @@ export type Database = {
             referencedRelation: "affiliates"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "admin_impersonations_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
+          },
         ]
       }
       admin_import_conflicts: {
@@ -4730,6 +4772,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "affiliate_assignments_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
+          },
+          {
             foreignKeyName: "affiliate_assignments_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
@@ -4830,6 +4879,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "affiliates"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_clicks_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
           },
           {
             foreignKeyName: "affiliate_clicks_link_id_fkey"
@@ -4945,6 +5001,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "affiliate_conversions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
+          },
+          {
             foreignKeyName: "affiliate_conversions_attribution_id_fkey"
             columns: ["attribution_id"]
             isOneToOne: false
@@ -5006,6 +5069,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "affiliates"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_import_batches_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
           },
         ]
       }
@@ -5101,6 +5171,13 @@ export type Database = {
             referencedRelation: "affiliates"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "affiliate_invitations_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
+          },
         ]
       }
       affiliate_lead_events: {
@@ -5138,6 +5215,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "affiliates"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_lead_events_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
           },
           {
             foreignKeyName: "affiliate_lead_events_lead_id_fkey"
@@ -5210,6 +5294,13 @@ export type Database = {
             referencedRelation: "affiliates"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "affiliate_links_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
+          },
         ]
       }
       affiliate_message_templates: {
@@ -5250,6 +5341,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "affiliates"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_message_templates_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
           },
         ]
       }
@@ -5386,6 +5484,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "affiliates"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_sessions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
           },
         ]
       }
@@ -23295,6 +23400,13 @@ export type Database = {
             referencedRelation: "affiliates"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "commissions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
+          },
         ]
       }
       communication_fallback_queue: {
@@ -29117,6 +29229,13 @@ export type Database = {
             foreignKeyName: "contractor_dedupe_log_kept_prospect_id_fkey"
             columns: ["kept_prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_manual_contact_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "contractor_dedupe_log_kept_prospect_id_fkey"
+            columns: ["kept_prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_prospect_funnel"
             referencedColumns: ["prospect_id"]
           },
@@ -32720,6 +32839,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "contractor_leads_assigned_affiliate_id_fkey"
+            columns: ["assigned_affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
+          },
+          {
             foreignKeyName: "contractor_leads_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
@@ -32781,6 +32907,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "affiliates"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_created_by_affiliate_id_fkey"
+            columns: ["created_by_affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
           },
           {
             foreignKeyName: "contractor_leads_scanner_session_id_fkey"
@@ -41189,6 +41322,13 @@ export type Database = {
             referencedRelation: "affiliates"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractors_prospects_assigned_affiliate_id_fkey"
+            columns: ["assigned_affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
+          },
         ]
       }
       contractors_trust: {
@@ -41755,6 +41895,242 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      crm_contact_outcomes: {
+        Row: {
+          actor_id: string | null
+          affiliate_id: string | null
+          assignment_id: string | null
+          channel: string
+          created_at: string
+          due_at: string | null
+          id: string
+          next_action: string | null
+          note: string | null
+          objection: string | null
+          outcome: string
+          prospect_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          affiliate_id?: string | null
+          assignment_id?: string | null
+          channel?: string
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          next_action?: string | null
+          note?: string | null
+          objection?: string | null
+          outcome: string
+          prospect_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          affiliate_id?: string | null
+          assignment_id?: string | null
+          channel?: string
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          next_action?: string | null
+          note?: string | null
+          objection?: string | null
+          outcome?: string
+          prospect_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_contact_outcomes_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_contact_outcomes_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
+          },
+          {
+            foreignKeyName: "crm_contact_outcomes_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "crm_manual_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_contact_outcomes_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_manual_contact_queue"
+            referencedColumns: ["assignment_id"]
+          },
+          {
+            foreignKeyName: "crm_contact_outcomes_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "crm_contact_outcomes_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_crm_next_action"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "crm_contact_outcomes_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "crm_contact_outcomes_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_manual_contact_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "crm_contact_outcomes_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_prospect_funnel"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "crm_contact_outcomes_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "verified_contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_manual_assignments: {
+        Row: {
+          affiliate_id: string | null
+          assigned_at: string
+          assigned_by: string | null
+          attempts: number
+          closed_at: string | null
+          created_at: string
+          due_at: string | null
+          id: string
+          last_outcome: string | null
+          last_outcome_at: string | null
+          next_action: string | null
+          objection: string | null
+          owner_user_id: string | null
+          priority: number
+          prospect_id: string
+          queue: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id?: string | null
+          assigned_at?: string
+          assigned_by?: string | null
+          attempts?: number
+          closed_at?: string | null
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          last_outcome?: string | null
+          last_outcome_at?: string | null
+          next_action?: string | null
+          objection?: string | null
+          owner_user_id?: string | null
+          priority?: number
+          prospect_id: string
+          queue?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string | null
+          assigned_at?: string
+          assigned_by?: string | null
+          attempts?: number
+          closed_at?: string | null
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          last_outcome?: string | null
+          last_outcome_at?: string | null
+          next_action?: string | null
+          objection?: string | null
+          owner_user_id?: string | null
+          priority?: number
+          prospect_id?: string
+          queue?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_manual_assignments_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_manual_assignments_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
+          },
+          {
+            foreignKeyName: "crm_manual_assignments_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "crm_manual_assignments_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_crm_next_action"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "crm_manual_assignments_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "crm_manual_assignments_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_manual_contact_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "crm_manual_assignments_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_prospect_funnel"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "crm_manual_assignments_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "verified_contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       crm_prospect_notes: {
         Row: {
@@ -56778,6 +57154,13 @@ export type Database = {
             foreignKeyName: "official_site_crawl_runs_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_manual_contact_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "official_site_crawl_runs_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_prospect_funnel"
             referencedColumns: ["prospect_id"]
           },
@@ -56886,6 +57269,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "official_site_enrichment_evidence_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_manual_contact_queue"
             referencedColumns: ["prospect_id"]
           },
           {
@@ -76817,6 +77207,13 @@ export type Database = {
             foreignKeyName: "scout_captures_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_manual_contact_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "scout_captures_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_prospect_funnel"
             referencedColumns: ["prospect_id"]
           },
@@ -87690,6 +88087,13 @@ export type Database = {
             foreignKeyName: "verified_prospect_tokens_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_manual_contact_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "verified_prospect_tokens_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_prospect_funnel"
             referencedColumns: ["prospect_id"]
           },
@@ -90155,6 +90559,21 @@ export type Database = {
           },
         ]
       }
+      v_affiliate_workload: {
+        Row: {
+          activations: number | null
+          active_assignments: number | null
+          affiliate_id: string | null
+          contacted: number | null
+          daily_quota: number | null
+          name: string | null
+          not_started: number | null
+          overdue: number | null
+          primary_city: string | null
+          total_attempts: number | null
+        }
+        Relationships: []
+      }
       v_autopilot_pipeline: {
         Row: {
           activated_count: number | null
@@ -90920,6 +91339,106 @@ export type Database = {
           total_leads: number | null
         }
         Relationships: []
+      }
+      v_manual_contact_queue: {
+        Row: {
+          activated_this_week: boolean | null
+          activation_probability: number | null
+          activation_token: string | null
+          affiliate_id: string | null
+          affiliate_name: string | null
+          alex_started_at: string | null
+          assigned_at: string | null
+          assignment_id: string | null
+          assignment_next_action: string | null
+          assignment_priority: number | null
+          assignment_status: string | null
+          attempts: number | null
+          blocked_reason: string | null
+          business_name: string | null
+          campaign_id: string | null
+          can_email: boolean | null
+          can_sms: boolean | null
+          category: string | null
+          checkout_at: string | null
+          city: string | null
+          click_count: number | null
+          clicked_at: string | null
+          current_stage: string | null
+          data_quality_score: number | null
+          delivered_at: string | null
+          due_at: string | null
+          email: string | null
+          emails_sent: number | null
+          estimated_value_cents: number | null
+          google_business_url: string | null
+          has_email: boolean | null
+          health_score: number | null
+          hours_since_last_activity: number | null
+          is_duplicate: boolean | null
+          is_overdue: boolean | null
+          is_unassigned: boolean | null
+          landing_at: string | null
+          last_activity_at: string | null
+          last_email_at: string | null
+          last_error: string | null
+          last_outcome: string | null
+          last_outcome_at: string | null
+          last_sent_at: string | null
+          last_sid: string | null
+          last_status: string | null
+          missing_gbp: boolean | null
+          missing_rbq: boolean | null
+          needs_action: boolean | null
+          next_best_action: string | null
+          no_email: boolean | null
+          no_website: boolean | null
+          objection: string | null
+          opted_out: boolean | null
+          otp_requested_at: string | null
+          otp_verified_at: string | null
+          outreach_status: string | null
+          owner_user_id: string | null
+          paid_at: string | null
+          paid_today: boolean | null
+          phone_e164: string | null
+          phone_invalid: boolean | null
+          phone_line_type: string | null
+          phone_validation_status: string | null
+          priority_score: number | null
+          prospect_id: string | null
+          rbq_number: string | null
+          recoverable_revenue_cents: number | null
+          registered_at: string | null
+          revenue_cents: number | null
+          scraped_at: string | null
+          sent_at: string | null
+          sms_delivered: number | null
+          sms_eligibility_tier: string | null
+          sms_failed: number | null
+          sms_no_callback: number | null
+          sms_sent: number | null
+          sms_undelivered: number | null
+          tags: string[] | null
+          validated_at: string | null
+          website_url: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_manual_assignments_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_manual_assignments_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
+          },
+        ]
       }
       v_match_results_safe: {
         Row: {
@@ -92499,6 +93018,34 @@ export type Database = {
           _reason: string
         }
         Returns: Json
+      }
+      manual_queue_for_me: {
+        Args: never
+        Returns: {
+          activation_probability: number
+          activation_token: string
+          assigned_at: string
+          assignment_id: string
+          assignment_status: string
+          attempts: number
+          blocked_reason: string
+          business_name: string
+          category: string
+          city: string
+          current_stage: string
+          due_at: string
+          email: string
+          estimated_value_cents: number
+          is_overdue: boolean
+          last_outcome: string
+          next_action: string
+          objection: string
+          opted_out: boolean
+          phone_e164: string
+          priority_score: number
+          prospect_id: string
+          website_url: string
+        }[]
       }
       mark_outreach_first_viewed: {
         Args: { p_id: string; p_token: string }

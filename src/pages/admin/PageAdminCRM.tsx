@@ -25,6 +25,7 @@ import {
   type SmartFilter,
 } from "@/hooks/useCrmOperations";
 import CrmProspectDrawer from "@/components/admin/crm/CrmProspectDrawer";
+import ManualContactQueue from "@/components/admin/crm/ManualContactQueue";
 import { RefreshCw, Search, Loader2, AlertTriangle, Target, Zap } from "lucide-react";
 
 const kpiCards = (k: ReturnType<typeof useCrmProspects>["kpis"]) => [
@@ -49,6 +50,7 @@ export default function PageAdminCRM() {
   const [busy, setBusy] = useState<string | null>(null);
   const [drawerId, setDrawerId] = useState<string | null>(null);
   const [operatorMode, setOperatorMode] = useState(false);
+  const [tab, setTab] = useState<"pipeline" | "manual">("pipeline");
 
   const filtered = useMemo(() => {
     let out = applySmartFilter(rows, filter);
@@ -116,6 +118,26 @@ export default function PageAdminCRM() {
             </Button>
           </div>
         </div>
+
+        {/* Onglets */}
+        <div className="flex gap-1.5">
+          {([
+            { key: "pipeline", label: "Pipeline automatisé" },
+            { key: "manual", label: "À contacter manuellement" },
+          ] as const).map((t) => (
+            <Button
+              key={t.key}
+              size="sm"
+              variant={tab === t.key ? "default" : "outline"}
+              className="h-9 text-xs"
+              onClick={() => setTab(t.key)}
+            >
+              {t.label}
+            </Button>
+          ))}
+        </div>
+
+        {tab === "manual" ? <ManualContactQueue /> : <>
 
         {/* Tableau des revenus */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
@@ -300,6 +322,7 @@ export default function PageAdminCRM() {
             ))}
           </div>
         )}
+        </>}
       </div>
 
       <CrmProspectDrawer
