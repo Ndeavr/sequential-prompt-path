@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { AddLeadSheet } from "@/features/affiliate/addLead/AddLeadSheet";
 import { AffiliateHeaderMenu } from "@/features/affiliate/components/AffiliateHeaderMenu";
 import { AssignedLeadsList } from "@/features/affiliate/warRoom/AssignedLeadsList";
+import { MyManualQueue } from "@/features/affiliate/warRoom/MyManualQueue";
 
 type Assignment = {
   id: string;
@@ -225,6 +226,15 @@ export default function PageAffiliateWarRoom() {
               ))}
             </ul>
           )}
+        </section>
+
+        {/* File « À contacter manuellement » assignée par l'admin */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-foreground">À contacter aujourd'hui</h2>
+            <span className="text-xs text-muted-foreground">Appelez, puis consignez le résultat</span>
+          </div>
+          <MyManualQueue />
         </section>
 
         {/* Assigned leads with 1-click SMS perso */}

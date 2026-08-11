@@ -33,8 +33,18 @@ const ACTIONS = new Set([
   "note",
   // The CRM drawer sends "add_note"; both names hit the same handler.
   "add_note",
-
+  // Manual contact queue (« À contacter manuellement »)
+  "assign",
+  "reassign",
+  "unassign",
+  "reclaim_overdue",
+  "log_outcome",
+  "send_activation_link",
+  "manual_contact_logged",
 ]);
+
+const TERMINAL_OUTCOMES = new Set(["activated", "not_interested", "invalid_contact"]);
+
 
 function randToken() {
   return crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "").slice(0, 8);
@@ -135,7 +145,7 @@ Deno.serve(async (req) => {
         if (!p) throw new Error("prospect_not_found");
 
         // Opt-out / STOP guard for every outbound action.
-        const outbound = ["retry_sms", "second_sms", "send_email", "onboarding_email", "payment_email", "payment_sms"];
+        const outbound = ["retry_sms", "second_sms", "send_email", "onboarding_email", "payment_email", "payment_sms", "send_activation_link"];
         if (outbound.includes(action)) {
           if (p.phone_e164) {
             const { data: stop } = await sb
@@ -163,7 +173,8 @@ Deno.serve(async (req) => {
         }
 
         // Resolve or create an activation token/link when needed.
-        const needsLink = ["payment_email", "payment_sms", "second_sms", "resume_checkout", "new_checkout", "onboarding_email", "send_email"];
+        const needsLink = ["payment_email", "payment_sms", "second_sms", "resume_checkout", "new_checkout", "onboarding_email", "send_email", "send_activation_link"];
+
         let link = "";
         if (needsLink.includes(action)) {
           const { data: tok } = await sb
@@ -295,8 +306,185 @@ Deno.serve(async (req) => {
             break;
           }
 
+          // ─── File « À contacter manuellement » ───────────────────────
+          case "assign":
+          case "reassign": {
+            const affiliateId = (payloadExtra.affiliate_id ?? null) as string | null;
+            const ownerUserId = (payloadExtra.owner_user_id ?? (affiliateId ? null : actorId)) as string | null;
+            if (!affiliateId && !ownerUserId) throw new Error("missing_owner");
+
+            // One active assignment per prospect: close the current one first.
+            const { data: active } = await sb
+              .from("crm_manual_assignments")
+              .select("id, affiliate_id, owner_user_id")
+              .eq("prospect_id", pid)
+              .in("status", ["assigned", "in_progress"])
+              .maybeSingle();
+
+            if (active) {
+              if (action === "assign") {
+                results.push({ prospect_id: pid, action, status: "skipped", result: "already_assigned" });
+                continue;
+              }
+              await sb
+                .from("crm_manual_assignments")
+                .update({ status: "closed_lost", closed_at: new Date().toISOString() })
+                .eq("id", active.id);
+            }
+
+            const { data: ins, error: insErr } = await sb
+              .from("crm_manual_assignments")
+              .insert({
+                prospect_id: pid,
+                affiliate_id: affiliateId,
+                owner_user_id: ownerUserId,
+                assigned_by: actorId,
+                priority: Number(payloadExtra.priority ?? 0),
+                next_action: String(payloadExtra.next_action ?? "call"),
+                due_at: (payloadExtra.due_at as string | undefined) ??
+                  new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+              })
+              .select("id")
+              .maybeSingle();
+            if (insErr) throw new Error(`assign_failed: ${insErr.message}`);
+
+            // Notification d'assignation (chemin courriel sortant existant).
+            if (affiliateId) {
+              const { data: aff } = await sb
+                .from("affiliates")
+                .select("email, name")
+                .eq("id", affiliateId)
+                .maybeSingle();
+              if (aff?.email) {
+                try {
+                  await invokeFn("outreach-resend-send", {
+                    to: aff.email,
+                    subject: `Nouveau prospect assigné : ${p.business_name ?? ""}`,
+                    message_id: `assign-${ins?.id}`,
+                    template_name: "affiliate-assignment",
+                    cta_url: `${BASE}/affiliate`,
+                    html: shell(
+                      `<h2 style="margin:0 0 12px">Bonjour ${esc(aff.name ?? "")}</h2>
+<p>Un nouveau prospect vous est assigné : <strong>${esc(p.business_name ?? "")}</strong>${p.city ? ` (${esc(p.city)})` : ""}.</p>
+<p>Appelez-le aujourd'hui et consignez le résultat dans « Mes prospects ».</p>`,
+                      "Voir mes prospects",
+                      `${BASE}/affiliate`,
+                    ),
+                    tags: { campaign: "crm_manual_queue", action: "assignment_notification" },
+                  });
+                } catch (_e) {
+                  // La notification ne doit jamais bloquer l'assignation.
+                }
+              }
+            }
+            result = `assigned:${ins?.id ?? ""}`;
+            break;
+          }
+
+          case "unassign": {
+            const { error: uErr } = await sb
+              .from("crm_manual_assignments")
+              .update({ status: "closed_lost", closed_at: new Date().toISOString() })
+              .eq("prospect_id", pid)
+              .in("status", ["assigned", "in_progress"]);
+            if (uErr) throw new Error(`unassign_failed: ${uErr.message}`);
+            result = "unassigned";
+            break;
+          }
+
+          case "reclaim_overdue": {
+            const { data: rec, error: rErr } = await sb
+              .from("crm_manual_assignments")
+              .update({
+                affiliate_id: null,
+                owner_user_id: actorId,
+                assigned_by: actorId,
+                assigned_at: new Date().toISOString(),
+                due_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+              })
+              .eq("prospect_id", pid)
+              .in("status", ["assigned", "in_progress"])
+              .lt("due_at", new Date().toISOString())
+              .select("id");
+            if (rErr) throw new Error(`reclaim_failed: ${rErr.message}`);
+            if (!rec || rec.length === 0) {
+              results.push({ prospect_id: pid, action, status: "skipped", result: "not_overdue" });
+              continue;
+            }
+            result = "reclaimed";
+            break;
+          }
+
+          case "log_outcome": {
+            const outcome = String(payloadExtra.outcome ?? "").trim();
+            if (!outcome) throw new Error("missing_outcome");
+            const terminal = TERMINAL_OUTCOMES.has(outcome);
+            const { data: asg } = await sb
+              .from("crm_manual_assignments")
+              .select("id, affiliate_id")
+              .eq("prospect_id", pid)
+              .in("status", ["assigned", "in_progress"])
+              .maybeSingle();
+            if (!asg) throw new Error("no_active_assignment");
+
+            const nextAction = terminal ? null : String(payloadExtra.next_action ?? "call");
+            const dueAt = terminal
+              ? null
+              : ((payloadExtra.due_at as string | undefined) ??
+                new Date(Date.now() + 24 * 3600 * 1000).toISOString());
+
+            const { error: oErr } = await sb.from("crm_contact_outcomes").insert({
+              assignment_id: asg.id,
+              prospect_id: pid,
+              actor_id: actorId,
+              affiliate_id: asg.affiliate_id,
+              channel: String(payloadExtra.channel ?? "call"),
+              outcome,
+              objection: (payloadExtra.objection as string | undefined) ?? null,
+              note: (payloadExtra.note as string | undefined) ?? null,
+              next_action: nextAction,
+              due_at: dueAt,
+            });
+            if (oErr) throw new Error(`outcome_failed: ${oErr.message}`);
+            result = terminal ? `closed:${outcome}` : `logged:${outcome}`;
+            break;
+          }
+
+          case "send_activation_link": {
+            const channel = String(payloadExtra.channel ?? "sms");
+            if (channel === "email") {
+              if (!p.email) throw new Error("no_email");
+              result = await invokeFn("outreach-resend-send", {
+                to: p.email,
+                subject: "Votre lien d'activation UNPRO — 1 $",
+                message_id: `crm-${idem}`,
+                template_name: "incomplete-checkout-followup",
+                cta_url: link,
+                html: checkoutHtml(p.business_name, link),
+                tags: { campaign: "crm_manual_queue", action },
+              });
+            } else {
+              result = await invokeFn("second-touch-outreach", { prospect_ids: [pid], dry_run: false, limit: 1 });
+            }
+            result = `${link} | ${result}`;
+            break;
+          }
+
+          case "manual_contact_logged": {
+            // Composition manuelle (tel:/sms:/mailto:) depuis l'appareil de
+            // l'opérateur — aucun envoi plateforme, journalisation seulement.
+            await sb
+              .from("crm_manual_assignments")
+              .update({ status: "in_progress" })
+              .eq("prospect_id", pid)
+              .in("status", ["assigned"]);
+            result = `manual_${String(payloadExtra.channel ?? "call")}`;
+            break;
+          }
+
           default:
             throw new Error(`unknown_action:${action}`);
+
         }
       } catch (e) {
         status = "failed";
