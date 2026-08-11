@@ -389,7 +389,7 @@ async function selectFairCandidates(supabase: any, ctx: RunContext, take: number
   if (results.length < poolCap) {
     let q = supabase
       .from("contractor_prospects")
-      .select("id,business_name,email,phone,phone_e164,website_url,city,trade,source,created_at")
+      .select("id,business_name,email,phone,phone_e164,website_url,city,trade,category_slug,source,created_at")
       .not("business_name", "is", null)
       .or("phone.not.is.null,phone_e164.not.is.null")
       .order("created_at", { ascending: true })
@@ -402,10 +402,13 @@ async function selectFairCandidates(supabase: any, ctx: RunContext, take: number
         phone: row.phone_e164 ?? row.phone,
         website: row.website_url,
         city: row.city,
-        category: row.trade,
+        // `trade` is frequently null on scraped rows while `category_slug` is
+        // always populated — falling back keeps 75+ real prospects in the pool.
+        category: row.trade ?? row.category_slug,
         email: row.email,
       });
     }
+
   }
 
   // Table 3 — contractors_prospects (legacy)
