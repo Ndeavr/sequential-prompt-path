@@ -5,7 +5,7 @@ import { MapPin } from "lucide-react";
 
 interface Props {
   areas: string[];
-  radiusKm: number;
+  radiusKm: number | null;
   primaryCity: string | null;
 }
 
@@ -29,10 +29,16 @@ export default function ServiceAreaMap({ areas, radiusKm, primaryCity }: Props) 
             </span>
           ))}
         </div>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Distance maximale</span>
-          <span className="font-semibold text-foreground">{radiusKm} km</span>
-        </div>
+        {radiusKm ? (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Distance maximale</span>
+            <span className="font-semibold text-foreground">{radiusKm} km</span>
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Rayon de déplacement non précisé par l'entreprise.
+          </p>
+        )}
       </div>
     </section>
   );

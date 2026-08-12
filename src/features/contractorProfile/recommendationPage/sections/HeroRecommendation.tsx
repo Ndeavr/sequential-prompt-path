@@ -18,7 +18,9 @@ export default function HeroRecommendation({ contractor: c }: Props) {
     .toUpperCase();
 
   const yearJoined = c.created_at ? new Date(c.created_at).getFullYear() : null;
-  const rating = c.rating ?? null;
+  const reviewCount = c.review_count ?? 0;
+  const rating = reviewCount > 0 && c.rating ? c.rating : null;
+  const isVerified = !!c.admin_verified;
   const areas: string[] = c.service_areas ?? [];
 
   return (
@@ -49,13 +51,19 @@ export default function HeroRecommendation({ contractor: c }: Props) {
                   />
                 ))}
                 <span className="ml-1 text-muted-foreground">
-                  {rating.toFixed(1)} · {c.review_count ?? 0} avis
+                  {rating.toFixed(1)} · {reviewCount} avis
                 </span>
               </div>
             )}
-            <Badge variant="secondary" className="gap-1">
-              <ShieldCheck className="w-3 h-3" /> Entreprise vérifiée UNPRO
-            </Badge>
+            {isVerified ? (
+              <Badge variant="secondary" className="gap-1">
+                <ShieldCheck className="w-3 h-3" /> Entreprise vérifiée UNPRO
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="gap-1">
+                Profil non réclamé · informations publiques
+              </Badge>
+            )}
           </div>
         </div>
       </div>
@@ -67,21 +75,22 @@ export default function HeroRecommendation({ contractor: c }: Props) {
         {areas.length > 0 && (
           <InfoTile label="Zones" value={areas.slice(0, 3).join(" · ")} />
         )}
-        <InfoTile label="Rayon" value={`${c.travel_radius_km ?? 15} km`} />
-        <InfoTile
-          label="Disponibilité"
-          value={availabilityLabel(c.availability_estimate ?? "cette_semaine")}
-        />
+        {c.travel_radius_km ? (
+          <InfoTile label="Rayon" value={`${c.travel_radius_km} km`} />
+        ) : null}
+        {c.availability_estimate ? (
+          <InfoTile label="Disponibilité" value={availabilityLabel(c.availability_estimate)} />
+        ) : null}
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <TrustBadge label="Identité vérifiée" active />
+        <TrustBadge label="Identité vérifiée" active={isVerified} />
         <TrustBadge label="Coordonnées validées" active={!!c.phone && !!c.email} />
         <TrustBadge label="Assuré" active={!!c.insurance_info} />
-        <TrustBadge label="Entreprise active" active={c.is_published} />
+        <TrustBadge label="Profil publié" active={c.is_published} />
       </div>
 
-      {yearJoined && (
+      {isVerified && yearJoined && (
         <p className="text-xs text-muted-foreground">Membre UNPRO depuis {yearJoined}</p>
       )}
     </header>

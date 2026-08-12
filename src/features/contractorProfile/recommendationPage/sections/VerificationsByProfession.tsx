@@ -15,7 +15,7 @@ export default function VerificationsByProfession({ categorySlug, contractor: c 
   const active = (id: string): boolean => {
     switch (id) {
       case "identity":
-        return true;
+        return !!c.admin_verified;
       case "phone":
         return !!c.phone;
       case "email":
@@ -36,6 +36,9 @@ export default function VerificationsByProfession({ categorySlug, contractor: c 
       <h2 id="verif-heading" className="text-lg font-semibold text-foreground">
         Vérifications UNPRO
       </h2>
+      <p className="text-sm text-muted-foreground">
+        Un élément non coché n'a pas encore été validé par UNPRO. Aucun statut n'est présumé.
+      </p>
       <ul className="rounded-2xl border border-border bg-card divide-y divide-border">
         {checks.map((check) => {
           const isActive = active(check.id);
