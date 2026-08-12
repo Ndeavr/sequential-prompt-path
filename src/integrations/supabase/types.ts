@@ -35858,6 +35858,63 @@ export type Database = {
         }
         Relationships: []
       }
+      contractor_profile_corrections: {
+        Row: {
+          admin_note: string | null
+          contractor_id: string
+          contractor_slug: string | null
+          created_at: string
+          current_value: string | null
+          evidence_url: string | null
+          field_key: string
+          id: string
+          reporter_contact: string
+          reporter_name: string
+          requested_value: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_note?: string | null
+          contractor_id: string
+          contractor_slug?: string | null
+          created_at?: string
+          current_value?: string | null
+          evidence_url?: string | null
+          field_key: string
+          id?: string
+          reporter_contact: string
+          reporter_name: string
+          requested_value: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_note?: string | null
+          contractor_id?: string
+          contractor_slug?: string | null
+          created_at?: string
+          current_value?: string | null
+          evidence_url?: string | null
+          field_key?: string
+          id?: string
+          reporter_contact?: string
+          reporter_name?: string
+          requested_value?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contractor_profile_gaps: {
         Row: {
           contractor_id: string
