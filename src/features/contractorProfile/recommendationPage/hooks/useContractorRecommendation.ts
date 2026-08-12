@@ -22,14 +22,27 @@ export function useContractorRecommendation(slug: string | undefined) {
     queryKey: ["contractor-recommendation", slug],
     enabled: !!slug,
     queryFn: async (): Promise<ContractorRecommendationData | null> => {
-      const { data: c, error } = await supabase
+      let c: any = null;
+
+      const { data: direct } = await supabase
         .from("contractors")
         .select("*")
         .eq("slug", slug!)
         .eq("is_published", true)
         .maybeSingle();
+      c = direct;
 
-      if (error || !c) return null;
+      // Fallback for published-but-unverified profiles (public read goes through the
+      // security-definer RPC, which only exposes published public pages).
+      if (!c) {
+        const { data: rpcData } = await supabase.rpc("get_contractor_public_profile", {
+          _slug: slug!,
+        });
+        const payload = rpcData as any;
+        if (payload?.contractor) c = payload.contractor;
+      }
+
+      if (!c) return null;
 
       const { data: projects } = await supabase
         .from("contractor_projects")
