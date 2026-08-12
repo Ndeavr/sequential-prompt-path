@@ -1,63 +1,57 @@
-# Convertir les clics existants en premier 1 $ réel
+# Profil public Pavage Alpha — /entrepreneurs/pavage-alpha-laval
 
-## Ce que les données de production disent (vérifié à l'instant)
+## Ce que l'inspection montre (vérifié)
 
-Événements réels des 30 derniers jours (`pipeline_engagement_events`) :
+- Aucune fiche « Pavage Alpha » n'existe : recherche sur `contractors` par nom, téléphone normalisé `5142629791` et domaine `pavagealpha` → 0 résultat. Il n'y a donc pas de doublon à fusionner, seulement une fiche à créer.
+- La route profil publique existante est **`/entrepreneur/:slug`** (`ContractorSeoPage`), et la réclamation existante est **`/entrepreneur/:slug/reclamer`** (`PageClaimWizard`).
+- **Conflit d'URL** : `/entrepreneurs/:slug` (au pluriel) est déjà pris par `PageHomeownerBookingFunnel`. L'URL canonique demandée entrerait en collision avec un parcours existant.
+- Tables réutilisables : `contractors`, `contractor_services`, `contractor_service_areas`, `contractor_media`, `contractor_credentials`, `contractor_public_pages`, vue `v_contractor_public_profile`. Sections déjà écrites : `AboutContractor`, `StructuredServices`, `ServiceAreaMap`, `CompatibilityCard`, `SmartFAQ`, `MediaGallery`, `ProjectsShowcase`, `VerificationsByProfession`.
+- `PageClaimWizard` est un flux 4 écrans avec paiement 1 $, **sans étape OTP** ni validation NEQ/RBQ. Le parcours en 12 étapes demandé n'existe pas encore tel quel.
+- Il n'existe pas de table générique de corrections pour entrepreneurs (`aipp_profile_corrections` est liée aux profils AIPP, pas à `contractors`).
 
-```text
-sent 120 · delivered 282 · undelivered 93
-clicked            22 prospects
-landing_viewed     22 prospects
-profile_viewed      2 prospects
-checkout_cta_clicked 2 prospects
-checkout_opened     4 prospects (10 événements)
-paid                0
-```
+## Décisions à trancher avant de coder
 
-Sessions Stripe réellement créées (`billing_checkout_sessions`) : **3 au total, toutes `cs_live_`** (donc Stripe est bien en mode LIVE), toutes encore `open / unpaid`. Deux des trois sont des tests internes (`instrumentation_test`, `priority1_live_run`) ; **une seule** vient d'un vrai prospect (`sms_activation`, 11 août).
+1. **URL canonique.** Le pluriel est occupé. Proposition : servir la page sur la route canonique existante `/entrepreneur/pavage-alpha-laval` et rediriger `/entrepreneurs/pavage-alpha-laval` vers elle (301 via `LEGACY_REDIRECTS`). Aucune route existante n'est cassée.
+2. **Portée du flux de réclamation.** Le 1 $ Stripe et la confirmation d'entreprise existent déjà ; OTP, NEQ, RBQ et assurance n'existent pas dans ce flux. On livre d'abord le chemin réel (confirmation → 1 $ → complétion guidée), et les étapes OTP/NEQ/RBQ sont ajoutées ensuite plutôt que simulées.
 
-Conclusion factuelle : « checkout → paid = 0/4 » n'est pas une panne Stripe démontrée — il n'y a jamais eu de vraie tentative de paiement carte. Le vrai blocage mesuré est **landing → CTA : 2 / 22 (9 %)**. Deuxième blocage : la promesse du CTA. Troisième : l'attribution (`prospect_id` est nul sur `sent`/`delivered`, donc on ne peut pas segmenter proprement le second envoi).
+## Étape 1 — Données réelles, avec provenance
 
-## Ce qu'on fait, dans l'ordre
+Insérer Pavage Alpha via migration (aucune donnée inventée) :
+- `contractors` : nom public, catégorie « Pavage et asphalte », ville Laval, téléphone `514-262-9791`, site `pavagealpha.ca`, `verification_status = unverified`, `claim_status = unclaimed`. Aucune adresse civique (trois adresses publiques contradictoires), aucun NEQ affiché, aucune note, aucun nombre d'avis.
+- `contractor_services` : les 10 sous-catégories, statut **déclaré**, groupées en Installation / Réparation-entretien / Commercial-industriel.
+- `contractor_service_areas` : Laval, Montréal, Rive-Sud, régions environnantes — statut **déclaré**, sans rayon kilométrique.
+- `contractor_public_pages` : slug `pavage-alpha-laval`, titre, meta, sources publiques (site officiel, Facebook, Wheree, Indeed) et date de révision 12 août 2026.
+- Chaque champ porte sa provenance : `value`, `verification_status` (Vérifié / Déclaré / Inféré / En attente), `source_url`, `observed_at`, `confidence`. On étend les colonnes existantes si nécessaire plutôt que de créer une architecture parallèle.
 
-### 1. Landing V2 — la page doit prouver « UNPRO comprend déjà mon entreprise »
-Réutiliser la route existante `/unpro/activate/:token` et `activation-token-resolve` (déjà enrichi). Retravail de la page :
-- Au-dessus de la ligne de flottaison : nom d'entreprise, logo (si réel), ville/territoire, catégorie, site web — puis le titre « Voici comment l'IA comprend {{company_name}} ».
-- Aperçu profil : services détectés, territoires, informations publiques trouvées, signaux d'avis réels, statut de vérification. Chaque champ garde son étiquette Vérifié / Déclaré / Déduit / À confirmer. Aucun champ inventé, aucun bloc vide : un champ manquant disparaît ou devient « à confirmer ».
-- Un seul CTA dominant : **« Voir et activer mon profil — 1 $ »**, répété une fois après l'aperçu, plus une barre CTA persistante en bas sur mobile. Suppression des CTA concurrents et de la navigation sur ce chemin.
-- Bloc valeur court : réclamer le profil, corriger l'information, dire ses objectifs à Alex, devenir recommandable. Mention explicite « 1 $ aujourd'hui. Aucun engagement. »
+## Étape 2 — La page
 
-### 2. Rendre le 1 $ vraiment sans engagement
-`create-activation-checkout` bascule en `mode: "subscription"` avec le plan mensuel dès qu'un `plan_code`/`quote_id` est présent. Sur le chemin SMS/activation, on force le chemin **paiement unique** (`mode: "payment"`, 1 $ CAD, aucun abonnement créé) et on ignore tout `plan_code` entrant. Le choix de plan arrive après, via Alex.
+Rendu via le shell canonique UNPRO (header/footer existants, `PageShell`), thème clair bleu pâle, cartes blanches, mobile-first. Sections dans l'ordre demandé :
 
-### 3. Fiabiliser et prouver Stripe LIVE de bout en bout
-- Journaliser chaque étape (création session, redirection, retour, webhook reçu, signature validée, activation DB) dans les logs d'audit existants, sans donnée de paiement sensible.
-- Vérifier que `stripe-unpro-webhook` reçoit bien `checkout.session.completed` pour le mode `payment` et que les métadonnées `platform/brand` passent le filtre de quarantaine.
-- Exécuter une vraie transaction 1 $ en production, du CTA jusqu'à l'écran de succès et l'entrée dans l'onboarding, puis rembourser. Sans cette preuve, aucune campagne n'est envoyée.
+1. Hero : nom, sous-titre, description, badges (Laval, Résidentiel, Commercial, Industriel, Profil non réclamé), CTA « Vérifier la compatibilité », « Demander un rendez-vous », « Appeler le 514-262-9791 », lien discret de réclamation, barre CTA fixe mobile (Vérifier / Appeler).
+2. État du profil UNPRO : liste des 8 vérifications avec leur statut réel + phrase d'explication. Jamais « Vérifié par UNPRO » ni « Recommandé ».
+3. À propos + lien externe `rel="noopener noreferrer"`.
+4. Services en trois familles, reliés aux entrées `contractor_services` (aucune page de service vide).
+5. Territoires déclarés + mention de confirmation.
+6. Synthèse des commentaires publics : points positifs observés, points à clarifier, encadré « avant de signer », lien vers la source. **Aucune note reprise de Wheree, aucun AggregateRating.**
+7. Perspective d'un employé (Indeed), isolée, avec avertissement, exclue de toute note qualité.
+8. Compatibilité : réutilise `CompatibilityCard` branché sur le parcours Alex existant, 7 questions une à la fois, photos si le composant existe. Résultats limités aux 5 verdicts autorisés ; profil non réclamé → message de confirmation préalable + CTA « Trouver une entreprise vérifiée ». La demande est enregistrée dans le workflow de demande existant avec `source = pavage-alpha-profile`.
+9. Réalisations : images réelles seulement, sinon état vide élégant.
+10. FAQ (7 questions) reprenant exactement les statuts de la page.
+11. Réclamation : carte forte → `/entrepreneur/pavage-alpha-laval/reclamer` (flux réel, Stripe live 1 $). Aucune simulation de paiement ; erreurs Stripe/OTP affichées et journalisées.
+12. Sources publiques repliables + bouton « Signaler une correction ».
 
-### 4. Réparer l'attribution du tunnel
-`sent`/`delivered` arrivent sans `prospect_id`. On relie ces événements au prospect (via le message/token) pour que le cohorte « cliqué / non payé » soit exacte et que la comparaison Premier SMS vs Second SMS soit possible.
+Formulaire de correction : entreprise, champ contesté, correction demandée, preuve/URL, nom, téléphone/courriel, date, statut. Nouvelle table `contractor_profile_corrections` (aucune équivalente n'existe), RLS : insertion publique limitée anti-spam, lecture réservée aux admins, validation serveur.
 
-### 5. Après le paiement — Alex, une question à la fois
-Le succès ne renvoie pas vers un tableau de bord générique : il enchaîne sur `activation-goals` (déjà en place). Alex demande, une par une : services, territoire, projet idéal, capacité, objectifs, croissance visée, exclusivité. Ensuite seulement, un plan personnalisé unique est recommandé via le moteur de plans existant. Tout ce que UNPRO sait déjà est préchargé : le contractant confirme ou corrige.
+## Étape 3 — SEO et données structurées
 
-### 6. Second contact segmenté (seulement après la preuve Stripe)
-- **Segment A** — les prospects ayant cliqué et vu la landing sans payer (22 identifiés) : message personnalisé « votre aperçu IA est prêt », lien personnalisé, 1 $ sans engagement.
-- **Segment B** — livrés sans clic : variante différente, jamais le message identique.
-- Passage obligatoire par les portes CASL, opt-out/STOP, suppression, garde anti-doublon 24 h et exclusion des contractants déjà payants/activés.
+Canonical, Open Graph, Twitter Card, breadcrumb, H1 unique, liens internes (pavage, asphalte, Laval, Montréal, vérification d'entrepreneur). JSON-LD limité à `HomeAndConstructionBusiness` (localisation Laval, QC, CA — sans adresse civique), `Service`, `areaServed`, `FAQPage`, `BreadcrumbList`. Pas d'`AggregateRating`, pas de `Review`, pas d'horaires, pas de RBQ.
 
-### 7. Visibilité CRM
-Dans le CRM existant, afficher l'état par prospect : Envoyé → Livré → Cliqué → Landing → CTA → Checkout → Payé → Activé, plus un filtre **« Prospects chauds — cliqué, non activé »** qui devient la file de relance manuelle/affilié si l'automatisation échoue.
+## Étape 4 — Sécurité, analytique, QA
 
-## Détails techniques
-- Fichiers touchés : `src/pages/activation/PageUnproActivate.tsx` et `src/features/activationProfile/*` (landing V2), `supabase/functions/create-activation-checkout/index.ts` (paiement unique forcé + logs), `supabase/functions/stripe-unpro-webhook/index.ts` (audit), `second-touch-outreach` (segments), vues CRM/`/admin/conversion-lab` existantes.
-- Aucune nouvelle table sauf besoin d'attribution ; réutilisation de `pipeline_engagement_events`, `billing_checkout_sessions`, `verified_prospect_tokens`.
-- QA mobile obligatoire : chargement rapide, nom visible immédiatement, CTA sans scroll, aucun contraste cassé, retour de Stripe fonctionnel, onboarding Alex opérationnel.
+- RLS : lecture publique du profil publié uniquement ; aucune écriture publique sur `contractors` ; corrections en attente jusqu'à validation admin ; journalisation des changements de statut.
+- Événements analytiques réutilisant le système existant : `contractor_profile_viewed`, `compatibility_started/completed`, `appointment_requested`, `phone_clicked`, `website_clicked`, `claim_started`, `claim_payment_started/succeeded/failed`, `correction_submitted`, tous avec `source = pavage-alpha-profile`.
+- QA mobile et desktop réels (Playwright 390 px et 1280 px) : pas de débordement horizontal, téléphone cliquable, FAQ utilisable, Alex lisible au-dessus du clavier, CTA fixe qui ne masque rien, aucun bloc sombre illisible, aucun faux badge.
 
-## Critères de fin (résultats factuels, pas « implémenté »)
-- Landing V2 en ligne : oui/non
-- Nombre de prospects cliqué-non-payé identifiés
-- Stripe LIVE vérifié : oui/non
-- Transaction 1 $ réelle de bout en bout vérifiée : oui/non
-- Second contact : éligibles / envoyés / livrés / cliqués / CTA / checkout / payés / activés
-- Si payé reste à zéro : le blocage exact, avec preuve
+## Livrable final
+
+Rapport factuel : URL en ligne, données insérées et leur provenance, statut réel du parcours de réclamation (jusqu'où le 1 $ Stripe live va réellement), résultats des tests mobile/desktop, et blocage précis s'il en reste un.
