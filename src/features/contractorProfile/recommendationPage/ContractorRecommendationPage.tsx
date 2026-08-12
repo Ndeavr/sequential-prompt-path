@@ -149,13 +149,13 @@ export default function ContractorRecommendationPage() {
         <MediaGallery items={gallery} businessName={c.business_name} />
         <ServiceAreaMap
           areas={c.service_areas ?? []}
-          radiusKm={c.travel_radius_km ?? 15}
+          radiusKm={c.travel_radius_km ?? null}
           primaryCity={c.city}
         />
         <StructuredServices services={c.services_structured ?? []} />
         <VerificationsByProfession categorySlug={c.specialty} contractor={c} />
         <CompatibilityCard fits={compatibility.fits} not_fits={compatibility.not_fits} />
-        <AvailabilityCard key_={c.availability_estimate ?? "cette_semaine"} />
+        {c.availability_estimate ? <AvailabilityCard key_={c.availability_estimate} /> : null}
         <SmartFAQ contractor={c} />
         <ProjectsShowcase projects={projects} businessName={c.business_name} />
         <AboutContractor contractor={c} />
