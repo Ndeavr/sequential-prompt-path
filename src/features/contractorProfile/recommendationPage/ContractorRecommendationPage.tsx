@@ -24,6 +24,10 @@ import ProjectsShowcase from "./sections/ProjectsShowcase";
 import AboutContractor from "./sections/AboutContractor";
 import FinalCTA from "./sections/FinalCTA";
 import AIReferenceBlock from "./sections/AIReferenceBlock";
+import DataProvenance from "./sections/DataProvenance";
+import CorrectionRequestCard from "./sections/CorrectionRequestCard";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 export default function ContractorRecommendationPage() {
   const { slug, city } = useParams<{ slug: string; city?: string }>();
@@ -50,7 +54,7 @@ export default function ContractorRecommendationPage() {
 
   if (!data) return <NotFound />;
 
-  const { contractor: c, projects, aiReference, compatibility } = data;
+  const { contractor: c, projects, aiReference, compatibility, publicSources } = data;
   const cityName = city || c.city || c.service_areas?.[0] || "Québec";
 
   const title = `${c.business_name}${c.specialty ? ` — ${c.specialty}` : ""} à ${cityName} | Recommandation UNPRO`;
@@ -155,6 +159,27 @@ export default function ContractorRecommendationPage() {
         <SmartFAQ contractor={c} />
         <ProjectsShowcase projects={projects} businessName={c.business_name} />
         <AboutContractor contractor={c} />
+        <DataProvenance contractor={c} sources={publicSources} />
+        <CorrectionRequestCard
+          contractorId={c.id}
+          contractorSlug={c.slug ?? slug!}
+          businessName={c.business_name}
+        />
+        {!c.admin_verified && (
+          <section className="rounded-2xl border border-primary/30 bg-primary/5 p-5 space-y-3">
+            <h2 className="text-lg font-semibold text-foreground">
+              Vous êtes {c.business_name} ?
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Réclamez ce profil pour 1 $, corrigez vos informations et activez vos rendez-vous.
+            </p>
+            <Button asChild className="w-full sm:w-auto">
+              <Link to={`/entrepreneur/${c.slug ?? slug}/reclamer`}>
+                Réclamer mon profil — 1 $
+              </Link>
+            </Button>
+          </section>
+        )}
         <FinalCTA contractorId={c.id} businessName={c.business_name} />
       </article>
     </MainLayout>
