@@ -1,0 +1,9 @@
+CREATE UNIQUE INDEX IF NOT EXISTS conversion_variant_assignments_prospect_surface_key
+  ON public.conversion_variant_assignments (prospect_id, surface);
+
+ALTER TABLE public.conversion_variant_assignments
+  DROP CONSTRAINT IF EXISTS conversion_variant_assignments_prospect_surface_uniq;
+
+ALTER TABLE public.conversion_variant_assignments
+  ADD CONSTRAINT conversion_variant_assignments_prospect_surface_uniq
+  UNIQUE USING INDEX conversion_variant_assignments_prospect_surface_key;

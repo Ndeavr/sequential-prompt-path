@@ -207,6 +207,7 @@ const PageActivationStart = lazyWithRetry(() => import("@/pages/checkout/PageAct
 const SolicitationActivationPage = lazyWithRetry(() => import("@/pages/SolicitationActivationPage"));
 const PageShortLinkRedirect = lazyWithRetry(() => import("@/pages/invitation/PageShortLinkRedirect"));
 const PageUnproActivate = lazyWithRetry(() => import("@/pages/activation/PageUnproActivate"));
+const PageAdminConversionLab = lazyWithRetry(() => import("@/pages/admin/PageAdminConversionLab"));
 const PageInvitationLanding = lazyWithRetry(() => import("@/pages/invitation/PageInvitationLanding"));
 const PageInvitationEdit = lazyWithRetry(() => import("@/pages/invitation/PageInvitationEdit"));
 const PageInvitationActivate = lazyWithRetry(() => import("@/pages/invitation/PageInvitationActivate"));
@@ -1100,7 +1101,8 @@ export const AppRouter = () => (
         <Route path="/admin/funnel-audit" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><AdminFunnelAudit /></Suspense></UniversalRouteGuard>} />
         <Route path="/admin/funnel-debug" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><AdminFunnelDebug /></Suspense></UniversalRouteGuard>} />
         <Route path="/admin/conversion-truth" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><AdminConversionTruth /></Suspense></UniversalRouteGuard>} />
-        
+        <Route path="/admin/conversion-lab" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageAdminConversionLab /></Suspense></UniversalRouteGuard>} />
+
         <Route path="/book/:slug" element={<PublicBookingPage />} />
         <Route path="/book/:slug/:typeSlug" element={<PublicBookingPage />} />
         <Route path="/book/success" element={<BookingPaymentSuccess />} />

@@ -1,28 +1,32 @@
 /**
  * /unpro/activate/:token — Page d'activation reçue par SMS/courriel.
+ *
  * Route publique (aucun garde d'authentification). Résout le jeton d'outreach,
- * affiche l'entreprise réelle, puis lance le paiement d'activation de 1 $.
+ * affiche le PROFIL D'ENTREPRISE DÉJÀ CONSTRUIT par UNPRO (identité, spécialité,
+ * territoire, licence, avis réels, score de recommandation) puis lance le
+ * paiement d'activation de 1 $.
+ *
+ * Règle absolue : aucune donnée inventée. Chaque fait porte sa provenance
+ * (Vérifié / Déclaré / Déduit) et les sections vides ne sont pas rendues.
  */
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Loader2, ShieldCheck, Sparkles, ArrowRight, Check } from "lucide-react";
+import { Loader2, ShieldCheck, ArrowRight, Check, Globe, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
 import { Button } from "@/components/ui/button";
-
-interface ResolvedProspect {
-  id: string;
-  business_name: string | null;
-  city: string | null;
-  category: string | null;
-  email: string | null;
-}
+import CompanyIdentityHeader from "@/features/activationProfile/components/CompanyIdentityHeader";
+import FactGrid from "@/features/activationProfile/components/FactGrid";
+import ReviewSignalCard from "@/features/activationProfile/components/ReviewSignalCard";
+import ReadinessMeter from "@/features/activationProfile/components/ReadinessMeter";
+import { useActivationTracking } from "@/features/activationProfile/useActivationTracking";
+import type { ActivationProfile, ResolvedProspect } from "@/features/activationProfile/types";
 
 const BENEFITS = [
-  "Profil optimisé pour les IA et les propriétaires",
-  "Recommandations dans votre territoire",
-  "Tableau de bord et suivi des demandes",
+  "Votre profil publié et optimisé pour les IA et les propriétaires",
+  "Recommandations dans votre territoire, sans course aux soumissions",
+  "Rendez-vous exclusifs, jamais partagés avec 3 concurrents",
   "Aucun renouvellement automatique",
 ];
 
@@ -30,9 +34,14 @@ export default function PageUnproActivate() {
   const { token } = useParams<{ token: string }>();
   const [state, setState] = useState<"loading" | "ready" | "invalid" | "error">("loading");
   const [prospect, setProspect] = useState<ResolvedProspect | null>(null);
+  const [profile, setProfile] = useState<ActivationProfile | null>(null);
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
   const [reason, setReason] = useState<string | null>(null);
+  const [correctionSent, setCorrectionSent] = useState(false);
+  const engagedRef = useRef(false);
+
+  const track = useActivationTracking(token);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,6 +72,7 @@ export default function PageUnproActivate() {
           return;
         }
         setProspect(data.prospect as ResolvedProspect);
+        setProfile((data.profile as ActivationProfile) ?? null);
         setState("ready");
       } catch (e) {
         if (!cancelled) {
@@ -78,19 +88,35 @@ export default function PageUnproActivate() {
     };
   }, [token]);
 
+  // landing_engaged: le prospect a réellement consulté son profil (scroll ou 6 s).
+  useEffect(() => {
+    if (state !== "ready") return;
+    const markEngaged = () => {
+      if (engagedRef.current) return;
+      engagedRef.current = true;
+      track("landing_engaged", { readiness: profile?.readiness.score ?? null });
+    };
+    const onScroll = () => {
+      if (window.scrollY > 120) markEngaged();
+    };
+    const timer = window.setTimeout(markEngaged, 6000);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, [state, track, profile]);
 
-  function track(event: "checkout_cta_clicked" | "checkout_cta_failed") {
-    // Fire-and-forget: instrumentation must never delay or block the payment.
-    void supabase.functions
-      .invoke("activation-token-resolve", { body: { token, event } })
-      .catch(() => undefined);
-  }
+  const handleCorrect = useCallback(() => {
+    track("correction_requested", { readiness: profile?.readiness.score ?? null });
+    setCorrectionSent(true);
+  }, [track, profile]);
 
-  async function handleActivate() {
+  async function handleActivate(placement: string) {
     if (!prospect) return;
     setPaying(true);
     setPayError(null);
-    track("checkout_cta_clicked");
+    track("checkout_cta_clicked", { placement });
     try {
       const { data, error } = await supabase.functions.invoke("create-activation-checkout", {
         body: {
@@ -100,28 +126,29 @@ export default function PageUnproActivate() {
         },
       });
       if (error || !data?.url) {
-        track("checkout_cta_failed");
+        track("checkout_cta_failed", { placement });
         setPayError("Paiement indisponible pour l'instant. Réessayez dans quelques secondes.");
         return;
       }
       redirectToCheckout(data.url as string);
     } catch {
-      track("checkout_cta_failed");
+      track("checkout_cta_failed", { placement });
       setPayError("Paiement indisponible pour l'instant. Réessayez dans quelques secondes.");
     } finally {
       setPaying(false);
     }
   }
 
-
-  const company = prospect?.business_name?.trim() || "votre entreprise";
-  const cityLine = prospect?.city ? ` · ${prospect.city}` : "";
+  const company = profile?.display_name ?? prospect?.business_name?.trim() ?? "votre entreprise";
 
   return (
-    <div className="alex-immersive min-h-screen bg-[#050816] px-5 py-10 text-readable">
+    <div className="alex-immersive min-h-screen bg-[#050816] px-5 pb-28 pt-10 text-readable sm:pb-14">
       <Helmet>
-        <title>Activer votre profil UNPRO — 1 $</title>
-        <meta name="description" content="Activez le profil UNPRO de votre entreprise pour 1 $ et devenez visible auprès des propriétaires et des IA." />
+        <title>{`${company} — Activer votre profil UNPRO`}</title>
+        <meta
+          name="description"
+          content="Activez le profil UNPRO de votre entreprise pour 1 $ et devenez visible auprès des propriétaires et des IA."
+        />
         <meta name="robots" content="noindex,nofollow" />
       </Helmet>
 
@@ -129,7 +156,7 @@ export default function PageUnproActivate() {
         {state === "loading" && (
           <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-10 text-center backdrop-blur">
             <Loader2 className="mx-auto mb-5 h-9 w-9 animate-spin text-sky-400" />
-            <p className="text-white/70 text-sm">Préparation de votre profil…</p>
+            <p className="text-sm text-white/70">Préparation de votre profil…</p>
           </div>
         )}
 
@@ -137,7 +164,8 @@ export default function PageUnproActivate() {
           <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center backdrop-blur">
             <h1 className="mb-3 text-2xl font-semibold text-white">Ce lien d'activation n'est plus valide</h1>
             <p className="mb-6 text-sm text-white/70">
-              Le lien a peut-être été tronqué par votre application de messagerie. Vous pouvez activer votre profil directement.
+              Le lien a peut-être été tronqué par votre application de messagerie. Vous pouvez activer votre
+              profil directement.
             </p>
             <Link
               to="/pro/activate"
@@ -153,9 +181,13 @@ export default function PageUnproActivate() {
           <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center backdrop-blur">
             <h1 className="mb-3 text-2xl font-semibold text-white">Un instant</h1>
             <p className="mb-6 text-sm text-white/70">
-              Nous n'arrivons pas à charger votre profil pour le moment. Rafraîchissez la page dans quelques secondes.
+              Nous n'arrivons pas à charger votre profil pour le moment. Rafraîchissez la page dans quelques
+              secondes.
             </p>
-            <Button onClick={() => window.location.reload()} className="rounded-2xl bg-white text-[#050816] hover:bg-white/90">
+            <Button
+              onClick={() => window.location.reload()}
+              className="rounded-2xl bg-white text-[#050816] hover:bg-white/90"
+            >
               Réessayer
             </Button>
             {reason && <p className="mt-4 text-[11px] text-white/40">Réf. : {reason}</p>}
@@ -163,56 +195,105 @@ export default function PageUnproActivate() {
         )}
 
         {state === "ready" && prospect && (
-          <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-7 backdrop-blur">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[10px] uppercase tracking-wider text-white/80">
-              <Sparkles className="h-3 w-3" /> Offre d'activation
+          <div className="space-y-4">
+            {/* ---------------------------------------------- profil pré-construit */}
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur">
+              <div className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-400/12 px-2.5 py-1 text-[10px] uppercase tracking-wider text-emerald-200">
+                <Building2 className="h-3 w-3" /> Profil déjà préparé par UNPRO
+              </div>
+
+              {profile ? (
+                <CompanyIdentityHeader profile={profile} />
+              ) : (
+                <h1 className="text-3xl font-semibold leading-tight text-white">{company}</h1>
+              )}
+
+              <p className="mt-4 text-[15px] leading-relaxed text-white/80">
+                Nous avons construit votre fiche à partir de sources publiques. Vérifiez-la, puis activez-la
+                pour être recommandé aux propriétaires de votre territoire.
+              </p>
+
+              {profile?.website_host && (
+                <a
+                  href={profile.website_url ?? undefined}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  onClick={() => track("profile_section_expanded", { section: "website" })}
+                  className="mt-3 inline-flex items-center gap-1.5 text-[13px] text-sky-300 underline underline-offset-4"
+                >
+                  <Globe className="h-3.5 w-3.5" /> {profile.website_host}
+                </a>
+              )}
             </div>
 
-            <h1 className="mt-3 text-3xl font-semibold leading-tight text-white">
-              {company}
-            </h1>
-            <p className="mt-1 text-sm text-white/60">
-              Profil préparé par UNPRO{cityLine}
-            </p>
+            {profile && <ReviewSignalCard profile={profile} />}
+            {profile && <FactGrid facts={profile.facts} />}
+            {profile && <ReadinessMeter profile={profile} onCorrect={handleCorrect} />}
 
-            <p className="mt-5 text-[15px] leading-relaxed text-white/80">
-              Activez votre visibilité auprès des propriétaires et des IA pendant 7 jours.
-              Paiement unique de 1 $, sans engagement.
-            </p>
+            {correctionSent && (
+              <div className="rounded-2xl border border-sky-300/25 bg-sky-400/10 p-4 text-[13px] leading-relaxed text-sky-100">
+                Parfait. Dès l'activation, Alex vous guide pour corriger et compléter chaque information en
+                quelques secondes.
+              </div>
+            )}
 
-            <ul className="mt-5 space-y-2">
-              {BENEFITS.map((b) => (
-                <li key={b} className="flex items-start gap-2 text-[14px] text-white/85">
-                  <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-400/20">
-                    <Check className="h-2.5 w-2.5 text-emerald-300" />
-                  </span>
-                  {b}
-                </li>
-              ))}
-            </ul>
+            {/* -------------------------------------------------------- offre 1 $ */}
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur">
+              <h2 className="text-sm font-semibold text-white">Activer ce profil</h2>
 
-            <div className="mt-6 flex items-baseline gap-2">
-              <span className="text-4xl font-bold tracking-tight text-white">1 $</span>
-              <span className="text-sm text-white/60">pour 7 jours</span>
+              <ul className="mt-3 space-y-2">
+                {BENEFITS.map((b) => (
+                  <li key={b} className="flex items-start gap-2 text-[14px] leading-snug text-white/85">
+                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-400/20">
+                      <Check className="h-2.5 w-2.5 text-emerald-300" />
+                    </span>
+                    {b}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-5 flex items-baseline gap-2">
+                <span className="text-4xl font-bold tracking-tight text-white">1 $</span>
+                <span className="text-sm text-white/60">pour 7 jours</span>
+              </div>
+
+              <Button
+                onClick={() => handleActivate("inline")}
+                disabled={paying}
+                className="mt-4 h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#050816] hover:bg-white/90"
+              >
+                {paying ? (
+                  "Préparation du paiement…"
+                ) : (
+                  <>
+                    Activer mon profil — 1 $ <ArrowRight className="ml-1 h-4 w-4" />
+                  </>
+                )}
+              </Button>
+
+              {payError && <p className="mt-3 text-xs text-rose-300">{payError}</p>}
+
+              <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-white/50">
+                <ShieldCheck className="h-3 w-3" />
+                Paiement sécurisé Stripe · Aucun renouvellement automatique
+              </p>
             </div>
-
-            <Button
-              onClick={handleActivate}
-              disabled={paying}
-              className="mt-4 h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#050816] hover:bg-white/90"
-            >
-              {paying ? "Préparation du paiement…" : (<>Activer mon profil — 1 $ <ArrowRight className="ml-1 h-4 w-4" /></>)}
-            </Button>
-
-            {payError && <p className="mt-3 text-xs text-rose-300">{payError}</p>}
-
-            <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-white/50">
-              <ShieldCheck className="h-3 w-3" />
-              Paiement sécurisé Stripe · Aucun renouvellement automatique
-            </p>
           </div>
         )}
       </div>
+
+      {/* CTA collant mobile : la décision reste toujours à un pouce. */}
+      {state === "ready" && prospect && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#050816]/95 px-5 py-3 backdrop-blur sm:hidden">
+          <Button
+            onClick={() => handleActivate("sticky_mobile")}
+            disabled={paying}
+            className="h-13 w-full rounded-2xl bg-white py-3.5 text-base font-semibold text-[#050816] hover:bg-white/90"
+          >
+            {paying ? "Préparation…" : "Activer mon profil — 1 $"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
