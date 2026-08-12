@@ -53,7 +53,7 @@ export function buildAIReference(c: BuildInput): AIReferencePayload {
   if (c.services_structured?.length) reasoning.push("Services clairement définis");
   if (c.service_areas?.length) reasoning.push("Zone desservie cohérente");
   if (insuranceVerified) reasoning.push("Assurance responsabilité confirmée");
-  if (c.phone) reasoning.push("Coordonnées vérifiées");
+  if (c.phone) reasoning.push("Coordonnées publiques disponibles");
 
   const compatibilityScore = Math.min(
     100,
