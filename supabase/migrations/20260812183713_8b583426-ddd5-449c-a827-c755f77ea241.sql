@@ -1,0 +1,1 @@
+DELETE FROM public.contractor_profile_corrections WHERE reporter_name = 'QA Bot';
