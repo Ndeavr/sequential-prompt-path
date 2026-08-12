@@ -1197,6 +1197,7 @@ export type Database = {
           created_at: string
           event_type: string
           id: string
+          idempotency_key: string | null
           metadata: Json
           occurred_at: string
           profile_id: string | null
@@ -1213,6 +1214,7 @@ export type Database = {
           created_at?: string
           event_type: string
           id?: string
+          idempotency_key?: string | null
           metadata?: Json
           occurred_at?: string
           profile_id?: string | null
@@ -1229,6 +1231,7 @@ export type Database = {
           created_at?: string
           event_type?: string
           id?: string
+          idempotency_key?: string | null
           metadata?: Json
           occurred_at?: string
           profile_id?: string | null
@@ -25381,6 +25384,81 @@ export type Database = {
         }
         Relationships: []
       }
+      contractor_activation_goals: {
+        Row: {
+          accepted_at: string | null
+          accepted_plan_code: string | null
+          activation_token: string | null
+          answers: Json
+          completed_at: string | null
+          contractor_id: string | null
+          created_at: string
+          current_step: number
+          desired_project_types: string[] | null
+          exclusions: string[] | null
+          exclusivity_preference: string | null
+          growth_objective: string | null
+          id: string
+          ideal_project_value_cad: number | null
+          monthly_appointment_goal: number | null
+          prospect_id: string | null
+          recommended_plan_code: string | null
+          recommended_plan_reason: string | null
+          territories: string[] | null
+          updated_at: string
+          urgency: string | null
+          user_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_plan_code?: string | null
+          activation_token?: string | null
+          answers?: Json
+          completed_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          current_step?: number
+          desired_project_types?: string[] | null
+          exclusions?: string[] | null
+          exclusivity_preference?: string | null
+          growth_objective?: string | null
+          id?: string
+          ideal_project_value_cad?: number | null
+          monthly_appointment_goal?: number | null
+          prospect_id?: string | null
+          recommended_plan_code?: string | null
+          recommended_plan_reason?: string | null
+          territories?: string[] | null
+          updated_at?: string
+          urgency?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_plan_code?: string | null
+          activation_token?: string | null
+          answers?: Json
+          completed_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          current_step?: number
+          desired_project_types?: string[] | null
+          exclusions?: string[] | null
+          exclusivity_preference?: string | null
+          growth_objective?: string | null
+          id?: string
+          ideal_project_value_cad?: number | null
+          monthly_appointment_goal?: number | null
+          prospect_id?: string | null
+          recommended_plan_code?: string | null
+          recommended_plan_reason?: string | null
+          territories?: string[] | null
+          updated_at?: string
+          urgency?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       contractor_activation_ledger: {
         Row: {
           action: string
@@ -35666,6 +35744,48 @@ export type Database = {
           },
         ]
       }
+      contractor_profile_completion: {
+        Row: {
+          completion_score: number
+          contractor_id: string | null
+          created_at: string
+          id: string
+          items: Json
+          last_confirmed_at: string | null
+          missing_keys: string[] | null
+          prospect_id: string | null
+          recommendation_ready: boolean
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          completion_score?: number
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          items?: Json
+          last_confirmed_at?: string | null
+          missing_keys?: string[] | null
+          prospect_id?: string | null
+          recommendation_ready?: boolean
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          completion_score?: number
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          items?: Json
+          last_confirmed_at?: string | null
+          missing_keys?: string[] | null
+          prospect_id?: string | null
+          recommendation_ready?: boolean
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       contractor_profile_content: {
         Row: {
           company_description_en: string | null
@@ -41725,6 +41845,36 @@ export type Database = {
           id?: string
           session_id?: string
           value?: string | null
+        }
+        Relationships: []
+      }
+      conversion_variant_assignments: {
+        Row: {
+          assigned_at: string
+          cohort_city: string | null
+          cohort_trade: string | null
+          id: string
+          prospect_id: string
+          surface: string
+          variant: string
+        }
+        Insert: {
+          assigned_at?: string
+          cohort_city?: string | null
+          cohort_trade?: string | null
+          id?: string
+          prospect_id: string
+          surface: string
+          variant: string
+        }
+        Update: {
+          assigned_at?: string
+          cohort_city?: string | null
+          cohort_trade?: string | null
+          id?: string
+          prospect_id?: string
+          surface?: string
+          variant?: string
         }
         Relationships: []
       }
@@ -90134,6 +90284,16 @@ export type Database = {
         }
         Relationships: []
       }
+      v_activation_bottleneck: {
+        Row: {
+          from_count: number | null
+          rate_pct: number | null
+          step_order: number | null
+          to_count: number | null
+          transition: string | null
+        }
+        Relationships: []
+      }
       v_activation_funnel: {
         Row: {
           checkouts_opened: number | null
@@ -91037,6 +91197,28 @@ export type Database = {
           verified_credentials_count: number | null
           visibility_score: number | null
           years_experience: number | null
+        }
+        Relationships: []
+      }
+      v_conversion_lab: {
+        Row: {
+          checkout_created: number | null
+          city: string | null
+          clicked: number | null
+          cohort_size: number | null
+          cta_clicked: number | null
+          delivered: number | null
+          goals_completed: number | null
+          landing_engaged: number | null
+          landing_variant: string | null
+          landing_viewed: number | null
+          message_variant: string | null
+          paid: number | null
+          plan_accepted: number | null
+          profile_variant: string | null
+          profile_viewed: number | null
+          sent: number | null
+          trade: string | null
         }
         Relationships: []
       }
