@@ -196,9 +196,11 @@ Deno.serve(async (req) => {
       push({ key: "legal_name", label: "Dénomination légale", value: legal, provenance: "verified", source: "Registre" });
     }
 
-    const trade = prospect.category?.trim() || extra?.trade?.trim() || null;
+    const rawTrade = prospect.category?.trim() || extra?.trade?.trim() || null;
+    // Les catégories brutes sont en minuscules ; on les présente proprement.
+    const trade = rawTrade ? titleCase(rawTrade.replace(/[_-]+/g, " ")) : null;
     if (trade) {
-      push({ key: "trade", label: "Spécialité", value: titleCase(trade), provenance: "verified", source: "Fiche publique" });
+      push({ key: "trade", label: "Spécialité", value: trade, provenance: "verified", source: "Fiche publique" });
     }
 
     if (prospect.city) {
