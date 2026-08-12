@@ -1,73 +1,101 @@
-# CRM — Liste « À contacter manuellement »
+# UNPRO — Boucle autonome de conversion vers le premier 1 $
 
-Objectif : pouvoir aujourd'hui sélectionner les meilleurs prospects réels, les appeler nous-mêmes ou les déléguer à un affilié, et fermer le premier 1 $. Extension minimale de la console CRM existante — aucun CRM parallèle.
+Correction de stratégie : l'acquisition primaire est **automatique** (courriel/SMS conformes → landing personnalisée → profil d'entreprise prêbâti → 1 $ → objectifs Alex → plan personnalisé → profil complété). La file « À contacter manuellement » devient la **couche de récupération**, activée seulement après que l'automatisation a eu sa chance, et priorisée par signaux d'intention.
 
-## 1. Ce qui existe déjà et sera réutilisé
+Nord : produire de vrais paiements de 1 $ automatiquement, puis utiliser l'humain pour récupérer les meilleurs non-convertis.
 
-- `v_crm_prospects` / `v_crm_next_action` : source unique par prospect (entreprise, ville, catégorie, téléphone E164, courriel, site, RBQ, GBP, étape funnel, score de priorité, santé, probabilité d'activation, valeur estimée, `next_best_action`, `blocked_reason`, `opted_out`, historique SMS/courriel, clics, paiement).
-- `verified_contractor_prospects` : table de vérité des prospects qualifiés (statut d'outreach, éligibilité téléphone/CASL).
-- `crm_action_log` (audit idempotent), `crm_prospect_notes`, `crm_prospect_tags`.
-- Edge function `crm-recovery-action` : dispatcher unique déjà branché sur les envois existants (retry_sms, second_sms, send_email, payment_email, resume_checkout / new_checkout, schedule_followup, pause, archive, tag, note) avec garde d'idempotence et respect des opt-out.
-- `affiliates` (quotas, territoires, catégories permises, compteurs de performance), `affiliate_assignments` (affiliate_id, prospect_id, status, priority, assigned_at, last_activity_at, won_at, lost_reason, recommended_plan_slug) avec RLS déjà correcte : admin = tout, affilié = `is_affiliate_owner(affiliate_id)` en lecture/écriture de ses lignes uniquement.
-- `affiliate_activation_links` (attribution d'activation par affilié) et `affiliate_commissions` / `affiliate_conversions` pour la commission future.
-- UI : `/admin/crm` (`PageAdminCRM` + `CrmProspectDrawer` + `useCrmOperations`), `/admin/affiliates/assign`, `/affiliate` (War Room).
-- Automatisation existante (`crm-automation-tick`, `send-verified-batch`, garde 24 h anti-doublon) : inchangée.
+## 1. Audit d'état actuel (à faire AVANT tout changement)
 
-## 2. Changements de schéma (minimum strict)
+Aucune hypothèse. Chaque affirmation doit venir d'une requête ou d'une lecture.
 
-Une seule migration, aucune table CRM nouvelle en double :
+- Cartographier les événements réellement écrits aujourd'hui : `acquisition_events`, `sms_logs`/`acq_sms_logs`, logs courriel, `billing_checkout_sessions`, `v_activation_funnel`, `v_prospect_funnel`, `v_campaign_funnel`, `crm_action_log`.
+- Mesurer les taux réels par transition sur les 30 derniers jours et par cohorte (métier × ville × canal × variante) : envoyé → livré → cliqué → landing vue → profil vu → CTA 1 $ → session Stripe → payé → objectifs complétés → profil ≥ 70 % → plan accepté.
+- Identifier la **première transition nulle ou faible** ; c'est la seule à corriger en premier.
+- Auditer le rendu du profil d'entreprise (`/pro/:slug`, `PageProLandingNuclearClose`, `src/features/contractorProfile/*`) : desktop, mobile, données incomplètes, erreurs console, temps de rendu, champs vides visibles.
+- Vérifier la couverture des données par source (VÉRIFIÉ / DÉCLARÉ / INFÉRÉ) : logo, identité, catégories, territoires, années, RBQ/NEQ, site, signaux Google Business, note et nombre d'avis, photos.
 
-1. `affiliate_assignments` — colonnes ajoutées :
-   - `owner_user_id uuid` (assignation à un admin/soi-même ; `affiliate_id` devient nullable)
-   - `queue text default 'manual_contact'`
-   - `next_action text`, `due_at timestamptz`, `attempts int default 0`
-   - `last_outcome text`, `last_outcome_at timestamptz`, `objection text`
-   - Index unique partiel : un seul assignement actif par prospect
-     `unique (prospect_id) where status in ('assigned','in_progress')` → empêche la double assignation simultanée.
-   - Contrainte : `affiliate_id is not null or owner_user_id is not null`.
-2. Nouvelle table `crm_contact_outcomes` (journal d'appel structuré, une ligne par tentative) : `assignment_id`, `prospect_id`, `actor_id`, `channel` (call/sms/email/other), `outcome` (enum textuel ci-dessous), `objection`, `note`, `next_action`, `due_at`, `created_at`. GRANT authenticated/service_role ; RLS : admin tout, affilié uniquement sur ses assignements.
-   - Outcomes : `interested`, `follow_up`, `not_now`, `no_value_understanding`, `no_trust`, `price_objection`, `wants_guaranteed_appointments`, `buys_leads_elsewhere`, `checkout_issue`, `activated`, `not_interested`, `invalid_contact`.
-   - Terminaux : `activated`, `not_interested`, `invalid_contact` → clôturent l'assignement. Tous les autres exigent `next_action` + `due_at` (contrainte CHECK) → exactement une prochaine action par prospect non terminal.
-3. Vue `v_manual_contact_queue` : jointure `v_crm_next_action` × `affiliate_assignments` (actif) × dernier outcome + éligibilité CASL/contact et liens calculés (profil `/pro/:slug`, activation `/unpro/activate/:token` si un token existe déjà). Aucun envoi déclenché par la vue.
-4. Vue `v_affiliate_workload` : par affilié — assignés, en cours, en retard (`due_at < now()`), contactés, activations, revenu attribué.
-5. RLS lecture affilié sur les prospects : fonction `security definer` `affiliate_can_see_prospect(uuid)` + politique de lecture sur `v_manual_contact_queue` exposée via une fonction RPC `manual_queue_for_me()` (l'affilié ne voit que ses lignes assignées ; aucune vue publique de tous les prospects).
+Livrable : rapport de goulot unique + tableau de couverture des données.
 
-## 3. Routes / composants / fonctions à modifier
+## 2. Taxonomie canonique du tunnel (source unique)
 
-- `/admin/crm` : nouvel onglet « À contacter manuellement » dans `PageAdminCRM` (pas de nouvelle page admin) :
-  - Table triée par score de priorité × valeur estimée, filtres (ville, métier, étape, éligibilité CASL, propriétaire, en retard, sans propriétaire), recherche.
-  - Sélection multiple → **Assigner à moi** / **Assigner à un affilié** (liste filtrée par territoire + catégories permises + quota restant).
-  - Colonnes demandées : entreprise, contact, téléphone, courriel, métier, ville, score, source, éligibilité CASL, dernier contact, étape, plan recommandé, lien profil, lien 1 $, propriétaire, prochaine action, échéance, tentatives, dernier résultat.
-  - Panneau « Charge & performance affiliés » (`v_affiliate_workload`) + bouton **Récupérer les prospects en retard**.
-- `CrmProspectDrawer` : bloc « Contact manuel » — boutons **APPELER** (`tel:`), **SMS**, **COURRIEL**, **OUVRIR PROFIL**, **ENVOYER LIEN 1 $** ; formulaire de résultat structuré (outcome, objection, note, prochaine action, échéance).
-- Nouveau composant partagé `ManualContactPanel` réutilisé par l'admin et l'affilié (aucune duplication).
-- `/affiliate` (War Room) : onglet « Mes prospects » alimenté par `manual_queue_for_me()`, mêmes actions, mêmes journaux.
-- Edge function : **extension** de `crm-recovery-action` avec les actions `assign`, `reassign`, `unassign`, `log_outcome`, `manual_sms`, `manual_email`, `send_activation_link`. Les envois passent par les chemins existants (mêmes gates CASL, opt-out, garde 24 h). Toute action écrit dans `crm_action_log` (`source: 'manual_admin' | 'manual_affiliate'`).
-- Notification d'assignation : réutilise l'infrastructure courriel sortante existante (un courriel à l'affilié à l'assignation, `source: 'assignment_notification'`).
-- Attribution : à l'activation 1 $, le webhook Stripe existant lie déjà le prospect ; on ajoute la copie de `affiliate_id` de l'assignement actif vers `affiliate_conversions` / `affiliate_commissions` (structures existantes) — aucune logique de paiement nouvelle.
+Un seul vocabulaire d'événements, écrit par toutes les fonctions Edge et le front :
 
-## 4. Migration / backfill
+`outreach_queued`, `outreach_sent`, `outreach_delivered`, `outreach_failed`, `link_clicked`, `landing_viewed`, `landing_engaged` (scroll ≥ 50 % ou ≥ 15 s), `profile_viewed`, `profile_section_expanded`, `correction_requested`, `cta_activate_clicked`, `checkout_created`, `checkout_abandoned`, `payment_succeeded`, `goals_started`, `goals_completed`, `plan_recommended`, `plan_accepted`, `profile_completion_updated`, `recommendation_eligible`.
 
-- Migration unique (colonnes + table outcomes + vues + RLS + GRANTs).
-- Backfill : aucun prospect fictif. Remplissage initial de la file par requête sur données réelles — prospects avec téléphone valide ou courriel, non opt-out, non payés, `priority_score` élevé (cliqué non payé, livré sans clic, courriel livré), limité aux 100 meilleurs, insérés comme `status='unassigned'` dans la file (assignement créé seulement au moment de l'assignation réelle).
-- Aucune modification des crons ni de `send-verified-batch`.
+Chaque événement porte : `prospect_id`, `contractor_id?`, `token`, `message_variant`, `landing_variant`, `profile_variant`, `trade`, `city`, `channel`, `ts`. Vue matérialisée de conversion par étape et par cohorte.
 
-## 5. Tests bout en bout
+## 3. Règles d'optimisation automatique (déterministes)
 
-1. Admin ouvre `/admin/crm` → onglet manuel affiche des prospects réels triés par priorité, avec éligibilité CASL correcte.
-2. Assignation à soi puis à un affilié → une seule ligne active ; tentative de double assignation refusée par l'index unique.
-3. Affilié se connecte → voit uniquement ses prospects ; tentative de lecture d'un prospect non assigné refusée par RLS.
-4. Appel → journalisation d'un outcome `follow_up` → prochaine action + échéance obligatoires ; tentatives incrémentées.
-5. Outcome terminal `not_interested` → assignement clos, prospect sort de la file.
-6. **Envoyer lien 1 $** → réutilise `create-activation-checkout`, produit un lien réel cliquable ; second clic le même jour → ignoré (idempotence), consigné.
-7. Prospect en retard → bouton admin de récupération réassigne et notifie.
-8. Régression : `crm-automation-tick` et la garde 24 h envoient exactement comme avant (vérification des logs avant/après).
+Le système corrige la première transition faible, une à la fois :
 
-## 6. Critères de complétion
+| Transition faible | Action automatique |
+|---|---|
+| livré → clic | tester variantes de MESSAGE (objet/accroche/preuve/CTA), dans les gardes CASL + anti-doublon 24 h |
+| clic → engagement/landing | tester variantes de LANDING (proposition de valeur, preuve, position de l'offre 1 $) |
+| landing → profil | P0 : corriger rendu/erreurs/lenteur du profil |
+| profil → checkout | renforcer CTA 1 $, confiance, garanties, rareté du territoire |
+| checkout → payé | diagnostiquer Stripe/auth/redirection/mobile |
+| payé → objectifs/profil | optimiser l'onboarding Alex (une question à la fois, valeur avant effort) |
 
-- File « À contacter manuellement » alimentée par de vraies données de production, triée par valeur.
-- Admin peut assigner/réassigner/récupérer ; affilié voit et travaille uniquement ses prospects.
-- Les cinq actions un clic fonctionnent et sont journalisées, sans contourner CASL/opt-out.
-- Chaque prospect non terminal a exactement une prochaine action et une échéance.
-- Zéro double assignation, zéro double envoi.
-- Attribution d'une activation 1 $ à l'affilié visible dans le tableau de charge.
+Garde-fous : aucune décision sous **n ≥ 200 livraisons ou 40 clics par variante**, maximum une variante changée par cohorte à la fois, journal de chaque changement.
+
+## 4. Profil d'entreprise — actif de conversion P0
+
+Il doit prouver qu'UNPRO comprend déjà l'entreprise.
+
+- Provenance affichée par champ : **Vérifié** (registre/RBQ/NEQ/Google), **Déclaré** (fourni par l'entrepreneur), **Inféré** (déduit — étiqueté clairement). Rien d'inventé.
+- Enrichissement à partir des sources existantes uniquement : logo, identité légale et commerciale, catégories de service, territoires, années d'activité, accréditations, site web, signaux Google Business, note et nombre d'avis, résumé IA du sentiment des avis **ancré sur des avis réels existants**, spécialités, statut de confiance/vérification, photos si légitimement disponibles, score de préparation à la recommandation + explication.
+- Dégradation élégante : aucun champ vide affiché ; blocs manquants deviennent des invitations à compléter, jamais des trous.
+- Bouton proéminent « Corriger / compléter » → flux d'appropriation qui améliore la qualité des données et enregistre `correction_requested`.
+- Responsive strict mobile d'abord, conforme aux règles de lisibilité existantes (scope thème sombre, WCAG AA).
+
+## 5. Après le 1 $ — Alex, une question à la fois
+
+Aucun tableau de bord générique. Alex qualifie séquentiellement :
+objectif de croissance → types de projets → valeur/budget de projet idéal → territoires/villes → capacité/rendez-vous souhaités → exclusions → urgence → préférence d'exclusivité.
+
+Chaque réponse met à jour la valeur affichée en temps réel (revenus potentiels, rendez-vous nécessaires, places restantes).
+
+## 6. Moteur de plan personnalisé
+
+Une seule recommandation par défaut, alternatives inspectables. Basé sur l'architecture existante 49 / 79 / 149 / 299 / 599 / 1499 $ plus : territoire, concurrence par catégorie, capacité déclarée, places restantes, score de visibilité. Réutiliser le moteur monotone canonique existant (`_shared/planRecommendation.ts`) — jamais de plan plus cher pour un score plus faible.
+
+## 7. Complétion de profil guidée
+
+Score et liste de contrôle après paiement : logo, description, services, territoires, accréditations, photos, confirmation du résumé d'avis, différenciateurs, critères de client/projet idéal. Les données existantes sont préremplies : l'entrepreneur **confirme ou corrige**, il ne repart pas de zéro. Le score débloque l'éligibilité à la recommandation.
+
+## 8. Modules de service inspirés du benchmark (phase ultérieure)
+
+Nous ne clonons pas Search Atlas. Modules de valeur à intégrer dans les plans : audit/optimisation de fiche Google, surveillance des avis + résumé et réponses IA, visibilité locale et cartes de chaleur, citations et cohérence des coordonnées, schéma/entités, audit technique et on-page du site, pages locales de contenu, visibilité dans les réponses IA/LLM. Différenciation préservée : marketplace de recommandation + rendez-vous exclusifs garantis + intelligence entrepreneur.
+
+## 9. Laboratoire de conversion (Admin)
+
+Nouvelle page `/admin/conversion-lab` sur données de production : lignes = variante message × variante landing × variante profil × cohorte (métier/ville) ; colonnes = livrés, cliqués, engagés, profil vu, checkout 1 $, payés, objectifs complétés, % complétion profil, plan accepté, activés, MRR. Tests A/B contrôlés avec taille d'échantillon minimale, arrêt manuel, historique des décisions.
+
+## 10. File manuelle — repositionnée en récupération
+
+Ordre d'éligibilité : cliqué/non payé → checkout/non payé → payé/objectifs incomplets → forte interaction profil/non payé → répondu/intéressé → livré/sans clic **après** la seconde relance automatique. Les affiliés ne reçoivent jamais de prospect neuf de haute qualité avant l'automatisation, sauf dérogation explicite d'un admin. Le reste de la mécanique déjà livrée (assignations, résultats structurés, actions en un clic) est conservé tel quel.
+
+## 11. Détails techniques
+
+- Migrations : table d'événements canoniques ou normalisation de `acquisition_events` + vues de conversion ; tables de variantes (`conversion_variants`, `conversion_assignments`) ; colonnes de provenance sur les champs de profil ; `profile_completion_score`.
+- Fonctions Edge modifiées : outreach (variante message), résolution de token (variante landing), profil (provenance + enrichissement), `create-activation-checkout` (événements), `stripe-webhook` (paid → goals), nouvelle `conversion-optimizer-tick` (détecte la transition faible, applique la règle, journalise).
+- Front : profil d'entreprise, flux Alex post-paiement, checklist de complétion, `/admin/conversion-lab`.
+- Intact : automatisations d'outreach canoniques, gardes CASL, opt-out, anti-doublon 24 h, journaux d'audit, idempotence.
+
+## 12. Tests
+
+- E2E production sur un vrai prospect : outreach → clic → landing → profil → 1 $ → objectifs → plan → complétion.
+- Rendu du profil : desktop, mobile, données minimales, données riches, données corrompues.
+- Non-régression : conformité CASL, opt-out, doublon 24 h, monotonicité des plans, RLS affilié.
+- Vérification que chaque transition émet exactement un événement (pas de double comptage).
+
+## 13. Critères de complétion (durs)
+
+1. Chaque transition du tunnel produit des événements réels et un taux de conversion mesuré.
+2. Le goulot actuel est identifié par données, pas par supposition, et corrigé.
+3. Le profil d'entreprise rend correctement sur mobile et desktop, même avec données partielles, avec provenance visible et chemin « Corriger / compléter ».
+4. Un paiement de 1 $ réel arrive via le chemin automatique, sans intervention humaine.
+5. Après paiement, Alex complète les objectifs et recommande exactement un plan cohérent.
+6. Le laboratoire de conversion affiche les données réelles par variante et cohorte.
+7. La file manuelle ne contient que des prospects ayant déjà reçu leur chance automatique.
