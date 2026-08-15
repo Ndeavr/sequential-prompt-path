@@ -26,49 +26,20 @@ const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+import { searchPlacesResilient } from "../_shared/placesGateway.ts";
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false },
 });
 
 // ─── Stage 1: Google Places search ────────────────────────────────────────────
 async function searchGooglePlaces(trade: string, city: string, limit: number) {
-  const query = `${trade} ${city} Québec`;
-  const fieldMask =
-    "places.id,places.displayName,places.formattedAddress,places.websiteUri,places.nationalPhoneNumber,places.rating,places.userRatingCount,places.types,places.businessStatus";
-
-  // Preferred: Lovable Google Maps Platform connector gateway
-  let url: string;
-  let headers: Record<string, string>;
-  if (LOVABLE_API_KEY && GOOGLE_MAPS_API_KEY) {
-    url = "https://connector-gateway.lovable.dev/google_maps/places/v1/places:searchText";
-    headers = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-      "X-Connection-Api-Key": GOOGLE_MAPS_API_KEY,
-      "X-Goog-FieldMask": fieldMask,
-    };
-  } else if (GOOGLE_PLACES_API_KEY) {
-    url = "https://places.googleapis.com/v1/places:searchText";
-    headers = {
-      "Content-Type": "application/json",
-      "X-Goog-Api-Key": GOOGLE_PLACES_API_KEY,
-      "X-Goog-FieldMask": fieldMask,
-    };
-  } else {
-    throw new Error("Google Places non configuré (connecteur Google Maps Platform ou GOOGLE_PLACES_API_KEY)");
-  }
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ textQuery: query, languageCode: "fr-CA", regionCode: "CA", maxResultCount: Math.min(limit, 20) }),
+  // COST INVARIANT (incident 2026-08): single billable discovery path.
+  const search = await searchPlacesResilient(supabase, {
+    trade, city, limit: Math.min(limit, 20), caller: "autopilot-mvp",
   });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Google Places ${res.status}: ${err.slice(0, 200)}`);
-  }
-  const data = await res.json();
-  return data.places ?? [];
+  if (!search.ok) throw new Error(`google_places_blocked:${search.error_code}: ${search.remediation}`);
+  return search.places;
 }
 
 // Insert a Google Place into outbound_companies, returns inserted record or null on dup/error

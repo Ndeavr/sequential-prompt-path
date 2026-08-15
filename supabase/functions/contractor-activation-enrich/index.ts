@@ -84,31 +84,12 @@ async function enrichContractor(
 ) {
   const importedData: Record<string, unknown> = {};
 
-  // 1. Google Places lookup (if GOOGLE_PLACES_API_KEY available)
-  const googleApiKey = Deno.env.get("GOOGLE_PLACES_SERVER_KEY") || Deno.env.get("GOOGLE_PLACES_API_KEY");
-  if (googleApiKey && businessName) {
-    try {
-      const query = encodeURIComponent(`${businessName} Quebec`);
-      const res = await fetch(
-        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&key=${googleApiKey}`
-      );
-      const data = await res.json();
-      if (data.results?.[0]) {
-        const place = data.results[0];
-        importedData.google_name = place.name;
-        importedData.google_address = place.formatted_address;
-        importedData.google_rating = place.rating;
-        importedData.google_reviews_count = place.user_ratings_total;
-        importedData.google_place_id = place.place_id;
-        importedData.google_categories = place.types;
-        if (place.photos?.[0]) {
-          importedData.google_photo_ref = place.photos[0].photo_reference;
-        }
-      }
-    } catch (e) {
-      console.error("Google Places lookup failed:", e);
-    }
-  }
+  // 1. Google Places lookup — REMOVED (incident 2026-08 cost invariant).
+  // Text Search is billable and must only be reached through the discovery
+  // gateway (_shared/placesGateway.ts). Enrichment now relies on data already
+  // captured during discovery; no ad-hoc Google call happens here.
+
+
 
   // 2. Website scrape via Firecrawl (if available)
   const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");

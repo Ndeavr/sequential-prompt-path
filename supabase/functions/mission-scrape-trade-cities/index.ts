@@ -3,17 +3,11 @@
 // Persists into outbound_companies + outbound_leads with mission_id attribution.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { corsHeaders, jsonResponse } from "../_shared/mission-cors.ts";
-import { resolvePlacesKey } from "../_shared/launchKeys.ts";
+import { searchPlacesResilient } from "../_shared/placesGateway.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
-
-let _placesKey: { key: string; source: string } | null | undefined;
-function getPlacesKey() {
-  if (_placesKey === undefined) _placesKey = resolvePlacesKey();
-  return _placesKey;
-}
 
 type ScrapedCompany = {
   name: string;
@@ -30,62 +24,28 @@ function normalizeKey(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-async function placesTextSearch(query: string): Promise<any[]> {
-  const pk = getPlacesKey();
-  if (!pk) return [];
-  const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&region=ca&language=fr&key=${pk.key}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    console.error("places http", res.status);
+// COST INVARIANT (incident 2026-08): discovery only through the resilient
+// gateway — shared 14-day cache, circuit breaker, 25 external calls/day max.
+async function scrapeGooglePlaces(
+  sb: ReturnType<typeof createClient>,
+  trade: string,
+  city: string,
+): Promise<ScrapedCompany[]> {
+  const search = await searchPlacesResilient(sb, { trade, city, limit: 20, caller: "mission-scrape-trade-cities" });
+  if (!search.ok) {
+    console.warn(`[places] blocked: ${search.error_code} — ${search.remediation}`);
     return [];
   }
-  const data = await res.json();
-  if (data.status && data.status !== "OK" && data.status !== "ZERO_RESULTS") {
-    console.error("places status", data.status, data.error_message);
-  }
-  return data.results ?? [];
-}
-
-async function scrapeGooglePlaces(trade: string, city: string): Promise<ScrapedCompany[]> {
-  const pk = getPlacesKey();
-  if (!pk) return [];
-  const queries = [
-    `${trade} ${city} Québec`,
-    `isolation entretoit ${city}`,
-    `isolation toiture ${city}`,
-    `entrepreneur isolation ${city}`,
-  ];
-  let results: any[] = [];
-  for (const q of queries) {
-    results = await placesTextSearch(q);
-    console.log(`[places] "${q}" => ${results.length}`);
-    if (results.length > 0) break;
-  }
-  const enriched: ScrapedCompany[] = [];
-  for (const r of results.slice(0, 20)) {
-    let phone: string | null = null;
-    let website: string | null = null;
-    try {
-      const dUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${r.place_id}&fields=formatted_phone_number,website,formatted_address&key=${pk.key}`;
-      const dRes = await fetch(dUrl);
-      if (dRes.ok) {
-        const d = await dRes.json();
-        phone = d.result?.formatted_phone_number ?? null;
-        website = d.result?.website ?? null;
-      }
-    } catch {}
-    enriched.push({
-      name: r.name,
-      city,
-      phone,
-      website,
-      google_place_id: r.place_id,
-      rating: r.rating ?? null,
-      review_count: r.user_ratings_total ?? null,
-      address: r.formatted_address ?? null,
-    });
-  }
-  return enriched;
+  return search.places.map((r) => ({
+    name: r.displayName?.text ?? "Sans nom",
+    city,
+    phone: r.nationalPhoneNumber ?? null,
+    website: r.websiteUri ?? null,
+    google_place_id: r.id ?? null,
+    rating: null,
+    review_count: null,
+    address: r.formattedAddress ?? null,
+  }));
 }
 
 function extractFirecrawlItems(data: any): any[] {
@@ -173,7 +133,7 @@ Deno.serve(async (req) => {
 
       let companies: ScrapedCompany[] = [];
       try {
-        companies = await scrapeGooglePlaces(mission.trade_slug, city);
+        companies = await scrapeGooglePlaces(supabase, mission.trade_slug, city);
         diag.places = companies.length;
       } catch (e) {
         console.error("places err", city, e);
@@ -257,7 +217,7 @@ Deno.serve(async (req) => {
       per_city: perCityDiag,
       total_inserted: inserted.length,
       errors,
-      has_places_key: !!getPlacesKey(),
+      discovery_path: "places_gateway",
       has_firecrawl_key: !!FIRECRAWL_API_KEY,
     };
 

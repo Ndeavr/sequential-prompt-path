@@ -7,6 +7,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { searchPlacesResilient } from "../_shared/placesGateway.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -70,29 +71,16 @@ function getAdjacentCities(city: string): string[] {
   return CITY_ADJACENCY[k] ?? [];
 }
 
-// ─── Google Places search with pagination ────────────────────────────────────
-async function searchPlaces(query: string, pageToken?: string): Promise<{ places: any[]; nextPageToken?: string; status: number }> {
-  const body: Record<string, unknown> = {
-    textQuery: query, languageCode: "fr-CA", maxResultCount: 20,
-  };
-  if (pageToken) body.pageToken = pageToken;
-
-  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Goog-Api-Key": GOOGLE_PLACES_API_KEY,
-      "X-Goog-FieldMask":
-        "nextPageToken,places.id,places.displayName,places.formattedAddress,places.websiteUri,places.nationalPhoneNumber,places.rating,places.userRatingCount,places.types,places.businessStatus",
-    },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    console.error(`Places ${res.status}: ${(await res.text()).slice(0, 200)}`);
-    return { places: [], status: res.status };
+// ─── Google Places search — SINGLE billable path (incident 2026-08) ──────────
+// All automated discovery goes through searchPlacesResilient: shared 14-day
+// cache, circuit breaker, and atomic 25-calls/day budget. Never fetch directly.
+async function searchPlaces(trade: string, city: string): Promise<{ places: any[]; nextPageToken?: string; status: number }> {
+  const search = await searchPlacesResilient(supabase, { trade, city, limit: 20, caller: "autopilot-recovery-agent" });
+  if (!search.ok) {
+    console.warn(`[recovery] places blocked: ${search.error_code}`);
+    return { places: [], status: 429 };
   }
-  const data = await res.json();
-  return { places: data.places ?? [], nextPageToken: data.nextPageToken, status: 200 };
+  return { places: search.places, status: 200 };
 }
 
 // ─── Main recovery handler ───────────────────────────────────────────────────
@@ -117,54 +105,31 @@ serve(async (req) => {
     const synonyms = getSynonyms(trade);
     const adjacent = cities.flatMap(getAdjacentCities);
 
-    // Build query cascade
-    const queries: Array<{ q: string; strategy: string }> = [];
-
-    // Strategy 1: synonyms × original cities
+    // Build (trade × city) cascade — the gateway keys its cache on that pair.
+    const queries: Array<{ trade: string; city: string; strategy: string }> = [];
     for (const syn of synonyms) {
-      for (const city of cities) {
-        queries.push({ q: `${syn} ${city} Québec`, strategy: "synonym" });
-      }
+      for (const city of cities) queries.push({ trade: syn, city, strategy: "synonym" });
     }
-
-    // Strategy 2: original trade × adjacent cities
-    for (const city of adjacent) {
-      queries.push({ q: `${trade} ${city} Québec`, strategy: "adjacent_city" });
-    }
-
-    // Strategy 3: synonyms × adjacent cities (deeper fallback)
+    for (const city of adjacent) queries.push({ trade, city, strategy: "adjacent_city" });
     for (const syn of synonyms.slice(0, 3)) {
-      for (const city of adjacent.slice(0, 3)) {
-        queries.push({ q: `${syn} ${city}`, strategy: "synonym_adjacent" });
-      }
+      for (const city of adjacent.slice(0, 3)) queries.push({ trade: syn, city, strategy: "synonym_adjacent" });
     }
 
-    // Execute until we have enough, with pagination on each query
-    for (const { q, strategy } of queries) {
+    for (const { trade: qTrade, city: qCity, strategy } of queries) {
       if (newProspects.length >= needed) break;
-
-      let pageToken: string | undefined;
-      let pagesUsed = 0;
+      const q = `${qTrade} ${qCity} Québec`;
+      const { places, status } = await searchPlaces(qTrade, qCity);
       let resultsForQuery = 0;
-      let lastStatus = 0;
-
-      do {
-        const { places, nextPageToken, status } = await searchPlaces(q, pageToken);
-        lastStatus = status;
-        for (const p of places) {
-          if (!p.id || seenIds.has(p.id)) continue;
-          seenIds.add(p.id);
-          newProspects.push({ ...p, __strategy: strategy, __query: q });
-          resultsForQuery++;
-          if (newProspects.length >= needed) break;
-        }
-        pageToken = nextPageToken;
-        pagesUsed++;
-        // Google requires a short delay before nextPageToken becomes valid
-        if (pageToken && pagesUsed < 3) await new Promise(r => setTimeout(r, 1500));
-      } while (pageToken && pagesUsed < 3 && newProspects.length < needed);
-
-      strategiesAttempted.push({ strategy, query: q, results: resultsForQuery, status: lastStatus });
+      for (const p of places) {
+        if (!p.id || seenIds.has(p.id)) continue;
+        seenIds.add(p.id);
+        newProspects.push({ ...p, __strategy: strategy, __query: q });
+        resultsForQuery++;
+        if (newProspects.length >= needed) break;
+      }
+      strategiesAttempted.push({ strategy, query: q, results: resultsForQuery, status });
+      // Budget/circuit blocked → stop the cascade instead of hammering.
+      if (status === 429) break;
     }
 
     // Log to run

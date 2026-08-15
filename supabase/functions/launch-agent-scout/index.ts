@@ -1,20 +1,28 @@
 /**
  * launch-agent-scout — seeds launch_leads.
  *
+ * COST INVARIANT (incident 2026-08 — Google Places billing loop):
+ * this function used to call Places directly (googleMapsConnector /
+ * resolvePlacesKey / legacy textsearch) with a field mask that did not include
+ * a phone number. It inserted rows it then rejected with `no_phone_no_email`,
+ * and launch-commander re-triggered it every minute → one billable call/minute.
+ * Discovery now goes through `searchPlacesResilient` ONLY (cache + circuit +
+ * atomic 25 calls/day budget), and a place without a phone number never enters
+ * the pool.
+ *
  * Strategy:
  *   1. Pull eligible rows from the existing `outbound_companies` pool (priority trades + cities).
- *   2. If the resulting candidate batch is < batch / 2, refill the pool with a Google Places Text
- *      Search call for the next (trade, city) pair stored in launch_mode_state.scout_cursor.
- *      Uses resolvePlacesKey() so a referrer-restricted browser key never blocks us.
+ *   2. If the batch is < batch / 2, refill via the resilient Places gateway for the
+ *      next (trade, city) pair from launch_mode_state.scout_cursor.
  *   3. Insert deduped rows into launch_leads as DISCOVERED with stage timeout metadata.
  *
  * Never silently fails: every exit path either reports inserted > 0 OR a precise BlockReason.
  */
 import { corsHeaders, adminClient, logLaunchEvent } from "../_shared/launch.ts";
-import { resolvePlacesKey } from "../_shared/launchKeys.ts";
 import { reportOutcome, BlockReason, FailureCode } from "../_shared/reliability.ts";
-import { placesSearchTextRaw, googleConnectorAvailable } from "../_shared/googleMapsConnector.ts";
+import { searchPlacesResilient, type PlaceResult } from "../_shared/placesGateway.ts";
 import { captureScrapeEvidenceForProfile } from "../_shared/caslEvidence.ts";
+
 
 const PRIORITY_TRADES = [
   "isolation", "toiture", "fondation", "drain", "drain francais",
@@ -44,91 +52,88 @@ function matchesPriority(c: { trade?: string | null; specialty?: string | null; 
   return { tradeOk, cityOk };
 }
 
-async function googlePlacesRefill(sb: ReturnType<typeof adminClient>): Promise<{
+export interface RefillResult {
   inserted_into_pool: number;
+  usable_results: number;
+  rejected_no_phone: number;
   query: string;
   trade: string;
   city: string;
+  cache_hit?: boolean;
+  external_calls?: number;
+  blocked?: boolean;
   error?: string;
-}> {
-  const useConnector = googleConnectorAvailable();
-  const resolved = useConnector ? { key: "connector" } : resolvePlacesKey();
-  if (!resolved) return { inserted_into_pool: 0, query: "", trade: "", city: "", error: "no_places_key (tried connector, GOOGLE_PLACES_SERVER_KEY, GOOGLE_MAPS_API_KEY, GOOGLE_PLACES_API_KEY)" };
+}
 
+/**
+ * Pure, testable part: only places with a real phone number are usable.
+ * Anything else is counted and dropped — it must never reach the pool.
+ */
+export function partitionPlacesByPhone(places: PlaceResult[]): {
+  usable: PlaceResult[];
+  rejected_no_phone: number;
+} {
+  const usable: PlaceResult[] = [];
+  let rejected_no_phone = 0;
+  for (const p of places) {
+    const phone = (p.nationalPhoneNumber ?? "").trim();
+    if (!p?.id || !phone) { rejected_no_phone++; continue; }
+    usable.push(p);
+  }
+  return { usable, rejected_no_phone };
+}
+
+async function googlePlacesRefill(sb: ReturnType<typeof adminClient>): Promise<RefillResult> {
   // Round-robin cursor
   const { data: state } = await sb.from("launch_mode_state").select("scout_cursor").eq("id", true).maybeSingle();
   const cursor = (state?.scout_cursor as { trade_idx?: number; city_idx?: number } | null) ?? { trade_idx: 0, city_idx: 0 };
-  const trade = PRIORITY_TRADE_QUERIES[cursor.trade_idx % PRIORITY_TRADE_QUERIES.length];
-  const city = PRIORITY_CITIES[cursor.city_idx % PRIORITY_CITIES.length];
+  const trade = PRIORITY_TRADE_QUERIES[(cursor.trade_idx ?? 0) % PRIORITY_TRADE_QUERIES.length];
+  const city = PRIORITY_CITIES[(cursor.city_idx ?? 0) % PRIORITY_CITIES.length];
   const next = {
-    trade_idx: (cursor.trade_idx + 1) % PRIORITY_TRADE_QUERIES.length,
-    city_idx: cursor.trade_idx + 1 >= PRIORITY_TRADE_QUERIES.length ? (cursor.city_idx + 1) % PRIORITY_CITIES.length : cursor.city_idx,
+    trade_idx: ((cursor.trade_idx ?? 0) + 1) % PRIORITY_TRADE_QUERIES.length,
+    city_idx: (cursor.trade_idx ?? 0) + 1 >= PRIORITY_TRADE_QUERIES.length
+      ? ((cursor.city_idx ?? 0) + 1) % PRIORITY_CITIES.length
+      : (cursor.city_idx ?? 0),
   };
-
   const query = `${trade} ${city} Québec`;
+  const base = { query, trade, city, inserted_into_pool: 0, usable_results: 0, rejected_no_phone: 0 };
 
-  // Prefer the Lovable Google Maps connector (server-to-server, no referer restrictions).
-  let results: Array<Record<string, unknown>> = [];
-  if (useConnector) {
-    const res = await placesSearchTextRaw(
-      query,
-      { language: "fr-CA", region: "CA", maxResults: 20 },
-      "places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.businessStatus",
-    );
-    if (res.google_status && !["OK", "ZERO_RESULTS"].includes(res.google_status)) {
-      return { inserted_into_pool: 0, query, trade, city, error: `connector: ${res.google_status}: ${res.error_message ?? ""}` };
-    }
-    results = res.places.map((p: any) => ({
-      name: p.displayName?.text ?? "",
-      formatted_address: p.formattedAddress ?? "",
-      place_id: p.id ?? "",
-      rating: p.rating ?? null,
-      user_ratings_total: p.userRatingCount ?? null,
-      business_status: p.businessStatus ?? "OPERATIONAL",
-    }));
-  } else {
-    const key = (resolved as { key: string }).key;
-    let resp: Response;
-    try {
-      resp = await fetch(
-        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&region=ca&language=fr&key=${key}`,
-      );
-    } catch (e) {
-      return { inserted_into_pool: 0, query, trade, city, error: `network: ${String(e)}` };
-    }
-    if (!resp.ok) {
-      return { inserted_into_pool: 0, query, trade, city, error: `http_${resp.status}` };
-    }
-    const json = (await resp.json()) as { results?: Array<Record<string, unknown>>; status?: string; error_message?: string };
-    if (json.status && !["OK", "ZERO_RESULTS"].includes(json.status)) {
-      return { inserted_into_pool: 0, query, trade, city, error: `${json.status}: ${json.error_message ?? ""}` };
-    }
-    results = json.results ?? [];
-  }
+  // SINGLE billable path — cache, circuit breaker and daily budget live here.
+  const search = await searchPlacesResilient(sb, {
+    trade, city, limit: 20, caller: "launch-agent-scout",
+  });
 
-  const rows = results
-    .filter(r => r.business_status === "OPERATIONAL" || !r.business_status)
-    .map(r => ({
-      company_name: String(r.name ?? "").slice(0, 200),
-      city,
-      trade,
-      specialty: trade,
-      address: String(r.formatted_address ?? ""),
-      google_place_id: String(r.place_id ?? ""),
-      google_rating: r.rating ?? null,
-      review_count: r.user_ratings_total ?? null,
-      business_status: r.business_status ?? "OPERATIONAL",
-      region: "QC",
-    }))
-    .filter(r => r.company_name && r.google_place_id);
-
-  if (rows.length === 0) {
-    // advance cursor anyway so we don't loop on the same empty query
+  if (!search.ok) {
+    // Blocked (kill switch, circuit open, budget exhausted). Advance the cursor so
+    // the next tick does not hammer the same combination.
     await sb.from("launch_mode_state").update({ scout_cursor: next }).eq("id", true);
-    return { inserted_into_pool: 0, query, trade, city };
+    return { ...base, blocked: true, error: search.error_code };
   }
 
-  // Upsert into outbound_companies on google_place_id (skip duplicates)
+  const { usable, rejected_no_phone } = partitionPlacesByPhone(search.places);
+  const rows = usable.map((p) => ({
+    company_name: (p.displayName?.text ?? "").slice(0, 200),
+    city,
+    trade,
+    specialty: trade,
+    address: p.formattedAddress ?? "",
+    google_place_id: p.id,
+    phone: (p.nationalPhoneNumber ?? "").trim(),
+    website_url: p.websiteUri ?? null,
+    business_status: "OPERATIONAL",
+    region: "QC",
+  })).filter(r => r.company_name && r.google_place_id);
+
+  // The (trade × city) combination is cached for 14 days by the gateway, including
+  // when it produced 0 usable contact — so we never repay for the same dead query.
+  if (rows.length === 0) {
+    await sb.from("launch_mode_state").update({ scout_cursor: next }).eq("id", true);
+    return {
+      ...base, rejected_no_phone, usable_results: 0,
+      cache_hit: search.cache_hit, external_calls: search.external_calls,
+    };
+  }
+
   const { data: existing } = await sb
     .from("outbound_companies")
     .select("google_place_id")
@@ -141,7 +146,7 @@ async function googlePlacesRefill(sb: ReturnType<typeof adminClient>): Promise<{
       .select("id, google_place_id, phone, email");
     // CASL evidence — publicly conspicuous Google Business Profile.
     for (const row of inserted ?? []) {
-      const raw = results.find((r: any) => String(r.place_id ?? "") === row.google_place_id);
+      const raw = usable.find((p) => p.id === row.google_place_id);
       if (!raw) continue;
       try {
         await captureScrapeEvidenceForProfile(sb, {
@@ -161,8 +166,16 @@ async function googlePlacesRefill(sb: ReturnType<typeof adminClient>): Promise<{
     }
   }
   await sb.from("launch_mode_state").update({ scout_cursor: next, current_trade: trade, current_city: city }).eq("id", true);
-  return { inserted_into_pool: fresh.length, query, trade, city };
+  return {
+    ...base,
+    inserted_into_pool: fresh.length,
+    usable_results: usable.length,
+    rejected_no_phone,
+    cache_hit: search.cache_hit,
+    external_calls: search.external_calls,
+  };
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -244,20 +257,21 @@ Deno.serve(async (req) => {
   }
 
 
-  // Pass 2 — refill via Google Places if pool yielded too few
-  let refill: Awaited<ReturnType<typeof googlePlacesRefill>> | null = null;
+  // Pass 2 — refill through the resilient Places gateway if the pool yielded too few.
+  let refill: RefillResult | null = null;
   if (candidates.length < Math.floor(batch / 2)) {
     refill = await googlePlacesRefill(sb);
-    if (refill.error && refill.inserted_into_pool === 0) {
+    if (refill.blocked) {
       await reportOutcome({
         operation: "launch.scout.run",
         outcome: "blocked",
         block_reason: BlockReason.MISSING_SECRET,
-        next_action: `Google Places refill failed: ${refill.error}`,
+        next_action: `Découverte Google Places bloquée (${refill.error}) — le pipeline continue sur l'inventaire existant.`,
       });
       await logLaunchEvent({
-        agent: "launch-agent-scout", event: "blocked", success: false,
+        agent: "launch-agent-scout", event: "discovery_blocked", success: false,
         message: `google_places: ${refill.error} (q="${refill.query}")`,
+        payload: { refill },
       });
       // continue — we may still have some candidates from pool
     }
@@ -267,6 +281,7 @@ Deno.serve(async (req) => {
       candidates = pickCandidates(pool ?? []).slice(0, batch);
     }
   }
+
 
   if (candidates.length === 0) {
     const reason = (pool ?? []).length === 0
@@ -288,7 +303,7 @@ Deno.serve(async (req) => {
       last_blocker_reason: reason,
       last_blocker_at: new Date().toISOString(),
     }).eq("id", true);
-    return new Response(JSON.stringify({ ok: true, inserted: 0, rejection, refill }), {
+    return new Response(JSON.stringify({ ok: true, inserted: 0, blocked: refill?.blocked ?? false, rejection, refill }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

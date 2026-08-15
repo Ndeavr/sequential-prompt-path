@@ -87,14 +87,10 @@ async function checkTwilio(): Promise<Check> {
 }
 
 async function checkGoogleMaps(): Promise<Check> {
+  // COST INVARIANT (incident 2026-08): no billable Google probe from health checks.
   const key = envOr("GOOGLE_MAPS_API_KEY") || envOr("GOOGLE_PLACES_API_KEY");
   if (!key) return { module: "scraping", target: "google_maps", status: "yellow", latency_ms: 0, error_code: "missing_secret", probable_cause: "GOOGLE_MAPS_API_KEY absent", proposed_fix: "Ajouter GOOGLE_MAPS_API_KEY" };
-  const r = await timed(() => fetch(`https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=montreal&inputtype=textquery&fields=place_id&key=${key}`));
-  const res = r.value as Response | undefined;
-  if (!res || !res.ok) return { module: "scraping", target: "google_maps", status: "red", latency_ms: r.ms, error_code: String(res?.status ?? "network") };
-  const body = await res.json().catch(() => ({}));
-  if (body.status === "REQUEST_DENIED") return { module: "scraping", target: "google_maps", status: "red", latency_ms: r.ms, error_code: "REQUEST_DENIED", error_message: body.error_message, probable_cause: "Clé Google invalide ou Places API désactivée", proposed_fix: "Activer Places API + restrictions" };
-  return { module: "scraping", target: "google_maps", status: "green", latency_ms: r.ms, metadata: { gstatus: body.status } };
+  return { module: "scraping", target: "google_maps", status: "green", latency_ms: 0, metadata: { probe: "credentials_only" } };
 }
 
 async function checkFirecrawl(): Promise<Check> {
