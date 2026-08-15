@@ -26,6 +26,7 @@ import { AddLeadSheet } from "@/features/affiliate/addLead/AddLeadSheet";
 import { AffiliateHeaderMenu } from "@/features/affiliate/components/AffiliateHeaderMenu";
 import { AssignedLeadsList } from "@/features/affiliate/warRoom/AssignedLeadsList";
 import { MyManualQueue } from "@/features/affiliate/warRoom/MyManualQueue";
+import { AffiliateTeamSection } from "@/features/affiliate/team/AffiliateTeamSection";
 
 type Assignment = {
   id: string;
