@@ -135,7 +135,7 @@ export default function PageVisibiliteIA() {
 
       <div className="landing-warm pb-28 md:pb-0">
         {/* HERO */}
-        <section className="px-5 pt-10 pb-14 sm:pt-16 md:pb-20">
+        <section className="px-5 pt-8 pb-8 sm:pt-14 md:pb-16">
           <div className="mx-auto max-w-3xl text-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-primary">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
@@ -180,7 +180,7 @@ export default function PageVisibiliteIA() {
         </section>
 
         {/* PROBLÈME */}
-        <section className="px-5 py-14 md:py-20">
+        <section className="px-5 py-6 md:py-16">
           <div className="mx-auto max-w-4xl">
             <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Le référencement traditionnel ne suffit plus
@@ -209,7 +209,7 @@ export default function PageVisibiliteIA() {
         </section>
 
         {/* SOLUTION */}
-        <section className="px-5 py-14 md:py-20">
+        <section className="px-5 py-6 md:py-16">
           <div className="mx-auto max-w-4xl">
             <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               UNPRO bâtit votre présence pour l'ère de l'IA
@@ -237,7 +237,7 @@ export default function PageVisibiliteIA() {
         </section>
 
         {/* COMPARAISON */}
-        <section className="px-5 py-14 md:py-20">
+        <section className="px-5 py-6 md:py-16">
           <div className="mx-auto max-w-4xl">
             <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               SEO, AEO et GEO : des approches complémentaires
@@ -272,7 +272,7 @@ export default function PageVisibiliteIA() {
         </section>
 
         {/* FORMULAIRE */}
-        <section id="analyse-ia" className="scroll-mt-24 px-5 py-14 md:py-20">
+        <section id="analyse-ia" className="scroll-mt-24 px-5 py-6 md:py-16">
           <div className="mx-auto max-w-2xl">
             <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Découvrez comment l'IA comprend votre entreprise
@@ -288,7 +288,7 @@ export default function PageVisibiliteIA() {
         </section>
 
         {/* PLAN PERSONNALISÉ */}
-        <section className="px-5 py-14 md:py-20">
+        <section className="px-5 py-6 md:py-16">
           <div className="mx-auto max-w-4xl">
             <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Une stratégie adaptée à votre entreprise
@@ -313,7 +313,7 @@ export default function PageVisibiliteIA() {
         </section>
 
         {/* FAQ */}
-        <section className="px-5 py-14 md:py-20">
+        <section className="px-5 py-6 md:py-16">
           <div className="mx-auto max-w-3xl">
             <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Questions fréquentes
@@ -334,7 +334,7 @@ export default function PageVisibiliteIA() {
         </section>
 
         {/* CTA FINAL */}
-        <section className="px-5 py-14 md:py-20">
+        <section className="px-5 py-6 md:py-16">
           <div className="mx-auto max-w-3xl rounded-3xl border border-border bg-card p-8 text-center sm:p-12">
             <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Préparez votre entreprise avant que vos concurrents le fassent
