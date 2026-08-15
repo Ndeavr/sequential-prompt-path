@@ -9,6 +9,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import AiVisibilityLeadForm from "@/features/aiVisibilityLanding/AiVisibilityLeadForm";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Phone, Sparkles, MapPin, Wrench, Building2, ShieldCheck, Award, Layers,
   Search, Bot, ArrowRight,
