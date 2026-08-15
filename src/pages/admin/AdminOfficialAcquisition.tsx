@@ -125,14 +125,19 @@ export default function AdminOfficialAcquisition() {
         <SourceCard
           icon={<Database className="h-4 w-4" />}
           title="REQ — Registre des entreprises"
-          state="Réconciliation d'identité"
+          state="Réconciliation NEQ connus"
           rows={[["Fiches", byKind("req")]]}
           action={
             <Button size="sm" variant="secondary" disabled={running !== null}
-              onClick={() => invoke("rbq-official-ingest", { mode: "dry_run", dataset: "req", limit: 100, neqs: [] }, "REQ — réconciliation à blanc")}>
+              onClick={() => invoke(
+                "rbq-official-ingest",
+                { mode: "dry_run", dataset: "req", limit: 100, neqs_source: "known_records" },
+                "REQ — réconciliation à blanc (NEQ déjà ingérés)",
+              )}>
               <PlayCircle className="h-4 w-4 mr-1" /> Réconcilier (à blanc)
             </Button>
           }
+
         />
         <SourceCard
           icon={<ShieldCheck className="h-4 w-4" />}

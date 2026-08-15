@@ -36,11 +36,16 @@ const PREFERRED_FORMATS = ["csv", "xlsx", "xls"];
 export function pickResource(resources: CkanResource[]): CkanResource | null {
   const usable = (resources ?? []).filter((r) => {
     if (r.state && r.state !== "active") return false;
+    // A DataStore-backed resource is queryable whatever its download format (ZIP included).
+    if (r.datastore_active === true && r.id) return true;
     const fmt = (r.format ?? "").toLowerCase();
     return PREFERRED_FORMATS.includes(fmt) && !!r.url;
   });
   if (usable.length === 0) return null;
-  const score = (r: CkanResource) => PREFERRED_FORMATS.indexOf((r.format ?? "").toLowerCase());
+  const score = (r: CkanResource) => {
+    if (r.datastore_active === true) return -1;
+    return PREFERRED_FORMATS.indexOf((r.format ?? "").toLowerCase());
+  };
   const ts = (r: CkanResource) => Date.parse(r.last_modified ?? r.created ?? "") || 0;
   return [...usable].sort((a, b) => score(a) - score(b) || ts(b) - ts(a))[0];
 }
@@ -108,29 +113,46 @@ export type CanonicalField =
 
 const ALIASES: Record<CanonicalField, RegExp[]> = {
   business_name: [/^(nom|nom_?de?_?l?'?entreprise|raison[_ ]?sociale|nom_assujetti|nom_entreprise|titulaire)/i],
-  neq: [/neq/i, /num[eé]ro[_ ]?d?'?entreprise/i],
-  rbq_license: [/licence/i, /rbq/i, /no[_ ]?licence/i],
+  neq: [/^neq$/i, /neq/i, /num[eé]ro[_ ]?d?'?entreprise/i],
+  rbq_license: [/^num[eé]ro de licence/i, /no[_ ]?licence/i, /licence/i, /rbq/i],
   phone: [/t[eé]l[eé]phone/i, /^tel/i, /num[eé]ro[_ ]?de[_ ]?t[eé]l/i],
   email: [/courriel/i, /email/i, /adresse[_ ]?[eé]lectronique/i],
   website: [/site[_ ]?web/i, /site[_ ]?internet/i, /url/i],
   address: [/adresse/i, /rue/i, /voie/i],
   postal_code: [/code[_ ]?postal/i, /^cp$/i],
   municipality: [/municipalit/i, /^ville/i, /localit/i],
-  region: [/r[eé]gion/i],
-  categories: [/cat[eé]gorie/i, /sous[-_ ]?cat/i, /classe/i, /activit/i, /secteur/i],
-  status: [/statut/i, /[eé]tat/i],
+  region: [/^r[eé]gion administrative/i, /r[eé]gion/i],
+  categories: [/^cat[eé]gorie/i, /^sous[-_ ]?cat[eé]gorie/i, /cat[eé]gorie/i, /activit/i, /secteur/i, /classe/i],
+  status: [/^statut de la licence/i, /statut/i, /[eé]tat/i],
 };
 
-/** Build a header → canonical field map, defensively (French label drift tolerated). */
+/** Headers that must never win a field (counts, codes, derived columns). */
+const EXCLUSIONS: Partial<Record<CanonicalField, RegExp[]>> = {
+  region: [/^code/i],
+  categories: [/nombre/i],
+  address: [/electron|courriel|email/i],
+  municipality: [/code/i],
+};
+
+const normHeader = (h: string) =>
+  h.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+/**
+ * Build a canonical field → header map.
+ * Alias order is a PRIORITY order: the most specific label wins over a loose one
+ * (e.g. "Region administrative" beats "Code de region administrative").
+ */
 export function mapColumns(headers: string[]): Partial<Record<CanonicalField, string>> {
   const out: Partial<Record<CanonicalField, string>> = {};
-  for (const h of headers) {
-    const norm = h.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-    for (const [field, patterns] of Object.entries(ALIASES) as [CanonicalField, RegExp[]][]) {
-      if (out[field]) continue;
-      // "adresse électronique" must map to email, not address.
-      if (field === "address" && /electron|courriel|email/.test(norm)) continue;
-      if (patterns.some((p) => p.test(norm) || p.test(h))) { out[field] = h; break; }
+  for (const [field, patterns] of Object.entries(ALIASES) as [CanonicalField, RegExp[]][]) {
+    const excl = EXCLUSIONS[field] ?? [];
+    for (const p of patterns) {
+      const hit = headers.find((h) => {
+        const n = normHeader(h);
+        if (excl.some((e) => e.test(n) || e.test(h))) return false;
+        return p.test(n) || p.test(h);
+      });
+      if (hit) { out[field] = hit; break; }
     }
   }
   return out;
@@ -171,4 +193,78 @@ const TRADE_MATCHERS: Array<{ re: RegExp; key: string }> = [
 export function tradeKeysFor(text: string | null | undefined): string[] {
   const hay = (text ?? "");
   return TRADE_MATCHERS.filter((m) => m.re.test(hay)).map((m) => m.key);
+}
+
+/* ------------------------- resource strategy ------------------------- */
+
+export type ResourceStrategy = "datastore" | "csv" | "workbook" | "unsupported";
+
+/**
+ * Deterministic decision of HOW a CKAN resource must be read.
+ * DataStore wins whenever CKAN advertises it (selective queries + pagination).
+ */
+export function resourceStrategy(r: CkanResource | null | undefined): ResourceStrategy {
+  if (!r) return "unsupported";
+  if (r.datastore_active === true && r.id) return "datastore";
+  const fmt = (r.format ?? "").toLowerCase();
+  if (!r.url) return "unsupported";
+  if (fmt === "csv") return "csv";
+  if (fmt === "xlsx" || fmt === "xls") return "workbook";
+  return "unsupported";
+}
+
+/** CKAN datastore_search URL (deterministic ordering by _id for resumable cursors). */
+export function datastoreSearchUrl(
+  resourceId: string,
+  opts: { limit?: number; offset?: number; filters?: Record<string, string[] | string>; fieldsOnly?: boolean } = {},
+): string {
+  const p = new URLSearchParams();
+  p.set("resource_id", resourceId);
+  p.set("limit", String(opts.fieldsOnly ? 0 : Math.max(0, opts.limit ?? 100)));
+  if (!opts.fieldsOnly) {
+    p.set("offset", String(Math.max(0, opts.offset ?? 0)));
+    p.set("sort", "_id asc");
+  }
+  if (opts.filters && Object.keys(opts.filters).length > 0) {
+    p.set("filters", JSON.stringify(opts.filters));
+  }
+  return `${CKAN_BASE}/datastore_search?${p.toString()}`;
+}
+
+export type DatastorePage = {
+  fields: string[];
+  records: Record<string, string>[];
+  total: number;
+};
+
+/** Normalize a CKAN datastore_search response into string records. */
+export function parseDatastoreResult(body: unknown): DatastorePage {
+  const b = body as {
+    success?: boolean;
+    result?: { fields?: Array<{ id: string }>; records?: Record<string, unknown>[]; total?: number };
+  };
+  if (!b?.success || !b?.result) throw new Error("datastore_invalid_response");
+  const fields = (b.result.fields ?? []).map((f) => f.id).filter((id) => id !== "_id");
+  const records = (b.result.records ?? []).map((rec) => {
+    const o: Record<string, string> = {};
+    for (const [k, v] of Object.entries(rec)) {
+      if (k === "_id") continue;
+      o[k] = v === null || v === undefined ? "" : String(v).trim();
+    }
+    return o;
+  });
+  return { fields, records, total: Number(b.result.total ?? records.length) };
+}
+
+/** Convert a sheet array-of-arrays (header row first) into trimmed string records. */
+export function sheetRowsToRecords(aoa: unknown[][]): Record<string, string>[] {
+  if (!aoa || aoa.length === 0) return [];
+  const header = (aoa[0] ?? []).map((h) => String(h ?? "").trim());
+  return aoa.slice(1)
+    .filter((r) => (r ?? []).some((v) => String(v ?? "").trim() !== ""))
+    .map((r) => {
+      const o: Record<string, string> = {};
+      header.forEach((h, i) => { if (h) o[h] = String(r?.[i] ?? "").trim(); });
+      return o;
+    });
 }

@@ -26,11 +26,15 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import {
   ckanPackageShow,
   pickResource,
+  resourceStrategy,
+  datastoreSearchUrl,
+  parseDatastoreResult,
   parseDelimited,
   mapColumns,
   pick,
   regionKeyFor,
   tradeKeysFor,
+  type CanonicalField,
 } from "../_shared/ckanSource.ts";
 import {
   normalizeOfficialRecord,
@@ -84,7 +88,17 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } },
     );
 
+    // ---------- admin auth (same contract as dataforseo-enrich-official) ----------
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData } = await supabase.auth.getUser(token);
+    const userId = userData?.user?.id;
+    if (!userId) return json({ ok: false, error: "unauthorized" }, 401);
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!isAdmin) return json({ ok: false, error: "forbidden" }, 403);
+
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
+
     const mode: "dry_run" | "ingest" = body.mode === "ingest" ? "ingest" : "dry_run";
     const datasetKey: "rbq" | "req" = body.dataset === "req" ? "req" : "rbq";
     const ds = DATASETS[datasetKey];
@@ -156,17 +170,35 @@ Deno.serve(async (req) => {
       return json({ ok: false, mode, dataset: ds.slug, funnel, error: "no_active_resource" }, 502);
     }
 
-    // ---------- 2. Download + parse (defensive column aliasing) ----------
-    const fmt = (resource.format ?? "").toLowerCase();
-    if (fmt !== "csv") {
+    // ---------- 2. Read the resource (DataStore > CSV > XLSX). No HTML scraping. ----------
+    const strategy = resourceStrategy(resource);
+    const resourceInfo = {
+      id: resource.id,
+      format: resource.format ?? null,
+      strategy,
+      datastore_active: resource.datastore_active === true,
+      last_modified: resource.last_modified ?? null,
+      checksum: resource.hash ?? null,
+      url: resource.url,
+    };
+
+    if (strategy === "unsupported") {
+      funnel.source_error++;
       return json({
-        ok: false,
-        mode,
-        dataset: ds.slug,
-        resource: { id: resource.id, format: resource.format, url: resource.url },
-        funnel,
+        ok: false, mode, dataset: ds.slug, resource: resourceInfo, funnel,
         error: "unsupported_resource_format",
-        message: "Seules les ressources CSV sont traitées automatiquement (aucun scraping).",
+        message: "Seules les ressources DataStore, CSV et XLSX officielles sont traitées (aucun scraping).",
+      }, 422);
+    }
+
+    // REQ ne doit JAMAIS télécharger le registre complet pour réconcilier quelques NEQ.
+    if (neqFilter && strategy !== "datastore") {
+      return json({
+        ok: false, mode, dataset: ds.slug, resource: resourceInfo, funnel,
+        error: "unsupported_selective_req",
+        message:
+          "La ressource officielle REQ courante n'expose pas de DataStore interrogeable : "
+          + "la réconciliation sélective par NEQ est impossible et le téléchargement complet est interdit.",
       }, 422);
     }
 
@@ -175,31 +207,92 @@ Deno.serve(async (req) => {
       : (await supabase.from("official_source_registry").select("ingest_cursor").eq("source_key", ds.source_key).maybeSingle())
           .data?.ingest_cursor ?? 0;
 
-    let rows: Record<string, string>[] = [];
-    try {
-      const r = await fetch(resource.url, { headers: { "User-Agent": "UNPRO-OfficialSources/1.0 (+https://unpro.ca)" } });
+    let slice: Record<string, string>[] = [];
+    let totalRows = 0;
+    let map: Partial<Record<CanonicalField, string>> = {};
+    let nextCursor = 0;
+
+    async function getJson(url: string) {
+      const r = await fetch(url, {
+        headers: { Accept: "application/json", "User-Agent": "UNPRO-OfficialSources/1.0 (+https://unpro.ca)" },
+      });
       if (!r.ok) throw new Error(`resource_http_${r.status}`);
-      rows = parseDelimited(await r.text());
+      return await r.json();
+    }
+
+    try {
+      if (strategy === "datastore") {
+        const meta = parseDatastoreResult(await getJson(datastoreSearchUrl(resource.id, { fieldsOnly: true })));
+        map = mapColumns(meta.fields);
+        totalRows = meta.total;
+
+        if (neqFilter) {
+          if (!map.neq) {
+            return json({
+              ok: false, mode, dataset: ds.slug, resource: resourceInfo, funnel,
+              error: "unsupported_selective_req",
+              message: "Aucune colonne NEQ interrogeable dans la ressource officielle REQ.",
+              fields: meta.fields,
+            }, 422);
+          }
+          const wanted = Array.from(neqFilter);
+          for (let i = 0; i < wanted.length && slice.length < limit; i += 50) {
+            const page = parseDatastoreResult(await getJson(datastoreSearchUrl(resource.id, {
+              limit: Math.min(limit - slice.length, 100),
+              filters: { [map.neq]: wanted.slice(i, i + 50) },
+            })));
+            slice.push(...page.records);
+          }
+          nextCursor = 0;
+        } else {
+          // Pagination déterministe et reprenable (_id asc).
+          let offset = cursor;
+          while (slice.length < limit) {
+            const page = parseDatastoreResult(await getJson(datastoreSearchUrl(resource.id, {
+              limit: Math.min(limit - slice.length, 500),
+              offset,
+            })));
+            if (page.records.length === 0) break;
+            slice.push(...page.records);
+            offset += page.records.length;
+          }
+          nextCursor = offset >= totalRows ? 0 : offset;
+        }
+      } else {
+        const r = await fetch(resource.url!, {
+          headers: { "User-Agent": "UNPRO-OfficialSources/1.0 (+https://unpro.ca)" },
+        });
+        if (!r.ok) throw new Error(`resource_http_${r.status}`);
+        const rows = strategy === "csv"
+          ? parseDelimited(await r.text())
+          : await (await import("../_shared/workbookSource.ts")).parseWorkbook(await r.arrayBuffer());
+        totalRows = rows.length;
+        map = mapColumns(Object.keys(rows[0] ?? {}));
+        slice = rows.slice(cursor, cursor + limit);
+        nextCursor = cursor + slice.length >= rows.length ? 0 : cursor + slice.length;
+      }
     } catch (e) {
       funnel.source_error++;
       return json({
-        ok: false, mode, dataset: ds.slug, funnel,
+        ok: false, mode, dataset: ds.slug, resource: resourceInfo, funnel,
         error: "resource_download_failed",
         message: e instanceof Error ? e.message : String(e),
       }, 502);
     }
 
-    const headers = Object.keys(rows[0] ?? {});
-    const map = mapColumns(headers);
     if (!map.business_name) {
       funnel.source_error++;
-      return json({ ok: false, mode, dataset: ds.slug, funnel, error: "business_name_column_not_found", headers }, 422);
+      return json({
+        ok: false, mode, dataset: ds.slug, resource: resourceInfo, funnel,
+        error: "business_name_column_not_found",
+        headers: Object.keys(slice[0] ?? {}),
+        column_map: map,
+      }, 422);
     }
 
     // ---------- 3. Normalize within scope ----------
-    const slice = rows.slice(cursor, cursor + limit);
     funnel.discovered = slice.length;
-    const nextCursor = cursor + slice.length >= rows.length ? 0 : cursor + slice.length;
+
 
     const doc = {
       source_key: ds.source_key,
@@ -237,7 +330,8 @@ Deno.serve(async (req) => {
         address: pick(row, map, "address"),
         postal_code: pick(row, map, "postal_code"),
         municipality,
-        region: region ?? municipality,
+        // Préférer un libellé de région lisible ; les codes numériques ne priorisent rien.
+        region: region && /[A-Za-zÀ-ÿ]/.test(region) ? region : municipality,
         categories: categories ? categories.split(/[;,|]/).map((c) => c.trim()).filter(Boolean) : null,
         raw: row,
       };
@@ -317,11 +411,11 @@ Deno.serve(async (req) => {
         resource_format: resource.format ?? null,
         resource_last_modified: resource.last_modified ?? null,
         resource_checksum: resource.hash ?? null,
-        document_type: "csv",
+        document_type: strategy,
         access_policy: "API CKAN officielle Données Québec — aucune extraction HTML",
         robots_allowed: true,
         last_fetched_at: startedAt,
-        last_record_count: rows.length,
+        last_record_count: totalRows,
         ingest_cursor: nextCursor,
         last_run_summary: funnel,
         active: true,
@@ -380,14 +474,8 @@ Deno.serve(async (req) => {
       mode,
       dataset: ds.slug,
       source_kind: ds.source_kind,
-      resource: {
-        id: resource.id,
-        format: resource.format,
-        last_modified: resource.last_modified ?? null,
-        checksum: resource.hash ?? null,
-        url: resource.url,
-      },
-      rows_in_resource: rows.length,
+      resource: resourceInfo,
+      rows_in_resource: totalRows,
       cursor,
       next_cursor: nextCursor,
       column_map: map,
