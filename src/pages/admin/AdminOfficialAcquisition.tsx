@@ -160,6 +160,7 @@ export default function AdminOfficialAcquisition() {
           state={paidLocked ? "Verrouillé" : "Actif"}
           locked={paidLocked}
           rows={[
+            ["Identifiants", credentialsConfigured ? "Configurés" : "Absents"],
             ["À enrichir", needsEnrichment],
             ["Appariés", attemptCount("matched")],
             ["Ambigus", attemptCount("ambiguous")],
@@ -170,6 +171,13 @@ export default function AdminOfficialAcquisition() {
           ]}
           action={
             <div className="flex flex-col gap-2">
+              <p className="text-xs text-muted-foreground">
+                {credentialsConfigured
+                  ? killSwitch
+                    ? "Identifiants installés. Fournisseur toujours verrouillé — activation explicite requise avant tout test payant."
+                    : "Identifiants installés. Fournisseur actif sous plafonds quotidiens."
+                  : "Identifiants absents. Ajoutez-les dans les secrets du projet avant toute activation."}
+              </p>
               <Button size="sm" variant="secondary" disabled={running !== null}
                 onClick={() => invoke("dataforseo-enrich-official", { mode: "dry_run", limit: 25 }, "DataForSEO — test 25 (à blanc)")}>
                 Test 25 (à blanc)
@@ -185,6 +193,7 @@ export default function AdminOfficialAcquisition() {
               )}
             </div>
           }
+
         />
         <SourceCard
           icon={<Globe className="h-4 w-4" />}
