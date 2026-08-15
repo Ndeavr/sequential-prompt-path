@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
       documents: DOCS.length,
       records_discovered: 0,
       records_parsed: 0,
-      parse_rejected_no_contact: 0,
+      no_contact_retained: 0,
       region_filtered_out: 0,
       duplicate_in_batch: 0,
       already_known: 0,
@@ -125,12 +125,12 @@ Deno.serve(async (req) => {
     for (const doc of DOCS) {
       for (const rec of doc.records) {
         funnel.records_discovered++;
-        const n = normalizeOfficialRecord(doc, rec, fetchedAt);
-        if (n.parse_error === "no_published_contact") {
-          funnel.parse_rejected_no_contact++;
-          continue;
-        }
+        const n = normalizeOfficialRecord({ ...doc, source_kind: "novoclimat" }, rec, fetchedAt);
+        if (n.parse_error) continue;
         funnel.records_parsed++;
+        // A record without published contact is RETAINED (needs_enrichment),
+        // never rejected and never promoted for outreach.
+        if (n.contact_status === "needs_enrichment") funnel.no_contact_retained++;
         if (regionFilter && !regionFilter.some((r) => (n.region ?? "").toLowerCase().includes(r))) {
           funnel.region_filtered_out++;
           continue;
@@ -277,7 +277,9 @@ Deno.serve(async (req) => {
         const hasChannel = (n.phone_e164 && !phoneBlocked) || (n.email && !emailBlocked);
         if (!hasChannel) {
           eligibility = "blocked";
-          blocked = phoneBlocked || emailBlocked ? "opt_out_suppressed" : "not_contactable";
+          blocked = phoneBlocked || emailBlocked
+            ? "opt_out_suppressed"
+            : (n.contact_status === "needs_enrichment" ? "needs_enrichment" : "not_contactable");
           if (blocked === "opt_out_suppressed") funnel.blocked_opt_out++;
           else funnel.blocked_not_contactable++;
         }
@@ -343,20 +345,33 @@ Deno.serve(async (req) => {
       // 6a. official_source_records: full audit trail of every parsed record
       const rows = decided.map((d) => ({
         source_key: d.source_key,
+        source_kind: d.source_kind,
+        source_record_key: d.source_record_key,
         source_name: d.source_name,
         source_url: d.source_url,
         certification: d.certification,
         certificate_no: d.certificate_no,
+        neq: d.neq,
+        rbq_license: d.rbq_license,
         business_name: d.business_name,
         business_name_norm: d.business_name_norm,
         phone_raw: d.phone_raw,
         phone_e164: d.phone_e164,
         email: d.email,
+        website_url: d.website_url,
+        official_domain: d.official_domain,
+        address: d.address,
+        postal_code: d.postal_code,
         municipality: d.municipality,
+        city: d.city,
         region: d.region,
         priority_rank: d.priority_rank,
         specialty_bonus: d.specialty_bonus,
         trust_bonus: d.trust_bonus,
+        trust_score: d.trust_score,
+        contact_status: d.contact_status,
+        enrichment_status: d.contact_status === "needs_enrichment" ? "needs_enrichment" : "none",
+        raw_record: d.raw_record,
         provenance: d.provenance,
         fetched_at: fetchedAt,
         dedupe_status: d.dedupe_status,
@@ -370,7 +385,7 @@ Deno.serve(async (req) => {
       for (let i = 0; i < rows.length; i += 100) {
         const { error } = await supabase
           .from("official_source_records")
-          .upsert(rows.slice(i, i + 100), { onConflict: "source_key,certificate_no" });
+          .upsert(rows.slice(i, i + 100), { onConflict: "source_key,source_record_key" });
         if (error) console.error("official_source_records upsert:", error.message);
       }
 
@@ -380,7 +395,7 @@ Deno.serve(async (req) => {
           .from("official_source_records")
           .select("id,prospect_id")
           .eq("source_key", d.source_key)
-          .eq("certificate_no", d.certificate_no ?? "")
+          .eq("source_record_key", d.source_record_key)
           .maybeSingle();
         if (existing?.prospect_id) continue; // idempotent
 
@@ -402,7 +417,7 @@ Deno.serve(async (req) => {
             source_key: d.source_key,
             source_name: d.source_name,
             source_url: d.source_url,
-            source_record_id: d.certificate_no,
+            source_record_id: d.source_record_key,
             discovery_method: "official_verified_source",
             source_priority: d.priority_rank,
             rbq_verified: false,
@@ -432,7 +447,7 @@ Deno.serve(async (req) => {
           .from("official_source_records")
           .update({ prospect_id: inserted.id, updated_at: new Date().toISOString() })
           .eq("source_key", d.source_key)
-          .eq("certificate_no", d.certificate_no ?? "");
+          .eq("source_record_key", d.source_record_key);
 
         promoted.push({ business_name: d.business_name, prospect_id: inserted.id });
         funnel.promoted_to_prospects++;
