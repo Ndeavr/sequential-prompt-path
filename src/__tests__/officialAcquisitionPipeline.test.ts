@@ -344,3 +344,55 @@ describe("DataStore-backed resources of any format", () => {
     expect(pickResource([{ id: "pdf", format: "PDF", url: "https://x/g.pdf" }])).toBeNull();
   });
 });
+
+/* ------------------ registry summary timing + persistence accounting ------------------ */
+import {
+  chunkPayload,
+  accountPersistence,
+  redactPersistError,
+} from "../../supabase/functions/_shared/officialPersistence";
+
+describe("official persistence accounting", () => {
+  it("chunks deterministically", () => {
+    const rows = Array.from({ length: 250 }, (_, i) => i);
+    const chunks = chunkPayload(rows, 100);
+    expect(chunks.map((c) => c.length)).toEqual([100, 100, 50]);
+  });
+
+  it("counts only successful chunks as persisted", () => {
+    const acc = accountPersistence([
+      { size: 100 },
+      { size: 100, error: "duplicate key value violates unique constraint" },
+      { size: 21 },
+    ]);
+    expect(acc.attempted).toBe(221);
+    expect(acc.persisted).toBe(121);
+    expect(acc.failed).toBe(100);
+    expect(acc.chunks_failed).toBe(1);
+    expect(acc.errors[0].chunk_index).toBe(1);
+  });
+
+  it("reports zero persisted when every chunk fails", () => {
+    const acc = accountPersistence([{ size: 21, error: "boom" }]);
+    expect(acc.persisted).toBe(0);
+    expect(acc.failed).toBe(21);
+  });
+
+  it("redacts urls and secrets from persistence errors", () => {
+    const msg = redactPersistError("failed https://db.example.co/rest apikey=abc123");
+    expect(msg).not.toContain("abc123");
+    expect(msg).not.toContain("https://");
+  });
+
+  it("summary written after upserts reflects the factual run (21 persisted)", () => {
+    // Simulates the fixed ordering: records upsert -> accounting -> registry summary.
+    const funnel: Record<string, number> = { discovered: 21, persisted: 0 };
+    const acc = accountPersistence([{ size: 21 }]);
+    funnel.persisted = acc.persisted;
+    funnel.persist_failed = acc.failed;
+    const summary = { ...funnel, persistence: acc };
+    expect(summary.persisted).toBe(21);
+    expect(summary.persist_failed).toBe(0);
+    expect(summary.persistence.chunks_failed).toBe(0);
+  });
+});
