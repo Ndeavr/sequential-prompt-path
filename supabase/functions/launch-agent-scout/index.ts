@@ -257,20 +257,21 @@ Deno.serve(async (req) => {
   }
 
 
-  // Pass 2 — refill via Google Places if pool yielded too few
-  let refill: Awaited<ReturnType<typeof googlePlacesRefill>> | null = null;
+  // Pass 2 — refill through the resilient Places gateway if the pool yielded too few.
+  let refill: RefillResult | null = null;
   if (candidates.length < Math.floor(batch / 2)) {
     refill = await googlePlacesRefill(sb);
-    if (refill.error && refill.inserted_into_pool === 0) {
+    if (refill.blocked) {
       await reportOutcome({
         operation: "launch.scout.run",
         outcome: "blocked",
         block_reason: BlockReason.MISSING_SECRET,
-        next_action: `Google Places refill failed: ${refill.error}`,
+        next_action: `Découverte Google Places bloquée (${refill.error}) — le pipeline continue sur l'inventaire existant.`,
       });
       await logLaunchEvent({
-        agent: "launch-agent-scout", event: "blocked", success: false,
+        agent: "launch-agent-scout", event: "discovery_blocked", success: false,
         message: `google_places: ${refill.error} (q="${refill.query}")`,
+        payload: { refill },
       });
       // continue — we may still have some candidates from pool
     }
@@ -280,6 +281,7 @@ Deno.serve(async (req) => {
       candidates = pickCandidates(pool ?? []).slice(0, batch);
     }
   }
+
 
   if (candidates.length === 0) {
     const reason = (pool ?? []).length === 0
