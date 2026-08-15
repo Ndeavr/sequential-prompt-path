@@ -497,6 +497,9 @@ Deno.serve(async (req) => {
       next_cursor: nextCursor,
       column_map: map,
       funnel,
+      persistence,
+      ok_persistence: !persistence || persistence.chunks_failed === 0,
+
       top_candidates: decided.slice(0, 15).map((d) => ({
         business_name: d.business_name,
         neq: d.neq,
