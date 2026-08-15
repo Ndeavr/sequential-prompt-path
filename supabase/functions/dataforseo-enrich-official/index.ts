@@ -25,6 +25,13 @@ import {
   MAX_TRANSIENT_RETRIES,
   type MatchTarget,
 } from "../_shared/dataForSeo.ts";
+import {
+  OFFICIAL_SOURCE_KINDS,
+  evaluateCandidate,
+  buildMatchUpdate,
+  type CandidateRecord,
+  type CandidateReason,
+} from "../_shared/dataForSeoCandidates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -282,6 +289,7 @@ Deno.serve(async (req) => {
         attempt_count: (attemptBy.get(c.id)?.attempt_count ?? 0) + 1,
         query_title: c.business_name,
         query_locality: target.city,
+        candidate_reason: c.candidate_reason,
         match_score: outcome.score,
         matched_title: item?.title ?? null,
         matched_phone: item?.phone ?? null,
@@ -296,29 +304,19 @@ Deno.serve(async (req) => {
       }, { onConflict: "official_source_record_id,provider" });
 
       if (outcome.status === "matched" && item) {
-        // Aggregator-sourced contact: NOT source_confirmed. Website confirmation pending.
-        await admin.from("official_source_records").update({
-          enrichment_status: item.url ? "pending_website_confirmation" : "aggregator_only",
-          website_url: item.url ?? undefined,
-          provenance: {
-            dataforseo: {
-              matched_at: new Date().toISOString(),
-              match_score: outcome.score,
-              phone: item.phone,
-              website: item.url,
-              trust: "aggregator_sourced",
-              confirmed_by_official_site: false,
-            },
-          },
-          updated_at: new Date().toISOString(),
-        }).eq("id", c.id);
+        // Aggregator-sourced: additive only. Official phone/email and any
+        // published contact_status are preserved untouched. The website stays
+        // `pending_website_confirmation` until enrich-official-website validates it.
+        await admin.from("official_source_records")
+          .update(buildMatchUpdate(c, item, outcome.score, new Date().toISOString()))
+          .eq("id", c.id);
       } else {
         await admin.from("official_source_records")
           .update({ enrichment_status: outcome.status, updated_at: new Date().toISOString() })
           .eq("id", c.id);
       }
 
-      results.push({ id: c.id, status: outcome.status, score: outcome.score });
+      results.push({ id: c.id, status: outcome.status, score: outcome.score, candidate_reason: c.candidate_reason });
     }
 
     return json({
