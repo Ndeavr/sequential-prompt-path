@@ -227,17 +227,20 @@ Deno.serve(async (req) => {
     // Opt-outs / suppressions (hard block, certification never bypasses them)
     {
       const values = [...phones, ...emails];
-      if (values.length) {
-        const { data } = await supabase
-          .from("outreach_suppressions")
-          .select("contact_type,contact_value")
-          .in("contact_value", values)
-          .limit(2000);
-        for (const r of (data ?? []) as { contact_type: string; contact_value: string }[]) {
-          if (phones.includes(r.contact_value)) optOut.phone.add(r.contact_value);
-          if (emails.includes(r.contact_value?.toLowerCase?.() ?? "")) optOut.email.add(r.contact_value.toLowerCase());
-        }
-      }
+      await Promise.all(
+        chunks(values).map(async (part) => {
+          const { data, error } = await supabase
+            .from("outreach_suppressions")
+            .select("contact_type,contact_value")
+            .in("contact_value", part)
+            .limit(1000);
+          if (error) { console.error(`suppression scan failed: ${error.message}`); return; }
+          for (const r of (data ?? []) as { contact_type: string; contact_value: string }[]) {
+            if (phones.includes(r.contact_value)) optOut.phone.add(r.contact_value);
+            if (emails.includes(r.contact_value?.toLowerCase?.() ?? "")) optOut.email.add(r.contact_value.toLowerCase());
+          }
+        }),
+      );
     }
 
     // ---------- 5. Classify ----------
