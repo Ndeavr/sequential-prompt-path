@@ -228,6 +228,11 @@ export default function PageAffiliateWarRoom() {
           )}
         </section>
 
+        {/* Équipe — sous-affiliés (override 5 %) */}
+        {affiliate?.referral_code && (
+          <AffiliateTeamSection referralCode={affiliate.referral_code} />
+        )}
+
         {/* File « À contacter manuellement » assignée par l'admin */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
