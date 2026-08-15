@@ -4,6 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { reportOutcome, FailureCode } from "../_shared/reliability.ts";
+import { searchPlacesResilient } from "../_shared/placesGateway.ts";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_maps";
 
@@ -69,37 +70,22 @@ Deno.serve(async (req) => {
       await sb.from("contractor_growth_campaigns").update({ status: "running" }).eq("id", campaign.id);
     }
 
-    // Google Places text search via gateway
-    const textQuery = `${trade} ${city} Québec`;
-    const fields = "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount";
-    const limit = Math.min(body.limit ?? 50, 50);
-
-    const resp = await fetch(`${GATEWAY}/places/v1/places:searchText`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_KEY}`,
-        "X-Connection-Api-Key": GMAPS_KEY,
-        "Content-Type": "application/json",
-        "X-Goog-FieldMask": fields,
-      },
-      body: JSON.stringify({ textQuery, maxResultCount: limit, languageCode: "fr-CA", regionCode: "CA" }),
-    });
-
-    if (!resp.ok) {
-      const errText = await resp.text();
+    // Google Places via the resilient gateway — single billable path
+    // (incident 2026-08): shared cache, circuit breaker, atomic daily budget.
+    const limit = Math.min(body.limit ?? 20, 20);
+    const search = await searchPlacesResilient(sb, { trade, city, limit, caller: "growth-expansion-agent" });
+    if (!search.ok) {
       await reportOutcome({
-        operation: "growth_expansion", outcome: "failed",
+        operation: "growth_expansion", outcome: "blocked",
         failure_code: FailureCode.ENRICHMENT_FAILED,
         affected_record: body.contractor_id,
-        payload: { http: resp.status, body: errText.slice(0, 500) },
+        payload: { error_code: search.error_code, remediation: search.remediation },
       });
-      return new Response(JSON.stringify({ error: "places_api_error", detail: errText.slice(0, 500) }), {
-        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ error: search.error_code, detail: search.remediation }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const data = await resp.json();
-    const places: Array<Record<string, unknown>> = (data.places ?? []) as Array<Record<string, unknown>>;
+    const places = search.places as Array<Record<string, unknown>>;
 
     const rows = places.map((p) => ({
       contractor_id: body.contractor_id,
@@ -108,8 +94,8 @@ Deno.serve(async (req) => {
       city,
       website: (p.websiteUri as string | undefined) ?? null,
       phone: (p.nationalPhoneNumber as string | undefined) ?? null,
-      google_rating: (p.rating as number | undefined) ?? null,
-      review_count: (p.userRatingCount as number | undefined) ?? null,
+      google_rating: null,
+      review_count: null,
       status: "waiting_review",
     }));
 
