@@ -82,24 +82,39 @@ Deno.serve(async (req) => {
     const killSwitch = circuit?.kill_switch !== false;
 
     // ---------- candidates ----------
+    // Eligible when EITHER the contact is missing (needs_enrichment) OR the
+    // official website is missing while the record is eligible. Discovery is
+    // never performed: candidates always come from official_source_records.
     const nowIso = new Date().toISOString();
+    const SELECT_COLS =
+      "id, source_kind, business_name, business_name_norm, neq, rbq_license, city, municipality, region, postal_code, website_url, official_domain, contact_status, enrichment_status, eligibility_status, dedupe_status, blocked_reason";
+    const MISSING_WEBSITE_FILTER =
+      "and(eligibility_status.eq.eligible,website_url.is.null,official_domain.is.null)";
+    const CANDIDATE_OR = `contact_status.eq.needs_enrichment,${MISSING_WEBSITE_FILTER}`;
+
+    const requestedKinds: string[] = Array.isArray(body.source_kinds) && body.source_kinds.length
+      ? body.source_kinds.filter((k: unknown) => typeof k === "string")
+      : [...OFFICIAL_SOURCE_KINDS];
+
     let q = admin
       .from("official_source_records")
-      .select("id, business_name, business_name_norm, neq, rbq_license, city, municipality, region, postal_code, official_domain, contact_status, enrichment_status")
-      .eq("contact_status", "needs_enrichment")
+      .select(SELECT_COLS)
+      .in("source_kind", requestedKinds)
+      .neq("dedupe_status", "known")
+      .or(CANDIDATE_OR)
       .order("priority_rank", { ascending: true })
       .order("trust_score", { ascending: false })
       .limit(limit);
     if (Array.isArray(body.record_ids) && body.record_ids.length) {
       q = admin
         .from("official_source_records")
-        .select("id, business_name, business_name_norm, neq, rbq_license, city, municipality, region, postal_code, official_domain, contact_status, enrichment_status")
+        .select(SELECT_COLS)
         .in("id", body.record_ids.slice(0, MAX_BATCH));
     }
     const { data: records, error: recErr } = await q;
     if (recErr) return json({ ok: false, error: "candidates_query_failed", message: recErr.message }, 500);
 
-    const candidates = records ?? [];
+    const candidates = (records ?? []) as CandidateRecord[];
 
     // ---------- cache / terminal filter ----------
     const ids = candidates.map((c) => c.id);
@@ -116,31 +131,54 @@ Deno.serve(async (req) => {
       attemptBy.set(a.official_source_record_id, a);
     }
 
-    const eligible = candidates.filter((c) => {
-      const a = attemptBy.get(c.id);
-      if (!a) return true;
-      if (a.status === "failed_terminal") return false;
-      if (a.next_eligible_at && a.next_eligible_at > nowIso) return false;
-      return true;
-    });
+    const eligible: Array<CandidateRecord & { candidate_reason: CandidateReason }> = [];
+    const skipped: Array<{ id: string; skip_reason: string }> = [];
+    for (const c of candidates) {
+      const verdict = evaluateCandidate(c, attemptBy.get(c.id), nowIso);
+      if (verdict.eligible) eligible.push({ ...c, candidate_reason: verdict.reason });
+      else skipped.push({ id: c.id, skip_reason: verdict.skip_reason });
+    }
 
     const plan = eligible.map((c) => ({
       id: c.id,
+      source_kind: c.source_kind,
       title: c.business_name,
       locality: c.municipality ?? c.city,
       region: c.region,
+      candidate_reason: c.candidate_reason,
     }));
+
+    // Totals ignore `limit` so the cockpit always sees the real backlog.
+    const baseCount = () =>
+      admin.from("official_source_records")
+        .select("id", { count: "exact", head: true })
+        .in("source_kind", requestedKinds)
+        .neq("dedupe_status", "known");
+    const [missingContactRes, missingWebsiteRes, targetableRes] = await Promise.all([
+      baseCount().eq("contact_status", "needs_enrichment"),
+      baseCount().eq("eligibility_status", "eligible").is("website_url", null).is("official_domain", null),
+      baseCount().or(CANDIDATE_OR),
+    ]);
 
     const summary = {
       provider: PROVIDER,
       mode,
       credentials_configured: credentialsConfigured,
       kill_switch: killSwitch,
+      source_kinds: requestedKinds,
       candidates_found: candidates.length,
-      cache_or_terminal_skipped: candidates.length - eligible.length,
+      cache_or_terminal_skipped: skipped.length,
+      skipped,
       planned_calls: plan.length,
+      limit_applied: limit,
+      targetable_totals: {
+        missing_contact: missingContactRes.count ?? 0,
+        missing_website: missingWebsiteRes.count ?? 0,
+        total_targetable: targetableRes.count ?? 0,
+      },
       caps: { max_usd_per_day: 5, max_calls_per_day: 100, max_items_per_day: 500 },
     };
+
 
     if (mode !== "live") {
       return json({ ok: true, ...summary, executed: 0, plan, note: "Dry-run : aucun appel payant effectué." });
