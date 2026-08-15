@@ -90,7 +90,7 @@ export default function PageUnproActivate() {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [token, preview]);
 
   // landing_engaged: le prospect a réellement consulté son profil (scroll ou 6 s).
   useEffect(() => {
