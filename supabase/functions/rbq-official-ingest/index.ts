@@ -24,6 +24,14 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import {
+  chunkPayload,
+  accountPersistence,
+  redactPersistError,
+  type ChunkOutcome,
+  type PersistenceAccounting,
+} from "../_shared/officialPersistence.ts";
+
+import {
   ckanPackageShow,
   pickResource,
   resourceStrategy,
