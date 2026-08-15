@@ -60,9 +60,24 @@ export default function AdminOfficialAcquisition() {
   const needsEnrichment = records.filter((r) => r.contact_status === "needs_enrichment").length;
   const attemptCount = (s: string) => (data?.attempts ?? []).filter((a) => a.status === s).length;
 
-  const credentialsConfigured = Boolean(data?.circuit?.notes?.includes("credentials_ok"));
+  // Credential presence is a SERVER truth: the dry-run endpoint reports a boolean only,
+  // never a value. No duplicate endpoint, no stale `notes` string parsing.
+  const { data: credHealth } = useQuery({
+    queryKey: ["dataforseo-credentials-health"],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("dataforseo-enrich-official", {
+        body: { mode: "dry_run", limit: 1 },
+      });
+      if (error) throw error;
+      return data as { credentials_configured?: boolean; kill_switch?: boolean };
+    },
+  });
+
+  const credentialsConfigured = credHealth?.credentials_configured === true;
   const killSwitch = data?.circuit?.kill_switch !== false;
   const paidLocked = killSwitch || !credentialsConfigured;
+
 
   const costToday = Number(data?.budget?.cost_usd_used ?? 0);
   const callsToday = Number(data?.budget?.calls_used ?? 0);
@@ -145,6 +160,7 @@ export default function AdminOfficialAcquisition() {
           state={paidLocked ? "Verrouillé" : "Actif"}
           locked={paidLocked}
           rows={[
+            ["Identifiants", credentialsConfigured ? "Configurés" : "Absents"],
             ["À enrichir", needsEnrichment],
             ["Appariés", attemptCount("matched")],
             ["Ambigus", attemptCount("ambiguous")],
@@ -155,6 +171,13 @@ export default function AdminOfficialAcquisition() {
           ]}
           action={
             <div className="flex flex-col gap-2">
+              <p className="text-xs text-muted-foreground">
+                {credentialsConfigured
+                  ? killSwitch
+                    ? "Identifiants installés. Fournisseur toujours verrouillé — activation explicite requise avant tout test payant."
+                    : "Identifiants installés. Fournisseur actif sous plafonds quotidiens."
+                  : "Identifiants absents. Ajoutez-les dans les secrets du projet avant toute activation."}
+              </p>
               <Button size="sm" variant="secondary" disabled={running !== null}
                 onClick={() => invoke("dataforseo-enrich-official", { mode: "dry_run", limit: 25 }, "DataForSEO — test 25 (à blanc)")}>
                 Test 25 (à blanc)
@@ -170,6 +193,7 @@ export default function AdminOfficialAcquisition() {
               )}
             </div>
           }
+
         />
         <SourceCard
           icon={<Globe className="h-4 w-4" />}
