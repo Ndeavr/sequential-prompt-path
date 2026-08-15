@@ -65165,6 +65165,30 @@ export type Database = {
         }
         Relationships: []
       }
+      places_external_call_budget: {
+        Row: {
+          budget_date: string
+          calls_used: number
+          created_at: string
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          budget_date: string
+          calls_used?: number
+          created_at?: string
+          provider: string
+          updated_at?: string
+        }
+        Update: {
+          budget_date?: string
+          calls_used?: number
+          created_at?: string
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       places_query_cache: {
         Row: {
           cache_key: string
@@ -93371,6 +93395,7 @@ export type Database = {
         Returns: boolean
       }
       pipeline_data_integrity_report: { Args: never; Returns: Json }
+      places_budget_status: { Args: { p_provider?: string }; Returns: Json }
       process_waitlist_replacement: {
         Args: { p_territory_id: string; p_threshold?: number }
         Returns: Json
@@ -93457,6 +93482,10 @@ export type Database = {
         Returns: boolean
       }
       repair_mojibake_text: { Args: { input: string }; Returns: string }
+      reserve_places_external_call: {
+        Args: { p_provider?: string }
+        Returns: Json
+      }
       reserve_promo_code_redemption: {
         Args: {
           p_code: string
