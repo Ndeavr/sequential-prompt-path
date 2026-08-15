@@ -390,7 +390,7 @@ describe("official persistence accounting", () => {
     const acc = accountPersistence([{ size: 21 }]);
     funnel.persisted = acc.persisted;
     funnel.persist_failed = acc.failed;
-    const summary = { ...funnel, persistence: acc };
+    const summary: Record<string, number> & { persistence: typeof acc } = { ...funnel, persistence: acc };
     expect(summary.persisted).toBe(21);
     expect(summary.persist_failed).toBe(0);
     expect(summary.persistence.chunks_failed).toBe(0);
