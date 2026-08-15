@@ -273,9 +273,23 @@ Deno.serve(async (req) => {
     });
 
     const eligible = decided.filter((d) => d.eligibility_status === "eligible");
+
     // Safety: promotion into the canonical prospect table is always explicitly bounded.
     // limit = 0 records the official audit trail without feeding the recruitment queue.
-    const selected = limit > 0 ? eligible.slice(0, limit) : [];
+    // A hard daily cap prevents a replay loop from flooding the recruitment queue.
+    const DAILY_PROMOTION_CAP = 5;
+    let remainingToday = DAILY_PROMOTION_CAP;
+    if (mode === "ingest" && limit > 0) {
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { count } = await supabase
+        .from("official_source_records")
+        .select("id", { count: "exact", head: true })
+        .not("prospect_id", "is", null)
+        .gte("updated_at", since);
+      remainingToday = Math.max(0, DAILY_PROMOTION_CAP - (count ?? 0));
+    }
+    const selected = limit > 0 ? eligible.slice(0, Math.min(limit, remainingToday)) : [];
+    funnel.daily_promotion_slots_remaining = remainingToday;
 
     const topCandidates = eligible.slice(0, 15).map((d) => ({
       business_name: d.business_name,
