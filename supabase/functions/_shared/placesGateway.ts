@@ -293,10 +293,11 @@ export async function searchPlacesResilient(
   const url = useConnectorGateway
     ? "https://connector-gateway.lovable.dev/google_maps/places/v1/places:searchText"
     : "https://places.googleapis.com/v1/places:searchText";
+  // Strictly required fields only. `rating` / `userRatingCount` are NOT part of
+  // discovery — they belong to enrichment, and they raise the SKU tier for nothing.
   const fieldMask = [
     "places.id","places.displayName","places.formattedAddress","places.nationalPhoneNumber",
-    "places.websiteUri","places.googleMapsUri","places.rating","places.userRatingCount",
-    "places.primaryType","places.location","places.addressComponents",
+    "places.websiteUri","places.googleMapsUri","places.primaryType","places.addressComponents",
   ].join(",");
 
   const collected: PlaceResult[] = [];
@@ -304,6 +305,38 @@ export async function searchPlacesResilient(
   let externalCalls = 0;
 
   for (let page = 0; page < pagesNeeded && collected.length < limit; page++) {
+    // ATOMIC BUDGET RESERVATION — always before the network call, never after.
+    const { data: reservation, error: reserveError } = await supabase.rpc(
+      "reserve_places_external_call",
+      { p_provider: PROVIDER },
+    );
+    if (reserveError || !reservation?.allowed) {
+      const resetsAt = reservation?.resets_at ?? null;
+      const remediation =
+        `Plafond quotidien Google Places atteint (${reservation?.calls_used ?? "?"}/${reservation?.daily_limit ?? 25} appels externes, journée America/Toronto). ` +
+        `Aucun appel facturable n'est émis jusqu'à la réinitialisation. Le recrutement continue sur le cache et l'inventaire existant.`;
+      const retryAfter = await tripCircuit(supabase, {
+        errorCode: "daily_budget_exhausted",
+        message: reserveError?.message ?? remediation,
+        remediation,
+        failureCount: (state?.failure_count ?? 0),
+        cooldownMs: resetsAt ? Math.max(new Date(resetsAt).getTime() - Date.now(), 60_000) : 60 * 60 * 1000,
+      });
+      await logCall(supabase, {
+        ...logBase, outcome: "daily_budget_exhausted", cache_hit: false,
+        external_calls: 0, calls_avoided: pagesNeeded - page, result_count: 0,
+        error_code: "daily_budget_exhausted",
+      });
+      if (cached) {
+        const places = dedupePlaces((cached.results ?? []) as PlaceResult[]).slice(0, limit);
+        return { ok: true, places, cache_hit: true, stale: true, source: "cache_stale", external_calls: 0, calls_avoided: pagesNeeded };
+      }
+      return {
+        ok: false, blocked: true, error_code: "daily_budget_exhausted", state: "open",
+        retry_after: resetsAt ?? retryAfter, remediation,
+      };
+    }
+
     const resp = await fetch(url, {
       method: "POST",
       headers: {
@@ -317,11 +350,12 @@ export async function searchPlacesResilient(
         textQuery: query,
         languageCode: "fr-CA",
         regionCode: "CA",
-        pageSize: Math.min(20, limit - collected.length),
+        pageSize: Math.min(MAX_RESULTS_PER_SEARCH, limit - collected.length),
         ...(pageToken ? { pageToken } : {}),
       }),
     });
     externalCalls++;
+
 
     if (!resp.ok) {
       const raw = await resp.text();
