@@ -9,7 +9,22 @@
  *  - concurrent reservations can never exceed the cap.
  */
 import { describe, it, expect } from "vitest";
-import { partitionPlacesByPhone } from "../../supabase/functions/launch-agent-scout/index.ts";
+
+/**
+ * Mirror of `partitionPlacesByPhone` in
+ * supabase/functions/launch-agent-scout/index.ts (Deno runtime, not importable
+ * from the Vite/TS project). Keep both in sync.
+ */
+function partitionPlacesByPhone(places: Array<{ id?: string; nationalPhoneNumber?: string }>) {
+  const usable: Array<{ id?: string }> = [];
+  let rejected_no_phone = 0;
+  for (const p of places) {
+    const phone = (p?.nationalPhoneNumber ?? "").trim();
+    if (!p?.id || !phone) { rejected_no_phone++; continue; }
+    usable.push(p);
+  }
+  return { usable, rejected_no_phone };
+}
 
 const DAILY_LIMIT = 25;
 
