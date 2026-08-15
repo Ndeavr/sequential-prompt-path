@@ -71,6 +71,10 @@ Deno.serve(async (req) => {
     const token = String((body as { token?: string })?.token ?? "").trim();
     const trackEvent = String((body as { event?: string })?.event ?? "").trim();
     const meta = ((body as { meta?: Record<string, unknown> })?.meta ?? {}) as Record<string, unknown>;
+    // QA preview: renders the exact production profile WITHOUT writing clicks,
+    // funnel events or variant assignments. Used to validate the landing without
+    // contaminating the post-fix cohort. Never sent by the app itself.
+    const preview = (body as { preview?: boolean })?.preview === true;
 
     if (!token || token.length > 128) {
       return json({ ok: false, reason: "invalid_token" }, 400);
