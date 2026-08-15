@@ -208,7 +208,7 @@ export async function searchPlacesResilient(
   },
 ): Promise<PlacesSearchResult> {
   const { trade, city, caller } = opts;
-  const limit = Math.min(Math.max(Number(opts.limit) || 20, 1), 60);
+  const limit = Math.min(Math.max(Number(opts.limit) || 20, 1), MAX_RESULTS_PER_SEARCH);
   const ttlDays = opts.ttlDays ?? DEFAULT_TTL_DAYS;
   const key = cacheKey(trade, city);
   const query = `${trade} ${city} Québec`;
