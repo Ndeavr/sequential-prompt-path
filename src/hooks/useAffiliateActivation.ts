@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { getStoredAttribution } from "@/hooks/useReferralAttribution";
 
 export type AffiliateType =
   | "contractor"
