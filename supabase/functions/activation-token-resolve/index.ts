@@ -169,25 +169,41 @@ Deno.serve(async (req) => {
           avg_job_value_cad: number | null;
         }
       | null = null;
+    // Anti-collision : deux entreprises peuvent porter le même nom dans deux
+    // villes. On n'attache des signaux externes (avis, notes, licence) QUE si
+    // le nom correspond exactement ET qu'une seule fiche existe, ou que la
+    // ville concorde. Aucun signal ne doit jamais migrer d'une entreprise à
+    // une autre.
+    const exactName = (prospect.business_name ?? "").trim();
+    const nameFilter = exactName.replace(/[%_]/g, (m) => `\\${m}`) || "___never___";
+
     try {
-      const { data: cp } = await supabase
+      const { data: rows } = await supabase
         .from("contractor_prospects")
-        .select("review_count, review_rating, photo_count, rbq_license, rbq_verified, trade, avg_job_value_cad")
-        .ilike("business_name", prospect.business_name ?? "___never___")
-        .limit(1)
-        .maybeSingle();
-      extra = (cp as typeof extra) ?? null;
+        .select("review_count, review_rating, photo_count, rbq_license, rbq_verified, trade, avg_job_value_cad, city")
+        .ilike("business_name", nameFilter)
+        .limit(5);
+      const list = (rows ?? []) as Array<Record<string, unknown> & { city: string | null }>;
+      const cityMatch = prospect.city
+        ? list.find((r) => (r.city ?? "").toLowerCase() === prospect.city!.toLowerCase())
+        : null;
+      const chosen = cityMatch ?? (list.length === 1 ? list[0] : null);
+      extra = (chosen as typeof extra) ?? null;
     } catch { /* non-blocking */ }
 
     let aipp: { logo_url: string | null; short_ai_summary: string | null; google_rating: number | null; google_review_count: number | null } | null = null;
     try {
-      const { data: ap } = await supabase
+      const { data: aps } = await supabase
         .from("aipp_profiles")
-        .select("logo_url, short_ai_summary, google_rating, google_review_count")
-        .ilike("company_name", prospect.business_name ?? "___never___")
-        .limit(1)
-        .maybeSingle();
-      aipp = (ap as typeof aipp) ?? null;
+        .select("logo_url, short_ai_summary, google_rating, google_review_count, city")
+        .ilike("company_name", nameFilter)
+        .limit(5);
+      const list = (aps ?? []) as Array<Record<string, unknown> & { city: string | null }>;
+      const cityMatch = prospect.city
+        ? list.find((r) => (r.city ?? "").toLowerCase() === prospect.city!.toLowerCase())
+        : null;
+      const chosen = cityMatch ?? (list.length === 1 ? list[0] : null);
+      aipp = (chosen as typeof aipp) ?? null;
     } catch { /* non-blocking */ }
 
     // ------------------------------------------------------- build the profile
