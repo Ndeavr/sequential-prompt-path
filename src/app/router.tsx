@@ -1581,6 +1581,8 @@ export const AppRouter = () => (
         <Route path="/admin/dispatch-center" element={<ProtectedRoute requiredRole="admin"><AdminDispatchCenter /></ProtectedRoute>} />
         <Route path="/admin/commercial-eligibility" element={<ProtectedRoute requiredRole="admin"><AdminCommercialEligibility /></ProtectedRoute>} />
         <Route path="/admin/official-site-enrichment" element={<ProtectedRoute requiredRole="admin"><AdminOfficialSiteEnrichment /></ProtectedRoute>} />
+        <Route path="/admin/official-acquisition" element={<ProtectedRoute requiredRole="admin"><AdminOfficialAcquisition /></ProtectedRoute>} />
+
         <Route path="/admin/solicitation" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><AdminSolicitationPage /></Suspense></ProtectedRoute>} />
         <Route path="/admin/outreach-errors" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOutreachErrors /></Suspense></ProtectedRoute>} />
         <Route path="/admin/provider-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminProviderHealth /></Suspense></ProtectedRoute>} />
