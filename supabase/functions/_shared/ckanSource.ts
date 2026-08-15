@@ -108,29 +108,46 @@ export type CanonicalField =
 
 const ALIASES: Record<CanonicalField, RegExp[]> = {
   business_name: [/^(nom|nom_?de?_?l?'?entreprise|raison[_ ]?sociale|nom_assujetti|nom_entreprise|titulaire)/i],
-  neq: [/neq/i, /num[eé]ro[_ ]?d?'?entreprise/i],
-  rbq_license: [/licence/i, /rbq/i, /no[_ ]?licence/i],
+  neq: [/^neq$/i, /neq/i, /num[eé]ro[_ ]?d?'?entreprise/i],
+  rbq_license: [/^num[eé]ro de licence/i, /no[_ ]?licence/i, /licence/i, /rbq/i],
   phone: [/t[eé]l[eé]phone/i, /^tel/i, /num[eé]ro[_ ]?de[_ ]?t[eé]l/i],
   email: [/courriel/i, /email/i, /adresse[_ ]?[eé]lectronique/i],
   website: [/site[_ ]?web/i, /site[_ ]?internet/i, /url/i],
   address: [/adresse/i, /rue/i, /voie/i],
   postal_code: [/code[_ ]?postal/i, /^cp$/i],
   municipality: [/municipalit/i, /^ville/i, /localit/i],
-  region: [/r[eé]gion/i],
-  categories: [/cat[eé]gorie/i, /sous[-_ ]?cat/i, /classe/i, /activit/i, /secteur/i],
-  status: [/statut/i, /[eé]tat/i],
+  region: [/^r[eé]gion administrative/i, /r[eé]gion/i],
+  categories: [/^cat[eé]gorie/i, /^sous[-_ ]?cat[eé]gorie/i, /cat[eé]gorie/i, /activit/i, /secteur/i, /classe/i],
+  status: [/^statut de la licence/i, /statut/i, /[eé]tat/i],
 };
 
-/** Build a header → canonical field map, defensively (French label drift tolerated). */
+/** Headers that must never win a field (counts, codes, derived columns). */
+const EXCLUSIONS: Partial<Record<CanonicalField, RegExp[]>> = {
+  region: [/^code/i],
+  categories: [/nombre/i],
+  address: [/electron|courriel|email/i],
+  municipality: [/code/i],
+};
+
+const normHeader = (h: string) =>
+  h.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+/**
+ * Build a canonical field → header map.
+ * Alias order is a PRIORITY order: the most specific label wins over a loose one
+ * (e.g. "Region administrative" beats "Code de region administrative").
+ */
 export function mapColumns(headers: string[]): Partial<Record<CanonicalField, string>> {
   const out: Partial<Record<CanonicalField, string>> = {};
-  for (const h of headers) {
-    const norm = h.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-    for (const [field, patterns] of Object.entries(ALIASES) as [CanonicalField, RegExp[]][]) {
-      if (out[field]) continue;
-      // "adresse électronique" must map to email, not address.
-      if (field === "address" && /electron|courriel|email/.test(norm)) continue;
-      if (patterns.some((p) => p.test(norm) || p.test(h))) { out[field] = h; break; }
+  for (const [field, patterns] of Object.entries(ALIASES) as [CanonicalField, RegExp[]][]) {
+    const excl = EXCLUSIONS[field] ?? [];
+    for (const p of patterns) {
+      const hit = headers.find((h) => {
+        const n = normHeader(h);
+        if (excl.some((e) => e.test(n) || e.test(h))) return false;
+        return p.test(n) || p.test(h);
+      });
+      if (hit) { out[field] = hit; break; }
     }
   }
   return out;

@@ -306,3 +306,27 @@ describe("CKAN resource strategy + readers", () => {
     expect(mapColumns(Object.keys(csv[0]))).toEqual(mapColumns(ds.fields));
   });
 });
+
+describe("RBQ column mapping (real Données Québec headers)", () => {
+  const RBQ_HEADERS = [
+    "Numero de licence", "Statut de la licence", "Type de licence", "Date de delivrance",
+    "Courriel", "Adresse", "NEQ", "Nom de l'intervenant", "Numero de telephone",
+    "Municipalite", "Statut juridique", "Code de region administrative",
+    "Region administrative", "Nombre de sous-categorie autorisees", "Categorie", "Sous-categories",
+  ];
+  it("prefers the readable region label over the numeric code column", () => {
+    expect(mapColumns(RBQ_HEADERS).region).toBe("Region administrative");
+  });
+  it("never maps a count column to categories", () => {
+    expect(mapColumns(RBQ_HEADERS).categories).toBe("Categorie");
+  });
+  it("maps identity + contact columns", () => {
+    const m = mapColumns(RBQ_HEADERS);
+    expect(m.business_name).toBe("Nom de l'intervenant");
+    expect(m.neq).toBe("NEQ");
+    expect(m.rbq_license).toBe("Numero de licence");
+    expect(m.phone).toBe("Numero de telephone");
+    expect(m.email).toBe("Courriel");
+    expect(m.municipality).toBe("Municipalite");
+  });
+});

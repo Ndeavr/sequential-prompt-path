@@ -330,7 +330,8 @@ Deno.serve(async (req) => {
         address: pick(row, map, "address"),
         postal_code: pick(row, map, "postal_code"),
         municipality,
-        region: region ?? municipality,
+        // Préférer un libellé de région lisible ; les codes numériques ne priorisent rien.
+        region: region && /[A-Za-zÀ-ÿ]/.test(region) ? region : municipality,
         categories: categories ? categories.split(/[;,|]/).map((c) => c.trim()).filter(Boolean) : null,
         raw: row,
       };
