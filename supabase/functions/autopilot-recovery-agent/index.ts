@@ -70,29 +70,16 @@ function getAdjacentCities(city: string): string[] {
   return CITY_ADJACENCY[k] ?? [];
 }
 
-// ─── Google Places search with pagination ────────────────────────────────────
-async function searchPlaces(query: string, pageToken?: string): Promise<{ places: any[]; nextPageToken?: string; status: number }> {
-  const body: Record<string, unknown> = {
-    textQuery: query, languageCode: "fr-CA", maxResultCount: 20,
-  };
-  if (pageToken) body.pageToken = pageToken;
-
-  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Goog-Api-Key": GOOGLE_PLACES_API_KEY,
-      "X-Goog-FieldMask":
-        "nextPageToken,places.id,places.displayName,places.formattedAddress,places.websiteUri,places.nationalPhoneNumber,places.rating,places.userRatingCount,places.types,places.businessStatus",
-    },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    console.error(`Places ${res.status}: ${(await res.text()).slice(0, 200)}`);
-    return { places: [], status: res.status };
+// ─── Google Places search — SINGLE billable path (incident 2026-08) ──────────
+// All automated discovery goes through searchPlacesResilient: shared 14-day
+// cache, circuit breaker, and atomic 25-calls/day budget. Never fetch directly.
+async function searchPlaces(trade: string, city: string): Promise<{ places: any[]; nextPageToken?: string; status: number }> {
+  const search = await searchPlacesResilient(sbAdmin(), { trade, city, limit: 20, caller: "autopilot-recovery-agent" });
+  if (!search.ok) {
+    console.warn(`[recovery] places blocked: ${search.error_code}`);
+    return { places: [], status: 429 };
   }
-  const data = await res.json();
-  return { places: data.places ?? [], nextPageToken: data.nextPageToken, status: 200 };
+  return { places: search.places, status: 200 };
 }
 
 // ─── Main recovery handler ───────────────────────────────────────────────────
