@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
   await reportOutcome({
     operation: "launch.commander.tick",
     outcome: anyOk && anyMovement ? "achieved" : "partial",
-    payload: { byStatus, durationMs: Date.now() - startedAt, results },
+    payload: { byStatus, durationMs: Date.now() - startedAt, results, scout_skipped: scoutSkipped },
     next_action: anyOk && anyMovement ? undefined : "No actionable work this tick — check Active Blocker.",
   });
 
@@ -165,10 +165,10 @@ Deno.serve(async (req) => {
     agent: "launch-commander",
     event: "tick",
     success: anyOk && anyMovement,
-    payload: { byStatus, results },
+    payload: { byStatus, results, scout_skipped: scoutSkipped },
   });
 
-  return new Response(JSON.stringify({ ok: true, byStatus, results }), {
+  return new Response(JSON.stringify({ ok: true, byStatus, results, scout_skipped: scoutSkipped }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 });
