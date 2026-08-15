@@ -24,6 +24,14 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import {
+  chunkPayload,
+  accountPersistence,
+  redactPersistError,
+  type ChunkOutcome,
+  type PersistenceAccounting,
+} from "../_shared/officialPersistence.ts";
+
+import {
   ckanPackageShow,
   pickResource,
   resourceStrategy,
@@ -398,30 +406,10 @@ Deno.serve(async (req) => {
     });
 
     // ---------- 5. Persist (ingest only, audit trail only — no send queue) ----------
+    // Records FIRST, registry summary AFTER, so `persisted` is factual and a failed
+    // chunk is never silently counted as written.
+    let persistence: PersistenceAccounting | null = null;
     if (mode === "ingest") {
-      await supabase.from("official_source_registry").upsert({
-        source_key: ds.source_key,
-        source_kind: ds.source_kind,
-        source_name: ds.source_name,
-        publisher: ds.publisher,
-        source_url: doc.source_url,
-        dataset_slug: ds.slug,
-        resource_id: resource.id,
-        resource_url: resource.url,
-        resource_format: resource.format ?? null,
-        resource_last_modified: resource.last_modified ?? null,
-        resource_checksum: resource.hash ?? null,
-        document_type: strategy,
-        access_policy: "API CKAN officielle Données Québec — aucune extraction HTML",
-        robots_allowed: true,
-        last_fetched_at: startedAt,
-        last_record_count: totalRows,
-        ingest_cursor: nextCursor,
-        last_run_summary: funnel,
-        active: true,
-        updated_at: startedAt,
-      }, { onConflict: "source_key" });
-
       const payload = decided.map((d) => ({
         source_key: d.source_key,
         source_kind: d.source_kind,
@@ -460,14 +448,43 @@ Deno.serve(async (req) => {
         blocked_reason: d.already_known ? "already_known_in_unpro" : (d.contact_status === "needs_enrichment" ? "needs_enrichment" : null),
         updated_at: startedAt,
       }));
-      for (let i = 0; i < payload.length; i += 100) {
+
+      const outcomes: ChunkOutcome[] = [];
+      for (const slice of chunkPayload(payload, 100)) {
         const { error } = await supabase
           .from("official_source_records")
-          .upsert(payload.slice(i, i + 100), { onConflict: "source_key,source_record_key" });
-        if (error) console.error("official_source_records upsert:", error.message);
-        else funnel.persisted += payload.slice(i, i + 100).length;
+          .upsert(slice, { onConflict: "source_key,source_record_key" });
+        if (error) console.error("official_source_records upsert failed:", redactPersistError(error.message));
+        outcomes.push({ size: slice.length, error: error ? error.message : null });
       }
+      persistence = accountPersistence(outcomes);
+      funnel.persisted = persistence.persisted;
+      funnel.persist_failed = persistence.failed;
+
+      await supabase.from("official_source_registry").upsert({
+        source_key: ds.source_key,
+        source_kind: ds.source_kind,
+        source_name: ds.source_name,
+        publisher: ds.publisher,
+        source_url: doc.source_url,
+        dataset_slug: ds.slug,
+        resource_id: resource.id,
+        resource_url: resource.url,
+        resource_format: resource.format ?? null,
+        resource_last_modified: resource.last_modified ?? null,
+        resource_checksum: resource.hash ?? null,
+        document_type: strategy,
+        access_policy: "API CKAN officielle Données Québec — aucune extraction HTML",
+        robots_allowed: true,
+        last_fetched_at: startedAt,
+        last_record_count: totalRows,
+        ingest_cursor: nextCursor,
+        last_run_summary: { ...funnel, persistence },
+        active: true,
+        updated_at: startedAt,
+      }, { onConflict: "source_key" });
     }
+
 
     return json({
       ok: true,
@@ -480,6 +497,9 @@ Deno.serve(async (req) => {
       next_cursor: nextCursor,
       column_map: map,
       funnel,
+      persistence,
+      ok_persistence: !persistence || persistence.chunks_failed === 0,
+
       top_candidates: decided.slice(0, 15).map((d) => ({
         business_name: d.business_name,
         neq: d.neq,
