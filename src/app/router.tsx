@@ -20,6 +20,8 @@ const PageHomeVariantB = lazyWithRetry(() => import("@/pages/home/PageHomeVarian
 const PageHomeVariantC = lazyWithRetry(() => import("@/pages/home/PageHomeVariantC"));
 import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
+const PageVisibiliteIA = lazyWithRetry(() => import("@/pages/marketing/PageVisibiliteIA"));
+const AdminVisibiliteIALeads = lazyWithRetry(() => import("@/pages/admin/AdminVisibiliteIALeads"));
 import { LEGACY_REDIRECTS } from "@/config/routeRegistry";
 import PageEmergencyReset from "@/pages/PageEmergencyReset";
 const PageProjectCreatedSuccess = lazyWithRetry(() => import("@/pages/PageProjectCreatedSuccess"));
