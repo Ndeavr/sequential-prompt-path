@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
 
       let companies: ScrapedCompany[] = [];
       try {
-        companies = await scrapeGooglePlaces(mission.trade_slug, city);
+        companies = await scrapeGooglePlaces(supabase, mission.trade_slug, city);
         diag.places = companies.length;
       } catch (e) {
         console.error("places err", city, e);
@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
       per_city: perCityDiag,
       total_inserted: inserted.length,
       errors,
-      has_places_key: !!getPlacesKey(),
+      discovery_path: "places_gateway",
       has_firecrawl_key: !!FIRECRAWL_API_KEY,
     };
 
