@@ -333,7 +333,7 @@ Deno.serve(async (req) => {
         _idempotency_key: `profile_viewed:${realToken}`,
       });
     } catch (e) {
-      console.error("[activation-token-resolve] click_track_failed", String(e));
+      if (!preview) console.error("[activation-token-resolve] click_track_failed", String(e));
     }
 
     return json({
