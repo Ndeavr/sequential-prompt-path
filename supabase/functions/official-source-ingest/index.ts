@@ -273,7 +273,9 @@ Deno.serve(async (req) => {
     });
 
     const eligible = decided.filter((d) => d.eligibility_status === "eligible");
-    const selected = limit > 0 ? eligible.slice(0, limit) : eligible;
+    // Safety: promotion into the canonical prospect table is always explicitly bounded.
+    // limit = 0 records the official audit trail without feeding the recruitment queue.
+    const selected = limit > 0 ? eligible.slice(0, limit) : [];
 
     const topCandidates = eligible.slice(0, 15).map((d) => ({
       business_name: d.business_name,
