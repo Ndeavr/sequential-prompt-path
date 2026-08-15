@@ -527,7 +527,7 @@ export default function PageAffiliatesHub() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("affiliates")
-        .select("id, name, first_name, last_name, email, phone, primary_city, province, status, commission_pct, daily_quota, total_assigned, total_contacted, total_trials, total_converted, total_revenue_cents, total_commissions_cents, referral_code, created_at")
+        .select("id, name, first_name, last_name, email, phone, primary_city, province, status, commission_pct, daily_quota, total_assigned, total_contacted, total_trials, total_converted, total_revenue_cents, total_commissions_cents, referral_code, created_at, parent_affiliate_id, parent_assigned_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Aff[];
@@ -551,7 +551,7 @@ export default function PageAffiliatesHub() {
         </header>
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid grid-cols-5 lg:grid-cols-10 h-auto">
+          <TabsList className="grid grid-cols-4 lg:grid-cols-11 h-auto">
             <TabsTrigger value="dashboard" className="text-xs"><TrendingUp className="w-3.5 h-3.5 mr-1" />Dashboard</TabsTrigger>
             <TabsTrigger value="affiliates" className="text-xs"><Users className="w-3.5 h-3.5 mr-1" />Affiliés</TabsTrigger>
             <TabsTrigger value="prospects" className="text-xs"><ClipboardList className="w-3.5 h-3.5 mr-1" />Prospects</TabsTrigger>
@@ -561,6 +561,7 @@ export default function PageAffiliatesHub() {
             <TabsTrigger value="payouts" className="text-xs"><Wallet className="w-3.5 h-3.5 mr-1" />Paiements</TabsTrigger>
             <TabsTrigger value="leaderboard" className="text-xs"><Award className="w-3.5 h-3.5 mr-1" />Leaderboard</TabsTrigger>
             <TabsTrigger value="documents" className="text-xs"><FileText className="w-3.5 h-3.5 mr-1" />Docs</TabsTrigger>
+            <TabsTrigger value="subaffiliates" className="text-xs"><UserPlus className="w-3.5 h-3.5 mr-1" />Équipes</TabsTrigger>
             <TabsTrigger value="settings" className="text-xs"><Settings className="w-3.5 h-3.5 mr-1" />Réglages</TabsTrigger>
           </TabsList>
 
@@ -589,6 +590,7 @@ export default function PageAffiliatesHub() {
             <TabsContent value="payouts"><ComingSoon title="Paiements" subtitle="Lots de paiement, exports CSV / Stripe / QuickBooks." sprint="Sprint C" /></TabsContent>
             <TabsContent value="leaderboard"><ComingSoon title="Leaderboard" subtitle="Classement par conversions, revenus et commissions." sprint="Sprint D" /></TabsContent>
             <TabsContent value="documents"><ComingSoon title="Documents" subtitle="Bibliothèque PDF (scripts appel/SMS, présentation, FAQ)." sprint="Sprint D" /></TabsContent>
+            <TabsContent value="subaffiliates"><SubAffiliatesTab affiliates={affiliates} /></TabsContent>
             <TabsContent value="settings"><ComingSoon title="Réglages" subtitle="Règles d'assignation, quotas globaux, seuils de charge." sprint="Sprint D" /></TabsContent>
           </div>
         </Tabs>
