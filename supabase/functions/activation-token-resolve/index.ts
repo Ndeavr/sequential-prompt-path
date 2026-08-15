@@ -272,22 +272,25 @@ Deno.serve(async (req) => {
     const profileVariant = bucket(prospect.id + "p", ["standard"]);
 
     // Persist the variant assignment (idempotent) so the Conversion Lab can compare.
-    try {
-      await supabase.from("conversion_variant_assignments").upsert(
-        [
-          { prospect_id: prospect.id, surface: "landing", variant: landingVariant, cohort_city: prospect.city, cohort_trade: trade },
-          { prospect_id: prospect.id, surface: "profile", variant: profileVariant, cohort_city: prospect.city, cohort_trade: trade },
-        ],
-        { onConflict: "prospect_id,surface", ignoreDuplicates: true },
-      );
-    } catch (e) {
-      console.error("[activation-token-resolve] variant_assign_failed", String(e));
+    if (!preview) {
+      try {
+        await supabase.from("conversion_variant_assignments").upsert(
+          [
+            { prospect_id: prospect.id, surface: "landing", variant: landingVariant, cohort_city: prospect.city, cohort_trade: trade },
+            { prospect_id: prospect.id, surface: "profile", variant: profileVariant, cohort_city: prospect.city, cohort_trade: trade },
+          ],
+          { onConflict: "prospect_id,surface", ignoreDuplicates: true },
+        );
+      } catch (e) {
+        console.error("[activation-token-resolve] variant_assign_failed", String(e));
+      }
     }
 
     // ------------------------------------------------------------ click + events
     const now = new Date().toISOString();
     const realToken = resolved.token;
     try {
+      if (preview) throw new Error("preview_mode_no_write");
       await supabase
         .from("verified_prospect_tokens")
         .update({ clicked_at: resolved.clicked_at ?? now, click_count: (resolved.click_count ?? 0) + 1 })
