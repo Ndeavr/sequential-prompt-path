@@ -95,17 +95,31 @@ Deno.serve(async (req) => {
     const trades: string[] = Array.isArray(body.trades) && body.trades.length
       ? body.trades.map((t: string) => t.toLowerCase())
       : PILOT_TRADES;
-    const neqFilter: Set<string> | null = datasetKey === "req" && Array.isArray(body.neqs) && body.neqs.length
+    let neqFilter: Set<string> | null = datasetKey === "req" && Array.isArray(body.neqs) && body.neqs.length
       ? new Set(body.neqs.map((n: string) => String(n).replace(/\D/g, "")))
       : null;
 
+    // REQ ne sert qu'à réconcilier l'identité de NEQ DÉJÀ présents en base.
+    // Si l'admin ne fournit pas de liste, on sélectionne automatiquement les NEQ connus.
     if (datasetKey === "req" && !neqFilter) {
-      return json({
-        ok: false,
-        error: "req_requires_neqs",
-        message: "REQ ne sert qu'à réconcilier l'identité de NEQ déjà sélectionnés. Fournir `neqs`.",
-      }, 400);
+      const { data: knownNeqs, error: neqErr } = await supabase
+        .from("official_source_records")
+        .select("neq")
+        .not("neq", "is", null)
+        .limit(Math.min(limit, 500));
+      const list = (knownNeqs ?? [])
+        .map((r: { neq: string | null }) => String(r.neq ?? "").replace(/\D/g, ""))
+        .filter((n: string) => n.length > 0);
+      if (neqErr || list.length === 0) {
+        return json({
+          ok: false,
+          error: "req_no_known_neqs",
+          message: "Aucun NEQ déjà ingéré à réconcilier. Lancez d'abord une ingestion RBQ.",
+        }, 400);
+      }
+      neqFilter = new Set(list);
     }
+
 
     const funnel: Record<string, number> = {
       discovered: 0,
