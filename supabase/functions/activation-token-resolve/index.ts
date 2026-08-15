@@ -281,7 +281,9 @@ Deno.serve(async (req) => {
       { key: "trade", label: "Spécialité identifiée", ok: Boolean(trade) },
       { key: "territory", label: "Territoire défini", ok: Boolean(prospect.city || areas.length) },
       { key: "contact", label: "Contact joignable", ok: Boolean(prospect.phone_e164 || prospect.email) },
-      { key: "web", label: "Présence web", ok: Boolean(site || prospect.google_business_url || prospect.google_place_id) },
+      // « Présence en ligne » : site web OU fiche Google. Le libellé doit rester
+      // exact, sinon la fiche affirme un site web que l'entreprise n'a pas.
+      { key: "web", label: site ? "Site web" : "Présence en ligne (Google)", ok: Boolean(site || prospect.google_business_url || prospect.google_place_id) },
       { key: "reviews", label: "Signaux d'avis publics", ok: hasReviews },
       { key: "credentials", label: "Licence RBQ", ok: Boolean(rbq) },
       { key: "media", label: "Photos de réalisations", ok: Boolean(photoCount && photoCount > 0) },
