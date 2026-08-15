@@ -172,3 +172,77 @@ export function tradeKeysFor(text: string | null | undefined): string[] {
   const hay = (text ?? "");
   return TRADE_MATCHERS.filter((m) => m.re.test(hay)).map((m) => m.key);
 }
+
+/* ------------------------- resource strategy ------------------------- */
+
+export type ResourceStrategy = "datastore" | "csv" | "workbook" | "unsupported";
+
+/**
+ * Deterministic decision of HOW a CKAN resource must be read.
+ * DataStore wins whenever CKAN advertises it (selective queries + pagination).
+ */
+export function resourceStrategy(r: CkanResource | null | undefined): ResourceStrategy {
+  if (!r) return "unsupported";
+  if (r.datastore_active === true && r.id) return "datastore";
+  const fmt = (r.format ?? "").toLowerCase();
+  if (!r.url) return "unsupported";
+  if (fmt === "csv") return "csv";
+  if (fmt === "xlsx" || fmt === "xls") return "workbook";
+  return "unsupported";
+}
+
+/** CKAN datastore_search URL (deterministic ordering by _id for resumable cursors). */
+export function datastoreSearchUrl(
+  resourceId: string,
+  opts: { limit?: number; offset?: number; filters?: Record<string, string[] | string>; fieldsOnly?: boolean } = {},
+): string {
+  const p = new URLSearchParams();
+  p.set("resource_id", resourceId);
+  p.set("limit", String(opts.fieldsOnly ? 0 : Math.max(0, opts.limit ?? 100)));
+  if (!opts.fieldsOnly) {
+    p.set("offset", String(Math.max(0, opts.offset ?? 0)));
+    p.set("sort", "_id asc");
+  }
+  if (opts.filters && Object.keys(opts.filters).length > 0) {
+    p.set("filters", JSON.stringify(opts.filters));
+  }
+  return `${CKAN_BASE}/datastore_search?${p.toString()}`;
+}
+
+export type DatastorePage = {
+  fields: string[];
+  records: Record<string, string>[];
+  total: number;
+};
+
+/** Normalize a CKAN datastore_search response into string records. */
+export function parseDatastoreResult(body: unknown): DatastorePage {
+  const b = body as {
+    success?: boolean;
+    result?: { fields?: Array<{ id: string }>; records?: Record<string, unknown>[]; total?: number };
+  };
+  if (!b?.success || !b?.result) throw new Error("datastore_invalid_response");
+  const fields = (b.result.fields ?? []).map((f) => f.id).filter((id) => id !== "_id");
+  const records = (b.result.records ?? []).map((rec) => {
+    const o: Record<string, string> = {};
+    for (const [k, v] of Object.entries(rec)) {
+      if (k === "_id") continue;
+      o[k] = v === null || v === undefined ? "" : String(v).trim();
+    }
+    return o;
+  });
+  return { fields, records, total: Number(b.result.total ?? records.length) };
+}
+
+/** Convert a sheet array-of-arrays (header row first) into trimmed string records. */
+export function sheetRowsToRecords(aoa: unknown[][]): Record<string, string>[] {
+  if (!aoa || aoa.length === 0) return [];
+  const header = (aoa[0] ?? []).map((h) => String(h ?? "").trim());
+  return aoa.slice(1)
+    .filter((r) => (r ?? []).some((v) => String(v ?? "").trim() !== ""))
+    .map((r) => {
+      const o: Record<string, string> = {};
+      header.forEach((h, i) => { if (h) o[h] = String(r?.[i] ?? "").trim(); });
+      return o;
+    });
+}
