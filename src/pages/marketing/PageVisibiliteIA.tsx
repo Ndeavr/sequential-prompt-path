@@ -367,24 +367,27 @@ export default function PageVisibiliteIA() {
         </section>
       </div>
 
-      {/* CTA fixe mobile — au-dessus du dock */}
-      <div className="fixed inset-x-3 bottom-[calc(var(--bottom-dock-height,88px)+env(safe-area-inset-bottom))] z-30 flex gap-2 md:hidden">
-        <a
-          href={PHONE_TEL}
-          onClick={() => trackCall("sticky_mobile")}
-          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full border border-border bg-card text-sm font-semibold text-foreground shadow-lg"
-        >
-          <Phone className="h-4 w-4" aria-hidden="true" />
-          Appeler UNPRO
-        </a>
-        <a
-          href="#analyse-ia"
-          onClick={() => logFunnelEvent({ event_type: "ai_visibility_cta_hero", metadata: { position: "sticky_mobile" } })}
-          className="flex h-12 flex-1 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-lg"
-        >
-          Analyse IA
-        </a>
-      </div>
+      {/* CTA fixe mobile — porté dans document.body pour échapper aux conteneurs clippés */}
+      {createPortal(
+        <div className="fixed inset-x-3 bottom-[calc(var(--bottom-dock-height,88px)+env(safe-area-inset-bottom))] z-30 flex gap-2 md:hidden">
+          <a
+            href={PHONE_TEL}
+            onClick={() => trackCall("sticky_mobile")}
+            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full border border-border bg-card text-sm font-semibold text-foreground shadow-lg"
+          >
+            <Phone className="h-4 w-4" aria-hidden="true" />
+            Appeler UNPRO
+          </a>
+          <a
+            href="#analyse-ia"
+            onClick={() => logFunnelEvent({ event_type: "ai_visibility_cta_hero", metadata: { position: "sticky_mobile" } })}
+            className="flex h-12 flex-1 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-lg"
+          >
+            Analyse IA
+          </a>
+        </div>,
+        document.body,
+      )}
     </MainLayout>
   );
 }
