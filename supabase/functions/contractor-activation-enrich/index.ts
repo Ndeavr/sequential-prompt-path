@@ -88,7 +88,8 @@ async function enrichContractor(
   // Text Search is billable and must only be reached through the discovery
   // gateway (_shared/placesGateway.ts). Enrichment now relies on data already
   // captured during discovery; no ad-hoc Google call happens here.
-  }
+
+
 
   // 2. Website scrape via Firecrawl (if available)
   const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");
