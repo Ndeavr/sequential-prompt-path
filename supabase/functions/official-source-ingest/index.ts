@@ -164,33 +164,54 @@ Deno.serve(async (req) => {
     const known = { phone: new Map<string, string>(), email: new Map<string, string>(), name: new Map<string, string>() };
     const optOut = { phone: new Set<string>(), email: new Set<string>() };
 
+    // PostgREST filters travel in the URL: chunk the lookup so a 179-record batch
+    // never blows the request-line limit (silent dedupe failure = duplicate outreach).
+    const CHUNK = 40;
+    function chunks<T>(arr: T[]): T[][] {
+      const out: T[][] = [];
+      for (let i = 0; i < arr.length; i += CHUNK) out.push(arr.slice(i, i + CHUNK));
+      return out;
+    }
+
     async function scan(
       table: string,
       cols: { phone?: string[]; email?: string[]; name?: string[] },
     ) {
       const select = ["id", ...(cols.phone ?? []), ...(cols.email ?? []), ...(cols.name ?? [])].join(",");
-      const filters: string[] = [];
-      for (const c of cols.phone ?? []) if (phones.length) filters.push(`${c}.in.(${phones.join(",")})`);
-      for (const c of cols.email ?? []) if (emails.length) filters.push(`${c}.in.(${emails.map((e) => `"${e}"`).join(",")})`);
-      for (const c of cols.name ?? []) if (names.length) filters.push(`${c}.in.(${names.map((v) => `"${v.replace(/"/g, "")}"`).join(",")})`);
-      if (!filters.length) return;
-      const { data, error } = await supabase.from(table).select(select).or(filters.join(",")).limit(2000);
-      if (error) { console.error(`dedupe scan ${table} failed: ${error.message}`); return; }
-      for (const row of (data ?? []) as Record<string, unknown>[]) {
-        const ref = `${table}:${row.id}`;
-        for (const c of cols.phone ?? []) {
-          const v = row[c] as string | null;
-          if (v && phones.includes(v) && !known.phone.has(v)) known.phone.set(v, ref);
+
+      const collect = (rows: Record<string, unknown>[]) => {
+        for (const row of rows) {
+          const ref = `${table}:${row.id}`;
+          for (const c of cols.phone ?? []) {
+            const v = row[c] as string | null;
+            if (v && phones.includes(v) && !known.phone.has(v)) known.phone.set(v, ref);
+          }
+          for (const c of cols.email ?? []) {
+            const v = (row[c] as string | null)?.toLowerCase();
+            if (v && emails.includes(v) && !known.email.has(v)) known.email.set(v, ref);
+          }
+          for (const c of cols.name ?? []) {
+            const v = row[c] as string | null;
+            if (v && names.includes(v) && !known.name.has(v)) known.name.set(v, ref);
+          }
         }
-        for (const c of cols.email ?? []) {
-          const v = (row[c] as string | null)?.toLowerCase();
-          if (v && emails.includes(v) && !known.email.has(v)) known.email.set(v, ref);
+      };
+
+      const runs: Array<Promise<void>> = [];
+      const push = (col: string, values: string[]) => {
+        for (const part of chunks(values)) {
+          runs.push((async () => {
+            const { data, error } = await supabase.from(table).select(select).in(col, part).limit(1000);
+            if (error) { console.error(`dedupe scan ${table}.${col} failed: ${error.message}`); return; }
+            collect((data ?? []) as Record<string, unknown>[]);
+          })());
         }
-        for (const c of cols.name ?? []) {
-          const v = row[c] as string | null;
-          if (v && names.includes(v) && !known.name.has(v)) known.name.set(v, ref);
-        }
-      }
+      };
+
+      for (const c of cols.phone ?? []) if (phones.length) push(c, phones);
+      for (const c of cols.email ?? []) if (emails.length) push(c, emails);
+      for (const c of cols.name ?? []) if (names.length) push(c, names);
+      await Promise.all(runs);
     }
 
     await Promise.all([
