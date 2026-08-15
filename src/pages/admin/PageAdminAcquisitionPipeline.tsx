@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { RevenueTimelinePanel } from "@/components/admin/acquisition/RevenueTimelinePanel";
 import { AutonomousRecruitmentPanel } from "@/components/admin/acquisition/AutonomousRecruitmentPanel";
 import { DiscoveryHealthPanel } from "@/components/admin/acquisition/DiscoveryHealthPanel";
+import { SupplySourceMixPanel } from "@/components/admin/acquisition/SupplySourceMixPanel";
 
 import {
   useAcquisitionSourceHealth,
@@ -863,6 +864,8 @@ export default function PageAdminAcquisitionPipeline() {
         </section>
 
         <DiscoveryHealthPanel />
+
+        <SupplySourceMixPanel />
 
         <AutonomousRecruitmentPanel />
 
