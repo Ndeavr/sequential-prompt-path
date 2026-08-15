@@ -410,6 +410,105 @@ function CommissionsTab() {
   );
 }
 
+function SubAffiliatesTab({ affiliates }: { affiliates: Aff[] }) {
+  const byId = useMemo(() => new Map(affiliates.map((a) => [a.id, a])), [affiliates]);
+  const children = useMemo(() => affiliates.filter((a: any) => a.parent_affiliate_id), [affiliates]);
+
+  const { data: overrides = [], isLoading } = useQuery({
+    queryKey: ["admin-subaffiliate-overrides"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("affiliate_conversions")
+        .select("id, affiliate_id, parent_of_affiliate_id, source_conversion_id, value_cents, commission_amount_cents, commission_rate, status, created_at")
+        .eq("commission_kind", "subaffiliate_override")
+        .order("created_at", { ascending: false })
+        .limit(300);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const totalOverride = overrides
+    .filter((o: any) => o.status !== "reversed")
+    .reduce((s: number, o: any) => s + (o.commission_amount_cents || 0), 0);
+
+  const nameOf = (id?: string | null) => (id ? byId.get(id)?.name ?? id.slice(0, 8) : "—");
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-3">
+        <KpiCard icon={Users} label="Affiliés recrutés" value={String(children.length)} />
+        <KpiCard icon={Wallet} label="Overrides 5 % générés" value={formatCents(totalOverride)} />
+        <KpiCard icon={FileText} label="Lignes override" value={String(overrides.length)} />
+      </div>
+
+      <div className="rounded-2xl border border-border/40 bg-card overflow-x-auto">
+        <div className="p-3 text-sm font-medium border-b border-border/40">Relations parent → recrue</div>
+        {children.length === 0 ? (
+          <div className="p-6 text-center text-sm text-muted-foreground">Aucun sous-affilié attribué pour l'instant.</div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-muted/30 border-b border-border/40">
+              <tr>
+                <th className="p-3 text-left">Recrue</th>
+                <th className="p-3 text-left">Parrain</th>
+                <th className="p-3 text-left">Attribué le</th>
+                <th className="p-3 text-left">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              {children.map((c: any) => (
+                <tr key={c.id} className="border-b border-border/20">
+                  <td className="p-3 font-medium">{c.name}</td>
+                  <td className="p-3">{nameOf(c.parent_affiliate_id)}</td>
+                  <td className="p-3 text-xs text-muted-foreground">
+                    {c.parent_assigned_at ? new Date(c.parent_assigned_at).toLocaleString("fr-CA") : "—"}
+                  </td>
+                  <td className="p-3"><Badge variant="outline">{c.status}</Badge></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="rounded-2xl border border-border/40 bg-card overflow-x-auto">
+        <div className="p-3 text-sm font-medium border-b border-border/40">Commissions override (5 %)</div>
+        {isLoading ? (
+          <div className="p-6 text-sm text-muted-foreground">Chargement…</div>
+        ) : overrides.length === 0 ? (
+          <div className="p-6 text-center text-sm text-muted-foreground">Aucune commission override enregistrée.</div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-muted/30 border-b border-border/40">
+              <tr>
+                <th className="p-3 text-left">Parrain payé</th>
+                <th className="p-3 text-left">Vente de</th>
+                <th className="p-3 text-left">Revenu source</th>
+                <th className="p-3 text-left">Override</th>
+                <th className="p-3 text-left">Statut</th>
+                <th className="p-3 text-left">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {overrides.map((o: any) => (
+                <tr key={o.id} className="border-b border-border/20">
+                  <td className="p-3 font-medium">{nameOf(o.affiliate_id)}</td>
+                  <td className="p-3">{nameOf(o.parent_of_affiliate_id)}</td>
+                  <td className="p-3 tabular-nums">{formatCents(o.value_cents || 0)}</td>
+                  <td className="p-3 tabular-nums font-semibold">{formatCents(o.commission_amount_cents || 0)}</td>
+                  <td className="p-3"><Badge variant="outline">{o.status}</Badge></td>
+                  <td className="p-3 text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString("fr-CA")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ComingSoon({ title, subtitle, sprint }: { title: string; subtitle: string; sprint: string }) {
   return (
     <div className="rounded-2xl border border-border/40 bg-card p-8 text-center space-y-2">
@@ -428,7 +527,7 @@ export default function PageAffiliatesHub() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("affiliates")
-        .select("id, name, first_name, last_name, email, phone, primary_city, province, status, commission_pct, daily_quota, total_assigned, total_contacted, total_trials, total_converted, total_revenue_cents, total_commissions_cents, referral_code, created_at")
+        .select("id, name, first_name, last_name, email, phone, primary_city, province, status, commission_pct, daily_quota, total_assigned, total_contacted, total_trials, total_converted, total_revenue_cents, total_commissions_cents, referral_code, created_at, parent_affiliate_id, parent_assigned_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Aff[];
@@ -452,7 +551,7 @@ export default function PageAffiliatesHub() {
         </header>
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid grid-cols-5 lg:grid-cols-10 h-auto">
+          <TabsList className="grid grid-cols-4 lg:grid-cols-11 h-auto">
             <TabsTrigger value="dashboard" className="text-xs"><TrendingUp className="w-3.5 h-3.5 mr-1" />Dashboard</TabsTrigger>
             <TabsTrigger value="affiliates" className="text-xs"><Users className="w-3.5 h-3.5 mr-1" />Affiliés</TabsTrigger>
             <TabsTrigger value="prospects" className="text-xs"><ClipboardList className="w-3.5 h-3.5 mr-1" />Prospects</TabsTrigger>
@@ -462,6 +561,7 @@ export default function PageAffiliatesHub() {
             <TabsTrigger value="payouts" className="text-xs"><Wallet className="w-3.5 h-3.5 mr-1" />Paiements</TabsTrigger>
             <TabsTrigger value="leaderboard" className="text-xs"><Award className="w-3.5 h-3.5 mr-1" />Leaderboard</TabsTrigger>
             <TabsTrigger value="documents" className="text-xs"><FileText className="w-3.5 h-3.5 mr-1" />Docs</TabsTrigger>
+            <TabsTrigger value="subaffiliates" className="text-xs"><UserPlus className="w-3.5 h-3.5 mr-1" />Équipes</TabsTrigger>
             <TabsTrigger value="settings" className="text-xs"><Settings className="w-3.5 h-3.5 mr-1" />Réglages</TabsTrigger>
           </TabsList>
 
@@ -490,6 +590,7 @@ export default function PageAffiliatesHub() {
             <TabsContent value="payouts"><ComingSoon title="Paiements" subtitle="Lots de paiement, exports CSV / Stripe / QuickBooks." sprint="Sprint C" /></TabsContent>
             <TabsContent value="leaderboard"><ComingSoon title="Leaderboard" subtitle="Classement par conversions, revenus et commissions." sprint="Sprint D" /></TabsContent>
             <TabsContent value="documents"><ComingSoon title="Documents" subtitle="Bibliothèque PDF (scripts appel/SMS, présentation, FAQ)." sprint="Sprint D" /></TabsContent>
+            <TabsContent value="subaffiliates"><SubAffiliatesTab affiliates={affiliates} /></TabsContent>
             <TabsContent value="settings"><ComingSoon title="Réglages" subtitle="Règles d'assignation, quotas globaux, seuils de charge." sprint="Sprint D" /></TabsContent>
           </div>
         </Tabs>

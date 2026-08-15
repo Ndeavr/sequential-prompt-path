@@ -164,6 +164,38 @@ export default function PageAffiliesPublic() {
         </div>
       </section>
 
+      {/* Sous-affiliés — override 5 % */}
+      <section className="mx-auto max-w-5xl px-6 pb-20">
+        <div className="rounded-3xl border border-primary/25 bg-primary/5 p-6 md:p-10">
+          <div className="text-xs font-medium uppercase tracking-wider text-primary">Revenu d'équipe</div>
+          <h2 className="mt-2 text-2xl md:text-3xl font-semibold text-foreground">
+            Bâtissez votre équipe UNPRO
+          </h2>
+          <p className="mt-3 text-muted-foreground max-w-2xl">
+            Recrutez d'autres affiliés avec votre lien personnel. Ils touchent 100 % de leur commission
+            habituelle, et UNPRO vous verse <strong className="text-foreground">5 % additionnels</strong> sur
+            leurs ventes admissibles. Rien n'est retiré à votre recrue.
+          </p>
+          <div className="mt-6 grid sm:grid-cols-3 gap-4">
+            {[
+              { t: "Vente de votre recrue", d: "350 $" },
+              { t: "Sa commission", d: "Inchangée, payée en entier" },
+              { t: "Votre override 5 %", d: "17,50 $ payé par UNPRO" },
+            ].map((x) => (
+              <div key={x.t} className="rounded-2xl border border-border/40 bg-card p-4">
+                <div className="text-xs text-muted-foreground">{x.t}</div>
+                <div className="mt-1 text-lg font-semibold text-foreground">{x.d}</div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-4 text-xs text-muted-foreground">
+            Un seul niveau. Attribution automatique via votre lien de recrutement, vérifiée côté serveur.
+          </p>
+        </div>
+      </section>
+
+
+
       {/* Trust */}
       <section className="mx-auto max-w-5xl px-6 pb-20">
         <div className="grid md:grid-cols-3 gap-4">

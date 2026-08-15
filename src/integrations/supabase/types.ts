@@ -4960,12 +4960,17 @@ export type Database = {
           affiliate_id: string | null
           attribution_id: string | null
           commission_amount_cents: number
+          commission_kind: string
           commission_rate: number
           conversion_type: string
           created_at: string
           id: string
           metadata: Json | null
+          parent_of_affiliate_id: string | null
+          source_conversion_id: string | null
+          source_event_key: string | null
           status: string
+          updated_at: string
           user_id: string | null
           value_cents: number
         }
@@ -4973,12 +4978,17 @@ export type Database = {
           affiliate_id?: string | null
           attribution_id?: string | null
           commission_amount_cents?: number
+          commission_kind?: string
           commission_rate?: number
           conversion_type: string
           created_at?: string
           id?: string
           metadata?: Json | null
+          parent_of_affiliate_id?: string | null
+          source_conversion_id?: string | null
+          source_event_key?: string | null
           status?: string
+          updated_at?: string
           user_id?: string | null
           value_cents?: number
         }
@@ -4986,12 +4996,17 @@ export type Database = {
           affiliate_id?: string | null
           attribution_id?: string | null
           commission_amount_cents?: number
+          commission_kind?: string
           commission_rate?: number
           conversion_type?: string
           created_at?: string
           id?: string
           metadata?: Json | null
+          parent_of_affiliate_id?: string | null
+          source_conversion_id?: string | null
+          source_event_key?: string | null
           status?: string
+          updated_at?: string
           user_id?: string | null
           value_cents?: number
         }
@@ -5015,6 +5030,27 @@ export type Database = {
             columns: ["attribution_id"]
             isOneToOne: false
             referencedRelation: "affiliate_attributions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_conversions_parent_of_affiliate_id_fkey"
+            columns: ["parent_of_affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_conversions_parent_of_affiliate_id_fkey"
+            columns: ["parent_of_affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
+          },
+          {
+            foreignKeyName: "affiliate_conversions_source_conversion_id_fkey"
+            columns: ["source_conversion_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_conversions"
             referencedColumns: ["id"]
           },
         ]
@@ -5504,6 +5540,7 @@ export type Database = {
           default_attribution_days: number
           default_validation_days: number
           id: boolean
+          subaffiliate_override_pct: number
           updated_at: string
         }
         Insert: {
@@ -5512,6 +5549,7 @@ export type Database = {
           default_attribution_days?: number
           default_validation_days?: number
           id?: boolean
+          subaffiliate_override_pct?: number
           updated_at?: string
         }
         Update: {
@@ -5520,6 +5558,7 @@ export type Database = {
           default_attribution_days?: number
           default_validation_days?: number
           id?: boolean
+          subaffiliate_override_pct?: number
           updated_at?: string
         }
         Relationships: []
@@ -5548,6 +5587,9 @@ export type Database = {
           last_name: string | null
           metadata: Json | null
           name: string
+          parent_affiliate_id: string | null
+          parent_assigned_at: string | null
+          parent_attribution_id: string | null
           payout_method: string | null
           permissions: Json
           phone: string | null
@@ -5596,6 +5638,9 @@ export type Database = {
           last_name?: string | null
           metadata?: Json | null
           name: string
+          parent_affiliate_id?: string | null
+          parent_assigned_at?: string | null
+          parent_attribution_id?: string | null
           payout_method?: string | null
           permissions?: Json
           phone?: string | null
@@ -5644,6 +5689,9 @@ export type Database = {
           last_name?: string | null
           metadata?: Json | null
           name?: string
+          parent_affiliate_id?: string | null
+          parent_assigned_at?: string | null
+          parent_attribution_id?: string | null
           payout_method?: string | null
           permissions?: Json
           phone?: string | null
@@ -5669,7 +5717,22 @@ export type Database = {
           user_id?: string | null
           website_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "affiliates_parent_affiliate_id_fkey"
+            columns: ["parent_affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliates_parent_affiliate_id_fkey"
+            columns: ["parent_affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
+          },
+        ]
       }
       agent_city_service_targets: {
         Row: {
@@ -93162,6 +93225,18 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_affiliate_attribution_chain: {
+        Args: { p_affiliate_id: string }
+        Returns: Json
+      }
+      admin_reassign_affiliate_parent: {
+        Args: {
+          p_affiliate_id: string
+          p_parent_affiliate_id: string
+          p_reason?: string
+        }
+        Returns: Json
+      }
       advance_onboarding_status: {
         Args: { p_new_status: string; p_patch?: Json; p_session_id: string }
         Returns: {
@@ -93205,6 +93280,14 @@ export type Database = {
           _prospect_id: string
         }
         Returns: undefined
+      }
+      assign_affiliate_parent: {
+        Args: {
+          p_affiliate_id: string
+          p_attribution_id?: string
+          p_ref_code: string
+        }
+        Returns: Json
       }
       backfill_prospects_to_sniper: {
         Args: never
@@ -93509,6 +93592,20 @@ export type Database = {
         Returns: {
           count: number
           lead_status: string
+        }[]
+      }
+      get_my_affiliate_earnings: { Args: never; Returns: Json }
+      get_my_affiliate_team: {
+        Args: never
+        Returns: {
+          affiliate_id: string
+          affiliate_name: string
+          eligible_revenue_cents: number
+          joined_at: string
+          last_sale_at: string
+          override_commission_cents: number
+          recruited_at: string
+          status: string
         }[]
       }
       get_outreach_target: {

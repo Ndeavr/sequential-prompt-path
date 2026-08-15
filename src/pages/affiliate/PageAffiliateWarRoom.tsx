@@ -26,6 +26,7 @@ import { AddLeadSheet } from "@/features/affiliate/addLead/AddLeadSheet";
 import { AffiliateHeaderMenu } from "@/features/affiliate/components/AffiliateHeaderMenu";
 import { AssignedLeadsList } from "@/features/affiliate/warRoom/AssignedLeadsList";
 import { MyManualQueue } from "@/features/affiliate/warRoom/MyManualQueue";
+import { AffiliateTeamSection } from "@/features/affiliate/team/AffiliateTeamSection";
 
 type Assignment = {
   id: string;
@@ -227,6 +228,11 @@ export default function PageAffiliateWarRoom() {
             </ul>
           )}
         </section>
+
+        {/* Équipe — sous-affiliés (override 5 %) */}
+        {affiliate?.referral_code && (
+          <AffiliateTeamSection referralCode={affiliate.referral_code} />
+        )}
 
         {/* File « À contacter manuellement » assignée par l'admin */}
         <section className="space-y-3">
