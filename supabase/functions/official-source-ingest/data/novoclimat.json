@@ -1,0 +1,1275 @@
+[
+ {
+  "source_key": "novoclimat_ventilation_autonome",
+  "source_name": "Entrepreneurs Novoclimat — Spécialistes en ventilation autonome",
+  "source_url": "https://cdn-contenu.quebec.ca/cdn-contenu/environnement/transition-energetique/residentiel-novoclimat/liste-entrepreneurs-ventilation-autonome-novoclimat.pdf",
+  "certification": "ventilation_autonome",
+  "document_sha256": "73dd3d6195d8165b67351459a34a5bc3088c232d801acecbeebd7cc33197c344",
+  "document_updated_label": "10 juin 2026",
+  "records": [
+   {
+    "certificate_no": "2301",
+    "business_name": "6939112 CANADA INC. (VENTILATION RS MANSEAU INC.)",
+    "phone": "8197624404",
+    "email": "naudet@rsmanseau.ca",
+    "region": "Abitibi-Témiscamingue"
+   },
+   {
+    "certificate_no": "2120",
+    "business_name": "CAMEC (MÉCANIQUE DE BÂTIMENT) INC.",
+    "phone": "4187246792",
+    "email": "info@camec.ca",
+    "region": "Bas-Saint-Laurent"
+   },
+   {
+    "certificate_no": "2302",
+    "business_name": "9031-8395 QUÉBEC INC. (RÉFRIGÉRATION AIR C)",
+    "phone": "4187252472",
+    "email": "payables@refrigerationairc.com",
+    "region": "Bas-Saint-Laurent"
+   },
+   {
+    "certificate_no": "2347",
+    "business_name": "FERBLANTERIE ST-FABIEN INC.",
+    "phone": "4188693750",
+    "email": "annickchretien@globetrotter.net",
+    "region": "Bas-Saint-Laurent"
+   },
+   {
+    "certificate_no": "2962",
+    "business_name": "DÉCARTECQ INC.",
+    "phone": "4186292100",
+    "email": "comptabilite@decartecq.ca",
+    "region": "Bas-Saint-Laurent"
+   },
+   {
+    "certificate_no": "4283",
+    "business_name": "PLOMBERIE G. ET D. GAUTHIER INC.",
+    "phone": "4185624380",
+    "email": null,
+    "region": "Bas-Saint-Laurent"
+   },
+   {
+    "certificate_no": "4446",
+    "business_name": "VENTILATION SPL INC.",
+    "phone": "4187303206",
+    "email": "ventilationspl@hotmail.com",
+    "region": "Bas-Saint-Laurent"
+   },
+   {
+    "certificate_no": "2180",
+    "business_name": "FILTRE PLUS Y.G. INC.",
+    "phone": "4185275455",
+    "email": "criel@filtreplus.com",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "2213",
+    "business_name": "VENTILATION N.H.",
+    "phone": "4188472448",
+    "email": "ventilation.nh@hotmail.com",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "2431",
+    "business_name": "BALVENT INC.",
+    "phone": "4186875639",
+    "email": "jpp@balvent.com",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "2641",
+    "business_name": "INDUKTION GÉOTHERMIE INC.",
+    "phone": "4186141106",
+    "email": null,
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "2988",
+    "business_name": "A. TREMBLAY & FRÈRES LTÉE",
+    "phone": "4184352002",
+    "email": null,
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "3870",
+    "business_name": "SGL CLIMATISATION CHAUFFAGE INC.",
+    "phone": "4184408516",
+    "email": "info@sglclimatisationchauffage.com",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "3899",
+    "business_name": "9358-3177 QUÉBEC INC. (M.E.I. MÉCANIQUE)",
+    "phone": "4186826373",
+    "email": "isa@meimecanique.com",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "4164",
+    "business_name": "ÉQUIPEMENT CHARLEVOIX INC.",
+    "phone": "4184395050",
+    "email": null,
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "4247",
+    "business_name": "VENTILATION N. H. ET FILS S.E.N.C.",
+    "phone": "4187172448",
+    "email": "ventilation.nhetfils@gmail.com",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "2086",
+    "business_name": "BOURQUE REFRIGERATION INC.",
+    "phone": "8194784559",
+    "email": "bourquerefrigeration@bellnet.ca",
+    "region": "Centre-du-Québec"
+   },
+   {
+    "certificate_no": "2189",
+    "business_name": "MARIO DESROSIERS INC.",
+    "phone": "8194724188",
+    "email": "pdesrosiers@mdesrosiers.ca",
+    "region": "Centre-du-Québec"
+   },
+   {
+    "certificate_no": "2218",
+    "business_name": "PLOMBERIE PHCB INC.",
+    "phone": "8192604422",
+    "email": "reception@plomberiehcb.com",
+    "region": "Centre-du-Québec"
+   },
+   {
+    "certificate_no": "2360",
+    "business_name": "ASPIRABEC INC.",
+    "phone": "8194722127",
+    "email": "info@aspirabec.com",
+    "region": "Centre-du-Québec"
+   },
+   {
+    "certificate_no": "2544",
+    "business_name": "PLOMBERIE J. VACHON INC.",
+    "phone": "8197586434",
+    "email": "bgauthier@jvachon.com",
+    "region": "Centre-du-Québec"
+   },
+   {
+    "certificate_no": "4020",
+    "business_name": "CLIMATISATION TURCOTTE INC.",
+    "phone": "8193133775",
+    "email": "info@climatisationturcotte.com",
+    "region": "Centre-du-Québec"
+   },
+   {
+    "certificate_no": "4050",
+    "business_name": "9263-1076 QUÉBEC INC.",
+    "phone": "8196740406",
+    "email": "info@echangeurdair.com",
+    "region": "Centre-du-Québec"
+   },
+   {
+    "certificate_no": "2087",
+    "business_name": "9167-1487 QUÉBEC INC. PLOMBERIE CHAUFFAGE MMV",
+    "phone": "4182287762",
+    "email": "plomberiemmv@hotmail.com",
+    "region": "Chaudière-Appalaches"
+   },
+   {
+    "certificate_no": "2129",
+    "business_name": "MB VENTILATION INC.",
+    "phone": "4188339437",
+    "email": "info@mbventilation.com",
+    "region": "Chaudière-Appalaches"
+   },
+   {
+    "certificate_no": "2224",
+    "business_name": "VENTILATION G. FILLION INC.",
+    "phone": "4184754143",
+    "email": "ventilationgfillion@live.ca",
+    "region": "Chaudière-Appalaches"
+   },
+   {
+    "certificate_no": "2423",
+    "business_name": "ICETEC CLIMATISATION INC.",
+    "phone": "4188397993",
+    "email": "vdesrochers@icetecconfort.com",
+    "region": "Chaudière-Appalaches"
+   },
+   {
+    "certificate_no": "2613",
+    "business_name": "FERBLANTERIE ROGER DROUIN INC.",
+    "phone": "4189357027",
+    "email": null,
+    "region": "Chaudière-Appalaches"
+   },
+   {
+    "certificate_no": "3722",
+    "business_name": "R L INC.",
+    "phone": "4183873363",
+    "email": "rlinc.info@gmail.com",
+    "region": "Chaudière-Appalaches"
+   },
+   {
+    "certificate_no": "4570",
+    "business_name": "CLIMACONFORT INC.",
+    "phone": "4183972167",
+    "email": "katy@climaconfort.ca",
+    "region": "Chaudière-Appalaches"
+   },
+   {
+    "certificate_no": "2172",
+    "business_name": "CLIMATISATION DUPLESSIS INC.",
+    "phone": "8192406837",
+    "email": "info@climatisationduplessis.com",
+    "region": "Estrie"
+   },
+   {
+    "certificate_no": "2182",
+    "business_name": "9231-9227 QUÉBEC INC. (PLOMBERIE CHRISTIAN CÔTÉ)",
+    "phone": "8198641357",
+    "email": "plomberieccote@videotron.ca",
+    "region": "Estrie"
+   },
+   {
+    "certificate_no": "2267",
+    "business_name": "ÉCHANGEUR D'AIR DE L'ESTRIE (V.R.C.) INC.",
+    "phone": "8195661133",
+    "email": "andre.lapierre@echangeur.ca",
+    "region": "Estrie"
+   },
+   {
+    "certificate_no": "3643",
+    "business_name": "9022-3884 QUÉBEC INC. (HUPPÉ RÉFRIGÉRATION)",
+    "phone": "8195668061",
+    "email": null,
+    "region": "Estrie"
+   },
+   {
+    "certificate_no": "3790",
+    "business_name": "PRO ÉNERGIE TECH INC.",
+    "phone": "8195830318",
+    "email": null,
+    "region": "Estrie"
+   },
+   {
+    "certificate_no": "4286",
+    "business_name": "9130-9849 QUÉBEC INC. (VENTILATION PASCAL MARTINEAU)",
+    "phone": "8198350030",
+    "email": null,
+    "region": "Estrie"
+   },
+   {
+    "certificate_no": "3119",
+    "business_name": "FERBLANTERIE GASPÉSIENNE INC. (LA)",
+    "phone": "4183854593",
+    "email": null,
+    "region": "Gaspésie"
+   },
+   {
+    "certificate_no": "4270",
+    "business_name": "9283-9133 QUÉBEC INC. (THERMOMAX)",
+    "phone": "4507568644",
+    "email": null,
+    "region": "Lanaudière"
+   },
+   {
+    "certificate_no": "4371",
+    "business_name": "9184-1643 QUÉBEC INC. (F.L. VENTIL-R)",
+    "phone": "4508344064",
+    "email": "flventil-r@outlook.com",
+    "region": "Lanaudière"
+   },
+   {
+    "certificate_no": "4606",
+    "business_name": "VENTILATION DALPÉ",
+    "phone": "5144628514",
+    "email": "ventilationdalpe.inc@gmail.com",
+    "region": "Lanaudière"
+   },
+   {
+    "certificate_no": "2386",
+    "business_name": "VENTILATION VOLMAIR INC.",
+    "phone": "5146854044",
+    "email": "galthot@volmair.ca",
+    "region": "Laurentides"
+   },
+   {
+    "certificate_no": "2528",
+    "business_name": "VENTILATION BENOIT LÉVEILLÉ INC.",
+    "phone": "4504317742",
+    "email": null,
+    "region": "Laurentides"
+   },
+   {
+    "certificate_no": "2910",
+    "business_name": "9237-9965 QUEBEC INC. (PRESTIGE CLIMATISATION)",
+    "phone": "5144244404",
+    "email": "ecorbeil@prestigeclimatisation.com",
+    "region": "Laurentides"
+   },
+   {
+    "certificate_no": "3939",
+    "business_name": "9209-2261 QUÉBEC INC.",
+    "phone": "4502245505",
+    "email": "g.aube@ventilas.com",
+    "region": "Laurentides"
+   },
+   {
+    "certificate_no": "4472",
+    "business_name": "Ventilation BR INC.",
+    "phone": "5142918341",
+    "email": "ventilationbr@outlook.com",
+    "region": "Laurentides"
+   },
+   {
+    "certificate_no": "2500",
+    "business_name": "9160-7721 QUÉBEC INC. (STÉ-FAN AIR)",
+    "phone": "4506623939",
+    "email": "info@stefanair.com",
+    "region": "Laval"
+   },
+   {
+    "certificate_no": "2751",
+    "business_name": "BERTRAND SYSTÈME DE CHAUFFAGE INC.",
+    "phone": "4509781790",
+    "email": "valerie@bertrandsolutions.com",
+    "region": "Laval"
+   },
+   {
+    "certificate_no": "2820",
+    "business_name": "LYS AIR MÉCANIC INC.",
+    "phone": "4506644445",
+    "email": "benoit.bourdages@lysair.ca",
+    "region": "Laval"
+   },
+   {
+    "certificate_no": "2190",
+    "business_name": "CHARTRAY RÉFRIGÉRATION COMMERCIALE INC.",
+    "phone": "8193781048",
+    "email": "info@chartray.com",
+    "region": "Mauricie"
+   },
+   {
+    "certificate_no": "4065",
+    "business_name": "NOVA-TECH ÉNERGIE INC.",
+    "phone": "8193744908",
+    "email": "akahnoussi@icloud.com",
+    "region": "Mauricie"
+   },
+   {
+    "certificate_no": "2090",
+    "business_name": "9251-4959 QUÉBEC INC VENTILATION D. LACOSTE 2011",
+    "phone": "4506747007",
+    "email": "daniel.lacoste@ventilationdlacoste.com",
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "2136",
+    "business_name": "AIR PÉLOQUIN INC.",
+    "phone": "4506705204",
+    "email": "rpeloquin@airpeloquin.com",
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "2234",
+    "business_name": "EXCEL CLIMATISATION INC.",
+    "phone": "4506761944",
+    "email": "francois@excelclimatisation.com",
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "2385",
+    "business_name": "KLIMFAX INC.",
+    "phone": "5149066460",
+    "email": "alain.bastrash@klimfax.com",
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "2456",
+    "business_name": "M.L. VENTILATION INC. (LES HABITATIONS M.L.& FILS INC.)",
+    "phone": "4507800747",
+    "email": "mlventilation@hotmail.com",
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "2578",
+    "business_name": "9174-5778 QUÉBEC INC. (BINETTE VENTILATION)",
+    "phone": "4503777506",
+    "email": "binetteventilation@gmail.com",
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "2612",
+    "business_name": "VENTILATION A. GUILLEMETTE INC.",
+    "phone": "5143781888",
+    "email": null,
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "2788",
+    "business_name": "RÉFRIGÉRATION ET CLIMATISATION SANSOUCY INC.",
+    "phone": "4504693038",
+    "email": "cparent@climatisationsansoucy.com",
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "3064",
+    "business_name": "SÉLECTAIR INC.",
+    "phone": "5144449119",
+    "email": "selectair@icloud.com",
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "3143",
+    "business_name": "9316-0349 QUÉBEC INC. (BRICAULT RÉFRIGÉRATION)",
+    "phone": "4504472220",
+    "email": null,
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "3612",
+    "business_name": "RÉFRIGÉRATION ET CLIMATISATION LUC THERRIEN INC.",
+    "phone": "4507773933",
+    "email": null,
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "4196",
+    "business_name": "8446547 CANADA INC. (22 DEGRÉS)",
+    "phone": "5145001011",
+    "email": "admin@22degres.ca",
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "4326",
+    "business_name": "THERMOPOMPES N & R SOL INC.",
+    "phone": "4506993232",
+    "email": "rpitre@nrsol.com",
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "3358",
+    "business_name": "FARAND ET CHARTRAND (1982) INC.",
+    "phone": "4503734074",
+    "email": "farandchartrand@gmail.com",
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "2069",
+    "business_name": "ALLARD & ÉMOND INC.",
+    "phone": "5143326666",
+    "email": "payable@allardemond.com",
+    "region": "Montréal"
+   },
+   {
+    "certificate_no": "2227",
+    "business_name": "CLIMATISATION B.S. INC.",
+    "phone": "4506637417",
+    "email": "admin@climatisationbs.com",
+    "region": "Montréal"
+   },
+   {
+    "certificate_no": "2790",
+    "business_name": "BARETTE BERNARD - ÉNERFLAMME INC.",
+    "phone": "8192435358",
+    "email": "ejomphe@barettebernard.com",
+    "region": "Outaouais"
+   },
+   {
+    "certificate_no": "2899",
+    "business_name": "VENTILATION S.M. INC.",
+    "phone": "8192811222",
+    "email": "ventilationsm@bellnet.ca",
+    "region": "Outaouais"
+   },
+   {
+    "certificate_no": "3323",
+    "business_name": "ENTREPRISES S.A.F. COMBUSTION CHAUFFAGE CLIMATISATION INC. (LES)",
+    "phone": "8194591207",
+    "email": null,
+    "region": "Outaouais"
+   },
+   {
+    "certificate_no": "2194",
+    "business_name": "9257-2668 QUÉBEC INC. (VENTILATION M.L.)",
+    "phone": "4182390736",
+    "email": "info@ventilationml.com",
+    "region": "Saguenay–Lac-Saint-Jean"
+   },
+   {
+    "certificate_no": "2908",
+    "business_name": "MGS MÉTAL INC.",
+    "phone": "4185489144",
+    "email": null,
+    "region": "Saguenay–Lac-Saint-Jean"
+   },
+   {
+    "certificate_no": "4264",
+    "business_name": "ENTREPRISES RÉAL BOUCHARD INC. (LES)",
+    "phone": "4184127225",
+    "email": "bernardv@erbinc.ca",
+    "region": "Saguenay–Lac-Saint-Jean"
+   }
+  ]
+ },
+ {
+  "source_key": "novoclimat_ventilation_autonome_centralisee",
+  "source_name": "Entrepreneurs Novoclimat — Spécialistes en ventilation autonome et centralisée",
+  "source_url": "https://cdn-contenu.quebec.ca/cdn-contenu/environnement/transition-energetique/residentiel-novoclimat/liste-entrepreneurs-ventilation-autonome-centralise-novoclimat.pdf",
+  "certification": "ventilation_autonome_centralisee",
+  "document_sha256": "2a3b9ce3a1d52475f9173d7454ebec725e4f2f2e0321f5b2726e4edc60db3a1b",
+  "document_updated_label": "10 juin 2026",
+  "records": [
+   {
+    "certificate_no": "3710",
+    "business_name": "GILLES MORIN CHAUFFAGE INC.",
+    "phone": "8198249710",
+    "email": "admin@gillesmorinchauffage.com",
+    "region": "Abitibi-Témiscamingue"
+   },
+   {
+    "certificate_no": "3924",
+    "business_name": "MP SOLUTIONS INC.",
+    "phone": "8197622818",
+    "email": null,
+    "region": "Abitibi-Témiscamingue"
+   },
+   {
+    "certificate_no": "4300",
+    "business_name": "GÉOTHERMIE ABITIBI INC.",
+    "phone": "8197277518",
+    "email": "info@geothermieabitibi.ca",
+    "region": "Abitibi-Témiscamingue"
+   },
+   {
+    "certificate_no": "4323",
+    "business_name": "ENTREPRISES LANOIX & LAROUCHE INC. (LES)",
+    "phone": "8197329445",
+    "email": "nbelzile@lanoixlarouche.com",
+    "region": "Abitibi-Témiscamingue"
+   },
+   {
+    "certificate_no": "4074",
+    "business_name": "FERBLANTERIE OUELLET (QUÉBEC) INC.",
+    "phone": "4188562153",
+    "email": "info@ferblanterieouellet.com",
+    "region": "Bas-Saint-Laurent"
+   },
+   {
+    "certificate_no": "4078",
+    "business_name": "FERBLANTERIE A.T. INC.",
+    "phone": "4187226889",
+    "email": "christian.atinc@telus.net",
+    "region": "Bas-Saint-Laurent"
+   },
+   {
+    "certificate_no": "4384",
+    "business_name": "COMPAGNIE DE RÉGRIGÉRATION RAY (RIVIÈRE-DU-LOUP) INC. (LA)",
+    "phone": "4188626346",
+    "email": "guillaume@rayrefrigeration.com",
+    "region": "Bas-Saint-Laurent"
+   },
+   {
+    "certificate_no": "4396",
+    "business_name": "EQUIPEMENTS AGRICOLES CPR LTÉE",
+    "phone": "4187226608",
+    "email": "scaissy@equipementscpr.com",
+    "region": "Bas-Saint-Laurent"
+   },
+   {
+    "certificate_no": "2845",
+    "business_name": "SERVICES FRIMAS INC. (LES)",
+    "phone": "4188712960",
+    "email": "frimas@videotron.ca",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "3705",
+    "business_name": "VENTILATION CDR INC.",
+    "phone": "4186535545",
+    "email": null,
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "3993",
+    "business_name": "B.F. VENTILATION INC.",
+    "phone": "4188223638",
+    "email": "benoit@bfventilation.com",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "4037",
+    "business_name": "VENTILATION C.F. INC.",
+    "phone": "4188492838",
+    "email": "sandra.fournier@ventilationcf.com",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "4039",
+    "business_name": "VENTILATION PRO-CONFORT INC.",
+    "phone": "4189998316",
+    "email": "pro-confort@outlook.com",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "4135",
+    "business_name": "P.M. BOWLE INC.",
+    "phone": "5816810688",
+    "email": "fmartin@pmbowle.com",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "4145",
+    "business_name": "BP CONFORT INC.",
+    "phone": "4189053958",
+    "email": "info@bpconfort.ca",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "4185",
+    "business_name": "ISOLATION BEAUPORT (1978) INC.",
+    "phone": "4186636906",
+    "email": "david.crepeault@isolationbeauport.com",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "4253",
+    "business_name": "FERBLANTERIE LARO D.C. INC.",
+    "phone": "4188782516",
+    "email": "joel@ferblanterielarodc.com",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "4378",
+    "business_name": "9358-3177 QUÉBEC INC. (M.E.I. MÉCANIQUE)",
+    "phone": "4186826373",
+    "email": "isa@meimecanique.com",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "4474",
+    "business_name": "HABITAT RÉFRIGÉRATION INC.",
+    "phone": "4184357979",
+    "email": "ms@groupehabitat.com",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "4486",
+    "business_name": "THERMOCLIM INC.",
+    "phone": "0418872366",
+    "email": "service@thermoclim.com",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "4544",
+    "business_name": "VENTILATION FERBLANTERIE FB INC.",
+    "phone": "4186244662",
+    "email": "frederic.boulay@confort.ideal.ca",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "4566",
+    "business_name": "AIRNOVA INC.",
+    "phone": "4184402215",
+    "email": "maveilleux@air-nova.ca",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "4587",
+    "business_name": "ÉCHANGEURS D'AIR EXP-AIR INC. (LES) (EXPAIR.CA)",
+    "phone": "4188478000",
+    "email": "pgrimard@expair.ca",
+    "region": "Capitale-Nationale"
+   },
+   {
+    "certificate_no": "3351",
+    "business_name": "VENTILATION LR INC.",
+    "phone": "8193621324",
+    "email": "ventilationlr@ventilationlr.com",
+    "region": "Centre-du-Québec"
+   },
+   {
+    "certificate_no": "3881",
+    "business_name": "GROUPE CEVEC INC. (LE)",
+    "phone": "8193954292",
+    "email": "martin.beliveau@groupecevec.ca",
+    "region": "Centre-du-Québec"
+   },
+   {
+    "certificate_no": "3657",
+    "business_name": "MISSION VENTILATION KG INC.",
+    "phone": "4188148606",
+    "email": null,
+    "region": "Chaudière-Appalaches"
+   },
+   {
+    "certificate_no": "4096",
+    "business_name": "HL VENTILATION INC.",
+    "phone": "4182611280",
+    "email": "hl.ventilation@gmail.com",
+    "region": "Chaudière-Appalaches"
+   },
+   {
+    "certificate_no": "4136",
+    "business_name": "S.G. SERVICES INC.",
+    "phone": "4182487419",
+    "email": "s.g.services@cgocable.ca",
+    "region": "Chaudière-Appalaches"
+   },
+   {
+    "certificate_no": "4188",
+    "business_name": "CLIMAT EXPRESS INC.",
+    "phone": "4189476555",
+    "email": "info@climatexpress.ca",
+    "region": "Chaudière-Appalaches"
+   },
+   {
+    "certificate_no": "4246",
+    "business_name": "VENTILATION KÉNO INC.",
+    "phone": "4188324711",
+    "email": "ericpicard@ventilationkeno.com",
+    "region": "Chaudière-Appalaches"
+   },
+   {
+    "certificate_no": "4257",
+    "business_name": "CYTECH CORBIN INC.",
+    "phone": "4182482396",
+    "email": "carl.mercier@cytechcorbin.com",
+    "region": "Chaudière-Appalaches"
+   },
+   {
+    "certificate_no": "4293",
+    "business_name": "RÉFRIGÉRATION THETFORD INC.",
+    "phone": "4183384659",
+    "email": "admin@refthetford.com",
+    "region": "Chaudière-Appalaches"
+   },
+   {
+    "certificate_no": "2527",
+    "business_name": "LEPROHON INC.",
+    "phone": "8195632454",
+    "email": "guillaume.leprohon@leprohon.com",
+    "region": "Estrie"
+   },
+   {
+    "certificate_no": "2885",
+    "business_name": "BALANCEMENT PRO-AIR INC.",
+    "phone": "8195648834",
+    "email": "ronald@pro-air.ca",
+    "region": "Estrie"
+   },
+   {
+    "certificate_no": "4011",
+    "business_name": "ENTREPRENEURS EN MÉCANIQUE A.J.R. INC.",
+    "phone": "8193464816",
+    "email": null,
+    "region": "Estrie"
+   },
+   {
+    "certificate_no": "4017",
+    "business_name": "GNR CORBUS INC.",
+    "phone": "8195642300",
+    "email": "info@gnrcorbus.com",
+    "region": "Estrie"
+   },
+   {
+    "certificate_no": "4079",
+    "business_name": "9291-1700 QUÉBEC INC.",
+    "phone": "8196786968",
+    "email": "enerecycle@gmail.com",
+    "region": "Estrie"
+   },
+   {
+    "certificate_no": "4179",
+    "business_name": "AIRCONFORT DODIER INC.",
+    "phone": "8195831108",
+    "email": "airconfort@hotmail.ca",
+    "region": "Estrie"
+   },
+   {
+    "certificate_no": "4381",
+    "business_name": "CLIMATHERMO CPL INC.",
+    "phone": "8195758305",
+    "email": "plleclair@climathermocpl.ca",
+    "region": "Estrie"
+   },
+   {
+    "certificate_no": "4426",
+    "business_name": "FERBLANTERIE LAPOINTE INC.",
+    "phone": "8195746963",
+    "email": "ferblanterie.lapointe@hotmial.com",
+    "region": "Estrie"
+   },
+   {
+    "certificate_no": "4540",
+    "business_name": "CLIMATISATION LAJOIE",
+    "phone": "8194375134",
+    "email": "charles@climatisationlajoie.com",
+    "region": "Estrie"
+   },
+   {
+    "certificate_no": "3928",
+    "business_name": "PLOMBERIE CMC INC.",
+    "phone": "4189865465",
+    "email": "davidt@entreprisesppe.ca",
+    "region": "Îles-de-la-Madeleine"
+   },
+   {
+    "certificate_no": "2071",
+    "business_name": "ENTREPRISE DE RÉFRIGÉRATION & CLIMATISATION CLAUDE BÉDARD (1995) INC.",
+    "phone": "4507539426",
+    "email": "info@cbedard.com",
+    "region": "Lanaudière"
+   },
+   {
+    "certificate_no": "2986",
+    "business_name": "VENTILATION LÉTOURNEAU INC.",
+    "phone": "4504928207",
+    "email": "info@ventilationletourneau.ca",
+    "region": "Lanaudière"
+   },
+   {
+    "certificate_no": "3142",
+    "business_name": "9538-3162 QUÉBEC INC. (VENTILATION JEAN ROY (2025))",
+    "phone": "4507521115",
+    "email": "philippe@ventilationjeanroy.com",
+    "region": "Lanaudière"
+   },
+   {
+    "certificate_no": "3234",
+    "business_name": "MAROIS CLIMATISATION INC.",
+    "phone": "4505866666",
+    "email": null,
+    "region": "Lanaudière"
+   },
+   {
+    "certificate_no": "3644",
+    "business_name": "VENTILATION PIERRE GAMACHE INC.",
+    "phone": "4504742001",
+    "email": "julie@vpgamache.com",
+    "region": "Lanaudière"
+   },
+   {
+    "certificate_no": "4385",
+    "business_name": "VENTILATION PRO S.L INC.",
+    "phone": null,
+    "email": "info@ventilationprosl.com",
+    "region": "Lanaudière"
+   },
+   {
+    "certificate_no": "4388",
+    "business_name": "CLIMATISATION R. BESSETTE INC.",
+    "phone": "4507524322",
+    "email": "eric@crbessette.com",
+    "region": "Lanaudière"
+   },
+   {
+    "certificate_no": "4410",
+    "business_name": "LE GROUPE MECAPLUS INC.",
+    "phone": "4506210522",
+    "email": "patrick.@mecaplus.ca",
+    "region": "Lanaudière"
+   },
+   {
+    "certificate_no": "3110",
+    "business_name": "VENTILATION S.C. AIR INC.",
+    "phone": "4504354124",
+    "email": "comptabilite@ventilationscair.ca",
+    "region": "Laurentides"
+   },
+   {
+    "certificate_no": "3133",
+    "business_name": "THERMO-STAT INC.",
+    "phone": "4504346576",
+    "email": null,
+    "region": "Laurentides"
+   },
+   {
+    "certificate_no": "3324",
+    "business_name": "CAM MÉCANIQUE INC.",
+    "phone": "4502411410",
+    "email": null,
+    "region": "Laurentides"
+   },
+   {
+    "certificate_no": "3382",
+    "business_name": "BOURCIER VENTILATION INC.",
+    "phone": "4505924200",
+    "email": "info@bourcierventilation.com",
+    "region": "Laurentides"
+   },
+   {
+    "certificate_no": "3700",
+    "business_name": "TMP RÉFRIGÉRATION INC.",
+    "phone": "8193213131",
+    "email": "info@tmprefrigeration.com",
+    "region": "Laurentides"
+   },
+   {
+    "certificate_no": "3946",
+    "business_name": "ÉNAIRCO INC.",
+    "phone": "4506289995",
+    "email": "mmondou@enairco.com",
+    "region": "Laurentides"
+   },
+   {
+    "certificate_no": "4073",
+    "business_name": "PROFESSION-AIR INC.",
+    "phone": "5144165777",
+    "email": null,
+    "region": "Laurentides"
+   },
+   {
+    "certificate_no": "4250",
+    "business_name": "9262-4931 QUÉBEC INC. (D.M.AIR. VENTILATION)",
+    "phone": null,
+    "email": "srenaud@dmair.ca",
+    "region": "Laurentides"
+   },
+   {
+    "certificate_no": "4258",
+    "business_name": "VENTILATION ÉCO-AIR INC.",
+    "phone": null,
+    "email": "simondesrochers@hotmail.ca",
+    "region": "Laurentides"
+   },
+   {
+    "certificate_no": "4382",
+    "business_name": "ESPACE JLP INC.",
+    "phone": "8196231841",
+    "email": "administration@espacejlp.com",
+    "region": "Laurentides"
+   },
+   {
+    "certificate_no": "4476",
+    "business_name": "CONFORT RIVE-NORD INC.",
+    "phone": "5409701818",
+    "email": "stephanraymond@confortrivenord.com",
+    "region": "Laurentides"
+   },
+   {
+    "certificate_no": "4478",
+    "business_name": "CLIMATISATION MANOPRO INC.",
+    "phone": "5148043314",
+    "email": "etienne@climatisationmanopro.com",
+    "region": "Laurentides"
+   },
+   {
+    "certificate_no": "4554",
+    "business_name": "9511-8618 QUÉBEC INC. ( VENTILATION LR INC.)",
+    "phone": "4504366156",
+    "email": "ventilationvlr@gmail.com",
+    "region": "Laurentides"
+   },
+   {
+    "certificate_no": "2233",
+    "business_name": "VENTILABEC INC.",
+    "phone": "5147450230",
+    "email": "eladouceur@ventilabec.ca",
+    "region": "Laval"
+   },
+   {
+    "certificate_no": "3261",
+    "business_name": "AÉRO MÉCANIQUE TURCOTTE INC.",
+    "phone": "4506252627",
+    "email": null,
+    "region": "Laval"
+   },
+   {
+    "certificate_no": "3473",
+    "business_name": "MISTRAL VENTILATION INC.",
+    "phone": "5143822825",
+    "email": "n.constantineau@mistralventilation.com",
+    "region": "Laval"
+   },
+   {
+    "certificate_no": "3680",
+    "business_name": "2982897 CANADA INC. (EPM MÉCANIQUE)",
+    "phone": "5143324830",
+    "email": null,
+    "region": "Laval"
+   },
+   {
+    "certificate_no": "4052",
+    "business_name": "ENTREPRISES PRO-MATH INC. (LES)",
+    "phone": "4506819144",
+    "email": "olivierlongval@promath.ca",
+    "region": "Laval"
+   },
+   {
+    "certificate_no": "4099",
+    "business_name": "VENTILATION G.R. INC.",
+    "phone": "4506884553",
+    "email": "sylvain@ventilationgr.com",
+    "region": "Laval"
+   },
+   {
+    "certificate_no": "4108",
+    "business_name": "VENTILATION VENT D'AIR INC.",
+    "phone": "5149757150",
+    "email": "admin@ventilationventdair.ca",
+    "region": "Laval"
+   },
+   {
+    "certificate_no": "4248",
+    "business_name": "MÉCANIQUE RH 2003 LTÉE",
+    "phone": "5143848300",
+    "email": "fsanche@mecaniquerh.ca",
+    "region": "Laval"
+   },
+   {
+    "certificate_no": "4542",
+    "business_name": "9313-8329 QUEBEC INC. (VENTILATION MFC)",
+    "phone": "4506280404",
+    "email": "mfrancoeur@ventilationmfc.ca",
+    "region": "Laval"
+   },
+   {
+    "certificate_no": "4546",
+    "business_name": "SAISONS-AIR INC.",
+    "phone": "5144948787",
+    "email": "jpz@saisons-air.com",
+    "region": "Laval"
+   },
+   {
+    "certificate_no": "4582",
+    "business_name": "S.T. AIR VENTILATION INC.",
+    "phone": "5148625484",
+    "email": "stairventilation@videotron.ca",
+    "region": "Laval"
+   },
+   {
+    "certificate_no": "2518",
+    "business_name": "2745-7019 QUÉBEC INC. (CLIMATISATION BÉLANGER)",
+    "phone": "8196971110",
+    "email": "mabelanger@climatisationbelanger.com",
+    "region": "Mauricie"
+   },
+   {
+    "certificate_no": "2922",
+    "business_name": "ANDRÉ PÉLISSIER INC.",
+    "phone": "8193763725",
+    "email": "dominiccarignan@aubinpelissier.com",
+    "region": "Mauricie"
+   },
+   {
+    "certificate_no": "4054",
+    "business_name": "MULTI-ÉNERGIE BEST INC.",
+    "phone": "8193786677",
+    "email": null,
+    "region": "Mauricie"
+   },
+   {
+    "certificate_no": "4249",
+    "business_name": "CLIMATISATION EXPRESS INC.",
+    "phone": "8196683858",
+    "email": "climatisationexpress@hotmail.com",
+    "region": "Mauricie"
+   },
+   {
+    "certificate_no": "4332",
+    "business_name": "GAUTHIER VENTILATION INC.",
+    "phone": "8195367750",
+    "email": "alexandre@gauthierventilation.com",
+    "region": "Mauricie"
+   },
+   {
+    "certificate_no": "4482",
+    "business_name": "9174-2262 QUÉBEC INC. ( VENTILATION CJM)",
+    "phone": "8193773663",
+    "email": "mwhissell@ventilationcjm.ca",
+    "region": "Mauricie"
+   },
+   {
+    "certificate_no": "3111",
+    "business_name": "PETROLES C. PROVOST (1990) INC. (LES)",
+    "phone": "4506491469",
+    "email": null,
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "3120",
+    "business_name": "CLIMATISATION CHAUFFAGE SOREL-TRACY INC.",
+    "phone": "4507425557",
+    "email": "compte@climatisationst.com",
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "3230",
+    "business_name": "CHAUFFAGE & VENTILATION GODIN INC.",
+    "phone": "4503750666",
+    "email": null,
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "3233",
+    "business_name": "ZONE CONFORT INC.",
+    "phone": "4503384949",
+    "email": null,
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "3811",
+    "business_name": "VENTILATION ROUSSEAU INC.",
+    "phone": "4502046357",
+    "email": "info@ventilationrousseau.ca",
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "3838",
+    "business_name": "VENTILATION BELLE-RIVE INC.",
+    "phone": "4503329832",
+    "email": null,
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "4109",
+    "business_name": "9083-2742 QUÉBEC INC. (MILLE N AIR VENTILATION)",
+    "phone": "4504440054",
+    "email": "millenair@hotmail.com",
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "4112",
+    "business_name": "MORICAR IMMOBILIER INC. (VENTILATION ELIXAIR)",
+    "phone": "5142646133",
+    "email": null,
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "4170",
+    "business_name": "FLOCONS MULTI SERVICES INC.",
+    "phone": null,
+    "email": "info@flocons.ca",
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "4187",
+    "business_name": "ENTREPRISES J2S INC. (LES)",
+    "phone": "4504187980",
+    "email": "sebastien@lesentreprisesj2s.com",
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "4235",
+    "business_name": "CO-REF LTÉE (CLIMATISATION CHAUFFAGE STE-JULIE)",
+    "phone": "5143864434",
+    "email": "annick@coref.ca",
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "4287",
+    "business_name": "INDUSTRIES PERFORM AIR INC. (LES)",
+    "phone": "4506387172",
+    "email": null,
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "4524",
+    "business_name": "RÉFRIGÉRATION CONCEPTAIR INC.",
+    "phone": "5149950500",
+    "email": "fmichaud@conceptair.ca",
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "4576",
+    "business_name": "130132 CANADA INC. (LAROCHELLE ÉLECTRIQUE)",
+    "phone": "4506328855",
+    "email": "simon@larochelleelectrique.com",
+    "region": "Montérégie"
+   },
+   {
+    "certificate_no": "2495",
+    "business_name": "HYDRAULIQUES R. & O. SERVICES INC.",
+    "phone": "5147391921",
+    "email": "jmrobitaille@hydrauliques.ca",
+    "region": "Montréal"
+   },
+   {
+    "certificate_no": "3711",
+    "business_name": "FARGIO-RINACO PLOMBERIE ÉLECTRICITÉ INC.",
+    "phone": "5149550199",
+    "email": "info@fargiorinaco.com",
+    "region": "Montréal"
+   },
+   {
+    "certificate_no": "3848",
+    "business_name": "ENTREPRISES DE VENTILATION A.Q.T. INC.",
+    "phone": "5147476848",
+    "email": "aqtventilation@videotron.ca",
+    "region": "Montréal"
+   },
+   {
+    "certificate_no": "4180",
+    "business_name": "SERVICES CLIM-ACTION INC. (LES)",
+    "phone": "5148952546",
+    "email": null,
+    "region": "Montréal"
+   },
+   {
+    "certificate_no": "4256",
+    "business_name": "CHAUD ET FROID INC.",
+    "phone": null,
+    "email": "info@hotncold.ca",
+    "region": "Montréal"
+   },
+   {
+    "certificate_no": "4420",
+    "business_name": "RÉFRIGÉRATION ET GAZ CENTRE-VILLE LTÉE",
+    "phone": "8199862015",
+    "email": "pphilippe@rgcv.ca",
+    "region": "Outaouais"
+   },
+   {
+    "certificate_no": "2269",
+    "business_name": "VENTIL-AIR 2001 INC.",
+    "phone": "4185420010",
+    "email": "jpageau@ventilair.ca",
+    "region": "Saguenay–Lac-Saint-Jean"
+   },
+   {
+    "certificate_no": "2893",
+    "business_name": "2534-3146 QUÉBEC INC. (ÉNERGIE MÉCANIQUE ENR.)",
+    "phone": "4186682200",
+    "email": "energie.mecanique@cgocable.ca",
+    "region": "Saguenay–Lac-Saint-Jean"
+   },
+   {
+    "certificate_no": "3487",
+    "business_name": "MAUVALIN INC.",
+    "phone": "4185437244",
+    "email": null,
+    "region": "Saguenay–Lac-Saint-Jean"
+   },
+   {
+    "certificate_no": "4178",
+    "business_name": "2166-8405 QUÉBEC INC. (RÉFRIGÉRATION NORDIC)",
+    "phone": "4186627690",
+    "email": "info@refrigerationnordic.com",
+    "region": "Saguenay–Lac-Saint-Jean"
+   },
+   {
+    "certificate_no": "4242",
+    "business_name": "PLOMBERIE ROY ALMA LTÉE",
+    "phone": "4186682351",
+    "email": "dharvey@plomberieroy.com",
+    "region": "Saguenay–Lac-Saint-Jean"
+   },
+   {
+    "certificate_no": "4325",
+    "business_name": "3094-8715 QUÉBEC INC. (G.A. CLIMATECK)",
+    "phone": "4182744435",
+    "email": "frank.gagnon@gaclimateck.ca",
+    "region": "Saguenay–Lac-Saint-Jean"
+   },
+   {
+    "certificate_no": "4327",
+    "business_name": "CONFORTCLIM SAGUENAY INC.",
+    "phone": "4188039449",
+    "email": "infosaguenay@confortclim.ca",
+    "region": "Saguenay–Lac-Saint-Jean"
+   }
+  ]
+ }
+]

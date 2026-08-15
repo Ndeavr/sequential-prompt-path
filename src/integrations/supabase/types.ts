@@ -57501,6 +57501,155 @@ export type Database = {
           },
         ]
       }
+      official_source_records: {
+        Row: {
+          blocked_reason: string | null
+          business_name: string
+          business_name_norm: string
+          certificate_no: string | null
+          certification: string | null
+          created_at: string
+          dedupe_match_id: string | null
+          dedupe_match_table: string | null
+          dedupe_signals: Json
+          dedupe_status: string
+          eligibility_status: string
+          email: string | null
+          fetched_at: string
+          id: string
+          municipality: string | null
+          phone_e164: string | null
+          phone_raw: string | null
+          priority_rank: number
+          prospect_id: string | null
+          provenance: Json
+          region: string | null
+          source_key: string
+          source_name: string
+          source_url: string
+          specialty_bonus: number
+          trust_bonus: number
+          updated_at: string
+        }
+        Insert: {
+          blocked_reason?: string | null
+          business_name: string
+          business_name_norm: string
+          certificate_no?: string | null
+          certification?: string | null
+          created_at?: string
+          dedupe_match_id?: string | null
+          dedupe_match_table?: string | null
+          dedupe_signals?: Json
+          dedupe_status?: string
+          eligibility_status?: string
+          email?: string | null
+          fetched_at?: string
+          id?: string
+          municipality?: string | null
+          phone_e164?: string | null
+          phone_raw?: string | null
+          priority_rank?: number
+          prospect_id?: string | null
+          provenance?: Json
+          region?: string | null
+          source_key: string
+          source_name: string
+          source_url: string
+          specialty_bonus?: number
+          trust_bonus?: number
+          updated_at?: string
+        }
+        Update: {
+          blocked_reason?: string | null
+          business_name?: string
+          business_name_norm?: string
+          certificate_no?: string | null
+          certification?: string | null
+          created_at?: string
+          dedupe_match_id?: string | null
+          dedupe_match_table?: string | null
+          dedupe_signals?: Json
+          dedupe_status?: string
+          eligibility_status?: string
+          email?: string | null
+          fetched_at?: string
+          id?: string
+          municipality?: string | null
+          phone_e164?: string | null
+          phone_raw?: string | null
+          priority_rank?: number
+          prospect_id?: string | null
+          provenance?: Json
+          region?: string | null
+          source_key?: string
+          source_name?: string
+          source_url?: string
+          specialty_bonus?: number
+          trust_bonus?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "official_source_records_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "official_source_registry"
+            referencedColumns: ["source_key"]
+          },
+        ]
+      }
+      official_source_registry: {
+        Row: {
+          access_policy: string | null
+          active: boolean
+          certification: string | null
+          created_at: string
+          document_type: string
+          last_document_sha256: string | null
+          last_fetched_at: string | null
+          last_record_count: number
+          publisher: string
+          robots_allowed: boolean
+          source_key: string
+          source_name: string
+          source_url: string
+          updated_at: string
+        }
+        Insert: {
+          access_policy?: string | null
+          active?: boolean
+          certification?: string | null
+          created_at?: string
+          document_type?: string
+          last_document_sha256?: string | null
+          last_fetched_at?: string | null
+          last_record_count?: number
+          publisher: string
+          robots_allowed?: boolean
+          source_key: string
+          source_name: string
+          source_url: string
+          updated_at?: string
+        }
+        Update: {
+          access_policy?: string | null
+          active?: boolean
+          certification?: string | null
+          created_at?: string
+          document_type?: string
+          last_document_sha256?: string | null
+          last_fetched_at?: string | null
+          last_record_count?: number
+          publisher?: string
+          robots_allowed?: boolean
+          source_key?: string
+          source_name?: string
+          source_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       omega_loop_runs: {
         Row: {
           created_at: string
@@ -92573,6 +92722,18 @@ export type Database = {
           retry_count?: number | null
           session_id?: string | null
           stripe_event_id?: string | null
+        }
+        Relationships: []
+      }
+      v_supply_discovery_by_source: {
+        Row: {
+          eligible_yield: number | null
+          last_activity_at: string | null
+          promoted: number | null
+          records_new: number | null
+          records_total: number | null
+          source_key: string | null
+          source_label: string | null
         }
         Relationships: []
       }
