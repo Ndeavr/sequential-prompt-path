@@ -303,7 +303,7 @@ Deno.serve(async (req) => {
       last_blocker_reason: reason,
       last_blocker_at: new Date().toISOString(),
     }).eq("id", true);
-    return new Response(JSON.stringify({ ok: true, inserted: 0, rejection, refill }), {
+    return new Response(JSON.stringify({ ok: true, inserted: 0, blocked: refill?.blocked ?? false, rejection, refill }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
