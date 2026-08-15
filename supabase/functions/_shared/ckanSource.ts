@@ -36,11 +36,16 @@ const PREFERRED_FORMATS = ["csv", "xlsx", "xls"];
 export function pickResource(resources: CkanResource[]): CkanResource | null {
   const usable = (resources ?? []).filter((r) => {
     if (r.state && r.state !== "active") return false;
+    // A DataStore-backed resource is queryable whatever its download format (ZIP included).
+    if (r.datastore_active === true && r.id) return true;
     const fmt = (r.format ?? "").toLowerCase();
     return PREFERRED_FORMATS.includes(fmt) && !!r.url;
   });
   if (usable.length === 0) return null;
-  const score = (r: CkanResource) => PREFERRED_FORMATS.indexOf((r.format ?? "").toLowerCase());
+  const score = (r: CkanResource) => {
+    if (r.datastore_active === true) return -1;
+    return PREFERRED_FORMATS.indexOf((r.format ?? "").toLowerCase());
+  };
   const ts = (r: CkanResource) => Date.parse(r.last_modified ?? r.created ?? "") || 0;
   return [...usable].sort((a, b) => score(a) - score(b) || ts(b) - ts(a))[0];
 }

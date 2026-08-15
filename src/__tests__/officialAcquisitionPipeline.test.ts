@@ -330,3 +330,17 @@ describe("RBQ column mapping (real Données Québec headers)", () => {
     expect(m.municipality).toBe("Municipalite");
   });
 });
+
+describe("DataStore-backed resources of any format", () => {
+  it("selects a ZIP resource when CKAN exposes it through the DataStore", () => {
+    const r = pickResource([
+      { id: "pdf", format: "PDF", url: "https://x/g.pdf" },
+      { id: "zip", format: "ZIP", url: "https://x/r.zip", datastore_active: true },
+    ]);
+    expect(r?.id).toBe("zip");
+    expect(resourceStrategy(r)).toBe("datastore");
+  });
+  it("still ignores non-queryable, non-tabular resources", () => {
+    expect(pickResource([{ id: "pdf", format: "PDF", url: "https://x/g.pdf" }])).toBeNull();
+  });
+});
