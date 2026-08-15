@@ -16,7 +16,20 @@
 
 const PROVIDER = "google_places";
 const DEFAULT_TTL_DAYS = 14;
-const MAX_PAGES = 2;
+/**
+ * COST INVARIANT (incident 2026-08 — Google Places billing loop):
+ * launch-commander ran every minute, launch-agent-scout called Places directly
+ * without asking for a phone number, inserted unusable rows, rejected them,
+ * and looped. Discovery now has exactly one billable path with three hard locks:
+ *   1. one page max per search (never more than 20 results / 1 external call),
+ *   2. a 14-day cache per (trade × city) — including negative results,
+ *   3. an atomic DB reservation (`reserve_places_external_call`) capped at
+ *      25 external calls per America/Toronto day, server-side, non-overridable.
+ * Never bypass `searchPlacesResilient` for automated discovery.
+ */
+const MAX_PAGES = 1;
+const MAX_RESULTS_PER_SEARCH = 20;
+
 
 export interface PlaceResult {
   id: string;
