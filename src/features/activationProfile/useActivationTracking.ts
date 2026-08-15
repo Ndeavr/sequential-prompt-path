@@ -13,7 +13,7 @@ export type ActivationEvent =
   | "checkout_cta_clicked"
   | "checkout_cta_failed";
 
-export function useActivationTracking(token: string | undefined) {
+export function useActivationTracking(token: string | undefined, preview = false) {
   const fired = useRef<Set<string>>(new Set());
 
   return useCallback(
@@ -23,9 +23,9 @@ export function useActivationTracking(token: string | undefined) {
       if (fired.current.has(key)) return;
       fired.current.add(key);
       void supabase.functions
-        .invoke("activation-token-resolve", { body: { token, event, meta } })
+        .invoke("activation-token-resolve", { body: { token, event, meta, preview } })
         .catch(() => { /* tracking must never break the funnel */ });
     },
-    [token],
+    [token, preview],
   );
 }
