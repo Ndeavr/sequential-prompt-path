@@ -32,6 +32,10 @@ const BENEFITS = [
 
 export default function PageUnproActivate() {
   const { token } = useParams<{ token: string }>();
+  // QA : ?preview=1 rend la page réelle sans écrire de clic ni d'événement
+  // d'entonnoir, afin de ne pas contaminer la cohorte de production.
+  const preview =
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("preview") === "1";
   const [state, setState] = useState<"loading" | "ready" | "invalid" | "error">("loading");
   const [prospect, setProspect] = useState<ResolvedProspect | null>(null);
   const [profile, setProfile] = useState<ActivationProfile | null>(null);
@@ -41,7 +45,7 @@ export default function PageUnproActivate() {
   const [correctionSent, setCorrectionSent] = useState(false);
   const engagedRef = useRef(false);
 
-  const track = useActivationTracking(token);
+  const track = useActivationTracking(token, preview);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,7 +57,7 @@ export default function PageUnproActivate() {
     (async () => {
       try {
         const { data, error } = await supabase.functions.invoke("activation-token-resolve", {
-          body: { token },
+          body: { token, preview },
         });
         if (cancelled) return;
         if (error || !data?.ok) {
@@ -86,7 +90,7 @@ export default function PageUnproActivate() {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [token, preview]);
 
   // landing_engaged: le prospect a réellement consulté son profil (scroll ou 6 s).
   useEffect(() => {

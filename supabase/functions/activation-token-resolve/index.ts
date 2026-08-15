@@ -71,6 +71,10 @@ Deno.serve(async (req) => {
     const token = String((body as { token?: string })?.token ?? "").trim();
     const trackEvent = String((body as { event?: string })?.event ?? "").trim();
     const meta = ((body as { meta?: Record<string, unknown> })?.meta ?? {}) as Record<string, unknown>;
+    // QA preview: renders the exact production profile WITHOUT writing clicks,
+    // funnel events or variant assignments. Used to validate the landing without
+    // contaminating the post-fix cohort. Never sent by the app itself.
+    const preview = (body as { preview?: boolean })?.preview === true;
 
     if (!token || token.length > 128) {
       return json({ ok: false, reason: "invalid_token" }, 400);
@@ -84,6 +88,7 @@ Deno.serve(async (req) => {
     // ---------------------------------------------------------------- tracking
     if (trackEvent) {
       if (!TRACKABLE.has(trackEvent)) return json({ ok: false, reason: "unsupported_event" }, 400);
+      if (preview) return json({ ok: true, tracked: trackEvent, preview: true });
       try {
         const { data: tk } = await supabase
           .from("verified_prospect_tokens")
@@ -164,25 +169,41 @@ Deno.serve(async (req) => {
           avg_job_value_cad: number | null;
         }
       | null = null;
+    // Anti-collision : deux entreprises peuvent porter le même nom dans deux
+    // villes. On n'attache des signaux externes (avis, notes, licence) QUE si
+    // le nom correspond exactement ET qu'une seule fiche existe, ou que la
+    // ville concorde. Aucun signal ne doit jamais migrer d'une entreprise à
+    // une autre.
+    const exactName = (prospect.business_name ?? "").trim();
+    const nameFilter = exactName.replace(/[%_]/g, (m) => `\\${m}`) || "___never___";
+
     try {
-      const { data: cp } = await supabase
+      const { data: rows } = await supabase
         .from("contractor_prospects")
-        .select("review_count, review_rating, photo_count, rbq_license, rbq_verified, trade, avg_job_value_cad")
-        .ilike("business_name", prospect.business_name ?? "___never___")
-        .limit(1)
-        .maybeSingle();
-      extra = (cp as typeof extra) ?? null;
+        .select("review_count, review_rating, photo_count, rbq_license, rbq_verified, trade, avg_job_value_cad, city")
+        .ilike("business_name", nameFilter)
+        .limit(5);
+      const list = (rows ?? []) as Array<Record<string, unknown> & { city: string | null }>;
+      const cityMatch = prospect.city
+        ? list.find((r) => (r.city ?? "").toLowerCase() === prospect.city!.toLowerCase())
+        : null;
+      const chosen = cityMatch ?? (list.length === 1 ? list[0] : null);
+      extra = (chosen as typeof extra) ?? null;
     } catch { /* non-blocking */ }
 
     let aipp: { logo_url: string | null; short_ai_summary: string | null; google_rating: number | null; google_review_count: number | null } | null = null;
     try {
-      const { data: ap } = await supabase
+      const { data: aps } = await supabase
         .from("aipp_profiles")
-        .select("logo_url, short_ai_summary, google_rating, google_review_count")
-        .ilike("company_name", prospect.business_name ?? "___never___")
-        .limit(1)
-        .maybeSingle();
-      aipp = (ap as typeof aipp) ?? null;
+        .select("logo_url, short_ai_summary, google_rating, google_review_count, city")
+        .ilike("company_name", nameFilter)
+        .limit(5);
+      const list = (aps ?? []) as Array<Record<string, unknown> & { city: string | null }>;
+      const cityMatch = prospect.city
+        ? list.find((r) => (r.city ?? "").toLowerCase() === prospect.city!.toLowerCase())
+        : null;
+      const chosen = cityMatch ?? (list.length === 1 ? list[0] : null);
+      aipp = (chosen as typeof aipp) ?? null;
     } catch { /* non-blocking */ }
 
     // ------------------------------------------------------- build the profile
@@ -260,7 +281,9 @@ Deno.serve(async (req) => {
       { key: "trade", label: "Spécialité identifiée", ok: Boolean(trade) },
       { key: "territory", label: "Territoire défini", ok: Boolean(prospect.city || areas.length) },
       { key: "contact", label: "Contact joignable", ok: Boolean(prospect.phone_e164 || prospect.email) },
-      { key: "web", label: "Présence web", ok: Boolean(site || prospect.google_business_url || prospect.google_place_id) },
+      // « Présence en ligne » : site web OU fiche Google. Le libellé doit rester
+      // exact, sinon la fiche affirme un site web que l'entreprise n'a pas.
+      { key: "web", label: site ? "Site web" : "Présence en ligne (Google)", ok: Boolean(site || prospect.google_business_url || prospect.google_place_id) },
       { key: "reviews", label: "Signaux d'avis publics", ok: hasReviews },
       { key: "credentials", label: "Licence RBQ", ok: Boolean(rbq) },
       { key: "media", label: "Photos de réalisations", ok: Boolean(photoCount && photoCount > 0) },
@@ -272,22 +295,25 @@ Deno.serve(async (req) => {
     const profileVariant = bucket(prospect.id + "p", ["standard"]);
 
     // Persist the variant assignment (idempotent) so the Conversion Lab can compare.
-    try {
-      await supabase.from("conversion_variant_assignments").upsert(
-        [
-          { prospect_id: prospect.id, surface: "landing", variant: landingVariant, cohort_city: prospect.city, cohort_trade: trade },
-          { prospect_id: prospect.id, surface: "profile", variant: profileVariant, cohort_city: prospect.city, cohort_trade: trade },
-        ],
-        { onConflict: "prospect_id,surface", ignoreDuplicates: true },
-      );
-    } catch (e) {
-      console.error("[activation-token-resolve] variant_assign_failed", String(e));
+    if (!preview) {
+      try {
+        await supabase.from("conversion_variant_assignments").upsert(
+          [
+            { prospect_id: prospect.id, surface: "landing", variant: landingVariant, cohort_city: prospect.city, cohort_trade: trade },
+            { prospect_id: prospect.id, surface: "profile", variant: profileVariant, cohort_city: prospect.city, cohort_trade: trade },
+          ],
+          { onConflict: "prospect_id,surface", ignoreDuplicates: true },
+        );
+      } catch (e) {
+        console.error("[activation-token-resolve] variant_assign_failed", String(e));
+      }
     }
 
     // ------------------------------------------------------------ click + events
     const now = new Date().toISOString();
     const realToken = resolved.token;
     try {
+      if (preview) throw new Error("preview_mode_no_write");
       await supabase
         .from("verified_prospect_tokens")
         .update({ clicked_at: resolved.clicked_at ?? now, click_count: (resolved.click_count ?? 0) + 1 })
@@ -330,7 +356,7 @@ Deno.serve(async (req) => {
         _idempotency_key: `profile_viewed:${realToken}`,
       });
     } catch (e) {
-      console.error("[activation-token-resolve] click_track_failed", String(e));
+      if (!preview) console.error("[activation-token-resolve] click_track_failed", String(e));
     }
 
     return json({
