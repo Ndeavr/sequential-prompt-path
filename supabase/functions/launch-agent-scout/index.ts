@@ -1,20 +1,28 @@
 /**
  * launch-agent-scout — seeds launch_leads.
  *
+ * COST INVARIANT (incident 2026-08 — Google Places billing loop):
+ * this function used to call Places directly (googleMapsConnector /
+ * resolvePlacesKey / legacy textsearch) with a field mask that did not include
+ * a phone number. It inserted rows it then rejected with `no_phone_no_email`,
+ * and launch-commander re-triggered it every minute → one billable call/minute.
+ * Discovery now goes through `searchPlacesResilient` ONLY (cache + circuit +
+ * atomic 25 calls/day budget), and a place without a phone number never enters
+ * the pool.
+ *
  * Strategy:
  *   1. Pull eligible rows from the existing `outbound_companies` pool (priority trades + cities).
- *   2. If the resulting candidate batch is < batch / 2, refill the pool with a Google Places Text
- *      Search call for the next (trade, city) pair stored in launch_mode_state.scout_cursor.
- *      Uses resolvePlacesKey() so a referrer-restricted browser key never blocks us.
+ *   2. If the batch is < batch / 2, refill via the resilient Places gateway for the
+ *      next (trade, city) pair from launch_mode_state.scout_cursor.
  *   3. Insert deduped rows into launch_leads as DISCOVERED with stage timeout metadata.
  *
  * Never silently fails: every exit path either reports inserted > 0 OR a precise BlockReason.
  */
 import { corsHeaders, adminClient, logLaunchEvent } from "../_shared/launch.ts";
-import { resolvePlacesKey } from "../_shared/launchKeys.ts";
 import { reportOutcome, BlockReason, FailureCode } from "../_shared/reliability.ts";
-import { placesSearchTextRaw, googleConnectorAvailable } from "../_shared/googleMapsConnector.ts";
+import { searchPlacesResilient, type PlaceResult } from "../_shared/placesGateway.ts";
 import { captureScrapeEvidenceForProfile } from "../_shared/caslEvidence.ts";
+
 
 const PRIORITY_TRADES = [
   "isolation", "toiture", "fondation", "drain", "drain francais",
