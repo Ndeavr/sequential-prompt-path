@@ -42714,6 +42714,83 @@ export type Database = {
           },
         ]
       }
+      dataforseo_enrichment_attempts: {
+        Row: {
+          attempt_count: number
+          conflict_reason: string | null
+          cost_usd: number
+          created_at: string
+          error_code: string | null
+          id: string
+          items_returned: number
+          match_score: number | null
+          matched_address: string | null
+          matched_phone: string | null
+          matched_title: string | null
+          matched_website: string | null
+          next_eligible_at: string | null
+          official_source_record_id: string
+          provider: string
+          query_locality: string | null
+          query_title: string | null
+          response_summary: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          conflict_reason?: string | null
+          cost_usd?: number
+          created_at?: string
+          error_code?: string | null
+          id?: string
+          items_returned?: number
+          match_score?: number | null
+          matched_address?: string | null
+          matched_phone?: string | null
+          matched_title?: string | null
+          matched_website?: string | null
+          next_eligible_at?: string | null
+          official_source_record_id: string
+          provider?: string
+          query_locality?: string | null
+          query_title?: string | null
+          response_summary?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          conflict_reason?: string | null
+          cost_usd?: number
+          created_at?: string
+          error_code?: string | null
+          id?: string
+          items_returned?: number
+          match_score?: number | null
+          matched_address?: string | null
+          matched_phone?: string | null
+          matched_title?: string | null
+          matched_website?: string | null
+          next_eligible_at?: string | null
+          official_source_record_id?: string
+          provider?: string
+          query_locality?: string | null
+          query_title?: string | null
+          response_summary?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dataforseo_enrichment_attempts_official_source_record_id_fkey"
+            columns: ["official_source_record_id"]
+            isOneToOne: false
+            referencedRelation: "official_source_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deep_link_events: {
         Row: {
           created_at: string
@@ -48082,6 +48159,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      external_enrichment_budget: {
+        Row: {
+          budget_date: string
+          calls_used: number
+          cost_usd_used: number
+          created_at: string
+          items_used: number
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          budget_date: string
+          calls_used?: number
+          cost_usd_used?: number
+          created_at?: string
+          items_used?: number
+          provider: string
+          updated_at?: string
+        }
+        Update: {
+          budget_date?: string
+          calls_used?: number
+          cost_usd_used?: number
+          created_at?: string
+          items_used?: number
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      external_enrichment_circuit: {
+        Row: {
+          created_at: string
+          enabled_at: string | null
+          enabled_by: string | null
+          kill_switch: boolean
+          notes: string | null
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled_at?: string | null
+          enabled_by?: string | null
+          kill_switch?: boolean
+          notes?: string | null
+          provider: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled_at?: string | null
+          enabled_by?: string | null
+          kill_switch?: boolean
+          notes?: string | null
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       extra_appointment_pricing_rules: {
         Row: {
@@ -57503,11 +57640,14 @@ export type Database = {
       }
       official_source_records: {
         Row: {
+          address: string | null
           blocked_reason: string | null
           business_name: string
           business_name_norm: string
           certificate_no: string | null
           certification: string | null
+          city: string | null
+          contact_status: string
           created_at: string
           dedupe_match_id: string | null
           dedupe_match_table: string | null
@@ -57515,28 +57655,43 @@ export type Database = {
           dedupe_status: string
           eligibility_status: string
           email: string | null
+          enrichment_status: string
           fetched_at: string
           id: string
           municipality: string | null
+          neq: string | null
+          next_enrichment_eligible_at: string | null
+          official_domain: string | null
           phone_e164: string | null
           phone_raw: string | null
+          postal_code: string | null
           priority_rank: number
           prospect_id: string | null
           provenance: Json
+          raw_record: Json
+          rbq_license: string | null
           region: string | null
           source_key: string
+          source_kind: string
           source_name: string
+          source_record_key: string
+          source_updated_at: string | null
           source_url: string
           specialty_bonus: number
           trust_bonus: number
+          trust_score: number
           updated_at: string
+          website_url: string | null
         }
         Insert: {
+          address?: string | null
           blocked_reason?: string | null
           business_name: string
           business_name_norm: string
           certificate_no?: string | null
           certification?: string | null
+          city?: string | null
+          contact_status?: string
           created_at?: string
           dedupe_match_id?: string | null
           dedupe_match_table?: string | null
@@ -57544,28 +57699,43 @@ export type Database = {
           dedupe_status?: string
           eligibility_status?: string
           email?: string | null
+          enrichment_status?: string
           fetched_at?: string
           id?: string
           municipality?: string | null
+          neq?: string | null
+          next_enrichment_eligible_at?: string | null
+          official_domain?: string | null
           phone_e164?: string | null
           phone_raw?: string | null
+          postal_code?: string | null
           priority_rank?: number
           prospect_id?: string | null
           provenance?: Json
+          raw_record?: Json
+          rbq_license?: string | null
           region?: string | null
           source_key: string
+          source_kind?: string
           source_name: string
+          source_record_key: string
+          source_updated_at?: string | null
           source_url: string
           specialty_bonus?: number
           trust_bonus?: number
+          trust_score?: number
           updated_at?: string
+          website_url?: string | null
         }
         Update: {
+          address?: string | null
           blocked_reason?: string | null
           business_name?: string
           business_name_norm?: string
           certificate_no?: string | null
           certification?: string | null
+          city?: string | null
+          contact_status?: string
           created_at?: string
           dedupe_match_id?: string | null
           dedupe_match_table?: string | null
@@ -57573,21 +57743,33 @@ export type Database = {
           dedupe_status?: string
           eligibility_status?: string
           email?: string | null
+          enrichment_status?: string
           fetched_at?: string
           id?: string
           municipality?: string | null
+          neq?: string | null
+          next_enrichment_eligible_at?: string | null
+          official_domain?: string | null
           phone_e164?: string | null
           phone_raw?: string | null
+          postal_code?: string | null
           priority_rank?: number
           prospect_id?: string | null
           provenance?: Json
+          raw_record?: Json
+          rbq_license?: string | null
           region?: string | null
           source_key?: string
+          source_kind?: string
           source_name?: string
+          source_record_key?: string
+          source_updated_at?: string | null
           source_url?: string
           specialty_bonus?: number
           trust_bonus?: number
+          trust_score?: number
           updated_at?: string
+          website_url?: string | null
         }
         Relationships: [
           {
@@ -57605,13 +57787,22 @@ export type Database = {
           active: boolean
           certification: string | null
           created_at: string
+          dataset_slug: string | null
           document_type: string
+          ingest_cursor: number
           last_document_sha256: string | null
           last_fetched_at: string | null
           last_record_count: number
+          last_run_summary: Json
           publisher: string
+          resource_checksum: string | null
+          resource_format: string | null
+          resource_id: string | null
+          resource_last_modified: string | null
+          resource_url: string | null
           robots_allowed: boolean
           source_key: string
+          source_kind: string
           source_name: string
           source_url: string
           updated_at: string
@@ -57621,13 +57812,22 @@ export type Database = {
           active?: boolean
           certification?: string | null
           created_at?: string
+          dataset_slug?: string | null
           document_type?: string
+          ingest_cursor?: number
           last_document_sha256?: string | null
           last_fetched_at?: string | null
           last_record_count?: number
+          last_run_summary?: Json
           publisher: string
+          resource_checksum?: string | null
+          resource_format?: string | null
+          resource_id?: string | null
+          resource_last_modified?: string | null
+          resource_url?: string | null
           robots_allowed?: boolean
           source_key: string
+          source_kind?: string
           source_name: string
           source_url: string
           updated_at?: string
@@ -57637,13 +57837,22 @@ export type Database = {
           active?: boolean
           certification?: string | null
           created_at?: string
+          dataset_slug?: string | null
           document_type?: string
+          ingest_cursor?: number
           last_document_sha256?: string | null
           last_fetched_at?: string | null
           last_record_count?: number
+          last_run_summary?: Json
           publisher?: string
+          resource_checksum?: string | null
+          resource_format?: string | null
+          resource_id?: string | null
+          resource_last_modified?: string | null
+          resource_url?: string | null
           robots_allowed?: boolean
           source_key?: string
+          source_kind?: string
           source_name?: string
           source_url?: string
           updated_at?: string
@@ -93583,6 +93792,16 @@ export type Database = {
         Args: { p_entity: string }
         Returns: undefined
       }
+      reconcile_external_enrichment_cost: {
+        Args: {
+          p_actual_cost_usd: number
+          p_actual_items: number
+          p_est_cost_usd: number
+          p_est_items: number
+          p_provider: string
+        }
+        Returns: undefined
+      }
       record_email_event: {
         Args: { p_kind: string; p_message_id: string; p_payload?: Json }
         Returns: string
@@ -93643,6 +93862,10 @@ export type Database = {
         Returns: boolean
       }
       repair_mojibake_text: { Args: { input: string }; Returns: string }
+      reserve_external_enrichment_call: {
+        Args: { p_est_cost_usd?: number; p_items?: number; p_provider?: string }
+        Returns: Json
+      }
       reserve_places_external_call: {
         Args: { p_provider?: string }
         Returns: Json

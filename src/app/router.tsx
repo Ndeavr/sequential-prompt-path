@@ -751,6 +751,7 @@ const AdminNexusDashboard = lazyWithRetry(() => import("@/pages/admin/AdminNexus
 const AdminDispatchCenter = lazyWithRetry(() => import("@/pages/admin/AdminDispatchCenter"));
 const AdminCommercialEligibility = lazyWithRetry(() => import("@/pages/admin/AdminCommercialEligibility"));
 const AdminOfficialSiteEnrichment = lazyWithRetry(() => import("@/pages/admin/AdminOfficialSiteEnrichment"));
+const AdminOfficialAcquisition = lazyWithRetry(() => import("@/pages/admin/AdminOfficialAcquisition"));
 const AdminDomainIntelligence = lazyWithRetry(() => import("@/pages/admin/AdminDomainIntelligence"));
 const PageDomainHealthDashboard = lazyWithRetry(() => import("@/pages/admin/PageDomainHealthDashboard"));
 const AdminBulkArticlesPage = lazyWithRetry(() => import("@/pages/admin/AdminBulkArticlesPage"));
@@ -1580,6 +1581,8 @@ export const AppRouter = () => (
         <Route path="/admin/dispatch-center" element={<ProtectedRoute requiredRole="admin"><AdminDispatchCenter /></ProtectedRoute>} />
         <Route path="/admin/commercial-eligibility" element={<ProtectedRoute requiredRole="admin"><AdminCommercialEligibility /></ProtectedRoute>} />
         <Route path="/admin/official-site-enrichment" element={<ProtectedRoute requiredRole="admin"><AdminOfficialSiteEnrichment /></ProtectedRoute>} />
+        <Route path="/admin/official-acquisition" element={<ProtectedRoute requiredRole="admin"><AdminOfficialAcquisition /></ProtectedRoute>} />
+
         <Route path="/admin/solicitation" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><AdminSolicitationPage /></Suspense></ProtectedRoute>} />
         <Route path="/admin/outreach-errors" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOutreachErrors /></Suspense></ProtectedRoute>} />
         <Route path="/admin/provider-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminProviderHealth /></Suspense></ProtectedRoute>} />

@@ -220,6 +220,10 @@ export const CANDIDATE_PATHS = [
   "/services", "/team", "/equipe", "/company", "/entreprise",
 ] as const;
 
+/** Hard page budget for the acquisition flow. */
+export const MAX_ACQUISITION_PAGES = 5;
+export const UNPRO_USER_AGENT = "UNPRO-Enrichment/1.1 (+https://unpro.ca)";
+
 export type FetchResult = {
   url: string;
   status: number | null;
@@ -233,27 +237,122 @@ export type FetchResult = {
 
 const MAX_BYTES = 800_000;
 const TIMEOUT_MS = 9_000;
+const MAX_REDIRECTS = 3;
 
-export async function fetchPage(url: string, ua = "UNPRO-Enrichment/1.1 (+https://unpro.ca)"): Promise<FetchResult> {
-  const started = new Date().toISOString();
+/* ---------- robots.txt ---------- */
+
+export type RobotsRules = { disallow: string[]; allow: string[] };
+
+/**
+ * Parse robots.txt for the UNPRO agent, falling back to `*`.
+ * An agent-specific group wins over the wildcard group entirely.
+ */
+export function parseRobots(txt: string, agent = "unpro-enrichment"): RobotsRules {
+  const lines = txt.split(/\r?\n/).map((l) => l.replace(/#.*$/, "").trim()).filter(Boolean);
+  const groups: Array<{ agents: string[]; allow: string[]; disallow: string[] }> = [];
+  let current: { agents: string[]; allow: string[]; disallow: string[] } | null = null;
+  let lastWasAgent = false;
+
+  for (const line of lines) {
+    const m = line.match(/^([A-Za-z-]+)\s*:\s*(.*)$/);
+    if (!m) continue;
+    const key = m[1].toLowerCase();
+    const value = m[2].trim();
+    if (key === "user-agent") {
+      if (!current || !lastWasAgent) { current = { agents: [], allow: [], disallow: [] }; groups.push(current); }
+      current.agents.push(value.toLowerCase());
+      lastWasAgent = true;
+      continue;
+    }
+    lastWasAgent = false;
+    if (!current) continue;
+    if (key === "disallow") current.disallow.push(value);
+    else if (key === "allow") current.allow.push(value);
+  }
+
+  const specific = groups.find((g) => g.agents.some((a) => agent.startsWith(a) || a === agent));
+  const wildcard = groups.find((g) => g.agents.includes("*"));
+  const chosen = specific ?? wildcard;
+  return { disallow: chosen?.disallow ?? [], allow: chosen?.allow ?? [] };
+}
+
+function matchesRule(path: string, rule: string): boolean {
+  if (rule === "") return false; // "Disallow:" (empty) = allow everything
+  const escaped = rule.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
+  const anchored = escaped.endsWith("$") ? `^${escaped}` : `^${escaped}`;
+  try { return new RegExp(anchored).test(path); } catch { return path.startsWith(rule); }
+}
+
+export function isAllowedByRobots(rules: RobotsRules, path: string): boolean {
+  const longest = (arr: string[]) =>
+    arr.filter((r) => matchesRule(path, r)).sort((a, b) => b.length - a.length)[0] ?? null;
+  const a = longest(rules.allow);
+  const d = longest(rules.disallow);
+  if (d === null) return true;
+  if (a === null) return false;
+  return a.length >= d.length;
+}
+
+export async function fetchRobots(origin: string): Promise<RobotsRules> {
   try {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
-    const r = await fetch(url, {
-      redirect: "follow",
+    const t = setTimeout(() => ctrl.abort(), 5_000);
+    const r = await fetch(new URL("/robots.txt", origin).toString(), {
       signal: ctrl.signal,
-      headers: { "User-Agent": ua, "Accept": "text/html,application/xhtml+xml" },
+      headers: { "User-Agent": UNPRO_USER_AGENT },
+      redirect: "follow",
     });
     clearTimeout(t);
-    const ct = r.headers.get("content-type") ?? "";
-    if (!r.ok) return { url, status: r.status, ok: false, html: null, content_type: ct, fetched_at: started, final_url: r.url, reason: `http_${r.status}` };
-    if (!ct.includes("text") && !ct.includes("html")) return { url, status: r.status, ok: false, html: null, content_type: ct, fetched_at: started, final_url: r.url, reason: `content_type_${ct}` };
-    const buf = await r.arrayBuffer();
-    if (buf.byteLength > MAX_BYTES * 2) {
-      return { url, status: r.status, ok: false, html: null, content_type: ct, fetched_at: started, final_url: r.url, reason: "too_large" };
+    if (!r.ok) return { disallow: [], allow: [] };
+    const txt = await r.text();
+    return parseRobots(txt);
+  } catch {
+    return { disallow: [], allow: [] };
+  }
+}
+
+/** Fetch a single page. Redirects are followed manually and ONLY within the same host. */
+export async function fetchPage(url: string, ua = UNPRO_USER_AGENT): Promise<FetchResult> {
+  const started = new Date().toISOString();
+  const originHost = (() => { try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return null; } })();
+  if (!originHost) {
+    return { url, status: null, ok: false, html: null, content_type: null, fetched_at: started, final_url: null, reason: "invalid_url" };
+  }
+
+  let target = url;
+  try {
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+      const r = await fetch(target, {
+        redirect: "manual",
+        signal: ctrl.signal,
+        headers: { "User-Agent": ua, "Accept": "text/html,application/xhtml+xml" },
+      });
+      clearTimeout(t);
+
+      if (r.status >= 300 && r.status < 400) {
+        const loc = r.headers.get("location");
+        if (!loc) return { url, status: r.status, ok: false, html: null, content_type: null, fetched_at: started, final_url: target, reason: "redirect_without_location" };
+        const next = new URL(loc, target);
+        if (next.hostname.replace(/^www\./, "") !== originHost) {
+          return { url, status: r.status, ok: false, html: null, content_type: null, fetched_at: started, final_url: next.toString(), reason: "cross_domain_redirect" };
+        }
+        target = next.toString();
+        continue;
+      }
+
+      const ct = r.headers.get("content-type") ?? "";
+      if (!r.ok) return { url, status: r.status, ok: false, html: null, content_type: ct, fetched_at: started, final_url: target, reason: `http_${r.status}` };
+      if (!ct.includes("text") && !ct.includes("html")) return { url, status: r.status, ok: false, html: null, content_type: ct, fetched_at: started, final_url: target, reason: `content_type_${ct}` };
+      const buf = await r.arrayBuffer();
+      if (buf.byteLength > MAX_BYTES * 2) {
+        return { url, status: r.status, ok: false, html: null, content_type: ct, fetched_at: started, final_url: target, reason: "too_large" };
+      }
+      const html = new TextDecoder("utf-8", { fatal: false }).decode(buf.slice(0, MAX_BYTES));
+      return { url, status: r.status, ok: true, html, content_type: ct, fetched_at: started, final_url: target };
     }
-    const html = new TextDecoder("utf-8", { fatal: false }).decode(buf.slice(0, MAX_BYTES));
-    return { url, status: r.status, ok: true, html, content_type: ct, fetched_at: started, final_url: r.url };
+    return { url, status: null, ok: false, html: null, content_type: null, fetched_at: started, final_url: target, reason: "too_many_redirects" };
   } catch (e) {
     const reason = e instanceof DOMException && e.name === "AbortError" ? "timeout" : "fetch_failed";
     return { url, status: null, ok: false, html: null, content_type: null, fetched_at: started, final_url: null, reason };
@@ -267,9 +366,13 @@ export type CrawlSummary = {
   fields: Array<ExtractedField & { source_url: string }>;
   complete: boolean;
   had_transient_failure: boolean;
+  robots_blocked: string[];
 };
 
-export async function crawlOfficialSite(domain: string, opts?: { maxPages?: number }): Promise<CrawlSummary> {
+export async function crawlOfficialSite(
+  domain: string,
+  opts?: { maxPages?: number; respectRobots?: boolean },
+): Promise<CrawlSummary> {
   const resolved = resolveOfficialDomain(domain);
   if (!resolved.canonical) {
     return {
@@ -279,17 +382,23 @@ export async function crawlOfficialSite(domain: string, opts?: { maxPages?: numb
       fields: [],
       complete: false,
       had_transient_failure: false,
+      robots_blocked: [],
     };
   }
-  const maxPages = opts?.maxPages ?? CANDIDATE_PATHS.length;
+  const maxPages = Math.min(opts?.maxPages ?? MAX_ACQUISITION_PAGES, MAX_ACQUISITION_PAGES);
   const base = new URL(resolved.canonical);
   const attempted: FetchResult[] = [];
   const okPages: FetchResult[] = [];
   const fields: Array<ExtractedField & { source_url: string }> = [];
+  const robotsBlocked: string[] = [];
   let hadTransient = false;
 
-  for (let i = 0; i < Math.min(maxPages, CANDIDATE_PATHS.length); i++) {
-    const target = new URL(CANDIDATE_PATHS[i] || "/", base).toString();
+  const rules = opts?.respectRobots === false ? { allow: [], disallow: [] } : await fetchRobots(base.origin);
+
+  for (let i = 0; i < CANDIDATE_PATHS.length && attempted.length < maxPages; i++) {
+    const path = CANDIDATE_PATHS[i] || "/";
+    if (!isAllowedByRobots(rules, path)) { robotsBlocked.push(path); continue; }
+    const target = new URL(path, base).toString();
     const r = await fetchPage(target);
     attempted.push(r);
     if (r.reason === "timeout" || r.reason === "fetch_failed" || (r.status && r.status >= 500)) {
@@ -309,8 +418,63 @@ export async function crawlOfficialSite(domain: string, opts?: { maxPages?: numb
     fields,
     complete,
     had_transient_failure: hadTransient,
+    robots_blocked: robotsBlocked,
   };
 }
+
+// ---------- Identity verification ----------
+
+export type IdentityExpectation = {
+  business_name_norm: string;
+  postal_code?: string | null;
+  rbq_license?: string | null;
+  city?: string | null;
+};
+
+export type IdentityVerdict = {
+  verified: boolean;
+  score: number;
+  signals: string[];
+  conflict: string | null;
+};
+
+function normText(s: string | null | undefined): string {
+  return (s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+/**
+ * Confirm that the crawled site belongs to the expected company before any
+ * contact is accepted as source_confirmed.
+ */
+export function verifyIdentity(
+  fields: Array<ExtractedField & { source_url?: string }>,
+  expected: IdentityExpectation,
+  pageText?: string,
+): IdentityVerdict {
+  const signals: string[] = [];
+  let score = 0;
+  let conflict: string | null = null;
+
+  const orgNames = fields.filter(f => f.kind === "org_name").map(f => normText(f.normalized ?? f.raw));
+  const haystack = `${orgNames.join(" ")} ${normText(pageText ?? "")}`;
+  const tokens = expected.business_name_norm.split(" ").filter(t => t.length > 2);
+  const hits = tokens.filter(t => haystack.includes(t)).length;
+  if (tokens.length > 0 && hits / tokens.length >= 0.5) { score += 50; signals.push("org_name_match"); }
+
+  if (expected.rbq_license) {
+    const rbqs = fields.filter(f => f.kind === "rbq").map(f => f.normalized);
+    if (rbqs.includes(expected.rbq_license)) { score += 30; signals.push("rbq_match"); }
+    else if (rbqs.length > 0) conflict = "rbq_conflict";
+  }
+  if (expected.postal_code) {
+    const postals = fields.filter(f => f.kind === "postal_code").map(f => (f.normalized ?? "").toUpperCase());
+    if (postals.includes(expected.postal_code.toUpperCase())) { score += 20; signals.push("postal_match"); }
+  }
+  if (expected.city && haystack.includes(normText(expected.city))) { score += 10; signals.push("city_match"); }
+
+  return { verified: !conflict && score >= 50, score: Math.min(score, 100), signals, conflict };
+}
+
 
 // ---------- Trust precedence ----------
 
