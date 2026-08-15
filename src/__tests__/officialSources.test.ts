@@ -52,8 +52,8 @@ describe("official source normalization", () => {
   });
 
   it("gives a specialty bonus only for signals present in the source", () => {
-    const plain = specialtyBonus({ business_name: "PLOMBERIE X" }, "ventilation_autonome");
-    const envelope = specialtyBonus({ business_name: "ISOLATION ET VENTILATION Y" }, "ventilation_autonome_et_centralisee");
+    const plain = specialtyBonus({ business_name: "PLOMBERIE X" }, { source_kind: "novoclimat", certification: "ventilation_autonome" });
+    const envelope = specialtyBonus({ business_name: "ISOLATION ET VENTILATION Y" }, { source_kind: "novoclimat", certification: "ventilation_autonome_et_centralisee" });
     expect(envelope.bonus).toBeGreaterThan(plain.bonus);
     expect(envelope.signals).toContain("enveloppe_isolation");
     expect(plain.signals).not.toContain("enveloppe_isolation");
