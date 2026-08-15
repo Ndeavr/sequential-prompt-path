@@ -59,9 +59,10 @@ describe("official source normalization", () => {
     expect(plain.signals).not.toContain("enveloppe_isolation");
   });
 
-  it("flags records with no published contact instead of inferring one", () => {
+  it("retains records with no published contact as needs_enrichment instead of inferring one", () => {
     const n = normalizeOfficialRecord(doc, { certificate_no: "1", business_name: "SANS CONTACT", phone: null, email: null, region: "Laval" }, "2026-01-01T00:00:00Z");
-    expect(n.parse_error).toBe("no_published_contact");
+    expect(n.parse_error).toBeUndefined();
+    expect(n.contact_status).toBe("needs_enrichment");
     expect(n.phone_e164).toBeNull();
     expect(n.provenance.provenance).toBe("official_verified_source");
   });
