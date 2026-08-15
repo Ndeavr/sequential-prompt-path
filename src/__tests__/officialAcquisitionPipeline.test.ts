@@ -159,13 +159,13 @@ describe("DataForSEO adapter", () => {
     const empty = parseResponse({ status_code: 20000, cost: 0, tasks: [{ status_code: 20000, result: [{ items: [] }] }] });
     expect(empty.ok && empty.items).toHaveLength(0);
 
-    const taskErr = parseResponse({ status_code: 20000, cost: 0, tasks: [{ status_code: 40501 }] });
+    const taskErr = parseResponse({ status_code: 20000, cost: 0, tasks: [{ status_code: 40501 }] }) as { ok: boolean; retryable: boolean };
     expect(taskErr.ok).toBe(false);
-    if (!taskErr.ok) expect(taskErr.retryable).toBe(false);
+    expect(taskErr.retryable).toBe(false);
 
-    const transient = parseResponse({ status_code: 50000, cost: 0, tasks: [] });
+    const transient = parseResponse({ status_code: 50000, cost: 0, tasks: [] }) as { ok: boolean; retryable: boolean };
     expect(transient.ok).toBe(false);
-    if (!transient.ok) expect(transient.retryable).toBe(true);
+    expect(transient.retryable).toBe(true);
 
     expect(parseResponse(null).ok).toBe(false);
     expect(parseResponse("nope").ok).toBe(false);
