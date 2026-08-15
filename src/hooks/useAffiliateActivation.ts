@@ -122,10 +122,25 @@ export function useAffiliateActivation() {
         email: user.email || null,
       };
 
-      const { error } = await (supabase as any)
+      const { data: saved, error } = await (supabase as any)
         .from("affiliates")
-        .upsert(payload, { onConflict: "user_id" });
+        .upsert(payload, { onConflict: "user_id" })
+        .select("id")
+        .maybeSingle();
       if (error) throw error;
+
+      // Sous-affiliés — rattache le recruteur (1 seul niveau, immuable côté serveur)
+      try {
+        const attr = getStoredAttribution();
+        if (saved?.id && attr?.refCode) {
+          await (supabase as any).rpc("assign_affiliate_parent", {
+            p_affiliate_id: saved.id,
+            p_ref_code: attr.refCode,
+          });
+        }
+      } catch (err) {
+        console.warn("[affiliate parent assign]", err);
+      }
 
       await qc.invalidateQueries({ queryKey: ["user-role"] });
       toast.success("Votre statut d'affilié est actif.");
