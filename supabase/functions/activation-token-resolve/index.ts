@@ -88,6 +88,7 @@ Deno.serve(async (req) => {
     // ---------------------------------------------------------------- tracking
     if (trackEvent) {
       if (!TRACKABLE.has(trackEvent)) return json({ ok: false, reason: "unsupported_event" }, 400);
+      if (preview) return json({ ok: true, tracked: trackEvent, preview: true });
       try {
         const { data: tk } = await supabase
           .from("verified_prospect_tokens")
