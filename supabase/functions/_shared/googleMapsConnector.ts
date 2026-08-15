@@ -171,16 +171,12 @@ export async function placesAutocomplete(
       console.error("[googleMapsConnector] places:autocomplete failed:", e);
     }
 
-    // 2) Fallback to connector searchText
-    try {
-      const searchRes = await placesSearchText(input, { language, region, maxResults: 5 }, c);
-      if (searchRes.data && searchRes.data.length > 0) {
-        return { data: searchRes.data, source: "connector_searchText", google_status: searchRes.google_status };
-      }
-    } catch (e) {
-      console.error("[googleMapsConnector] searchText fallback failed:", e);
-    }
+    // 2) NO Text Search fallback here (cost invariant, incident 2026-08):
+    //    Text Search is a far more expensive SKU and is reserved for the
+    //    discovery gateway. Autocomplete degrades to the legacy autocomplete
+    //    endpoint below, or returns a structured error — never to Text Search.
   }
+
 
   // 3) Legacy direct key fallback (server key preferred, then browser key)
   const key = getEffectiveServerKey(c);
