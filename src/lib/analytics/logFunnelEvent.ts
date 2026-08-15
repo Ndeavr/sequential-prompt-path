@@ -24,7 +24,15 @@ export type FunnelEventType =
   | "stripe_payment_success"
   | "stripe_payment_failed"
   | "activation_started"
-  | "activation_completed";
+  | "activation_completed"
+  // Landing "Visibilité IA pour entrepreneurs" (/visibilite-ia-entrepreneurs)
+  | "ai_visibility_page_view"
+  | "ai_visibility_cta_hero"
+  | "ai_visibility_call_click"
+  | "ai_visibility_form_start"
+  | "ai_visibility_form_error"
+  | "ai_visibility_form_submitted"
+  | "ai_visibility_cta_final";
 
 export type FunnelEventSource =
   | "twilio"

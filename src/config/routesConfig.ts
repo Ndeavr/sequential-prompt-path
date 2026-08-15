@@ -18,6 +18,7 @@ export const ROUTES = {
   SCORE_MAISON: "/score-maison",
   AIPP_SCORE: "/aipp-score",
   PRICING: "/pricing",
+  AI_VISIBILITY_AGENCY: "/visibilite-ia-entrepreneurs",
 
   // Public — legacy English
   HOMEOWNERS: "/homeowners",
