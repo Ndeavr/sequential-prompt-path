@@ -93,9 +93,34 @@ Deno.serve(async (req) => {
   const discoveredQueue = byStatus.DISCOVERED ?? 0;
   const messagedReady = (byStatus.ENRICHED ?? 0) + (byStatus.SCORED ?? 0);
 
+  // 2b) LOOP DEFENSE (incident 2026-08 — Google Places billing loop).
+  // Never trigger discovery when the Google circuit/kill switch is open, and never
+  // retry discovery more than once per SCOUT_COOLDOWN_MINUTES. The rest of the
+  // pipeline keeps running on existing inventory.
+  const SCOUT_COOLDOWN_MINUTES = 30;
+  let scoutSkipped: string | null = null;
+  {
+    const { data: circuit } = await sb
+      .from("provider_circuit_state").select("state, kill_switch, retry_after, last_error_code")
+      .eq("provider", "google_places").maybeSingle();
+    const circuitOpen = Boolean(
+      circuit?.kill_switch ||
+      (circuit?.state === "open" && (!circuit?.retry_after || new Date(circuit.retry_after) > new Date())),
+    );
+    if (circuitOpen) {
+      scoutSkipped = circuit?.kill_switch ? "kill_switch_enabled" : (circuit?.last_error_code ?? "circuit_open");
+    } else {
+      const since = new Date(Date.now() - SCOUT_COOLDOWN_MINUTES * 60_000).toISOString();
+      const { data: recent } = await sb
+        .from("places_api_calls").select("id")
+        .eq("caller", "launch-agent-scout").gte("created_at", since).limit(1);
+      if ((recent ?? []).length > 0) scoutSkipped = "scout_cooldown";
+    }
+  }
+
   // Build agent invocations conditionally, then run in parallel with per-agent timeouts
   const jobs: Array<[string, Promise<{ ok: boolean; status: number; body: string }>]> = [];
-  if (discoveredQueue < 100) jobs.push(["scout", invoke("launch-agent-scout", { batch: 25 })]);
+  if (discoveredQueue < 100 && !scoutSkipped) jobs.push(["scout", invoke("launch-agent-scout", { batch: 25 })]);
   jobs.push(["enrich", invoke("launch-agent-enrich", { batch: 20 })]);
   jobs.push(["visibility", invoke("launch-agent-visibility", { batch: 20 })]);
   if (messagedReady > 0) jobs.push(["outreach", invoke("launch-agent-outreach", { batch: 30 })]);
@@ -116,9 +141,19 @@ Deno.serve(async (req) => {
   await surfaceSubAgentBlockers(sb, results);
 
 
-  // 3) Fake-success prevention — only "achieved" if at least one agent moved work
-  const anyOk = Object.values(results).some(r => r.ok);
+  // 3) Fake-success prevention — HTTP 200 is not movement.
+  // A scout answering 200 with inserted=0 or blocked=true counts as NO movement.
+  const scoutMoved = (() => {
+    const r = results["scout"];
+    if (!r?.ok) return false;
+    try {
+      const parsed = JSON.parse(r.body);
+      return Number(parsed?.inserted ?? 0) > 0 && parsed?.blocked !== true;
+    } catch { return false; }
+  })();
+  const anyOk = Object.entries(results).some(([name, r]) => r.ok && (name !== "scout" || scoutMoved));
   const anyMovement = (byStatus.DISCOVERED ?? 0) + (byStatus.ENRICHED ?? 0) + (byStatus.MESSAGED ?? 0) > 0;
+
   await reportOutcome({
     operation: "launch.commander.tick",
     outcome: anyOk && anyMovement ? "achieved" : "partial",
