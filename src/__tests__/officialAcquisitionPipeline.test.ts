@@ -8,6 +8,10 @@ import {
 } from "../../supabase/functions/_shared/officialSources";
 import {
   pickResource,
+  resourceStrategy,
+  datastoreSearchUrl,
+  parseDatastoreResult,
+  sheetRowsToRecords,
   parseDelimited,
   mapColumns,
   regionKeyFor,
@@ -232,5 +236,73 @@ describe("official website validation", () => {
     const conflict = verifyIdentity(fields, { business_name_norm: "toitures bel air", rbq_license: "9999999999" });
     expect(conflict.verified).toBe(false);
     expect(conflict.conflict).toBe("rbq_conflict");
+  });
+});
+
+describe("CKAN resource strategy + readers", () => {
+  it("prefers DataStore when CKAN advertises it", () => {
+    expect(resourceStrategy({ id: "r1", format: "CSV", url: "https://x/a.csv", datastore_active: true }))
+      .toBe("datastore");
+  });
+  it("falls back to CSV then workbook, rejects the rest", () => {
+    expect(resourceStrategy({ id: "r1", format: "CSV", url: "https://x/a.csv" })).toBe("csv");
+    expect(resourceStrategy({ id: "r1", format: "XLSX", url: "https://x/a.xlsx" })).toBe("workbook");
+    expect(resourceStrategy({ id: "r1", format: "XLS", url: "https://x/a.xls" })).toBe("workbook");
+    expect(resourceStrategy({ id: "r1", format: "PDF", url: "https://x/a.pdf" })).toBe("unsupported");
+    expect(resourceStrategy(null)).toBe("unsupported");
+  });
+
+  it("builds deterministic, resumable datastore URLs", () => {
+    const u = datastoreSearchUrl("res-1", { limit: 100, offset: 200 });
+    expect(u).toContain("resource_id=res-1");
+    expect(u).toContain("limit=100");
+    expect(u).toContain("offset=200");
+    expect(u).toContain("sort=_id+asc");
+  });
+
+  it("builds selective NEQ filter queries", () => {
+    const u = datastoreSearchUrl("res-1", { limit: 50, filters: { NEQ: ["1234567890", "9876543210"] } });
+    expect(decodeURIComponent(u)).toContain('filters={"NEQ":["1234567890","9876543210"]}');
+  });
+
+  it("parses a datastore page and drops _id", () => {
+    const page = parseDatastoreResult({
+      success: true,
+      result: {
+        total: 42,
+        fields: [{ id: "_id" }, { id: "Nom de l'entreprise" }, { id: "NEQ" }],
+        records: [{ _id: 1, "Nom de l'entreprise": " Toitures Boisvert inc. ", NEQ: 1234567890 }],
+      },
+    });
+    expect(page.total).toBe(42);
+    expect(page.fields).toEqual(["Nom de l'entreprise", "NEQ"]);
+    expect(page.records[0]["Nom de l'entreprise"]).toBe("Toitures Boisvert inc.");
+    expect(page.records[0].NEQ).toBe("1234567890");
+    expect(mapColumns(page.fields).business_name).toBe("Nom de l'entreprise");
+    expect(mapColumns(page.fields).neq).toBe("NEQ");
+  });
+
+  it("rejects an invalid datastore response", () => {
+    expect(() => parseDatastoreResult({ success: false })).toThrow("datastore_invalid_response");
+  });
+
+  it("maps workbook sheet rows like CSV rows", () => {
+    const rows = sheetRowsToRecords([
+      ["Nom de l'entreprise", "Ville", "NEQ"],
+      ["Isolation Laval inc.", " Laval ", 1111111111],
+      ["", "", ""],
+    ]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]["Ville"]).toBe("Laval");
+    expect(mapColumns(Object.keys(rows[0])).municipality).toBe("Ville");
+  });
+
+  it("CSV and DataStore paths yield the same column map", () => {
+    const csv = parseDelimited("Nom de l'entreprise;Ville;NEQ\nIsolation Laval inc.;Laval;1111111111\n");
+    const ds = parseDatastoreResult({
+      success: true,
+      result: { total: 1, fields: [{ id: "Nom de l'entreprise" }, { id: "Ville" }, { id: "NEQ" }], records: [] },
+    });
+    expect(mapColumns(Object.keys(csv[0]))).toEqual(mapColumns(ds.fields));
   });
 });

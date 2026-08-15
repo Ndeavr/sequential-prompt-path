@@ -234,3 +234,10 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
 
 
+
+  [functions.rbq-official-ingest]
+    verify_jwt = true
+  [functions.dataforseo-enrich-official]
+    verify_jwt = true
+  [functions.enrich-official-website]
+    verify_jwt = true
