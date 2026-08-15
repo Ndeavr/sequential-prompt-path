@@ -84,7 +84,17 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } },
     );
 
+    // ---------- admin auth (same contract as dataforseo-enrich-official) ----------
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData } = await supabase.auth.getUser(token);
+    const userId = userData?.user?.id;
+    if (!userId) return json({ ok: false, error: "unauthorized" }, 401);
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!isAdmin) return json({ ok: false, error: "forbidden" }, 403);
+
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
+
     const mode: "dry_run" | "ingest" = body.mode === "ingest" ? "ingest" : "dry_run";
     const datasetKey: "rbq" | "req" = body.dataset === "req" ? "req" : "rbq";
     const ds = DATASETS[datasetKey];
