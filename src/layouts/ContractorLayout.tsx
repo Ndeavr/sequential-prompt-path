@@ -40,10 +40,8 @@ const ContractorLayout = ({ children }: { children: ReactNode }) => {
     <div className="min-h-screen flex bg-background">
       <aside className="hidden md:flex w-56 flex-col border-r border-border/30 bg-card/40 p-4">
         <Link to="/" className="flex items-center gap-2 px-3 mb-1 mt-2">
-          <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-glow">
-            <Sparkles className="h-3 w-3 text-primary-foreground" />
-          </div>
-          <span className="font-display text-sm font-bold text-foreground">UNPRO</span>
+          <UnproLogo size={90} className="h-6 w-auto" />
+
         </Link>
         <span className="text-caption text-muted-foreground/50 px-3 mb-4 uppercase tracking-widest">Espace Pro</span>
 
