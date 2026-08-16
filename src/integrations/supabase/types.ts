@@ -51821,6 +51821,39 @@ export type Database = {
         }
         Relationships: []
       }
+      homeowner_usage_daily: {
+        Row: {
+          created_at: string
+          feature_key: string
+          id: string
+          last_idempotency_key: string | null
+          updated_at: string
+          usage_day: string
+          used_count: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature_key: string
+          id?: string
+          last_idempotency_key?: string | null
+          updated_at?: string
+          usage_day: string
+          used_count?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feature_key?: string
+          id?: string
+          last_idempotency_key?: string | null
+          updated_at?: string
+          usage_day?: string
+          used_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       homeowner_usage_events: {
         Row: {
           created_at: string
@@ -92302,6 +92335,24 @@ export type Database = {
         }
         Relationships: []
       }
+      v_homeowner_usage_admin: {
+        Row: {
+          analyses_daily_blocked: boolean | null
+          analyses_daily_limit: number | null
+          analyses_month: number | null
+          analyses_month_limit: number | null
+          analyses_today: number | null
+          designs_daily_blocked: boolean | null
+          designs_daily_limit: number | null
+          designs_month: number | null
+          designs_month_limit: number | null
+          designs_today: number | null
+          plan_code: string | null
+          usage_day: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       v_launch_agent_health: {
         Row: {
           agent: string | null
@@ -94043,6 +94094,10 @@ export type Database = {
         }
         Returns: Json
       }
+      homeowner_daily_feature_key: {
+        Args: { _feature_key: string }
+        Returns: string
+      }
       homeowner_feature_access: {
         Args: { _feature_key: string; _user_id: string }
         Returns: Json
@@ -94052,6 +94107,10 @@ export type Database = {
         Returns: number
       }
       homeowner_plan_code: { Args: { _user_id: string }; Returns: string }
+      homeowner_quota_check: {
+        Args: { _feature_key: string; _user_id: string }
+        Returns: Json
+      }
       homeowner_usage_snapshot: { Args: { _user_id: string }; Returns: Json }
       increment_stripe_event_retry: {
         Args: { p_event_id: string }
