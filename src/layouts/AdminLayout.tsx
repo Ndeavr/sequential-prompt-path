@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   LogOut, Menu, X, Sparkles, ChevronDown, ChevronRight, Search,
 } from "lucide-react";
+import UnproLogo from "@/components/brand/UnproLogo";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import BannerSystemEnvironmentStatus from "@/components/admin/system/BannerSystemEnvironmentStatus";
 import SmsInfrastructureBanner from "@/components/admin/SmsInfrastructureBanner";
