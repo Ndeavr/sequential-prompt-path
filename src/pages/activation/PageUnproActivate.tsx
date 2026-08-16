@@ -140,7 +140,7 @@ export default function PageUnproActivate() {
         <title>{`${company} — Activer votre profil UNPRO`}</title>
         <meta
           name="description"
-          content="Activez le profil UNPRO de votre entreprise pour 1 $ et devenez visible auprès des propriétaires et des IA."
+          content="Votre profil d'entreprise est déjà préparé par UNPRO. Jusqu'à 5 rendez-vous exclusifs garantis dès 350 $, paiement unique."
         />
         <meta name="robots" content="noindex,nofollow" />
       </Helmet>
