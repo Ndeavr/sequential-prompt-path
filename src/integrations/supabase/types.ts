@@ -35533,6 +35533,7 @@ export type Database = {
           capacity_availability: Json
           city: string | null
           company_name: string | null
+          contractor_capacity: number | null
           contractor_id: string | null
           created_at: string
           data_status: string
@@ -35543,11 +35544,15 @@ export type Database = {
           expires_at: string | null
           extra_appointment_price: number | null
           factors: Json
+          guaranteed_appointments: number | null
           id: string
           input_payload: Json
+          market_capacity_snapshot: Json | null
           max_monthly_price: number
           min_monthly_price: number
+          monthly_budget: number | null
           pricing_explanation: Json
+          pricing_mode: string
           pricing_status: Database["public"]["Enums"]["pricing_quote_status"]
           pricing_version: string
           recommended_monthly_price: number
@@ -35581,6 +35586,7 @@ export type Database = {
           capacity_availability?: Json
           city?: string | null
           company_name?: string | null
+          contractor_capacity?: number | null
           contractor_id?: string | null
           created_at?: string
           data_status?: string
@@ -35591,11 +35597,15 @@ export type Database = {
           expires_at?: string | null
           extra_appointment_price?: number | null
           factors?: Json
+          guaranteed_appointments?: number | null
           id?: string
           input_payload?: Json
+          market_capacity_snapshot?: Json | null
           max_monthly_price?: number
           min_monthly_price?: number
+          monthly_budget?: number | null
           pricing_explanation?: Json
+          pricing_mode?: string
           pricing_status?: Database["public"]["Enums"]["pricing_quote_status"]
           pricing_version?: string
           recommended_monthly_price?: number
@@ -35629,6 +35639,7 @@ export type Database = {
           capacity_availability?: Json
           city?: string | null
           company_name?: string | null
+          contractor_capacity?: number | null
           contractor_id?: string | null
           created_at?: string
           data_status?: string
@@ -35639,11 +35650,15 @@ export type Database = {
           expires_at?: string | null
           extra_appointment_price?: number | null
           factors?: Json
+          guaranteed_appointments?: number | null
           id?: string
           input_payload?: Json
+          market_capacity_snapshot?: Json | null
           max_monthly_price?: number
           min_monthly_price?: number
+          monthly_budget?: number | null
           pricing_explanation?: Json
+          pricing_mode?: string
           pricing_status?: Database["public"]["Enums"]["pricing_quote_status"]
           pricing_version?: string
           recommended_monthly_price?: number

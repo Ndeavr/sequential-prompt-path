@@ -11,6 +11,13 @@
 
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import {
+  evaluateMargin,
+  marginConfigFrom,
+  solveBudget,
+  type ModeOutcome,
+  type PricingMode,
+} from "../_shared/pricingModes.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,6 +32,10 @@ interface Input {
   city: string;
   service_cities?: string[];
   service_radius_km?: number;
+  /** "goal" = appointments in → budget out. "budget" = budget in → guarantee out. */
+  pricing_mode?: PricingMode;
+  /** Required when pricing_mode = "budget" (CAD cents). */
+  monthly_budget_cents?: number;
   target_monthly_appointments: number;
   average_project_value: number; // CAD dollars
   monthly_capacity: number;
@@ -254,7 +265,11 @@ Deno.serve(async (req) => {
     if (
       !body?.trade_primary ||
       !body?.city ||
-      !Number.isFinite(body.target_monthly_appointments) ||
+      !Number.isFinite(
+        body.pricing_mode === "budget"
+          ? (body.monthly_budget_cents ?? NaN)
+          : body.target_monthly_appointments,
+      ) ||
       !Number.isFinite(body.average_project_value) ||
       !Number.isFinite(body.monthly_capacity)
     ) {
@@ -301,8 +316,8 @@ Deno.serve(async (req) => {
         ? body.close_rate_estimate / 100
         : body.close_rate_estimate || 0.3;
 
-    const revenuePotential = Math.round(
-      body.target_monthly_appointments * close * body.average_project_value,
+    const declaredRevenuePotential = Math.round(
+      (body.target_monthly_appointments ?? 0) * close * body.average_project_value,
     );
 
     // ---------- Market signals (never invented) ----------
@@ -519,14 +534,9 @@ Deno.serve(async (req) => {
       (exclusivityAvailability as any).status === "available" &&
       !marketClosed;
 
-    // ---------- Capacity factor ----------
-    const cap = Math.max(1, body.monthly_capacity ?? 1);
-    const utilization = clamp(body.target_monthly_appointments / cap, 0, 2);
-    const capacityFactor = clamp(
-      0.85 + utilization * 0.25,
-      w.capacity_factor_min,
-      w.capacity_factor_max,
-    );
+    // (capacity factor is computed per appointment target inside priceChain)
+
+
 
     // ---------- Territory breadth ----------
     const extraCities = Math.max(0, (body.service_cities?.length ?? 1) - 1);
@@ -540,49 +550,139 @@ Deno.serve(async (req) => {
     const objective = body.business_objective ?? "grow";
     const objectiveMultiplier = w.objective_multipliers[objective] ?? 1.0;
 
-    // ---------- Plan + fees ----------
-    const picked = pickPlan(body, plans, capacityCeiling);
-    const plan = picked.plan;
-    const capacityCapped = picked.capped;
-    const base = plan.monthly_price;
-
     // ---------- Extra appointment price (market value, never plan ÷ included) ----------
     const extra = await computeExtraAppointmentPrice(svc, body, close, w);
-    const extraAppointments = Math.max(
-      0,
-      body.target_monthly_appointments - (plan.appointments_included ?? 0),
-    );
-    const apptPkg = extra.price_cents
-      ? extraAppointments * extra.price_cents
-      : extraAppointments * w.volume_per_appointment_cents;
-
-    // Exclusivity is only charged when the inventory can actually grant it.
-    const exclusivity = exclusivityGranted
-      ? Math.round(base * (w.exclusivity_multiplier - 1))
-      : 0;
     const aipp = aippFee(body.current_ai_visibility_score);
 
-    const subtotal = base + apptPkg + exclusivity + aipp;
-    // Compounding six factors can double the price; the blended multiplier is
-    // clamped so the personalized price stays within a defensible band of the
-    // plan's published price.
-    const marketMultiplier = round2(
-      clamp(
-        demandFactor *
-          competitionFactor *
-          capacityFactor *
-          territoryMultiplier *
-          seasonality *
-          objectiveMultiplier *
-          clusterMultiplier *
-          scarcityMultiplier,
-        0.85,
-        1.45,
-      ),
+    /**
+     * THE canonical price chain, expressed as a pure function of the appointment
+     * target. Both pricing modes (goal / budget) resolve THIS function — there is
+     * no second formula anywhere.
+     */
+    function priceChain(target: number) {
+      const t = Math.max(0, Math.round(target));
+      const picked = pickPlan({ ...body, target_monthly_appointments: t }, plans, capacityCeiling);
+      const p = picked.plan;
+      const base = p.monthly_price;
+
+      const extraAppointments = Math.max(0, t - (p.appointments_included ?? 0));
+      const apptPkg = extra.price_cents
+        ? extraAppointments * extra.price_cents
+        : extraAppointments * w.volume_per_appointment_cents;
+
+      // Exclusivity is only charged when the inventory can actually grant it.
+      const exclusivity = exclusivityGranted
+        ? Math.round(base * (w.exclusivity_multiplier - 1))
+        : 0;
+
+      const utilizationT = clamp(t / Math.max(1, body.monthly_capacity ?? 1), 0, 2);
+      const capacityFactorT = clamp(
+        0.85 + utilizationT * 0.25,
+        w.capacity_factor_min,
+        w.capacity_factor_max,
+      );
+
+      const subtotal = base + apptPkg + exclusivity + aipp;
+      // Compounding six factors can double the price; the blended multiplier is
+      // clamped so the personalized price stays within a defensible band of the
+      // plan's published price.
+      const marketMultiplier = round2(
+        clamp(
+          demandFactor *
+            competitionFactor *
+            capacityFactorT *
+            territoryMultiplier *
+            seasonality *
+            objectiveMultiplier *
+            clusterMultiplier *
+            scarcityMultiplier,
+          0.85,
+          1.45,
+        ),
+      );
+
+      return {
+        target: t,
+        plan: p,
+        plan_code: p.code,
+        capacity_capped: picked.capped,
+        base,
+        appointment_package_fee: apptPkg,
+        exclusivity_fee: exclusivity,
+        aipp_fee: aipp,
+        subtotal,
+        market_multiplier: marketMultiplier,
+        monthly_price_cents: clamp(Math.round(subtotal * marketMultiplier), minCents, maxCents),
+      };
+    }
+
+    // ---------- Mode resolution (goal ⇄ budget, same chain) ----------
+    const marginCfg = marginConfigFrom((cfgRow?.weights as any) ?? {});
+    const pricingMode: PricingMode = body.pricing_mode === "budget" ? "budget" : "goal";
+    const monthlyBudgetCents =
+      pricingMode === "budget"
+        ? Math.max(0, Math.round(Number(body.monthly_budget_cents ?? 0)))
+        : null;
+
+    let effectiveTarget = Math.max(0, Math.round(body.target_monthly_appointments ?? 0));
+    let modeOutcome: ModeOutcome = "goal_resolved";
+    let budgetSolve: Record<string, unknown> | null = null;
+
+    if (pricingMode === "budget") {
+      const solved = solveBudget(
+        {
+          monthly_budget_cents: monthlyBudgetCents ?? 0,
+          market_ceiling: capacityCeiling,
+          contractor_capacity: Math.max(0, Math.round(body.monthly_capacity ?? 0)),
+          market_unavailable: saturated || marketClosed,
+          margin: marginCfg,
+        },
+        (t) => {
+          const c = priceChain(t);
+          return {
+            target: c.target,
+            plan_code: c.plan_code,
+            monthly_price_cents: c.monthly_price_cents,
+            capacity_capped: c.capacity_capped,
+          };
+        },
+      );
+      modeOutcome = solved.outcome;
+      effectiveTarget = solved.guaranteed_appointments;
+      budgetSolve = {
+        monthly_budget_cents: monthlyBudgetCents,
+        guaranteed_appointments: solved.guaranteed_appointments,
+        budget_affordable_appointments: solved.budget_affordable_appointments,
+        market_ceiling: solved.market_ceiling,
+        contractor_capacity: solved.contractor_capacity,
+        unused_budget_cents: solved.unused_budget_cents,
+        margin_ok: solved.margin?.meets_minimum ?? false,
+        outcome: solved.outcome,
+      };
+    } else if (saturated || marketClosed) {
+      modeOutcome = "market_unavailable";
+    } else if (capacityCeiling !== null && effectiveTarget > capacityCeiling) {
+      modeOutcome = "capacity_limited";
+    }
+
+    // ---------- Final price for the resolved target ----------
+    const chain = priceChain(effectiveTarget);
+    const plan = chain.plan;
+    const capacityCapped = chain.capacity_capped;
+    const base = chain.base;
+    const apptPkg = chain.appointment_package_fee;
+    const exclusivity = chain.exclusivity_fee;
+    const subtotal = chain.subtotal;
+    const marketMultiplier = chain.market_multiplier;
+    const extraAppointments = Math.max(0, effectiveTarget - (plan.appointments_included ?? 0));
+    const utilization = clamp(effectiveTarget / Math.max(1, body.monthly_capacity ?? 1), 0, 2);
+    const capacityFactor = clamp(
+      0.85 + utilization * 0.25,
+      w.capacity_factor_min,
+      w.capacity_factor_max,
     );
 
-
-    let finalPrice = clamp(Math.round(subtotal * marketMultiplier), minCents, maxCents);
+    let finalPrice = chain.monthly_price_cents;
     let finalPlanCode = plan.code;
     let status: string = "offered";
 
@@ -593,6 +693,36 @@ Deno.serve(async (req) => {
       finalPlanCode = entry.code;
       finalPrice = entry.monthly_price;
     }
+
+    // Budget mode with no guaranteeable appointment: fall back to the entry plan
+    // (Présence) and never display an invented guarantee.
+    if (pricingMode === "budget" && modeOutcome === "budget_below_floor" && status !== "waitlisted") {
+      const entry = plans[0];
+      finalPlanCode = entry.code;
+      finalPrice = entry.monthly_price;
+      status = "offered";
+    }
+
+    const guaranteedAppointments =
+      status === "waitlisted" || modeOutcome === "budget_below_floor"
+        ? 0
+        : pricingMode === "budget"
+          ? effectiveTarget
+          : Math.min(
+              effectiveTarget,
+              capacityCeiling ?? effectiveTarget,
+              plan.appointments_included ?? effectiveTarget,
+            );
+
+    const marginEval = evaluateMargin(finalPrice, guaranteedAppointments, marginCfg);
+
+    // Revenue potential always reflects what is REALLY guaranteed (budget mode)
+    // or what the contractor declared targeting (goal mode).
+    const revenuePotential =
+      pricingMode === "budget"
+        ? Math.round(guaranteedAppointments * close * body.average_project_value)
+        : declaredRevenuePotential;
+
 
 
     // ---------- Data confidence ----------
@@ -654,6 +784,16 @@ Deno.serve(async (req) => {
     // Human-readable, evidence-only explanation (no invented scarcity).
     const pricingExplanation = {
       calculation_version: CALCULATION_VERSION,
+      pricing_mode: pricingMode,
+      mode_outcome: modeOutcome,
+      monthly_budget_cents: monthlyBudgetCents,
+      guaranteed_appointments: guaranteedAppointments,
+      budget_solve: budgetSolve,
+      margin: {
+        meets_minimum: marginEval.meets_minimum,
+        meets_target: marginEval.meets_target,
+        margin_ratio: marginEval.margin_ratio,
+      },
       plan_reason: capacityCapped
         ? "capacity_capped"
         : status === "waitlisted"
@@ -685,7 +825,13 @@ Deno.serve(async (req) => {
       business_objective: objective,
       wants_exclusivity: !!body.wants_exclusivity,
       territory_cluster: `${citySlug}::${tradeSlug}`,
-      target_monthly_appointments: body.target_monthly_appointments,
+      pricing_mode: pricingMode,
+      monthly_budget: monthlyBudgetCents,
+      guaranteed_appointments: guaranteedAppointments,
+      contractor_capacity: Math.max(0, Math.round(body.monthly_capacity ?? 0)),
+      market_capacity_snapshot: capacityAvailability,
+      target_monthly_appointments:
+        pricingMode === "budget" ? effectiveTarget : body.target_monthly_appointments,
       average_project_value: Math.round(body.average_project_value),
       estimated_close_rate: round2(close),
       estimated_monthly_revenue_potential: revenuePotential,
@@ -732,7 +878,7 @@ Deno.serve(async (req) => {
     }
 
     await svc.from("pricing_audit_log").insert({
-      event_type: "quote_computed",
+      event_type: pricingMode === "budget" ? "budget_quote_computed" : "quote_computed",
       actor_id: user?.id ?? null,
       actor_role: user ? "contractor" : "guest",
       contractor_id: body.contractor_id ?? null,
@@ -740,6 +886,10 @@ Deno.serve(async (req) => {
       service_slug: tradeSlug,
       city_slug: citySlug,
       new_state: {
+        pricing_mode: pricingMode,
+        mode_outcome: modeOutcome,
+        monthly_budget_cents: monthlyBudgetCents,
+        guaranteed_appointments: guaranteedAppointments,
         plan: finalPlanCode,
         price_cents: finalPrice,
         status,
@@ -756,6 +906,12 @@ Deno.serve(async (req) => {
         pricing_version: pricingVersion,
         calculation_version: CALCULATION_VERSION,
         data_status: dataStatus,
+        pricing_mode: pricingMode,
+        mode_outcome: modeOutcome,
+        monthly_budget: monthlyBudgetCents,
+        guaranteed_appointments: guaranteedAppointments,
+        contractor_capacity: Math.max(0, Math.round(body.monthly_capacity ?? 0)),
+        budget_solve: budgetSolve,
         recommended_plan: finalPlanCode,
         plan_name: plan.name,
         recommended_monthly_price: finalPrice,
