@@ -287,9 +287,16 @@ export default function PropertyPassportPage() {
           </Card>
         )}
 
+        {/* À prévoir pour votre maison */}
+        <UpcomingMaintenanceCard propertyId={id!} />
+
         {/* Passport Modules — Tabbed */}
-        <Tabs defaultValue="identity" className="w-full">
-          <TabsList className="w-full grid grid-cols-3 sm:grid-cols-6 h-auto p-1">
+        <Tabs defaultValue="story" className="w-full">
+          <TabsList className="w-full grid grid-cols-4 sm:grid-cols-7 h-auto p-1">
+            <TabsTrigger value="story" className="text-xs gap-1 py-2">
+              <History className="w-3 h-3" />
+              <span className="hidden sm:inline">Histoire</span>
+            </TabsTrigger>
             <TabsTrigger value="identity" className="text-xs gap-1 py-2">
               <Home className="w-3 h-3" />
               <span className="hidden sm:inline">Identité</span>
@@ -317,6 +324,9 @@ export default function PropertyPassportPage() {
           </TabsList>
 
           <div className="mt-4">
+            <TabsContent value="story">
+              <PropertyStoryTimeline propertyId={id!} />
+            </TabsContent>
             <TabsContent value="identity">
               <PropertyIdentityCard property={property} sectionData={basicData} />
             </TabsContent>
@@ -329,6 +339,7 @@ export default function PropertyPassportPage() {
             <TabsContent value="maintenance">
               <MaintenanceTimeline propertyId={id!} />
             </TabsContent>
+
             <TabsContent value="documents">
               <DocumentVault propertyId={id!} />
             </TabsContent>
