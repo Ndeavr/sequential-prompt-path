@@ -13,6 +13,7 @@
  * Intelligence could not classify their number.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { buildOutreachUrl, smsWithLink } from "../_shared/outreachLink.ts";
 import { logPipelineEvent, REASON } from "../_shared/acquisitionPipeline.ts";
 
 const corsHeaders = {
