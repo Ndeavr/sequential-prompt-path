@@ -1,19 +1,21 @@
 /**
- * UNPRO — Icon-only (round blue speech-bubble mark)
- * Master brand icon used across avatars, auth surfaces, navigation marks.
+ * UNPRO — Icon-only (official mark)
+ * Used across avatars, auth surfaces, navigation marks.
  */
-import markAsset from "@/assets/brand/unpro-logo-mark.png.asset.json";
+import { BRAND } from "@/config/branding";
 
 type UnproIconProps = {
   size?: number;
+  /** Historical variants preserved; `shape` controls the official mark used. */
   variant?: "primary" | "mono" | "blue" | "rubber";
+  shape?: "round" | "square";
   className?: string;
 };
 
-export default function UnproIcon({ size = 64, className = "" }: UnproIconProps) {
+export default function UnproIcon({ size = 64, shape = "round", className = "" }: UnproIconProps) {
   return (
     <img
-      src={markAsset.url}
+      src={shape === "square" ? BRAND.logoSquare : BRAND.logoRound}
       alt="UNPRO"
       width={size}
       height={size}

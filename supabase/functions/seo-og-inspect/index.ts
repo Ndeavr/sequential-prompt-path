@@ -20,7 +20,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const EXPECTED_OG_IMAGE = "https://unpro.ca/og/og-unpro-fin-3-soumissions-v2.jpg?v=20260816";
+const EXPECTED_OG_IMAGE = "https://unpro.ca/og/og-unpro-fin-3-soumissions-v3.jpg?v=20260816b";
 // Match on filename only (allow ?v= drift or extra params)
 const EXPECTED_OG_MATCH = /\/og\/og-unpro-fin-3-soumissions-v2\.jpg/;
 
