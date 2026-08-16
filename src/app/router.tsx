@@ -203,6 +203,7 @@ const PageBusinessCardImport = lazyWithRetry(() => import("@/pages/business-card
 const PageBusinessCardScannerHub = lazyWithRetry(() => import("@/pages/business-card/PageBusinessCardScannerHub"));
 const PageContractorLeads = lazyWithRetry(() => import("@/pages/business-card/PageContractorLeads"));
 const PageAlexGoalsStrategy = lazyWithRetry(() => import("@/pages/goals/PageAlexGoalsStrategy"));
+const PageActivationGoals = lazyWithRetry(() => import("@/pages/entrepreneur/PageActivationGoals"));
 const PageCheckoutStripe = lazyWithRetry(() => import("@/pages/checkout/PageCheckoutStripe"));
 const PageCheckoutSuccess = lazyWithRetry(() => import("@/pages/checkout/PageCheckoutSuccess"));
 const PageActivationStart = lazyWithRetry(() => import("@/pages/checkout/PageActivationStart"));
@@ -1120,6 +1121,7 @@ export const AppRouter = () => (
         <Route path="/compare-quotes" element={<CompareQuotesPage />} />
         <Route path="/contractor-onboarding" element={<ContractorOnboardingPage />} />
         <Route path="/goals" element={<PageAlexGoalsStrategy />} />
+        <Route path="/entrepreneur/objectifs/:token" element={<PageActivationGoals />} />
         <Route path="/checkout" element={<PageCheckoutStripe />} />
         <Route path="/checkout/success" element={<PageCheckoutSuccess />} />
         <Route path="/checkout/native/:planCode" element={<PageCheckoutNativeScrollable />} />

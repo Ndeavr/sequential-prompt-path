@@ -32,12 +32,27 @@ const STEP_KEYS = [
   "desired_project_types",
   "ideal_project_value_cad",
   "territories",
+  // How the contractor wants the plan built: from a goal, or from a budget.
+  "pricing_mode",
   "monthly_appointment_goal",
+  "monthly_budget_cad",
   "exclusions",
   "urgency",
   "exclusivity_preference",
 ] as const;
 type StepKey = (typeof STEP_KEYS)[number];
+
+/**
+ * Alex asks ONE question at a time, and never asks a question the chosen mode
+ * makes irrelevant: goal mode skips the budget question, budget mode skips the
+ * appointment-goal question.
+ */
+function requiredSteps(answers: Record<string, unknown>): StepKey[] {
+  const mode = answers.pricing_mode === "budget" ? "budget" : "goal";
+  return STEP_KEYS.filter((k) =>
+    mode === "budget" ? k !== "monthly_appointment_goal" : k !== "monthly_budget_cad",
+  );
+}
 
 /**
  * Deterministic plan selection.
@@ -204,7 +219,8 @@ Deno.serve(async (req) => {
       // Mirror into the typed column so reporting stays queryable.
       patch[key] = body.value;
 
-      const complete = STEP_KEYS.every((k) => answers[k] !== undefined && answers[k] !== null);
+      const required = requiredSteps(answers);
+      const complete = required.every((k) => answers[k] !== undefined && answers[k] !== null);
       if (complete && !goals.completed_at) patch.completed_at = new Date().toISOString();
 
       const { data: updated, error } = await supabase
@@ -219,9 +235,9 @@ Deno.serve(async (req) => {
       }
 
       await logEvent("goal_step_completed", { step: key, index: idx }, `goal_step:${token}:${key}`);
-      if (complete) await logEvent("goals_completed", { steps: STEP_KEYS.length }, `goals_completed:${token}`);
+      if (complete) await logEvent("goals_completed", { steps: required.length }, `goals_completed:${token}`);
 
-      return json({ ok: true, goals: updated, complete });
+      return json({ ok: true, goals: updated, complete, required_steps: required });
     }
 
     // ------------------------------------------------------------- recommend
@@ -239,15 +255,28 @@ Deno.serve(async (req) => {
         ? (answers.desired_project_types as unknown[]).map(String).filter(Boolean)
         : [];
       const exclusivity = String(answers.exclusivity_preference ?? "");
+      const pricingMode = answers.pricing_mode === "budget" ? "budget" : "goal";
+      const budgetCents =
+        pricingMode === "budget"
+          ? Math.max(0, Math.round(Number(answers.monthly_budget_cad ?? 0) * 100))
+          : undefined;
+      // In budget mode the contractor has not stated a volume goal; capacity
+      // defaults to a generous ceiling so the market decides the guarantee.
+      const declaredCapacity =
+        pricingMode === "budget"
+          ? Math.max(1, Number(answers.monthly_capacity ?? 30))
+          : Math.max(1, Number(answers.monthly_appointment_goal ?? 1));
       const enginePayload = {
         contractor_id: (goals as any).contractor_id ?? null,
         company_name: prospect?.business_name ?? null,
         trade_primary: projectTypes[0] || prospect?.category || "general",
         city: territories[0] || prospect?.city || "Montréal",
         service_cities: territories.length ? territories : prospect?.city ? [prospect.city] : [],
+        pricing_mode: pricingMode,
+        monthly_budget_cents: budgetCents,
         target_monthly_appointments: Number(answers.monthly_appointment_goal ?? 0),
         average_project_value: Number(answers.ideal_project_value_cad ?? 0),
-        monthly_capacity: Math.max(1, Number(answers.monthly_appointment_goal ?? 1)),
+        monthly_capacity: declaredCapacity,
         wants_exclusivity: exclusivity === "exclusif",
         business_objective:
           String(answers.growth_objective ?? "") === "visibilite"
@@ -333,6 +362,11 @@ Deno.serve(async (req) => {
           monthly_price: planRow?.monthly_price ?? null,
           appointments_included: planRow?.appointments_included ?? null,
           personalized_price: engine?.recommended_monthly_price ?? null,
+          pricing_mode: engine?.pricing_mode ?? pricingMode,
+          mode_outcome: engine?.mode_outcome ?? null,
+          monthly_budget_cents: budgetCents ?? null,
+          guaranteed_appointments: engine?.guaranteed_appointments ?? null,
+          budget_solve: engine?.budget_solve ?? null,
           pricing_status: engine?.pricing_status ?? null,
           quote_id: engine?.quote_id ?? null,
           capacity: engine?.capacity_availability ?? null,
@@ -383,6 +417,7 @@ Deno.serve(async (req) => {
         desired_project_types: goals.desired_project_types ?? [],
       },
       steps: STEP_KEYS,
+      required_steps: requiredSteps((goals.answers as Record<string, unknown>) ?? {}),
     });
   } catch (e) {
     console.error("[activation-goals] fatal", String(e));
