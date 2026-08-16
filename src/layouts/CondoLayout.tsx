@@ -55,9 +55,8 @@ function CondoLayoutInner({ children }: { children: ReactNode }) {
     [condoRole]
   );
 
-  const roleColor = condoRole === "condo_board" ? "from-amber-500 to-orange-500"
-    : condoRole === "condo_manager" ? "from-secondary to-primary"
-    : "from-primary to-secondary";
+
+
 
   return (
     <div className="min-h-screen flex bg-background">
