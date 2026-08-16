@@ -191,6 +191,7 @@ export default function PageAdminPricingIntelligence() {
                     <th className="text-left px-4 py-3">Entreprise</th>
                     <th className="text-left px-4 py-3">Métier</th>
                     <th className="text-left px-4 py-3">Ville</th>
+                    <th className="text-left px-4 py-3">Mode</th>
                     <th className="text-left px-4 py-3">Plan</th>
                     <th className="text-right px-4 py-3">Prix</th>
                     <th className="text-right px-4 py-3">ROI</th>
@@ -210,6 +211,19 @@ export default function PageAdminPricingIntelligence() {
                       </td>
                       <td className="px-4 py-3">{q.trade_primary}</td>
                       <td className="px-4 py-3">{q.city}</td>
+                      <td className="px-4 py-3">
+                        {/* Objectif → budget calculé ; Budget → garantie calculée. */}
+                        <span className="text-xs px-2 py-1 rounded-full bg-white/[0.06] text-white/80">
+                          {q.pricing_mode === "budget"
+                            ? `Budget ${q.monthly_budget ? formatCAD(q.monthly_budget) : ""}`
+                            : "Objectif"}
+                        </span>
+                        {typeof q.guaranteed_appointments === "number" && q.guaranteed_appointments > 0 && (
+                          <span className="block text-[11px] text-white/50 mt-1">
+                            {q.guaranteed_appointments} RDV garantis
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 capitalize">
                         {q.recommended_plan}
                       </td>
