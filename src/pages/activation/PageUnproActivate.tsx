@@ -116,31 +116,21 @@ export default function PageUnproActivate() {
     setCorrectionSent(true);
   }, [track, profile]);
 
-  async function handleActivate(placement: string) {
+  /**
+   * L'offre d'entrée est le pack 350 $. La garantie DOIT être calculée avant
+   * tout paiement : on dirige vers le calculateur canonique, pré-rempli avec
+   * les faits déjà vérifiés du prospect.
+   */
+  function handleActivate(placement: string) {
     if (!prospect) return;
-    setPaying(true);
-    setPayError(null);
-    track("checkout_cta_clicked", { placement });
-    try {
-      const { data, error } = await supabase.functions.invoke("create-activation-checkout", {
-        body: {
-          activation_token: token,
-          email: prospect.email ?? undefined,
-          source: "sms_activation",
-        },
-      });
-      if (error || !data?.url) {
-        track("checkout_cta_failed", { placement });
-        setPayError("Paiement indisponible pour l'instant. Réessayez dans quelques secondes.");
-        return;
-      }
-      redirectToCheckout(data.url as string);
-    } catch {
-      track("checkout_cta_failed", { placement });
-      setPayError("Paiement indisponible pour l'instant. Réessayez dans quelques secondes.");
-    } finally {
-      setPaying(false);
-    }
+    track("checkout_cta_clicked", { placement, offer: "pack_350" });
+    const params = new URLSearchParams();
+    if (token) params.set("t", token);
+    const trade = profile?.primary_category ?? prospect.category_slug ?? "";
+    const city = profile?.city ?? prospect.city ?? "";
+    if (trade) params.set("trade", trade);
+    if (city) params.set("city", city);
+    navigate(`/entrepreneur/garantie?${params.toString()}`);
   }
 
   const company = profile?.display_name ?? prospect?.business_name?.trim() ?? "votre entreprise";
