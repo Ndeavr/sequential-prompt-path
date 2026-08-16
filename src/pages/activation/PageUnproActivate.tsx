@@ -10,11 +10,11 @@
  * (Vérifié / Déclaré / Déduit) et les sections vides ne sont pas rendues.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Loader2, ShieldCheck, ArrowRight, Check, Globe, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { redirectToCheckout } from "@/lib/redirectToCheckout";
+import { OFFER_350 } from "@/lib/copy/offer350";
 import { Button } from "@/components/ui/button";
 import CompanyIdentityHeader from "@/features/activationProfile/components/CompanyIdentityHeader";
 import FactGrid from "@/features/activationProfile/components/FactGrid";
