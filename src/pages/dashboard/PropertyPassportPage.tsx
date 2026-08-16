@@ -26,8 +26,11 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import {
   Home, Wrench, Hammer, Zap, FileText, ShieldCheck,
   CheckCircle2, X, Clock, Sparkles, Trophy,
-  BarChart3, Layers, ClipboardList, FolderOpen,
+  BarChart3, Layers, ClipboardList, FolderOpen, History,
 } from "lucide-react";
+import PropertyStoryTimeline from "@/components/passport/PropertyStoryTimeline";
+import UpcomingMaintenanceCard from "@/components/passport/UpcomingMaintenanceCard";
+import QuickAddToHome from "@/components/passport/QuickAddToHome";
 import HomeScoreCard from "@/components/passport/HomeScoreCard";
 import PropertyIdentityCard from "@/components/passport/PropertyIdentityCard";
 import SystemInventoryCards from "@/components/passport/SystemInventoryCards";
