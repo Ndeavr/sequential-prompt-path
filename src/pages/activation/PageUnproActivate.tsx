@@ -126,7 +126,7 @@ export default function PageUnproActivate() {
     track("checkout_cta_clicked", { placement, offer: "pack_350" });
     const params = new URLSearchParams();
     if (token) params.set("t", token);
-    const trade = profile?.primary_category ?? prospect.category_slug ?? "";
+    const trade = profile?.trade ?? prospect.category ?? "";
     const city = profile?.city ?? prospect.city ?? "";
     if (trade) params.set("trade", trade);
     if (city) params.set("city", city);
