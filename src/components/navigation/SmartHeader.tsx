@@ -50,6 +50,7 @@ const SmartHeader = () => {
   const [activeMega, setActiveMega] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const { lang, setLang } = useLanguage();
+  const { openAlex } = useAlexVoice();
 
   const handleMegaEnter = useCallback((key: string) => setActiveMega(key), []);
   const handleMegaLeave = useCallback(() => setActiveMega(null), []);
