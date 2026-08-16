@@ -716,6 +716,13 @@ Deno.serve(async (req) => {
 
     const marginEval = evaluateMargin(finalPrice, guaranteedAppointments, marginCfg);
 
+    // Revenue potential always reflects what is REALLY guaranteed (budget mode)
+    // or what the contractor declared targeting (goal mode).
+    const revenuePotential =
+      pricingMode === "budget"
+        ? Math.round(guaranteedAppointments * close * body.average_project_value)
+        : declaredRevenuePotential;
+
 
 
     // ---------- Data confidence ----------
