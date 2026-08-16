@@ -42,8 +42,9 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const showSEOGrid = ["/problemes", "/services", "/villes", "/professionnels"].some(
     (prefix) => pathname.startsWith(prefix)
   );
-  // Unicorn home renders its own HeaderFloatingGlass — skip SmartHeader there to avoid duplicate.
-  const showSmartHeader = !["/", "/index"].includes(pathname);
+  // SmartHeader is now shown everywhere, including `/` (the "fin des 3 soumissions"
+  // home has no header of its own and needs logo + nav + FR/EN toggle).
+  const showSmartHeader = true;
 
   return (
     <div className="min-h-[100svh] flex flex-col relative w-full max-w-full overflow-visible">
