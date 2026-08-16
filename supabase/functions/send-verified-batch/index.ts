@@ -41,37 +41,13 @@ function jsonResponse(body: Record<string, unknown>, status = 200, requestId = c
 
 const SMS_TEMPLATE = (biz: string, link: string) =>
   smsWithLink(
-    `Bonjour, savez-vous comment l'IA comprend actuellement ${biz}? ` +
-      `UNPRO a préparé son profil d'entreprise. Vous pouvez le voir et l'activer pour 1 $.`,
+    firstTouchSms(biz),
     buildOutreachUrl(link, { campaign: "contractor_activation" }),
   );
 
-const EMAIL_SUBJECT = (biz: string) =>
-  `${biz} — votre profil UNPRO est prêt (activation 1 $)`;
+const EMAIL_SUBJECT = (biz: string) => emailSubject(biz);
 
-const EMAIL_HTML = (biz: string, link: string) => `
-<!doctype html>
-<html lang="fr">
-  <body style="margin:0;padding:0;background:#f5f5f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#111;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f5f0;padding:32px 16px;">
-      <tr><td align="center">
-        <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="background:#ffffff;border-radius:16px;padding:32px;max-width:560px;">
-          <tr><td>
-            <p style="font-size:14px;color:#666;margin:0 0 16px 0;letter-spacing:0.06em;text-transform:uppercase;">UNPRO — Concierge Décisif</p>
-            <h1 style="font-size:22px;line-height:1.3;margin:0 0 16px 0;color:#111;">Bonjour ${biz},</h1>
-            <p style="font-size:16px;line-height:1.55;margin:0 0 16px 0;">UNPRO a préparé gratuitement un profil pour votre entreprise afin que les propriétaires et les IA de recherche puissent mieux comprendre vos services au Québec.</p>
-            <p style="font-size:16px;line-height:1.55;margin:0 0 24px 0;">Les <strong>10 premières entreprises</strong> peuvent l'activer pour <strong>1 $</strong>.</p>
-            <p style="margin:0 0 24px 0;">
-              <a href="${link}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:14px 22px;border-radius:12px;font-weight:600;font-size:16px;">Activer mon profil (1 $)</a>
-            </p>
-            <p style="font-size:13px;line-height:1.5;color:#666;margin:0 0 0 0;">Ou copiez ce lien dans votre navigateur :<br /><a href="${link}" style="color:#666;">${link}</a></p>
-          </td></tr>
-        </table>
-        <p style="font-size:12px;color:#999;margin:16px 0 0 0;">UNPRO — plateforme d'intelligence résidentielle québécoise · unpro.ca</p>
-      </td></tr>
-    </table>
-  </body>
-</html>`;
+const EMAIL_HTML = (biz: string, link: string) => emailHtml(biz, link);
 
 // Twilio error codes for which SMS should NOT be retried and email fallback is preferred.
 const FALLBACK_ELIGIBLE_TWILIO_CODES = new Set<number>([
