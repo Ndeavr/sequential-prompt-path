@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Home, CheckCircle2, Calendar, Phone, AlertTriangle, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import HomeownerUsageGuardrailTable from "@/components/admin/HomeownerUsageGuardrailTable";
 
 export default function AdminHomeownerAnalyticsPage() {
   const navigate = useNavigate();
@@ -135,6 +136,8 @@ export default function AdminHomeownerAnalyticsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <HomeownerUsageGuardrailTable />
     </div>
   );
 }

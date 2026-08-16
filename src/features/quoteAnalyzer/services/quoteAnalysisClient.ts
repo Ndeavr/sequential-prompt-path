@@ -2,6 +2,17 @@
  * quoteAnalysisClient — Convert files, call edge function, persist + retrieve analyses.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { parseDailyLimit, type DailyLimitPayload } from "@/lib/copy/usagePolicy";
+
+/** Garde-fou d'utilisation raisonnable atteint : on invite l'utilisateur à revenir demain. */
+export class DailyLimitError extends Error {
+  payload: DailyLimitPayload;
+  constructor(payload: DailyLimitPayload) {
+    super(payload.title);
+    this.name = "DailyLimitError";
+    this.payload = payload;
+  }
+}
 
 export interface AnalyzedQuote {
   slot: number;
@@ -63,7 +74,16 @@ export async function runQuoteAnalysis(files: File[]): Promise<{ analysis_id: st
     new Promise((r) => setTimeout(r, MIN_MS)),
   ]);
 
-  if (result.error) throw new Error(result.error.message || "Erreur d'analyse");
+  if (result.error) {
+    // Le corps 429 du garde-fou quotidien arrive via le contexte de la FunctionsHttpError.
+    const ctx = (result.error as { context?: Response }).context;
+    if (ctx && typeof ctx.json === "function") {
+      const body = await ctx.clone().json().catch(() => null);
+      const daily = parseDailyLimit(body);
+      if (daily) throw new DailyLimitError(daily);
+    }
+    throw new Error(result.error.message || "Erreur d'analyse");
+  }
   const data = result.data as { analysis_id: string; payload: QuoteAnalysisPayload; error?: string };
   if (!data?.analysis_id) throw new Error(data?.error || "Réponse invalide");
 

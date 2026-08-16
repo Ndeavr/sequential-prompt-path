@@ -6,6 +6,7 @@ import { useState, useCallback, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import type { DesignVersion } from "@/components/design/data";
+import { parseDailyLimit, type DailyLimitPayload } from "@/lib/copy/usagePolicy";
 
 const DESIGN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/design-generate`;
 
@@ -20,6 +21,7 @@ export function useDesignProject() {
   const [isIdentifying, setIsIdentifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [usageLimitHit, setUsageLimitHit] = useState<{ current: number; limit: number } | null>(null);
+  const [dailyLimitHit, setDailyLimitHit] = useState<DailyLimitPayload | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const authHeaders = useCallback(
@@ -110,6 +112,7 @@ export function useDesignProject() {
       if (!originalImage) return;
       setIsGenerating(true);
       setError(null);
+      setDailyLimitHit(null);
 
       try {
         const resp = await fetch(DESIGN_URL, {
@@ -132,6 +135,12 @@ export function useDesignProject() {
 
         if (!resp.ok) {
           const err = await resp.json().catch(() => ({ error: "Erreur" }));
+          const daily = parseDailyLimit(err);
+          if (daily) {
+            // Politique d'utilisation raisonnable : rien n'est perdu, on revient demain.
+            setDailyLimitHit(daily);
+            return;
+          }
           if (err.usage_limit) {
             setUsageLimitHit({ current: err.current_count, limit: err.limit });
             return;
@@ -251,7 +260,10 @@ export function useDesignProject() {
     [projectId, session, authHeaders]
   );
 
-  const clearUsageLimit = useCallback(() => setUsageLimitHit(null), []);
+  const clearUsageLimit = useCallback(() => {
+    setUsageLimitHit(null);
+    setDailyLimitHit(null);
+  }, []);
 
   return {
     // State
@@ -266,6 +278,7 @@ export function useDesignProject() {
     error,
     shareToken,
     usageLimitHit,
+    dailyLimitHit,
     // Actions
     uploadPhoto,
     generate,

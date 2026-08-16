@@ -20,6 +20,7 @@ export default function DesignPage() {
     error,
     shareToken,
     usageLimitHit,
+    dailyLimitHit,
     uploadPhoto,
     generate,
     freezeVersion,
@@ -59,6 +60,7 @@ export default function DesignPage() {
           projectId={projectId}
           shareToken={shareToken}
           usageLimitHit={usageLimitHit}
+          dailyLimitHit={dailyLimitHit}
           onBack={reset}
           onGenerate={generate}
           onFreeze={freezeVersion}
