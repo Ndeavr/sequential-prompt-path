@@ -399,6 +399,10 @@ export default function PropertyPassportPage() {
             </Link>
           </Button>
         </div>
+
+        {/* Ajout rapide mobile-first */}
+        <QuickAddToHome propertyId={id!} />
+
       </div>
     </DashboardLayout>
   );
