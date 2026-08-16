@@ -212,6 +212,14 @@ export interface HomeownerUsageSnapshot {
   quoteAnalysisUsed: number;
   aiDesignLimit: number | null;
   aiDesignUsed: number;
+  /** Garde-fou quotidien invisible (jamais présenté comme une limite commerciale). */
+  periodDay: string;
+  quoteAnalysisDailyLimit: number | null;
+  quoteAnalysisDailyUsed: number;
+  aiDesignDailyLimit: number | null;
+  aiDesignDailyUsed: number;
+  quoteAnalysisDailyReached: boolean;
+  aiDesignDailyReached: boolean;
 }
 
 export function useHomeownerUsage() {
@@ -237,6 +245,13 @@ export function useHomeownerUsage() {
         quoteAnalysisUsed: Number(s.quote_analysis_used ?? 0),
         aiDesignLimit: s.ai_design_limit ?? null,
         aiDesignUsed: Number(s.ai_design_used ?? 0),
+        periodDay: String(s.period_day ?? ""),
+        quoteAnalysisDailyLimit: s.quote_analysis_daily_limit ?? null,
+        quoteAnalysisDailyUsed: Number(s.quote_analysis_daily_used ?? 0),
+        aiDesignDailyLimit: s.ai_design_daily_limit ?? null,
+        aiDesignDailyUsed: Number(s.ai_design_daily_used ?? 0),
+        quoteAnalysisDailyReached: !!s.quote_analysis_daily_reached,
+        aiDesignDailyReached: !!s.ai_design_daily_reached,
       };
     },
   });
