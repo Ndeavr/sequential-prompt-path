@@ -16,6 +16,7 @@ import HeaderSearch from "./HeaderSearch";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import MegaMenuPanel from "./MegaMenu";
 import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
+import ThemeSwitcher from "@/components/theme/ThemeSwitcher";
 import SwitchLanguagePillAnimated from "@/components/ui/SwitchLanguagePillAnimated";
 import SmartCTA from "@/components/cta/SmartCTA";
 import QRShareSheet from "@/components/sharing/QRShareSheet";
