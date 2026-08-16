@@ -11,6 +11,8 @@ import DesignSidebar from "./DesignSidebar";
 import DesignCanvas from "./DesignCanvas";
 import DesignControls from "./DesignControls";
 import DesignCompare from "./DesignCompare";
+import DailyLimitReachedCard from "@/components/usage/DailyLimitReachedCard";
+import type { DailyLimitPayload } from "@/lib/copy/usagePolicy";
 import DesignShare from "./DesignShare";
 import DesignUpgradeModal from "./DesignUpgradeModal";
 import DesignSignupPrompt from "./DesignSignupPrompt";
@@ -27,6 +29,7 @@ interface Props {
   projectId: string | null;
   shareToken: string | null;
   usageLimitHit: { current: number; limit: number } | null;
+  dailyLimitHit?: DailyLimitPayload | null;
   onBack: () => void;
   onGenerate: (prompt: string, options?: any) => void;
   onFreeze: (id: string) => void;
@@ -47,6 +50,7 @@ export default function DesignWorkspace({
   projectId,
   shareToken,
   usageLimitHit,
+  dailyLimitHit,
   onBack,
   onGenerate,
   onFreeze,
@@ -212,7 +216,21 @@ export default function DesignWorkspace({
             existingToken={shareToken}
           />
         )}
-        {usageLimitHit && (
+        {dailyLimitHit && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md">
+              <DailyLimitReachedCard feature="ai_design_monthly" payload={dailyLimitHit} />
+              <button
+                type="button"
+                onClick={onClearUsageLimit}
+                className="mt-4 w-full text-sm text-muted-foreground underline-offset-4 hover:underline"
+              >
+                Revenir à mes designs
+              </button>
+            </div>
+          </div>
+        )}
+        {usageLimitHit && !dailyLimitHit && (
           <DesignUpgradeModal
             currentCount={usageLimitHit.current}
             limit={usageLimitHit.limit}
