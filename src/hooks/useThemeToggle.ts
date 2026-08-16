@@ -1,18 +1,44 @@
 /**
- * useThemeToggle — Dark-only mode for UNPRO.
- * Forces dark theme. Toggle removed from UI.
- * Structure kept for future extension.
+ * useThemeToggle — reactive access to the UNPRO theme store.
+ * API kept identical to the previous stub so no call site breaks.
  */
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
+import {
+  getThemeMode,
+  initTheme,
+  resolveTheme,
+  setThemeMode,
+  subscribeTheme,
+  type ResolvedTheme,
+  type ThemeMode,
+} from "@/lib/theme/themeStore";
 
 export function useThemeToggle() {
-  // Force dark — remove .light class if present
-  if (typeof window !== "undefined") {
-    document.documentElement.classList.remove("light");
-  }
+  const [mode, setMode] = useState<ThemeMode>(() => getThemeMode());
+  const [resolved, setResolved] = useState<ResolvedTheme>(() => resolveTheme());
 
-  const toggle = useCallback(() => {}, []);
-  const setTheme = useCallback((_t: "dark" | "light") => {}, []);
+  useEffect(() => {
+    initTheme();
+    setMode(getThemeMode());
+    setResolved(resolveTheme());
+    return subscribeTheme((m, r) => {
+      setMode(m);
+      setResolved(r);
+    });
+  }, []);
 
-  return { theme: "dark" as const, isDark: true, toggle, setTheme };
+  const setTheme = useCallback((t: ThemeMode) => setThemeMode(t), []);
+  const toggle = useCallback(() => {
+    setThemeMode(resolveTheme() === "dark" ? "light" : "dark");
+  }, []);
+
+  return {
+    /** Resolved theme actually painted. */
+    theme: resolved,
+    /** User selection, including "system". */
+    mode,
+    isDark: resolved === "dark",
+    toggle,
+    setTheme,
+  };
 }
