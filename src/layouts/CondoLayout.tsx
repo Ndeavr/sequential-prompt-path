@@ -63,13 +63,9 @@ function CondoLayoutInner({ children }: { children: ReactNode }) {
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-60 flex-col border-r border-border/30 bg-card/40 backdrop-blur-sm">
         <Link to="/condos" className="flex items-center gap-2.5 px-5 py-5 border-b border-border/20">
-          <div className={`h-8 w-8 rounded-xl bg-gradient-to-br ${roleColor} flex items-center justify-center shadow-glow`}>
-            <Building2 className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <div>
-            <span className="font-display text-sm font-bold text-foreground">UNPRO</span>
-            <span className="font-display text-xs text-muted-foreground ml-1">Condos</span>
-          </div>
+          <UnproLogo size={96} className="h-6 w-auto" />
+          <span className="font-display text-xs uppercase tracking-wider text-muted-foreground">Condos</span>
+
         </Link>
 
         {/* Role switcher */}
