@@ -175,6 +175,10 @@ const SmartHeader = () => {
                 <LanguageToggle lang={lang} onChange={setLang} />
               </div>
 
+              {/* Theme — Clair / Auto / Sombre */}
+              <ThemeSwitcher className="hidden lg:inline-flex" />
+              <ThemeSwitcher variant="compact" className="lg:hidden h-8 w-8" />
+
               {/* Share QR */}
               <Button
                 variant="ghost"
