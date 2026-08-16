@@ -1,43 +1,33 @@
 /**
- * UNPRO — Primary Logo (wordmark + speech-bubble mark)
- * Renders the master UNPRO wordmark. `showWordmark={false}` falls back to the round mark.
+ * UNPRO — Primary Logo (official wordmark lockup)
+ * `showWordmark={false}` falls back to the official round / square mark.
  */
-import blueAsset from "@/assets/brand/unpro-logo-blue.png.asset.json";
-import blackAsset from "@/assets/brand/unpro-logo-black.png.asset.json";
-import whiteAsset from "@/assets/brand/unpro-logo-white.png.asset.json";
-import greyAsset from "@/assets/brand/unpro-logo-grey.png.asset.json";
-import markAsset from "@/assets/brand/unpro-logo-mark.png.asset.json";
+import { BRAND } from "@/config/branding";
 
 type UnproLogoProps = {
   size?: number;
+  /** Historical variants are preserved; all resolve to the official lockup. */
   variant?: "primary" | "blue" | "mono" | "mono-invert" | "rubber";
   /** Kept for API compatibility; the master lockup is a static image. */
   animated?: boolean;
   showWordmark?: boolean;
+  /** Mark shape when the wordmark is hidden. */
+  markShape?: "round" | "square";
   className?: string;
 };
 
-const variantSrc: Record<NonNullable<UnproLogoProps["variant"]>, string> = {
-  primary: blueAsset.url,
-  blue: blueAsset.url,
-  mono: blackAsset.url,
-  "mono-invert": whiteAsset.url,
-  rubber: greyAsset.url,
-};
-
-// New wordmark aspect ≈ 1160 x 270 ≈ 4.3
-const WORDMARK_RATIO = 4.3;
+const WORDMARK_RATIO = BRAND.wordmarkRatio;
 
 export default function UnproLogo({
   size = 320,
-  variant = "primary",
   showWordmark = true,
+  markShape = "round",
   className = "",
 }: UnproLogoProps) {
   if (!showWordmark) {
     return (
       <img
-        src={markAsset.url}
+        src={markShape === "square" ? BRAND.logoSquare : BRAND.logoRound}
         alt="UNPRO"
         width={size}
         height={size}
@@ -51,7 +41,7 @@ export default function UnproLogo({
   const height = Math.round(size / WORDMARK_RATIO);
   return (
     <img
-      src={variantSrc[variant] ?? blueAsset.url}
+      src={BRAND.logo}
       alt="UNPRO"
       width={size}
       height={height}

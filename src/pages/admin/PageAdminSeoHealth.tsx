@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, XCircle, ExternalLink, Loader2 } from "lucide-react";
 
-const EXPECTED_OG_IMAGE = "https://unpro.ca/og/og-unpro-fin-3-soumissions-v2.jpg?v=20260816";
+const EXPECTED_OG_IMAGE = "https://unpro.ca/og/og-unpro-fin-3-soumissions-v3.jpg?v=20260816b";
 
 const KEY_ROUTES = [
   { label: "Accueil", url: "https://unpro.ca/" },
@@ -90,13 +90,13 @@ function ResultRow({ result }: { result: InspectResult }) {
           <div><span className="text-muted-foreground">og:description</span> — {m.ogDescription ?? m.description ?? "—"}</div>
           <div className="md:col-span-2 break-all">
             <span className="text-muted-foreground">og:image</span> —{" "}
-            <span className={m.ogImage && m.ogImage.includes("og-unpro-fin-3-soumissions-v2.jpg") ? "text-emerald-500" : "text-destructive"}>
+            <span className={m.ogImage && m.ogImage.includes("og-unpro-fin-3-soumissions-v3.jpg") ? "text-emerald-500" : "text-destructive"}>
               {m.ogImage ?? "—"}
             </span>
           </div>
           <div className="md:col-span-2 break-all">
             <span className="text-muted-foreground">twitter:image</span> —{" "}
-            <span className={m.twitterImage && m.twitterImage.includes("og-unpro-fin-3-soumissions-v2.jpg") ? "text-emerald-500" : "text-destructive"}>
+            <span className={m.twitterImage && m.twitterImage.includes("og-unpro-fin-3-soumissions-v3.jpg") ? "text-emerald-500" : "text-destructive"}>
               {m.twitterImage ?? "—"}
             </span>
           </div>

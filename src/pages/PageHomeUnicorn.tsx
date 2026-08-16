@@ -647,7 +647,7 @@ export default function PageHomeUnicorn() {
     name: "UNPRO",
     alternateName: ["UNPRO Quebec", "UNPRO Home Intelligence", "Alex Home Assistant"],
     url: "https://unpro.ca",
-    logo: "https://unpro.ca/__l5e/assets-v1/a3c1d0e8-a6dd-413f-acf4-7ac488a303e0/unpro-logo-clean.png",
+    logo: "https://unpro.ca/__l5e/assets-v1/9d60f0ec-ee4e-44b3-b781-7dcfa82b18b7/unpro-logo-wordmark.png",
     description:
       "AI-powered home passport platform helping homeowners identify property issues, understand risks, analyze renovation projects, and connect with verified professionals.",
     category: "Home Intelligence Platform",
