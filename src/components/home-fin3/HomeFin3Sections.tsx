@@ -53,23 +53,23 @@ export function SectionProblemeTroisSoumissions() {
   return (
     <Section>
       <Reveal>
-        <h2 className="text-[clamp(1.6rem,5.2vw,2.4rem)] font-bold leading-[1.1] tracking-[-0.03em] text-white">
+        <h2 className="text-[clamp(1.6rem,5.2vw,2.4rem)] font-bold leading-[1.1] tracking-[-0.03em] text-foreground">
           {c.title}
           <br />
-          <span className="text-white/60">{c.titleAccent}</span>
+          <span className="text-foreground/70">{c.titleAccent}</span>
         </h2>
-        <p className="mt-4 text-[15px] leading-relaxed text-white/70">{c.body}</p>
+        <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">{c.body}</p>
       </Reveal>
 
       <Reveal delay={0.08}>
         <ol className="mt-8 flex flex-wrap items-center gap-2">
           {c.steps.map((step, i) => (
             <li key={step} className="flex items-center gap-2">
-              <span className="rounded-full border border-white/12 bg-white/[0.05] px-4 py-2 text-sm font-medium text-white/90 backdrop-blur-sm">
+              <span className="glass-btn px-4 py-2 text-sm font-medium text-foreground">
                 {step}
               </span>
               {i < c.steps.length - 1 && (
-                <ChevronRight className="h-4 w-4 shrink-0 text-white/30" aria-hidden />
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
               )}
             </li>
           ))}
@@ -92,12 +92,12 @@ export function SectionAlexUneQuestion() {
   return (
     <Section className="border-t border-white/[0.06]">
       <Reveal>
-        <h2 className="text-[clamp(1.6rem,5.2vw,2.4rem)] font-bold leading-[1.1] tracking-[-0.03em] text-white">
+        <h2 className="text-[clamp(1.6rem,5.2vw,2.4rem)] font-bold leading-[1.1] tracking-[-0.03em] text-foreground">
           {c.title}
           <br />
-          <span className="text-white/60">{c.titleAccent}</span>
+          <span className="text-foreground/70">{c.titleAccent}</span>
         </h2>
-        <p className="mt-4 text-[15px] leading-relaxed text-white/70">{c.body}</p>
+        <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">{c.body}</p>
       </Reveal>
 
       <Reveal delay={0.08}>
@@ -105,17 +105,17 @@ export function SectionAlexUneQuestion() {
           {c.dimensions.map((d) => (
             <li
               key={d}
-              className="rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-[13px] text-white/80"
+              className="glass-btn px-3.5 py-1.5 text-[13px] text-foreground/90"
             >
               {d}
             </li>
           ))}
         </ul>
-        <p className="mt-5 text-[13px] text-white/45">{c.note}</p>
+        <p className="mt-5 text-[13px] text-muted-foreground">{c.note}</p>
         <button
           type="button"
           onClick={start}
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-[#05070d] transition-transform duration-300 hover:-translate-y-0.5"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-[var(--shadow-cta)] transition-transform duration-300 hover:-translate-y-0.5"
         >
           {c.cta}
           <ArrowRight className="h-4 w-4" />
@@ -131,19 +131,19 @@ export function SectionNouveauModele() {
   return (
     <Section className="border-t border-white/[0.06]">
       <Reveal>
-        <h2 className="text-[clamp(1.6rem,5.2vw,2.4rem)] font-bold leading-[1.1] tracking-[-0.03em] text-white">
+        <h2 className="text-[clamp(1.6rem,5.2vw,2.4rem)] font-bold leading-[1.1] tracking-[-0.03em] text-foreground">
           {c.title}
           <br />
-          <span className="text-white/60">{c.titleAccent}</span>
+          <span className="text-foreground/70">{c.titleAccent}</span>
         </h2>
-        <p className="mt-4 text-[15px] leading-relaxed text-white/70">{c.body}</p>
+        <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">{c.body}</p>
       </Reveal>
 
       <Reveal delay={0.08}>
-        <p className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.04] px-6 py-8 text-center text-[clamp(1.3rem,4.6vw,2rem)] font-bold leading-tight tracking-[-0.03em] text-white backdrop-blur-xl">
+        <p className="mt-8 glass-panel px-6 py-8 text-center text-[clamp(1.3rem,4.6vw,2rem)] font-bold leading-tight tracking-[-0.03em] text-white ">
           {c.statement}
         </p>
-        <p className="mt-5 text-[15px] leading-relaxed text-white/70">{c.after}</p>
+        <p className="mt-5 text-[15px] leading-relaxed text-muted-foreground">{c.after}</p>
       </Reveal>
     </Section>
   );
@@ -155,16 +155,16 @@ export function SectionPourquoiRecommander() {
   return (
     <Section className="border-t border-white/[0.06]">
       <Reveal>
-        <h2 className="text-[clamp(1.6rem,5.2vw,2.4rem)] font-bold leading-[1.1] tracking-[-0.03em] text-white">
+        <h2 className="text-[clamp(1.6rem,5.2vw,2.4rem)] font-bold leading-[1.1] tracking-[-0.03em] text-foreground">
           {c.title}
         </h2>
-        <p className="mt-4 text-[15px] leading-relaxed text-white/70">{c.body}</p>
+        <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">{c.body}</p>
       </Reveal>
 
       <Reveal delay={0.06}>
         <ul className="mt-7 grid grid-cols-1 gap-2 sm:grid-cols-2">
           {c.dimensions.map((d) => (
-            <li key={d} className="flex items-center gap-2.5 text-[14px] text-white/80">
+            <li key={d} className="flex items-center gap-2.5 text-[14px] text-foreground/85">
               <Check className="h-4 w-4 shrink-0 text-emerald-400" aria-hidden />
               {d}
             </li>
@@ -173,15 +173,15 @@ export function SectionPourquoiRecommander() {
       </Reveal>
 
       <Reveal delay={0.12}>
-        <div className="mt-9 rounded-[28px] border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">
+        <div className="mt-9 glass-panel p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             {c.provenanceTitle}
           </p>
           <dl className="mt-4 space-y-3">
             {c.provenance.map((p) => (
               <div key={p.label} className="flex flex-col gap-1 sm:flex-row sm:gap-3">
-                <dt className="w-32 shrink-0 text-[13px] font-bold text-white">{p.label}</dt>
-                <dd className="text-[13px] leading-relaxed text-white/65">{p.body}</dd>
+                <dt className="w-32 shrink-0 text-[13px] font-bold text-foreground">{p.label}</dt>
+                <dd className="text-[13px] leading-relaxed text-muted-foreground">{p.body}</dd>
               </div>
             ))}
           </dl>
@@ -197,11 +197,11 @@ export function SectionComparerSoumissions() {
   return (
     <Section className="border-t border-white/[0.06]">
       <Reveal>
-        <h2 className="text-[clamp(1.6rem,5.2vw,2.4rem)] font-bold leading-[1.1] tracking-[-0.03em] text-white">
+        <h2 className="text-[clamp(1.6rem,5.2vw,2.4rem)] font-bold leading-[1.1] tracking-[-0.03em] text-foreground">
           {c.title}
         </h2>
-        <p className="mt-3 text-[15px] font-semibold text-white/80">{c.subtitle}</p>
-        <p className="mt-3 text-[15px] leading-relaxed text-white/70">{c.body}</p>
+        <p className="mt-3 text-[15px] font-semibold text-foreground/85">{c.subtitle}</p>
+        <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">{c.body}</p>
       </Reveal>
 
       <Reveal delay={0.08}>
@@ -209,7 +209,7 @@ export function SectionComparerSoumissions() {
           {c.items.map((i) => (
             <li
               key={i}
-              className="rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-[13px] text-white/80"
+              className="glass-btn px-3.5 py-1.5 text-[13px] text-foreground/90"
             >
               {i}
             </li>
@@ -220,7 +220,7 @@ export function SectionComparerSoumissions() {
           onClick={() => {
             trackCopilotEvent("quote_comparison_started", { source: "home_section_compare" });
           }}
-          className="mt-7 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-6 py-3 text-sm font-bold text-white transition-transform duration-300 hover:-translate-y-0.5"
+          className="mt-7 inline-flex items-center gap-2 glass-btn px-6 py-3 text-sm font-bold text-foreground transition-transform duration-300 hover:-translate-y-0.5"
         >
           {c.cta}
           <ArrowRight className="h-4 w-4" />
@@ -236,14 +236,14 @@ export function SectionPasseportMaison() {
   return (
     <Section className="border-t border-white/[0.06]">
       <Reveal>
-        <h2 className="text-[clamp(1.6rem,5.2vw,2.4rem)] font-bold leading-[1.1] tracking-[-0.03em] text-white">
+        <h2 className="text-[clamp(1.6rem,5.2vw,2.4rem)] font-bold leading-[1.1] tracking-[-0.03em] text-foreground">
           {c.title}
         </h2>
-        <p className="mt-4 text-[15px] leading-relaxed text-white/70">{c.body}</p>
+        <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">{c.body}</p>
         <Link
           to="/proprietaires/passeport-maison"
           onClick={() => trackCopilotEvent("passport_cta_clicked", { source: "home_section_passport" })}
-          className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-6 py-3 text-sm font-bold text-white transition-transform duration-300 hover:-translate-y-0.5"
+          className="mt-6 inline-flex items-center gap-2 glass-btn px-6 py-3 text-sm font-bold text-foreground transition-transform duration-300 hover:-translate-y-0.5"
         >
           {c.cta}
           <ArrowRight className="h-4 w-4" />
@@ -259,18 +259,18 @@ export function SectionEntrepreneursEntree() {
   return (
     <Section className="border-t border-white/[0.06]">
       <Reveal>
-        <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl md:p-8">
-          <h2 className="text-[clamp(1.4rem,4.6vw,2rem)] font-bold leading-[1.1] tracking-[-0.03em] text-white">
+        <div className="glass-panel p-6 md:p-8">
+          <h2 className="text-[clamp(1.4rem,4.6vw,2rem)] font-bold leading-[1.1] tracking-[-0.03em] text-foreground">
             {c.title}
           </h2>
-          <p className="mt-3 text-[15px] font-semibold text-white/80">{c.subtitle}</p>
-          <p className="mt-3 text-[15px] leading-relaxed text-white/65">{c.body}</p>
+          <p className="mt-3 text-[15px] font-semibold text-foreground/85">{c.subtitle}</p>
+          <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">{c.body}</p>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link
               to="/entrepreneur"
               onClick={() => trackCopilotEvent("contractor_entry_click", { source: "home_section_contractor" })}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-[#05070d] transition-transform duration-300 hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-[var(--shadow-cta)] transition-transform duration-300 hover:-translate-y-0.5"
             >
               {c.ctaPrimary}
               <ArrowRight className="h-4 w-4" />
@@ -282,12 +282,12 @@ export function SectionEntrepreneursEntree() {
                   source: "home_section_contractor",
                 })
               }
-              className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/[0.06] px-6 py-3 text-sm font-bold text-white transition-transform duration-300 hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center glass-btn px-6 py-3 text-sm font-bold text-foreground transition-transform duration-300 hover:-translate-y-0.5"
             >
               {c.ctaSecondary}
             </a>
           </div>
-          <p className="mt-3 text-[12px] text-white/45">{c.note}</p>
+          <p className="mt-3 text-[12px] text-muted-foreground">{c.note}</p>
         </div>
       </Reveal>
     </Section>
@@ -308,21 +308,21 @@ export function SectionCtaFinal() {
   return (
     <Section className="border-t border-white/[0.06] text-center">
       <Reveal>
-        <h2 className="text-[clamp(1.8rem,6vw,2.8rem)] font-bold leading-[1.05] tracking-[-0.04em] text-white">
+        <h2 className="text-[clamp(1.8rem,6vw,2.8rem)] font-bold leading-[1.05] tracking-[-0.04em] text-foreground">
           {c.title}
           <br />
-          <span className="text-white/60">{c.titleAccent}</span>
+          <span className="text-foreground/70">{c.titleAccent}</span>
         </h2>
-        <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-white/70">{c.body}</p>
+        <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-muted-foreground">{c.body}</p>
         <button
           type="button"
           onClick={start}
-          className="mt-7 inline-flex items-center gap-2 rounded-full bg-white px-8 py-3.5 text-sm font-bold text-[#05070d] transition-transform duration-300 hover:-translate-y-0.5"
+          className="mt-7 inline-flex items-center gap-2 rounded-full bg-primary px-8 py-3.5 text-sm font-bold text-primary-foreground shadow-[var(--shadow-cta)] transition-transform duration-300 hover:-translate-y-0.5"
         >
           {c.cta}
           <ArrowRight className="h-4 w-4" />
         </button>
-        <p className="mt-8 text-[12px] uppercase tracking-[0.22em] text-white/35">{c.signature}</p>
+        <p className="mt-8 text-[12px] uppercase tracking-[0.22em] text-muted-foreground">{c.signature}</p>
       </Reveal>
     </Section>
   );
