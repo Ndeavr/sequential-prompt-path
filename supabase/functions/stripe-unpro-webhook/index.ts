@@ -29,6 +29,18 @@ const cors = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+/** Canonical slug used by market_capacity (service_slug / city_slug). */
+function slugify(v: string | null | undefined): string {
+  return String(v ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -336,6 +348,98 @@ async function handleCheckoutFailed(sb: any, event: Stripe.Event): Promise<Handl
   return { action: event.type };
 }
 
+/**
+ * Capacity commitment engine — market inventory follows subscription truth.
+ * An active paid subscription commits appointments in its service x city
+ * market; a cancelled/unpaid subscription releases them immediately.
+ */
+async function syncCapacityCommitment(
+  sb: any,
+  args: {
+    contractorId: string | null;
+    subscriptionId: string;
+    unproStatus: string;
+    md: Record<string, string>;
+  },
+) {
+  const { contractorId, subscriptionId, unproStatus, md } = args;
+  const active = unproStatus === "active" || unproStatus === "trialing";
+
+  if (!active) {
+    const { data: released } = await sb
+      .from("market_capacity_commitments")
+      .update({
+        status: "released",
+        released_at: new Date().toISOString(),
+        release_reason: `subscription_${unproStatus}`,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("subscription_id", subscriptionId)
+      .eq("status", "active")
+      .select("service_slug,city_slug");
+    for (const row of released ?? []) {
+      await sb.rpc("refresh_market_capacity", {
+        p_service_slug: row.service_slug,
+        p_city_slug: row.city_slug,
+      });
+    }
+    return;
+  }
+
+  if (!contractorId) return;
+
+  // The quote is the source of truth for plan, market and committed volume.
+  let quote: any = null;
+  if (md.quote_id) {
+    const { data } = await sb
+      .from("contractor_pricing_quotes")
+      .select("id,recommended_plan,trade_primary,city,wants_exclusivity,target_monthly_appointments,factors")
+      .eq("id", md.quote_id)
+      .maybeSingle();
+    quote = data;
+  }
+  if (!quote) return;
+
+  const serviceSlug = slugify(quote.trade_primary);
+  const citySlug = slugify(quote.city);
+  const { data: plan } = await sb
+    .from("plans")
+    .select("code,appointments_included")
+    .eq("code", quote.recommended_plan)
+    .maybeSingle();
+
+  const committed = Number(
+    plan?.appointments_included ?? quote.target_monthly_appointments ?? 0,
+  );
+
+  const { error: upErr } = await sb.from("market_capacity_commitments").upsert(
+    {
+      contractor_id: contractorId,
+      subscription_id: subscriptionId,
+      quote_id: quote.id,
+      plan_code: quote.recommended_plan,
+      service_slug: serviceSlug,
+      city_slug: citySlug,
+      appointments_committed: committed,
+      exclusive: !!quote.wants_exclusivity,
+      status: "active",
+      released_at: null,
+      release_reason: null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "subscription_id" },
+  );
+  if (upErr) {
+    console.error("[stripe-unpro-webhook] capacity commit failed", upErr.message);
+    return;
+  }
+
+  await sb.rpc("refresh_market_capacity", {
+    p_service_slug: serviceSlug,
+    p_city_slug: citySlug,
+  });
+}
+
 async function handleSubscriptionEvent(sb: any, event: Stripe.Event): Promise<HandleResult> {
   const sub = event.data.object as Stripe.Subscription;
   const md = (sub.metadata ?? {}) as Record<string, string>;
@@ -368,8 +472,20 @@ async function handleSubscriptionEvent(sb: any, event: Stripe.Event): Promise<Ha
     }).eq("id", contractorId);
   }
 
+  try {
+    await syncCapacityCommitment(sb, {
+      contractorId,
+      subscriptionId: sub.id,
+      unproStatus,
+      md,
+    });
+  } catch (e) {
+    console.error("[stripe-unpro-webhook] syncCapacityCommitment error", e);
+  }
+
   return { action: event.type, contractor_id: contractorId, unpro_status: unproStatus };
 }
+
 
 async function handleInvoiceEvent(sb: any, event: Stripe.Event): Promise<HandleResult> {
   const inv = event.data.object as Stripe.Invoice;

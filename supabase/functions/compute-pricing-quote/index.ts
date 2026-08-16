@@ -1,10 +1,14 @@
-// UNPRO — Personalized Contractor Pricing Quote (v2026.08-growth)
-// Deterministic, server-side pricing engine.
+// UNPRO — Personalized Contractor Pricing Quote (v2026.08-growth / pricing_v3)
+// Deterministic, server-side pricing engine. SINGLE canonical engine.
 // Single source of truth: public.pricing_config (weights) + public.plans (catalog)
 // Market factors: public.market_demand, public.city_service_demand_grid,
 //                 public.territory_availability(trade, city)
+// Capacity truth: public.market_capacity + public.market_capacity_commitments
+// Appointment value: public.appointment_values (configurable, provenance-tagged)
 // Never invents market data: when signals are missing, factors stay neutral (1.00)
 // and data_status downgrades to "declared" or "insufficient".
+// Never displays scarcity that is not proven by real remaining positions.
+
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
@@ -115,12 +119,16 @@ function seasonalityFor(priority: string | undefined, month: number): number {
  * top tier (or is one tier below it) can be offered the top tier. This is the
  * defect that offered Domination ($1,499/mo) to an 8-appointment contractor.
  */
-function pickPlan(input: Input, plans: PlanRow[]): PlanRow {
+function pickPlan(
+  input: Input,
+  plans: PlanRow[],
+  capacityCeiling: number | null,
+): { plan: PlanRow; capped: boolean } {
   const ordered = [...plans].sort((a, b) => a.tier_rank - b.tier_rank);
   const target = Math.max(0, input.target_monthly_appointments ?? 0);
   const objective = input.business_objective ?? "grow";
 
-  if (objective === "visibility" && target <= 1) return ordered[0];
+  if (objective === "visibility" && target <= 1) return { plan: ordered[0], capped: false };
 
   // Smallest plan whose included appointments cover the real target.
   const fitIndex = ordered.findIndex((p) => (p.appointments_included ?? 0) >= target);
@@ -134,8 +142,23 @@ function pickPlan(input: Input, plans: PlanRow[]): PlanRow {
   if (index === ordered.length - 1 && fitIndex >= 0 && fitIndex < ordered.length - 2) {
     index = ordered.length - 2;
   }
-  return ordered[index];
+
+  // CAPACITY GUARD — never sell guaranteed appointments beyond what the market
+  // can actually deliver. Downgrade to the richest plan the market supports.
+  let capped = false;
+  if (capacityCeiling !== null) {
+    while (
+      index > 0 &&
+      (ordered[index].appointments_included ?? 0) > capacityCeiling
+    ) {
+      index--;
+      capped = true;
+    }
+    if ((ordered[index].appointments_included ?? 0) > capacityCeiling) capped = true;
+  }
+  return { plan: ordered[index], capped };
 }
+
 
 function aippFee(score: number | undefined | null): number {
   const s = Number(score ?? 0);
@@ -145,6 +168,69 @@ function aippFee(score: number | undefined | null): number {
   if (s >= 30) return 9900;
   return 14900;
 }
+
+/**
+ * Price of ONE extra exclusive appointment for THIS contractor.
+ * It is the market value of an appointment in this contractor's economics —
+ * NEVER `plan price ÷ included appointments`.
+ *
+ * value = average project value × close rate × configured appointment share.
+ * Provenance is always reported: configured | inferred | calculated | unavailable.
+ */
+async function computeExtraAppointmentPrice(
+  svc: any,
+  body: Input,
+  close: number,
+  w: any,
+): Promise<{ price_cents: number | null; status: string; basis: Record<string, unknown> }> {
+  const share = Number(w.appointment_value_share ?? 0.08);
+  const minCents = Number(w.extra_appointment_min_cents ?? 4900);
+  const maxCents = Number(w.extra_appointment_max_cents ?? 99900);
+
+  let projectValue = Number(body.average_project_value ?? 0);
+  let status = "calculated";
+  const basis: Record<string, unknown> = { share, close_rate: round2(close) };
+
+  const { data: bands, error } = await svc
+    .from("appointment_values")
+    .select("project_size,label_fr,estimated_value_min,estimated_value_max,conversion_rate,value_status")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    basis.appointment_values_error = error.message;
+  } else if (Array.isArray(bands) && bands.length) {
+    const band = bands.find(
+      (b: any) =>
+        projectValue >= Number(b.estimated_value_min ?? 0) &&
+        projectValue <= Number(b.estimated_value_max ?? 0),
+    );
+    if (band) {
+      status = band.value_status ?? "configured";
+      basis.band = { size: band.project_size, label: band.label_fr };
+    } else if (!projectValue) {
+      // No declared project value: fall back to the configured mid band.
+      const mid = bands[Math.floor(bands.length / 2)];
+      projectValue =
+        (Number(mid.estimated_value_min ?? 0) + Number(mid.estimated_value_max ?? 0)) / 2;
+      status = "inferred";
+      basis.band = { size: mid.project_size, label: mid.label_fr, inferred: true };
+    }
+  }
+
+  if (!projectValue || !Number.isFinite(projectValue)) {
+    return { price_cents: null, status: "unavailable", basis };
+  }
+
+  const raw = Math.round(projectValue * close * share * 100);
+  const price = clamp(raw, minCents, maxCents);
+  basis.raw_cents = raw;
+  basis.clamped = raw !== price;
+  basis.project_value = Math.round(projectValue);
+  return { price_cents: price, status, basis };
+}
+
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -345,6 +431,93 @@ Deno.serve(async (req) => {
       availability = { status: "insufficient_data", error: msg };
     }
 
+    // ---------- Market capacity (service x city) — inventory truth ----------
+    // No guaranteed appointment is ever sold beyond real market capacity, and
+    // no scarcity is displayed unless remaining positions prove it.
+    let capacityAvailability: Record<string, unknown> = {
+      status: "unknown",
+      market_open: true,
+      remaining_positions: null,
+      capacity_status: null,
+      appointment_ceiling: null,
+    };
+    let capacityCeiling: number | null = null;
+    let marketClosed = false;
+
+    const { data: mc, error: mcErr } = await svc
+      .from("market_capacity")
+      .select(
+        "service_slug,city_slug,max_contractors,active_contractors,committed_appointments,estimated_monthly_demand,remaining_positions,capacity_score,capacity_status,market_open",
+      )
+      .eq("service_slug", tradeSlug)
+      .eq("city_slug", citySlug)
+      .maybeSingle();
+    if (mcErr) {
+      signalErrors.market_capacity = mcErr.message;
+      console.error("[compute-pricing-quote] market_capacity read failed:", mcErr.message);
+    } else if (mc) {
+      signalCount++;
+      sources.market_capacity = mc;
+      const remaining = Number((mc as any).remaining_positions ?? 0);
+      const open = (mc as any).market_open === true && remaining > 0;
+      marketClosed = !open;
+      // Demand actually available to a new contractor this month.
+      const demand = Number((mc as any).estimated_monthly_demand ?? 0);
+      const committed = Number((mc as any).committed_appointments ?? 0);
+      capacityCeiling = demand > 0 ? Math.max(0, demand - committed) : null;
+      capacityAvailability = {
+        status: "verified",
+        market_open: open,
+        remaining_positions: remaining,
+        max_contractors: Number((mc as any).max_contractors ?? 0),
+        active_contractors: Number((mc as any).active_contractors ?? 0),
+        committed_appointments: committed,
+        estimated_monthly_demand: demand > 0 ? demand : null,
+        capacity_status: (mc as any).capacity_status ?? null,
+        capacity_score: Number((mc as any).capacity_score ?? 0),
+        appointment_ceiling: capacityCeiling,
+      };
+    } else {
+      capacityAvailability = {
+        status: "not_configured",
+        market_open: true,
+        remaining_positions: null,
+        capacity_status: null,
+        appointment_ceiling: null,
+        service_slug: tradeSlug,
+        city_slug: citySlug,
+      };
+    }
+
+    // ---------- Exclusivity inventory ----------
+    let exclusivityAvailability: Record<string, unknown> = { status: "unknown" };
+    if (body.wants_exclusivity) {
+      const { data: exclusiveHeld, error: exErr } = await svc
+        .from("market_capacity_commitments")
+        .select("id,contractor_id")
+        .eq("service_slug", tradeSlug)
+        .eq("city_slug", citySlug)
+        .eq("exclusive", true)
+        .eq("status", "active")
+        .maybeSingle();
+      if (exErr) {
+        signalErrors.exclusivity = exErr.message;
+        exclusivityAvailability = { status: "unknown", error: exErr.message };
+      } else if (exclusiveHeld) {
+        exclusivityAvailability = {
+          status: "taken",
+          held_by_self: exclusiveHeld.contractor_id === (body.contractor_id ?? null),
+        };
+      } else {
+        exclusivityAvailability = { status: "available" };
+      }
+    } else {
+      exclusivityAvailability = { status: "not_requested" };
+    }
+    const exclusivityGranted =
+      !!body.wants_exclusivity &&
+      (exclusivityAvailability as any).status === "available" &&
+      !marketClosed;
 
     // ---------- Capacity factor ----------
     const cap = Math.max(1, body.monthly_capacity ?? 1);
@@ -368,14 +541,23 @@ Deno.serve(async (req) => {
     const objectiveMultiplier = w.objective_multipliers[objective] ?? 1.0;
 
     // ---------- Plan + fees ----------
-    const plan = pickPlan(body, plans);
+    const picked = pickPlan(body, plans, capacityCeiling);
+    const plan = picked.plan;
+    const capacityCapped = picked.capped;
     const base = plan.monthly_price;
+
+    // ---------- Extra appointment price (market value, never plan ÷ included) ----------
+    const extra = await computeExtraAppointmentPrice(svc, body, close, w);
     const extraAppointments = Math.max(
       0,
       body.target_monthly_appointments - (plan.appointments_included ?? 0),
     );
-    const apptPkg = extraAppointments * w.volume_per_appointment_cents;
-    const exclusivity = body.wants_exclusivity
+    const apptPkg = extra.price_cents
+      ? extraAppointments * extra.price_cents
+      : extraAppointments * w.volume_per_appointment_cents;
+
+    // Exclusivity is only charged when the inventory can actually grant it.
+    const exclusivity = exclusivityGranted
       ? Math.round(base * (w.exclusivity_multiplier - 1))
       : 0;
     const aipp = aippFee(body.current_ai_visibility_score);
@@ -404,12 +586,14 @@ Deno.serve(async (req) => {
     let finalPlanCode = plan.code;
     let status: string = "offered";
 
-    if (saturated) {
+    // Market saturated OR no remaining position: never sell guaranteed capacity.
+    if (saturated || marketClosed) {
       status = "waitlisted";
       const entry = plans[0];
       finalPlanCode = entry.code;
       finalPrice = entry.monthly_price;
     }
+
 
     // ---------- Data confidence ----------
     const dataStatus =
@@ -442,6 +626,8 @@ Deno.serve(async (req) => {
       degraded: Object.keys(signalErrors).length > 0,
     };
 
+    const CALCULATION_VERSION = "pricing_v3.capacity";
+
     const breakdown = {
       base_platform_fee: base,
       appointment_package_fee: apptPkg,
@@ -450,6 +636,9 @@ Deno.serve(async (req) => {
       subtotal,
       market_multiplier: marketMultiplier,
       final_monthly_price: finalPrice,
+      extra_appointment_price: extra.price_cents,
+      extra_appointment_status: extra.status,
+      extra_appointment_basis: extra.basis,
       trial: {
         price_cents: cfgRow?.trial_price_cents ?? 100,
         days: cfgRow?.trial_days ?? 7,
@@ -460,6 +649,30 @@ Deno.serve(async (req) => {
         appointments_included: plan.appointments_included ?? 0,
         stripe_monthly_price_id: plan.stripe_monthly_price_id,
       },
+    };
+
+    // Human-readable, evidence-only explanation (no invented scarcity).
+    const pricingExplanation = {
+      calculation_version: CALCULATION_VERSION,
+      plan_reason: capacityCapped
+        ? "capacity_capped"
+        : status === "waitlisted"
+          ? "market_unavailable"
+          : "objective_and_volume_fit",
+      capacity_capped: capacityCapped,
+      market_status: (capacityAvailability as any).capacity_status ?? "unknown",
+      remaining_positions: (capacityAvailability as any).remaining_positions ?? null,
+      scarcity_provable:
+        (capacityAvailability as any).status === "verified" &&
+        Number((capacityAvailability as any).remaining_positions ?? 0) > 0 &&
+        Number((capacityAvailability as any).remaining_positions ?? 0) <= 3,
+      extra_appointment: {
+        price_cents: extra.price_cents,
+        status: extra.status,
+      },
+      exclusivity: exclusivityAvailability,
+      data_status: dataStatus,
+      degraded: Object.keys(signalErrors).length > 0,
     };
 
     const quotePayload: Record<string, unknown> = {
@@ -494,6 +707,12 @@ Deno.serve(async (req) => {
       data_status: dataStatus,
       factors,
       availability,
+      capacity_availability: capacityAvailability,
+      exclusivity_availability: exclusivityAvailability,
+      pricing_explanation: pricingExplanation,
+      calculation_version: CALCULATION_VERSION,
+      extra_appointment_price: extra.price_cents,
+      expires_at: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(),
       input_payload: body as unknown as Record<string, unknown>,
       breakdown,
     };
@@ -512,10 +731,30 @@ Deno.serve(async (req) => {
       );
     }
 
+    await svc.from("pricing_audit_log").insert({
+      event_type: "quote_computed",
+      actor_id: user?.id ?? null,
+      actor_role: user ? "contractor" : "guest",
+      contractor_id: body.contractor_id ?? null,
+      quote_id: saved.id,
+      service_slug: tradeSlug,
+      city_slug: citySlug,
+      new_state: {
+        plan: finalPlanCode,
+        price_cents: finalPrice,
+        status,
+        capacity: capacityAvailability,
+        extra_appointment_price: extra.price_cents,
+      },
+      reason: pricingExplanation.plan_reason,
+      calculation_version: CALCULATION_VERSION,
+    });
+
     return new Response(
       JSON.stringify({
         quote_id: saved.id,
         pricing_version: pricingVersion,
+        calculation_version: CALCULATION_VERSION,
         data_status: dataStatus,
         recommended_plan: finalPlanCode,
         plan_name: plan.name,
@@ -527,11 +766,16 @@ Deno.serve(async (req) => {
         pricing_status: status,
         trial: breakdown.trial,
         availability,
+        capacity_availability: capacityAvailability,
+        exclusivity_availability: exclusivityAvailability,
+        pricing_explanation: pricingExplanation,
+        extra_appointment_price: extra.price_cents,
         factors,
         breakdown,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
     );
+
   } catch (e) {
     console.error("[compute-pricing-quote] error", e);
     return new Response(

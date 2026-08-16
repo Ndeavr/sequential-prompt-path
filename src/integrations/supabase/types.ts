@@ -16048,8 +16048,13 @@ export type Database = {
           is_active: boolean
           label_en: string | null
           label_fr: string
+          overridden_at: string | null
+          overridden_by: string | null
+          override_reason: string | null
           project_size: string
           sort_order: number
+          updated_at: string
+          value_status: string
         }
         Insert: {
           avg_duration_minutes?: number
@@ -16062,8 +16067,13 @@ export type Database = {
           is_active?: boolean
           label_en?: string | null
           label_fr: string
+          overridden_at?: string | null
+          overridden_by?: string | null
+          override_reason?: string | null
           project_size: string
           sort_order?: number
+          updated_at?: string
+          value_status?: string
         }
         Update: {
           avg_duration_minutes?: number
@@ -16076,8 +16086,13 @@ export type Database = {
           is_active?: boolean
           label_en?: string | null
           label_fr?: string
+          overridden_at?: string | null
+          overridden_by?: string | null
+          override_reason?: string | null
           project_size?: string
           sort_order?: number
+          updated_at?: string
+          value_status?: string
         }
         Relationships: []
       }
@@ -25452,7 +25467,11 @@ export type Database = {
           accepted_at: string | null
           accepted_plan_code: string | null
           activation_token: string | null
+          answered_keys: string[]
           answers: Json
+          average_project_value: number | null
+          cities: string[]
+          completed: boolean
           completed_at: string | null
           contractor_id: string | null
           created_at: string
@@ -25464,19 +25483,28 @@ export type Database = {
           id: string
           ideal_project_value_cad: number | null
           monthly_appointment_goal: number | null
+          monthly_capacity: number | null
+          priority: string | null
           prospect_id: string | null
+          quote_id: string | null
           recommended_plan_code: string | null
           recommended_plan_reason: string | null
+          services: string[]
           territories: string[] | null
           updated_at: string
           urgency: string | null
           user_id: string | null
+          wants_exclusivity: boolean | null
         }
         Insert: {
           accepted_at?: string | null
           accepted_plan_code?: string | null
           activation_token?: string | null
+          answered_keys?: string[]
           answers?: Json
+          average_project_value?: number | null
+          cities?: string[]
+          completed?: boolean
           completed_at?: string | null
           contractor_id?: string | null
           created_at?: string
@@ -25488,19 +25516,28 @@ export type Database = {
           id?: string
           ideal_project_value_cad?: number | null
           monthly_appointment_goal?: number | null
+          monthly_capacity?: number | null
+          priority?: string | null
           prospect_id?: string | null
+          quote_id?: string | null
           recommended_plan_code?: string | null
           recommended_plan_reason?: string | null
+          services?: string[]
           territories?: string[] | null
           updated_at?: string
           urgency?: string | null
           user_id?: string | null
+          wants_exclusivity?: boolean | null
         }
         Update: {
           accepted_at?: string | null
           accepted_plan_code?: string | null
           activation_token?: string | null
+          answered_keys?: string[]
           answers?: Json
+          average_project_value?: number | null
+          cities?: string[]
+          completed?: boolean
           completed_at?: string | null
           contractor_id?: string | null
           created_at?: string
@@ -25512,13 +25549,18 @@ export type Database = {
           id?: string
           ideal_project_value_cad?: number | null
           monthly_appointment_goal?: number | null
+          monthly_capacity?: number | null
+          priority?: string | null
           prospect_id?: string | null
+          quote_id?: string | null
           recommended_plan_code?: string | null
           recommended_plan_reason?: string | null
+          services?: string[]
           territories?: string[] | null
           updated_at?: string
           urgency?: string | null
           user_id?: string | null
+          wants_exclusivity?: boolean | null
         }
         Relationships: []
       }
@@ -35476,6 +35518,7 @@ export type Database = {
       }
       contractor_pricing_quotes: {
         Row: {
+          accepted_at: string | null
           aipp_optimization_fee: number
           appointment_package_fee: number
           approval_note: string | null
@@ -35486,6 +35529,8 @@ export type Database = {
           base_platform_fee: number
           breakdown: Json
           business_objective: string | null
+          calculation_version: string | null
+          capacity_availability: Json
           city: string | null
           company_name: string | null
           contractor_id: string | null
@@ -35493,12 +35538,16 @@ export type Database = {
           data_status: string
           estimated_close_rate: number
           estimated_monthly_revenue_potential: number
+          exclusivity_availability: Json
           exclusivity_fee: number
+          expires_at: string | null
+          extra_appointment_price: number | null
           factors: Json
           id: string
           input_payload: Json
           max_monthly_price: number
           min_monthly_price: number
+          pricing_explanation: Json
           pricing_status: Database["public"]["Enums"]["pricing_quote_status"]
           pricing_version: string
           recommended_monthly_price: number
@@ -35517,6 +35566,7 @@ export type Database = {
           wants_exclusivity: boolean
         }
         Insert: {
+          accepted_at?: string | null
           aipp_optimization_fee?: number
           appointment_package_fee?: number
           approval_note?: string | null
@@ -35527,6 +35577,8 @@ export type Database = {
           base_platform_fee?: number
           breakdown?: Json
           business_objective?: string | null
+          calculation_version?: string | null
+          capacity_availability?: Json
           city?: string | null
           company_name?: string | null
           contractor_id?: string | null
@@ -35534,12 +35586,16 @@ export type Database = {
           data_status?: string
           estimated_close_rate?: number
           estimated_monthly_revenue_potential?: number
+          exclusivity_availability?: Json
           exclusivity_fee?: number
+          expires_at?: string | null
+          extra_appointment_price?: number | null
           factors?: Json
           id?: string
           input_payload?: Json
           max_monthly_price?: number
           min_monthly_price?: number
+          pricing_explanation?: Json
           pricing_status?: Database["public"]["Enums"]["pricing_quote_status"]
           pricing_version?: string
           recommended_monthly_price?: number
@@ -35558,6 +35614,7 @@ export type Database = {
           wants_exclusivity?: boolean
         }
         Update: {
+          accepted_at?: string | null
           aipp_optimization_fee?: number
           appointment_package_fee?: number
           approval_note?: string | null
@@ -35568,6 +35625,8 @@ export type Database = {
           base_platform_fee?: number
           breakdown?: Json
           business_objective?: string | null
+          calculation_version?: string | null
+          capacity_availability?: Json
           city?: string | null
           company_name?: string | null
           contractor_id?: string | null
@@ -35575,12 +35634,16 @@ export type Database = {
           data_status?: string
           estimated_close_rate?: number
           estimated_monthly_revenue_potential?: number
+          exclusivity_availability?: Json
           exclusivity_fee?: number
+          expires_at?: string | null
+          extra_appointment_price?: number | null
           factors?: Json
           id?: string
           input_payload?: Json
           max_monthly_price?: number
           min_monthly_price?: number
+          pricing_explanation?: Json
           pricing_status?: Database["public"]["Enums"]["pricing_quote_status"]
           pricing_version?: string
           recommended_monthly_price?: number
@@ -54980,31 +55043,121 @@ export type Database = {
       }
       market_capacity: {
         Row: {
+          active_contractors: number
           active_slots: number
+          capacity_explanation: Json
+          capacity_score: number
+          capacity_status: string
           city: string
+          city_slug: string | null
+          committed_appointments: number
+          created_at: string
+          delivered_appointments_30d: number
+          estimated_monthly_demand: number
           id: string
+          market_open: boolean
+          max_contractors: number
           max_slots: number
+          remaining_positions: number
+          service_slug: string | null
           specialty: string
           updated_at: string | null
           waiting_list_count: number
         }
         Insert: {
+          active_contractors?: number
           active_slots?: number
+          capacity_explanation?: Json
+          capacity_score?: number
+          capacity_status?: string
           city: string
+          city_slug?: string | null
+          committed_appointments?: number
+          created_at?: string
+          delivered_appointments_30d?: number
+          estimated_monthly_demand?: number
           id?: string
+          market_open?: boolean
+          max_contractors?: number
           max_slots?: number
+          remaining_positions?: number
+          service_slug?: string | null
           specialty: string
           updated_at?: string | null
           waiting_list_count?: number
         }
         Update: {
+          active_contractors?: number
           active_slots?: number
+          capacity_explanation?: Json
+          capacity_score?: number
+          capacity_status?: string
           city?: string
+          city_slug?: string | null
+          committed_appointments?: number
+          created_at?: string
+          delivered_appointments_30d?: number
+          estimated_monthly_demand?: number
           id?: string
+          market_open?: boolean
+          max_contractors?: number
           max_slots?: number
+          remaining_positions?: number
+          service_slug?: string | null
           specialty?: string
           updated_at?: string | null
           waiting_list_count?: number
+        }
+        Relationships: []
+      }
+      market_capacity_commitments: {
+        Row: {
+          appointments_committed: number
+          city_slug: string
+          contractor_id: string
+          created_at: string
+          exclusive: boolean
+          id: string
+          plan_code: string
+          quote_id: string | null
+          release_reason: string | null
+          released_at: string | null
+          service_slug: string
+          status: string
+          subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          appointments_committed?: number
+          city_slug: string
+          contractor_id: string
+          created_at?: string
+          exclusive?: boolean
+          id?: string
+          plan_code: string
+          quote_id?: string | null
+          release_reason?: string | null
+          released_at?: string | null
+          service_slug: string
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          appointments_committed?: number
+          city_slug?: string
+          contractor_id?: string
+          created_at?: string
+          exclusive?: boolean
+          id?: string
+          plan_code?: string
+          quote_id?: string | null
+          release_reason?: string | null
+          released_at?: string | null
+          service_slug?: string
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -66117,6 +66270,7 @@ export type Database = {
         Row: {
           active: boolean
           ai_index_priority: number
+          appointment_model: string
           appointments_included: number
           audience: string
           billing_interval: string
@@ -66125,6 +66279,7 @@ export type Database = {
           code: string
           created_at: string
           id: string
+          legacy: boolean
           monthly_price: number
           name: string
           one_time_price: number
@@ -66132,8 +66287,10 @@ export type Database = {
           seo_boost: number
           stripe_monthly_price_id: string | null
           stripe_yearly_price_id: string | null
+          superseded_by: string | null
           tagline: string | null
           territory_radius_km: number
+          territory_scope: string | null
           tier_rank: number
           trust_boost: number
           updated_at: string
@@ -66143,6 +66300,7 @@ export type Database = {
         Insert: {
           active?: boolean
           ai_index_priority?: number
+          appointment_model?: string
           appointments_included?: number
           audience?: string
           billing_interval?: string
@@ -66151,6 +66309,7 @@ export type Database = {
           code: string
           created_at?: string
           id?: string
+          legacy?: boolean
           monthly_price?: number
           name: string
           one_time_price?: number
@@ -66158,8 +66317,10 @@ export type Database = {
           seo_boost?: number
           stripe_monthly_price_id?: string | null
           stripe_yearly_price_id?: string | null
+          superseded_by?: string | null
           tagline?: string | null
           territory_radius_km?: number
+          territory_scope?: string | null
           tier_rank?: number
           trust_boost?: number
           updated_at?: string
@@ -66169,6 +66330,7 @@ export type Database = {
         Update: {
           active?: boolean
           ai_index_priority?: number
+          appointment_model?: string
           appointments_included?: number
           audience?: string
           billing_interval?: string
@@ -66177,6 +66339,7 @@ export type Database = {
           code?: string
           created_at?: string
           id?: string
+          legacy?: boolean
           monthly_price?: number
           name?: string
           one_time_price?: number
@@ -66184,8 +66347,10 @@ export type Database = {
           seo_boost?: number
           stripe_monthly_price_id?: string | null
           stripe_yearly_price_id?: string | null
+          superseded_by?: string | null
           tagline?: string | null
           territory_radius_km?: number
+          territory_scope?: string | null
           tier_rank?: number
           trust_boost?: number
           updated_at?: string
@@ -66628,6 +66793,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pricing_audit_log: {
+        Row: {
+          actor_id: string | null
+          actor_role: string | null
+          calculation_version: string | null
+          city_slug: string | null
+          contractor_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          new_state: Json
+          previous_state: Json
+          quote_id: string | null
+          reason: string | null
+          service_slug: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_role?: string | null
+          calculation_version?: string | null
+          city_slug?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          new_state?: Json
+          previous_state?: Json
+          quote_id?: string | null
+          reason?: string | null
+          service_slug?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_role?: string | null
+          calculation_version?: string | null
+          city_slug?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          new_state?: Json
+          previous_state?: Json
+          quote_id?: string | null
+          reason?: string | null
+          service_slug?: string | null
+        }
+        Relationships: []
       }
       pricing_categories: {
         Row: {
@@ -93949,6 +94162,7 @@ export type Database = {
       }
       recover_blocked_launch_leads: { Args: never; Returns: Json }
       refresh_appointment_value_matrix: { Args: never; Returns: Json }
+      refresh_market_capacity: { Args: never; Returns: number }
       reject_company: {
         Args: { _actor_id: string; _company_id: string; _notes?: string }
         Returns: Json
