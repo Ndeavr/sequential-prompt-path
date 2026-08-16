@@ -70,18 +70,7 @@ const SmartHeader = () => {
 
   return (
     <>
-      <header
-        className="sticky top-0 z-[60] pointer-events-auto"
-        style={{
-          background:
-            "linear-gradient(180deg, hsl(220 45% 7% / 0.92) 0%, hsl(220 40% 5% / 0.85) 100%)",
-          backdropFilter: "blur(28px) saturate(1.8)",
-          WebkitBackdropFilter: "blur(28px) saturate(1.8)",
-          borderBottom: "1px solid transparent",
-          borderImage:
-            "linear-gradient(90deg, transparent, hsl(210 30% 60% / 0.22), transparent) 1",
-        }}
-      >
+      <header className="glass-nav sticky top-0 z-[60] pointer-events-auto">
         <div className="mx-auto max-w-7xl px-1 sm:px-4 lg:px-6">
           <div className="flex items-center justify-between h-10 sm:h-12 lg:h-14">
             {/* Back button */}
