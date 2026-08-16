@@ -111,8 +111,9 @@ function CondoLayoutInner({ children }: { children: ReactNode }) {
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
         <div className="flex items-center gap-2 ml-2">
-          <Building2 className="h-5 w-5 text-primary" />
-          <span className="font-display text-sm font-bold">UNPRO Condos</span>
+          <UnproLogo size={84} className="h-5 w-auto" />
+          <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">Condos</span>
+
         </div>
       </div>
 
