@@ -39,7 +39,11 @@ function jsonResponse(body: Record<string, unknown>, status = 200, requestId = c
 }
 
 const SMS_TEMPLATE = (biz: string, link: string) =>
-  `Bonjour ${biz}, UNPRO a préparé gratuitement un profil pour votre entreprise afin que les propriétaires et les IA puissent mieux comprendre vos services. Les 10 premières entreprises peuvent l'activer pour 1 $ : ${link}`;
+  smsWithLink(
+    `Bonjour, savez-vous comment l'IA comprend actuellement ${biz}? ` +
+      `UNPRO a préparé son profil d'entreprise. Vous pouvez le voir et l'activer pour 1 $.`,
+    buildOutreachUrl(link, { campaign: "contractor_activation" }),
+  );
 
 const EMAIL_SUBJECT = (biz: string) =>
   `${biz} — votre profil UNPRO est prêt (activation 1 $)`;
