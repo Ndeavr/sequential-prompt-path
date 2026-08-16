@@ -350,9 +350,18 @@ Deno.serve(async (req) => {
     // ---------------------------------------------------------------- accept
     if (action === "accept") {
       const code = String(body.value ?? "");
-      if (!(PLAN_LADDER as unknown as string[]).includes(code)) {
+      // Only a live, non-legacy contractor plan can be accepted.
+      const { data: acceptable } = await supabase
+        .from("plans")
+        .select("code")
+        .eq("code", code)
+        .eq("active", true)
+        .eq("legacy", false)
+        .maybeSingle();
+      if (!acceptable) {
         return json({ ok: false, reason: "unknown_plan" }, 400);
       }
+
       await supabase
         .from("contractor_activation_goals")
         .update({ accepted_plan_code: code, accepted_at: new Date().toISOString() })
