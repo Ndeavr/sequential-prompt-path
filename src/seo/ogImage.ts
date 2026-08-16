@@ -10,9 +10,9 @@
  * (`/og-image.jpg`, `/og-default.png`).
  */
 export const DEFAULT_OG_IMAGE =
-  "https://unpro.ca/og/unpro-og-v4.jpg?v=20260724";
+  "https://unpro.ca/og/unpro-og-v5.jpg?v=20260816";
 
 export const DEFAULT_OG_IMAGE_WIDTH = 1200;
 export const DEFAULT_OG_IMAGE_HEIGHT = 630;
 export const DEFAULT_OG_IMAGE_ALT =
-  "UNPRO — Votre plateforme d'intelligence résidentielle propulsée par l'IA.";
+  "UNPRO — La fin des 3 soumissions. L'IA trouve le bon entrepreneur pour vos travaux.";
