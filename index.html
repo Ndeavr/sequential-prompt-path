@@ -104,6 +104,25 @@
         "publisher": { "@type": "Organization", "name": "UNPRO", "url": "https://unpro.ca" }
       }
     </script>
+    <!-- Theme anti-flash: apply the stored mode before first paint. -->
+    <script>
+      (function () {
+        try {
+          var m = localStorage.getItem("unpro-theme") || "dark";
+          var dark =
+            m === "dark" ||
+            (m === "system" &&
+              window.matchMedia &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          var r = document.documentElement;
+          r.classList.toggle("dark", dark);
+          r.classList.toggle("light", !dark);
+          r.style.colorScheme = dark ? "dark" : "light";
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute("content", dark ? "#050816" : "#F7FAFF");
+        } catch (e) {}
+      })();
+    </script>
   </head>
 
   <body>
