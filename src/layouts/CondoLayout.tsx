@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useCondoRole, useCondoRoleState, CondoRoleProvider } from "@/hooks/useCondoRole";
 import CondoRoleSwitcher from "@/components/condo/CondoRoleSwitcher";
+import UnproLogo from "@/components/brand/UnproLogo";
 import { Button } from "@/components/ui/button";
 import {
   Building2, LayoutDashboard, Puzzle, Wrench, FolderOpen,
@@ -54,22 +55,17 @@ function CondoLayoutInner({ children }: { children: ReactNode }) {
     [condoRole]
   );
 
-  const roleColor = condoRole === "condo_board" ? "from-amber-500 to-orange-500"
-    : condoRole === "condo_manager" ? "from-secondary to-primary"
-    : "from-primary to-secondary";
+
+
 
   return (
     <div className="min-h-screen flex bg-background">
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-60 flex-col border-r border-border/30 bg-card/40 backdrop-blur-sm">
         <Link to="/condos" className="flex items-center gap-2.5 px-5 py-5 border-b border-border/20">
-          <div className={`h-8 w-8 rounded-xl bg-gradient-to-br ${roleColor} flex items-center justify-center shadow-glow`}>
-            <Building2 className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <div>
-            <span className="font-display text-sm font-bold text-foreground">UNPRO</span>
-            <span className="font-display text-xs text-muted-foreground ml-1">Condos</span>
-          </div>
+          <UnproLogo size={96} className="h-6 w-auto" />
+          <span className="font-display text-xs uppercase tracking-wider text-muted-foreground">Condos</span>
+
         </Link>
 
         {/* Role switcher */}
@@ -114,8 +110,9 @@ function CondoLayoutInner({ children }: { children: ReactNode }) {
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
         <div className="flex items-center gap-2 ml-2">
-          <Building2 className="h-5 w-5 text-primary" />
-          <span className="font-display text-sm font-bold">UNPRO Condos</span>
+          <UnproLogo size={84} className="h-5 w-auto" />
+          <span className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">Condos</span>
+
         </div>
       </div>
 

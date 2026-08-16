@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { Button } from "@/components/ui/button";
 import { Home, FileText, BarChart3, User, CalendarDays, LogOut, Sparkles, Building2, FolderOpen } from "lucide-react";
+import UnproLogo from "@/components/brand/UnproLogo";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import AlexConcierge from "@/components/alex/AlexConcierge";
 import type { ReactNode } from "react";
@@ -33,10 +34,8 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
       {/* ─── Desktop sidebar ─── */}
       <aside className="hidden md:flex w-56 flex-col border-r border-border/30 bg-card/40 p-4">
         <Link to="/" className="flex items-center gap-2 px-3 mb-2 mt-2">
-          <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-glow">
-            <Sparkles className="h-3 w-3 text-primary-foreground" />
-          </div>
-          <span className="font-display text-sm font-bold text-foreground">UNPRO</span>
+          <UnproLogo size={90} className="h-6 w-auto" />
+
         </Link>
 
         {/* Property switcher */}
@@ -87,10 +86,8 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="md:hidden flex items-center justify-between border-b border-border/20 px-4 py-2.5 bg-background/80 backdrop-blur-xl sticky top-0 z-20">
           <Link to="/" className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <Sparkles className="h-3 w-3 text-primary-foreground" />
-            </div>
-            <span className="font-display text-meta font-bold text-foreground">UNPRO</span>
+            <UnproLogo size={84} className="h-5 w-auto" />
+
           </Link>
         </header>
         <main className="flex-1 p-4 md:p-8 pb-[var(--dock-safe-pb)] md:pb-8 overflow-auto">{children}</main>

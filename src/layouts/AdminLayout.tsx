@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   LogOut, Menu, X, Sparkles, ChevronDown, ChevronRight, Search,
 } from "lucide-react";
+import UnproLogo from "@/components/brand/UnproLogo";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import BannerSystemEnvironmentStatus from "@/components/admin/system/BannerSystemEnvironmentStatus";
 import SmsInfrastructureBanner from "@/components/admin/SmsInfrastructureBanner";
@@ -155,10 +156,8 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
     <div className="admin-theme min-h-screen flex bg-background">
       <aside className="hidden md:flex w-64 flex-col border-r border-border/30 bg-card/40 p-3 sticky top-0 h-screen">
         <Link to="/" className="flex items-center gap-2 px-3 mb-1 mt-2">
-          <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-            <Sparkles className="h-3 w-3 text-primary-foreground" />
-          </div>
-          <span className="text-sm font-bold text-foreground">UNPRO</span>
+          <UnproLogo size={90} className="h-6 w-auto" />
+
           <span className="text-[10px] uppercase tracking-wider text-muted-foreground ml-1">Admin</span>
         </Link>
 
@@ -180,10 +179,9 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
         <RevenueWall />
         <header className="md:hidden flex items-center justify-between border-b border-border/30 px-4 py-2.5 bg-background/80 backdrop-blur-xl sticky top-0 z-30">
           <Link to="/" className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <Sparkles className="h-3 w-3 text-primary-foreground" />
-            </div>
-            <span className="text-sm font-bold text-foreground">UNPRO Admin</span>
+            <UnproLogo size={84} className="h-5 w-auto" />
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Admin</span>
+
           </Link>
           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setMobileMenuOpen(v => !v)}>
             {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}

@@ -14,6 +14,7 @@ import {
   AlertTriangle, CheckCircle, ArrowRight, Sparkles, Scale,
 } from "lucide-react";
 import { UnproVerifiedBadge } from "@/components/contractor/UnproVerifiedBadge";
+import UnproIcon from "@/components/brand/UnproIcon";
 import { getContractorTrustLabel } from "@/lib/trustLabels";
 import WhyThisContractorIsRecommended from "@/components/contractor/WhyThisContractorIsRecommended";
 import type { MatchEvaluation } from "@/types/matching";
@@ -153,9 +154,8 @@ const MatchCard = ({ match, rank, onCompare, isComparing }: MatchCardProps) => {
           {/* UNPRO + AIPP Mini Scores */}
           <div className="flex items-center gap-3 mb-4">
             <div className="flex items-center gap-1.5">
-              <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center">
-                <span className="text-[9px] font-bold text-primary">U</span>
-              </div>
+              <UnproIcon size={20} shape="round" className="rounded" />
+
               <span className="text-xs font-medium">{Math.round(match.unpro_score_snapshot)}</span>
             </div>
             <div className="flex items-center gap-1.5">
