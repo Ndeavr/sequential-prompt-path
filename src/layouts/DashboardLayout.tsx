@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { Button } from "@/components/ui/button";
 import { Home, FileText, BarChart3, User, CalendarDays, LogOut, Sparkles, Building2, FolderOpen } from "lucide-react";
+import UnproLogo from "@/components/brand/UnproLogo";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import AlexConcierge from "@/components/alex/AlexConcierge";
 import type { ReactNode } from "react";
