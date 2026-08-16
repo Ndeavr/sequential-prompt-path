@@ -53,7 +53,7 @@ export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole 
         <div className="p-5 flex-1 overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-5">
-            <span className="font-display text-lg font-bold text-foreground">UNPRO</span>
+            <UnproLogo size={100} className="h-6 w-auto" />
             <div className="flex items-center gap-1.5">
               <LanguageToggle lang={lang} onChange={setLang} />
               <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9 rounded-lg">
