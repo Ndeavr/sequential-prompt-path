@@ -1,5 +1,12 @@
 // analyze-quote-comparative — Real AI analysis of 1-3 quote documents using Lovable AI Gateway
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import {
+  serviceClient,
+  getUserId,
+  checkHomeownerQuota,
+  consumeHomeownerQuota,
+  quotaBlockedResponse,
+} from "../_shared/homeownerQuota.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -114,13 +121,26 @@ function scoreQuote(q: ExtractedQuote, medianPrice: number | null): number {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
-    const { files } = (await req.json()) as { files: InputFile[] };
+    const body = (await req.json()) as { files: InputFile[]; idempotency_key?: string };
+    const files = body.files;
     if (!Array.isArray(files) || files.length < 1 || files.length > 3) {
       return new Response(JSON.stringify({ error: "1 à 3 fichiers requis" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // ─── Monthly quota (catalog-driven: Gratuit 1 analyse/mois, Plus & Gold illimité) ───
+    // 1 à 3 soumissions = UNE analyse.
+    const supa = serviceClient();
+    const userId = await getUserId(req, supa);
+    if (userId) {
+      const quota = await checkHomeownerQuota(supa, userId, "quote_analysis_monthly");
+      if (!quota.allowed) {
+        return quotaBlockedResponse(quota, "quote_analysis_monthly", corsHeaders);
+      }
+    }
+
 
     // Run extractions in parallel
     const extracted = await Promise.all(files.map((f) => callGemini(f).catch((e) => {
@@ -215,13 +235,9 @@ Deno.serve(async (req) => {
     };
 
     // Persist
-    const supa = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
     const { data, error } = await supa
       .from("quote_analyses")
-      .insert({ payload, file_count: files.length })
+      .insert({ payload, file_count: files.length, user_id: userId })
       .select("id")
       .single();
 
@@ -232,6 +248,18 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Consume ONE monthly credit only after a real, persisted analysis.
+    if (userId) {
+      await consumeHomeownerQuota(
+        supa,
+        userId,
+        "quote_analysis_monthly",
+        String(body.idempotency_key ?? data.id),
+      );
+    }
+
+
 
     return new Response(JSON.stringify({ analysis_id: data.id, payload }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
