@@ -10,25 +10,28 @@
  */
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { buildOutreachUrl, smsWithLink } from "../_shared/outreachLink.ts";
 
 const RELANCE_KIND = "second_touch";
 const CLICK_RECOVERY_KIND = "click_recovery";
 const ALLOWED_KINDS = new Set([RELANCE_KIND, CLICK_RECOVERY_KIND]);
-const BASE = "https://unpro.ca";
 
 function buildMessage(businessName: string, token: string, kind: string): string {
   const name = (businessName || "").trim().slice(0, 40);
+  const url = buildOutreachUrl(`/unpro/activate/${token}`, {
+    campaign: kind === CLICK_RECOVERY_KIND ? "click_recovery" : "second_touch",
+  });
   if (kind === CLICK_RECOVERY_KIND) {
-    return (
+    return smsWithLink(
       `UNPRO — ${name} : votre lien d'activation est prêt. ` +
-      `7 jours pour 1,00 $ CA : ${BASE}/unpro/activate/${token}\n` +
-      `Répondez STOP pour ne plus recevoir de messages.`
+        `7 jours pour 1,00 $ CA, sans engagement.`,
+      url,
     );
   }
-  return (
-    `UNPRO — ${name}: votre profil est prêt. ` +
-    `Activez-le 7 jours pour 1 $ : ${BASE}/unpro/activate/${token}\n` +
-    `Répondez STOP pour ne plus recevoir de messages.`
+  return smsWithLink(
+    `Je vous renvoie simplement le lien pour voir comment ${name} peut être ` +
+      `comprise et recommandée par l'IA. Aucun engagement, activation 1 $.`,
+    url,
   );
 }
 
