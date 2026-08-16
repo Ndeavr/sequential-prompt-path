@@ -51809,6 +51809,66 @@ export type Database = {
         }
         Relationships: []
       }
+      homeowner_usage_events: {
+        Row: {
+          created_at: string
+          feature_key: string
+          id: string
+          idempotency_key: string
+          period_month: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature_key: string
+          id?: string
+          idempotency_key: string
+          period_month: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feature_key?: string
+          id?: string
+          idempotency_key?: string
+          period_month?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      homeowner_usage_monthly: {
+        Row: {
+          created_at: string
+          feature_key: string
+          id: string
+          last_idempotency_key: string | null
+          period_month: string
+          updated_at: string
+          used_count: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature_key: string
+          id?: string
+          last_idempotency_key?: string | null
+          period_month: string
+          updated_at?: string
+          used_count?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feature_key?: string
+          id?: string
+          last_idempotency_key?: string | null
+          period_month?: string
+          updated_at?: string
+          used_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       improvement_tasks: {
         Row: {
           assigned_to: string | null
@@ -69670,6 +69730,7 @@ export type Database = {
           estimated_score: number | null
           full_address: string | null
           id: string
+          is_active: boolean
           latitude: number | null
           listing_import_id: string | null
           longitude: number | null
@@ -69703,6 +69764,7 @@ export type Database = {
           estimated_score?: number | null
           full_address?: string | null
           id?: string
+          is_active?: boolean
           latitude?: number | null
           listing_import_id?: string | null
           longitude?: number | null
@@ -69736,6 +69798,7 @@ export type Database = {
           estimated_score?: number | null
           full_address?: string | null
           id?: string
+          is_active?: boolean
           latitude?: number | null
           listing_import_id?: string | null
           longitude?: number | null
@@ -93936,11 +93999,29 @@ export type Database = {
         }
         Returns: boolean
       }
+      homeowner_active_plan_code: {
+        Args: { _user_id: string }
+        Returns: string
+      }
+      homeowner_can_add_property: { Args: { _user_id: string }; Returns: Json }
+      homeowner_consume_quota: {
+        Args: {
+          _feature_key: string
+          _idempotency_key?: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       homeowner_feature_access: {
         Args: { _feature_key: string; _user_id: string }
         Returns: Json
       }
+      homeowner_feature_limit: {
+        Args: { _feature_key: string; _user_id: string }
+        Returns: number
+      }
       homeowner_plan_code: { Args: { _user_id: string }; Returns: string }
+      homeowner_usage_snapshot: { Args: { _user_id: string }; Returns: Json }
       increment_stripe_event_retry: {
         Args: { p_event_id: string }
         Returns: undefined

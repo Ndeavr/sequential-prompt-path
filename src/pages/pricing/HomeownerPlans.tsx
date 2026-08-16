@@ -1,6 +1,6 @@
 /**
  * UNPRO — Section Pricing Propriétaires Premium
- * 3 plans: Découverte, Plus, Signature
+ * 3 plans: Gratuit, Plus, Gold
  * Ultra premium, mobile-first, licorne design
  */
 import { Link } from "react-router-dom";
@@ -48,84 +48,71 @@ interface Plan {
 const PLANS: Plan[] = [
   {
     code: "homeowners_discovery",
-    name: "Découverte",
+    name: "Gratuit",
     price: 0,
     period: "/ gratuit",
-    audience: "Pour commencer sans friction",
-    description: "Les bases pour vérifier, comprendre et avancer.",
+    audience: "Essayez UNPRO chaque mois",
+    description: "Tout le nécessaire pour une première décision, sans frais.",
     features: [
-      { text: "1 compte propriétaire UNPRO" },
+      { text: "1 propriété" },
+      { text: "1 analyse de soumissions par mois", highlight: true },
+      { text: "Jusqu'à 3 soumissions comparées par analyse", highlight: true },
+      { text: "1 design IA par mois" },
       { text: "1 Passeport Maison" },
-      { text: "Estimation préliminaire de projet" },
-      { text: "Recommandations de professionnels compatibles" },
-      { text: "Vérification de base d'un entrepreneur" },
-      { text: "1 analyse de soumission par mois" },
-      { text: "Stockage de documents essentiels" },
-      { text: "Suivi de projet simple" },
-      { text: "Accès à Alex pour orientation de base" },
+      { text: "Historique conservé pour votre propriété" },
     ],
     cta: "Commencer gratuitement",
     ctaLink: "/signup?redirect=/proprietaire/bienvenue?plan=discovery",
-    microcopy: "Idéal pour un premier projet ou un besoin ponctuel.",
+    microcopy: "Le quota se renouvelle chaque mois. Aucune carte requise.",
     icon: Home,
-    badge: { label: "Gratuit pour commencer", type: "neutral" },
+    badge: { label: "0 $", type: "neutral" },
   },
   {
     code: "homeowners_plus",
     name: "Plus",
     price: 49,
     period: "/ an",
-    audience: "Pour comparer intelligemment",
-    description: "Comparez mieux, évitez les erreurs coûteuses et centralisez votre maison.",
+    audience: "Ma maison, sans limites",
+    description: "Analysez et comparez autant de soumissions que nécessaire.",
     features: [
-      { text: "Tout dans Découverte", highlight: false },
-      { text: "Jusqu'à 3 adresses", highlight: true },
-      { text: "Passeport Maison enrichi", highlight: true },
-      { text: "Analyses de soumissions illimitées", highlight: true },
-      { text: "Comparaison intelligente de jusqu'à 3 soumissions", highlight: true },
-      { text: "Détection d'écarts, d'oublis possibles et de zones floues", highlight: true },
-      { text: "Vérifications entrepreneur plus détaillées", highlight: true },
-      { text: "Historique de projets et dépenses" },
-      { text: "Rappels d'entretien" },
-      { text: "Classement et archivage avancé des documents" },
-      { text: "Recommandations plus précises selon budget, urgence et type de projet" },
-      { text: "Support prioritaire léger" },
+      { text: "1 propriété" },
+      { text: "Analyses de soumissions illimitées*", highlight: true },
+      { text: "Jusqu'à 3 soumissions comparées par analyse" },
+      { text: "10 designs IA par mois", highlight: true },
+      { text: "Passeport Maison complet", highlight: true },
+      { text: "Historique complet de la propriété" },
     ],
     cta: "Passer à Plus",
     ctaLink: "/auth?plan=plus",
-    microcopy: "Le meilleur équilibre entre clarté, protection et valeur.",
+    microcopy: "Le meilleur équilibre pour une maison.",
     icon: Sparkles,
     badge: { label: "Le plus populaire", type: "popular" },
     popular: true,
   },
   {
     code: "homeowners_signature",
-    name: "Signature",
+    name: "Gold",
     price: 149,
     period: "/ an",
-    audience: "Pour piloter votre maison avec plus de contrôle",
-    description: "Une expérience premium avec copilote maison plus stratégique.",
+    audience: "Toutes mes propriétés, sans limites",
+    description: "Pour gérer plusieurs propriétés au même endroit.",
     features: [
-      { text: "Tout dans Plus", highlight: false },
-      { text: "Jusqu'à 5 adresses", highlight: true },
-      { text: "Analyses prioritaires", highlight: true },
-      { text: "Accompagnement Alex avancé", highlight: true },
-      { text: "Lecture plus stratégique des soumissions et options", highlight: true },
-      { text: "Priorisation des travaux selon risque, valeur et urgence", highlight: true },
-      { text: "Vue consolidée maison, documents, projets et entrepreneurs", highlight: true },
-      { text: "Espace documentaire premium" },
-      { text: "Préparation simplifiée avant vente, refinancement ou sinistre" },
-      { text: "Suggestions proactives liées à l'entretien, aux risques visibles et aux prochaines étapes", highlight: true },
-      { text: "Support prioritaire premium" },
+      { text: "Jusqu'à 3 propriétés", highlight: true },
+      { text: "Analyses de soumissions illimitées*", highlight: true },
+      { text: "Designs IA illimités*", highlight: true },
+      { text: "Un Passeport Maison par propriété", highlight: true },
+      { text: "Historique distinct pour chaque propriété" },
+      { text: "Changement de propriété en un geste sur mobile" },
     ],
-    cta: "Activer Signature",
+    cta: "Passer à Gold",
     ctaLink: "/auth?plan=signature",
-    microcopy: "Pour les propriétaires exigeants qui veulent une vraie longueur d'avance.",
+    microcopy: "Pour les propriétaires de plusieurs adresses.",
     icon: Crown,
-    badge: { label: "Premium", type: "premium" },
+    badge: { label: "Multi-propriétés", type: "premium" },
     premium: true,
   },
 ];
+
 
 /* ─── Comparison Features ─── */
 interface ComparisonRow {
@@ -137,18 +124,18 @@ interface ComparisonRow {
 
 const COMPARISON: ComparisonRow[] = [
   { label: "Compte propriétaire UNPRO", discovery: "Oui", plus: "Oui", signature: "Oui" },
-  { label: "Adresses (propriétés)", discovery: "1", plus: "Jusqu'à 3", signature: "Jusqu'à 5" },
-  { label: "Passeport Maison", discovery: "1", plus: "1 enrichi", signature: "1 enrichi" },
+  { label: "Propriétés actives", discovery: "1", plus: "1", signature: "3" },
+  { label: "Analyses de soumissions", discovery: "1 / mois", plus: "Illimité*", signature: "Illimité*" },
+  { label: "Soumissions par analyse", discovery: "Jusqu'à 3", plus: "Jusqu'à 3", signature: "Jusqu'à 3" },
+  { label: "Designs IA", discovery: "1 / mois", plus: "10 / mois", signature: "Illimité*" },
+  { label: "Passeport Maison", discovery: "1", plus: "1 enrichi", signature: "1 par propriété" },
   { label: "Estimation préliminaire de projet", discovery: "Oui", plus: "Oui", signature: "Oui" },
   { label: "Recommandations de professionnels", discovery: "Oui", plus: "Oui", signature: "Oui" },
   { label: "Vérification entrepreneur", discovery: "Base", plus: "Détaillée", signature: "Détaillée" },
-  { label: "Analyse de soumission", discovery: "1 / mois", plus: "Illimité", signature: "Illimité prioritaire" },
-  { label: "Comparaison de jusqu'à 3 soumissions", discovery: "—", plus: "Oui", signature: "Oui" },
-  { label: "Détection d'écarts et zones floues", discovery: "—", plus: "Oui", signature: "Oui" },
+  { label: "Détection d'écarts et zones floues", discovery: "Oui", plus: "Oui", signature: "Oui" },
   { label: "Historique projets et dépenses", discovery: "—", plus: "Oui", signature: "Oui" },
   { label: "Archivage avancé documents", discovery: "—", plus: "Oui", signature: "Oui" },
   { label: "Rappels d'entretien", discovery: "—", plus: "Oui", signature: "Oui" },
-  { label: "Lecture stratégique des options", discovery: "—", plus: "—", signature: "Oui" },
   { label: "Priorisation des travaux", discovery: "—", plus: "—", signature: "Oui" },
   { label: "Suggestions proactives", discovery: "—", plus: "—", signature: "Oui" },
   { label: "Support", discovery: "Standard", plus: "Prioritaire léger", signature: "Prioritaire premium" },
@@ -156,13 +143,14 @@ const COMPARISON: ComparisonRow[] = [
 
 /* ─── FAQ ─── */
 const FAQ = [
-  { q: "Le plan Découverte est-il vraiment gratuit ?", a: "Oui. Vous pouvez créer votre compte et utiliser les fonctionnalités de base sans frais." },
-  { q: "Qu'est-ce qui change surtout avec Plus ?", a: "Plus débloque les analyses illimitées, la comparaison de soumissions et une meilleure organisation du Passeport Maison." },
-  { q: "À qui s'adresse Signature ?", a: "Signature s'adresse aux propriétaires qui veulent une expérience plus premium, plus proactive et plus stratégique." },
-  { q: "Puis-je changer de plan plus tard ?", a: "Oui. Vous pouvez passer à un plan supérieur lorsque vos besoins évoluent." },
+  { q: "Le plan Gratuit est-il vraiment gratuit ?", a: "Oui. Chaque mois vous avez droit à 1 analyse de soumissions (jusqu'à 3 soumissions comparées) et 1 design IA, sans frais et sans carte." },
+  { q: "Qu'est-ce qui change avec Plus ?", a: "Plus retire la limite mensuelle d'analyses pour votre propriété et fait passer les designs IA à 10 par mois." },
+  { q: "À qui s'adresse Gold ?", a: "Gold s'adresse aux propriétaires de plusieurs adresses : jusqu'à 3 propriétés, analyses et designs illimités." },
+  { q: "Que se passe-t-il si je passe de Gold à Plus ?", a: "Rien n'est supprimé. Vous choisissez simplement quelle propriété reste active ; les autres passent en lecture seule et redeviennent actives dès que vous repassez à Gold." },
+  { q: "Que veut dire « illimité » ?", a: "Un usage normal de propriétaire, encadré par une protection anti-abus automatique. Aucun quota mensuel ne s'applique à votre utilisation régulière." },
   { q: "Mes documents restent-ils privés ?", a: "Oui. Les documents liés à votre maison restent dans votre espace propriétaire." },
-  { q: "UNPRO remplace-t-il mon jugement ?", a: "Non. UNPRO vous aide à mieux comprendre, mieux comparer et mieux décider. La décision finale reste toujours la vôtre." },
 ];
+
 
 /* ─── Why Pay Blocks ─── */
 const WHY_PAY = [
@@ -322,9 +310,9 @@ function ComparisonMatrix() {
         <thead>
           <tr className="border-b border-border/30">
             <th className="py-3 pr-4 text-xs font-semibold text-muted-foreground w-[40%]">Fonctionnalité</th>
-            <th className="py-3 px-3 text-xs font-semibold text-muted-foreground text-center">Découverte</th>
+            <th className="py-3 px-3 text-xs font-semibold text-muted-foreground text-center">Gratuit</th>
             <th className="py-3 px-3 text-xs font-semibold text-primary text-center">Plus</th>
-            <th className="py-3 px-3 text-xs font-semibold text-secondary text-center">Signature</th>
+            <th className="py-3 px-3 text-xs font-semibold text-secondary text-center">Gold</th>
           </tr>
         </thead>
         <tbody>
@@ -338,7 +326,11 @@ function ComparisonMatrix() {
           ))}
         </tbody>
       </table>
+      <p className="mt-3 text-[11px] text-muted-foreground">
+        * Illimité selon un usage normal de propriétaire, encadré par une protection anti-abus automatique.
+      </p>
     </div>
+
   );
 }
 
@@ -439,7 +431,7 @@ export default function HomeownerPlans() {
         className="max-w-3xl mx-auto text-center mb-16"
       >
         <h3 className="text-xl md:text-2xl font-bold text-foreground mb-2">
-          Découverte rassure. Plus aide à décider. Signature aide à piloter.
+          Gratuit rassure. Plus aide à décider. Gold aide à piloter plusieurs propriétés.
         </h3>
         <p className="text-sm text-muted-foreground">
           Chaque plan augmente votre niveau de clarté, de structure et de contrôle.

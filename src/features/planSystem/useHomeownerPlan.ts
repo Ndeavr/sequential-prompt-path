@@ -15,6 +15,8 @@ export type HomeownerFeatureKey =
   | "properties_max"
   | "quote_analysis_monthly"
   | "quote_comparison"
+  | "ai_design_monthly"
+  | "property_passport"
   | "contractor_verification_detailed"
   | "maintenance_reminders"
   | "document_archive_advanced"
@@ -23,6 +25,14 @@ export type HomeownerFeatureKey =
   | "work_prioritization"
   | "proactive_suggestions"
   | "priority_support";
+
+/** Display labels — Gratuit / Plus / Gold. */
+export const HOMEOWNER_PLAN_LABEL: Record<HomeownerPlanCode, string> = {
+  home_decouverte: "Gratuit",
+  home_plus: "Plus",
+  home_signature: "Gold",
+};
+
 
 export interface HomeownerPlan {
   code: HomeownerPlanCode;
@@ -50,9 +60,11 @@ export function normalizeHomeownerPlanCode(code: string | null | undefined): Hom
     case "homeowners_plus":
       return "home_plus";
     case "signature":
+    case "gold":
     case "home_signature":
     case "homeowners_signature":
       return "home_signature";
+
     default:
       return "home_decouverte";
   }
@@ -188,4 +200,70 @@ export function useRefreshEntitlements() {
     qc.invalidateQueries({ queryKey: ["homeowner-subscription"] });
     qc.invalidateQueries({ queryKey: ["homeowner-plan-catalog"] });
   };
+}
+
+/** Live monthly usage snapshot (server-computed, never trust the client). */
+export interface HomeownerUsageSnapshot {
+  planCode: HomeownerPlanCode;
+  periodMonth: string;
+  propertiesUsed: number;
+  propertiesMax: number | null;
+  quoteAnalysisLimit: number | null;
+  quoteAnalysisUsed: number;
+  aiDesignLimit: number | null;
+  aiDesignUsed: number;
+}
+
+export function useHomeownerUsage() {
+  const { session } = useAuth();
+  const userId = session?.user?.id ?? null;
+
+  return useQuery({
+    queryKey: ["homeowner-usage", userId],
+    enabled: !!userId,
+    staleTime: 15_000,
+    queryFn: async (): Promise<HomeownerUsageSnapshot | null> => {
+      const { data, error } = await supabase.rpc("homeowner_usage_snapshot" as any, {
+        _user_id: userId!,
+      });
+      if (error) throw error;
+      const s = (data ?? {}) as Record<string, any>;
+      return {
+        planCode: normalizeHomeownerPlanCode(s.plan_code),
+        periodMonth: String(s.period_month ?? ""),
+        propertiesUsed: Number(s.properties_used ?? 0),
+        propertiesMax: s.properties_max ?? null,
+        quoteAnalysisLimit: s.quote_analysis_limit ?? null,
+        quoteAnalysisUsed: Number(s.quote_analysis_used ?? 0),
+        aiDesignLimit: s.ai_design_limit ?? null,
+        aiDesignUsed: Number(s.ai_design_used ?? 0),
+      };
+    },
+  });
+}
+
+/** Can the current user add one more ACTIVE property? Server-resolved. */
+export function useCanAddProperty() {
+  const { session } = useAuth();
+  const userId = session?.user?.id ?? null;
+
+  return useQuery({
+    queryKey: ["homeowner-can-add-property", userId],
+    enabled: !!userId,
+    staleTime: 10_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("homeowner_can_add_property" as any, {
+        _user_id: userId!,
+      });
+      if (error) throw error;
+      const r = (data ?? {}) as Record<string, any>;
+      return {
+        allowed: !!r.allowed,
+        limit: (r.limit ?? null) as number | null,
+        used: Number(r.used ?? 0),
+        planCode: normalizeHomeownerPlanCode(r.plan_code),
+        upgradeTarget: (r.upgrade_target ?? null) as HomeownerPlanCode | null,
+      };
+    },
+  });
 }
