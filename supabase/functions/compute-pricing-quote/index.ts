@@ -519,14 +519,9 @@ Deno.serve(async (req) => {
       (exclusivityAvailability as any).status === "available" &&
       !marketClosed;
 
-    // ---------- Capacity factor ----------
-    const cap = Math.max(1, body.monthly_capacity ?? 1);
-    const utilization = clamp(body.target_monthly_appointments / cap, 0, 2);
-    const capacityFactor = clamp(
-      0.85 + utilization * 0.25,
-      w.capacity_factor_min,
-      w.capacity_factor_max,
-    );
+    // (capacity factor is computed per appointment target inside priceChain)
+
+
 
     // ---------- Territory breadth ----------
     const extraCities = Math.max(0, (body.service_cities?.length ?? 1) - 1);
