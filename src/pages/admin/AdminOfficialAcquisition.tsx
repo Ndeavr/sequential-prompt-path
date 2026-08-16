@@ -39,7 +39,7 @@ export default function AdminOfficialAcquisition() {
         supabase.from("official_source_registry").select("*").order("source_kind"),
         supabase.from("external_enrichment_circuit").select("*").eq("provider", "dataforseo").maybeSingle(),
         supabase.from("external_enrichment_budget").select("*").eq("provider", "dataforseo").eq("budget_date", today).maybeSingle(),
-        supabase.from("official_source_records").select("source_kind, contact_status, enrichment_status").limit(5000),
+        supabase.from("official_source_records").select("source_kind, contact_status, enrichment_status, eligibility_status, dedupe_status, website_url, official_domain").limit(5000),
         supabase.from("dataforseo_enrichment_attempts").select("status").limit(5000),
         supabase.from("places_external_call_budget").select("*").limit(1),
       ]);
@@ -57,7 +57,17 @@ export default function AdminOfficialAcquisition() {
 
   const records = data?.records ?? [];
   const byKind = (kind: string) => records.filter((r) => r.source_kind === kind).length;
-  const needsEnrichment = records.filter((r) => r.contact_status === "needs_enrichment").length;
+  const notKnown = records.filter((r) => r.dedupe_status !== "known");
+  const missingWebsiteOf = (r: (typeof records)[number]) =>
+    !(r.website_url ?? "").trim() && !(r.official_domain ?? "").trim();
+  // Ciblable = contact manquant OU (site manquant ET fiche éligible), hors doublons connus.
+  const missingContacts = notKnown.filter((r) => r.contact_status === "needs_enrichment").length;
+  const missingWebsites = notKnown.filter((r) => r.eligibility_status === "eligible" && missingWebsiteOf(r)).length;
+  const targetable = notKnown.filter(
+    (r) => r.contact_status === "needs_enrichment" || (r.eligibility_status === "eligible" && missingWebsiteOf(r)),
+  ).length;
+  const rbqNew = records.filter((r) => r.source_kind === "rbq" && r.dedupe_status !== "known").length;
+  const rbqKnown = records.filter((r) => r.source_kind === "rbq" && r.dedupe_status === "known").length;
   const attemptCount = (s: string) => (data?.attempts ?? []).filter((a) => a.status === s).length;
 
   // Credential presence is a SERVER truth: the dry-run endpoint reports a boolean only,
@@ -128,7 +138,9 @@ export default function AdminOfficialAcquisition() {
           state="Source d'amorce"
           rows={[
             ["Fiches", byKind("rbq")],
-            ["Sans contact", records.filter((r) => r.source_kind === "rbq" && r.contact_status === "needs_enrichment").length],
+            ["Nouvelles éligibles", rbqNew],
+            ["Déjà connues", rbqKnown],
+            ["Sans site web", records.filter((r) => r.source_kind === "rbq" && r.dedupe_status !== "known" && missingWebsiteOf(r)).length],
           ]}
           action={
             <Button size="sm" variant="secondary" disabled={running !== null}
@@ -161,7 +173,9 @@ export default function AdminOfficialAcquisition() {
           locked={paidLocked}
           rows={[
             ["Identifiants", credentialsConfigured ? "Configurés" : "Absents"],
-            ["À enrichir", needsEnrichment],
+            ["Contacts manquants", missingContacts],
+            ["Sites web manquants", missingWebsites],
+            ["Total ciblable", targetable],
             ["Appariés", attemptCount("matched")],
             ["Ambigus", attemptCount("ambiguous")],
             ["Sans résultat", attemptCount("no_match")],
@@ -174,7 +188,7 @@ export default function AdminOfficialAcquisition() {
               <p className="text-xs text-muted-foreground">
                 {credentialsConfigured
                   ? killSwitch
-                    ? "Identifiants installés. Fournisseur toujours verrouillé — activation explicite requise avant tout test payant."
+                    ? "Identifiants configurés / fournisseur verrouillé. Activation explicite requise avant tout test payant. L'essai à blanc ne dépense jamais."
                     : "Identifiants installés. Fournisseur actif sous plafonds quotidiens."
                   : "Identifiants absents. Ajoutez-les dans les secrets du projet avant toute activation."}
               </p>

@@ -42780,6 +42780,7 @@ export type Database = {
       dataforseo_enrichment_attempts: {
         Row: {
           attempt_count: number
+          candidate_reason: string | null
           conflict_reason: string | null
           cost_usd: number
           created_at: string
@@ -42802,6 +42803,7 @@ export type Database = {
         }
         Insert: {
           attempt_count?: number
+          candidate_reason?: string | null
           conflict_reason?: string | null
           cost_usd?: number
           created_at?: string
@@ -42824,6 +42826,7 @@ export type Database = {
         }
         Update: {
           attempt_count?: number
+          candidate_reason?: string | null
           conflict_reason?: string | null
           cost_usd?: number
           created_at?: string
