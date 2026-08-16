@@ -939,7 +939,8 @@ export const AppRouter = () => (
         <Route path="/alex/demo" element={<Suspense fallback={<LazyFallback />}><PageAlexConversationAnimated /></Suspense>} />
         <Route path="/alex/analysis" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
         <Route path="/conversation" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
-        <Route path="/" element={<HomeAbSwitch />} />
+        {/* `/` = « La fin des 3 soumissions » (PageHomeSimple). Legacy A/B variants stay on /v2 and /v3. */}
+        <Route path="/" element={<HomeWithFeatureFlag />} />
         <Route path="/v2" element={<Suspense fallback={<LazyFallback />}><PageHomeVariantB /></Suspense>} />
         <Route path="/v3" element={<Suspense fallback={<LazyFallback />}><PageHomeVariantC /></Suspense>} />
 
