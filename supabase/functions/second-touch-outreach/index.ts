@@ -11,6 +11,7 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { buildOutreachUrl, smsWithLink } from "../_shared/outreachLink.ts";
+import { secondTouchSms, clickRecoverySms } from "../_shared/offerCopy.ts";
 
 const RELANCE_KIND = "second_touch";
 const CLICK_RECOVERY_KIND = "click_recovery";
@@ -21,16 +22,8 @@ function buildMessage(businessName: string, token: string, kind: string): string
   const url = buildOutreachUrl(`/unpro/activate/${token}`, {
     campaign: kind === CLICK_RECOVERY_KIND ? "click_recovery" : "second_touch",
   });
-  if (kind === CLICK_RECOVERY_KIND) {
-    return smsWithLink(
-      `UNPRO — ${name} : votre lien d'activation est prêt. ` +
-        `7 jours pour 1,00 $ CA, sans engagement.`,
-      url,
-    );
-  }
   return smsWithLink(
-    `Je vous renvoie simplement le lien pour voir comment ${name} peut être ` +
-      `comprise et recommandée par l'IA. Aucun engagement, activation 1 $.`,
+    kind === CLICK_RECOVERY_KIND ? clickRecoverySms(name) : secondTouchSms(name),
     url,
   );
 }
