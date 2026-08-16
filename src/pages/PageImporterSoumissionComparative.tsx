@@ -73,10 +73,14 @@ export default function PageImporterSoumissionComparative() {
             ]}
           />
 
-          <PanelDropzoneSoumissionComparative
-            onStartAnalysis={handleStartAnalysis}
-            isAnalyzing={isAnalyzing}
-          />
+          {dailyLimit ? (
+            <DailyLimitReachedCard feature="quote_analysis_monthly" payload={dailyLimit} />
+          ) : (
+            <PanelDropzoneSoumissionComparative
+              onStartAnalysis={handleStartAnalysis}
+              isAnalyzing={isAnalyzing}
+            />
+          )}
         </div>
       </div>
 
