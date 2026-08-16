@@ -32,14 +32,9 @@ import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 const TOTAL_STEPS = 10;
 
-/** Official UNPRO plan catalog — single source of truth */
-const PLAN_CATALOG: Record<string, { name: string; monthlyPrice: number; yearlyPrice: number }> = {
-  recrue:    { name: "Recrue",    monthlyPrice: 49,  yearlyPrice: 499  },
-  pro:       { name: "Pro",       monthlyPrice: 99,  yearlyPrice: 999  },
-  premium:   { name: "Premium",   monthlyPrice: 149, yearlyPrice: 1499 },
-  elite:     { name: "Élite",     monthlyPrice: 249, yearlyPrice: 2499 },
-  signature: { name: "Signature", monthlyPrice: 499, yearlyPrice: 4999 },
-};
+// Plan names and prices are NEVER hardcoded here — the canonical catalog lives
+// in public.plans and is read by StepPlanRecommendation.
+
 
 export default function OnboardingFlow() {
   const { user, isAuthenticated } = useAuth();
@@ -255,12 +250,19 @@ export default function OnboardingFlow() {
         <StepPlanRecommendation
           aippScore={aippScore.total}
           objective={objective}
-          onSelectPlan={(planId, interval) => {
-            const p = PLAN_CATALOG[planId] || PLAN_CATALOG.recrue;
-            const plan = { id: planId, name: p.name, price: interval === "month" ? p.monthlyPrice : p.yearlyPrice, interval };
+          onSelectPlan={(planId, interval, monthlyPriceCents) => {
+            // Price comes from the canonical catalog via the step component.
+            const monthly = Math.round(monthlyPriceCents / 100);
+            const plan = {
+              id: planId,
+              name: planId,
+              price: interval === "month" ? monthly : Math.round(monthly * 0.85 * 12),
+              interval,
+            };
             setSelectedPlan(plan);
             goToStep(7, { selected_plan: plan as any });
           }}
+
         />
       )}
       {step === 7 && aippScore && (

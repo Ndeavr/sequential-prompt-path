@@ -230,36 +230,138 @@ Deno.serve(async (req) => {
       for (const k of STEP_KEYS) if (answers[k] == null) answers[k] = goals[k as keyof typeof goals];
 
       const rec = recommendPlan(answers);
+
+      // ---- Canonical engine: real plan, real price, real capacity ----------
+      const territories = (Array.isArray(answers.territories) ? answers.territories : [])
+        .map(String)
+        .filter(Boolean);
+      const projectTypes = Array.isArray(answers.desired_project_types)
+        ? (answers.desired_project_types as unknown[]).map(String).filter(Boolean)
+        : [];
+      const exclusivity = String(answers.exclusivity_preference ?? "");
+      const enginePayload = {
+        contractor_id: (goals as any).contractor_id ?? null,
+        company_name: prospect?.business_name ?? null,
+        trade_primary: projectTypes[0] || prospect?.category || "general",
+        city: territories[0] || prospect?.city || "Montréal",
+        service_cities: territories.length ? territories : prospect?.city ? [prospect.city] : [],
+        target_monthly_appointments: Number(answers.monthly_appointment_goal ?? 0),
+        average_project_value: Number(answers.ideal_project_value_cad ?? 0),
+        monthly_capacity: Math.max(1, Number(answers.monthly_appointment_goal ?? 1)),
+        wants_exclusivity: exclusivity === "exclusif",
+        business_objective:
+          String(answers.growth_objective ?? "") === "visibilite"
+            ? "visibility"
+            : exclusivity === "exclusif"
+              ? "exclusivity"
+              : "grow",
+      };
+
+      let engine: Record<string, unknown> | null = null;
+      try {
+        const resp = await fetch(
+          `${Deno.env.get("SUPABASE_URL")}/functions/v1/compute-pricing-quote`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+            },
+            body: JSON.stringify(enginePayload),
+          },
+        );
+        if (resp.ok) engine = await resp.json();
+        else console.error("[activation-goals] engine_http", resp.status);
+      } catch (e) {
+        console.error("[activation-goals] engine_failed", String(e));
+      }
+
+      // Engine wins. Local ladder only survives as a degraded fallback, and is
+      // then mapped onto the canonical (non-legacy) grid.
+      let planCode = String(engine?.recommended_plan ?? "");
+      let reason = String(
+        (engine?.pricing_explanation as any)?.plan_reason
+          ? rec.reason
+          : rec.reason,
+      );
+      if (!planCode) {
+        const { data: legacyRow } = await supabase
+          .from("plans")
+          .select("code, legacy, superseded_by")
+          .eq("code", rec.code)
+          .maybeSingle();
+        planCode = (legacyRow?.legacy ? legacyRow.superseded_by : legacyRow?.code) || "presence";
+        reason = `${rec.reason} (estimation hors ligne)`;
+      }
+
+      const { data: planRow } = await supabase
+        .from("plans")
+        .select("code, name, monthly_price, appointments_included, description")
+        .eq("code", planCode)
+        .maybeSingle();
+
       await supabase
         .from("contractor_activation_goals")
         .update({
-          recommended_plan_code: rec.code,
-          recommended_plan_reason: rec.reason,
+          recommended_plan_code: planCode,
+          recommended_plan_reason: reason,
           updated_at: new Date().toISOString(),
         })
         .eq("id", goals.id);
 
-      await logEvent("plan_recommended", { plan: rec.code }, `plan_recommended:${token}`);
+      await logEvent(
+        "plan_recommended",
+        { plan: planCode, engine: !!engine, quote_id: engine?.quote_id ?? null },
+        `plan_recommended:${token}`,
+      );
 
-      // Real pricing comes from the canonical catalog, never from this function.
+      // Alternatives: the canonical contractor grid only, never legacy plans.
       const { data: plans } = await supabase
         .from("plans")
-        .select("code, name, monthly_price_cad, description")
-        .in("code", PLAN_LADDER as unknown as string[]);
+        .select("code, name, monthly_price, appointments_included, description, tier_rank")
+        .eq("active", true)
+        .eq("legacy", false)
+        .not("code", "like", "home_%")
+        .order("tier_rank", { ascending: true });
 
       return json({
         ok: true,
-        recommended: { code: rec.code, label: PLAN_LABELS[rec.code], reason: rec.reason, factors: rec.factors },
+        recommended: {
+          code: planCode,
+          label: planRow?.name ?? PLAN_LABELS[rec.code],
+          reason,
+          monthly_price: planRow?.monthly_price ?? null,
+          appointments_included: planRow?.appointments_included ?? null,
+          personalized_price: engine?.recommended_monthly_price ?? null,
+          pricing_status: engine?.pricing_status ?? null,
+          quote_id: engine?.quote_id ?? null,
+          capacity: engine?.capacity_availability ?? null,
+          exclusivity: engine?.exclusivity_availability ?? null,
+          explanation: engine?.pricing_explanation ?? null,
+          factors: rec.factors,
+          source: engine ? "canonical_engine" : "fallback_ladder",
+        },
         plans: plans ?? [],
       });
     }
 
+
+
     // ---------------------------------------------------------------- accept
     if (action === "accept") {
       const code = String(body.value ?? "");
-      if (!(PLAN_LADDER as unknown as string[]).includes(code)) {
+      // Only a live, non-legacy contractor plan can be accepted.
+      const { data: acceptable } = await supabase
+        .from("plans")
+        .select("code")
+        .eq("code", code)
+        .eq("active", true)
+        .eq("legacy", false)
+        .maybeSingle();
+      if (!acceptable) {
         return json({ ok: false, reason: "unknown_plan" }, 400);
       }
+
       await supabase
         .from("contractor_activation_goals")
         .update({ accepted_plan_code: code, accepted_at: new Date().toISOString() })
