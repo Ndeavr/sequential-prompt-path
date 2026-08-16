@@ -20,9 +20,9 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const EXPECTED_OG_IMAGE = "https://unpro.ca/og/unpro-og-v3.jpg?v=20260712";
+const EXPECTED_OG_IMAGE = "https://unpro.ca/og/og-unpro-fin-3-soumissions-v2.jpg?v=20260816";
 // Match on filename only (allow ?v= drift or extra params)
-const EXPECTED_OG_MATCH = /\/og\/unpro-og-v3\.jpg/;
+const EXPECTED_OG_MATCH = /\/og\/og-unpro-fin-3-soumissions-v2\.jpg/;
 
 function extract(html: string, re: RegExp): string | null {
   const m = html.match(re);

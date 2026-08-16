@@ -49,7 +49,7 @@ export default function PageHomeCopilot() {
           content="Décisions de rénovation plus intelligentes grâce à l'IA, recommandations personnalisées et jumelage exclusif avec le bon entrepreneur."
         />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://unpro.ca/og/unpro-og-v4.jpg?v=20260724" />
+        <meta property="og:image" content="https://unpro.ca/og/og-unpro-fin-3-soumissions-v2.jpg?v=20260816" />
         <meta name="theme-color" content="#060B14" />
         <link rel="canonical" href="https://unpro.ca" />
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
