@@ -140,7 +140,7 @@ export function SectionNouveauModele() {
       </Reveal>
 
       <Reveal delay={0.08}>
-        <p className="mt-8 glass-panel px-6 py-8 text-center text-[clamp(1.3rem,4.6vw,2rem)] font-bold leading-tight tracking-[-0.03em] text-white ">
+        <p className="mt-8 glass-panel px-6 py-8 text-center text-[clamp(1.3rem,4.6vw,2rem)] font-bold leading-tight tracking-[-0.03em] text-foreground ">
           {c.statement}
         </p>
         <p className="mt-5 text-[15px] leading-relaxed text-muted-foreground">{c.after}</p>
