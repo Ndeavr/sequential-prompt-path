@@ -14,6 +14,7 @@ import {
   AlertTriangle, CheckCircle, ArrowRight, Sparkles, Scale,
 } from "lucide-react";
 import { UnproVerifiedBadge } from "@/components/contractor/UnproVerifiedBadge";
+import UnproIcon from "@/components/brand/UnproIcon";
 import { getContractorTrustLabel } from "@/lib/trustLabels";
 import WhyThisContractorIsRecommended from "@/components/contractor/WhyThisContractorIsRecommended";
 import type { MatchEvaluation } from "@/types/matching";
