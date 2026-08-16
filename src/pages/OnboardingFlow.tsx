@@ -250,12 +250,19 @@ export default function OnboardingFlow() {
         <StepPlanRecommendation
           aippScore={aippScore.total}
           objective={objective}
-          onSelectPlan={(planId, interval) => {
-            const p = PLAN_CATALOG[planId] || PLAN_CATALOG.recrue;
-            const plan = { id: planId, name: p.name, price: interval === "month" ? p.monthlyPrice : p.yearlyPrice, interval };
+          onSelectPlan={(planId, interval, monthlyPriceCents) => {
+            // Price comes from the canonical catalog via the step component.
+            const monthly = Math.round(monthlyPriceCents / 100);
+            const plan = {
+              id: planId,
+              name: planId,
+              price: interval === "month" ? monthly : Math.round(monthly * 0.85 * 12),
+              interval,
+            };
             setSelectedPlan(plan);
             goToStep(7, { selected_plan: plan as any });
           }}
+
         />
       )}
       {step === 7 && aippScore && (
