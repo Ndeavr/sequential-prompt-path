@@ -346,6 +346,7 @@ const AdminSeoGenerator = lazyWithRetry(() => import("@/pages/admin/AdminSeoGene
 const PageSeoAutopilot = lazyWithRetry(() => import("@/pages/admin/PageSeoAutopilot"));
 const PagePrLoop = lazyWithRetry(() => import("@/pages/admin/PagePrLoop"));
 const PropertyGraphPage = lazyWithRetry(() => import("@/pages/PropertyGraphPage"));
+const PagePasseportMaison = lazyWithRetry(() => import("@/pages/PagePasseportMaison"));
 const AlexChat = lazyWithRetry(() => import("@/pages/AlexChat"));
 const AuthorityDashboardPage = lazyWithRetry(() => import("@/pages/AuthorityDashboardPage"));
 const PressRelease = lazyWithRetry(() => import("@/pages/PressRelease"));
@@ -1242,7 +1243,7 @@ export const AppRouter = () => (
         <Route path="/city/:slug" element={<CityPage />} />
 
         {/* ─── Public navigation pages (wired to real pages) ─── */}
-        <Route path="/proprietaires/passeport-maison" element={<PropertyGraphPage />} />
+        <Route path="/proprietaires/passeport-maison" element={<PagePasseportMaison />} />
         <Route path="/proprietaires/score-maison" element={<ProtectedRoute requiredRole="homeowner"><HomeScorePage /></ProtectedRoute>} />
         <Route path="/outils-ia" element={<AnswerEnginePage />} />
         <Route path="/services/isolation-grenier" element={<ProblemesMaisonPage />} />
