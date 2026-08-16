@@ -119,10 +119,10 @@ export default function PropertyGraphPage() {
         {/* Title */}
         <div className="mb-8">
           <h1 className="text-hero-sm md:text-hero text-foreground">
-            UNPRO · <span className="text-gradient">Property Knowledge Graph</span>
+            <span className="text-gradient">Passeport Maison</span>
           </h1>
           <p className="mt-3 max-w-2xl text-body-lg text-muted-foreground">
-            Version interactive du diagramme. Cliquez sur un bloc pour voir ses relations directes.
+            Le graphe de connaissances de votre propriété. Cliquez sur un bloc pour voir ses relations directes.
           </p>
           <div className="mt-4 flex gap-3">
             <Stat label="Nœuds" value={`${nodes.length}`} />
