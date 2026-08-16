@@ -102,11 +102,11 @@ export default function PropertyGraphPage() {
       {/* Header */}
       <header className="border-b border-border bg-card/60 backdrop-blur-xl">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-xs font-black text-primary-foreground">U</div>
-            <span className="text-lg font-bold text-foreground">UNPRO</span>
-          </div>
-          <span className="text-meta text-muted-foreground">Property Knowledge Graph</span>
+          <Link to="/" className="flex items-center" aria-label="UNPRO — accueil">
+            <UnproLogo size={104} className="h-7 w-auto" />
+          </Link>
+          <span className="hidden sm:inline text-meta text-muted-foreground">Passeport Maison UNPRO</span>
+
         </div>
       </header>
 
