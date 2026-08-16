@@ -245,13 +245,13 @@ export function useHomeownerUsage() {
         quoteAnalysisUsed: Number(s.quote_analysis_used ?? 0),
         aiDesignLimit: s.ai_design_limit ?? null,
         aiDesignUsed: Number(s.ai_design_used ?? 0),
-        periodDay: String(s.period_day ?? ""),
+        periodDay: String(s.usage_day ?? ""),
         quoteAnalysisDailyLimit: s.quote_analysis_daily_limit ?? null,
-        quoteAnalysisDailyUsed: Number(s.quote_analysis_daily_used ?? 0),
+        quoteAnalysisDailyUsed: Number(s.quote_analysis_today ?? 0),
         aiDesignDailyLimit: s.ai_design_daily_limit ?? null,
-        aiDesignDailyUsed: Number(s.ai_design_daily_used ?? 0),
-        quoteAnalysisDailyReached: !!s.quote_analysis_daily_reached,
-        aiDesignDailyReached: !!s.ai_design_daily_reached,
+        aiDesignDailyUsed: Number(s.ai_design_today ?? 0),
+        quoteAnalysisDailyReached: !!s.quote_analysis_daily_blocked,
+        aiDesignDailyReached: !!s.ai_design_daily_blocked,
       };
     },
   });
