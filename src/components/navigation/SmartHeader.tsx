@@ -225,6 +225,9 @@ const SmartHeader = () => {
                 <ProfileMenu />
               ) : (
                 <>
+                  <Button asChild variant="ghost" size="sm" className="rounded-full h-9 text-[13px] px-3 hidden md:inline-flex text-muted-foreground hover:text-foreground">
+                    <Link to="/entrepreneur">{lang === "en" ? "Contractors" : "Entrepreneurs"}</Link>
+                  </Button>
                   <Button asChild size="sm" className="rounded-full h-7 text-[11px] px-3 font-bold sm:hidden btn-liquid-metal border-0">
                     <Link to="/role">
                       {lang === "en" ? "Sign In" : "Connexion"}
@@ -233,7 +236,13 @@ const SmartHeader = () => {
                   <Button asChild variant="ghost" size="sm" className="rounded-full h-9 text-[13px] px-4 hidden sm:inline-flex text-muted-foreground hover:text-foreground">
                     <Link to="/role">{lang === "en" ? "Sign In" : "Connexion"}</Link>
                   </Button>
-                  <SmartCTA variant="header" className="hidden sm:block" />
+                  <Button
+                    size="sm"
+                    className="rounded-full h-8 text-xs px-4 font-semibold hidden sm:inline-flex"
+                    onClick={() => openAlex("homeowner")}
+                  >
+                    {lang === "en" ? "Find my PRO" : "Trouver mon PRO"}
+                  </Button>
                 </>
               )}
 
