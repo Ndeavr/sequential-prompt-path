@@ -25,7 +25,14 @@ export type CopilotEventName =
   | "pim_cta_create_clicked"
   | "pim_cta_alex_clicked"
   | "intelligence_card_clicked"
-  | "passport_cta_clicked";
+  | "passport_cta_clicked"
+  | "hero_find_pro_click"
+  | "hero_compare_quotes_click"
+  | "project_started"
+  | "quote_comparison_started"
+  | "contractor_entry_click"
+  | "contractor_1_dollar_activation_click"
+  | "passport_click";
 
 const SESSION_KEY = "unpro_copilot_session_id";
 
