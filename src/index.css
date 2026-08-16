@@ -117,14 +117,12 @@
   }
 
   /* ═══════════════════════════════════════════════
-     DEFAULT UNPRO THEME — cinematic dark.
-     This is the ONLY default. It matches the dark background layer
-     painted app-wide by <StableBackgroundLayer>, so any page using
-     `text-foreground` / `bg-card` is readable without a wrapper.
-     `.admin-theme` and `.alex-immersive` are kept as aliases so existing
-     markup keeps working, but they no longer diverge from the default.
+     UNPRO DARK SCOPE — cinematic premium.
+     Driven by the `dark` class on <html> (see src/lib/theme/themeStore.ts).
+     `.admin-theme` and `.alex-immersive` stay hard-scoped to dark: those
+     surfaces are designed dark-only and must never render in light mode.
      ═══════════════════════════════════════════════ */
-  :root,
+  .dark,
   .admin-theme,
   .alex-immersive {
     --primary: 222 100% 60%;
@@ -1283,3 +1281,98 @@ html { -webkit-text-size-adjust: 100%; }
 }
 
 
+
+/* ═══════════════════════════════════════════════════════════════════════
+   UNPRO PREMIUM LIGHT + DARK — atmosphere tokens, glass language, theme
+   cross-fade. Light lives on :root, dark on .dark (see themeStore.ts).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Atmosphere — light: cold frosted daylight */
+  --atmos-base: #f6f9ff;
+  --atmos-glow-a: radial-gradient(1200px 800px at 8% -8%, rgba(37, 99, 255, 0.14), transparent 58%);
+  --atmos-glow-b: radial-gradient(1000px 700px at 100% 100%, rgba(120, 190, 255, 0.16), transparent 55%);
+  --atmos-bloom: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(238, 244, 255, 0.6) 100%);
+  --atmos-grid: rgba(11, 18, 32, 0.055);
+  --atmos-noise-opacity: 0.015;
+
+  /* Glass language */
+  --glass-surface-bg: rgba(255, 255, 255, 0.72);
+  --glass-surface-border: rgba(11, 18, 32, 0.08);
+  --glass-surface-shadow: 0 24px 60px -28px rgba(11, 18, 32, 0.22);
+  --glass-surface-highlight: linear-gradient(180deg, rgba(255, 255, 255, 0.9), transparent 46%);
+  --glass-surface-blur: 24px;
+}
+
+.dark {
+  /* Atmosphere — dark: near-black navy, volumetric blue */
+  --atmos-base: #050816;
+  --atmos-glow-a: radial-gradient(1200px 800px at 6% -10%, rgba(0, 132, 255, 0.22), transparent 52%);
+  --atmos-glow-b: radial-gradient(1000px 700px at 100% 100%, rgba(0, 255, 255, 0.10), transparent 50%);
+  --atmos-bloom: linear-gradient(180deg, rgba(8, 16, 38, 0.55) 0%, rgba(2, 6, 13, 0.85) 100%);
+  --atmos-grid: rgba(120, 180, 255, 0.05);
+  --atmos-noise-opacity: 0.02;
+
+  --glass-surface-bg: rgba(255, 255, 255, 0.045);
+  --glass-surface-border: rgba(255, 255, 255, 0.10);
+  --glass-surface-shadow: 0 28px 70px -30px rgba(0, 0, 0, 0.85);
+  --glass-surface-highlight: linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 42%);
+  --glass-surface-blur: 26px;
+}
+
+/* Theme cross-fade — only after first paint, never on boot. */
+html[data-theme-ready="true"] body,
+html[data-theme-ready="true"] .glass-nav,
+html[data-theme-ready="true"] .glass-dock,
+html[data-theme-ready="true"] .glass-panel,
+html[data-theme-ready="true"] .glass-btn {
+  transition: background-color 240ms var(--ease-cinematic),
+              border-color 240ms var(--ease-cinematic),
+              color 240ms var(--ease-cinematic);
+}
+
+/* ─── Unified glass surfaces ─── */
+.glass-panel,
+.glass-nav,
+.glass-dock,
+.glass-btn,
+.glass-modal {
+  background: var(--glass-surface-bg);
+  border: 1px solid var(--glass-surface-border);
+  -webkit-backdrop-filter: blur(var(--glass-surface-blur)) saturate(150%);
+  backdrop-filter: blur(var(--glass-surface-blur)) saturate(150%);
+}
+
+.glass-panel {
+  border-radius: var(--radius-card);
+  box-shadow: var(--glass-surface-shadow);
+}
+
+.glass-nav {
+  box-shadow: 0 1px 0 0 var(--glass-surface-border);
+}
+
+.glass-dock {
+  border-radius: var(--radius-pill);
+  box-shadow: var(--glass-surface-shadow);
+}
+
+.glass-btn {
+  border-radius: var(--radius-pill);
+}
+
+.glass-modal {
+  border-radius: var(--radius-card);
+  box-shadow: var(--glass-surface-shadow);
+}
+
+/* Hover contract: elevation only, never scale. */
+.lift-hover {
+  transition: transform var(--duration-cinematic) var(--ease-cinematic),
+              border-color var(--duration-cinematic) var(--ease-cinematic);
+}
+.lift-hover:hover { transform: translateY(-2px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .lift-hover:hover { transform: none; }
+}

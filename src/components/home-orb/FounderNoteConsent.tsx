@@ -88,9 +88,8 @@ export default function FounderNoteConsent() {
           className="text-center"
           style={{
             fontFamily: "'Caveat', 'Segoe Script', cursive",
-            color: "rgba(255,255,255,0.92)",
+            color: "hsl(var(--foreground) / 0.92)",
             lineHeight: 1.45,
-            textShadow: "0 1px 12px rgba(0,0,0,0.45)",
           }}
         >
           {LINES.map((line, i) => (
@@ -126,14 +125,14 @@ export default function FounderNoteConsent() {
           <button
             type="button"
             onClick={handleAccept}
-            className="flex-1 min-h-[64px] rounded-2xl px-6 py-4 text-base md:text-lg font-medium text-white bg-white/10 hover:bg-white/15 border border-white/20 backdrop-blur-sm transition-colors"
+            className="flex-1 min-h-[64px] rounded-2xl px-6 py-4 text-base md:text-lg font-medium text-foreground bg-foreground/[0.07] hover:bg-foreground/[0.12] border border-foreground/20 backdrop-blur-sm transition-colors"
           >
             Je suis d'accord avec cette philosophie
           </button>
           <button
             type="button"
             onClick={handleDecline}
-            className="flex-1 min-h-[64px] rounded-2xl px-6 py-4 text-base md:text-lg font-medium text-white/75 bg-transparent hover:bg-white/5 border border-white/15 transition-colors"
+            className="flex-1 min-h-[64px] rounded-2xl px-6 py-4 text-base md:text-lg font-medium text-muted-foreground bg-transparent hover:bg-foreground/5 border border-foreground/15 transition-colors"
           >
             Je n'adhère pas à cette philosophie
           </button>
@@ -141,7 +140,7 @@ export default function FounderNoteConsent() {
       )}
 
       {!accepted && showHint && (
-        <p className="mt-6 text-sm text-white/55 text-center">
+        <p className="mt-6 text-sm text-muted-foreground text-center">
           Veuillez choisir une option pour continuer.
         </p>
       )}

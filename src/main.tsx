@@ -9,8 +9,10 @@ import { initObservability } from "./lib/observability";
 import { tryRecoverFromChunkError } from "./components/errors/AppErrorBoundary";
 import { installConsoleErrorCapture } from "./lib/visualStabilityLogger";
 import { startStaticHeadDedupe } from "./seo/dedupeStaticHead";
+import { initTheme } from "./lib/theme/themeStore";
 
 logBoot("APP_MOUNT");
+initTheme();
 void initObservability();
 installConsoleErrorCapture();
 startStaticHeadDedupe();

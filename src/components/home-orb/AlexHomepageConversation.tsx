@@ -225,13 +225,13 @@ export default forwardRef<AlexHomepageConversationHandle, Props>(
               if (!hasGreetedRef.current) greet();
             }}
             placeholder="Décrivez votre situation…"
-            className="flex-1 h-11 rounded-full border border-white/10 bg-white/[0.05] px-4 text-sm text-white placeholder:text-white/40 outline-none focus:border-blue-400/50"
+            className="flex-1 h-11 rounded-full border border-foreground/10 bg-foreground/[0.05] px-4 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50"
           />
           <button
             type="submit"
             disabled={!input.trim()}
             aria-label="Envoyer"
-            className="shrink-0 w-11 h-11 rounded-full inline-flex items-center justify-center bg-blue-500 text-white disabled:opacity-40"
+            className="shrink-0 w-11 h-11 rounded-full inline-flex items-center justify-center bg-primary text-primary-foreground disabled:opacity-40"
           >
             <Send className="w-4 h-4" />
           </button>

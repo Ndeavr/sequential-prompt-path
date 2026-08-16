@@ -95,17 +95,7 @@ export default function BottomDockGlass() {
       className="lg:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none pb-[env(safe-area-inset-bottom)]"
     >
       <div className="mx-3 mb-3 pointer-events-auto relative">
-        <div
-          className="grid grid-cols-5 items-end rounded-[28px] px-0 pt-1 pb-1 relative"
-          style={{
-            background: "rgba(255,255,255,0.78)",
-            backdropFilter: "blur(24px) saturate(160%)",
-            WebkitBackdropFilter: "blur(24px) saturate(160%)",
-            border: "1px solid rgba(255,255,255,0.95)",
-            boxShadow:
-              "0 24px 60px -20px rgba(37,99,255,0.22), 0 8px 24px -14px rgba(11,18,32,0.10)",
-          }}
-        >
+        <div className="glass-dock grid grid-cols-5 items-end rounded-[28px] px-0 pt-1 pb-1 relative">
           <Tab item={left[0]} />
           <Tab item={left[1]} />
           {/* Center Alex slot — orb is absolutely anchored to this cell */}

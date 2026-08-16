@@ -84,17 +84,22 @@ export default function HeroOrbMockup() {
   return (
     <section
       className="relative isolate text-center overflow-hidden"
-      style={{
-        background:
-          "radial-gradient(ellipse at 50% 0%, hsl(220 60% 8%), hsl(222 70% 4%) 60%, #02060d 100%)",
-      }}
       aria-label="UNPRO — La fin des 3 soumissions"
     >
+      {/* Cinematic halo — rises from behind the orb, theme-aware */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 70% 55% at 50% 78%, hsl(var(--primary) / 0.20), transparent 70%)",
+        }}
+        aria-hidden
+      />
       {/* Subtle dot grid */}
       <div
         className="absolute inset-0 opacity-[0.06] pointer-events-none"
         style={{
-          backgroundImage: "radial-gradient(hsl(212 100% 60%) 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(hsl(var(--primary)) 1px, transparent 1px)",
           backgroundSize: "28px 28px",
         }}
         aria-hidden
@@ -102,13 +107,13 @@ export default function HeroOrbMockup() {
 
       {/* Promise block — first thing visible on mobile */}
       <div className="relative z-10 px-5 pt-7 md:pt-12 max-w-2xl mx-auto">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/45">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-primary/80">
           {copy.hero.eyebrow}
         </p>
-        <h1 className="mt-3 text-[clamp(2rem,8.2vw,3.6rem)] font-bold leading-[0.98] tracking-[-0.04em] text-white">
+        <h1 className="mt-3 text-[clamp(2rem,8.2vw,3.6rem)] font-bold leading-[0.98] tracking-[-0.04em] text-foreground">
           {copy.hero.title}
         </h1>
-        <p className="mt-3 text-[clamp(1rem,4.2vw,1.25rem)] font-semibold text-white/80">
+        <p className="mt-3 text-[clamp(1rem,4.2vw,1.25rem)] font-semibold text-foreground/85">
           {copy.hero.subtitle}
         </p>
 
@@ -116,7 +121,7 @@ export default function HeroOrbMockup() {
           <button
             type="button"
             onClick={handleStart}
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-bold text-[#05070d] transition-transform duration-300 hover:-translate-y-0.5"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-7 py-3.5 text-sm font-bold text-primary-foreground shadow-[var(--shadow-cta)] transition-transform duration-300 hover:-translate-y-0.5"
           >
             {copy.hero.ctaPrimary}
             <ArrowRight className="h-4 w-4" />
@@ -124,15 +129,15 @@ export default function HeroOrbMockup() {
           <Link
             to="/analyse-soumissions/importer"
             onClick={() => trackCopilotEvent("hero_compare_quotes_click")}
-            className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/[0.06] px-7 py-3.5 text-sm font-bold text-white transition-transform duration-300 hover:-translate-y-0.5"
+            className="inline-flex items-center justify-center glass-btn px-7 py-3.5 text-sm font-bold text-foreground transition-transform duration-300 hover:-translate-y-0.5"
           >
             {copy.hero.ctaSecondary}
           </Link>
         </div>
 
-        <p className="mt-4 text-[12px] leading-relaxed text-white/45">{copy.hero.microcopy}</p>
+        <p className="mt-4 text-[12px] leading-relaxed text-muted-foreground">{copy.hero.microcopy}</p>
 
-        <p className="mt-5 text-[13px] leading-relaxed text-white/60 max-w-xl mx-auto">
+        <p className="mt-5 text-[13px] leading-relaxed text-muted-foreground max-w-xl mx-auto">
           {copy.hero.body}
         </p>
       </div>
@@ -147,13 +152,13 @@ export default function HeroOrbMockup() {
         </div>
 
         <div className="mt-2 flex items-center gap-3">
-          <span className="text-white text-lg font-bold tracking-[0.35em]">ALEX</span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30">
+          <span className="text-foreground text-lg font-bold tracking-[0.35em]">ALEX</span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success/15 border border-success/30">
             <span className="relative flex w-1.5 h-1.5">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-70 animate-ping" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+              <span className="absolute inline-flex h-full w-full rounded-full bg-success opacity-70 animate-ping" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success" />
             </span>
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-success">
               {badgeLabel}
             </span>
           </span>
@@ -180,7 +185,7 @@ export default function HeroOrbMockup() {
           <a
             key={q.label}
             href={q.href}
-            className="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] backdrop-blur-sm px-4 py-4 text-left text-white/90 text-sm font-medium transition"
+            className="glass-panel lift-hover rounded-2xl px-4 py-4 text-left text-foreground text-sm font-medium"
           >
             {q.label}
           </a>
