@@ -33,9 +33,20 @@ const STEPS = ["trade", "city", "capacity", "value"] as const;
 type Step = (typeof STEPS)[number];
 
 export default function PageGuaranteeCalculator() {
-  const [step, setStep] = useState<Step>("trade");
-  const [trade, setTrade] = useState("");
-  const [city, setCity] = useState("");
+  // Pré-remplissage depuis la page d'activation (?trade=&city=) : on ne repose
+  // jamais une question dont UNPRO connaît déjà la réponse vérifiée.
+  const prefill =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search)
+      : new URLSearchParams();
+  const prefillTrade = (prefill.get("trade") ?? "").trim();
+  const prefillCity = (prefill.get("city") ?? "").trim();
+
+  const [step, setStep] = useState<Step>(
+    prefillTrade ? (prefillCity ? "capacity" : "city") : "trade",
+  );
+  const [trade, setTrade] = useState(prefillTrade);
+  const [city, setCity] = useState(prefillCity);
   const [capacity, setCapacity] = useState("");
   const [projectValue, setProjectValue] = useState("");
   const [loading, setLoading] = useState(false);
