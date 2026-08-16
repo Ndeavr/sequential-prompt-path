@@ -11,6 +11,13 @@
 
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import {
+  evaluateMargin,
+  marginConfigFrom,
+  solveBudget,
+  type ModeOutcome,
+  type PricingMode,
+} from "../_shared/pricingModes.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,6 +32,10 @@ interface Input {
   city: string;
   service_cities?: string[];
   service_radius_km?: number;
+  /** "goal" = appointments in → budget out. "budget" = budget in → guarantee out. */
+  pricing_mode?: PricingMode;
+  /** Required when pricing_mode = "budget" (CAD cents). */
+  monthly_budget_cents?: number;
   target_monthly_appointments: number;
   average_project_value: number; // CAD dollars
   monthly_capacity: number;
@@ -254,7 +265,11 @@ Deno.serve(async (req) => {
     if (
       !body?.trade_primary ||
       !body?.city ||
-      !Number.isFinite(body.target_monthly_appointments) ||
+      !Number.isFinite(
+        body.pricing_mode === "budget"
+          ? (body.monthly_budget_cents ?? NaN)
+          : body.target_monthly_appointments,
+      ) ||
       !Number.isFinite(body.average_project_value) ||
       !Number.isFinite(body.monthly_capacity)
     ) {
@@ -301,8 +316,8 @@ Deno.serve(async (req) => {
         ? body.close_rate_estimate / 100
         : body.close_rate_estimate || 0.3;
 
-    const revenuePotential = Math.round(
-      body.target_monthly_appointments * close * body.average_project_value,
+    const declaredRevenuePotential = Math.round(
+      (body.target_monthly_appointments ?? 0) * close * body.average_project_value,
     );
 
     // ---------- Market signals (never invented) ----------
