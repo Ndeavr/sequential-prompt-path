@@ -3,18 +3,18 @@
  *
  * Route publique (aucun garde d'authentification). Résout le jeton d'outreach,
  * affiche le PROFIL D'ENTREPRISE DÉJÀ CONSTRUIT par UNPRO (identité, spécialité,
- * territoire, licence, avis réels, score de recommandation) puis lance le
- * paiement d'activation de 1 $.
+ * territoire, licence, avis réels, score de recommandation) puis dirige vers le
+ * calculateur de garantie du pack d'entrée 350 $ (garantie calculée avant paiement).
  *
  * Règle absolue : aucune donnée inventée. Chaque fait porte sa provenance
  * (Vérifié / Déclaré / Déduit) et les sections vides ne sont pas rendues.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Loader2, ShieldCheck, ArrowRight, Check, Globe, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { redirectToCheckout } from "@/lib/redirectToCheckout";
+import { OFFER_350 } from "@/lib/copy/offer350";
 import { Button } from "@/components/ui/button";
 import CompanyIdentityHeader from "@/features/activationProfile/components/CompanyIdentityHeader";
 import FactGrid from "@/features/activationProfile/components/FactGrid";
@@ -39,8 +39,7 @@ export default function PageUnproActivate() {
   const [state, setState] = useState<"loading" | "ready" | "invalid" | "error">("loading");
   const [prospect, setProspect] = useState<ResolvedProspect | null>(null);
   const [profile, setProfile] = useState<ActivationProfile | null>(null);
-  const [paying, setPaying] = useState(false);
-  const [payError, setPayError] = useState<string | null>(null);
+  const navigate = useNavigate();
   const [reason, setReason] = useState<string | null>(null);
   const [correctionSent, setCorrectionSent] = useState(false);
   const engagedRef = useRef(false);
@@ -116,31 +115,21 @@ export default function PageUnproActivate() {
     setCorrectionSent(true);
   }, [track, profile]);
 
-  async function handleActivate(placement: string) {
+  /**
+   * L'offre d'entrée est le pack 350 $. La garantie DOIT être calculée avant
+   * tout paiement : on dirige vers le calculateur canonique, pré-rempli avec
+   * les faits déjà vérifiés du prospect.
+   */
+  function handleActivate(placement: string) {
     if (!prospect) return;
-    setPaying(true);
-    setPayError(null);
-    track("checkout_cta_clicked", { placement });
-    try {
-      const { data, error } = await supabase.functions.invoke("create-activation-checkout", {
-        body: {
-          activation_token: token,
-          email: prospect.email ?? undefined,
-          source: "sms_activation",
-        },
-      });
-      if (error || !data?.url) {
-        track("checkout_cta_failed", { placement });
-        setPayError("Paiement indisponible pour l'instant. Réessayez dans quelques secondes.");
-        return;
-      }
-      redirectToCheckout(data.url as string);
-    } catch {
-      track("checkout_cta_failed", { placement });
-      setPayError("Paiement indisponible pour l'instant. Réessayez dans quelques secondes.");
-    } finally {
-      setPaying(false);
-    }
+    track("checkout_cta_clicked", { placement, offer: "pack_350" });
+    const params = new URLSearchParams();
+    if (token) params.set("t", token);
+    const trade = profile?.trade ?? prospect.category ?? "";
+    const city = profile?.city ?? prospect.city ?? "";
+    if (trade) params.set("trade", trade);
+    if (city) params.set("city", city);
+    navigate(`/entrepreneur/garantie?${params.toString()}`);
   }
 
   const company = profile?.display_name ?? prospect?.business_name?.trim() ?? "votre entreprise";
@@ -151,7 +140,7 @@ export default function PageUnproActivate() {
         <title>{`${company} — Activer votre profil UNPRO`}</title>
         <meta
           name="description"
-          content="Activez le profil UNPRO de votre entreprise pour 1 $ et devenez visible auprès des propriétaires et des IA."
+          content="Votre profil d'entreprise est déjà préparé par UNPRO. Jusqu'à 5 rendez-vous exclusifs garantis dès 350 $, paiement unique."
         />
         <meta name="robots" content="noindex,nofollow" />
       </Helmet>
@@ -241,12 +230,16 @@ export default function PageUnproActivate() {
               </div>
             )}
 
-            {/* -------------------------------------------------------- offre 1 $ */}
+            {/* ------------------------------------------------------ offre 350 $ */}
             <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur">
-              <h2 className="text-sm font-semibold text-white">Activer ce profil</h2>
+              <p className="text-[10px] uppercase tracking-wider text-white/50">{OFFER_350.card.eyebrow}</p>
+              <h2 className="mt-1 text-xl font-semibold leading-snug text-white">
+                {OFFER_350.card.title}
+              </h2>
+              <p className="mt-2 text-[13px] leading-relaxed text-white/60">{OFFER_350.subtitle}</p>
 
-              <ul className="mt-3 space-y-2">
-                {BENEFITS.map((b) => (
+              <ul className="mt-4 space-y-2">
+                {OFFER_350.card.bullets.map((b) => (
                   <li key={b} className="flex items-start gap-2 text-[14px] leading-snug text-white/85">
                     <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-400/20">
                       <Check className="h-2.5 w-2.5 text-emerald-300" />
@@ -256,30 +249,16 @@ export default function PageUnproActivate() {
                 ))}
               </ul>
 
-              <div className="mt-5 flex items-baseline gap-2">
-                <span className="text-4xl font-bold tracking-tight text-white">1 $</span>
-                <span className="text-sm text-white/60">pour 7 jours</span>
-              </div>
-
               <Button
                 onClick={() => handleActivate("inline")}
-                disabled={paying}
-                className="mt-4 h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#050816] hover:bg-white/90"
+                className="mt-5 h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#050816] hover:bg-white/90"
               >
-                {paying ? (
-                  "Préparation du paiement…"
-                ) : (
-                  <>
-                    Activer mon profil — 1 $ <ArrowRight className="ml-1 h-4 w-4" />
-                  </>
-                )}
+                {OFFER_350.ctaPrimary} <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
 
-              {payError && <p className="mt-3 text-xs text-rose-300">{payError}</p>}
-
-              <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-white/50">
+              <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[11px] text-white/50">
                 <ShieldCheck className="h-3 w-3" />
-                Paiement sécurisé Stripe · Aucun renouvellement automatique
+                {OFFER_350.paymentNote} Garantie calculée avant tout paiement.
               </p>
             </div>
           </div>
@@ -291,10 +270,9 @@ export default function PageUnproActivate() {
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#050816]/95 px-5 py-3 backdrop-blur sm:hidden">
           <Button
             onClick={() => handleActivate("sticky_mobile")}
-            disabled={paying}
             className="h-13 w-full rounded-2xl bg-white py-3.5 text-base font-semibold text-[#050816] hover:bg-white/90"
           >
-            {paying ? "Préparation…" : "Activer mon profil — 1 $"}
+            {OFFER_350.ctaPrimary}
           </Button>
         </div>
       )}

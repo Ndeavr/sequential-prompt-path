@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 const FOLLOWUP_COPY =
-  "Une question sur l'activation 1 $ ? Répondez ici, un humain répond en moins de 15 minutes. — UNPRO";
+  "Une question sur votre garantie de rendez-vous ? Répondez ici, un humain répond en moins de 15 minutes. — UNPRO";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
