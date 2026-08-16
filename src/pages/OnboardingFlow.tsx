@@ -32,14 +32,9 @@ import { redirectToCheckout } from "@/lib/redirectToCheckout";
 
 const TOTAL_STEPS = 10;
 
-/** Official UNPRO plan catalog — single source of truth */
-const PLAN_CATALOG: Record<string, { name: string; monthlyPrice: number; yearlyPrice: number }> = {
-  recrue:    { name: "Recrue",    monthlyPrice: 49,  yearlyPrice: 499  },
-  pro:       { name: "Pro",       monthlyPrice: 99,  yearlyPrice: 999  },
-  premium:   { name: "Premium",   monthlyPrice: 149, yearlyPrice: 1499 },
-  elite:     { name: "Élite",     monthlyPrice: 249, yearlyPrice: 2499 },
-  signature: { name: "Signature", monthlyPrice: 499, yearlyPrice: 4999 },
-};
+// Plan names and prices are NEVER hardcoded here — the canonical catalog lives
+// in public.plans and is read by StepPlanRecommendation.
+
 
 export default function OnboardingFlow() {
   const { user, isAuthenticated } = useAuth();
