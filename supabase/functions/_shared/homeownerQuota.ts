@@ -9,6 +9,7 @@
  *   2. `consumeHomeownerQuota` AFTER the operation really succeeded
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { DAILY_LIMIT_COPY, nextTorontoMidnightISO } from "./usagePolicyCopy.ts";
 
 export type HomeownerFeature = "quote_analysis_monthly" | "ai_design_monthly";
 
@@ -21,6 +22,10 @@ export interface QuotaResult {
   planCode: string;
   upgradeTarget: string | null;
   replayed?: boolean;
+  /** 'monthly' = quota commercial du forfait, 'daily' = garde-fou anti-abus invisible. */
+  blockedBy?: "monthly" | "daily" | null;
+  dailyLimit?: number | null;
+  dailyUsed?: number;
 }
 
 const UPGRADE_LABEL: Record<string, string> = {
@@ -59,38 +64,31 @@ function normalize(raw: Record<string, unknown> | null, fallbackPlan = "home_dec
     planCode: String(raw?.plan_code ?? fallbackPlan),
     upgradeTarget: (raw?.upgrade_target ?? null) as string | null,
     replayed: !!raw?.replayed,
+    blockedBy: (raw?.blocked_by ?? null) as "monthly" | "daily" | null,
+    dailyLimit: (raw?.daily_limit ?? null) as number | null,
+    dailyUsed: Number(raw?.daily_used ?? 0),
   };
 }
 
-/** Non-consuming check: is there room left this month? */
+/** Non-consuming check: monthly quota + invisible daily guardrail (most restrictive wins). */
 export async function checkHomeownerQuota(
   supa: SupabaseClient,
   userId: string,
   feature: HomeownerFeature,
 ): Promise<QuotaResult> {
-  const { data, error } = await supa.rpc("homeowner_usage_snapshot", { _user_id: userId });
+  const { data, error } = await supa.rpc("homeowner_quota_check", {
+    _user_id: userId,
+    _feature_key: feature,
+  });
   if (error) {
-    console.error("[homeownerQuota] snapshot failed", error.message);
+    console.error("[homeownerQuota] check failed", error.message);
     // Fail open: never block a paying flow on an infra hiccup.
-    return { allowed: true, unlimited: true, limit: null, used: 0, remaining: -1, planCode: "unknown", upgradeTarget: null };
+    return {
+      allowed: true, unlimited: true, limit: null, used: 0, remaining: -1,
+      planCode: "unknown", upgradeTarget: null, blockedBy: null,
+    };
   }
-  const snap = (data ?? {}) as Record<string, number | string>;
-  const limit = Number(
-    feature === "ai_design_monthly" ? snap.ai_design_limit ?? -1 : snap.quote_analysis_limit ?? -1,
-  );
-  const used = Number(
-    feature === "ai_design_monthly" ? snap.ai_design_used ?? 0 : snap.quote_analysis_used ?? 0,
-  );
-  const unlimited = limit === -1 || Number.isNaN(limit);
-  return {
-    allowed: unlimited || used < limit,
-    unlimited,
-    limit: unlimited ? -1 : limit,
-    used,
-    remaining: unlimited ? -1 : Math.max(limit - used, 0),
-    planCode: String(snap.plan_code ?? "home_decouverte"),
-    upgradeTarget: null,
-  };
+  return normalize((data ?? null) as Record<string, unknown> | null);
 }
 
 /** Consume one credit. Idempotent when the same key is replayed. */
@@ -112,12 +110,32 @@ export async function consumeHomeownerQuota(
   return normalize((data ?? null) as Record<string, unknown> | null);
 }
 
-/** Canonical 429 body — the UI turns this into an upgrade CTA. */
+/** Canonical 429 body. Monthly = upgrade CTA. Daily = premium "revenez demain" UX. */
 export function quotaBlockedResponse(
   quota: QuotaResult,
   feature: HomeownerFeature,
   corsHeaders: Record<string, string>,
 ): Response {
+  if (quota.blockedBy === "daily") {
+    const copy = DAILY_LIMIT_COPY[feature];
+    return new Response(
+      JSON.stringify({
+        error: copy.title,
+        daily_limit_reached: true,
+        feature,
+        plan_code: quota.planCode,
+        title: copy.title,
+        body: copy.body,
+        reassurance: copy.reassurance,
+        cta_label: copy.ctaLabel,
+        cta_href: copy.ctaHref,
+        resets_at: nextTorontoMidnightISO(),
+        message: `${copy.title} ${copy.body} ${copy.reassurance}`,
+      }),
+      { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
   const target = quota.upgradeTarget ?? (quota.planCode === "home_plus" ? "home_signature" : "home_plus");
   const label = UPGRADE_LABEL[target] ?? "Plus";
   const message = feature === "ai_design_monthly"
