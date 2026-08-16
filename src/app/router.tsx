@@ -14,7 +14,7 @@ import AuthOverlayPremium from "@/components/auth/AuthOverlayPremium";
 // Only eagerly load the home page and critical shared pages
 import HomeWithFeatureFlag from "@/components/home-intent/HomeWithFeatureFlag";
 import PageHomeUnicorn from "@/pages/PageHomeUnicorn";
-import HomeAbSwitch from "@/components/home-ab/HomeAbSwitch";
+// HomeAbSwitch kept on disk for legacy A/B variants (/v2, /v3).
 import MainLayout from "@/layouts/MainLayout";
 const PageHomeVariantB = lazyWithRetry(() => import("@/pages/home/PageHomeVariantB"));
 const PageHomeVariantC = lazyWithRetry(() => import("@/pages/home/PageHomeVariantC"));
@@ -916,7 +916,7 @@ export const AppRouter = () => (
     <Suspense fallback={<LazyFallback />}>
       <Routes>
         {/* Redirects for common mismatched entry points */}
-        <Route path="/index" element={<MainLayout><PageHomeUnicorn /></MainLayout>} />
+        <Route path="/index" element={<HomeWithFeatureFlag />} />
         <Route path="/isolation-solution-royal" element={<Suspense fallback={<LazyFallback />}><PageSignaturePartner slug="isolation-solution-royal" /></Suspense>} />
         <Route path="/partenaires/:slug" element={<Suspense fallback={<LazyFallback />}><PageSignaturePartner /></Suspense>} />
         <Route path="/admin/partners" element={<Suspense fallback={<LazyFallback />}><PageAdminPartners /></Suspense>} />
