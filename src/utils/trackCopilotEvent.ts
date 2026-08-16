@@ -32,7 +32,11 @@ export type CopilotEventName =
   | "quote_comparison_started"
   | "contractor_entry_click"
   | "contractor_1_dollar_activation_click"
-  | "passport_click";
+  | "passport_click"
+  | "alex_analysis_started"
+  | "example_clicked"
+  | "theme_changed"
+  | "contractor_nav_clicked";
 
 const SESSION_KEY = "unpro_copilot_session_id";
 
