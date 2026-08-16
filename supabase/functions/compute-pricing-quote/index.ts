@@ -784,6 +784,16 @@ Deno.serve(async (req) => {
     // Human-readable, evidence-only explanation (no invented scarcity).
     const pricingExplanation = {
       calculation_version: CALCULATION_VERSION,
+      pricing_mode: pricingMode,
+      mode_outcome: modeOutcome,
+      monthly_budget_cents: monthlyBudgetCents,
+      guaranteed_appointments: guaranteedAppointments,
+      budget_solve: budgetSolve,
+      margin: {
+        meets_minimum: marginEval.meets_minimum,
+        meets_target: marginEval.meets_target,
+        margin_ratio: marginEval.margin_ratio,
+      },
       plan_reason: capacityCapped
         ? "capacity_capped"
         : status === "waitlisted"
@@ -815,7 +825,13 @@ Deno.serve(async (req) => {
       business_objective: objective,
       wants_exclusivity: !!body.wants_exclusivity,
       territory_cluster: `${citySlug}::${tradeSlug}`,
-      target_monthly_appointments: body.target_monthly_appointments,
+      pricing_mode: pricingMode,
+      monthly_budget: monthlyBudgetCents,
+      guaranteed_appointments: guaranteedAppointments,
+      contractor_capacity: Math.max(0, Math.round(body.monthly_capacity ?? 0)),
+      market_capacity_snapshot: capacityAvailability,
+      target_monthly_appointments:
+        pricingMode === "budget" ? effectiveTarget : body.target_monthly_appointments,
       average_project_value: Math.round(body.average_project_value),
       estimated_close_rate: round2(close),
       estimated_monthly_revenue_potential: revenuePotential,
@@ -862,7 +878,7 @@ Deno.serve(async (req) => {
     }
 
     await svc.from("pricing_audit_log").insert({
-      event_type: "quote_computed",
+      event_type: pricingMode === "budget" ? "budget_quote_computed" : "quote_computed",
       actor_id: user?.id ?? null,
       actor_role: user ? "contractor" : "guest",
       contractor_id: body.contractor_id ?? null,
@@ -870,6 +886,10 @@ Deno.serve(async (req) => {
       service_slug: tradeSlug,
       city_slug: citySlug,
       new_state: {
+        pricing_mode: pricingMode,
+        mode_outcome: modeOutcome,
+        monthly_budget_cents: monthlyBudgetCents,
+        guaranteed_appointments: guaranteedAppointments,
         plan: finalPlanCode,
         price_cents: finalPrice,
         status,
@@ -886,6 +906,12 @@ Deno.serve(async (req) => {
         pricing_version: pricingVersion,
         calculation_version: CALCULATION_VERSION,
         data_status: dataStatus,
+        pricing_mode: pricingMode,
+        mode_outcome: modeOutcome,
+        monthly_budget: monthlyBudgetCents,
+        guaranteed_appointments: guaranteedAppointments,
+        contractor_capacity: Math.max(0, Math.round(body.monthly_capacity ?? 0)),
+        budget_solve: budgetSolve,
         recommended_plan: finalPlanCode,
         plan_name: plan.name,
         recommended_monthly_price: finalPrice,
