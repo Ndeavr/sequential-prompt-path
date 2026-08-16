@@ -10,6 +10,7 @@ import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { headerNavByRole, getDrawerItems, getStateActions } from "@/config/navigationConfig";
 import { resolveIcon, LogOut, ArrowRightLeft, Settings } from "./IconResolver";
 import { useLanguage } from "@/components/ui/LanguageToggle";
+import ThemeSwitcher from "@/components/theme/ThemeSwitcher";
 import type { UserRole } from "@/types/navigation";
 
 const roleLabels: Record<UserRole, string> = {
@@ -130,6 +131,15 @@ const MobileDrawer = ({ onClose }: { onClose: () => void }) => {
             ))}
           </>
         )}
+
+        {/* Theme */}
+        <div className="h-px bg-border/20 my-2" />
+        <div className="flex items-center justify-between px-3 py-2.5">
+          <span className="text-meta text-muted-foreground">
+            {lang === "en" ? "Appearance" : "Apparence"}
+          </span>
+          <ThemeSwitcher />
+        </div>
 
         {/* Account */}
         <div className="h-px bg-border/20 my-2" />
