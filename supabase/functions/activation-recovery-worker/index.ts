@@ -14,7 +14,7 @@ const REMINDERS = [
     ageHoursMin: 24,
     ageHoursMax: 72,
     template_key: "war_room_recovery_1",
-    body: "UNPRO: il vous reste 2 minutes pour activer votre profil. 1$ pour 7 jours. unpro.ca",
+    body: "UNPRO: votre calcul de garantie est prêt. Jusqu'à 5 rendez-vous exclusifs garantis dès 350$. unpro.ca/entrepreneur/garantie",
   },
   {
     attempt: 2,

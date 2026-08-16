@@ -95,7 +95,7 @@ export const homeFin3 = {
         "Demain, vos clients ne chercheront plus seulement qui apparaît en premier. Ils demanderont à l'IA qui elle recommande.",
       body: "Découvrez comment UNPRO comprend actuellement votre entreprise, complétez votre profil et améliorez les informations utilisées pour vous associer aux bons projets.",
       ctaPrimary: "Voir mon profil IA",
-      ctaSecondary: "Activer mon profil pour 1 $",
+      ctaSecondary: "Voir ce que 350 $ peut me garantir",
       note: "L'activation à 1 $ est optionnelle.",
     },
     final: {

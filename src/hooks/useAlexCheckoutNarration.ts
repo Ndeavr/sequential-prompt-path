@@ -37,7 +37,7 @@ const MESSAGES: MessageMap = {
     "Le plan recommandé peut être ajusté plus tard.",
   ],
   trial_offer: [
-    "Essayez UNPRO 7 jours pour 1 $.",
+    "Dès 350 $, jusqu'à 5 rendez-vous exclusifs garantis. Le nombre exact est calculé avant le paiement.",
     "Activation immédiate, annulable en tout temps.",
   ],
   checkout: [

@@ -15,6 +15,10 @@ import {
   evaluateMargin,
   marginConfigFrom,
   solveBudget,
+  solvePack,
+  PACK_350_TOTAL_CENTS,
+  PACK_350_MAX_APPOINTMENTS,
+  PACK_350_DURATION_MONTHS,
   type ModeOutcome,
   type PricingMode,
 } from "../_shared/pricingModes.ts";
@@ -36,6 +40,10 @@ interface Input {
   pricing_mode?: PricingMode;
   /** Required when pricing_mode = "budget" (CAD cents). */
   monthly_budget_cents?: number;
+  /** Required when pricing_mode = "pack" — one-time amount (CAD cents). */
+  total_price_cents?: number;
+  /** Delivery window of the pack guarantee (months). */
+  guarantee_duration_months?: number;
   target_monthly_appointments: number;
   average_project_value: number; // CAD dollars
   monthly_capacity: number;
@@ -268,7 +276,9 @@ Deno.serve(async (req) => {
       !Number.isFinite(
         body.pricing_mode === "budget"
           ? (body.monthly_budget_cents ?? NaN)
-          : body.target_monthly_appointments,
+          : body.pricing_mode === "pack"
+            ? (body.total_price_cents ?? NaN)
+            : body.target_monthly_appointments,
       ) ||
       !Number.isFinite(body.average_project_value) ||
       !Number.isFinite(body.monthly_capacity)
@@ -618,7 +628,26 @@ Deno.serve(async (req) => {
 
     // ---------- Mode resolution (goal ⇄ budget, same chain) ----------
     const marginCfg = marginConfigFrom((cfgRow?.weights as any) ?? {});
-    const pricingMode: PricingMode = body.pricing_mode === "budget" ? "budget" : "goal";
+    const pricingMode: PricingMode =
+      body.pricing_mode === "budget"
+        ? "budget"
+        : body.pricing_mode === "pack"
+          ? "pack"
+          : "goal";
+    const packTotalCents =
+      pricingMode === "pack"
+        ? Math.max(0, Math.round(Number(body.total_price_cents ?? PACK_350_TOTAL_CENTS)))
+        : null;
+    const packDurationMonths =
+      pricingMode === "pack"
+        ? Math.max(1, Math.round(Number(body.guarantee_duration_months ?? PACK_350_DURATION_MONTHS)))
+        : null;
+    const offerKind =
+      pricingMode === "pack" && (packTotalCents ?? 0) <= PACK_350_TOTAL_CENTS
+        ? "pack_350"
+        : pricingMode === "pack"
+          ? "pack"
+          : "subscription";
     const monthlyBudgetCents =
       pricingMode === "budget"
         ? Math.max(0, Math.round(Number(body.monthly_budget_cents ?? 0)))
@@ -628,7 +657,43 @@ Deno.serve(async (req) => {
     let modeOutcome: ModeOutcome = "goal_resolved";
     let budgetSolve: Record<string, unknown> | null = null;
 
-    if (pricingMode === "budget") {
+    let packSolve: Record<string, unknown> | null = null;
+
+    if (pricingMode === "pack") {
+      const solved = solvePack(
+        {
+          total_price_cents: packTotalCents ?? PACK_350_TOTAL_CENTS,
+          duration_months: packDurationMonths ?? PACK_350_DURATION_MONTHS,
+          market_ceiling: capacityCeiling,
+          contractor_capacity: Math.max(0, Math.round(body.monthly_capacity ?? 0)),
+          market_unavailable: saturated || marketClosed,
+          margin: marginCfg,
+        },
+        (t) => {
+          const c = priceChain(t);
+          return {
+            target: c.target,
+            plan_code: c.plan_code,
+            monthly_price_cents: c.monthly_price_cents,
+            capacity_capped: c.capacity_capped,
+          };
+        },
+      );
+      modeOutcome = solved.outcome;
+      effectiveTarget = solved.guaranteed_appointments;
+      packSolve = {
+        total_price_cents: solved.total_price_cents,
+        duration_months: solved.duration_months,
+        guaranteed_appointments: solved.guaranteed_appointments,
+        resolved_before_cap: solved.resolved_before_cap,
+        capped_by_offer: solved.capped_by_offer,
+        offer_max_appointments: solved.offer_max_appointments,
+        market_ceiling: solved.market_ceiling,
+        contractor_capacity: solved.contractor_capacity,
+        margin_ok: solved.margin?.meets_minimum ?? false,
+        outcome: solved.outcome,
+      };
+    } else if (pricingMode === "budget") {
       const solved = solveBudget(
         {
           monthly_budget_cents: monthlyBudgetCents ?? 0,
@@ -694,6 +759,18 @@ Deno.serve(async (req) => {
       finalPrice = entry.monthly_price;
     }
 
+    // Pack mode: the contractor pays the fixed one-time amount, never the
+    // monthly chain price. The chain only resolves HOW MANY appointments the
+    // amount can really guarantee.
+    if (pricingMode === "pack") {
+      finalPrice = packTotalCents ?? PACK_350_TOTAL_CENTS;
+      if (modeOutcome === "analysis_required" || modeOutcome === "budget_below_floor") {
+        status = "analysis_required";
+      } else if (status !== "waitlisted") {
+        status = "offered";
+      }
+    }
+
     // Budget mode with no guaranteeable appointment: fall back to the entry plan
     // (Présence) and never display an invented guarantee.
     if (pricingMode === "budget" && modeOutcome === "budget_below_floor" && status !== "waitlisted") {
@@ -704,9 +781,14 @@ Deno.serve(async (req) => {
     }
 
     const guaranteedAppointments =
-      status === "waitlisted" || modeOutcome === "budget_below_floor"
+      status === "waitlisted" ||
+      status === "analysis_required" ||
+      modeOutcome === "analysis_required" ||
+      modeOutcome === "budget_below_floor"
         ? 0
-        : pricingMode === "budget"
+        : pricingMode === "pack"
+          ? effectiveTarget
+          : pricingMode === "budget"
           ? effectiveTarget
           : Math.min(
               effectiveTarget,
@@ -719,7 +801,7 @@ Deno.serve(async (req) => {
     // Revenue potential always reflects what is REALLY guaranteed (budget mode)
     // or what the contractor declared targeting (goal mode).
     const revenuePotential =
-      pricingMode === "budget"
+      pricingMode === "budget" || pricingMode === "pack"
         ? Math.round(guaranteedAppointments * close * body.average_project_value)
         : declaredRevenuePotential;
 
@@ -789,6 +871,12 @@ Deno.serve(async (req) => {
       monthly_budget_cents: monthlyBudgetCents,
       guaranteed_appointments: guaranteedAppointments,
       budget_solve: budgetSolve,
+      offer_kind: offerKind,
+      pack_solve: packSolve,
+      offer_max_appointments:
+        pricingMode === "pack" && (packTotalCents ?? 0) <= PACK_350_TOTAL_CENTS
+          ? PACK_350_MAX_APPOINTMENTS
+          : null,
       margin: {
         meets_minimum: marginEval.meets_minimum,
         meets_target: marginEval.meets_target,
@@ -826,6 +914,9 @@ Deno.serve(async (req) => {
       wants_exclusivity: !!body.wants_exclusivity,
       territory_cluster: `${citySlug}::${tradeSlug}`,
       pricing_mode: pricingMode,
+      offer_kind: offerKind,
+      total_price_cents: pricingMode === "pack" ? finalPrice : null,
+      guarantee_duration_months: packDurationMonths,
       monthly_budget: monthlyBudgetCents,
       guaranteed_appointments: guaranteedAppointments,
       contractor_capacity: Math.max(0, Math.round(body.monthly_capacity ?? 0)),
@@ -878,7 +969,12 @@ Deno.serve(async (req) => {
     }
 
     await svc.from("pricing_audit_log").insert({
-      event_type: pricingMode === "budget" ? "budget_quote_computed" : "quote_computed",
+      event_type:
+        pricingMode === "pack"
+          ? "pack_quote_computed"
+          : pricingMode === "budget"
+            ? "budget_quote_computed"
+            : "quote_computed",
       actor_id: user?.id ?? null,
       actor_role: user ? "contractor" : "guest",
       contractor_id: body.contractor_id ?? null,
@@ -907,7 +1003,15 @@ Deno.serve(async (req) => {
         calculation_version: CALCULATION_VERSION,
         data_status: dataStatus,
         pricing_mode: pricingMode,
+        offer_kind: offerKind,
         mode_outcome: modeOutcome,
+        total_price_cents: pricingMode === "pack" ? finalPrice : null,
+        guarantee_duration_months: packDurationMonths,
+        offer_max_appointments:
+          pricingMode === "pack" && (packTotalCents ?? 0) <= PACK_350_TOTAL_CENTS
+            ? PACK_350_MAX_APPOINTMENTS
+            : null,
+        pack_solve: packSolve,
         monthly_budget: monthlyBudgetCents,
         guaranteed_appointments: guaranteedAppointments,
         contractor_capacity: Math.max(0, Math.round(body.monthly_capacity ?? 0)),

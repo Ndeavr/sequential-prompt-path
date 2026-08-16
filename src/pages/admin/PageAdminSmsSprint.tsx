@@ -41,13 +41,13 @@ const SMS_REVENUE_VARIANTS = [
     key: "profile_ready",
     label: "Votre fiche est prête",
     body:
-      "Votre fiche est prête. Activez-la pour 1 $ et voyez si votre entreprise peut être recommandée aux propriétaires. unpro.ca",
+      "Votre fiche est prête. Voyez combien de rendez-vous exclusifs 350 $ peut vous garantir. unpro.ca/entrepreneur/garantie",
   },
   {
     key: "identified",
     label: "Identifié dans votre secteur",
     body:
-      "Vous avez été identifié comme entrepreneur dans votre secteur. Voulez-vous voir votre potentiel IA ? Activation 1 $. unpro.ca",
+      "Vous avez été identifié comme entrepreneur dans votre secteur. Jusqu'à 5 rendez-vous exclusifs garantis dès 350 $. unpro.ca/entrepreneur/garantie",
   },
 ];
 

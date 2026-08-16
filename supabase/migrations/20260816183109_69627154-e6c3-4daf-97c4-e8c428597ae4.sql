@@ -1,0 +1,2 @@
+ALTER TABLE public.contractor_pricing_quotes DROP CONSTRAINT IF EXISTS contractor_pricing_quotes_pricing_mode_chk;
+ALTER TABLE public.contractor_pricing_quotes ADD CONSTRAINT contractor_pricing_quotes_pricing_mode_chk CHECK (pricing_mode IN ('goal','budget','pack'));

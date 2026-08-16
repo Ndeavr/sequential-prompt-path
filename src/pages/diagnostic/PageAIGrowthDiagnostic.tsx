@@ -410,7 +410,7 @@ export default function PageAIGrowthDiagnostic() {
                   className="diag-bubble px-5 py-3 font-semibold"
                   onClick={() => logEvent(id, "cta_clicked", { cta: "trial" })}
                 >
-                  Démarrer pour 1 $
+                  Voir ma garantie dès 350 $
                 </Link>
               </div>
               <div className="mt-6 text-xs opacity-50">Sans engagement · Annulable en tout temps</div>

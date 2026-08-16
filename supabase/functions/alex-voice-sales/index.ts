@@ -47,7 +47,7 @@ Calcule et recommande le plan basé sur :
 - Revenus visés / valeur moyenne de projet = rendez-vous nécessaires
 - Ajusté par taux de fermeture
 - Plans UNPRO (mensuel): Présence(49$), Local(79$), Croissance(149$), Pro(299$), Premium(599$), Domination(1499$)
-- Offre d'entrée: 1 $ pour 7 jours, puis le plan choisi
+- Offre d'entrée: 350 $ (paiement unique) — jusqu'à 5 rendez-vous exclusifs garantis. Le nombre exact est calculé avant le paiement selon le domaine, le territoire et la capacité. Ne jamais promettre 5 sans calcul.
 - Si le besoin est atypique (territoire, exclusivité, capacité), propose le plan personnalisé calculé par UNPRO
 
 Dis clairement : "Je vous recommande le plan [X]. Vous recevez [Y] rendez-vous qualifiés par mois."

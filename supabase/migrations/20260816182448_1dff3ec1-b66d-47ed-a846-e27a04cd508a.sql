@@ -1,0 +1,1 @@
+ALTER TYPE public.pricing_quote_status ADD VALUE IF NOT EXISTS 'analysis_required';

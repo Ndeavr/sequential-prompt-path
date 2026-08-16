@@ -4,6 +4,7 @@ import {
   evaluateMargin,
   marginConfigFrom,
   solveBudget,
+  solvePack,
   type PricedTarget,
 } from "../../supabase/functions/_shared/pricingModes";
 
@@ -110,5 +111,73 @@ describe("solveBudget", () => {
     const goalPrice = price(r.guaranteed_appointments).monthly_price_cents;
     expect(goalPrice).toBe(r.priced!.monthly_price_cents);
     expect(price(r.guaranteed_appointments + 1).monthly_price_cents).toBeGreaterThan(120000);
+  });
+});
+
+describe("solvePack — 350 $ entry offer", () => {
+  const packInput = (over: Partial<Parameters<typeof solvePack>[0]> = {}) => ({
+    total_price_cents: 35000,
+    duration_months: 6,
+    market_ceiling: 20,
+    contractor_capacity: 20,
+    market_unavailable: false,
+    margin: cfg,
+    ...over,
+  });
+
+  it("returns the real resolved count when it is under the ceiling", () => {
+    // 4900 + 9000n ≤ 35000 → n ≤ 3
+    const r = solvePack(packInput(), priceFn());
+    expect(r.guaranteed_appointments).toBe(3);
+    expect(r.capped_by_offer).toBe(false);
+    expect(r.outcome).toBe("pack_resolved");
+  });
+
+  it("caps a richer resolution at 5 appointments for 350 $", () => {
+    // cheap chain would afford far more than 5
+    const r = solvePack(packInput(), priceFn(4500, 4900));
+    expect(r.resolved_before_cap).toBeGreaterThan(5);
+    expect(r.guaranteed_appointments).toBe(5);
+    expect(r.capped_by_offer).toBe(true);
+    expect(r.outcome).toBe("pack_capped");
+  });
+
+  it("never applies the ceiling above 350 $ (no rule of three)", () => {
+    const r = solvePack(packInput({ total_price_cents: 105000 }), priceFn(4500, 4900));
+    expect(r.offer_max_appointments).toBeNull();
+    expect(r.guaranteed_appointments).toBeGreaterThan(5);
+  });
+
+  it("never invents a guarantee when the market ceiling is unknown", () => {
+    const r = solvePack(packInput({ market_ceiling: null }), priceFn(4500, 4900));
+    expect(r.outcome).toBe("analysis_required");
+    expect(r.guaranteed_appointments).toBe(0);
+  });
+
+  it("never invents a guarantee on a closed market", () => {
+    const r = solvePack(packInput({ market_unavailable: true }), priceFn(4500, 4900));
+    expect(r.outcome).toBe("analysis_required");
+    expect(r.guaranteed_appointments).toBe(0);
+  });
+
+  it("respects contractor capacity below the ceiling", () => {
+    const r = solvePack(packInput({ contractor_capacity: 2 }), priceFn(4500, 4900));
+    expect(r.guaranteed_appointments).toBe(2);
+  });
+
+  it("stays consistent with the budget solver on the same chain", () => {
+    const chain = priceFn();
+    const pack = solvePack(packInput(), chain);
+    const budget = solveBudget(
+      {
+        monthly_budget_cents: 35000,
+        market_ceiling: 20,
+        contractor_capacity: 20,
+        market_unavailable: false,
+        margin: cfg,
+      },
+      chain,
+    );
+    expect(pack.resolved_before_cap).toBe(budget.guaranteed_appointments);
   });
 });

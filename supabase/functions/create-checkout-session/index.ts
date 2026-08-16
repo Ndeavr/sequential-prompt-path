@@ -56,6 +56,8 @@ Deno.serve(async (req) => {
       returnUrl,
       quoteId,
       displayedPriceCents,
+      packQuoteId,
+      displayedGuaranteedAppointments,
     } = await req.json();
     const interval: "month" | "year" = billingInterval === "year" ? "year" : "month";
 
@@ -63,6 +65,127 @@ Deno.serve(async (req) => {
       supabaseUrl,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // ── ENTRY PACK (350 $, one-time payment) ──
+    // The guarantee comes from the stored quote ONLY. Never recomputed here,
+    // never the public maximum.
+    if (packQuoteId) {
+      const { data: q, error: qErr } = await serviceClient
+        .from("contractor_pricing_quotes")
+        .select(
+          "id, offer_kind, total_price_cents, guaranteed_appointments, guarantee_duration_months, pricing_status, trade_primary, city",
+        )
+        .eq("id", packQuoteId)
+        .maybeSingle();
+
+      if (qErr || !q) {
+        return new Response(JSON.stringify({ error: "Devis introuvable", code: "quote_not_found" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (q.offer_kind !== "pack_350") {
+        return new Response(JSON.stringify({ error: "Ce devis n'est pas un forfait d'entrée.", code: "invalid_offer_kind" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (q.pricing_status === "waitlisted" || q.pricing_status === "analysis_required" || Number(q.guaranteed_appointments ?? 0) <= 0) {
+        return new Response(
+          JSON.stringify({ error: "Analyse du territoire requise avant paiement.", code: "analysis_required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      const packTotal = Math.round(Number(q.total_price_cents ?? 0));
+      if (packTotal <= 0) {
+        return new Response(JSON.stringify({ error: "Montant du forfait invalide.", code: "invalid_amount" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Closed loop: what the browser displayed must equal the server truth.
+      if (typeof displayedPriceCents === "number" && Math.abs(displayedPriceCents - packTotal) > 1) {
+        return new Response(
+          JSON.stringify({ error: "Désaccord de prix détecté entre l'écran et le serveur.", code: "pricing_mismatch" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      if (
+        typeof displayedGuaranteedAppointments === "number" &&
+        displayedGuaranteedAppointments !== Number(q.guaranteed_appointments)
+      ) {
+        return new Response(
+          JSON.stringify({ error: "Désaccord de garantie détecté entre l'écran et le serveur.", code: "guarantee_mismatch" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      let { data: packContractor } = await serviceClient
+        .from("contractors")
+        .select("id")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!packContractor) {
+        const { data: created } = await serviceClient
+          .from("contractors")
+          .insert({ user_id: userId, business_name: userEmail })
+          .select("id")
+          .single();
+        packContractor = created;
+      }
+
+      const stripePack = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+      const guaranteed = Number(q.guaranteed_appointments);
+      const durationMonths = Number(q.guarantee_duration_months ?? 6);
+
+      const packSession = await stripePack.checkout.sessions.create({
+        mode: "payment",
+        locale: "fr",
+        customer_email: userEmail,
+        line_items: [
+          {
+            price_data: {
+              currency: "cad",
+              unit_amount: packTotal,
+              product_data: {
+                name: `UNPRO — ${guaranteed} rendez-vous exclusifs garantis`,
+                description: `${q.trade_primary} · ${q.city} · livraison sur ${durationMonths} mois maximum`,
+              },
+            },
+            quantity: 1,
+          },
+        ],
+        metadata: {
+          platform: "unpro",
+          brand: "unpro",
+          offer_kind: "pack_350",
+          quote_id: String(q.id),
+          contractor_id: String(packContractor?.id ?? ""),
+          guaranteed_appointments: String(guaranteed),
+          guarantee_duration_months: String(durationMonths),
+        },
+        success_url:
+          successUrl || `${req.headers.get("origin")}/entrepreneur/payment-success?quote_id=${q.id}&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: cancelUrl || `${req.headers.get("origin")}/entrepreneur/payment-cancelled?quote_id=${q.id}`,
+      });
+
+      await serviceClient.from("checkout_sessions").insert({
+        contractor_profile_id: packContractor?.id ?? null,
+        selected_plan_code: "pack_350",
+        selected_plan_name: `Forfait d'entrée — ${guaranteed} rendez-vous garantis`,
+        billing_cycle: "one_time",
+        external_checkout_id: packSession.id,
+        checkout_status: "pending",
+        payment_provider: "stripe",
+        adaptive_pricing_enabled: false,
+        quote_id: q.id,
+        personalized_monthly_price_cents: packTotal,
+      });
+
+      return new Response(JSON.stringify({ url: packSession.url, guaranteed_appointments: guaranteed }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Canonical source of truth: public.plans (legacy codes resolved server-side)
     const { data: canonical } = await serviceClient.rpc("canonical_plan_code", { _code: planId });
