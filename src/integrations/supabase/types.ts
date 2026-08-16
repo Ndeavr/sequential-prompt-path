@@ -70192,6 +70192,7 @@ export type Database = {
           id: string
           metadata: Json | null
           property_id: string
+          provenance: string
           title: string
           user_id: string
         }
@@ -70205,6 +70206,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           property_id: string
+          provenance?: string
           title: string
           user_id: string
         }
@@ -70218,6 +70220,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           property_id?: string
+          provenance?: string
           title?: string
           user_id?: string
         }
