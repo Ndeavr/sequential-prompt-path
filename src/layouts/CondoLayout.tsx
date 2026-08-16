@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useCondoRole, useCondoRoleState, CondoRoleProvider } from "@/hooks/useCondoRole";
 import CondoRoleSwitcher from "@/components/condo/CondoRoleSwitcher";
+import UnproLogo from "@/components/brand/UnproLogo";
 import { Button } from "@/components/ui/button";
 import {
   Building2, LayoutDashboard, Puzzle, Wrench, FolderOpen,
