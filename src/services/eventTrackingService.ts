@@ -87,3 +87,39 @@ export const trackSeoPageCreation = (pageType: string, slug: string) =>
 
 export const trackContractorPublicView = (contractorId: string) =>
   trackEvent({ eventType: "contractor_public_view", category: "contractor", entityType: "contractor", entityId: contractorId });
+
+/* ── Passeport Maison — canonical analytics (no second system) ── */
+
+export const trackPassportCreated = (propertyId: string, userId?: string) =>
+  trackEvent({ eventType: "passeport_created", category: "passport", entityType: "property", entityId: propertyId }, userId);
+
+export const trackInspectionUploaded = (propertyId: string, userId?: string) =>
+  trackEvent({ eventType: "inspection_uploaded", category: "passport", entityType: "property", entityId: propertyId }, userId);
+
+export const trackRenovationAdded = (propertyId: string, userId?: string) =>
+  trackEvent({ eventType: "renovation_added", category: "passport", entityType: "property", entityId: propertyId }, userId);
+
+export const trackRepairAdded = (propertyId: string, userId?: string) =>
+  trackEvent({ eventType: "repair_added", category: "passport", entityType: "property", entityId: propertyId }, userId);
+
+export const trackWarrantyAdded = (propertyId: string, userId?: string) =>
+  trackEvent({ eventType: "warranty_added", category: "passport", entityType: "property", entityId: propertyId }, userId);
+
+export const trackMaintenanceCompleted = (propertyId: string, category?: string, userId?: string) =>
+  trackEvent({ eventType: "maintenance_completed", category: "passport", entityType: "property", entityId: propertyId, metadata: { category } }, userId);
+
+export const trackPassportReportGenerated = (propertyId: string, userId?: string) =>
+  trackEvent({ eventType: "passport_report_generated", category: "passport", entityType: "property", entityId: propertyId }, userId);
+
+export const trackPassportShared = (propertyId: string, channel: string, userId?: string) =>
+  trackEvent({ eventType: "passport_shared", category: "passport", entityType: "property", entityId: propertyId, metadata: { channel } }, userId);
+
+/** Document type → canonical passport event. */
+export const trackPassportDocument = (propertyId: string, documentType: string, userId?: string) => {
+  switch (documentType) {
+    case "inspection": return trackInspectionUploaded(propertyId, userId);
+    case "warranty": return trackWarrantyAdded(propertyId, userId);
+    default:
+      return trackEvent({ eventType: "passport_document_added", category: "passport", entityType: "property", entityId: propertyId, metadata: { documentType } }, userId);
+  }
+};
