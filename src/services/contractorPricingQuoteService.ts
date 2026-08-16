@@ -32,6 +32,11 @@ export interface PricingQuote {
   trade_primary: string;
   city: string;
   territory_cluster: string;
+  /** "goal" = objectif → budget calculé ; "budget" = budget → garantie calculée. */
+  pricing_mode?: "goal" | "budget" | null;
+  monthly_budget?: number | null;
+  guaranteed_appointments?: number | null;
+  contractor_capacity?: number | null;
   target_monthly_appointments: number;
   average_project_value: number;
   estimated_close_rate: number;
