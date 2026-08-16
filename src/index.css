@@ -117,14 +117,12 @@
   }
 
   /* ═══════════════════════════════════════════════
-     DEFAULT UNPRO THEME — cinematic dark.
-     This is the ONLY default. It matches the dark background layer
-     painted app-wide by <StableBackgroundLayer>, so any page using
-     `text-foreground` / `bg-card` is readable without a wrapper.
-     `.admin-theme` and `.alex-immersive` are kept as aliases so existing
-     markup keeps working, but they no longer diverge from the default.
+     UNPRO DARK SCOPE — cinematic premium.
+     Driven by the `dark` class on <html> (see src/lib/theme/themeStore.ts).
+     `.admin-theme` and `.alex-immersive` stay hard-scoped to dark: those
+     surfaces are designed dark-only and must never render in light mode.
      ═══════════════════════════════════════════════ */
-  :root,
+  .dark,
   .admin-theme,
   .alex-immersive {
     --primary: 222 100% 60%;
