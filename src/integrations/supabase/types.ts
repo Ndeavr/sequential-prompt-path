@@ -25483,7 +25483,9 @@ export type Database = {
           id: string
           ideal_project_value_cad: number | null
           monthly_appointment_goal: number | null
+          monthly_budget_cad: number | null
           monthly_capacity: number | null
+          pricing_mode: string
           priority: string | null
           prospect_id: string | null
           quote_id: string | null
@@ -25516,7 +25518,9 @@ export type Database = {
           id?: string
           ideal_project_value_cad?: number | null
           monthly_appointment_goal?: number | null
+          monthly_budget_cad?: number | null
           monthly_capacity?: number | null
+          pricing_mode?: string
           priority?: string | null
           prospect_id?: string | null
           quote_id?: string | null
@@ -25549,7 +25553,9 @@ export type Database = {
           id?: string
           ideal_project_value_cad?: number | null
           monthly_appointment_goal?: number | null
+          monthly_budget_cad?: number | null
           monthly_capacity?: number | null
+          pricing_mode?: string
           priority?: string | null
           prospect_id?: string | null
           quote_id?: string | null
