@@ -3,8 +3,8 @@
  *
  * Route publique (aucun garde d'authentification). Résout le jeton d'outreach,
  * affiche le PROFIL D'ENTREPRISE DÉJÀ CONSTRUIT par UNPRO (identité, spécialité,
- * territoire, licence, avis réels, score de recommandation) puis lance le
- * paiement d'activation de 1 $.
+ * territoire, licence, avis réels, score de recommandation) puis dirige vers le
+ * calculateur de garantie du pack d'entrée 350 $ (garantie calculée avant paiement).
  *
  * Règle absolue : aucune donnée inventée. Chaque fait porte sa provenance
  * (Vérifié / Déclaré / Déduit) et les sections vides ne sont pas rendues.
