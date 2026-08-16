@@ -114,15 +114,15 @@ export default function PageInvitationLanding() {
             Rendez-vous exclusifs avec des propriétaires compatibles avec vos services.
           </ValueRow>
           <ValueRow icon={<Sparkles className="h-4 w-4" />}>
-            Activation 7 jours pour <span className="font-semibold text-white">1&nbsp;$</span>.
+            Jusqu'à 5 rendez-vous exclusifs garantis dès <span className="font-semibold text-white">350&nbsp;$</span> (paiement unique).
           </ValueRow>
         </div>
 
         {/* CTAs */}
         <div className="mt-8 flex flex-col sm:flex-row gap-3">
           <Button asChild size="lg" className="h-14 flex-1 text-base bg-white text-black hover:bg-white/90 rounded-2xl font-medium">
-            <Link to={`/invitation/${token}/activate`}>
-              Activer ma fiche pour 1 $ <ArrowRight className="ml-2 h-4 w-4" />
+            <Link to="/entrepreneur/garantie">
+              Voir ce que 350 $ peut me garantir <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
           <Button asChild size="lg" variant="outline" className="h-14 flex-1 text-base rounded-2xl border-white/20 bg-white/5 text-white hover:bg-white/10">

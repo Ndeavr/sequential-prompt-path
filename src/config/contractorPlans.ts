@@ -52,7 +52,7 @@ export interface FounderOffer {
 export const TRIAL_OFFER = {
   priceDollars: 1,
   days: 7,
-  label: "1 $ pour 7 jours",
+  label: "Dès 350 $ — jusqu'à 5 rendez-vous garantis",
   note: "Puis votre plan mensuel. Annulable en tout temps.",
 } as const;
 

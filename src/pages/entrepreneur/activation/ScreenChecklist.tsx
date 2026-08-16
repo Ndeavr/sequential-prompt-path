@@ -175,7 +175,7 @@ export default function ScreenChecklist() {
               <Check className="w-5 h-5 text-emerald-500 shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-foreground">
-                  Profil prêt à {overallCompletion}% — activez pour 1 $
+                  Profil prêt à {overallCompletion}% — voir ma garantie dès 350 $
                 </div>
                 <div className="text-xs text-muted-foreground mt-0.5">
                   {founder.remaining}/{founder.total} places Fondateur restantes

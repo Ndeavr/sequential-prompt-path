@@ -171,7 +171,7 @@ export default function ContractorRecommendationPage() {
               Vous êtes {c.business_name} ?
             </h2>
             <p className="text-sm text-muted-foreground">
-              Réclamez ce profil pour 1 $, corrigez vos informations et activez vos rendez-vous.
+              Réclamez ce profil, corrigez vos informations et voyez ce que 350 $ peut vous garantir en rendez-vous exclusifs.
             </p>
             <Button asChild className="w-full sm:w-auto">
               <Link to={`/entrepreneur/${c.slug ?? slug}/reclamer`}>

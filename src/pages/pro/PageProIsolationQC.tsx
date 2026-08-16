@@ -136,10 +136,10 @@ export default function PageProIsolationQC() {
   return (
     <div className="min-h-screen bg-[#0B1220] text-white flex items-start sm:items-center justify-center px-5 py-8 sm:py-10">
       <Helmet>
-        <title>Être recommandé par l'IA d'UNPRO — 1 $ pour 7 jours</title>
+        <title>Être recommandé par l'IA d'UNPRO — jusqu'à 5 rendez-vous garantis dès 350 $</title>
         <meta
           name="description"
-          content="Votre entreprise mérite-t-elle d'être recommandée par l'IA d'UNPRO ? Voyez votre revenu potentiel, vos villes couvertes et la demande en attente. Essai 7 jours pour 1 $."
+          content="Votre entreprise mérite-t-elle d'être recommandée par l'IA d'UNPRO ? Voyez votre revenu potentiel, vos villes couvertes et la demande en attente. Jusqu'à 5 rendez-vous exclusifs garantis dès 350 $."
         />
       </Helmet>
 
@@ -201,7 +201,7 @@ export default function PageProIsolationQC() {
         >
           {loading ? "Préparation…" : (
             <>
-              Activer mon essai — 1 $ pour 7 jours <ArrowRight className="h-5 w-5" />
+              Voir ce que 350 $ peut me garantir <ArrowRight className="h-5 w-5" />
             </>
           )}
         </button>

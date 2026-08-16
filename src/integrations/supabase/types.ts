@@ -35527,6 +35527,7 @@ export type Database = {
           accepted_at: string | null
           aipp_optimization_fee: number
           appointment_package_fee: number
+          appointments_delivered: number
           approval_note: string | null
           approved_at: string | null
           approved_by: string | null
@@ -35550,6 +35551,7 @@ export type Database = {
           expires_at: string | null
           extra_appointment_price: number | null
           factors: Json
+          guarantee_duration_months: number | null
           guaranteed_appointments: number | null
           id: string
           input_payload: Json
@@ -35557,6 +35559,7 @@ export type Database = {
           max_monthly_price: number
           min_monthly_price: number
           monthly_budget: number | null
+          offer_kind: string
           pricing_explanation: Json
           pricing_mode: string
           pricing_status: Database["public"]["Enums"]["pricing_quote_status"]
@@ -35571,6 +35574,7 @@ export type Database = {
           target_monthly_appointments: number
           territory_cluster: string | null
           territory_competition_multiplier: number
+          total_price_cents: number | null
           trade_primary: string | null
           updated_at: string
           user_id: string | null
@@ -35580,6 +35584,7 @@ export type Database = {
           accepted_at?: string | null
           aipp_optimization_fee?: number
           appointment_package_fee?: number
+          appointments_delivered?: number
           approval_note?: string | null
           approved_at?: string | null
           approved_by?: string | null
@@ -35603,6 +35608,7 @@ export type Database = {
           expires_at?: string | null
           extra_appointment_price?: number | null
           factors?: Json
+          guarantee_duration_months?: number | null
           guaranteed_appointments?: number | null
           id?: string
           input_payload?: Json
@@ -35610,6 +35616,7 @@ export type Database = {
           max_monthly_price?: number
           min_monthly_price?: number
           monthly_budget?: number | null
+          offer_kind?: string
           pricing_explanation?: Json
           pricing_mode?: string
           pricing_status?: Database["public"]["Enums"]["pricing_quote_status"]
@@ -35624,6 +35631,7 @@ export type Database = {
           target_monthly_appointments?: number
           territory_cluster?: string | null
           territory_competition_multiplier?: number
+          total_price_cents?: number | null
           trade_primary?: string | null
           updated_at?: string
           user_id?: string | null
@@ -35633,6 +35641,7 @@ export type Database = {
           accepted_at?: string | null
           aipp_optimization_fee?: number
           appointment_package_fee?: number
+          appointments_delivered?: number
           approval_note?: string | null
           approved_at?: string | null
           approved_by?: string | null
@@ -35656,6 +35665,7 @@ export type Database = {
           expires_at?: string | null
           extra_appointment_price?: number | null
           factors?: Json
+          guarantee_duration_months?: number | null
           guaranteed_appointments?: number | null
           id?: string
           input_payload?: Json
@@ -35663,6 +35673,7 @@ export type Database = {
           max_monthly_price?: number
           min_monthly_price?: number
           monthly_budget?: number | null
+          offer_kind?: string
           pricing_explanation?: Json
           pricing_mode?: string
           pricing_status?: Database["public"]["Enums"]["pricing_quote_status"]
@@ -35677,6 +35688,7 @@ export type Database = {
           target_monthly_appointments?: number
           territory_cluster?: string | null
           territory_competition_multiplier?: number
+          total_price_cents?: number | null
           trade_primary?: string | null
           updated_at?: string
           user_id?: string | null
@@ -92662,6 +92674,22 @@ export type Database = {
         }
         Relationships: []
       }
+      v_pack350_performance: {
+        Row: {
+          appointments_delivered: number | null
+          appointments_guaranteed: number | null
+          appointments_remaining: number | null
+          city: string | null
+          estimated_margin_ratio: number | null
+          offers_4_5: number | null
+          packs_offered: number | null
+          packs_sold: number | null
+          revenue_cents: number | null
+          revenue_cents_per_appointment: number | null
+          trade_primary: string | null
+        }
+        Relationships: []
+      }
       v_pipeline_agents_live: {
         Row: {
           agent_key: string | null
@@ -94592,6 +94620,7 @@ export type Database = {
         | "paid"
         | "waitlisted"
         | "rejected"
+        | "analysis_required"
       project_fit: "compatible" | "partial" | "verify" | "incompatible"
       property_condition: "excellent" | "good" | "fair" | "poor" | "critical"
       qr_type: "property_plate" | "electrical_panel" | "jobsite_temporary"
@@ -94926,6 +94955,7 @@ export const Constants = {
         "paid",
         "waitlisted",
         "rejected",
+        "analysis_required",
       ],
       project_fit: ["compatible", "partial", "verify", "incompatible"],
       property_condition: ["excellent", "good", "fair", "poor", "critical"],

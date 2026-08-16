@@ -49,7 +49,7 @@ export default function PageReviewIntelligenceLanding() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
             <Link to="/entrepreneur/join?product=review_intelligence">
               <Button size="lg" className="rounded-full h-12 px-8 bg-gradient-to-r from-primary to-cyan-500 hover:opacity-95 text-white font-semibold shadow-[0_10px_40px_-10px_rgba(59,130,246,0.5)]">
-                Commencer pour 1 $
+                Voir ma garantie dès 350 $
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>

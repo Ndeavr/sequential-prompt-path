@@ -65,8 +65,8 @@ function outreachHtml(name: unknown, city: unknown, category: unknown, link: str
   return shell(
     `<h2 style="margin:0 0 12px">Bonjour ${esc(name ?? "")}</h2>
 <p>Nous recevons des demandes en ${esc(category ?? "services résidentiels")} à ${esc(city ?? "votre région")} et votre entreprise correspond au profil recherché.</p>
-<p>Activez votre accès pour <strong>1,00 $ CA</strong> (7 jours) et recevez vos premiers rendez-vous.</p>`,
-    "Activer pour 1 $",
+<p>Voyez combien de rendez-vous exclusifs UNPRO peut vous garantir : <strong>jusqu'à 5 dès 350 $</strong> (paiement unique). Le nombre exact est calculé avant le paiement.</p>`,
+    "Calculer ma garantie",
     link,
   );
 }
@@ -74,7 +74,7 @@ function outreachHtml(name: unknown, city: unknown, category: unknown, link: str
 function checkoutHtml(name: unknown, link: string) {
   return shell(
     `<h2 style="margin:0 0 12px">${esc(name ?? "Votre entreprise")} — il reste une étape</h2>
-<p>Votre activation UNPRO n'a pas été complétée. Le paiement est de <strong>1,00 $ CA</strong> pour 7 jours.</p>`,
+<p>Votre calcul de garantie UNPRO n'a pas été complété. L'offre d'entrée est de <strong>350 $ CA</strong>, paiement unique, jusqu'à 5 rendez-vous exclusifs garantis.</p>`,
     "Terminer mon activation",
     link,
   );
@@ -238,7 +238,7 @@ Deno.serve(async (req) => {
             if (!p.email) throw new Error("no_email");
             result = await invokeFn("outreach-resend-send", {
               to: p.email,
-              subject: "Il reste une étape : activez pour 1 $",
+              subject: "Il reste une étape : calculez votre garantie",
               message_id: `crm-${idem}`,
               template_name: "incomplete-checkout-followup",
               cta_url: link,
@@ -456,7 +456,7 @@ Deno.serve(async (req) => {
               if (!p.email) throw new Error("no_email");
               result = await invokeFn("outreach-resend-send", {
                 to: p.email,
-                subject: "Votre lien d'activation UNPRO — 1 $",
+                subject: "Votre garantie UNPRO — dès 350 $",
                 message_id: `crm-${idem}`,
                 template_name: "incomplete-checkout-followup",
                 cta_url: link,

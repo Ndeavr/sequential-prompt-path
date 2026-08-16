@@ -269,6 +269,54 @@ async function handleCheckoutCompleted(
     return { action: "checkout_unpaid" };
   }
 
+  // ── ENTRY PACK (one-time 350 $) ──
+  // The guarantee persisted is EXACTLY the one calculated in the quote.
+  if (md.offer_kind === "pack_350" && md.quote_id) {
+    const { data: q } = await sb
+      .from("contractor_pricing_quotes")
+      .select("id,guaranteed_appointments,total_price_cents,guarantee_duration_months")
+      .eq("id", md.quote_id)
+      .maybeSingle();
+
+    if (q) {
+      await sb
+        .from("contractor_pricing_quotes")
+        .update({
+          pricing_status: "paid",
+          stripe_checkout_session_id: session.id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", q.id);
+
+      await sb.from("pricing_audit_log").insert({
+        event_type: "pack_350_paid",
+        actor_role: "system",
+        contractor_id: md.contractor_id || null,
+        quote_id: q.id,
+        new_state: {
+          guaranteed_appointments: q.guaranteed_appointments,
+          total_price_cents: q.total_price_cents,
+          guarantee_duration_months: q.guarantee_duration_months,
+          appointments_remaining: q.guaranteed_appointments,
+          checkout_session_id: session.id,
+        },
+        reason: "entry_pack_activated",
+        calculation_version: "pricing_v3.pack350",
+      });
+    }
+
+    await auditRow(sb, {
+      contractor_id: md.contractor_id || null,
+      stripe_event_id: event.id,
+      checkout_session_id: session.id,
+      action: "pack_350_activated",
+      result: "processed",
+      metadata: md,
+    });
+
+    return { action: "pack_350_activated", contractor_id: md.contractor_id || null };
+  }
+
   const contractorId = md.contractor_id || md.contractor_profile_id || null;
   const prospectId = md.prospect_id || null;
   const planCode = md.plan_code || null;

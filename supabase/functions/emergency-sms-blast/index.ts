@@ -13,10 +13,10 @@ const cors = {
 };
 
 const VARIANTS = [
-  (name: string) => `Bonjour ${name}, UNPRO peut vous envoyer 1 rendez-vous qualifié cette semaine. Activation 1 $ : https://unpro.ca/pro/activation`,
-  (name: string) => `${name}, votre profil est visible sur UNPRO. Débloquez vos leads pour 1 $ ici : https://unpro.ca/pro/activation`,
-  (name: string) => `Salut ${name} — nouveaux clients en attente près de chez vous sur UNPRO. Essai 1 $ : https://unpro.ca/pro/activation`,
-  (name: string) => `Bonjour ${name}. Alex (IA d'UNPRO) a préqualifié un projet dans votre secteur. Activation 1 $ : https://unpro.ca/pro/activation`,
+  (name: string) => `Bonjour ${name}, UNPRO peut vous envoyer 1 rendez-vous qualifié cette semaine. Jusqu'à 5 rendez-vous garantis dès 350$ : https://unpro.ca/entrepreneur/garantie`,
+  (name: string) => `${name}, votre profil est visible sur UNPRO. Voyez ce que 350$ peut vous garantir : https://unpro.ca/entrepreneur/garantie`,
+  (name: string) => `Salut ${name} — nouveaux clients en attente près de chez vous sur UNPRO. Calculez votre garantie : https://unpro.ca/entrepreneur/garantie`,
+  (name: string) => `Bonjour ${name}. Alex (IA d'UNPRO) a préqualifié un projet dans votre secteur. Jusqu'à 5 rendez-vous garantis dès 350$ : https://unpro.ca/entrepreneur/garantie`,
   (name: string) => `${name}, testez UNPRO pour 1 $ et recevez votre premier rendez-vous vérifié cette semaine : https://unpro.ca/pro/activation`,
 ];
 

@@ -11,7 +11,7 @@
 // revenue keeps the configured minimum margin against the real cost of
 // delivering those appointments.
 
-export type PricingMode = "goal" | "budget";
+export type PricingMode = "goal" | "budget" | "pack";
 
 export type ModeOutcome =
   | "goal_resolved"
@@ -19,7 +19,16 @@ export type ModeOutcome =
   | "budget_below_floor"
   | "capacity_limited"
   | "contractor_capacity_limited"
-  | "market_unavailable";
+  | "market_unavailable"
+  | "pack_resolved"
+  | "pack_capped"
+  | "analysis_required";
+
+/** Entry pack — one-time payment, publicly announced as "jusqu'à 5". */
+export const PACK_350_TOTAL_CENTS = 35000;
+export const PACK_350_MAX_APPOINTMENTS = 5;
+export const PACK_350_DURATION_MONTHS = 6;
+
 
 export interface MarginConfig {
   /** Cost of producing/acquiring ONE appointment (cents). */
@@ -221,5 +230,111 @@ export function solveBudget(
     margin: evaluateMargin(best.monthly_price_cents, best.target, input.margin),
     unused_budget_cents: Math.max(0, budget - best.monthly_price_cents),
     evaluated,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Entry pack (one-time payment) — same canonical chain, new resolution direction
+// ---------------------------------------------------------------------------
+
+export interface PackSolveInput {
+  /** One-time amount paid by the contractor (cents). */
+  total_price_cents: number;
+  /** Maximum delivery window for the guaranteed appointments. */
+  duration_months: number;
+  market_ceiling: number | null;
+  contractor_capacity: number;
+  market_unavailable: boolean;
+  margin: MarginConfig;
+  max_search?: number;
+}
+
+export interface PackSolveResult extends BudgetSolveResult {
+  total_price_cents: number;
+  duration_months: number;
+  /** Appointments the chain resolved BEFORE the public offer ceiling. */
+  resolved_before_cap: number;
+  /** True when the 350 $ public ceiling reduced the guarantee. */
+  capped_by_offer: boolean;
+  offer_max_appointments: number | null;
+}
+
+/**
+ * Resolve "how many exclusive appointments can UNPRO really guarantee for this
+ * one-time amount?".
+ *
+ * Identical resolution to `solveBudget` (same canonical price chain), plus:
+ *   - a hard public ceiling of 5 appointments for the 350 $ entry pack,
+ *   - no invented guarantee when the market ceiling is unknown or closed.
+ *
+ * No rule of three: amounts above the entry pack are resolved purely by the
+ * market chain, with no ceiling applied.
+ */
+export function solvePack(
+  input: PackSolveInput,
+  priceForTarget: (target: number) => PricedTarget,
+): PackSolveResult {
+  const total = Math.max(0, Math.round(input.total_price_cents));
+  const duration = Math.max(1, Math.round(input.duration_months || PACK_350_DURATION_MONTHS));
+  const offerMax = total <= PACK_350_TOTAL_CENTS ? PACK_350_MAX_APPOINTMENTS : null;
+
+  const base = solveBudget(
+    {
+      monthly_budget_cents: total,
+      market_ceiling: input.market_ceiling,
+      contractor_capacity: input.contractor_capacity,
+      market_unavailable: input.market_unavailable,
+      margin: input.margin,
+      max_search: input.max_search,
+    },
+    priceForTarget,
+  );
+
+  // Never invent a guarantee on a territory we cannot measure.
+  if (input.market_unavailable || input.market_ceiling === null) {
+    return {
+      ...base,
+      guaranteed_appointments: 0,
+      priced: null,
+      margin: null,
+      outcome: "analysis_required",
+      total_price_cents: total,
+      duration_months: duration,
+      resolved_before_cap: base.guaranteed_appointments,
+      capped_by_offer: false,
+      offer_max_appointments: offerMax,
+      unused_budget_cents: total,
+    };
+  }
+
+  const resolved = base.guaranteed_appointments;
+  if (resolved <= 0) {
+    return {
+      ...base,
+      outcome: "budget_below_floor",
+      total_price_cents: total,
+      duration_months: duration,
+      resolved_before_cap: resolved,
+      capped_by_offer: false,
+      offer_max_appointments: offerMax,
+    };
+  }
+
+  const capped = offerMax !== null && resolved > offerMax;
+  const guaranteed = capped ? offerMax! : resolved;
+  const priced = capped ? priceForTarget(guaranteed) : base.priced;
+
+  return {
+    ...base,
+    guaranteed_appointments: guaranteed,
+    priced,
+    margin: evaluateMargin(total, guaranteed, input.margin),
+    outcome: capped ? "pack_capped" : "pack_resolved",
+    total_price_cents: total,
+    duration_months: duration,
+    resolved_before_cap: resolved,
+    capped_by_offer: capped,
+    offer_max_appointments: offerMax,
+    unused_budget_cents: Math.max(0, total - (priced?.monthly_price_cents ?? 0)),
   };
 }

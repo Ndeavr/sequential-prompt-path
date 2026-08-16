@@ -55,6 +55,8 @@ export const FALLBACK_RULES: ContentRule[] = [
   { pattern: "AI-readable", matchType: "plain", severity: "warn", category: "seo_internal", description: "GEO jargon" },
   { pattern: "\\bGEO\\b", matchType: "regex", severity: "warn", category: "seo_internal", description: "Generative Engine Optimization" },
   { pattern: "\\bAEO\\b", matchType: "regex", severity: "warn", category: "seo_internal", description: "Answer Engine Optimization" },
+  { pattern: "5 rendez-vous pour 350", matchType: "plain", severity: "block", category: "jargon", description: "Promesse non calculée — dire « jusqu'à 5 » avant calcul" },
+  { pattern: "activation à 1 \\$", matchType: "regex", severity: "block", category: "jargon", description: "Offre 1 $ retirée des surfaces publiques entrepreneur" },
 ];
 
 /** Files/paths explicitly allowed to contain internal/LLM-facing content. */
