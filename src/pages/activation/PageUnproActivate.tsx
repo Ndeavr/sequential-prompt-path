@@ -39,8 +39,7 @@ export default function PageUnproActivate() {
   const [state, setState] = useState<"loading" | "ready" | "invalid" | "error">("loading");
   const [prospect, setProspect] = useState<ResolvedProspect | null>(null);
   const [profile, setProfile] = useState<ActivationProfile | null>(null);
-  const [paying, setPaying] = useState(false);
-  const [payError, setPayError] = useState<string | null>(null);
+  const navigate = useNavigate();
   const [reason, setReason] = useState<string | null>(null);
   const [correctionSent, setCorrectionSent] = useState(false);
   const engagedRef = useRef(false);
