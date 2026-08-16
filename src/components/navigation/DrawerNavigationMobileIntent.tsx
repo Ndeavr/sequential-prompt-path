@@ -12,6 +12,7 @@ import LanguageToggle from "@/components/ui/LanguageToggle";
 import { getDrawerSections } from "@/config/navigationConfig";
 import { resolveIcon } from "./IconResolver";
 import BadgePersonaActiveNavigation from "./BadgePersonaActiveNavigation";
+import UnproLogo from "@/components/brand/UnproLogo";
 import MenuRoleSwitcherUniversal from "./MenuRoleSwitcherUniversal";
 import HeaderSearch from "./HeaderSearch";
 import SmartCTA from "@/components/cta/SmartCTA";
