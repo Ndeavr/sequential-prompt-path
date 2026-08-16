@@ -179,10 +179,9 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
         <RevenueWall />
         <header className="md:hidden flex items-center justify-between border-b border-border/30 px-4 py-2.5 bg-background/80 backdrop-blur-xl sticky top-0 z-30">
           <Link to="/" className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <Sparkles className="h-3 w-3 text-primary-foreground" />
-            </div>
-            <span className="text-sm font-bold text-foreground">UNPRO Admin</span>
+            <UnproLogo size={84} className="h-5 w-auto" />
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Admin</span>
+
           </Link>
           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setMobileMenuOpen(v => !v)}>
             {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
