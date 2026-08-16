@@ -12,12 +12,16 @@ import {
   OverlayAnalyseProgress,
   runQuoteAnalysis,
 } from "@/features/quoteAnalyzer";
+import { DailyLimitError } from "@/features/quoteAnalyzer/services/quoteAnalysisClient";
+import DailyLimitReachedCard from "@/components/usage/DailyLimitReachedCard";
+import type { DailyLimitPayload } from "@/lib/copy/usagePolicy";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function PageImporterSoumissionComparative() {
   const navigate = useNavigate();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [dailyLimit, setDailyLimit] = useState<DailyLimitPayload | null>(null);
 
   const handleStartAnalysis = async (files: (File | null)[]) => {
     const filled = files.filter(Boolean) as File[];
@@ -30,6 +34,11 @@ export default function PageImporterSoumissionComparative() {
       const { analysis_id } = await runQuoteAnalysis(filled);
       navigate(`/analyse-soumissions/resultats?id=${analysis_id}`);
     } catch (e) {
+      if (e instanceof DailyLimitError) {
+        setDailyLimit(e.payload);
+        setIsAnalyzing(false);
+        return;
+      }
       console.error(e);
       toast.error("L'analyse n'a pas pu être complétée. Réessayez.");
       setIsAnalyzing(false);
