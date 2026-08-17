@@ -17,7 +17,7 @@ const VARIANTS = [
   (name: string) => `${name}, votre profil est visible sur UNPRO. Voyez ce que 350$ peut vous garantir : https://unpro.ca/entrepreneur/garantie`,
   (name: string) => `Salut ${name} — nouveaux clients en attente près de chez vous sur UNPRO. Calculez votre garantie : https://unpro.ca/entrepreneur/garantie`,
   (name: string) => `Bonjour ${name}. Alex (IA d'UNPRO) a préqualifié un projet dans votre secteur. Jusqu'à 5 rendez-vous garantis dès 350$ : https://unpro.ca/entrepreneur/garantie`,
-  (name: string) => `${name}, testez UNPRO pour 1 $ et recevez votre premier rendez-vous vérifié cette semaine : https://unpro.ca/pro/activation`,
+  (name: string) => `${name}, UNPRO : jusqu'à 5 rendez-vous exclusifs garantis dès 350 $, paiement unique : https://unpro.ca/pro/activation`,
 ];
 
 function firstName(business: string | null): string {

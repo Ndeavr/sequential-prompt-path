@@ -28,7 +28,7 @@ const STATUS_LABELS: Record<string, { label: string; tone: string }> = {
   unpro_sms_sent: { label: "SMS UNPRO", tone: "bg-blue-500/10 text-blue-500 border-blue-500/30" },
   called: { label: "Appelé", tone: "bg-amber-500/10 text-amber-500 border-amber-500/30" },
   clicked: { label: "A cliqué", tone: "bg-fuchsia-500/10 text-fuchsia-500 border-fuchsia-500/30" },
-  trial_1dollar: { label: "Essai 1 $", tone: "bg-emerald-500/15 text-emerald-500 border-emerald-500/40" },
+  trial_1dollar: { label: "Pack 350 $", tone: "bg-emerald-500/15 text-emerald-500 border-emerald-500/40" },
   subscribed: { label: "Abonné", tone: "bg-emerald-600/15 text-emerald-500 border-emerald-500/40" },
   not_interested: { label: "Pas intéressé", tone: "bg-muted text-muted-foreground border-border/40" },
 };

@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
     // 3) Compose + send ONE SMS
     const greeting = first_name ? `Bonjour ${first_name}, ` : "Bonjour, ";
     const smsBody =
-      `${greeting}test technique UNPRO. Activation entrepreneur 1 $ : ${landingUrl}`;
+      `${greeting}test technique UNPRO. Activation entrepreneur (pack 350 $) : ${landingUrl}`;
 
     const twilio = await sendTwilioSms(phone, smsBody);
 

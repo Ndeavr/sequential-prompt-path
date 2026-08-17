@@ -226,7 +226,7 @@ Deno.serve(async (req) => {
     const paid = subscription?.payment_status === "paid" || (subscription?.amount_paid_cents ?? 0) >= 100;
     stages.push({
       key: "paid_1_dollar",
-      label: "Payé 1 $",
+      label: "Payé (pack d'entrée)",
       status: paid ? "success" : "pending",
       timestamp: paid ? subscription?.current_period_start ?? subscription?.created_at ?? null : null,
       provider_id: subscription?.stripe_subscription_id ?? null,
@@ -284,7 +284,7 @@ Deno.serve(async (req) => {
       registration_started: "Attendre l'ouverture de l'inscription",
       otp_verified: "Attendre la vérification OTP",
       checkout_created: "Attendre l'ouverture du checkout Stripe",
-      paid_1_dollar: "Attendre le paiement Stripe de 1 $ CAD",
+      paid_1_dollar: "Attendre le paiement Stripe du pack d'entrée 350 $ CAD",
       activated: "Finaliser l'activation contractor",
     };
     const conversionNextAction = conversionStage

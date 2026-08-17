@@ -32,7 +32,7 @@ const MESSAGES: MessageMap = {
     "Vous pourrez ajuster votre capacité plus tard.",
   ],
   hesitating: [
-    "Vous pouvez commencer avec l'essai à 1 $.",
+    "Vous pouvez commencer avec le pack d'entrée à 350 $, paiement unique.",
     "Aucun engagement long terme requis.",
     "Le plan recommandé peut être ajusté plus tard.",
   ],

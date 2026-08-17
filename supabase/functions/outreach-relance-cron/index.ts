@@ -21,9 +21,9 @@ interface RelanceRow {
 }
 
 const COPY = {
-  j1: "Toujours intéressé à être recommandé par l'IA d'UNPRO ? Activation 7 jours : 1 $. {link}",
-  j3: "Nous recherchons actuellement des entrepreneurs dans votre secteur. Activation : 1 $. {link}",
-  j7: "Dernier rappel. Votre profil peut être activé aujourd'hui pour 1 $. {link}",
+  j1: "Toujours intéressé à être recommandé par l'IA d'UNPRO ? Jusqu'à 5 rendez-vous exclusifs garantis dès 350 $. Paiement unique. {link}",
+  j3: "Nous recherchons actuellement des entrepreneurs dans votre secteur. Jusqu'à 5 rendez-vous exclusifs garantis dès 350 $. {link}",
+  j7: "Dernier rappel. Votre profil peut être activé aujourd'hui dès 350 $, paiement unique. {link}",
 };
 
 function newToken(): string {
