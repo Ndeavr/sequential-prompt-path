@@ -202,7 +202,7 @@ export function useRunQueueWorker() {
 }
 
 export function statusLabel(p: VerifiedProspect): { label: string; tone: "ok" | "warn" | "err" | "info" } {
-  if (p.outreach_status === "activated") return { label: "Activé 1 $", tone: "ok" };
+  if (p.outreach_status === "activated") return { label: "Activé (350 $)", tone: "ok" };
   if (p.outreach_status === "clicked") return { label: "Cliqué", tone: "ok" };
   if (p.outreach_status === "delivered") return { label: "Livré", tone: "ok" };
   if (p.outreach_status === "sent") return { label: "Envoyé", tone: "info" };

@@ -207,7 +207,7 @@ export default function PageProIsolationQC() {
         </button>
 
         <p className="mt-2.5 text-[11.5px] text-center text-white/50">
-          Paiement unique de 1 $ · Aucun renouvellement automatique · Stripe
+          Paiement unique de 350 $ · Aucun renouvellement automatique · Stripe
         </p>
 
 

@@ -64,7 +64,6 @@ export default function PageInvitationActivate() {
     );
   }
 
-  const nextDate = new Date(Date.now() + 7 * 86400_000).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" });
 
   return (
     <main className="min-h-screen bg-[#050816] text-white">
@@ -82,19 +81,19 @@ export default function PageInvitationActivate() {
         )}
 
         <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur">
-          <Row label="Plan" value="Essai activation 7 jours" />
-          <Row label="Prix aujourd'hui" value="1,00 $ CA" strong />
-          <Row label="Durée" value="7 jours" />
-          <Row label="Prix après essai" value="Choix libre pendant l'essai" />
-          <Row label="Prochain prélèvement" value={`Aucun avant le ${nextDate}`} />
+          <Row label="Offre" value="Pack d'entrée UNPRO" />
+          <Row label="Prix aujourd'hui" value="350,00 $ CA" strong />
+          <Row label="Garantie" value="Jusqu'à 5 rendez-vous exclusifs" />
+          <Row label="Après le pack" value="Aucun engagement" />
+          <Row label="Prochain prélèvement" value="Aucun" />
           <Row label="Taxes" value="Incluses (facturation Québec)" />
           <Row label="Annulation" value="Possible à tout moment, aucun frais caché" />
         </div>
 
         <div className="mt-8 grid gap-2 text-sm text-white/80">
-          <RowIcon>Paiement unique de 1 $ CA</RowIcon>
+          <RowIcon>Paiement unique de 350 $ CA</RowIcon>
           <RowIcon>Aucun abonnement créé aujourd'hui</RowIcon>
-          <RowIcon>Vous choisirez votre plan pendant les 7 jours</RowIcon>
+          <RowIcon>Le nombre exact de rendez-vous garantis est calculé avant le paiement</RowIcon>
         </div>
 
         <Button
@@ -103,7 +102,7 @@ export default function PageInvitationActivate() {
           size="lg"
           className="mt-8 h-14 w-full text-base bg-white text-black hover:bg-white/90 rounded-2xl font-medium"
         >
-          {prospect.already_paid ? "Déjà activé" : starting ? "Préparation…" : (<>Activer maintenant pour 1 $ <ArrowRight className="ml-2 h-4 w-4" /></>)}
+          {prospect.already_paid ? "Déjà activé" : starting ? "Préparation…" : (<>Activer maintenant pour 350 $ <ArrowRight className="ml-2 h-4 w-4" /></>)}
         </Button>
 
         {error && <p className="mt-4 text-sm text-rose-300">{error}</p>}

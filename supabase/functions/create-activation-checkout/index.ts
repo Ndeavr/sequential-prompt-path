@@ -1,8 +1,10 @@
-// Create a Stripe one-time checkout for the 1$/7d activation offer.
+// Create a Stripe one-time checkout for the UNPRO 350 $ entry pack.
+// The legacy 1 $ activation offer is obsolete and MUST NOT be reintroduced.
 // Public: prospects can pay before having an account (email collected by Stripe).
 // Never block a payment because of an internal lookup — proceed with metadata only.
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { OFFER } from "../_shared/offerCopy.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -117,57 +119,51 @@ Deno.serve(async (req) => {
           ? `/isolation-qc?canceled=1`
           : `/pro/${encodeURIComponent(effectiveSlug)}?canceled=1`;
 
-    // ── $1 entry offer ─────────────────────────────────────────────────────
-    // When a plan is selected (plan_code or quote_id), the contractor pays 1 $
-    // today and the chosen plan starts automatically after 7 days.
-    // Without a plan, we keep the legacy one-time 1 $ activation (no renewal),
-    // so every SMS link already in the wild keeps working exactly as promised.
-    let trialPlan: {
-      code: string;
-      name: string;
-      monthly_price: number;
-      stripe_monthly_price_id: string | null;
-    } | null = null;
-    let resolvedQuoteId = quote_id ?? "";
+    // ── Offre d'entrée 350 $ (paiement unique) ─────────────────────────────
+    // L'offre 1 $ est OBSOLÈTE et interdite en recrutement. Toute activation
+    // passe désormais par le pack d'entrée 350 $ : jusqu'à 5 rendez-vous
+    // exclusifs garantis, aucun abonnement, aucun renouvellement automatique.
+    const resolvedQuoteId = quote_id ?? "";
+    let guaranteedAppointments: number | null = null;
+    let packPriceCents = OFFER.price_cents;
 
     try {
-      let wantedCode = plan_code ?? "";
-      if (!wantedCode && quote_id) {
+      if (quote_id) {
         const { data: q } = await supabase
           .from("contractor_pricing_quotes")
-          .select("recommended_plan")
+          .select("guaranteed_appointments, total_price_cents")
           .eq("id", quote_id)
           .maybeSingle();
-        wantedCode = (q?.recommended_plan as string) ?? "";
+        if (q?.guaranteed_appointments) {
+          guaranteedAppointments = Math.min(Number(q.guaranteed_appointments), OFFER.max_appointments);
+        }
+        if (q?.total_price_cents && Number(q.total_price_cents) >= OFFER.price_cents) {
+          packPriceCents = Number(q.total_price_cents);
+        }
       }
-      if (wantedCode) {
-        const { data: p } = await supabase
-          .from("plans")
-          .select("code,name,monthly_price,stripe_monthly_price_id")
-          .eq("audience", "contractor")
-          .eq("active", true)
-          .eq("code", wantedCode)
-          .maybeSingle();
-        if (p?.stripe_monthly_price_id) trialPlan = p as typeof trialPlan;
-      }
-    } catch (_) { /* soft-fail — fall back to the one-time offer */ }
+    } catch (_) { /* soft-fail — pack d'entrée standard */ }
 
-    const trialDays = 7;
+    const priceLabel = `${Math.round(packPriceCents / 100)} $`;
+    const guaranteeLine = guaranteedAppointments
+      ? `${guaranteedAppointments} rendez-vous exclusif${guaranteedAppointments > 1 ? "s" : ""} garanti${guaranteedAppointments > 1 ? "s" : ""}`
+      : `Jusqu'à ${OFFER.max_appointments} rendez-vous exclusifs garantis`;
+
     const baseMetadata: Record<string, string> = {
       // REQUIRED by stripe-unpro-webhook (checkUnproMetadata). Without these
       // two keys every activation payment is quarantined and never recorded.
       platform: "unpro",
       brand: "unpro",
-      offer_code: "contractor_activation_1_dollar",
-      activation_type: trialPlan ? "activation_trial_to_plan" : "activation_7d",
-      plan_code: trialPlan?.code ?? "",
+      offer_code: "contractor_entry_pack_350",
+      activation_type: "activation_pack_350",
+      plan_code: plan_code ?? "",
       quote_id: resolvedQuoteId,
+      guaranteed_appointments: guaranteedAppointments ? String(guaranteedAppointments) : "",
       prospect_slug: effectiveSlug,
       prospect_id: prospectId,
       campaign_id: outreachCampaignId,
       landing_token: landing_token ?? "",
       activation_token: activation_token ?? "",
-      offer: "activation_7d",
+      offer: "entry_pack_350",
       source: source ?? (isOutreach ? "sms_outreach" : ""),
       campaign_variant: utm?.camp ?? "",
       utm_city: utm?.city ?? "",
@@ -176,78 +172,36 @@ Deno.serve(async (req) => {
 
     let session;
     try {
-      const common = {
+      session = await stripe.checkout.sessions.create({
         customer_email: email || undefined,
         success_url: `${origin}${successPath}`,
         cancel_url: `${origin}${cancelPath}`,
         metadata: baseMetadata,
-        // REVENUE-CRITICAL: Stripe Adaptive Pricing was showing a
-        // "Choisir la devise — 0,74 $US / 1,00 $CA" selector with USD preselected
-        // to Québec contractors on a 1 $ CA offer. It destroyed trust at the
-        // exact moment of payment. CAD only, always.
+        // REVENUE-CRITICAL: Stripe Adaptive Pricing showed a currency selector
+        // with USD preselected to Québec contractors. CAD only, always.
         adaptive_pricing: { enabled: false },
         locale: "fr-CA" as const,
-      };
-
-      session = trialPlan
-        ? await stripe.checkout.sessions.create({
-            ...common,
-            mode: "subscription",
-            // Trial + setup-fee pattern: the 1 $ one-time item is invoiced and
-            // collected today, the plan itself starts billing after the trial.
-            line_items: [
-              {
-                quantity: 1,
-                price_data: {
-                  currency: "cad",
-                  unit_amount: 100,
-                  product_data: {
-                    name: `UNPRO — Activation ${trialDays} jours (${trialPlan.name})`,
-                    description: `1 $ CA aujourd'hui, puis ${Math.round(trialPlan.monthly_price / 100)} $ CA / mois après ${trialDays} jours.`,
-                  },
-                },
-              },
-              { price: trialPlan.stripe_monthly_price_id!, quantity: 1 },
-            ],
-            subscription_data: {
-              trial_period_days: trialDays,
-              description: `UNPRO ${trialPlan.name} — 1 $ CA pour ${trialDays} jours, puis ${Math.round(trialPlan.monthly_price / 100)} $ CA / mois.`,
-              metadata: baseMetadata,
+        mode: "payment",
+        line_items: [{
+          quantity: 1,
+          price_data: {
+            currency: "cad",
+            unit_amount: packPriceCents,
+            product_data: {
+              name: `UNPRO — Pack d'entrée ${priceLabel} (paiement unique)`,
+              description: `${guaranteeLine}. ${OFFER.payment_note}`,
             },
-            custom_text: {
-              submit: {
-                message: `1 $ CA aujourd'hui. Votre plan ${trialPlan.name} (${Math.round(trialPlan.monthly_price / 100)} $ CA / mois) démarre dans ${trialDays} jours. Annulable en tout temps.`,
-              },
-            },
-          })
-        : await stripe.checkout.sessions.create({
-            ...common,
-            mode: "payment",
-            line_items: [{
-              quantity: 1,
-              price_data: {
-                currency: "cad",
-                unit_amount: 100,
-                product_data: {
-                  name: "UNPRO — Activation 7 jours (paiement unique)",
-                  description:
-                    "1 $ aujourd'hui. Aucun renouvellement automatique. Vous choisirez votre plan pendant l'essai.",
-                },
-              },
-            }],
-            payment_intent_data: {
-              description:
-                "UNPRO Activation 7 jours — paiement unique de 1 $ CA. Aucun abonnement créé.",
-            },
-            custom_text: {
-              submit: {
-                message:
-                  "Paiement unique de 1 $ CA. Aucun abonnement — vous choisirez votre plan pendant les 7 jours d'essai.",
-              },
-            },
-          });
-
-
+          },
+        }],
+        payment_intent_data: {
+          description: `UNPRO — Pack d'entrée ${priceLabel} CA, paiement unique. ${guaranteeLine}.`,
+        },
+        custom_text: {
+          submit: {
+            message: `Paiement unique de ${priceLabel} CA. Aucun abonnement. ${guaranteeLine}.`,
+          },
+        },
+      });
     } catch (stripeErr: any) {
       console.error("[create-activation-checkout] stripe_error", stripeErr?.message || stripeErr);
       return json({ error: "stripe_error", detail: stripeErr?.message || String(stripeErr), stage: "stripe_create" }, 502);
@@ -276,11 +230,11 @@ Deno.serve(async (req) => {
     try {
       await supabase.from("billing_checkout_sessions").insert({
         stripe_checkout_session_id: session.id,
-        amount_total: 100,
+        amount_total: packPriceCents,
         currency: "cad",
         checkout_status: "open",
         payment_status: "unpaid",
-        plan_code: trialPlan?.code ?? "activation_7d",
+        plan_code: plan_code ?? "entry_pack_350",
         metadata_json: {
           prospect_id: prospectId || null,
           activation_token: activation_token ?? null,

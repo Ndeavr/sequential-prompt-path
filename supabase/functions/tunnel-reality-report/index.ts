@@ -232,7 +232,7 @@ Deno.serve(async (req) => {
       { key: "landing_view", label: "Landing ouverte", order: 5, totals: landings, last_event_at: null, top_error: null },
       { key: "account_created", label: "Compte créé", order: 6, totals: accounts, last_event_at: null, top_error: null },
       { key: "checkout_opened", label: "Checkout Stripe SMS (attribué)", order: 7, totals: checkoutOpened, last_event_at: null, top_error: null },
-      { key: "paid_success", label: "Paiement 1 $ réussi", order: 8, totals: paidSuccess, last_event_at: lastPaid, top_error: null },
+      { key: "paid_success", label: "Paiement 350 $ réussi", order: 8, totals: paidSuccess, last_event_at: lastPaid, top_error: null },
       { key: "paid_failed", label: "Paiement échoué", order: 9, totals: paidFailed, last_event_at: null, top_error: null },
       { key: "profile_completed", label: "Profil complété", order: 10, totals: completed, last_event_at: null, top_error: null },
       { key: "activated", label: "Entrepreneur activé", order: 11, totals: activated, last_event_at: null, top_error: null },

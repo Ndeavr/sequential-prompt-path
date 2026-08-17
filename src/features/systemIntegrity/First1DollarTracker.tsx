@@ -11,7 +11,7 @@ const STEPS: Array<{ key: keyof FirstPaidFunnel; label: string }> = [
   { key: "sms_delivered_at", label: "SMS livré" },
   { key: "clicked_at", label: "Clic" },
   { key: "account_created_at", label: "Compte créé" },
-  { key: "payment_at", label: "Paiement 1 $" },
+  { key: "payment_at", label: "Paiement 350 $" },
   { key: "activated_at", label: "Profil activé" },
   { key: "first_match_at", label: "Première demande compatible" },
   { key: "first_booking_at", label: "Premier rendez-vous" },
