@@ -131,14 +131,14 @@ Deno.serve(async (req) => {
       if (quote_id) {
         const { data: q } = await supabase
           .from("contractor_pricing_quotes")
-          .select("guaranteed_appointments, pack_price_cents")
+          .select("guaranteed_appointments, total_price_cents")
           .eq("id", quote_id)
           .maybeSingle();
         if (q?.guaranteed_appointments) {
           guaranteedAppointments = Math.min(Number(q.guaranteed_appointments), OFFER.max_appointments);
         }
-        if (q?.pack_price_cents && Number(q.pack_price_cents) >= OFFER.price_cents) {
-          packPriceCents = Number(q.pack_price_cents);
+        if (q?.total_price_cents && Number(q.total_price_cents) >= OFFER.price_cents) {
+          packPriceCents = Number(q.total_price_cents);
         }
       }
     } catch (_) { /* soft-fail — pack d'entrée standard */ }
