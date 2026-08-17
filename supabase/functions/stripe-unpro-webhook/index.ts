@@ -368,7 +368,7 @@ async function handleCheckoutCompleted(
     checkout_session_id: session.id,
     payment_intent_id: (session.payment_intent as string) || null,
     subscription_id: (session.subscription as string) || null,
-    action: offerCode === "contractor_activation_1_dollar" ? "dollar_activation" : "checkout_completed",
+    action: offerCode === "contractor_entry_pack_350" || offerCode === "contractor_activation_1_dollar" ? "entry_pack_activation" : "checkout_completed",
     new_status: "activated",
     amount_cents: session.amount_total ?? null,
     currency: session.currency ?? null,

@@ -402,11 +402,13 @@ Deno.serve(async (req) => {
           break;
         }
 
-        // $1 ACTIVATION flow (create-activation-checkout): the live acquisition
-        // pool is verified_contractor_prospects. Without this branch a real $1
-        // payment is invisible to the cockpit.
+        // ENTRY PACK 350 $ flow (create-activation-checkout): the live acquisition
+        // pool is verified_contractor_prospects. Without this branch a real
+        // payment is invisible to the cockpit. "activation_7d" is the legacy 1 $
+        // offer, kept only so in-flight sessions still reconcile.
         if (
           session.metadata?.activation_token ||
+          session.metadata?.offer === "entry_pack_350" ||
           session.metadata?.offer === "activation_7d"
         ) {
           const activationToken = session.metadata?.activation_token || null;
@@ -468,7 +470,7 @@ Deno.serve(async (req) => {
                       email_confirm: true,
                       user_metadata: {
                         business_name: prospect.business_name ?? null,
-                        source: "stripe_activation_1_dollar",
+                        source: "stripe_entry_pack_350",
                       },
                     });
                   if (createdUser?.user?.id) {
@@ -531,8 +533,8 @@ Deno.serve(async (req) => {
                   .eq("stripe_checkout_session_id", session.id);
                 await supabase.rpc("activate_contractor_unified", {
                   p_contractor_id: activatedContractorId,
-                  p_source: "stripe_activation_1_dollar",
-                  p_plan_id: session.metadata?.plan_code || "activation_7d",
+                  p_source: "stripe_entry_pack_350",
+                  p_plan_id: session.metadata?.plan_code || "entry_pack_350",
                   p_actor: null,
                   p_metadata: {
                     checkout_session_id: session.id,
@@ -589,7 +591,7 @@ Deno.serve(async (req) => {
               session: session.id,
             });
           } catch (e) {
-            console.error("[stripe-webhook] activation_7d handling failed", (e as Error).message);
+            console.error("[stripe-webhook] entry_pack_350 handling failed", (e as Error).message);
           }
           break;
         }
