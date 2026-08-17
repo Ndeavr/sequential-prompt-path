@@ -1,8 +1,10 @@
-// Create a Stripe one-time checkout for the 1$/7d activation offer.
+// Create a Stripe one-time checkout for the UNPRO 350 $ entry pack.
+// The legacy 1 $ activation offer is obsolete and MUST NOT be reintroduced.
 // Public: prospects can pay before having an account (email collected by Stripe).
 // Never block a payment because of an internal lookup — proceed with metadata only.
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { OFFER } from "../_shared/offerCopy.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
