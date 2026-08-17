@@ -64,7 +64,6 @@ export default function PageInvitationActivate() {
     );
   }
 
-  const nextDate = new Date(Date.now() + 7 * 86400_000).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" });
 
   return (
     <main className="min-h-screen bg-[#050816] text-white">
