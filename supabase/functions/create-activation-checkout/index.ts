@@ -230,11 +230,11 @@ Deno.serve(async (req) => {
     try {
       await supabase.from("billing_checkout_sessions").insert({
         stripe_checkout_session_id: session.id,
-        amount_total: 100,
+        amount_total: packPriceCents,
         currency: "cad",
         checkout_status: "open",
         payment_status: "unpaid",
-        plan_code: trialPlan?.code ?? "activation_7d",
+        plan_code: plan_code ?? "entry_pack_350",
         metadata_json: {
           prospect_id: prospectId || null,
           activation_token: activation_token ?? null,
