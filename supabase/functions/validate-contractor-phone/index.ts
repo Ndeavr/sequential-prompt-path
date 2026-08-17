@@ -102,14 +102,23 @@ Deno.serve(async (req) => {
             validation_errors: j?.validation_errors,
             line_type_intelligence: j?.line_type_intelligence ?? null,
           };
-          if (t === "mobile") { line_type = "mobile"; status = "valid_mobile"; }
+          // Twilio says the number does not exist / is not a routable NANP number.
+          // These are fabricated or corrupted records — never attempt SMS (CASL + sender reputation).
+          if (j?.valid === false) {
+            line_type = "unknown";
+            status = "invalid";
+            lookupError = `twilio_invalid_number: ${JSON.stringify(j?.validation_errors ?? [])}`;
+          }
+          else if (t === "mobile") { line_type = "mobile"; status = "valid_mobile"; }
           else if (t === "nonFixedVoip") { line_type = "voip"; status = "valid_sms_capable_voip"; }
           else if (t === "fixedVoip") { line_type = "voip"; status = "valid_sms_capable_voip"; }
           else if (t === "landline") { line_type = "landline"; status = "landline"; }
           else {
+            // Valid number, but Line Type Intelligence is not provisioned for this
+            // Twilio account / country. Downstream tier C attempts SMS with email fallback.
             line_type = "unknown";
             status = "unverified";
-            lookupError = `Twilio Lookup returned no SMS-capable line type: ${t ?? "missing"}`;
+            lookupError = `lti_unavailable_valid_number: ${t ?? "missing"}`;
           }
         } catch { lookupError = "Réponse Twilio Lookup illisible"; }
       } else {
@@ -120,7 +129,11 @@ Deno.serve(async (req) => {
       lookupError = "Twilio Lookup credentials missing: TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN";
     }
 
-    const sms_eligible = status === "valid_mobile" || status === "valid_sms_capable_voip";
+    const sms_eligible =
+      status === "valid_mobile" ||
+      status === "valid_sms_capable_voip" ||
+      // valid number without LTI data — tier C path (SMS attempt + email fallback)
+      (status === "unverified" && lookupError?.startsWith("lti_unavailable_valid_number") === true);
     const { error: updateErr } = await supabase.from("verified_contractor_prospects").update({
       phone_e164: e164,
       phone_line_type: line_type,
