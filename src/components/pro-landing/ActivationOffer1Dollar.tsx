@@ -58,13 +58,13 @@ export default function ActivationOffer1Dollar({ slug, companyName, onTrack }: P
               Activez votre visibilité IA locale
             </h3>
             <p className="mt-1 text-sm text-white/80">
-              Accès complet pendant 7 jours · profil optimisé · recommandations propriétaires · tableau de bord {companyName}.
+              Profil optimisé · recommandations propriétaires · tableau de bord {companyName}.
             </p>
           </div>
           <div className="flex flex-col items-stretch gap-2 md:items-end">
             <div className="text-right md:text-right">
-              <span className="text-4xl font-bold tracking-tight">1 $</span>
-              <span className="ml-1 text-sm text-white/70">pendant 7 jours</span>
+              <span className="text-4xl font-bold tracking-tight">350 $</span>
+              <span className="ml-1 text-sm text-white/70">paiement unique</span>
             </div>
             <Button
               onClick={handleActivate}
