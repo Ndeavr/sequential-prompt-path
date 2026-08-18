@@ -314,6 +314,9 @@ Deno.serve(async (req) => {
           campaign: { city: targetCity, category: targetCategory, limit, dry_run: delegatedDryRun },
           limit,
         };
+    await supabase.from("recruitment_runs")
+      .update({ delegated_function: delegatedFunction })
+      .eq("run_id", runId);
     const resp = await fetch(`${url}/functions/v1/${delegatedFunction}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
