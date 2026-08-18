@@ -183,6 +183,9 @@ Deno.serve(async (req) => {
         .or("sms_eligibility_tier.in.(A,B,C),and(sms_eligibility_tier.eq.D,email.not.is.null),and(sms_eligibility_tier.is.null,email.not.is.null)");
     }
     if (prospectIds) query = query.in("id", prospectIds);
+    if (filterCity) query = query.ilike("city", `${filterCity}%`);
+    if (filterRegion) query = query.ilike("region", filterRegion);
+    if (filterCategory) query = query.ilike("category", `%${filterCategory}%`);
 
     const { data: pool, error } = await query;
     if (error) throw new FunctionError(error.message, 500, "eligible_query_failed");
