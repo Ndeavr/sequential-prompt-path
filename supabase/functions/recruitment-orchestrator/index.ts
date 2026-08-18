@@ -142,16 +142,25 @@ Deno.serve(async (req) => {
     // ---------------------------------------------------------------
     let gapQuery = supabase
       .from("v_recruitment_coverage_gaps")
-      .select("city, category, homeowner_count, supply_count, gap_score, estimated_revenue, avg_urgency, opportunity_score, score_reasons")
+      .select("city, region, geo_kind, basis, category, homeowner_count, supply_count, gap_score, estimated_revenue, avg_urgency, ready_prospects, opportunity_score, score_reasons")
       .order("opportunity_score", { ascending: false })
-      .limit(20);
+      .limit(50);
     if (city) gapQuery = gapQuery.ilike("city", city);
     if (category) gapQuery = gapQuery.ilike("category", `%${category}%`);
     const { data: gaps, error: gapErr } = await gapQuery;
     if (gapErr) return json({ ok: false, stage: "coverage_gaps", error: rawError(gapErr) }, 500);
 
-    const targetCity = city ?? gaps?.[0]?.city ?? null;
-    const targetCategory = category ?? gaps?.[0]?.category ?? null;
+    // Actionability gate: a demand row with zero recruitable inventory produces
+    // zero sends every run. Prefer the highest-scoring row that actually has
+    // recruitment-ready contractors behind it; fall back to the raw ranking.
+    const rankedGaps = (gaps ?? []) as any[];
+    const actionable = rankedGaps.find((g) => Number(g.ready_prospects ?? 0) > 0) ?? null;
+    const targetRow = actionable ?? rankedGaps[0] ?? null;
+
+    const targetCity = city ?? targetRow?.city ?? null;
+    const targetCategory = category ?? targetRow?.category ?? null;
+    const targetRegion: string | null = targetRow?.geo_kind === "region" ? (targetRow?.region ?? null) : null;
+    const readyInventory = Number(targetRow?.ready_prospects ?? 0);
     if (!targetCity || !targetCategory) {
       return json({ ok: false, blocked: true, reason_code: "no_coverage_target",
         reason_text: "Aucune combinaison ville × catégorie exploitable dans les données de demande réelles.",
