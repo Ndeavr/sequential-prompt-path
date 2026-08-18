@@ -234,8 +234,8 @@ Deno.serve(async (req) => {
       run_id: runId, mode, city: targetCity, category: targetCategory, channel,
       requested_limit: limit, status: "running", lock_key: lockKey,
       idempotency_key: mode === "dry_run" ? `${runIdemKey}:${runId}` : effectiveIdemKey,
-      source, requested_by, delegated_function: "acquisition-queue-worker",
-      result: { province, opportunity: gaps?.[0] ?? null, limits },
+      source, requested_by, delegated_function: "pending",
+      result: { province, opportunity: targetRow ?? null, target_region: targetRegion, ready_inventory: readyInventory, limits },
     });
     if (runErr) {
       return json({ ok: false, stage: "run_registry", error: rawError(runErr) }, 500);
@@ -335,7 +335,7 @@ Deno.serve(async (req) => {
     }
     if (!resp.ok) {
       await supabase.from("recruitment_runs").update({
-        status: "failed", error_summary: `acquisition-queue-worker [${resp.status}]: ${workerText.slice(0, 400)}`,
+        status: "failed", error_summary: `${delegatedFunction} [${resp.status}]: ${workerText.slice(0, 400)}`,
         completed_at: new Date().toISOString(), result: { worker },
       }).eq("run_id", runId);
       if (lockKey) await supabase.rpc("release_recruitment_lock", { p_lock_key: lockKey, p_run_id: runId });
