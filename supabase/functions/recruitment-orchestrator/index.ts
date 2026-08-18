@@ -142,16 +142,25 @@ Deno.serve(async (req) => {
     // ---------------------------------------------------------------
     let gapQuery = supabase
       .from("v_recruitment_coverage_gaps")
-      .select("city, category, homeowner_count, supply_count, gap_score, estimated_revenue, avg_urgency, opportunity_score, score_reasons")
+      .select("city, region, geo_kind, basis, category, homeowner_count, supply_count, gap_score, estimated_revenue, avg_urgency, ready_prospects, opportunity_score, score_reasons")
       .order("opportunity_score", { ascending: false })
-      .limit(20);
+      .limit(50);
     if (city) gapQuery = gapQuery.ilike("city", city);
     if (category) gapQuery = gapQuery.ilike("category", `%${category}%`);
     const { data: gaps, error: gapErr } = await gapQuery;
     if (gapErr) return json({ ok: false, stage: "coverage_gaps", error: rawError(gapErr) }, 500);
 
-    const targetCity = city ?? gaps?.[0]?.city ?? null;
-    const targetCategory = category ?? gaps?.[0]?.category ?? null;
+    // Actionability gate: a demand row with zero recruitable inventory produces
+    // zero sends every run. Prefer the highest-scoring row that actually has
+    // recruitment-ready contractors behind it; fall back to the raw ranking.
+    const rankedGaps = (gaps ?? []) as any[];
+    const actionable = rankedGaps.find((g) => Number(g.ready_prospects ?? 0) > 0) ?? null;
+    const targetRow = actionable ?? rankedGaps[0] ?? null;
+
+    const targetCity = city ?? targetRow?.city ?? null;
+    const targetCategory = category ?? targetRow?.category ?? null;
+    const targetRegion: string | null = targetRow?.geo_kind === "region" ? (targetRow?.region ?? null) : null;
+    const readyInventory = Number(targetRow?.ready_prospects ?? 0);
     if (!targetCity || !targetCategory) {
       return json({ ok: false, blocked: true, reason_code: "no_coverage_target",
         reason_text: "Aucune combinaison ville × catégorie exploitable dans les données de demande réelles.",
@@ -225,8 +234,8 @@ Deno.serve(async (req) => {
       run_id: runId, mode, city: targetCity, category: targetCategory, channel,
       requested_limit: limit, status: "running", lock_key: lockKey,
       idempotency_key: mode === "dry_run" ? `${runIdemKey}:${runId}` : effectiveIdemKey,
-      source, requested_by, delegated_function: "acquisition-queue-worker",
-      result: { province, opportunity: gaps?.[0] ?? null, limits },
+      source, requested_by, delegated_function: "pending",
+      result: { province, opportunity: targetRow ?? null, target_region: targetRegion, ready_inventory: readyInventory, limits },
     });
     if (runErr) {
       return json({ ok: false, stage: "run_registry", error: rawError(runErr) }, 500);
@@ -283,16 +292,32 @@ Deno.serve(async (req) => {
     };
 
     // ---------------------------------------------------------------
-    // 7. Delegate to the canonical worker (never send directly)
+    // 7. Delegate to a canonical sender (never send directly)
+    //    - inventory-backed target  -> send-verified-batch (already-verified pool)
+    //    - raw-demand target        -> acquisition-queue-worker (scrape drain)
     // ---------------------------------------------------------------
     const delegatedDryRun = mode !== "execute_controlled_test";
-    const workerBody = {
-      dry_run: delegatedDryRun,
-      run_id: runId,
-      campaign: { city: targetCity, category: targetCategory, limit, dry_run: delegatedDryRun },
-      limit,
-    };
-    const resp = await fetch(`${url}/functions/v1/acquisition-queue-worker`, {
+    const useVerifiedPool = readyInventory > 0;
+    const delegatedFunction = useVerifiedPool ? "send-verified-batch" : "acquisition-queue-worker";
+    const workerBody = useVerifiedPool
+      ? {
+          dry_run: delegatedDryRun,
+          run_id: runId,
+          limit,
+          category: targetCategory,
+          ...(targetRegion ? { region: targetRegion } : { city: targetCity }),
+          ...(channel === "email" ? { channel: "email" } : {}),
+        }
+      : {
+          dry_run: delegatedDryRun,
+          run_id: runId,
+          campaign: { city: targetCity, category: targetCategory, limit, dry_run: delegatedDryRun },
+          limit,
+        };
+    await supabase.from("recruitment_runs")
+      .update({ delegated_function: delegatedFunction })
+      .eq("run_id", runId);
+    const resp = await fetch(`${url}/functions/v1/${delegatedFunction}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
       body: JSON.stringify(workerBody),
@@ -300,9 +325,20 @@ Deno.serve(async (req) => {
     const workerText = await resp.text();
     let worker: any = {};
     try { worker = JSON.parse(workerText); } catch { worker = { parse_error: workerText.slice(0, 500) }; }
+    if (useVerifiedPool) {
+      // Normalize send-verified-batch output to the worker-shaped contract used
+      // by the per-item traceability block below.
+      worker = {
+        ...worker,
+        prospects: Array.isArray(worker.eligible)
+          ? worker.eligible
+          : (Array.isArray(worker.results) ? worker.results : []),
+        sms_result: { results: Array.isArray(worker.results) ? worker.results : [] },
+      };
+    }
     if (!resp.ok) {
       await supabase.from("recruitment_runs").update({
-        status: "failed", error_summary: `acquisition-queue-worker [${resp.status}]: ${workerText.slice(0, 400)}`,
+        status: "failed", error_summary: `${delegatedFunction} [${resp.status}]: ${workerText.slice(0, 400)}`,
         completed_at: new Date().toISOString(), result: { worker },
       }).eq("run_id", runId);
       if (lockKey) await supabase.rpc("release_recruitment_lock", { p_lock_key: lockKey, p_run_id: runId });
@@ -393,7 +429,7 @@ Deno.serve(async (req) => {
       ok: true, mode, run_id: runId, city: targetCity, category: targetCategory, channel,
       lock_key: lockKey, lock, idempotency_key: runIdemKey,
       provider_calls_made: mode === "execute_controlled_test",
-      delegated_to: "acquisition-queue-worker",
+      delegated_to: delegatedFunction,
       recommendations: gaps ?? [],
       limits, conflicts,
       counts: {

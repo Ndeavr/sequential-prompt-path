@@ -141,6 +141,14 @@ Deno.serve(async (req) => {
     // Opt-in email-only wave: used for prospects whose SMS channel is proven
     // dead (landline 30006 / A2P 30034). Never sends SMS in this mode.
     const forceEmail = String(body.channel ?? "").toLowerCase() === "email";
+    // Optional geographic / trade scoping used by recruitment-orchestrator.
+    // `region` is the official registry region (Novoclimat/RBQ), `city` the
+    // municipality when the official record carries one.
+    const filterCity = typeof body.city === "string" && body.city.trim() ? body.city.trim() : null;
+    const filterRegion = typeof body.region === "string" && body.region.trim() ? body.region.trim() : null;
+    const filterCategory = typeof body.category === "string" && body.category.trim()
+      ? body.category.trim().toLowerCase()
+      : null;
 
     const url = Deno.env.get("SUPABASE_URL");
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -175,6 +183,9 @@ Deno.serve(async (req) => {
         .or("sms_eligibility_tier.in.(A,B,C),and(sms_eligibility_tier.eq.D,email.not.is.null),and(sms_eligibility_tier.is.null,email.not.is.null)");
     }
     if (prospectIds) query = query.in("id", prospectIds);
+    if (filterCity) query = query.ilike("city", `${filterCity}%`);
+    if (filterRegion) query = query.ilike("region", filterRegion);
+    if (filterCategory) query = query.ilike("category", `%${filterCategory}%`);
 
     const { data: pool, error } = await query;
     if (error) throw new FunctionError(error.message, 500, "eligible_query_failed");
