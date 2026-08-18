@@ -88891,6 +88891,7 @@ export type Database = {
           postal_code: string | null
           rbq_number: string | null
           rbq_source_url: string | null
+          region: string | null
           rejection_reason_code: string | null
           rejection_reason_text: string | null
           retry_count: number
@@ -88952,6 +88953,7 @@ export type Database = {
           postal_code?: string | null
           rbq_number?: string | null
           rbq_source_url?: string | null
+          region?: string | null
           rejection_reason_code?: string | null
           rejection_reason_text?: string | null
           retry_count?: number
@@ -89013,6 +89015,7 @@ export type Database = {
           postal_code?: string | null
           rbq_number?: string | null
           rbq_source_url?: string | null
+          region?: string | null
           rejection_reason_code?: string | null
           rejection_reason_text?: string | null
           retry_count?: number
@@ -93080,14 +93083,18 @@ export type Database = {
       v_recruitment_coverage_gaps: {
         Row: {
           avg_urgency: number | null
+          basis: string | null
           category: string | null
           city: string | null
           estimated_revenue: number | null
           gap_score: number | null
+          geo_kind: string | null
           homeowner_count: number | null
           last_signal_at: string | null
           opportunity_score: number | null
           pressure_score: number | null
+          ready_prospects: number | null
+          region: string | null
           score_reasons: Json | null
           supply_count: number | null
           target_priority_score: number | null
