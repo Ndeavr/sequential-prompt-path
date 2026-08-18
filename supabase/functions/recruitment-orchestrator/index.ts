@@ -292,16 +292,29 @@ Deno.serve(async (req) => {
     };
 
     // ---------------------------------------------------------------
-    // 7. Delegate to the canonical worker (never send directly)
+    // 7. Delegate to a canonical sender (never send directly)
+    //    - inventory-backed target  -> send-verified-batch (already-verified pool)
+    //    - raw-demand target        -> acquisition-queue-worker (scrape drain)
     // ---------------------------------------------------------------
     const delegatedDryRun = mode !== "execute_controlled_test";
-    const workerBody = {
-      dry_run: delegatedDryRun,
-      run_id: runId,
-      campaign: { city: targetCity, category: targetCategory, limit, dry_run: delegatedDryRun },
-      limit,
-    };
-    const resp = await fetch(`${url}/functions/v1/acquisition-queue-worker`, {
+    const useVerifiedPool = readyInventory > 0;
+    const delegatedFunction = useVerifiedPool ? "send-verified-batch" : "acquisition-queue-worker";
+    const workerBody = useVerifiedPool
+      ? {
+          dry_run: delegatedDryRun,
+          run_id: runId,
+          limit,
+          category: targetCategory,
+          ...(targetRegion ? { region: targetRegion } : { city: targetCity }),
+          ...(channel === "email" ? { channel: "email" } : {}),
+        }
+      : {
+          dry_run: delegatedDryRun,
+          run_id: runId,
+          campaign: { city: targetCity, category: targetCategory, limit, dry_run: delegatedDryRun },
+          limit,
+        };
+    const resp = await fetch(`${url}/functions/v1/${delegatedFunction}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
       body: JSON.stringify(workerBody),
@@ -309,6 +322,17 @@ Deno.serve(async (req) => {
     const workerText = await resp.text();
     let worker: any = {};
     try { worker = JSON.parse(workerText); } catch { worker = { parse_error: workerText.slice(0, 500) }; }
+    if (useVerifiedPool) {
+      // Normalize send-verified-batch output to the worker-shaped contract used
+      // by the per-item traceability block below.
+      worker = {
+        ...worker,
+        prospects: Array.isArray(worker.eligible)
+          ? worker.eligible
+          : (Array.isArray(worker.results) ? worker.results : []),
+        sms_result: { results: Array.isArray(worker.results) ? worker.results : [] },
+      };
+    }
     if (!resp.ok) {
       await supabase.from("recruitment_runs").update({
         status: "failed", error_summary: `acquisition-queue-worker [${resp.status}]: ${workerText.slice(0, 400)}`,
