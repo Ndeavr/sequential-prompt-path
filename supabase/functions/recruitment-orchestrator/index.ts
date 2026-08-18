@@ -429,7 +429,7 @@ Deno.serve(async (req) => {
       ok: true, mode, run_id: runId, city: targetCity, category: targetCategory, channel,
       lock_key: lockKey, lock, idempotency_key: runIdemKey,
       provider_calls_made: mode === "execute_controlled_test",
-      delegated_to: "acquisition-queue-worker",
+      delegated_to: delegatedFunction,
       recommendations: gaps ?? [],
       limits, conflicts,
       counts: {
