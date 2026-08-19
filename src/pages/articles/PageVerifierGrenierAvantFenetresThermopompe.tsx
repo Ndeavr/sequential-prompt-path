@@ -62,6 +62,7 @@ const INTERNAL_LINKS = [
   { url: "/diagnostic", anchor: "Diagnostic maison gratuit" },
   { url: "/verifier-entrepreneur", anchor: "Vérifier un entrepreneur" },
   { url: "/articles/badges-choix-consommateur-2026", anchor: "Badges Choix du consommateur en 2026" },
+  { url: "/articles/moins-de-soumissions-plus-de-factures", anchor: "Moins de soumissions, plus de factures" },
 ];
 
 const LOSSES = [
