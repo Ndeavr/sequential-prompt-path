@@ -15,6 +15,12 @@ import { RefreshCw, FileText } from "lucide-react";
 /** Analyses éditoriales UNPRO (pages statiques, hors table seo_articles) */
 const EDITORIALS = [
   {
+    slug: "fournisseur-peinture-plus-contrats",
+    title: "Comment un fournisseur de peinture a augmenté ses ventes en aidant ses entrepreneurs à décrocher plus de contrats",
+    excerpt:
+      "Pourquoi aider ses entrepreneurs à obtenir plus de contrats peut devenir le meilleur programme de fidélisation d'un fournisseur.",
+  },
+  {
     slug: "moins-de-soumissions-plus-de-factures",
     title: "Moins de soumissions, plus de factures",
     excerpt:

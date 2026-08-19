@@ -64,6 +64,7 @@ const INTERNAL_LINKS = [
   { url: "/entrepreneurs", anchor: "UNPRO pour les entrepreneurs" },
   { url: "/entrepreneur/garantie", anchor: "Rendez-vous garantis : comment ça fonctionne" },
   { url: "/entrepreneur/pricing", anchor: "Tarification entrepreneur" },
+  { url: "/articles/fournisseur-peinture-plus-contrats", anchor: "Comment un fournisseur de peinture a augmenté ses ventes avec UNPRO" },
   { url: "/pourquoi-pas-trois-soumissions", anchor: "Pourquoi la fin des 3 soumissions" },
   { url: "/comment-fonctionne-ia", anchor: "Comment fonctionne la recommandation IA" },
   { url: "/articles/badges-choix-consommateur-2026", anchor: "Les badges « Choix du consommateur » en 2026" },

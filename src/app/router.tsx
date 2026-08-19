@@ -84,6 +84,7 @@ const PageWhyResultsAreDropping = lazyWithRetry(() => import("@/pages/entreprene
 const PageBadgesConsommateur2026 = lazyWithRetry(() => import("@/pages/articles/PageBadgesConsommateur2026"));
 const PageVerifierGrenierAvantFenetresThermopompe = lazyWithRetry(() => import("@/pages/articles/PageVerifierGrenierAvantFenetresThermopompe"));
 const PageMoinsSoumissionsPlusFactures = lazyWithRetry(() => import("@/pages/articles/PageMoinsSoumissionsPlusFactures"));
+const PageFournisseurPeinturePlusContrats = lazyWithRetry(() => import("@/pages/articles/PageFournisseurPeinturePlusContrats"));
 const PageSignaturePartner = lazyWithRetry(() => import("@/pages/partners/PageSignaturePartner"));
 const PageAdminPartners = lazyWithRetry(() => import("@/pages/admin/partners/PageAdminPartners"));
 const PageAdminContentGuard = lazyWithRetry(() => import("@/pages/admin/PageAdminContentGuard"));
@@ -1042,6 +1043,7 @@ export const AppRouter = () => (
         <Route path="/badges-choix-consommateur-2026" element={<Suspense fallback={<LazyFallback />}><PageBadgesConsommateur2026 /></Suspense>} />
         <Route path="/articles/verifier-grenier-avant-fenetres-thermopompe" element={<Suspense fallback={<LazyFallback />}><PageVerifierGrenierAvantFenetresThermopompe /></Suspense>} />
         <Route path="/articles/moins-de-soumissions-plus-de-factures" element={<Suspense fallback={<LazyFallback />}><PageMoinsSoumissionsPlusFactures /></Suspense>} />
+        <Route path="/articles/fournisseur-peinture-plus-contrats" element={<Suspense fallback={<LazyFallback />}><PageFournisseurPeinturePlusContrats /></Suspense>} />
         <Route path="/entrepreneur/plan-ia" element={<Suspense fallback={<LazyFallback />}><PageDynamicPlanGeneration /></Suspense>} />
         <Route path="/admin/dynamic-pricing" element={<Suspense fallback={<LazyFallback />}><PageAdminDynamicPricing /></Suspense>} />
         <Route path="/entrepreneur/onboarding-voice" element={<Suspense fallback={<LazyFallback />}><PageContractorVoiceFirstLanding /></Suspense>} />
