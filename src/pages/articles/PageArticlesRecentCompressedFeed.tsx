@@ -3,6 +3,7 @@
  * Compressed feed of recent published articles.
  */
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import SeoHead from "@/seo/components/SeoHead";
 import HeroArticleFeatured from "@/components/articles/HeroArticleFeatured";
@@ -10,6 +11,26 @@ import CardArticleCompressed from "@/components/articles/CardArticleCompressed";
 import SkeletonArticleCard from "@/components/articles/SkeletonArticleCard";
 import { motion } from "framer-motion";
 import { RefreshCw, FileText } from "lucide-react";
+
+/** Analyses éditoriales UNPRO (pages statiques, hors table seo_articles) */
+const EDITORIALS = [
+  {
+    slug: "moins-de-soumissions-plus-de-factures",
+    title: "Moins de soumissions, plus de factures",
+    excerpt:
+      "Pourquoi les entrepreneurs québécois doivent viser de meilleurs rendez-vous plutôt que davantage de leads.",
+  },
+  {
+    slug: "badges-choix-consommateur-2026",
+    title: "Les badges « Choix du consommateur » suffisent-ils encore en 2026?",
+    excerpt: "Ce que les moteurs IA voient désormais au-delà du marketing.",
+  },
+  {
+    slug: "verifier-grenier-avant-fenetres-thermopompe",
+    title: "Vérifier le grenier avant les fenêtres ou la thermopompe",
+    excerpt: "L'ordre des travaux qui protège réellement le budget d'un propriétaire.",
+  },
+];
 
 function readingTime(wordCount?: number): number {
   return Math.max(1, Math.ceil((wordCount || 800) / 250));
@@ -48,6 +69,24 @@ export default function PageArticlesRecentCompressedFeed() {
             <h1 className="text-2xl font-bold text-foreground">Articles récents</h1>
             <p className="text-sm text-muted-foreground">Guides, analyses et actualités pour propriétaires et entrepreneurs au Québec.</p>
           </motion.div>
+
+          {/* Analyses éditoriales UNPRO */}
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Analyses UNPRO</h2>
+            <ul className="space-y-2">
+              {EDITORIALS.map((e) => (
+                <li key={e.slug}>
+                  <Link
+                    to={`/articles/${e.slug}`}
+                    className="block rounded-xl border border-border/50 bg-card/40 p-4 hover:border-primary/40 transition-colors"
+                  >
+                    <p className="text-sm font-semibold text-foreground">{e.title}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{e.excerpt}</p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
 
           {/* Loading */}
           {isLoading && (

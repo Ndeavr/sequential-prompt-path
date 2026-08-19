@@ -67,6 +67,7 @@ const INTERNAL_LINKS = [
   { url: "/comment-fonctionne-ia", anchor: "Comment fonctionne l'IA UNPRO" },
   { url: "/verification-rbq", anchor: "Vérification RBQ" },
   { url: "/analyse-confiance-entrepreneur", anchor: "Analyse de confiance entrepreneuriale" },
+  { url: "/articles/moins-de-soumissions-plus-de-factures", anchor: "Moins de soumissions, plus de factures" },
 ];
 
 const AI_SEES_NOW = [

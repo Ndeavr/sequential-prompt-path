@@ -51,6 +51,10 @@ const PILLAR_ROUTES: { path: string; changefreq?: string; priority?: string }[] 
   { path: "/a-propos", changefreq: "monthly", priority: "0.6" },
   { path: "/journal", changefreq: "weekly", priority: "0.8" },
   { path: "/blog", changefreq: "weekly", priority: "0.8" },
+  { path: "/articles", changefreq: "weekly", priority: "0.8" },
+  { path: "/articles/moins-de-soumissions-plus-de-factures", changefreq: "monthly", priority: "0.8" },
+  { path: "/articles/badges-choix-consommateur-2026", changefreq: "monthly", priority: "0.7" },
+  { path: "/articles/verifier-grenier-avant-fenetres-thermopompe", changefreq: "monthly", priority: "0.7" },
 ];
 
 // --------------------------------------------------------------------------
