@@ -309,9 +309,35 @@ Deno.serve(async (req) => {
       ...DEFAULT_WEIGHTS.objective_multipliers,
       ...(((cfgRow?.weights as any)?.objective_multipliers) ?? {}),
     };
-    const pricingVersion = cfgRow?.pricing_version ?? "v2026.08-growth";
     const minCents = cfgRow?.min_monthly_cents ?? 4900;
     const maxCents = cfgRow?.max_monthly_cents ?? 149900;
+
+    // ---------- Growth settings (profile fee, annual discount, caps) ----------
+    const { data: growthCfg } = await svc
+      .from("pricing_growth_settings")
+      .select(
+        "profile_fee_cents,annual_months_charged,guaranteed_appointments_cap,entry_pack_total_cents,entry_pack_duration_months,default_close_rate",
+      )
+      .eq("active", true)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const profileFeeCents = Math.max(0, Math.round(Number(growthCfg?.profile_fee_cents ?? 35000)));
+    const annualMonthsCharged = Math.max(1, Number(growthCfg?.annual_months_charged ?? 10));
+    const entryPackTotalCents = Math.max(
+      0,
+      Math.round(Number(growthCfg?.entry_pack_total_cents ?? PACK_350_TOTAL_CENTS)),
+    );
+    const entryPackDurationMonths = Math.max(
+      1,
+      Math.round(Number(growthCfg?.entry_pack_duration_months ?? PACK_350_DURATION_MONTHS)),
+    );
+    const guaranteeCap = Math.max(
+      1,
+      Math.round(Number(growthCfg?.guaranteed_appointments_cap ?? PACK_350_MAX_APPOINTMENTS)),
+    );
+
 
     // ---------- Catalog ----------
     const { data: planRows } = await svc
