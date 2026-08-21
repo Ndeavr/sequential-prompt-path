@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
     if (quoteId) {
       const { data: q, error: qErr } = await serviceClient
         .from("contractor_pricing_quotes")
-        .select("id, recommended_plan, recommended_monthly_price, pricing_status")
+        .select("id, recommended_plan, recommended_monthly_price, annual_price_cents, profile_fee_cents, pricing_status")
         .eq("id", quoteId)
         .maybeSingle();
       if (qErr || !q) {
@@ -245,7 +245,13 @@ Deno.serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      personalizedPriceCents = Math.round(Number(q.recommended_monthly_price) * 100);
+      // Quotes store CAD cents. Never re-scale.
+      const monthlyCents = Math.round(Number(q.recommended_monthly_price));
+      personalizedPriceCents =
+        interval === "year"
+          ? Math.round(Number(q.annual_price_cents ?? 0)) || monthlyCents * 10
+          : monthlyCents;
+
 
       // Closed-loop validation: client-displayed price must match server-computed quote price
       if (
