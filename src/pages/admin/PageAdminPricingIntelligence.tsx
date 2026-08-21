@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatCAD, type PricingQuote } from "@/services/contractorPricingQuoteService";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import GrowthCalculatorAdminPanel from "@/components/admin/pricing/GrowthCalculatorAdminPanel";
+
 
 const STATUSES = [
   "draft",
@@ -129,6 +131,12 @@ export default function PageAdminPricingIntelligence() {
         <h1 className="text-2xl font-semibold tracking-tight mb-6">
           Pricing Intelligence
         </h1>
+
+        <div className="mb-8">
+          <GrowthCalculatorAdminPanel />
+        </div>
+
+
 
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">

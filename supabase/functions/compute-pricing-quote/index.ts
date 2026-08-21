@@ -64,7 +64,15 @@ interface Input {
   website_url?: string | null;
   contractor_id?: string | null;
   session_id?: string | null;
+  /** Growth calculator context (persisted, never invented). */
+  annual_revenue?: number; // CAD dollars
+  gross_margin_percent?: number; // 0..100
+  growth_mode?: "percent" | "amount";
+  growth_value?: number;
+  billing_interval?: "month" | "year";
+  source?: string;
 }
+
 
 interface PlanRow {
   code: string;
@@ -303,7 +311,35 @@ Deno.serve(async (req) => {
     };
     const pricingVersion = cfgRow?.pricing_version ?? "v2026.08-growth";
     const minCents = cfgRow?.min_monthly_cents ?? 4900;
+
     const maxCents = cfgRow?.max_monthly_cents ?? 149900;
+
+    // ---------- Growth settings (profile fee, annual discount, caps) ----------
+    const { data: growthCfg } = await svc
+      .from("pricing_growth_settings")
+      .select(
+        "profile_fee_cents,annual_months_charged,guaranteed_appointments_cap,entry_pack_total_cents,entry_pack_duration_months,default_close_rate",
+      )
+      .eq("active", true)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const profileFeeCents = Math.max(0, Math.round(Number(growthCfg?.profile_fee_cents ?? 35000)));
+    const annualMonthsCharged = Math.max(1, Number(growthCfg?.annual_months_charged ?? 10));
+    const entryPackTotalCents = Math.max(
+      0,
+      Math.round(Number(growthCfg?.entry_pack_total_cents ?? PACK_350_TOTAL_CENTS)),
+    );
+    const entryPackDurationMonths = Math.max(
+      1,
+      Math.round(Number(growthCfg?.entry_pack_duration_months ?? PACK_350_DURATION_MONTHS)),
+    );
+    const guaranteeCap = Math.max(
+      1,
+      Math.round(Number(growthCfg?.guaranteed_appointments_cap ?? PACK_350_MAX_APPOINTMENTS)),
+    );
+
 
     // ---------- Catalog ----------
     const { data: planRows } = await svc
@@ -333,6 +369,22 @@ Deno.serve(async (req) => {
     // ---------- Market signals (never invented) ----------
     const citySlug = slug(body.city);
     const tradeSlug = slug(body.trade_primary);
+
+    // ---------- Admin territory / trade override (manual validation layer) ----------
+    const { data: territoryOverride } = await svc
+      .from("pricing_territory_overrides")
+      .select("price_multiplier,min_monthly_cents,max_guaranteed_appointments,manually_validated,notes")
+      .eq("service_slug", tradeSlug)
+      .eq("city_slug", citySlug)
+      .eq("active", true)
+      .maybeSingle();
+
+    const overrideMultiplier = clamp(Number(territoryOverride?.price_multiplier ?? 1), 0.5, 3);
+    const overrideFloorCents = Math.max(
+      0,
+      Math.round(Number(territoryOverride?.min_monthly_cents ?? 0)),
+    );
+
     const sources: Record<string, unknown> = {};
     // Signal read failures must be visible, not swallowed. Every missing signal
     // is reported so the quote's confidence can be judged.
@@ -622,7 +674,15 @@ Deno.serve(async (req) => {
         aipp_fee: aipp,
         subtotal,
         market_multiplier: marketMultiplier,
-        monthly_price_cents: clamp(Math.round(subtotal * marketMultiplier), minCents, maxCents),
+        monthly_price_cents: Math.max(
+          overrideFloorCents,
+          clamp(
+            Math.round(subtotal * marketMultiplier * overrideMultiplier),
+            minCents,
+            maxCents,
+          ),
+        ),
+
       };
     }
 
@@ -903,6 +963,83 @@ Deno.serve(async (req) => {
       degraded: Object.keys(signalErrors).length > 0,
     };
 
+    // ---------- Growth calculator layer (annual, profile fee, entry pack) ----------
+    const annualPriceCents = Math.round(finalPrice * annualMonthsCharged);
+    const annualSavingsCents = Math.max(0, finalPrice * 12 - annualPriceCents);
+    const competitionLevel =
+      competitionFactor >= 1.12 ? "faible" : competitionFactor >= 0.98 ? "moyenne" : "forte";
+    const billingInterval: "month" | "year" = body.billing_interval === "year" ? "year" : "month";
+
+    // Companion entry pack: same chain, never a second formula.
+    const entryPackSolved = solvePack(
+      {
+        total_price_cents: entryPackTotalCents,
+        duration_months: entryPackDurationMonths,
+        market_ceiling: capacityCeiling,
+        contractor_capacity: Math.max(0, Math.round(body.monthly_capacity ?? 0)),
+        market_unavailable: saturated || marketClosed,
+        margin: marginCfg,
+      },
+      (t) => {
+        const c = priceChain(t);
+        return {
+          target: c.target,
+          plan_code: c.plan_code,
+          monthly_price_cents: c.monthly_price_cents,
+          capacity_capped: c.capacity_capped,
+        };
+      },
+    );
+    const overrideApptCap = territoryOverride?.max_guaranteed_appointments ?? null;
+    const entryPackAppointments = Math.min(
+      guaranteeCap,
+      overrideApptCap ?? guaranteeCap,
+      Math.max(0, entryPackSolved.guaranteed_appointments),
+    );
+    const entryPack = {
+      total_price_cents: entryPackTotalCents,
+      duration_months: entryPackDurationMonths,
+      max_appointments: guaranteeCap,
+      guaranteed_appointments: entryPackAppointments,
+      outcome: entryPackSolved.outcome,
+      requires_confirmation:
+        entryPackAppointments <= 0 ||
+        entryPackSolved.outcome === "analysis_required" ||
+        saturated ||
+        marketClosed,
+    };
+
+    const growthAmountCents = (() => {
+      const rev = Math.max(0, Math.round(Number(body.annual_revenue ?? 0)));
+      if (!rev || body.growth_value == null) return null;
+      const v = Math.max(0, Number(body.growth_value));
+      return body.growth_mode === "amount"
+        ? Math.round(v * 100)
+        : Math.round(rev * (v / 100) * 100);
+    })();
+
+    const growth = {
+      profile_fee_cents: profileFeeCents,
+      billing_interval: billingInterval,
+      monthly_price_cents: finalPrice,
+      annual_price_cents: annualPriceCents,
+      annual_savings_cents: annualSavingsCents,
+      annual_months_charged: annualMonthsCharged,
+      due_today_cents:
+        (billingInterval === "year" ? annualPriceCents : finalPrice) + profileFeeCents,
+      growth_amount_cents: growthAmountCents,
+      competition_level: competitionLevel,
+      territory_override: territoryOverride
+        ? {
+            price_multiplier: overrideMultiplier,
+            manually_validated: !!territoryOverride.manually_validated,
+          }
+        : null,
+      entry_pack: entryPack,
+    };
+
+
+
     const quotePayload: Record<string, unknown> = {
       user_id: user?.id ?? null,
       contractor_id: body.contractor_id ?? null,
@@ -950,7 +1087,19 @@ Deno.serve(async (req) => {
       calculation_version: CALCULATION_VERSION,
       extra_appointment_price: extra.price_cents,
       expires_at: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(),
+      annual_revenue: body.annual_revenue != null ? Math.round(body.annual_revenue) : null,
+      gross_margin_percent: body.gross_margin_percent ?? null,
+      growth_mode: body.growth_mode ?? null,
+      growth_value: body.growth_value ?? null,
+      growth_amount: growthAmountCents,
+      profile_fee_cents: profileFeeCents,
+      billing_interval: billingInterval,
+      annual_price_cents: annualPriceCents,
+      annual_savings_cents: annualSavingsCents,
+      competition_level: competitionLevel,
+      source: body.source ?? null,
       input_payload: body as unknown as Record<string, unknown>,
+
       breakdown,
     };
 
@@ -1030,7 +1179,9 @@ Deno.serve(async (req) => {
         exclusivity_availability: exclusivityAvailability,
         pricing_explanation: pricingExplanation,
         extra_appointment_price: extra.price_cents,
+        growth,
         factors,
+
         breakdown,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },

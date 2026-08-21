@@ -58,6 +58,8 @@ Deno.serve(async (req) => {
       displayedPriceCents,
       packQuoteId,
       displayedGuaranteedAppointments,
+      includeProfileFee,
+
     } = await req.json();
     const interval: "month" | "year" = billingInterval === "year" ? "year" : "month";
 
@@ -218,7 +220,7 @@ Deno.serve(async (req) => {
     if (quoteId) {
       const { data: q, error: qErr } = await serviceClient
         .from("contractor_pricing_quotes")
-        .select("id, recommended_plan, recommended_monthly_price, pricing_status")
+        .select("id, recommended_plan, recommended_monthly_price, annual_price_cents, profile_fee_cents, pricing_status")
         .eq("id", quoteId)
         .maybeSingle();
       if (qErr || !q) {
@@ -245,7 +247,13 @@ Deno.serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      personalizedPriceCents = Math.round(Number(q.recommended_monthly_price) * 100);
+      // Quotes store CAD cents. Never re-scale.
+      const monthlyCents = Math.round(Number(q.recommended_monthly_price));
+      personalizedPriceCents =
+        interval === "year"
+          ? Math.round(Number(q.annual_price_cents ?? 0)) || monthlyCents * 10
+          : monthlyCents;
+
 
       // Closed-loop validation: client-displayed price must match server-computed quote price
       if (
@@ -505,6 +513,24 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── One-time profile creation & optimization fee (server truth only) ──
+    let profileFeeCents = 0;
+    if (includeProfileFee) {
+      const quoteFee = Math.round(Number(quoteRow?.profile_fee_cents ?? 0));
+      if (quoteFee > 0) {
+        profileFeeCents = quoteFee;
+      } else {
+        const { data: growthCfg } = await serviceClient
+          .from("pricing_growth_settings")
+          .select("profile_fee_cents")
+          .eq("active", true)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        profileFeeCents = Math.round(Number(growthCfg?.profile_fee_cents ?? 0));
+      }
+    }
+
     // Build checkout config
     const isEmbedded = uiMode === "embedded";
     const checkoutConfig: any = {
@@ -519,6 +545,7 @@ Deno.serve(async (req) => {
         ...(quoteId && { quote_id: String(quoteId) }),
         ...(redemptionId && { redemption_id: redemptionId }),
         ...(promoCode && { promo_code: promoCode.toUpperCase() }),
+        ...(profileFeeCents > 0 && { profile_fee_cents: String(profileFeeCents) }),
         ...(appointmentPack && {
           appointment_pack_size: String(appointmentPack.size),
           appointment_pack_total_cents: String(appointmentPack.totalPriceCents),
@@ -531,7 +558,22 @@ Deno.serve(async (req) => {
           billing_interval: interval,
           ...(quoteId && { quote_id: String(quoteId) }),
         },
+        ...(profileFeeCents > 0 && {
+          add_invoice_items: [
+            {
+              price_data: {
+                currency: "cad",
+                unit_amount: profileFeeCents,
+                product_data: {
+                  name: "Création et optimisation du profil UNPRO",
+                },
+              },
+              quantity: 1,
+            },
+          ],
+        }),
       },
+
     };
 
     if (isEmbedded) {

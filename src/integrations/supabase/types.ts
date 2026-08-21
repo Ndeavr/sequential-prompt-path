@@ -35524,8 +35524,12 @@ export type Database = {
       }
       contractor_pricing_quotes: {
         Row: {
+          abandoned_at: string | null
           accepted_at: string | null
           aipp_optimization_fee: number
+          annual_price_cents: number | null
+          annual_revenue: number | null
+          annual_savings_cents: number | null
           appointment_package_fee: number
           appointments_delivered: number
           approval_note: string | null
@@ -35534,12 +35538,14 @@ export type Database = {
           availability: Json
           average_project_value: number
           base_platform_fee: number
+          billing_interval: string | null
           breakdown: Json
           business_objective: string | null
           calculation_version: string | null
           capacity_availability: Json
           city: string | null
           company_name: string | null
+          competition_level: string | null
           contractor_capacity: number | null
           contractor_id: string | null
           created_at: string
@@ -35551,6 +35557,10 @@ export type Database = {
           expires_at: string | null
           extra_appointment_price: number | null
           factors: Json
+          gross_margin_percent: number | null
+          growth_amount: number | null
+          growth_mode: string | null
+          growth_value: number | null
           guarantee_duration_months: number | null
           guaranteed_appointments: number | null
           id: string
@@ -35564,12 +35574,14 @@ export type Database = {
           pricing_mode: string
           pricing_status: Database["public"]["Enums"]["pricing_quote_status"]
           pricing_version: string
+          profile_fee_cents: number | null
           recommended_monthly_price: number
           recommended_plan: string
           requires_approval: boolean
           roi_estimate: number
           seasonality_multiplier: number
           service_cities: string[]
+          source: string | null
           stripe_checkout_session_id: string | null
           target_monthly_appointments: number
           territory_cluster: string | null
@@ -35581,8 +35593,12 @@ export type Database = {
           wants_exclusivity: boolean
         }
         Insert: {
+          abandoned_at?: string | null
           accepted_at?: string | null
           aipp_optimization_fee?: number
+          annual_price_cents?: number | null
+          annual_revenue?: number | null
+          annual_savings_cents?: number | null
           appointment_package_fee?: number
           appointments_delivered?: number
           approval_note?: string | null
@@ -35591,12 +35607,14 @@ export type Database = {
           availability?: Json
           average_project_value?: number
           base_platform_fee?: number
+          billing_interval?: string | null
           breakdown?: Json
           business_objective?: string | null
           calculation_version?: string | null
           capacity_availability?: Json
           city?: string | null
           company_name?: string | null
+          competition_level?: string | null
           contractor_capacity?: number | null
           contractor_id?: string | null
           created_at?: string
@@ -35608,6 +35626,10 @@ export type Database = {
           expires_at?: string | null
           extra_appointment_price?: number | null
           factors?: Json
+          gross_margin_percent?: number | null
+          growth_amount?: number | null
+          growth_mode?: string | null
+          growth_value?: number | null
           guarantee_duration_months?: number | null
           guaranteed_appointments?: number | null
           id?: string
@@ -35621,12 +35643,14 @@ export type Database = {
           pricing_mode?: string
           pricing_status?: Database["public"]["Enums"]["pricing_quote_status"]
           pricing_version?: string
+          profile_fee_cents?: number | null
           recommended_monthly_price?: number
           recommended_plan?: string
           requires_approval?: boolean
           roi_estimate?: number
           seasonality_multiplier?: number
           service_cities?: string[]
+          source?: string | null
           stripe_checkout_session_id?: string | null
           target_monthly_appointments?: number
           territory_cluster?: string | null
@@ -35638,8 +35662,12 @@ export type Database = {
           wants_exclusivity?: boolean
         }
         Update: {
+          abandoned_at?: string | null
           accepted_at?: string | null
           aipp_optimization_fee?: number
+          annual_price_cents?: number | null
+          annual_revenue?: number | null
+          annual_savings_cents?: number | null
           appointment_package_fee?: number
           appointments_delivered?: number
           approval_note?: string | null
@@ -35648,12 +35676,14 @@ export type Database = {
           availability?: Json
           average_project_value?: number
           base_platform_fee?: number
+          billing_interval?: string | null
           breakdown?: Json
           business_objective?: string | null
           calculation_version?: string | null
           capacity_availability?: Json
           city?: string | null
           company_name?: string | null
+          competition_level?: string | null
           contractor_capacity?: number | null
           contractor_id?: string | null
           created_at?: string
@@ -35665,6 +35695,10 @@ export type Database = {
           expires_at?: string | null
           extra_appointment_price?: number | null
           factors?: Json
+          gross_margin_percent?: number | null
+          growth_amount?: number | null
+          growth_mode?: string | null
+          growth_value?: number | null
           guarantee_duration_months?: number | null
           guaranteed_appointments?: number | null
           id?: string
@@ -35678,12 +35712,14 @@ export type Database = {
           pricing_mode?: string
           pricing_status?: Database["public"]["Enums"]["pricing_quote_status"]
           pricing_version?: string
+          profile_fee_cents?: number | null
           recommended_monthly_price?: number
           recommended_plan?: string
           requires_approval?: boolean
           roi_estimate?: number
           seasonality_multiplier?: number
           service_cities?: string[]
+          source?: string | null
           stripe_checkout_session_id?: string | null
           target_monthly_appointments?: number
           territory_cluster?: string | null
@@ -67292,6 +67328,51 @@ export type Database = {
         }
         Relationships: []
       }
+      pricing_growth_settings: {
+        Row: {
+          active: boolean
+          annual_months_charged: number
+          created_at: string
+          default_close_rate: number
+          entry_pack_duration_months: number
+          entry_pack_total_cents: number
+          guaranteed_appointments_cap: number
+          id: string
+          notes: string | null
+          profile_fee_cents: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          annual_months_charged?: number
+          created_at?: string
+          default_close_rate?: number
+          entry_pack_duration_months?: number
+          entry_pack_total_cents?: number
+          guaranteed_appointments_cap?: number
+          id?: string
+          notes?: string | null
+          profile_fee_cents?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          annual_months_charged?: number
+          created_at?: string
+          default_close_rate?: number
+          entry_pack_duration_months?: number
+          entry_pack_total_cents?: number
+          guaranteed_appointments_cap?: number
+          id?: string
+          notes?: string | null
+          profile_fee_cents?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       pricing_markets: {
         Row: {
           city_name: string
@@ -67779,6 +67860,54 @@ export type Database = {
           rule_name?: string
           rule_type?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      pricing_territory_overrides: {
+        Row: {
+          active: boolean
+          city_slug: string
+          created_at: string
+          id: string
+          manually_validated: boolean
+          max_guaranteed_appointments: number | null
+          min_monthly_cents: number | null
+          notes: string | null
+          price_multiplier: number
+          service_slug: string
+          updated_at: string
+          validated_at: string | null
+          validated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          city_slug: string
+          created_at?: string
+          id?: string
+          manually_validated?: boolean
+          max_guaranteed_appointments?: number | null
+          min_monthly_cents?: number | null
+          notes?: string | null
+          price_multiplier?: number
+          service_slug: string
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          city_slug?: string
+          created_at?: string
+          id?: string
+          manually_validated?: boolean
+          max_guaranteed_appointments?: number | null
+          min_monthly_cents?: number | null
+          notes?: string | null
+          price_multiplier?: number
+          service_slug?: string
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
         }
         Relationships: []
       }
