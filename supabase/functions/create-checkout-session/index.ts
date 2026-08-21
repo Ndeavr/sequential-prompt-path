@@ -58,6 +58,8 @@ Deno.serve(async (req) => {
       displayedPriceCents,
       packQuoteId,
       displayedGuaranteedAppointments,
+      includeProfileFee,
+
     } = await req.json();
     const interval: "month" | "year" = billingInterval === "year" ? "year" : "month";
 
