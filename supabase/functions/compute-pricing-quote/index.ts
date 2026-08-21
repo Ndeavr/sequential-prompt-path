@@ -1179,7 +1179,9 @@ Deno.serve(async (req) => {
         exclusivity_availability: exclusivityAvailability,
         pricing_explanation: pricingExplanation,
         extra_appointment_price: extra.price_cents,
+        growth,
         factors,
+
         breakdown,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
