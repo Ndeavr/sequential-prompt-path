@@ -1087,7 +1087,19 @@ Deno.serve(async (req) => {
       calculation_version: CALCULATION_VERSION,
       extra_appointment_price: extra.price_cents,
       expires_at: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(),
+      annual_revenue: body.annual_revenue != null ? Math.round(body.annual_revenue) : null,
+      gross_margin_percent: body.gross_margin_percent ?? null,
+      growth_mode: body.growth_mode ?? null,
+      growth_value: body.growth_value ?? null,
+      growth_amount: growthAmountCents,
+      profile_fee_cents: profileFeeCents,
+      billing_interval: billingInterval,
+      annual_price_cents: annualPriceCents,
+      annual_savings_cents: annualSavingsCents,
+      competition_level: competitionLevel,
+      source: body.source ?? null,
       input_payload: body as unknown as Record<string, unknown>,
+
       breakdown,
     };
 
