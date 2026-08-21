@@ -1086,6 +1086,8 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/pricing" element={<PageEntrepreneurPricing />} />
         <Route path="/entrepreneur/pricing-calculator" element={<PagePricingCalculator />} />
         <Route path="/entrepreneur/garantie" element={<PageGuaranteeCalculator />} />
+        <Route path="/entrepreneur/calculateur-forfait" element={<Suspense fallback={<LazyFallback />}><PageForfaitGrowthCalculator /></Suspense>} />
+
         <Route path="/entrepreneurs/garantie" element={<PageGuaranteeCalculator />} />
         <Route path="/entrepreneur/plan-result" element={<PagePlanResult />} />
         <Route path="/entrepreneurs/calculateur" element={<PageEntrepreneurGoalToPlanLanding />} />
