@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatCAD, type PricingQuote } from "@/services/contractorPricingQuoteService";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import GrowthCalculatorAdminPanel from "@/components/admin/pricing/GrowthCalculatorAdminPanel";
+
 
 const STATUSES = [
   "draft",
