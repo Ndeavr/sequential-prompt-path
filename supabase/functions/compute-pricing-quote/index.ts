@@ -64,7 +64,15 @@ interface Input {
   website_url?: string | null;
   contractor_id?: string | null;
   session_id?: string | null;
+  /** Growth calculator context (persisted, never invented). */
+  annual_revenue?: number; // CAD dollars
+  gross_margin_percent?: number; // 0..100
+  growth_mode?: "percent" | "amount";
+  growth_value?: number;
+  billing_interval?: "month" | "year";
+  source?: string;
 }
+
 
 interface PlanRow {
   code: string;
