@@ -309,7 +309,9 @@ Deno.serve(async (req) => {
       ...DEFAULT_WEIGHTS.objective_multipliers,
       ...(((cfgRow?.weights as any)?.objective_multipliers) ?? {}),
     };
+    const pricingVersion = cfgRow?.pricing_version ?? "v2026.08-growth";
     const minCents = cfgRow?.min_monthly_cents ?? 4900;
+
     const maxCents = cfgRow?.max_monthly_cents ?? 149900;
 
     // ---------- Growth settings (profile fee, annual discount, caps) ----------
