@@ -130,6 +130,12 @@ export default function PageAdminPricingIntelligence() {
           Pricing Intelligence
         </h1>
 
+        <div className="mb-8">
+          <GrowthCalculatorAdminPanel />
+        </div>
+
+
+
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
           <KPI label="Devis 7j" value={String(kpis.last7)} />
