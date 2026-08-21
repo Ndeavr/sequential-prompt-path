@@ -369,6 +369,22 @@ Deno.serve(async (req) => {
     // ---------- Market signals (never invented) ----------
     const citySlug = slug(body.city);
     const tradeSlug = slug(body.trade_primary);
+
+    // ---------- Admin territory / trade override (manual validation layer) ----------
+    const { data: territoryOverride } = await svc
+      .from("pricing_territory_overrides")
+      .select("price_multiplier,min_monthly_cents,max_guaranteed_appointments,manually_validated,notes")
+      .eq("service_slug", tradeSlug)
+      .eq("city_slug", citySlug)
+      .eq("active", true)
+      .maybeSingle();
+
+    const overrideMultiplier = clamp(Number(territoryOverride?.price_multiplier ?? 1), 0.5, 3);
+    const overrideFloorCents = Math.max(
+      0,
+      Math.round(Number(territoryOverride?.min_monthly_cents ?? 0)),
+    );
+
     const sources: Record<string, unknown> = {};
     // Signal read failures must be visible, not swallowed. Every missing signal
     // is reported so the quote's confidence can be judged.
