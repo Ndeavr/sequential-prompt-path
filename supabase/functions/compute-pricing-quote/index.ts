@@ -674,7 +674,15 @@ Deno.serve(async (req) => {
         aipp_fee: aipp,
         subtotal,
         market_multiplier: marketMultiplier,
-        monthly_price_cents: clamp(Math.round(subtotal * marketMultiplier), minCents, maxCents),
+        monthly_price_cents: Math.max(
+          overrideFloorCents,
+          clamp(
+            Math.round(subtotal * marketMultiplier * overrideMultiplier),
+            minCents,
+            maxCents,
+          ),
+        ),
+
       };
     }
 
