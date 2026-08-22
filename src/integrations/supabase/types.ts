@@ -28918,6 +28918,219 @@ export type Database = {
           },
         ]
       }
+      contractor_compatibility_insights: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          detail_fr: string | null
+          evidence: Json
+          id: string
+          insight_type: string
+          proposed_change: Json
+          status: string
+          title_fr: string
+          updated_at: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          detail_fr?: string | null
+          evidence?: Json
+          id?: string
+          insight_type: string
+          proposed_change?: Json
+          status?: string
+          title_fr: string
+          updated_at?: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          detail_fr?: string | null
+          evidence?: Json
+          id?: string
+          insight_type?: string
+          proposed_change?: Json
+          status?: string
+          title_fr?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_compatibility_insights_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_insights_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_insights_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_insights_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_insights_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_insights_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_insights_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_insights_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_compatibility_profiles: {
+        Row: {
+          answers: Json
+          completed_at: string | null
+          completion_pct: number
+          contractor_id: string
+          created_at: string
+          critical_notes: string[]
+          current_step: number
+          floor_project_cents: number | null
+          id: string
+          ideal_project_max_cents: number | null
+          ideal_project_min_cents: number | null
+          last_updated_by: string | null
+          status: string
+          summary: Json
+          trade_pack: string
+          updated_at: string
+          volume_preference: string | null
+        }
+        Insert: {
+          answers?: Json
+          completed_at?: string | null
+          completion_pct?: number
+          contractor_id: string
+          created_at?: string
+          critical_notes?: string[]
+          current_step?: number
+          floor_project_cents?: number | null
+          id?: string
+          ideal_project_max_cents?: number | null
+          ideal_project_min_cents?: number | null
+          last_updated_by?: string | null
+          status?: string
+          summary?: Json
+          trade_pack?: string
+          updated_at?: string
+          volume_preference?: string | null
+        }
+        Update: {
+          answers?: Json
+          completed_at?: string | null
+          completion_pct?: number
+          contractor_id?: string
+          created_at?: string
+          critical_notes?: string[]
+          current_step?: number
+          floor_project_cents?: number | null
+          id?: string
+          ideal_project_max_cents?: number | null
+          ideal_project_min_cents?: number | null
+          last_updated_by?: string | null
+          status?: string
+          summary?: Json
+          trade_pack?: string
+          updated_at?: string
+          volume_preference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_compatibility_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_competitors: {
         Row: {
           aipp_score: number | null
@@ -33867,6 +34080,102 @@ export type Database = {
           },
         ]
       }
+      contractor_matching_rules: {
+        Row: {
+          confirmed_by_contractor: boolean
+          contractor_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          payload: Json
+          rule_key: string
+          rule_type: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          confirmed_by_contractor?: boolean
+          contractor_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          payload?: Json
+          rule_key: string
+          rule_type: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          confirmed_by_contractor?: boolean
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          payload?: Json
+          rule_key?: string
+          rule_type?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_matching_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_matching_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_matching_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_matching_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_matching_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_matching_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_matching_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_matching_rules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_matching_status: {
         Row: {
           accepting_new_projects: boolean
@@ -35636,6 +35945,96 @@ export type Database = {
           },
         ]
       }
+      contractor_prequalification_requirements: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          criterion: string
+          id: string
+          label_fr: string | null
+          level: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          criterion: string
+          id?: string
+          label_fr?: string | null
+          level?: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          criterion?: string
+          id?: string
+          label_fr?: string | null
+          level?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_prequalification_requirements_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prequalification_requirements_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_prequalification_requirements_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_prequalification_requirements_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prequalification_requirements_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_prequalification_requirements_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prequalification_requirements_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_prequalification_requirements_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_pricing_quotes: {
         Row: {
           abandoned_at: string | null
@@ -36523,6 +36922,105 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_sms_sprint_eligible"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_project_preferences: {
+        Row: {
+          answer: string
+          condition_note: string | null
+          confidence: number
+          contractor_id: string
+          created_at: string
+          dimension: string
+          id: string
+          key: string
+          label_fr: string | null
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          condition_note?: string | null
+          confidence?: number
+          contractor_id: string
+          created_at?: string
+          dimension: string
+          id?: string
+          key: string
+          label_fr?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          condition_note?: string | null
+          confidence?: number
+          contractor_id?: string
+          created_at?: string
+          dimension?: string
+          id?: string
+          key?: string
+          label_fr?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_project_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_project_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_project_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_project_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_project_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_project_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_project_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_project_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
         ]
       }
@@ -39714,6 +40212,99 @@ export type Database = {
           },
         ]
       }
+      contractor_service_preferences: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          id: string
+          min_project_cents: number | null
+          service_label_fr: string | null
+          service_slug: string
+          source: string
+          stance: string
+          updated_at: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          id?: string
+          min_project_cents?: number | null
+          service_label_fr?: string | null
+          service_slug: string
+          source?: string
+          stance?: string
+          updated_at?: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          min_project_cents?: number | null
+          service_label_fr?: string | null
+          service_slug?: string
+          source?: string
+          stance?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_service_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_service_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_service_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_service_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_service_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_service_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_service_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_service_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_services: {
         Row: {
           category: string | null
@@ -40365,6 +40956,109 @@ export type Database = {
             foreignKeyName: "contractor_subscriptions_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: true
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_territory_preferences: {
+        Row: {
+          area_id: string | null
+          city_name: string | null
+          city_slug: string
+          contractor_id: string
+          created_at: string
+          id: string
+          min_project_cents: number | null
+          source: string
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          area_id?: string | null
+          city_name?: string | null
+          city_slug: string
+          contractor_id: string
+          created_at?: string
+          id?: string
+          min_project_cents?: number | null
+          source?: string
+          tier?: string
+          updated_at?: string
+        }
+        Update: {
+          area_id?: string | null
+          city_name?: string | null
+          city_slug?: string
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          min_project_cents?: number | null
+          source?: string
+          tier?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_territory_preferences_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_service_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_territory_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_territory_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_territory_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_territory_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_territory_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_territory_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_territory_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_territory_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
           },

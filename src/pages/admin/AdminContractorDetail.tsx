@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle, XCircle, RefreshCw, Eye, EyeOff, ExternalLink } from "lucide-react";
 import ContractorCommsTimeline from "@/components/contractor/ContractorCommsTimeline";
+import CompatibilityAdminPanel from "@/components/contractor-compatibility/CompatibilityAdminPanel";
 
 const statusLabels: Record<string, string> = {
   unverified: "Non vérifié",
@@ -200,12 +201,16 @@ const AdminContractorDetail = () => {
           />
         )}
 
+        {/* Compatibilité & projets recherchés */}
+        <CompatibilityAdminPanel contractorId={contractor.id} />
+
         {/* Merge Suggestions */}
         <MergeSuggestionsPanel
           suggestions={mergeSuggestions as any}
           contractorId={contractor.id}
           isLoading={suggestionsLoading}
         />
+
 
         {/* Verification History */}
         <VerificationHistoryTable runs={verificationHistory as any} />

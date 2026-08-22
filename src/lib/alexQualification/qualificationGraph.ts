@@ -44,6 +44,8 @@ export interface QualificationGraph {
     emergency: boolean | null;
   };
   project_context: Record<string, unknown>;
+  /** Réponses aux exigences de préqualification déclarées par les entrepreneurs. */
+  prequal_answers?: Record<string, string | boolean>;
   score: number;                  // 0-100
   missing_dimensions: string[];
   ready_for_match: boolean;
@@ -61,6 +63,7 @@ export function createEmptyGraph(language: "fr" | "en" = "fr"): QualificationGra
     photos: { requested: false, uploaded_ids: [] },
     compatibility: { schedule: null, permit_required: null, condo_board: null, emergency: null },
     project_context: {},
+    prequal_answers: {},
     score: 0,
     missing_dimensions: [],
     ready_for_match: false,
@@ -81,6 +84,7 @@ export function mergeGraph(base: QualificationGraph, patch: Partial<Qualificatio
     photos: { ...base.photos, ...(patch.photos ?? {}) },
     compatibility: { ...base.compatibility, ...(patch.compatibility ?? {}) },
     project_context: { ...base.project_context, ...(patch.project_context ?? {}) },
+    prequal_answers: { ...(base.prequal_answers ?? {}), ...(patch.prequal_answers ?? {}) },
     score: patch.score ?? base.score,
     missing_dimensions: patch.missing_dimensions ?? base.missing_dimensions,
     ready_for_match: patch.ready_for_match ?? base.ready_for_match,

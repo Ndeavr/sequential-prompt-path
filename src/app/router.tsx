@@ -691,6 +691,7 @@ const PageContractorInbox = lazyWithRetry(() => import("@/pages/pro/PageContract
 const PageJobDetailsLive = lazyWithRetry(() => import("@/pages/pro/PageJobDetailsLive"));
 const ProPartnerNetwork = lazyWithRetry(() => import("@/pages/pro/ProPartnerNetwork"));
 const ProExpertise = lazyWithRetry(() => import("@/pages/pro/ProExpertise"));
+const PageContractorCompatibility = lazyWithRetry(() => import("@/pages/pro/PageContractorCompatibility"));
 const ProTeams = lazyWithRetry(() => import("@/pages/pro/ProTeams"));
 const ProEmergencySettings = lazyWithRetry(() => import("@/pages/pro/ProEmergencySettings"));
 const ProDomainIntelligence = lazyWithRetry(() => import("@/pages/pro/ProDomainIntelligence"));
@@ -1458,6 +1459,8 @@ export const AppRouter = () => (
         <Route path="/pro/inbox/:id" element={<ProtectedRoute requiredRole="contractor"><PageJobDetailsLive /></ProtectedRoute>} />
         <Route path="/pro/partners" element={<ProtectedRoute requiredRole="contractor"><ProPartnerNetwork /></ProtectedRoute>} />
         <Route path="/pro/expertise" element={<ProtectedRoute requiredRole="contractor"><ProExpertise /></ProtectedRoute>} />
+        <Route path="/pro/compatibilite" element={<ProtectedRoute requiredRole="contractor"><PageContractorCompatibility /></ProtectedRoute>} />
+
         <Route path="/pro/teams" element={<ProtectedRoute requiredRole="contractor"><ProTeams /></ProtectedRoute>} />
         <Route path="/pro/emergency-settings" element={<ProtectedRoute requiredRole="contractor"><ProEmergencySettings /></ProtectedRoute>} />
         <Route path="/pro/domain-intelligence" element={<ProtectedRoute requiredRole="contractor"><ProDomainIntelligence /></ProtectedRoute>} />
@@ -1522,7 +1525,9 @@ export const AppRouter = () => (
         {/* Duplicate route removed — `/activation-success` is registered above (line 1042). */}
         <Route path="/admin/war-room" element={<ProtectedRoute requiredRole="admin"><PageAdminWarRoom /></ProtectedRoute>} />
         <Route path="/admin/contractors/create-manual" element={<ProtectedRoute requiredRole="admin"><PageAdminCreateContractorManual /></ProtectedRoute>} />
+        <Route path="/admin/contractors/:id/compatibilite" element={<ProtectedRoute requiredRole="admin"><PageContractorCompatibility /></ProtectedRoute>} />
         <Route path="/admin/contractors/:id" element={<ProtectedRoute requiredRole="admin"><AdminContractorDetail /></ProtectedRoute>} />
+
         <Route path="/admin/quotes" element={<ProtectedRoute requiredRole="admin"><AdminQuotes /></ProtectedRoute>} />
         <Route path="/admin/reviews" element={<ProtectedRoute requiredRole="admin"><AdminReviews /></ProtectedRoute>} />
         <Route path="/admin/documents" element={<ProtectedRoute requiredRole="admin"><AdminDocuments /></ProtectedRoute>} />
