@@ -85,6 +85,7 @@ const PageBadgesConsommateur2026 = lazyWithRetry(() => import("@/pages/articles/
 const PageVerifierGrenierAvantFenetresThermopompe = lazyWithRetry(() => import("@/pages/articles/PageVerifierGrenierAvantFenetresThermopompe"));
 const PageMoinsSoumissionsPlusFactures = lazyWithRetry(() => import("@/pages/articles/PageMoinsSoumissionsPlusFactures"));
 const PageFournisseurPeinturePlusContrats = lazyWithRetry(() => import("@/pages/articles/PageFournisseurPeinturePlusContrats"));
+const PageApparaitreRechercheIA2026 = lazyWithRetry(() => import("@/pages/articles/PageApparaitreRechercheIA2026"));
 const PageSignaturePartner = lazyWithRetry(() => import("@/pages/partners/PageSignaturePartner"));
 const PageAdminPartners = lazyWithRetry(() => import("@/pages/admin/partners/PageAdminPartners"));
 const PageAdminContentGuard = lazyWithRetry(() => import("@/pages/admin/PageAdminContentGuard"));
@@ -1047,6 +1048,7 @@ export const AppRouter = () => (
         <Route path="/articles/verifier-grenier-avant-fenetres-thermopompe" element={<Suspense fallback={<LazyFallback />}><PageVerifierGrenierAvantFenetresThermopompe /></Suspense>} />
         <Route path="/articles/moins-de-soumissions-plus-de-factures" element={<Suspense fallback={<LazyFallback />}><PageMoinsSoumissionsPlusFactures /></Suspense>} />
         <Route path="/articles/fournisseur-peinture-plus-contrats" element={<Suspense fallback={<LazyFallback />}><PageFournisseurPeinturePlusContrats /></Suspense>} />
+        <Route path="/articles/comment-apparaitre-resultats-recherche-ia-2026-entrepreneur" element={<Suspense fallback={<LazyFallback />}><PageApparaitreRechercheIA2026 /></Suspense>} />
         <Route path="/entrepreneur/plan-ia" element={<Suspense fallback={<LazyFallback />}><PageDynamicPlanGeneration /></Suspense>} />
         <Route path="/admin/dynamic-pricing" element={<Suspense fallback={<LazyFallback />}><PageAdminDynamicPricing /></Suspense>} />
         <Route path="/entrepreneur/onboarding-voice" element={<Suspense fallback={<LazyFallback />}><PageContractorVoiceFirstLanding /></Suspense>} />

@@ -61,6 +61,7 @@ const FAQS = [
 ];
 
 const INTERNAL_LINKS = [
+  { url: "/articles/comment-apparaitre-resultats-recherche-ia-2026-entrepreneur", anchor: "Comment apparaître dans les résultats de recherche par l'IA en 2026" },
   { url: "/entrepreneurs", anchor: "UNPRO pour les entrepreneurs" },
   { url: "/entrepreneur/garantie", anchor: "Rendez-vous garantis : comment ça fonctionne" },
   { url: "/entrepreneur/pricing", anchor: "Tarification entrepreneur" },
