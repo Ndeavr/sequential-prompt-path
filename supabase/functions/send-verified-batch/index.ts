@@ -381,7 +381,37 @@ Deno.serve(async (req) => {
 
 
       // Build a single activation link both channels will share.
-      const { token, link, error: linkErr } = await ensureActivationLink(supabase, origin, p.id, campaignId);
+      const { token, link, error: linkErr } = await ensureActivationLink(supabase, origin, p.id, campaignId, attribution);
+      const personalized = typeof messageOverrides[p.id] === "string" && messageOverrides[p.id].trim()
+        ? messageOverrides[p.id].trim()
+        : null;
+      const smsBody = personalized
+        ? smsWithLink(personalized, buildOutreachUrl(link, { campaign: "contractor_activation" }))
+        : SMS_TEMPLATE(p.business_name, link);
+      // Canonical selection event — proves the agent chose this prospect.
+      if (attribution) {
+        try {
+          await supabase.rpc("record_engagement_event", {
+            _event_type: "ai_selected",
+            _channel: "system",
+            _status: "ai_selected",
+            _provider: attribution.agent_name,
+            _tracking_id: token,
+            _prospect_id: p.id,
+            _source_table: "verified_prospect_tokens",
+            _source_row_id: token,
+            _metadata: {
+              acquisition_origin: attribution.acquisition_origin,
+              agent_run_id: attribution.agent_run_id,
+              agent_name: attribution.agent_name,
+              agent_version: attribution.agent_version,
+              outreach_variant: attribution.outreach_variant,
+              personalized: !!personalized,
+            },
+            _idempotency_key: `ai_selected:${token}`,
+          });
+        } catch (_) { /* never block a send on analytics */ }
+      }
       if (linkErr) {
         results.push({ id: p.id, status: "failed", error: linkErr, channel_used: null });
         continue;
