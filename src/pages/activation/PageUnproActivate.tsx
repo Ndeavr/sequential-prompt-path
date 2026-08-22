@@ -140,6 +140,7 @@ export default function PageUnproActivate() {
       if (error || !data?.url) throw new Error(error?.message ?? "checkout_unavailable");
       window.location.href = data.url as string;
     } catch (_) {
+      track("checkout_cta_failed", { placement });
       setCheckoutError("Paiement momentanément indisponible. Réessayez dans quelques secondes.");
       setCheckoutLoading(false);
     }
