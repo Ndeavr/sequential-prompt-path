@@ -2,7 +2,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import {
   compatCors,
-  sanitizeAnswers,
+  mergeAnswers,
   computeCompletion,
   buildSummary,
   materialize,
@@ -49,7 +49,12 @@ Deno.serve(async (req) => {
     }
     if (!contractorId) return json({ error: "Aucune fiche entrepreneur rattachée à ce compte." }, 404);
 
-    const answers = sanitizeAnswers(body?.answers);
+    const { data: existing } = await admin
+      .from("contractor_compatibility_profiles")
+      .select("answers")
+      .eq("contractor_id", contractorId)
+      .maybeSingle();
+    const answers = mergeAnswers(existing?.answers, body?.answers);
     const completion = computeCompletion(answers);
     const summary = buildSummary(answers);
     const now = new Date().toISOString();

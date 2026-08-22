@@ -70,6 +70,24 @@ export function citySlug(name: string): string {
 }
 
 /** Nettoyage strict : rien d'inconnu n'entre en base. */
+/**
+ * Fusionne les réponses reçues avec celles déjà stockées (autosave par étape).
+ * Une étape ne doit JAMAIS effacer les étapes précédentes.
+ */
+export function mergeAnswers(stored: unknown, incoming: unknown): CompatAnswers {
+  const a = (stored ?? {}) as Record<string, any>;
+  const b = (incoming ?? {}) as Record<string, any>;
+  const out: Record<string, any> = { ...a };
+  for (const [k, v] of Object.entries(b)) {
+    if (v && typeof v === "object" && !Array.isArray(v) && a[k] && typeof a[k] === "object" && !Array.isArray(a[k])) {
+      out[k] = { ...a[k], ...v };
+    } else if (v !== undefined) {
+      out[k] = v;
+    }
+  }
+  return sanitizeAnswers(out);
+}
+
 export function sanitizeAnswers(raw: unknown): CompatAnswers {
   const a = (raw ?? {}) as CompatAnswers;
   const out: CompatAnswers = {};
