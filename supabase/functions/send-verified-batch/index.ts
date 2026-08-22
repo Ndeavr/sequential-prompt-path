@@ -79,19 +79,48 @@ function randToken(): string {
   return crypto.randomUUID().replace(/-/g, "").slice(0, 22);
 }
 
+export interface AgentAttribution {
+  acquisition_origin: string;      // 'ai_agent' | 'automation'
+  agent_name: string;
+  agent_version: string;
+  agent_run_id: string | null;
+  agent_session_id: string | null;
+  outreach_variant: string | null;
+}
+
 async function ensureActivationLink(
   supabase: ReturnType<typeof createClient>,
   origin: string,
   prospectId: string,
   campaignId?: string | null,
-): Promise<{ token: string; link: string; error?: string }> {
+  attribution?: AgentAttribution | null,
+): Promise<{ token: string; link: string; attribution_key?: string; error?: string }> {
   const token = randToken();
+  const attributionKey = attribution ? `${attribution.acquisition_origin}:${token}` : null;
   const { error } = await supabase
     .from("verified_prospect_tokens")
-    .insert({ token, prospect_id: prospectId, campaign_id: campaignId ?? null });
+    .insert({
+      token,
+      prospect_id: prospectId,
+      campaign_id: campaignId ?? null,
+      ...(attribution
+        ? {
+          acquisition_origin: attribution.acquisition_origin,
+          agent_name: attribution.agent_name,
+          agent_version: attribution.agent_version,
+          agent_run_id: attribution.agent_run_id,
+          agent_session_id: attribution.agent_session_id,
+          outreach_variant: attribution.outreach_variant,
+          first_touch_source: attribution.acquisition_origin,
+          last_touch_source: attribution.acquisition_origin,
+          attribution_key: attributionKey,
+        }
+        : {}),
+    });
   if (error) return { token, link: "", error: `token_create_failed: ${error.message}` };
-  return { token, link: `${origin}/unpro/activate/${token}` };
+  return { token, link: `${origin}/unpro/activate/${token}`, attribution_key: attributionKey ?? undefined };
 }
+
 
 
 async function sendEmailViaResend(
@@ -149,6 +178,25 @@ Deno.serve(async (req) => {
     const filterCategory = typeof body.category === "string" && body.category.trim()
       ? body.category.trim().toLowerCase()
       : null;
+
+    // Server-bound acquisition attribution. Supplied ONLY by trusted callers
+    // (service-role automations such as ai-revenue-agent). Never derived from a
+    // query string, never inferred at payment time.
+    const attribution: AgentAttribution | null = body.attribution && typeof body.attribution === "object"
+      ? {
+        acquisition_origin: String(body.attribution.acquisition_origin ?? "automation"),
+        agent_name: String(body.attribution.agent_name ?? "unknown-agent"),
+        agent_version: String(body.attribution.agent_version ?? "v1"),
+        agent_run_id: body.attribution.agent_run_id ? String(body.attribution.agent_run_id) : null,
+        agent_session_id: body.attribution.agent_session_id ? String(body.attribution.agent_session_id) : null,
+        outreach_variant: body.attribution.outreach_variant ? String(body.attribution.outreach_variant) : null,
+      }
+      : null;
+    // Optional per-prospect message body produced by a model. The activation
+    // link is always appended server-side — a model can never alter the CTA.
+    const messageOverrides: Record<string, string> =
+      body.message_overrides && typeof body.message_overrides === "object" ? body.message_overrides : {};
+
 
     const url = Deno.env.get("SUPABASE_URL");
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -333,7 +381,37 @@ Deno.serve(async (req) => {
 
 
       // Build a single activation link both channels will share.
-      const { token, link, error: linkErr } = await ensureActivationLink(supabase, origin, p.id, campaignId);
+      const { token, link, error: linkErr } = await ensureActivationLink(supabase, origin, p.id, campaignId, attribution);
+      const personalized = typeof messageOverrides[p.id] === "string" && messageOverrides[p.id].trim()
+        ? messageOverrides[p.id].trim()
+        : null;
+      const smsBody = personalized
+        ? smsWithLink(personalized, buildOutreachUrl(link, { campaign: "contractor_activation" }))
+        : SMS_TEMPLATE(p.business_name, link);
+      // Canonical selection event — proves the agent chose this prospect.
+      if (attribution) {
+        try {
+          await supabase.rpc("record_engagement_event", {
+            _event_type: "ai_selected",
+            _channel: "system",
+            _status: "ai_selected",
+            _provider: attribution.agent_name,
+            _tracking_id: token,
+            _prospect_id: p.id,
+            _source_table: "verified_prospect_tokens",
+            _source_row_id: token,
+            _metadata: {
+              acquisition_origin: attribution.acquisition_origin,
+              agent_run_id: attribution.agent_run_id,
+              agent_name: attribution.agent_name,
+              agent_version: attribution.agent_version,
+              outreach_variant: attribution.outreach_variant,
+              personalized: !!personalized,
+            },
+            _idempotency_key: `ai_selected:${token}`,
+          });
+        } catch (_) { /* never block a send on analytics */ }
+      }
       if (linkErr) {
         results.push({ id: p.id, status: "failed", error: linkErr, channel_used: null });
         continue;
@@ -351,7 +429,7 @@ Deno.serve(async (req) => {
       // -------- SMS attempt --------
       if (shouldTrySms) {
         smsAttempted = true;
-        const message = SMS_TEMPLATE(p.business_name, link);
+        const message = smsBody;
         const twResp = await fetch(
           `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
           {
@@ -434,7 +512,7 @@ Deno.serve(async (req) => {
         await supabase.from("acq_sms_logs").insert({
           prospect_id: p.id,
           recipient_phone: String(p.phone_e164),
-          body: SMS_TEMPLATE(p.business_name, link),
+          body: smsBody,
           status: "sent",
           provider_message_id: smsSid,
           sent_at: nowIso,
@@ -518,7 +596,32 @@ Deno.serve(async (req) => {
           fallback_reason: fallbackReason, twilio_error_code: twilioErrorCode, email_error: emailError,
         });
       }
+
+      // Canonical outreach event for the AI attribution chain.
+      if (attribution && channelUsed) {
+        try {
+          await supabase.rpc("record_engagement_event", {
+            _event_type: channelUsed === "sms" ? "sms_sent" : "email_sent",
+            _channel: channelUsed,
+            _status: "sent",
+            _provider: channelUsed === "sms" ? "twilio" : "resend",
+            _tracking_id: token,
+            _prospect_id: p.id,
+            _source_table: "verified_prospect_tokens",
+            _source_row_id: token,
+            _metadata: {
+              acquisition_origin: attribution.acquisition_origin,
+              agent_run_id: attribution.agent_run_id,
+              agent_name: attribution.agent_name,
+              outreach_variant: attribution.outreach_variant,
+              provider_message_id: channelUsed === "sms" ? smsSid : resendId,
+            },
+            _idempotency_key: `ai_outreach_sent:${token}`,
+          });
+        } catch (_) { /* analytics must never block revenue */ }
+      }
     }
+
 
 
     const allResults = [...results, ...missingResults];

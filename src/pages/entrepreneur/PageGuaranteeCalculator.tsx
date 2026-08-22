@@ -106,17 +106,31 @@ export default function PageGuaranteeCalculator() {
     if (!quote || quote.guaranteed_appointments <= 0) return;
     setPaying(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-checkout-session", {
-        body: {
-          packQuoteId: quote.quote_id,
-          displayedPriceCents: quote.total_price_cents,
-          displayedGuaranteedAppointments: quote.guaranteed_appointments,
-        },
-      });
+      // Un jeton d'activation (?t=) signifie que le prospect vient d'une
+      // sollicitation UNPRO : on passe par le checkout d'activation pour
+      // préserver la chaîne d'attribution jusqu'au paiement.
+      const activationToken =
+        typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("t") : null;
+      const { data, error } = activationToken
+        ? await supabase.functions.invoke("create-activation-checkout", {
+          body: {
+            activation_token: activationToken,
+            quote_id: quote.quote_id,
+            source: "guarantee_calculator",
+          },
+        })
+        : await supabase.functions.invoke("create-checkout-session", {
+          body: {
+            packQuoteId: quote.quote_id,
+            displayedPriceCents: quote.total_price_cents,
+            displayedGuaranteedAppointments: quote.guaranteed_appointments,
+          },
+        });
       if (error) throw new Error(error.message);
       if ((data as any)?.error) throw new Error((data as any).error);
       if ((data as any)?.url) redirectToCheckout((data as any).url);
       else toast.error("Impossible d'ouvrir le paiement. Réessayez.");
+
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erreur de paiement.");
     } finally {

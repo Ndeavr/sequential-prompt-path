@@ -34,7 +34,20 @@ Deno.serve(async (req) => {
     let outreachSlug = slug;
 
     // /unpro/activate/:token flow — resolve the verified prospect from the SMS token.
+    // ATTRIBUTION IS READ FROM THE DATABASE ROW, NEVER FROM THE REQUEST BODY.
     let activationProspectId = "";
+    let attr: {
+      acquisition_origin: string | null;
+      agent_run_id: string | null;
+      agent_name: string | null;
+      agent_version: string | null;
+      attribution_key: string | null;
+      outreach_variant: string | null;
+      human_unpro_touches: number;
+    } = {
+      acquisition_origin: null, agent_run_id: null, agent_name: null,
+      agent_version: null, attribution_key: null, outreach_variant: null, human_unpro_touches: 0,
+    };
     if (activation_token) {
       const svc = createClient(
         Deno.env.get("SUPABASE_URL")!,
@@ -42,14 +55,26 @@ Deno.serve(async (req) => {
       );
       const { data: tk } = await svc
         .from("verified_prospect_tokens")
-        .select("prospect_id")
+        .select("prospect_id, acquisition_origin, agent_run_id, agent_name, agent_version, attribution_key, outreach_variant, human_unpro_touches")
         .eq("token", activation_token)
         .maybeSingle();
       if (tk?.prospect_id) {
         activationProspectId = tk.prospect_id as string;
         outreachSlug = outreachSlug || `activation-${activationProspectId}`;
       }
+      if (tk) {
+        attr = {
+          acquisition_origin: (tk as any).acquisition_origin ?? null,
+          agent_run_id: (tk as any).agent_run_id ?? null,
+          agent_name: (tk as any).agent_name ?? null,
+          agent_version: (tk as any).agent_version ?? null,
+          attribution_key: (tk as any).attribution_key ?? null,
+          outreach_variant: (tk as any).outreach_variant ?? null,
+          human_unpro_touches: Number((tk as any).human_unpro_touches ?? 0),
+        };
+      }
     }
+
 
     if (landing_token) {
       const supabaseEarly = createClient(
@@ -168,6 +193,14 @@ Deno.serve(async (req) => {
       campaign_variant: utm?.camp ?? "",
       utm_city: utm?.city ?? "",
       utm_company: utm?.company ?? "",
+      // ── AI revenue attribution (server-bound, DB-derived) ────────────────
+      acquisition_origin: attr.acquisition_origin ?? "",
+      agent_run_id: attr.agent_run_id ?? "",
+      agent_name: attr.agent_name ?? "",
+      agent_version: attr.agent_version ?? "",
+      attribution_key: attr.attribution_key ?? "",
+      outreach_variant: attr.outreach_variant ?? "",
+      human_unpro_touches: String(attr.human_unpro_touches ?? 0),
     };
 
     let session;
@@ -235,6 +268,11 @@ Deno.serve(async (req) => {
         checkout_status: "open",
         payment_status: "unpaid",
         plan_code: plan_code ?? "entry_pack_350",
+        acquisition_origin: attr.acquisition_origin,
+        agent_run_id: attr.agent_run_id,
+        activation_token: activation_token ?? null,
+        attribution_key: attr.attribution_key,
+        prospect_id: prospectId || null,
         metadata_json: {
           prospect_id: prospectId || null,
           activation_token: activation_token ?? null,

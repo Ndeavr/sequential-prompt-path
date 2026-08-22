@@ -269,6 +269,52 @@ async function handleCheckoutCompleted(
     return { action: "checkout_unpaid" };
   }
 
+  // ── AI REVENUE PROOF: seal the attribution chain at payment time ─────────
+  // Attribution is NEVER inferred here. It was written on the activation token
+  // when the agent sent the outreach, copied into Stripe metadata at checkout
+  // creation, and is now persisted back onto the canonical checkout record.
+  try {
+    const activationToken = (md.activation_token as string) || null;
+    const paidAt = new Date().toISOString();
+    await sb
+      .from("billing_checkout_sessions")
+      .update({
+        checkout_status: "complete",
+        payment_status: "paid",
+        paid_at: paidAt,
+        acquisition_origin: (md.acquisition_origin as string) || null,
+        agent_run_id: (md.agent_run_id as string) || null,
+        activation_token: activationToken,
+        attribution_key: (md.attribution_key as string) || null,
+        prospect_id: (md.prospect_id as string) || null,
+      })
+      .eq("stripe_checkout_session_id", session.id);
+
+    if (activationToken) {
+      await sb.rpc("record_engagement_event", {
+        _event_type: "payment_succeeded",
+        _channel: "web",
+        _status: "paid",
+        _provider: "stripe",
+        _tracking_id: activationToken,
+        _prospect_id: (md.prospect_id as string) || null,
+        _source_table: "billing_checkout_sessions",
+        _source_row_id: session.id,
+        _metadata: {
+          acquisition_origin: (md.acquisition_origin as string) || null,
+          agent_run_id: (md.agent_run_id as string) || null,
+          agent_name: (md.agent_name as string) || null,
+          human_unpro_touches: (md.human_unpro_touches as string) || "0",
+          amount_total: session.amount_total,
+        },
+        _idempotency_key: `payment_succeeded:${session.id}`,
+      });
+    }
+  } catch (e) {
+    console.error("[stripe-unpro-webhook] attribution_seal_failed", String(e));
+  }
+
+
   // ── ENTRY PACK (one-time 350 $) ──
   // The guarantee persisted is EXACTLY the one calculated in the quote.
   if (md.offer_kind === "pack_350" && md.quote_id) {

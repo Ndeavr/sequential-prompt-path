@@ -42,7 +42,10 @@ export default function PageUnproActivate() {
   const navigate = useNavigate();
   const [reason, setReason] = useState<string | null>(null);
   const [correctionSent, setCorrectionSent] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const engagedRef = useRef(false);
+
 
   const track = useActivationTracking(token, preview);
 
@@ -116,21 +119,45 @@ export default function PageUnproActivate() {
   }, [track, profile]);
 
   /**
-   * L'offre d'entrée est le pack 350 $. La garantie DOIT être calculée avant
-   * tout paiement : on dirige vers le calculateur canonique, pré-rempli avec
-   * les faits déjà vérifiés du prospect.
+   * REVENUE-CRITICAL — zéro friction entre le clic et Stripe.
+   * L'offre d'entrée (350 $, jusqu'à 5 rendez-vous exclusifs garantis) est
+   * complète en elle-même : on ouvre directement le checkout canonique avec le
+   * jeton d'activation, ce qui préserve aussi la chaîne d'attribution.
+   * Le calculateur reste accessible en action secondaire pour personnaliser.
    */
-  function handleActivate(placement: string) {
-    if (!prospect) return;
+  async function handleActivate(placement: string) {
+    if (!prospect || checkoutLoading) return;
     track("checkout_cta_clicked", { placement, offer: "pack_350" });
+    setCheckoutLoading(true);
+    setCheckoutError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-activation-checkout", {
+        body: {
+          activation_token: token,
+          source: "activation_landing",
+        },
+      });
+      if (error || !data?.url) throw new Error(error?.message ?? "checkout_unavailable");
+      window.location.href = data.url as string;
+    } catch (_) {
+      track("checkout_cta_failed", { placement });
+      setCheckoutError("Paiement momentanément indisponible. Réessayez dans quelques secondes.");
+      setCheckoutLoading(false);
+    }
+  }
+
+  /** Action secondaire : calculer une garantie personnalisée (jeton conservé). */
+  function handleCustomize() {
+    track("customize_guarantee_clicked", { offer: "pack_350" });
     const params = new URLSearchParams();
     if (token) params.set("t", token);
-    const trade = profile?.trade ?? prospect.category ?? "";
-    const city = profile?.city ?? prospect.city ?? "";
+    const trade = profile?.trade ?? prospect?.category ?? "";
+    const city = profile?.city ?? prospect?.city ?? "";
     if (trade) params.set("trade", trade);
     if (city) params.set("city", city);
     navigate(`/entrepreneur/garantie?${params.toString()}`);
   }
+
 
   const company = profile?.display_name ?? prospect?.business_name?.trim() ?? "votre entreprise";
 
@@ -251,15 +278,29 @@ export default function PageUnproActivate() {
 
               <Button
                 onClick={() => handleActivate("inline")}
+                disabled={checkoutLoading}
                 className="mt-5 h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#050816] hover:bg-white/90"
               >
-                {OFFER_350.ctaPrimary} <ArrowRight className="ml-1 h-4 w-4" />
+                {checkoutLoading ? "Ouverture du paiement…" : (<>{OFFER_350.ctaPrimary} <ArrowRight className="ml-1 h-4 w-4" /></>)}
               </Button>
+
+              <button
+                type="button"
+                onClick={handleCustomize}
+                className="mt-3 w-full text-center text-xs text-white/60 underline underline-offset-4 hover:text-white/80"
+              >
+                Personnaliser ma garantie avant de payer
+              </button>
+
+              {checkoutError && (
+                <p className="mt-3 text-center text-xs text-rose-300">{checkoutError}</p>
+              )}
 
               <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[11px] text-white/50">
                 <ShieldCheck className="h-3 w-3" />
-                {OFFER_350.paymentNote} Garantie calculée avant tout paiement.
+                {OFFER_350.paymentNote} Jusqu'à 5 rendez-vous exclusifs garantis.
               </p>
+
             </div>
           </div>
         )}
@@ -270,10 +311,12 @@ export default function PageUnproActivate() {
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#050816]/95 px-5 py-3 backdrop-blur sm:hidden">
           <Button
             onClick={() => handleActivate("sticky_mobile")}
+            disabled={checkoutLoading}
             className="h-13 w-full rounded-2xl bg-white py-3.5 text-base font-semibold text-[#050816] hover:bg-white/90"
           >
-            {OFFER_350.ctaPrimary}
+            {checkoutLoading ? "Ouverture du paiement…" : OFFER_350.ctaPrimary}
           </Button>
+
         </div>
       )}
     </div>

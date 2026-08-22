@@ -11,6 +11,7 @@ export type ActivationEvent =
   | "profile_section_expanded"
   | "correction_requested"
   | "checkout_cta_clicked"
+  | "customize_guarantee_clicked"
   | "checkout_cta_failed";
 
 export function useActivationTracking(token: string | undefined, preview = false) {
