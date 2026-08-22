@@ -277,15 +277,29 @@ export default function PageUnproActivate() {
 
               <Button
                 onClick={() => handleActivate("inline")}
+                disabled={checkoutLoading}
                 className="mt-5 h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#050816] hover:bg-white/90"
               >
-                {OFFER_350.ctaPrimary} <ArrowRight className="ml-1 h-4 w-4" />
+                {checkoutLoading ? "Ouverture du paiement…" : (<>{OFFER_350.ctaPrimary} <ArrowRight className="ml-1 h-4 w-4" /></>)}
               </Button>
+
+              <button
+                type="button"
+                onClick={handleCustomize}
+                className="mt-3 w-full text-center text-xs text-white/60 underline underline-offset-4 hover:text-white/80"
+              >
+                Personnaliser ma garantie avant de payer
+              </button>
+
+              {checkoutError && (
+                <p className="mt-3 text-center text-xs text-rose-300">{checkoutError}</p>
+              )}
 
               <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[11px] text-white/50">
                 <ShieldCheck className="h-3 w-3" />
-                {OFFER_350.paymentNote} Garantie calculée avant tout paiement.
+                {OFFER_350.paymentNote} Jusqu'à 5 rendez-vous exclusifs garantis.
               </p>
+
             </div>
           </div>
         )}
