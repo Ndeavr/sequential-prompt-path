@@ -6382,6 +6382,102 @@ export type Database = {
           },
         ]
       }
+      ai_agent_runs: {
+        Row: {
+          agent_name: string
+          agent_version: string
+          candidates_count: number
+          created_at: string
+          dry_run: boolean
+          eligible_count: number
+          finished_at: string | null
+          id: string
+          mode: string
+          model: string | null
+          params: Json
+          result: Json
+          selected_count: number
+          sent_count: number
+          started_at: string
+          status: string
+        }
+        Insert: {
+          agent_name?: string
+          agent_version?: string
+          candidates_count?: number
+          created_at?: string
+          dry_run?: boolean
+          eligible_count?: number
+          finished_at?: string | null
+          id?: string
+          mode?: string
+          model?: string | null
+          params?: Json
+          result?: Json
+          selected_count?: number
+          sent_count?: number
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          agent_name?: string
+          agent_version?: string
+          candidates_count?: number
+          created_at?: string
+          dry_run?: boolean
+          eligible_count?: number
+          finished_at?: string | null
+          id?: string
+          mode?: string
+          model?: string | null
+          params?: Json
+          result?: Json
+          selected_count?: number
+          sent_count?: number
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      ai_attribution_human_touches: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_user_id: string | null
+          agent_run_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          prospect_id: string | null
+          source: string | null
+          token: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_user_id?: string | null
+          agent_run_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          prospect_id?: string | null
+          source?: string | null
+          token?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_user_id?: string | null
+          agent_run_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          prospect_id?: string | null
+          source?: string | null
+          token?: string | null
+        }
+        Relationships: []
+      }
       ai_citation_scores: {
         Row: {
           created_at: string
@@ -18252,7 +18348,11 @@ export type Database = {
       }
       billing_checkout_sessions: {
         Row: {
+          acquisition_origin: string | null
+          activation_token: string | null
+          agent_run_id: string | null
           amount_total: number
+          attribution_key: string | null
           checkout_status: string
           contractor_id: string | null
           coupon_code: string | null
@@ -18260,14 +18360,20 @@ export type Database = {
           currency: string
           id: string
           metadata_json: Json | null
+          paid_at: string | null
           payment_status: string
           plan_code: string | null
+          prospect_id: string | null
           stripe_checkout_session_id: string | null
           stripe_customer_id: string | null
           updated_at: string
         }
         Insert: {
+          acquisition_origin?: string | null
+          activation_token?: string | null
+          agent_run_id?: string | null
           amount_total?: number
+          attribution_key?: string | null
           checkout_status?: string
           contractor_id?: string | null
           coupon_code?: string | null
@@ -18275,14 +18381,20 @@ export type Database = {
           currency?: string
           id?: string
           metadata_json?: Json | null
+          paid_at?: string | null
           payment_status?: string
           plan_code?: string | null
+          prospect_id?: string | null
           stripe_checkout_session_id?: string | null
           stripe_customer_id?: string | null
           updated_at?: string
         }
         Update: {
+          acquisition_origin?: string | null
+          activation_token?: string | null
+          agent_run_id?: string | null
           amount_total?: number
+          attribution_key?: string | null
           checkout_status?: string
           contractor_id?: string | null
           coupon_code?: string | null
@@ -18290,8 +18402,10 @@ export type Database = {
           currency?: string
           id?: string
           metadata_json?: Json | null
+          paid_at?: string | null
           payment_status?: string
           plan_code?: string | null
+          prospect_id?: string | null
           stripe_checkout_session_id?: string | null
           stripe_customer_id?: string | null
           updated_at?: string
@@ -89167,33 +89281,73 @@ export type Database = {
       }
       verified_prospect_tokens: {
         Row: {
+          acquisition_origin: string | null
+          agent_name: string | null
+          agent_run_id: string | null
+          agent_session_id: string | null
+          agent_version: string | null
+          ai_metadata: Json
+          attribution_key: string | null
           campaign_id: string | null
           click_count: number
           clicked_at: string | null
           created_at: string
+          first_touch_source: string | null
+          human_unpro_touches: number
+          last_touch_source: string | null
+          outreach_variant: string | null
           prospect_id: string
           sms_log_id: string | null
           token: string
         }
         Insert: {
+          acquisition_origin?: string | null
+          agent_name?: string | null
+          agent_run_id?: string | null
+          agent_session_id?: string | null
+          agent_version?: string | null
+          ai_metadata?: Json
+          attribution_key?: string | null
           campaign_id?: string | null
           click_count?: number
           clicked_at?: string | null
           created_at?: string
+          first_touch_source?: string | null
+          human_unpro_touches?: number
+          last_touch_source?: string | null
+          outreach_variant?: string | null
           prospect_id: string
           sms_log_id?: string | null
           token: string
         }
         Update: {
+          acquisition_origin?: string | null
+          agent_name?: string | null
+          agent_run_id?: string | null
+          agent_session_id?: string | null
+          agent_version?: string | null
+          ai_metadata?: Json
+          attribution_key?: string | null
           campaign_id?: string | null
           click_count?: number
           clicked_at?: string | null
           created_at?: string
+          first_touch_source?: string | null
+          human_unpro_touches?: number
+          last_touch_source?: string | null
+          outreach_variant?: string | null
           prospect_id?: string
           sms_log_id?: string | null
           token?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "verified_prospect_tokens_agent_run_id_fkey"
+            columns: ["agent_run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agent_runs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "verified_prospect_tokens_prospect_id_fkey"
             columns: ["prospect_id"]
@@ -91713,6 +91867,57 @@ export type Database = {
           overdue: number | null
           primary_city: string | null
           total_attempts: number | null
+        }
+        Relationships: []
+      }
+      v_ai_revenue_proof: {
+        Row: {
+          acquisition_origin: string | null
+          activation_token: string | null
+          agent_dry_run: boolean | null
+          agent_mode: string | null
+          agent_model: string | null
+          agent_name: string | null
+          agent_run_id: string | null
+          agent_version: string | null
+          ai_link_clicked_at: string | null
+          ai_selected_at: string | null
+          amount_cents: number | null
+          attribution_key: string | null
+          business_name: string | null
+          category: string | null
+          checkout_created_at: string | null
+          checkout_id: string | null
+          checkout_status: string | null
+          city: string | null
+          currency: string | null
+          first_touch_source: string | null
+          human_unpro_touches: number | null
+          is_test_session: boolean | null
+          last_touch_source: string | null
+          outreach_variant: string | null
+          paid_at: string | null
+          payment_status: string | null
+          plan_code: string | null
+          proof_qualified: boolean | null
+          prospect_id: string | null
+          stripe_checkout_session_id: string | null
+        }
+        Relationships: []
+      }
+      v_ai_revenue_proof_summary: {
+        Row: {
+          ai_checkouts_created: number | null
+          ai_cta_clicked: number | null
+          ai_landing_viewed: number | null
+          ai_link_clicked: number | null
+          ai_outreach_delivered: number | null
+          ai_outreach_sent: number | null
+          ai_paid_customers: number | null
+          ai_revenue_cents: number | null
+          ai_runs_total: number | null
+          ai_selected: number | null
+          last_ai_payment_at: string | null
         }
         Relationships: []
       }
