@@ -15,6 +15,12 @@ import { RefreshCw, FileText } from "lucide-react";
 /** Analyses éditoriales UNPRO (pages statiques, hors table seo_articles) */
 const EDITORIALS = [
   {
+    slug: "comment-apparaitre-resultats-recherche-ia-2026-entrepreneur",
+    title: "Comment apparaître dans les résultats de recherche par l'IA en 2026? Le guide pour les entrepreneurs",
+    excerpt:
+      "SEO, AEO, GEO et données structurées : ce qu'un entrepreneur québécois doit faire pour être compris et recommandé par les systèmes intelligents.",
+  },
+  {
     slug: "fournisseur-peinture-plus-contrats",
     title: "Comment un fournisseur de peinture a augmenté ses ventes en aidant ses entrepreneurs à décrocher plus de contrats",
     excerpt:
