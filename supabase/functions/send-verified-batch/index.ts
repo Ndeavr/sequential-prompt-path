@@ -429,7 +429,7 @@ Deno.serve(async (req) => {
       // -------- SMS attempt --------
       if (shouldTrySms) {
         smsAttempted = true;
-        const message = SMS_TEMPLATE(p.business_name, link);
+        const message = smsBody;
         const twResp = await fetch(
           `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
           {
@@ -512,7 +512,7 @@ Deno.serve(async (req) => {
         await supabase.from("acq_sms_logs").insert({
           prospect_id: p.id,
           recipient_phone: String(p.phone_e164),
-          body: SMS_TEMPLATE(p.business_name, link),
+          body: smsBody,
           status: "sent",
           provider_message_id: smsSid,
           sent_at: nowIso,
