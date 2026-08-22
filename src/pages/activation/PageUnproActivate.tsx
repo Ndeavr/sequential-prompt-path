@@ -116,21 +116,44 @@ export default function PageUnproActivate() {
   }, [track, profile]);
 
   /**
-   * L'offre d'entrée est le pack 350 $. La garantie DOIT être calculée avant
-   * tout paiement : on dirige vers le calculateur canonique, pré-rempli avec
-   * les faits déjà vérifiés du prospect.
+   * REVENUE-CRITICAL — zéro friction entre le clic et Stripe.
+   * L'offre d'entrée (350 $, jusqu'à 5 rendez-vous exclusifs garantis) est
+   * complète en elle-même : on ouvre directement le checkout canonique avec le
+   * jeton d'activation, ce qui préserve aussi la chaîne d'attribution.
+   * Le calculateur reste accessible en action secondaire pour personnaliser.
    */
-  function handleActivate(placement: string) {
-    if (!prospect) return;
+  async function handleActivate(placement: string) {
+    if (!prospect || checkoutLoading) return;
     track("checkout_cta_clicked", { placement, offer: "pack_350" });
+    setCheckoutLoading(true);
+    setCheckoutError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-activation-checkout", {
+        body: {
+          activation_token: token,
+          source: "activation_landing",
+        },
+      });
+      if (error || !data?.url) throw new Error(error?.message ?? "checkout_unavailable");
+      window.location.href = data.url as string;
+    } catch (_) {
+      setCheckoutError("Paiement momentanément indisponible. Réessayez dans quelques secondes.");
+      setCheckoutLoading(false);
+    }
+  }
+
+  /** Action secondaire : calculer une garantie personnalisée (jeton conservé). */
+  function handleCustomize() {
+    track("customize_guarantee_clicked", { offer: "pack_350" });
     const params = new URLSearchParams();
     if (token) params.set("t", token);
-    const trade = profile?.trade ?? prospect.category ?? "";
-    const city = profile?.city ?? prospect.city ?? "";
+    const trade = profile?.trade ?? prospect?.category ?? "";
+    const city = profile?.city ?? prospect?.city ?? "";
     if (trade) params.set("trade", trade);
     if (city) params.set("city", city);
     navigate(`/entrepreneur/garantie?${params.toString()}`);
   }
+
 
   const company = profile?.display_name ?? prospect?.business_name?.trim() ?? "votre entreprise";
 
