@@ -179,6 +179,25 @@ Deno.serve(async (req) => {
       ? body.category.trim().toLowerCase()
       : null;
 
+    // Server-bound acquisition attribution. Supplied ONLY by trusted callers
+    // (service-role automations such as ai-revenue-agent). Never derived from a
+    // query string, never inferred at payment time.
+    const attribution: AgentAttribution | null = body.attribution && typeof body.attribution === "object"
+      ? {
+        acquisition_origin: String(body.attribution.acquisition_origin ?? "automation"),
+        agent_name: String(body.attribution.agent_name ?? "unknown-agent"),
+        agent_version: String(body.attribution.agent_version ?? "v1"),
+        agent_run_id: body.attribution.agent_run_id ? String(body.attribution.agent_run_id) : null,
+        agent_session_id: body.attribution.agent_session_id ? String(body.attribution.agent_session_id) : null,
+        outreach_variant: body.attribution.outreach_variant ? String(body.attribution.outreach_variant) : null,
+      }
+      : null;
+    // Optional per-prospect message body produced by a model. The activation
+    // link is always appended server-side — a model can never alter the CTA.
+    const messageOverrides: Record<string, string> =
+      body.message_overrides && typeof body.message_overrides === "object" ? body.message_overrides : {};
+
+
     const url = Deno.env.get("SUPABASE_URL");
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!url || !serviceKey) {
