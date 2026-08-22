@@ -268,6 +268,11 @@ Deno.serve(async (req) => {
         checkout_status: "open",
         payment_status: "unpaid",
         plan_code: plan_code ?? "entry_pack_350",
+        acquisition_origin: attr.acquisition_origin,
+        agent_run_id: attr.agent_run_id,
+        activation_token: activation_token ?? null,
+        attribution_key: attr.attribution_key,
+        prospect_id: prospectId || null,
         metadata_json: {
           prospect_id: prospectId || null,
           activation_token: activation_token ?? null,
