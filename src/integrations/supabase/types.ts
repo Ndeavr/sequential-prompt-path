@@ -52694,6 +52694,30 @@ export type Database = {
         }
         Relationships: []
       }
+      internal_agent_tokens: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          token?: string
+        }
+        Relationships: []
+      }
       job_status_logs: {
         Row: {
           actor: string
