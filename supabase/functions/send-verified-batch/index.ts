@@ -596,7 +596,32 @@ Deno.serve(async (req) => {
           fallback_reason: fallbackReason, twilio_error_code: twilioErrorCode, email_error: emailError,
         });
       }
+
+      // Canonical outreach event for the AI attribution chain.
+      if (attribution && channelUsed) {
+        try {
+          await supabase.rpc("record_engagement_event", {
+            _event_type: channelUsed === "sms" ? "sms_sent" : "email_sent",
+            _channel: channelUsed,
+            _status: "sent",
+            _provider: channelUsed === "sms" ? "twilio" : "resend",
+            _tracking_id: token,
+            _prospect_id: p.id,
+            _source_table: "verified_prospect_tokens",
+            _source_row_id: token,
+            _metadata: {
+              acquisition_origin: attribution.acquisition_origin,
+              agent_run_id: attribution.agent_run_id,
+              agent_name: attribution.agent_name,
+              outreach_variant: attribution.outreach_variant,
+              provider_message_id: channelUsed === "sms" ? smsSid : resendId,
+            },
+            _idempotency_key: `ai_outreach_sent:${token}`,
+          });
+        } catch (_) { /* analytics must never block revenue */ }
+      }
     }
+
 
 
     const allResults = [...results, ...missingResults];
