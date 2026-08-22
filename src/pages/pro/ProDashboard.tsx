@@ -9,6 +9,7 @@ import { useAppointments } from "@/hooks/useAppointments";
 import { useHasActiveSubscription } from "@/hooks/useSubscription";
 import DashHero from "@/components/pro-dashboard/DashHero";
 import CardCalendarConnectionRole from "@/components/calendar/CardCalendarConnectionRole";
+import CompatibilityEntryCard from "@/components/contractor-compatibility/CompatibilityEntryCard";
 import DashKpiRow from "@/components/pro-dashboard/DashKpiRow";
 import DashProbability from "@/components/pro-dashboard/DashProbability";
 import DashChecklist from "@/components/pro-dashboard/DashChecklist";
@@ -53,6 +54,7 @@ const ProDashboard = () => {
       <div className="dark max-w-4xl mx-auto space-y-5 pb-24">
         <DashHero profile={profile} completeness={completeness} aipp={aipp} />
         <CardCalendarConnectionRole role="contractor" surface="dashboard_pro" />
+        <CompatibilityEntryCard contractorId={profile?.id} />
         <DashKpiRow
           newAppts={newAppts}
           acceptedAppts={acceptedAppts}

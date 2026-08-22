@@ -38,7 +38,72 @@ const BUDGET_OPTIONS = [
   { value: "50k+", label_fr: "50 000 $ et plus" },
 ];
 
-export function pickNextQuestion(g: QualificationGraph, dna?: KnownDnaFacts): NextQuestion | null {
+/**
+ * Exigences de préqualification déclarées par les entrepreneurs candidats
+ * (table `contractor_prequalification_requirements`). Alex les pose AVANT de proposer
+ * un rendez-vous, seulement si elles ne sont pas déjà couvertes par le graphe.
+ */
+export interface PrequalRequirement {
+  criterion: string;
+  level: "optional" | "important" | "required";
+}
+
+const PREQUAL_QUESTIONS: Record<string, { question_fr: string; why_fr: string; ui_hint: NextQuestion["ui_hint"] }> = {
+  photos: {
+    question_fr: "Pouvez-vous ajouter une photo du problème ? Le professionnel en a besoin avant de se déplacer.",
+    why_fr: "Exigence du professionnel recommandé.",
+    ui_hint: "upload_photo",
+  },
+  foundation_type: {
+    question_fr: "Savez-vous de quel type de fondation il s'agit : béton coulé, blocs, pierre ou dalle ?",
+    why_fr: "Le professionnel doit connaître le type de fondation avant la visite.",
+    ui_hint: "choice",
+  },
+  water_active: {
+    question_fr: "Y a-t-il de l'eau qui entre en ce moment ?",
+    why_fr: "Détermine l'urgence réelle de l'intervention.",
+    ui_hint: "choice",
+  },
+  basement_finished: {
+    question_fr: "Votre sous-sol est-il fini ?",
+    why_fr: "Influence la méthode de travail à l'intérieur.",
+    ui_hint: "choice",
+  },
+  access_description: {
+    question_fr: "Comment est l'accès au terrain pour de la machinerie ?",
+    why_fr: "L'accès détermine l'équipement nécessaire.",
+    ui_hint: "text",
+  },
+  camera_report: {
+    question_fr: "Avez-vous un rapport d'inspection par caméra ?",
+    why_fr: "Évite une inspection en double.",
+    ui_hint: "choice",
+  },
+  owner_decision: {
+    question_fr: "Êtes-vous la personne qui prend la décision finale pour ces travaux ?",
+    why_fr: "Le professionnel réserve ses plages aux décisionnaires.",
+    ui_hint: "choice",
+  },
+  timeline: {
+    question_fr: "Dans quel échéancier souhaitez-vous que les travaux soient réalisés ?",
+    why_fr: "Pour valider la disponibilité réelle du professionnel.",
+    ui_hint: "text",
+  },
+};
+
+/** Critères déjà couverts par le graphe de qualification universel. */
+const PREQUAL_COVERED_BY_GRAPH: Record<string, (g: QualificationGraph) => boolean> = {
+  address: (g) => !!g.property.address,
+  budget_range: (g) => !!g.budget,
+  photos: (g) => !!g.photos?.requested,
+  timeline: (g) => !!g.urgency,
+};
+
+export function pickNextQuestion(
+  g: QualificationGraph,
+  dna?: KnownDnaFacts,
+  prequal?: PrequalRequirement[],
+): NextQuestion | null {
   const known = (field: string) => (dna ? isFieldKnown(dna, field) : false);
 
   // 1. Problem category (must exist before we can branch)
@@ -124,6 +189,18 @@ export function pickNextQuestion(g: QualificationGraph, dna?: KnownDnaFacts): Ne
       ui_hint: "choice",
       options: BUDGET_OPTIONS,
     };
+  }
+
+  // 9. Exigences de préqualification des entrepreneurs candidats (obligatoires d'abord)
+  const ordered = (prequal ?? [])
+    .filter((p) => p.level !== "optional")
+    .sort((a, b) => (a.level === "required" ? -1 : 1) - (b.level === "required" ? -1 : 1));
+  for (const req of ordered) {
+    if (PREQUAL_COVERED_BY_GRAPH[req.criterion]?.(g)) continue;
+    if (g.prequal_answers?.[req.criterion]) continue;
+    const q = PREQUAL_QUESTIONS[req.criterion];
+    if (!q) continue;
+    return { field: `prequal.${req.criterion}`, ...q };
   }
 
   return null;

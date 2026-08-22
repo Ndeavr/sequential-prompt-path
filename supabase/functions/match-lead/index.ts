@@ -244,8 +244,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 2. Load service areas + category assignments in parallel.
-    const [{ data: areas }, { data: cats }, { data: catRow }] = await Promise.all([
+    // 2. Load service areas + category assignments + compatibility rules in parallel.
+    const [{ data: areas }, { data: cats }, { data: catRow }, { data: compatRules }] = await Promise.all([
       supabase
         .from("contractor_service_areas")
         .select("contractor_id, city_name")
@@ -261,7 +261,61 @@ Deno.serve(async (req) => {
             .eq("slug", typedLead.project_category)
             .maybeSingle()
         : Promise.resolve({ data: null } as any),
+      supabase
+        .from("contractor_matching_rules")
+        .select("contractor_id, rule_type, rule_key, payload, source, confirmed_by_contractor")
+        .in("contractor_id", contractorIds)
+        .eq("is_active", true),
     ]);
+
+    // Profil de compatibilité → règles appliquées au classement.
+    // Les règles `inferred` n'excluent JAMAIS : elles modulent seulement le score.
+    interface CompatRules {
+      excludedServices: Set<string>;
+      priorityServices: Set<string>;
+      blockedCities: Set<string>;
+      priorityCities: Set<string>;
+      cityMin: Map<string, number>;
+      floorCents: number | null;
+      paused: boolean;
+      softHits: number;
+    }
+    const rulesByContractor = new Map<string, CompatRules>();
+    for (const r of (compatRules ?? []) as any[]) {
+      const key = r.contractor_id as string;
+      if (!rulesByContractor.has(key)) {
+        rulesByContractor.set(key, {
+          excludedServices: new Set(),
+          priorityServices: new Set(),
+          blockedCities: new Set(),
+          priorityCities: new Set(),
+          cityMin: new Map(),
+          floorCents: null,
+          paused: false,
+          softHits: 0,
+        });
+      }
+      const bucket = rulesByContractor.get(key)!;
+      const hard = r.source !== "inferred" && r.confirmed_by_contractor === true;
+      const p = (r.payload ?? {}) as any;
+      if (r.rule_type === "hard_exclusion" && hard) {
+        if (p.service_slug) bucket.excludedServices.add(String(p.service_slug));
+        if (p.city_slug) bucket.blockedCities.add(normCity(String(p.city_slug)));
+      } else if (r.rule_type === "priority") {
+        if (p.service_slug) bucket.priorityServices.add(String(p.service_slug));
+        if (p.city_slug) bucket.priorityCities.add(normCity(String(p.city_slug)));
+      } else if (r.rule_type === "soft_preference") {
+        bucket.softHits += 1;
+        if (p.city_slug && typeof p.min_project_cents === "number") {
+          bucket.cityMin.set(normCity(String(p.city_slug)), p.min_project_cents);
+        }
+        if (r.rule_key === "floor_project" && typeof p.min_project_cents === "number") {
+          bucket.floorCents = p.min_project_cents;
+        }
+      } else if (r.rule_type === "capacity" && hard) {
+        bucket.paused = p.paused === true;
+      }
+    }
 
     const areasByContractor = new Map<string, Set<string>>();
     (areas ?? []).forEach((a: any) => {
@@ -292,7 +346,41 @@ Deno.serve(async (req) => {
           (areaSet.has(leadCitySlug) || normCity(c.city) === leadCitySlug);
         const catSet = catsByContractor.get(c.id) ?? new Set<string>();
         const matchesCategory = !!wantedCat && catSet.has(wantedCat);
-        return scoreContractor(c as ContractorRow, servesCity, matchesCategory, typedLead);
+        const base = scoreContractor(c as ContractorRow, servesCity, matchesCategory, typedLead);
+
+        // ── Profil de compatibilité ───────────────────────────────────
+        const compat = rulesByContractor.get(c.id);
+        if (!compat) return base;
+
+        const wanted = wantedCat ?? typedLead.specialty_needed ?? null;
+        const budget = typedLead.budget_max ?? typedLead.budget_min ?? null;
+        const budgetCents = budget != null ? Math.round(Number(budget) * 100) : null;
+
+        if (compat.paused) return { ...base, score: 0, reasons: [...base.reasons, "Agenda en pause"] };
+        if (wanted && compat.excludedServices.has(wanted)) {
+          return { ...base, score: 0, reasons: [...base.reasons, "Service non recherché"] };
+        }
+        if (leadCitySlug && compat.blockedCities.has(leadCitySlug)) {
+          return { ...base, score: 0, reasons: [...base.reasons, "Territoire exclu"] };
+        }
+
+        let score = base.score;
+        const reasons = [...base.reasons];
+        if (wanted && compat.priorityServices.has(wanted)) {
+          score += 15;
+          reasons.push("Service prioritaire");
+        }
+        if (leadCitySlug && compat.priorityCities.has(leadCitySlug)) {
+          score += 10;
+          reasons.push("Territoire prioritaire");
+        }
+        const cityMin = leadCitySlug ? compat.cityMin.get(leadCitySlug) ?? null : null;
+        const minRequired = Math.max(cityMin ?? 0, compat.floorCents ?? 0) || null;
+        if (minRequired && budgetCents != null && budgetCents < minRequired) {
+          score -= 25;
+          reasons.push("Sous le minimum de projet déclaré");
+        }
+        return { ...base, score: Math.max(0, Math.min(score, 100)), reasons };
       })
       // require at least city OR category to qualify
       .filter((m) => m.score >= 25)
