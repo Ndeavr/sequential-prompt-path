@@ -125,10 +125,25 @@ Deno.serve(async (req) => {
     const filterRegion = typeof body.region === "string" && body.region.trim() ? body.region.trim() : null;
     const filterCategory = typeof body.category === "string" && body.category.trim() ? body.category.trim() : null;
 
-    // ── AUTH: admin JWT, or service-role (cron) ───────────────────────────
+    // ── AUTH: admin JWT, service-role, or internal scheduler token ────────
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace("Bearer ", "").trim();
     let authorized = token === serviceKey;
+    if (!authorized) {
+      // Internal scheduler path: pg_cron cannot hold the service-role key, so a
+      // rotatable token stored in public.internal_agent_tokens is used instead.
+      const agentToken = req.headers.get("x-agent-token")?.trim();
+      if (agentToken) {
+        const { data: row } = await sb
+          .from("internal_agent_tokens")
+          .select("name")
+          .eq("name", "ai-revenue-agent")
+          .eq("token", agentToken)
+          .eq("is_active", true)
+          .maybeSingle();
+        authorized = !!row;
+      }
+    }
     if (!authorized && token) {
       const { data: u } = await sb.auth.getUser(token);
       if (u?.user) {
@@ -137,6 +152,7 @@ Deno.serve(async (req) => {
       }
     }
     if (!authorized) return json({ ok: false, error: "forbidden" }, 403);
+
 
     // ── RUN RECORD ────────────────────────────────────────────────────────
     const { data: run, error: runErr } = await sb
