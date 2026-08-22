@@ -193,6 +193,14 @@ Deno.serve(async (req) => {
       campaign_variant: utm?.camp ?? "",
       utm_city: utm?.city ?? "",
       utm_company: utm?.company ?? "",
+      // ── AI revenue attribution (server-bound, DB-derived) ────────────────
+      acquisition_origin: attr.acquisition_origin ?? "",
+      agent_run_id: attr.agent_run_id ?? "",
+      agent_name: attr.agent_name ?? "",
+      agent_version: attr.agent_version ?? "",
+      attribution_key: attr.attribution_key ?? "",
+      outreach_variant: attr.outreach_variant ?? "",
+      human_unpro_touches: String(attr.human_unpro_touches ?? 0),
     };
 
     let session;
