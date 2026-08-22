@@ -310,10 +310,12 @@ export default function PageUnproActivate() {
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#050816]/95 px-5 py-3 backdrop-blur sm:hidden">
           <Button
             onClick={() => handleActivate("sticky_mobile")}
+            disabled={checkoutLoading}
             className="h-13 w-full rounded-2xl bg-white py-3.5 text-base font-semibold text-[#050816] hover:bg-white/90"
           >
-            {OFFER_350.ctaPrimary}
+            {checkoutLoading ? "Ouverture du paiement…" : OFFER_350.ctaPrimary}
           </Button>
+
         </div>
       )}
     </div>
