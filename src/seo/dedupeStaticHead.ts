@@ -21,6 +21,7 @@ const KEYS: Key[] = [
   { selector: 'meta[data-rh][property="og:title"]', staticSelector: 'meta[data-static-head][property="og:title"]' },
   { selector: 'meta[data-rh][property="og:description"]', staticSelector: 'meta[data-static-head][property="og:description"]' },
   { selector: 'meta[data-rh][property="og:image"]', staticSelector: 'meta[data-static-head][property="og:image"]' },
+  { selector: 'meta[data-rh][property="og:type"]', staticSelector: 'meta[data-static-head][property="og:type"]' },
   { selector: 'meta[data-rh][name="twitter:title"]', staticSelector: 'meta[data-static-head][name="twitter:title"]' },
   { selector: 'meta[data-rh][name="twitter:description"]', staticSelector: 'meta[data-static-head][name="twitter:description"]' },
   { selector: 'meta[data-rh][name="twitter:image"]', staticSelector: 'meta[data-static-head][name="twitter:image"]' },
