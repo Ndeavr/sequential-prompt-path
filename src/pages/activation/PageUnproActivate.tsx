@@ -42,7 +42,10 @@ export default function PageUnproActivate() {
   const navigate = useNavigate();
   const [reason, setReason] = useState<string | null>(null);
   const [correctionSent, setCorrectionSent] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const engagedRef = useRef(false);
+
 
   const track = useActivationTracking(token, preview);
 
