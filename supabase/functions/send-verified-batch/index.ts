@@ -79,19 +79,48 @@ function randToken(): string {
   return crypto.randomUUID().replace(/-/g, "").slice(0, 22);
 }
 
+export interface AgentAttribution {
+  acquisition_origin: string;      // 'ai_agent' | 'automation'
+  agent_name: string;
+  agent_version: string;
+  agent_run_id: string | null;
+  agent_session_id: string | null;
+  outreach_variant: string | null;
+}
+
 async function ensureActivationLink(
   supabase: ReturnType<typeof createClient>,
   origin: string,
   prospectId: string,
   campaignId?: string | null,
-): Promise<{ token: string; link: string; error?: string }> {
+  attribution?: AgentAttribution | null,
+): Promise<{ token: string; link: string; attribution_key?: string; error?: string }> {
   const token = randToken();
+  const attributionKey = attribution ? `${attribution.acquisition_origin}:${token}` : null;
   const { error } = await supabase
     .from("verified_prospect_tokens")
-    .insert({ token, prospect_id: prospectId, campaign_id: campaignId ?? null });
+    .insert({
+      token,
+      prospect_id: prospectId,
+      campaign_id: campaignId ?? null,
+      ...(attribution
+        ? {
+          acquisition_origin: attribution.acquisition_origin,
+          agent_name: attribution.agent_name,
+          agent_version: attribution.agent_version,
+          agent_run_id: attribution.agent_run_id,
+          agent_session_id: attribution.agent_session_id,
+          outreach_variant: attribution.outreach_variant,
+          first_touch_source: attribution.acquisition_origin,
+          last_touch_source: attribution.acquisition_origin,
+          attribution_key: attributionKey,
+        }
+        : {}),
+    });
   if (error) return { token, link: "", error: `token_create_failed: ${error.message}` };
-  return { token, link: `${origin}/unpro/activate/${token}` };
+  return { token, link: `${origin}/unpro/activate/${token}`, attribution_key: attributionKey ?? undefined };
 }
+
 
 
 async function sendEmailViaResend(
