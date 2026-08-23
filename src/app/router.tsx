@@ -665,6 +665,7 @@ const PageAIPPAnalysisLoading = lazyWithRetry(() => import("@/pages/entrepreneur
 const PageEntrepreneurImportProcessing = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurImportProcessing"));
 const PagePricingCalculator = lazyWithRetry(() => import("@/pages/entrepreneur/PagePricingCalculator"));
 const PageGuaranteeCalculator = lazyWithRetry(() => import("@/pages/entrepreneur/PageGuaranteeCalculator"));
+const PageAiRecommendationAudit = lazyWithRetry(() => import("@/pages/entrepreneur/PageAiRecommendationAudit"));
 const PageForfaitGrowthCalculator = lazyWithRetry(() => import("@/pages/entrepreneur/PageForfaitGrowthCalculator"));
 
 const PagePlanResult = lazyWithRetry(() => import("@/pages/entrepreneur/PagePlanResult"));
