@@ -1095,6 +1095,7 @@ export const AppRouter = () => (
 
         <Route path="/entrepreneurs/audit-ia" element={<PageAiRecommendationAudit />} />
         <Route path="/entrepreneur/audit-ia" element={<Navigate to="/entrepreneurs/audit-ia" replace />} />
+        <Route path="/entrepreneurs/garantie" element={<PageGuaranteeCalculator />} />
 
         <Route path="/entrepreneur/plan-result" element={<PagePlanResult />} />
         <Route path="/entrepreneurs/calculateur" element={<PageEntrepreneurGoalToPlanLanding />} />
