@@ -13,6 +13,18 @@ import {
 
 const PROVENANCE = ["public_source", "confirmed_by_company"] as const;
 
+const TRADE_PACKS = ["excavation_fondation", "isolation_entretoit"] as const;
+
+/** Le pack déjà enregistré prime ; sinon il est déduit de la spécialité de la fiche. */
+function resolveTradePack(stored?: string | null, specialty?: string | null): string {
+  if (stored && (TRADE_PACKS as readonly string[]).includes(stored)) return stored;
+  const s = (specialty ?? "").toLowerCase();
+  if (/isolation|entretoit|urethane|ur\u00e9thane|ventilation|vermiculite/.test(s)) {
+    return "isolation_entretoit";
+  }
+  return "excavation_fondation";
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: inviteCors });
 
@@ -49,7 +61,7 @@ Deno.serve(async (req) => {
             .eq("contractor_id", contractorId),
           admin
             .from("contractor_compatibility_profiles")
-            .select("answers, status, current_step, completion_pct, completed_at, summary")
+            .select("answers, status, current_step, completion_pct, completed_at, summary, trade_pack")
             .eq("contractor_id", contractorId)
             .maybeSingle(),
         ]);
@@ -70,6 +82,7 @@ Deno.serve(async (req) => {
       return jsonResponse({
         ok: true,
         already_submitted: !!invite.submitted_at,
+        trade_pack: resolveTradePack(ctx.profile?.trade_pack, ctx.contractor?.specialty),
         contractor: ctx.contractor,
         facts: ctx.facts,
         service_areas: ctx.areas.map((a: { city_name: string }) => a.city_name),
@@ -127,9 +140,14 @@ Deno.serve(async (req) => {
     }
 
     if (action === "save" || action === "finalize") {
+      const { data: contractorRow } = await admin
+        .from("contractors")
+        .select("specialty")
+        .eq("id", contractorId)
+        .maybeSingle();
       const { data: existing } = await admin
         .from("contractor_compatibility_profiles")
-        .select("answers")
+        .select("answers, trade_pack")
         .eq("contractor_id", contractorId)
         .maybeSingle();
       const answers = mergeAnswers(existing?.answers, body?.answers);
@@ -142,7 +160,7 @@ Deno.serve(async (req) => {
       const { error: upErr } = await admin.from("contractor_compatibility_profiles").upsert(
         {
           contractor_id: contractorId,
-          trade_pack: "excavation_fondation",
+          trade_pack: resolveTradePack(existing?.trade_pack, contractorRow?.specialty),
           status: finalize ? "completed" : "in_progress",
           completion_pct: completion,
           current_step: finalize ? 6 : currentStep,

@@ -22,6 +22,7 @@ import {
   type TerritoryTier,
   type TriAnswer,
 } from "@/config/compatibilityExcavation";
+import { anyPrequalLabel, anyProjectLabel, anyServiceLabel } from "@/config/compatibilityPacks";
 import {
   useCompatibilityAuditLog,
   useCompatibilityOutcomes,
@@ -30,10 +31,10 @@ import {
 import CompatibilityAdminEditor from "./CompatibilityAdminEditor";
 import ProfileInviteLinkControl from "./ProfileInviteLinkControl";
 
-const serviceLabel = (slug: string) => COMPAT_SERVICES.find((s) => s.slug === slug)?.label ?? slug;
+const serviceLabel = (slug: string) => anyServiceLabel(slug);
 const projectLabel = (dim: string, key: string) =>
-  COMPAT_PROJECT_QUESTIONS.find((q) => q.dimension === dim && q.key === key)?.label ?? `${dim}:${key}`;
-const prequalLabel = (c: string) => COMPAT_PREQUAL.find((p) => p.criterion === c)?.label ?? c;
+  anyProjectLabel(dim, key);
+const prequalLabel = (c: string) => anyPrequalLabel(c);
 
 export default function CompatibilityAdminPanel({ contractorId }: { contractorId: string }) {
   const { data, isLoading } = useCompatibilitySnapshot(contractorId);

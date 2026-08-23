@@ -20,8 +20,6 @@ import { ArrowLeft, ArrowRight, Check, Loader2, Pencil, Plus, ShieldCheck, X } f
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  COMPAT_PREQUAL,
-  COMPAT_SERVICES,
   COMPAT_STEPS,
   PREQUAL_LEVEL_LABEL,
   STANCE_LABEL,
@@ -31,12 +29,12 @@ import {
   VOLUME_OPTIONS,
   citySlug,
   formatMoney,
-  visibleProjectQuestions,
   type PrequalLevel,
   type Stance,
   type TerritoryTier,
   type TriAnswer,
 } from "@/config/compatibilityExcavation";
+import { getCompatPack, packVisibleProjectQuestions } from "@/config/compatibilityPacks";
 import { EMPTY_ANSWERS, type CompatibilityAnswers } from "@/hooks/useContractorCompatibility";
 
 const STANCES: Stance[] = ["priority", "accepted", "not_wanted"];
@@ -55,6 +53,7 @@ interface Fact {
 
 interface ResolvedInvite {
   already_submitted: boolean;
+  trade_pack?: string;
   contractor: {
     id: string;
     business_name: string;
@@ -232,12 +231,15 @@ export default function PageContractorProfileInvite() {
 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
+  const pack = useMemo(() => getCompatPack(data?.trade_pack), [data?.trade_pack]);
+
   const projectQuestions = useMemo(
     () =>
-      visibleProjectQuestions(
+      packVisibleProjectQuestions(
+        pack,
         Object.fromEntries(Object.entries(answers.services).map(([k, v]) => [k, v.stance])),
       ),
-    [answers.services],
+    [pack, answers.services],
   );
 
   const groupedProjects = useMemo(() => {
@@ -256,6 +258,13 @@ export default function PageContractorProfileInvite() {
     water: "Eau et intérieur",
     drainage: "Drainage",
     access: "Accès et contraintes",
+    attic: "Entretoit et accès",
+    size: "Taille des mandats",
+    contamination: "Contamination",
+    ventilation: "Ventilation",
+    envelope: "Enveloppe et diagnostics",
+    roof_special: "Toits particuliers",
+    availability: "Délais et disponibilité",
   };
 
   if (loading) {
@@ -487,7 +496,7 @@ export default function PageContractorProfileInvite() {
 
   // ── Résumé final ──────────────────────────────────────────────────
   if (phase === "summary") {
-    const label = (slug: string) => COMPAT_SERVICES.find((s) => s.slug === slug)?.label ?? slug;
+    const label = (slug: string) => pack.services.find((s) => s.slug === slug)?.label ?? slug;
     const qLabel = (k: string) =>
       projectQuestions.find((q) => `${q.dimension}:${q.key}` === k)?.label ?? k;
     const priority = Object.entries(answers.services).filter(([, v]) => v.stance === "priority");
@@ -563,7 +572,7 @@ export default function PageContractorProfileInvite() {
             <p className="mt-1.5 text-sm text-foreground">
               {Object.entries(answers.prequal)
                 .filter(([, l]) => l !== "optional")
-                .map(([c, l]) => `${COMPAT_PREQUAL.find((p) => p.criterion === c)?.label ?? c} (${PREQUAL_LEVEL_LABEL[l]})`)
+                .map(([c, l]) => `${pack.prequal.find((p) => p.criterion === c)?.label ?? c} (${PREQUAL_LEVEL_LABEL[l]})`)
                 .join(" · ") || "Aucune exigence particulière"}
             </p>
           </CardContent></Card>
@@ -613,7 +622,7 @@ export default function PageContractorProfileInvite() {
           transition={{ duration: 0.25 }}
           className="mt-5 space-y-3"
         >
-          {step === 1 && COMPAT_SERVICES.map((svc) => (
+          {step === 1 && pack.services.map((svc) => (
             <Card key={svc.slug}>
               <CardContent className="space-y-3 p-4">
                 <p className="text-sm font-medium text-foreground">{svc.label}</p>
@@ -837,7 +846,7 @@ export default function PageContractorProfileInvite() {
               <p className="text-sm text-muted-foreground">
                 Que voulez-vous absolument savoir avant qu'UNPRO vous propose un rendez-vous ?
               </p>
-              {COMPAT_PREQUAL.map((p) => (
+              {pack.prequal.map((p) => (
                 <Card key={p.criterion}><CardContent className="space-y-3 p-4">
                   <p className="text-sm font-medium text-foreground">{p.label}</p>
                   <ChoiceRow
