@@ -21,15 +21,22 @@ export interface ServiceDef {
 /** Étape 1 — Services couverts. */
 export const COMPAT_SERVICES: readonly ServiceDef[] = Object.freeze([
   { slug: "excavation", label: "Excavation", unlocks: ["access"] },
-  { slug: "reparation_fissures", label: "Réparation de fissures", unlocks: ["foundation", "crack"] },
-  { slug: "drain_francais", label: "Drain français", unlocks: ["drainage", "access"] },
-  { slug: "impermeabilisation", label: "Imperméabilisation de fondation", unlocks: ["foundation", "access"] },
-  { slug: "infiltration_eau", label: "Infiltration d'eau", unlocks: ["water"] },
   { slug: "fondations", label: "Fondations (réparation / reconstruction)", unlocks: ["foundation", "access"] },
-  { slug: "drainage", label: "Drainage / gestion de l'eau", unlocks: ["drainage"] },
+  { slug: "reparation_fissures", label: "Réparation de fissures", unlocks: ["foundation", "crack"] },
+  { slug: "injection_fissures", label: "Injection de fissures", unlocks: ["crack"] },
+  { slug: "fissures_structurales", label: "Fissures structurales", unlocks: ["crack", "foundation"] },
+  { slug: "drain_francais", label: "Drain français", unlocks: ["drainage", "access"] },
+  { slug: "remplacement_drain_francais", label: "Remplacement de drain français", unlocks: ["drainage", "access"] },
+  { slug: "inspection_drain", label: "Inspection de drain", unlocks: ["drainage"] },
+  { slug: "impermeabilisation", label: "Imperméabilisation extérieure", unlocks: ["foundation", "access"] },
+  { slug: "membranes", label: "Membranes d'étanchéité", unlocks: ["foundation", "access"] },
+  { slug: "impermeabilisation_interieure", label: "Imperméabilisation intérieure", unlocks: ["water", "foundation"] },
+  { slug: "infiltration_eau", label: "Infiltration d'eau", unlocks: ["water"] },
   { slug: "puisard_pompe", label: "Puisard / pompe submersible", unlocks: ["drainage"] },
+  { slug: "drainage", label: "Drainage du terrain / gestion de l'eau", unlocks: ["drainage"] },
   { slug: "nivellement", label: "Nivellement / pente de terrain", unlocks: [] },
 ]);
+
 
 export const STANCE_LABEL: Record<Stance, string> = {
   priority: "Prioritaire",
