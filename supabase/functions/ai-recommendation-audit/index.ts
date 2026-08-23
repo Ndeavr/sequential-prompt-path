@@ -48,9 +48,27 @@ const slug = (raw: unknown) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
+/** Canonical company-name key: accent/punctuation free, legal suffixes removed. */
+const nameKey = (raw: unknown) =>
+  slug(raw)
+    .replace(/-(inc|ltee|ltd|enr|senc|sencrl|srl|cie|co|corp|group|groupe|les|le|la)$/g, "")
+    .replace(/^-|-$/g, "");
+
+/** Canonical domain key from any URL-ish string. */
+const domainKey = (raw: unknown) => {
+  const s = String(raw ?? "").trim().toLowerCase();
+  if (!s) return "";
+  return s
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .split(/[/?#]/)[0]
+    .replace(/\.$/, "");
+};
+
 function push(facts: Fact[], f: Fact | null) {
   if (f && f.value) facts.push(f);
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
