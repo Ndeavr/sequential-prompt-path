@@ -40,7 +40,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import InlineCheckoutNuclear from "@/components/pro-landing/InlineCheckoutNuclear";
-import ActivationOffer1Dollar from "@/components/pro-landing/ActivationOffer1Dollar";
 import {
   OpportunitiesGrid,
   TerritoryScarcityBlock,
