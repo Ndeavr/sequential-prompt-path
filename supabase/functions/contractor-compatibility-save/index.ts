@@ -3,10 +3,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import {
   compatCors,
   mergeAnswers,
+  sanitizeAnswers,
   computeCompletion,
   buildSummary,
   materialize,
+  diffAnswers,
 } from "../_shared/contractorCompatibility.ts";
+
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
