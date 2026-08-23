@@ -28,6 +28,7 @@ import {
   useCompatibilitySnapshot,
 } from "@/hooks/useContractorCompatibility";
 import CompatibilityAdminEditor from "./CompatibilityAdminEditor";
+import ProfileInviteLinkControl from "./ProfileInviteLinkControl";
 
 const serviceLabel = (slug: string) => COMPAT_SERVICES.find((s) => s.slug === slug)?.label ?? slug;
 const projectLabel = (dim: string, key: string) =>
@@ -74,6 +75,7 @@ export default function CompatibilityAdminPanel({ contractorId }: { contractorId
       </CardHeader>
 
       <CardContent className="space-y-5">
+        <ProfileInviteLinkControl contractorId={contractorId} />
         {!profile ? (
           <p className="text-sm text-muted-foreground">
             Aucune donnée. Ouvrez « Modifier » pour remplir le profil avec l'entrepreneur.
