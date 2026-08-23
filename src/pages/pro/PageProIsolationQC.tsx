@@ -111,25 +111,16 @@ export default function PageProIsolationQC() {
     setLoading(true);
     setErr(null);
     try {
-      const { data, error } = await supabase.functions.invoke(
-        "create-activation-checkout",
-        { body: { slug: SPRINT_SLUG, source: "isolation-qc", utm } },
-      );
-      const url = (data as any)?.url as string | undefined;
-      if (error || !url) {
-        const detail = (data as any)?.error || (data as any)?.detail || error?.message || "unknown";
-        logEvent("cta_failed", { ...utm, detail });
-        setErr("Activation temporairement indisponible — réessayez dans 10 secondes.");
-        return;
-      }
-      redirectToCheckout(url);
+      const params = new URLSearchParams({ source: "isolation-qc" });
+      if (utm.city) params.set("ville", utm.city);
+      window.location.href = `/entrepreneurs/garantie?${params.toString()}`;
     } catch (e: any) {
       logEvent("cta_failed", { ...utm, detail: e?.message || "exception" });
       setErr("Activation temporairement indisponible — réessayez dans 10 secondes.");
-    } finally {
       setLoading(false);
     }
   };
+
 
   const cityLabel = utm.city ? utm.city.replace(/-/g, " ") : "Québec";
 
