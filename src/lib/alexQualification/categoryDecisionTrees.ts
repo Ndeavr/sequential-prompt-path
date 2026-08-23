@@ -3,12 +3,24 @@
  * Each tree returns sub-type options + relevant intelligence cards (quote/photo).
  */
 
+export interface ExtraQuestion {
+  /** Clé stockée dans `graph.project_context`. */
+  key: string;
+  question_fr: string;
+  why_fr: string;
+  options: { value: string; label_fr: string }[];
+  /** Ne pose la question que pour ces sous-types (absent = tous). */
+  only_sub_types?: string[];
+}
+
 export interface CategoryTree {
   category: string;
   sub_types: { value: string; label_fr: string }[];
   invites_quote: boolean;
   invites_photo: boolean;
   sub_type_question_fr: string;
+  /** Questions métier posées une à la fois après le sous-type. */
+  extra_questions?: ExtraQuestion[];
 }
 
 export const CATEGORY_TREES: Record<string, CategoryTree> = {
