@@ -375,3 +375,124 @@ export async function materialize(
       .eq("id", contractorId);
   }
 }
+
+// ── Journal d'audit granulaire : diff lisible entre deux versions de réponses ──
+export interface CompatChange {
+  field: string;
+  label_fr: string;
+  before: unknown;
+  after: unknown;
+}
+
+function moneyFr(v: unknown): string {
+  const n = typeof v === "number" ? v : null;
+  return n == null ? "—" : `${(n / 100).toLocaleString("fr-CA")} $`;
+}
+
+export function diffAnswers(before: CompatAnswers, after: CompatAnswers): CompatChange[] {
+  const out: CompatChange[] = [];
+
+  const bs = before.services ?? {};
+  const as_ = after.services ?? {};
+  for (const slug of new Set([...Object.keys(bs), ...Object.keys(as_)])) {
+    if (bs[slug]?.stance !== as_[slug]?.stance) {
+      out.push({
+        field: `service:${slug}`,
+        label_fr: `Service « ${slug} » : position ${bs[slug]?.stance ?? "—"} → ${as_[slug]?.stance ?? "—"}`,
+        before: bs[slug]?.stance ?? null,
+        after: as_[slug]?.stance ?? null,
+      });
+    }
+    if ((bs[slug]?.min_project_cents ?? null) !== (as_[slug]?.min_project_cents ?? null)) {
+      out.push({
+        field: `service_min:${slug}`,
+        label_fr: `Minimum « ${slug} » : ${moneyFr(bs[slug]?.min_project_cents)} → ${moneyFr(as_[slug]?.min_project_cents)}`,
+        before: bs[slug]?.min_project_cents ?? null,
+        after: as_[slug]?.min_project_cents ?? null,
+      });
+    }
+  }
+
+  const bp = before.projects ?? {};
+  const ap = after.projects ?? {};
+  for (const k of new Set([...Object.keys(bp), ...Object.keys(ap)])) {
+    if (bp[k]?.answer !== ap[k]?.answer) {
+      out.push({
+        field: `project:${k}`,
+        label_fr: `Condition « ${k} » : ${bp[k]?.answer ?? "—"} → ${ap[k]?.answer ?? "—"}`,
+        before: bp[k]?.answer ?? null,
+        after: ap[k]?.answer ?? null,
+      });
+    }
+  }
+
+  const moneyKeys: Array<[keyof NonNullable<CompatAnswers["money"]>, string]> = [
+    ["floor_project_cents", "Plancher de projet"],
+    ["ideal_min_cents", "Projet idéal (min)"],
+    ["ideal_max_cents", "Projet idéal (max)"],
+    ["volume_preference", "Préférence volume/valeur"],
+  ];
+  for (const [k, label] of moneyKeys) {
+    const b = (before.money ?? {})[k] ?? null;
+    const a = (after.money ?? {})[k] ?? null;
+    if (b !== a) {
+      const fmt = k === "volume_preference" ? (v: unknown) => String(v ?? "—") : moneyFr;
+      out.push({ field: `money:${String(k)}`, label_fr: `${label} : ${fmt(b)} → ${fmt(a)}`, before: b, after: a });
+    }
+  }
+
+  const bt = new Map((before.territories ?? []).map((t) => [t.city_slug!, t]));
+  const at = new Map((after.territories ?? []).map((t) => [t.city_slug!, t]));
+  for (const slug of new Set([...bt.keys(), ...at.keys()])) {
+    const b = bt.get(slug);
+    const a = at.get(slug);
+    if (b?.tier !== a?.tier) {
+      out.push({
+        field: `territory:${slug}`,
+        label_fr: `Territoire « ${a?.city_name ?? b?.city_name ?? slug} » : ${b?.tier ?? "retiré"} → ${a?.tier ?? "retiré"}`,
+        before: b?.tier ?? null,
+        after: a?.tier ?? null,
+      });
+    }
+    if ((b?.min_project_cents ?? null) !== (a?.min_project_cents ?? null)) {
+      out.push({
+        field: `territory_min:${slug}`,
+        label_fr: `Minimum territoire « ${a?.city_name ?? slug} » : ${moneyFr(b?.min_project_cents)} → ${moneyFr(a?.min_project_cents)}`,
+        before: b?.min_project_cents ?? null,
+        after: a?.min_project_cents ?? null,
+      });
+    }
+  }
+
+  const capKeys: Array<[string, string]> = [
+    ["projects_per_month", "Projets par mois"],
+    ["lead_time_weeks", "Délai (semaines)"],
+    ["accepts_emergency", "Urgences"],
+    ["responds_24_48", "Réponse 24-48 h"],
+    ["weekend", "Fins de semaine"],
+    ["winter", "Hiver"],
+    ["paused", "Agenda en pause"],
+  ];
+  for (const [k, label] of capKeys) {
+    const b = (before.capacity as any)?.[k] ?? null;
+    const a = (after.capacity as any)?.[k] ?? null;
+    if (b !== a) {
+      out.push({ field: `capacity:${k}`, label_fr: `${label} : ${String(b ?? "—")} → ${String(a ?? "—")}`, before: b, after: a });
+    }
+  }
+
+  const bq = before.prequal ?? {};
+  const aq = after.prequal ?? {};
+  for (const k of new Set([...Object.keys(bq), ...Object.keys(aq)])) {
+    if (bq[k] !== aq[k]) {
+      out.push({
+        field: `prequal:${k}`,
+        label_fr: `Exigence « ${k} » : ${bq[k] ?? "—"} → ${aq[k] ?? "—"}`,
+        before: bq[k] ?? null,
+        after: aq[k] ?? null,
+      });
+    }
+  }
+
+  return out.slice(0, 60);
+}

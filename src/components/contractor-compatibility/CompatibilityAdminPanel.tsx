@@ -22,7 +22,12 @@ import {
   type TerritoryTier,
   type TriAnswer,
 } from "@/config/compatibilityExcavation";
-import { useCompatibilitySnapshot } from "@/hooks/useContractorCompatibility";
+import {
+  useCompatibilityAuditLog,
+  useCompatibilityOutcomes,
+  useCompatibilitySnapshot,
+} from "@/hooks/useContractorCompatibility";
+import CompatibilityAdminEditor from "./CompatibilityAdminEditor";
 
 const serviceLabel = (slug: string) => COMPAT_SERVICES.find((s) => s.slug === slug)?.label ?? slug;
 const projectLabel = (dim: string, key: string) =>
@@ -31,6 +36,8 @@ const prequalLabel = (c: string) => COMPAT_PREQUAL.find((p) => p.criterion === c
 
 export default function CompatibilityAdminPanel({ contractorId }: { contractorId: string }) {
   const { data, isLoading } = useCompatibilitySnapshot(contractorId);
+  const { data: auditLog } = useCompatibilityAuditLog(contractorId);
+  const { data: outcomes } = useCompatibilityOutcomes(contractorId);
 
   if (isLoading) {
     return (
@@ -53,11 +60,17 @@ export default function CompatibilityAdminPanel({ contractorId }: { contractorId
               : "Profil de compatibilité jamais rempli"}
           </p>
         </div>
-        <Button asChild variant="outline" size="sm">
-          <Link to={`/admin/contractors/${contractorId}/compatibilite`}>
-            <Pencil className="mr-1.5 h-3.5 w-3.5" /> Modifier
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <CompatibilityAdminEditor
+            contractorId={contractorId}
+            answers={(profile?.answers as any) ?? null}
+          />
+          <Button asChild variant="outline" size="sm">
+            <Link to={`/admin/contractors/${contractorId}/compatibilite`}>
+              <Pencil className="mr-1.5 h-3.5 w-3.5" /> Formulaire complet
+            </Link>
+          </Button>
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-5">
@@ -175,6 +188,52 @@ export default function CompatibilityAdminPanel({ contractorId }: { contractorId
             )}
           </>
         )}
+
+        <section>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Résultats réels
+          </p>
+          {outcomes?.summary && (outcomes.summary as any).completed_count != null ? (
+            <>
+              <p className="mt-1.5 text-sm text-foreground">
+                {(outcomes.summary as any).completed_count ?? 0} complétés ·{" "}
+                {(outcomes.summary as any).won_count ?? 0} gagnés ·{" "}
+                {(outcomes.summary as any).lost_count ?? 0} perdus · valeur moyenne{" "}
+                {formatMoney((outcomes.summary as any).avg_won_value_cents)}
+              </p>
+              {((outcomes.summary as any).won_below_declared_floor ?? 0) > 0 && (
+                <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                  {(outcomes.summary as any).won_below_declared_floor} projet(s) gagné(s) sous le plancher
+                  déclaré — le plancher pourrait être ajusté.
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              En attente — aucun résultat de production enregistré pour cette fiche.
+            </p>
+          )}
+        </section>
+
+        <section>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Journal des modifications
+          </p>
+          {(auditLog ?? []).length === 0 ? (
+            <p className="mt-1.5 text-sm text-muted-foreground">Aucune modification enregistrée.</p>
+          ) : (
+            <ul className="mt-2 space-y-1.5 text-sm">
+              {(auditLog ?? []).slice(0, 10).map((l: any) => (
+                <li key={l.id} className="flex flex-wrap items-baseline gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(l.created_at).toLocaleString("fr-CA", { dateStyle: "short", timeStyle: "short" })}
+                  </span>
+                  <span className="text-foreground">{l.notes}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </CardContent>
     </Card>
   );

@@ -222,3 +222,83 @@ export function useCompatibilitySnapshot(contractorId?: string | null) {
     },
   });
 }
+
+/** Admin — correction ciblée d'une fiche (journalisée champ par champ côté serveur). */
+export function useCompatibilityAdminPatch(contractorId?: string | null) {
+  const qc = useQueryClient();
+  const [saving, setSaving] = useState(false);
+
+  const patch = useCallback(
+    async (answers: Partial<CompatibilityAnswers>) => {
+      if (!contractorId) return null;
+      setSaving(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("contractor-compatibility-save", {
+          body: { contractor_id: contractorId, answers, mode: "admin_patch" },
+        });
+        if (error) throw error;
+        qc.invalidateQueries({ queryKey: ["contractor-compatibility-snapshot", contractorId] });
+        qc.invalidateQueries({ queryKey: ["contractor-compatibility-audit", contractorId] });
+        toast.success(
+          (data as any)?.changes
+            ? `${(data as any).changes} modification(s) enregistrée(s)`
+            : "Aucun changement à enregistrer",
+        );
+        return data as { ok: boolean; changes: number; completion_pct: number };
+      } catch {
+        toast.error("Modification impossible pour l'instant.");
+        return null;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [contractorId, qc],
+  );
+
+  return { patch, saving };
+}
+
+/** Admin — journal d'audit granulaire des changements de compatibilité. */
+export function useCompatibilityAuditLog(contractorId?: string | null) {
+  return useQuery({
+    queryKey: ["contractor-compatibility-audit", contractorId],
+    enabled: !!contractorId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("admin_action_logs")
+        .select("id, action_type, notes, payload_json, created_at, actor_user_id")
+        .eq("contractor_id", contractorId!)
+        .in("action_type", [
+          "contractor_compatibility_field_changed",
+          "contractor_profile_preferences_updated",
+        ])
+        .order("created_at", { ascending: false })
+        .limit(50);
+      return data ?? [];
+    },
+  });
+}
+
+/** Admin / entrepreneur — résultats réels vs préférences déclarées. */
+export function useCompatibilityOutcomes(contractorId?: string | null) {
+  return useQuery({
+    queryKey: ["contractor-compatibility-outcomes", contractorId],
+    enabled: !!contractorId,
+    queryFn: async () => {
+      const [{ data: summary }, { data: recent }] = await Promise.all([
+        supabase
+          .from("v_contractor_preference_vs_outcome")
+          .select("*")
+          .eq("contractor_id", contractorId!)
+          .maybeSingle(),
+        supabase
+          .from("contractor_recommendation_outcomes")
+          .select("id, stage, service_slug, city_slug, project_value_cents, occurred_at")
+          .eq("contractor_id", contractorId!)
+          .order("occurred_at", { ascending: false })
+          .limit(10),
+      ]);
+      return { summary: summary ?? null, recent: recent ?? [] };
+    },
+  });
+}

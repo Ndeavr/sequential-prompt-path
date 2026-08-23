@@ -1,0 +1,2 @@
+REVOKE ALL ON FUNCTION public.record_contractor_outcome(uuid, text, uuid, uuid, text, text, integer, jsonb) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.record_contractor_outcome(uuid, text, uuid, uuid, text, text, integer, jsonb) TO service_role;
