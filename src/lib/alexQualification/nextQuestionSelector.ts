@@ -138,6 +138,23 @@ export function pickNextQuestion(
     };
   }
 
+  // 3b. Questions métier propres au corps de métier (une à la fois)
+  if (tree?.extra_questions?.length) {
+    const ctx = (g.project_context ?? {}) as Record<string, unknown>;
+    for (const q of tree.extra_questions) {
+      if (q.only_sub_types && g.problem.sub_type && !q.only_sub_types.includes(g.problem.sub_type)) continue;
+      if (ctx[q.key] !== undefined && ctx[q.key] !== null && ctx[q.key] !== "") continue;
+      if (known(`project_context.${q.key}`)) continue;
+      return {
+        field: `project_context.${q.key}`,
+        question_fr: q.question_fr,
+        why_fr: q.why_fr,
+        ui_hint: "choice",
+        options: q.options,
+      };
+    }
+  }
+
   // 4. Urgency
   if (!g.urgency && !known("urgency")) {
     return {
