@@ -693,6 +693,7 @@ const PageJobDetailsLive = lazyWithRetry(() => import("@/pages/pro/PageJobDetail
 const ProPartnerNetwork = lazyWithRetry(() => import("@/pages/pro/ProPartnerNetwork"));
 const ProExpertise = lazyWithRetry(() => import("@/pages/pro/ProExpertise"));
 const PageContractorCompatibility = lazyWithRetry(() => import("@/pages/pro/PageContractorCompatibility"));
+const PageContractorProfileInvite = lazyWithRetry(() => import("@/pages/pro/PageContractorProfileInvite"));
 const ProTeams = lazyWithRetry(() => import("@/pages/pro/ProTeams"));
 const ProEmergencySettings = lazyWithRetry(() => import("@/pages/pro/ProEmergencySettings"));
 const ProDomainIntelligence = lazyWithRetry(() => import("@/pages/pro/ProDomainIntelligence"));
@@ -1463,6 +1464,7 @@ export const AppRouter = () => (
         <Route path="/pro/inbox/:id" element={<ProtectedRoute requiredRole="contractor"><PageJobDetailsLive /></ProtectedRoute>} />
         <Route path="/pro/partners" element={<ProtectedRoute requiredRole="contractor"><ProPartnerNetwork /></ProtectedRoute>} />
         <Route path="/pro/expertise" element={<ProtectedRoute requiredRole="contractor"><ProExpertise /></ProtectedRoute>} />
+        <Route path="/profil-entrepreneur/:token" element={<PageContractorProfileInvite />} />
         <Route path="/pro/compatibilite" element={<ProtectedRoute requiredRole="contractor"><PageContractorCompatibility /></ProtectedRoute>} />
 
         <Route path="/pro/teams" element={<ProtectedRoute requiredRole="contractor"><ProTeams /></ProtectedRoute>} />
