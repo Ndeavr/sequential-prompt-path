@@ -146,116 +146,263 @@ Deno.serve(async (req) => {
         return json({ ok: false, reason: "invalid_kind" }, 400);
       }
 
-      const facts: Fact[] = [];
-      const gaps: Gap[] = [];
-      let businessName = String(body.business_name ?? "").slice(0, 160) || null;
-      let city: string | null = null;
-      let trade: string | null = null;
-      let contractorId: string | null = null;
-      let prospectId: string | null = null;
-      let hasRbq = false;
-      let hasWebsite = false;
-      let hasReviews = false;
-      let hasTerritory = false;
-      let hasTrade = false;
-      let hasContact = false;
-      let hasIdentity = false;
-      let reviewNote: string | null = null;
+      const CONTRACTOR_COLS =
+        "id, business_name, legal_name, city, specialty, website, normalized_website, phone, email, rbq_number, neq, rating, review_count, google_business_url, service_areas, verification_status, rbq_compliance_status, is_published, logo_url";
+      const PROSPECT_COLS =
+        "id, business_name, legal_name, city, region, category, website_url, google_business_url, phone_primary, email, rbq_number, service_areas, verification_status, data_quality_score";
 
+      type Row = Record<string, any> | null;
+      let contractor: Row = null;
+      let prospect: Row = null;
+
+      /* --------------------------- 1. Anchor record --------------------- */
       if (kind === "contractor" && id) {
-        const { data: c } = await db
-          .from("contractors")
-          .select(
-            "id, business_name, legal_name, city, specialty, website, phone, email, rbq_number, neq, rating, review_count, google_business_url, service_areas, verification_status, rbq_compliance_status, is_published, logo_url"
-          )
-          .eq("id", id)
-          .maybeSingle();
-        if (!c) return json({ ok: false, reason: "not_found" }, 404);
-        contractorId = c.id;
-        businessName = c.business_name ?? businessName;
-        city = c.city ?? null;
-        trade = c.specialty ?? null;
-        hasIdentity = Boolean(c.business_name);
-        hasRbq = Boolean(c.rbq_number);
-        hasWebsite = Boolean(c.website);
-        hasTrade = Boolean(c.specialty);
-        hasTerritory = Boolean(c.city || (c.service_areas ?? []).length);
-        hasContact = Boolean(c.phone || c.email);
-        hasReviews = Boolean(c.review_count && Number(c.review_count) > 0);
-
-        push(facts, c.legal_name ? { key: "legal_name", label: "Nom légal", value: c.legal_name, provenance: "verified", source: "Registre" } : null);
-        push(facts, c.business_name ? { key: "business_name", label: "Entreprise", value: c.business_name, provenance: "declared" } : null);
-        push(facts, c.specialty ? { key: "trade", label: "Spécialité", value: c.specialty, provenance: "declared" } : null);
-        push(facts, c.city ? { key: "city", label: "Territoire principal", value: c.city, provenance: "declared" } : null);
-        push(facts, (c.service_areas ?? []).length ? { key: "areas", label: "Zones desservies", value: (c.service_areas as string[]).slice(0, 4).join(", "), provenance: "declared" } : null);
-        push(facts, c.rbq_number ? { key: "rbq", label: "Licence RBQ", value: c.rbq_number, provenance: c.rbq_compliance_status === "verified" ? "verified" : "declared", source: "RBQ" } : null);
-        push(facts, c.neq ? { key: "neq", label: "NEQ", value: c.neq, provenance: "verified", source: "Registraire des entreprises" } : null);
-        push(facts, c.website ? { key: "website", label: "Site web", value: String(c.website).replace(/^https?:\/\//, ""), provenance: "verified", source: "Site officiel" } : null);
-        push(facts, c.google_business_url ? { key: "gmb", label: "Fiche Google", value: "Détectée", provenance: "verified", source: "Google" } : null);
-        if (hasReviews) {
-          push(facts, { key: "reviews", label: "Avis publics", value: `${c.review_count} avis${c.rating ? ` · ${c.rating}/5` : ""}`, provenance: "verified", source: "Google" });
-        }
+        const { data } = await db.from("contractors").select(CONTRACTOR_COLS).eq("id", id).maybeSingle();
+        contractor = data ?? null;
       } else if (kind === "prospect" && id) {
-        const { data: p } = await db
-          .from("verified_contractor_prospects")
-          .select(
-            "id, business_name, legal_name, city, region, category, website_url, google_business_url, phone_primary, email, rbq_number, service_areas, verification_status, data_quality_score"
-          )
-          .eq("id", id)
-          .maybeSingle();
-        if (!p) return json({ ok: false, reason: "not_found" }, 404);
-        prospectId = p.id;
-        businessName = p.business_name ?? businessName;
-        city = p.city ?? null;
-        trade = p.category ?? null;
-        hasIdentity = Boolean(p.business_name);
-        hasRbq = Boolean(p.rbq_number);
-        hasWebsite = Boolean(p.website_url);
-        hasTrade = Boolean(p.category);
-        hasTerritory = Boolean(p.city || (p.service_areas ?? []).length);
-        hasContact = Boolean(p.phone_primary || p.email);
-
-        push(facts, p.legal_name ? { key: "legal_name", label: "Nom légal", value: p.legal_name, provenance: "verified", source: "Registre" } : null);
-        push(facts, p.business_name ? { key: "business_name", label: "Entreprise", value: p.business_name, provenance: "verified", source: "Source officielle" } : null);
-        push(facts, p.category ? { key: "trade", label: "Spécialité détectée", value: p.category, provenance: "inferred", source: "Classification UNPRO" } : null);
-        push(facts, p.city ? { key: "city", label: "Territoire principal", value: p.city, provenance: "verified", source: "Source officielle" } : null);
-        push(facts, p.region ? { key: "region", label: "Région", value: p.region, provenance: "inferred" } : null);
-        push(facts, p.rbq_number ? { key: "rbq", label: "Licence RBQ", value: p.rbq_number, provenance: "verified", source: "RBQ" } : null);
-        push(facts, p.website_url ? { key: "website", label: "Site web", value: String(p.website_url).replace(/^https?:\/\//, ""), provenance: "verified", source: "Site officiel" } : null);
-        push(facts, p.google_business_url ? { key: "gmb", label: "Fiche Google", value: "Détectée", provenance: "verified", source: "Google" } : null);
-        reviewNote = "Aucun avis vérifié par UNPRO pour le moment.";
-      } else {
-        // Unknown company — UNPRO holds nothing yet. Honest empty baseline.
-        hasIdentity = Boolean(businessName);
-        city = (String(body.city ?? "").slice(0, 120) || null) as string | null;
-        push(facts, businessName ? { key: "business_name", label: "Entreprise", value: businessName, provenance: "declared" } : null);
-        push(facts, city ? { key: "city", label: "Territoire déclaré", value: city, provenance: "declared" } : null);
+        const { data } = await db.from("verified_contractor_prospects").select(PROSPECT_COLS).eq("id", id).maybeSingle();
+        prospect = data ?? null;
       }
 
-      /* ------- Recommendation gaps: what blocks an AI recommendation ----- */
-      const addGap = (ok: boolean, g: Gap) => { if (!ok) gaps.push(g); };
-      addGap(hasIdentity, { key: "identity", label: "Identité d'entreprise confirmée", why: "Sans identité confirmée, aucune IA ne peut vous nommer.", impact: "high" });
-      addGap(hasTrade, { key: "trade", label: "Spécialité principale", why: "L'IA doit savoir ce que vous faites exactement pour vous recommander.", impact: "high" });
-      addGap(hasTerritory, { key: "territory", label: "Territoire desservi", why: "Sans territoire, vous n'apparaissez dans aucune recommandation locale.", impact: "high" });
-      addGap(hasRbq, { key: "rbq", label: "Licence RBQ confirmée", why: "Signal de confiance exigé avant toute recommandation.", impact: "high" });
-      addGap(hasWebsite, { key: "website", label: "Source officielle en ligne", why: "Sans source vérifiable, vos informations restent non confirmées.", impact: "medium" });
-      addGap(hasReviews, { key: "reviews", label: "Avis publics vérifiés", why: "UNPRO n'invente aucun avis : sans avis vérifiés, la confiance reste incomplète.", impact: "medium" });
-      addGap(hasContact, { key: "contact", label: "Canal de rendez-vous", why: "Un rendez-vous exclusif exige un canal joignable et confirmé.", impact: "high" });
+      const rawQuery = String(body.business_name ?? "").slice(0, 160) || queryText;
 
-      const checks = [
-        { key: "identity", label: "Identité confirmée", ok: hasIdentity },
-        { key: "trade", label: "Spécialité claire", ok: hasTrade },
-        { key: "territory", label: "Territoire défini", ok: hasTerritory },
-        { key: "rbq", label: "Licence RBQ", ok: hasRbq },
-        { key: "website", label: "Source officielle", ok: hasWebsite },
-        { key: "reviews", label: "Avis vérifiés", ok: hasReviews },
-        { key: "contact", label: "Canal de rendez-vous", ok: hasContact },
+      /* -------- 2. Name-based resolution when nothing was selected ------- */
+      if (!contractor && !prospect && rawQuery.trim().length >= 2) {
+        const like = `%${rawQuery.trim()}%`;
+        const key = nameKey(rawQuery);
+        const [{ data: cs }, { data: ps }] = await Promise.all([
+          db.from("contractors").select(CONTRACTOR_COLS).or(`business_name.ilike.${like},legal_name.ilike.${like}`).limit(10),
+          db
+            .from("verified_contractor_prospects")
+            .select(PROSPECT_COLS)
+            .or(`business_name.ilike.${like},legal_name.ilike.${like}`)
+            .limit(10),
+        ]);
+        const bestOf = (rows: any[] | null) => {
+          if (!rows?.length) return null;
+          return (
+            rows.find((r) => nameKey(r.business_name) === key || nameKey(r.legal_name) === key) ??
+            rows.find((r) => nameKey(r.business_name).startsWith(key) || key.startsWith(nameKey(r.business_name))) ??
+            null
+          );
+        };
+        contractor = bestOf(cs as any[]);
+        prospect = bestOf(ps as any[]);
+      }
+
+      /* ------- 3. Cross-link the sibling record (same real company) ------ */
+      const anchorName = nameKey(contractor?.business_name ?? prospect?.business_name);
+      const anchorDomain = domainKey(
+        contractor?.normalized_website ?? contractor?.website ?? prospect?.website_url
+      );
+
+      if (contractor && !prospect && (anchorName || anchorDomain)) {
+        const filters: string[] = [];
+        if (contractor.business_name) filters.push(`business_name.ilike.%${String(contractor.business_name).slice(0, 60)}%`);
+        if (anchorDomain) filters.push(`website_url.ilike.%${anchorDomain}%`);
+        if (filters.length) {
+          const { data } = await db.from("verified_contractor_prospects").select(PROSPECT_COLS).or(filters.join(",")).limit(5);
+          prospect =
+            (data as any[])?.find(
+              (p) => nameKey(p.business_name) === anchorName || (anchorDomain && domainKey(p.website_url) === anchorDomain)
+            ) ?? null;
+        }
+      }
+      if (prospect && !contractor && (anchorName || anchorDomain)) {
+        const filters: string[] = [];
+        if (prospect.business_name) filters.push(`business_name.ilike.%${String(prospect.business_name).slice(0, 60)}%`);
+        if (anchorDomain) filters.push(`normalized_website.ilike.%${anchorDomain}%`);
+        if (filters.length) {
+          const { data } = await db.from("contractors").select(CONTRACTOR_COLS).or(filters.join(",")).limit(5);
+          contractor =
+            (data as any[])?.find(
+              (c) =>
+                nameKey(c.business_name) === anchorName ||
+                (anchorDomain && domainKey(c.normalized_website ?? c.website) === anchorDomain)
+            ) ?? null;
+        }
+      }
+
+      if (kind !== "unknown" && id && !contractor && !prospect) {
+        return json({ ok: false, reason: "not_found" }, 404);
+      }
+
+      /* --------------------- 4. Canonical merged entity ------------------ */
+      const first = <T,>(...vals: (T | null | undefined)[]) => vals.find((v) => v !== null && v !== undefined && v !== "") ?? null;
+      const contractorId: string | null = contractor?.id ?? null;
+      const prospectId: string | null = prospect?.id ?? null;
+
+      const businessName: string | null =
+        first<string>(contractor?.business_name, prospect?.business_name) ?? (rawQuery.trim() || null);
+      const legalName = first<string>(contractor?.legal_name, prospect?.legal_name);
+      const trade = first<string>(contractor?.specialty, prospect?.category);
+      const city = first<string>(contractor?.city, prospect?.city, String(body.city ?? "").slice(0, 120) || null);
+      const region = first<string>(prospect?.region);
+      const areas = Array.from(
+        new Set([...(contractor?.service_areas ?? []), ...(prospect?.service_areas ?? [])].filter(Boolean).map(String))
+      );
+      const website = first<string>(contractor?.website, contractor?.normalized_website, prospect?.website_url);
+      const gmb = first<string>(contractor?.google_business_url, prospect?.google_business_url);
+      const phone = first<string>(contractor?.phone, prospect?.phone_primary);
+      const email = first<string>(contractor?.email, prospect?.email);
+      const rbq = first<string>(contractor?.rbq_number, prospect?.rbq_number);
+      const neq = first<string>(contractor?.neq);
+      const reviewCount = Number(contractor?.review_count ?? 0);
+      const rating = contractor?.rating ?? null;
+
+      const rbqVerified = contractor?.rbq_compliance_status === "verified";
+      const officialProspect = Boolean(prospect);
+
+      const facts: Fact[] = [];
+      push(facts, legalName ? { key: "legal_name", label: "Nom légal", value: legalName, provenance: "verified", source: "Registre" } : null);
+      push(
+        facts,
+        businessName
+          ? {
+              key: "business_name",
+              label: "Entreprise",
+              value: businessName,
+              provenance: officialProspect ? "verified" : contractor ? "declared" : "declared",
+              source: officialProspect ? "Source officielle" : undefined,
+            }
+          : null
+      );
+      push(
+        facts,
+        trade
+          ? {
+              key: "trade",
+              label: "Spécialité",
+              value: trade,
+              provenance: contractor?.specialty ? "declared" : "inferred",
+              source: contractor?.specialty ? undefined : "Classification UNPRO",
+            }
+          : null
+      );
+      push(
+        facts,
+        city
+          ? {
+              key: "city",
+              label: "Territoire principal",
+              value: city,
+              provenance: officialProspect && prospect?.city ? "verified" : "declared",
+              source: officialProspect && prospect?.city ? "Source officielle" : undefined,
+            }
+          : null
+      );
+      push(facts, region ? { key: "region", label: "Région", value: region, provenance: "inferred" } : null);
+      push(facts, areas.length ? { key: "areas", label: "Zones desservies", value: areas.slice(0, 4).join(", "), provenance: "declared" } : null);
+      push(facts, rbq ? { key: "rbq", label: "Licence RBQ", value: rbq, provenance: rbqVerified ? "verified" : "declared", source: "RBQ" } : null);
+      push(facts, neq ? { key: "neq", label: "NEQ", value: neq, provenance: "verified", source: "Registraire des entreprises" } : null);
+      push(
+        facts,
+        website
+          ? { key: "website", label: "Site web", value: domainKey(website), provenance: "verified", source: "Site officiel" }
+          : null
+      );
+      push(facts, gmb ? { key: "gmb", label: "Fiche Google", value: "Détectée", provenance: "verified", source: "Google" } : null);
+      push(
+        facts,
+        phone
+          ? {
+              key: "phone",
+              label: "Téléphone",
+              value: String(phone),
+              provenance: officialProspect && prospect?.phone_primary ? "verified" : "declared",
+              source: officialProspect && prospect?.phone_primary ? "Source officielle" : undefined,
+            }
+          : null
+      );
+      push(facts, email ? { key: "email", label: "Courriel", value: String(email), provenance: "declared" } : null);
+      if (reviewCount > 0) {
+        push(facts, {
+          key: "reviews",
+          label: "Avis publics",
+          value: `${reviewCount} avis${rating ? ` · ${rating}/5` : ""}`,
+          provenance: "verified",
+          source: "Google",
+        });
+      }
+
+      const reviewNote = reviewCount > 0 ? null : "Aucun avis vérifié par UNPRO pour le moment.";
+
+      /* ------------- 5. Missions: confirmed / detected / missing --------- */
+      type MissionStatus = "confirmed" | "detected" | "missing";
+      interface Mission {
+        key: string;
+        label: string;
+        status: MissionStatus;
+        points: number;
+        earned: number;
+        impact: "high" | "medium" | "low";
+        detected_value: string | null;
+        why: string;
+        unlocks: string;
+        cta: string;
+      }
+
+      const mk = (
+        key: string,
+        label: string,
+        points: number,
+        impact: "high" | "medium" | "low",
+        confirmed: boolean,
+        detectedValue: string | null,
+        why: string,
+        unlocks: string
+      ): Mission => {
+        const status: MissionStatus = confirmed ? "confirmed" : detectedValue ? "detected" : "missing";
+        return {
+          key,
+          label,
+          status,
+          points,
+          earned: status === "confirmed" ? points : status === "detected" ? Math.round(points * 0.6) : 0,
+          impact,
+          detected_value: detectedValue,
+          why,
+          unlocks,
+          cta: status === "confirmed" ? "Confirmé" : status === "detected" ? "Confirmer en 1 clic" : "Compléter",
+        };
+      };
+
+      const missions: Mission[] = [
+        mk("identity", "Identité d'entreprise", 10, "high", Boolean(legalName || officialProspect), businessName,
+          "Sans identité confirmée, aucune IA ne peut vous nommer.", "Votre nom devient citable par l'IA"),
+        mk("trade", "Spécialité principale", 15, "high", Boolean(contractor?.specialty), trade,
+          "L'IA doit savoir exactement ce que vous faites.", "Éligible aux recommandations de votre métier"),
+        mk("territory", "Territoire desservi", 15, "high", areas.length > 0, city ?? (areas[0] ?? null),
+          "Sans territoire confirmé, aucune recommandation locale.", "+ visibilité locale"),
+        mk("contact", "Canal de rendez-vous", 20, "high", Boolean(contractor?.phone || contractor?.email), phone ?? email,
+          "Un rendez-vous exclusif exige un canal joignable.", "Rendez-vous activables"),
+        mk("website", "Source officielle en ligne", 15, "medium", Boolean(website), website ? domainKey(website) : null,
+          "Une source vérifiable confirme vos informations.", "Vos données deviennent vérifiables"),
+        mk("rbq", "Licence RBQ", 15, "high", rbqVerified, rbq,
+          "Signal de confiance exigé avant toute recommandation.", "Badge de conformité"),
+        mk("reviews", "Avis publics vérifiés", 10, "medium", reviewCount > 0, gmb ? "Fiche Google détectée" : null,
+          "UNPRO n'invente aucun avis.", "Bonus confiance"),
       ];
-      const score = Math.round((checks.filter((c) => c.ok).length / checks.length) * 100);
-      const recommendable = hasIdentity && hasTrade && hasTerritory && hasContact && (hasRbq || hasWebsite);
 
-      /* -------------------- Real capacity (never fabricated) ------------- */
-      let capacity: Record<string, unknown> = { status: "pending", label: "Capacité en cours d'analyse" };
+      const score = Math.min(100, missions.reduce((s, m) => s + m.earned, 0));
+      const remainingSteps = missions.filter((m) => m.status !== "confirmed").length;
+      const level =
+        score >= 85 ? "Recommandable" : score >= 60 ? "Presque recommandable" : score >= 35 ? "Partiellement visible" : "Invisible pour l'IA";
+
+      // Legacy-compatible payloads
+      const checks = missions.map((m) => ({ key: m.key, label: m.label, ok: m.status === "confirmed" }));
+      const gaps: Gap[] = missions
+        .filter((m) => m.status !== "confirmed")
+        .map((m) => ({ key: m.key, label: m.label, why: m.why, impact: m.impact }));
+
+      const recommendable =
+        Boolean(businessName) && Boolean(trade) && Boolean(city || areas.length) && Boolean(phone || email) && Boolean(rbq || website);
+
+      /* -------------------- 6. Real capacity (never fabricated) ---------- */
+      let capacity: Record<string, unknown> = {
+        status: "needs_confirmation",
+        label: "Confirmez votre territoire et votre spécialité pour voir les places disponibles.",
+      };
       if (city && trade) {
         const { data: cap } = await db
           .from("market_capacity")
@@ -274,10 +421,30 @@ Deno.serve(async (req) => {
             remaining,
             market_open: cap.market_open !== false,
           };
+        } else {
+          capacity = {
+            status: "not_tracked",
+            city,
+            trade,
+            label: `Aucune limite de place publiée pour ${trade} à ${city}.`,
+          };
         }
       }
 
-      const baseline = { facts, checks, recommendable, review_note: reviewNote };
+      const baseline = {
+        facts,
+        checks,
+        missions,
+        level,
+        remaining_steps: remainingSteps,
+        recommendable,
+        review_note: reviewNote,
+        matched: {
+          contractor_id: contractorId,
+          prospect_id: prospectId,
+          merged_sources: [contractorId ? "contractor" : null, prospectId ? "official_prospect" : null].filter(Boolean),
+        },
+      };
 
       const { data: audit, error } = await db
         .from("ai_recommendation_audits")
@@ -319,6 +486,7 @@ Deno.serve(async (req) => {
         capacity,
       });
     }
+
 
     /* ------------------------------------------------------------- CLAIM */
     if (action === "claim") {
