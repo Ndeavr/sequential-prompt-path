@@ -6981,6 +6981,218 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_recommendation_audit_events: {
+        Row: {
+          audit_id: string
+          event_type: string
+          id: string
+          metadata: Json
+          occurred_at: string
+        }
+        Insert: {
+          audit_id: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+        }
+        Update: {
+          audit_id?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_recommendation_audit_events_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "ai_recommendation_audits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_recommendation_audits: {
+        Row: {
+          activation_started_at: string | null
+          ai_agent_run_id: string | null
+          baseline: Json
+          business_name: string | null
+          capacity: Json
+          checkout_created_at: string | null
+          city: string | null
+          claimed_at: string | null
+          claimed_contact: Json | null
+          completed_at: string | null
+          contractor_id: string | null
+          created_at: string
+          gaps: Json
+          id: string
+          paid_at: string | null
+          prospect_id: string | null
+          query_text: string | null
+          readiness_score: number | null
+          session_token: string
+          source: string
+          status: string
+          trade: string | null
+          updated_at: string
+          utm: Json
+        }
+        Insert: {
+          activation_started_at?: string | null
+          ai_agent_run_id?: string | null
+          baseline?: Json
+          business_name?: string | null
+          capacity?: Json
+          checkout_created_at?: string | null
+          city?: string | null
+          claimed_at?: string | null
+          claimed_contact?: Json | null
+          completed_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          gaps?: Json
+          id?: string
+          paid_at?: string | null
+          prospect_id?: string | null
+          query_text?: string | null
+          readiness_score?: number | null
+          session_token?: string
+          source?: string
+          status?: string
+          trade?: string | null
+          updated_at?: string
+          utm?: Json
+        }
+        Update: {
+          activation_started_at?: string | null
+          ai_agent_run_id?: string | null
+          baseline?: Json
+          business_name?: string | null
+          capacity?: Json
+          checkout_created_at?: string | null
+          city?: string | null
+          claimed_at?: string | null
+          claimed_contact?: Json | null
+          completed_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          gaps?: Json
+          id?: string
+          paid_at?: string | null
+          prospect_id?: string | null
+          query_text?: string | null
+          readiness_score?: number | null
+          session_token?: string
+          source?: string
+          status?: string
+          trade?: string | null
+          updated_at?: string
+          utm?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_recommendation_audits_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_recommendation_audits_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "ai_recommendation_audits_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "ai_recommendation_audits_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_recommendation_audits_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "ai_recommendation_audits_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_recommendation_audits_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "ai_recommendation_audits_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "ai_recommendation_audits_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_acquisition_dead_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "ai_recommendation_audits_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_crm_next_action"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "ai_recommendation_audits_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "ai_recommendation_audits_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_manual_contact_queue"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "ai_recommendation_audits_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_prospect_funnel"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "ai_recommendation_audits_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "verified_contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_recommendation_rank: {
         Row: {
           category: string
