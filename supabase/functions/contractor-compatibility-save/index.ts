@@ -62,18 +62,25 @@ Deno.serve(async (req) => {
 
     const { data: existing } = await admin
       .from("contractor_compatibility_profiles")
-      .select("answers")
+      .select("answers, status, current_step")
       .eq("contractor_id", contractorId)
       .maybeSingle();
+    const previous = sanitizeAnswers(existing?.answers);
     const answers = mergeAnswers(existing?.answers, body?.answers);
-    const currentStep = Math.min(Math.max(Number(body?.current_step) || 1, 1), 6);
+    // Mode admin : correction ciblée d'une fiche existante, sans revenir en brouillon.
+    const adminPatch = body?.mode === "admin_patch" && actorIsAdmin;
+    const wasFinalized = existing?.status === "active";
+    const currentStep = adminPatch
+      ? Math.min(Math.max(Number(existing?.current_step) || 6, 1), 6)
+      : Math.min(Math.max(Number(body?.current_step) || 1, 1), 6);
     const completion = computeCompletion(answers);
+    const changes = diffAnswers(previous, answers);
 
     const { error: upErr } = await admin.from("contractor_compatibility_profiles").upsert(
       {
         contractor_id: contractorId,
         trade_pack: "excavation_fondation",
-        status: "draft",
+        status: adminPatch || wasFinalized ? (existing?.status ?? "draft") : "draft",
         completion_pct: completion,
         current_step: currentStep,
         answers,
@@ -90,19 +97,43 @@ Deno.serve(async (req) => {
     );
     if (upErr) return json({ error: upErr.message }, 400);
 
-    await materialize(admin, contractorId, answers, { finalize: false });
+    // En mode admin sur une fiche déjà finalisée, on régénère aussi les règles de matching.
+    await materialize(admin, contractorId, answers, { finalize: adminPatch && wasFinalized });
 
-    if (actorIsAdmin) {
+    if (actorIsAdmin && changes.length) {
+      // Journal granulaire : une entrée par champ modifié.
+      await admin.from("admin_action_logs").insert(
+        changes.map((c) => ({
+          actor_user_id: userId,
+          contractor_id: contractorId,
+          action_type: "contractor_compatibility_field_changed",
+          notes: c.label_fr,
+          payload_json: {
+            field: c.field,
+            before: c.before,
+            after: c.after,
+            mode: adminPatch ? "admin_patch" : "admin_form",
+            completion,
+          },
+        })),
+      );
+    } else if (actorIsAdmin) {
       await admin.from("admin_action_logs").insert({
         actor_user_id: userId,
         contractor_id: contractorId,
         action_type: "contractor_profile_preferences_updated",
-        notes: `Étape ${currentStep} — complétion ${completion}%`,
+        notes: `Étape ${currentStep} — complétion ${completion}% (aucun changement)`,
         payload_json: { step: currentStep, completion },
       });
     }
 
-    return json({ ok: true, contractor_id: contractorId, completion_pct: completion });
+    return json({
+      ok: true,
+      contractor_id: contractorId,
+      completion_pct: completion,
+      changes: changes.length,
+    });
+
   } catch (e) {
     return json({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
   }
