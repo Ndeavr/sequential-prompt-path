@@ -97,6 +97,8 @@ const PREQUAL_COVERED_BY_GRAPH: Record<string, (g: QualificationGraph) => boolea
   budget_range: (g) => !!g.budget,
   photos: (g) => !!g.photos?.requested,
   timeline: (g) => !!g.urgency,
+  attic_access: (g) => !!(g.project_context as Record<string, unknown> | undefined)?.attic_access,
+  contamination: (g) => !!(g.project_context as Record<string, unknown> | undefined)?.contamination_suspected,
 };
 
 export function pickNextQuestion(
