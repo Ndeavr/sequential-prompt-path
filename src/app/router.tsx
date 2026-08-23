@@ -665,6 +665,7 @@ const PageAIPPAnalysisLoading = lazyWithRetry(() => import("@/pages/entrepreneur
 const PageEntrepreneurImportProcessing = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurImportProcessing"));
 const PagePricingCalculator = lazyWithRetry(() => import("@/pages/entrepreneur/PagePricingCalculator"));
 const PageGuaranteeCalculator = lazyWithRetry(() => import("@/pages/entrepreneur/PageGuaranteeCalculator"));
+const PageAiRecommendationAudit = lazyWithRetry(() => import("@/pages/entrepreneur/PageAiRecommendationAudit"));
 const PageForfaitGrowthCalculator = lazyWithRetry(() => import("@/pages/entrepreneur/PageForfaitGrowthCalculator"));
 
 const PagePlanResult = lazyWithRetry(() => import("@/pages/entrepreneur/PagePlanResult"));
@@ -1092,7 +1093,10 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/garantie" element={<PageGuaranteeCalculator />} />
         <Route path="/entrepreneur/calculateur-forfait" element={<Suspense fallback={<LazyFallback />}><PageForfaitGrowthCalculator /></Suspense>} />
 
+        <Route path="/entrepreneurs/audit-ia" element={<PageAiRecommendationAudit />} />
+        <Route path="/entrepreneur/audit-ia" element={<Navigate to="/entrepreneurs/audit-ia" replace />} />
         <Route path="/entrepreneurs/garantie" element={<PageGuaranteeCalculator />} />
+
         <Route path="/entrepreneur/plan-result" element={<PagePlanResult />} />
         <Route path="/entrepreneurs/calculateur" element={<PageEntrepreneurGoalToPlanLanding />} />
         <Route path="/entrepreneur/payment-success" element={<PagePaymentSuccess />} />

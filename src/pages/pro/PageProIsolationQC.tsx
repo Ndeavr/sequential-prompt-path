@@ -111,25 +111,16 @@ export default function PageProIsolationQC() {
     setLoading(true);
     setErr(null);
     try {
-      const { data, error } = await supabase.functions.invoke(
-        "create-activation-checkout",
-        { body: { slug: SPRINT_SLUG, source: "isolation-qc", utm } },
-      );
-      const url = (data as any)?.url as string | undefined;
-      if (error || !url) {
-        const detail = (data as any)?.error || (data as any)?.detail || error?.message || "unknown";
-        logEvent("cta_failed", { ...utm, detail });
-        setErr("Activation temporairement indisponible — réessayez dans 10 secondes.");
-        return;
-      }
-      redirectToCheckout(url);
+      const params = new URLSearchParams({ source: "isolation-qc" });
+      if (utm.city) params.set("ville", utm.city);
+      window.location.href = `/entrepreneurs/garantie?${params.toString()}`;
     } catch (e: any) {
       logEvent("cta_failed", { ...utm, detail: e?.message || "exception" });
       setErr("Activation temporairement indisponible — réessayez dans 10 secondes.");
-    } finally {
       setLoading(false);
     }
   };
+
 
   const cityLabel = utm.city ? utm.city.replace(/-/g, " ") : "Québec";
 
@@ -179,20 +170,21 @@ export default function PageProIsolationQC() {
           />
         </div>
 
-        {/* Pricing recap — no ambiguity on what happens after 7 days */}
+        {/* Pricing recap — offre d'entrée canonique 350 $ (paiement unique) */}
         <div className="mb-4 rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
           <div className="flex items-center justify-between px-3.5 py-3 border-b border-white/10">
-            <span className="text-[12px] text-white/60">Aujourd'hui</span>
-            <span className="text-[14px] font-semibold text-white">1,00 $ + taxes</span>
+            <span className="text-[12px] text-white/60">Pack d'entrée</span>
+            <span className="text-[14px] font-semibold text-white">350 $ + taxes</span>
           </div>
           <div className="flex items-start justify-between px-3.5 py-3">
-            <span className="text-[12px] text-white/60">Après 7 jours</span>
+            <span className="text-[12px] text-white/60">Ce que ça inclut</span>
             <span className="text-[12.5px] text-right text-white/85 leading-tight max-w-[62%]">
-              Aucun prélèvement automatique.<br/>
-              <span className="text-white/60">Vous choisirez votre plan pendant l'essai.</span>
+              Jusqu'à 5 rendez-vous exclusifs garantis.<br/>
+              <span className="text-white/60">Paiement unique. Aucun abonnement. Nombre exact calculé avant paiement.</span>
             </span>
           </div>
         </div>
+
 
         <button
           onClick={activate}
