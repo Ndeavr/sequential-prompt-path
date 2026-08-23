@@ -38230,6 +38230,51 @@ export type Database = {
           },
         ]
       }
+      contractor_recommendation_outcomes: {
+        Row: {
+          appointment_id: string | null
+          city_slug: string | null
+          contractor_id: string
+          created_at: string
+          id: string
+          lead_id: string | null
+          metadata: Json
+          occurred_at: string
+          project_value_cents: number | null
+          service_slug: string | null
+          source: string
+          stage: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          city_slug?: string | null
+          contractor_id: string
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          metadata?: Json
+          occurred_at?: string
+          project_value_cents?: number | null
+          service_slug?: string | null
+          source?: string
+          stage: string
+        }
+        Update: {
+          appointment_id?: string | null
+          city_slug?: string | null
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          metadata?: Json
+          occurred_at?: string
+          project_value_cents?: number | null
+          service_slug?: string | null
+          source?: string
+          stage?: string
+        }
+        Relationships: []
+      }
       contractor_recruitment_audit_logs: {
         Row: {
           actor_id: string | null
@@ -93212,6 +93257,78 @@ export type Database = {
         }
         Relationships: []
       }
+      v_contractor_preference_vs_outcome: {
+        Row: {
+          avg_won_value_cents: number | null
+          completed_count: number | null
+          contractor_id: string | null
+          declared_floor_cents: number | null
+          declared_ideal_max_cents: number | null
+          declared_ideal_min_cents: number | null
+          lost_count: number | null
+          min_won_value_cents: number | null
+          won_below_declared_floor: number | null
+          won_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_compatibility_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_compatibility_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       v_contractor_public_profile: {
         Row: {
           aipp_score: number | null
@@ -93241,6 +93358,84 @@ export type Database = {
           years_experience: number | null
         }
         Relationships: []
+      }
+      v_contractor_public_services: {
+        Row: {
+          contractor_id: string | null
+          is_priority: boolean | null
+          service_label_fr: string | null
+          service_slug: string | null
+        }
+        Insert: {
+          contractor_id?: string | null
+          is_priority?: never
+          service_label_fr?: string | null
+          service_slug?: string | null
+        }
+        Update: {
+          contractor_id?: string | null
+          is_priority?: never
+          service_label_fr?: string | null
+          service_slug?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_service_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_service_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_service_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_service_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_service_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_service_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_service_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_service_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
       }
       v_contractor_recommendation_score: {
         Row: {
@@ -95577,6 +95772,19 @@ export type Database = {
           p_provider: string
         }
         Returns: undefined
+      }
+      record_contractor_outcome: {
+        Args: {
+          _appointment_id?: string
+          _city_slug?: string
+          _contractor_id: string
+          _lead_id?: string
+          _metadata?: Json
+          _project_value_cents?: number
+          _service_slug?: string
+          _stage: string
+        }
+        Returns: string
       }
       record_email_event: {
         Args: { p_kind: string; p_message_id: string; p_payload?: Json }
