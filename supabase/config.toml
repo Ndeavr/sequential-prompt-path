@@ -241,3 +241,8 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = true
   [functions.enrich-official-website]
     verify_jwt = true
+
+  [functions.contractor-profile-token]
+    verify_jwt = false
+  [functions.contractor-profile-invite]
+    verify_jwt = true
