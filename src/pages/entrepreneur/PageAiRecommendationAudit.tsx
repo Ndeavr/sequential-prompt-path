@@ -447,7 +447,7 @@ function AuditReport({
             ? "Toutes les informations clés sont confirmées."
             : `${remaining} étape${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""} pour devenir recommandable.`}
         </p>
-        {baseline.matched_note}
+        
       </section>
 
       {/* Ce que l'IA peut déjà dire de vous */}
