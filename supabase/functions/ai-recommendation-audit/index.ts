@@ -262,8 +262,8 @@ Deno.serve(async (req) => {
               key: "business_name",
               label: "Entreprise",
               value: businessName,
-              provenance: officialProspect ? "verified" : contractor ? "declared" : "declared",
-              source: officialProspect ? "Source officielle" : undefined,
+              provenance: officialProspect && nameKey(prospect?.business_name) === nameKey(businessName) ? "verified" : "declared",
+              source: officialProspect && nameKey(prospect?.business_name) === nameKey(businessName) ? "Source officielle" : undefined,
             }
           : null
       );
@@ -286,8 +286,8 @@ Deno.serve(async (req) => {
               key: "city",
               label: "Territoire principal",
               value: city,
-              provenance: officialProspect && prospect?.city ? "verified" : "declared",
-              source: officialProspect && prospect?.city ? "Source officielle" : undefined,
+              provenance: prospect?.city === city ? "verified" : "declared",
+              source: prospect?.city === city ? "Source officielle" : undefined,
             }
           : null
       );
@@ -309,8 +309,8 @@ Deno.serve(async (req) => {
               key: "phone",
               label: "Téléphone",
               value: String(phone),
-              provenance: officialProspect && prospect?.phone_primary ? "verified" : "declared",
-              source: officialProspect && prospect?.phone_primary ? "Source officielle" : undefined,
+              provenance: prospect?.phone_primary === phone ? "verified" : "declared",
+              source: prospect?.phone_primary === phone ? "Source officielle" : undefined,
             }
           : null
       );
