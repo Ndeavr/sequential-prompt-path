@@ -304,7 +304,8 @@ function ScoreRing({ score, level }: { score: number; level: string }) {
   const c = 2 * Math.PI * r;
   const dash = (Math.max(0, Math.min(100, score)) / 100) * c;
   return (
-    <div className="relative mx-auto h-[132px] w-[132px]">
+    <div>
+      <div className="relative mx-auto h-[132px] w-[132px]">
       <svg viewBox="0 0 132 132" className="h-full w-full -rotate-90">
         <circle cx="66" cy="66" r={r} fill="none" stroke="rgba(255,255,255,0.09)" strokeWidth="10" />
         <circle
@@ -329,7 +330,8 @@ function ScoreRing({ score, level }: { score: number; level: string }) {
         <span className="text-[34px] font-bold leading-none tabular-nums">{score}</span>
         <span className="mt-0.5 text-[11px] uppercase tracking-[0.16em] text-white/45">/ 100</span>
       </div>
-      <p className="mt-2 text-center text-[13px] font-semibold text-sky-200">{level}</p>
+      </div>
+      <p className="mt-3 text-center text-[13px] font-semibold text-sky-200">{level}</p>
     </div>
   );
 }
