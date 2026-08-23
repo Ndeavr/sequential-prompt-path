@@ -1093,7 +1093,9 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/garantie" element={<PageGuaranteeCalculator />} />
         <Route path="/entrepreneur/calculateur-forfait" element={<Suspense fallback={<LazyFallback />}><PageForfaitGrowthCalculator /></Suspense>} />
 
-        <Route path="/entrepreneurs/garantie" element={<PageGuaranteeCalculator />} />
+        <Route path="/entrepreneurs/audit-ia" element={<PageAiRecommendationAudit />} />
+        <Route path="/entrepreneur/audit-ia" element={<Navigate to="/entrepreneurs/audit-ia" replace />} />
+
         <Route path="/entrepreneur/plan-result" element={<PagePlanResult />} />
         <Route path="/entrepreneurs/calculateur" element={<PageEntrepreneurGoalToPlanLanding />} />
         <Route path="/entrepreneur/payment-success" element={<PagePaymentSuccess />} />
