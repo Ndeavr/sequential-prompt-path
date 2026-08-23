@@ -4,8 +4,8 @@
  *
  * Entrée à friction minimale du funnel entrepreneur : un nom d'entreprise
  * suffit. Aucune donnée inventée — chaque fait porte sa provenance
- * (Vérifié / Déclaré / Déduit / En attente). Le CTA unique mène à
- * l'activation 350 $.
+ * (Vérifié / Déclaré / Déduit / En attente). Le parcours est gamifié :
+ * score, niveau, missions pondérées, CTA sticky vers l'activation 350 $.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
@@ -19,7 +19,9 @@ import {
   Sparkles,
   Clock3,
   MapPin,
-  AlertTriangle,
+  Lock,
+  Check,
+  Zap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -27,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { OFFER_350 } from "@/lib/copy/offer350";
 
 type Provenance = "verified" | "declared" | "inferred" | "pending";
+type MissionStatus = "confirmed" | "detected" | "missing";
 
 interface Candidate {
   kind: "contractor" | "prospect";
@@ -42,6 +45,18 @@ interface Fact {
   value: string;
   provenance: Provenance;
   source?: string;
+}
+interface Mission {
+  key: string;
+  label: string;
+  status: MissionStatus;
+  points: number;
+  earned: number;
+  impact: "high" | "medium" | "low";
+  detected_value: string | null;
+  why: string;
+  unlocks: string;
+  cta: string;
 }
 interface Gap {
   key: string;
@@ -59,6 +74,9 @@ interface AuditResult {
   baseline: {
     facts: Fact[];
     checks: { key: string; label: string; ok: boolean }[];
+    missions?: Mission[];
+    level?: string;
+    remaining_steps?: number;
     recommendable: boolean;
     review_note: string | null;
   };
@@ -173,7 +191,7 @@ export default function PageAiRecommendationAudit() {
   }
 
   return (
-    <div className="alex-immersive min-h-[100dvh] bg-[#050816] text-white">
+    <div className="alex-immersive min-h-[100dvh] overflow-x-hidden bg-[#050816] text-white">
       <Helmet>
         <title>Audit de recommandation IA — Comment l'IA voit votre entreprise | UNPRO</title>
         <meta
@@ -280,6 +298,98 @@ export default function PageAiRecommendationAudit() {
   );
 }
 
+/* ------------------------------------------------------------------ Ring */
+function ScoreRing({ score, level }: { score: number; level: string }) {
+  const r = 52;
+  const c = 2 * Math.PI * r;
+  const dash = (Math.max(0, Math.min(100, score)) / 100) * c;
+  return (
+    <div>
+      <div className="relative mx-auto h-[132px] w-[132px]">
+      <svg viewBox="0 0 132 132" className="h-full w-full -rotate-90">
+        <circle cx="66" cy="66" r={r} fill="none" stroke="rgba(255,255,255,0.09)" strokeWidth="10" />
+        <circle
+          cx="66"
+          cy="66"
+          r={r}
+          fill="none"
+          stroke="url(#unproRing)"
+          strokeWidth="10"
+          strokeLinecap="round"
+          strokeDasharray={`${dash} ${c}`}
+          style={{ transition: "stroke-dasharray 900ms cubic-bezier(.22,1,.36,1)" }}
+        />
+        <defs>
+          <linearGradient id="unproRing" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#38bdf8" />
+            <stop offset="100%" stopColor="#67e8f9" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-[34px] font-bold leading-none tabular-nums">{score}</span>
+        <span className="mt-0.5 text-[11px] uppercase tracking-[0.16em] text-white/45">/ 100</span>
+      </div>
+      </div>
+      <p className="mt-3 text-center text-[13px] font-semibold text-sky-200">{level}</p>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------- Missions */
+const STATUS_META: Record<MissionStatus, { label: string; cls: string; dot: string }> = {
+  confirmed: { label: "Confirmé", cls: "border-emerald-300/20 bg-emerald-400/[0.07]", dot: "bg-emerald-400" },
+  detected: { label: "Détecté — confirmez en 1 clic", cls: "border-sky-300/25 bg-sky-400/[0.07]", dot: "bg-sky-400" },
+  missing: { label: "À compléter", cls: "border-white/10 bg-white/[0.03]", dot: "bg-white/25" },
+};
+
+function MissionRow({ m }: { m: Mission }) {
+  const meta = STATUS_META[m.status];
+  const blocking = m.status !== "confirmed" && m.impact === "high";
+  return (
+    <li className={`rounded-2xl border p-3.5 ${meta.cls}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta.dot}`} aria-hidden />
+            <p className="truncate text-[14.5px] font-semibold text-white">{m.label}</p>
+          </div>
+          {m.detected_value && (
+            <p className="mt-1 truncate text-[12.5px] text-white/70" title={m.detected_value}>
+              {m.detected_value}
+            </p>
+          )}
+          <p className="mt-1 text-[12px] leading-relaxed text-white/50">
+            {m.status === "confirmed" ? m.unlocks : m.why}
+          </p>
+        </div>
+        <span
+          className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold tabular-nums ${
+            m.status === "confirmed" ? "bg-emerald-400/15 text-emerald-200" : "bg-white/10 text-white/75"
+          }`}
+        >
+          {m.status === "confirmed" ? <Check className="h-3.5 w-3.5" aria-hidden /> : `+${m.points - m.earned}`}
+        </span>
+      </div>
+      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+        <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10.5px] text-white/60">
+          {meta.label}
+        </span>
+        {blocking && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-rose-300/25 bg-rose-400/10 px-2 py-0.5 text-[10.5px] font-medium text-rose-200">
+            <Lock className="h-2.5 w-2.5" aria-hidden /> Bloquant
+          </span>
+        )}
+        {m.status !== "confirmed" && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-cyan-300/20 bg-cyan-400/[0.08] px-2 py-0.5 text-[10.5px] text-cyan-100">
+            <Zap className="h-2.5 w-2.5" aria-hidden /> {m.unlocks}
+          </span>
+        )}
+      </div>
+    </li>
+  );
+}
+
 function AuditReport({
   result,
   onActivate,
@@ -290,10 +400,29 @@ function AuditReport({
   onRestart: () => void;
 }) {
   const { baseline, gaps, capacity } = result;
-  const highGaps = gaps.filter((g) => g.impact === "high");
+  const missions: Mission[] =
+    baseline.missions ??
+    baseline.checks.map((c) => ({
+      key: c.key,
+      label: c.label,
+      status: (c.ok ? "confirmed" : "missing") as MissionStatus,
+      points: Math.round(100 / Math.max(1, baseline.checks.length)),
+      earned: c.ok ? Math.round(100 / Math.max(1, baseline.checks.length)) : 0,
+      impact: "high" as const,
+      detected_value: null,
+      why: gaps.find((g) => g.key === c.key)?.why ?? "",
+      unlocks: "",
+      cta: c.ok ? "Confirmé" : "Compléter",
+    }));
+
+  const remaining = baseline.remaining_steps ?? missions.filter((m) => m.status !== "confirmed").length;
+  const level = baseline.level ?? (result.readiness_score >= 85 ? "Recommandable" : "Invisible pour l'IA");
+  const toConfirm = missions.filter((m) => m.status === "detected");
+  const detectedFacts = baseline.facts.filter((f) => f.provenance === "verified" || f.provenance === "inferred");
+  const ctaLabel = toConfirm.length > 0 ? "Confirmer mes informations" : "Compléter mon profil";
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-28">
       <button
         type="button"
         onClick={onRestart}
@@ -304,7 +433,7 @@ function AuditReport({
 
       <header>
         <p className="text-[11px] uppercase tracking-[0.18em] text-white/50">Audit de recommandation IA</p>
-        <h1 className="mt-2 text-[26px] font-extrabold leading-tight" style={{ letterSpacing: "-0.03em" }}>
+        <h1 className="mt-2 break-words text-[26px] font-extrabold leading-tight" style={{ letterSpacing: "-0.03em" }}>
           {result.business_name ?? "Votre entreprise"}
         </h1>
         <p className="mt-1 text-[13px] text-white/55">
@@ -312,33 +441,25 @@ function AuditReport({
         </p>
       </header>
 
-      {/* Score */}
-      <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-        <div className="flex items-baseline justify-between gap-3">
-          <h2 className="text-sm font-semibold text-white">Prêt à être recommandé par l'IA</h2>
-          <span className="text-3xl font-semibold tabular-nums">{result.readiness_score}%</span>
-        </div>
-        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-sky-400 to-cyan-300 transition-[width] duration-700"
-            style={{ width: `${Math.max(4, result.readiness_score)}%` }}
-          />
-        </div>
-        <p className="mt-3 text-[13px] leading-relaxed text-white/65">
-          {baseline.recommendable
-            ? "UNPRO détient assez de données confirmées pour vous considérer dans ses recommandations."
-            : "UNPRO ne détient pas encore assez de données confirmées pour vous recommander avec confiance."}
+      {/* Score + progression */}
+      <section className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
+        <ScoreRing score={result.readiness_score} level={level} />
+        <p className="mt-4 text-center text-[13.5px] leading-relaxed text-white/70">
+          {remaining === 0
+            ? "Toutes les informations clés sont confirmées."
+            : `${remaining} étape${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""} pour devenir recommandable.`}
         </p>
+        
       </section>
 
-      {/* Ce que l'IA comprend */}
-      {baseline.facts.length > 0 && (
+      {/* Ce que l'IA peut déjà dire de vous */}
+      {detectedFacts.length > 0 && (
         <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-          <h2 className="text-sm font-semibold text-white">Ce que l'IA comprend aujourd'hui</h2>
+          <h2 className="text-sm font-semibold text-white">Ce que l'IA peut déjà dire de vous</h2>
           <dl className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {baseline.facts.map((f) => (
+            {detectedFacts.map((f) => (
               <div key={f.key} className="min-w-0">
-                <dt className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-white/45">
+                <dt className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-wide text-white/45">
                   {f.label}
                   <ProvenanceTag provenance={f.provenance} source={f.source} />
                 </dt>
@@ -348,37 +469,27 @@ function AuditReport({
               </div>
             ))}
           </dl>
-          {baseline.review_note && (
-            <p className="mt-3 text-[12.5px] text-white/45">{baseline.review_note}</p>
-          )}
+          {baseline.review_note && <p className="mt-3 text-[12.5px] text-white/45">{baseline.review_note}</p>}
         </section>
       )}
 
-      {/* Écart de recommandation */}
-      {gaps.length > 0 && (
-        <section className="rounded-2xl border border-amber-300/20 bg-amber-400/[0.06] p-4">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-amber-200" aria-hidden />
-            <h2 className="text-sm font-semibold text-white">
-              Écart de recommandation — {gaps.length} élément{gaps.length > 1 ? "s" : ""} manquant
-              {gaps.length > 1 ? "s" : ""}
-            </h2>
-          </div>
-          <ul className="mt-3 space-y-3">
-            {gaps.map((g) => (
-              <li key={g.key} className="border-l-2 border-amber-300/30 pl-3">
-                <p className="text-[14px] font-medium text-white/90">{g.label}</p>
-                <p className="text-[12.5px] leading-relaxed text-white/55">{g.why}</p>
-              </li>
+      {/* Missions */}
+      <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="text-sm font-semibold text-white">Vos missions de recommandabilité</h2>
+          <span className="text-[12px] tabular-nums text-white/45">
+            {missions.filter((m) => m.status === "confirmed").length}/{missions.length}
+          </span>
+        </div>
+        <ul className="mt-3 space-y-2.5">
+          {missions
+            .slice()
+            .sort((a, b) => (a.status === "confirmed" ? 1 : 0) - (b.status === "confirmed" ? 1 : 0) || b.points - a.points)
+            .map((m) => (
+              <MissionRow key={m.key} m={m} />
             ))}
-          </ul>
-          {highGaps.length > 0 && (
-            <p className="mt-3 text-[12.5px] text-amber-100/80">
-              {highGaps.length} de ces éléments bloquent complètement une recommandation.
-            </p>
-          )}
-        </section>
-      )}
+        </ul>
+      </section>
 
       {/* Capacité réelle */}
       <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
@@ -399,7 +510,7 @@ function AuditReport({
           </p>
         ) : (
           <p className="mt-2 text-[13.5px] leading-relaxed text-white/60">
-            Analyse de capacité en cours pour votre domaine et votre territoire.
+            {capacity?.label ?? "Confirmez votre territoire et votre spécialité pour voir les places disponibles."}
             <span className="ml-2 align-middle">
               <ProvenanceTag provenance="pending" />
             </span>
@@ -407,7 +518,7 @@ function AuditReport({
         )}
       </section>
 
-      {/* CTA unique */}
+      {/* Offre */}
       <section className="rounded-2xl border border-white/12 bg-gradient-to-br from-white/[0.09] to-white/[0.03] p-5">
         <h2 className="text-[19px] font-bold leading-tight">
           Devenez le professionnel que l'IA peut recommander
@@ -415,17 +526,24 @@ function AuditReport({
         <p className="mt-2 text-[13.5px] leading-relaxed text-white/70">
           Rendez-vous exclusifs garantis. Jamais de leads partagés. {OFFER_350.subtitle}
         </p>
-        <Button
-          onClick={onActivate}
-          size="lg"
-          className="mt-4 h-14 w-full rounded-2xl bg-white text-[16px] font-semibold text-[#050816] hover:bg-white/90"
-        >
-          Activer mon profil pour être recommandable <ArrowRight className="ml-1 h-4 w-4" />
-        </Button>
-        <p className="mt-2 text-center text-[12px] text-white/45">
+        <p className="mt-3 text-center text-[12px] text-white/45">
           {OFFER_350.paymentNote} · {OFFER_350.disclaimer}
         </p>
       </section>
+
+      {/* CTA sticky mobile */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#050816]/95 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl">
+        <div className="mx-auto w-full max-w-md sm:max-w-lg">
+          <Button
+            onClick={onActivate}
+            size="lg"
+            className="h-14 w-full rounded-2xl bg-white px-3 text-[15px] font-semibold leading-tight text-[#050816] hover:bg-white/90"
+          >
+            <span className="truncate">{ctaLabel}</span>
+            <ArrowRight className="ml-1.5 h-4 w-4 shrink-0" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
