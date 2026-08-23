@@ -17,7 +17,7 @@ const HOMEOWNER_LINKS: FooterLink[] = [
 
 const CONTRACTOR_LINKS: FooterLink[] = [
   { label: "Être recommandé par l'IA", to: "/entrepreneurs" },
-  { label: "Activation 7 jours à 1 $", to: "/pro/activate" },
+  { label: "Voir comment l'IA voit mon entreprise", to: "/entrepreneurs/audit-ia" },
   { label: "Plans et tarifs", to: "/pricing/entrepreneurs" },
   { label: "Fonctionnement", to: "/comment-fonctionne-ia" },
   { label: "Centre d'aide", to: "/aide" },
