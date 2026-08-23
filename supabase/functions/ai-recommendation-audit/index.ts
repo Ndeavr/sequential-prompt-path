@@ -292,6 +292,10 @@ Deno.serve(async (req) => {
           : null
       );
       push(facts, region ? { key: "region", label: "Région", value: region, provenance: "inferred" } : null);
+      {
+        const other = [contractor?.city, prospect?.city].filter(Boolean).map(String).find((v) => v !== city);
+        push(other ? facts : facts, other ? { key: "city_alt", label: "Autre ville détectée", value: other, provenance: "inferred", source: "Fiches UNPRO" } : null);
+      }
       push(facts, areas.length ? { key: "areas", label: "Zones desservies", value: areas.slice(0, 4).join(", "), provenance: "declared" } : null);
       push(facts, rbq ? { key: "rbq", label: "Licence RBQ", value: rbq, provenance: rbqVerified ? "verified" : "declared", source: "RBQ" } : null);
       push(facts, neq ? { key: "neq", label: "NEQ", value: neq, provenance: "verified", source: "Registraire des entreprises" } : null);
