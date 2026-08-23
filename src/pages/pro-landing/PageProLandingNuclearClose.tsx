@@ -482,12 +482,8 @@ export default function PageProLandingNuclearClose() {
           companyName={prospect.company_name}
         />
 
-        {/* Activation Offer 1$ / 7 jours */}
-        <ActivationOffer1Dollar
-          slug={prospect.slug}
-          companyName={prospect.company_name}
-          onTrack={(e) => logProLandingCta(prospect.id, e).catch(() => {})}
-        />
+        {/* Offre d'entrée 350 $ — l'ancienne activation 1 $ / 7 jours est retirée */}
+
 
         {/* Inline embedded Stripe checkout — same-session conversion */}
         <section className="mt-6">
