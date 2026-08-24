@@ -151,9 +151,15 @@ Deno.serve(async (req) => {
     { auth: { persistSession: false } },
   );
 
+  // REPAIR: `omega_loop_runs_date_phase_uniq` allows one row per phase per day.
+  // The previous hard INSERT made every re-run of the day fail with a duplicate
+  // key error. We now reuse the day's row (upsert) so re-runs and dry-runs work.
   const { data: run, error: insertErr } = await supabase
     .from("omega_loop_runs")
-    .insert({ phase, status: "running" })
+    .upsert(
+      { phase, status: "running", started_at: new Date().toISOString(), ended_at: null },
+      { onConflict: "run_date,phase" },
+    )
     .select("id")
     .single();
 
@@ -190,8 +196,11 @@ Deno.serve(async (req) => {
       payloads = payloads.map((p) => ({ ...(step.payload ?? {}), ...p }));
     }
 
-    if (dryRun && step.external) {
-      stats[step.fn] = { dry_run: true, candidates: payloads.length, external: true };
+    // REPAIR: a dry-run must never invoke anything. Downstream functions do not
+    // all understand a `dry_run` flag, so invoking them returned non-2xx and made
+    // healthy phases look "failed". We now only report resolved candidates.
+    if (dryRun) {
+      stats[step.fn] = { dry_run: true, candidates: payloads.length, external: !!step.external };
       skipped++;
       continue;
     }
