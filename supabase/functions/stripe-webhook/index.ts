@@ -599,8 +599,24 @@ Deno.serve(async (req) => {
                 source: session.metadata?.source ?? null,
                 slug: session.metadata?.prospect_slug ?? null,
                 contractor_id: activatedContractorId,
+                ...aiAttribution,
               },
             });
+
+            // Keep the webhook audit row attribution-complete for AI revenue proof.
+            await supabase.from("stripe_webhook_events").update({
+              contractor_id: activatedContractorId,
+              prospect_id: vProspectId,
+              payment_intent_id: (session.payment_intent as string) || null,
+              attribution: {
+                ...aiAttribution,
+                contractor_id: activatedContractorId,
+                prospect_id: vProspectId,
+                amount_cents: session.amount_total ?? null,
+                currency: session.currency ?? "cad",
+              },
+            }).eq("stripe_event_id", event.id);
+
 
             // Canonical funnel event. v_activation_funnel counts event_type='paid',
             // so this MUST be 'paid' — 'payment_succeeded' was invisible to the cockpit.
