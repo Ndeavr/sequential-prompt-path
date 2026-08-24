@@ -50,7 +50,7 @@ UNPRO a détecté des opportunités de visibilité locale pour votre entreprise 
 Voir votre aperçu :
 ${linkLine}
 
-Activation : 1$ pendant 7 jours
+Activation : 350 $ (paiement unique)
 
 STOP = arrêter`;
 }

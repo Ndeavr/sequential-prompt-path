@@ -113,7 +113,7 @@ export default function FormCouponAdminCreate({ onClose }: Props) {
                 { label: "1 an gratuit", patch: { discount_type: "percentage", discount_value: 100, duration_type: "repeating", duration_in_months: 12, label: "1 an gratuit" } },
                 { label: "50 % à vie", patch: { discount_type: "percentage", discount_value: 50, duration_type: "forever", label: "50 % à vie" } },
                 { label: "-25 % (1x)", patch: { discount_type: "percentage", discount_value: 25, duration_type: "once", label: "Rabais 25 %" } },
-                { label: "Activation 1 $", patch: { discount_type: "amount", discount_value: 14800, duration_type: "once", label: "Activation à 1 $" } },
+                { label: "Rabais interne (démo)", patch: { discount_type: "amount", discount_value: 14800, duration_type: "once", label: "Rabais interne (démo)" } },
               ].map((p) => (
                 <Button
                   key={p.label}
