@@ -156,7 +156,7 @@ Deno.serve(async (req) => {
     .in("state", Object.keys(STUCK_THRESHOLDS_MIN).concat(["STUCK"]))
     .limit(500);
 
-  let healed = 0, escalated = 0;
+  let healed = 0, escalated = 0, handedOff = 0;
   for (const row of rows ?? []) {
     const threshold = STUCK_THRESHOLDS_MIN[row.state] ?? 60 * 24 * 7;
     const since = new Date(row.updated_at).getTime();
@@ -191,12 +191,12 @@ Deno.serve(async (req) => {
         actor: "system",
         error: `timeout_in_${row.state}`,
       });
-      await scheduleAffiliateHandoff(row.contractor_id, row.state);
+      if (await scheduleAffiliateHandoff(row.contractor_id, row.state)) handedOff++;
       escalated++;
     }
   }
 
-  return new Response(JSON.stringify({ ok: true, healed, escalated }), {
+  return new Response(JSON.stringify({ ok: true, healed, escalated, affiliate_handoffs: handedOff }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 });
