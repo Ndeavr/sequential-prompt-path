@@ -88,14 +88,31 @@ Deno.serve(async (req) => {
 
 
 
-    // Observability: log to stripe_webhook_events (idempotent via unique stripe_event_id)
+    // Observability: log to stripe_webhook_events (idempotent via unique stripe_event_id).
+    // CANONICAL AUDIT — this function is the ONLY production Stripe endpoint
+    // (Stripe endpoint `we_1Tqjp5CvZwK1QnPVnKuhISaC` -> /functions/v1/stripe-webhook).
+    // Never log card data: only ids, status and attribution metadata.
     const receivedAt = new Date().toISOString();
     const sessionObj = (event.data.object as any) || {};
+    const evtMd = (sessionObj?.metadata || {}) as Record<string, string>;
     const sessionIdField = sessionObj?.id || null;
-    const contractorIdField =
-      sessionObj?.metadata?.contractor_id ||
-      sessionObj?.metadata?.prospect_id ||
-      null;
+    const contractorIdField = evtMd.contractor_id || evtMd.prospect_id || null;
+    const prospectIdField = evtMd.prospect_id || null;
+    const paymentIntentField =
+      typeof sessionObj?.payment_intent === "string"
+        ? sessionObj.payment_intent
+        : sessionObj?.payment_intent?.id ?? (sessionObj?.object === "payment_intent" ? sessionObj?.id : null);
+    // AI attribution must survive checkout -> webhook -> activation.
+    const aiAttribution = {
+      agent_run_id: evtMd.agent_run_id ?? null,
+      agent_name: evtMd.agent_name ?? null,
+      acquisition_origin: evtMd.acquisition_origin ?? null,
+      human_unpro_touches: evtMd.human_unpro_touches ?? null,
+      activation_token: evtMd.activation_token ?? null,
+      landing_token: evtMd.landing_token ?? null,
+      campaign_id: evtMd.campaign_id ?? null,
+      offer: evtMd.offer ?? evtMd.offer_kind ?? null,
+    };
 
     if (isReplay) {
       // Mark row as reprocessing; clear previous error.
@@ -113,10 +130,15 @@ Deno.serve(async (req) => {
         event_type: event.type,
         received_at: receivedAt,
         contractor_id: contractorIdField,
+        prospect_id: prospectIdField,
+        payment_intent_id: paymentIntentField,
         session_id: sessionIdField,
+        livemode: (event as any).livemode ?? null,
+        attribution: aiAttribution,
         payload: event as any,
         processing_status: "processing",
       });
+
 
       if (insertErr && !String(insertErr.message).includes("duplicate")) {
         console.warn("[stripe-webhook] audit insert warning", insertErr.message);
