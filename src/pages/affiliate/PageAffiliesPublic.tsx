@@ -2,8 +2,13 @@
  * PageAffiliesPublic — Page publique du programme d'affiliation UNPRO.
  * Route: /affilies
  */
+import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import {
+  useReferralAttribution,
+  trackReferralEvent,
+} from "@/hooks/useReferralAttribution";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -80,6 +85,33 @@ const FAQ = [
 ];
 
 export default function PageAffiliesPublic() {
+  // REPAIR: /affilies?ref=CODE&intent=join doit capturer le parrain.
+  // Sans ce hook, le code ref n'était jamais stocké et `assign_affiliate_parent`
+  // ne recevait rien → aucun sous-affilié n'était rattaché (override 5 % perdu).
+  useReferralAttribution();
+  const [params] = useSearchParams();
+  const refCode = params.get("ref");
+  const intent = params.get("intent");
+
+  useEffect(() => {
+    if (refCode) {
+      trackReferralEvent("affiliate_recruit_landing", refCode, {
+        targetType: "affiliate_join",
+        metadata: { intent: intent ?? null },
+      });
+    }
+  }, [refCode, intent]);
+
+  // Le code parrain est propagé dans chaque CTA pour survivre à la navigation.
+  const joinUrl = (type?: string) => {
+    const q = new URLSearchParams();
+    if (type) q.set("type", type);
+    if (refCode) q.set("ref", refCode);
+    if (intent) q.set("intent", intent);
+    const qs = q.toString();
+    return `/affilies/activer${qs ? `?${qs}` : ""}`;
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Helmet>
@@ -109,7 +141,7 @@ export default function PageAffiliesPublic() {
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild size="lg" className="text-base">
-              <Link to="/affilies/activer">
+              <Link to={joinUrl()}>
                 Devenir affilié
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
@@ -154,7 +186,7 @@ export default function PageAffiliesPublic() {
                 <h3 className="mt-4 text-lg font-semibold text-foreground">{title}</h3>
                 <p className="mt-2 text-sm text-muted-foreground flex-1">{desc}</p>
                 <Button asChild variant="ghost" className="mt-4 justify-start px-0">
-                  <Link to={`/affilies/activer?type=${kind}`}>
+                  <Link to={joinUrl(kind)}>
                     Commencer <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
                 </Button>
@@ -238,7 +270,7 @@ export default function PageAffiliesPublic() {
         </div>
         <div className="mt-10 text-center">
           <Button asChild size="lg">
-            <Link to="/affilies/activer">
+            <Link to={joinUrl()}>
               Activer mon statut d'affilié
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>

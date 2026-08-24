@@ -26,9 +26,13 @@ import {
   type AffiliateType,
   type DisplayPreference,
 } from "@/hooks/useAffiliateActivation";
+import { useReferralAttribution } from "@/hooks/useReferralAttribution";
 import { ArrowRight, Loader2, ShieldCheck } from "lucide-react";
 
 export default function PageAffilieActivation() {
+  // REPAIR: capture ?ref=CODE avant le login pour que `assign_affiliate_parent`
+  // reçoive le parrain après l'activation (rattachement sous-affilié 5 %).
+  useReferralAttribution();
   const { user, isLoading } = useAuth();
   const [params] = useSearchParams();
   const navigate = useNavigate();

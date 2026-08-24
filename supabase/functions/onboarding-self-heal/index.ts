@@ -23,17 +23,127 @@ const STUCK_THRESHOLDS_MIN: Record<string, number> = {
   CONTACTABLE: 60 * 6,            // invite retries stuck
 };
 
+/**
+ * Escalate a stuck contractor to the human/affiliate recovery layer.
+ *
+  * REPAIR (2026-08-24): the previous version wrote `contractor_id`, a text
+ * `priority` and a `reason` column — none of which exist on
+ * `affiliate_assignments`. Real schema:
+ *   prospect_id  -> contractors_prospects(id)  NOT NULL
+ *   affiliate_id -> affiliates(id)             NOT NULL
+ *   status text default 'to_call', priority int default 0
+ *   UNIQUE (affiliate_id, prospect_id)
+ * Every escalation therefore failed silently. We now resolve the real
+ * prospect row, pick a real affiliate, and assign idempotently.
+ */
+function digitsOnly(v: string | null | undefined): string {
+  return (v ?? "").replace(/\D/g, "").slice(-10);
+}
+
+async function resolveProspectId(contractorId: string): Promise<string | null> {
+  const { data: contractor } = await supabase
+    .from("contractors")
+    .select("id, company_name, phone")
+    .eq("id", contractorId)
+    .maybeSingle();
+  const c = contractor as { company_name?: string; phone?: string } | null;
+  if (!c) return null;
+
+  const phone = digitsOnly(c.phone);
+  if (phone.length === 10) {
+    const { data } = await supabase
+      .from("contractors_prospects")
+      .select("id, phone")
+      .ilike("phone", `%${phone}%`)
+      .limit(1);
+    const hit = (data ?? [])[0] as { id?: string } | undefined;
+    if (hit?.id) return hit.id;
+  }
+
+  if (c.company_name) {
+    const { data } = await supabase
+      .from("contractors_prospects")
+      .select("id")
+      .ilike("business_name", c.company_name.trim())
+      .limit(1);
+    const hit = (data ?? [])[0] as { id?: string } | undefined;
+    if (hit?.id) return hit.id;
+  }
+  return null;
+}
+
+/** Least-loaded active affiliate. Returns null when there is none — we never invent one. */
+async function pickAffiliate(prospectId: string): Promise<string | null> {
+  const { data: prospect } = await supabase
+    .from("contractors_prospects")
+    .select("assigned_affiliate_id")
+    .eq("id", prospectId)
+    .maybeSingle();
+  const preassigned = (prospect as { assigned_affiliate_id?: string } | null)?.assigned_affiliate_id;
+  if (preassigned) return preassigned;
+
+  const { data: affiliates } = await supabase
+    .from("affiliates")
+    .select("id")
+    .eq("status", "active")
+    .order("created_at", { ascending: true })
+    .limit(50);
+  const list = (affiliates ?? []) as { id: string }[];
+  if (!list.length) return null;
+
+  const loads = await Promise.all(
+    list.map(async (a) => {
+      const { count } = await supabase
+        .from("affiliate_assignments")
+        .select("id", { count: "exact", head: true })
+        .eq("affiliate_id", a.id)
+        .not("status", "in", "(won,lost)");
+      return { id: a.id, load: count ?? 0 };
+    }),
+  );
+  loads.sort((x, y) => x.load - y.load || x.id.localeCompare(y.id));
+  return loads[0].id;
+}
+
 async function scheduleAffiliateHandoff(contractorId: string, currentState: string) {
-  // Reuse existing affiliate_assignments table if unassigned
-  const { data: existing } = await supabase.from("affiliate_assignments")
-    .select("id").eq("contractor_id", contractorId).maybeSingle();
-  if (existing) return;
-  await supabase.from("affiliate_assignments").insert({
-    contractor_id: contractorId,
-    status: "pending_auto_assign",
-    priority: "high",
-    reason: `auto_handoff_from_${currentState}`,
-  } as any);
+  const prospectId = await resolveProspectId(contractorId);
+  if (!prospectId) {
+    console.warn("[self-heal] no prospect resolved for contractor", contractorId, "— handoff skipped");
+    return false;
+  }
+
+  // Idempotent guard: never duplicate an OPEN assignment for the same prospect.
+  const { data: open } = await supabase
+    .from("affiliate_assignments")
+    .select("id")
+    .eq("prospect_id", prospectId)
+    .not("status", "in", "(won,lost)")
+    .limit(1);
+  if ((open ?? []).length) return false;
+
+  const affiliateId = await pickAffiliate(prospectId);
+  if (!affiliateId) {
+    console.warn("[self-heal] no active affiliate available — handoff skipped", { contractorId });
+    return false;
+  }
+
+  // UNIQUE (affiliate_id, prospect_id) makes this upsert safe to replay.
+  const { error } = await supabase.from("affiliate_assignments").upsert(
+    {
+      prospect_id: prospectId,
+      affiliate_id: affiliateId,
+      status: "to_call",
+      priority: 1,
+      assigned_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "affiliate_id,prospect_id", ignoreDuplicates: true },
+  );
+  if (error) {
+    console.error("[self-heal] affiliate handoff failed", error.message, { contractorId, currentState });
+    return false;
+  }
+  return true;
 }
 
 Deno.serve(async (req) => {
@@ -46,7 +156,7 @@ Deno.serve(async (req) => {
     .in("state", Object.keys(STUCK_THRESHOLDS_MIN).concat(["STUCK"]))
     .limit(500);
 
-  let healed = 0, escalated = 0;
+  let healed = 0, escalated = 0, handedOff = 0;
   for (const row of rows ?? []) {
     const threshold = STUCK_THRESHOLDS_MIN[row.state] ?? 60 * 24 * 7;
     const since = new Date(row.updated_at).getTime();
@@ -81,12 +191,12 @@ Deno.serve(async (req) => {
         actor: "system",
         error: `timeout_in_${row.state}`,
       });
-      await scheduleAffiliateHandoff(row.contractor_id, row.state);
+      if (await scheduleAffiliateHandoff(row.contractor_id, row.state)) handedOff++;
       escalated++;
     }
   }
 
-  return new Response(JSON.stringify({ ok: true, healed, escalated }), {
+  return new Response(JSON.stringify({ ok: true, healed, escalated, affiliate_handoffs: handedOff }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 });

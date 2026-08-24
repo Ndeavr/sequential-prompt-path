@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
 
     const { data: existing } = await admin
       .from("contractor_compatibility_profiles")
-      .select("answers, status, current_step")
+      .select("answers, status, current_step, trade_pack")
       .eq("contractor_id", contractorId)
       .maybeSingle();
     const previous = sanitizeAnswers(existing?.answers);
@@ -79,7 +79,11 @@ Deno.serve(async (req) => {
     const { error: upErr } = await admin.from("contractor_compatibility_profiles").upsert(
       {
         contractor_id: contractorId,
-        trade_pack: "excavation_fondation",
+        // REPAIR: never clobber the pack of a multi-trade profile (isolation, etc.).
+        trade_pack:
+          (typeof body?.trade_pack === "string" && body.trade_pack) ||
+          existing?.trade_pack ||
+          "excavation_fondation",
         status: adminPatch || wasFinalized ? (existing?.status ?? "draft") : "draft",
         completion_pct: completion,
         current_step: currentStep,
@@ -97,8 +101,12 @@ Deno.serve(async (req) => {
     );
     if (upErr) return json({ error: upErr.message }, 400);
 
-    // En mode admin sur une fiche déjà finalisée, on régénère aussi les règles de matching.
-    await materialize(admin, contractorId, answers, { finalize: adminPatch && wasFinalized });
+    // REPAIR: toute édition admin d'une fiche déjà active régénère les règles de
+    // matching (pas seulement le mode `admin_patch`). La régénération est
+    // atomique et idempotente : `materialize` désactive puis réécrit les règles
+    // déclarées via des upserts sur clé stable.
+    const shouldRegenerateRules = wasFinalized && (adminPatch || actorIsAdmin);
+    await materialize(admin, contractorId, answers, { finalize: shouldRegenerateRules });
 
     if (actorIsAdmin && changes.length) {
       // Journal granulaire : une entrée par champ modifié.

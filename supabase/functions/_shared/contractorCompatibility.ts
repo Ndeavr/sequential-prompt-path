@@ -347,25 +347,36 @@ export async function materialize(
     );
   }
 
-  // Exclusions dures confirmées → table canonique existante (remplacement complet)
-  await supabase
+  // Exclusions dures confirmées → table canonique existante.
+  // REPAIR: on n'efface plus tout avant de réécrire (fenêtre destructive si
+  // l'insert échoue). On insère d'abord l'état voulu, puis on retire seulement
+  // ce qui n'en fait plus partie → idempotent et rejouable sans perte.
+  const wantedSlugs = Object.entries(a.services ?? {})
+    .filter(([, v]) => v.stance === "not_wanted")
+    .map(([slug]) => slug);
+
+  if (wantedSlugs.length) {
+    await supabase.from("contractor_exclusions").upsert(
+      wantedSlugs.map((slug) => ({
+        contractor_id: contractorId,
+        exclusion_type: "service",
+        service_slug: slug,
+        reason_fr: "Service non recherché (profil de compatibilité)",
+        source: "compatibility_profile",
+        is_active: true,
+      })),
+      { onConflict: "contractor_id,exclusion_type,service_slug" },
+    );
+  }
+
+  const cleanup = supabase
     .from("contractor_exclusions")
     .delete()
     .eq("contractor_id", contractorId)
     .eq("source", "compatibility_profile");
-  const exclusions = Object.entries(a.services ?? {})
-    .filter(([, v]) => v.stance === "not_wanted")
-    .map(([slug]) => ({
-      contractor_id: contractorId,
-      exclusion_type: "service",
-      service_slug: slug,
-      reason_fr: "Service non recherché (profil de compatibilité)",
-      source: "compatibility_profile",
-      is_active: true,
-    }));
-  if (exclusions.length) {
-    await supabase.from("contractor_exclusions").insert(exclusions);
-  }
+  await (wantedSlugs.length
+    ? cleanup.not("service_slug", "in", `(${wantedSlugs.join(",")})`)
+    : cleanup);
 
   // Capacité : pause sans dépublier le profil
   if (a.capacity?.paused === true || a.capacity?.paused === false) {

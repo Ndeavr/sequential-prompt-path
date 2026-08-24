@@ -1,8 +1,14 @@
-// Founder Premium activation checkout.
-// Charges 1 CAD today via add_invoice_items, then 7-day trial, then 599 CAD/mo subscription.
-// Reads amounts from billing_offers.founder_premium_7d — never hardcoded.
+// Contractor activation checkout — CANONICAL OFFER.
+//
+// REPAIR (2026-08-24): this function used to open a 1 CAD / 7-day-trial
+// subscription that then rolled into 599 CAD/mo. That offer is OBSOLETE.
+// The single canonical contractor entry offer is the pack d'entrée UNPRO:
+// 350 CAD CA, one-time payment, no subscription (see _shared/offerCopy.ts).
+// The endpoint keeps its name and response shape so existing callers
+// (ScreenPayment, agent dispatch) keep working.
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { OFFER as OFFER_350 } from "../_shared/offerCopy.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,9 +27,7 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const admin = createClient(supabaseUrl, serviceRoleKey);
 
     // Optional auth (works for guest checkout too)
     let userEmail: string | undefined;
@@ -47,45 +51,15 @@ Deno.serve(async (req) => {
       cancel_path,
     } = (body ?? {}) as Record<string, string | undefined>;
 
-    // --- Load offer (source of truth) ---
-    const { data: offer, error: offerErr } = await admin
-      .from("billing_offers")
-      .select("*")
-      .eq("offer_code", offer_code)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (offerErr || !offer) {
-      return json({ error: "offer_not_found", detail: offerErr?.message }, 404);
-    }
-
-    // --- Integrity guard: for Founder path, refuse if activation > 2 CAD ---
-    if (offer.activation_amount_cents > 200) {
-      await admin.from("system_integrity_incidents").insert({
-        incident_type: "founder_activation_amount_too_high",
-        severity: "critical",
-        entity_type: "billing_offer",
-        entity_id: offer.id,
-        detected_value: { activation_amount_cents: offer.activation_amount_cents },
-        expected_value: { activation_amount_cents: 100 },
-        repair_status: "blocked_checkout",
-      }).catch(() => {});
-      return json({ error: "offer_integrity_failed" }, 409);
-    }
-
-    if (!offer.stripe_activation_price_id || !offer.stripe_recurring_price_id) {
-      return json({ error: "stripe_prices_missing" }, 500);
-    }
-
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) return json({ error: "stripe_not_configured" }, 500);
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     const origin = req.headers.get("origin") || "https://unpro.ca";
-    const successUrl = `${origin}${success_path || "/entrepreneur/activer/succes"}?session_id={CHECKOUT_SESSION_ID}&offer=${offer.offer_code}`;
+    const successUrl = `${origin}${success_path || "/entrepreneur/activer/succes"}?session_id={CHECKOUT_SESSION_ID}&offer=pack_350`;
     const cancelUrl = `${origin}${cancel_path || "/entrepreneur/activer/plan"}?canceled=1`;
 
-    // Try to reuse existing customer for logged-in users
+    // Reuse an existing Stripe customer when we know the email.
     let customerId: string | undefined;
     const effectiveEmail = email || userEmail;
     if (effectiveEmail) {
@@ -94,16 +68,21 @@ Deno.serve(async (req) => {
     }
 
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
-      mode: "subscription",
+      mode: "payment",
       customer: customerId,
       customer_email: customerId ? undefined : effectiveEmail,
-      line_items: [{ price: offer.stripe_recurring_price_id, quantity: 1 }],
-      subscription_data: {
-        trial_period_days: offer.trial_days,
-      },
-      // 1 $ activation billed on the first (trial) invoice — issued immediately.
-      add_invoice_items: [
-        { price: offer.stripe_activation_price_id, quantity: 1 },
+      line_items: [
+        {
+          price_data: {
+            currency: "cad",
+            unit_amount: OFFER_350.price_cents,
+            product_data: {
+              name: "Pack d'entrée UNPRO",
+              description: `${OFFER_350.headline}. ${OFFER_350.payment_note}`,
+            },
+          },
+          quantity: 1,
+        },
       ],
       automatic_tax: { enabled: true },
       tax_id_collection: { enabled: true },
@@ -114,18 +93,16 @@ Deno.serve(async (req) => {
       locale: "fr",
       custom_text: {
         submit: {
-          message:
-            "1 $ aujourd'hui + taxes. 7 jours d'accès Fondateur. Puis 599 $/mois + taxes, sauf annulation avant la fin de l'essai.",
+          message: `${OFFER_350.price_label} CA + taxes, paiement unique. Aucun abonnement, aucun prélèvement récurrent.`,
         },
       },
       metadata: {
-        offer_code: offer.offer_code,
-        offer_id: offer.id,
+        offer_code: "pack_350",
+        offer_kind: "pack_350",
         user_id: userId ?? "",
         onboarding_session_id: onboarding_session_id ?? "",
-        activation_amount_cents: String(offer.activation_amount_cents),
-        recurring_amount_cents: String(offer.recurring_amount_cents),
-        trial_days: String(offer.trial_days),
+        amount_cents: String(OFFER_350.price_cents),
+        legacy_offer_code_requested: offer_code ?? "",
       },
     };
 
@@ -134,13 +111,14 @@ Deno.serve(async (req) => {
     return json({
       url: session.url,
       session_id: session.id,
-      expected_today_cents: offer.activation_amount_cents,
-      expected_recurring_cents: offer.recurring_amount_cents,
-      trial_days: offer.trial_days,
+      offer_kind: "pack_350",
+      expected_today_cents: OFFER_350.price_cents,
+      expected_recurring_cents: 0,
+      trial_days: 0,
     });
   } catch (e) {
     const err = e as { message?: string };
-    console.error("[create-founder-activation-checkout]", err?.message || e);
+    console.error("[create-founder-activation-checkout:pack_350]", err?.message || e);
     return json({ error: "internal_error", detail: err?.message ?? String(e) }, 500);
   }
 });
