@@ -52,46 +52,25 @@ Deno.serve(async (req) => {
 
     const origin = req.headers.get("origin") ?? "https://unpro.ca";
 
-    // Two line items in one Checkout Session:
-    //   1) One-time CA$1.00 activation fee — charged today.
-    //   2) Recurring subscription at the plan price with a 7-day free trial.
-    // Stripe renders: "CA$1.00 due today · then CA$149.00/month after 7-day trial".
+    // Canonical UNPRO entry offer: 350 $ CAD, one-time payment. No trial, no subscription.
+    const ENTRY_PRICE_CENTS = 35000;
     const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
+      mode: "payment",
       customer_email: email || undefined,
       line_items: [
         {
           price_data: {
             currency: "cad",
             product_data: {
-              name: "UNPRO — Activation 7 jours",
-              description: "Frais d'activation unique · 1 $ CA payé aujourd'hui.",
-            },
-            unit_amount: 100,
-          },
-          quantity: 1,
-        },
-        {
-          price_data: {
-            currency: "cad",
-            product_data: {
-              name: plan.name,
+              name: "UNPRO — Offre d'entrée",
               description:
-                "Profil IA optimisé · Recommandations propriétaires · Accès Alex · Jusqu'à 3 rendez-vous exclusifs · Annulation en tout temps",
+                "Paiement unique de 350 $. Jusqu'à 5 rendez-vous exclusifs garantis — le nombre réel est calculé selon votre domaine, votre territoire et la capacité disponible. Aucun abonnement.",
             },
-            unit_amount: plan.price,
-            recurring: { interval: "month" },
+            unit_amount: ENTRY_PRICE_CENTS,
           },
           quantity: 1,
         },
       ],
-      subscription_data: {
-        trial_period_days: 7,
-        trial_settings: {
-          end_behavior: { missing_payment_method: "pause" },
-        },
-      },
-      payment_method_collection: "always",
       automatic_tax: { enabled: true },
       tax_id_collection: { enabled: true },
       success_url: `${origin}/pro/welcome?session_id={CHECKOUT_SESSION_ID}&prospect=${prospectId ?? ""}`,
@@ -101,9 +80,10 @@ Deno.serve(async (req) => {
         plan_id: plan.id,
         prospect_id: prospectId ?? "",
         source: "first_customer_48h",
-        offer: "fondateur_1cad_7d_then_149",
+        offer_kind: "pack_350",
       },
     });
+
 
     if (prospectId) {
       await admin
