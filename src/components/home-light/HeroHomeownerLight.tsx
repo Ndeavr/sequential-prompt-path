@@ -79,7 +79,7 @@ export default function HeroHomeownerLight() {
           transition={{ duration: 0.5, delay: 0.18, type: "spring", stiffness: 110, damping: 18 }}
           className="mt-10 flex justify-center"
         >
-          <AlexOrb state={orbState} size="hero" onClick={startAlex} ariaLabel="Parler à Alex" />
+          <AlexOrb state={orbState} size="hero" theme="light" onClick={startAlex} ariaLabel="Parler à Alex" />
         </motion.div>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">

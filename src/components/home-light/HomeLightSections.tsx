@@ -228,7 +228,7 @@ export function SectionPasseport() {
             aide Alex à mieux vous conseiller la prochaine fois.
           </p>
           <Link
-            to="/passeport-maison"
+            to="/proprietaires/passeport-maison"
             className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5"
           >
             Découvrir le Passeport <ArrowRight className="h-4 w-4" />
