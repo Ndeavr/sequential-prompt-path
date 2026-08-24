@@ -1,6 +1,6 @@
 /**
  * UNPRO — Panneau de contact manuel (partagé Admin + Affilié).
- * 5 actions 1-clic : APPELER, SMS, COURRIEL, PROFIL, LIEN 1 $.
+ * 5 actions 1-clic : APPELER, SMS, COURRIEL, PROFIL, LIEN D'ACTIVATION.
  * Journalise chaque action via crm-recovery-action (audit + garde anti-doublon).
  */
 import { useState } from "react";
