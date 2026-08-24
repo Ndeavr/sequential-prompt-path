@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Helmet } from "react-helmet-async";
 import { AlertTriangle, TrendingUp, Loader2, ArrowRight, Sparkles } from "lucide-react";
+import { OFFER_350 } from "@/lib/copy/offer350";
 
 type ScanReport = {
   id: string;
@@ -217,8 +218,8 @@ export default function PageScanIAReport() {
           </div>
           <h2 className="mb-2 text-3xl font-semibold">Activation IA</h2>
           <div className="mb-6 flex items-baseline gap-2">
-            <span className="text-5xl font-semibold">1 $</span>
-            <span className="text-[#050816]/60">pendant 7 jours</span>
+            <span className="text-5xl font-semibold">{OFFER_350.price_label}</span>
+            <span className="text-[#050816]/60">{OFFER_350.paymentNote}</span>
           </div>
           <ul className="mb-6 grid grid-cols-1 gap-2 text-sm text-[#050816]/80 md:grid-cols-2">
             {[

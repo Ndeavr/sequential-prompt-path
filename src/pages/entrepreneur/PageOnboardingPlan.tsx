@@ -8,6 +8,7 @@ import TrialActivationCard from "@/components/trial/TrialActivationCard";
 import { useAlexCheckoutState } from "@/stores/alexCheckoutState";
 import type { ContractorPlanSlug } from "@/config/contractorPlans";
 import { toast } from "sonner";
+import { OFFER_350 } from "@/lib/copy/offer350";
 
 export default function PageOnboardingPlan() {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ export default function PageOnboardingPlan() {
 
   const handleTrial = () => {
     setStage("trial_offer");
-    toast.info("L'essai 7 jours à 1 $ arrive bientôt. Vous pouvez activer un plan complet en attendant.");
+    toast.info(`${OFFER_350.title} — ${OFFER_350.paymentNote}`);
   };
 
   return (

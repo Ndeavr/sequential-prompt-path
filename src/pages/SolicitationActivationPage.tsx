@@ -1,6 +1,6 @@
 /**
  * SolicitationActivationPage — Minimal /activation landing for SMS-driven contractors.
- * Reads ?t=<tracking_slug>, marks click, launches $1 activation checkout.
+ * Reads ?t=<tracking_slug>, marks click, launches the canonical entry-pack checkout.
  */
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -8,6 +8,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
+import { OFFER_350 } from "@/lib/copy/offer350";
 
 interface TrackContext {
   company_name?: string;
@@ -85,7 +86,7 @@ export default function SolicitationActivationPage() {
           <span className="text-white/60">Pas des leads partagés.</span>
         </h1>
         <p className="mt-5 text-lg text-white/75">
-          Essai de 7 jours pour <span className="font-semibold text-white">1&nbsp;$</span>. Activation immédiate.
+          {OFFER_350.title} <span className="text-white/60">{OFFER_350.paymentNote}</span>
         </p>
 
         <Button

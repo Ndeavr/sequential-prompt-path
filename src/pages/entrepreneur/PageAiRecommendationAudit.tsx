@@ -526,9 +526,22 @@ function AuditReport({
         <p className="mt-2 text-[13.5px] leading-relaxed text-white/70">
           Rendez-vous exclusifs garantis. Jamais de leads partagés. {OFFER_350.subtitle}
         </p>
+        <div className="mt-4 flex items-end gap-2">
+          <span className="text-[34px] font-bold leading-none tracking-tight">{OFFER_350.price_label}</span>
+          <span className="pb-1 text-[12.5px] text-white/55">{OFFER_350.card.eyebrow.replace("À partir de ", "à partir de ")}</span>
+        </div>
+        <ul className="mt-3 space-y-1.5">
+          {OFFER_350.card.bullets.map((b) => (
+            <li key={b} className="flex items-start gap-2 text-[13px] text-white/75">
+              <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-300" aria-hidden />
+              <span>{b}</span>
+            </li>
+          ))}
+        </ul>
         <p className="mt-3 text-center text-[12px] text-white/45">
           {OFFER_350.paymentNote} · {OFFER_350.disclaimer}
         </p>
+
       </section>
 
       {/* CTA sticky mobile */}

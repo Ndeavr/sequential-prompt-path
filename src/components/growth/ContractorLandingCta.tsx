@@ -40,7 +40,7 @@ const ContractorLandingCta = () => (
 
     <div className="flex gap-3">
       <Button asChild>
-        <Link to="/signup">{CONTRACTOR_CTA}</Link>
+        <Link to="/entrepreneurs/audit-ia">{CONTRACTOR_CTA}</Link>
       </Button>
       <Button asChild variant="outline">
         <Link to="/alex">Voir la plateforme</Link>

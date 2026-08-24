@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, TrendingUp, DollarSign, ArrowRight } from "lucide-react";
+import { OFFER_350 } from "@/lib/copy/offer350";
 
 const fmtMoney = (n: number) =>
   new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format(n);
@@ -79,7 +80,7 @@ export default function PageContractorDemandLanding() {
             size="lg"
             onClick={() => navigate(`/contractor-onboarding?city=${encodeURIComponent(cityLabel)}&category=${encodeURIComponent(catLabel)}&source=demand_landing`)}
           >
-            Activer mon profil — $1 / 7 jours <ArrowRight className="ml-2 h-4 w-4" />
+            Activer mon profil — {OFFER_350.price_label} <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
 

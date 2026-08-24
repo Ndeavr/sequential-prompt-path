@@ -24,8 +24,8 @@ export const CTA_DEST: Record<CanonicalCTA, CTADescriptor> = {
     analyticsId: "cta_create_project",
   },
   activate_profile: {
-    href: "/entrepreneurs",
-    label: "Activer mon profil",
+    href: "/entrepreneurs/audit-ia",
+    label: "Voir comment l'IA voit mon entreprise",
     analyticsId: "cta_activate_profile",
   },
   book: {
