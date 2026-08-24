@@ -84,6 +84,7 @@ export default function HeroHomeownerLight() {
 
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <button
+            data-cta-canonical="home_alex"
             onClick={startAlex}
             className="inline-flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-7 py-4 text-[15px] font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-transform hover:-translate-y-0.5 sm:w-auto"
           >
