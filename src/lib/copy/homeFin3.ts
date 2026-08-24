@@ -96,7 +96,7 @@ export const homeFin3 = {
       body: "Découvrez comment UNPRO comprend actuellement votre entreprise, complétez votre profil et améliorez les informations utilisées pour vous associer aux bons projets.",
       ctaPrimary: "Voir mon profil IA",
       ctaSecondary: "Voir ce que 350 $ peut me garantir",
-      note: "L'activation à 1 $ est optionnelle.",
+      note: "L'offre d'entrée est de 350 $, paiement unique. Aucun abonnement.",
     },
     final: {
       title: "Arrêtez de chercher trois entrepreneurs.",

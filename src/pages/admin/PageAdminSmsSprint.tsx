@@ -17,7 +17,7 @@ const SMS_REVENUE_VARIANTS = [
     key: "recommendation",
     label: "Recommandation IA",
     body:
-      "Bonjour {{first_name}}. Votre entreprise pourrait être recommandée par l'IA d'UNPRO. Activation aujourd'hui : 1 $. unpro.ca",
+      "Bonjour {{first_name}}. Votre entreprise pourrait être recommandée par l'IA d'UNPRO. Offre d'entrée : 350 $, paiement unique. unpro.ca",
   },
   {
     key: "chasing",
@@ -35,7 +35,7 @@ const SMS_REVENUE_VARIANTS = [
     key: "not_most_visible",
     label: "Pas les plus visibles",
     body:
-      "Les meilleurs entrepreneurs ne sont pas toujours les plus visibles. Voyez si UNPRO peut vous recommander. Activation : 1 $. unpro.ca",
+      "Les meilleurs entrepreneurs ne sont pas toujours les plus visibles. Voyez si UNPRO peut vous recommander. Offre d'entrée : 350 $, paiement unique. unpro.ca",
   },
   {
     key: "profile_ready",
