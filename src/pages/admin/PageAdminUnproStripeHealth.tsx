@@ -170,7 +170,7 @@ export default function PageAdminUnproStripeHealth() {
                       <td>{r.processing_status}</td>
                       <td>{r.livemode ? "live" : "test"}</td>
                       <td className="font-mono">{r.stripe_event_id}</td>
-                      <td className="text-red-300">{r.error_code || ""}</td>
+                      <td className="text-red-300">{r.error_message || ""}</td>
                     </tr>
                   ))}
                 </tbody>
