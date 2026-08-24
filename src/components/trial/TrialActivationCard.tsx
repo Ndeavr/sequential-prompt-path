@@ -1,13 +1,13 @@
 /**
  * TrialActivationCard — "Tester UNPRO sans risque" pré-checkout.
  *
- * 7 jours pour 1 $. CTA primaire active l'essai (callback parent), CTA secondaire
- * bascule vers l'abonnement standard. Backend Stripe trial à brancher dans une
- * itération suivante; ici on expose les hooks UI.
+ * Offre d'entrée canonique (src/lib/copy/offer350.ts). CTA primaire active le
+ * pack d'entrée (callback parent), CTA secondaire bascule vers l'abonnement.
  */
 import { motion } from "framer-motion";
 import { Check, Sparkles, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { OFFER_350 } from "@/lib/copy/offer350";
 
 const BENEFITS = [
   "Activation immédiate du profil",
@@ -52,10 +52,10 @@ export default function TrialActivationCard({
         </div>
 
         <h3 className="text-xl font-bold text-foreground tracking-tight">
-          Tester UNPRO sans risque
+          {OFFER_350.card.title}
         </h3>
         <p className="text-xs text-muted-foreground mt-1">
-          7 jours pour 1 $ · Annulable à tout moment
+          {OFFER_350.paymentNote} · {OFFER_350.disclaimer}
         </p>
 
         <ul className="mt-4 grid grid-cols-1 gap-2">
@@ -81,7 +81,7 @@ export default function TrialActivationCard({
             disabled={loading}
             className="w-full h-12 text-sm font-bold rounded-xl bg-gradient-to-r from-primary to-primary-glow hover:opacity-95 shadow-lg"
           >
-            Activer mon essai 7 jours — 1 $
+            {OFFER_350.ctaActivate}
           </Button>
           <button
             type="button"

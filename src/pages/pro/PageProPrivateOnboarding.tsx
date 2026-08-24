@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Loader2, Sparkles, Star, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { OFFER_350 } from "@/lib/copy/offer350";
 
 type Lead = {
   lead_id: string;
@@ -147,9 +148,9 @@ export default function PageProPrivateOnboarding() {
 
         <section className="rounded-2xl border border-amber-400/30 bg-gradient-to-br from-amber-400/10 to-transparent p-5">
           <p className="text-xs uppercase tracking-wider text-amber-300 mb-1">Plan recommandé</p>
-          <p className="text-xl font-semibold mb-2">Fondateur — Recrue</p>
+          <p className="text-xl font-semibold mb-2">{OFFER_350.card.title}</p>
           <p className="text-sm text-white/70 mb-4">
-            Essai 7 jours pour 1 $, puis 149 $/mois. Rendez-vous exclusifs garantis, jamais partagés.
+            {OFFER_350.subtitle} Rendez-vous exclusifs garantis, jamais partagés.
           </p>
           {checkoutUrl ? (
             <a
@@ -166,7 +167,7 @@ export default function PageProPrivateOnboarding() {
               className="w-full rounded-2xl bg-amber-400 text-[#060B14] py-4 font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-              {busy ? "Préparation du paiement…" : "Activer mon profil pour 1 $"}
+              {busy ? "Préparation du paiement…" : OFFER_350.ctaActivate}
             </button>
           )}
           {error && <p className="mt-3 text-sm text-red-400 text-center">{error}</p>}
