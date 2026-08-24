@@ -59,8 +59,9 @@ export default function PageAdminUnproStripeHealth() {
   }, [rows]);
 
   const legacyHits = rows.filter(
-    (r) => r.error_code === "unpro_event_hit_legacy_endpoint",
+    (r) => (r.error_message || "").includes("retired"),
   ).length;
+
 
   const status: HealthStatus = useMemo(() => {
     if (legacyHits > 0) return "ISR_DEPENDENCY_DETECTED";
