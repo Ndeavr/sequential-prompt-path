@@ -26,42 +26,119 @@ const STUCK_THRESHOLDS_MIN: Record<string, number> = {
 /**
  * Escalate a stuck contractor to the human/affiliate recovery layer.
  *
- * REPAIR (2026-08-24): the previous version wrote `contractor_id`, a text
+  * REPAIR (2026-08-24): the previous version wrote `contractor_id`, a text
  * `priority` and a `reason` column — none of which exist on
- * `affiliate_assignments` (real columns: prospect_id, affiliate_id, status,
- * priority int, recommended_plan_slug, assigned_at, ...). Every escalation
- * therefore failed silently. We now resolve the canonical prospect for the
- * contractor and upsert idempotently on prospect_id.
+ * `affiliate_assignments`. Real schema:
+ *   prospect_id  -> contractors_prospects(id)  NOT NULL
+ *   affiliate_id -> affiliates(id)             NOT NULL
+ *   status text default 'to_call', priority int default 0
+ *   UNIQUE (affiliate_id, prospect_id)
+ * Every escalation therefore failed silently. We now resolve the real
+ * prospect row, pick a real affiliate, and assign idempotently.
  */
-async function scheduleAffiliateHandoff(contractorId: string, currentState: string) {
-  // Resolve the canonical prospect row for this contractor.
-  const { data: prospect } = await supabase
-    .from("verified_contractor_prospects")
-    .select("id")
-    .eq("contractor_id", contractorId)
-    .maybeSingle();
+function digitsOnly(v: string | null | undefined): string {
+  return (v ?? "").replace(/\D/g, "").slice(-10);
+}
 
-  const prospectId = (prospect as { id?: string } | null)?.id;
+async function resolveProspectId(contractorId: string): Promise<string | null> {
+  const { data: contractor } = await supabase
+    .from("contractors")
+    .select("id, company_name, phone")
+    .eq("id", contractorId)
+    .maybeSingle();
+  const c = contractor as { company_name?: string; phone?: string } | null;
+  if (!c) return null;
+
+  const phone = digitsOnly(c.phone);
+  if (phone.length === 10) {
+    const { data } = await supabase
+      .from("contractors_prospects")
+      .select("id, phone")
+      .ilike("phone", `%${phone}%`)
+      .limit(1);
+    const hit = (data ?? [])[0] as { id?: string } | undefined;
+    if (hit?.id) return hit.id;
+  }
+
+  if (c.company_name) {
+    const { data } = await supabase
+      .from("contractors_prospects")
+      .select("id")
+      .ilike("business_name", c.company_name.trim())
+      .limit(1);
+    const hit = (data ?? [])[0] as { id?: string } | undefined;
+    if (hit?.id) return hit.id;
+  }
+  return null;
+}
+
+/** Least-loaded active affiliate. Returns null when there is none — we never invent one. */
+async function pickAffiliate(prospectId: string): Promise<string | null> {
+  const { data: prospect } = await supabase
+    .from("contractors_prospects")
+    .select("assigned_affiliate_id")
+    .eq("id", prospectId)
+    .maybeSingle();
+  const preassigned = (prospect as { assigned_affiliate_id?: string } | null)?.assigned_affiliate_id;
+  if (preassigned) return preassigned;
+
+  const { data: affiliates } = await supabase
+    .from("affiliates")
+    .select("id")
+    .eq("status", "active")
+    .order("created_at", { ascending: true })
+    .limit(50);
+  const list = (affiliates ?? []) as { id: string }[];
+  if (!list.length) return null;
+
+  const loads = await Promise.all(
+    list.map(async (a) => {
+      const { count } = await supabase
+        .from("affiliate_assignments")
+        .select("id", { count: "exact", head: true })
+        .eq("affiliate_id", a.id)
+        .not("status", "in", "(won,lost)");
+      return { id: a.id, load: count ?? 0 };
+    }),
+  );
+  loads.sort((x, y) => x.load - y.load || x.id.localeCompare(y.id));
+  return loads[0].id;
+}
+
+async function scheduleAffiliateHandoff(contractorId: string, currentState: string) {
+  const prospectId = await resolveProspectId(contractorId);
   if (!prospectId) {
-    console.warn("[self-heal] no prospect for contractor", contractorId, "- handoff skipped");
+    console.warn("[self-heal] no prospect resolved for contractor", contractorId, "— handoff skipped");
     return false;
   }
 
-  // Idempotent: never duplicate an open assignment for the same prospect.
-  const { data: existing } = await supabase
+  // Idempotent guard: never duplicate an OPEN assignment for the same prospect.
+  const { data: open } = await supabase
     .from("affiliate_assignments")
-    .select("id, status")
+    .select("id")
     .eq("prospect_id", prospectId)
-    .not("status", "in", '("won","lost")')
-    .maybeSingle();
-  if (existing) return false;
+    .not("status", "in", "(won,lost)")
+    .limit(1);
+  if ((open ?? []).length) return false;
 
-  const { error } = await supabase.from("affiliate_assignments").insert({
-    prospect_id: prospectId,
-    status: "pending_auto_assign",
-    priority: 1,
-    assigned_at: new Date().toISOString(),
-  });
+  const affiliateId = await pickAffiliate(prospectId);
+  if (!affiliateId) {
+    console.warn("[self-heal] no active affiliate available — handoff skipped", { contractorId });
+    return false;
+  }
+
+  // UNIQUE (affiliate_id, prospect_id) makes this upsert safe to replay.
+  const { error } = await supabase.from("affiliate_assignments").upsert(
+    {
+      prospect_id: prospectId,
+      affiliate_id: affiliateId,
+      status: "to_call",
+      priority: 1,
+      assigned_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "affiliate_id,prospect_id", ignoreDuplicates: true },
+  );
   if (error) {
     console.error("[self-heal] affiliate handoff failed", error.message, { contractorId, currentState });
     return false;
