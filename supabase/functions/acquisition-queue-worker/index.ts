@@ -946,6 +946,11 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     // Honor dry_run at both top level and inside campaign payload (Admin UI passes it inside campaign).
     const dryRun = body.dry_run === true || body?.campaign?.dry_run === true;
+    // prepare_only: run the full canonical pipeline (promotion, Twilio
+    // verification, tier assignment, queue enqueue) but STOP before any send.
+    // Used to bring a batch to "ready" state without contacting anyone.
+    const prepareOnly = body.prepare_only === true || body?.campaign?.prepare_only === true;
+
     const url = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(url, serviceKey);
@@ -1365,7 +1370,10 @@ Deno.serve(async (req) => {
     // Auto-send — scoped to prospect_ids prepared in THIS run only
     // ------------------------------------------------------------------
     let smsResult: any = null;
-    if (preparedIds.length > 0) {
+    if (prepareOnly && preparedIds.length > 0) {
+      smsResult = { skipped: true, reason: "prepare_only", prepared: preparedIds.length };
+    } else if (preparedIds.length > 0) {
+
       for (const pid of preparedIds) {
         await emitEvent(supabase, ctx, { prospect_id: pid, stage: "sms_attempted", metadata: {} });
       }
