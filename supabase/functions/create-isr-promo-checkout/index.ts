@@ -37,15 +37,16 @@ Deno.serve(async (req) => {
       customer_email: p.email || undefined,
       customer_creation: "always",
       payment_intent_data: {
-        description: `UNPRO Premium — Activation 1$ (${p.company_name})`,
+        // DÉMO INTERNE — ce n'est PAS l'offre commerciale UNPRO (offre canonique : 350 $ paiement unique).
+        description: `UNPRO — Démo interne 1 $ (${p.company_name})`,
       },
       line_items: [
         {
           price_data: {
             currency: "cad",
             product_data: {
-              name: `UNPRO Premium — Activation 1$`,
-              description: `Activation promo live-run pour ${p.company_name}`,
+              name: `UNPRO — Démo interne (1 $)`,
+              description: `Test live-run interne pour ${p.company_name}. Offre commerciale réelle : 350 $ paiement unique.`,
             },
             unit_amount: 100,
           },

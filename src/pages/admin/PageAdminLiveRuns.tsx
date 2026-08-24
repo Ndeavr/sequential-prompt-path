@@ -514,7 +514,7 @@ export default function PageAdminLiveRuns() {
                       Approuver &amp; envoyer
                     </Button>
                     <Button size="sm" variant="secondary" onClick={() => startCheckout(run)}>
-                      Checkout 1$
+                      Checkout démo 1 $
                     </Button>
                   </div>
                 </div>
