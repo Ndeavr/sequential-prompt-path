@@ -160,6 +160,13 @@ export default function PageUnproActivate() {
 
 
   const company = profile?.display_name ?? prospect?.business_name?.trim() ?? "votre entreprise";
+  const canceled =
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("canceled") === "1";
+  const territoryParts = [
+    profile?.trade ?? prospect?.category ?? null,
+    profile?.city ?? prospect?.city ?? null,
+  ].filter(Boolean) as string[];
+  const territory = territoryParts.join(" · ");
 
   return (
     <div className="alex-immersive min-h-screen bg-[#050816] px-5 pb-28 pt-10 text-readable sm:pb-14">
