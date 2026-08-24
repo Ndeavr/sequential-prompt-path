@@ -31,7 +31,6 @@ Deno.serve(async (req) => {
       capacity,
       recommended_plan,
       plan_name,
-      plan_monthly_price_cents,
     } = body ?? {};
 
     if (!session_token) return json({ error: "Session invalide." }, 400);
