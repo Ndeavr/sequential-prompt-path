@@ -85038,15 +85038,19 @@ export type Database = {
       }
       stripe_webhook_events: {
         Row: {
+          attribution: Json
           contractor_id: string | null
           created_at: string
           error_message: string | null
           event_type: string
           id: string
           last_retry_at: string | null
+          livemode: boolean | null
           payload: Json | null
+          payment_intent_id: string | null
           processed_at: string | null
           processing_status: string
+          prospect_id: string | null
           received_at: string
           retry_count: number
           session_id: string | null
@@ -85054,15 +85058,19 @@ export type Database = {
           success: boolean | null
         }
         Insert: {
+          attribution?: Json
           contractor_id?: string | null
           created_at?: string
           error_message?: string | null
           event_type: string
           id?: string
           last_retry_at?: string | null
+          livemode?: boolean | null
           payload?: Json | null
+          payment_intent_id?: string | null
           processed_at?: string | null
           processing_status?: string
+          prospect_id?: string | null
           received_at?: string
           retry_count?: number
           session_id?: string | null
@@ -85070,15 +85078,19 @@ export type Database = {
           success?: boolean | null
         }
         Update: {
+          attribution?: Json
           contractor_id?: string | null
           created_at?: string
           error_message?: string | null
           event_type?: string
           id?: string
           last_retry_at?: string | null
+          livemode?: boolean | null
           payload?: Json | null
+          payment_intent_id?: string | null
           processed_at?: string | null
           processing_status?: string
+          prospect_id?: string | null
           received_at?: string
           retry_count?: number
           session_id?: string | null
