@@ -1,7 +1,10 @@
-// Creates a $1 Stripe Checkout Session for a contractor activation pipeline run.
+// Creates the CANONICAL contractor activation Checkout Session for a pipeline run.
+// Offre canonique : pack d'entrée UNPRO — 350 $ CA, paiement unique.
+// L'ancienne offre « 1 $ » est OBSOLÈTE et interdite (voir _shared/offerCopy.ts).
 // Guest-friendly (no auth required). Returns { url } for client redirect.
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { OFFER_350 } from "../_shared/offerCopy.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -61,11 +64,11 @@ Deno.serve(async (req) => {
         {
           price_data: {
             currency: "cad",
-            unit_amount: 100, // 1.00 CAD
+            unit_amount: OFFER_350.price_cents, // 350,00 CAD — source unique
             product_data: {
-              name: `Activation Fondateur UNPRO — ${planLabel}`,
+              name: `Pack d'entrée UNPRO — ${planLabel}`,
               description:
-                `Activation immédiate du profil entrepreneur (${run.domain ?? ""}). Accès Fondateur — 1 $ aujourd'hui.`,
+                `Activation immédiate du profil entrepreneur (${run.domain ?? ""}). ${OFFER_350.price_label} CA, paiement unique.`,
             },
           },
           quantity: 1,
@@ -76,6 +79,8 @@ Deno.serve(async (req) => {
         plan,
         domain: String(run.domain ?? ""),
         aipp_score: String(run.aipp_score ?? ""),
+        offer_kind: "pack_350",
+        amount_cents: String(OFFER_350.price_cents),
       },
       success_url:
         `${origin}/contractor/activated?session={CHECKOUT_SESSION_ID}&run=${run.id}`,
