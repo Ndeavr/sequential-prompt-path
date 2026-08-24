@@ -121,7 +121,7 @@ export default function PageAdminUnproStripeHealth() {
         <Card className="border-red-500/50 bg-red-500/10">
           <CardHeader><CardTitle className="text-red-300">ISR dependency detected</CardTitle></CardHeader>
           <CardContent className="text-sm text-red-100">
-            {legacyHits} UNPRO event(s) still hit the deprecated <code>stripe-isr-webhook</code>.
+            {legacyHits} event(s) hit a retired endpoint (<code>stripe-unpro-webhook</code> / <code>stripe-isr-webhook</code>).
             Update the Stripe endpoint to <code>{EXPECTED_URL}</code>, then disable the old endpoint.
           </CardContent>
         </Card>
