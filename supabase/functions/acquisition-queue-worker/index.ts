@@ -21,6 +21,7 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { CATEGORY_SYNONYMS, normalizeCategoryInput } from "../_shared/acquisitionPipeline.ts";
+import { PENDING_CATEGORY, resolveIdentity } from "../_shared/sparseLead.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -389,22 +390,25 @@ async function selectFairCandidates(supabase: any, ctx: RunContext, take: number
   if (results.length < poolCap) {
     let q = supabase
       .from("contractor_prospects")
-      .select("id,business_name,email,phone,phone_e164,website_url,city,trade,category_slug,source,created_at")
-      .not("business_name", "is", null)
+      .select("id,business_name,owner_name,email,phone,phone_e164,website_url,city,trade,category_slug,source,created_at")
+      // Sparse leads (person name + phone, no business name) stay in the pool.
+      .or("business_name.not.is.null,owner_name.not.is.null")
       .or("phone.not.is.null,phone_e164.not.is.null")
       .order("created_at", { ascending: true })
       .limit(poolCap);
     if (ctx.city) q = q.ilike("city", `${ctx.city}%`);
     const { data } = await q;
     for (const row of data ?? []) {
+      const identity = resolveIdentity(row as any);
       push(row, normalizeSource(row.source ?? "website"), "contractor_prospects", {
-        business: row.business_name,
+        // Sparse lead: fall back to the person name so the record survives.
+        business: row.business_name ?? identity.display_name,
         phone: row.phone_e164 ?? row.phone,
         website: row.website_url,
         city: row.city,
         // `trade` is frequently null on scraped rows while `category_slug` is
         // always populated — falling back keeps 75+ real prospects in the pool.
-        category: row.trade ?? row.category_slug,
+        category: row.trade ?? row.category_slug ?? PENDING_CATEGORY,
         email: row.email,
       });
     }
@@ -711,18 +715,21 @@ async function promoteProspect(
 
   // Defensive: category is NOT NULL in DB. Skip with distinct code so the
   // failure counter isn't polluted by promotion_insert_failed.
-  const safeCategory = (lead.category ?? "").trim();
-  if (!safeCategory) {
+  // Sparse-lead rule: an unknown category is stored as a pending placeholder,
+  // never a rejection. Enrichment resolves it later; the lead stays in the pool.
+  const rawCategory = (lead.category ?? "").trim();
+  const safeCategory = rawCategory || PENDING_CATEGORY;
+  if (!rawCategory) {
     await emitEvent(supabase, ctx, {
       business_name: lead.business_name,
       city: lead.city,
+      category: PENDING_CATEGORY,
       source: lead.source,
-      stage: "rejected",
-      reason_code: "category_missing",
-      reason_text: "candidate has empty category; insert would violate NOT NULL",
+      stage: "kept_sparse",
+      reason_code: "category_pending",
+      reason_text: "category unknown; stored as pending and kept for enrichment",
       metadata: { phone_e164: lead.phone_e164, source_table: lead.source_table, source_id: lead.source_id, run_id: ctx.run_id },
     });
-    return { prospect: null, reason: "category_missing" };
   }
 
   // Insert new — omit verification_status so the DB default 'needs_enrichment'

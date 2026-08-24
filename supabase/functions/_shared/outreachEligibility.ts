@@ -26,9 +26,13 @@ export class SkipError extends Error {
   }
 }
 
+/** Line types we may text: proven mobile, VoIP, or structurally valid (tier C). */
+const SMS_CAPABLE_TYPES = new Set(["mobile", "voip_business", "nonFixedVoip", "unknown_valid"]);
+
 export interface EligibilityInput {
   outreach_eligible?: boolean | null;
   phone_type?: string | null;
+  phone_sms_capable?: boolean | null;
   aggregator_email?: boolean | null;
   do_not_contact?: boolean | null;
   acquisition_priority_score?: number | null;
@@ -57,7 +61,8 @@ export function canSendSMS(p: EligibilityInput): SkipReason | null {
     if (pendingEnrichment(p)) return "enrichment_pending";
     return "missing_phone";
   }
-  if (p.phone_type !== "mobile") return "not_mobile";
+  if (p.phone_sms_capable === true) return null;
+  if (!SMS_CAPABLE_TYPES.has(String(p.phone_type ?? ""))) return "not_mobile";
   return null;
 }
 

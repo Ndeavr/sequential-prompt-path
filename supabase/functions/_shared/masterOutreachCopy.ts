@@ -4,6 +4,8 @@
 //   2. reply CTA ("Répondez … OUI")
 // Do NOT remove either path. The validator will block the send otherwise.
 
+import { outreachSubjectNoun, sparseSafeGreeting, type IdentityStatus } from "./sparseLead.ts";
+
 const PUBLIC_BASE = "https://unpro.ca";
 
 export type OutreachContext = {
@@ -12,6 +14,11 @@ export type OutreachContext = {
   slug?: string | null;
   prospect_id?: string | null;
   utm_campaign?: string | null;
+  /**
+   * Sparse leads (person name + phone only) must be addressed by first name and
+   * must never be told we know their business.
+   */
+  identity_status?: IdentityStatus | null;
 };
 
 function landing(ctx: OutreachContext, campaign: string): string {
@@ -23,6 +30,22 @@ function landing(ctx: OutreachContext, campaign: string): string {
 function firstName(ctx: OutreachContext): string {
   const n = (ctx.first_name || "").trim();
   return n || "Bonjour";
+}
+
+function isSparse(ctx: OutreachContext): boolean {
+  return ctx.identity_status ? ctx.identity_status !== "company_confirmed" : !ctx.business_name;
+}
+
+/** "Groupe X" / "votre entreprise" when confirmed, "vos services" when sparse. */
+function subjectNoun(ctx: OutreachContext): string {
+  return outreachSubjectNoun(
+    (ctx.identity_status as IdentityStatus) ?? (ctx.business_name ? "company_confirmed" : "sparse_person"),
+    ctx.business_name,
+  );
+}
+
+function greeting(ctx: OutreachContext): string {
+  return sparseSafeGreeting(ctx.first_name);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -54,7 +77,7 @@ export function masterEmail1(ctx: OutreachContext): EmailCopy {
 <p>De plus en plus de propriétaires demandent à l'IA :</p>
 <p style="border-left:3px solid #0F172A;padding-left:14px;color:#374151;font-style:italic;">« Quel entrepreneur me recommandes-tu ? »</p>
 <p>Nous analysons actuellement comment certaines entreprises du Québec apparaissent dans ces résultats.</p>
-<p><strong>${ctx.business_name ? ctx.business_name : "Votre entreprise"}</strong> a été sélectionnée pour un aperçu gratuit.</p>`.trim();
+<p>${ctx.business_name ? `<strong>${ctx.business_name}</strong> a été sélectionnée` : "Vous avez été sélectionné"} pour un aperçu gratuit.</p>`.trim();
   return {
     subject: "L'IA trouve-t-elle déjà votre entreprise?",
     html: emailShell(body, cta),
@@ -103,9 +126,14 @@ export function masterSms1(ctx: OutreachContext): SmsCopy {
   const cta = landing(ctx, "ai_visibility_sms_1");
   return {
     body:
-`Bonjour ${firstName(ctx)},
+    isSparse(ctx)
+      ? `${greeting(ctx)},
 De plus en plus de propriétaires demandent à l'IA quel entrepreneur choisir.
-Voulez-vous voir comment votre entreprise apparaît?
+Voulez-vous voir si ${subjectNoun(ctx)} y apparaissent?
+Répondez OUI ou consultez : ${cta}`
+      : `Bonjour ${firstName(ctx)},
+De plus en plus de propriétaires demandent à l'IA quel entrepreneur choisir.
+Voulez-vous voir comment ${subjectNoun(ctx)} apparaît?
 Répondez OUI ou consultez : ${cta}`,
   };
 }
@@ -114,7 +142,12 @@ export function masterSms2(ctx: OutreachContext): SmsCopy {
   const cta = landing(ctx, "ai_visibility_sms_2");
   return {
     body:
-`${firstName(ctx)},
+    isSparse(ctx)
+      ? `${greeting(ctx)},
+L'IA recommande déjà certains entrepreneurs au Québec.
+Vérifiez si vous en faites partie : ${cta}
+Répondez OUI pour recevoir votre aperçu.`
+      : `${firstName(ctx)},
 L'IA recommande déjà certaines entreprises dans votre secteur.
 Vérifiez si la vôtre en fait partie : ${cta}
 Répondez OUI pour recevoir votre aperçu.`,
@@ -125,7 +158,12 @@ export function masterSms3(ctx: OutreachContext): SmsCopy {
   const cta = landing(ctx, "ai_visibility_sms_3");
   return {
     body:
-`Dernier suivi.
+    isSparse(ctx)
+      ? `Dernier suivi.
+Comment ChatGPT, Google AI et Gemini parlent-ils des entrepreneurs comme vous aujourd'hui?
+Voir l'aperçu : ${cta}
+Ou répondez OUI.`
+      : `Dernier suivi.
 Comment ChatGPT, Google AI et Gemini décrivent-ils votre entreprise aujourd'hui?
 Voir l'aperçu : ${cta}
 Ou répondez OUI.`,

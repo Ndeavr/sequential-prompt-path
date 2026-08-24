@@ -1,0 +1,1 @@
+- [Sparse Lead Retention](mem://features/sparse-lead-retention) — Person-name+phone Facebook leads never discarded; pending fields, tier C SMS, "À enrichir" admin surface, sparse-safe outreach copy

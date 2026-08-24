@@ -7,6 +7,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { isAggregatorEmail, extractEmailDomain } from "../_shared/aggregator.ts";
 import { classifyPhone, selectOutreachChannel } from "../_shared/phone.ts";
 import { classifyWebsite, scoreProspect } from "../_shared/prospectScoring.ts";
+import { resolveIdentity } from "../_shared/sparseLead.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -28,6 +29,14 @@ interface Counters {
   errors: number;
 }
 
+/** Regulated trades cannot be solicited without a verified licence. */
+const REGULATED_TRADES = ["electric", "électric", "nal", "gaz", "gas", "plomb"];
+function isRegulatedUnverified(row: any): boolean {
+  const t = `${row.category_slug ?? ""} ${row.trade ?? ""} ${row.business_name ?? ""}`.toLowerCase();
+  const regulated = REGULATED_TRADES.some((k) => t.includes(k));
+  return regulated && !row.rbq_verified && !row.rbq && !row.rbq_license;
+}
+
 function isValidEmailShape(email: string | null): boolean {
   return !!email && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim());
 }
@@ -42,7 +51,7 @@ Deno.serve(async (req) => {
 
     let query = supa
       .from("contractor_prospects")
-      .select("id, email, phone, website_url, review_count, review_rating, service_area_count, do_not_contact, raw_data, priority_recomputed_at")
+      .select("id, email, phone, website_url, review_count, review_rating, service_area_count, do_not_contact, raw_data, priority_recomputed_at, business_name, owner_name, category_slug, trade, rbq, rbq_license, rbq_verified")
       .order("id", { ascending: true })
       .limit(batch);
 
@@ -103,21 +112,27 @@ Deno.serve(async (req) => {
           service_area_count: row.service_area_count,
         });
 
+        // Sparse identity (person name + phone only) NEVER suppresses a lead —
+        // only the phone/consent gates do.
+        const identity = resolveIdentity(row as any);
+
         const channel = selectOutreachChannel({
           has_mobile: phone.has_mobile,
+          sms_capable: phone.sms_capable,
           hasValidNonAggregatorEmail: validShape && !aggregator,
         });
 
         let outreachEligible = !row.do_not_contact && channel !== "none";
         let suppression: string | null = null;
         if (row.do_not_contact) suppression = "do_not_contact";
-        else if (aggregator && !phone.has_mobile) { suppression = "aggregator_email"; outreachEligible = false; }
+        else if (aggregator && !phone.sms_capable) { suppression = "aggregator_email"; outreachEligible = false; }
+        else if (isRegulatedUnverified(row)) { suppression = "regulated_trade_unverified"; outreachEligible = false; }
         else if (channel === "none") { suppression = "unreachable"; outreachEligible = false; }
 
         if (aggregator) counters.suppressed_aggregator++;
         if (channel === "none") counters.suppressed_unreachable++;
 
-        const finalScore = aggregator && !phone.has_mobile ? 0 : scored.score;
+        const finalScore = aggregator && !phone.sms_capable ? 0 : scored.score;
         if (outreachEligible && finalScore >= 90) counters.promoted_a++;
 
         if (!body.dry_run) {
@@ -126,6 +141,8 @@ Deno.serve(async (req) => {
             .update({
               acquisition_priority_score: finalScore,
               phone_type: phone.phone_type,
+              phone_sms_capable: phone.sms_capable,
+              phone_e164: phone.e164,
               has_mobile: phone.has_mobile,
               has_landline: phone.has_landline,
               email_quality: emailQuality,
@@ -136,7 +153,14 @@ Deno.serve(async (req) => {
               outreach_eligible: outreachEligible,
               suppression_reason: suppression,
               priority_recomputed_at: new Date().toISOString(),
-              raw_data: { ...(row.raw_data ?? {}), scoring: scored.breakdown, website_quality: web.quality },
+              needs_review: identity.is_sparse ? true : undefined,
+              raw_data: {
+                ...(row.raw_data ?? {}),
+                scoring: scored.breakdown,
+                website_quality: web.quality,
+                identity_status: identity.identity_status,
+                pending_fields: identity.pending_fields,
+              },
             })
             .eq("id", row.id);
           if (upErr) throw upErr;
