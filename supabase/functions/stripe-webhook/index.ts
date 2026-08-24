@@ -585,6 +585,45 @@ Deno.serve(async (req) => {
               },
               _idempotency_key: `paid:${session.id}`,
             });
+
+            // Canonical golden-path steps 4/5 and 5/5. Kept alongside 'paid'
+            // (legacy cockpit) so the invited-contractor funnel is coherent:
+            // activation_page_viewed -> activation_cta_clicked ->
+            // stripe_checkout_created -> payment_completed -> contractor_activated.
+            {
+              const trackingId =
+                activationToken || (session.metadata?.landing_token as string) || null;
+              const evtBase = {
+                _channel: "web",
+                _status: "paid",
+                _provider: "stripe",
+                _prospect_id: vProspectId,
+                _contractor_id: activatedContractorId,
+                _tracking_id: trackingId,
+                _source_table: "billing_checkout_sessions",
+                _source_row_id: session.id,
+                _metadata: {
+                  amount_cents: session.amount_total ?? null,
+                  offer_code: session.metadata?.offer_code ?? null,
+                  activation_token: activationToken,
+                  landing_token: session.metadata?.landing_token ?? null,
+                  contractor_id: activatedContractorId,
+                },
+              };
+              await supabase.rpc("record_engagement_event", {
+                ...evtBase,
+                _event_type: "payment_completed",
+                _idempotency_key: `payment_completed:${session.id}`,
+              }).then(() => {}, () => {});
+              if (activatedContractorId) {
+                await supabase.rpc("record_engagement_event", {
+                  ...evtBase,
+                  _event_type: "contractor_activated",
+                  _idempotency_key: `contractor_activated:${session.id}`,
+                }).then(() => {}, () => {});
+              }
+            }
+
             console.log("[stripe-webhook] $1 activation recorded", {
               prospect_id: vProspectId,
               contractor_id: activatedContractorId,

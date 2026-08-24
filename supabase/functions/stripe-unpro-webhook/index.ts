@@ -290,13 +290,14 @@ async function handleCheckoutCompleted(
       })
       .eq("stripe_checkout_session_id", session.id);
 
-    if (activationToken) {
-      await sb.rpc("record_engagement_event", {
-        _event_type: "payment_succeeded",
+    // Canonical funnel steps 4/5 and 5/5. Recorded for every invited prospect
+    // (activation_token OR landing_token) so the chain stays attributable.
+    const trackingId = activationToken || (md.landing_token as string) || null;
+    if (trackingId) {
+      const evtBase = {
         _channel: "web",
-        _status: "paid",
         _provider: "stripe",
-        _tracking_id: activationToken,
+        _tracking_id: trackingId,
         _prospect_id: (md.prospect_id as string) || null,
         _source_table: "billing_checkout_sessions",
         _source_row_id: session.id,
@@ -307,9 +308,27 @@ async function handleCheckoutCompleted(
           human_unpro_touches: (md.human_unpro_touches as string) || "0",
           amount_total: session.amount_total,
         },
+      };
+      await sb.rpc("record_engagement_event", {
+        ...evtBase,
+        _event_type: "payment_succeeded",
+        _status: "paid",
         _idempotency_key: `payment_succeeded:${session.id}`,
       });
+      await sb.rpc("record_engagement_event", {
+        ...evtBase,
+        _event_type: "payment_completed",
+        _status: "payment_completed",
+        _idempotency_key: `payment_completed:${session.id}`,
+      });
+      await sb.rpc("record_engagement_event", {
+        ...evtBase,
+        _event_type: "contractor_activated",
+        _status: "contractor_activated",
+        _idempotency_key: `contractor_activated:${session.id}`,
+      });
     }
+
   } catch (e) {
     console.error("[stripe-unpro-webhook] attribution_seal_failed", String(e));
   }

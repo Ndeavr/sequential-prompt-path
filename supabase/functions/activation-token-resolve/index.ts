@@ -348,6 +348,15 @@ Deno.serve(async (req) => {
         _metadata: { campaign_id: resolved.campaign_id ?? null, landing_variant: landingVariant },
         _idempotency_key: `landing_viewed:${realToken}`,
       });
+      // Canonical funnel name (step 1/5). Kept alongside the legacy
+      // `landing_viewed` so historical dashboards keep working.
+      await supabase.rpc("record_engagement_event", {
+        ...base,
+        _event_type: "activation_page_viewed",
+        _status: "activation_page_viewed",
+        _metadata: { campaign_id: resolved.campaign_id ?? null, landing_variant: landingVariant },
+        _idempotency_key: `activation_page_viewed:${realToken}`,
+      });
       await supabase.rpc("record_engagement_event", {
         ...base,
         _event_type: "profile_viewed",
