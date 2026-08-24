@@ -8,6 +8,7 @@ import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
+import { OFFER_350 } from "@/lib/copy/offer350";
 
 export default function PageInvitationActivate() {
   const { token } = useParams<{ token: string }>();
@@ -82,8 +83,8 @@ export default function PageInvitationActivate() {
 
         <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur">
           <Row label="Offre" value="Pack d'entrée UNPRO" />
-          <Row label="Prix aujourd'hui" value="350,00 $ CA" strong />
-          <Row label="Garantie" value="Jusqu'à 5 rendez-vous exclusifs" />
+          <Row label="Prix aujourd'hui" value={`${OFFER_350.price_label} CA`} strong />
+          <Row label="Garantie" value={`Jusqu'à ${OFFER_350.max_appointments} rendez-vous exclusifs`} />
           <Row label="Après le pack" value="Aucun engagement" />
           <Row label="Prochain prélèvement" value="Aucun" />
           <Row label="Taxes" value="Incluses (facturation Québec)" />
@@ -91,7 +92,7 @@ export default function PageInvitationActivate() {
         </div>
 
         <div className="mt-8 grid gap-2 text-sm text-white/80">
-          <RowIcon>Paiement unique de 350 $ CA</RowIcon>
+          <RowIcon>Paiement unique de {OFFER_350.price_label} CA</RowIcon>
           <RowIcon>Aucun abonnement créé aujourd'hui</RowIcon>
           <RowIcon>Le nombre exact de rendez-vous garantis est calculé avant le paiement</RowIcon>
         </div>
@@ -102,7 +103,7 @@ export default function PageInvitationActivate() {
           size="lg"
           className="mt-8 h-14 w-full text-base bg-white text-black hover:bg-white/90 rounded-2xl font-medium"
         >
-          {prospect.already_paid ? "Déjà activé" : starting ? "Préparation…" : (<>Activer maintenant pour 350 $ <ArrowRight className="ml-2 h-4 w-4" /></>)}
+          {prospect.already_paid ? "Déjà activé" : starting ? "Préparation…" : (<>Activer maintenant pour {OFFER_350.price_label} <ArrowRight className="ml-2 h-4 w-4" /></>)}
         </Button>
 
         {error && <p className="mt-4 text-sm text-rose-300">{error}</p>}

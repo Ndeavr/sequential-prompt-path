@@ -49,7 +49,7 @@ serve(async (req) => {
           unit_amount: DEMO_PRICE_CENTS,
           product_data: {
             name: "UNPRO Signature — ISR Demo",
-            description: "Activation démo Signature à 1$ pour Isolation Solution Royal.",
+            description: "Démo interne (1 $) pour Isolation Solution Royal. Offre commerciale réelle : 350 $ paiement unique.",
           },
         },
       }],

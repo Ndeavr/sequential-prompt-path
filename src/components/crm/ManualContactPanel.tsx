@@ -70,7 +70,10 @@ export default function ManualContactPanel({
       const r = await queueActions.sendActivationLink([target.prospect_id], channel);
       if (r.failed > 0) toast.error("Envoi refusé", { description: r.results?.[0]?.result });
       else if (r.skipped > 0) toast.info("Déjà envoyé aujourd'hui (garde anti-doublon)");
-      else toast.success("Lien 1 $ envoyé");
+      else if ((r.succeeded ?? 0) < 1) {
+        // Aucun succès confirmé par le fournisseur : ne jamais annoncer un envoi.
+        toast.warning("Envoi non confirmé", { description: r.results?.[0]?.result ?? "Le fournisseur n'a pas confirmé la remise." });
+      } else toast.success("Lien d'activation envoyé");
       onDone?.();
     } catch (e: any) {
       toast.error("Envoi échoué", { description: e?.message });
@@ -130,7 +133,7 @@ export default function ManualContactPanel({
         <Button size="sm" className={size} disabled={busy !== null || target.opted_out}
           onClick={() => sendLink(target.email ? "email" : "sms")}>
           {busy ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Link2 className="h-3.5 w-3.5 mr-1" />}
-          Lien 1 $
+          Lien d'activation
         </Button>
         {canLogOutcome && (
           <Button size="sm" variant="secondary" className={size} onClick={() => setOutcomeOpen(true)}>

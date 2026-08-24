@@ -12,7 +12,7 @@ const corsHeaders = {
 type Win = "24h" | "7d" | "30d";
 const WINDOW_HOURS: Record<Win, number> = { "24h": 24, "7d": 168, "30d": 720 };
 
-// Which plan codes are considered part of the SMS 1$ activation tunnel.
+// Which plan codes are considered part of the SMS activation tunnel.
 const SMS_PLAN_CODES = ["activation_1", "sms_outreach", "sms_1", "activation"];
 
 interface StageResult {
@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
     );
 
     // ------------------------------------------------------------------
-    // 6) Paid 1$ — only attributed prospects
+    // 6) Paid — only attributed prospects
     // ------------------------------------------------------------------
     const paidSuccess = await countAcross((from) =>
       (supabase.from("prospects").select("id", { count: "exact", head: true }) as any).eq("is_test_e2e", false)
