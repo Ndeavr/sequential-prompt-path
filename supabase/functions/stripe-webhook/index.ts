@@ -661,7 +661,9 @@ Deno.serve(async (req) => {
                   activation_token: activationToken,
                   landing_token: session.metadata?.landing_token ?? null,
                   contractor_id: activatedContractorId,
+                  ...aiAttribution,
                 },
+
               };
               await supabase.rpc("record_engagement_event", {
                 ...evtBase,
