@@ -17,15 +17,19 @@ interface WebhookRow {
   stripe_event_id: string;
   event_type: string;
   processing_status: string;
-  livemode: boolean;
+  livemode: boolean | null;
   received_at: string;
   processed_at: string | null;
-  error_code: string | null;
   error_message: string | null;
+  contractor_id: string | null;
+  prospect_id: string | null;
+  session_id: string | null;
+  payment_intent_id: string | null;
 }
 
+// CANONICAL production Stripe endpoint. `stripe-unpro-webhook` is retired (410).
 const EXPECTED_URL =
-  "https://clmaqdnphbndvmmqvpff.supabase.co/functions/v1/stripe-unpro-webhook";
+  "https://clmaqdnphbndvmmqvpff.supabase.co/functions/v1/stripe-webhook";
 
 export default function PageAdminUnproStripeHealth() {
   const [rows, setRows] = useState<WebhookRow[]>([]);
@@ -36,14 +40,15 @@ export default function PageAdminUnproStripeHealth() {
   async function load() {
     setLoading(true);
     const { data, error } = await supabase
-      .from("unpro_stripe_webhook_events")
-      .select("id,stripe_event_id,event_type,processing_status,livemode,received_at,processed_at,error_code,error_message")
+      .from("stripe_webhook_events")
+      .select("id,stripe_event_id,event_type,processing_status,livemode,received_at,processed_at,error_message,contractor_id,prospect_id,session_id,payment_intent_id")
       .order("received_at", { ascending: false })
       .limit(100);
     if (error) toast.error(error.message);
-    else setRows((data as WebhookRow[]) || []);
+    else setRows((data as unknown as WebhookRow[]) || []);
     setLoading(false);
   }
+
 
   useEffect(() => { load(); }, []);
 
