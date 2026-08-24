@@ -151,21 +151,42 @@ Deno.serve(async (req) => {
     { auth: { persistSession: false } },
   );
 
-  // REPAIR: `omega_loop_runs_date_phase_uniq` allows one row per phase per day.
-  // The previous hard INSERT made every re-run of the day fail with a duplicate
-  // key error. We now reuse the day's row (upsert) so re-runs and dry-runs work.
-  const { data: run, error: insertErr } = await supabase
+  // REPAIR: `omega_loop_runs_date_phase_uniq` (loop_date, phase) allows one row
+  // per phase per day (except outreach_send). The previous hard INSERT made every
+  // re-run of the day fail with a duplicate key error. We now reuse the day's row.
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: sameDay } = await supabase
     .from("omega_loop_runs")
-    .upsert(
-      { phase, status: "running", started_at: new Date().toISOString(), ended_at: null },
-      { onConflict: "run_date,phase" },
-    )
     .select("id")
-    .single();
+    .eq("loop_date", today)
+    .eq("phase", phase)
+    .maybeSingle();
 
-  if (insertErr) {
-    console.error("[omega-conductor] insert failed", insertErr);
-    return new Response(JSON.stringify({ error: insertErr.message, phase }), {
+  let run: { id: string } | null = null;
+  let insertErr: { message: string } | null = null;
+
+  if (sameDay?.id && phase !== "outreach_send") {
+    const { data, error } = await supabase
+      .from("omega_loop_runs")
+      .update({ status: "running", started_at: new Date().toISOString(), ended_at: null })
+      .eq("id", sameDay.id)
+      .select("id")
+      .single();
+    run = data;
+    insertErr = error;
+  } else {
+    const { data, error } = await supabase
+      .from("omega_loop_runs")
+      .insert({ phase, status: "running" })
+      .select("id")
+      .single();
+    run = data;
+    insertErr = error;
+  }
+
+  if (insertErr || !run) {
+    console.error("[omega-conductor] run row failed", insertErr);
+    return new Response(JSON.stringify({ error: insertErr?.message ?? "run_row_failed", phase }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
