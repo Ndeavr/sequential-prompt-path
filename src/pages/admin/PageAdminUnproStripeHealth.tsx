@@ -17,15 +17,19 @@ interface WebhookRow {
   stripe_event_id: string;
   event_type: string;
   processing_status: string;
-  livemode: boolean;
+  livemode: boolean | null;
   received_at: string;
   processed_at: string | null;
-  error_code: string | null;
   error_message: string | null;
+  contractor_id: string | null;
+  prospect_id: string | null;
+  session_id: string | null;
+  payment_intent_id: string | null;
 }
 
+// CANONICAL production Stripe endpoint. `stripe-unpro-webhook` is retired (410).
 const EXPECTED_URL =
-  "https://clmaqdnphbndvmmqvpff.supabase.co/functions/v1/stripe-unpro-webhook";
+  "https://clmaqdnphbndvmmqvpff.supabase.co/functions/v1/stripe-webhook";
 
 export default function PageAdminUnproStripeHealth() {
   const [rows, setRows] = useState<WebhookRow[]>([]);
@@ -36,14 +40,15 @@ export default function PageAdminUnproStripeHealth() {
   async function load() {
     setLoading(true);
     const { data, error } = await supabase
-      .from("unpro_stripe_webhook_events")
-      .select("id,stripe_event_id,event_type,processing_status,livemode,received_at,processed_at,error_code,error_message")
+      .from("stripe_webhook_events")
+      .select("id,stripe_event_id,event_type,processing_status,livemode,received_at,processed_at,error_message,contractor_id,prospect_id,session_id,payment_intent_id")
       .order("received_at", { ascending: false })
       .limit(100);
     if (error) toast.error(error.message);
-    else setRows((data as WebhookRow[]) || []);
+    else setRows((data as unknown as WebhookRow[]) || []);
     setLoading(false);
   }
+
 
   useEffect(() => { load(); }, []);
 
@@ -54,8 +59,9 @@ export default function PageAdminUnproStripeHealth() {
   }, [rows]);
 
   const legacyHits = rows.filter(
-    (r) => r.error_code === "unpro_event_hit_legacy_endpoint",
+    (r) => (r.error_message || "").includes("retired"),
   ).length;
+
 
   const status: HealthStatus = useMemo(() => {
     if (legacyHits > 0) return "ISR_DEPENDENCY_DETECTED";
@@ -115,7 +121,7 @@ export default function PageAdminUnproStripeHealth() {
         <Card className="border-red-500/50 bg-red-500/10">
           <CardHeader><CardTitle className="text-red-300">ISR dependency detected</CardTitle></CardHeader>
           <CardContent className="text-sm text-red-100">
-            {legacyHits} UNPRO event(s) still hit the deprecated <code>stripe-isr-webhook</code>.
+            {legacyHits} event(s) hit a retired endpoint (<code>stripe-unpro-webhook</code> / <code>stripe-isr-webhook</code>).
             Update the Stripe endpoint to <code>{EXPECTED_URL}</code>, then disable the old endpoint.
           </CardContent>
         </Card>
@@ -164,7 +170,7 @@ export default function PageAdminUnproStripeHealth() {
                       <td>{r.processing_status}</td>
                       <td>{r.livemode ? "live" : "test"}</td>
                       <td className="font-mono">{r.stripe_event_id}</td>
-                      <td className="text-red-300">{r.error_code || ""}</td>
+                      <td className="text-red-300">{r.error_message || ""}</td>
                     </tr>
                   ))}
                 </tbody>

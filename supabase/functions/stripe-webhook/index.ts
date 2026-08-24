@@ -88,14 +88,31 @@ Deno.serve(async (req) => {
 
 
 
-    // Observability: log to stripe_webhook_events (idempotent via unique stripe_event_id)
+    // Observability: log to stripe_webhook_events (idempotent via unique stripe_event_id).
+    // CANONICAL AUDIT — this function is the ONLY production Stripe endpoint
+    // (Stripe endpoint `we_1Tqjp5CvZwK1QnPVnKuhISaC` -> /functions/v1/stripe-webhook).
+    // Never log card data: only ids, status and attribution metadata.
     const receivedAt = new Date().toISOString();
     const sessionObj = (event.data.object as any) || {};
+    const evtMd = (sessionObj?.metadata || {}) as Record<string, string>;
     const sessionIdField = sessionObj?.id || null;
-    const contractorIdField =
-      sessionObj?.metadata?.contractor_id ||
-      sessionObj?.metadata?.prospect_id ||
-      null;
+    const contractorIdField = evtMd.contractor_id || evtMd.prospect_id || null;
+    const prospectIdField = evtMd.prospect_id || null;
+    const paymentIntentField =
+      typeof sessionObj?.payment_intent === "string"
+        ? sessionObj.payment_intent
+        : sessionObj?.payment_intent?.id ?? (sessionObj?.object === "payment_intent" ? sessionObj?.id : null);
+    // AI attribution must survive checkout -> webhook -> activation.
+    const aiAttribution = {
+      agent_run_id: evtMd.agent_run_id ?? null,
+      agent_name: evtMd.agent_name ?? null,
+      acquisition_origin: evtMd.acquisition_origin ?? null,
+      human_unpro_touches: evtMd.human_unpro_touches ?? null,
+      activation_token: evtMd.activation_token ?? null,
+      landing_token: evtMd.landing_token ?? null,
+      campaign_id: evtMd.campaign_id ?? null,
+      offer: evtMd.offer ?? evtMd.offer_kind ?? null,
+    };
 
     if (isReplay) {
       // Mark row as reprocessing; clear previous error.
@@ -113,10 +130,15 @@ Deno.serve(async (req) => {
         event_type: event.type,
         received_at: receivedAt,
         contractor_id: contractorIdField,
+        prospect_id: prospectIdField,
+        payment_intent_id: paymentIntentField,
         session_id: sessionIdField,
+        livemode: (event as any).livemode ?? null,
+        attribution: aiAttribution,
         payload: event as any,
         processing_status: "processing",
       });
+
 
       if (insertErr && !String(insertErr.message).includes("duplicate")) {
         console.warn("[stripe-webhook] audit insert warning", insertErr.message);
@@ -414,7 +436,22 @@ Deno.serve(async (req) => {
           const activationToken = session.metadata?.activation_token || null;
           const vProspectId = session.metadata?.prospect_id || null;
           let activatedContractorId: string | null = null;
+
+          // GUARD — never activate or emit payment_completed/contractor_activated
+          // on an unpaid session (async payment methods complete later).
+          const paidVerified =
+            session.payment_status === "paid" ||
+            session.payment_status === "no_payment_required";
+          if (!paidVerified) {
+            await supabase.from("stripe_webhook_events").update({
+              processing_status: "ignored_unpaid",
+            }).eq("stripe_event_id", event.id);
+            console.log("[stripe-webhook] entry_pack session not paid yet", session.id, session.payment_status);
+            break;
+          }
+
           try {
+
             // 1 — close the checkout session record (cockpit truth).
             await supabase
               .from("billing_checkout_sessions")
@@ -562,8 +599,24 @@ Deno.serve(async (req) => {
                 source: session.metadata?.source ?? null,
                 slug: session.metadata?.prospect_slug ?? null,
                 contractor_id: activatedContractorId,
+                ...aiAttribution,
               },
             });
+
+            // Keep the webhook audit row attribution-complete for AI revenue proof.
+            await supabase.from("stripe_webhook_events").update({
+              contractor_id: activatedContractorId,
+              prospect_id: vProspectId,
+              payment_intent_id: (session.payment_intent as string) || null,
+              attribution: {
+                ...aiAttribution,
+                contractor_id: activatedContractorId,
+                prospect_id: vProspectId,
+                amount_cents: session.amount_total ?? null,
+                currency: session.currency ?? "cad",
+              },
+            }).eq("stripe_event_id", event.id);
+
 
             // Canonical funnel event. v_activation_funnel counts event_type='paid',
             // so this MUST be 'paid' — 'payment_succeeded' was invisible to the cockpit.
@@ -608,7 +661,9 @@ Deno.serve(async (req) => {
                   activation_token: activationToken,
                   landing_token: session.metadata?.landing_token ?? null,
                   contractor_id: activatedContractorId,
+                  ...aiAttribution,
                 },
+
               };
               await supabase.rpc("record_engagement_event", {
                 ...evtBase,

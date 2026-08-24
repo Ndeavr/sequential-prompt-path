@@ -1,9 +1,13 @@
 // Shared helpers for the UNPRO Stripe webhook + reconciliation flow.
 // Do NOT import ISR-specific code here.
+//
+// CANONICAL PRODUCTION WEBHOOK = /functions/v1/stripe-webhook
+// `stripe-unpro-webhook` is retired (410) and processes nothing.
 
 export const UNPRO_STRIPE_ACCOUNT_ID = "acct_19AhHrCvZwK1QnPV";
 
-export const UNPRO_WEBHOOK_URL_PATH = "/functions/v1/stripe-unpro-webhook";
+export const UNPRO_WEBHOOK_URL_PATH = "/functions/v1/stripe-webhook";
+
 
 export const UNPRO_SUPPORTED_EVENTS = new Set<string>([
   "checkout.session.completed",
