@@ -23,17 +23,50 @@ const STUCK_THRESHOLDS_MIN: Record<string, number> = {
   CONTACTABLE: 60 * 6,            // invite retries stuck
 };
 
+/**
+ * Escalate a stuck contractor to the human/affiliate recovery layer.
+ *
+ * REPAIR (2026-08-24): the previous version wrote `contractor_id`, a text
+ * `priority` and a `reason` column — none of which exist on
+ * `affiliate_assignments` (real columns: prospect_id, affiliate_id, status,
+ * priority int, recommended_plan_slug, assigned_at, ...). Every escalation
+ * therefore failed silently. We now resolve the canonical prospect for the
+ * contractor and upsert idempotently on prospect_id.
+ */
 async function scheduleAffiliateHandoff(contractorId: string, currentState: string) {
-  // Reuse existing affiliate_assignments table if unassigned
-  const { data: existing } = await supabase.from("affiliate_assignments")
-    .select("id").eq("contractor_id", contractorId).maybeSingle();
-  if (existing) return;
-  await supabase.from("affiliate_assignments").insert({
-    contractor_id: contractorId,
+  // Resolve the canonical prospect row for this contractor.
+  const { data: prospect } = await supabase
+    .from("verified_contractor_prospects")
+    .select("id")
+    .eq("contractor_id", contractorId)
+    .maybeSingle();
+
+  const prospectId = (prospect as { id?: string } | null)?.id;
+  if (!prospectId) {
+    console.warn("[self-heal] no prospect for contractor", contractorId, "- handoff skipped");
+    return false;
+  }
+
+  // Idempotent: never duplicate an open assignment for the same prospect.
+  const { data: existing } = await supabase
+    .from("affiliate_assignments")
+    .select("id, status")
+    .eq("prospect_id", prospectId)
+    .not("status", "in", '("won","lost")')
+    .maybeSingle();
+  if (existing) return false;
+
+  const { error } = await supabase.from("affiliate_assignments").insert({
+    prospect_id: prospectId,
     status: "pending_auto_assign",
-    priority: "high",
-    reason: `auto_handoff_from_${currentState}`,
-  } as any);
+    priority: 1,
+    assigned_at: new Date().toISOString(),
+  });
+  if (error) {
+    console.error("[self-heal] affiliate handoff failed", error.message, { contractorId, currentState });
+    return false;
+  }
+  return true;
 }
 
 Deno.serve(async (req) => {

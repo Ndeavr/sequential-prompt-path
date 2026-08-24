@@ -1,6 +1,16 @@
 // Omega Conductor — daily autonomous loop dispatcher
 // Triggered by pg_cron with ?phase=<phase_name>
-// Each phase invokes existing engines and writes status to omega_loop_runs.
+//
+// REPAIR (2026-08-24):
+//  - The canonical phase list now matches the cron jobs AND the
+//    omega_loop_runs.phase check constraint (12 phases).
+//  - Each step declares how its payload is built. Several downstream
+//    functions are PER-RECORD (they require an id / url / action) — calling
+//    them with an empty body returned 400 and made whole phases "failed".
+//    Steps now resolve real candidates from the DB and fan out, or are
+//    skipped (not failed) when there is no work.
+//  - `dry_run: true` resolves candidates and reports them WITHOUT invoking
+//    anything that performs an external send or a paid API call.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
@@ -9,32 +19,130 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PHASE_INVOCATIONS: Record<string, string[]> = {
-  prospect_discovery:    ["sniper-import-targets", "war-prospecting-engine"],
-  enrichment:            ["enrich-prospect", "sniper-enrich-target"],
-  scoring:               ["aipp-real-scan", "edge-generate-aipp-preview"],
-  campaign_generation:   ["campaign-generator", "sniper-generate-assets"],
-  outreach_send:         ["process-outbound-queue", "sniper-queue-send"],
-  reply_handling:        ["edge-classify-reply-intent"],
-  alex_closing:          ["alex-autopilot-evaluate", "alex-reengage-check"],
-  payment_followup:      ["admin-activation-subscribe"],
-  onboarding_activation: ["activate-contractor-plan", "contractor-activation-enrich"],
-  expansion_scan:        ["expansion-detector"],
-  churn_rescue:          ["churn-detector"],
-  metrics_optimize:      ["fn-omega-rollup-metrics", "sniper-update-heat"],
+type Sb = ReturnType<typeof createClient>;
+
+interface Step {
+  fn: string;
+  /** Static payload merged into every invocation. */
+  payload?: Record<string, unknown>;
+  /** Resolve per-record payloads. Empty array => step skipped, never failed. */
+  resolve?: (sb: Sb) => Promise<Record<string, unknown>[]>;
+  /** Performs an external send or a paid API call — never invoked on dry_run. */
+  external?: boolean;
+}
+
+const FANOUT_LIMIT = 3;
+
+/** CANONICAL PHASES — keep in sync with omega_loop_runs.phase check constraint. */
+const PHASES: Record<string, Step[]> = {
+  prospect_discovery: [
+    // war-prospecting-engine requires an `action`.
+    { fn: "war-prospecting-engine", payload: { action: "discover" }, external: true },
+    // sniper-import-targets is a pure ingest endpoint (requires a targets array):
+    // it has no autonomous mode, so it is intentionally NOT part of this phase.
+  ],
+  enrichment: [
+    { fn: "enrich-prospect", payload: { mode: "cron_worker" }, external: true },
+    {
+      fn: "sniper-enrich-target",
+      external: true,
+      resolve: async (sb) => {
+        const { data } = await sb
+          .from("sniper_targets")
+          .select("id")
+          .or("enrichment_status.is.null,enrichment_status.eq.pending")
+          .order("created_at", { ascending: true })
+          .limit(FANOUT_LIMIT);
+        return (data ?? []).map((r: Record<string, unknown>) => ({ targetId: r.id }));
+      },
+    },
+  ],
+  scoring: [
+    {
+      fn: "aipp-real-scan",
+      external: true,
+      resolve: async (sb) => {
+        const { data } = await sb
+          .from("outbound_companies")
+          .select("website")
+          .not("website", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(FANOUT_LIMIT);
+        return (data ?? [])
+          .filter((r: Record<string, unknown>) => !!r.website)
+          .map((r: Record<string, unknown>) => ({ website_url: r.website }));
+      },
+    },
+    {
+      fn: "edge-generate-aipp-preview",
+      resolve: async (sb) => {
+        const { data } = await sb
+          .from("prospect_enrichments")
+          .select("prospect_id")
+          .order("created_at", { ascending: false })
+          .limit(FANOUT_LIMIT);
+        return (data ?? []).map((r: Record<string, unknown>) => ({ company_id: r.prospect_id }));
+      },
+    },
+  ],
+  campaign_generation: [
+    { fn: "campaign-generator", payload: { mode: "auto" } },
+    { fn: "sniper-generate-assets", payload: { mode: "auto" } },
+  ],
+  outreach_send: [
+    { fn: "process-outbound-queue", external: true },
+    { fn: "sniper-queue-send", external: true },
+  ],
+  reply_handling: [
+    { fn: "edge-classify-reply-intent", payload: { mode: "batch" } },
+  ],
+  alex_closing: [
+    { fn: "alex-autopilot-evaluate", payload: { mode: "batch" } },
+    { fn: "alex-reengage-check", payload: { mode: "batch" }, external: true },
+  ],
+  payment_followup: [
+    { fn: "admin-activation-subscribe", payload: { mode: "followup_scan", dry_run: true } },
+  ],
+  onboarding_activation: [
+    { fn: "activate-contractor-plan", payload: { mode: "reconcile" } },
+    { fn: "contractor-activation-enrich", payload: { mode: "batch" } },
+  ],
+  expansion_scan: [
+    { fn: "expansion-detector", payload: { mode: "scan" } },
+  ],
+  churn_rescue: [
+    { fn: "churn-detector", payload: { mode: "scan" } },
+  ],
+  metrics_optimize: [
+    { fn: "fn-omega-rollup-metrics" },
+    { fn: "sniper-update-heat" },
+  ],
 };
+
+export const OMEGA_PHASES = Object.keys(PHASES);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const url = new URL(req.url);
-  const phase = url.searchParams.get("phase") ||
-                (await req.json().catch(() => ({}))).phase;
+  const body = await req.json().catch(() => ({} as Record<string, unknown>));
+  const phase = (url.searchParams.get("phase") || (body as Record<string, unknown>).phase) as
+    | string
+    | undefined;
+  const dryRun =
+    url.searchParams.get("dry_run") === "true" || (body as Record<string, unknown>).dry_run === true;
 
-  if (!phase || !PHASE_INVOCATIONS[phase]) {
-    return new Response(JSON.stringify({ error: "invalid_phase", phase }), {
-      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+  if (phase === "__list__") {
+    return new Response(JSON.stringify({ phases: OMEGA_PHASES }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+  }
+
+  if (!phase || !PHASES[phase]) {
+    return new Response(
+      JSON.stringify({ error: "invalid_phase", phase, valid_phases: OMEGA_PHASES }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 
   const supabase = createClient(
@@ -51,40 +159,86 @@ Deno.serve(async (req) => {
 
   if (insertErr) {
     console.error("[omega-conductor] insert failed", insertErr);
-    return new Response(JSON.stringify({ error: insertErr.message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(JSON.stringify({ error: insertErr.message, phase }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
   const stats: Record<string, unknown> = {};
   const errors: { fn: string; error: string }[] = [];
+  const steps = PHASES[phase];
+  let executed = 0;
+  let skipped = 0;
 
-  for (const fn of PHASE_INVOCATIONS[phase]) {
-    try {
-      const { data, error } = await supabase.functions.invoke(fn, {
-        body: { triggered_by: "omega-conductor", phase, run_id: run.id },
-      });
-      if (error) {
-        errors.push({ fn, error: error.message ?? String(error) });
-        console.error(`[omega-conductor] ${fn} failed`, error);
-      } else {
-        stats[fn] = data?.summary ?? data ?? "ok";
+  for (const step of steps) {
+    let payloads: Record<string, unknown>[] = [step.payload ?? {}];
+
+    if (step.resolve) {
+      try {
+        payloads = await step.resolve(supabase);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        errors.push({ fn: step.fn, error: `resolve_failed: ${msg}` });
+        continue;
       }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      errors.push({ fn, error: msg });
-      console.error(`[omega-conductor] ${fn} threw`, msg);
+      if (payloads.length === 0) {
+        stats[step.fn] = { skipped: "no_candidates" };
+        skipped++;
+        continue;
+      }
+      payloads = payloads.map((p) => ({ ...(step.payload ?? {}), ...p }));
     }
+
+    if (dryRun && step.external) {
+      stats[step.fn] = { dry_run: true, candidates: payloads.length, external: true };
+      skipped++;
+      continue;
+    }
+
+    const results: unknown[] = [];
+    let stepFailed = 0;
+
+    for (const payload of payloads) {
+      try {
+        const { data, error } = await supabase.functions.invoke(step.fn, {
+          body: { triggered_by: "omega-conductor", phase, run_id: run.id, dry_run: dryRun, ...payload },
+        });
+        if (error) {
+          stepFailed++;
+          errors.push({ fn: step.fn, error: error.message ?? String(error) });
+        } else {
+          results.push(data?.summary ?? data ?? "ok");
+        }
+      } catch (e) {
+        stepFailed++;
+        errors.push({ fn: step.fn, error: e instanceof Error ? e.message : String(e) });
+      }
+    }
+
+    executed++;
+    stats[step.fn] = {
+      invocations: payloads.length,
+      failed: stepFailed,
+      results: results.slice(0, 3),
+    };
   }
 
-  const status = errors.length === 0 ? "success"
-              : errors.length < PHASE_INVOCATIONS[phase].length ? "success" : "failed";
+  const status = executed === 0 && skipped > 0
+    ? "skipped"
+    : errors.length === 0
+    ? "success"
+    : errors.length < steps.length
+    ? "success"
+    : "failed";
 
-  await supabase.from("omega_loop_runs")
+  await supabase
+    .from("omega_loop_runs")
     .update({ status, ended_at: new Date().toISOString(), stats, errors })
     .eq("id", run.id);
 
-  return new Response(JSON.stringify({ run_id: run.id, phase, status, stats, errors }), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+  return new Response(
+    JSON.stringify({ run_id: run.id, phase, status, dry_run: dryRun, executed, skipped, stats, errors }),
+    { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+  );
 });
