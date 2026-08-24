@@ -1,5 +1,5 @@
 // pro-founder-checkout-guest — Guest checkout for the Fondateur plan.
-// Charges 1 $ CA today (one-time line) + 149 $/mo subscription with a 7-day trial.
+// Charges the canonical UNPRO entry offer: 350 $ CAD one-time. No trial, no subscription.
 // No authentication required: Stripe collects the email at the checkout page.
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
