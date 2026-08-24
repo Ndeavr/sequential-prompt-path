@@ -436,7 +436,22 @@ Deno.serve(async (req) => {
           const activationToken = session.metadata?.activation_token || null;
           const vProspectId = session.metadata?.prospect_id || null;
           let activatedContractorId: string | null = null;
+
+          // GUARD — never activate or emit payment_completed/contractor_activated
+          // on an unpaid session (async payment methods complete later).
+          const paidVerified =
+            session.payment_status === "paid" ||
+            session.payment_status === "no_payment_required";
+          if (!paidVerified) {
+            await supabase.from("stripe_webhook_events").update({
+              processing_status: "ignored_unpaid",
+            }).eq("stripe_event_id", event.id);
+            console.log("[stripe-webhook] entry_pack session not paid yet", session.id, session.payment_status);
+            break;
+          }
+
           try {
+
             // 1 — close the checkout session record (cockpit truth).
             await supabase
               .from("billing_checkout_sessions")
