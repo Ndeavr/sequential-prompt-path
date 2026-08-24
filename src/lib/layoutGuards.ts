@@ -98,7 +98,7 @@ export function scanLayout(): LayoutScan {
   // The QA overlay itself prints the word "placeholder", so it is excluded
   // from the scan to avoid a self-referential false positive.
   const bodyText = Array.from(document.body?.children ?? [])
-    .filter((el) => !el.hasAttribute("data-qa-overlay"))
+    .filter((el) => !el.hasAttribute("data-mobile-qa-overlay"))
     .map((el) => (el as HTMLElement).innerText ?? "")
     .join("\n");
   const placeholderText: string[] = [];
