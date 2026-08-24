@@ -4,6 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { classifyPhone, lookupPhone, type PhoneValidationStatus } from "./phoneValidation.ts";
 import { classifyCompany } from "./companyValidation.ts";
+import { resolveIdentity, type IdentityStatus } from "./sparseLead.ts";
 import {
   classifyOfficialSiteState,
   enqueueOfficialSiteCrawlIfNeeded,
@@ -47,6 +48,8 @@ export type ValidateLeadResult = {
   phone_carrier: string | null;
   block_reason: BlockReason | null;
   tentative_send: boolean;
+  identity_status: IdentityStatus;
+  sparse_lead: boolean;
 };
 
 function phoneStatusToScore(s: PhoneValidationStatus): number {
@@ -77,10 +80,20 @@ export async function validateLead(
     official_domain?: string | null;
     official_site_status?: string | null;
     email?: string | null;
+    owner_name?: string | null;
+    contact_name?: string | null;
   },
 ): Promise<ValidateLeadResult> {
-  // 1. Company
+  // 1. Company + identity.
+  // A prospect with only a person name + phone (Facebook comment lead) is a
+  // valid *sparse* lead: never rejected for the missing business identity.
   const company = classifyCompany(lead.company_name);
+  const identity = resolveIdentity({
+    business_name: lead.company_name,
+    owner_name: lead.owner_name,
+    contact_name: lead.contact_name,
+  });
+  const sparsePersonLead = !company.valid && Boolean(identity.person_name);
 
   // 2. Phone classify + lookup
   const raw = lead.mobile_phone || lead.phone || "";
@@ -180,7 +193,7 @@ export async function validateLead(
   } else if (phoneStatus === "lookup_unavailable" || phoneStatus === "lookup_failed") {
     // Twilio Lookup couldn't classify — E.164 QC number is still sendable.
     // Never downgrade to invalid/needs_review just because Lookup is offline.
-    if (!company.valid) {
+    if (!company.valid && !sparsePersonLead) {
       status = "invalid_company";
       blockReason = company.reason === "low_confidence" ? "low_confidence" : "invalid_company_name";
     } else {
@@ -190,6 +203,12 @@ export async function validateLead(
     }
     // Canonicalize on the sendable bucket
     phoneStatus = "lookup_unavailable";
+  } else if (sparsePersonLead) {
+    // Sparse identity + sendable phone: keep it in the pool, flagged tentative
+    // so outreach copy addresses the person and claims no business knowledge.
+    status = "valid";
+    blockReason = null;
+    tentative = true;
   } else if (!company.valid) {
     status = "invalid_company";
     blockReason = company.reason === "low_confidence" ? "low_confidence" : "invalid_company_name";
@@ -218,6 +237,8 @@ export async function validateLead(
     phone_carrier: carrier,
     block_reason: blockReason,
     tentative_send: tentative,
+    identity_status: identity.identity_status,
+    sparse_lead: sparsePersonLead || identity.is_sparse,
   };
 
   // 5. Persist (best-effort: ignore unknown columns)

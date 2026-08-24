@@ -5,10 +5,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, RefreshCw, PlayCircle, Activity, AlertTriangle, CheckCircle2, XCircle, MinusCircle } from "lucide-react";
+import { SPARSE_BADGE_HINT, SPARSE_BADGE_LABEL, isSparseProspect, pendingFields } from "@/lib/sparseLead";
 
 type HealthRow = { service_name: string; status: string; required_for: string[]; error_message: string | null; last_checked_at: string | null };
 type RunRow = { id: string; run_type: string; status: string; started_at: string; completed_at: string | null; succeeded_count: number; failed_count: number; blocked_count: number; error_summary: string | null };
-type ProspectRow = { id: string; business_name: string; trade: string | null; city: string | null; aipp_score: number | null; outreach_status: string; onboarding_status: string; payment_status: string; activation_status: string; blocked_reason: string | null };
+type ProspectRow = { id: string; business_name: string | null; owner_name: string | null; category_slug: string | null; email: string | null; website_url: string | null; trade: string | null; city: string | null; aipp_score: number | null; outreach_status: string; onboarding_status: string; payment_status: string; activation_status: string; blocked_reason: string | null };
 
 const STATUS_COLOR: Record<string, string> = {
   connected: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40",
@@ -35,7 +36,7 @@ export default function PageAdminAcquisition() {
     const [{ data: h }, { data: r }, { data: p }, { count: cp }, { count: ca }, { count: cpaid }, { count: cact }, { count: cb }] = await Promise.all([
       supabase.from("system_config_health").select("*").order("service_name"),
       supabase.from("acquisition_pipeline_runs").select("*").order("started_at", { ascending: false }).limit(20),
-      supabase.from("contractor_prospects").select("id,business_name,trade,city,aipp_score,outreach_status,onboarding_status,payment_status,activation_status,blocked_reason").order("updated_at", { ascending: false }).limit(50),
+      supabase.from("contractor_prospects").select("id,business_name,owner_name,category_slug,email,website_url,trade,city,aipp_score,outreach_status,onboarding_status,payment_status,activation_status,blocked_reason").order("updated_at", { ascending: false }).limit(50),
       supabase.from("contractor_prospects").select("*", { count: "exact", head: true }),
       supabase.from("contractor_prospects").select("*", { count: "exact", head: true }).eq("aipp_status", "generated"),
       supabase.from("contractor_prospects").select("*", { count: "exact", head: true }).eq("payment_status", "paid"),
@@ -179,7 +180,12 @@ export default function PageAdminAcquisition() {
 
       {/* Prospects */}
       <Card className="p-4">
-        <h2 className="text-lg font-semibold mb-3">Prospects ({prospects.length})</h2>
+        <h2 className="text-lg font-semibold mb-3">
+          Prospects ({prospects.length})
+          <span className="ml-2 text-xs font-normal text-amber-400">
+            {prospects.filter(isSparseProspect).length} {SPARSE_BADGE_LABEL}
+          </span>
+        </h2>
         <div className="overflow-auto">
           <table className="w-full text-xs">
             <thead className="text-left text-muted-foreground border-b border-border">
@@ -188,7 +194,21 @@ export default function PageAdminAcquisition() {
             <tbody>
               {prospects.map(p => (
                 <tr key={p.id} className="border-b border-border/30">
-                  <td className="p-2 font-medium">{p.business_name}</td>
+                  <td className="p-2 font-medium">
+                    <div className="flex flex-col gap-0.5">
+                      <span>{p.business_name || p.owner_name || "—"}</span>
+                      {isSparseProspect(p) && (
+                        <span className="flex flex-wrap items-center gap-1" title={SPARSE_BADGE_HINT}>
+                          <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-400">
+                            {SPARSE_BADGE_LABEL}
+                          </Badge>
+                          <span className="text-[10px] text-muted-foreground">
+                            {pendingFields(p).join(" · ")}
+                          </span>
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td>{p.trade || "—"}</td><td>{p.city || "—"}</td><td>{p.aipp_score ?? "—"}</td>
                   <td><Badge variant="outline" className="text-[10px]">{p.outreach_status}</Badge></td>
                   <td><Badge variant="outline" className="text-[10px]">{p.onboarding_status}</Badge></td>

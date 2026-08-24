@@ -8,13 +8,19 @@
 //     mark obvious invalid or toll-free cases).
 //  3. Delegate uncertain cases to Twilio Lookup v2 when TWILIO_LOOKUP_ENABLED=1.
 
-export type PhoneType = "mobile" | "landline" | "voip_business" | "toll_free" | "unknown" | "invalid";
+export type PhoneType = "mobile" | "landline" | "voip_business" | "toll_free" | "unknown" | "unknown_valid" | "invalid";
 
 export interface PhoneClassification {
   e164: string | null;
   phone_type: PhoneType;
   has_mobile: boolean;
   has_landline: boolean;
+  /**
+   * True when the number is a structurally valid, non-toll-free NANP number we
+   * may text under tier C rules even if Twilio Lookup never classified it.
+   * Sparse Facebook leads (person name + phone) rely on this.
+   */
+  sms_capable: boolean;
   source: "invalid" | "rule" | "twilio_lookup" | "cache";
 }
 
@@ -30,16 +36,18 @@ export function normalizeToE164(raw: string | null | undefined): string | null {
 }
 
 function ruleClassify(e164: string | null): PhoneClassification {
-  if (!e164) return { e164: null, phone_type: "invalid", has_mobile: false, has_landline: false, source: "invalid" };
+  if (!e164) return { e164: null, phone_type: "invalid", has_mobile: false, has_landline: false, sms_capable: false, source: "invalid" };
   const digits = e164.replace(/\D+/g, "");
   if (!digits.startsWith("1") || digits.length !== 11) {
-    return { e164, phone_type: "unknown", has_mobile: false, has_landline: false, source: "rule" };
+    return { e164, phone_type: "unknown", has_mobile: false, has_landline: false, sms_capable: false, source: "rule" };
   }
   const npa = digits.slice(1, 4);
   if (TOLL_FREE_NPAS.has(npa)) {
-    return { e164, phone_type: "toll_free", has_mobile: false, has_landline: false, source: "rule" };
+    return { e164, phone_type: "toll_free", has_mobile: false, has_landline: false, sms_capable: false, source: "rule" };
   }
-  return { e164, phone_type: "unknown", has_mobile: false, has_landline: false, source: "rule" };
+  // Canada mixes mobile/landline inside the same NPA, so we cannot prove mobile
+  // without Lookup — but the number is usable (tier C).
+  return { e164, phone_type: "unknown_valid", has_mobile: false, has_landline: false, sms_capable: true, source: "rule" };
 }
 
 async function twilioLookup(e164: string): Promise<PhoneClassification | null> {
@@ -68,13 +76,14 @@ async function twilioLookup(e164: string): Promise<PhoneClassification | null> {
     phone_type: t,
     has_mobile: t === "mobile",
     has_landline: t === "landline",
+    sms_capable: t === "mobile" || t === "voip_business",
     source: "twilio_lookup",
   };
 }
 
 export async function classifyPhone(raw: string | null | undefined): Promise<PhoneClassification> {
   const e164 = normalizeToE164(raw);
-  if (!e164) return { e164: null, phone_type: "invalid", has_mobile: false, has_landline: false, source: "invalid" };
+  if (!e164) return { e164: null, phone_type: "invalid", has_mobile: false, has_landline: false, sms_capable: false, source: "invalid" };
   const enable = Deno.env.get("TWILIO_LOOKUP_ENABLED") === "1";
   if (enable) {
     try {
@@ -88,10 +97,13 @@ export async function classifyPhone(raw: string | null | undefined): Promise<Pho
 export function selectOutreachChannel(opts: {
   has_mobile: boolean;
   hasValidNonAggregatorEmail: boolean;
+  /** Tier C: structurally valid number, line type unconfirmed. */
+  sms_capable?: boolean;
 }): "sms_email" | "sms" | "email" | "none" {
   const { has_mobile, hasValidNonAggregatorEmail } = opts;
-  if (has_mobile && hasValidNonAggregatorEmail) return "sms_email";
-  if (has_mobile) return "sms";
+  const textable = has_mobile || opts.sms_capable === true;
+  if (textable && hasValidNonAggregatorEmail) return "sms_email";
+  if (textable) return "sms";
   if (hasValidNonAggregatorEmail) return "email";
   return "none";
 }
