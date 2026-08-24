@@ -4,7 +4,7 @@
 // Guest-friendly (no auth required). Returns { url } for client redirect.
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { OFFER_350 } from "../_shared/offerCopy.ts";
+import { OFFER as OFFER_350 } from "../_shared/offerCopy.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
