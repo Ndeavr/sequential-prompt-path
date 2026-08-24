@@ -162,11 +162,7 @@ export default function PageUnproActivate() {
   const company = profile?.display_name ?? prospect?.business_name?.trim() ?? "votre entreprise";
   const canceled =
     typeof window !== "undefined" && new URLSearchParams(window.location.search).get("canceled") === "1";
-  const territoryParts = [
-    profile?.trade ?? prospect?.category ?? null,
-    profile?.city ?? prospect?.city ?? null,
-  ].filter(Boolean) as string[];
-  const territory = territoryParts.join(" · ");
+
 
   return (
     <div className="alex-immersive min-h-screen bg-[#050816] px-5 pb-28 pt-10 text-readable sm:pb-14">
@@ -241,10 +237,6 @@ export default function PageUnproActivate() {
                 <h1 className="text-3xl font-semibold leading-tight text-white">{company}</h1>
               )}
 
-              {territory && (
-                <p className="mt-2 text-[13px] text-white/60">{territory}</p>
-              )}
-
               <p className="mt-4 text-[15px] leading-relaxed text-white/85">
                 Votre profil UNPRO est prêt. Il ne manque que l'activation pour être recommandé aux
                 propriétaires de votre territoire.
@@ -252,7 +244,7 @@ export default function PageUnproActivate() {
 
               <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.05] p-4">
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-2xl font-semibold text-white">{OFFER_350.price_label}</span>
+                  <span className="whitespace-nowrap text-2xl font-semibold text-white">{OFFER_350.price_label}</span>
                   <span className="text-[11px] text-white/60">{OFFER_350.paymentNote}</span>
                 </div>
                 <p className="mt-1 text-[13px] leading-snug text-white/75">{OFFER_350.card.title}</p>
