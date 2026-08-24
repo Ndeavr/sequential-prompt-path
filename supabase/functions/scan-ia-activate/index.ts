@@ -31,7 +31,6 @@ Deno.serve(async (req) => {
       capacity,
       recommended_plan,
       plan_name,
-      plan_monthly_price_cents,
     } = body ?? {};
 
     if (!session_token) return json({ error: "Session invalide." }, 400);
@@ -52,25 +51,13 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const origin = req.headers.get("origin") ?? "https://unpro.ca";
 
-    // Post-trial pricing summary for transparency
-    const monthlyDollars = Math.round((Number(plan_monthly_price_cents) || 0) / 100);
-    const GST = 0.05;
-    const QST = 0.09975;
-    const totalTaxIncl = monthlyDollars > 0
-      ? Math.round(monthlyDollars * (1 + GST + QST) * 100) / 100
-      : 0;
-    const nextChargeDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    const nextChargeFR = nextChargeDate.toLocaleDateString("fr-CA", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
+    // Canonical UNPRO entry offer: 350 $ CAD, one-time payment. No trial, no subscription.
+    const ENTRY_PRICE_CENTS = 35000;
 
     const planLabel = plan_name || "Premium";
-    const productName = `Activation IA UNPRO — Plan ${planLabel}`;
-    const productDescription = monthlyDollars > 0
-      ? `1 $ aujourd'hui pour 7 jours d'accès complet. Puis ${monthlyDollars} $/mois (${totalTaxIncl.toFixed(2)} $ taxes QC incluses) à partir du ${nextChargeFR}. Annulation en 1 clic avant le jour 8.`
-      : "Profil IA, territoires, catégories, apparition dans Alex, réception de rendez-vous.";
+    const productName = `Activation UNPRO — Offre d'entrée`;
+    const productDescription =
+      "Paiement unique de 350 $. Jusqu'à 5 rendez-vous exclusifs garantis — le nombre réel est calculé selon votre domaine, votre territoire et la capacité disponible. Aucun abonnement.";
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -81,7 +68,7 @@ Deno.serve(async (req) => {
           quantity: 1,
           price_data: {
             currency: "cad",
-            unit_amount: 100,
+            unit_amount: ENTRY_PRICE_CENTS,
             product_data: {
               name: productName,
               description: productDescription,
@@ -91,13 +78,13 @@ Deno.serve(async (req) => {
       ],
       custom_text: {
         submit: {
-          message: monthlyDollars > 0
-            ? `Vous payez 1 $ aujourd'hui. Le ${nextChargeFR}, votre plan ${planLabel} démarrera à ${monthlyDollars} $/mois (${totalTaxIncl.toFixed(2)} $ taxes incluses). Annulation en 1 clic avant cette date.`
-            : "Vous payez 1 $ aujourd'hui pour 7 jours d'accès complet.",
+          message:
+            "Paiement unique de 350 $. Aucun abonnement, aucun renouvellement automatique.",
         },
       },
       metadata: {
         source: "scan_ia_wizard",
+        offer_kind: "pack_350",
         report_id: String(report_id ?? ""),
         session_token: String(session_token),
         business_name: String(business_name ?? ""),
@@ -105,9 +92,8 @@ Deno.serve(async (req) => {
         capacity: String(capacity ?? ""),
         recommended_plan: String(recommended_plan ?? ""),
         plan_name: String(planLabel),
-        plan_monthly_price_cents: String(plan_monthly_price_cents ?? ""),
-        next_charge_date: nextChargeDate.toISOString(),
       },
+
       success_url: `${origin}/scan-ia/activation-success?st=${encodeURIComponent(session_token)}&cs={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/scan-ia/wizard?st=${encodeURIComponent(session_token)}`,
     });

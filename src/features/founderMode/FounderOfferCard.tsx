@@ -1,6 +1,6 @@
 /**
  * FounderOfferCard — replaces the 3-plan grid when Founder slots remain.
- * 1 $ today · 7 days · shows normal value 599 $/mo · live X/10 counter.
+ * Offre d'entrée UNPRO : 350 $ paiement unique · live X/10 counter.
  */
 import { motion } from "framer-motion";
 import { Sparkles, ArrowRight, Users, Lock } from "lucide-react";
@@ -13,7 +13,7 @@ interface Props {
   busy?: boolean;
 }
 
-export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon profil Fondateur — 1 $", busy }: Props) {
+export default function FounderOfferCard({ onActivate, ctaLabel = "Activer ma garantie — 350 $", busy }: Props) {
   const { remaining, total, loading } = useFounderSlots();
   if (loading) return null;
   if (remaining <= 0) return null;
@@ -41,14 +41,12 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon p
           Activez votre profil complet
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Réservé aux 10 premiers entrepreneurs activés. Annulez à tout moment pendant les 7 jours.
+          Réservé aux 10 premiers entrepreneurs activés. Paiement unique, aucun abonnement.
         </p>
 
         <div className="mt-4 flex items-end gap-3">
-          <div className="text-4xl font-bold tracking-tight text-foreground">1 $</div>
-          <div className="pb-1 text-sm text-muted-foreground">
-            aujourd'hui · <span className="line-through">valeur 599 $/mois</span>
-          </div>
+          <div className="text-4xl font-bold tracking-tight text-foreground">350 $</div>
+          <div className="pb-1 text-sm text-muted-foreground">paiement unique · aucun abonnement</div>
         </div>
 
         <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
@@ -60,9 +58,9 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon p
 
         <div className="mt-4 grid grid-cols-1 gap-1.5 text-xs text-foreground/80">
           <div>✓ Profil UNPRO complet, indexé dans l'écosystème IA</div>
-          <div>✓ 10 rendez-vous inclus pendant 7 jours</div>
+          <div>✓ Jusqu'à 5 rendez-vous exclusifs garantis (nombre calculé avant le paiement)</div>
           <div>✓ Priorité de matching dans votre territoire</div>
-          <div>✓ Annulation libre — aucun engagement</div>
+          <div>✓ Paiement unique — aucun engagement récurrent</div>
         </div>
 
         <Button
@@ -75,7 +73,7 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon p
         </Button>
 
         <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
-          <Lock className="h-3 w-3" /> Paiement sécurisé Stripe · Sans engagement
+          <Lock className="h-3 w-3" /> Paiement sécurisé Stripe · Paiement unique
         </div>
       </div>
     </motion.div>

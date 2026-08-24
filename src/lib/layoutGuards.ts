@@ -95,10 +95,16 @@ export function scanLayout(): LayoutScan {
   const missingCanonicalCTA = ctaEls.length === 0;
 
   // Placeholder text sniff — flag copy that leaks unfinished states.
-  const bodyText = document.body?.innerText ?? "";
+  // The QA overlay itself prints the word "placeholder", so it is excluded
+  // from the scan to avoid a self-referential false positive.
+  const bodyText = Array.from(document.body?.children ?? [])
+    .filter((el) => !el.hasAttribute("data-mobile-qa-overlay"))
+    .map((el) => (el as HTMLElement).innerText ?? "")
+    .join("\n");
   const placeholderText: string[] = [];
   const m = bodyText.match(PLACEHOLDER_RE);
   if (m) placeholderText.push(m[0]);
+
 
   return {
     timestamp: Date.now(),

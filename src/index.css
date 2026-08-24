@@ -251,6 +251,59 @@
     z-index: 0;
   }
 
+  /* ═══════════════════════════════════════════════
+     HOMEOWNER LIGHT SCOPE (`.home-light`) — white / light-blue surface,
+     royal-blue actions, navy typography. Used by the public homeowner-first
+     homepage. Opaque so it fully covers the global dark layer.
+     ═══════════════════════════════════════════════ */
+  .home-light {
+    --background: 213 100% 98%;        /* #F5F9FF */
+    --foreground: 220 60% 12%;         /* navy */
+    --card: 0 0% 100%;
+    --card-foreground: 220 60% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 60% 12%;
+    --primary: 224 76% 48%;            /* royal blue */
+    --primary-foreground: 0 0% 100%;
+    --primary-strong: 224 76% 42%;
+    --primary-tint: 224 76% 36%;
+    --secondary: 213 96% 94%;          /* light blue surface */
+    --secondary-foreground: 224 76% 30%;
+    --secondary-strong: 213 96% 88%;
+    --secondary-tint: 224 60% 30%;
+
+    --muted: 213 60% 95%;
+    --muted-foreground: 220 20% 34%;
+    --accent: 205 90% 45%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 44%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 153 72% 30%;
+    --success-foreground: 0 0% 100%;
+    --warning: 32 90% 34%;
+    --warning-foreground: 0 0% 100%;
+    --border: 213 40% 88%;
+    --input: 213 40% 90%;
+    --ring: 224 76% 48%;
+
+    --text-primary: 220 60% 12%;
+    --text-body: 220 35% 20%;
+    --text-secondary: 220 22% 30%;
+    --text-muted: 220 16% 38%;
+    --text-disabled: 220 12% 52%;
+    --surface-primary: 0 0% 100%;
+    --surface-secondary: 213 96% 96%;
+
+    --glass-bg: hsl(0 0% 100% / 0.88);
+    --glass-border: hsl(224 40% 20% / 0.10);
+    --glass-highlight: linear-gradient(180deg, hsl(0 0% 100% / 0.95) 0%, transparent 45%);
+
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    position: relative;
+    z-index: 0;
+  }
+
 
   /* ═══════════════════════════════════════════════
      INTEL SCOPE — UNPRO AI Trust Layer (bronze + black + electric blue)
