@@ -126,22 +126,29 @@ Deno.serve(async (req) => {
 
     // Canonical instrumentation — the CTA click is recorded SERVER-SIDE so the
     // funnel can never show more checkouts than CTA clicks (client beacons drop).
-    if (activation_token) {
+    // Covers BOTH invited paths: /unpro/activate/:token (activation_token) and
+    // /invitation/:token/activate (landing_token).
+    const ctaTrackingId = activation_token || landing_token || null;
+    if (ctaTrackingId) {
       try {
         await supabase.rpc("record_engagement_event", {
           _event_type: "activation_cta_clicked",
           _channel: "web",
           _status: "activation_cta_clicked",
           _provider: "app",
-          _tracking_id: activation_token,
-          _prospect_id: activationProspectId || null,
-          _source_table: "verified_prospect_tokens",
-          _source_row_id: activation_token,
-          _metadata: { surface: "unpro_activate", source: source ?? null },
-          _idempotency_key: `activation_cta_clicked:${activation_token}`,
+          _tracking_id: ctaTrackingId,
+          _prospect_id: prospectId || null,
+          _source_table: activation_token ? "verified_prospect_tokens" : "prospects",
+          _source_row_id: ctaTrackingId,
+          _metadata: {
+            surface: activation_token ? "unpro_activate" : "invitation_activate",
+            source: source ?? null,
+          },
+          _idempotency_key: `activation_cta_clicked:${ctaTrackingId}`,
         });
       } catch (_) { /* never block the payment */ }
     }
+
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) return json({ error: "stripe_not_configured", stage: "stripe_init" }, 500);
@@ -209,6 +216,8 @@ Deno.serve(async (req) => {
       landing_token: landing_token ?? "",
       activation_token: activation_token ?? "",
       offer: "entry_pack_350",
+      // Consumed by stripe-unpro-webhook to persist the calculated guarantee.
+      offer_kind: resolvedQuoteId ? "pack_350" : "",
       source: source ?? (isOutreach ? "sms_outreach" : ""),
       campaign_variant: utm?.camp ?? "",
       utm_city: utm?.city ?? "",
@@ -261,21 +270,38 @@ Deno.serve(async (req) => {
     }
 
 
-    // Canonical funnel event — checkout opened.
+    // Canonical funnel event — checkout created (step 3/5).
+    // `checkout_opened` is kept for legacy dashboards.
     try {
-      await supabase.rpc("record_engagement_event", {
-        _event_type: "checkout_opened",
+      const evtBase = {
         _channel: "web",
-        _status: "checkout_opened",
         _provider: "stripe",
+        _tracking_id: ctaTrackingId,
         _prospect_id: prospectId || null,
         _destination_url: session.url ?? null,
         _source_table: "stripe_checkout_sessions",
         _source_row_id: session.id,
-        _metadata: { campaign_id: outreachCampaignId ?? null, slug: effectiveSlug },
+        _metadata: {
+          campaign_id: outreachCampaignId ?? null,
+          slug: effectiveSlug,
+          amount_cents: packPriceCents,
+          offer_code: "contractor_entry_pack_350",
+        },
+      };
+      await supabase.rpc("record_engagement_event", {
+        ...evtBase,
+        _event_type: "stripe_checkout_created",
+        _status: "stripe_checkout_created",
+        _idempotency_key: `stripe_checkout_created:${session.id}`,
+      });
+      await supabase.rpc("record_engagement_event", {
+        ...evtBase,
+        _event_type: "checkout_opened",
+        _status: "checkout_opened",
         _idempotency_key: `checkout_opened:${session.id}`,
       });
     } catch (_) { /* ignore */ }
+
 
     // REVENUE-CRITICAL: persist the session so click -> checkout -> paid is
     // reconcilable without calling Stripe. Without this row the funnel between
