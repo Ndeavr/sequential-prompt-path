@@ -36,7 +36,8 @@ Deno.serve(async (req) => {
       .eq("template_name", templateKey)
       .maybeSingle();
     const body_template = (tpl as { body_template: string } | null)?.body_template
-      ?? "UNPRO: 1$ pour 7 jours. unpro.ca";
+      // Repli canonique : offre d'entrée 350 $ (paiement unique), jamais l'ancien 1 $.
+      ?? "UNPRO: jusqu'a 5 rendez-vous exclusifs garantis des 350 $ (paiement unique). unpro.ca";
 
     // Suppression: build a domain blocklist
     const { data: sup } = await supabase

@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
       { key: "signup_started", label: "Inscription commencée", count: evSignupStart.length, lastAt: lastAt(evSignupStart), err: topEventError(["registration_started", "signup_started"]) },
       { key: "signup_completed", label: "Inscription terminée", count: evSignupDone.length, lastAt: lastAt(evSignupDone), err: null },
       { key: "checkout_opened", label: "Checkout ouvert", count: evCheckoutOpen.length, lastAt: lastAt(evCheckoutOpen), err: topEventError(["checkout_started", "stripe_checkout_opened"]) },
-      { key: "payment_success", label: "Paiement 1$", count: paidCount, lastAt: paidLeads[0]?.paid_at ?? lastAt(evPaid), err: null },
+      { key: "payment_success", label: "Paiement réussi", count: paidCount, lastAt: paidLeads[0]?.paid_at ?? lastAt(evPaid), err: null },
       { key: "activated", label: "Compte activé", count: activatedCount, lastAt: activatedLeads[0]?.activated_at ?? lastAt(evActivated), err: null },
       { key: "recommendable", label: "Recommandable par Alex", count: activatedCount, lastAt: activatedLeads[0]?.activated_at ?? null, err: null },
     ];
@@ -342,7 +342,7 @@ async function computeRealPipeline(admin: any, since: string) {
     { key: "13_onboarding_started", label: "13. Onboarding commencé", count: leads.filter((l: any) => ["engaged", "replied", "onboarding"].includes(l.pipeline_status ?? "")).length },
     { key: "14_otp_completed", label: "14. OTP complété (contractor_id lié)", count: leads.filter((l: any) => !!l.contractor_id).length },
     { key: "15_stripe_checkout_started", label: "15. Stripe checkout créé", count: checkoutsOpen.length },
-    { key: "16_payment_succeeded", label: "16. Paiement 1$ réussi", count: checkoutsPaid.length },
+    { key: "16_payment_succeeded", label: "16. Paiement réussi", count: checkoutsPaid.length },
     { key: "17_webhook_received", label: "17. Webhook reçu (30j)", count: webhooksReceived.length },
     { key: "17b_webhook_verified", label: "17b. Webhook vérifié / traité", count: webhooksVerified.length },
     { key: "18_contractor_activated", label: "18. Compte activé", count: activatedLeads.length },
