@@ -1370,7 +1370,10 @@ Deno.serve(async (req) => {
     // Auto-send — scoped to prospect_ids prepared in THIS run only
     // ------------------------------------------------------------------
     let smsResult: any = null;
-    if (preparedIds.length > 0) {
+    if (prepareOnly && preparedIds.length > 0) {
+      smsResult = { skipped: true, reason: "prepare_only", prepared: preparedIds.length };
+    } else if (preparedIds.length > 0) {
+
       for (const pid of preparedIds) {
         await emitEvent(supabase, ctx, { prospect_id: pid, stage: "sms_attempted", metadata: {} });
       }
