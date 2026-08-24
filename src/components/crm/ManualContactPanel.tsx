@@ -70,7 +70,7 @@ export default function ManualContactPanel({
       const r = await queueActions.sendActivationLink([target.prospect_id], channel);
       if (r.failed > 0) toast.error("Envoi refusé", { description: r.results?.[0]?.result });
       else if (r.skipped > 0) toast.info("Déjà envoyé aujourd'hui (garde anti-doublon)");
-      else if ((r.sent ?? 0) < 1) {
+      else if ((r.succeeded ?? 0) < 1) {
         // Aucun succès confirmé par le fournisseur : ne jamais annoncer un envoi.
         toast.warning("Envoi non confirmé", { description: r.results?.[0]?.result ?? "Le fournisseur n'a pas confirmé la remise." });
       } else toast.success("Lien d'activation envoyé");

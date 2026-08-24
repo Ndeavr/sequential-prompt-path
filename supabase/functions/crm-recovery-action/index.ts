@@ -465,6 +465,13 @@ Deno.serve(async (req) => {
               });
             } else {
               result = await invokeFn("second-touch-outreach", { prospect_ids: [pid], dry_run: false, limit: 1 });
+              // Ne jamais rapporter un succès si le fournisseur n'a rien accepté/mis en file.
+              let sentCount = 0;
+              try {
+                const parsed = JSON.parse(result) as { sent?: number };
+                sentCount = Number(parsed?.sent ?? 0);
+              } catch { sentCount = 0; }
+              if (sentCount < 1) throw new Error(`provider_not_accepted: ${result.slice(0, 200)}`);
             }
             result = `${link} | ${result}`;
             break;
