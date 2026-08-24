@@ -1,5 +1,5 @@
 /**
- * FounderOfferCard — 149$/mo Fondateur UNPRO offer block.
+ * FounderOfferCard — Offre d'entrée UNPRO 350 $ (paiement unique).
  * Dark premium card with feature list, spots counter, and CTA.
  */
 import { CheckCircle2, Sparkles } from "lucide-react";
@@ -17,12 +17,12 @@ const FEATURES = [
   "Recommandations propriétaires",
   "Présence UNPRO",
   "Accès Alex (Conseiller Croissance IA)",
-  "Jusqu'à 3 rendez-vous exclusifs",
+  "Jusqu'à 5 rendez-vous exclusifs garantis",
   "Aucun lead partagé",
-  "Annulation en tout temps",
+  "Paiement unique · aucun abonnement",
 ];
 
-export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon profil pour 1 $", loading, checkoutUrl }: Props) {
+export default function FounderOfferCard({ onActivate, ctaLabel = "Activer ma garantie — 350 $", loading, checkoutUrl }: Props) {
   const spots = useFounderSpotsRemaining("fondateur-149");
   return (
     <div
@@ -76,14 +76,14 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon p
             className="text-[34px] md:text-[40px] font-extrabold leading-none"
             style={{ color: "#F5C85A" }}
           >
-            1 $
+            350 $
           </span>
           <span className="text-[13px] font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>
-            pour 7 jours
+            paiement unique
           </span>
         </div>
         <p className="text-[12px] mt-1.5" style={{ color: "rgba(255,255,255,0.7)" }}>
-          puis <span className="font-semibold" style={{ color: "rgba(255,255,255,0.92)" }}>149 $/mois</span> · annulable en tout temps
+          Le nombre de rendez-vous garantis est <span className="font-semibold" style={{ color: "rgba(255,255,255,0.92)" }}>calculé avant le paiement</span>.
         </p>
         <div
           className="inline-flex items-center gap-1 mt-3 px-2.5 py-1 rounded-full text-[10.5px] font-bold uppercase tracking-wider"
@@ -93,7 +93,7 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon p
             border: "1px solid rgba(245,200,90,0.28)",
           }}
         >
-          Essai Fondateur · 7 jours pour 1 $
+          Offre d'entrée · 350 $ une seule fois
         </div>
 
         <ul className="mt-4 space-y-2">
@@ -120,7 +120,7 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon p
                 boxShadow: "0 10px 24px -8px rgba(245,200,90,0.6)",
               }}
             >
-              Activer mon profil pour 1 $ →
+              Activer ma garantie — 350 $ →
             </a>
             <a
               href={checkoutUrl}
@@ -151,7 +151,7 @@ export default function FounderOfferCard({ onActivate, ctaLabel = "Activer mon p
           className="text-[10.5px] text-center mt-2"
           style={{ color: "rgba(255,255,255,0.55)" }}
         >
-          Paiement sécurisé via Stripe · 1 $ pour 7 jours, puis 149 $/mois
+          Paiement sécurisé via Stripe · 350 $ une seule fois. Aucun abonnement.
         </p>
       </div>
     </div>
