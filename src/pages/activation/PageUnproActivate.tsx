@@ -160,6 +160,9 @@ export default function PageUnproActivate() {
 
 
   const company = profile?.display_name ?? prospect?.business_name?.trim() ?? "votre entreprise";
+  const canceled =
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("canceled") === "1";
+
 
   return (
     <div className="alex-immersive min-h-screen bg-[#050816] px-5 pb-28 pt-10 text-readable sm:pb-14">
@@ -216,7 +219,13 @@ export default function PageUnproActivate() {
 
         {state === "ready" && prospect && (
           <div className="space-y-4">
-            {/* ---------------------------------------------- profil pré-construit */}
+            {canceled && (
+              <div className="rounded-2xl border border-amber-300/25 bg-amber-400/10 p-4 text-[13px] leading-relaxed text-amber-100">
+                Paiement interrompu. Votre profil est toujours réservé — vous pouvez reprendre ci-dessous.
+              </div>
+            )}
+
+            {/* ------------- AU-DESSUS DE LA LIGNE DE FLOTTAISON : identité + offre + 1 CTA */}
             <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur">
               <div className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-400/12 px-2.5 py-1 text-[10px] uppercase tracking-wider text-emerald-200">
                 <Building2 className="h-3 w-3" /> Profil déjà préparé par UNPRO
@@ -228,9 +237,43 @@ export default function PageUnproActivate() {
                 <h1 className="text-3xl font-semibold leading-tight text-white">{company}</h1>
               )}
 
-              <p className="mt-4 text-[15px] leading-relaxed text-white/80">
-                Nous avons construit votre fiche à partir de sources publiques. Vérifiez-la, puis activez-la
-                pour être recommandé aux propriétaires de votre territoire.
+              <p className="mt-4 text-[15px] leading-relaxed text-white/85">
+                Votre profil UNPRO est prêt. Il ne manque que l'activation pour être recommandé aux
+                propriétaires de votre territoire.
+              </p>
+
+              <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.05] p-4">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="whitespace-nowrap text-2xl font-semibold text-white">{OFFER_350.price_label}</span>
+                  <span className="text-[11px] text-white/60">{OFFER_350.paymentNote}</span>
+                </div>
+                <p className="mt-1 text-[13px] leading-snug text-white/75">{OFFER_350.card.title}</p>
+              </div>
+
+              <Button
+                onClick={() => handleActivate("hero")}
+                disabled={checkoutLoading}
+                className="mt-4 h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#050816] hover:bg-white/90"
+              >
+                {checkoutLoading ? "Ouverture du paiement…" : (<>{OFFER_350.ctaActivate} <ArrowRight className="ml-1 h-4 w-4" /></>)}
+              </Button>
+
+              {checkoutError && (
+                <div className="mt-3 space-y-2 text-center">
+                  <p className="text-xs text-rose-300">{checkoutError}</p>
+                  <button
+                    type="button"
+                    onClick={() => handleActivate("retry")}
+                    className="text-xs font-medium text-sky-300 underline underline-offset-4"
+                  >
+                    Réessayer le paiement
+                  </button>
+                </div>
+              )}
+
+              <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[11px] text-white/50">
+                <ShieldCheck className="h-3 w-3" />
+                Aucun abonnement. Aucun renouvellement automatique.
               </p>
 
               {profile?.website_host && (
@@ -239,33 +282,17 @@ export default function PageUnproActivate() {
                   target="_blank"
                   rel="noreferrer noopener"
                   onClick={() => track("profile_section_expanded", { section: "website" })}
-                  className="mt-3 inline-flex items-center gap-1.5 text-[13px] text-sky-300 underline underline-offset-4"
+                  className="mt-4 inline-flex items-center gap-1.5 text-[13px] text-sky-300 underline underline-offset-4"
                 >
                   <Globe className="h-3.5 w-3.5" /> {profile.website_host}
                 </a>
               )}
             </div>
 
-            {profile && <ReviewSignalCard profile={profile} />}
-            {profile && <FactGrid facts={profile.facts} />}
-            {profile && <ReadinessMeter profile={profile} onCorrect={handleCorrect} />}
-
-            {correctionSent && (
-              <div className="rounded-2xl border border-sky-300/25 bg-sky-400/10 p-4 text-[13px] leading-relaxed text-sky-100">
-                Parfait. Dès l'activation, Alex vous guide pour corriger et compléter chaque information en
-                quelques secondes.
-              </div>
-            )}
-
-            {/* ------------------------------------------------------ offre 350 $ */}
+            {/* --------------------------------------- ce que l'activation inclut */}
             <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur">
-              <p className="text-[10px] uppercase tracking-wider text-white/50">{OFFER_350.card.eyebrow}</p>
-              <h2 className="mt-1 text-xl font-semibold leading-snug text-white">
-                {OFFER_350.card.title}
-              </h2>
-              <p className="mt-2 text-[13px] leading-relaxed text-white/60">{OFFER_350.subtitle}</p>
-
-              <ul className="mt-4 space-y-2">
+              <p className="text-[10px] uppercase tracking-wider text-white/50">Inclus dans l'activation</p>
+              <ul className="mt-3 space-y-2">
                 {OFFER_350.card.bullets.map((b) => (
                   <li key={b} className="flex items-start gap-2 text-[14px] leading-snug text-white/85">
                     <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-400/20">
@@ -275,33 +302,27 @@ export default function PageUnproActivate() {
                   </li>
                 ))}
               </ul>
-
-              <Button
-                onClick={() => handleActivate("inline")}
-                disabled={checkoutLoading}
-                className="mt-5 h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#050816] hover:bg-white/90"
-              >
-                {checkoutLoading ? "Ouverture du paiement…" : (<>{OFFER_350.ctaPrimary} <ArrowRight className="ml-1 h-4 w-4" /></>)}
-              </Button>
-
-              <button
-                type="button"
-                onClick={handleCustomize}
-                className="mt-3 w-full text-center text-xs text-white/60 underline underline-offset-4 hover:text-white/80"
-              >
-                Personnaliser ma garantie avant de payer
-              </button>
-
-              {checkoutError && (
-                <p className="mt-3 text-center text-xs text-rose-300">{checkoutError}</p>
-              )}
-
-              <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[11px] text-white/50">
-                <ShieldCheck className="h-3 w-3" />
-                {OFFER_350.paymentNote} Jusqu'à 5 rendez-vous exclusifs garantis.
-              </p>
-
+              <p className="mt-3 text-[12.5px] leading-relaxed text-white/55">{OFFER_350.subtitle}</p>
             </div>
+
+            {profile && <ReviewSignalCard profile={profile} />}
+            {profile && <FactGrid facts={profile.facts} />}
+            {profile && <ReadinessMeter profile={profile} onCorrect={handleCorrect} tone="activation" />}
+
+            {correctionSent && (
+              <div className="rounded-2xl border border-sky-300/25 bg-sky-400/10 p-4 text-[13px] leading-relaxed text-sky-100">
+                Parfait. Dès l'activation, Alex vous guide pour corriger et compléter chaque information en
+                quelques secondes.
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleCustomize}
+              className="mx-auto block pb-2 text-center text-xs text-white/50 underline underline-offset-4 hover:text-white/75"
+            >
+              Personnaliser ma garantie avant de payer
+            </button>
           </div>
         )}
       </div>
@@ -314,11 +335,12 @@ export default function PageUnproActivate() {
             disabled={checkoutLoading}
             className="h-13 w-full rounded-2xl bg-white py-3.5 text-base font-semibold text-[#050816] hover:bg-white/90"
           >
-            {checkoutLoading ? "Ouverture du paiement…" : OFFER_350.ctaPrimary}
+            {checkoutLoading ? "Ouverture du paiement…" : OFFER_350.ctaActivate}
           </Button>
 
         </div>
       )}
+
     </div>
   );
 }

@@ -2,6 +2,10 @@
  * ReadinessMeter — recommendation-readiness score computed server-side from
  * facts UNPRO actually holds. Doubles as the completion checklist that drives
  * the "Corriger / compléter" path.
+ *
+ * `tone="activation"` reframes the missing items as what the activation
+ * completes (used on the invited-contractor activation landing, where a
+ * discouraging message right above the payment CTA kills conversion).
  */
 import { Check, Circle } from "lucide-react";
 import type { ActivationProfile } from "../types";
@@ -9,12 +13,15 @@ import type { ActivationProfile } from "../types";
 export default function ReadinessMeter({
   profile,
   onCorrect,
+  tone = "audit",
 }: {
   profile: ActivationProfile;
   onCorrect?: () => void;
+  tone?: "audit" | "activation";
 }) {
   const { score, checks } = profile.readiness;
   const missing = checks.filter((c) => !c.ok);
+
 
   return (
     <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
@@ -45,11 +52,12 @@ export default function ReadinessMeter({
 
       {missing.length > 0 && (
         <p className="mt-3 text-[12.5px] leading-relaxed text-white/60">
-          {missing.length} élément{missing.length > 1 ? "s" : ""} manquant
-          {missing.length > 1 ? "s" : ""} limite{missing.length > 1 ? "nt" : ""} votre visibilité dans les
-          recommandations UNPRO.
+          {tone === "activation"
+            ? `Dès l'activation, Alex complète ces ${missing.length} élément${missing.length > 1 ? "s" : ""} avec vous en quelques minutes.`
+            : `${missing.length} élément${missing.length > 1 ? "s" : ""} manquant${missing.length > 1 ? "s" : ""} limite${missing.length > 1 ? "nt" : ""} votre visibilité dans les recommandations UNPRO.`}
         </p>
       )}
+
 
       {onCorrect && (
         <button

@@ -124,9 +124,29 @@ Deno.serve(async (req) => {
       } catch (_) { /* soft-fail — proceed to Stripe anyway */ }
     }
 
+    // Canonical instrumentation — the CTA click is recorded SERVER-SIDE so the
+    // funnel can never show more checkouts than CTA clicks (client beacons drop).
+    if (activation_token) {
+      try {
+        await supabase.rpc("record_engagement_event", {
+          _event_type: "activation_cta_clicked",
+          _channel: "web",
+          _status: "activation_cta_clicked",
+          _provider: "app",
+          _tracking_id: activation_token,
+          _prospect_id: activationProspectId || null,
+          _source_table: "verified_prospect_tokens",
+          _source_row_id: activation_token,
+          _metadata: { surface: "unpro_activate", source: source ?? null },
+          _idempotency_key: `activation_cta_clicked:${activation_token}`,
+        });
+      } catch (_) { /* never block the payment */ }
+    }
+
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) return json({ error: "stripe_not_configured", stage: "stripe_init" }, 500);
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+
 
     const origin = req.headers.get("origin") || "https://unpro.ca";
     const successPath = activation_token
