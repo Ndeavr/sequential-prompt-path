@@ -195,12 +195,13 @@ Deno.serve(async (req) => {
     try {
       const { data: aps } = await supabase
         .from("aipp_profiles")
-        .select("logo_url, short_ai_summary, google_rating, google_review_count, city")
+        // NOTE: aipp_profiles has `primary_city`, NOT `city` (schema drift bug).
+        .select("logo_url, short_ai_summary, google_rating, google_review_count, primary_city")
         .ilike("company_name", nameFilter)
         .limit(5);
-      const list = (aps ?? []) as Array<Record<string, unknown> & { city: string | null }>;
+      const list = (aps ?? []) as Array<Record<string, unknown> & { primary_city: string | null }>;
       const cityMatch = prospect.city
-        ? list.find((r) => (r.city ?? "").toLowerCase() === prospect.city!.toLowerCase())
+        ? list.find((r) => (r.primary_city ?? "").toLowerCase() === prospect.city!.toLowerCase())
         : null;
       const chosen = cityMatch ?? (list.length === 1 ? list[0] : null);
       aipp = (chosen as typeof aipp) ?? null;
