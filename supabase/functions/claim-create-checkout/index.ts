@@ -58,10 +58,10 @@ Deno.serve(async (req) => {
         {
           price_data: {
             currency: "cad",
-            unit_amount: 100, // 1.00 CAD
+            unit_amount: 35000, // 350.00 CAD — canonical entry offer, one-time
             product_data: {
-              name: `UNPRO — Activation Founding Member · ${businessName || slug}`,
-              description: "Profil vérifié · Visibilité IA · Matching propriétaires · Rendez-vous exclusifs",
+              name: `UNPRO — Offre d'entrée · ${businessName || slug}`,
+              description: "Paiement unique de 350 $. Jusqu'à 5 rendez-vous exclusifs garantis — nombre réel calculé selon le domaine, le territoire et la capacité. Aucun abonnement.",
             },
           },
           quantity: 1,
@@ -72,6 +72,7 @@ Deno.serve(async (req) => {
       cancel_url: `${origin}/entrepreneur/${encodeURIComponent(slug)}/reclamer?cancelled=1`,
       metadata: {
         kind: "contractor_claim_activation",
+        offer_kind: "pack_350",
         slug,
         business_name: businessName,
         jobs_per_month: String(jobsPerMonth),
