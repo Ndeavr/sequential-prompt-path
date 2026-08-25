@@ -4960,6 +4960,8 @@ export type Database = {
           affiliate_id: string | null
           attribution_id: string | null
           commission_amount_cents: number
+          commission_base_cents: number | null
+          commission_base_kind: string
           commission_kind: string
           commission_rate: number
           conversion_type: string
@@ -4978,6 +4980,8 @@ export type Database = {
           affiliate_id?: string | null
           attribution_id?: string | null
           commission_amount_cents?: number
+          commission_base_cents?: number | null
+          commission_base_kind?: string
           commission_kind?: string
           commission_rate?: number
           conversion_type: string
@@ -4996,6 +5000,8 @@ export type Database = {
           affiliate_id?: string | null
           attribution_id?: string | null
           commission_amount_cents?: number
+          commission_base_cents?: number | null
+          commission_base_kind?: string
           commission_kind?: string
           commission_rate?: number
           conversion_type?: string
@@ -96131,6 +96137,19 @@ export type Database = {
           p_provider: string
         }
         Returns: undefined
+      }
+      record_affiliate_payment_conversion: {
+        Args: {
+          p_affiliate_id?: string
+          p_amount_pretax_cents?: number
+          p_contractor_id?: string
+          p_metadata?: Json
+          p_prospect_id?: string
+          p_referral_code?: string
+          p_stripe_session_id?: string
+          p_user_id?: string
+        }
+        Returns: Json
       }
       record_contractor_outcome: {
         Args: {

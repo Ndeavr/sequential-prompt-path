@@ -589,7 +589,7 @@ Deno.serve(async (req) => {
               stripe_event_id: event.id,
               checkout_session_id: session.id,
               payment_intent_id: (session.payment_intent as string) || null,
-              action: "dollar_activation",
+              action: "entry_pack_activation",
               result: "success",
               new_status: "activated",
               amount_cents: session.amount_total ?? null,
@@ -617,6 +617,37 @@ Deno.serve(async (req) => {
               },
             }).eq("stripe_event_id", event.id);
 
+            // AFFILIATE ATTRIBUTION — canonical economics: direct 20% of the
+            // PRE-TAX base ($70 on $350), 5% parent override ($17.50) cascades
+            // via the affiliate_apply_subaffiliate_override trigger. Resolves
+            // the affiliate from metadata ref, prospect lock, assignment, or
+            // confirmed attribution. No affiliate → clean no-op. Idempotent
+            // per Stripe session. Never blocks activation.
+            try {
+              const pretaxCents =
+                (session.amount_subtotal as number | null) ??
+                (session.amount_total as number | null) ??
+                35000;
+              const affRes = await supabase.rpc("record_affiliate_payment_conversion", {
+                p_prospect_id: vProspectId,
+                p_contractor_id: activatedContractorId,
+                p_user_id: null,
+                p_amount_pretax_cents: pretaxCents,
+                p_stripe_session_id: session.id,
+                p_affiliate_id: (session.metadata?.affiliate_id as string) || null,
+                p_referral_code: (session.metadata?.ref as string) || null,
+                p_metadata: {
+                  offer_code: session.metadata?.offer_code ?? null,
+                  acquisition_origin: session.metadata?.acquisition_origin ?? null,
+                  agent_run_id: session.metadata?.agent_run_id ?? null,
+                },
+              });
+              if ((affRes.data as any)?.recorded) {
+                console.log("[stripe-webhook] affiliate conversion recorded", affRes.data);
+              }
+            } catch (e) {
+              console.warn("[stripe-webhook] affiliate conversion soft-fail", String(e));
+            }
 
             // Canonical funnel event. v_activation_funnel counts event_type='paid',
             // so this MUST be 'paid' — 'payment_succeeded' was invisible to the cockpit.
@@ -679,7 +710,7 @@ Deno.serve(async (req) => {
               }
             }
 
-            console.log("[stripe-webhook] $1 activation recorded", {
+            console.log("[stripe-webhook] entry pack activation recorded", {
               prospect_id: vProspectId,
               contractor_id: activatedContractorId,
               session: session.id,
