@@ -128,7 +128,22 @@ export default function PageGuaranteeCalculator() {
         });
       if (error) throw new Error(error.message);
       if ((data as any)?.error) throw new Error((data as any).error);
-      if ((data as any)?.url) redirectToCheckout((data as any).url);
+      if ((data as any)?.url) {
+        const auditId = prefill.get("audit");
+        const auditToken = prefill.get("audit_token");
+        if (auditId && auditToken) {
+          await supabase.functions.invoke("ai-recommendation-audit", {
+            body: {
+              action: "event",
+              audit_id: auditId,
+              token: auditToken,
+              event_type: "checkout_created",
+              metadata: { quote_id: quote.quote_id, source: "guarantee_calculator" },
+            },
+          });
+        }
+        redirectToCheckout((data as any).url);
+      }
       else toast.error("Impossible d'ouvrir le paiement. Réessayez.");
 
     } catch (e) {

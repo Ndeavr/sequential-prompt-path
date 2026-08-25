@@ -128,7 +128,7 @@ export default function PageAippPublic() {
               <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-primary" /> Positionnement prioritaire dans votre secteur</li>
               <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-primary" /> Réservation de votre territoire</li>
             </ul>
-            <Link to={`/activation/${c.slug}`}>
+            <Link to={`/entrepreneurs/audit-ia?q=${encodeURIComponent(c.company_name)}`}>
               <Button size="lg" className="mt-4" disabled={slotsRemaining === 0}>
                 {slotsRemaining === 0 ? "Complet" : "Activer mon profil — 350 $"}
               </Button>
