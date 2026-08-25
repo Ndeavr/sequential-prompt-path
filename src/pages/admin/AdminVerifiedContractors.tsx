@@ -97,7 +97,7 @@ export default function AdminVerifiedContractors() {
             ["Contactés", revenue.contacted, "text-foreground"],
             ["Livrés", revenue.delivered, "text-emerald-500"],
             ["Cliqués", revenue.clicked, "text-emerald-500"],
-            ["Activés 1$", revenue.activated, revenue.activated > 0 ? "text-emerald-400" : "text-red-500"],
+            ["Activés 350 $", revenue.activated, revenue.activated > 0 ? "text-emerald-400" : "text-red-500"],
           ].map(([label, value, cls]) => (
             <div key={label as string} className="rounded-xl border border-border bg-card p-3">
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
