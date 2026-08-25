@@ -50770,6 +50770,39 @@ export type Database = {
         }
         Relationships: []
       }
+      founder_eligible_categories: {
+        Row: {
+          created_at: string
+          group_type: string
+          id: string
+          internal_cap_per_city: number
+          is_active: boolean
+          name_fr: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          group_type: string
+          id?: string
+          internal_cap_per_city?: number
+          is_active?: boolean
+          name_fr: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          group_type?: string
+          id?: string
+          internal_cap_per_city?: number
+          is_active?: boolean
+          name_fr?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       founder_health_checks: {
         Row: {
           auto_fixable: boolean
@@ -50891,6 +50924,74 @@ export type Database = {
           used_count?: number
         }
         Relationships: []
+      }
+      founder_memberships: {
+        Row: {
+          attribution: Json
+          business_name: string
+          category_slug: string
+          city: string
+          contact_name: string | null
+          created_at: string
+          email: string
+          founder_end: string | null
+          founder_start: string | null
+          id: string
+          phone: string | null
+          prospect_id: string | null
+          renewal_cadence: string
+          renewal_price_cents: number
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attribution?: Json
+          business_name: string
+          category_slug: string
+          city: string
+          contact_name?: string | null
+          created_at?: string
+          email: string
+          founder_end?: string | null
+          founder_start?: string | null
+          id?: string
+          phone?: string | null
+          prospect_id?: string | null
+          renewal_cadence?: string
+          renewal_price_cents?: number
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attribution?: Json
+          business_name?: string
+          category_slug?: string
+          city?: string
+          contact_name?: string | null
+          created_at?: string
+          email?: string
+          founder_end?: string | null
+          founder_start?: string | null
+          id?: string
+          phone?: string | null
+          prospect_id?: string | null
+          renewal_cadence?: string
+          renewal_price_cents?: number
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "founder_memberships_category_slug_fkey"
+            columns: ["category_slug"]
+            isOneToOne: false
+            referencedRelation: "founder_eligible_categories"
+            referencedColumns: ["slug"]
+          },
+        ]
       }
       founder_outreach_bcc: {
         Row: {
@@ -95541,6 +95642,10 @@ export type Database = {
         Returns: undefined
       }
       canonical_plan_code: { Args: { _code: string }; Returns: string }
+      check_founder_eligibility: {
+        Args: { p_category_slug: string; p_city: string }
+        Returns: Json
+      }
       check_generation_quota: {
         Args: {
           _generation_type?: string
@@ -95689,6 +95794,18 @@ export type Database = {
       fn_refresh_market_demand: {
         Args: { _category: string; _city: string }
         Returns: undefined
+      }
+      founder_public_signup: {
+        Args: {
+          p_attribution?: Json
+          p_business_name: string
+          p_category_slug: string
+          p_city: string
+          p_contact_name: string
+          p_email: string
+          p_phone: string
+        }
+        Returns: Json
       }
       generate_curiosity_slug: {
         Args: { _business_name: string; _lead_id: string }

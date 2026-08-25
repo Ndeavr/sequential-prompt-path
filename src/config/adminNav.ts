@@ -21,7 +21,7 @@ import {
   Ban, TestTube, Rocket, BarChart3, Wand2, Bot, FileText, Star,
   Tag, MapPin, Grid3X3, Network, Zap, Camera, ImageIcon, Send,
   Inbox, Server, Target, Palette, FolderOpen, LayoutList, AlertTriangle,
-  Upload, HandCoins, UserCheck, Handshake, Radio, Gauge, Clock,
+  Upload, HandCoins, UserCheck, Handshake, Radio, Gauge, Clock, Crown,
   UserPlus, PhoneCall, Compass, CreditCard, Siren, Wrench, Eye,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -77,6 +77,7 @@ export const adminSections: AdminSection[] = [
       "/admin/import-contractors", "/admin/outbound", "/admin/sniper",
       "/admin/recruitment", "/admin/scout", "/admin/prospects", "/admin/prospection",
       "/admin/affiliates", "/admin/partenaires", "/admin/partner-applications",
+      "/admin/founder-pipeline",
     ],
     tabs: [
       { to: "/admin/acquisition", label: "Vue d'ensemble", icon: TrendingUp },
@@ -94,6 +95,7 @@ export const adminSections: AdminSection[] = [
       { to: "/admin/sniper", label: "Sniper", icon: Target },
       { to: "/admin/scout", label: "Scout", icon: Eye },
       { to: "/admin/affiliates", label: "Affiliés", icon: Handshake },
+      { to: "/admin/founder-pipeline", label: "Fondateurs", icon: Crown },
     ],
   },
   {
