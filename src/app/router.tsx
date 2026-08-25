@@ -4,6 +4,7 @@ import { lazy, Suspense } from "react";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 import UniversalRouteGuard from "@/guards/UniversalRouteGuard";
 import ScrollRestoration from "@/components/ScrollRestoration";
 import BannerContinueFlow from "@/components/flow/BannerContinueFlow";
@@ -1018,7 +1019,7 @@ export const AppRouter = () => (
         <Route path="/scanner" element={<PageBusinessCardScannerHub />} />
         <Route path="/leads" element={<PageContractorLeads />} />
         <Route path="/profile-completion" element={<PageBusinessImport />} />
-        <Route path="/search" element={<ProtectedRoute requiredRole="admin"><Search /></ProtectedRoute>} />
+        <Route path="/search" element={<AdminProtectedRoute><Search /></AdminProtectedRoute>} />
         <Route path="/diagnostic-photo" element={<Suspense fallback={<LazyFallback />}><ProVisualSearchPage /></Suspense>} />
         <Route path="/radon" element={<Suspense fallback={<LazyFallback />}><PageRadonLanding /></Suspense>} />
         <Route path="/contractors/:id" element={<ContractorProfile />} />
@@ -1322,7 +1323,7 @@ export const AppRouter = () => (
         <Route path="/conseils-renovation" element={<BlogPage2 />} />
         <Route path="/journal" element={<JournalIndexPage />} />
         <Route path="/journal/:slug" element={<JournalArticlePage />} />
-        <Route path="/admin/journal" element={<ProtectedRoute requiredRole="admin"><AdminJournalPage /></ProtectedRoute>} />
+        <Route path="/admin/journal" element={<AdminProtectedRoute><AdminJournalPage /></AdminProtectedRoute>} />
         <Route path="/faq" element={<PageUnproFAQ25 />} />
         <Route path="/comment-ca-marche" element={<CommentCaMarchePage />} />
         <Route path="/comment-fonctionne-ia" element={<PageHowUnproWorksAI />} />
@@ -1348,8 +1349,8 @@ export const AppRouter = () => (
         <Route path="/partenaire/leads" element={<PartnerGuard feature="leads"><PartnerCrm /></PartnerGuard>} />
         <Route path="/partenaire/pipeline" element={<PartnerGuard feature="pipeline"><PartnerCrm /></PartnerGuard>} />
         <Route path="/partenaire/rappels" element={<PartnerGuard feature="reminders"><PartnerCrm /></PartnerGuard>} />
-        <Route path="/admin/partenaires" element={<ProtectedRoute requiredRole="admin"><AdminPartenaires /></ProtectedRoute>} />
-        <Route path="/admin/partner-applications" element={<ProtectedRoute requiredRole="admin"><AdminPartnerApplications /></ProtectedRoute>} />
+        <Route path="/admin/partenaires" element={<AdminProtectedRoute><AdminPartenaires /></AdminProtectedRoute>} />
+        <Route path="/admin/partner-applications" element={<AdminProtectedRoute><AdminPartnerApplications /></AdminProtectedRoute>} />
         <Route path="/contact" element={<StaticContentPage slug="contact" />} />
         <Route path="/conditions" element={<StaticContentPage slug="conditions" />} />
         <Route path="/confidentialite" element={<StaticContentPage slug="confidentialite" />} />
@@ -1485,327 +1486,327 @@ export const AppRouter = () => (
 
 
         {/* Admin */}
-        <Route path="/admin/menu-intelligence" element={<ProtectedRoute requiredRole="admin"><MenuIntelligenceAdminPage /></ProtectedRoute>} />
-        <Route path="/admin/handoff-analytics" element={<ProtectedRoute requiredRole="admin"><PageAdminHandoffAnalytics /></ProtectedRoute>} />
-        <Route path="/admin/emails" element={<ProtectedRoute requiredRole="admin"><PageAdminEmailLogs /></ProtectedRoute>} />
-        <Route path="/admin/campaign-center" element={<ProtectedRoute requiredRole="admin"><PageCampaignCenter /></ProtectedRoute>} />
-        <Route path="/admin/campaign-logs" element={<ProtectedRoute requiredRole="admin"><PageCampaignLogs /></ProtectedRoute>} />
-        <Route path="/admin/manual-test-send" element={<ProtectedRoute requiredRole="admin"><PageAdminManualTestSend /></ProtectedRoute>} />
-        <Route path="/admin/challenge-tracker" element={<ProtectedRoute requiredRole="admin"><PageChallengeTracker /></ProtectedRoute>} />
-        <Route path="/admin/email-templates" element={<ProtectedRoute requiredRole="admin"><PageAdminEmailTemplates /></ProtectedRoute>} />
-        <Route path="/admin/aeo" element={<ProtectedRoute requiredRole="admin"><PageAdminAeoCockpit /></ProtectedRoute>} />
-        <Route path="/admin/alex/voice-lab" element={<ProtectedRoute requiredRole="admin"><PageVoiceLab /></ProtectedRoute>} />
-        <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
-        <Route path="/admin/launch-war-room" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><AdminLaunchWarRoom /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/ai-revenue-proof" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAiRevenueProof /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/launch-control" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminLaunchControl /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/critical-path-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminCriticalPathAudit /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/ui-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><AdminUIHealthMonitor /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/google-project-audit" element={<ProtectedRoute requiredRole="admin"><PageGoogleProjectUsageAudit /></ProtectedRoute>} />
-        <Route path="/admin/omega" element={<ProtectedRoute requiredRole="admin"><PageAdminOmega /></ProtectedRoute>} />
-        <Route path="/admin/activation" element={<ProtectedRoute requiredRole="admin"><PageAdminEntrepreneurActivation /></ProtectedRoute>} />
-        <Route path="/admin/concierge" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageConciergeCockpit /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/autonomous-engine" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAutonomousEngine /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><AdminUsers /></ProtectedRoute>} />
-        <Route path="/admin/contractors" element={<ProtectedRoute requiredRole="admin"><AdminContractors /></ProtectedRoute>} />
-        <Route path="/admin/ai-trust" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAiTrustDashboard /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/ai-trust/territory" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAiTrustTerritory /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/acquisition" element={<ProtectedRoute requiredRole="admin"><PageAdminAcquisition /></ProtectedRoute>} />
-        <Route path="/admin/acquisition-machine" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionMachine /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/acquisition/duplicates" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionDuplicates /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/acquisition/pipeline" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionPipeline /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/acquisition/errors" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionErrors /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/acquisition/engagement" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionEngagement /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/acquisition/stripe" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionStripe /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/acquisition/activation" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionActivation /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/menu-intelligence" element={<AdminProtectedRoute><MenuIntelligenceAdminPage /></AdminProtectedRoute>} />
+        <Route path="/admin/handoff-analytics" element={<AdminProtectedRoute><PageAdminHandoffAnalytics /></AdminProtectedRoute>} />
+        <Route path="/admin/emails" element={<AdminProtectedRoute><PageAdminEmailLogs /></AdminProtectedRoute>} />
+        <Route path="/admin/campaign-center" element={<AdminProtectedRoute><PageCampaignCenter /></AdminProtectedRoute>} />
+        <Route path="/admin/campaign-logs" element={<AdminProtectedRoute><PageCampaignLogs /></AdminProtectedRoute>} />
+        <Route path="/admin/manual-test-send" element={<AdminProtectedRoute><PageAdminManualTestSend /></AdminProtectedRoute>} />
+        <Route path="/admin/challenge-tracker" element={<AdminProtectedRoute><PageChallengeTracker /></AdminProtectedRoute>} />
+        <Route path="/admin/email-templates" element={<AdminProtectedRoute><PageAdminEmailTemplates /></AdminProtectedRoute>} />
+        <Route path="/admin/aeo" element={<AdminProtectedRoute><PageAdminAeoCockpit /></AdminProtectedRoute>} />
+        <Route path="/admin/alex/voice-lab" element={<AdminProtectedRoute><PageVoiceLab /></AdminProtectedRoute>} />
+        <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+        <Route path="/admin/launch-war-room" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><AdminLaunchWarRoom /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/ai-revenue-proof" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAiRevenueProof /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/launch-control" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminLaunchControl /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/critical-path-audit" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminCriticalPathAudit /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/ui-health" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><AdminUIHealthMonitor /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/google-project-audit" element={<AdminProtectedRoute><PageGoogleProjectUsageAudit /></AdminProtectedRoute>} />
+        <Route path="/admin/omega" element={<AdminProtectedRoute><PageAdminOmega /></AdminProtectedRoute>} />
+        <Route path="/admin/activation" element={<AdminProtectedRoute><PageAdminEntrepreneurActivation /></AdminProtectedRoute>} />
+        <Route path="/admin/concierge" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageConciergeCockpit /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/autonomous-engine" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAutonomousEngine /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/users" element={<AdminProtectedRoute><AdminUsers /></AdminProtectedRoute>} />
+        <Route path="/admin/contractors" element={<AdminProtectedRoute><AdminContractors /></AdminProtectedRoute>} />
+        <Route path="/admin/ai-trust" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAiTrustDashboard /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/ai-trust/territory" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAiTrustTerritory /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/acquisition" element={<AdminProtectedRoute><PageAdminAcquisition /></AdminProtectedRoute>} />
+        <Route path="/admin/acquisition-machine" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionMachine /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/acquisition/duplicates" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionDuplicates /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/acquisition/pipeline" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionPipeline /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/acquisition/errors" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionErrors /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/acquisition/engagement" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionEngagement /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/acquisition/stripe" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionStripe /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/acquisition/activation" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionActivation /></Suspense></AdminProtectedRoute>} />
         <Route path="/contractor/ai-score/:prospectId" element={<Suspense fallback={<LazyFallback />}><PageContractorAIScoreLanding /></Suspense>} />
         <Route path="/aipp/:slug" element={<PageAippPublic />} />
         <Route path="/ai-indexed-profiles/:slug" element={<PageAiIndexedProfile />} />
         <Route path="/ai/:slug" element={<Suspense fallback={<LazyFallback />}><PageAiEntity /></Suspense>} />
-        <Route path="/admin/ai-entities" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAiEntities /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/smart-context" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminSmartContext /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/plans-matrix" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminPlansMatrix /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/ai-entities" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAiEntities /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/smart-context" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminSmartContext /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/plans-matrix" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminPlansMatrix /></Suspense></AdminProtectedRoute>} />
 
-        <Route path="/admin/aipp-import" element={<ProtectedRoute requiredRole="admin"><PageAippImport /></ProtectedRoute>} />
-        <Route path="/admin/aipp-profiles" element={<ProtectedRoute requiredRole="admin"><PageAippProfiles /></ProtectedRoute>} />
+        <Route path="/admin/aipp-import" element={<AdminProtectedRoute><PageAippImport /></AdminProtectedRoute>} />
+        <Route path="/admin/aipp-profiles" element={<AdminProtectedRoute><PageAippProfiles /></AdminProtectedRoute>} />
         <Route path="/contractor/aipp-cockpit" element={<ProtectedRoute><PageContractorAippCockpit /></ProtectedRoute>} />
         <Route path="/activation/:slug" element={<PageAcqActivation />} />
         {/* Duplicate route removed — `/activation-success` is registered above (line 1042). */}
-        <Route path="/admin/war-room" element={<ProtectedRoute requiredRole="admin"><PageAdminWarRoom /></ProtectedRoute>} />
-        <Route path="/admin/contractors/create-manual" element={<ProtectedRoute requiredRole="admin"><PageAdminCreateContractorManual /></ProtectedRoute>} />
-        <Route path="/admin/contractors/:id/compatibilite" element={<ProtectedRoute requiredRole="admin"><PageContractorCompatibility /></ProtectedRoute>} />
-        <Route path="/admin/contractors/:id" element={<ProtectedRoute requiredRole="admin"><AdminContractorDetail /></ProtectedRoute>} />
+        <Route path="/admin/war-room" element={<AdminProtectedRoute><PageAdminWarRoom /></AdminProtectedRoute>} />
+        <Route path="/admin/contractors/create-manual" element={<AdminProtectedRoute><PageAdminCreateContractorManual /></AdminProtectedRoute>} />
+        <Route path="/admin/contractors/:id/compatibilite" element={<AdminProtectedRoute><PageContractorCompatibility /></AdminProtectedRoute>} />
+        <Route path="/admin/contractors/:id" element={<AdminProtectedRoute><AdminContractorDetail /></AdminProtectedRoute>} />
 
-        <Route path="/admin/quotes" element={<ProtectedRoute requiredRole="admin"><AdminQuotes /></ProtectedRoute>} />
-        <Route path="/admin/reviews" element={<ProtectedRoute requiredRole="admin"><AdminReviews /></ProtectedRoute>} />
-        <Route path="/admin/documents" element={<ProtectedRoute requiredRole="admin"><AdminDocuments /></ProtectedRoute>} />
-        <Route path="/admin/appointments" element={<ProtectedRoute requiredRole="admin"><AdminAppointments /></ProtectedRoute>} />
-        <Route path="/admin/leads" element={<ProtectedRoute requiredRole="admin"><AdminLeads /></ProtectedRoute>} />
-        <Route path="/admin/war-prospecting" element={<ProtectedRoute requiredRole="admin"><AdminWarProspecting /></ProtectedRoute>} />
-        <Route path="/admin/territories" element={<ProtectedRoute requiredRole="admin"><AdminTerritories /></ProtectedRoute>} />
-        <Route path="/admin/growth" element={<ProtectedRoute requiredRole="admin"><AdminGrowth /></ProtectedRoute>} />
-        <Route path="/admin/agents" element={<ProtectedRoute requiredRole="admin"><AdminAgents /></ProtectedRoute>} />
-        <Route path="/admin/live-agents" element={<ProtectedRoute requiredRole="admin"><PageAdminLiveAgents /></ProtectedRoute>} />
-        <Route path="/admin/media" element={<ProtectedRoute requiredRole="admin"><AdminMedia /></ProtectedRoute>} />
-        <Route path="/admin/validation" element={<ProtectedRoute requiredRole="admin"><AdminValidation /></ProtectedRoute>} />
-        <Route path="/admin/answer-engine" element={<ProtectedRoute requiredRole="admin"><AdminAnswerEngine /></ProtectedRoute>} />
-        <Route path="/admin/operations" element={<ProtectedRoute requiredRole="admin"><AdminOperationsHub /></ProtectedRoute>} />
-        <Route path="/admin/waiting-homeowners" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminWaitingHomeowners /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/quotes" element={<AdminProtectedRoute><AdminQuotes /></AdminProtectedRoute>} />
+        <Route path="/admin/reviews" element={<AdminProtectedRoute><AdminReviews /></AdminProtectedRoute>} />
+        <Route path="/admin/documents" element={<AdminProtectedRoute><AdminDocuments /></AdminProtectedRoute>} />
+        <Route path="/admin/appointments" element={<AdminProtectedRoute><AdminAppointments /></AdminProtectedRoute>} />
+        <Route path="/admin/leads" element={<AdminProtectedRoute><AdminLeads /></AdminProtectedRoute>} />
+        <Route path="/admin/war-prospecting" element={<AdminProtectedRoute><AdminWarProspecting /></AdminProtectedRoute>} />
+        <Route path="/admin/territories" element={<AdminProtectedRoute><AdminTerritories /></AdminProtectedRoute>} />
+        <Route path="/admin/growth" element={<AdminProtectedRoute><AdminGrowth /></AdminProtectedRoute>} />
+        <Route path="/admin/agents" element={<AdminProtectedRoute><AdminAgents /></AdminProtectedRoute>} />
+        <Route path="/admin/live-agents" element={<AdminProtectedRoute><PageAdminLiveAgents /></AdminProtectedRoute>} />
+        <Route path="/admin/media" element={<AdminProtectedRoute><AdminMedia /></AdminProtectedRoute>} />
+        <Route path="/admin/validation" element={<AdminProtectedRoute><AdminValidation /></AdminProtectedRoute>} />
+        <Route path="/admin/answer-engine" element={<AdminProtectedRoute><AdminAnswerEngine /></AdminProtectedRoute>} />
+        <Route path="/admin/operations" element={<AdminProtectedRoute><AdminOperationsHub /></AdminProtectedRoute>} />
+        <Route path="/admin/waiting-homeowners" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminWaitingHomeowners /></Suspense></AdminProtectedRoute>} />
         <Route path="/pro/demande/:city/:category" element={<Suspense fallback={<LazyFallback />}><PageContractorDemandLanding /></Suspense>} />
-        <Route path="/admin/founder-verification" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageFounderVerification /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/pricing-intelligence" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminPricingIntelligence /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/unpro-stripe-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminUnproStripeHealth /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/system-mode" element={<ProtectedRoute requiredRole="admin"><PageSystemModeControlCenter /></ProtectedRoute>} />
-        <Route path="/admin/verification" element={<ProtectedRoute requiredRole="admin"><AdminVerificationRuns /></ProtectedRoute>} />
-        <Route path="/admin/verification/:id" element={<ProtectedRoute requiredRole="admin"><AdminVerificationRunDetail /></ProtectedRoute>} />
-        <Route path="/admin/alerts" element={<ProtectedRoute requiredRole="admin"><AdminAlerts /></ProtectedRoute>} />
-        <Route path="/admin/nav-analytics" element={<ProtectedRoute requiredRole="admin"><AdminNavAnalytics /></ProtectedRoute>} />
-        <Route path="/admin/verified-contractors" element={<ProtectedRoute requiredRole="admin"><AdminVerifiedContractors /></ProtectedRoute>} />
-        <Route path="/admin/acquisition-pipeline" element={<ProtectedRoute requiredRole="admin"><PageAdminAcquisitionPipelineNew /></ProtectedRoute>} />
-        <Route path="/admin/acquisition-diagnostics" element={<ProtectedRoute requiredRole="admin"><PageAdminAcquisitionDiagnostics /></ProtectedRoute>} />
-        <Route path="/admin/import-contractors" element={<ProtectedRoute requiredRole="admin"><PageAdminImportContractors /></ProtectedRoute>} />
-        <Route path="/admin/duplicates" element={<ProtectedRoute requiredRole="admin"><AdminDuplicates /></ProtectedRoute>} />
-        <Route path="/admin/automation" element={<ProtectedRoute requiredRole="admin"><AdminAutomation /></ProtectedRoute>} />
-        <Route path="/admin/automation-command-center" element={<ProtectedRoute requiredRole="admin"><PageAdminAutomationCommandCenter /></ProtectedRoute>} />
-        <Route path="/admin/go-live" element={<ProtectedRoute requiredRole="admin"><PageAdminGoLive /></ProtectedRoute>} />
-        <Route path="/admin/go-live/verification" element={<ProtectedRoute requiredRole="admin"><PageAdminGoLiveVerification /></ProtectedRoute>} />
-        <Route path="/admin/go-live/incidents" element={<ProtectedRoute requiredRole="admin"><PageAdminGoLiveIncidents /></ProtectedRoute>} />
-        <Route path="/admin/go-live/e2e-tests" element={<ProtectedRoute requiredRole="admin"><PageAdminGoLiveE2ETests /></ProtectedRoute>} />
-        <Route path="/admin/go-live/function-health" element={<ProtectedRoute requiredRole="admin"><PageAdminGoLiveFunctionHealth /></ProtectedRoute>} />
-        <Route path="/admin/go-live/payment-health" element={<ProtectedRoute requiredRole="admin"><PageAdminGoLivePaymentHealth /></ProtectedRoute>} />
-        <Route path="/admin/navigation" element={<ProtectedRoute requiredRole="admin"><PageAdminNavigation /></ProtectedRoute>} />
-        <Route path="/admin/aipp-v2" element={<ProtectedRoute requiredRole="admin"><PageAdminAIPPv2Dashboard /></ProtectedRoute>} />
-        <Route path="/admin/aipp-debug" element={<ProtectedRoute requiredRole="admin"><PageAippDebug /></ProtectedRoute>} />
-        <Route path="/admin/mission-control" element={<ProtectedRoute requiredRole="admin"><PageMissionControl /></ProtectedRoute>} />
+        <Route path="/admin/founder-verification" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageFounderVerification /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/pricing-intelligence" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminPricingIntelligence /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/unpro-stripe-health" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminUnproStripeHealth /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/system-mode" element={<AdminProtectedRoute><PageSystemModeControlCenter /></AdminProtectedRoute>} />
+        <Route path="/admin/verification" element={<AdminProtectedRoute><AdminVerificationRuns /></AdminProtectedRoute>} />
+        <Route path="/admin/verification/:id" element={<AdminProtectedRoute><AdminVerificationRunDetail /></AdminProtectedRoute>} />
+        <Route path="/admin/alerts" element={<AdminProtectedRoute><AdminAlerts /></AdminProtectedRoute>} />
+        <Route path="/admin/nav-analytics" element={<AdminProtectedRoute><AdminNavAnalytics /></AdminProtectedRoute>} />
+        <Route path="/admin/verified-contractors" element={<AdminProtectedRoute><AdminVerifiedContractors /></AdminProtectedRoute>} />
+        <Route path="/admin/acquisition-pipeline" element={<AdminProtectedRoute><PageAdminAcquisitionPipelineNew /></AdminProtectedRoute>} />
+        <Route path="/admin/acquisition-diagnostics" element={<AdminProtectedRoute><PageAdminAcquisitionDiagnostics /></AdminProtectedRoute>} />
+        <Route path="/admin/import-contractors" element={<AdminProtectedRoute><PageAdminImportContractors /></AdminProtectedRoute>} />
+        <Route path="/admin/duplicates" element={<AdminProtectedRoute><AdminDuplicates /></AdminProtectedRoute>} />
+        <Route path="/admin/automation" element={<AdminProtectedRoute><AdminAutomation /></AdminProtectedRoute>} />
+        <Route path="/admin/automation-command-center" element={<AdminProtectedRoute><PageAdminAutomationCommandCenter /></AdminProtectedRoute>} />
+        <Route path="/admin/go-live" element={<AdminProtectedRoute><PageAdminGoLive /></AdminProtectedRoute>} />
+        <Route path="/admin/go-live/verification" element={<AdminProtectedRoute><PageAdminGoLiveVerification /></AdminProtectedRoute>} />
+        <Route path="/admin/go-live/incidents" element={<AdminProtectedRoute><PageAdminGoLiveIncidents /></AdminProtectedRoute>} />
+        <Route path="/admin/go-live/e2e-tests" element={<AdminProtectedRoute><PageAdminGoLiveE2ETests /></AdminProtectedRoute>} />
+        <Route path="/admin/go-live/function-health" element={<AdminProtectedRoute><PageAdminGoLiveFunctionHealth /></AdminProtectedRoute>} />
+        <Route path="/admin/go-live/payment-health" element={<AdminProtectedRoute><PageAdminGoLivePaymentHealth /></AdminProtectedRoute>} />
+        <Route path="/admin/navigation" element={<AdminProtectedRoute><PageAdminNavigation /></AdminProtectedRoute>} />
+        <Route path="/admin/aipp-v2" element={<AdminProtectedRoute><PageAdminAIPPv2Dashboard /></AdminProtectedRoute>} />
+        <Route path="/admin/aipp-debug" element={<AdminProtectedRoute><PageAippDebug /></AdminProtectedRoute>} />
+        <Route path="/admin/mission-control" element={<AdminProtectedRoute><PageMissionControl /></AdminProtectedRoute>} />
         <Route path="/contractor/aipp-audit/:contractorId" element={<PageContractorAippAudit />} />
-        <Route path="/admin/home-graph" element={<ProtectedRoute requiredRole="admin"><AdminHomeGraph /></ProtectedRoute>} />
-        <Route path="/admin/uos" element={<ProtectedRoute requiredRole="admin"><AdminUOS /></ProtectedRoute>} />
-        <Route path="/admin/qa-simulation" element={<ProtectedRoute requiredRole="admin"><PageAdminQASimulation /></ProtectedRoute>} />
-        <Route path="/admin/qa-simulation/run/:runId" element={<ProtectedRoute requiredRole="admin"><PageAdminQASimulationRun /></ProtectedRoute>} />
-        <Route path="/admin/qa-simulation/templates" element={<ProtectedRoute requiredRole="admin"><PageAdminQASimulationTemplates /></ProtectedRoute>} />
-        <Route path="/admin/growth-engine" element={<ProtectedRoute requiredRole="admin"><AdminGrowthEngine /></ProtectedRoute>} />
-        <Route path="/admin/growth-os" element={<ProtectedRoute requiredRole="admin"><AdminGrowthOS /></ProtectedRoute>} />
-        <Route path="/admin/growth-live-monitor" element={<ProtectedRoute requiredRole="admin"><AdminGrowthLiveMonitor /></ProtectedRoute>} />
+        <Route path="/admin/home-graph" element={<AdminProtectedRoute><AdminHomeGraph /></AdminProtectedRoute>} />
+        <Route path="/admin/uos" element={<AdminProtectedRoute><AdminUOS /></AdminProtectedRoute>} />
+        <Route path="/admin/qa-simulation" element={<AdminProtectedRoute><PageAdminQASimulation /></AdminProtectedRoute>} />
+        <Route path="/admin/qa-simulation/run/:runId" element={<AdminProtectedRoute><PageAdminQASimulationRun /></AdminProtectedRoute>} />
+        <Route path="/admin/qa-simulation/templates" element={<AdminProtectedRoute><PageAdminQASimulationTemplates /></AdminProtectedRoute>} />
+        <Route path="/admin/growth-engine" element={<AdminProtectedRoute><AdminGrowthEngine /></AdminProtectedRoute>} />
+        <Route path="/admin/growth-os" element={<AdminProtectedRoute><AdminGrowthOS /></AdminProtectedRoute>} />
+        <Route path="/admin/growth-live-monitor" element={<AdminProtectedRoute><AdminGrowthLiveMonitor /></AdminProtectedRoute>} />
         <Route path="/pro/growth" element={<ProtectedRoute><ContractorGrowth /></ProtectedRoute>} />
-        <Route path="/admin/pricing" element={<ProtectedRoute requiredRole="admin"><AdminPricingPage /></ProtectedRoute>} />
-        <Route path="/admin/coupons" element={<ProtectedRoute requiredRole="admin"><AdminCoupons /></ProtectedRoute>} />
-        <Route path="/admin/plan-distribution" element={<ProtectedRoute requiredRole="admin"><PageAdminPlanDistribution /></ProtectedRoute>} />
-        <Route path="/admin/plan-appointments" element={<ProtectedRoute requiredRole="admin"><PageAdminPlanAppointmentsControl /></ProtectedRoute>} />
-        <Route path="/admin/cluster-project-size-matrix" element={<ProtectedRoute requiredRole="admin"><PageAdminClusterPlanProjectSizeMatrix /></ProtectedRoute>} />
-        <Route path="/admin/project-size-extensions" element={<ProtectedRoute requiredRole="admin"><PageAdminProjectSizeExtensions /></ProtectedRoute>} />
+        <Route path="/admin/pricing" element={<AdminProtectedRoute><AdminPricingPage /></AdminProtectedRoute>} />
+        <Route path="/admin/coupons" element={<AdminProtectedRoute><AdminCoupons /></AdminProtectedRoute>} />
+        <Route path="/admin/plan-distribution" element={<AdminProtectedRoute><PageAdminPlanDistribution /></AdminProtectedRoute>} />
+        <Route path="/admin/plan-appointments" element={<AdminProtectedRoute><PageAdminPlanAppointmentsControl /></AdminProtectedRoute>} />
+        <Route path="/admin/cluster-project-size-matrix" element={<AdminProtectedRoute><PageAdminClusterPlanProjectSizeMatrix /></AdminProtectedRoute>} />
+        <Route path="/admin/project-size-extensions" element={<AdminProtectedRoute><PageAdminProjectSizeExtensions /></AdminProtectedRoute>} />
         <Route path="/pro/plan-usage" element={<ProtectedRoute><PageEntrepreneurPlanUsage /></ProtectedRoute>} />
-        <Route path="/admin/refusal-seo" element={<ProtectedRoute requiredRole="admin"><AdminRefusalSeoPage /></ProtectedRoute>} />
-        <Route path="/admin/ads-engine" element={<ProtectedRoute requiredRole="admin"><AdminAdsEngine /></ProtectedRoute>} />
-        <Route path="/admin/demand-grid" element={<ProtectedRoute requiredRole="admin"><AdminDemandGrid /></ProtectedRoute>} />
-        <Route path="/admin/sales-psychology" element={<ProtectedRoute requiredRole="admin"><AdminSalesPsychology /></ProtectedRoute>} />
-        <Route path="/admin/reward-rules" element={<ProtectedRoute requiredRole="admin"><AdminRewardRules /></ProtectedRoute>} />
-        <Route path="/admin/deep-link-analytics" element={<ProtectedRoute requiredRole="admin"><AdminDeepLinkAnalytics /></ProtectedRoute>} />
-        <Route path="/admin/ai-growth" element={<ProtectedRoute requiredRole="admin"><AdminAIGrowthInsights /></ProtectedRoute>} />
-        <Route path="/admin/seo-generator" element={<ProtectedRoute requiredRole="admin"><AdminSeoGenerator /></ProtectedRoute>} />
-        <Route path="/admin/seo-autopilot" element={<ProtectedRoute requiredRole="admin"><PageSeoAutopilot /></ProtectedRoute>} />
-        <Route path="/admin/pr-loop" element={<ProtectedRoute requiredRole="admin"><PagePrLoop /></ProtectedRoute>} />
-        <Route path="/admin/ai-dashboard" element={<ProtectedRoute requiredRole="admin"><AdminAIGrowthDashboard /></ProtectedRoute>} />
-        <Route path="/admin/campaign-lab" element={<ProtectedRoute requiredRole="admin"><AdminCampaignLab /></ProtectedRoute>} />
-        <Route path="/admin/autopilot" element={<ProtectedRoute requiredRole="admin"><AdminAutopilotDashboard /></ProtectedRoute>} />
-        <Route path="/admin/seo-domination" element={<ProtectedRoute requiredRole="admin"><AdminSeoDominationDashboard /></ProtectedRoute>} />
-        <Route path="/admin/market-engine" element={<ProtectedRoute requiredRole="admin"><AdminMarketEngine /></ProtectedRoute>} />
-        <Route path="/admin/nexus" element={<ProtectedRoute requiredRole="admin"><AdminNexusDashboard /></ProtectedRoute>} />
-        <Route path="/admin/dispatch-center" element={<ProtectedRoute requiredRole="admin"><AdminDispatchCenter /></ProtectedRoute>} />
-        <Route path="/admin/commercial-eligibility" element={<ProtectedRoute requiredRole="admin"><AdminCommercialEligibility /></ProtectedRoute>} />
-        <Route path="/admin/official-site-enrichment" element={<ProtectedRoute requiredRole="admin"><AdminOfficialSiteEnrichment /></ProtectedRoute>} />
-        <Route path="/admin/official-acquisition" element={<ProtectedRoute requiredRole="admin"><AdminOfficialAcquisition /></ProtectedRoute>} />
+        <Route path="/admin/refusal-seo" element={<AdminProtectedRoute><AdminRefusalSeoPage /></AdminProtectedRoute>} />
+        <Route path="/admin/ads-engine" element={<AdminProtectedRoute><AdminAdsEngine /></AdminProtectedRoute>} />
+        <Route path="/admin/demand-grid" element={<AdminProtectedRoute><AdminDemandGrid /></AdminProtectedRoute>} />
+        <Route path="/admin/sales-psychology" element={<AdminProtectedRoute><AdminSalesPsychology /></AdminProtectedRoute>} />
+        <Route path="/admin/reward-rules" element={<AdminProtectedRoute><AdminRewardRules /></AdminProtectedRoute>} />
+        <Route path="/admin/deep-link-analytics" element={<AdminProtectedRoute><AdminDeepLinkAnalytics /></AdminProtectedRoute>} />
+        <Route path="/admin/ai-growth" element={<AdminProtectedRoute><AdminAIGrowthInsights /></AdminProtectedRoute>} />
+        <Route path="/admin/seo-generator" element={<AdminProtectedRoute><AdminSeoGenerator /></AdminProtectedRoute>} />
+        <Route path="/admin/seo-autopilot" element={<AdminProtectedRoute><PageSeoAutopilot /></AdminProtectedRoute>} />
+        <Route path="/admin/pr-loop" element={<AdminProtectedRoute><PagePrLoop /></AdminProtectedRoute>} />
+        <Route path="/admin/ai-dashboard" element={<AdminProtectedRoute><AdminAIGrowthDashboard /></AdminProtectedRoute>} />
+        <Route path="/admin/campaign-lab" element={<AdminProtectedRoute><AdminCampaignLab /></AdminProtectedRoute>} />
+        <Route path="/admin/autopilot" element={<AdminProtectedRoute><AdminAutopilotDashboard /></AdminProtectedRoute>} />
+        <Route path="/admin/seo-domination" element={<AdminProtectedRoute><AdminSeoDominationDashboard /></AdminProtectedRoute>} />
+        <Route path="/admin/market-engine" element={<AdminProtectedRoute><AdminMarketEngine /></AdminProtectedRoute>} />
+        <Route path="/admin/nexus" element={<AdminProtectedRoute><AdminNexusDashboard /></AdminProtectedRoute>} />
+        <Route path="/admin/dispatch-center" element={<AdminProtectedRoute><AdminDispatchCenter /></AdminProtectedRoute>} />
+        <Route path="/admin/commercial-eligibility" element={<AdminProtectedRoute><AdminCommercialEligibility /></AdminProtectedRoute>} />
+        <Route path="/admin/official-site-enrichment" element={<AdminProtectedRoute><AdminOfficialSiteEnrichment /></AdminProtectedRoute>} />
+        <Route path="/admin/official-acquisition" element={<AdminProtectedRoute><AdminOfficialAcquisition /></AdminProtectedRoute>} />
 
-        <Route path="/admin/solicitation" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><AdminSolicitationPage /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/outreach-errors" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOutreachErrors /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/provider-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminProviderHealth /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/contractors-contacted" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminContractorsContacted /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/domain-intelligence" element={<ProtectedRoute requiredRole="admin"><AdminDomainIntelligence /></ProtectedRoute>} />
-        <Route path="/admin/domain-health" element={<ProtectedRoute requiredRole="admin"><PageDomainHealthDashboard /></ProtectedRoute>} />
-        <Route path="/admin/alex-guardrails" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexConversationRules /></ProtectedRoute>} />
-        <Route path="/admin/alex-debug" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexDebugHome /></ProtectedRoute>} />
-        <Route path="/admin/alex-speech-tuning" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexSpeechTuning /></ProtectedRoute>} />
-        <Route path="/admin/alex-voice-admin" element={<ProtectedRoute requiredRole="admin"><AlexVoiceAdmin /></ProtectedRoute>} />
-        <Route path="/admin/seo-articles" element={<ProtectedRoute requiredRole="admin"><AdminSeoArticles /></ProtectedRoute>} />
-        <Route path="/admin/bulk-articles" element={<ProtectedRoute requiredRole="admin"><AdminBulkArticlesPage /></ProtectedRoute>} />
-        <Route path="/admin/founder-invites" element={<ProtectedRoute requiredRole="admin"><AdminFounderInvites /></ProtectedRoute>} />
-        <Route path="/admin/prospects" element={<ProtectedRoute requiredRole="admin"><AdminProspects /></ProtectedRoute>} />
-        <Route path="/admin/prospects/import" element={<ProtectedRoute requiredRole="admin"><AdminProspectImport /></ProtectedRoute>} />
-        <Route path="/admin/prospects/campaigns" element={<ProtectedRoute requiredRole="admin"><AdminProspectCampaigns /></ProtectedRoute>} />
-        <Route path="/admin/roadmap-execution" element={<ProtectedRoute requiredRole="admin"><AdminRoadmapExecution /></ProtectedRoute>} />
-        <Route path="/admin/screenshot-analytics" element={<ProtectedRoute requiredRole="admin"><AdminScreenshotAnalyticsPage /></ProtectedRoute>} />
-        <Route path="/admin/screenshot-friction" element={<ProtectedRoute requiredRole="admin"><AdminScreenshotFrictionPage /></ProtectedRoute>} />
-        <Route path="/admin/screenshot-alerts" element={<ProtectedRoute requiredRole="admin"><AdminScreenshotAlertsPage /></ProtectedRoute>} />
-        <Route path="/admin/screenshot-insights" element={<ProtectedRoute requiredRole="admin"><AdminScreenshotInsightsPage /></ProtectedRoute>} />
-        <Route path="/admin/optimization" element={<ProtectedRoute requiredRole="admin"><AdminOptimizationDashboard /></ProtectedRoute>} />
-        <Route path="/admin/experiments" element={<ProtectedRoute requiredRole="admin"><AdminExperimentsPage /></ProtectedRoute>} />
-        <Route path="/admin/experiments/:id" element={<ProtectedRoute requiredRole="admin"><AdminExperimentDetailPage /></ProtectedRoute>} />
-        <Route path="/admin/optimization/recommendations" element={<ProtectedRoute requiredRole="admin"><AdminOptimizationRecommendations /></ProtectedRoute>} />
-        <Route path="/admin/optimization/winners" element={<ProtectedRoute requiredRole="admin"><AdminWinningVariantsPage /></ProtectedRoute>} />
-        <Route path="/admin/predictive-leads" element={<ProtectedRoute requiredRole="admin"><AdminPredictiveLeads /></ProtectedRoute>} />
-        <Route path="/admin/dynamic-pricing-market" element={<ProtectedRoute requiredRole="admin"><AdminDynamicMarketPricing /></ProtectedRoute>} />
-        <Route path="/admin/predictive-market-board" element={<ProtectedRoute requiredRole="admin"><AdminPredictiveMarketBoard /></ProtectedRoute>} />
-        <Route path="/admin/zone-value" element={<ProtectedRoute requiredRole="admin"><AdminZoneValueMap /></ProtectedRoute>} />
-        <Route path="/admin/voice-control" element={<ProtectedRoute requiredRole="admin"><AdminVoiceControlPage /></ProtectedRoute>} />
-        <Route path="/admin/voice-optimizer" element={<ProtectedRoute requiredRole="admin"><AdminVoiceOptimizerPage /></ProtectedRoute>} />
-        <Route path="/admin/voice-optimizer/:id" element={<ProtectedRoute requiredRole="admin"><AdminVoiceOptimizerPage /></ProtectedRoute>} />
-        <Route path="/admin/voice-pronunciation" element={<ProtectedRoute requiredRole="admin"><PageAdminVoicePronunciation /></ProtectedRoute>} />
-        <Route path="/admin/brand-pronunciation" element={<ProtectedRoute requiredRole="admin"><PageAdminBrandPronunciation /></ProtectedRoute>} />
-        <Route path="/admin/alex/voice" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexVoice /></ProtectedRoute>} />
-        <Route path="/admin/alex/voice/tests" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexVoice /></ProtectedRoute>} />
-        <Route path="/admin/alex/context" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexContext /></ProtectedRoute>} />
-        <Route path="/admin/alex/analytics" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexAnalytics /></ProtectedRoute>} />
-        <Route path="/admin/alex/fallbacks" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexVoice /></ProtectedRoute>} />
-        <Route path="/admin/voice-health" element={<ProtectedRoute requiredRole="admin"><PageVoiceHealth /></ProtectedRoute>} />
-        <Route path="/admin/sms-health" element={<ProtectedRoute requiredRole="admin"><PageSmsHealth /></ProtectedRoute>} />
-        <Route path="/admin/system-time" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminSystemTime /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/system-integrity" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminSystemIntegrity /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/onboarding-orchestrator" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOnboardingOrchestrator /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/solicitation" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><AdminSolicitationPage /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/outreach-errors" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminOutreachErrors /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/provider-health" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminProviderHealth /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/contractors-contacted" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminContractorsContacted /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/domain-intelligence" element={<AdminProtectedRoute><AdminDomainIntelligence /></AdminProtectedRoute>} />
+        <Route path="/admin/domain-health" element={<AdminProtectedRoute><PageDomainHealthDashboard /></AdminProtectedRoute>} />
+        <Route path="/admin/alex-guardrails" element={<AdminProtectedRoute><PageAdminAlexConversationRules /></AdminProtectedRoute>} />
+        <Route path="/admin/alex-debug" element={<AdminProtectedRoute><PageAdminAlexDebugHome /></AdminProtectedRoute>} />
+        <Route path="/admin/alex-speech-tuning" element={<AdminProtectedRoute><PageAdminAlexSpeechTuning /></AdminProtectedRoute>} />
+        <Route path="/admin/alex-voice-admin" element={<AdminProtectedRoute><AlexVoiceAdmin /></AdminProtectedRoute>} />
+        <Route path="/admin/seo-articles" element={<AdminProtectedRoute><AdminSeoArticles /></AdminProtectedRoute>} />
+        <Route path="/admin/bulk-articles" element={<AdminProtectedRoute><AdminBulkArticlesPage /></AdminProtectedRoute>} />
+        <Route path="/admin/founder-invites" element={<AdminProtectedRoute><AdminFounderInvites /></AdminProtectedRoute>} />
+        <Route path="/admin/prospects" element={<AdminProtectedRoute><AdminProspects /></AdminProtectedRoute>} />
+        <Route path="/admin/prospects/import" element={<AdminProtectedRoute><AdminProspectImport /></AdminProtectedRoute>} />
+        <Route path="/admin/prospects/campaigns" element={<AdminProtectedRoute><AdminProspectCampaigns /></AdminProtectedRoute>} />
+        <Route path="/admin/roadmap-execution" element={<AdminProtectedRoute><AdminRoadmapExecution /></AdminProtectedRoute>} />
+        <Route path="/admin/screenshot-analytics" element={<AdminProtectedRoute><AdminScreenshotAnalyticsPage /></AdminProtectedRoute>} />
+        <Route path="/admin/screenshot-friction" element={<AdminProtectedRoute><AdminScreenshotFrictionPage /></AdminProtectedRoute>} />
+        <Route path="/admin/screenshot-alerts" element={<AdminProtectedRoute><AdminScreenshotAlertsPage /></AdminProtectedRoute>} />
+        <Route path="/admin/screenshot-insights" element={<AdminProtectedRoute><AdminScreenshotInsightsPage /></AdminProtectedRoute>} />
+        <Route path="/admin/optimization" element={<AdminProtectedRoute><AdminOptimizationDashboard /></AdminProtectedRoute>} />
+        <Route path="/admin/experiments" element={<AdminProtectedRoute><AdminExperimentsPage /></AdminProtectedRoute>} />
+        <Route path="/admin/experiments/:id" element={<AdminProtectedRoute><AdminExperimentDetailPage /></AdminProtectedRoute>} />
+        <Route path="/admin/optimization/recommendations" element={<AdminProtectedRoute><AdminOptimizationRecommendations /></AdminProtectedRoute>} />
+        <Route path="/admin/optimization/winners" element={<AdminProtectedRoute><AdminWinningVariantsPage /></AdminProtectedRoute>} />
+        <Route path="/admin/predictive-leads" element={<AdminProtectedRoute><AdminPredictiveLeads /></AdminProtectedRoute>} />
+        <Route path="/admin/dynamic-pricing-market" element={<AdminProtectedRoute><AdminDynamicMarketPricing /></AdminProtectedRoute>} />
+        <Route path="/admin/predictive-market-board" element={<AdminProtectedRoute><AdminPredictiveMarketBoard /></AdminProtectedRoute>} />
+        <Route path="/admin/zone-value" element={<AdminProtectedRoute><AdminZoneValueMap /></AdminProtectedRoute>} />
+        <Route path="/admin/voice-control" element={<AdminProtectedRoute><AdminVoiceControlPage /></AdminProtectedRoute>} />
+        <Route path="/admin/voice-optimizer" element={<AdminProtectedRoute><AdminVoiceOptimizerPage /></AdminProtectedRoute>} />
+        <Route path="/admin/voice-optimizer/:id" element={<AdminProtectedRoute><AdminVoiceOptimizerPage /></AdminProtectedRoute>} />
+        <Route path="/admin/voice-pronunciation" element={<AdminProtectedRoute><PageAdminVoicePronunciation /></AdminProtectedRoute>} />
+        <Route path="/admin/brand-pronunciation" element={<AdminProtectedRoute><PageAdminBrandPronunciation /></AdminProtectedRoute>} />
+        <Route path="/admin/alex/voice" element={<AdminProtectedRoute><PageAdminAlexVoice /></AdminProtectedRoute>} />
+        <Route path="/admin/alex/voice/tests" element={<AdminProtectedRoute><PageAdminAlexVoice /></AdminProtectedRoute>} />
+        <Route path="/admin/alex/context" element={<AdminProtectedRoute><PageAdminAlexContext /></AdminProtectedRoute>} />
+        <Route path="/admin/alex/analytics" element={<AdminProtectedRoute><PageAdminAlexAnalytics /></AdminProtectedRoute>} />
+        <Route path="/admin/alex/fallbacks" element={<AdminProtectedRoute><PageAdminAlexVoice /></AdminProtectedRoute>} />
+        <Route path="/admin/voice-health" element={<AdminProtectedRoute><PageVoiceHealth /></AdminProtectedRoute>} />
+        <Route path="/admin/sms-health" element={<AdminProtectedRoute><PageSmsHealth /></AdminProtectedRoute>} />
+        <Route path="/admin/system-time" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminSystemTime /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/system-integrity" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminSystemIntegrity /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/onboarding-orchestrator" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminOnboardingOrchestrator /></Suspense></AdminProtectedRoute>} />
         <Route path="/ia/:slug" element={<PageCuriosityLanding />} />
-        <Route path="/admin/outbound/send-windows" element={<ProtectedRoute requiredRole="admin"><PageSendWindowPolicy /></ProtectedRoute>} />
-        <Route path="/admin/system-health/alex-voice" element={<ProtectedRoute requiredRole="admin"><PageVoiceHealth /></ProtectedRoute>} />
-        <Route path="/admin/no-match-monitoring" element={<ProtectedRoute requiredRole="admin"><PageAdminNoMatchMonitoring /></ProtectedRoute>} />
-        <Route path="/admin/content-guard" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminContentGuard /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/ai-visibility-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAiVisibilityAudit /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/acquisition-funnel" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionFunnel /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/revenue-intelligence" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminRevenueIntelligence /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/acquisition/sms-sprint" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminSmsSprint /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/outbound/send-windows" element={<AdminProtectedRoute><PageSendWindowPolicy /></AdminProtectedRoute>} />
+        <Route path="/admin/system-health/alex-voice" element={<AdminProtectedRoute><PageVoiceHealth /></AdminProtectedRoute>} />
+        <Route path="/admin/no-match-monitoring" element={<AdminProtectedRoute><PageAdminNoMatchMonitoring /></AdminProtectedRoute>} />
+        <Route path="/admin/content-guard" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminContentGuard /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/ai-visibility-audit" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAiVisibilityAudit /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/acquisition-funnel" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionFunnel /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/revenue-intelligence" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminRevenueIntelligence /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/acquisition/sms-sprint" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminSmsSprint /></Suspense></AdminProtectedRoute>} />
         <Route path="/activer/:slug" element={<Suspense fallback={<LazyFallback />}><PageActivationSprint /></Suspense>} />
         <Route path="/activer/:slug/succes" element={<Suspense fallback={<LazyFallback />}><PageActivationSprint /></Suspense>} />
-        <Route path="/admin/content-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminContentAudit /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/acquisition-tests" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionTests /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/revenue-gate-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminRevenueGateAudit /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/revenue-path-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminRevenuePathAudit /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/tunnel-reality" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageTunnelReality /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/dispatch-bottleneck" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminDispatchBottleneck /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/recovery-sprint" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminRecoverySprint /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/normalization" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminNormalization /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/operations-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOperationsHealth /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/crm" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminCRM /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/scout" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminScout /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/content-audit" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminContentAudit /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/acquisition-tests" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionTests /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/revenue-gate-audit" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminRevenueGateAudit /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/revenue-path-audit" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminRevenuePathAudit /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/tunnel-reality" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageTunnelReality /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/dispatch-bottleneck" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminDispatchBottleneck /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/recovery-sprint" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminRecoverySprint /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/normalization" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminNormalization /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/operations-health" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminOperationsHealth /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/crm" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminCRM /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/scout" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminScout /></Suspense></AdminProtectedRoute>} />
 
 
 
 
 
-        <Route path="/admin/ops" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOps /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/site-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminSiteHealth /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/ops" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminOps /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/site-health" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminSiteHealth /></Suspense></AdminProtectedRoute>} />
 
-        <Route path="/admin/email-cta-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailCtaAudit /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/outreach-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOutreachHealth /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/email-sender-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailSenderHealth /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/sales-analytics" element={<ProtectedRoute requiredRole="admin"><AdminSalesAnalyticsPage /></ProtectedRoute>} />
+        <Route path="/admin/email-cta-audit" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminEmailCtaAudit /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/outreach-health" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminOutreachHealth /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/email-sender-health" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminEmailSenderHealth /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/sales-analytics" element={<AdminProtectedRoute><AdminSalesAnalyticsPage /></AdminProtectedRoute>} />
         <Route path="/entrepreneur/sales" element={<EntrepreneurVoiceSalesPage />} />
         <Route path="/homeowner/voice" element={<HomeownerVoiceEntryPage />} />
-        <Route path="/admin/homeowner-analytics" element={<ProtectedRoute requiredRole="admin"><AdminHomeownerAnalyticsPage /></ProtectedRoute>} />
+        <Route path="/admin/homeowner-analytics" element={<AdminProtectedRoute><AdminHomeownerAnalyticsPage /></AdminProtectedRoute>} />
         <Route path="/alex/predictive-seller" element={<PageAlexPredictiveSeller />} />
         <Route path="/signature" element={<PageAlexGuidedOnboarding />} />
-        <Route path="/admin/prospection" element={<ProtectedRoute requiredRole="admin"><AdminProspectionEngine /></ProtectedRoute>} />
-        <Route path="/admin/prospection-engine" element={<ProtectedRoute requiredRole="admin"><PageProspectionDashboard /></ProtectedRoute>} />
-        <Route path="/admin/prospection/prospects" element={<ProtectedRoute requiredRole="admin"><AdminProspectionProspects /></ProtectedRoute>} />
-        <Route path="/admin/prospection/analytics" element={<ProtectedRoute requiredRole="admin"><AdminProspectionAnalytics /></ProtectedRoute>} />
-        <Route path="/admin/city-activity-matrix" element={<ProtectedRoute requiredRole="admin"><PageAdminCityActivityMatrix /></ProtectedRoute>} />
-        <Route path="/admin/services-secondaires" element={<ProtectedRoute requiredRole="admin"><PageAdminActivitiesSecondaryManager /></ProtectedRoute>} />
+        <Route path="/admin/prospection" element={<AdminProtectedRoute><AdminProspectionEngine /></AdminProtectedRoute>} />
+        <Route path="/admin/prospection-engine" element={<AdminProtectedRoute><PageProspectionDashboard /></AdminProtectedRoute>} />
+        <Route path="/admin/prospection/prospects" element={<AdminProtectedRoute><AdminProspectionProspects /></AdminProtectedRoute>} />
+        <Route path="/admin/prospection/analytics" element={<AdminProtectedRoute><AdminProspectionAnalytics /></AdminProtectedRoute>} />
+        <Route path="/admin/city-activity-matrix" element={<AdminProtectedRoute><PageAdminCityActivityMatrix /></AdminProtectedRoute>} />
+        <Route path="/admin/services-secondaires" element={<AdminProtectedRoute><PageAdminActivitiesSecondaryManager /></AdminProtectedRoute>} />
         <Route path="/alex-landing" element={<PageAlexPersonalizedLanding />} />
-        <Route path="/admin/outreach" element={<ProtectedRoute requiredRole="admin"><AdminOutreachDashboard /></ProtectedRoute>} />
-        <Route path="/admin/outreach/new" element={<ProtectedRoute requiredRole="admin"><AdminOutreachCampaignNew /></ProtectedRoute>} />
-        <Route path="/admin/outreach/:id" element={<ProtectedRoute requiredRole="admin"><AdminOutreachCampaignDetail /></ProtectedRoute>} />
-        <Route path="/admin/outreach/templates" element={<ProtectedRoute requiredRole="admin"><AdminOutreachTemplates /></ProtectedRoute>} />
-        <Route path="/admin/outreach/analytics" element={<ProtectedRoute requiredRole="admin"><AdminOutreachAnalytics /></ProtectedRoute>} />
-        <Route path="/admin/contact-verification" element={<ProtectedRoute requiredRole="admin"><AdminContactVerification /></ProtectedRoute>} />
-        <Route path="/admin/outbound" element={<ProtectedRoute requiredRole="admin"><PageOutboundControlTower /></ProtectedRoute>} />
-        <Route path="/admin/autopilot-mvp" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAutopilotMvp /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/autopilot-mvp/run/:runId" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAutopilotRunDetail /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/outbound/legacy" element={<ProtectedRoute requiredRole="admin"><PageOutboundDashboard /></ProtectedRoute>} />
-        <Route path="/admin/outbound/test-center" element={<ProtectedRoute requiredRole="admin"><PageOutboundTestCenter /></ProtectedRoute>} />
-        <Route path="/admin/outreach-live" element={<ProtectedRoute requiredRole="admin"><PageOutreachLive /></ProtectedRoute>} />
-        <Route path="/admin/outbound/campaigns" element={<ProtectedRoute requiredRole="admin"><PageOutboundCampaigns /></ProtectedRoute>} />
-        <Route path="/admin/outbound/leads" element={<ProtectedRoute requiredRole="admin"><PageOutboundLeadsQueue /></ProtectedRoute>} />
-        <Route path="/admin/outbound/leads/:id" element={<ProtectedRoute requiredRole="admin"><PageOutboundLeadProfile /></ProtectedRoute>} />
-        <Route path="/admin/outbound/sequences" element={<ProtectedRoute requiredRole="admin"><PageOutboundSequences /></ProtectedRoute>} />
-        <Route path="/admin/outbound/mailboxes" element={<ProtectedRoute requiredRole="admin"><PageOutboundMailboxes /></ProtectedRoute>} />
-        <Route path="/admin/outbound/analytics" element={<ProtectedRoute requiredRole="admin"><PageOutboundAnalytics /></ProtectedRoute>} />
-        <Route path="/admin/outbound/suppressions" element={<ProtectedRoute requiredRole="admin"><PageOutboundSuppressionCenter /></ProtectedRoute>} />
-        <Route path="/admin/outbound/landing-pages" element={<ProtectedRoute requiredRole="admin"><PageOutboundLandingPages /></ProtectedRoute>} />
-        <Route path="/admin/outbound/landing-funnel" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOutboundLandingFunnel /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/outreach" element={<AdminProtectedRoute><AdminOutreachDashboard /></AdminProtectedRoute>} />
+        <Route path="/admin/outreach/new" element={<AdminProtectedRoute><AdminOutreachCampaignNew /></AdminProtectedRoute>} />
+        <Route path="/admin/outreach/:id" element={<AdminProtectedRoute><AdminOutreachCampaignDetail /></AdminProtectedRoute>} />
+        <Route path="/admin/outreach/templates" element={<AdminProtectedRoute><AdminOutreachTemplates /></AdminProtectedRoute>} />
+        <Route path="/admin/outreach/analytics" element={<AdminProtectedRoute><AdminOutreachAnalytics /></AdminProtectedRoute>} />
+        <Route path="/admin/contact-verification" element={<AdminProtectedRoute><AdminContactVerification /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound" element={<AdminProtectedRoute><PageOutboundControlTower /></AdminProtectedRoute>} />
+        <Route path="/admin/autopilot-mvp" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAutopilotMvp /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/autopilot-mvp/run/:runId" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAutopilotRunDetail /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/legacy" element={<AdminProtectedRoute><PageOutboundDashboard /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/test-center" element={<AdminProtectedRoute><PageOutboundTestCenter /></AdminProtectedRoute>} />
+        <Route path="/admin/outreach-live" element={<AdminProtectedRoute><PageOutreachLive /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/campaigns" element={<AdminProtectedRoute><PageOutboundCampaigns /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/leads" element={<AdminProtectedRoute><PageOutboundLeadsQueue /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/leads/:id" element={<AdminProtectedRoute><PageOutboundLeadProfile /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/sequences" element={<AdminProtectedRoute><PageOutboundSequences /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/mailboxes" element={<AdminProtectedRoute><PageOutboundMailboxes /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/analytics" element={<AdminProtectedRoute><PageOutboundAnalytics /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/suppressions" element={<AdminProtectedRoute><PageOutboundSuppressionCenter /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/landing-pages" element={<AdminProtectedRoute><PageOutboundLandingPages /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/landing-funnel" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminOutboundLandingFunnel /></Suspense></AdminProtectedRoute>} />
         <Route path="/pro/diagnostic/:slug" element={<Suspense fallback={<LazyFallback />}><PageOutboundLanding /></Suspense>} />
         <Route path="/pro/diagnostic/:slug/merci" element={<Suspense fallback={<LazyFallback />}><PageOutboundLandingSuccess /></Suspense>} />
-        <Route path="/admin/outbound/ops" element={<ProtectedRoute requiredRole="admin"><PageOutboundOpsCenter /></ProtectedRoute>} />
-        <Route path="/admin/outbound/replies" element={<ProtectedRoute requiredRole="admin"><PageOutboundReplies /></ProtectedRoute>} />
-        <Route path="/admin/communications" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminCommunications /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/outbound/verification" element={<ProtectedRoute requiredRole="admin"><PageOutboundVerification /></ProtectedRoute>} />
-        <Route path="/admin/outbound/tests" element={<ProtectedRoute requiredRole="admin"><PageOutboundTests /></ProtectedRoute>} />
-        <Route path="/admin/outbound/automations" element={<ProtectedRoute requiredRole="admin"><PageOutboundAutomations /></ProtectedRoute>} />
-        <Route path="/admin/outbound/logs" element={<ProtectedRoute requiredRole="admin"><PageOutboundLogs /></ProtectedRoute>} />
-        <Route path="/admin/outbound/settings-lite" element={<ProtectedRoute requiredRole="admin"><PageOutboundSettingsLite /></ProtectedRoute>} />
-        <Route path="/admin/outbound/email-health" element={<ProtectedRoute requiredRole="admin"><PageOutboundEmailHealth /></ProtectedRoute>} />
-        <Route path="/admin/outbound/sequences-elite" element={<ProtectedRoute requiredRole="admin"><PageOutboundSequencesElite /></ProtectedRoute>} />
-        <Route path="/admin/outbound/sending-architecture" element={<ProtectedRoute requiredRole="admin"><PageOutboundSendingArchitecture /></ProtectedRoute>} />
-        <Route path="/admin/outbound/deliverability" element={<ProtectedRoute requiredRole="admin"><PageOutboundDeliverability /></ProtectedRoute>} />
-        <Route path="/admin/outbound/ai-rewrite" element={<ProtectedRoute requiredRole="admin"><PageOutboundAIRewrite /></ProtectedRoute>} />
-        <Route path="/admin/outbound/revenue" element={<ProtectedRoute requiredRole="admin"><PageOutboundRevenue /></ProtectedRoute>} />
-        <Route path="/admin/outbound/sms-fallback" element={<ProtectedRoute requiredRole="admin"><PageOutboundSMSFallback /></ProtectedRoute>} />
-        <Route path="/admin/outbound/campaigns/new" element={<ProtectedRoute requiredRole="admin"><PageCampaignBuilderAutonomous /></ProtectedRoute>} />
-        <Route path="/admin/outbound/runs" element={<ProtectedRoute requiredRole="admin"><PagePipelineCommandCenterOutbound /></ProtectedRoute>} />
-        <Route path="/admin/outbound/runs/:runId" element={<ProtectedRoute requiredRole="admin"><PageRunDetailsAgentExecution /></ProtectedRoute>} />
-        <Route path="/admin/outbound/blockers" element={<ProtectedRoute requiredRole="admin"><PageBlockedItemsRecoveryQueue /></ProtectedRoute>} />
-        <Route path="/admin/outbound/health" element={<ProtectedRoute requiredRole="admin"><PageSystemHealthDependencies /></ProtectedRoute>} />
-        <Route path="/admin/outbound/runs-legacy" element={<ProtectedRoute requiredRole="admin"><PageRunMonitorAutonomous /></ProtectedRoute>} />
-        <Route path="/admin/outbound/settings" element={<ProtectedRoute requiredRole="admin"><PageOutboundSettingsAutonomous /></ProtectedRoute>} />
-        <Route path="/admin/outbound/targets" element={<ProtectedRoute requiredRole="admin"><PageOutboundTargetListInbox /></ProtectedRoute>} />
-        <Route path="/admin/outbound/targets/review" element={<ProtectedRoute requiredRole="admin"><PageOutboundTargetReviewQueue /></ProtectedRoute>} />
-        <Route path="/admin/outbound/autopilot/runs" element={<ProtectedRoute requiredRole="admin"><PageOutboundAutopilotRuns /></ProtectedRoute>} />
-        <Route path="/admin/outbound/cities" element={<ProtectedRoute requiredRole="admin"><PageCityFirstTargetHub /></ProtectedRoute>} />
-        <Route path="/admin/outbound/cities/:slug" element={<ProtectedRoute requiredRole="admin"><PageCityExecutionMonitor /></ProtectedRoute>} />
-        <Route path="/admin/outbound/diagnostics" element={<ProtectedRoute requiredRole="admin"><PageRunDiagnostics /></ProtectedRoute>} />
-        <Route path="/admin/outbound/sniper" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageSniperPipeline /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/outbound/sms" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageSMSPipeline /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/execution-control" element={<ProtectedRoute requiredRole="admin"><PageAdminExecutionControl /></ProtectedRoute>} />
-        <Route path="/admin/dominance" element={<ProtectedRoute requiredRole="admin"><PageAdminDominanceControl /></ProtectedRoute>} />
-        <Route path="/admin/voice-debug" element={<ProtectedRoute requiredRole="admin"><PageAlexVoiceDebugAdmin /></ProtectedRoute>} />
-        <Route path="/admin/alex-prompt-rules" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAlexPromptRulesAdmin /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/alex-conversation-debug" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAlexConversationDebugAdmin /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/alex-knowledge-plans" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAlexKnowledgePlans /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/alex-response-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAlexResponseAudit /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/sms-images" element={<ProtectedRoute requiredRole="admin"><PageAdminSMSImageTemplates /></ProtectedRoute>} />
-        <Route path="/admin/brand" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminBrandSettings /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/brand-intelligence/logos" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminBrandLogos /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/capacity-framework" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminCapacityFramework /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/share-images" element={<ProtectedRoute requiredRole="admin"><PageShareImageDashboard /></ProtectedRoute>} />
-        <Route path="/admin/share-images/generate" element={<ProtectedRoute requiredRole="admin"><PageShareImageGenerate /></ProtectedRoute>} />
-        <Route path="/admin/share-images/templates" element={<ProtectedRoute requiredRole="admin"><PageShareImageTemplates /></ProtectedRoute>} />
-        <Route path="/admin/share-images/history" element={<ProtectedRoute requiredRole="admin"><PageShareImageHistory /></ProtectedRoute>} />
-        <Route path="/admin/share-images/preview" element={<ProtectedRoute requiredRole="admin"><PageShareImagePreview /></ProtectedRoute>} />
-        <Route path="/admin/extraction" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminExtractionQueue /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/facebook-extraction" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageFacebookExtractionEngine /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/extraction/coverage" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminCoverageCityDomain /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/outbound/approvals" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOutboundApprovals /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/outbound/auto-flagging" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOutboundAutoFlagging /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/prospect-execution" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminProspectExecutionDashboard /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/prospect-execution/:runId" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminProspectExecutionRunDetail /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/affiliates" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAffiliatesHub /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/affiliates/dashboard" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAffiliateDashboard /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/affiliates/assign" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAffiliateAssignment /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/affiliates/attribution" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAffiliateAttribution /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/outbound/ops" element={<AdminProtectedRoute><PageOutboundOpsCenter /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/replies" element={<AdminProtectedRoute><PageOutboundReplies /></AdminProtectedRoute>} />
+        <Route path="/admin/communications" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminCommunications /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/verification" element={<AdminProtectedRoute><PageOutboundVerification /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/tests" element={<AdminProtectedRoute><PageOutboundTests /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/automations" element={<AdminProtectedRoute><PageOutboundAutomations /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/logs" element={<AdminProtectedRoute><PageOutboundLogs /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/settings-lite" element={<AdminProtectedRoute><PageOutboundSettingsLite /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/email-health" element={<AdminProtectedRoute><PageOutboundEmailHealth /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/sequences-elite" element={<AdminProtectedRoute><PageOutboundSequencesElite /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/sending-architecture" element={<AdminProtectedRoute><PageOutboundSendingArchitecture /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/deliverability" element={<AdminProtectedRoute><PageOutboundDeliverability /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/ai-rewrite" element={<AdminProtectedRoute><PageOutboundAIRewrite /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/revenue" element={<AdminProtectedRoute><PageOutboundRevenue /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/sms-fallback" element={<AdminProtectedRoute><PageOutboundSMSFallback /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/campaigns/new" element={<AdminProtectedRoute><PageCampaignBuilderAutonomous /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/runs" element={<AdminProtectedRoute><PagePipelineCommandCenterOutbound /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/runs/:runId" element={<AdminProtectedRoute><PageRunDetailsAgentExecution /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/blockers" element={<AdminProtectedRoute><PageBlockedItemsRecoveryQueue /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/health" element={<AdminProtectedRoute><PageSystemHealthDependencies /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/runs-legacy" element={<AdminProtectedRoute><PageRunMonitorAutonomous /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/settings" element={<AdminProtectedRoute><PageOutboundSettingsAutonomous /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/targets" element={<AdminProtectedRoute><PageOutboundTargetListInbox /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/targets/review" element={<AdminProtectedRoute><PageOutboundTargetReviewQueue /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/autopilot/runs" element={<AdminProtectedRoute><PageOutboundAutopilotRuns /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/cities" element={<AdminProtectedRoute><PageCityFirstTargetHub /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/cities/:slug" element={<AdminProtectedRoute><PageCityExecutionMonitor /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/diagnostics" element={<AdminProtectedRoute><PageRunDiagnostics /></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/sniper" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageSniperPipeline /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/sms" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageSMSPipeline /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/execution-control" element={<AdminProtectedRoute><PageAdminExecutionControl /></AdminProtectedRoute>} />
+        <Route path="/admin/dominance" element={<AdminProtectedRoute><PageAdminDominanceControl /></AdminProtectedRoute>} />
+        <Route path="/admin/voice-debug" element={<AdminProtectedRoute><PageAlexVoiceDebugAdmin /></AdminProtectedRoute>} />
+        <Route path="/admin/alex-prompt-rules" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAlexPromptRulesAdmin /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/alex-conversation-debug" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAlexConversationDebugAdmin /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/alex-knowledge-plans" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAlexKnowledgePlans /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/alex-response-audit" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAlexResponseAudit /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/sms-images" element={<AdminProtectedRoute><PageAdminSMSImageTemplates /></AdminProtectedRoute>} />
+        <Route path="/admin/brand" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminBrandSettings /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/brand-intelligence/logos" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminBrandLogos /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/capacity-framework" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminCapacityFramework /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/share-images" element={<AdminProtectedRoute><PageShareImageDashboard /></AdminProtectedRoute>} />
+        <Route path="/admin/share-images/generate" element={<AdminProtectedRoute><PageShareImageGenerate /></AdminProtectedRoute>} />
+        <Route path="/admin/share-images/templates" element={<AdminProtectedRoute><PageShareImageTemplates /></AdminProtectedRoute>} />
+        <Route path="/admin/share-images/history" element={<AdminProtectedRoute><PageShareImageHistory /></AdminProtectedRoute>} />
+        <Route path="/admin/share-images/preview" element={<AdminProtectedRoute><PageShareImagePreview /></AdminProtectedRoute>} />
+        <Route path="/admin/extraction" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminExtractionQueue /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/facebook-extraction" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageFacebookExtractionEngine /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/extraction/coverage" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminCoverageCityDomain /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/approvals" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminOutboundApprovals /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/outbound/auto-flagging" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminOutboundAutoFlagging /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/prospect-execution" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminProspectExecutionDashboard /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/prospect-execution/:runId" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminProspectExecutionRunDetail /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/affiliates" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliatesHub /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/affiliates/dashboard" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliateDashboard /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/affiliates/assign" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliateAssignment /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/affiliates/attribution" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliateAttribution /></Suspense></AdminProtectedRoute>} />
         <Route path="/affiliate" element={<ProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliateActionMode /></Suspense></ProtectedRoute>} />
         <Route path="/affiliate/crm" element={<ProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliateWarRoom /></Suspense></ProtectedRoute>} />
         <Route path="/affiliate/company/:id" element={<ProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliateCompanyWorkspace /></Suspense></ProtectedRoute>} />
         <Route path="/affiliate/prospects/import" element={<ProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliateProspectImport /></Suspense></ProtectedRoute>} />
         <Route path="/affiliate/login" element={<Suspense fallback={<LazyFallback />}><PageAffiliateLogin /></Suspense>} />
         <Route path="/go/:slug" element={<Suspense fallback={<LazyFallback />}><PageAffiliateShortLink /></Suspense>} />
-        <Route path="/admin/affiliates/new" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAffiliateNew /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/affiliates/new" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAffiliateNew /></Suspense></AdminProtectedRoute>} />
         <Route path="/affilie" element={<Navigate to="/affilies" replace />} />
         <Route path="/affilies" element={<Suspense fallback={<LazyFallback />}><PageAffiliesPublic /></Suspense>} />
         <Route path="/affilies/onboarding" element={<Suspense fallback={<LazyFallback />}><PageAffiliateOnboarding /></Suspense>} />
         <Route path="/affilies/activer" element={<Navigate to="/affilies/onboarding" replace />} />
         <Route path="/a/:slug" element={<Suspense fallback={<LazyFallback />}><PageAffiliePublicProfile /></Suspense>} />
         <Route path="/lorraine" element={<Navigate to="/a/lorraine" replace />} />
-        <Route path="/admin/email-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailHealthCenterV2 /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/email-health-legacy" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailAuditCenter /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/email-audit-history" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailAuditHistory /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/email-control-center" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailControlCenter /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/email-warmup" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailWarmup /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/email-delivery-logs" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailDeliveryLogs /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/acquisition-pipeline-legacy" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminPipelineProspects /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/email-health" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageEmailHealthCenterV2 /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/email-health-legacy" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageEmailAuditCenter /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/email-audit-history" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageEmailAuditHistory /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/email-control-center" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminEmailControlCenter /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/email-warmup" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminEmailWarmup /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/email-delivery-logs" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminEmailDeliveryLogs /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/acquisition-pipeline-legacy" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminPipelineProspects /></Suspense></AdminProtectedRoute>} />
         <Route path="/services/:entitySlug/:citySlug" element={<PageServiceEntityLanding />} />
         <Route path="/audit/:slug" element={<AuditLandingPage />} />
         <Route path="/articles" element={<PageArticlesRecentCompressedFeed />} />
