@@ -865,8 +865,9 @@ const PageAffiliateWarRoom = lazyWithRetry(() => import("@/pages/affiliate/PageA
 const PageAffiliateActionMode = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateActionMode"));
 const PageAffiliateCompanyWorkspace = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateCompanyWorkspace"));
 const PageAffiliateAssignment = lazyWithRetry(() => import("@/pages/admin/affiliate/PageAffiliateAssignment"));
+const PageAffiliateAttribution = lazyWithRetry(() => import("@/pages/admin/affiliate/PageAffiliateAttribution"));
 const PageAffiliesPublic = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliesPublic"));
-const PageAffilieActivation = lazyWithRetry(() => import("@/pages/affiliate/PageAffilieActivation"));
+const PageAffiliateOnboarding = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateOnboarding"));
 const PageAffiliePublicProfile = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliePublicProfile"));
 const PageAffiliateLogin = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateLogin"));
 const PageAffiliateShortLink = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateShortLink"));
@@ -1784,6 +1785,7 @@ export const AppRouter = () => (
         <Route path="/admin/affiliates" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAffiliatesHub /></Suspense></ProtectedRoute>} />
         <Route path="/admin/affiliates/dashboard" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAffiliateDashboard /></Suspense></ProtectedRoute>} />
         <Route path="/admin/affiliates/assign" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAffiliateAssignment /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/affiliates/attribution" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAffiliateAttribution /></Suspense></ProtectedRoute>} />
         <Route path="/affiliate" element={<ProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliateActionMode /></Suspense></ProtectedRoute>} />
         <Route path="/affiliate/crm" element={<ProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliateWarRoom /></Suspense></ProtectedRoute>} />
         <Route path="/affiliate/company/:id" element={<ProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliateCompanyWorkspace /></Suspense></ProtectedRoute>} />
@@ -1791,8 +1793,10 @@ export const AppRouter = () => (
         <Route path="/affiliate/login" element={<Suspense fallback={<LazyFallback />}><PageAffiliateLogin /></Suspense>} />
         <Route path="/go/:slug" element={<Suspense fallback={<LazyFallback />}><PageAffiliateShortLink /></Suspense>} />
         <Route path="/admin/affiliates/new" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAffiliateNew /></Suspense></ProtectedRoute>} />
+        <Route path="/affilie" element={<Navigate to="/affilies" replace />} />
         <Route path="/affilies" element={<Suspense fallback={<LazyFallback />}><PageAffiliesPublic /></Suspense>} />
-        <Route path="/affilies/activer" element={<Suspense fallback={<LazyFallback />}><PageAffilieActivation /></Suspense>} />
+        <Route path="/affilies/onboarding" element={<Suspense fallback={<LazyFallback />}><PageAffiliateOnboarding /></Suspense>} />
+        <Route path="/affilies/activer" element={<Navigate to="/affilies/onboarding" replace />} />
         <Route path="/a/:slug" element={<Suspense fallback={<LazyFallback />}><PageAffiliePublicProfile /></Suspense>} />
         <Route path="/lorraine" element={<Navigate to="/a/lorraine" replace />} />
         <Route path="/admin/email-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailHealthCenterV2 /></Suspense></ProtectedRoute>} />

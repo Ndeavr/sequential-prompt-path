@@ -6,6 +6,7 @@
 import { useCallback, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { trackAffiliateFunnel } from "@/features/affiliate/onboarding/trackAffiliateFunnel";
 
 export interface ActionProspect {
   id: string;
@@ -57,7 +58,11 @@ export function useNextProspect() {
         const { data, error } = await supabase.functions.invoke("affiliate-next-prospect", { body: payload });
         if (error) throw error;
         if ((data as any)?.error) throw new Error((data as any).error);
-        return data as NextProspectResult;
+        const result = data as NextProspectResult;
+        if (result?.prospect && payload.action === "next") {
+          trackAffiliateFunnel("first_prospect_viewed", { metadata: { lead_id: result.prospect.id } });
+        }
+        return result;
       } catch (e: any) {
         setError(e?.message ?? "Impossible de charger un prospect.");
         return null;
@@ -136,6 +141,7 @@ export async function logCallStarted(affiliateId: string, leadId: string) {
     channel: "voice",
     payload: {},
   });
+  trackAffiliateFunnel("call_started", { affiliate_id: affiliateId, metadata: { lead_id: leadId } });
 }
 
 export interface DayStats {
