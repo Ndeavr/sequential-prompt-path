@@ -173,6 +173,7 @@ export default function PageAiRecommendationAudit() {
   async function runAudit(c: Candidate | null) {
     setAuditing(true);
     setError(null);
+    void trackInvite("started");
     try {
       const { data, error: fnErr } = await supabase.functions.invoke("ai-recommendation-audit", {
         body: {
@@ -190,6 +191,7 @@ export default function PageAiRecommendationAudit() {
         return;
       }
       setResult(data as AuditResult);
+      void trackInvite("completed");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
       setError("Analyse indisponible pour le moment. Réessayez dans quelques secondes.");
