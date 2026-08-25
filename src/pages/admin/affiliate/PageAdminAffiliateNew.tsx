@@ -41,7 +41,7 @@ export default function PageAdminAffiliateNew() {
     first_name: "", last_name: "", business_name: "",
     email: "", phone: "", primary_city: "", province: "QC",
     preferred_language: "fr", affiliate_type: "affiliate",
-    slug: "", commission_pct: 10, daily_quota: 10, bio: "",
+    slug: "", commission_pct: 20, daily_quota: 10, bio: "",
     territories: "", allowed_categories: "",
     display_preference: "first_name",
     status: "draft" as "draft" | "invited" | "active",
