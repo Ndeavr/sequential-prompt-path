@@ -233,13 +233,16 @@ Deno.serve(async (req) => {
     // email on file (email-only fallback path).
     let query = supabase
       .from("verified_contractor_prospects")
-      .select("id, business_name, phone_e164, phone_validation_status, phone_line_type, sms_eligibility_tier, sms_eligibility_confidence, data_quality_score, website_url, google_business_url, google_place_id, phone_source_url, city, category, source, email, outreach_status, verification_status, retry_count, email_eligible, email_eligibility_reason, email_sent_at")
+      .select("id, business_name, phone_e164, phone_validation_status, phone_line_type, sms_eligibility_tier, sms_eligibility_confidence, data_quality_score, website_url, google_business_url, google_place_id, phone_source_url, city, category, source, email, outreach_status, verification_status, retry_count, email_eligible, email_eligibility_reason, email_sent_at, source_urls")
       .eq("verification_status", "verified")
       .gte("data_quality_score", 80)
       // CASL provenance gate: a standalone website is NOT required, but a
       // verifiable public business source is. Any of website / Google Business
       // listing / Google place id / documented phone source URL qualifies.
-      .or("website_url.not.is.null,google_business_url.not.is.null,google_place_id.not.is.null,phone_source_url.not.is.null")
+      // An official public registry URL (e.g. RBQ / Novoclimat / REQ lists)
+      // persisted in source_urls.official_registry also qualifies — it is a
+      // real public source, never fabricated.
+      .or("website_url.not.is.null,google_business_url.not.is.null,google_place_id.not.is.null,phone_source_url.not.is.null,source_urls->>official_registry.not.is.null")
       .order("sms_eligibility_tier", { ascending: true, nullsFirst: false })
       .order("data_quality_score", { ascending: false })
       .limit(limit);
@@ -275,12 +278,13 @@ Deno.serve(async (req) => {
       if (missingIds.length > 0) {
         const { data: skipped } = await supabase
           .from("verified_contractor_prospects")
-          .select("id, business_name, city, category, source, verification_status, phone_line_type, sms_eligibility_tier, outreach_status, data_quality_score, website_url, google_business_url, google_place_id, phone_source_url, email, eligibility_reason")
+          .select("id, business_name, city, category, source, verification_status, phone_line_type, sms_eligibility_tier, outreach_status, data_quality_score, website_url, google_business_url, google_place_id, phone_source_url, email, eligibility_reason, source_urls")
           .in("id", missingIds);
         for (const p of skipped ?? []) {
           let reason = "unknown_ineligibility";
           const hasProvenance = Boolean(
-            p.website_url || p.google_business_url || p.google_place_id || p.phone_source_url,
+            p.website_url || p.google_business_url || p.google_place_id || p.phone_source_url
+              || (p.source_urls as any)?.official_registry,
           );
           if (!hasProvenance) reason = "missing_public_provenance";
           else if (p.verification_status !== "verified") reason = `not_verified:${p.verification_status ?? "null"}`;
