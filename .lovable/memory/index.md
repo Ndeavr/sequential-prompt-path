@@ -1,2 +1,3 @@
 - [Sparse Lead Retention](mem://features/sparse-lead-retention) — Person-name+phone Facebook leads never discarded; pending fields, tier C SMS, "À enrichir" admin surface, sparse-safe outreach copy
 - [Admin Navigation Architecture](mem://admin/navigation-architecture) — Operator-first admin nav: 5 primary destinations (Dashboard, Acquisition, Entrepreneurs, RDV, Revenus), Affiliés secondary, Operations/Avancé collapsed; router-level AdminProtectedRoute shell, idempotent AdminLayout
+- [Email Eligible Fallback](mem://features/email-eligible-fallback) — Carrier-dead SMS prospects enter compliant email wave via `email_eligible` flag; monotonic status preserved, suppression + 7d cooldown gates enforced at send time

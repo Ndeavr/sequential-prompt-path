@@ -210,7 +210,7 @@ Deno.serve(async (req) => {
     // email on file (email-only fallback path).
     let query = supabase
       .from("verified_contractor_prospects")
-      .select("id, business_name, phone_e164, phone_validation_status, phone_line_type, sms_eligibility_tier, sms_eligibility_confidence, data_quality_score, website_url, google_business_url, google_place_id, phone_source_url, city, category, source, email, outreach_status, verification_status, retry_count")
+      .select("id, business_name, phone_e164, phone_validation_status, phone_line_type, sms_eligibility_tier, sms_eligibility_confidence, data_quality_score, website_url, google_business_url, google_place_id, phone_source_url, city, category, source, email, outreach_status, verification_status, retry_count, email_eligible, email_eligibility_reason, email_sent_at")
       .eq("verification_status", "verified")
       .gte("data_quality_score", 80)
       // CASL provenance gate: a standalone website is NOT required, but a
@@ -223,8 +223,14 @@ Deno.serve(async (req) => {
 
     if (forceEmail) {
       // A hard-failed SMS attempt never reached a human, so these rows stay
-      // contactable on the email channel only. Paid/activated are excluded.
-      query = query.in("outreach_status", ["none", "failed"]).not("email", "is", null);
+      // contactable on the email channel only. Prospects whose SMS line is
+      // carrier-proven dead carry email_eligible=true and may be emailed even
+      // when their monotonic outreach_status (sent/delivered/clicked) cannot
+      // be downgraded — the trigger preserves it. Terminal states excluded.
+      query = query
+        .or("outreach_status.in.(none,failed),email_eligible.eq.true")
+        .not("email", "is", null)
+        .or("outreach_status.is.null,outreach_status.not.in.(registered,payment_started,paid,activated)");
     } else {
       query = query
         .eq("outreach_status", "none")
@@ -312,6 +318,9 @@ Deno.serve(async (req) => {
         .from("acq_sms_logs")
         .select("recipient_phone, prospect_id, created_at")
         .gte("created_at", dupSince)
+        // A message the carrier never delivered (undelivered/failed) never
+        // reached a human — it is a non-contact and must not trip the guard.
+        .or("status.is.null,status.not.in.(undelivered,failed)")
         .or(
           [
             phonesInBatch.length ? `recipient_phone.in.(${phonesInBatch.join(",")})` : null,
@@ -321,6 +330,20 @@ Deno.serve(async (req) => {
       for (const row of recentLogs ?? []) {
         if (row.recipient_phone) recentlyContactedPhones.add(String(row.recipient_phone));
         if (row.prospect_id) recentlyContactedIds.add(String(row.prospect_id));
+      }
+      // Same guard window on the email channel: acquisition emails carry
+      // message_id `acq-<prospectId>-<ts>` in the canonical email_send_log.
+      if (idsInBatch.length > 0) {
+        const { data: recentEmails } = await supabase
+          .from("email_send_log")
+          .select("message_id, created_at")
+          .gte("created_at", dupSince)
+          .eq("status", "sent")
+          .or(idsInBatch.map((id) => `message_id.like.acq-${id}-%`).join(","));
+        for (const row of recentEmails ?? []) {
+          const m = /^acq-([0-9a-fA-F-]{36})-/.exec(String(row.message_id ?? ""));
+          if (m) recentlyContactedIds.add(m[1]);
+        }
       }
     }
     const isRecentlyContacted = (p: any) =>
@@ -337,6 +360,9 @@ Deno.serve(async (req) => {
           tier: p.sms_eligibility_tier,
           phone_line_type: p.phone_line_type,
           has_email: !!p.email,
+          email_eligible: p.email_eligible === true,
+          email_eligibility_reason: p.email_eligibility_reason ?? null,
+          outreach_status: p.outreach_status,
           duplicate_guard: dup,
           channel_planned: dup ? "none" : (smsEligibleTier ? "sms" : (p.email ? "email" : "none")),
           skip_reason: dup ? `duplicate_recent_contact_${DUP_GUARD_HOURS}h` : null,
@@ -475,6 +501,20 @@ Deno.serve(async (req) => {
         );
 
       if (shouldTryEmail) {
+        // Unified suppression / opt-out gate (same suppression_index the
+        // commercial-send-gate uses). A suppressed address is never emailed.
+        const { data: isSuppressed } = await supabase
+          .rpc("is_email_suppressed", { p_email: p.email });
+        if (isSuppressed === true) {
+          results.push({ id: p.id, business_name: p.business_name, status: "skipped", skipped: "email_suppressed", channel_used: null });
+          continue;
+        }
+        // Email channel cooldown: at most one acquisition email per prospect
+        // per 7 days, whatever automation produced the previous one.
+        if (p.email_sent_at && Date.now() - new Date(p.email_sent_at).getTime() < 7 * 24 * 3600_000) {
+          results.push({ id: p.id, business_name: p.business_name, status: "skipped", skipped: "email_cooldown_7d", channel_used: null });
+          continue;
+        }
         const emailRes = await sendEmailViaResend(url, serviceKey, {
           to: p.email!,
           businessName: p.business_name,

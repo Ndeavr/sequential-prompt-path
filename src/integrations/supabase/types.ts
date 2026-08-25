@@ -90427,6 +90427,9 @@ export type Database = {
           delivery_status: string | null
           eligibility_reason: string | null
           email: string | null
+          email_eligibility_reason: string | null
+          email_eligible: boolean | null
+          email_eligible_at: string | null
           email_error_message: string | null
           email_failure_reason: string | null
           email_provider_message_id: string | null
@@ -90489,6 +90492,9 @@ export type Database = {
           delivery_status?: string | null
           eligibility_reason?: string | null
           email?: string | null
+          email_eligibility_reason?: string | null
+          email_eligible?: boolean | null
+          email_eligible_at?: string | null
           email_error_message?: string | null
           email_failure_reason?: string | null
           email_provider_message_id?: string | null
@@ -90551,6 +90557,9 @@ export type Database = {
           delivery_status?: string | null
           eligibility_reason?: string | null
           email?: string | null
+          email_eligibility_reason?: string | null
+          email_eligible?: boolean | null
+          email_eligible_at?: string | null
           email_error_message?: string | null
           email_failure_reason?: string | null
           email_provider_message_id?: string | null
