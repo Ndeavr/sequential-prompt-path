@@ -104,9 +104,42 @@ const PHASES: Record<string, Step[]> = {
     { fn: "admin-activation-subscribe", payload: { mode: "followup_scan", dry_run: true } },
   ],
   onboarding_activation: [
-    { fn: "activate-contractor-plan", payload: { mode: "reconcile" } },
-    { fn: "contractor-activation-enrich", payload: { mode: "batch" } },
+    {
+      // Requires a real paid Stripe session id — never invoke with an empty body.
+      fn: "activate-contractor-plan",
+      resolve: async (sb) => {
+        const { data } = await sb
+          .from("billing_checkout_sessions")
+          .select("stripe_checkout_session_id")
+          .eq("payment_status", "paid")
+          .is("paid_at", null)
+          .order("created_at", { ascending: false })
+          .limit(FANOUT_LIMIT);
+        return (data ?? [])
+          .filter((r: Record<string, unknown>) => !!r.stripe_checkout_session_id)
+          .map((r: Record<string, unknown>) => ({ checkout_session_id: r.stripe_checkout_session_id }));
+      },
+    },
+    {
+      // Requires funnel_id — fan out over funnels awaiting enrichment.
+      fn: "contractor-activation-enrich",
+      resolve: async (sb) => {
+        const { data } = await sb
+          .from("contractor_activation_funnel")
+          .select("id, business_name, phone, website")
+          .or("import_status.is.null,import_status.eq.pending,import_status.eq.failed")
+          .order("created_at", { ascending: false })
+          .limit(FANOUT_LIMIT);
+        return (data ?? []).map((r: Record<string, unknown>) => ({
+          funnel_id: r.id,
+          business_name: r.business_name,
+          phone: r.phone,
+          website: r.website,
+        }));
+      },
+    },
   ],
+
   expansion_scan: [
     { fn: "expansion-detector", payload: { mode: "scan" } },
   ],
