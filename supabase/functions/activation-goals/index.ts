@@ -1,4 +1,4 @@
-// activation-goals — Post-$1 qualification flow (Alex, one question at a time).
+// activation-goals — Post-payment qualification flow (Alex, one question at a time). Canonical entry offer: $350 pack.
 //
 // Actions:
 //   "start"       → resolves what UNPRO already knows, returns prefilled answers
