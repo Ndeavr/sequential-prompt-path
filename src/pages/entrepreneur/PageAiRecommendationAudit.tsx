@@ -201,6 +201,15 @@ export default function PageAiRecommendationAudit() {
     };
   }, [query, touched, runSearch]);
 
+  // Tokenized outreach link (SMS score-first): auto-run the exact prospect's
+  // audit on arrival — the visitor immediately sees THEIR score, no form.
+  useEffect(() => {
+    if (!prospectId || autoRunRef.current) return;
+    autoRunRef.current = true;
+    void runAudit({ kind: "prospect", id: prospectId, business_name: query.trim() || "prospect" } as Candidate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prospectId]);
+
   async function runAudit(c: Candidate | null) {
     setAuditing(true);
     setError(null);
@@ -213,7 +222,11 @@ export default function PageAiRecommendationAudit() {
           id: c?.id ?? null,
           business_name: c?.business_name ?? query.trim(),
           query: query.trim(),
-          source: "public_audit_ia",
+          source: prospectId
+            ? "outreach_first_touch"
+            : inviteToken
+              ? "affiliate_invite"
+              : "public_audit_ia",
           utm,
         },
       });
@@ -258,6 +271,9 @@ export default function PageAiRecommendationAudit() {
     if (result.trade) params.set("metier", result.trade);
     params.set("audit", result.audit_id);
     params.set("audit_token", result.token);
+    // Preserve outreach attribution: garantie reads `t` for the attributed
+    // activation checkout (create-activation-checkout).
+    if (activationToken) params.set("t", activationToken);
     navigate(`/entrepreneurs/garantie?${params.toString()}`);
   }
 
