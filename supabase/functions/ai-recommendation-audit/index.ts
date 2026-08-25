@@ -87,6 +87,44 @@ Deno.serve(async (req) => {
   const action = String(body.action ?? "search");
 
   try {
+    /* ------------------------------------------------------------ HEALTH */
+    // Real, non-destructive checks only. A system is "operational" solely when
+    // the check actually ran and passed — never assumed.
+    if (action === "health") {
+      const checks: Record<string, { status: "operational" | "configured" | "unavailable"; detail: string }> = {};
+
+      // Audit IA: real DB read on the audits table.
+      const { error: auditErr } = await db.from("ai_recommendation_audits").select("id").limit(1);
+      checks.audit_ia = auditErr
+        ? { status: "unavailable", detail: "Lecture impossible" }
+        : { status: "operational", detail: "Moteur d'audit en ligne" };
+
+      // Capacity engine: real read on market_capacity.
+      const { error: capErr } = await db.from("market_capacity").select("city_slug").limit(1);
+      checks.capacity = capErr
+        ? { status: "unavailable", detail: "Lecture impossible" }
+        : { status: "operational", detail: "Capacité territoriale en ligne" };
+
+      // AI attribution: real read on ai_agent_runs.
+      const { error: agentErr } = await db.from("ai_agent_runs").select("id").limit(1);
+      checks.attribution_ia = agentErr
+        ? { status: "unavailable", detail: "Lecture impossible" }
+        : { status: "operational", detail: "Journal d'attribution en ligne" };
+
+      // Stripe / Twilio / Resend: configuration presence only (no paid calls).
+      checks.stripe = Deno.env.get("STRIPE_SECRET_KEY")
+        ? { status: "configured", detail: "Checkout configuré" }
+        : { status: "unavailable", detail: "Clé Stripe absente" };
+      checks.sms = Deno.env.get("TWILIO_ACCOUNT_SID") && Deno.env.get("TWILIO_AUTH_TOKEN")
+        ? { status: "configured", detail: "SMS configuré" }
+        : { status: "unavailable", detail: "SMS non configuré" };
+      checks.email = Deno.env.get("RESEND_API_KEY")
+        ? { status: "configured", detail: "Courriel configuré" }
+        : { status: "unavailable", detail: "Courriel non configuré" };
+
+      return json({ ok: true, checked_at: new Date().toISOString(), checks });
+    }
+
     /* ------------------------------------------------------------ SEARCH */
     if (action === "search") {
       const q = String(body.query ?? "").trim();
@@ -481,6 +519,7 @@ Deno.serve(async (req) => {
         ok: true,
         audit_id: audit.id,
         token: audit.session_token,
+        generated_at: new Date().toISOString(),
         business_name: businessName,
         city,
         trade,
@@ -524,7 +563,15 @@ Deno.serve(async (req) => {
       const auditId = String(body.audit_id ?? "");
       const token = String(body.token ?? "");
       const type = String(body.event_type ?? "");
-      const allowed = new Set(["activation_started", "checkout_created", "audit_abandoned"]);
+      const allowed = new Set([
+        "activation_started",
+        "checkout_created",
+        "audit_abandoned",
+        "eligible_or_existing_business",
+        "claim_started",
+        "profile_completed",
+        "recommendation_eligible",
+      ]);
       if (!auditId || !token || !allowed.has(type)) return json({ ok: false, reason: "invalid_event" }, 400);
 
       const { data: audit } = await db
