@@ -1,14 +1,17 @@
 /**
  * UNPRO — /entrepreneurs/audit-ia
- * « Voir comment l'IA voit mon entreprise »
+ * Dominant contractor acquisition entry point.
  *
- * Entrée à friction minimale du funnel entrepreneur : un nom d'entreprise
- * suffit. Aucune donnée inventée — chaque fait porte sa provenance
- * (Vérifié / Déclaré / Déduit / En attente). Le parcours est gamifié :
- * score, niveau, missions pondérées, CTA sticky vers l'activation.
+ * Visual system: `.audit-gold` — black top nav, white canvas, gold primary,
+ * green success, thin gray borders, numbered step cards, premium
+ * operational-dashboard density. Mirrors the reference mockup journey:
+ *   1. Audit IA gratuit → 2. Résultat → 3. Réclamez votre profil →
+ *   4. Éléments manquants → 5. Activation → 6. Recommandable par l'IA
  *
- * Surface : `.home-light` (blanc / bleu pâle / bleu royal) — même langage
- * visuel que la page d'accueil, jamais un panneau admin sombre.
+ * Trust contract: nothing is invented. Every fact carries its provenance
+ * (Vérifié / Déclaré / Déduit / En attente). The readiness score is the
+ * deterministic production score computed server-side from real missions —
+ * never a marketing number.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
@@ -30,6 +33,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { OFFER_350 } from "@/lib/copy/offer350";
+import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
+import { AuditProHeader } from "@/components/audit-ia/AuditProHeader";
+import { JourneySteps } from "@/components/audit-ia/JourneySteps";
+import { OperationalSections } from "@/components/audit-ia/OperationalSections";
 
 type Provenance = "verified" | "declared" | "inferred" | "pending";
 type MissionStatus = "confirmed" | "detected" | "missing";
@@ -70,6 +77,7 @@ interface Gap {
 interface AuditResult {
   audit_id: string;
   token: string;
+  generated_at?: string;
   business_name: string | null;
   city: string | null;
   trade: string | null;
@@ -88,7 +96,7 @@ interface AuditResult {
 }
 
 const PROVENANCE_META: Record<Provenance, { label: string; cls: string; Icon: typeof BadgeCheck }> = {
-  verified: { label: "Vérifié", cls: "border-emerald-600/30 bg-emerald-50 text-emerald-700", Icon: BadgeCheck },
+  verified: { label: "Vérifié", cls: "border-success/35 bg-[hsl(152_69%_31%/0.08)] text-success", Icon: BadgeCheck },
   declared: { label: "Déclaré", cls: "border-primary/30 bg-secondary text-secondary-foreground", Icon: PenLine },
   inferred: { label: "Déduit", cls: "border-amber-500/35 bg-amber-50 text-amber-800", Icon: Sparkles },
   pending: { label: "En attente", cls: "border-border bg-muted text-muted-foreground", Icon: Clock3 },
@@ -118,6 +126,7 @@ export default function PageAiRecommendationAudit() {
   const [error, setError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   const debounce = useRef<number | null>(null);
+  const auditCardRef = useRef<HTMLDivElement | null>(null);
 
   const inviteToken = sp.get("t");
 
@@ -126,6 +135,18 @@ export default function PageAiRecommendationAudit() {
     utm_medium: sp.get("utm_medium"),
     utm_campaign: sp.get("utm_campaign"),
   };
+
+  // Funnel: page view = audit_opened on the canonical funnel logger.
+  useEffect(() => {
+    void logFunnelEvent({
+      event_type: "landing_view",
+      event_source: "app",
+      current_path: "/entrepreneurs/audit-ia",
+      step: "audit_opened",
+      metadata: { ...utm, invite: Boolean(inviteToken) },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Lien d'invitation affilié : enregistre l'ouverture réelle et pré-remplit le nom.
   const trackInvite = useCallback(
@@ -136,7 +157,7 @@ export default function PageAiRecommendationAudit() {
       });
       return (data as any)?.audit ?? null;
     },
-    [inviteToken]
+    [inviteToken],
   );
 
   useEffect(() => {
@@ -149,7 +170,6 @@ export default function PageAiRecommendationAudit() {
       cancelled = true;
     };
   }, [inviteToken, trackInvite]);
-
 
   const runSearch = useCallback(async (q: string) => {
     if (q.trim().length < 2) {
@@ -193,8 +213,21 @@ export default function PageAiRecommendationAudit() {
         setError("Analyse indisponible pour le moment. Réessayez dans quelques secondes.");
         return;
       }
-      setResult(data as AuditResult);
+      const res = data as AuditResult;
+      setResult(res);
       void trackInvite("completed");
+      // Existing business recognised in UNPRO records → eligibility signal.
+      if (c) {
+        void supabase.functions.invoke("ai-recommendation-audit", {
+          body: {
+            action: "event",
+            audit_id: res.audit_id,
+            token: res.token,
+            event_type: "eligible_or_existing_business",
+            metadata: { kind: c.kind, matched_id: c.id },
+          },
+        });
+      }
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
       setError("Analyse indisponible pour le moment. Réessayez dans quelques secondes.");
@@ -205,14 +238,12 @@ export default function PageAiRecommendationAudit() {
 
   async function activate() {
     if (!result) return;
-    await supabase.functions.invoke("ai-recommendation-audit", {
-      body: {
-        action: "event",
-        audit_id: result.audit_id,
-        token: result.token,
-        event_type: "activation_started",
-      },
-    });
+    // claim_started → activation_started, both attribution-preserving.
+    for (const event_type of ["claim_started", "activation_started"] as const) {
+      await supabase.functions.invoke("ai-recommendation-audit", {
+        body: { action: "event", audit_id: result.audit_id, token: result.token, event_type },
+      });
+    }
     const params = new URLSearchParams();
     if (result.business_name) params.set("entreprise", result.business_name);
     if (result.city) params.set("ville", result.city);
@@ -221,119 +252,158 @@ export default function PageAiRecommendationAudit() {
     navigate(`/entrepreneurs/garantie?${params.toString()}`);
   }
 
+  const scrollToAudit = useCallback(() => {
+    auditCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const currentStep = result ? 2 : 1;
+
   return (
-    <div className="home-light min-h-[100dvh] overflow-x-hidden bg-background text-foreground">
+    <div className="audit-gold min-h-[100dvh] overflow-x-hidden bg-background text-foreground">
       <Helmet>
-        <title>Audit de recommandation IA — Comment l'IA voit votre entreprise | UNPRO</title>
+        <title>Audit IA gratuit — Découvrez comment l'IA voit votre entreprise | UNPRO</title>
         <meta
           name="description"
-          content="Voyez ce que l'IA comprend de votre entreprise au Québec : identité, spécialité, territoire, signaux de confiance. Audit gratuit, données étiquetées Vérifié / Déclaré / Déduit."
+          content="Audit IA gratuit en 30 secondes : voyez ce que l'IA comprend de votre entreprise au Québec et ce qui l'empêche encore de vous recommander. Données réelles, étiquetées Vérifié / Déclaré / Déduit / En attente."
         />
         <link rel="canonical" href="https://unpro.ca/entrepreneurs/audit-ia" />
       </Helmet>
 
-      {/* Soft light-blue atmosphere */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[420px]"
-        style={{
-          background:
-            "radial-gradient(720px 380px at 80% -10%, hsl(var(--primary) / 0.10), transparent 62%)",
-        }}
-      />
+      <AuditProHeader onAuditClick={scrollToAudit} />
 
-      <main className="relative mx-auto w-full max-w-md px-5 py-10 sm:max-w-lg">
-        {!result ? (
-          <>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-              UNPRO · Audit de recommandation IA
+      <main>
+        {/* ------------------------------------------------------- Hero */}
+        <section className="mx-auto w-full max-w-6xl px-4 pb-8 pt-10 sm:px-6 sm:pt-14">
+          <div className="max-w-3xl">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+              UNPRO · Intelligence résidentielle
             </p>
             <h1
-              className="mt-3 text-[30px] font-bold leading-[1.06] text-foreground sm:text-[38px]"
+              className="mt-3 text-[30px] font-bold leading-[1.08] text-foreground sm:text-[44px]"
               style={{ letterSpacing: "-0.03em" }}
             >
-              Voir comment l'IA voit mon entreprise
+              Découvrez comment l'IA comprend votre entreprise — et ce qui l'empêche encore de vous
+              recommander.
             </h1>
-            <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-              Entrez seulement le nom de votre entreprise. Nous affichons ce que UNPRO sait déjà,
-              ce qui est confirmé, et ce qui manque pour que vous soyez recommandé.
+            <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted-foreground sm:text-[16px]">
+              Un nom d'entreprise suffit. Chaque fait affiché porte sa provenance — Vérifié, Déclaré,
+              Déduit ou En attente. Aucun avis, aucune licence et aucun rendez-vous n'est jamais inventé.
             </p>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={scrollToAudit}
+                className="gold-btn inline-flex h-12 items-center gap-2 rounded-2xl px-6 text-[15px] font-bold transition-transform hover:-translate-y-0.5"
+              >
+                Obtenir mon audit IA gratuit <ArrowRight className="h-4 w-4" aria-hidden />
+              </button>
+              <span className="text-[12.5px] text-muted-foreground">30 secondes · aucune carte de crédit</span>
+            </div>
+          </div>
+        </section>
 
-            <div className="mt-6">
-              <label htmlFor="audit-q" className="sr-only">
-                Nom de votre entreprise
-              </label>
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="audit-q"
-                  value={query}
-                  autoComplete="organization"
-                  onChange={(e) => {
-                    setTouched(true);
-                    setQuery(e.target.value);
-                  }}
-                  placeholder="Nom de votre entreprise"
-                  className="h-14 rounded-2xl border-input bg-card pl-9 text-[16px] text-foreground shadow-sm placeholder:text-muted-foreground"
-                />
-                {searching && (
-                  <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
-                )}
+        {/* -------------------------------------------------- Journey */}
+        <JourneySteps currentStep={currentStep} />
+
+        {/* ------------------------------------------- Step card / result */}
+        <div ref={auditCardRef} className="mx-auto w-full max-w-3xl scroll-mt-24 px-4 py-10 sm:px-6">
+          {!result ? (
+            <section
+              aria-labelledby="audit-start-title"
+              className="rounded-[24px] border border-border bg-card p-5 shadow-sm sm:p-7"
+            >
+              <div className="flex items-center gap-3">
+                <span className="gold-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[14px] font-bold tabular-nums">
+                  1
+                </span>
+                <div>
+                  <h2 id="audit-start-title" className="text-[19px] font-bold leading-tight text-foreground">
+                    Audit IA gratuit (30 secondes)
+                  </h2>
+                  <p className="text-[12.5px] text-muted-foreground">
+                    Aucune carte de crédit. Valeur immédiate, avant toute inscription.
+                  </p>
+                </div>
               </div>
 
-              {candidates.length > 0 && (
-                <ul className="mt-3 space-y-2">
-                  {candidates.map((c) => (
-                    <li key={`${c.kind}-${c.id}`}>
-                      <button
-                        type="button"
-                        onClick={() => runAudit(c)}
-                        disabled={auditing}
-                        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-left shadow-sm transition hover:border-primary/40 hover:bg-secondary/60"
-                      >
-                        <span className="min-w-0">
-                          <span className="block truncate text-[15px] font-medium text-foreground">
-                            {c.business_name}
-                          </span>
-                          <span className="block truncate text-[12px] text-muted-foreground">
-                            {[c.trade, c.city].filter(Boolean).join(" · ") || "Territoire à confirmer"}
-                          </span>
-                        </span>
-                        <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <div className="mt-5">
+                <label htmlFor="audit-q" className="sr-only">
+                  Nom de votre entreprise
+                </label>
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="audit-q"
+                    value={query}
+                    autoComplete="organization"
+                    onChange={(e) => {
+                      setTouched(true);
+                      setQuery(e.target.value);
+                    }}
+                    placeholder="Nom de votre entreprise"
+                    className="h-14 rounded-2xl border-input bg-card pl-9 text-[16px] text-foreground shadow-sm placeholder:text-muted-foreground"
+                  />
+                  {searching && (
+                    <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+                  )}
+                </div>
 
-              <Button
-                onClick={() => runAudit(null)}
-                disabled={auditing || query.trim().length < 2}
-                size="lg"
-                className="mt-4 h-14 w-full rounded-2xl bg-primary text-[16px] font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90"
-              >
-                {auditing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyse en cours…
-                  </>
-                ) : (
-                  <>
-                    Lancer mon audit gratuit <ArrowRight className="ml-1 h-4 w-4" />
-                  </>
+                {candidates.length > 0 && (
+                  <ul className="mt-3 space-y-2">
+                    {candidates.map((c) => (
+                      <li key={`${c.kind}-${c.id}`}>
+                        <button
+                          type="button"
+                          onClick={() => runAudit(c)}
+                          disabled={auditing}
+                          className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-left shadow-sm transition hover:border-primary/50 hover:bg-secondary/60"
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate text-[15px] font-medium text-foreground">
+                              {c.business_name}
+                            </span>
+                            <span className="block truncate text-[12px] text-muted-foreground">
+                              {[c.trade, c.city].filter(Boolean).join(" · ") || "Territoire à confirmer"}
+                            </span>
+                          </span>
+                          <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 )}
-              </Button>
 
-              {error && <p className="mt-3 text-[13px] text-destructive">{error}</p>}
+                <Button
+                  onClick={() => runAudit(null)}
+                  disabled={auditing || query.trim().length < 2}
+                  size="lg"
+                  className="gold-btn mt-4 h-14 w-full rounded-2xl border-0 text-[16px] font-bold hover:text-primary-foreground"
+                >
+                  {auditing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyse en cours…
+                    </>
+                  ) : (
+                    <>
+                      Obtenir mon audit IA gratuit <ArrowRight className="ml-1 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
 
-              <p className="mt-4 text-[12.5px] leading-relaxed text-muted-foreground">
-                Aucune donnée financière demandée. UNPRO n'invente jamais un avis, une licence RBQ,
-                une assurance ni un rendez-vous.
-              </p>
-            </div>
-          </>
-        ) : (
-          <AuditReport result={result} onActivate={activate} onRestart={() => setResult(null)} />
-        )}
+                {error && <p className="mt-3 text-[13px] text-destructive">{error}</p>}
+
+                <p className="mt-4 text-[12.5px] leading-relaxed text-muted-foreground">
+                  UNPRO n'invente jamais un avis, une licence RBQ, une assurance ni un rendez-vous.
+                </p>
+              </div>
+            </section>
+          ) : (
+            <AuditReport result={result} onActivate={activate} onRestart={() => setResult(null)} />
+          )}
+        </div>
+
+        {/* ------------------------------------- Operational sections A–F */}
+        <OperationalSections />
       </main>
     </div>
   );
@@ -347,30 +417,30 @@ function ScoreRing({ score, level }: { score: number; level: string }) {
   return (
     <div>
       <div className="relative mx-auto h-[132px] w-[132px]">
-      <svg viewBox="0 0 132 132" className="h-full w-full -rotate-90">
-        <circle cx="66" cy="66" r={r} fill="none" stroke="hsl(var(--border))" strokeWidth="10" />
-        <circle
-          cx="66"
-          cy="66"
-          r={r}
-          fill="none"
-          stroke="url(#unproRing)"
-          strokeWidth="10"
-          strokeLinecap="round"
-          strokeDasharray={`${dash} ${c}`}
-          style={{ transition: "stroke-dasharray 900ms cubic-bezier(.22,1,.36,1)" }}
-        />
-        <defs>
-          <linearGradient id="unproRing" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="hsl(224 76% 48%)" />
-            <stop offset="100%" stopColor="hsl(205 92% 55%)" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[34px] font-bold leading-none tabular-nums text-foreground">{score}</span>
-        <span className="mt-0.5 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">/ 100</span>
-      </div>
+        <svg viewBox="0 0 132 132" className="h-full w-full -rotate-90">
+          <circle cx="66" cy="66" r={r} fill="none" stroke="hsl(var(--border))" strokeWidth="10" />
+          <circle
+            cx="66"
+            cy="66"
+            r={r}
+            fill="none"
+            stroke="url(#unproRing)"
+            strokeWidth="10"
+            strokeLinecap="round"
+            strokeDasharray={`${dash} ${c}`}
+            style={{ transition: "stroke-dasharray 900ms cubic-bezier(.22,1,.36,1)" }}
+          />
+          <defs>
+            <linearGradient id="unproRing" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="hsl(43 74% 44%)" />
+              <stop offset="100%" stopColor="hsl(152 69% 31%)" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-[34px] font-bold leading-none tabular-nums text-foreground">{score}</span>
+          <span className="mt-0.5 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">/ 100</span>
+        </div>
       </div>
       <p className="mt-3 text-center text-[13px] font-semibold text-primary">{level}</p>
     </div>
@@ -379,7 +449,7 @@ function ScoreRing({ score, level }: { score: number; level: string }) {
 
 /* -------------------------------------------------------------- Missions */
 const STATUS_META: Record<MissionStatus, { label: string; cls: string; dot: string }> = {
-  confirmed: { label: "Confirmé", cls: "border-emerald-600/25 bg-emerald-50/70", dot: "bg-emerald-500" },
+  confirmed: { label: "Confirmé", cls: "border-success/25 bg-[hsl(152_69%_31%/0.05)]", dot: "bg-success" },
   detected: { label: "Détecté — confirmez en 1 clic", cls: "border-primary/30 bg-secondary/70", dot: "bg-primary" },
   missing: { label: "À compléter", cls: "border-border bg-muted/60", dot: "bg-muted-foreground/40" },
 };
@@ -406,7 +476,7 @@ function MissionRow({ m }: { m: Mission }) {
         </div>
         <span
           className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold tabular-nums ${
-            m.status === "confirmed" ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"
+            m.status === "confirmed" ? "bg-[hsl(152_69%_31%/0.12)] text-success" : "bg-muted text-muted-foreground"
           }`}
         >
           {m.status === "confirmed" ? <Check className="h-3.5 w-3.5" aria-hidden /> : `+${m.points - m.earned}`}
@@ -429,6 +499,19 @@ function MissionRow({ m }: { m: Mission }) {
       </div>
     </li>
   );
+}
+
+/** Qualitative state derived from the deterministic score + real missions. */
+function qualitativeState(
+  score: number,
+  recommendable: boolean,
+  missions: Mission[],
+): { label: string; cls: string } {
+  if (recommendable && score >= 85)
+    return { label: "Bien compris", cls: "border-success/35 bg-[hsl(152_69%_31%/0.08)] text-success" };
+  if (missions.some((m) => m.status !== "confirmed" && m.impact === "high"))
+    return { label: "Bloquant — action requise", cls: "border-rose-500/30 bg-rose-50 text-rose-700" };
+  return { label: "À compléter", cls: "border-primary/35 bg-secondary text-secondary-foreground" };
 }
 
 function AuditReport({
@@ -458,9 +541,18 @@ function AuditReport({
 
   const remaining = baseline.remaining_steps ?? missions.filter((m) => m.status !== "confirmed").length;
   const level = baseline.level ?? (result.readiness_score >= 85 ? "Recommandable" : "Invisible pour l'IA");
-  const toConfirm = missions.filter((m) => m.status === "detected");
+  const state = qualitativeState(result.readiness_score, baseline.recommendable, missions);
   const detectedFacts = baseline.facts.filter((f) => f.provenance === "verified" || f.provenance === "inferred");
-  const ctaLabel = toConfirm.length > 0 ? "Confirmer mes informations" : "Compléter mon profil";
+  // Only the 1–3 highest-impact missing items, in priority order.
+  const priorityMissing = missions
+    .filter((m) => m.status !== "confirmed")
+    .sort(
+      (a, b) =>
+        (a.impact === "high" ? 0 : a.impact === "medium" ? 1 : 2) -
+          (b.impact === "high" ? 0 : b.impact === "medium" ? 1 : 2) || b.points - a.points,
+    )
+    .slice(0, 3);
+  const generatedAt = result.generated_at ? new Date(result.generated_at) : new Date();
 
   return (
     <div className="space-y-4 pb-28">
@@ -472,31 +564,51 @@ function AuditReport({
         ← Analyser une autre entreprise
       </button>
 
-      <header>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Audit de recommandation IA</p>
-        <h1 className="mt-2 break-words text-[26px] font-bold leading-tight text-foreground" style={{ letterSpacing: "-0.03em" }}>
-          {result.business_name ?? "Votre entreprise"}
-        </h1>
-        <p className="mt-1 text-[13px] text-muted-foreground">
-          {[result.trade, result.city].filter(Boolean).join(" · ") || "Territoire à confirmer"}
-        </p>
-      </header>
+      {/* Étape 2 — résultat */}
+      <section className="rounded-[24px] border border-border bg-card p-5 shadow-sm sm:p-7">
+        <div className="flex items-start gap-3">
+          <span className="gold-btn mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[14px] font-bold tabular-nums">
+            2
+          </span>
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Votre résultat d'audit</p>
+            <h1
+              className="mt-1 break-words text-[24px] font-bold leading-tight text-foreground sm:text-[28px]"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              {result.business_name ?? "Votre entreprise"}
+            </h1>
+            <p className="mt-1 text-[13px] text-muted-foreground">
+              {[result.trade, result.city].filter(Boolean).join(" · ") || "Territoire à confirmer"}
+            </p>
+            <p className="mt-1 text-[11.5px] text-muted-foreground">
+              Généré le {generatedAt.toLocaleString("fr-CA")}
+            </p>
+            <span
+              className={`mt-2.5 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] font-semibold ${state.cls}`}
+            >
+              {state.label}
+            </span>
+          </div>
+        </div>
 
-      {/* Score + progression */}
-      <section className="rounded-[28px] border border-border bg-card p-5 shadow-sm">
-        <ScoreRing score={result.readiness_score} level={level} />
-        <p className="mt-4 text-center text-[13.5px] leading-relaxed text-muted-foreground">
-          {remaining === 0
-            ? "Toutes les informations clés sont confirmées."
-            : `${remaining} étape${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""} pour devenir recommandable.`}
-        </p>
-
+        <div className="mt-5 border-t border-border pt-5">
+          <ScoreRing score={result.readiness_score} level={level} />
+          <p className="mt-4 text-center text-[13.5px] leading-relaxed text-muted-foreground">
+            {remaining === 0
+              ? "Toutes les informations clés sont confirmées."
+              : `${remaining} étape${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""} pour devenir recommandable.`}
+          </p>
+          <p className="mt-1 text-center text-[11px] text-muted-foreground">
+            Indice déterministe calculé à partir de vos missions confirmées — jamais estimé.
+          </p>
+        </div>
       </section>
 
       {/* Ce que l'IA peut déjà dire de vous */}
       {detectedFacts.length > 0 && (
-        <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-foreground">Ce que l'IA peut déjà dire de vous</h2>
+        <section className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+          <h2 className="text-sm font-semibold text-foreground">Ce que l'IA comprend déjà de votre entreprise</h2>
           <dl className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {detectedFacts.map((f) => (
               <div key={f.key} className="min-w-0">
@@ -514,8 +626,31 @@ function AuditReport({
         </section>
       )}
 
-      {/* Missions */}
-      <section className="rounded-2xl border border-border bg-card/70 p-4 shadow-sm">
+      {/* Éléments manquants prioritaires (1–3, réels uniquement) */}
+      {priorityMissing.length > 0 && (
+        <section className="rounded-2xl border border-primary/35 bg-secondary/50 p-4 shadow-sm sm:p-5">
+          <h2 className="text-sm font-semibold text-foreground">
+            Les {priorityMissing.length} éléments qui bloquent encore votre recommandation
+          </h2>
+          <ul className="mt-3 space-y-2">
+            {priorityMissing.map((m) => (
+              <li
+                key={m.key}
+                className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card p-3"
+              >
+                <div className="min-w-0">
+                  <p className="text-[13.5px] font-semibold text-foreground">{m.label}</p>
+                  <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">{m.why}</p>
+                </div>
+                <ProvenanceTag provenance="pending" />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Missions complètes */}
+      <section className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="text-sm font-semibold text-foreground">Vos missions de recommandabilité</h2>
           <span className="text-[12px] tabular-nums text-muted-foreground">
@@ -533,7 +668,7 @@ function AuditReport({
       </section>
 
       {/* Capacité réelle */}
-      <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+      <section className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
         <div className="flex items-center gap-2">
           <MapPin className="h-4 w-4 text-primary" aria-hidden />
           <h2 className="text-sm font-semibold text-foreground">Capacité de votre territoire</h2>
@@ -559,22 +694,27 @@ function AuditReport({
         )}
       </section>
 
-      {/* Offre */}
-      <section className="rounded-2xl border border-primary/25 bg-gradient-to-br from-secondary to-card p-5 shadow-md shadow-primary/10">
-        <h2 className="text-[19px] font-bold leading-tight text-foreground">
-          Devenez le professionnel que l'IA peut recommander
+      {/* Activation — offre canonique résolue depuis la config production */}
+      <section className="rounded-2xl border border-primary/40 bg-gradient-to-br from-secondary to-card p-5 shadow-md">
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Étape 5 — Activation</p>
+        <h2 className="mt-2 text-[19px] font-bold leading-tight text-foreground">
+          Soyez le professionnel que l'IA peut recommander.
         </h2>
         <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">
           Rendez-vous exclusifs garantis. Jamais de leads partagés. {OFFER_350.subtitle}
         </p>
         <div className="mt-4 flex items-end gap-2">
-          <span className="text-[34px] font-bold leading-none tracking-tight text-foreground">{OFFER_350.price_label}</span>
-          <span className="pb-1 text-[12.5px] text-muted-foreground">{OFFER_350.card.eyebrow.replace("À partir de ", "à partir de ")}</span>
+          <span className="text-[34px] font-bold leading-none tracking-tight text-foreground">
+            {OFFER_350.price_label}
+          </span>
+          <span className="pb-1 text-[12.5px] text-muted-foreground">
+            {OFFER_350.card.eyebrow.replace("À partir de ", "à partir de ")}
+          </span>
         </div>
         <ul className="mt-3 space-y-1.5">
           {OFFER_350.card.bullets.map((b) => (
             <li key={b} className="flex items-start gap-2 text-[13px] text-foreground/85">
-              <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden />
+              <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" aria-hidden />
               <span>{b}</span>
             </li>
           ))}
@@ -582,7 +722,6 @@ function AuditReport({
         <p className="mt-3 text-center text-[12px] text-muted-foreground">
           {OFFER_350.paymentNote} · {OFFER_350.disclaimer}
         </p>
-
       </section>
 
       {/* CTA sticky mobile */}
@@ -591,9 +730,9 @@ function AuditReport({
           <Button
             onClick={onActivate}
             size="lg"
-            className="h-14 w-full rounded-2xl bg-primary px-3 text-[15px] font-semibold leading-tight text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90"
+            className="gold-btn h-14 w-full rounded-2xl border-0 px-3 text-[15px] font-bold leading-tight hover:text-primary-foreground"
           >
-            <span className="truncate">{ctaLabel}</span>
+            <span className="truncate">Compléter mon profil et devenir recommandable</span>
             <ArrowRight className="ml-1.5 h-4 w-4 shrink-0" />
           </Button>
         </div>

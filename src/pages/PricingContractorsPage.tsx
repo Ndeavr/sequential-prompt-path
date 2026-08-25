@@ -7,7 +7,7 @@ import { useEffect, useRef } from "react";
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import { Home, ArrowRight, Sparkles } from "lucide-react";
-import { TRIAL_OFFER, resolvePlanSlug } from "@/config/contractorPlans";
+import { ENTRY_OFFER, resolvePlanSlug } from "@/config/contractorPlans";
 import { CANONICAL_PLAN_LABELS } from "@/config/pricing";
 import ContractorPlans from "./pricing/ContractorPlans";
 import PricingHero from "./pricing/PricingHero";
@@ -51,17 +51,17 @@ export default function PricingContractorsPage() {
       >
         <PricingHero />
 
-        {/* $1 entry offer + personalized plan — above the catalog, always visible */}
+        {/* Entry offer 350 $ + personalized plan — above the catalog, always visible */}
         <section className="max-w-4xl mx-auto px-5 -mt-2 mb-8">
           <div className="rounded-3xl border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-accent/10 p-5 md:p-7">
             <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-2">
               Offre d'entrée
             </p>
             <h2 className="text-xl md:text-2xl font-bold text-foreground mb-1.5">
-              {TRIAL_OFFER.label} — essayez UNPRO avant de payer votre plan
+              {ENTRY_OFFER.label}
             </h2>
             <p className="text-sm text-muted-foreground mb-5">
-              {TRIAL_OFFER.note} Chaque plan ci-dessous démarre avec la même offre.
+              {ENTRY_OFFER.note}
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Link

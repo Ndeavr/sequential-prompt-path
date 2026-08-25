@@ -48,13 +48,22 @@ export interface FounderOffer {
   cta: string;
 }
 
-/** $1 entry offer applied to every plan. */
-export const TRIAL_OFFER = {
-  priceDollars: 1,
-  days: 7,
-  label: "Dès 350 $ — jusqu'à 5 rendez-vous garantis",
-  note: "Puis votre plan mensuel. Annulable en tout temps.",
+/**
+ * Canonical entry offer (2026): one-time 350 $ activation pack.
+ * « Jusqu'à 5 rendez-vous exclusifs garantis » — the guaranteed number is
+ * always computed by the pricing engine before payment, never promised flat.
+ * The obsolete « 7 jours à 1 $ » trial is retired and must not reappear.
+ */
+export const ENTRY_OFFER = {
+  priceDollars: 350,
+  billingType: "one_time",
+  maxAppointments: 5,
+  label: "Dès 350 $ — jusqu'à 5 rendez-vous exclusifs garantis",
+  note: "Paiement unique. Aucun abonnement. La garantie exacte est calculée avant le paiement.",
 } as const;
+
+/** @deprecated Legacy name kept for import compatibility — use ENTRY_OFFER. */
+export const TRIAL_OFFER = ENTRY_OFFER;
 
 export const CONTRACTOR_PLANS: ContractorPlan[] = [
   {
