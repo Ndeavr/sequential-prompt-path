@@ -116,11 +116,37 @@ export default function PageAiRecommendationAudit() {
   const [touched, setTouched] = useState(false);
   const debounce = useRef<number | null>(null);
 
+  const inviteToken = sp.get("t");
+
   const utm = {
     utm_source: sp.get("utm_source"),
     utm_medium: sp.get("utm_medium"),
     utm_campaign: sp.get("utm_campaign"),
   };
+
+  // Lien d'invitation affilié : enregistre l'ouverture réelle et pré-remplit le nom.
+  const trackInvite = useCallback(
+    async (event: "opened" | "started" | "completed") => {
+      if (!inviteToken) return null;
+      const { data } = await supabase.functions.invoke("affiliate-audit-track", {
+        body: { token: inviteToken, event },
+      });
+      return (data as any)?.audit ?? null;
+    },
+    [inviteToken]
+  );
+
+  useEffect(() => {
+    if (!inviteToken) return;
+    let cancelled = false;
+    void trackInvite("opened").then((a) => {
+      if (!cancelled && a?.business_name) setQuery((q) => q || a.business_name);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [inviteToken, trackInvite]);
+
 
   const runSearch = useCallback(async (q: string) => {
     if (q.trim().length < 2) {
