@@ -60,7 +60,7 @@ export default function PageIsrDemoPlanTest() {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [founderAllowed]);
 
   const handleAnswer = async (key: IsrAnswerKey, value: string) => {
     const next = { ...answers, [key]: value };
@@ -81,6 +81,41 @@ export default function PageIsrDemoPlanTest() {
     if (reco) patch.recommended_plan = reco;
     await supabase.from("demo_contractor_plan_tests").update(patch).eq("id", demoRunId);
   };
+
+  if (founderAllowed === false) {
+    return (
+      <div className="min-h-screen bg-[#050816] text-white flex items-center justify-center px-6">
+        <Helmet>
+          <title>Démo ISR — UNPRO</title>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
+        <div className="max-w-md text-center">
+          <div className="text-[11px] uppercase tracking-[0.25em] text-cyan-300/80">UNPRO · Démo entrepreneur</div>
+          <h1 className="mt-3 text-2xl font-semibold tracking-[-0.03em]">Cette démo n'est pas active.</h1>
+          <p className="mt-3 text-sm text-white/65">
+            Le parcours de démonstration avec paiement test est réservé à l'équipe UNPRO.
+          </p>
+          <Link
+            to="/entrepreneurs/audit-ia"
+            className="mt-6 inline-block rounded-[18px] bg-amber-300 px-6 py-3 text-sm font-semibold text-[#050816] hover:-translate-y-0.5 transition-all"
+          >
+            Obtenir mon audit IA gratuit
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (founderAllowed === null) {
+    return (
+      <div className="min-h-screen bg-[#050816] text-white flex items-center justify-center">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
+        <div className="text-sm text-white/60">Chargement…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#050816] text-white relative overflow-hidden">
