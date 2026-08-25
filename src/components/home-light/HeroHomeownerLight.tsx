@@ -1,16 +1,17 @@
 /**
  * HeroHomeownerLight — Homeowner-first hero on the light UNPRO surface.
  * White / light-blue background, navy typography, royal-blue actions.
- * Alex is integrated as the primary entry point (orb + CTA).
+ * Headline: « Fini les 3 soumissions. Un pro. C'est tout. »
+ * Alex orb + CTA, homeowner photographic visual.
  */
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, ShieldCheck } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { useAlexStore } from "@/features/alex/state/alexStore";
 import AlexOrb, { type AlexOrbState } from "@/components/alex/AlexOrb";
+import heroImage from "@/assets/home-hero-homeowner.jpg";
 
 export default function HeroHomeownerLight() {
   const { openAlex } = useAlexVoice();
@@ -42,66 +43,73 @@ export default function HeroHomeownerLight() {
         }}
       />
 
-      <div className="relative z-10 mx-auto w-full max-w-5xl px-5 pt-14 pb-16 md:pt-24 md:pb-24 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium text-secondary-foreground"
-        >
-          <ShieldCheck className="h-3.5 w-3.5" />
-          Plateforme d'intelligence résidentielle québécoise
-        </motion.div>
-
+      <div className="relative z-10 mx-auto w-full max-w-5xl px-5 pt-12 pb-14 md:pt-20 md:pb-20 text-center">
         <motion.h1
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.05 }}
-          className="mt-6 text-[clamp(2rem,6.2vw,3.6rem)] font-semibold leading-[1.06] tracking-[-0.03em] text-foreground"
+          transition={{ duration: 0.5 }}
+          className="text-[clamp(2.1rem,6.4vw,3.8rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-foreground"
         >
-          La fin des 3 soumissions.
+          Fini les 3 soumissions.
+          <span className="block text-primary">Un pro. C'est tout.</span>
         </motion.h1>
 
         <motion.p
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.12 }}
+          transition={{ duration: 0.45, delay: 0.1 }}
           className="mx-auto mt-5 max-w-2xl text-[16.5px] leading-relaxed text-muted-foreground md:text-lg"
         >
-          Décrivez vos travaux à Alex. Une question à la fois. Vous repartez avec
-          une compréhension claire de votre projet et un entrepreneur qui
-          correspond réellement à vos besoins.
+          Décrivez vos travaux à Alex, une question à la fois. L'IA comprend
+          votre projet et vous oriente vers l'entrepreneur qui correspond
+          réellement à vos besoins.
         </motion.p>
 
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.18, type: "spring", stiffness: 110, damping: 18 }}
-          className="mt-10 flex justify-center"
+          transition={{ duration: 0.5, delay: 0.16, type: "spring", stiffness: 110, damping: 18 }}
+          className="mt-9 flex justify-center"
         >
           <AlexOrb state={orbState} size="hero" theme="light" onClick={startAlex} ariaLabel="Parler à Alex" />
         </motion.div>
 
-        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.22 }}
+          className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
+        >
           <button
             data-cta-canonical="home_alex"
             onClick={startAlex}
-            className="inline-flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-7 py-4 text-[15px] font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-transform hover:-translate-y-0.5 sm:w-auto"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-7 py-4 text-[15px] font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-transform hover:-translate-y-0.5 sm:w-auto"
           >
             Parler à Alex
             <ArrowRight className="h-4 w-4" />
           </button>
-          <Link
-            to="/diagnostic"
-            className="inline-flex w-full items-center justify-center rounded-2xl border border-border bg-card px-7 py-4 text-[15px] font-semibold text-foreground transition-transform hover:-translate-y-0.5 sm:w-auto"
-          >
-            Décrire mes travaux
-          </Link>
-        </div>
+        </motion.div>
 
-        <p className="mt-5 text-[13px] text-muted-foreground">
+        <p className="mt-4 text-[13px] text-muted-foreground">
           Gratuit pour les propriétaires. Aucune obligation.
         </p>
+
+        {/* Homeowner visual */}
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, delay: 0.3 }}
+          className="mx-auto mt-12 max-w-4xl overflow-hidden rounded-[28px] border border-border shadow-xl shadow-primary/10"
+        >
+          <img
+            src={heroImage}
+            alt="Propriétaires québécois devant leur maison, confiants après avoir trouvé le bon entrepreneur avec UNPRO"
+            width={1536}
+            height={1024}
+            className="h-auto w-full object-cover"
+            fetchPriority="high"
+          />
+        </motion.div>
       </div>
     </section>
   );
