@@ -11,11 +11,17 @@
  *
  * The pipeline never quarantines a prospect simply because Twilio Line Type
  * Intelligence could not classify their number.
+ *
+ * SMS first-touch copy is score-first (curiosity → free personalized AI
+ * score, no pricing/payment/subscription language) and points at
+ * /unpro/audit/:token, which resolves the canonical token and lands the
+ * prospect directly on their personalized Audit IA. Email keeps the
+ * canonical $350 golden path (/unpro/activate/:token).
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { buildOutreachUrl, smsWithLink } from "../_shared/outreachLink.ts";
 import { logPipelineEvent, REASON } from "../_shared/acquisitionPipeline.ts";
-import { firstTouchSms, emailSubject, emailHtml } from "../_shared/offerCopy.ts";
+import { firstTouchScoreSms, emailSubject, emailHtml } from "../_shared/offerCopy.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
