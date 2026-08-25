@@ -19,7 +19,7 @@ import {
   ShieldCheck,
   BarChart3,
 } from "lucide-react";
-import { UnproLogo } from "@/components/brand/UnproLogo";
+import UnproLogo from "@/components/brand/UnproLogo";
 import { trackAffiliateFunnel } from "@/features/affiliate/onboarding/trackAffiliateFunnel";
 
 const STEPS = [

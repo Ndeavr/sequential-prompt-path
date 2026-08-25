@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { captureAttribution, getStoredAttribution } from "@/hooks/useReferralAttribution";
 import { trackAffiliateFunnel } from "@/features/affiliate/onboarding/trackAffiliateFunnel";
-import { UnproLogo } from "@/components/brand/UnproLogo";
+import UnproLogo from "@/components/brand/UnproLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -88,7 +88,7 @@ function loadDraft(): Draft {
 export default function PageAffiliateOnboarding() {
   const nav = useNavigate();
   const location = useLocation();
-  const { user, loading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
 
   const [draft, setDraft] = useState<Draft>(loadDraft);
   const [busy, setBusy] = useState(false);
