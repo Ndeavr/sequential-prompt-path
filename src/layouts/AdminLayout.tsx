@@ -256,7 +256,20 @@ const AdminNav = ({ pathname, onNavigate, showPrimary }: {
 
 /* -------------------------------- layout ------------------------------- */
 
+/** Idempotency guard: pages that still self-wrap render children only. */
+const AdminLayoutDepth = createContext(0);
+
 const AdminLayout = ({ children }: { children: ReactNode }) => {
+  const depth = useContext(AdminLayoutDepth);
+  if (depth > 0) return <>{children}</>;
+  return (
+    <AdminLayoutDepth.Provider value={1}>
+      <AdminLayoutShell>{children}</AdminLayoutShell>
+    </AdminLayoutDepth.Provider>
+  );
+};
+
+const AdminLayoutShell = ({ children }: { children: ReactNode }) => {
   const { pathname } = useLocation();
   const { signOut, user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
