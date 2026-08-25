@@ -1,1 +1,2 @@
 - [Sparse Lead Retention](mem://features/sparse-lead-retention) — Person-name+phone Facebook leads never discarded; pending fields, tier C SMS, "À enrichir" admin surface, sparse-safe outreach copy
+- [Admin Navigation Architecture](mem://admin/navigation-architecture) — Operator-first admin nav: 5 primary destinations (Dashboard, Acquisition, Entrepreneurs, RDV, Revenus), Affiliés secondary, Operations/Avancé collapsed; router-level AdminProtectedRoute shell, idempotent AdminLayout
