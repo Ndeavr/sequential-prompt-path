@@ -210,7 +210,7 @@ Deno.serve(async (req) => {
     // email on file (email-only fallback path).
     let query = supabase
       .from("verified_contractor_prospects")
-      .select("id, business_name, phone_e164, phone_validation_status, phone_line_type, sms_eligibility_tier, sms_eligibility_confidence, data_quality_score, website_url, google_business_url, google_place_id, phone_source_url, city, category, source, email, outreach_status, verification_status, retry_count")
+      .select("id, business_name, phone_e164, phone_validation_status, phone_line_type, sms_eligibility_tier, sms_eligibility_confidence, data_quality_score, website_url, google_business_url, google_place_id, phone_source_url, city, category, source, email, outreach_status, verification_status, retry_count, email_eligible, email_eligibility_reason, email_sent_at")
       .eq("verification_status", "verified")
       .gte("data_quality_score", 80)
       // CASL provenance gate: a standalone website is NOT required, but a
@@ -223,8 +223,14 @@ Deno.serve(async (req) => {
 
     if (forceEmail) {
       // A hard-failed SMS attempt never reached a human, so these rows stay
-      // contactable on the email channel only. Paid/activated are excluded.
-      query = query.in("outreach_status", ["none", "failed"]).not("email", "is", null);
+      // contactable on the email channel only. Prospects whose SMS line is
+      // carrier-proven dead carry email_eligible=true and may be emailed even
+      // when their monotonic outreach_status (sent/delivered/clicked) cannot
+      // be downgraded — the trigger preserves it. Terminal states excluded.
+      query = query
+        .or("outreach_status.in.(none,failed),email_eligible.eq.true")
+        .not("email", "is", null)
+        .or("outreach_status.is.null,outreach_status.not.in.(registered,payment_started,paid,activated)");
     } else {
       query = query
         .eq("outreach_status", "none")
