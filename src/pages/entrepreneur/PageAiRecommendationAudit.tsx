@@ -206,7 +206,14 @@ export default function PageAiRecommendationAudit() {
   useEffect(() => {
     if (!prospectId || autoRunRef.current) return;
     autoRunRef.current = true;
-    void runAudit({ kind: "prospect", id: prospectId, business_name: query.trim() || "prospect" } as Candidate);
+    void runAudit({
+      kind: "prospect",
+      id: prospectId,
+      business_name: query.trim() || null,
+      city: null,
+      trade: null,
+      has_rbq: false,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prospectId]);
 
