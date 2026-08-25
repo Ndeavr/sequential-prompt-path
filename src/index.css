@@ -285,6 +285,9 @@
     --border: 213 40% 88%;
     --input: 213 40% 90%;
     --ring: 224 76% 48%;
+    --sun: 45 96% 52%;                /* yellow — small accent only */
+    --sun-foreground: 220 60% 12%;
+    --navy-strip: 224 64% 14%;        /* announcement strip */
 
     --text-primary: 220 60% 12%;
     --text-body: 220 35% 20%;

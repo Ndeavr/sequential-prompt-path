@@ -45,9 +45,16 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   // SmartHeader is now shown everywhere, including `/` (the "fin des 3 soumissions"
   // home has no header of its own and needs logo + nav + FR/EN toggle).
   const showSmartHeader = true;
+  // Light homeowner surface: header + content share the `.home-light` tokens
+  // (white glass nav, royal-blue actions) while the footer stays navy.
+  const isLightHome = pathname === "/" || pathname === "/index";
 
   return (
-    <div className="min-h-[100svh] flex flex-col relative w-full max-w-full overflow-visible">
+    <div
+      className={`min-h-[100svh] flex flex-col relative w-full max-w-full overflow-visible${
+        isLightHome ? " home-light" : ""
+      }`}
+    >
       {/* Cinematic background now lives in src/app/App.tsx (StableBackgroundLayer)
           — mounted once above the router so route changes never remount it. */}
 
