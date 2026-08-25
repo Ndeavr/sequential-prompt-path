@@ -249,6 +249,7 @@ export default function PageAiRecommendationAudit() {
     if (result.city) params.set("ville", result.city);
     if (result.trade) params.set("metier", result.trade);
     params.set("audit", result.audit_id);
+    params.set("audit_token", result.token);
     navigate(`/entrepreneurs/garantie?${params.toString()}`);
   }
 

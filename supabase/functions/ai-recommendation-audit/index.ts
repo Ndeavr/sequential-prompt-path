@@ -504,6 +504,7 @@ Deno.serve(async (req) => {
           gaps,
           capacity,
           status: "completed",
+          started_at: new Date().toISOString(),
           completed_at: new Date().toISOString(),
         })
         .select("id, session_token")
