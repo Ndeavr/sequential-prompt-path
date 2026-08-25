@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { isFounderModeActive } from "@/lib/launch/founderMode";
 import {
   ISR_BRAND,
   recommendPlan,
@@ -18,6 +20,16 @@ const RUN_KEY = "unpro.isrDemoRunId";
 export default function PageIsrDemoPlanTest() {
   const [answers, setAnswers] = useState<IsrAnswers>({});
   const [demoRunId, setDemoRunId] = useState<string | null>(null);
+  const [founderAllowed, setFounderAllowed] = useState<boolean | null>(null);
+
+  // Demo checkout (1 $ test) is founder-only — never exposed publicly.
+  useEffect(() => {
+    let cancelled = false;
+    isFounderModeActive()
+      .then((ok) => { if (!cancelled) setFounderAllowed(ok); })
+      .catch(() => { if (!cancelled) setFounderAllowed(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   const recommended = useMemo(() => recommendPlan(answers), [answers]);
 
