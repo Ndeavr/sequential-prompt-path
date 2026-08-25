@@ -318,6 +318,9 @@ Deno.serve(async (req) => {
         .from("acq_sms_logs")
         .select("recipient_phone, prospect_id, created_at")
         .gte("created_at", dupSince)
+        // A message the carrier never delivered (undelivered/failed) never
+        // reached a human — it is a non-contact and must not trip the guard.
+        .or("status.is.null,status.not.in.(undelivered,failed)")
         .or(
           [
             phonesInBatch.length ? `recipient_phone.in.(${phonesInBatch.join(",")})` : null,
@@ -327,6 +330,20 @@ Deno.serve(async (req) => {
       for (const row of recentLogs ?? []) {
         if (row.recipient_phone) recentlyContactedPhones.add(String(row.recipient_phone));
         if (row.prospect_id) recentlyContactedIds.add(String(row.prospect_id));
+      }
+      // Same guard window on the email channel: acquisition emails carry
+      // message_id `acq-<prospectId>-<ts>` in the canonical email_send_log.
+      if (idsInBatch.length > 0) {
+        const { data: recentEmails } = await supabase
+          .from("email_send_log")
+          .select("message_id, created_at")
+          .gte("created_at", dupSince)
+          .eq("status", "sent")
+          .or(idsInBatch.map((id) => `message_id.like.acq-${id}-%`).join(","));
+        for (const row of recentEmails ?? []) {
+          const m = /^acq-([0-9a-fA-F-]{36})-/.exec(String(row.message_id ?? ""));
+          if (m) recentlyContactedIds.add(m[1]);
+        }
       }
     }
     const isRecentlyContacted = (p: any) =>
@@ -481,6 +498,20 @@ Deno.serve(async (req) => {
         );
 
       if (shouldTryEmail) {
+        // Unified suppression / opt-out gate (same suppression_index the
+        // commercial-send-gate uses). A suppressed address is never emailed.
+        const { data: isSuppressed } = await supabase
+          .rpc("is_email_suppressed", { p_email: p.email });
+        if (isSuppressed === true) {
+          results.push({ id: p.id, business_name: p.business_name, status: "skipped", skipped: "email_suppressed", channel_used: null });
+          continue;
+        }
+        // Email channel cooldown: at most one acquisition email per prospect
+        // per 7 days, whatever automation produced the previous one.
+        if (p.email_sent_at && Date.now() - new Date(p.email_sent_at).getTime() < 7 * 24 * 3600_000) {
+          results.push({ id: p.id, business_name: p.business_name, status: "skipped", skipped: "email_cooldown_7d", channel_used: null });
+          continue;
+        }
         const emailRes = await sendEmailViaResend(url, serviceKey, {
           to: p.email!,
           businessName: p.business_name,
