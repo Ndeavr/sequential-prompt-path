@@ -10,6 +10,7 @@ import {
   BadgeCheck,
   Camera,
   ClipboardList,
+  Crown,
   Home,
   MessageSquare,
   Search,
@@ -57,12 +58,12 @@ function Title({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ── 1. Deux parcours visibles ───────────────────────────────── */
+/* ── 1. Trois parcours visibles ──────────────────────────────── */
 export function SectionTwoPaths() {
   const startAlex = useStartAlex("home_paths");
   return (
     <SectionWrap>
-      <div className="mt-2 grid gap-5 md:grid-cols-2">
+      <div className="mt-2 grid gap-5 md:grid-cols-3">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -116,6 +117,42 @@ export function SectionTwoPaths() {
               Faire mon audit IA gratuit <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.4, delay: 0.12 }}
+          className="rounded-3xl border border-border bg-card p-7 md:p-8"
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="inline-flex h-11 w-11 items-center justify-center rounded-2xl"
+              style={{ background: "hsl(var(--sun) / 0.25)", color: "hsl(var(--sun-foreground))" }}
+            >
+              <Crown className="h-5 w-5" />
+            </div>
+            <span
+              className="rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.1em]"
+              style={{ background: "hsl(var(--sun) / 0.2)", color: "hsl(var(--sun-foreground))" }}
+            >
+              Membre fondateur
+            </span>
+          </div>
+          <h3 className="mt-5 text-xl font-semibold text-foreground">Services locaux &amp; professionnels</h3>
+          <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
+            Courtiers, notaires, inspecteurs, évaluateurs, arpenteurs, entretien
+            ménager, lavage de vitres, gazon, conduits… Devenez membre fondateur
+            UNPRO : les 10 premiers membres de chaque ville profitent de 12 mois
+            gratuitement. Ensuite 350 $/an.
+          </p>
+          <Link
+            to="/fondateurs"
+            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-[15px] font-semibold text-primary-foreground shadow-md shadow-primary/25 transition-transform hover:-translate-y-0.5"
+          >
+            Réserver ma place gratuitement <ArrowRight className="h-4 w-4" />
+          </Link>
         </motion.div>
       </div>
     </SectionWrap>

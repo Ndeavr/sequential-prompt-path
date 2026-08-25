@@ -91,3 +91,49 @@ export function emailHtml(businessName: string, link: string): string {
   </body>
 </html>`;
 }
+
+// ─── Founder offer (local services & professionals) — 12 mois gratuits ───
+// Outreach templates ONLY; nothing here sends. All CASL / opt-out /
+// frequency gates stay in the canonical send workers.
+export const FOUNDER_OFFER = {
+  headline: "12 mois gratuitement — membre fondateur UNPRO",
+  renewal_note:
+    "Après 12 mois gratuits : 350 $/an, uniquement avec votre consentement. Aucun frais par mise en relation pendant le membership.",
+  conditions:
+    "Offre de lancement réservée aux premiers membres admissibles de chaque ville. Certaines conditions s'appliquent.",
+} as const;
+
+/** SMS first-touch for Founder-eligible prospects (services/professionnels). */
+export function founderFirstTouchSms(businessName: string): string {
+  const name = (businessName || "votre entreprise").trim().slice(0, 40);
+  return (
+    `${name} : UNPRO ouvre son offre de lancement dans votre ville. ` +
+    `Les premiers membres fondateurs admissibles obtiennent 12 mois gratuitement (valeur 350 $/an). Vérifiez votre admissibilité :`
+  );
+}
+
+export function founderEmailSubject(businessName: string): string {
+  return `${businessName} — membre fondateur UNPRO : 12 mois offerts dans votre ville`;
+}
+
+export function founderEmailHtml(businessName: string, link: string): string {
+  const safe = businessName.replace(/[<>&"]/g, "");
+  return `<!doctype html>
+<html lang="fr"><body style="margin:0;padding:0;background:#f7f7f8;font-family:-apple-system,Segoe UI,Roboto,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px;">
+    <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;padding:32px;">
+      <tr><td>
+        <p style="font-size:13px;color:#666;margin:0 0 8px 0;">UNPRO · Offre de lancement</p>
+        <h1 style="font-size:22px;line-height:1.3;margin:0 0 16px 0;color:#111;">${safe} : devenez membre fondateur de votre ville</h1>
+        <p style="font-size:15px;line-height:1.6;margin:0 0 16px 0;color:#333;">Soyez parmi les 10 premiers membres UNPRO de votre ville et profitez de <strong>12 mois gratuitement</strong>. UNPRO vous recommande aux propriétaires au bon moment — sans frais par mise en relation pendant votre membership.</p>
+        <p style="font-size:15px;line-height:1.6;margin:0 0 24px 0;color:#333;">${FOUNDER_OFFER.renewal_note}</p>
+        <p style="margin:0 0 24px 0;">
+          <a href="${link}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:14px 22px;border-radius:12px;font-weight:600;font-size:16px;">Réserver ma place gratuitement</a>
+        </p>
+        <p style="font-size:12px;line-height:1.5;color:#999;margin:0;">${FOUNDER_OFFER.conditions}</p>
+      </td></tr>
+    </table>
+    <p style="font-size:12px;color:#999;margin:16px 0 0 0;">UNPRO — plateforme d'intelligence résidentielle québécoise · unpro.ca</p>
+  </td></tr></table>
+</body></html>`;
+}

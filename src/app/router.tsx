@@ -92,6 +92,8 @@ const PageAdminPartners = lazyWithRetry(() => import("@/pages/admin/partners/Pag
 const PageAdminContentGuard = lazyWithRetry(() => import("@/pages/admin/PageAdminContentGuard"));
 const PageAdminAiVisibilityAudit = lazyWithRetry(() => import("@/pages/admin/PageAdminAiVisibilityAudit"));
 const PageAdminAcquisitionFunnel = lazyWithRetry(() => import("@/pages/admin/PageAdminAcquisitionFunnel"));
+const PageAdminFounderPipeline = lazyWithRetry(() => import("@/pages/admin/PageAdminFounderPipeline"));
+const PageFounderLocalServices = lazyWithRetry(() => import("@/pages/founder/PageFounderLocalServices"));
 const PageAdminRevenueIntelligence = lazyWithRetry(() => import("@/pages/admin/PageAdminRevenueIntelligence"));
 const PageAdminSmsSprint = lazyWithRetry(() => import("@/pages/admin/PageAdminSmsSprint"));
 const PageActivationSprint = lazyWithRetry(() => import("@/pages/PageActivationSprint"));
@@ -1099,6 +1101,8 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/calculateur-forfait" element={<Suspense fallback={<LazyFallback />}><PageForfaitGrowthCalculator /></Suspense>} />
 
         <Route path="/entrepreneurs/audit-ia" element={<PageAiRecommendationAudit />} />
+        {/* Founder offer — local services & professionals (12 mois gratuits, puis 350 $/an) */}
+        <Route path="/fondateurs" element={<Suspense fallback={<LazyFallback />}><PageFounderLocalServices /></Suspense>} />
         <Route path="/entrepreneur/audit-ia" element={<Navigate to="/entrepreneurs/audit-ia" replace />} />
         <Route path="/entrepreneurs/garantie" element={<PageGuaranteeCalculator />} />
 
@@ -1671,6 +1675,7 @@ export const AppRouter = () => (
         <Route path="/admin/content-guard" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminContentGuard /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/ai-visibility-audit" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAiVisibilityAudit /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/acquisition-funnel" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionFunnel /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/founder-pipeline" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminFounderPipeline /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/revenue-intelligence" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminRevenueIntelligence /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/acquisition/sms-sprint" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminSmsSprint /></Suspense></AdminProtectedRoute>} />
         <Route path="/activer/:slug" element={<Suspense fallback={<LazyFallback />}><PageActivationSprint /></Suspense>} />
