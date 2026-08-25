@@ -892,7 +892,7 @@ export default function PageAdminAcquisitionPipeline() {
             <StatTile label="Contactées" value={totalContacted} />
             <StatTile label="Rejetées (24h)" value={stageCounts.rejected ?? 0} tone="danger" />
             <StatTile label="Doublons (24h)" value={stageCounts.duplicate ?? 0} />
-            <StatTile label="Activées 1$" value={stageCounts.activated ?? 0} tone="success" />
+            <StatTile label="Activées 350 $" value={stageCounts.activated ?? 0} tone="success" />
           </div>
         </section>
 

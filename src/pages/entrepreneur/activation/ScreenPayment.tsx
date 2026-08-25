@@ -48,7 +48,7 @@ export default function ScreenPayment() {
     setProcessing(true);
     try {
       if (isFounder) {
-        // Dedicated function: subscription + trial 7d + 1$ add_invoice_items.
+        // Dedicated function: canonical 350 $ one-time entry pack (legacy trial retired).
         const { data, error } = await supabase.functions.invoke("create-founder-activation-checkout", {
           body: {
             offer_code: "founder_premium_7d",
