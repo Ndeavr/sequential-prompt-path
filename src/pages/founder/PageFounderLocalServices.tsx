@@ -43,10 +43,8 @@ export default function PageFounderLocalServices() {
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<
-    | { kind: "success"; founderEnd: string }
-    | { kind: "error"; message: string }
-    | null
-  );
+    { kind: "success"; founderEnd: string } | { kind: "error"; message: string } | null
+  >(null);
 
   const { data: categories } = useQuery({
     queryKey: ["founder-eligible-categories"],
