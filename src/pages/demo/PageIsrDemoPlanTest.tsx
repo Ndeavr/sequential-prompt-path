@@ -33,8 +33,9 @@ export default function PageIsrDemoPlanTest() {
 
   const recommended = useMemo(() => recommendPlan(answers), [answers]);
 
-  // Ensure a single demo run row exists
+  // Ensure a single demo run row exists (founder mode only)
   useEffect(() => {
+    if (founderAllowed !== true) return;
     let cancelled = false;
     (async () => {
       const existing = typeof window !== "undefined" ? localStorage.getItem(RUN_KEY) : null;
