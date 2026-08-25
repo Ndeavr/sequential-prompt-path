@@ -862,6 +862,7 @@ const PageAdminProspectExecutionRunDetail = lazyWithRetry(() => import("@/pages/
 const PageAffiliateDashboard = lazyWithRetry(() => import("@/pages/admin/affiliate/PageAffiliateDashboard"));
 const PageAffiliatesHub = lazyWithRetry(() => import("@/pages/admin/affiliate/PageAffiliatesHub"));
 const PageAffiliateWarRoom = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateWarRoom"));
+const PageAffiliateActionMode = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateActionMode"));
 const PageAffiliateCompanyWorkspace = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateCompanyWorkspace"));
 const PageAffiliateAssignment = lazyWithRetry(() => import("@/pages/admin/affiliate/PageAffiliateAssignment"));
 const PageAffiliesPublic = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliesPublic"));
@@ -1783,7 +1784,8 @@ export const AppRouter = () => (
         <Route path="/admin/affiliates" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAffiliatesHub /></Suspense></ProtectedRoute>} />
         <Route path="/admin/affiliates/dashboard" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAffiliateDashboard /></Suspense></ProtectedRoute>} />
         <Route path="/admin/affiliates/assign" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAffiliateAssignment /></Suspense></ProtectedRoute>} />
-        <Route path="/affiliate" element={<ProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliateWarRoom /></Suspense></ProtectedRoute>} />
+        <Route path="/affiliate" element={<ProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliateActionMode /></Suspense></ProtectedRoute>} />
+        <Route path="/affiliate/crm" element={<ProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliateWarRoom /></Suspense></ProtectedRoute>} />
         <Route path="/affiliate/company/:id" element={<ProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliateCompanyWorkspace /></Suspense></ProtectedRoute>} />
         <Route path="/affiliate/prospects/import" element={<ProtectedRoute><Suspense fallback={<LazyFallback />}><PageAffiliateProspectImport /></Suspense></ProtectedRoute>} />
         <Route path="/affiliate/login" element={<Suspense fallback={<LazyFallback />}><PageAffiliateLogin /></Suspense>} />
