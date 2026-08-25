@@ -865,6 +865,7 @@ const PageAffiliateWarRoom = lazyWithRetry(() => import("@/pages/affiliate/PageA
 const PageAffiliateActionMode = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateActionMode"));
 const PageAffiliateCompanyWorkspace = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateCompanyWorkspace"));
 const PageAffiliateAssignment = lazyWithRetry(() => import("@/pages/admin/affiliate/PageAffiliateAssignment"));
+const PageAffiliateAttribution = lazyWithRetry(() => import("@/pages/admin/affiliate/PageAffiliateAttribution"));
 const PageAffiliesPublic = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliesPublic"));
 const PageAffiliateOnboarding = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateOnboarding"));
 const PageAffiliePublicProfile = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliePublicProfile"));
