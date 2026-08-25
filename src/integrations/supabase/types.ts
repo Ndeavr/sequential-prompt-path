@@ -5055,6 +5055,60 @@ export type Database = {
           },
         ]
       }
+      affiliate_funnel_events: {
+        Row: {
+          affiliate_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          ref_code: string | null
+          session_id: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          affiliate_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          ref_code?: string | null
+          session_id: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          affiliate_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          ref_code?: string | null
+          session_id?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_funnel_events_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_funnel_events_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
+          },
+        ]
+      }
       affiliate_import_batches: {
         Row: {
           affiliate_id: string
@@ -5607,6 +5661,7 @@ export type Database = {
       }
       affiliates: {
         Row: {
+          acquisition_source: Json | null
           activated_at: string | null
           admin_notes: string | null
           affiliate_type: string
@@ -5635,6 +5690,7 @@ export type Database = {
           payout_method: string | null
           permissions: Json
           phone: string | null
+          preferred_channels: string[] | null
           preferred_language: string
           primary_city: string | null
           province: string | null
@@ -5656,8 +5712,10 @@ export type Database = {
           updated_at: string
           user_id: string | null
           website_url: string | null
+          work_preferences: string[] | null
         }
         Insert: {
+          acquisition_source?: Json | null
           activated_at?: string | null
           admin_notes?: string | null
           affiliate_type?: string
@@ -5686,6 +5744,7 @@ export type Database = {
           payout_method?: string | null
           permissions?: Json
           phone?: string | null
+          preferred_channels?: string[] | null
           preferred_language?: string
           primary_city?: string | null
           province?: string | null
@@ -5707,8 +5766,10 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           website_url?: string | null
+          work_preferences?: string[] | null
         }
         Update: {
+          acquisition_source?: Json | null
           activated_at?: string | null
           admin_notes?: string | null
           affiliate_type?: string
@@ -5737,6 +5798,7 @@ export type Database = {
           payout_method?: string | null
           permissions?: Json
           phone?: string | null
+          preferred_channels?: string[] | null
           preferred_language?: string
           primary_city?: string | null
           province?: string | null
@@ -5758,6 +5820,7 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           website_url?: string | null
+          work_preferences?: string[] | null
         }
         Relationships: [
           {

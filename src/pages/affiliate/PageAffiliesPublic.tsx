@@ -1,282 +1,279 @@
 /**
- * PageAffiliesPublic — Page publique du programme d'affiliation UNPRO.
- * Route: /affilies
+ * PageAffiliesPublic — Landing publique du programme affilié UNPRO.
+ * Route: /affilies (publique, partageable)
+ * Objectif : compréhension < 30 s → CTA « JE COMMENCE! » → onboarding 4 étapes.
+ * Aucun taux affiché (le taux est propre à chaque affiliée) — mécanismes réels seulement.
  */
 import { useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Link, useSearchParams } from "react-router-dom";
 import {
-  useReferralAttribution,
-  trackReferralEvent,
-} from "@/hooks/useReferralAttribution";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  ArrowRight,
-  Briefcase,
-  Home,
-  Handshake,
+  Search,
+  PhoneCall,
   Sparkles,
+  ListChecks,
+  Handshake,
+  ArrowRight,
+  CheckCircle2,
+  Clock,
   ShieldCheck,
-  Trophy,
+  BarChart3,
 } from "lucide-react";
+import { UnproLogo } from "@/components/brand/UnproLogo";
+import { trackAffiliateFunnel } from "@/features/affiliate/onboarding/trackAffiliateFunnel";
 
 const STEPS = [
-  { n: 1, t: "Activez", d: "60 secondes, sans nouveau compte." },
-  { n: 2, t: "Recommandez", d: "Votre lien perso ou une carte d'affaires." },
-  { n: 3, t: "Suivez", d: "Pipeline en temps réel dans votre tableau de bord." },
-  { n: 4, t: "Encaissez", d: "Commissions dès la conversion validée." },
+  {
+    n: 1,
+    icon: Search,
+    title: "Trouvez",
+    body: "UNPRO vous propose des entrepreneurs à contacter, un à la fois. Vous pouvez aussi ajouter les vôtres.",
+  },
+  {
+    n: 2,
+    icon: PhoneCall,
+    title: "Contactez",
+    body: "Un appel court, un texto ou un courriel. Votre objectif n'est pas de vendre : c'est d'ouvrir la porte.",
+    script: true,
+  },
+  {
+    n: 3,
+    icon: Sparkles,
+    title: "Envoyez l'évaluation IA",
+    body: "En un toucher, l'entrepreneur reçoit un lien unique vers son évaluation personnalisée.",
+    discoveries: true,
+  },
+  {
+    n: 4,
+    icon: ListChecks,
+    title: "Suivez",
+    body: "Vous voyez en temps réel où en est chaque entrepreneur : Envoyée → Ouverte → Commencée → Terminée.",
+  },
+  {
+    n: 5,
+    icon: Handshake,
+    title: "UNPRO prend la relève",
+    body: "Dès que l'évaluation est terminée, UNPRO accompagne l'entrepreneur jusqu'à son inscription.",
+    takeover: true,
+  },
 ];
 
-const PROFILES = [
-  {
-    icon: Briefcase,
-    kind: "contractor" as const,
-    title: "Entrepreneur",
-    desc: "Vous connaissez des pros qui gagneraient à rejoindre UNPRO ? Recommandez-les.",
-  },
-  {
-    icon: Home,
-    kind: "homeowner" as const,
-    title: "Propriétaire",
-    desc: "Recommandez UNPRO à un voisin, une famille, un syndicat de copropriété.",
-  },
-  {
-    icon: Handshake,
-    kind: "partner" as const,
-    title: "Partenaire / Créateur",
-    desc: "Vous avez une audience ou un réseau ? Devenez ambassadeur UNPRO.",
-  },
+const DISCOVERIES = [
+  "Sa visibilité réelle dans les recherches IA",
+  "Ses forces et ses angles morts",
+  "Son potentiel de revenus dans son territoire",
+  "Le plan UNPRO adapté à sa capacité",
+  "Ses prochaines actions concrètes",
 ];
+
+const TAKEOVER = ["Évaluation", "Profil", "Objectifs", "Solution", "Inscription"];
 
 const FAQ = [
   {
-    q: "Combien puis-je gagner ?",
-    a: "Les commissions sont configurées par plan et validées après la période d'essai. Vous voyez le montant estimé avant chaque recommandation.",
+    q: "Est-ce que je dois vendre ?",
+    a: "Non. Vous ouvrez la porte et envoyez l'évaluation. UNPRO fait la démonstration, l'accompagnement et l'inscription.",
   },
   {
-    q: "Dois-je créer un nouveau compte ?",
-    a: "Non. Si vous êtes déjà connecté comme propriétaire ou entrepreneur, votre statut d'affilié s'ajoute à votre compte existant.",
+    q: "Comment suis-je payée ?",
+    a: "Quand un entrepreneur que vous avez référé devient client payant, une commission vous est attribuée. Votre taux exact est confirmé dans votre espace dès l'activation.",
   },
   {
-    q: "Comment fonctionne l'attribution ?",
-    a: "Chaque lien contient votre code. Toute recommandation qui s'active dans la fenêtre d'attribution vous est créditée automatiquement.",
+    q: "Combien de temps mon lien reste-t-il valide ?",
+    a: "Un entrepreneur qui s'inscrit dans les 30 jours suivant votre envoi vous est attribué.",
   },
   {
-    q: "Puis-je recommander sans lien ?",
-    a: "Oui. Depuis votre tableau de bord, ajoutez un prospect (saisie rapide, photo de carte d'affaires, import ou site web).",
-  },
-  {
-    q: "Quand suis-je payé ?",
-    a: "Les commissions passent au statut « validée » après la fenêtre de validation, puis sont réglées selon vos préférences de paiement.",
-  },
-  {
-    q: "Puis-je m'auto-recommander ?",
-    a: "Non. Les auto-références et les doublons sont bloqués automatiquement.",
-  },
-  {
-    q: "Est-ce que ça respecte le C-28 ?",
-    a: "Oui. Chaque recommandation vérifie le consentement du prospect à être contacté par UNPRO.",
-  },
-  {
-    q: "Je suis déjà affilié ?",
-    a: "Retrouvez votre tableau de bord directement à /affiliate.",
+    q: "Puis-je ajouter mes propres contacts ?",
+    a: "Oui. Vous pouvez utiliser les prospects proposés par UNPRO ou ajouter les entrepreneurs que vous connaissez déjà.",
   },
 ];
 
 export default function PageAffiliesPublic() {
-  // REPAIR: /affilies?ref=CODE&intent=join doit capturer le parrain.
-  // Sans ce hook, le code ref n'était jamais stocké et `assign_affiliate_parent`
-  // ne recevait rien → aucun sous-affilié n'était rattaché (override 5 % perdu).
-  useReferralAttribution();
-  const [params] = useSearchParams();
-  const refCode = params.get("ref");
-  const intent = params.get("intent");
+  const location = useLocation();
 
   useEffect(() => {
-    if (refCode) {
-      trackReferralEvent("affiliate_recruit_landing", refCode, {
-        targetType: "affiliate_join",
-        metadata: { intent: intent ?? null },
-      });
-    }
-  }, [refCode, intent]);
+    trackAffiliateFunnel("affiliate_landing_view");
+  }, []);
 
-  // Le code parrain est propagé dans chaque CTA pour survivre à la navigation.
-  const joinUrl = (type?: string) => {
-    const q = new URLSearchParams();
-    if (type) q.set("type", type);
-    if (refCode) q.set("ref", refCode);
-    if (intent) q.set("intent", intent);
-    const qs = q.toString();
-    return `/affilies/activer${qs ? `?${qs}` : ""}`;
-  };
+  const startHref = `/affilies/onboarding${location.search}`;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="landing-warm min-h-screen bg-background text-foreground">
       <Helmet>
-        <title>Programme d'affiliation UNPRO — Recommandez et gagnez</title>
+        <title>Programme affilié UNPRO — Vous ouvrez la porte. UNPRO fait le reste.</title>
         <meta
           name="description"
-          content="Rejoignez le programme d'affiliation UNPRO. Recommandez des entrepreneurs ou des propriétaires et gagnez des commissions validées, en toute transparence."
+          content="Recommandez des entrepreneurs à UNPRO : trouvez, contactez, envoyez l'évaluation IA, suivez. UNPRO prend la relève et vous êtes payée sur chaque inscription."
         />
-        <link rel="canonical" href="https://unpro.ca/affilies" />
+        <meta property="og:title" content="Programme affilié UNPRO" />
+        <meta
+          property="og:description"
+          content="Trouvez un entrepreneur, envoyez son évaluation IA, UNPRO prend la relève. Vous êtes payée sur chaque inscription."
+        />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
       </Helmet>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="mx-auto max-w-5xl px-6 pt-20 pb-14 md:pt-28 md:pb-20 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/40 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5" />
-            Programme officiel UNPRO
-          </div>
-          <h1 className="mt-6 text-4xl md:text-6xl font-semibold tracking-tight text-foreground">
-            Recommandez UNPRO.
+      {/* Header */}
+      <header className="mx-auto flex max-w-3xl items-center justify-between px-5 py-5">
+        <Link to="/" aria-label="UNPRO">
+          <UnproLogo variant="primary" className="h-7 w-auto" />
+        </Link>
+        <Link
+          to="/affiliate/login"
+          className="text-sm font-medium text-muted-foreground underline-offset-4 hover:underline"
+        >
+          Déjà affiliée ? Connexion
+        </Link>
+      </header>
+
+      <main className="mx-auto max-w-3xl px-5 pb-40">
+        {/* Hero */}
+        <section className="pt-6 text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+            Programme affilié UNPRO
+          </p>
+          <h1 className="mt-3 text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl">
+            Vous ouvrez la porte.
             <br />
-            <span className="text-primary">Encaissez des commissions.</span>
+            <span className="text-primary">UNPRO fait le reste.</span>
           </h1>
-          <p className="mt-5 max-w-2xl mx-auto text-lg text-muted-foreground">
-            Le programme d'affiliation UNPRO récompense chaque personne qui aide un
-            entrepreneur ou un propriétaire à rejoindre la plateforme.
+          <p className="mx-auto mt-4 max-w-md text-base leading-relaxed text-muted-foreground">
+            Recommandez des entrepreneurs du Québec. UNPRO les évalue, les accompagne et les inscrit.
+            Vous êtes payée sur chaque inscription.
           </p>
-          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-            <Button asChild size="lg" className="text-base">
-              <Link to={joinUrl()}>
-                Devenir affilié
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="text-base">
-              <Link to="/affiliate">Déjà affilié ? Mon tableau de bord</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+          <Link
+            to={startHref}
+            onClick={() => trackAffiliateFunnel("affiliate_start_clicked", { metadata: { position: "hero" } })}
+            className="mt-8 inline-flex h-14 w-full max-w-sm items-center justify-center gap-2 rounded-full bg-primary text-lg font-bold text-primary-foreground shadow-lg transition-transform hover:-translate-y-0.5"
+          >
+            JE COMMENCE! <ArrowRight className="h-5 w-5" />
+          </Link>
+          <p className="mt-3 text-xs text-muted-foreground">4 étapes. 2 minutes. Aucune carte requise.</p>
+        </section>
 
-      {/* Steps */}
-      <section className="mx-auto max-w-5xl px-6 pb-16">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        {/* Parcours 5 étapes */}
+        <section className="mt-16 space-y-4">
           {STEPS.map((s) => (
-            <Card key={s.n} className="border-border/60 bg-card/40 backdrop-blur">
-              <CardContent className="p-5">
-                <div className="text-xs font-medium text-primary">Étape {s.n}</div>
-                <div className="mt-2 text-lg font-semibold text-foreground">{s.t}</div>
-                <div className="mt-1 text-sm text-muted-foreground">{s.d}</div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Profiles */}
-      <section className="mx-auto max-w-5xl px-6 pb-20">
-        <h2 className="text-2xl md:text-3xl font-semibold text-foreground text-center">
-          Qui peut devenir affilié ?
-        </h2>
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-          {PROFILES.map(({ icon: Icon, kind, title, desc }) => (
-            <Card
-              key={kind}
-              className="border-border/60 bg-card/40 backdrop-blur hover:border-primary/40 transition-colors"
+            <article
+              key={s.n}
+              className="rounded-3xl border border-border bg-card p-6 shadow-sm"
             >
-              <CardContent className="p-6 flex flex-col h-full">
-                <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <h3 className="mt-4 text-lg font-semibold text-foreground">{title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground flex-1">{desc}</p>
-                <Button asChild variant="ghost" className="mt-4 justify-start px-0">
-                  <Link to={joinUrl(kind)}>
-                    Commencer <ArrowRight className="ml-1 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Sous-affiliés — override 5 % */}
-      <section className="mx-auto max-w-5xl px-6 pb-20">
-        <div className="rounded-3xl border border-primary/25 bg-primary/5 p-6 md:p-10">
-          <div className="text-xs font-medium uppercase tracking-wider text-primary">Revenu d'équipe</div>
-          <h2 className="mt-2 text-2xl md:text-3xl font-semibold text-foreground">
-            Bâtissez votre équipe UNPRO
-          </h2>
-          <p className="mt-3 text-muted-foreground max-w-2xl">
-            Recrutez d'autres affiliés avec votre lien personnel. Ils touchent 100 % de leur commission
-            habituelle, et UNPRO vous verse <strong className="text-foreground">5 % additionnels</strong> sur
-            leurs ventes admissibles. Rien n'est retiré à votre recrue.
-          </p>
-          <div className="mt-6 grid sm:grid-cols-3 gap-4">
-            {[
-              { t: "Vente de votre recrue", d: "350 $" },
-              { t: "Sa commission", d: "Inchangée, payée en entier" },
-              { t: "Votre override 5 %", d: "17,50 $ payé par UNPRO" },
-            ].map((x) => (
-              <div key={x.t} className="rounded-2xl border border-border/40 bg-card p-4">
-                <div className="text-xs text-muted-foreground">{x.t}</div>
-                <div className="mt-1 text-lg font-semibold text-foreground">{x.d}</div>
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-base font-extrabold text-primary-foreground">
+                  {s.n}
+                </span>
+                <h2 className="flex items-center gap-2 text-xl font-bold">
+                  <s.icon className="h-5 w-5 text-primary" /> {s.title}
+                </h2>
               </div>
+              <p className="mt-3 leading-relaxed text-muted-foreground">{s.body}</p>
+
+              {s.script && (
+                <div className="mt-4 rounded-2xl bg-muted p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Ce que vous dites, en gros
+                  </p>
+                  <p className="mt-2 text-sm italic leading-relaxed">
+                    « Allô, c'est [votre prénom]. Je travaille avec UNPRO — on a préparé une évaluation
+                    gratuite de votre visibilité en ligne. Ça prend 3 minutes. Je vous envoie le lien ? »
+                  </p>
+                </div>
+              )}
+
+              {s.discoveries && (
+                <ul className="mt-4 space-y-2">
+                  {DISCOVERIES.map((d) => (
+                    <li key={d} className="flex items-start gap-2 text-sm">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                      <span>{d}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {s.takeover && (
+                <div className="mt-4 flex flex-wrap items-center gap-1.5">
+                  {TAKEOVER.map((t, i) => (
+                    <span key={t} className="flex items-center gap-1.5">
+                      <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold">{t}</span>
+                      {i < TAKEOVER.length - 1 && <ArrowRight className="h-3 w-3 text-muted-foreground" />}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </article>
+          ))}
+        </section>
+
+        {/* Rémunération — mécanismes réels, aucun taux public */}
+        <section className="mt-16 rounded-3xl border border-border bg-card p-6 shadow-sm">
+          <h2 className="text-2xl font-bold">Comment vous êtes payée</h2>
+          <ul className="mt-5 space-y-4">
+            <li className="flex items-start gap-3">
+              <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <p className="text-sm leading-relaxed">
+                <strong>Attribution claire.</strong> Chaque entrepreneur que vous contactez est lié à
+                votre compte. S'il devient client payant, la commission vous revient.
+              </p>
+            </li>
+            <li className="flex items-start gap-3">
+              <Clock className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <p className="text-sm leading-relaxed">
+                <strong>Fenêtre de 30 jours.</strong> Une inscription dans les 30 jours suivant votre
+                envoi vous est attribuée.
+              </p>
+            </li>
+            <li className="flex items-start gap-3">
+              <BarChart3 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <p className="text-sm leading-relaxed">
+                <strong>Suivi transparent.</strong> Prospects contactés, évaluations envoyées, ouvertes,
+                terminées, inscriptions et commissions : tout est visible dans votre espace.
+              </p>
+            </li>
+          </ul>
+          <p className="mt-5 rounded-2xl bg-muted p-4 text-sm text-muted-foreground">
+            Votre taux de commission exact est confirmé dans votre espace dès l'activation — il est
+            propre à chaque affiliée.
+          </p>
+        </section>
+
+        {/* CTA intermédiaire */}
+        <section className="mt-12 text-center">
+          <Link
+            to={startHref}
+            onClick={() => trackAffiliateFunnel("affiliate_start_clicked", { metadata: { position: "mid" } })}
+            className="inline-flex h-14 w-full max-w-sm items-center justify-center gap-2 rounded-full bg-primary text-lg font-bold text-primary-foreground shadow-lg transition-transform hover:-translate-y-0.5"
+          >
+            JE COMMENCE! <ArrowRight className="h-5 w-5" />
+          </Link>
+        </section>
+
+        {/* FAQ */}
+        <section className="mt-16">
+          <h2 className="text-2xl font-bold">Questions fréquentes</h2>
+          <div className="mt-5 space-y-3">
+            {FAQ.map((f) => (
+              <details key={f.q} className="rounded-2xl border border-border bg-card p-5">
+                <summary className="cursor-pointer text-base font-semibold">{f.q}</summary>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.a}</p>
+              </details>
             ))}
           </div>
-          <p className="mt-4 text-xs text-muted-foreground">
-            Un seul niveau. Attribution automatique via votre lien de recrutement, vérifiée côté serveur.
-          </p>
-        </div>
-      </section>
+        </section>
+      </main>
 
-
-
-      {/* Trust */}
-      <section className="mx-auto max-w-5xl px-6 pb-20">
-        <div className="grid md:grid-cols-3 gap-4">
-          {[
-            { i: ShieldCheck, t: "Transparent", d: "Taux et fenêtres visibles avant chaque recommandation." },
-            { i: Trophy, t: "Validation honnête", d: "Aucun crédit fantôme. Commissions basées sur des activations réelles." },
-            { i: Sparkles, t: "Sans friction", d: "Ajoutez un prospect par photo, lien ou saisie rapide." },
-          ].map(({ i: Icon, t, d }) => (
-            <div key={t} className="flex items-start gap-3">
-              <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                <Icon className="h-4 w-4" />
-              </div>
-              <div>
-                <div className="font-semibold text-foreground">{t}</div>
-                <div className="text-sm text-muted-foreground">{d}</div>
-              </div>
-            </div>
-          ))}
+      {/* CTA fixe */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-5 py-3 backdrop-blur">
+        <div className="mx-auto max-w-3xl">
+          <Link
+            to={startHref}
+            onClick={() => trackAffiliateFunnel("affiliate_start_clicked", { metadata: { position: "sticky" } })}
+            className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-primary text-lg font-bold text-primary-foreground shadow-lg"
+          >
+            JE COMMENCE! <ArrowRight className="h-5 w-5" />
+          </Link>
         </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="mx-auto max-w-3xl px-6 pb-24">
-        <h2 className="text-2xl md:text-3xl font-semibold text-foreground text-center">
-          Questions fréquentes
-        </h2>
-        <div className="mt-8 space-y-3">
-          {FAQ.map((f) => (
-            <details
-              key={f.q}
-              className="group rounded-xl border border-border/60 bg-card/40 backdrop-blur p-4"
-            >
-              <summary className="cursor-pointer font-medium text-foreground list-none flex items-center justify-between">
-                {f.q}
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-open:rotate-90 transition-transform" />
-              </summary>
-              <p className="mt-3 text-sm text-muted-foreground">{f.a}</p>
-            </details>
-          ))}
-        </div>
-        <div className="mt-10 text-center">
-          <Button asChild size="lg">
-            <Link to={joinUrl()}>
-              Activer mon statut d'affilié
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-      </section>
+      </div>
     </div>
   );
 }

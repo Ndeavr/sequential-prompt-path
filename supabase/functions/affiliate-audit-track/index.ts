@@ -63,6 +63,15 @@ Deno.serve(async (req) => {
           payload: { audit_event: event, audit_id: audit.id },
         });
       }
+      // Funnel affilié — états réels uniquement (ouverture/début/complétion).
+      if (["opened", "started", "completed"].includes(event)) {
+        await sb.from("affiliate_funnel_events").insert({
+          affiliate_id: audit.affiliate_id ?? null,
+          session_id: `audit:${audit.id}`,
+          event_type: `audit_${event}`,
+          metadata: { audit_id: audit.id, lead_id: audit.lead_id },
+        });
+      }
     }
 
     // Terminée → UNPRO prend la relève : le prospect passe au pipeline existant.

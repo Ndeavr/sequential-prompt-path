@@ -175,6 +175,13 @@ Deno.serve(async (req) => {
       payload: { audit_id: audit!.id, link, reminder: isReminder, delivery_status: deliveryStatus },
     });
 
+    await sb.from("affiliate_funnel_events").insert({
+      affiliate_id: affiliate.id,
+      session_id: `audit:${audit!.id}`,
+      event_type: "audit_sent",
+      metadata: { audit_id: audit!.id, lead_id: leadId, channel, reminder: isReminder, delivery_status: deliveryStatus },
+    });
+
     const patch: Record<string, unknown> = {
       contact_status: "personal_sms_sent",
       last_contacted_by: affiliate.id,
