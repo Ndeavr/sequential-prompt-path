@@ -1,8 +1,9 @@
-// UNPRO — Claim Pre-Built Profile $1 Activation
-// Creates a Stripe one-time $1 checkout for a contractor claiming their
+// UNPRO — Claim Pre-Built Profile · Canonical $350 Entry Pack
+// Creates a Stripe one-time $350 CAD checkout for a contractor claiming their
 // pre-built UNPRO profile. Guest-friendly (no auth). Captures email + intent
 // metadata. Account + magic-link are created post-payment by the existing
 // activation-confirm webhook flow (or follow-up edge function).
+// The legacy $1 activation offer is obsolete and MUST NOT be reintroduced.
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
