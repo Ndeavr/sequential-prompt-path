@@ -1,6 +1,6 @@
 /**
  * /admin/first-dollar — 11-stage real-time funnel dashboard.
- * Objective: 1 real entrepreneur × 1 successful $1 payment × 1 activated profile.
+ * Objective: 1 real entrepreneur × 1 successful 350 $ payment × 1 activated profile.
  */
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";

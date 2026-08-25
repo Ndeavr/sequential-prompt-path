@@ -1,6 +1,6 @@
 /**
  * /admin/verified-contractors
- * Real prospect list — only surface for launching the first $1 batch.
+ * Real prospect list — only surface for launching the first 350 $ batch.
  */
 import { useState } from "react";
 import AdminLayout from "@/layouts/AdminLayout";
@@ -84,7 +84,7 @@ export default function AdminVerifiedContractors() {
   return (
     <AdminLayout>
       <PageHeader
-        title="Revenue Progress — jusqu'au premier 1 $"
+        title="Revenue Progress — jusqu'au premier 350 $"
         description="Vraies entreprises, coordonnées vérifiables. Le worker autonome pousse jusqu'à l'activation payée."
       />
 

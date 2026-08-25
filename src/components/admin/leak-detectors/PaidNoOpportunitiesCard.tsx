@@ -1,5 +1,5 @@
 /**
- * PaidNoOpportunitiesCard — First-$1 leak detector.
+ * PaidNoOpportunitiesCard — First-revenue (350 $ activation) leak detector.
  *
  * Surfaces contractors with an active paid subscription who received
  * ZERO matches over the last 7 days. This number MUST always be zero —

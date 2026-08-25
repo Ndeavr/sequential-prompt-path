@@ -124,7 +124,7 @@ export default function PageAdminRevenuePathAudit() {
         </SectionErrorBoundary>
 
         <div className="text-xs opacity-60">
-          <a href="/admin/revenue-gate-audit" className="underline">← Real $1 Stripe test cockpit</a>
+          <a href="/admin/revenue-gate-audit" className="underline">← Real Stripe test cockpit</a>
         </div>
       </div>
     </div>

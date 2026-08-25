@@ -5,7 +5,7 @@ import { pickRecommendedPlan, buildGrowthPlan, type BusinessGoal } from "@/featu
 import { fmtCAD } from "./useCountUp";
 import { supabase } from "@/integrations/supabase/client";
 import { CONTRACTOR_PLANS, type ContractorPlanSlug } from "@/config/contractorPlans";
-import { getPlanPricingBreakdown, fmtCADDollars } from "@/features/scanIA/planPricingBreakdown";
+
 import PlanChoiceStrip from "./PlanChoiceStrip";
 import { Check, Loader2, ArrowRight, ShieldCheck } from "lucide-react";
 
@@ -78,45 +78,13 @@ export default function StepActivate() {
                 Aujourd'hui
               </div>
               <div className="text-4xl font-semibold leading-tight">
-                1&nbsp;$
+                350&nbsp;$
               </div>
               <div className="text-xs text-white/60 mt-2">
-                puis <span className="text-white font-medium">{fmtCADDollars(plan?.monthlyPrice ?? 0)}/mois</span> dès le jour&nbsp;8
+                Paiement unique · Aucun abonnement · Jusqu'à 5 rendez-vous exclusifs garantis
               </div>
             </div>
 
-
-            {(() => {
-              const b = getPlanPricingBreakdown(planSlug);
-              if (!b) return null;
-              return (
-                <div
-                  className="text-left border-t border-black/5 pt-4 mb-5"
-                  aria-label={`Après l'essai : ${b.name} à ${b.total.toFixed(2)} dollars par mois taxes incluses`}
-                >
-                  <div className="text-[10px] uppercase tracking-widest text-black/40 mb-1.5">
-                    Après l'essai
-                  </div>
-                  <div className="flex items-baseline justify-between mb-1">
-                    <span className="text-sm font-medium text-black/80">{b.name}</span>
-                    <span className="text-sm text-black/60">
-                      {fmtCADDollars(b.subtotal)} <span className="text-black/40">/ mois</span>
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-[11px] text-black/50">
-                    <span>+ TPS {fmtCADDollars(b.gst)}</span>
-                    <span>+ TVQ {fmtCADDollars(b.qst)}</span>
-                  </div>
-                  <div className="flex items-baseline justify-between mt-2 pt-2 border-t border-black/5">
-                    <span className="text-xs font-semibold text-black/70">Total / mois</span>
-                    <span className="text-base font-semibold text-black">
-                      {fmtCADDollars(b.total)}
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-black/40 mt-1">Taxes incluses (QC)</div>
-                </div>
-              );
-            })()}
 
             <PlanChoiceStrip
               recommended={recommendedSlug}
@@ -142,8 +110,8 @@ export default function StepActivate() {
                 "Profil IA visible sur Alex",
                 "Territoires & catégories réservés",
                 "Rendez-vous propriétaires qualifiés",
-                "Aucun prélèvement avant le jour 8",
-                "Annulation en 1 clic",
+                "Paiement unique — aucun abonnement",
+                "Jusqu'à 5 rendez-vous exclusifs garantis",
               ].map((f) => (
                 <li key={f} className="flex items-center gap-2 text-black/70">
                   <Check className="h-4 w-4 text-emerald-600" /> {f}
@@ -163,7 +131,7 @@ export default function StepActivate() {
                 </>
               ) : (
                 <>
-                  Activer pour 1&nbsp;$ · puis {fmtCADDollars(plan?.monthlyPrice ?? 0)}/mois
+                  Activer pour 350&nbsp;$ · paiement unique
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}

@@ -111,11 +111,10 @@ export default function PageAippPublic() {
           </Card>
         )}
 
-        {/* $1 Close */}
+        {/* Entry offer close */}
         <Card className="border-2 border-primary/40 bg-gradient-to-br from-primary/5 to-transparent">
           <CardContent className="p-8 text-center space-y-4">
-            <Badge variant="default" className="mx-auto">Offre limitée — aujourd'hui seulement</Badge>
-            <h2 className="text-3xl font-bold">Activez votre profil aujourd'hui pour 1$</h2>
+            <h2 className="text-3xl font-bold">Activez votre profil — 350 $, paiement unique</h2>
             {slotsRemaining !== null && slotsRemaining > 0 && (
               <p className="text-sm font-semibold text-primary">
                 Places disponibles à {c.city}: {slotsRemaining} restante{slotsRemaining > 1 ? "s" : ""}
@@ -131,11 +130,11 @@ export default function PageAippPublic() {
             </ul>
             <Link to={`/activation/${c.slug}`}>
               <Button size="lg" className="mt-4" disabled={slotsRemaining === 0}>
-                {slotsRemaining === 0 ? "Complet" : "Activer pour 1$"}
+                {slotsRemaining === 0 ? "Complet" : "Activer mon profil — 350 $"}
               </Button>
             </Link>
             <p className="text-xs text-muted-foreground">
-              Code promo <strong>freetoday</strong> appliqué automatiquement.
+              Paiement unique. Aucun abonnement, aucun renouvellement automatique.
             </p>
           </CardContent>
         </Card>

@@ -85,7 +85,7 @@ const AdminOperationsHub = () => {
     <AdminLayout>
       <PageHeader title="Centre d'opérations" description="Suivi opérationnel et observabilité" />
 
-      {/* First-$1 leak detector — must always be zero */}
+      {/* First-350-$ leak detector — must always be zero */}
       <div className="mb-6">
         <PaidNoOpportunitiesCard />
       </div>

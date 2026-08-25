@@ -23,7 +23,7 @@ function Stat({ label, value, tone }: { label: string; value: string | number; t
 
 export default function FirstRevenueTracker({ snapshot, isLoading }: Props) {
   const monthlyRevenueEstimate = (snapshot?.paid_plans_active ?? 0) * 349; // conservative Pro-plan mean
-  const todayRevenue = (snapshot?.activations_today ?? 0) * 1; // $1 activation
+  const todayRevenue = (snapshot?.activations_today ?? 0) * 350; // 350 $ one-time activation
   const alert = snapshot?.alert_no_activation_48h ?? true;
 
   return (
@@ -58,7 +58,7 @@ export default function FirstRevenueTracker({ snapshot, isLoading }: Props) {
           <Stat label="Contactés (7j)" value={snapshot.contacted_7d} tone="muted" />
           <Stat label="Inscriptions (7j)" value={snapshot.registrations_7d} tone="muted" />
           <Stat label="Profils complétés (7j)" value={snapshot.profiles_completed_7d} tone="muted" />
-          <Stat label="Activations 1$ (7j)" value={snapshot.activations_7d} tone="muted" />
+          <Stat label="Activations 350 $ (7j)" value={snapshot.activations_7d} tone="muted" />
         </div>
       )}
     </div>

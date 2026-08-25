@@ -186,7 +186,7 @@ export function AutonomousRecruitmentPanel() {
         <Stat label="Livrés" value={data.delivered} />
         <Stat label="Clics" value={data.clicked} />
         <Stat label="Inscriptions" value={data.registrations} />
-        <Stat label="Paiements 1 $" value={data.paid} />
+        <Stat label="Paiements 350 $" value={data.paid} />
         <Stat label="Activations" value={data.activated} />
         <Stat label="Bloqués conformité" value={data.complianceBlocked} />
         <Stat label="Doublons / idempotence" value={data.duplicateSkipped} />

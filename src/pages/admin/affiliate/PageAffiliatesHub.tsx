@@ -85,7 +85,7 @@ function DashboardTab({ affiliates }: { affiliates: Aff[] }) {
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
       <KpiCard icon={Users} label="Affiliés actifs" value={String(activeCount)} hint={`${affiliates.length} au total`} />
       <KpiCard icon={ClipboardList} label="Prospects assignés" value={String(totalAssigned)} />
-      <KpiCard icon={Send} label="Essais 1 $" value={String(totalTrials)} />
+      <KpiCard icon={Send} label="Activations 350 $" value={String(totalTrials)} />
       <KpiCard icon={TrendingUp} label="Conversions" value={String(totalConverted)} />
       <KpiCard icon={DollarSign} label="Revenus générés" value={formatCents(totalRevenue)} />
       <KpiCard icon={Wallet} label="Commissions dues" value={formatCents(totalCommissions)} />

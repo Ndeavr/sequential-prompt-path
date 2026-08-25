@@ -90,7 +90,7 @@ export default function PageAdminWarRoom() {
           <Stat icon={<Activity className="text-purple-500" />} label="Pages AIPP créées" value={stats?.pagesCreated ?? "—"} />
           <Stat icon={<Mail className="text-emerald-500" />} label="Emails envoyés" value={stats?.emailsSent ?? "—"} sub={`Taux d'ouverture: ${openRate}%`} />
           <Stat icon={<MessageSquare className="text-orange-500" />} label="SMS envoyés" value={stats?.smsSent ?? "—"} />
-          <Stat icon={<DollarSign className="text-green-500" />} label="Activations 1$" value={stats?.activations ?? "—"} />
+          <Stat icon={<DollarSign className="text-green-500" />} label="Activations 350 $" value={stats?.activations ?? "—"} />
           <Stat icon={<TrendingArrow />} label="Upgrades en attente" value={stats?.upgradesPending ?? "—"} highlight={Boolean(stats?.upgradesPending)} />
           <Stat icon={<DollarSign className="text-green-600" />} label="Revenus aujourd'hui" value={`$${(stats?.totalRevenue ?? 0).toFixed(2)}`} />
           <Stat icon={<AlertCircle className="text-red-500" />} label="Slots restants total"

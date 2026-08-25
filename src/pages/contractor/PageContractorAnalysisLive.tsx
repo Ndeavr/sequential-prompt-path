@@ -351,7 +351,7 @@ function CheckoutButton({ runId }: { runId: string }) {
         rel="noopener"
         className="w-full rounded-2xl bg-amber-400 text-[#060B14] py-4 text-base font-semibold flex items-center justify-center gap-2 active:scale-[0.99] transition"
       >
-        Activer mon profil — 1,00 $ aujourd'hui <ArrowRight className="w-4 h-4" />
+        Activer mon profil — 350 $ · paiement unique <ArrowRight className="w-4 h-4" />
       </a>
       <a
         href={url}

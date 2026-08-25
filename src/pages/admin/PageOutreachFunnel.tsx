@@ -23,7 +23,7 @@ const STAGES: Array<{ key: keyof Kpis; label: string }> = [
   { key: "landing_viewed", label: "Page vue" },
   { key: "profile_started", label: "Profil édité" },
   { key: "checkout_started", label: "Checkout" },
-  { key: "paid_1_dollar", label: "Payé 1 $" },
+  { key: "paid_1_dollar", label: "Payé 350 $" },
   { key: "activated", label: "Activé" },
   { key: "recommendable", label: "Recommandable" },
 ];
@@ -65,7 +65,7 @@ export default function PageOutreachFunnel() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Radio className="w-5 h-5 text-emerald-400 animate-pulse" />
-              <span className="text-[10px] uppercase tracking-widest text-emerald-400">TUNNEL SMS → 1 $</span>
+              <span className="text-[10px] uppercase tracking-widest text-emerald-400">TUNNEL SMS → 350 $</span>
             </div>
             <h1 className="text-3xl font-bold text-readable">Outreach Funnel</h1>
             <p className="text-sm text-readable-muted mt-1">
