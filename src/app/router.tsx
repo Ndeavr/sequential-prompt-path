@@ -214,6 +214,7 @@ const PageActivationStart = lazyWithRetry(() => import("@/pages/checkout/PageAct
 const SolicitationActivationPage = lazyWithRetry(() => import("@/pages/SolicitationActivationPage"));
 const PageShortLinkRedirect = lazyWithRetry(() => import("@/pages/invitation/PageShortLinkRedirect"));
 const PageUnproActivate = lazyWithRetry(() => import("@/pages/activation/PageUnproActivate"));
+const PageAuditTokenRedirect = lazyWithRetry(() => import("@/pages/activation/PageAuditTokenRedirect"));
 const PageAdminConversionLab = lazyWithRetry(() => import("@/pages/admin/PageAdminConversionLab"));
 const PageInvitationLanding = lazyWithRetry(() => import("@/pages/invitation/PageInvitationLanding"));
 const PageInvitationEdit = lazyWithRetry(() => import("@/pages/invitation/PageInvitationEdit"));
@@ -1154,6 +1155,8 @@ export const AppRouter = () => (
         {/* SMS → 350 $ activation outreach tunnel — public routes */}
         <Route path="/r/:token" element={<Suspense fallback={<LazyFallback />}><PageShortLinkRedirect /></Suspense>} />
         <Route path="/unpro/activate/:token" element={<Suspense fallback={<LazyFallback />}><PageUnproActivate /></Suspense>} />
+        {/* First-touch SMS → personalized free AI score (curiosity, no pricing) */}
+        <Route path="/unpro/audit/:token" element={<Suspense fallback={<LazyFallback />}><PageAuditTokenRedirect /></Suspense>} />
         <Route path="/invitation/:token" element={<Suspense fallback={<LazyFallback />}><PageInvitationLanding /></Suspense>} />
         <Route path="/invitation/:token/edit" element={<Suspense fallback={<LazyFallback />}><PageInvitationEdit /></Suspense>} />
         <Route path="/invitation/:token/activate" element={<Suspense fallback={<LazyFallback />}><PageInvitationActivate /></Suspense>} />
