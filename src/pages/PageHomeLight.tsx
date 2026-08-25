@@ -10,6 +10,7 @@ import { Helmet } from "react-helmet-async";
 
 import MainLayout from "@/layouts/MainLayout";
 import { AlexProvider } from "@/features/alex";
+import AnnouncementStrip from "@/components/home-light/AnnouncementStrip";
 import HeroHomeownerLight from "@/components/home-light/HeroHomeownerLight";
 import {
   SectionTwoPaths,
@@ -68,6 +69,7 @@ export default function PageHomeLight() {
         </Helmet>
 
         <div className="home-light">
+          <AnnouncementStrip />
           <HeroHomeownerLight />
           <SectionTwoPaths />
           <SectionHowItWorks />

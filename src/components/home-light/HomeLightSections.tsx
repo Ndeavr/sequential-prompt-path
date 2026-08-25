@@ -62,12 +62,7 @@ export function SectionTwoPaths() {
   const startAlex = useStartAlex("home_paths");
   return (
     <SectionWrap>
-      <div className="text-center">
-        <Eyebrow>Deux parcours</Eyebrow>
-        <Title>Vous êtes propriétaire ou entrepreneur ?</Title>
-      </div>
-
-      <div className="mt-10 grid gap-5 md:grid-cols-2">
+      <div className="mt-2 grid gap-5 md:grid-cols-2">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -78,10 +73,11 @@ export function SectionTwoPaths() {
           <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary text-secondary-foreground">
             <Home className="h-5 w-5" />
           </div>
-          <h3 className="mt-5 text-xl font-semibold text-foreground">Propriétaire</h3>
+          <h3 className="mt-5 text-xl font-semibold text-foreground">Vous êtes propriétaire ?</h3>
           <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
             Comprenez votre problème, documentez votre propriété et laissez Alex
-            vous orienter vers le bon professionnel.
+            vous orienter vers le bon professionnel — sans courir après les
+            soumissions.
           </p>
           <button
             onClick={startAlex}
@@ -96,28 +92,28 @@ export function SectionTwoPaths() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.4, delay: 0.06 }}
-          className="rounded-3xl border border-border bg-card p-7 md:p-8"
+          className="rounded-3xl border-2 border-primary/25 bg-card p-7 shadow-lg shadow-primary/10 md:p-8"
         >
-          <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary text-secondary-foreground">
+          <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
             <Wrench className="h-5 w-5" />
           </div>
-          <h3 className="mt-5 text-xl font-semibold text-foreground">Entrepreneur</h3>
+          <h3 className="mt-5 text-xl font-semibold text-foreground">Vous êtes entrepreneur ?</h3>
           <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
-            Voyez comment l'IA comprend votre entreprise aujourd'hui, puis
-            complétez votre profil pour être recommandé sur les bons projets.
+            L'IA de UNPRO lit les signaux publics de votre entreprise —
+            identité, spécialité, territoire, présence en ligne — et comprend
+            exactement pourquoi elle peut (ou ne peut pas encore) vous
+            recommander aux propriétaires.
+          </p>
+          <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
+            L'audit vous montre ce qui est confirmé, ce qui manque, et comment
+            devenir recommandable.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
               to="/entrepreneurs/audit-ia"
-              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5"
+              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-[15px] font-semibold text-primary-foreground shadow-md shadow-primary/25 transition-transform hover:-translate-y-0.5"
             >
-              Audit IA gratuit <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              to="/entrepreneur/garantie"
-              className="inline-flex items-center rounded-2xl border border-border bg-background px-5 py-3 text-sm font-semibold text-foreground transition-transform hover:-translate-y-0.5"
-            >
-              Voir l'offre d'entrée
+              Faire mon audit IA gratuit <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </motion.div>
@@ -126,22 +122,27 @@ export function SectionTwoPaths() {
   );
 }
 
-/* ── 2. Comment ça fonctionne ────────────────────────────────── */
+/* ── 2. Comment ça fonctionne — 4 étapes propriétaire ────────── */
 const STEPS = [
   {
     icon: MessageSquare,
-    title: "Une question à la fois",
-    body: "Alex pose les bonnes questions pour cerner le problème, le risque et l'urgence — jamais un long formulaire.",
+    title: "Décrivez votre situation",
+    body: "Alex pose une question à la fois pour cerner le problème, le risque et l'urgence — jamais un long formulaire.",
   },
   {
     icon: Camera,
-    title: "Photos et documents",
+    title: "Montrez, c'est tout",
     body: "Ajoutez une photo ou une soumission reçue. Alex l'analyse et vous explique ce qu'elle contient.",
   },
   {
+    icon: Search,
+    title: "Comprenez avant de décider",
+    body: "Ordre de grandeur, options et prochaines étapes utiles — avec la provenance de chaque information.",
+  },
+  {
     icon: BadgeCheck,
-    title: "Une recommandation claire",
-    body: "Un professionnel proposé selon votre projet et votre secteur, avec la provenance de chaque information.",
+    title: "Un pro, au bon moment",
+    body: "Quand c'est clair, UNPRO vous propose le professionnel qui correspond à votre projet et à votre secteur.",
   },
 ];
 
@@ -150,10 +151,10 @@ export function SectionHowItWorks() {
     <SectionWrap tone="tinted">
       <div className="text-center">
         <Eyebrow>Comment ça fonctionne</Eyebrow>
-        <Title>Trois étapes, aucune course aux soumissions</Title>
+        <Title>Quatre étapes, aucune course aux soumissions</Title>
       </div>
 
-      <div className="mt-10 grid gap-5 md:grid-cols-3">
+      <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {STEPS.map((s, i) => (
           <motion.div
             key={s.title}
@@ -161,13 +162,21 @@ export function SectionHowItWorks() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.4, delay: i * 0.06 }}
-            className="rounded-3xl border border-border bg-card p-7"
+            className="rounded-3xl border border-border bg-card p-6"
           >
-            <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary text-secondary-foreground">
-              <s.icon className="h-5 w-5" />
+            <div className="flex items-center gap-3">
+              <span
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-bold"
+                style={{ background: "hsl(var(--sun) / 0.25)", color: "hsl(var(--sun-foreground))" }}
+              >
+                {i + 1}
+              </span>
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-secondary text-secondary-foreground">
+                <s.icon className="h-4.5 w-4.5" />
+              </div>
             </div>
-            <h3 className="mt-5 text-lg font-semibold text-foreground">{s.title}</h3>
-            <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">{s.body}</p>
+            <h3 className="mt-4 text-[16px] font-semibold text-foreground">{s.title}</h3>
+            <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">{s.body}</p>
           </motion.div>
         ))}
       </div>
