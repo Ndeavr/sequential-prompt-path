@@ -108,7 +108,7 @@ export default function AdminSolicitationPage() {
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">Solicitation Engine</h1>
-            <p className="text-sm text-muted-foreground mt-1">SMS acquisition funnel — target first $1 activation today.</p>
+            <p className="text-sm text-muted-foreground mt-1">SMS acquisition funnel — target first 350 $ activation today.</p>
           </div>
           <div className="flex gap-2 flex-wrap items-center">
             <label className="flex items-center gap-1.5 text-xs">

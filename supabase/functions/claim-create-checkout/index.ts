@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
         business_name: businessName,
         jobs_per_month: String(jobsPerMonth),
         avg_ticket_k: String(avgTicketK),
-        amount_cad: "1.00",
+        amount_cad: "350.00",
       },
     });
 

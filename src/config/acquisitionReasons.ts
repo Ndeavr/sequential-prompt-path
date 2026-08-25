@@ -65,7 +65,7 @@ export const STAGE_LABELS: Record<string, string> = {
   contacted: "Contactée",
   delivered: "Livrée",
   clicked: "Cliquée",
-  activated: "Activée 1$",
+  activated: "Activée 350 $",
   rejected: "Rejetée",
   duplicate: "Doublon",
 };

@@ -54,7 +54,7 @@ export default function AdminConversionTruth() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-readable">Conversion Truth</h1>
           <p className="text-sm text-readable-muted">
-            Vérité brute du funnel — objectif : premier entrepreneur payé 1$
+            Vérité brute du funnel — objectif : premier entrepreneur payé 350 $
           </p>
         </div>
         <div className="flex items-center gap-2">

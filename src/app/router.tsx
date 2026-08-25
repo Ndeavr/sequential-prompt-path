@@ -1151,7 +1151,7 @@ export const AppRouter = () => (
         <Route path="/checkout/native/:planCode" element={<PageCheckoutNativeScrollable />} />
         <Route path="/activation" element={<Suspense fallback={<LazyFallback />}><SolicitationActivationPage /></Suspense>} />
         <Route path="/activation/start" element={<PageActivationStart />} />
-        {/* SMS → 1$ outreach tunnel — public routes */}
+        {/* SMS → 350 $ activation outreach tunnel — public routes */}
         <Route path="/r/:token" element={<Suspense fallback={<LazyFallback />}><PageShortLinkRedirect /></Suspense>} />
         <Route path="/unpro/activate/:token" element={<Suspense fallback={<LazyFallback />}><PageUnproActivate /></Suspense>} />
         <Route path="/invitation/:token" element={<Suspense fallback={<LazyFallback />}><PageInvitationLanding /></Suspense>} />

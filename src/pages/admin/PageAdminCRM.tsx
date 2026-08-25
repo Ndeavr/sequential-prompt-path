@@ -30,14 +30,14 @@ import { RefreshCw, Search, Loader2, AlertTriangle, Target, Zap } from "lucide-r
 
 const kpiCards = (k: ReturnType<typeof useCrmProspects>["kpis"]) => [
   { label: "Revenu aujourd'hui", value: `${k.revenueToday.toFixed(2)} $` },
-  { label: "Activations 1 $", value: k.activations },
+  { label: "Activations 350 $", value: k.activations },
   { label: "Plans payants", value: k.paidPlans },
   { label: "Succès SMS", value: `${k.smsSuccess} %` },
   { label: "Succès courriel", value: `${k.emailSuccess} %` },
   { label: "Échecs SMS", value: k.failedSms },
   { label: "Checkout abandonné", value: k.checkoutAbandoned },
   { label: "Revenu récupérable", value: `${k.recoverable.toFixed(2)} $` },
-  { label: "Délai moyen → 1 $", value: `${k.avgHoursToActivation} h` },
+  { label: "Délai moyen → 350 $", value: `${k.avgHoursToActivation} h` },
 ];
 
 export default function PageAdminCRM() {

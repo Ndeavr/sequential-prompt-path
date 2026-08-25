@@ -3,7 +3,7 @@
  * Route: /entrepreneur/:slug/reclamer
  *
  * 4-screen, no-auth, ≤60s flow:
- *   S1 Confirm business → S2 Jobs/month → S3 Ticket size → S4 Projection + $1 checkout
+ *   S1 Confirm business → S2 Jobs/month → S3 Ticket size → S4 Projection + 350 $ one-time checkout
  *
  * Account creation happens AFTER payment via magic link.
  * This page is intentionally mock-data-tolerant: it reads slug → business name
@@ -279,7 +279,7 @@ export default function PageClaimWizard() {
               <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 space-y-4">
                 <div className="flex items-center gap-2 text-amber-300">
                   <Sparkles className="w-5 h-5" />
-                  <span className="font-semibold">Founding Member — 1 $ d'activation</span>
+                  <span className="font-semibold">Offre d'entrée — 350 $, paiement unique</span>
                 </div>
                 <ul className="space-y-2 text-sm text-white/85">
                   <li className="flex items-start gap-2"><Check className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" /> Profil vérifié</li>
@@ -310,7 +310,7 @@ export default function PageClaimWizard() {
                   {submitting ? (
                     <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Redirection…</>
                   ) : (
-                    <>Activer mon profil — 1 $ <ArrowRight className="w-5 h-5 ml-2" /></>
+                    <>Activer mon profil — 350 $ <ArrowRight className="w-5 h-5 ml-2" /></>
                   )}
                 </Button>
 

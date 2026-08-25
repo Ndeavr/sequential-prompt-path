@@ -31,7 +31,7 @@ export type CopilotEventName =
   | "project_started"
   | "quote_comparison_started"
   | "contractor_entry_click"
-  | "contractor_1_dollar_activation_click"
+  | "contractor_entry_offer_click"
   | "passport_click"
   | "alex_analysis_started"
   | "example_clicked"

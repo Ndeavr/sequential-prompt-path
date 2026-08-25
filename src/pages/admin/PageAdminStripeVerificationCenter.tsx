@@ -216,7 +216,7 @@ export default function PageAdminStripeVerificationCenter() {
                 "Client Stripe créé",
                 "Coupon fondateur appliqué",
                 "Checkout complété",
-                "Paiement confirmé (1,00 $)",
+                "Paiement confirmé (350,00 $)",
                 "Abonnement actif",
                 "Profil activé",
               ].map((item) => (

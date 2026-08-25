@@ -56,7 +56,7 @@ const STAGE_STRIP: Array<{ key: string; label: string; downstream?: boolean }> =
   { key: "delivered", label: "Livré", downstream: true },
   { key: "clicked", label: "Cliqué", downstream: true },
   { key: "activated", label: "Activé", downstream: true },
-  { key: "paid", label: "Payé 1 $", downstream: true },
+  { key: "paid", label: "Payé 350 $", downstream: true },
 ];
 
 type CampaignPreview = {
@@ -144,7 +144,7 @@ function FirstDollarMini({ tracker }: { tracker: ReturnType<typeof useFirstDolla
     "First SMS Sent": "Envoyer le 1er SMS de ce lancement",
     "First Click": "Clic sur le lien d'activation",
     "First Registration": "Inscription contractor (compte créé)",
-    "First $1 Payment": "Paiement Stripe de 1 $ CAD",
+    "First 350 $ Payment": "Paiement Stripe de 350 $ CAD",
     "First Activation": "Activation contractor",
     "First Appointment": "Premier rendez-vous facturable",
   };
@@ -892,7 +892,7 @@ export default function PageAdminAcquisitionPipeline() {
             <StatTile label="Contactées" value={totalContacted} />
             <StatTile label="Rejetées (24h)" value={stageCounts.rejected ?? 0} tone="danger" />
             <StatTile label="Doublons (24h)" value={stageCounts.duplicate ?? 0} />
-            <StatTile label="Activées 1$" value={stageCounts.activated ?? 0} tone="success" />
+            <StatTile label="Activées 350 $" value={stageCounts.activated ?? 0} tone="success" />
           </div>
         </section>
 

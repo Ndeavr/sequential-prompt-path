@@ -10,7 +10,7 @@ import { ArrowRight, Check, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { useHomeFin3Copy } from "@/lib/copy/homeFin3";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
-import { buildCheckoutUrl } from "@/lib/checkoutUrl";
+
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 
 const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number];
@@ -268,24 +268,25 @@ export function SectionEntrepreneursEntree() {
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link
-              to="/entrepreneur"
+              to="/entrepreneurs/audit-ia"
               onClick={() => trackCopilotEvent("contractor_entry_click", { source: "home_section_contractor" })}
               className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-[var(--shadow-cta)] transition-transform duration-300 hover:-translate-y-0.5"
             >
               {c.ctaPrimary}
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <a
-              href={buildCheckoutUrl()}
+            <Link
+              to="/entrepreneur/garantie"
               onClick={() =>
-                trackCopilotEvent("contractor_1_dollar_activation_click", {
+                trackCopilotEvent("contractor_entry_offer_click", {
                   source: "home_section_contractor",
+                  offer: "pack_350",
                 })
               }
               className="inline-flex items-center justify-center glass-btn px-6 py-3 text-sm font-bold text-foreground transition-transform duration-300 hover:-translate-y-0.5"
             >
               {c.ctaSecondary}
-            </a>
+            </Link>
           </div>
           <p className="mt-3 text-[12px] text-muted-foreground">{c.note}</p>
         </div>

@@ -126,7 +126,7 @@ export default function PageReviewIntelligenceLanding() {
           <div className="relative">
             <Zap className="h-10 w-10 text-primary mx-auto mb-4" />
             <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">
-              Activez Review Intelligence™<br />pour <span className="text-primary">1 $</span>.
+              Activez Review Intelligence™<br />avec votre <span className="text-primary">offre d'entrée UNPRO</span>.
             </h2>
             <p className="text-white/60 mb-8 max-w-xl mx-auto">
               Importez vos clients existants, envoyez des demandes, collectez des avis structurés en moins de 5 minutes.

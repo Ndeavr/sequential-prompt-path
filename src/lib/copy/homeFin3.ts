@@ -194,8 +194,8 @@ export const homeFin3 = {
         "Tomorrow, your clients won't just look at who shows up first. They'll ask AI who it recommends.",
       body: "See how UNPRO currently understands your business, complete your profile and improve the information used to match you with the right projects.",
       ctaPrimary: "See my AI profile",
-      ctaSecondary: "Activate my profile for $1",
-      note: "The $1 activation is optional.",
+      ctaSecondary: "See what $350 can guarantee me",
+      note: "The entry offer is $350, one-time payment. No subscription.",
     },
     final: {
       title: "Stop chasing three contractors.",

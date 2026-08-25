@@ -1,5 +1,5 @@
 /**
- * SMS Revenue Engine — One-button cockpit focused on the next $1 activation.
+ * SMS Revenue Engine — One-button cockpit focused on the next 350 $ activation.
  * Reuses sms_sprint_* tables + sms-sprint-{test,scrape,send,followups} edge functions.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -230,7 +230,7 @@ export default function PageAdminSmsSprint() {
       items.push({
         id: `a-${p.id}`,
         ts: p.activated_at ? new Date(p.activated_at).getTime() : Date.now(),
-        label: "Payé 1 $ 🎉",
+        label: "Payé 350 $ 🎉",
         detail: p.company_name ?? "",
         tone: "paid",
       });
@@ -314,7 +314,7 @@ export default function PageAdminSmsSprint() {
         <Card className="p-6 bg-gradient-to-br from-emerald-500/10 to-white/[0.02] border-white/10 text-white">
           <div className="text-xs uppercase tracking-wider text-white/60">Objectif du jour</div>
           <div className="text-xl font-semibold mt-1">
-            🎯 Prochain entrepreneur qui active à 1 $
+            🎯 Prochain entrepreneur qui active à 350 $
           </div>
           <div className="mt-4 flex items-center gap-4">
             <div className="flex-1 h-3 rounded-full bg-white/10 overflow-hidden">

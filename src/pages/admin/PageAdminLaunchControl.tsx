@@ -1,6 +1,6 @@
 /**
  * UNPRO — Launch Control Center
- * ONE mission: get the first $1 paying contractors today.
+ * ONE mission: get the first 350 $ paying contractors (one-time entry pack).
  * All numbers come from real production views (no mock data).
  *   - v_launch_funnel        : today counters (America/Toronto)
  *   - v_pipeline_funnel_counts : all-time stage totals
@@ -113,7 +113,7 @@ export default function PageAdminLaunchControl() {
           <Badge variant="outline" className="ml-auto text-[10px]">refresh 10s</Badge>
         </div>
         <p className="text-xs text-muted-foreground">
-          Une seule mission aujourd'hui : premiers contrats à 1&nbsp;$.
+          Une seule mission aujourd'hui : premières activations à 350&nbsp;$ (paiement unique).
         </p>
       </div>
 
@@ -141,7 +141,7 @@ export default function PageAdminLaunchControl() {
           <Kpi label="SMS envoyés" value={today?.sms_sent_today ?? 0} icon={MessageSquare} tone="primary" />
           <Kpi label="Emails envoyés" value={today?.email_sent_today ?? 0} icon={Mail} />
           <Kpi label="Checkouts" value={today?.checkouts_today ?? 0} icon={CreditCard} />
-          <Kpi label="Paiements $1" value={paidToday} icon={DollarSign} tone={paidToday > 0 ? "success" : "default"} />
+          <Kpi label="Paiements 350 $" value={paidToday} icon={DollarSign} tone={paidToday > 0 ? "success" : "default"} />
           <Kpi label="Activations" value={activatedToday} icon={Sparkles} tone={activatedToday > 0 ? "success" : "default"} />
         </div>
       </div>
@@ -156,7 +156,7 @@ export default function PageAdminLaunchControl() {
           <Kpi label="Clics" value={pipe?.clicked ?? 0} icon={MousePointerClick} />
           <Kpi label="Inscrits" value={pipe?.onboarding_completed ?? 0} icon={UserPlus} />
           <Kpi label="Checkouts" value={pipe?.payment_started ?? 0} icon={CreditCard} />
-          <Kpi label="Payés $1" value={pipe?.paid ?? 0} icon={DollarSign} tone={(pipe?.paid ?? 0) > 0 ? "success" : "default"} />
+          <Kpi label="Payés 350 $" value={pipe?.paid ?? 0} icon={DollarSign} tone={(pipe?.paid ?? 0) > 0 ? "success" : "default"} />
           <Kpi label="Activés" value={pipe?.activated ?? 0} icon={ShieldCheck} tone={(pipe?.activated ?? 0) > 0 ? "success" : "default"} />
         </div>
       </div>
@@ -196,7 +196,7 @@ export default function PageAdminLaunchControl() {
                   {tracker.first_activation_at ? "✓" : "○"} Inscription
                 </div>
                 <div className={tracker.first_paid_at ? "text-emerald-400" : "text-muted-foreground"}>
-                  {tracker.first_paid_at ? "✓" : "○"} Payé $1
+                  {tracker.first_paid_at ? "✓" : "○"} Payé 350 $
                 </div>
                 <div className={tracker.first_contractor_activation_at ? "text-emerald-400" : "text-muted-foreground"}>
                   {tracker.first_contractor_activation_at ? "✓" : "○"} Activé

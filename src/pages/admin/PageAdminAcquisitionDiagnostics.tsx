@@ -95,7 +95,7 @@ export default function PageAdminAcquisitionDiagnostics() {
               ["First SMS Sent", tracker.data?.first_sms_sent_at],
               ["First Click", tracker.data?.first_click_at],
               ["First Activation", tracker.data?.first_activation_at],
-              ["First $1 Payment", tracker.data?.first_paid_at],
+              ["First 350 $ Payment", tracker.data?.first_paid_at],
               ["First Appointment", tracker.data?.first_appointment_at],
             ].map(([label, at]) => (
               <div key={label as string} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">

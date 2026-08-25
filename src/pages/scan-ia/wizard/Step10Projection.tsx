@@ -4,7 +4,6 @@ import { useScanWizardState } from "./useScanWizardState";
 import { ArrowDown, Sparkles } from "lucide-react";
 import { pickRecommendedPlan, buildGrowthPlan, type BusinessGoal } from "@/features/scanIA/growthPlanEngine";
 import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
-import { fmtCADDollars } from "@/features/scanIA/planPricingBreakdown";
 
 export default function Step10Projection() {
   const { report, capacity, goal, selectedPlan, next } = useScanWizardState();
@@ -105,8 +104,8 @@ export default function Step10Projection() {
                 <div className="text-white font-semibold text-sm">{plan.name}</div>
               </div>
               <div className="text-right">
-                <div className="text-white font-semibold text-sm">1&nbsp;$ aujourd'hui</div>
-                <div className="text-white/50 text-[10px]">puis {fmtCADDollars(plan.monthlyPrice)}/mois</div>
+                <div className="text-white font-semibold text-sm">350&nbsp;$ aujourd'hui</div>
+                <div className="text-white/50 text-[10px]">paiement unique · aucun abonnement</div>
               </div>
             </button>
           )}
