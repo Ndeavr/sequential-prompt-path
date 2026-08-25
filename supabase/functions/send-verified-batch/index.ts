@@ -11,11 +11,17 @@
  *
  * The pipeline never quarantines a prospect simply because Twilio Line Type
  * Intelligence could not classify their number.
+ *
+ * SMS first-touch copy is score-first (curiosity → free personalized AI
+ * score, no pricing/payment/subscription language) and points at
+ * /unpro/audit/:token, which resolves the canonical token and lands the
+ * prospect directly on their personalized Audit IA. Email keeps the
+ * canonical $350 golden path (/unpro/activate/:token).
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { buildOutreachUrl, smsWithLink } from "../_shared/outreachLink.ts";
 import { logPipelineEvent, REASON } from "../_shared/acquisitionPipeline.ts";
-import { firstTouchSms, emailSubject, emailHtml } from "../_shared/offerCopy.ts";
+import { firstTouchScoreSms, emailSubject, emailHtml } from "../_shared/offerCopy.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -40,11 +46,28 @@ function jsonResponse(body: Record<string, unknown>, status = 200, requestId = c
   });
 }
 
-const SMS_TEMPLATE = (biz: string, link: string) =>
+/**
+ * First-touch SMS — score-first. The link targets /unpro/audit/:token (the
+ * personalized Audit IA) instead of the $350 activation landing, and the
+ * copy never mentions pricing, payment, subscription, or guaranteed
+ * appointment counts.
+ */
+const FIRST_TOUCH_CAMPAIGN = "ai_score_first_touch";
+const SMS_TEMPLATE = (biz: string, auditLink: string) =>
   smsWithLink(
-    firstTouchSms(biz),
-    buildOutreachUrl(link, { campaign: "contractor_activation" }),
+    firstTouchScoreSms(biz),
+    buildOutreachUrl(auditLink, { campaign: FIRST_TOUCH_CAMPAIGN }),
   );
+
+/** Compliance guard: first-touch SMS must never carry commercial/pricing terms. */
+const FORBIDDEN_FIRST_TOUCH = /(350|\$\s?\d|prix|paiement|abonnement|forfait|rendez-vous garantis|garanti)/i;
+const safeFirstTouchBody = (biz: string, personalized: string | null, auditLink: string) => {
+  const link = buildOutreachUrl(auditLink, { campaign: FIRST_TOUCH_CAMPAIGN });
+  if (personalized && !FORBIDDEN_FIRST_TOUCH.test(personalized)) {
+    return smsWithLink(personalized, link);
+  }
+  return smsWithLink(firstTouchScoreSms(biz), link);
+};
 
 const EMAIL_SUBJECT = (biz: string) => emailSubject(biz);
 
@@ -411,9 +434,10 @@ Deno.serve(async (req) => {
       const personalized = typeof messageOverrides[p.id] === "string" && messageOverrides[p.id].trim()
         ? messageOverrides[p.id].trim()
         : null;
-      const smsBody = personalized
-        ? smsWithLink(personalized, buildOutreachUrl(link, { campaign: "contractor_activation" }))
-        : SMS_TEMPLATE(p.business_name, link);
+      // SMS lands on the personalized Audit IA (score-first), email on the
+      // canonical activation golden path.
+      const auditLink = link.replace("/unpro/activate/", "/unpro/audit/");
+      const smsBody = safeFirstTouchBody(p.business_name, personalized, auditLink);
       // Canonical selection event — proves the agent chose this prospect.
       if (attribution) {
         try {

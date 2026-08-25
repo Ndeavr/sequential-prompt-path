@@ -29,6 +29,19 @@ export function firstTouchSms(businessName: string): string {
   );
 }
 
+/**
+ * Premier contact SMS — objectif curiosité → score IA GRATUIT.
+ * AUCUN prix, paiement, abonnement ni nombre de rendez-vous garantis.
+ * Le lien mène à l'Audit IA personnalisé de l'entreprise (/unpro/audit/:token).
+ */
+export function firstTouchScoreSms(businessName: string): string {
+  const name = (businessName || "votre entreprise").trim().slice(0, 40);
+  return (
+    `Curieux de savoir si ${name} est recommandée par l'IA? ` +
+    `UNPRO a analysé votre présence. Découvrez gratuitement votre score actuel :`
+  );
+}
+
 /** Relance — même promesse, aucune nouvelle offre. */
 export function secondTouchSms(businessName: string): string {
   const name = (businessName || "votre entreprise").trim().slice(0, 40);

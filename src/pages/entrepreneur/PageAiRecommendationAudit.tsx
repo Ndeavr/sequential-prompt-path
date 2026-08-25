@@ -127,13 +127,21 @@ export default function PageAiRecommendationAudit() {
   const [touched, setTouched] = useState(false);
   const debounce = useRef<number | null>(null);
   const auditCardRef = useRef<HTMLDivElement | null>(null);
+  const autoRunRef = useRef(false);
 
   const inviteToken = sp.get("t");
+  /** Exact verified prospect pre-selected by a tokenized outreach link. */
+  const prospectId = sp.get("p");
+  /** Outreach activation token — forwarded to garantie checkout as `t`. */
+  const activationToken = sp.get("at");
 
   const utm = {
     utm_source: sp.get("utm_source"),
     utm_medium: sp.get("utm_medium"),
     utm_campaign: sp.get("utm_campaign"),
+    // Outreach attribution travels inside the audit row's utm payload so the
+    // audit → checkout chain stays attributable to the exact token.
+    outreach_token: activationToken,
   };
 
   // Funnel: page view = audit_opened on the canonical funnel logger.
@@ -143,7 +151,7 @@ export default function PageAiRecommendationAudit() {
       event_source: "app",
       current_path: "/entrepreneurs/audit-ia",
       step: "audit_opened",
-      metadata: { ...utm, invite: Boolean(inviteToken) },
+      metadata: { ...utm, invite: Boolean(inviteToken), outreach_prospect: prospectId },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -193,6 +201,22 @@ export default function PageAiRecommendationAudit() {
     };
   }, [query, touched, runSearch]);
 
+  // Tokenized outreach link (SMS score-first): auto-run the exact prospect's
+  // audit on arrival — the visitor immediately sees THEIR score, no form.
+  useEffect(() => {
+    if (!prospectId || autoRunRef.current) return;
+    autoRunRef.current = true;
+    void runAudit({
+      kind: "prospect",
+      id: prospectId,
+      business_name: query.trim() || null,
+      city: null,
+      trade: null,
+      has_rbq: false,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prospectId]);
+
   async function runAudit(c: Candidate | null) {
     setAuditing(true);
     setError(null);
@@ -205,7 +229,11 @@ export default function PageAiRecommendationAudit() {
           id: c?.id ?? null,
           business_name: c?.business_name ?? query.trim(),
           query: query.trim(),
-          source: "public_audit_ia",
+          source: prospectId
+            ? "outreach_first_touch"
+            : inviteToken
+              ? "affiliate_invite"
+              : "public_audit_ia",
           utm,
         },
       });
@@ -250,6 +278,9 @@ export default function PageAiRecommendationAudit() {
     if (result.trade) params.set("metier", result.trade);
     params.set("audit", result.audit_id);
     params.set("audit_token", result.token);
+    // Preserve outreach attribution: garantie reads `t` for the attributed
+    // activation checkout (create-activation-checkout).
+    if (activationToken) params.set("t", activationToken);
     navigate(`/entrepreneurs/garantie?${params.toString()}`);
   }
 
