@@ -46,11 +46,28 @@ function jsonResponse(body: Record<string, unknown>, status = 200, requestId = c
   });
 }
 
-const SMS_TEMPLATE = (biz: string, link: string) =>
+/**
+ * First-touch SMS — score-first. The link targets /unpro/audit/:token (the
+ * personalized Audit IA) instead of the $350 activation landing, and the
+ * copy never mentions pricing, payment, subscription, or guaranteed
+ * appointment counts.
+ */
+const FIRST_TOUCH_CAMPAIGN = "ai_score_first_touch";
+const SMS_TEMPLATE = (biz: string, auditLink: string) =>
   smsWithLink(
-    firstTouchSms(biz),
-    buildOutreachUrl(link, { campaign: "contractor_activation" }),
+    firstTouchScoreSms(biz),
+    buildOutreachUrl(auditLink, { campaign: FIRST_TOUCH_CAMPAIGN }),
   );
+
+/** Compliance guard: first-touch SMS must never carry commercial/pricing terms. */
+const FORBIDDEN_FIRST_TOUCH = /(350|\$\s?\d|prix|paiement|abonnement|forfait|rendez-vous garantis|garanti)/i;
+const safeFirstTouchBody = (biz: string, personalized: string | null, auditLink: string) => {
+  const link = buildOutreachUrl(auditLink, { campaign: FIRST_TOUCH_CAMPAIGN });
+  if (personalized && !FORBIDDEN_FIRST_TOUCH.test(personalized)) {
+    return smsWithLink(personalized, link);
+  }
+  return smsWithLink(firstTouchScoreSms(biz), link);
+};
 
 const EMAIL_SUBJECT = (biz: string) => emailSubject(biz);
 
@@ -417,9 +434,10 @@ Deno.serve(async (req) => {
       const personalized = typeof messageOverrides[p.id] === "string" && messageOverrides[p.id].trim()
         ? messageOverrides[p.id].trim()
         : null;
-      const smsBody = personalized
-        ? smsWithLink(personalized, buildOutreachUrl(link, { campaign: "contractor_activation" }))
-        : SMS_TEMPLATE(p.business_name, link);
+      // SMS lands on the personalized Audit IA (score-first), email on the
+      // canonical activation golden path.
+      const auditLink = link.replace("/unpro/activate/", "/unpro/audit/");
+      const smsBody = safeFirstTouchBody(p.business_name, personalized, auditLink);
       // Canonical selection event — proves the agent chose this prospect.
       if (attribution) {
         try {
