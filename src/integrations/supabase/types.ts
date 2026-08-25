@@ -5482,6 +5482,48 @@ export type Database = {
           },
         ]
       }
+      affiliate_prospect_locks: {
+        Row: {
+          affiliate_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          lead_id: string
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          lead_id: string
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          lead_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_prospect_locks_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_prospect_locks_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
+          },
+        ]
+      }
       affiliate_sessions: {
         Row: {
           affiliate_id: string | null
@@ -7016,10 +7058,12 @@ export type Database = {
       ai_recommendation_audits: {
         Row: {
           activation_started_at: string | null
+          affiliate_id: string | null
           ai_agent_run_id: string | null
           baseline: Json
           business_name: string | null
           capacity: Json
+          channel: string | null
           checkout_created_at: string | null
           city: string | null
           claimed_at: string | null
@@ -7029,12 +7073,17 @@ export type Database = {
           created_at: string
           gaps: Json
           id: string
+          invite_token: string | null
+          lead_id: string | null
+          opened_at: string | null
           paid_at: string | null
           prospect_id: string | null
           query_text: string | null
           readiness_score: number | null
+          sent_at: string | null
           session_token: string
           source: string
+          started_at: string | null
           status: string
           trade: string | null
           updated_at: string
@@ -7042,10 +7091,12 @@ export type Database = {
         }
         Insert: {
           activation_started_at?: string | null
+          affiliate_id?: string | null
           ai_agent_run_id?: string | null
           baseline?: Json
           business_name?: string | null
           capacity?: Json
+          channel?: string | null
           checkout_created_at?: string | null
           city?: string | null
           claimed_at?: string | null
@@ -7055,12 +7106,17 @@ export type Database = {
           created_at?: string
           gaps?: Json
           id?: string
+          invite_token?: string | null
+          lead_id?: string | null
+          opened_at?: string | null
           paid_at?: string | null
           prospect_id?: string | null
           query_text?: string | null
           readiness_score?: number | null
+          sent_at?: string | null
           session_token?: string
           source?: string
+          started_at?: string | null
           status?: string
           trade?: string | null
           updated_at?: string
@@ -7068,10 +7124,12 @@ export type Database = {
         }
         Update: {
           activation_started_at?: string | null
+          affiliate_id?: string | null
           ai_agent_run_id?: string | null
           baseline?: Json
           business_name?: string | null
           capacity?: Json
+          channel?: string | null
           checkout_created_at?: string | null
           city?: string | null
           claimed_at?: string | null
@@ -7081,18 +7139,37 @@ export type Database = {
           created_at?: string
           gaps?: Json
           id?: string
+          invite_token?: string | null
+          lead_id?: string | null
+          opened_at?: string | null
           paid_at?: string | null
           prospect_id?: string | null
           query_text?: string | null
           readiness_score?: number | null
+          sent_at?: string | null
           session_token?: string
           source?: string
+          started_at?: string | null
           status?: string
           trade?: string | null
           updated_at?: string
           utm?: Json
         }
         Relationships: [
+          {
+            foreignKeyName: "ai_recommendation_audits_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_recommendation_audits_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
+          },
           {
             foreignKeyName: "ai_recommendation_audits_contractor_id_fkey"
             columns: ["contractor_id"]

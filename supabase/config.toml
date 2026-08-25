@@ -246,3 +246,10 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.contractor-profile-invite]
     verify_jwt = true
+
+  [functions.affiliate-next-prospect]
+    verify_jwt = true
+  [functions.affiliate-send-audit]
+    verify_jwt = true
+  [functions.affiliate-audit-track]
+    verify_jwt = false

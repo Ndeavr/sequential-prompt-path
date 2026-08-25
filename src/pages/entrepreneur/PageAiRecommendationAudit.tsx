@@ -116,11 +116,37 @@ export default function PageAiRecommendationAudit() {
   const [touched, setTouched] = useState(false);
   const debounce = useRef<number | null>(null);
 
+  const inviteToken = sp.get("t");
+
   const utm = {
     utm_source: sp.get("utm_source"),
     utm_medium: sp.get("utm_medium"),
     utm_campaign: sp.get("utm_campaign"),
   };
+
+  // Lien d'invitation affilié : enregistre l'ouverture réelle et pré-remplit le nom.
+  const trackInvite = useCallback(
+    async (event: "opened" | "started" | "completed") => {
+      if (!inviteToken) return null;
+      const { data } = await supabase.functions.invoke("affiliate-audit-track", {
+        body: { token: inviteToken, event },
+      });
+      return (data as any)?.audit ?? null;
+    },
+    [inviteToken]
+  );
+
+  useEffect(() => {
+    if (!inviteToken) return;
+    let cancelled = false;
+    void trackInvite("opened").then((a) => {
+      if (!cancelled && a?.business_name) setQuery((q) => q || a.business_name);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [inviteToken, trackInvite]);
+
 
   const runSearch = useCallback(async (q: string) => {
     if (q.trim().length < 2) {
@@ -147,6 +173,7 @@ export default function PageAiRecommendationAudit() {
   async function runAudit(c: Candidate | null) {
     setAuditing(true);
     setError(null);
+    void trackInvite("started");
     try {
       const { data, error: fnErr } = await supabase.functions.invoke("ai-recommendation-audit", {
         body: {
@@ -164,6 +191,7 @@ export default function PageAiRecommendationAudit() {
         return;
       }
       setResult(data as AuditResult);
+      void trackInvite("completed");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
       setError("Analyse indisponible pour le moment. Réessayez dans quelques secondes.");
