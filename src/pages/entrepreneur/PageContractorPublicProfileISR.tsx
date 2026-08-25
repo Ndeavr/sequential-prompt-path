@@ -634,8 +634,8 @@ function AdminCockpit({
                 </div>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-xs text-white/75">
-                <div className="font-medium text-white/90">Potentiel Signature</div>
-                <div className="mt-1">Signature 1 799$/mois = 50 RDV exclusifs · upside net mensuel ~{Math.max(0, monthlyLoss - 1799).toLocaleString("fr-CA")}$.</div>
+                <div className="font-medium text-white/90">Potentiel Domination</div>
+                <div className="mt-1">Domination 1 499$/mois = 50 RDV exclusifs · upside net mensuel ~{Math.max(0, monthlyLoss - 1499).toLocaleString("fr-CA")}$.</div>
               </div>
             </>
           )}
@@ -669,18 +669,18 @@ function AdminCockpit({
             <>
               <div className="rounded-2xl border border-amber-300/40 bg-gradient-to-b from-amber-300/15 to-amber-400/5 p-5">
                 <div className="text-[10px] uppercase tracking-wider text-amber-200/80">Plan recommandé</div>
-                <div className="mt-1 text-2xl font-semibold text-white">Signature</div>
-                <div className="text-sm text-white/65">1 799$/mois · 50 RDV exclusifs · priorité IA</div>
+                <div className="mt-1 text-2xl font-semibold text-white">Domination</div>
+                <div className="text-sm text-white/65">1 499$/mois · 50 RDV exclusifs · priorité IA</div>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-xs text-white/80">
                 <div className="font-medium text-white/90">Scarcity territoire</div>
-                <div className="mt-1">Laval Signature : <span className="text-amber-300 font-semibold">2 places restantes</span> · Montréal-Nord : 1 · Lanaudière : 3.</div>
+                <div className="mt-1">Laval Domination : <span className="text-amber-300 font-semibold">2 places restantes</span> · Montréal-Nord : 1 · Lanaudière : 3.</div>
               </div>
               <a
-                href="/demo/isr-plan-test"
+                href="/entrepreneurs/audit-ia"
                 className="block text-center rounded-[18px] bg-amber-300 px-5 py-3 text-sm font-semibold text-[#050816] hover:-translate-y-0.5 transition-all"
               >
-                Ouvrir checkout démo 1$
+                Obtenir l'audit IA — activation 350$ (paiement unique)
               </a>
             </>
           )}

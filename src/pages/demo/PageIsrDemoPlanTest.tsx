@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { isFounderModeActive } from "@/lib/launch/founderMode";
 import {
   ISR_BRAND,
   recommendPlan,
@@ -18,11 +20,22 @@ const RUN_KEY = "unpro.isrDemoRunId";
 export default function PageIsrDemoPlanTest() {
   const [answers, setAnswers] = useState<IsrAnswers>({});
   const [demoRunId, setDemoRunId] = useState<string | null>(null);
+  const [founderAllowed, setFounderAllowed] = useState<boolean | null>(null);
+
+  // Demo checkout (1 $ test) is founder-only — never exposed publicly.
+  useEffect(() => {
+    let cancelled = false;
+    isFounderModeActive()
+      .then((ok) => { if (!cancelled) setFounderAllowed(ok); })
+      .catch(() => { if (!cancelled) setFounderAllowed(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   const recommended = useMemo(() => recommendPlan(answers), [answers]);
 
-  // Ensure a single demo run row exists
+  // Ensure a single demo run row exists (founder mode only)
   useEffect(() => {
+    if (founderAllowed !== true) return;
     let cancelled = false;
     (async () => {
       const existing = typeof window !== "undefined" ? localStorage.getItem(RUN_KEY) : null;
@@ -47,7 +60,7 @@ export default function PageIsrDemoPlanTest() {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [founderAllowed]);
 
   const handleAnswer = async (key: IsrAnswerKey, value: string) => {
     const next = { ...answers, [key]: value };
@@ -68,6 +81,41 @@ export default function PageIsrDemoPlanTest() {
     if (reco) patch.recommended_plan = reco;
     await supabase.from("demo_contractor_plan_tests").update(patch).eq("id", demoRunId);
   };
+
+  if (founderAllowed === false) {
+    return (
+      <div className="min-h-screen bg-[#050816] text-white flex items-center justify-center px-6">
+        <Helmet>
+          <title>Démo ISR — UNPRO</title>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
+        <div className="max-w-md text-center">
+          <div className="text-[11px] uppercase tracking-[0.25em] text-cyan-300/80">UNPRO · Démo entrepreneur</div>
+          <h1 className="mt-3 text-2xl font-semibold tracking-[-0.03em]">Cette démo n'est pas active.</h1>
+          <p className="mt-3 text-sm text-white/65">
+            Le parcours de démonstration avec paiement test est réservé à l'équipe UNPRO.
+          </p>
+          <Link
+            to="/entrepreneurs/audit-ia"
+            className="mt-6 inline-block rounded-[18px] bg-amber-300 px-6 py-3 text-sm font-semibold text-[#050816] hover:-translate-y-0.5 transition-all"
+          >
+            Obtenir mon audit IA gratuit
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (founderAllowed === null) {
+    return (
+      <div className="min-h-screen bg-[#050816] text-white flex items-center justify-center">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
+        <div className="text-sm text-white/60">Chargement…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#050816] text-white relative overflow-hidden">
