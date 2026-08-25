@@ -1,6 +1,6 @@
 /**
  * Screen 7 — Plan Recommendation
- * When Founder slots remain: single Founder card (1$/7d).
+ * When Founder slots remain: single Founder card (offre d'entrée 350 $, paiement unique).
  * Otherwise: legacy 3-plan grid.
  */
 import { useState } from "react";
@@ -58,7 +58,7 @@ export default function ScreenPlan() {
         <div className="max-w-lg mx-auto pb-28 sm:pb-0">
           <FounderOfferCard onActivate={handleActivateFounder} />
           <StickyMobileCTA
-            label={`Activer — 1 $ · ${founder.remaining}/${founder.total} places`}
+            label={`Activer — 350 $ · ${founder.remaining}/${founder.total} places`}
             onClick={handleActivateFounder}
             icon={<ArrowRight className="w-5 h-5 mr-2" />}
           />

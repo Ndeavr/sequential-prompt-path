@@ -23,7 +23,7 @@ UNPRO a préparé votre aperçu local.
 
 ${linkLine}
 
-Activation IA locale : 1$ / 7 jours
+Activation : 350 $ (paiement unique)
 
 STOP = arrêter`;
   }
@@ -36,7 +36,7 @@ Voyez comment votre entreprise apparaît dans ChatGPT pour :
 Votre aperçu local est prêt :
 ${linkLine}
 
-Activation : 1$ / 7 jours
+Activation : 350 $ (paiement unique)
 
 STOP = arrêter`;
   }
