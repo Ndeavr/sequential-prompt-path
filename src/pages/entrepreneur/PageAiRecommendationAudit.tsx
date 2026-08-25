@@ -127,13 +127,21 @@ export default function PageAiRecommendationAudit() {
   const [touched, setTouched] = useState(false);
   const debounce = useRef<number | null>(null);
   const auditCardRef = useRef<HTMLDivElement | null>(null);
+  const autoRunRef = useRef(false);
 
   const inviteToken = sp.get("t");
+  /** Exact verified prospect pre-selected by a tokenized outreach link. */
+  const prospectId = sp.get("p");
+  /** Outreach activation token — forwarded to garantie checkout as `t`. */
+  const activationToken = sp.get("at");
 
   const utm = {
     utm_source: sp.get("utm_source"),
     utm_medium: sp.get("utm_medium"),
     utm_campaign: sp.get("utm_campaign"),
+    // Outreach attribution travels inside the audit row's utm payload so the
+    // audit → checkout chain stays attributable to the exact token.
+    outreach_token: activationToken,
   };
 
   // Funnel: page view = audit_opened on the canonical funnel logger.
@@ -143,7 +151,7 @@ export default function PageAiRecommendationAudit() {
       event_source: "app",
       current_path: "/entrepreneurs/audit-ia",
       step: "audit_opened",
-      metadata: { ...utm, invite: Boolean(inviteToken) },
+      metadata: { ...utm, invite: Boolean(inviteToken), outreach_prospect: prospectId },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
