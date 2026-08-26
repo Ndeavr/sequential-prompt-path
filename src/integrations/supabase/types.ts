@@ -21699,6 +21699,124 @@ export type Database = {
         }
         Relationships: []
       }
+      campaign_attributions: {
+        Row: {
+          campaign_id: string | null
+          contractor_id: string | null
+          contractor_slug: string | null
+          created_at: string
+          gclid: string | null
+          id: string
+          intent_slug: string | null
+          landing_url: string | null
+          referrer: string | null
+          session_id: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          contractor_id?: string | null
+          contractor_slug?: string | null
+          created_at?: string
+          gclid?: string | null
+          id?: string
+          intent_slug?: string | null
+          landing_url?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          contractor_id?: string | null
+          contractor_slug?: string | null
+          created_at?: string
+          gclid?: string | null
+          id?: string
+          intent_slug?: string | null
+          landing_url?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_attributions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_attributions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_attributions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "campaign_attributions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "campaign_attributions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_attributions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "campaign_attributions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_attributions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "campaign_attributions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       campaign_contacts: {
         Row: {
           book_url_clicked: boolean
@@ -28033,6 +28151,108 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      contractor_campaigns: {
+        Row: {
+          active: boolean
+          bullets: Json
+          contractor_id: string
+          contractor_slug: string
+          created_at: string
+          cta_label: string
+          headline: string
+          id: string
+          intent_slug: string
+          service_area: string | null
+          subheadline: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          bullets?: Json
+          contractor_id: string
+          contractor_slug: string
+          created_at?: string
+          cta_label?: string
+          headline: string
+          id?: string
+          intent_slug: string
+          service_area?: string | null
+          subheadline?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          bullets?: Json
+          contractor_id?: string
+          contractor_slug?: string
+          created_at?: string
+          cta_label?: string
+          headline?: string
+          id?: string
+          intent_slug?: string
+          service_area?: string | null
+          subheadline?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_campaigns_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_campaigns_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_alex_eligible"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_campaigns_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_eag_monthly"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_campaigns_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_campaigns_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_plan_state"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_campaigns_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_campaigns_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_recommendation_score"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_campaigns_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
       }
       contractor_capabilities: {
         Row: {
