@@ -483,13 +483,13 @@ function ScoreRing({ score, level }: { score: number; level: string }) {
 /* -------------------------------------------------------------- Missions */
 const STATUS_META: Record<MissionStatus, { label: string; cls: string; dot: string }> = {
   confirmed: { label: "Confirmé", cls: "border-success/25 bg-[hsl(152_69%_31%/0.05)]", dot: "bg-success" },
-  detected: { label: "Détecté — confirmez en 1 clic", cls: "border-primary/30 bg-secondary/70", dot: "bg-primary" },
+  detected: { label: "À confirmer", cls: "border-primary/30 bg-secondary/70", dot: "bg-primary" },
   missing: { label: "À compléter", cls: "border-border bg-muted/60", dot: "bg-muted-foreground/40" },
 };
 
 function MissionRow({ m }: { m: Mission }) {
   const meta = STATUS_META[m.status];
-  const blocking = m.status !== "confirmed" && m.impact === "high";
+  const priority = m.status !== "confirmed" && m.impact === "high";
   return (
     <li className={`rounded-2xl border p-3.5 ${meta.cls}`}>
       <div className="flex items-start justify-between gap-3">
@@ -507,32 +507,26 @@ function MissionRow({ m }: { m: Mission }) {
             {m.status === "confirmed" ? m.unlocks : m.why}
           </p>
         </div>
-        <span
-          className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold tabular-nums ${
-            m.status === "confirmed" ? "bg-[hsl(152_69%_31%/0.12)] text-success" : "bg-muted text-muted-foreground"
-          }`}
-        >
-          {m.status === "confirmed" ? <Check className="h-3.5 w-3.5" aria-hidden /> : `+${m.points - m.earned}`}
-        </span>
+        {m.status === "confirmed" && (
+          <span className="shrink-0 rounded-full bg-[hsl(152_69%_31%/0.12)] px-2 py-1 text-success">
+            <Check className="h-3.5 w-3.5" aria-hidden />
+          </span>
+        )}
       </div>
       <div className="mt-2.5 flex flex-wrap items-center gap-2">
         <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 text-[10.5px] text-muted-foreground">
           {meta.label}
         </span>
-        {blocking && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/30 bg-rose-50 px-2 py-0.5 text-[10.5px] font-medium text-rose-700">
-            <Lock className="h-2.5 w-2.5" aria-hidden /> Bloquant
-          </span>
-        )}
-        {m.status !== "confirmed" && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-primary/25 bg-secondary px-2 py-0.5 text-[10.5px] text-secondary-foreground">
-            <Zap className="h-2.5 w-2.5" aria-hidden /> {m.unlocks}
+        {priority && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-secondary px-2 py-0.5 text-[10.5px] font-medium text-secondary-foreground">
+            <Zap className="h-2.5 w-2.5" aria-hidden /> Priorité
           </span>
         )}
       </div>
     </li>
   );
 }
+
 
 /** Qualitative state derived from the deterministic score + real missions. */
 function qualitativeState(
