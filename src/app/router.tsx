@@ -1808,7 +1808,6 @@ export const AppRouter = () => (
         <Route path="/affilies/onboarding" element={<Suspense fallback={<LazyFallback />}><PageAffiliateOnboarding /></Suspense>} />
         <Route path="/affilies/activer" element={<Navigate to="/affilies/onboarding" replace />} />
         <Route path="/a/:slug" element={<Suspense fallback={<LazyFallback />}><PageAffiliePublicProfile /></Suspense>} />
-        <Route path="/lorraine" element={<Navigate to="/a/lorraine" replace />} />
         <Route path="/admin/email-health" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageEmailHealthCenterV2 /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/email-health-legacy" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageEmailAuditCenter /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/email-audit-history" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageEmailAuditHistory /></Suspense></AdminProtectedRoute>} />
