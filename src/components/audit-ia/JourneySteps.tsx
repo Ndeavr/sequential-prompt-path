@@ -6,13 +6,14 @@
 import { Check } from "lucide-react";
 
 export const JOURNEY_STEPS = [
-  { n: 1, label: "Audit IA gratuit", hint: "30 secondes" },
-  { n: 2, label: "Votre résultat d'audit", hint: "Preuves réelles" },
-  { n: 3, label: "Créez / réclamez votre profil", hint: "Pré-rempli" },
-  { n: 4, label: "Complétez les éléments manquants", hint: "1 à 3 items" },
-  { n: 5, label: "Activation du profil", hint: "Offre canonique" },
-  { n: 6, label: "Recommandable par l'IA", hint: "Rendez-vous exclusifs" },
+  { n: 1, label: "Audit IA gratuit", hint: "30 secondes · gratuit" },
+  { n: 2, label: "Votre résultat", hint: "Ce qui limite vos recommandations" },
+  { n: 3, label: "Votre profil", hint: "Vérifiez et complétez" },
+  { n: 4, label: "Améliorez votre présence", hint: "Ce qui mérite votre attention" },
+  { n: 5, label: "Devenez recommandable", hint: "Demandes compatibles" },
+  { n: 6, label: "Rendez-vous exclusifs", hint: "Jamais de leads partagés" },
 ] as const;
+
 
 type StepState = "completed" | "current" | "pending";
 
