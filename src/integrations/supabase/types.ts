@@ -34658,6 +34658,84 @@ export type Database = {
           },
         ]
       }
+      contractor_matching_profiles: {
+        Row: {
+          activation_token: string | null
+          affiliate_ref: string | null
+          ai_profile_readiness: number
+          answers: Json
+          audit_id: string | null
+          audit_token: string | null
+          business_name: string | null
+          chatgpt_integration_status: string
+          city: string | null
+          completed_at: string | null
+          contractor_id: string | null
+          created_at: string
+          id: string
+          missing_matching_fields: Json
+          profile_completion: number
+          prospect_id: string | null
+          recommendation_eligible: boolean
+          session_key: string
+          status: string
+          trade: string | null
+          updated_at: string
+          utm: Json
+          verification_status: string
+        }
+        Insert: {
+          activation_token?: string | null
+          affiliate_ref?: string | null
+          ai_profile_readiness?: number
+          answers?: Json
+          audit_id?: string | null
+          audit_token?: string | null
+          business_name?: string | null
+          chatgpt_integration_status?: string
+          city?: string | null
+          completed_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          missing_matching_fields?: Json
+          profile_completion?: number
+          prospect_id?: string | null
+          recommendation_eligible?: boolean
+          session_key: string
+          status?: string
+          trade?: string | null
+          updated_at?: string
+          utm?: Json
+          verification_status?: string
+        }
+        Update: {
+          activation_token?: string | null
+          affiliate_ref?: string | null
+          ai_profile_readiness?: number
+          answers?: Json
+          audit_id?: string | null
+          audit_token?: string | null
+          business_name?: string | null
+          chatgpt_integration_status?: string
+          city?: string | null
+          completed_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          missing_matching_fields?: Json
+          profile_completion?: number
+          prospect_id?: string | null
+          recommendation_eligible?: boolean
+          session_key?: string
+          status?: string
+          trade?: string | null
+          updated_at?: string
+          utm?: Json
+          verification_status?: string
+        }
+        Relationships: []
+      }
       contractor_matching_rules: {
         Row: {
           confirmed_by_contractor: boolean
