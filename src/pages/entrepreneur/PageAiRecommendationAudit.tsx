@@ -537,7 +537,8 @@ function qualitativeState(
   if (recommendable && score >= 85)
     return { label: "Bien compris", cls: "border-success/35 bg-[hsl(152_69%_31%/0.08)] text-success" };
   if (missions.some((m) => m.status !== "confirmed" && m.impact === "high"))
-    return { label: "Bloquant — action requise", cls: "border-rose-500/30 bg-rose-50 text-rose-700" };
+    return { label: "À améliorer en priorité", cls: "border-primary/40 bg-secondary text-secondary-foreground" };
+
   return { label: "À compléter", cls: "border-primary/35 bg-secondary text-secondary-foreground" };
 }
 
