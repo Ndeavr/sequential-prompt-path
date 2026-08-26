@@ -14,6 +14,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowRight, Users, Send, Wallet } from "lucide-react";
 import { trackReferralEvent } from "@/hooks/useReferralAttribution";
+import FallbackRoutePage from "@/pages/FallbackRoutePage";
+
+const KNOWN_NEUTRAL = new Set<string>();
 
 interface AffiliateEntry {
   slug: string;
@@ -92,8 +95,11 @@ export default function PageAffiliateEntry() {
     );
   }
 
-  // Slug inconnu / désactivé — page neutre, aucune donnée privée.
+  // Slug inconnu / désactivé — page UNPRO neutre existante, aucune donnée privée.
   if (!affiliate) {
+    if (affiliateSlug && !KNOWN_NEUTRAL.has(affiliateSlug.toLowerCase())) {
+      return <FallbackRoutePage />;
+    }
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-6">
         <Helmet>

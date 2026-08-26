@@ -874,6 +874,7 @@ const PageAffiliesPublic = lazyWithRetry(() => import("@/pages/affiliate/PageAff
 const PageAffiliateOnboarding = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateOnboarding"));
 const PageAffiliePublicProfile = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliePublicProfile"));
 const PageAffiliateLogin = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateLogin"));
+const PageAffiliateEntry = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateEntry"));
 const PageAffiliateShortLink = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateShortLink"));
 const PageAdminAffiliateNew = lazyWithRetry(() => import("@/pages/admin/affiliate/PageAdminAffiliateNew"));
 const PageAffiliateProspectImport = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateProspectImport"));
