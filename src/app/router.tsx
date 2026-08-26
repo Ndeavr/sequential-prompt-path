@@ -1162,6 +1162,8 @@ export const AppRouter = () => (
         <Route path="/unpro/activate/:token" element={<Suspense fallback={<LazyFallback />}><PageUnproActivate /></Suspense>} />
         {/* First-touch SMS → personalized free AI score (curiosity, no pricing) */}
         <Route path="/unpro/audit/:token" element={<Suspense fallback={<LazyFallback />}><PageAuditTokenRedirect /></Suspense>} />
+        {/* Landing co-marquée par intention (Google Ads entrepreneur → système UNPRO canonique) */}
+        <Route path="/c/:contractorSlug/:intentSlug" element={<Suspense fallback={<LazyFallback />}><PageContractorCampaignLanding /></Suspense>} />
         <Route path="/invitation/:token" element={<Suspense fallback={<LazyFallback />}><PageInvitationLanding /></Suspense>} />
         <Route path="/invitation/:token/edit" element={<Suspense fallback={<LazyFallback />}><PageInvitationEdit /></Suspense>} />
         <Route path="/invitation/:token/activate" element={<Suspense fallback={<LazyFallback />}><PageInvitationActivate /></Suspense>} />
