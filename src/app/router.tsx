@@ -1999,9 +1999,12 @@ export const AppRouter = () => (
           <Route path="/project-created" element={<Suspense fallback={<LazyFallback />}><PageProjectCreatedSuccess /></Suspense>} />
           <Route path="/recommendations" element={<Suspense fallback={<LazyFallback />}><PageRecommendations /></Suspense>} />
           <Route path="/welcome" element={<Suspense fallback={<LazyFallback />}><PageRegistrationSuccess /></Suspense>} />
+          {/* Entrée personnalisée d'un affilié: /:affiliateSlug (ex. /lorraine) */}
+          <Route path="/:affiliateSlug" element={<Suspense fallback={<LazyFallback />}><PageAffiliateEntry /></Suspense>} />
 
           {/* Catch-all: try fallback, then 404 */}
           <Route path="*" element={<FallbackRoutePage />} />
+
       </Routes>
     </Suspense>
     <FloatingAlexGuide />
