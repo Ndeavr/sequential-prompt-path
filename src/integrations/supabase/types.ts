@@ -95581,6 +95581,17 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      affiliate_entry_by_slug: {
+        Args: { p_slug: string }
+        Returns: {
+          display_name: string
+          first_name: string
+          has_account: boolean
+          referral_code: string
+          slug: string
+          status: string
+        }[]
+      }
       aipp_is_published: { Args: { _profile_id: string }; Returns: boolean }
       apply_lead_normalization: { Args: { payload: Json }; Returns: number }
       approve_company: {

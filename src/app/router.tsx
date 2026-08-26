@@ -874,6 +874,7 @@ const PageAffiliesPublic = lazyWithRetry(() => import("@/pages/affiliate/PageAff
 const PageAffiliateOnboarding = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateOnboarding"));
 const PageAffiliePublicProfile = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliePublicProfile"));
 const PageAffiliateLogin = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateLogin"));
+const PageAffiliateEntry = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateEntry"));
 const PageAffiliateShortLink = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateShortLink"));
 const PageAdminAffiliateNew = lazyWithRetry(() => import("@/pages/admin/affiliate/PageAdminAffiliateNew"));
 const PageAffiliateProspectImport = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateProspectImport"));
@@ -1807,7 +1808,6 @@ export const AppRouter = () => (
         <Route path="/affilies/onboarding" element={<Suspense fallback={<LazyFallback />}><PageAffiliateOnboarding /></Suspense>} />
         <Route path="/affilies/activer" element={<Navigate to="/affilies/onboarding" replace />} />
         <Route path="/a/:slug" element={<Suspense fallback={<LazyFallback />}><PageAffiliePublicProfile /></Suspense>} />
-        <Route path="/lorraine" element={<Navigate to="/a/lorraine" replace />} />
         <Route path="/admin/email-health" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageEmailHealthCenterV2 /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/email-health-legacy" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageEmailAuditCenter /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/email-audit-history" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageEmailAuditHistory /></Suspense></AdminProtectedRoute>} />
@@ -1999,9 +1999,12 @@ export const AppRouter = () => (
           <Route path="/project-created" element={<Suspense fallback={<LazyFallback />}><PageProjectCreatedSuccess /></Suspense>} />
           <Route path="/recommendations" element={<Suspense fallback={<LazyFallback />}><PageRecommendations /></Suspense>} />
           <Route path="/welcome" element={<Suspense fallback={<LazyFallback />}><PageRegistrationSuccess /></Suspense>} />
+          {/* Entrée personnalisée d'un affilié: /:affiliateSlug (ex. /lorraine) */}
+          <Route path="/:affiliateSlug" element={<Suspense fallback={<LazyFallback />}><PageAffiliateEntry /></Suspense>} />
 
           {/* Catch-all: try fallback, then 404 */}
           <Route path="*" element={<FallbackRoutePage />} />
+
       </Routes>
     </Suspense>
     <FloatingAlexGuide />

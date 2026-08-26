@@ -40,6 +40,7 @@ type Aff = {
   total_revenue_cents: number;
   total_commissions_cents: number;
   referral_code: string;
+  slug: string | null;
   created_at: string;
 };
 
@@ -256,7 +257,22 @@ function AffiliatesTab({ affiliates, refetch }: { affiliates: Aff[]; refetch: ()
                     <td className="p-3 tabular-nums">{a.total_converted}</td>
                     <td className="p-3 tabular-nums">{formatCents(a.total_revenue_cents)}</td>
                     <td className="p-3 tabular-nums">{formatCents(a.total_commissions_cents)}</td>
-                    <td className="p-3 font-mono text-xs">{a.referral_code}</td>
+                    <td className="p-3 font-mono text-xs">
+                      <div>{a.referral_code}</div>
+                      {a.slug && (
+                        <button
+                          type="button"
+                          className="mt-1 text-[11px] text-primary underline underline-offset-2"
+                          onClick={() => {
+                            const url = `https://unpro.ca/${a.slug}`;
+                            navigator.clipboard.writeText(url);
+                            toast.success(`Lien copié : ${url}`);
+                          }}
+                        >
+                          unpro.ca/{a.slug}
+                        </button>
+                      )}
+                    </td>
                     <td className="p-3">
                       <Badge variant="outline" className={STATUS_TONE[a.status] ?? STATUS_TONE.inactive}>{a.status}</Badge>
                     </td>
@@ -527,7 +543,7 @@ export default function PageAffiliatesHub() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("affiliates")
-        .select("id, name, first_name, last_name, email, phone, primary_city, province, status, commission_pct, daily_quota, total_assigned, total_contacted, total_trials, total_converted, total_revenue_cents, total_commissions_cents, referral_code, created_at, parent_affiliate_id, parent_assigned_at")
+        .select("id, name, first_name, last_name, email, phone, primary_city, province, status, commission_pct, daily_quota, total_assigned, total_contacted, total_trials, total_converted, total_revenue_cents, total_commissions_cents, referral_code, slug, created_at, parent_affiliate_id, parent_assigned_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Aff[];
