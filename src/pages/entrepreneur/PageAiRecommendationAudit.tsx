@@ -25,7 +25,7 @@ import {
   Sparkles,
   Clock3,
   MapPin,
-  Lock,
+  
   Check,
   Zap,
 } from "lucide-react";
