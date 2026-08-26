@@ -633,8 +633,9 @@ function AuditReport({
               : `${remaining} étape${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""} pour devenir recommandable.`}
           </p>
           <p className="mt-1 text-center text-[11px] text-muted-foreground">
-            Indice déterministe calculé à partir de vos missions confirmées — jamais estimé.
+            Résultat basé sur les informations réellement disponibles sur votre entreprise.
           </p>
+
         </div>
       </section>
 
