@@ -682,7 +682,7 @@ function AuditReport({
       {/* Missions complètes */}
       <section className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
         <div className="flex items-baseline justify-between gap-3">
-          <h2 className="text-sm font-semibold text-foreground">Vos missions de recommandabilité</h2>
+          <h2 className="text-sm font-semibold text-foreground">Les informations sur votre entreprise</h2>
           <span className="text-[12px] tabular-nums text-muted-foreground">
             {missions.filter((m) => m.status === "confirmed").length}/{missions.length}
           </span>
