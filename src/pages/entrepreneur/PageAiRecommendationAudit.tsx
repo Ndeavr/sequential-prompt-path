@@ -659,8 +659,9 @@ function AuditReport({
       {priorityMissing.length > 0 && (
         <section className="rounded-2xl border border-primary/35 bg-secondary/50 p-4 shadow-sm sm:p-5">
           <h2 className="text-sm font-semibold text-foreground">
-            Les {priorityMissing.length} éléments qui bloquent encore votre recommandation
+            Ce qui mérite votre attention en priorité
           </h2>
+
           <ul className="mt-3 space-y-2">
             {priorityMissing.map((m) => (
               <li
