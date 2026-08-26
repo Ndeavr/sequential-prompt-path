@@ -318,9 +318,10 @@ export default function PageAiRecommendationAudit() {
               recommander.
             </h1>
             <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted-foreground sm:text-[16px]">
-              Un nom d'entreprise suffit. Chaque fait affiché porte sa provenance — Vérifié, Déclaré,
-              Déduit ou En attente. Aucun avis, aucune licence et aucun rendez-vous n'est jamais inventé.
+              Découvrez ce que l'IA comprend déjà de votre entreprise — et ce qui pourrait encore vous
+              empêcher d'être recommandée.
             </p>
+
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <button
                 type="button"
