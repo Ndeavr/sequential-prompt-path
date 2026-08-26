@@ -230,6 +230,52 @@ Deno.serve(async (req) => {
       if (updErr) console.error(`[${rid}] lead update failed`, updErr);
     }
 
+    // 6b. Update verified prospect — same trust rules, real provenance only.
+    // The crawled official domain IS the public source, so phone/email found
+    // there carry a real, verifiable `*_source_url`. Nothing is invented: when
+    // the crawl finds nothing, no contact field is touched.
+    if (!dry_run && prospect_id && prospect) {
+      const pupd: Record<string, unknown> = {
+        website_url: prospect.website_url ?? resolved.canonical,
+        last_enriched_at: finishedAt,
+      };
+      const phones = summary.fields.filter(f => f.kind === "phone" && f.normalized);
+      const emails = summary.fields.filter(f => f.kind === "email" && f.normalized);
+      const rbqs = summary.fields.filter(f => f.kind === "rbq" && f.normalized);
+
+      if (phones.length > 0) {
+        pupd.phone_e164 = phones[0].normalized;
+        pupd.phone_primary = phones[0].normalized;
+        pupd.phone_source_url = phones[0].source_url;
+      }
+      if (emails.length > 0) {
+        pupd.email = emails[0].normalized;
+        pupd.email_source_url = emails[0].source_url;
+      }
+      if (rbqs.length > 0 && !prospect.rbq_number) {
+        pupd.rbq_number = rbqs[0].normalized;
+        pupd.rbq_source_url = rbqs[0].source_url;
+      }
+      pupd.source_urls = {
+        ...(prospect.source_urls ?? {}),
+        official_site: resolved.canonical,
+      };
+      // Promotion is earned only by a completed crawl of the official domain
+      // that actually produced a contact point with provenance.
+      if (status === "complete_with_contact" && (phones.length > 0 || emails.length > 0)) {
+        pupd.verification_status = "verified";
+        pupd.verified_at = finishedAt;
+        pupd.eligibility_reason = "official_site_crawl_confirmed";
+      }
+
+      const { error: pErr } = await supabase
+        .from("verified_contractor_prospects")
+        .update(pupd)
+        .eq("id", prospect_id);
+      if (pErr) console.error(`[${rid}] prospect update failed`, pErr);
+    }
+
+
     return jr({
       ok: true,
       run_id: run?.id,
