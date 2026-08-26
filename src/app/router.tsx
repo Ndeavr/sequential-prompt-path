@@ -217,6 +217,7 @@ const SolicitationActivationPage = lazyWithRetry(() => import("@/pages/Solicitat
 const PageShortLinkRedirect = lazyWithRetry(() => import("@/pages/invitation/PageShortLinkRedirect"));
 const PageUnproActivate = lazyWithRetry(() => import("@/pages/activation/PageUnproActivate"));
 const PageAuditTokenRedirect = lazyWithRetry(() => import("@/pages/activation/PageAuditTokenRedirect"));
+const PageContractorCampaignLanding = lazyWithRetry(() => import("@/pages/PageContractorCampaignLanding"));
 const PageAdminConversionLab = lazyWithRetry(() => import("@/pages/admin/PageAdminConversionLab"));
 const PageInvitationLanding = lazyWithRetry(() => import("@/pages/invitation/PageInvitationLanding"));
 const PageInvitationEdit = lazyWithRetry(() => import("@/pages/invitation/PageInvitationEdit"));
