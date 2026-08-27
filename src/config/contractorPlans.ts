@@ -323,24 +323,20 @@ export function getRecommendedPlanSlug(): ContractorPlanSlug {
   return "pro_v2";
 }
 
-/** Price lookup map for calculators (legacy keys aliased to the new prices). */
-export const PLAN_PRICE_MAP: Record<ContractorPlanSlug, number> = {
-  presence: 49,
-  depart: 149,
-  croissance_v2: 299,
-  pro_v2: 599,
-  elite_v2: 999,
-  signature_v2: 1499,
-  // superseded slugs
-  local: 79,
-  croissance: 149,
-  pro: 299,
-  premium: 599,
-  domination: 1499,
-  recrue: 49,
-  elite: 599,
-  signature: 1499,
-};
+/**
+ * Price lookup map for calculators.
+ * DERIVED from CONTRACTOR_PLANS + LEGACY_PLAN_ALIAS so a legacy slug can never
+ * report a different price than the canonical plan it resolves to.
+ */
+export const PLAN_PRICE_MAP: Record<ContractorPlanSlug, number> = Object.freeze(
+  Object.fromEntries([
+    ...CONTRACTOR_PLANS.map((p) => [p.slug, p.monthlyPrice]),
+    ...Object.entries(LEGACY_PLAN_ALIAS).map(([legacy, canonical]) => [
+      legacy,
+      CONTRACTOR_PLANS.find((p) => p.slug === canonical)?.monthlyPrice ?? 0,
+    ]),
+  ]),
+) as Record<ContractorPlanSlug, number>;
 
 /** Format dollars to display string (fr-CA, e.g. "1 300 $"). */
 import { formatPrice as fmt } from "@/lib/formatPrice";
