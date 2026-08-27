@@ -170,33 +170,64 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
     }
   };
 
+  /** Fills the cells WITHOUT ever submitting. Single source of truth. */
+  const applyCode = (raw: string, focusEnd = true) => {
+    const digits = raw.replace(/\D/g, "").slice(0, 6);
+    if (!digits) return;
+    setInlineError(null);
+    const next = ["", "", "", "", "", ""].map((_, i) => digits[i] || "");
+    setCode(next);
+    const target = Math.min(digits.length, 5);
+    setTimeout(() => codeRefs.current[focusEnd ? target : 0]?.focus(), 0);
+  };
+
   const handleCodeChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
+    setInlineError(null);
     const newCode = [...code];
     newCode[index] = value.slice(-1);
     setCode(newCode);
     if (value && index < 5) codeRefs.current[index + 1]?.focus();
-    if (newCode.every((d) => d) && newCode.join("").length === 6) {
-      setTimeout(() => handleVerifyOtp(), 150);
-    }
   };
 
   const handleCodeKeyDown = (index: number, e: React.KeyboardEvent) => {
     if (e.key === "Backspace" && !code[index] && index > 0) {
       codeRefs.current[index - 1]?.focus();
     }
+    if (e.key === "ArrowLeft" && index > 0) codeRefs.current[index - 1]?.focus();
+    if (e.key === "ArrowRight" && index < 5) codeRefs.current[index + 1]?.focus();
   };
 
   const handleCodePaste = (e: React.ClipboardEvent) => {
     const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-    if (pasted.length === 6) {
+    if (pasted.length >= 4) {
       e.preventDefault();
-      const newCode = pasted.split("");
-      setCode(newCode);
-      codeRefs.current[5]?.focus();
-      setTimeout(() => handleVerifyOtp(), 150);
+      applyCode(pasted);
     }
   };
+
+  /** Reads the clipboard and extracts a 6-digit code (e.g. "Votre code UNPRO est 483921"). */
+  const handlePasteFromClipboard = async () => {
+    try {
+      if (!navigator?.clipboard?.readText || !window.isSecureContext) {
+        setInlineError({ kind: "clipboard", message: "Collez le code directement dans les cases ci-dessus." });
+        codeRefs.current[0]?.focus();
+        return;
+      }
+      const text = await navigator.clipboard.readText();
+      const match = text.match(/\d{6}/) || text.replace(/\D/g, "").match(/\d{4,6}/);
+      if (!match) {
+        setInlineError({ kind: "clipboard", message: "Aucun code à 6 chiffres trouvé. Collez-le directement dans les cases." });
+        codeRefs.current[0]?.focus();
+        return;
+      }
+      applyCode(match[0]);
+    } catch {
+      setInlineError({ kind: "clipboard", message: "Collez le code directement dans les cases ci-dessus." });
+      codeRefs.current[0]?.focus();
+    }
+  };
+
 
   const handleResend = async () => {
     if (cooldown > 0) return;
