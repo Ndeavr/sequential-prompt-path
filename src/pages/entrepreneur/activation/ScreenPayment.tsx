@@ -162,7 +162,7 @@ export default function ScreenPayment() {
           )}
         </div>
 
-        {/* Coupon — hidden on Founder path (fixed 1 $ offer) */}
+        {/* Coupon — masqué sur le pack d'entrée (offre unique 350 $, non cumulable) */}
         {!isFounder && (
           <div className="flex gap-2 mb-4">
             <div className="relative flex-1">
