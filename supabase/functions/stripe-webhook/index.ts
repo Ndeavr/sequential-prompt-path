@@ -481,6 +481,49 @@ Deno.serve(async (req) => {
               if (upErr) console.error("[stripe-webhook] prospect status update failed", upErr.message);
             }
 
+            // 2b — Founder guest checkout (pro-founder-checkout-guest) uses the
+            // founder_score_prospects pool. Without this fallback a real 350 $
+            // payment never creates a contractor.
+            if (!prospect && vProspectId) {
+              const { data: fp } = await supabase
+                .from("founder_score_prospects")
+                .select("id, company, city, trade, email, phone, website")
+                .eq("id", vProspectId)
+                .maybeSingle();
+              if (fp) {
+                prospect = {
+                  id: fp.id,
+                  business_name: fp.company,
+                  legal_name: fp.company,
+                  city: fp.city,
+                  category: fp.trade,
+                  email: fp.email,
+                  phone_e164: fp.phone,
+                  website_url: fp.website,
+                };
+                await supabase
+                  .from("founder_score_prospects")
+                  .update({ status: "paid", paid_at: new Date().toISOString(), stripe_session_id: session.id })
+                  .eq("id", fp.id);
+              }
+            }
+
+            // 2c — Guest checkout without any prospect: rely on Stripe identity.
+            if (!prospect && session.customer_details?.email) {
+              prospect = {
+                id: null,
+                business_name: session.customer_details?.name ?? session.customer_details.email,
+                legal_name: null,
+                city: null,
+                category: null,
+                email: session.customer_details.email,
+                phone_e164: session.customer_details?.phone ?? null,
+                website_url: null,
+              };
+            }
+
+
+
             // 3 — create/activate the contractor account (idempotent).
             if (prospect) {
               const phone = prospect.phone_e164 ?? null;
