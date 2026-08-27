@@ -198,13 +198,29 @@ const ProBilling = () => {
   const isActive =
     subscription && ["active", "trialing"].includes(subscription.status);
 
+  /** L'annuel n'est proposé que si au moins un plan a un vrai prix annuel Stripe. */
+  const yearlyAvailable = (allPlans ?? []).some((p) => p.supportsYearly);
+
+  // Intervalle demandé par un lien entrant (UpgradeWindow, courriel).
+  useEffect(() => {
+    if (searchParams.get("interval") === "year") setInterval("year");
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!yearlyAvailable) setInterval("month");
+  }, [yearlyAvailable]);
+
   const handleSubscribe = async (plan: CatalogPlan) => {
     try {
-      const priceId = getStripePriceId(plan, interval);
+      // Le serveur reste l'autorité sur le montant ; on n'envoie qu'un
+      // intervalle réellement facturable pour ce plan.
+      const effectiveInterval: BillingInterval =
+        interval === "year" && plan.supportsYearly ? "year" : "month";
+      const priceId = getStripePriceId(plan, effectiveInterval);
       const result = await checkout.mutateAsync({
         priceId,
         planId: plan.code,
-        billingInterval: interval,
+        billingInterval: effectiveInterval,
       });
       if (result.url) {
         window.location.href = result.url;
@@ -213,6 +229,7 @@ const ProBilling = () => {
       toast.error(e.message || "Erreur lors de la création du paiement.");
     }
   };
+
 
   const handlePortal = async () => {
     try {
