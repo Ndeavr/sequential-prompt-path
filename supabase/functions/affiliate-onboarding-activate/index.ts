@@ -98,8 +98,10 @@ Deno.serve(async (req) => {
     // et l'attribution existante seraient orphelins.
     let claimedId: string | null = null;
     if (!existing) {
+      const entrySlug = typeof body.entry_slug === "string" ? body.entry_slug.trim().toLowerCase() : "";
       const orFilters = [`email.eq.${email}`];
       if (phone) orFilters.push(`phone.eq.${phone}`);
+      if (entrySlug) orFilters.push(`slug.eq.${entrySlug}`);
       const { data: preCreated } = await sb
         .from("affiliates")
         .select("id, slug, referral_code, status, user_id")

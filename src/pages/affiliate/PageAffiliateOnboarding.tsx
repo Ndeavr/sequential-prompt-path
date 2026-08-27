@@ -224,6 +224,9 @@ export default function PageAffiliateOnboarding() {
           work_preferences: draft.work_preferences,
           preferred_channels: draft.preferred_channels,
           terms_accepted: terms,
+          // Page d'entrée personnalisée (/lorraine) : permet de RÉCLAMER la
+          // fiche affiliée déjà créée par l'admin au lieu d'en créer une 2e.
+          entry_slug: params.get("slug"),
           acquisition: {
             ref: params.get("ref") ?? stored?.refCode ?? null,
             intent: params.get("intent") ?? stored?.intent ?? null,
