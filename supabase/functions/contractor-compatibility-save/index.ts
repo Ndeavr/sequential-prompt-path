@@ -69,7 +69,12 @@ Deno.serve(async (req) => {
     const answers = mergeAnswers(existing?.answers, body?.answers);
     // Mode admin : correction ciblée d'une fiche existante, sans revenir en brouillon.
     const adminPatch = body?.mode === "admin_patch" && actorIsAdmin;
-    const wasFinalized = existing?.status === "active";
+    // REPAIR (2026-08-27): the finalized status written by
+    // contractor-compatibility-finalize / contractor-profile-token is
+    // "completed" (never "active"), so admin corrections never regenerated the
+    // matching rules. Both values are accepted now.
+    const FINALIZED_STATUSES = new Set(["completed", "active"]);
+    const wasFinalized = FINALIZED_STATUSES.has(String(existing?.status ?? ""));
     const currentStep = adminPatch
       ? Math.min(Math.max(Number(existing?.current_step) || 6, 1), 6)
       : Math.min(Math.max(Number(body?.current_step) || 1, 1), 6);

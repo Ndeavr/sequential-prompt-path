@@ -220,7 +220,14 @@ async function createLeadScore(supabase: any, request: any, handoff: any) {
 
 async function createContractorMatches(supabase: any, request: any, handoff: any, score: any) {
   // Find eligible contractors by city / category
-  let query = supabase.from("contractors").select("id, aipp_score, city, specialty").eq("status", "active").limit(10);
+  // REPAIR (2026-08-27): `contractors.status` does not exist — the real column is
+  // `verification_status` (enum verification_status). The previous query threw on
+  // every handoff, producing zero contractor matches.
+  let query = supabase
+    .from("contractors")
+    .select("id, aipp_score, city, specialty")
+    .in("verification_status", ["verified", "pending"])
+    .limit(10);
 
   if (handoff.location_city) {
     query = query.ilike("city", `%${handoff.location_city}%`);

@@ -162,7 +162,7 @@ export default function ScreenPayment() {
           )}
         </div>
 
-        {/* Coupon — hidden on Founder path (fixed 1 $ offer) */}
+        {/* Coupon — masqué sur le pack d'entrée (offre unique 350 $, non cumulable) */}
         {!isFounder && (
           <div className="flex gap-2 mb-4">
             <div className="relative flex-1">
@@ -191,7 +191,9 @@ export default function ScreenPayment() {
             </li>
             <li className="flex items-center gap-1.5">
               <ArrowRight className="w-3 h-3 text-primary shrink-0" />
-              Annulation libre avant le prochain renouvellement
+              {isFounder
+                ? "Paiement unique — aucun abonnement ni renouvellement automatique"
+                : "Annulation libre avant le prochain renouvellement"}
             </li>
           </ul>
         </div>
@@ -205,7 +207,7 @@ export default function ScreenPayment() {
             <Shield className="w-3 h-3" /> Paiement Stripe
           </div>
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <CreditCard className="w-3 h-3" /> Annulez en tout temps
+            <CreditCard className="w-3 h-3" /> {isFounder ? "Paiement unique" : "Annulez en tout temps"}
           </div>
         </div>
 
