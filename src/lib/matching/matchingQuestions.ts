@@ -18,7 +18,9 @@ export type MatchingFieldKey =
   | "availability"
   | "languages"
   | "credentials"
-  | "differentiators";
+  | "differentiators"
+  /** Optionnel, spécifique à certains métiers — ne bloque jamais la complétion. */
+  | "emergency";
 
 export type QuestionKind = "multi" | "single" | "text" | "chips";
 

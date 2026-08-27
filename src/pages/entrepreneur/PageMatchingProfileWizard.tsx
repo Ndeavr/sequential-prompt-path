@@ -198,7 +198,7 @@ export default function PageMatchingProfileWizard() {
         <meta name="robots" content="noindex" />
       </Helmet>
 
-      <AuditProHeader />
+      <AuditProHeader onAuditClick={() => navigate("/entrepreneurs/audit-ia")} />
 
       <main className="mx-auto w-full max-w-xl px-4 pb-32 pt-8 sm:px-6">
         {/* Progression — préparation du profil IA UNPRO (jamais un score OpenAI) */}
