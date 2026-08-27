@@ -162,14 +162,13 @@ export default function PageAffiliateOnboarding() {
   async function sendPhoneOtp() {
     setBusy(true);
     try {
-      const cleaned = draft.phone.replace(/\D/g, "");
-      const e164 = cleaned.startsWith("1") ? `+${cleaned}` : `+1${cleaned}`;
-      const { error } = await supabase.auth.signInWithOtp({ phone: e164 });
-      if (error) throw error;
+      const res = await sendOtpSms(draft.phone);
+      if (!res.ok) {
+        toast.error(res.message ?? "Impossible d'envoyer le code par SMS pour le moment.");
+        return;
+      }
       setOtpSent(true);
       toast.success("Code envoyé par SMS.");
-    } catch (e: any) {
-      toast.error(e.message || "Impossible d'envoyer le code. Essayez le lien courriel.");
     } finally {
       setBusy(false);
     }
@@ -178,18 +177,18 @@ export default function PageAffiliateOnboarding() {
   async function verifyOtp() {
     setBusy(true);
     try {
-      const cleaned = draft.phone.replace(/\D/g, "");
-      const e164 = cleaned.startsWith("1") ? `+${cleaned}` : `+1${cleaned}`;
-      const { error } = await supabase.auth.verifyOtp({ phone: e164, token: otpCode.trim(), type: "sms" });
-      if (error) throw error;
+      const res = await verifyOtpSms(draft.phone, otpCode);
+      if (!res.ok) {
+        toast.error(res.message ?? "Code invalide. Réessayez.");
+        return;
+      }
       toast.success("Numéro vérifié.");
       goTo(2);
-    } catch (e: any) {
-      toast.error(e.message || "Code invalide. Réessayez.");
     } finally {
       setBusy(false);
     }
   }
+
 
   async function sendEmailLink() {
     setBusy(true);
