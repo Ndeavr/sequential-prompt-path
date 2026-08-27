@@ -121,12 +121,11 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
 
   const handleVerifyOtp = async () => {
     const otp = code.join("");
-    if (otp.length !== 6) {
-      toast.error("Entrez le code à 6 chiffres");
-      return;
-    }
+    if (otp.length !== 6 || verifying) return;
 
     setVerifying(true);
+    setInlineError(null);
+    trackAuthEvent("otp_verify_attempt");
     authDebug.set({ auth_step: "otp_verifying" });
     try {
       const data = await callOtp("verify-otp", {
@@ -135,19 +134,20 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       });
 
       if (data.error) {
-        const map: Record<string, string> = {
-          invalid_code: "Code invalide.",
-          expired_or_invalid: "Code expiré. Demandez un nouveau code.",
-          too_many_attempts: "Trop de tentatives. Réessayez plus tard.",
-          invalid_input: "Code à 6 chiffres requis.",
+        const map: Record<string, { kind: "invalid" | "expired"; message: string }> = {
+          invalid_code: { kind: "invalid", message: "Ce code ne correspond pas. Vérifiez les 6 chiffres reçus par texto." },
+          expired_or_invalid: { kind: "expired", message: "Ce code a expiré." },
+          too_many_attempts: { kind: "invalid", message: "Trop de tentatives. Patientez quelques minutes." },
+          invalid_input: { kind: "invalid", message: "Code à 6 chiffres requis." },
         };
-        const msg = map[data.error] || "Erreur. Réessayez.";
+        const mapped = map[data.error] || { kind: "invalid" as const, message: "La vérification a échoué. Réessayez." };
         authDebug.error(data.error, "otp_verifying");
-        toast.error(msg);
-        setCode(["", "", "", "", "", ""]);
+        setInlineError(mapped);
         codeRefs.current[0]?.focus();
+        codeRefs.current[0]?.select();
         return;
       }
+
 
       // Set the session from the returned tokens
       if (data.session) {
