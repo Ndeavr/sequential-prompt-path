@@ -46,6 +46,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
   const [verified, setVerified] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [attempts, setAttempts] = useState(0);
+  const [inlineError, setInlineError] = useState<{ kind: "invalid" | "expired" | "clipboard" | "network"; message: string } | null>(null);
   const codeRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
