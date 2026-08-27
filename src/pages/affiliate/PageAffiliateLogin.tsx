@@ -29,6 +29,12 @@ export default function PageAffiliateLogin() {
   const [step, setStep] = useState<"input" | "otp">("input");
   const [busy, setBusy] = useState(false);
   const [affiliateName, setAffiliateName] = useState<string | null>(null);
+  const otpAuto = useOtpAutoSubmit({
+    code: otp,
+    enabled: step === "otp" && !busy,
+    onSubmit: () => verifyPhoneOtp(),
+  });
+
 
   // Pre-fill from ?slug (deep link /go/:slug) or ?phone / ?email
   useEffect(() => {
