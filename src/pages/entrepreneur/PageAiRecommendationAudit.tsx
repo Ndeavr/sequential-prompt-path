@@ -154,6 +154,12 @@ export default function PageAiRecommendationAudit() {
       step: "audit_opened",
       metadata: { ...utm, invite: Boolean(inviteToken), outreach_prospect: prospectId },
     });
+    void logFunnelEvent({
+      event_type: "ai_audit_viewed",
+      event_source: "app",
+      current_path: "/entrepreneurs/audit-ia",
+      metadata: { ...utm, outreach_prospect: prospectId },
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -244,6 +250,19 @@ export default function PageAiRecommendationAudit() {
       }
       const res = data as AuditResult;
       setResult(res);
+      if (res.business_name) {
+        void logFunnelEvent({
+          event_type: "company_recognized",
+          event_source: "app",
+          current_path: "/entrepreneurs/audit-ia",
+          metadata: {
+            business_name: res.business_name,
+            city: res.city,
+            readiness_score: res.readiness_score,
+            outreach_prospect: prospectId,
+          },
+        });
+      }
       void trackInvite("completed");
       // Existing business recognised in UNPRO records → eligibility signal.
       if (c) {
@@ -282,7 +301,14 @@ export default function PageAiRecommendationAudit() {
     // Preserve outreach attribution: garantie reads `t` for the attributed
     // activation checkout (create-activation-checkout).
     if (activationToken) params.set("t", activationToken);
-    navigate(`/entrepreneurs/garantie?${params.toString()}`);
+    const ref = sp.get("ref");
+    if (ref) params.set("ref", ref);
+    for (const k of ["utm_source", "utm_medium", "utm_campaign"]) {
+      const v = sp.get(k);
+      if (v) params.set(k, v);
+    }
+    // Valeur avant prix : on complète le profil de matching, puis les forfaits.
+    navigate(`/entrepreneurs/profil?${params.toString()}`);
   }
 
   const scrollToAudit = useCallback(() => {
