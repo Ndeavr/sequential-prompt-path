@@ -111,6 +111,7 @@ function parseText(text: string): ParsedRow[] {
 export default function PageAffiliateProspectImport() {
   const nav = useNavigate();
   const { data: affiliate } = useAffiliateSelf();
+  const [dragging, setDragging] = useState(false);
   const [step, setStep] = useState<"input" | "preview" | "done">("input");
   const [text, setText] = useState("");
   const [rows, setRows] = useState<ParsedRow[]>([]);
@@ -285,8 +286,23 @@ export default function PageAffiliateProspectImport() {
         </header>
 
         {step === "input" && (
-          <Card>
+          <Card
+            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragging(false);
+              const f = e.dataTransfer.files?.[0];
+              if (f) void handleFile(f);
+            }}
+            className={dragging ? "ring-2 ring-primary" : undefined}
+          >
             <CardContent className="p-6 space-y-4">
+              {dragging && (
+                <p className="rounded-lg border border-dashed p-3 text-center text-sm text-primary">
+                  Déposez votre fichier ici
+                </p>
+              )}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Format libre — le système détecte les colonnes automatiquement.</span>
                 <label className="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs hover:bg-muted cursor-pointer">
