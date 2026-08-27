@@ -206,14 +206,13 @@ export default function ModalOtpUnlock({ open, onOpenChange, runId, visitorId }:
           {mode === "sms" && (
             <div className="space-y-3">
               <Label htmlFor="otp_phone">Numéro mobile</Label>
-              <Input
+              <PhoneInput
                 id="otp_phone"
-                type="tel"
-                autoComplete="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="514-555-0101"
+                onChange={setPhone}
+                placeholder="(514) 555-0101"
               />
+
               <div className="flex items-center gap-2 pt-1">
                 <Button variant="ghost" size="sm" onClick={() => setMode("choose")}>
                   <ArrowLeft className="w-4 h-4 mr-1" />

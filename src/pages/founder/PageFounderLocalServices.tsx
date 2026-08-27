@@ -311,10 +311,15 @@ export default function PageFounderLocalServices() {
                         <label className="block text-[13px] font-semibold text-foreground">Téléphone (optionnel)</label>
                         <input
                           value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
+                          onChange={(e) => setPhone(formatPhoneDisplay(e.target.value))}
+                          onBlur={() => setPhone((p) => formatPhoneFinal(p))}
                           type="tel"
+                          inputMode="tel"
+                          autoComplete="tel"
+                          placeholder="(514) 555-0101"
                           className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
                         />
+
                       </div>
                     </div>
                     <div>

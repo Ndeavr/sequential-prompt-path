@@ -117,7 +117,7 @@ export default function PartnerLogin() {
                 <div><Label>Nom</Label><Input required value={lastName} onChange={(e) => setLastName(e.target.value)} /></div>
               </div>
               <div><Label>Courriel</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-              <div><Label>Téléphone</Label><Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
+              <div><Label>Téléphone</Label><PhoneInput value={phone} onChange={setPhone} placeholder="(514) 555-0101" /></div>
               <div><Label>Entreprise</Label><Input value={company} onChange={(e) => setCompany(e.target.value)} /></div>
               <div><Label>Mot de passe</Label><Input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} /></div>
               <Button disabled={loading} className="w-full bg-amber-500 text-black hover:bg-amber-400">
