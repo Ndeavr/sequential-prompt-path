@@ -250,17 +250,25 @@ export default function ModalOtpUnlock({ open, onOpenChange, runId, visitorId }:
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 value={code}
-                onChange={(e) => setCode(e.target.value)}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                 placeholder="123456"
-                maxLength={8}
+                maxLength={6}
               />
+              {otpAuto.pending && !otpAuto.reducedMotion && (
+                <div className="h-0.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full bg-primary"
+                    style={{ animation: `otp-auto-progress ${otpAuto.delay}ms linear forwards` }}
+                  />
+                </div>
+              )}
               <div className="flex items-center gap-2 pt-1">
                 <Button variant="ghost" size="sm" onClick={() => setMode("sms")}>
                   <ArrowLeft className="w-4 h-4 mr-1" />
                   Retour
                 </Button>
-                <Button className="flex-1" onClick={verifySms} disabled={busy}>
-                  {busy ? (
+                <Button className="flex-1" onClick={otpAuto.submitNow} disabled={busy}>
+                  {busy || otpAuto.pending ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Vérification…
@@ -270,6 +278,7 @@ export default function ModalOtpUnlock({ open, onOpenChange, runId, visitorId }:
                   )}
                 </Button>
               </div>
+
             </div>
           )}
         </motion.div>
