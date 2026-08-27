@@ -197,7 +197,11 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
     }
   };
 
-
+  const otpAuto = useOtpAutoSubmit({
+    code: code.join(""),
+    enabled: step === "code" && !verifying && !sending && !verified,
+    onSubmit: () => handleVerifyOtp(),
+  });
 
 
   const handleResend = async () => {
