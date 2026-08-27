@@ -8,6 +8,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
+import { sendPhoneOtp as sendOtpSms, verifyPhoneOtp as verifyOtpSms } from "@/lib/auth/phoneOtp";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { useAuth } from "@/hooks/useAuth";
 import { captureAttribution, getStoredAttribution } from "@/hooks/useReferralAttribution";
 import { trackAffiliateFunnel } from "@/features/affiliate/onboarding/trackAffiliateFunnel";
@@ -289,7 +291,7 @@ export default function PageAffiliateOnboarding() {
               </div>
               <div>
                 <Label htmlFor="ph">Téléphone</Label>
-                <Input id="ph" className="mt-1 h-12" type="tel" placeholder="514 555 1234" value={draft.phone} onChange={(e) => set({ phone: e.target.value })} autoComplete="tel" />
+                <PhoneInput id="ph" className="mt-1 h-12" placeholder="(514) 555-1234" value={draft.phone} onChange={(v) => set({ phone: v })} />
               </div>
               <div>
                 <Label htmlFor="em">Courriel</Label>
