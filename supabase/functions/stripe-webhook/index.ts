@@ -431,6 +431,7 @@ Deno.serve(async (req) => {
         if (
           session.metadata?.activation_token ||
           session.metadata?.offer === "entry_pack_350" ||
+          session.metadata?.offer_kind === "pack_350" ||
           session.metadata?.offer === "activation_7d"
         ) {
           const activationToken = session.metadata?.activation_token || null;
