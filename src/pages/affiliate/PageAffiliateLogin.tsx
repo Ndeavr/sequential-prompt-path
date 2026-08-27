@@ -16,6 +16,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loader2, Phone, Mail, ArrowRight, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Helmet } from "react-helmet-async";
+import { useOtpAutoSubmit } from "@/hooks/useOtpAutoSubmit";
+
 
 export default function PageAffiliateLogin() {
   const nav = useNavigate();
