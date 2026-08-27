@@ -365,7 +365,7 @@ function QuestionCard({
               disabled={multi.length === 0 || saving}
               onClick={() => onCommit(multi)}
               size="lg"
-              className="gold-btn h-13 mt-2 h-12 w-full rounded-2xl border-0 font-bold hover:text-primary-foreground"
+              className="gold-btn mt-2 h-12 w-full rounded-2xl border-0 font-bold hover:text-primary-foreground"
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : fr ? "Continuer" : "Continue"}
             </Button>
