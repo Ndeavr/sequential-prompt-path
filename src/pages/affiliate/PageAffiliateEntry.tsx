@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowRight, Users, Send, Wallet } from "lucide-react";
 import { trackReferralEvent } from "@/hooks/useReferralAttribution";
+import FallbackRoutePage from "@/pages/FallbackRoutePage";
 
 
 interface AffiliateEntry {
@@ -93,34 +94,10 @@ export default function PageAffiliateEntry() {
     );
   }
 
-  // Slug inconnu / désactivé — page UNPRO neutre existante, aucune donnée privée.
+  // Slug inconnu / désactivé — on rend le comportement normal du site
+  // (page de repli / 404 existante) plutôt qu'une page affiliée trompeuse.
   if (!affiliate) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-6">
-        <Helmet>
-          <title>Programme affilié UNPRO</title>
-          <meta name="robots" content="noindex" />
-        </Helmet>
-        <div className="w-full max-w-md text-center">
-          <div className="text-sm font-semibold tracking-[0.3em] text-primary">UNPRO</div>
-          <h1 className="mt-6 text-2xl font-semibold tracking-tight">
-            Programme de recommandation
-          </h1>
-          <p className="mt-3 text-muted-foreground">
-            Recommandez des entreprises et professionnels à UNPRO.
-          </p>
-          <Button asChild size="lg" className="mt-8 w-full">
-            <Link to="/affilies">
-              Voir le programme
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-          <Button asChild variant="ghost" size="sm" className="mt-3 w-full">
-            <Link to="/">Retour à l'accueil</Link>
-          </Button>
-        </div>
-      </div>
-    );
+    return <FallbackRoutePage />;
   }
 
   return (

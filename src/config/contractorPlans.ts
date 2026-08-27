@@ -11,12 +11,17 @@
 
 export type ContractorPlanSlug =
   | "presence"
+  | "depart"
+  | "croissance_v2"
+  | "pro_v2"
+  | "elite_v2"
+  | "signature_v2"
+  // superseded slugs kept resolvable for older flows
   | "local"
   | "croissance"
   | "pro"
   | "premium"
   | "domination"
-  // legacy slugs kept resolvable for older flows
   | "recrue"
   | "elite"
   | "signature";
@@ -65,7 +70,100 @@ export const ENTRY_OFFER = {
 /** @deprecated Legacy name kept for import compatibility — use ENTRY_OFFER. */
 export const TRIAL_OFFER = ENTRY_OFFER;
 
+/**
+ * Marketing copy for the ACTIVE catalog in `public.plans` (audience = 'contractor').
+ * Prices mirror the DB rows exactly — the DB stays the source of truth.
+ */
 export const CONTRACTOR_PLANS: ContractorPlan[] = [
+  {
+    slug: "depart",
+    name: "Départ",
+    monthlyPrice: 149,
+    subtitle: "Votre premier rendez-vous chaque mois",
+    description:
+      "Un rendez-vous exclusif garanti par mois, jamais partagé avec un autre entrepreneur.",
+    cta: "Activer Départ",
+    featured: false,
+    appointmentsIncluded: 1,
+    features: [
+      "1 rendez-vous exclusif garanti par mois",
+      "Profil UNPRO vérifié",
+      "Visibilité locale dans votre ville",
+      "Aucun lead partagé",
+    ],
+  },
+  {
+    slug: "croissance_v2",
+    name: "Croissance",
+    monthlyPrice: 299,
+    subtitle: "Un flux régulier de projets",
+    description:
+      "Trois rendez-vous exclusifs garantis par mois et des statistiques pour piloter votre croissance.",
+    cta: "Activer Croissance",
+    featured: false,
+    appointmentsIncluded: 3,
+    features: [
+      "3 rendez-vous exclusifs garantis par mois",
+      "Demandes qualifiées par Alex",
+      "Statistiques de performance",
+      "Optimisation continue du profil (AIPP)",
+    ],
+  },
+  {
+    slug: "pro_v2",
+    name: "Pro",
+    monthlyPrice: 599,
+    subtitle: "Votre agenda se remplit",
+    eyebrow: "Plan le plus populaire",
+    description:
+      "Sept rendez-vous exclusifs garantis par mois, confirmés directement à votre agenda.",
+    cta: "Activer Pro",
+    featured: true,
+    appointmentsIncluded: 7,
+    features: [
+      "7 rendez-vous exclusifs garantis par mois",
+      "Rendez-vous directs à l'agenda",
+      "Synchronisation calendrier",
+      "Priorité de répartition dans votre secteur",
+      "Notifications instantanées",
+    ],
+  },
+  {
+    slug: "elite_v2",
+    name: "Élite",
+    monthlyPrice: 999,
+    subtitle: "Volume élevé, agenda optimisé",
+    description:
+      "Douze rendez-vous exclusifs garantis par mois avec optimisation des routes et des distances.",
+    cta: "Activer Élite",
+    featured: false,
+    appointmentsIncluded: 12,
+    features: [
+      "12 rendez-vous exclusifs garantis par mois",
+      "Tout le plan Pro",
+      "Optimisation des routes et distances",
+      "Buffers automatiques entre les rendez-vous",
+      "Support prioritaire",
+    ],
+  },
+  {
+    slug: "signature_v2",
+    name: "Signature",
+    monthlyPrice: 1499,
+    subtitle: "Vous contrôlez votre marché",
+    description:
+      "Capacité sur mesure et exclusivité territoriale, orchestrées par l'intelligence UNPRO.",
+    cta: "Parler à UNPRO",
+    featured: false,
+    appointmentsIncluded: 0,
+    features: [
+      "Capacité de rendez-vous sur mesure",
+      "Exclusivité de territoire",
+      "Regroupement intelligent par secteur",
+      "Priorisation des projets à haute valeur",
+      "Visibilité IA maximale (AIPP MAX)",
+    ],
+  },
   {
     slug: "presence",
     name: "Présence",
@@ -176,8 +274,13 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
 /** Legacy slug → canonical slug. Keeps older flows working after the refactor. */
 export const LEGACY_PLAN_ALIAS: Record<string, ContractorPlanSlug> = {
   recrue: "presence",
-  elite: "premium",
-  signature: "domination",
+  local: "depart",
+  croissance: "croissance_v2",
+  pro: "pro_v2",
+  premium: "elite_v2",
+  elite: "elite_v2",
+  domination: "signature_v2",
+  signature: "signature_v2",
 };
 
 export function resolvePlanSlug(slug: string): ContractorPlanSlug {
@@ -217,18 +320,23 @@ export function getContractorPlan(slug: string): ContractorPlan | undefined {
 
 /** Get the recommended plan slug */
 export function getRecommendedPlanSlug(): ContractorPlanSlug {
-  return "pro";
+  return "pro_v2";
 }
 
 /** Price lookup map for calculators (legacy keys aliased to the new prices). */
 export const PLAN_PRICE_MAP: Record<ContractorPlanSlug, number> = {
   presence: 49,
+  depart: 149,
+  croissance_v2: 299,
+  pro_v2: 599,
+  elite_v2: 999,
+  signature_v2: 1499,
+  // superseded slugs
   local: 79,
   croissance: 149,
   pro: 299,
   premium: 599,
   domination: 1499,
-  // legacy aliases
   recrue: 49,
   elite: 599,
   signature: 1499,
