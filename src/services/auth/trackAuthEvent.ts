@@ -11,8 +11,6 @@ const AUTH_EVENTS = [
   "magic_link_selected",
   "dropoff_step",
   "role_selected",
-  "otp_verify_attempt",
-  "otp_resend",
 ] as const;
 
 type AuthEvent = (typeof AUTH_EVENTS)[number];

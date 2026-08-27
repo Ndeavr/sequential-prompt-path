@@ -6,9 +6,10 @@
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Phone, ArrowLeft, RefreshCw, ShieldCheck, Loader2, CheckCircle2, ClipboardPaste } from "lucide-react";
+import { Phone, ArrowLeft, RefreshCw, ShieldCheck, Loader2, CheckCircle2 } from "lucide-react";
 import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
 import { authDebug } from "@/services/auth/authDebugBus";
 import { motion, AnimatePresence } from "framer-motion";
@@ -45,8 +46,6 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
   const [verified, setVerified] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [attempts, setAttempts] = useState(0);
-  const [inlineError, setInlineError] = useState<{ kind: "invalid" | "expired" | "clipboard" | "network"; message: string } | null>(null);
-  const [focusedCell, setFocusedCell] = useState<number | null>(0);
   const codeRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -121,11 +120,12 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
 
   const handleVerifyOtp = async () => {
     const otp = code.join("");
-    if (otp.length !== 6 || verifying) return;
+    if (otp.length !== 6) {
+      toast.error("Entrez le code à 6 chiffres");
+      return;
+    }
 
     setVerifying(true);
-    setInlineError(null);
-    trackAuthEvent("otp_verify_attempt");
     authDebug.set({ auth_step: "otp_verifying" });
     try {
       const data = await callOtp("verify-otp", {
@@ -134,20 +134,19 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       });
 
       if (data.error) {
-        const map: Record<string, { kind: "invalid" | "expired"; message: string }> = {
-          invalid_code: { kind: "invalid", message: "Ce code ne correspond pas. Vérifiez les 6 chiffres reçus par texto." },
-          expired_or_invalid: { kind: "expired", message: "Ce code a expiré." },
-          too_many_attempts: { kind: "invalid", message: "Trop de tentatives. Patientez quelques minutes." },
-          invalid_input: { kind: "invalid", message: "Code à 6 chiffres requis." },
+        const map: Record<string, string> = {
+          invalid_code: "Code invalide.",
+          expired_or_invalid: "Code expiré. Demandez un nouveau code.",
+          too_many_attempts: "Trop de tentatives. Réessayez plus tard.",
+          invalid_input: "Code à 6 chiffres requis.",
         };
-        const mapped = map[data.error] || { kind: "invalid" as const, message: "La vérification a échoué. Réessayez." };
+        const msg = map[data.error] || "Erreur. Réessayez.";
         authDebug.error(data.error, "otp_verifying");
-        setInlineError(mapped);
+        toast.error(msg);
+        setCode(["", "", "", "", "", ""]);
         codeRefs.current[0]?.focus();
-        codeRefs.current[0]?.select();
         return;
       }
-
 
       // Set the session from the returned tokens
       if (data.session) {
@@ -165,77 +164,42 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       setTimeout(() => onSuccess?.(), 400);
     } catch (e) {
       authDebug.error(e, "otp_verifying");
-      setInlineError({ kind: "network", message: "Connexion instable. Réessayez." });
-
+      toast.error("Erreur réseau. Réessayez.");
     } finally {
       setVerifying(false);
     }
   };
 
-  /** Fills the cells WITHOUT ever submitting. Single source of truth. */
-  const applyCode = (raw: string, focusEnd = true) => {
-    const digits = raw.replace(/\D/g, "").slice(0, 6);
-    if (!digits) return;
-    setInlineError(null);
-    const next = ["", "", "", "", "", ""].map((_, i) => digits[i] || "");
-    setCode(next);
-    const target = Math.min(digits.length, 5);
-    setTimeout(() => codeRefs.current[focusEnd ? target : 0]?.focus(), 0);
-  };
-
   const handleCodeChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
-    setInlineError(null);
     const newCode = [...code];
     newCode[index] = value.slice(-1);
     setCode(newCode);
     if (value && index < 5) codeRefs.current[index + 1]?.focus();
+    if (newCode.every((d) => d) && newCode.join("").length === 6) {
+      setTimeout(() => handleVerifyOtp(), 150);
+    }
   };
 
   const handleCodeKeyDown = (index: number, e: React.KeyboardEvent) => {
     if (e.key === "Backspace" && !code[index] && index > 0) {
       codeRefs.current[index - 1]?.focus();
     }
-    if (e.key === "ArrowLeft" && index > 0) codeRefs.current[index - 1]?.focus();
-    if (e.key === "ArrowRight" && index < 5) codeRefs.current[index + 1]?.focus();
   };
 
   const handleCodePaste = (e: React.ClipboardEvent) => {
     const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-    if (pasted.length >= 4) {
+    if (pasted.length === 6) {
       e.preventDefault();
-      applyCode(pasted);
+      const newCode = pasted.split("");
+      setCode(newCode);
+      codeRefs.current[5]?.focus();
+      setTimeout(() => handleVerifyOtp(), 150);
     }
   };
-
-  /** Reads the clipboard and extracts a 6-digit code (e.g. "Votre code UNPRO est 483921"). */
-  const handlePasteFromClipboard = async () => {
-    try {
-      if (!navigator?.clipboard?.readText || !window.isSecureContext) {
-        setInlineError({ kind: "clipboard", message: "Collez le code directement dans les cases ci-dessus." });
-        codeRefs.current[0]?.focus();
-        return;
-      }
-      const text = await navigator.clipboard.readText();
-      const match = text.match(/\d{6}/) || text.replace(/\D/g, "").match(/\d{4,6}/);
-      if (!match) {
-        setInlineError({ kind: "clipboard", message: "Aucun code à 6 chiffres trouvé. Collez-le directement dans les cases." });
-        codeRefs.current[0]?.focus();
-        return;
-      }
-      applyCode(match[0]);
-    } catch {
-      setInlineError({ kind: "clipboard", message: "Collez le code directement dans les cases ci-dessus." });
-      codeRefs.current[0]?.focus();
-    }
-  };
-
 
   const handleResend = async () => {
     if (cooldown > 0) return;
-    setInlineError(null);
-    setCode(["", "", "", "", "", ""]);
-    trackAuthEvent("otp_resend");
     await handleSendOtp();
   };
 
@@ -345,8 +309,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
               <div className="flex justify-center mb-2">
                 <ShieldCheck className="h-5 w-5 text-primary" />
               </div>
-              <p className="text-base font-semibold text-foreground">Vérifiez votre téléphone</p>
-              <p className="text-sm mt-1 text-foreground/80">
+              <p className="text-sm font-medium text-foreground">
                 Code envoyé au +1 {formatPhoneDisplay(phone)}
               </p>
               <p className="text-xs mt-1 text-muted-foreground">
@@ -354,116 +317,76 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
               </p>
             </div>
 
-            {/* 6-digit code input — first cell carries SMS autofill. Never auto-submits. */}
-            <div className="flex justify-center gap-1.5 sm:gap-2 w-full" onPaste={handleCodePaste}>
+            {/* 6-digit code input — first cell carries SMS autofill */}
+            <div className="flex justify-center gap-2" onPaste={handleCodePaste}>
               {code.map((digit, i) => (
-                <input
+                <Input
                   key={i}
                   ref={(el) => { codeRefs.current[i] = el; }}
                   type="text"
                   inputMode="numeric"
-                  pattern="[0-9]*"
                   autoComplete={i === 0 ? "one-time-code" : "off"}
                   name={i === 0 ? "otp" : undefined}
                   maxLength={i === 0 ? 6 : 1}
                   value={digit}
-                  autoFocus={i === 0}
-                  onFocus={(e) => { setFocusedCell(i); e.currentTarget.select(); }}
-                  onBlur={() => setFocusedCell((c) => (c === i ? null : c))}
                   onChange={(e) => {
                     const v = e.target.value.replace(/\D/g, "");
-                    // SMS autofill / paste may deliver the whole code at once — fill only.
-                    if (v.length > 1) { applyCode(v); return; }
+                    if (v.length > 1) {
+                      // SMS autofill delivered the full code into cell 0
+                      const full = v.slice(0, 6);
+                      const next = ["", "", "", "", "", ""].map((_, idx) => full[idx] || "");
+                      setCode(next);
+                      if (next.every((d) => d) && next.join("").length === 6) {
+                        codeRefs.current[5]?.focus();
+                        setTimeout(() => handleVerifyOtp(), 150);
+                      }
+                      return;
+                    }
                     handleCodeChange(i, v);
                   }}
                   onKeyDown={(e) => handleCodeKeyDown(i, e)}
-                  className="flex-1 min-w-0 max-w-[52px] h-14 text-center text-xl font-bold rounded-xl outline-none transition-all"
+                  className="w-11 h-13 text-center text-lg font-bold rounded-xl"
                   style={{
-                    background: digit ? "hsl(228 24% 20%)" : "hsl(228 20% 14% / 0.8)",
-                    border:
-                      focusedCell === i
-                        ? "2px solid hsl(222 100% 65%)"
-                        : digit
-                          ? "1.5px solid hsl(222 100% 65% / 0.55)"
-                          : "1.5px solid hsl(228 14% 38%)",
-                    boxShadow: focusedCell === i ? "0 0 0 4px hsl(222 100% 65% / 0.18)" : "none",
-                    color: "hsl(0 0% 100%)",
-                    caretColor: "hsl(222 100% 75%)",
+                    background: "hsl(228 20% 14% / 0.6)",
+                    border: digit ? "1px solid hsl(222 100% 65% / 0.5)" : "1px solid hsl(228 18% 18%)",
+                    color: "hsl(220 20% 93%)",
                   }}
                   disabled={isDisabled}
                 />
               ))}
             </div>
 
-            {/* Paste action — deliberately the most visible secondary action */}
-            <button
-              type="button"
-              onClick={handlePasteFromClipboard}
-              disabled={isDisabled}
-              className="w-full h-12 flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
-              style={{
-                background: "hsl(222 100% 65% / 0.12)",
-                border: "1.5px solid hsl(222 100% 65% / 0.55)",
-                color: "hsl(222 100% 78%)",
-              }}
-            >
-              <ClipboardPaste className="h-4 w-4" />
-              Coller le code reçu par texto
-            </button>
-
-            {inlineError && (
-              <div
-                role="alert"
-                className="rounded-xl px-3 py-2.5 text-xs"
-                style={
-                  inlineError.kind === "clipboard"
-                    ? { background: "hsl(228 20% 16%)", border: "1px solid hsl(228 14% 30%)", color: "hsl(220 20% 88%)" }
-                    : { background: "hsl(0 60% 20% / 0.5)", border: "1px solid hsl(0 65% 45%)", color: "hsl(0 90% 88%)" }
-                }
-              >
-                <p>{inlineError.message}</p>
-                {inlineError.kind === "expired" && (
-                  <button
-                    type="button"
-                    onClick={handleResend}
-                    disabled={cooldown > 0}
-                    className="mt-1 underline font-semibold disabled:opacity-50"
-                  >
-                    {cooldown > 0 ? `Renvoyer un nouveau code (${cooldown}s)` : "Renvoyer un nouveau code"}
-                  </button>
-                )}
-              </div>
-            )}
-
             <Button
               type="button"
-              className="w-full h-[52px] text-base font-bold rounded-xl disabled:opacity-40"
+              className="w-full h-12 text-sm font-medium rounded-xl"
               disabled={isDisabled || code.some((d) => !d)}
               onClick={handleVerifyOtp}
             >
-              {verifying ? <Loader2 className="h-5 w-5 animate-spin" /> : "Vérifier le code"}
+              {verifying ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Vérifier le code"
+              )}
             </Button>
 
-            <div className="flex items-center justify-center gap-3 text-xs">
+            <div className="flex items-center justify-between">
               <button
                 type="button"
-                onClick={() => { setStep("phone"); setCode(["", "", "", "", "", ""]); setInlineError(null); }}
-                className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => { setStep("phone"); setCode(["", "", "", "", "", ""]); }}
+                className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ArrowLeft className="h-3 w-3" /> Changer de numéro
               </button>
-              <span className="text-muted-foreground/40">·</span>
               <button
                 type="button"
                 onClick={handleResend}
                 disabled={cooldown > 0}
-                className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 disabled:hover:text-muted-foreground"
+                className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 disabled:hover:text-muted-foreground"
               >
                 <RefreshCw className="h-3 w-3" />
                 {cooldown > 0 ? `Renvoyer (${cooldown}s)` : "Renvoyer le code"}
               </button>
             </div>
-
           </motion.div>
         )}
       </AnimatePresence>
