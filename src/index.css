@@ -1491,3 +1491,12 @@ html[data-theme-ready="true"] .glass-btn {
 @media (prefers-reduced-motion: reduce) {
   .lift-hover:hover { transform: none; }
 }
+
+/* OTP auto-validation — progression subtile avant envoi automatique */
+@keyframes otp-auto-progress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [style*="otp-auto-progress"] { animation: none !important; width: 100%; }
+}

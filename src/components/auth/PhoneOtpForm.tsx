@@ -6,6 +6,7 @@
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { useOtpAutoSubmit } from "@/hooks/useOtpAutoSubmit";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -124,8 +125,10 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       toast.error("Entrez le code à 6 chiffres");
       return;
     }
+    if (verifying) return; // anti double-soumission
 
     setVerifying(true);
+
     authDebug.set({ auth_step: "otp_verifying" });
     try {
       const data = await callOtp("verify-otp", {
@@ -176,7 +179,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
     newCode[index] = value.slice(-1);
     setCode(newCode);
     if (value && index < 5) codeRefs.current[index + 1]?.focus();
-    // Auto-remplissage OUI, auto-validation NON : l'utilisateur doit cliquer.
+    // Auto-remplissage OUI, auto-validation OUI (via useOtpAutoSubmit).
   };
 
   const handleCodeKeyDown = (index: number, e: React.KeyboardEvent) => {
@@ -191,9 +194,15 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       e.preventDefault();
       setCode(pasted.split(""));
       codeRefs.current[5]?.focus();
-      // Pas de soumission automatique.
+      // Auto-validation prise en charge par useOtpAutoSubmit.
     }
   };
+
+  const otpAuto = useOtpAutoSubmit({
+    code: code.join(""),
+    enabled: step === "code" && !verifying && !sending && !verified,
+    onSubmit: () => handleVerifyOtp(),
+  });
 
 
   const handleResend = async () => {
@@ -336,7 +345,6 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
                       setCode(next);
                       if (next.every((d) => d) && next.join("").length === 6) {
                         codeRefs.current[5]?.focus();
-                        setTimeout(() => handleVerifyOtp(), 150);
                       }
                       return;
                     }
@@ -354,14 +362,25 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
               ))}
             </div>
 
+            {otpAuto.pending && !otpAuto.reducedMotion && (
+              <div className="h-1 w-full overflow-hidden rounded-full bg-white/10" aria-hidden="true">
+                <div
+                  className="h-full rounded-full bg-primary"
+                  style={{ animation: `otp-auto-progress ${otpAuto.delay}ms linear forwards` }}
+                />
+              </div>
+            )}
+
             <Button
               type="button"
               className="w-full h-12 text-sm font-medium rounded-xl"
               disabled={isDisabled || code.some((d) => !d)}
-              onClick={handleVerifyOtp}
+              onClick={otpAuto.submitNow}
             >
-              {verifying ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+              {verifying || otpAuto.pending ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Vérification…
+                </span>
               ) : (
                 "Vérifier le code"
               )}

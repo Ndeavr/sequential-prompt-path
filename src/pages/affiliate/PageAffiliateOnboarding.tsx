@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { sendPhoneOtp as sendOtpSms, verifyPhoneOtp as verifyOtpSms } from "@/lib/auth/phoneOtp";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { useAuth } from "@/hooks/useAuth";
+import { useOtpAutoSubmit } from "@/hooks/useOtpAutoSubmit";
+
 import { captureAttribution, getStoredAttribution } from "@/hooks/useReferralAttribution";
 import { trackAffiliateFunnel } from "@/features/affiliate/onboarding/trackAffiliateFunnel";
 import UnproLogo from "@/components/brand/UnproLogo";
@@ -99,6 +101,12 @@ export default function PageAffiliateOnboarding() {
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [emailLinkSent, setEmailLinkSent] = useState(false);
+  const otpAuto = useOtpAutoSubmit({
+    code: otpCode,
+    enabled: otpSent && !busy,
+    onSubmit: () => verifyOtp(),
+  });
+
 
   useEffect(() => {
     captureAttribution(new URLSearchParams(location.search));
@@ -177,6 +185,7 @@ export default function PageAffiliateOnboarding() {
   }
 
   async function verifyOtp() {
+    if (busy) return; // anti double-soumission
     setBusy(true);
     try {
       const res = await verifyOtpSms(draft.phone, otpCode);
@@ -190,6 +199,7 @@ export default function PageAffiliateOnboarding() {
       setBusy(false);
     }
   }
+
 
 
   async function sendEmailLink() {
@@ -346,11 +356,32 @@ export default function PageAffiliateOnboarding() {
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   />
-
+                  {otpAuto.pending && !otpAuto.reducedMotion && (
+                    <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                      <div
+                        className="h-full rounded-full bg-primary"
+                        style={{ animation: `otp-auto-progress ${otpAuto.delay}ms linear forwards` }}
+                      />
+                    </div>
+                  )}
+                  <p aria-live="polite" className="sr-only">
+                    {otpAuto.pending ? "Vérification en cours" : ""}
+                  </p>
                 </div>
-                <Button className="h-14 w-full rounded-full text-lg font-bold" disabled={otpCode.length < 6 || busy} onClick={verifyOtp}>
-                  {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : "Vérifier et continuer"}
+                <Button
+                  className="h-14 w-full rounded-full text-lg font-bold"
+                  disabled={otpCode.length < 6 || busy}
+                  onClick={otpAuto.submitNow}
+                >
+                  {busy || otpAuto.pending ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Vérification…
+                    </>
+                  ) : (
+                    "Vérifier et continuer"
+                  )}
                 </Button>
+
                 <button type="button" className="w-full text-center text-sm font-medium text-muted-foreground underline-offset-4 hover:underline" disabled={busy} onClick={sendPhoneOtp}>
                   Renvoyer le code
                 </button>
