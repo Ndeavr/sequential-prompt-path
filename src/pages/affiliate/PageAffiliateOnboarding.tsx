@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { sendPhoneOtp as sendOtpSms, verifyPhoneOtp as verifyOtpSms } from "@/lib/auth/phoneOtp";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { useAuth } from "@/hooks/useAuth";
+import { useOtpAutoSubmit } from "@/hooks/useOtpAutoSubmit";
+
 import { captureAttribution, getStoredAttribution } from "@/hooks/useReferralAttribution";
 import { trackAffiliateFunnel } from "@/features/affiliate/onboarding/trackAffiliateFunnel";
 import UnproLogo from "@/components/brand/UnproLogo";
