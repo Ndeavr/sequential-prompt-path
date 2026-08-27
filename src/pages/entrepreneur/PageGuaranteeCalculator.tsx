@@ -126,8 +126,7 @@ export default function PageGuaranteeCalculator() {
         : await supabase.functions.invoke("create-checkout-session", {
           body: {
             packQuoteId: quote.quote_id,
-            displayedPriceCents: quote.total_price_cents,
-            displayedGuaranteedAppointments: quote.guaranteed_appointments,
+            // Server-authoritative: the amount is resolved from the stored quote.
             ref: affiliateRef,
           },
         });
