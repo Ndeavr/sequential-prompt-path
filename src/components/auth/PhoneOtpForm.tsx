@@ -178,7 +178,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
     newCode[index] = value.slice(-1);
     setCode(newCode);
     if (value && index < 5) codeRefs.current[index + 1]?.focus();
-    // Auto-remplissage OUI, auto-validation NON : l'utilisateur doit cliquer.
+    // Auto-remplissage OUI, auto-validation OUI (via useOtpAutoSubmit).
   };
 
   const handleCodeKeyDown = (index: number, e: React.KeyboardEvent) => {
@@ -193,9 +193,11 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       e.preventDefault();
       setCode(pasted.split(""));
       codeRefs.current[5]?.focus();
-      // Pas de soumission automatique.
+      // Auto-validation prise en charge par useOtpAutoSubmit.
     }
   };
+
+
 
 
   const handleResend = async () => {
