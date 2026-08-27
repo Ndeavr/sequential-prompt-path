@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Phone, ArrowLeft, RefreshCw, ShieldCheck, Loader2, CheckCircle2 } from "lucide-react";
+import { Phone, ArrowLeft, RefreshCw, ShieldCheck, Loader2, CheckCircle2, ClipboardPaste } from "lucide-react";
 import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
 import { authDebug } from "@/services/auth/authDebugBus";
 import { motion, AnimatePresence } from "framer-motion";
@@ -47,6 +47,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
   const [cooldown, setCooldown] = useState(0);
   const [attempts, setAttempts] = useState(0);
   const [inlineError, setInlineError] = useState<{ kind: "invalid" | "expired" | "clipboard" | "network"; message: string } | null>(null);
+  const [focusedCell, setFocusedCell] = useState<number | null>(0);
   const codeRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -233,6 +234,9 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
 
   const handleResend = async () => {
     if (cooldown > 0) return;
+    setInlineError(null);
+    setCode(["", "", "", "", "", ""]);
+    trackAuthEvent("otp_resend");
     await handleSendOtp();
   };
 
