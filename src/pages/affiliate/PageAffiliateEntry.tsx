@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowRight, Users, Send, Wallet } from "lucide-react";
 import { trackReferralEvent } from "@/hooks/useReferralAttribution";
+import FallbackRoutePage from "@/pages/FallbackRoutePage";
 
 
 interface AffiliateEntry {
