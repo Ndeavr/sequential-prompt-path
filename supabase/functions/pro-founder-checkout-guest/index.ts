@@ -96,7 +96,8 @@ Deno.serve(async (req) => {
       prospect_id: prospectId ?? null,
       email: email ?? null,
       stripe_session_id: session.id,
-      metadata: { plan_slug: slug, offer: "fondateur_1cad_7d_then_149" },
+      // CRM audit trail must describe the SAME offer as the Stripe session.
+      metadata: { plan_slug: slug, offer: "pack_350", offer_kind: "pack_350", amount_cents: ENTRY_PRICE_CENTS },
     });
 
     return new Response(JSON.stringify({ url: session.url, session_id: session.id }), {
