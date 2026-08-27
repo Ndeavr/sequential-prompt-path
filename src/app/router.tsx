@@ -1103,6 +1103,8 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/calculateur-forfait" element={<Suspense fallback={<LazyFallback />}><PageForfaitGrowthCalculator /></Suspense>} />
 
         <Route path="/entrepreneurs/audit-ia" element={<PageAiRecommendationAudit />} />
+        {/* Profil de matching — complétion progressive avant les forfaits */}
+        <Route path="/entrepreneurs/profil" element={<Suspense fallback={<LazyFallback />}><PageMatchingProfileWizard /></Suspense>} />
         {/* Founder offer — local services & professionals (12 mois gratuits, puis 350 $/an) */}
         <Route path="/fondateurs" element={<Suspense fallback={<LazyFallback />}><PageFounderLocalServices /></Suspense>} />
         <Route path="/entrepreneur/audit-ia" element={<Navigate to="/entrepreneurs/audit-ia" replace />} />
