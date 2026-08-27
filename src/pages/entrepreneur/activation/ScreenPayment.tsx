@@ -191,7 +191,9 @@ export default function ScreenPayment() {
             </li>
             <li className="flex items-center gap-1.5">
               <ArrowRight className="w-3 h-3 text-primary shrink-0" />
-              Annulation libre avant le prochain renouvellement
+              {isFounder
+                ? "Paiement unique — aucun abonnement ni renouvellement automatique"
+                : "Annulation libre avant le prochain renouvellement"}
             </li>
           </ul>
         </div>
