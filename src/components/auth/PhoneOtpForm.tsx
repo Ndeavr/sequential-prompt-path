@@ -176,9 +176,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
     newCode[index] = value.slice(-1);
     setCode(newCode);
     if (value && index < 5) codeRefs.current[index + 1]?.focus();
-    if (newCode.every((d) => d) && newCode.join("").length === 6) {
-      setTimeout(() => handleVerifyOtp(), 150);
-    }
+    // Auto-remplissage OUI, auto-validation NON : l'utilisateur doit cliquer.
   };
 
   const handleCodeKeyDown = (index: number, e: React.KeyboardEvent) => {
@@ -191,12 +189,12 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
     const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
     if (pasted.length === 6) {
       e.preventDefault();
-      const newCode = pasted.split("");
-      setCode(newCode);
+      setCode(pasted.split(""));
       codeRefs.current[5]?.focus();
-      setTimeout(() => handleVerifyOtp(), 150);
+      // Pas de soumission automatique.
     }
   };
+
 
   const handleResend = async () => {
     if (cooldown > 0) return;
