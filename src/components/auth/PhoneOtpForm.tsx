@@ -165,7 +165,8 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       setTimeout(() => onSuccess?.(), 400);
     } catch (e) {
       authDebug.error(e, "otp_verifying");
-      toast.error("Erreur réseau. Réessayez.");
+      setInlineError({ kind: "network", message: "Connexion instable. Réessayez." });
+
     } finally {
       setVerifying(false);
     }
