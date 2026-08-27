@@ -51,6 +51,8 @@ serve(async (req) => {
       return json({ error: "invalid_input" }, 400);
     }
 
+    console.log("otp_verify_started", { phone_suffix: phone.slice(-4) });
+
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
@@ -73,6 +75,8 @@ serve(async (req) => {
       await sb.from("otp_codes").update({ attempts: row.attempts + 1 }).eq("id", row.id);
       return json({ error: "invalid_code" }, 401);
     }
+
+    console.log("otp_verified", { phone_suffix: phone.slice(-4) });
 
     await sb.from("otp_codes").update({ consumed_at: new Date().toISOString() }).eq("id", row.id);
 
