@@ -631,6 +631,22 @@ Deno.serve(async (req) => {
 
     const session = await stripe.checkout.sessions.create(checkoutConfig);
 
+    // Sanitized checkout observability — never logs payment data or secrets.
+    console.info("[checkout:created]", {
+      user_id: userId,
+      contractor_id: contractor.id,
+      plan_slug: resolvedPlanCode,
+      billing_interval: interval,
+      currency: "cad",
+      resolved_price_id: personalizedPriceCents ? null : resolvedPriceId,
+      expected_amount_cents: personalizedPriceCents ?? null,
+      quote_id: quoteId ?? null,
+      checkout_session_id: session.id,
+      status: "pending",
+    });
+
+
+
     // Create checkout_sessions record
     await serviceClient.from("checkout_sessions").insert({
       contractor_profile_id: contractor.id,
