@@ -356,11 +356,32 @@ export default function PageAffiliateOnboarding() {
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   />
-
+                  {otpAuto.pending && !otpAuto.reducedMotion && (
+                    <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                      <div
+                        className="h-full rounded-full bg-primary"
+                        style={{ animation: `otp-auto-progress ${otpAuto.delay}ms linear forwards` }}
+                      />
+                    </div>
+                  )}
+                  <p aria-live="polite" className="sr-only">
+                    {otpAuto.pending ? "Vérification en cours" : ""}
+                  </p>
                 </div>
-                <Button className="h-14 w-full rounded-full text-lg font-bold" disabled={otpCode.length < 6 || busy} onClick={verifyOtp}>
-                  {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : "Vérifier et continuer"}
+                <Button
+                  className="h-14 w-full rounded-full text-lg font-bold"
+                  disabled={otpCode.length < 6 || busy}
+                  onClick={otpAuto.submitNow}
+                >
+                  {busy || otpAuto.pending ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Vérification…
+                    </>
+                  ) : (
+                    "Vérifier et continuer"
+                  )}
                 </Button>
+
                 <button type="button" className="w-full text-center text-sm font-medium text-muted-foreground underline-offset-4 hover:underline" disabled={busy} onClick={sendPhoneOtp}>
                   Renvoyer le code
                 </button>
