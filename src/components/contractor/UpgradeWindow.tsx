@@ -167,7 +167,7 @@ export default function UpgradeWindow({
   open, onOpenChange, trigger, currentPlanId, currentLimit, promoCode: initialPromo,
 }: UpgradeWindowProps) {
   const navigate = useNavigate();
-  const [billingInterval, setBillingInterval] = useState<"month" | "year">("year");
+  const [billingInterval, setBillingInterval] = useState<"month" | "year">("month");
   const [promoInput, setPromoInput] = useState(initialPromo || "");
 
   const config = TRIGGER_CONFIG[trigger];
@@ -186,8 +186,8 @@ export default function UpgradeWindow({
 
   const handleUpgrade = () => {
     onOpenChange(false);
-    // Navigate with plan pre-selected
-    navigate(`/pro/billing?plan=${suggestedPlan.id}&interval=${billingInterval}${promoInput ? `&promo=${promoInput}` : ""}`);
+    // The billing page resolves plans by CODE, never by UUID.
+    navigate(`/pro/billing?plan=${suggestedPlan.code}&interval=${billingInterval}${promoInput ? `&promo=${promoInput}` : ""}`);
   };
 
   return (
@@ -281,19 +281,21 @@ export default function UpgradeWindow({
             <p className="text-[11px] text-muted-foreground leading-relaxed">{config.roi}</p>
           </div>
 
-          {/* Billing toggle */}
+          {/* Billing toggle — yearly only when a real yearly price exists */}
           <Tabs value={billingInterval} onValueChange={(v) => setBillingInterval(v as "month" | "year")} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 h-9">
-              <TabsTrigger value="month" className="text-xs">Mensuel</TabsTrigger>
-              <TabsTrigger value="year" className="text-xs relative">
-                Annuel
-                {savingsPct > 0 && (
-                  <Badge className="absolute -top-2 -right-1 text-[8px] bg-green-500/90 text-white px-1 py-0">
-                    -{savingsPct}%
-                  </Badge>
-                )}
-              </TabsTrigger>
-            </TabsList>
+            {suggestedPlan.supportsYearly && (
+              <TabsList className="grid w-full grid-cols-2 h-9">
+                <TabsTrigger value="month" className="text-xs">Mensuel</TabsTrigger>
+                <TabsTrigger value="year" className="text-xs relative">
+                  Annuel
+                  {savingsPct > 0 && (
+                    <Badge className="absolute -top-2 -right-1 text-[8px] bg-green-500/90 text-white px-1 py-0">
+                      -{savingsPct}%
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              </TabsList>
+            )}
             <TabsContent value="month" className="mt-2">
               <p className="text-center text-xs text-muted-foreground">
                 <span className="text-lg font-bold text-foreground">{formatPlanPrice(suggestedPlan.monthlyPrice)}</span>

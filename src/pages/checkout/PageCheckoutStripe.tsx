@@ -174,8 +174,8 @@ export default function PageCheckoutStripe() {
               </div>
             </div>
 
-            {/* Billing toggle */}
-            <div className="flex rounded-xl bg-muted/50 p-1">
+            {/* Billing toggle — yearly only when a real yearly price exists */}
+            <div className={cn("flex rounded-xl bg-muted/50 p-1", !plan.supportsYearly && "hidden")}>
               {(["month", "year"] as BillingInterval[]).map((interval) => (
                 <button
                   key={interval}
