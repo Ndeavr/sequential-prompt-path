@@ -26,6 +26,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { sendPhoneOtp, verifyPhoneOtp } from "@/lib/auth/phoneOtp";
+import { useOtpAutoSubmit } from "@/hooks/useOtpAutoSubmit";
 
 interface Props {
   open: boolean;
