@@ -92,8 +92,13 @@ const PlanCard = ({
   onPortal: () => void;
   isLoading: boolean;
 }) => {
-  const price = interval === "year" ? plan.yearlyPrice : plan.monthlyPrice;
+  // Un plan sans prix annuel Stripe reste facturé au mois : afficher l'annuel
+  // provoquerait « Price not configured » au checkout.
+  const effectiveInterval: BillingInterval =
+    interval === "year" && plan.supportsYearly ? "year" : "month";
+  const price = effectiveInterval === "year" ? plan.yearlyPrice : plan.monthlyPrice;
   const savings = getYearlySavingsPercent(plan);
+
 
   return (
     <Card
