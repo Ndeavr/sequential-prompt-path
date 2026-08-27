@@ -39,11 +39,17 @@ export default function PageContractorCheckout() {
   const planParam = searchParams.get("plan");
 
   // Plan resolution priority: explicit ?plan= > quote > funnel state > fallback
-  const planSlug = planParam || (quote?.recommended_plan as string) || state.selectedPlanId || "pro";
-  const plan = PLAN_DETAILS[planSlug] || PLAN_DETAILS["pro"];
+  const planSlug = planParam || (quote?.recommended_plan as string) || state.selectedPlanId || "pro_v2";
+  const plan = PLAN_DETAILS[planSlug] || PLAN_DETAILS["pro_v2"];
   const planName = plan?.name || planSlug;
-  // When ?plan= overrides the quote, bill at catalog price for that plan (not the quote's recommended price)
-  const planPrice = (planParam ? plan?.price : quote?.recommended_monthly_price ?? plan?.price) ?? 349;
+  // AUTHORITATIVE PRICING: quotes store CENTS (public.contractor_pricing_quotes),
+  // the static catalog stores DOLLARS. Never mix. The server (create-checkout-session)
+  // remains the only authority — the browser never authorizes an amount.
+  const quoteMonthlyDollars =
+    typeof quote?.recommended_monthly_price === "number"
+      ? quote.recommended_monthly_price / 100
+      : null;
+  const planPrice = (planParam ? plan?.price : quoteMonthlyDollars ?? plan?.price) ?? plan?.price ?? 0;
 
   // Recommendation context — used to display "Premium recommandé → Pro Fondateur appliqué"
   const recommendedSlug = (quote?.recommended_plan as string) || null;
@@ -101,7 +107,7 @@ export default function PageContractorCheckout() {
           planId: planSlug,
           billingInterval: "month",
           quoteId: quoteId || undefined,
-          displayedPriceCents: Math.round(planPrice * 100),
+          // No displayedPriceCents: the server resolves the canonical amount.
           successUrl: `${window.location.origin}/entrepreneur/activation${quoteId ? `?quote_id=${quoteId}` : ""}`,
           cancelUrl: `${window.location.origin}/entrepreneur/checkout${quoteId ? `?quoteId=${quoteId}` : ""}`,
         },
@@ -116,15 +122,15 @@ export default function PageContractorCheckout() {
         toast.success(data.message || "Plan activé!");
         goToStep("activation");
       } else {
-        toast.error("Erreur lors de la création du checkout");
+        toast.error("Le paiement n'a pas pu démarrer. Réessayez.");
       }
     } catch (err: any) {
-      console.error(err);
       const code = err?.context?.body && (() => { try { return JSON.parse(err.context.body)?.code; } catch { return null; } })();
-      if (code === "pricing_mismatch") {
-        toast.error("Désaccord de prix détecté. Rechargez votre devis.");
+      console.error("[checkout]", { plan_slug: planSlug, quote_id: quoteId, code: code ?? "unknown" });
+      if (code === "waitlisted") {
+        toast.error("Ce territoire est en liste d'attente. Nous vous contactons sous peu.");
       } else {
-        toast.error("Erreur lors de la création du checkout");
+        toast.error("Le paiement n'a pas pu démarrer. Réessayez — votre progression est conservée.");
       }
     } finally {
       setIsLoading(false);

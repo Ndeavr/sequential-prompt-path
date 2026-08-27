@@ -35,10 +35,14 @@ export default function PageOnboardingPayment() {
     return () => { cancelled = true; };
   }, [quoteId, toast]);
 
-  const planCode = (quote?.recommended_plan as string) || planParam || "pro";
+  const planCode = (quote?.recommended_plan as string) || planParam || "pro_v2";
   const planObj = CONTRACTOR_PLANS.find((p) => p.slug === planCode);
   const planName = planObj?.name || planCode;
-  const monthlyPrice = quote?.recommended_monthly_price ?? planObj?.monthlyPrice ?? 349;
+  // Quotes store CENTS; the static catalog stores DOLLARS. Never mix.
+  const monthlyPrice =
+    typeof quote?.recommended_monthly_price === "number"
+      ? quote.recommended_monthly_price / 100
+      : planObj?.monthlyPrice ?? 0;
 
   const currentPrice = billingCycle === "monthly" ? monthlyPrice : Math.round(monthlyPrice * 12 * 0.85);
   const savings = billingCycle === "yearly" ? Math.round(monthlyPrice * 12 - currentPrice) : 0;
@@ -52,7 +56,7 @@ export default function PageOnboardingPayment() {
           planId: planCode,
           billingInterval: billingCycle === "yearly" ? "year" : "month",
           quoteId: quoteId || undefined,
-          displayedPriceCents: Math.round(currentPrice * 100),
+          // No client-side amount: create-checkout-session resolves the canonical price.
           promoCode: couponCode || undefined,
           successUrl: `${window.location.origin}/entrepreneur/payment-success${quoteId ? `?quote_id=${quoteId}` : ""}`,
           cancelUrl: `${window.location.origin}/entrepreneur/payment-cancelled`,
