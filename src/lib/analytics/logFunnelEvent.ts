@@ -32,7 +32,17 @@ export type FunnelEventType =
   | "ai_visibility_form_start"
   | "ai_visibility_form_error"
   | "ai_visibility_form_submitted"
-  | "ai_visibility_cta_final";
+  | "ai_visibility_cta_final"
+  // Parcours « trouvé par l'IA et UNPRO » (audit → profil de matching → forfaits)
+  | "ai_audit_viewed"
+  | "company_recognized"
+  | "profile_started"
+  | "matching_field_completed"
+  | "profile_completed"
+  | "plans_viewed"
+  | "checkout_started"
+  | "payment_completed"
+  | "recommendation_eligible";
 
 export type FunnelEventSource =
   | "twilio"
