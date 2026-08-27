@@ -46,7 +46,11 @@ export default function PageMatchingProfileWizard() {
   const navigate = useNavigate();
   const [sp] = useSearchParams();
   const { lang } = useLanguage();
-  const fr = lang !== "en";
+  // French-first : l'anglais n'est servi que si l'utilisateur l'a explicitement choisi.
+  const explicitEn = (() => {
+    try { return localStorage.getItem("unpro-lang") === "en"; } catch { return false; }
+  })();
+  const fr = !(explicitEn && lang === "en");
 
   const sessionKey = useMemo(getSessionKey, []);
   const businessName = sp.get("entreprise");
@@ -382,7 +386,7 @@ function QuestionCard({
                   }
                 }}
                 placeholder={q.placeholder}
-                className="h-13 h-12 rounded-2xl text-[16px]"
+                className="h-12 rounded-2xl text-[16px]"
               />
               <Button
                 type="button"
