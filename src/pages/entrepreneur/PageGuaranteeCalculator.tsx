@@ -111,12 +111,16 @@ export default function PageGuaranteeCalculator() {
       // préserver la chaîne d'attribution jusqu'au paiement.
       const activationToken =
         typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("t") : null;
+      // Attribution affiliée : ?ref=CODE voyage jusqu'aux métadonnées Stripe,
+      // seule source de la commission réelle (20 % direct + 5 % parrain).
+      const affiliateRef = prefill.get("ref");
       const { data, error } = activationToken
         ? await supabase.functions.invoke("create-activation-checkout", {
           body: {
             activation_token: activationToken,
             quote_id: quote.quote_id,
             source: "guarantee_calculator",
+            ref: affiliateRef,
           },
         })
         : await supabase.functions.invoke("create-checkout-session", {
@@ -124,6 +128,7 @@ export default function PageGuaranteeCalculator() {
             packQuoteId: quote.quote_id,
             displayedPriceCents: quote.total_price_cents,
             displayedGuaranteedAppointments: quote.guaranteed_appointments,
+            ref: affiliateRef,
           },
         });
       if (error) throw new Error(error.message);

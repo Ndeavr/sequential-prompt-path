@@ -59,6 +59,7 @@ Deno.serve(async (req) => {
       packQuoteId,
       displayedGuaranteedAppointments,
       includeProfileFee,
+      ref,
 
     } = await req.json();
     const interval: "month" | "year" = billingInterval === "year" ? "year" : "month";
@@ -67,6 +68,27 @@ Deno.serve(async (req) => {
       supabaseUrl,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // ── AFFILIATE ATTRIBUTION ─────────────────────────────────────────────
+    // The referral code travels in the URL (?ref=CODE). It is NEVER trusted as
+    // given: it is resolved server-side against an ACTIVE affiliate row, and
+    // only then written to Stripe metadata, where the webhook reads it to
+    // record the real commission. Unknown code → no attribution, no commission.
+    let affiliateRefCode = "";
+    let affiliateRefId = "";
+    if (typeof ref === "string" && ref.trim()) {
+      const { data: aff } = await serviceClient
+        .from("affiliates")
+        .select("id, referral_code")
+        .eq("referral_code", ref.trim().toUpperCase())
+        .eq("status", "active")
+        .maybeSingle();
+      if (aff) {
+        affiliateRefCode = aff.referral_code as string;
+        affiliateRefId = aff.id as string;
+      }
+    }
+
 
     // ── ENTRY PACK (350 $, one-time payment) ──
     // The guarantee comes from the stored quote ONLY. Never recomputed here,
@@ -165,6 +187,7 @@ Deno.serve(async (req) => {
           contractor_id: String(packContractor?.id ?? ""),
           guaranteed_appointments: String(guaranteed),
           guarantee_duration_months: String(durationMonths),
+          ...(affiliateRefCode && { ref: affiliateRefCode, affiliate_id: affiliateRefId }),
         },
         success_url:
           successUrl || `${req.headers.get("origin")}/entrepreneur/payment-success?quote_id=${q.id}&session_id={CHECKOUT_SESSION_ID}`,
@@ -542,6 +565,7 @@ Deno.serve(async (req) => {
         contractor_id: contractor.id,
         plan_id: resolvedPlanCode,
         billing_interval: interval,
+        ...(affiliateRefCode && { ref: affiliateRefCode, affiliate_id: affiliateRefId }),
         ...(quoteId && { quote_id: String(quoteId) }),
         ...(redemptionId && { redemption_id: redemptionId }),
         ...(promoCode && { promo_code: promoCode.toUpperCase() }),

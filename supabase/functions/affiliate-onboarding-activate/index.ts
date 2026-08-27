@@ -86,12 +86,39 @@ Deno.serve(async (req) => {
         { onConflict: "id" }
       );
 
-    // Ligne affiliée existante ?
-    const { data: existing } = await sb
+    // Ligne affiliée existante ? (par compte, puis par fiche pré-créée)
+    let { data: existing } = await sb
       .from("affiliates")
       .select("id, slug, referral_code, status")
       .eq("user_id", user.id)
       .maybeSingle();
+
+    // Fiche pré-créée par l'admin (slug/code déjà partagés, aucun compte lié) :
+    // on la RÉCLAME au lieu d'en créer une deuxième, sinon le lien personnalisé
+    // et l'attribution existante seraient orphelins.
+    let claimedId: string | null = null;
+    if (!existing) {
+      const entrySlug = typeof body.entry_slug === "string" ? body.entry_slug.trim().toLowerCase() : "";
+      const orFilters = [`email.eq.${email}`];
+      if (phone) orFilters.push(`phone.eq.${phone}`);
+      if (entrySlug) orFilters.push(`slug.eq.${entrySlug}`);
+      const { data: preCreated } = await sb
+        .from("affiliates")
+        .select("id, slug, referral_code, status, user_id")
+        .is("user_id", null)
+        .or(orFilters.join(","))
+        .limit(1)
+        .maybeSingle();
+      if (preCreated) {
+        claimedId = preCreated.id as string;
+        existing = {
+          id: preCreated.id,
+          slug: preCreated.slug,
+          referral_code: preCreated.referral_code,
+          status: preCreated.status,
+        } as typeof existing;
+      }
+    }
 
     let slug = existing?.slug as string | null;
     if (!slug) {
@@ -127,11 +154,18 @@ Deno.serve(async (req) => {
     };
     if (!existing) payload.status = "active";
 
-    const { data: row, error: upErr } = await sb
-      .from("affiliates")
-      .upsert(payload, { onConflict: "user_id" })
-      .select("id, slug, referral_code, status")
-      .single();
+    const { data: row, error: upErr } = claimedId
+      ? await sb
+          .from("affiliates")
+          .update(payload)
+          .eq("id", claimedId)
+          .select("id, slug, referral_code, status")
+          .single()
+      : await sb
+          .from("affiliates")
+          .upsert(payload, { onConflict: "user_id" })
+          .select("id, slug, referral_code, status")
+          .single();
     if (upErr) return json({ error: `affiliate_upsert_failed: ${upErr.message}` }, 500);
 
     // Acceptation des conditions — auditable.

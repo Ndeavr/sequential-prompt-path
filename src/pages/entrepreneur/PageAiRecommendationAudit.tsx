@@ -175,15 +175,22 @@ export default function PageAiRecommendationAudit() {
     [inviteToken],
   );
 
+  // Lien affilié personnalisé : on ouvre DIRECTEMENT l'évaluation de cette
+  // entreprise (jamais une page générique ni un formulaire vide).
   useEffect(() => {
     if (!inviteToken) return;
     let cancelled = false;
     void trackInvite("opened").then((a) => {
-      if (!cancelled && a?.business_name) setQuery((q) => q || a.business_name);
+      if (cancelled || !a?.business_name) return;
+      setQuery((q) => q || a.business_name);
+      if (autoRunRef.current) return;
+      autoRunRef.current = true;
+      void runAudit(null, a.business_name);
     });
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inviteToken, trackInvite]);
 
   const runSearch = useCallback(async (q: string) => {
@@ -224,7 +231,8 @@ export default function PageAiRecommendationAudit() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prospectId]);
 
-  async function runAudit(c: Candidate | null) {
+  async function runAudit(c: Candidate | null, overrideName?: string | null) {
+    const nameForAudit = (overrideName ?? query).trim();
     setAuditing(true);
     setError(null);
     void trackInvite("started");
@@ -234,8 +242,8 @@ export default function PageAiRecommendationAudit() {
           action: "audit",
           kind: c ? c.kind : "unknown",
           id: c?.id ?? null,
-          business_name: c?.business_name ?? query.trim(),
-          query: query.trim(),
+          business_name: c?.business_name ?? nameForAudit,
+          query: nameForAudit,
           source: prospectId
             ? "outreach_first_touch"
             : inviteToken
