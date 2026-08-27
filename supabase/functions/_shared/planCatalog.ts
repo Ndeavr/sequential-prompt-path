@@ -48,11 +48,18 @@ export class PlanResolutionError extends Error {
 }
 
 /** Legacy → canonical, mirrors `public.canonical_plan_code`. */
+// Keep in sync with public.canonical_plan_code (SQL). Legacy / superseded slugs
+// must resolve to the ACTIVE catalog rows, never to a deactivated plan.
 const LEGACY_ALIASES: Record<string, string> = {
   recrue: "presence",
-  elite: "premium",
-  "élite": "premium",
-  signature: "domination",
+  local: "depart",
+  croissance: "croissance_v2",
+  pro: "pro_v2",
+  premium: "elite_v2",
+  elite: "elite_v2",
+  "élite": "elite_v2",
+  domination: "signature_v2",
+  signature: "signature_v2",
 };
 
 export function canonicalPlanCode(input: string | null | undefined): string {
