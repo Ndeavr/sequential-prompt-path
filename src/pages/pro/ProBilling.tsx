@@ -314,7 +314,7 @@ const ProBilling = () => {
         {isActive ? "Changer de plan" : "Choisir un plan"}
       </h2>
 
-      <BillingToggle interval={interval} onChange={setInterval} />
+      {yearlyAvailable && <BillingToggle interval={interval} onChange={setInterval} />}
 
       {/* Plan cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
