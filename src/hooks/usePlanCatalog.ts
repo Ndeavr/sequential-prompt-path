@@ -22,6 +22,8 @@ export interface CatalogPlan {
   billingMode: BillingMode;
   stripeMonthlyPriceId: string;
   stripeYearlyPriceId: string;
+  /** True only when a real yearly Stripe price exists (checkout would fail otherwise). */
+  supportsYearly: boolean;
   tagline: string;
   features: string[];
   appointmentsIncluded: number;
@@ -63,6 +65,7 @@ async function fetchPlanCatalog(): Promise<CatalogPlan[]> {
         : "subscription") as BillingMode,
       stripeMonthlyPriceId: row.stripe_monthly_price_id ?? "",
       stripeYearlyPriceId: row.stripe_yearly_price_id ?? "",
+      supportsYearly: !!row.stripe_yearly_price_id,
       tagline: row.tagline ?? copy?.subtitle ?? "",
       features: copy?.features ?? [],
       appointmentsIncluded: row.appointments_included ?? copy?.appointmentsIncluded ?? 0,
