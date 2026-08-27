@@ -119,10 +119,10 @@ const PlanCard = ({
           {formatPlanPrice(price)}
           <span className="text-sm font-normal text-muted-foreground">
             {" "}
-            / {interval === "year" ? "an" : "mois"}
+            / {effectiveInterval === "year" ? "an" : "mois"}
           </span>
         </p>
-        {interval === "year" && savings > 0 && (
+        {effectiveInterval === "year" && savings > 0 && (
           <div className="space-y-0.5">
             <Badge variant="secondary" className="text-xs bg-secondary/20 text-secondary-foreground">
               Économisez {savings} %
@@ -132,7 +132,13 @@ const PlanCard = ({
             </p>
           </div>
         )}
+        {interval === "year" && !plan.supportsYearly && (
+          <p className="text-xs text-muted-foreground">
+            Facturation mensuelle seulement pour ce plan.
+          </p>
+        )}
       </CardHeader>
+
       <CardContent className="space-y-3">
         <ul className="space-y-2 text-sm">
           {plan.features.map((f) => (
