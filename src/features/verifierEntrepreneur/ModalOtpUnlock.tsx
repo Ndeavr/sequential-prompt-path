@@ -26,6 +26,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { sendPhoneOtp, verifyPhoneOtp } from "@/lib/auth/phoneOtp";
+import { useOtpAutoSubmit } from "@/hooks/useOtpAutoSubmit";
 
 interface Props {
   open: boolean;
@@ -86,43 +88,50 @@ export default function ModalOtpUnlock({ open, onOpenChange, runId, visitorId }:
     }
     setBusy(true);
     try {
-      const e164 = clean.startsWith("1") ? `+${clean}` : `+1${clean}`;
-      const { error } = await supabase.auth.signInWithOtp({ phone: e164 });
-      if (error) throw error;
+      // Canal canonique : fonctions edge Twilio (jamais signInWithOtp({ phone })).
+      const res = await sendPhoneOtp(phone);
+      if (!res.ok) {
+        toast.error(res.message ?? "Envoi SMS impossible");
+        return;
+      }
       toast.success("Code envoyé par SMS.");
+      setCode("");
       setMode("sms_verify");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Envoi SMS impossible");
     } finally {
       setBusy(false);
     }
   };
 
   const verifySms = async () => {
-    if (code.trim().length < 4) {
-      toast.error("Entrez le code reçu par SMS.");
+    const digits = code.replace(/\D/g, "");
+    if (digits.length !== 6) {
+      toast.error("Code à 6 chiffres requis.");
       return;
     }
     setBusy(true);
     try {
-      const clean = phone.replace(/\D/g, "");
-      const e164 = clean.startsWith("1") ? `+${clean}` : `+1${clean}`;
-      const { error } = await supabase.auth.verifyOtp({
-        phone: e164,
-        token: code.trim(),
-        type: "sms",
-      });
-      if (error) throw error;
+      const res = await verifyPhoneOtp(phone, digits);
+      if (!res.ok) {
+        toast.error(res.message ?? "Code invalide");
+        return;
+      }
       toast.success("Connexion réussie.");
       onOpenChange(false);
       reset();
       // The parent page's auth listener will detect the session and trigger the attach flow.
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Code invalide");
     } finally {
       setBusy(false);
     }
   };
+
+  const otpDigits = code.replace(/\D/g, "");
+  const otpAuto = useOtpAutoSubmit({
+    code: otpDigits,
+    onSubmit: () => verifySms(),
+    enabled: mode === "sms_verify" && !busy,
+  });
+
+
 
   return (
     <Dialog
@@ -241,17 +250,25 @@ export default function ModalOtpUnlock({ open, onOpenChange, runId, visitorId }:
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 value={code}
-                onChange={(e) => setCode(e.target.value)}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                 placeholder="123456"
-                maxLength={8}
+                maxLength={6}
               />
+              {otpAuto.pending && !otpAuto.reducedMotion && (
+                <div className="h-0.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full bg-primary"
+                    style={{ animation: `otp-auto-progress ${otpAuto.delay}ms linear forwards` }}
+                  />
+                </div>
+              )}
               <div className="flex items-center gap-2 pt-1">
                 <Button variant="ghost" size="sm" onClick={() => setMode("sms")}>
                   <ArrowLeft className="w-4 h-4 mr-1" />
                   Retour
                 </Button>
-                <Button className="flex-1" onClick={verifySms} disabled={busy}>
-                  {busy ? (
+                <Button className="flex-1" onClick={otpAuto.submitNow} disabled={busy}>
+                  {busy || otpAuto.pending ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Vérification…
@@ -261,6 +278,7 @@ export default function ModalOtpUnlock({ open, onOpenChange, runId, visitorId }:
                   )}
                 </Button>
               </div>
+
             </div>
           )}
         </motion.div>
