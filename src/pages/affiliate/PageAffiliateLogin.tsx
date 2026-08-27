@@ -136,11 +136,20 @@ export default function PageAffiliateLogin() {
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   placeholder="123456"
                 />
+                {otpAuto.pending && !otpAuto.reducedMotion && (
+                  <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{ animation: `otp-auto-progress ${otpAuto.delay}ms linear forwards` }}
+                    />
+                  </div>
+                )}
               </div>
-              <Button size="lg" className="w-full" onClick={verifyPhoneOtp} disabled={busy || otp.length !== 6}>
-                {busy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ArrowRight className="h-4 w-4 mr-2" />}
-                Vérifier le code
+              <Button size="lg" className="w-full" onClick={otpAuto.submitNow} disabled={busy || otp.length !== 6}>
+                {busy || otpAuto.pending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ArrowRight className="h-4 w-4 mr-2" />}
+                {busy || otpAuto.pending ? "Vérification…" : "Vérifier le code"}
               </Button>
+
 
               <button className="text-xs text-muted-foreground w-full text-center" onClick={() => setStep("input")}>
                 Renvoyer / changer de numéro
