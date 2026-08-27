@@ -57,9 +57,28 @@ Deno.serve(async (req) => {
     }
 
     if (channel === "sms") {
-      // Phone provider not yet enabled on this project. Acknowledge and pivot to email.
-      return ok({ ok: false, error: "sms_unavailable" });
+      // Canal SMS canonique UNPRO : fonction edge Twilio `send-otp`.
+      try {
+        const res = await fetch(`${supabaseUrl}/functions/v1/send-otp`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""}`,
+          },
+          body: JSON.stringify({ phone: identifier }),
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok || out?.error) {
+          console.error("[auth-otp-dispatch] send-otp failed", res.status, out?.error);
+          return ok({ ok: false, error: "sms_unavailable" });
+        }
+      } catch (e) {
+        console.error("[auth-otp-dispatch] send-otp network", e);
+        return ok({ ok: false, error: "sms_unavailable" });
+      }
+      return ok({ ok: true, channel, masked_identifier: identifier.replace(/\d(?=\d{4})/g, "•") });
     }
+
 
     // EMAIL — Supabase passwordless / magic link.
     // Auto-creates the user on first use. Branded email goes through

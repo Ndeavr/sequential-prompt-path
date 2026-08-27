@@ -18,6 +18,7 @@ import { ArrowRight, BadgeCheck, Building2, MapPin, Sparkles } from "lucide-reac
 
 import MainLayout from "@/layouts/MainLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { formatPhoneDisplay, formatPhoneFinal } from "@/utils/formatPhone";
 
 interface FounderCategory {
   slug: string;
@@ -311,10 +312,15 @@ export default function PageFounderLocalServices() {
                         <label className="block text-[13px] font-semibold text-foreground">Téléphone (optionnel)</label>
                         <input
                           value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
+                          onChange={(e) => setPhone(formatPhoneDisplay(e.target.value))}
+                          onBlur={() => setPhone((p) => formatPhoneFinal(p))}
                           type="tel"
+                          inputMode="tel"
+                          autoComplete="tel"
+                          placeholder="(514) 555-0101"
                           className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
                         />
+
                       </div>
                     </div>
                     <div>

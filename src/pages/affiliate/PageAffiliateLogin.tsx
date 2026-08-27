@@ -6,6 +6,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { sendPhoneOtp as sendOtpSms, verifyPhoneOtp as verifyOtpSms } from "@/lib/auth/phoneOtp";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,31 +56,31 @@ export default function PageAffiliateLogin() {
     if (!phone.trim()) return toast.error("Numéro requis");
     setBusy(true);
     try {
-      const cleaned = phone.replace(/\D/g, "");
-      const e164 = cleaned.startsWith("1") ? `+${cleaned}` : `+1${cleaned}`;
-      const { error } = await supabase.auth.signInWithOtp({ phone: e164 });
-      if (error) throw error;
+      const res = await sendOtpSms(phone);
+      if (!res.ok) {
+        toast.error(res.message ?? "Impossible d'envoyer le code par SMS pour le moment.");
+        return;
+      }
       setStep("otp");
       toast.success("Code envoyé par SMS.");
-    } catch (e: any) {
-      toast.error(e.message || "Impossible d'envoyer le code");
     } finally { setBusy(false); }
   }
 
   async function verifyPhoneOtp() {
-    if (!otp.trim()) return;
+    if (otp.trim().length !== 6) return;
     setBusy(true);
     try {
-      const cleaned = phone.replace(/\D/g, "");
-      const e164 = cleaned.startsWith("1") ? `+${cleaned}` : `+1${cleaned}`;
-      const { error } = await supabase.auth.verifyOtp({ phone: e164, token: otp.trim(), type: "sms" });
-      if (error) throw error;
+      const res = await verifyOtpSms(phone, otp);
+      if (!res.ok) {
+        toast.error(res.message ?? "Code invalide. Réessayez.");
+        return;
+      }
       toast.success("Connexion réussie");
-      nav("/affiliate", { replace: true });
-    } catch (e: any) {
-      toast.error(e.message || "Code invalide");
+      const returnTo = params.get("returnTo");
+      nav(returnTo && returnTo.startsWith("/") ? returnTo : "/affiliate", { replace: true });
     } finally { setBusy(false); }
   }
+
 
   async function sendMagicLink() {
     if (!email.trim()) return toast.error("Courriel requis");
@@ -120,16 +122,18 @@ export default function PageAffiliateLogin() {
                 <Input
                   className="mt-1.5 text-lg tracking-widest text-center"
                   inputMode="numeric"
+                  autoComplete="one-time-code"
                   maxLength={6}
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   placeholder="123456"
                 />
               </div>
-              <Button size="lg" className="w-full" onClick={verifyPhoneOtp} disabled={busy || otp.length < 4}>
+              <Button size="lg" className="w-full" onClick={verifyPhoneOtp} disabled={busy || otp.length !== 6}>
                 {busy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ArrowRight className="h-4 w-4 mr-2" />}
-                Confirmer
+                Vérifier le code
               </Button>
+
               <button className="text-xs text-muted-foreground w-full text-center" onClick={() => setStep("input")}>
                 Renvoyer / changer de numéro
               </button>
@@ -144,13 +148,13 @@ export default function PageAffiliateLogin() {
               <TabsContent value="phone" className="mt-6 space-y-4">
                 <div>
                   <Label>Numéro de téléphone mobile</Label>
-                  <Input
+                  <PhoneInput
                     className="mt-1.5"
-                    inputMode="tel"
-                    placeholder="514 555 0101"
+                    placeholder="(514) 555-0101"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={setPhone}
                   />
+
                 </div>
                 <Button size="lg" className="w-full" onClick={sendPhoneOtp} disabled={busy}>
                   {busy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ArrowRight className="h-4 w-4 mr-2" />}

@@ -8,6 +8,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
+import { sendPhoneOtp as sendOtpSms, verifyPhoneOtp as verifyOtpSms } from "@/lib/auth/phoneOtp";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { useAuth } from "@/hooks/useAuth";
 import { captureAttribution, getStoredAttribution } from "@/hooks/useReferralAttribution";
 import { trackAffiliateFunnel } from "@/features/affiliate/onboarding/trackAffiliateFunnel";
@@ -162,14 +164,13 @@ export default function PageAffiliateOnboarding() {
   async function sendPhoneOtp() {
     setBusy(true);
     try {
-      const cleaned = draft.phone.replace(/\D/g, "");
-      const e164 = cleaned.startsWith("1") ? `+${cleaned}` : `+1${cleaned}`;
-      const { error } = await supabase.auth.signInWithOtp({ phone: e164 });
-      if (error) throw error;
+      const res = await sendOtpSms(draft.phone);
+      if (!res.ok) {
+        toast.error(res.message ?? "Impossible d'envoyer le code par SMS pour le moment.");
+        return;
+      }
       setOtpSent(true);
       toast.success("Code envoyé par SMS.");
-    } catch (e: any) {
-      toast.error(e.message || "Impossible d'envoyer le code. Essayez le lien courriel.");
     } finally {
       setBusy(false);
     }
@@ -178,18 +179,18 @@ export default function PageAffiliateOnboarding() {
   async function verifyOtp() {
     setBusy(true);
     try {
-      const cleaned = draft.phone.replace(/\D/g, "");
-      const e164 = cleaned.startsWith("1") ? `+${cleaned}` : `+1${cleaned}`;
-      const { error } = await supabase.auth.verifyOtp({ phone: e164, token: otpCode.trim(), type: "sms" });
-      if (error) throw error;
+      const res = await verifyOtpSms(draft.phone, otpCode);
+      if (!res.ok) {
+        toast.error(res.message ?? "Code invalide. Réessayez.");
+        return;
+      }
       toast.success("Numéro vérifié.");
       goTo(2);
-    } catch (e: any) {
-      toast.error(e.message || "Code invalide. Réessayez.");
     } finally {
       setBusy(false);
     }
   }
+
 
   async function sendEmailLink() {
     setBusy(true);
@@ -290,7 +291,7 @@ export default function PageAffiliateOnboarding() {
               </div>
               <div>
                 <Label htmlFor="ph">Téléphone</Label>
-                <Input id="ph" className="mt-1 h-12" type="tel" placeholder="514 555 1234" value={draft.phone} onChange={(e) => set({ phone: e.target.value })} autoComplete="tel" />
+                <PhoneInput id="ph" className="mt-1 h-12" placeholder="(514) 555-1234" value={draft.phone} onChange={(v) => set({ phone: v })} />
               </div>
               <div>
                 <Label htmlFor="em">Courriel</Label>
@@ -340,10 +341,12 @@ export default function PageAffiliateOnboarding() {
                     id="otp"
                     className="mt-1 h-14 text-center text-2xl tracking-[0.4em]"
                     inputMode="numeric"
+                    autoComplete="one-time-code"
                     maxLength={6}
                     value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   />
+
                 </div>
                 <Button className="h-14 w-full rounded-full text-lg font-bold" disabled={otpCode.length < 6 || busy} onClick={verifyOtp}>
                   {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : "Vérifier et continuer"}
