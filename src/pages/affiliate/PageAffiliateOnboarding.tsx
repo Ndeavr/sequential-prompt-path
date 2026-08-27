@@ -341,10 +341,12 @@ export default function PageAffiliateOnboarding() {
                     id="otp"
                     className="mt-1 h-14 text-center text-2xl tracking-[0.4em]"
                     inputMode="numeric"
+                    autoComplete="one-time-code"
                     maxLength={6}
                     value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   />
+
                 </div>
                 <Button className="h-14 w-full rounded-full text-lg font-bold" disabled={otpCode.length < 6 || busy} onClick={verifyOtp}>
                   {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : "Vérifier et continuer"}
