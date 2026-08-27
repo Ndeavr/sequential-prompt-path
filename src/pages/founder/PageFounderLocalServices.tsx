@@ -18,6 +18,7 @@ import { ArrowRight, BadgeCheck, Building2, MapPin, Sparkles } from "lucide-reac
 
 import MainLayout from "@/layouts/MainLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { formatPhoneDisplay, formatPhoneFinal } from "@/utils/formatPhone";
 
 interface FounderCategory {
   slug: string;

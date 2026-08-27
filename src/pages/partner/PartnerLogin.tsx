@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { saveReturnPath } from "@/lib/authReturn";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Sparkles } from "lucide-react";
