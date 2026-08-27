@@ -74,16 +74,29 @@ export async function verifyPhoneOtp(raw: string, code: string): Promise<VerifyR
       return { ok: false, message: VERIFY_ERRORS_FR[data.error] ?? "Code invalide. Réessayez." };
     }
     if (data?.session?.access_token && data?.session?.refresh_token) {
-      const { error: sErr } = await supabase.auth.setSession({
+      const { data: setData, error: sErr } = await supabase.auth.setSession({
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
       });
-      if (sErr) {
-        console.error("[phoneOtp] setSession", sErr.message);
+      if (sErr || !setData?.session) {
+        console.error("[phoneOtp] setSession", sErr?.message);
         return { ok: false, message: "Impossible d'ouvrir la session. Réessayez." };
       }
+      console.log("[phoneOtp] client_session_set");
+
+      // Confirmer que la session est réellement active côté serveur.
+      const { data: userData, error: uErr } = await supabase.auth.getUser();
+      if (uErr || !userData?.user) {
+        console.error("[phoneOtp] session not active", uErr?.message);
+        return { ok: false, message: "Session non confirmée. Réessayez." };
+      }
+      console.log("[phoneOtp] auth_state_ready", userData.user.id);
+    } else {
+      console.error("[phoneOtp] verify-otp returned no session tokens");
+      return { ok: false, message: "Vérification réussie, mais la session n'a pas pu être ouverte. Réessayez." };
     }
     return { ok: true, isNewUser: !!data?.isNewUser, needsRole: !!data?.needsRole };
+
   } catch (e) {
     console.error("[phoneOtp] verify-otp network", e);
     return { ok: false, message: "Connexion instable. Réessayez." };

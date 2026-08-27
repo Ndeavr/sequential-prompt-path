@@ -51,6 +51,8 @@ serve(async (req) => {
       return json({ error: "invalid_input" }, 400);
     }
 
+    console.log("otp_verify_started", { phone_suffix: phone.slice(-4) });
+
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
@@ -73,6 +75,8 @@ serve(async (req) => {
       await sb.from("otp_codes").update({ attempts: row.attempts + 1 }).eq("id", row.id);
       return json({ error: "invalid_code" }, 401);
     }
+
+    console.log("otp_verified", { phone_suffix: phone.slice(-4) });
 
     await sb.from("otp_codes").update({ consumed_at: new Date().toISOString() }).eq("id", row.id);
 
@@ -116,25 +120,41 @@ serve(async (req) => {
       onboarding_status: isNewUser ? "phone_verified" : undefined,
     }, { onConflict: "user_id" });
 
-    // Mint session via temp password (no admin.createSession in supabase-js)
+    console.log("auth_user_resolved", { user_id: user.id, is_new: isNewUser });
+
+    // Mint a REAL Supabase session via magic-link token exchange.
+    // Never mutate the password here: a password update revokes the freshly
+    // minted session (GoTrue invalidates sessions on credential change),
+    // which produced "Session not found" on the client.
     const email = user.email || syntheticEmail(phone);
-    const tempPass = crypto.randomUUID() + "Aa9!";
-    await sb.auth.admin.updateUserById(user.id, { email, email_confirm: true, password: tempPass });
+    if (!user.email || !user.email_confirmed_at) {
+      await sb.auth.admin.updateUserById(user.id, { email, email_confirm: true });
+    }
+
+    const { data: linkData, error: linkErr } = await sb.auth.admin.generateLink({
+      type: "magiclink",
+      email,
+    });
+    const tokenHash = (linkData as any)?.properties?.hashed_token;
+    if (linkErr || !tokenHash) {
+      console.error("session_mint_link_failed", linkErr?.message);
+      return json({ error: "session_failed" }, 500);
+    }
 
     const loginClient = createClient(SUPABASE_URL, ANON, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
-    const { data: login, error: lErr } = await loginClient.auth.signInWithPassword({
-      email, password: tempPass,
+    const { data: login, error: lErr } = await loginClient.auth.verifyOtp({
+      type: "email",
+      token_hash: tokenHash,
     });
 
-    // Burn the temp password immediately
-    await sb.auth.admin.updateUserById(user.id, { password: crypto.randomUUID() + "Zz9!" });
-
-    if (lErr || !login?.session) {
-      console.error("session mint", lErr);
+    if (lErr || !login?.session?.access_token || !login?.session?.refresh_token) {
+      console.error("session_mint_verify_failed", lErr?.message);
       return json({ error: "session_failed" }, 500);
     }
+    console.log("session_created", { user_id: user.id });
+
 
     const { data: roles } = await sb.from("user_roles").select("role").eq("user_id", user.id);
 
