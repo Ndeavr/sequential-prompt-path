@@ -31,6 +31,8 @@ type ParsedRow = {
   category?: string;
   status: "ready" | "invalid" | "duplicate";
   reason?: string;
+  /** Champs manquants — la ligne reste importable, mais est marquée. */
+  missing?: string[];
   raw: string;
 };
 
@@ -89,9 +91,19 @@ function parseText(text: string): ParsedRow[] {
       row.phone_e164 = norm.normalized;
       if (!norm.valid) { row.status = "invalid"; row.reason = "Téléphone invalide"; }
     }
-    if (!row.company_name && !row.phone_e164 && !row.email) {
-      row.status = "invalid"; row.reason = "Ligne incomplète";
+    // Minimum requis : au moins un moyen de contact réel (téléphone ou courriel).
+    if (!row.phone_e164 && !row.email) {
+      row.status = "invalid";
+      row.reason = row.phone ? "Téléphone invalide et aucun courriel" : "Aucun contact utilisable";
     }
+    // Prénom + téléphone valide suffit : on ingère, en marquant ce qui manque.
+    const missing: string[] = [];
+    if (!row.company_name) missing.push("entreprise");
+    if (!row.contact_name) missing.push("contact");
+    if (!row.phone_e164) missing.push("téléphone");
+    if (!row.email) missing.push("courriel");
+    if (!row.city) missing.push("ville");
+    if (missing.length) row.missing = missing;
     return row;
   });
 }
@@ -138,10 +150,33 @@ export default function PageAffiliateProspectImport() {
         });
       }
 
+      // Pool CRM vérifié — un prospect déjà travaillé par UNPRO ne doit pas
+      // être réintroduit par un import affilié.
+      if (phones.length || emails.length) {
+        const { data: pool } = await (supabase as any).from("verified_contractor_prospects")
+          .select("phone_e164, email")
+          .or(`phone_e164.in.(${phones.map((p) => `"${p}"`).join(",") || '""'}),email.in.(${emails.map((e) => `"${e}"`).join(",") || '""'})`);
+        (pool ?? []).forEach((d: any) => {
+          if (d.phone_e164) existing.add(`p:${d.phone_e164}`);
+          if (d.email) existing.add(`e:${String(d.email).toLowerCase()}`);
+        });
+      }
+
+      // Doublons internes au fichier collé.
+      const seen = new Set<string>();
       const flagged = parsed.map((r) => {
         if (r.status === "invalid") return r;
-        const dup = (r.phone_e164 && existing.has(`p:${r.phone_e164}`)) || (r.email && existing.has(`e:${r.email.toLowerCase()}`));
-        if (dup) return { ...r, status: "duplicate" as const, reason: "Existe déjà" };
+        const keys = [
+          r.phone_e164 ? `p:${r.phone_e164}` : null,
+          r.email ? `e:${r.email.toLowerCase()}` : null,
+        ].filter(Boolean) as string[];
+        if (keys.some((k) => existing.has(k))) {
+          return { ...r, status: "duplicate" as const, reason: "Existe déjà dans UNPRO" };
+        }
+        if (keys.some((k) => seen.has(k))) {
+          return { ...r, status: "duplicate" as const, reason: "Doublon dans votre liste" };
+        }
+        keys.forEach((k) => seen.add(k));
         return r;
       });
 
@@ -194,10 +229,36 @@ export default function PageAffiliateProspectImport() {
       }));
 
       let imported = 0;
+      let insertedIds: string[] = [];
       if (payload.length > 0) {
         const { data, error } = await (supabase as any).from("contractor_leads").insert(payload).select("id");
         if (error) throw error;
-        imported = data?.length ?? 0;
+        insertedIds = (data ?? []).map((d: any) => d.id);
+        imported = insertedIds.length;
+      }
+
+      // Journal d'import auditable : chaque ligne, son verdict et son résultat.
+      const auditRows = rows.map((r) => {
+        const readyIndex = readyRows.indexOf(r);
+        return {
+          batch_id: batch.id,
+          raw_data: { line: r.raw },
+          normalized_data: {
+            company_name: r.company_name ?? null,
+            contact_name: r.contact_name ?? null,
+            phone_e164: r.phone_e164 ?? null,
+            email: r.email?.toLowerCase() ?? null,
+            city: r.city ?? null,
+            category: r.category ?? null,
+            missing_fields: r.missing ?? [],
+          },
+          validation_status: r.status === "ready" ? "imported" : r.status,
+          error_messages: r.reason ? { reason: r.reason } : null,
+          imported_prospect_id: readyIndex >= 0 ? insertedIds[readyIndex] ?? null : null,
+        };
+      });
+      if (auditRows.length > 0) {
+        await (supabase as any).from("affiliate_import_rows").insert(auditRows);
       }
 
       await (supabase as any).from("affiliate_import_batches").update({
