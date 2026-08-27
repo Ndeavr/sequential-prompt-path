@@ -24,9 +24,32 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { slug, email, source, utm, landing_token, activation_token, plan_code, quote_id } = (body ?? {}) as {
-      slug?: string; email?: string; source?: string; utm?: Record<string, string>; landing_token?: string; activation_token?: string; plan_code?: string; quote_id?: string;
+    const { slug, email, source, utm, landing_token, activation_token, plan_code, quote_id, ref } = (body ?? {}) as {
+      slug?: string; email?: string; source?: string; utm?: Record<string, string>; landing_token?: string; activation_token?: string; plan_code?: string; quote_id?: string; ref?: string;
     };
+
+    // ── AFFILIATE ATTRIBUTION ───────────────────────────────────────────────
+    // ?ref=CODE carried from the affiliate audit link. Resolved server-side
+    // against an ACTIVE affiliate; only a real match reaches Stripe metadata,
+    // where stripe-webhook records the 20 % direct commission (+5 % override).
+    let affiliateRefCode = "";
+    let affiliateRefId = "";
+    if (typeof ref === "string" && ref.trim()) {
+      const svcRef = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      );
+      const { data: aff } = await svcRef
+        .from("affiliates")
+        .select("id, referral_code")
+        .eq("referral_code", ref.trim().toUpperCase())
+        .eq("status", "active")
+        .maybeSingle();
+      if (aff) {
+        affiliateRefCode = aff.referral_code as string;
+        affiliateRefId = aff.id as string;
+      }
+    }
 
     // NEW: sms_outreach flow — resolve prospect via landing_token
     let outreachProspectId = "";
@@ -230,6 +253,9 @@ Deno.serve(async (req) => {
       attribution_key: attr.attribution_key ?? "",
       outreach_variant: attr.outreach_variant ?? "",
       human_unpro_touches: String(attr.human_unpro_touches ?? 0),
+      // Affiliate attribution (server-resolved, never trusted from the client).
+      ref: affiliateRefCode,
+      affiliate_id: affiliateRefId,
     };
 
     let session;
