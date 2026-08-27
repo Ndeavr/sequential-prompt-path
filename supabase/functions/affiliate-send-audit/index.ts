@@ -18,6 +18,9 @@ const json = (b: unknown, s = 200) =>
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const PUBLIC_BASE = "https://unpro.ca";
+// Plafond quotidien par affiliée (protection réputation + CASL/fréquence).
+// Atteint → aucun envoi, le prospect reste en file pour le lendemain.
+const AFFILIATE_DAILY_SEND_CAP = 40;
 
 function makeToken() {
   const bytes = new Uint8Array(24);
@@ -63,6 +66,24 @@ Deno.serve(async (req) => {
       return json({ error: "opted_out", message: "Cette entreprise a demandé à ne pas être contactée." }, 409);
     }
 
+    // ── Plafond quotidien affilié (file d'attente, jamais de contournement) ──
+    const startOfDay = new Date();
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const { count: sentToday } = await sb
+      .from("affiliate_lead_events")
+      .select("id", { count: "exact", head: true })
+      .eq("affiliate_id", affiliate.id)
+      .in("event_type", ["unpro_sms_dispatched", "email_sent"])
+      .gte("created_at", startOfDay.toISOString());
+    if ((sentToday ?? 0) >= AFFILIATE_DAILY_SEND_CAP) {
+      return json({
+        error: "daily_limit_reached",
+        message: `Limite quotidienne atteinte (${AFFILIATE_DAILY_SEND_CAP} envois). Ce prospect reste dans votre file pour demain.`,
+        sent_today: sentToday ?? 0,
+        daily_cap: AFFILIATE_DAILY_SEND_CAP,
+      }, 429);
+    }
+
     const company = (lead.company_name || lead.business_name || "votre entreprise") as string;
     const firstName = (lead.first_name || (lead.full_name ? String(lead.full_name).split(" ")[0] : null)) as string | null;
     const affiliateFirst = (affiliate.first_name || (affiliate.name ? String(affiliate.name).split(" ")[0] : "UNPRO")) as string;
@@ -106,7 +127,15 @@ Deno.serve(async (req) => {
       }, 409);
     }
 
-    const link = `${PUBLIC_BASE}/entrepreneurs/audit-ia?t=${audit!.invite_token}`;
+    // Lien personnalisé : le jeton ouvre l'évaluation de CETTE entreprise
+    // (jamais une page générique) et `ref` porte l'attribution affiliée
+    // jusqu'aux métadonnées Stripe.
+    const linkParams = new URLSearchParams({ t: String(audit!.invite_token) });
+    if (affiliate.referral_code) linkParams.set("ref", String(affiliate.referral_code));
+    linkParams.set("utm_source", channel === "sms" ? "sms" : "email");
+    linkParams.set("utm_medium", "affiliate");
+    linkParams.set("utm_campaign", "affiliate_audit_invite");
+    const link = `${PUBLIC_BASE}/entrepreneurs/audit-ia?${linkParams.toString()}`;
     const greeting = firstName ? `Bonjour ${firstName},` : "Bonjour,";
     const text = isReminder
       ? `${greeting}\n\nPetit rappel : le lien pour vérifier la présence IA de ${company} est toujours actif.\n\n${link}\n\nC'est gratuit.\n\n— ${affiliateFirst}, UNPRO`
