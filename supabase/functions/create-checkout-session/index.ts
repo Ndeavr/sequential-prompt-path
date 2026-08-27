@@ -187,6 +187,7 @@ Deno.serve(async (req) => {
           contractor_id: String(packContractor?.id ?? ""),
           guaranteed_appointments: String(guaranteed),
           guarantee_duration_months: String(durationMonths),
+          ...(affiliateRefCode && { ref: affiliateRefCode, affiliate_id: affiliateRefId }),
         },
         success_url:
           successUrl || `${req.headers.get("origin")}/entrepreneur/payment-success?quote_id=${q.id}&session_id={CHECKOUT_SESSION_ID}`,
@@ -564,6 +565,7 @@ Deno.serve(async (req) => {
         contractor_id: contractor.id,
         plan_id: resolvedPlanCode,
         billing_interval: interval,
+        ...(affiliateRefCode && { ref: affiliateRefCode, affiliate_id: affiliateRefId }),
         ...(quoteId && { quote_id: String(quoteId) }),
         ...(redemptionId && { redemption_id: redemptionId }),
         ...(promoCode && { promo_code: promoCode.toUpperCase() }),
