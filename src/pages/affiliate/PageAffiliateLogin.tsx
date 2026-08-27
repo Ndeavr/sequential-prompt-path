@@ -75,8 +75,10 @@ export default function PageAffiliateLogin() {
   }
 
   async function verifyPhoneOtp() {
+    if (busy) return; // anti double-soumission
     if (otp.trim().length !== 6) return;
     setBusy(true);
+
     try {
       const res = await verifyOtpSms(phone, otp);
       if (!res.ok) {
