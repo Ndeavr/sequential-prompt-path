@@ -207,7 +207,7 @@ export default function ScreenPayment() {
             <Shield className="w-3 h-3" /> Paiement Stripe
           </div>
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <CreditCard className="w-3 h-3" /> Annulez en tout temps
+            <CreditCard className="w-3 h-3" /> {isFounder ? "Paiement unique" : "Annulez en tout temps"}
           </div>
         </div>
 
