@@ -1,10 +1,11 @@
 /**
- * PhoneInput — Auto-formatting phone input for Quebec/Canada.
+ * PhoneInput — Champ téléphone canonique UNPRO.
+ * Affichage : (514) 249-9522 · Valeur technique : +15142499522
  * Drop-in replacement for <Input type="tel" />.
  */
-import { forwardRef, useCallback, useState } from "react";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { formatPhoneDisplay, formatPhoneFinal, phoneDigitsOnly } from "@/utils/formatPhone";
+import { formatPhoneDisplay, formatPhoneFinal, phoneDigitsOnly, phoneToE164 } from "@/utils/formatPhone";
 import { cn } from "@/lib/utils";
 
 interface PhoneInputProps extends Omit<React.ComponentPropsWithoutRef<typeof Input>, "onChange" | "value" | "type"> {
@@ -21,15 +22,28 @@ const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
     const isComplete = digits.length === 10;
     const showError = showValidation && touched && digits.length > 0 && !isComplete;
 
+    // Reformate automatiquement une valeur préchargée (ex. "15142499522").
+    const lastEmitted = useRef<string | null>(null);
+    useEffect(() => {
+      const pretty = formatPhoneDisplay(value);
+      if (value && pretty !== value && lastEmitted.current !== pretty) {
+        lastEmitted.current = pretty;
+        onChange(pretty);
+      }
+    }, [value, onChange]);
+
+    // Expose la valeur E.164 au parent à chaque changement.
+    useEffect(() => {
+      onNormalized?.(phoneToE164(value));
+    }, [value, onNormalized]);
+
     const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-      const formatted = formatPhoneDisplay(e.target.value);
-      onChange(formatted);
+      onChange(formatPhoneDisplay(e.target.value));
     }, [onChange]);
 
     const handleBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
       setTouched(true);
-      const final = formatPhoneFinal(value);
-      onChange(final);
+      onChange(formatPhoneFinal(value));
       onBlur?.(e);
     }, [value, onChange, onBlur]);
 
