@@ -177,6 +177,7 @@ export default function PageAffiliateOnboarding() {
   }
 
   async function verifyOtp() {
+    if (busy) return; // anti double-soumission
     setBusy(true);
     try {
       const res = await verifyOtpSms(draft.phone, otpCode);
@@ -190,6 +191,7 @@ export default function PageAffiliateOnboarding() {
       setBusy(false);
     }
   }
+
 
 
   async function sendEmailLink() {
