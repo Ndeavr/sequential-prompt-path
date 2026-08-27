@@ -99,6 +99,12 @@ export default function PageAffiliateOnboarding() {
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [emailLinkSent, setEmailLinkSent] = useState(false);
+  const otpAuto = useOtpAutoSubmit({
+    code: otpCode,
+    enabled: otpSent && !busy,
+    onSubmit: () => verifyOtp(),
+  });
+
 
   useEffect(() => {
     captureAttribution(new URLSearchParams(location.search));
