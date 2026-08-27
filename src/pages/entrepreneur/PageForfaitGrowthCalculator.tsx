@@ -87,10 +87,7 @@ export default function PageForfaitGrowthCalculator() {
           billingInterval: inputs.billingInterval,
           quoteId: quote.quote_id,
           includeProfileFee: true,
-          displayedPriceCents:
-            inputs.billingInterval === "year"
-              ? growth.annual_price_cents
-              : growth.monthly_price_cents,
+          // Server-authoritative: no client-side amount authorization.
           successUrl: `${window.location.origin}/entrepreneur/payment-success?quote_id=${quote.quote_id}`,
           cancelUrl: `${window.location.origin}/entrepreneur/calculateur-forfait`,
         },
@@ -140,8 +137,7 @@ export default function PageForfaitGrowthCalculator() {
       const { data, error: fnErr } = await supabase.functions.invoke("create-checkout-session", {
         body: {
           packQuoteId: (packQuote as any).quote_id,
-          displayedPriceCents: (packQuote as any).total_price_cents,
-          displayedGuaranteedAppointments: guaranteed,
+          // Server-authoritative: the amount is resolved from the stored quote.
         },
       });
       if (fnErr) throw new Error(fnErr.message);

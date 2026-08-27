@@ -28,18 +28,24 @@ import { toast } from "sonner";
 
 const PLAN_LABEL: Record<string, string> = {
   presence: "Présence",
-  local: "Local",
+  depart: "Départ",
+  croissance_v2: "Croissance",
+  pro_v2: "Pro",
+  elite_v2: "Élite",
+  signature_v2: "Signature",
+  // superseded codes still returned by older quotes
+  local: "Départ",
   croissance: "Croissance",
   pro: "Pro",
-  premium: "Premium",
-  domination: "Domination",
-  // legacy codes still returned by older quotes
+  premium: "Élite",
+  domination: "Signature",
   recrue: "Présence",
-  elite: "Premium",
-  signature: "Domination",
+  elite: "Élite",
+  signature: "Signature",
 };
 
-const PLAN_ORDER = ["presence", "local", "croissance", "pro", "premium", "domination"];
+// Active catalog order (public.plans, audience=contractor, active=true).
+const PLAN_ORDER = ["presence", "depart", "croissance_v2", "pro_v2", "elite_v2", "signature_v2"];
 
 export default function PageContractorPersonalizedPlan() {
   const { quoteId } = useParams<{ quoteId: string }>();
@@ -75,12 +81,6 @@ export default function PageContractorPersonalizedPlan() {
     setCheckoutLoading(true);
     try {
       const targetPlan = planCode ?? quote.recommended_plan;
-      const targetPrice =
-        targetPlan === quote.recommended_plan
-          ? quote.recommended_monthly_price
-          : targetPlan === "presence" || planCode === "presence"
-            ? quote.min_monthly_price
-            : quote.max_monthly_price;
       const isRecommended = targetPlan === quote.recommended_plan;
       const { data, error } = await supabase.functions.invoke(
         "create-checkout-session",
@@ -90,10 +90,8 @@ export default function PageContractorPersonalizedPlan() {
             billingInterval: "month",
             // Only attach quoteId for the recommended plan (server enforces plan == quote.recommended_plan).
             // Up/down triad picks fall back to catalog price for that plan.
-            ...(isRecommended && {
-              quoteId: quote.id,
-              displayedPriceCents: Math.round(targetPrice * 100),
-            }),
+            // Server-authoritative pricing: the browser sends identifiers only.
+            ...(isRecommended && { quoteId: quote.id }),
             successUrl: `${window.location.origin}/entrepreneur/plan-personnalise/${quote.id}?checkout=success`,
             cancelUrl: `${window.location.origin}/entrepreneur/plan-personnalise/${quote.id}?checkout=canceled`,
           },
