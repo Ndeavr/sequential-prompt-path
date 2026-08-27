@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import PanelContractorAdvisorAlex from "@/components/PanelContractorAdvisorAlex";
 import { useContractorProfile } from "@/hooks/useContractor";
+import { AiReadinessCard } from "@/components/contractor/AiReadinessCard";
 
 const PageEntrepreneurDashboardLite = () => {
   const { data: profile } = useContractorProfile();
@@ -17,6 +18,10 @@ const PageEntrepreneurDashboardLite = () => {
           <p className="text-sm text-muted-foreground mb-1">Tableau de bord</p>
           <h1 className="text-2xl font-bold text-foreground">{businessName}</h1>
         </motion.div>
+
+        <div className="mb-6">
+          <AiReadinessCard contractorId={profile?.id} />
+        </div>
 
         <PanelContractorAdvisorAlex surface="dashboard" />
       </div>

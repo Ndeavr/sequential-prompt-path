@@ -37,6 +37,7 @@ import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { AuditProHeader } from "@/components/audit-ia/AuditProHeader";
 import { JourneySteps } from "@/components/audit-ia/JourneySteps";
 import { OperationalSections } from "@/components/audit-ia/OperationalSections";
+import { HowItWorksBlock } from "@/components/audit-ia/HowItWorksBlock";
 
 type Provenance = "verified" | "declared" | "inferred" | "pending";
 type MissionStatus = "confirmed" | "detected" | "missing";
@@ -153,6 +154,12 @@ export default function PageAiRecommendationAudit() {
       step: "audit_opened",
       metadata: { ...utm, invite: Boolean(inviteToken), outreach_prospect: prospectId },
     });
+    void logFunnelEvent({
+      event_type: "ai_audit_viewed",
+      event_source: "app",
+      current_path: "/entrepreneurs/audit-ia",
+      metadata: { ...utm, outreach_prospect: prospectId },
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -243,6 +250,19 @@ export default function PageAiRecommendationAudit() {
       }
       const res = data as AuditResult;
       setResult(res);
+      if (res.business_name) {
+        void logFunnelEvent({
+          event_type: "company_recognized",
+          event_source: "app",
+          current_path: "/entrepreneurs/audit-ia",
+          metadata: {
+            business_name: res.business_name,
+            city: res.city,
+            readiness_score: res.readiness_score,
+            outreach_prospect: prospectId,
+          },
+        });
+      }
       void trackInvite("completed");
       // Existing business recognised in UNPRO records → eligibility signal.
       if (c) {
@@ -281,7 +301,14 @@ export default function PageAiRecommendationAudit() {
     // Preserve outreach attribution: garantie reads `t` for the attributed
     // activation checkout (create-activation-checkout).
     if (activationToken) params.set("t", activationToken);
-    navigate(`/entrepreneurs/garantie?${params.toString()}`);
+    const ref = sp.get("ref");
+    if (ref) params.set("ref", ref);
+    for (const k of ["utm_source", "utm_medium", "utm_campaign"]) {
+      const v = sp.get(k);
+      if (v) params.set(k, v);
+    }
+    // Valeur avant prix : on complète le profil de matching, puis les forfaits.
+    navigate(`/entrepreneurs/profil?${params.toString()}`);
   }
 
   const scrollToAudit = useCallback(() => {
@@ -314,12 +341,14 @@ export default function PageAiRecommendationAudit() {
               className="mt-3 text-[30px] font-bold leading-[1.08] text-foreground sm:text-[44px]"
               style={{ letterSpacing: "-0.03em" }}
             >
-              Découvrez comment l'IA comprend votre entreprise — et ce qui l'empêche encore de vous
-              recommander.
+              Vos prochains clients demanderont à l'IA qui appeler. Est-ce qu'elle vous comprend&nbsp;?
             </h1>
             <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted-foreground sm:text-[16px]">
-              Découvrez ce que l'IA comprend déjà de votre entreprise — et ce qui pourrait encore vous
-              empêcher d'être recommandée.
+              Vérifiez gratuitement ce que l'IA comprend de votre entreprise, complétez les informations
+              qui comptent et devenez admissible aux recommandations UNPRO.
+            </p>
+            <p className="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground">
+              Découvrez d'abord ce que l'IA comprend déjà de votre entreprise.
             </p>
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -328,9 +357,9 @@ export default function PageAiRecommendationAudit() {
                 onClick={scrollToAudit}
                 className="gold-btn inline-flex h-12 items-center gap-2 rounded-2xl px-6 text-[15px] font-bold transition-transform hover:-translate-y-0.5"
               >
-                Obtenir mon audit IA gratuit <ArrowRight className="h-4 w-4" aria-hidden />
+                Vérifier mon entreprise <ArrowRight className="h-4 w-4" aria-hidden />
               </button>
-              <span className="text-[12.5px] text-muted-foreground">30 secondes · aucune carte de crédit</span>
+              <span className="text-[12.5px] text-muted-foreground">Gratuit · environ 60 secondes · aucun engagement</span>
             </div>
           </div>
         </section>
@@ -621,6 +650,9 @@ function AuditReport({
         </div>
 
         <div className="mt-5 border-t border-border pt-5">
+          <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+            Préparation du profil IA UNPRO
+          </p>
           <ScoreRing score={result.readiness_score} level={level} />
           <p className="mt-4 text-center text-[13.5px] leading-relaxed text-muted-foreground">
             {remaining === 0
@@ -628,7 +660,8 @@ function AuditReport({
               : `${remaining} étape${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""} pour devenir recommandable.`}
           </p>
           <p className="mt-1 text-center text-[11px] text-muted-foreground">
-            Résultat basé sur les informations réellement disponibles sur votre entreprise.
+            Résultat basé sur les informations réellement disponibles sur votre entreprise. Indicateur
+            UNPRO de préparation du profil — ce n'est pas un score officiel de ChatGPT ou d'OpenAI.
           </p>
 
         </div>
@@ -724,6 +757,9 @@ function AuditReport({
         )}
       </section>
 
+      {/* Comment ça fonctionne — AVANT le prix */}
+      <HowItWorksBlock />
+
       {/* Activation — offre canonique résolue depuis la config production */}
       <section className="rounded-2xl border border-primary/40 bg-gradient-to-br from-secondary to-card p-5 shadow-md">
         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Étape 5 — Activation</p>
@@ -762,7 +798,7 @@ function AuditReport({
             size="lg"
             className="gold-btn h-14 w-full rounded-2xl border-0 px-3 text-[15px] font-bold leading-tight hover:text-primary-foreground"
           >
-            <span className="truncate">Compléter mon profil et devenir recommandable</span>
+            <span className="truncate">Compléter mon profil</span>
             <ArrowRight className="ml-1.5 h-4 w-4 shrink-0" />
           </Button>
         </div>
