@@ -202,6 +202,7 @@ export const MATCHING_FIELD_LABELS: Record<MatchingFieldKey, string> = {
   territories: "Territoires desservis",
   project_size: "Taille de projet",
   client_type: "Type de clientèle",
+  emergency: "Service d'urgence",
   availability: "Disponibilité",
   languages: "Langues",
   credentials: "Licences et couvertures",
