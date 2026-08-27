@@ -342,7 +342,8 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
               <div className="flex justify-center mb-2">
                 <ShieldCheck className="h-5 w-5 text-primary" />
               </div>
-              <p className="text-sm font-medium text-foreground">
+              <p className="text-base font-semibold text-foreground">Vérifiez votre téléphone</p>
+              <p className="text-sm mt-1 text-foreground/80">
                 Code envoyé au +1 {formatPhoneDisplay(phone)}
               </p>
               <p className="text-xs mt-1 text-muted-foreground">
@@ -350,76 +351,116 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
               </p>
             </div>
 
-            {/* 6-digit code input — first cell carries SMS autofill */}
-            <div className="flex justify-center gap-2" onPaste={handleCodePaste}>
+            {/* 6-digit code input — first cell carries SMS autofill. Never auto-submits. */}
+            <div className="flex justify-center gap-1.5 sm:gap-2 w-full" onPaste={handleCodePaste}>
               {code.map((digit, i) => (
-                <Input
+                <input
                   key={i}
                   ref={(el) => { codeRefs.current[i] = el; }}
                   type="text"
                   inputMode="numeric"
+                  pattern="[0-9]*"
                   autoComplete={i === 0 ? "one-time-code" : "off"}
                   name={i === 0 ? "otp" : undefined}
                   maxLength={i === 0 ? 6 : 1}
                   value={digit}
+                  autoFocus={i === 0}
+                  onFocus={(e) => { setFocusedCell(i); e.currentTarget.select(); }}
+                  onBlur={() => setFocusedCell((c) => (c === i ? null : c))}
                   onChange={(e) => {
                     const v = e.target.value.replace(/\D/g, "");
-                    if (v.length > 1) {
-                      // SMS autofill delivered the full code into cell 0
-                      const full = v.slice(0, 6);
-                      const next = ["", "", "", "", "", ""].map((_, idx) => full[idx] || "");
-                      setCode(next);
-                      if (next.every((d) => d) && next.join("").length === 6) {
-                        codeRefs.current[5]?.focus();
-                        setTimeout(() => handleVerifyOtp(), 150);
-                      }
-                      return;
-                    }
+                    // SMS autofill / paste may deliver the whole code at once — fill only.
+                    if (v.length > 1) { applyCode(v); return; }
                     handleCodeChange(i, v);
                   }}
                   onKeyDown={(e) => handleCodeKeyDown(i, e)}
-                  className="w-11 h-13 text-center text-lg font-bold rounded-xl"
+                  className="flex-1 min-w-0 max-w-[52px] h-14 text-center text-xl font-bold rounded-xl outline-none transition-all"
                   style={{
-                    background: "hsl(228 20% 14% / 0.6)",
-                    border: digit ? "1px solid hsl(222 100% 65% / 0.5)" : "1px solid hsl(228 18% 18%)",
-                    color: "hsl(220 20% 93%)",
+                    background: digit ? "hsl(228 24% 20%)" : "hsl(228 20% 14% / 0.8)",
+                    border:
+                      focusedCell === i
+                        ? "2px solid hsl(222 100% 65%)"
+                        : digit
+                          ? "1.5px solid hsl(222 100% 65% / 0.55)"
+                          : "1.5px solid hsl(228 14% 38%)",
+                    boxShadow: focusedCell === i ? "0 0 0 4px hsl(222 100% 65% / 0.18)" : "none",
+                    color: "hsl(0 0% 100%)",
+                    caretColor: "hsl(222 100% 75%)",
                   }}
                   disabled={isDisabled}
                 />
               ))}
             </div>
 
+            {/* Paste action — deliberately the most visible secondary action */}
+            <button
+              type="button"
+              onClick={handlePasteFromClipboard}
+              disabled={isDisabled}
+              className="w-full h-12 flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+              style={{
+                background: "hsl(222 100% 65% / 0.12)",
+                border: "1.5px solid hsl(222 100% 65% / 0.55)",
+                color: "hsl(222 100% 78%)",
+              }}
+            >
+              <ClipboardPaste className="h-4 w-4" />
+              Coller le code reçu par texto
+            </button>
+
+            {inlineError && (
+              <div
+                role="alert"
+                className="rounded-xl px-3 py-2.5 text-xs"
+                style={
+                  inlineError.kind === "clipboard"
+                    ? { background: "hsl(228 20% 16%)", border: "1px solid hsl(228 14% 30%)", color: "hsl(220 20% 88%)" }
+                    : { background: "hsl(0 60% 20% / 0.5)", border: "1px solid hsl(0 65% 45%)", color: "hsl(0 90% 88%)" }
+                }
+              >
+                <p>{inlineError.message}</p>
+                {inlineError.kind === "expired" && (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={cooldown > 0}
+                    className="mt-1 underline font-semibold disabled:opacity-50"
+                  >
+                    {cooldown > 0 ? `Renvoyer un nouveau code (${cooldown}s)` : "Renvoyer un nouveau code"}
+                  </button>
+                )}
+              </div>
+            )}
+
             <Button
               type="button"
-              className="w-full h-12 text-sm font-medium rounded-xl"
+              className="w-full h-[52px] text-base font-bold rounded-xl disabled:opacity-40"
               disabled={isDisabled || code.some((d) => !d)}
               onClick={handleVerifyOtp}
             >
-              {verifying ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                "Vérifier le code"
-              )}
+              {verifying ? <Loader2 className="h-5 w-5 animate-spin" /> : "Vérifier le code"}
             </Button>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-center gap-3 text-xs">
               <button
                 type="button"
-                onClick={() => { setStep("phone"); setCode(["", "", "", "", "", ""]); }}
-                className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => { setStep("phone"); setCode(["", "", "", "", "", ""]); setInlineError(null); }}
+                className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ArrowLeft className="h-3 w-3" /> Changer de numéro
               </button>
+              <span className="text-muted-foreground/40">·</span>
               <button
                 type="button"
                 onClick={handleResend}
                 disabled={cooldown > 0}
-                className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 disabled:hover:text-muted-foreground"
+                className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 disabled:hover:text-muted-foreground"
               >
                 <RefreshCw className="h-3 w-3" />
                 {cooldown > 0 ? `Renvoyer (${cooldown}s)` : "Renvoyer le code"}
               </button>
             </div>
+
           </motion.div>
         )}
       </AnimatePresence>
