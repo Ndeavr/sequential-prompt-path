@@ -124,8 +124,10 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       toast.error("Entrez le code à 6 chiffres");
       return;
     }
+    if (verifying) return; // anti double-soumission
 
     setVerifying(true);
+
     authDebug.set({ auth_step: "otp_verifying" });
     try {
       const data = await callOtp("verify-otp", {
