@@ -92,8 +92,13 @@ const PlanCard = ({
   onPortal: () => void;
   isLoading: boolean;
 }) => {
-  const price = interval === "year" ? plan.yearlyPrice : plan.monthlyPrice;
+  // Un plan sans prix annuel Stripe reste facturé au mois : afficher l'annuel
+  // provoquerait « Price not configured » au checkout.
+  const effectiveInterval: BillingInterval =
+    interval === "year" && plan.supportsYearly ? "year" : "month";
+  const price = effectiveInterval === "year" ? plan.yearlyPrice : plan.monthlyPrice;
   const savings = getYearlySavingsPercent(plan);
+
 
   return (
     <Card
@@ -114,10 +119,10 @@ const PlanCard = ({
           {formatPlanPrice(price)}
           <span className="text-sm font-normal text-muted-foreground">
             {" "}
-            / {interval === "year" ? "an" : "mois"}
+            / {effectiveInterval === "year" ? "an" : "mois"}
           </span>
         </p>
-        {interval === "year" && savings > 0 && (
+        {effectiveInterval === "year" && savings > 0 && (
           <div className="space-y-0.5">
             <Badge variant="secondary" className="text-xs bg-secondary/20 text-secondary-foreground">
               Économisez {savings} %
@@ -127,7 +132,13 @@ const PlanCard = ({
             </p>
           </div>
         )}
+        {interval === "year" && !plan.supportsYearly && (
+          <p className="text-xs text-muted-foreground">
+            Facturation mensuelle seulement pour ce plan.
+          </p>
+        )}
       </CardHeader>
+
       <CardContent className="space-y-3">
         <ul className="space-y-2 text-sm">
           {plan.features.map((f) => (
@@ -187,13 +198,29 @@ const ProBilling = () => {
   const isActive =
     subscription && ["active", "trialing"].includes(subscription.status);
 
+  /** L'annuel n'est proposé que si au moins un plan a un vrai prix annuel Stripe. */
+  const yearlyAvailable = (allPlans ?? []).some((p) => p.supportsYearly);
+
+  // Intervalle demandé par un lien entrant (UpgradeWindow, courriel).
+  useEffect(() => {
+    if (searchParams.get("interval") === "year") setInterval("year");
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!yearlyAvailable) setInterval("month");
+  }, [yearlyAvailable]);
+
   const handleSubscribe = async (plan: CatalogPlan) => {
     try {
-      const priceId = getStripePriceId(plan, interval);
+      // Le serveur reste l'autorité sur le montant ; on n'envoie qu'un
+      // intervalle réellement facturable pour ce plan.
+      const effectiveInterval: BillingInterval =
+        interval === "year" && plan.supportsYearly ? "year" : "month";
+      const priceId = getStripePriceId(plan, effectiveInterval);
       const result = await checkout.mutateAsync({
         priceId,
         planId: plan.code,
-        billingInterval: interval,
+        billingInterval: effectiveInterval,
       });
       if (result.url) {
         window.location.href = result.url;
@@ -202,6 +229,7 @@ const ProBilling = () => {
       toast.error(e.message || "Erreur lors de la création du paiement.");
     }
   };
+
 
   const handlePortal = async () => {
     try {
@@ -286,7 +314,7 @@ const ProBilling = () => {
         {isActive ? "Changer de plan" : "Choisir un plan"}
       </h2>
 
-      <BillingToggle interval={interval} onChange={setInterval} />
+      {yearlyAvailable && <BillingToggle interval={interval} onChange={setInterval} />}
 
       {/* Plan cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
