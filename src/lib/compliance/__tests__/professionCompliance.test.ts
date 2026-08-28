@@ -54,3 +54,21 @@ describe("compensation catalogue", () => {
     ]);
   });
 });
+
+describe("data-driven claim sanitization", () => {
+  it("prefers the longest matching claim and leaves no truncated words", () => {
+    const r = scanProhibitedClaims(
+      "Courtier recommandé par l'AMF, meilleure prime au Québec",
+      ["#1", "meilleur", "meilleure prime", "recommandé par l'AMF"],
+    );
+    expect(r.clean).toBe(false);
+    expect(r.sanitized).not.toMatch(/meilleur/i);
+    expect(r.sanitized).not.toMatch(/\bUNPROe\b/);
+    expect(r.matches).toContain("meilleure prime");
+  });
+
+  it("tolerates apostrophe variants and spacing in rule claims", () => {
+    const r = scanProhibitedClaims("Service recommandé par l AMF", ["recommandé par l'AMF"]);
+    expect(r.clean).toBe(false);
+  });
+});
