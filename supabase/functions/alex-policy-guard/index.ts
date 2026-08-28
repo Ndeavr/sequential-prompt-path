@@ -5,6 +5,16 @@
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import {
+  serviceClient,
+  evaluateCompliance,
+  logComplianceEvent,
+  scanProhibitedClaims,
+  COMPLIANCE_EVENTS,
+  UNPRO_REGULATED_DISCLOSURE,
+  type ComplianceVerdict,
+} from "../_shared/professionCompliance.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -138,12 +148,23 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         original_text: text,
-        corrected_text: correctedText,
+        corrected_text: regulated?.blocked ? regulated.safeText : correctedText,
         violations,
         has_violations: violations.length > 0,
+        regulated: regulated
+          ? {
+              blocked: regulated.blocked,
+              decision: regulated.verdict?.decision ?? "PENDING_REVIEW",
+              profession_code,
+              requires_regulated_handoff: regulated.verdict?.requires_regulated_handoff ?? false,
+              disclosure: regulated.disclosure,
+              next_stage: regulated.nextStage,
+            }
+          : null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+
   } catch (err) {
     console.error("alex-policy-guard error:", err);
     return new Response(
