@@ -36,6 +36,9 @@ import {
 } from "@/hooks/usePublicContractors";
 import { useContractorPublicScores, useReviewInsights } from "@/hooks/useMatchingEngine";
 import { UnproVerifiedBadge } from "@/components/contractor/UnproVerifiedBadge";
+import { ProfessionalVerificationsCard } from "@/components/compliance/ProfessionalVerificationsCard";
+import { RegulatedDisclosure } from "@/components/compliance/RegulatedDisclosure";
+
 import { useAuth } from "@/hooks/useAuth";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { motion } from "framer-motion";
@@ -453,6 +456,18 @@ const ContractorProfile = () => {
               />
             </motion.div>
           )}
+
+          {/* ── Vérifications professionnelles (données réelles seulement) ── */}
+          <motion.div variants={fadeUp} className="space-y-3">
+            <ProfessionalVerificationsCard
+              contractorId={contractorId as string}
+              professionCode={(contractor as any).profession_code ?? null}
+              businessName={contractor.business_name}
+              neq={(contractor as any).neq ?? null}
+            />
+            <RegulatedDisclosure professionCode={(contractor as any).profession_code ?? null} />
+          </motion.div>
+
 
           {/* ═══ 2. AI SUMMARY ═══ */}
           <motion.div variants={fadeUp}>
