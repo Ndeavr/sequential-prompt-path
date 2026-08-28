@@ -107,6 +107,8 @@ export default function PageUnproActivate() {
     };
     const onScroll = () => {
       if (window.scrollY > 120) markEngaged();
+      const top = offerRef.current?.getBoundingClientRect().top;
+      setShowStickyCta(typeof top === "number" && top < window.innerHeight * 0.9);
     };
     const timer = window.setTimeout(markEngaged, 6000);
     window.addEventListener("scroll", onScroll, { passive: true });
