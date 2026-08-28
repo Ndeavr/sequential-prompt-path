@@ -249,7 +249,7 @@ export const UNVERIFIABLE_CLAIM_PATTERNS: RegExp[] = [
   /\bbest\b/gi,
   /\btop\s?1\b/gi,
   /\bgaranti\s+le\s+moins\s+cher\b/gi,
-  /\b(recommand[ée]|approuv[ée])\s+par\s+(la\s+)?(RBQ|AMF|OACIQ|OIQ|OAQ|CMEQ|CMMTQ|CNQ|OTPQ)\b/gi,
+  /\b(recommand[ée]|approuv[ée]|certifi[ée]|endoss[ée])\s+par\s+(la\s+|le\s+|l['’])?(RBQ|AMF|OACIQ|OIQ|OAQ|CMEQ|CMMTQ|CNQ|OTPQ)\b/gi,
 ];
 
 export interface ClaimScanResult {
