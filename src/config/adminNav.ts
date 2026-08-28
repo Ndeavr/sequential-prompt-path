@@ -107,11 +107,12 @@ export const adminSections: AdminSection[] = [
     match: [
       "/admin/verified-contractors", "/admin/validation", "/admin/activation",
       "/admin/aipp-profiles", "/admin/contacted-contractors", "/admin/contractors-contacted",
-      "/admin/contractor", "/admin/onboarding-orchestrator",
+      "/admin/contractor", "/admin/onboarding-orchestrator", "/admin/compliance",
     ],
     tabs: [
       { to: "/admin/contractors", label: "Tous", icon: Briefcase },
       { to: "/admin/verified-contractors", label: "Membres actifs", icon: Shield },
+      { to: "/admin/compliance", label: "Conformité", icon: ShieldCheck },
       { to: "/admin/validation", label: "Activation", icon: ShieldCheck },
       { to: "/admin/recruitment/onboarding", label: "Onboarding", icon: UserCheck },
       { to: "/admin/onboarding-orchestrator", label: "Orchestrateur", icon: Bot },
@@ -119,6 +120,7 @@ export const adminSections: AdminSection[] = [
       { to: "/admin/contacted-contractors", label: "Contactés", icon: PhoneCall },
       { to: "/admin/contractors/create-manual", label: "Créer", icon: UserPlus },
     ],
+
   },
   {
     key: "appointments",
