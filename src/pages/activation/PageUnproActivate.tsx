@@ -344,8 +344,8 @@ export default function PageUnproActivate() {
         )}
       </div>
 
-      {/* CTA collant mobile : la décision reste toujours à un pouce. */}
-      {state === "ready" && prospect && (
+      {/* CTA collant mobile : n'apparaît qu'après la valeur gratuite (score + profil). */}
+      {state === "ready" && prospect && showStickyCta && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#050816]/95 px-5 py-3 backdrop-blur sm:hidden">
           <Button
             onClick={() => handleActivate("sticky_mobile")}
