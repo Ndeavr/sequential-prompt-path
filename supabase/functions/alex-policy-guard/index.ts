@@ -95,7 +95,7 @@ serve(async (req) => {
   }
 
   try {
-    const { text, conversation_session_id } = await req.json();
+    const { text, conversation_session_id, profession_code, alex_scope } = await req.json();
 
     if (!text) {
       return new Response(
@@ -105,6 +105,14 @@ serve(async (req) => {
     }
 
     const { violations, correctedText } = detectViolations(text);
+
+    // ── Regulated-profession guardrails (server-side, fail closed) ──
+    let regulated: RegulatedGuardResult | null = null;
+    if (profession_code) {
+      regulated = await evaluateRegulatedScope(text, profession_code, alex_scope, conversation_session_id);
+      violations.push(...regulated.violations);
+    }
+
 
     // Log violations to database
     if (violations.length > 0 && conversation_session_id) {
