@@ -150,6 +150,18 @@ export const UNVERIFIABLE_CLAIM_PATTERNS: RegExp[] = [
   /\b(recommand[ée]|approuv[ée]|certifi[ée]|endoss[ée])\s+par\s+(la\s+|le\s+|l['’])?(RBQ|AMF|OACIQ|OIQ|OAQ|CMEQ|CMMTQ|CNQ|OTPQ)\b/gi,
 ];
 
+/** Builds a tolerant matcher for a data-driven prohibited claim. */
+function claimPattern(claim: string): RegExp {
+  const src = claim
+    .trim()
+    .split(/\s+/)
+    .map((w) =>
+      w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/['’]/g, "['’\\s]?"),
+    )
+    .join("\\s+");
+  return new RegExp(`${src}\\w*`, "gi");
+}
+
 export function scanProhibitedClaims(
   text: string,
   extraClaims: string[] = [],
@@ -166,14 +178,15 @@ export function scanProhibitedClaims(
       sanitized = sanitized.replace(re, "sélectionné par UNPRO");
     }
   }
-  for (const claim of extraClaims) {
+  // Longest claims first so a shorter claim never truncates a longer one.
+  for (const claim of [...extraClaims].sort((a, b) => (b?.length ?? 0) - (a?.length ?? 0))) {
     if (!claim) continue;
-    const re = new RegExp(claim.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
-    if (re.test(sanitized)) {
+    if (claimPattern(claim).test(sanitized)) {
       matches.push(claim);
-      sanitized = sanitized.replace(re, "sélectionné par UNPRO");
+      sanitized = sanitized.replace(claimPattern(claim), "sélectionné par UNPRO");
     }
   }
+
   return { clean: matches.length === 0, matches: [...new Set(matches)], sanitized };
 }
 

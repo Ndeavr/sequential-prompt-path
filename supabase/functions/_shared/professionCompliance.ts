@@ -258,11 +258,23 @@ export interface ClaimScanResult {
   sanitized: string;
 }
 
-/**
- * Scans marketing copy for unverifiable superlatives and regulator-endorsement
- * implications. `extraClaims` comes from the profession rule (data-driven).
- */
+/** Builds a tolerant matcher for a data-driven prohibited claim. */
+
+function claimPattern(claim: string): RegExp {
+  const src = claim
+    .trim()
+    .split(/\s+/)
+    .map((w) =>
+      w
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+        .replace(/['’]/g, "['’\\s]?"),
+    )
+    .join("\\s+");
+  return new RegExp(`${src}\\w*`, "gi");
+}
+
 export function scanProhibitedClaims(text: string, extraClaims: string[] = []): ClaimScanResult {
+
   if (!text) return { clean: true, matches: [], sanitized: "" };
   const matches: string[] = [];
   let sanitized = text;
@@ -276,14 +288,16 @@ export function scanProhibitedClaims(text: string, extraClaims: string[] = []): 
     }
   }
 
-  for (const claim of extraClaims) {
+  // Longest claims first so a shorter claim never truncates a longer one.
+  for (const claim of [...extraClaims].sort((a, b) => (b?.length ?? 0) - (a?.length ?? 0))) {
     if (!claim) continue;
-    const re = new RegExp(claim.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+    const re = claimPattern(claim);
     if (re.test(sanitized)) {
       matches.push(claim);
-      sanitized = sanitized.replace(re, "sélectionné par UNPRO");
+      sanitized = sanitized.replace(claimPattern(claim), "sélectionné par UNPRO");
     }
   }
+
 
   return { clean: matches.length === 0, matches: [...new Set(matches)], sanitized };
 }
