@@ -287,7 +287,7 @@ Deno.serve(async (req) => {
     const readinessChecks = [
       { key: "identity", label: "Identité d'entreprise", ok: Boolean(display) },
       { key: "trade", label: "Spécialité identifiée", ok: Boolean(trade) },
-      { key: "territory", label: "Territoire défini", ok: Boolean(prospect.city || areas.length) },
+      { key: "territory", label: "Territoire défini", ok: Boolean(prospect.city || region || areas.length) },
       { key: "contact", label: "Contact joignable", ok: Boolean(prospect.phone_e164 || prospect.email) },
       // « Présence en ligne » : site web OU fiche Google. Le libellé doit rester
       // exact, sinon la fiche affirme un site web que l'entreprise n'a pas.
@@ -395,7 +395,7 @@ Deno.serve(async (req) => {
         display_name: display,
         legal_name: legal,
         trade,
-        city: prospect.city ?? null,
+        city: prospect.city ?? region ?? null,
         service_areas: areas,
         logo_url: aipp?.logo_url ?? null, // only if a real logo was already stored
         website_url: prospect.website_url ?? null,
