@@ -70216,6 +70216,7 @@ export type Database = {
       profession_compliance_rules: {
         Row: {
           advertising_allowed: boolean
+          affiliate_commission_status: string
           alex_allowed_scope: Json
           alex_prohibited_scope: Json
           appointment_allowed: boolean
@@ -70228,6 +70229,8 @@ export type Database = {
           credential_type: string | null
           effective_from: string
           effective_until: string | null
+          fixed_appointment_fee_status: string
+          fixed_referral_fee_status: string
           id: string
           is_active: boolean
           legal_review_notes: string | null
@@ -70235,7 +70238,12 @@ export type Database = {
           legal_reviewed_at: string | null
           legal_reviewed_by: string | null
           matching_allowed: boolean
+          matching_status: string
+          monetization_conditions: Json
+          monetization_notes: Json
           paid_referral_status: string
+          percentage_commission_status: string
+          platform_subscription_status: string
           profession_code: string
           profession_label_en: string | null
           profession_label_fr: string
@@ -70250,10 +70258,12 @@ export type Database = {
           source_last_verified_at: string | null
           source_reference: string | null
           source_url: string | null
+          success_fee_status: string
           updated_at: string
         }
         Insert: {
           advertising_allowed?: boolean
+          affiliate_commission_status?: string
           alex_allowed_scope?: Json
           alex_prohibited_scope?: Json
           appointment_allowed?: boolean
@@ -70266,6 +70276,8 @@ export type Database = {
           credential_type?: string | null
           effective_from?: string
           effective_until?: string | null
+          fixed_appointment_fee_status?: string
+          fixed_referral_fee_status?: string
           id?: string
           is_active?: boolean
           legal_review_notes?: string | null
@@ -70273,7 +70285,12 @@ export type Database = {
           legal_reviewed_at?: string | null
           legal_reviewed_by?: string | null
           matching_allowed?: boolean
+          matching_status?: string
+          monetization_conditions?: Json
+          monetization_notes?: Json
           paid_referral_status?: string
+          percentage_commission_status?: string
+          platform_subscription_status?: string
           profession_code: string
           profession_label_en?: string | null
           profession_label_fr: string
@@ -70288,10 +70305,12 @@ export type Database = {
           source_last_verified_at?: string | null
           source_reference?: string | null
           source_url?: string | null
+          success_fee_status?: string
           updated_at?: string
         }
         Update: {
           advertising_allowed?: boolean
+          affiliate_commission_status?: string
           alex_allowed_scope?: Json
           alex_prohibited_scope?: Json
           appointment_allowed?: boolean
@@ -70304,6 +70323,8 @@ export type Database = {
           credential_type?: string | null
           effective_from?: string
           effective_until?: string | null
+          fixed_appointment_fee_status?: string
+          fixed_referral_fee_status?: string
           id?: string
           is_active?: boolean
           legal_review_notes?: string | null
@@ -70311,7 +70332,12 @@ export type Database = {
           legal_reviewed_at?: string | null
           legal_reviewed_by?: string | null
           matching_allowed?: boolean
+          matching_status?: string
+          monetization_conditions?: Json
+          monetization_notes?: Json
           paid_referral_status?: string
+          percentage_commission_status?: string
+          platform_subscription_status?: string
           profession_code?: string
           profession_label_en?: string | null
           profession_label_fr?: string
@@ -70326,6 +70352,7 @@ export type Database = {
           source_last_verified_at?: string | null
           source_reference?: string | null
           source_url?: string | null
+          success_fee_status?: string
           updated_at?: string
         }
         Relationships: []
@@ -96225,6 +96252,7 @@ export type Database = {
           _action: string
           _alex_scope?: string
           _compensation_type?: string
+          _context?: Json
           _profession_code: string
         }
         Returns: Json
