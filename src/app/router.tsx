@@ -246,6 +246,8 @@ const PageAiEntity = lazyWithRetry(() => import("@/pages/ai/PageAiEntity"));
 const PageAdminAiEntities = lazyWithRetry(() => import("@/pages/admin/PageAdminAiEntities"));
 const PageAdminSmartContext = lazyWithRetry(() => import("@/pages/admin/PageAdminSmartContext"));
 const PageAdminPlansMatrix = lazyWithRetry(() => import("@/pages/admin/PageAdminPlansMatrix"));
+const PageAdminComplianceCenter = lazyWithRetry(() => import("@/pages/admin/PageAdminComplianceCenter"));
+
 const PageAdminAutopilotMvp = lazyWithRetry(() => import("@/pages/admin/PageAdminAutopilotMvp"));
 const PageAdminAutopilotRunDetail = lazyWithRetry(() => import("@/pages/admin/PageAdminAutopilotRunDetail"));
 const PageAdminOutboundLandingFunnel = lazyWithRetry(() => import("@/pages/admin/outbound/PageAdminOutboundLandingFunnel"));
