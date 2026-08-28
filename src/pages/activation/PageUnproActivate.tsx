@@ -44,6 +44,9 @@ export default function PageUnproActivate() {
   const [correctionSent, setCorrectionSent] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  // Le CTA collant n'apparaît qu'une fois la valeur gratuite consultée.
+  const [showStickyCta, setShowStickyCta] = useState(false);
+  const offerRef = useRef<HTMLDivElement | null>(null);
   const engagedRef = useRef(false);
 
 
