@@ -1,5 +1,10 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import {
+  assertCompensationAllowed,
+  complianceErrorPayload,
+} from "../_shared/professionCompliance.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -60,6 +65,7 @@ Deno.serve(async (req) => {
       displayedGuaranteedAppointments,
       includeProfileFee,
       ref,
+      professionCode,
 
     } = await req.json();
     const interval: "month" | "year" = billingInterval === "year" ? "year" : "month";
@@ -68,6 +74,37 @@ Deno.serve(async (req) => {
       supabaseUrl,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // ── PROFESSIONAL COMPLIANCE GATE (fail closed) ────────────────────────
+    // A declared regulated profession must have an explicitly ALLOWED
+    // compensation rule before any Stripe object is created. Undeclared
+    // professions = existing contractor golden path, untouched.
+    {
+      const declaredProfession =
+        (typeof professionCode === "string" && professionCode.trim()) || null;
+      if (declaredProfession) {
+        const compensationType = packQuoteId
+          ? "referral_fee_fixed"
+          : interval === "year"
+            ? "membership_annual"
+            : "membership_monthly";
+        const gate = await assertCompensationAllowed(serviceClient, {
+          professionCode: declaredProfession,
+          compensationType,
+          entityType: "stripe_checkout_session",
+          entityId: userId,
+          actorId: userId,
+          metadata: { plan_id: planId ?? null, pack_quote_id: packQuoteId ?? null },
+        });
+        if (!gate.ok) {
+          return new Response(JSON.stringify(complianceErrorPayload(gate.verdict)), {
+            status: 409,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+    }
+
 
     // ── AFFILIATE ATTRIBUTION ─────────────────────────────────────────────
     // The referral code travels in the URL (?ref=CODE). It is NEVER trusted as

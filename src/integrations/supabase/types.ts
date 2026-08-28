@@ -4902,6 +4902,9 @@ export type Database = {
       affiliate_commissions: {
         Row: {
           affiliate_id: string
+          compliance_reason: string | null
+          compliance_rule_id: string | null
+          compliance_status: string
           contractor_user_id: string | null
           created_at: string
           first_payment_at: string | null
@@ -4910,6 +4913,7 @@ export type Database = {
           metadata: Json
           monthly_commission_cents: number
           plan_slug: string
+          profession_code: string | null
           prospect_id: string | null
           status: string
           total_paid_cents: number
@@ -4917,6 +4921,9 @@ export type Database = {
         }
         Insert: {
           affiliate_id: string
+          compliance_reason?: string | null
+          compliance_rule_id?: string | null
+          compliance_status?: string
           contractor_user_id?: string | null
           created_at?: string
           first_payment_at?: string | null
@@ -4925,6 +4932,7 @@ export type Database = {
           metadata?: Json
           monthly_commission_cents?: number
           plan_slug: string
+          profession_code?: string | null
           prospect_id?: string | null
           status?: string
           total_paid_cents?: number
@@ -4932,6 +4940,9 @@ export type Database = {
         }
         Update: {
           affiliate_id?: string
+          compliance_reason?: string | null
+          compliance_rule_id?: string | null
+          compliance_status?: string
           contractor_user_id?: string | null
           created_at?: string
           first_payment_at?: string | null
@@ -4940,6 +4951,7 @@ export type Database = {
           metadata?: Json
           monthly_commission_cents?: number
           plan_slug?: string
+          profession_code?: string | null
           prospect_id?: string | null
           status?: string
           total_paid_cents?: number
@@ -30074,6 +30086,7 @@ export type Database = {
         Row: {
           contractor_id: string
           created_at: string | null
+          credential_status: string
           credential_type: string
           credential_value: string | null
           data_source: string | null
@@ -30082,7 +30095,12 @@ export type Database = {
           id: string
           issued_at: string | null
           issuer: string | null
+          profession_code: string | null
+          review_notes: string | null
+          source_last_verified_at: string | null
+          source_url: string | null
           updated_at: string | null
+          verification_state: string
           verification_status: string | null
           verified_at: string | null
           verified_by: string | null
@@ -30090,6 +30108,7 @@ export type Database = {
         Insert: {
           contractor_id: string
           created_at?: string | null
+          credential_status?: string
           credential_type: string
           credential_value?: string | null
           data_source?: string | null
@@ -30098,7 +30117,12 @@ export type Database = {
           id?: string
           issued_at?: string | null
           issuer?: string | null
+          profession_code?: string | null
+          review_notes?: string | null
+          source_last_verified_at?: string | null
+          source_url?: string | null
           updated_at?: string | null
+          verification_state?: string
           verification_status?: string | null
           verified_at?: string | null
           verified_by?: string | null
@@ -30106,6 +30130,7 @@ export type Database = {
         Update: {
           contractor_id?: string
           created_at?: string | null
+          credential_status?: string
           credential_type?: string
           credential_value?: string | null
           data_source?: string | null
@@ -30114,7 +30139,12 @@ export type Database = {
           id?: string
           issued_at?: string | null
           issuer?: string | null
+          profession_code?: string | null
+          review_notes?: string | null
+          source_last_verified_at?: string | null
+          source_url?: string | null
           updated_at?: string | null
+          verification_state?: string
           verification_status?: string | null
           verified_at?: string | null
           verified_by?: string | null
@@ -70183,6 +70213,123 @@ export type Database = {
           },
         ]
       }
+      profession_compliance_rules: {
+        Row: {
+          advertising_allowed: boolean
+          alex_allowed_scope: Json
+          alex_prohibited_scope: Json
+          appointment_allowed: boolean
+          automated_verification_available: boolean
+          compensation_rules: Json
+          created_at: string
+          credential_expiry_required: boolean
+          credential_required: boolean
+          credential_source: string | null
+          credential_type: string | null
+          effective_from: string
+          effective_until: string | null
+          id: string
+          is_active: boolean
+          legal_review_notes: string | null
+          legal_review_status: string
+          legal_reviewed_at: string | null
+          legal_reviewed_by: string | null
+          matching_allowed: boolean
+          paid_referral_status: string
+          profession_code: string
+          profession_label_en: string | null
+          profession_label_fr: string
+          profession_type: string
+          prohibited_claims: Json
+          regulator_code: string | null
+          regulator_name: string | null
+          regulator_url: string | null
+          required_disclosures: Json
+          requires_regulated_handoff: boolean
+          reserved_acts: Json
+          source_last_verified_at: string | null
+          source_reference: string | null
+          source_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          advertising_allowed?: boolean
+          alex_allowed_scope?: Json
+          alex_prohibited_scope?: Json
+          appointment_allowed?: boolean
+          automated_verification_available?: boolean
+          compensation_rules?: Json
+          created_at?: string
+          credential_expiry_required?: boolean
+          credential_required?: boolean
+          credential_source?: string | null
+          credential_type?: string | null
+          effective_from?: string
+          effective_until?: string | null
+          id?: string
+          is_active?: boolean
+          legal_review_notes?: string | null
+          legal_review_status?: string
+          legal_reviewed_at?: string | null
+          legal_reviewed_by?: string | null
+          matching_allowed?: boolean
+          paid_referral_status?: string
+          profession_code: string
+          profession_label_en?: string | null
+          profession_label_fr: string
+          profession_type?: string
+          prohibited_claims?: Json
+          regulator_code?: string | null
+          regulator_name?: string | null
+          regulator_url?: string | null
+          required_disclosures?: Json
+          requires_regulated_handoff?: boolean
+          reserved_acts?: Json
+          source_last_verified_at?: string | null
+          source_reference?: string | null
+          source_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          advertising_allowed?: boolean
+          alex_allowed_scope?: Json
+          alex_prohibited_scope?: Json
+          appointment_allowed?: boolean
+          automated_verification_available?: boolean
+          compensation_rules?: Json
+          created_at?: string
+          credential_expiry_required?: boolean
+          credential_required?: boolean
+          credential_source?: string | null
+          credential_type?: string | null
+          effective_from?: string
+          effective_until?: string | null
+          id?: string
+          is_active?: boolean
+          legal_review_notes?: string | null
+          legal_review_status?: string
+          legal_reviewed_at?: string | null
+          legal_reviewed_by?: string | null
+          matching_allowed?: boolean
+          paid_referral_status?: string
+          profession_code?: string
+          profession_label_en?: string | null
+          profession_label_fr?: string
+          profession_type?: string
+          prohibited_claims?: Json
+          regulator_code?: string | null
+          regulator_name?: string | null
+          regulator_url?: string | null
+          required_disclosures?: Json
+          requires_regulated_handoff?: boolean
+          reserved_acts?: Json
+          source_last_verified_at?: string | null
+          source_reference?: string | null
+          source_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profile_ai_citation_history: {
         Row: {
           cited_at: string
@@ -96073,6 +96220,15 @@ export type Database = {
         Returns: number
       }
       evaluate_outreach_gate: { Args: never; Returns: undefined }
+      evaluate_profession_compliance: {
+        Args: {
+          _action: string
+          _alex_scope?: string
+          _compensation_type?: string
+          _profession_code: string
+        }
+        Returns: Json
+      }
       fn_alex_compute_booking_readiness: {
         Args: { _session_id: string }
         Returns: Json
@@ -96390,6 +96546,15 @@ export type Database = {
       is_within_send_window: {
         Args: { _at?: string; _channel: string }
         Returns: boolean
+      }
+      log_compliance_event: {
+        Args: {
+          _action: string
+          _entity_id: string
+          _entity_type: string
+          _metadata?: Json
+        }
+        Returns: string
       }
       log_system_audit: {
         Args: {
