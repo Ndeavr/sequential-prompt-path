@@ -1542,6 +1542,8 @@ export const AppRouter = () => (
         <Route path="/admin/ai-entities" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAiEntities /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/smart-context" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminSmartContext /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/plans-matrix" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminPlansMatrix /></Suspense></AdminProtectedRoute>} />
+        <Route path="/admin/compliance" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminComplianceCenter /></Suspense></AdminProtectedRoute>} />
+
 
         <Route path="/admin/aipp-import" element={<AdminProtectedRoute><PageAippImport /></AdminProtectedRoute>} />
         <Route path="/admin/aipp-profiles" element={<AdminProtectedRoute><PageAippProfiles /></AdminProtectedRoute>} />
