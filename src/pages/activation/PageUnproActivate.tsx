@@ -44,6 +44,9 @@ export default function PageUnproActivate() {
   const [correctionSent, setCorrectionSent] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  // Le CTA collant n'apparaît qu'une fois la valeur gratuite consultée.
+  const [showStickyCta, setShowStickyCta] = useState(false);
+  const offerRef = useRef<HTMLDivElement | null>(null);
   const engagedRef = useRef(false);
 
 
@@ -104,6 +107,8 @@ export default function PageUnproActivate() {
     };
     const onScroll = () => {
       if (window.scrollY > 120) markEngaged();
+      const top = offerRef.current?.getBoundingClientRect().top;
+      setShowStickyCta(typeof top === "number" && top < window.innerHeight * 0.9);
     };
     const timer = window.setTimeout(markEngaged, 6000);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -225,7 +230,9 @@ export default function PageUnproActivate() {
               </div>
             )}
 
-            {/* ------------- AU-DESSUS DE LA LIGNE DE FLOTTAISON : identité + offre + 1 CTA */}
+            {/* ---- AU-DESSUS DE LA LIGNE DE FLOTTAISON : la valeur gratuite d'abord.
+                 On ne demande jamais d'argent avant d'avoir montré ce qu'UNPRO
+                 sait déjà de l'entreprise (données réelles uniquement). */}
             <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur">
               <div className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-400/12 px-2.5 py-1 text-[10px] uppercase tracking-wider text-emerald-200">
                 <Building2 className="h-3 w-3" /> Profil déjà préparé par UNPRO
@@ -238,8 +245,39 @@ export default function PageUnproActivate() {
               )}
 
               <p className="mt-4 text-[15px] leading-relaxed text-white/85">
-                Votre profil UNPRO est prêt. Il ne manque que l'activation pour être recommandé aux
-                propriétaires de votre territoire.
+                Curieux de savoir si votre entreprise est recommandée par l'IA&nbsp;? Voici gratuitement
+                le profil et le score que nous avons déjà constitués pour {company}.
+              </p>
+
+              {profile?.website_host && (
+                <a
+                  href={profile.website_url ?? undefined}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  onClick={() => track("profile_section_expanded", { section: "website" })}
+                  className="mt-4 inline-flex items-center gap-1.5 text-[13px] text-sky-300 underline underline-offset-4"
+                >
+                  <Globe className="h-3.5 w-3.5" /> {profile.website_host}
+                </a>
+              )}
+            </div>
+
+            {/* Le score gratuit : la preuve avant la demande. */}
+            {profile && <ReadinessMeter profile={profile} onCorrect={handleCorrect} tone="activation" />}
+            {profile && <ReviewSignalCard profile={profile} />}
+            {profile && <FactGrid facts={profile.facts} />}
+
+            {correctionSent && (
+              <div className="rounded-2xl border border-sky-300/25 bg-sky-400/10 p-4 text-[13px] leading-relaxed text-sky-100">
+                Parfait. Dès l'activation, Alex vous guide pour corriger et compléter chaque information en
+                quelques secondes.
+              </div>
+            )}
+
+            {/* ------------------------------- ENSUITE seulement : l'offre + le CTA */}
+            <div ref={offerRef} className="rounded-3xl border border-white/10 bg-white/[0.05] p-6 backdrop-blur">
+              <p className="text-[15px] leading-relaxed text-white/85">
+                Il ne manque que l'activation pour être recommandé aux propriétaires de votre territoire.
               </p>
 
               <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.05] p-4">
@@ -250,10 +288,22 @@ export default function PageUnproActivate() {
                 <p className="mt-1 text-[13px] leading-snug text-white/75">{OFFER_350.card.title}</p>
               </div>
 
+              <ul className="mt-4 space-y-2">
+                {OFFER_350.card.bullets.map((b) => (
+                  <li key={b} className="flex items-start gap-2 text-[14px] leading-snug text-white/85">
+                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-400/20">
+                      <Check className="h-2.5 w-2.5 text-emerald-300" />
+                    </span>
+                    {b}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-[12.5px] leading-relaxed text-white/55">{OFFER_350.subtitle}</p>
+
               <Button
-                onClick={() => handleActivate("hero")}
+                onClick={() => handleActivate("offer")}
                 disabled={checkoutLoading}
-                className="mt-4 h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#050816] hover:bg-white/90"
+                className="mt-5 h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#050816] hover:bg-white/90"
               >
                 {checkoutLoading ? "Ouverture du paiement…" : (<>{OFFER_350.ctaActivate} <ArrowRight className="ml-1 h-4 w-4" /></>)}
               </Button>
@@ -276,45 +326,12 @@ export default function PageUnproActivate() {
                 Aucun abonnement. Aucun renouvellement automatique.
               </p>
 
-              {profile?.website_host && (
-                <a
-                  href={profile.website_url ?? undefined}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  onClick={() => track("profile_section_expanded", { section: "website" })}
-                  className="mt-4 inline-flex items-center gap-1.5 text-[13px] text-sky-300 underline underline-offset-4"
-                >
-                  <Globe className="h-3.5 w-3.5" /> {profile.website_host}
-                </a>
-              )}
-            </div>
-
-            {/* --------------------------------------- ce que l'activation inclut */}
-            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur">
-              <p className="text-[10px] uppercase tracking-wider text-white/50">Inclus dans l'activation</p>
-              <ul className="mt-3 space-y-2">
-                {OFFER_350.card.bullets.map((b) => (
-                  <li key={b} className="flex items-start gap-2 text-[14px] leading-snug text-white/85">
-                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-400/20">
-                      <Check className="h-2.5 w-2.5 text-emerald-300" />
-                    </span>
-                    {b}
-                  </li>
+              <ul className="mt-4 space-y-1.5">
+                {BENEFITS.map((b) => (
+                  <li key={b} className="text-[12.5px] leading-snug text-white/60">• {b}</li>
                 ))}
               </ul>
-              <p className="mt-3 text-[12.5px] leading-relaxed text-white/55">{OFFER_350.subtitle}</p>
             </div>
-
-            {profile && <ReviewSignalCard profile={profile} />}
-            {profile && <FactGrid facts={profile.facts} />}
-            {profile && <ReadinessMeter profile={profile} onCorrect={handleCorrect} tone="activation" />}
-
-            {correctionSent && (
-              <div className="rounded-2xl border border-sky-300/25 bg-sky-400/10 p-4 text-[13px] leading-relaxed text-sky-100">
-                Parfait. Dès l'activation, Alex vous guide pour corriger et compléter chaque information en
-                quelques secondes.
-              </div>
-            )}
 
             <button
               type="button"
@@ -327,8 +344,8 @@ export default function PageUnproActivate() {
         )}
       </div>
 
-      {/* CTA collant mobile : la décision reste toujours à un pouce. */}
-      {state === "ready" && prospect && (
+      {/* CTA collant mobile : n'apparaît qu'après la valeur gratuite (score + profil). */}
+      {state === "ready" && prospect && showStickyCta && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#050816]/95 px-5 py-3 backdrop-blur sm:hidden">
           <Button
             onClick={() => handleActivate("sticky_mobile")}

@@ -149,7 +149,7 @@ Deno.serve(async (req) => {
     const { data: prospect } = await supabase
       .from("verified_contractor_prospects")
       .select(
-        "id, business_name, legal_name, city, category, email, website_url, phone_e164, rbq_number, " +
+        "id, business_name, legal_name, city, region, category, email, website_url, phone_e164, rbq_number, " +
           "google_place_id, google_business_url, service_areas, verification_status, data_quality_score, " +
           "source_urls, phone_source_url, rbq_source_url, verified_at",
       )
@@ -230,6 +230,12 @@ Deno.serve(async (req) => {
       push({ key: "city", label: "Ville principale", value: prospect.city, provenance: "verified", source: "Fiche publique" });
     }
 
+    // Territoire administratif réel issu du registre (jamais déduit d'un nom).
+    const region = (prospect as { region?: string | null }).region?.trim() || null;
+    if (!prospect.city && region) {
+      push({ key: "region", label: "Région administrative", value: region, provenance: "verified", source: "Registre officiel" });
+    }
+
     const areas = Array.isArray(prospect.service_areas)
       ? (prospect.service_areas as unknown[]).map(String).filter(Boolean)
       : [];
@@ -281,7 +287,7 @@ Deno.serve(async (req) => {
     const readinessChecks = [
       { key: "identity", label: "Identité d'entreprise", ok: Boolean(display) },
       { key: "trade", label: "Spécialité identifiée", ok: Boolean(trade) },
-      { key: "territory", label: "Territoire défini", ok: Boolean(prospect.city || areas.length) },
+      { key: "territory", label: "Territoire défini", ok: Boolean(prospect.city || region || areas.length) },
       { key: "contact", label: "Contact joignable", ok: Boolean(prospect.phone_e164 || prospect.email) },
       // « Présence en ligne » : site web OU fiche Google. Le libellé doit rester
       // exact, sinon la fiche affirme un site web que l'entreprise n'a pas.
@@ -389,7 +395,7 @@ Deno.serve(async (req) => {
         display_name: display,
         legal_name: legal,
         trade,
-        city: prospect.city ?? null,
+        city: prospect.city ?? region ?? null,
         service_areas: areas,
         logo_url: aipp?.logo_url ?? null, // only if a real logo was already stored
         website_url: prospect.website_url ?? null,
