@@ -99,7 +99,120 @@ function detectViolations(text: string): { violations: Violation[]; correctedTex
   return { violations, correctedText: corrected };
 }
 
+/* ── Regulated-profession guardrails ─────────────────────────────── */
+
+interface RegulatedGuardResult {
+  blocked: boolean;
+  violations: Violation[];
+  verdict: ComplianceVerdict | null;
+  safeText: string;
+  disclosure: string | null;
+  nextStage: string;
+}
+
+/**
+ * Detectors for reserved professional acts Alex must never perform.
+ * These map to `alex_prohibited_scope` entries in the compliance rules; the
+ * decision itself always comes from the server-side rule, never from here.
+ */
+const RESERVED_ACT_PATTERNS: { scope: string; pattern: RegExp }[] = [
+  { scope: "insurance_product_recommendation", pattern: /(je\s+vous\s+recommande|prenez|choisissez)[^.]{0,60}(police|assurance|couverture)/gi },
+  { scope: "coverage_amount_advice", pattern: /(couverture|montant\s+assur[ée])[^.]{0,40}(de\s+)?\d[\d\s.,]*\s*\$/gi },
+  { scope: "insurer_recommendation", pattern: /(assureur|compagnie\s+d['’]assurance)[^.]{0,30}(le\s+meilleur|recommand)/gi },
+  { scope: "mortgage_product_recommendation", pattern: /(je\s+vous\s+recommande|optez\s+pour)[^.]{0,60}(hypoth[èe]que|pr[êe]t|terme\s+fixe|terme\s+variable)/gi },
+  { scope: "rate_advice", pattern: /(taux)[^.]{0,30}(le\s+meilleur|garanti|vous\s+devriez)/gi },
+  { scope: "legal_advice", pattern: /(juridiquement|l[ée]galement)[^.]{0,40}(vous\s+devez|vous\s+pouvez|c['’]est\s+valide)/gi },
+  { scope: "structural_opinion", pattern: /(la\s+structure|la\s+fondation)[^.]{0,40}(est\s+s[ée]curitaire|n['’]est\s+pas\s+dangereuse|tient\s+le\s+coup)/gi },
+  { scope: "property_valuation", pattern: /(votre\s+(maison|propri[ée]t[ée]))[^.]{0,30}vaut\s+/gi },
+];
+
+async function evaluateRegulatedScope(
+  text: string,
+  professionCode: string,
+  declaredScope: string | undefined,
+  sessionId: string | undefined,
+): Promise<RegulatedGuardResult> {
+  const sb = serviceClient();
+  const violations: Violation[] = [];
+  let safeText = text;
+  let blocked = false;
+
+  // 1. Rule for the declared action scope (fail closed).
+  const verdict = await evaluateCompliance(sb, {
+    professionCode,
+    action: "alex_action",
+    alexScope: declaredScope ?? null,
+  });
+
+  if (declaredScope && !verdict.allowed) {
+    blocked = true;
+    violations.push({
+      type: "regulated_scope_denied",
+      detected_text: `${professionCode}:${declaredScope} → ${verdict.decision}`,
+      severity: "critical",
+    });
+  }
+
+  // 2. Reserved acts detected in the generated text itself.
+  for (const { scope, pattern } of RESERVED_ACT_PATTERNS) {
+    const re = new RegExp(pattern.source, pattern.flags);
+    if (!re.test(safeText)) continue;
+    const scopeVerdict = await evaluateCompliance(sb, {
+      professionCode,
+      action: "alex_action",
+      alexScope: scope,
+    });
+    if (!scopeVerdict.allowed) {
+      blocked = true;
+      violations.push({
+        type: "reserved_professional_act",
+        detected_text: scope,
+        severity: "critical",
+      });
+    }
+  }
+
+  // 3. Unverifiable claims / implied regulator endorsement.
+  const claims = scanProhibitedClaims(safeText, (verdict.prohibited_claims as string[]) ?? []);
+  if (!claims.clean) {
+    blocked = true;
+    safeText = claims.sanitized;
+    violations.push({
+      type: "prohibited_advertising_claim",
+      detected_text: claims.matches.join(", "),
+      severity: "high",
+    });
+  }
+
+  if (blocked) {
+    safeText =
+      "Je vous mets en relation avec un professionnel autorisé qui pourra répondre à cette question. " +
+      "Souhaitez-vous que je planifie un rendez-vous ?";
+    await logComplianceEvent(sb, {
+      action: COMPLIANCE_EVENTS.blockedAction,
+      entityType: "alex_response",
+      entityId: sessionId ?? "unknown",
+      professionCode,
+      verdict,
+      metadata: {
+        blocked_operation: "alex_regulated_response",
+        violations: violations.map((v) => v.type),
+      },
+    });
+  }
+
+  return {
+    blocked,
+    violations,
+    verdict,
+    safeText,
+    disclosure: verdict.requires_regulated_handoff ? UNPRO_REGULATED_DISCLOSURE : null,
+    nextStage: verdict.requires_regulated_handoff ? "regulated_handoff" : "appointment",
+  };
+}
+
 serve(async (req) => {
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
