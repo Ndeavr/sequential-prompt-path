@@ -161,7 +161,7 @@ function OfferSection() {
 
         <Link
           to="/entrepreneurs/garantie"
-          className="gold-btn mt-6 inline-flex h-13 w-full items-center justify-center gap-2 rounded-2xl px-5 py-4 text-[15px] font-bold transition-transform hover:-translate-y-0.5"
+          className="gold-btn mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-4 text-[15px] font-bold transition-transform hover:-translate-y-0.5"
         >
           {OFFER_350.ctaCalculate}
           <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
