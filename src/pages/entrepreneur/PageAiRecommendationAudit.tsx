@@ -365,10 +365,11 @@ export default function PageAiRecommendationAudit() {
                 onClick={scrollToAudit}
                 className="gold-btn inline-flex h-12 items-center gap-2 rounded-2xl px-6 text-[15px] font-bold transition-transform hover:-translate-y-0.5"
               >
-                Vérifier mon entreprise <ArrowRight className="h-4 w-4" aria-hidden />
+                Découvrir mon score IA <ArrowRight className="h-4 w-4" aria-hidden />
               </button>
               <span className="text-[12.5px] text-muted-foreground">Gratuit · environ 60 secondes · aucun engagement</span>
             </div>
+
           </div>
         </section>
 
