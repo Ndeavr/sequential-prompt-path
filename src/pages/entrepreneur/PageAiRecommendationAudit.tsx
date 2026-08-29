@@ -474,7 +474,7 @@ export default function PageAiRecommendationAudit() {
         </div>
 
         {/* ------------------------------------- Operational sections A–F */}
-        <OperationalSections />
+        <OperationalSections onAuditClick={scrollToAudit} />
       </main>
     </div>
   );
