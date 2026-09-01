@@ -284,9 +284,49 @@ export default function PageAffiliateActionMode() {
               ) : (
                 <p className="text-sm text-muted-foreground">Le lien est unique et vous est attribué automatiquement.</p>
               )}
+
+              {/* Offre affilié — 3 rendez-vous offerts + 50 % du premier mois payé */}
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Gift className="h-4 w-4 text-amber-500" />3 rendez-vous qualifiés offerts
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Réservé à vos appels personnels. S'il veut plus de volume ensuite, son plan
+                  personnalisé est calculé et votre code donne 50 % du premier mois payé.
+                </p>
+                {offer ? (
+                  <div className="mt-3 space-y-2">
+                    <div className="flex items-center justify-between rounded-xl bg-background px-3 py-2">
+                      <span className="font-mono text-base font-bold tracking-wider text-foreground">{offer.promo_code}</span>
+                      <Button
+                        variant="ghost" size="sm" className="gap-1.5 text-xs"
+                        onClick={() => { navigator.clipboard.writeText(offer.promo_code); toast.success("Code copié"); }}
+                      >
+                        <Copy className="h-3.5 w-3.5" />Copier
+                      </Button>
+                    </div>
+                    <Button
+                      variant="outline" size="sm" className="w-full gap-1.5 text-xs"
+                      onClick={() => { navigator.clipboard.writeText(offerScript); toast.success("Message copié"); }}
+                    >
+                      <Copy className="h-3.5 w-3.5" />Copier le message d'offre
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={onOfferFree}
+                    disabled={offering}
+                    className="mt-3 h-12 w-full gap-2 rounded-2xl bg-amber-500 text-black hover:bg-amber-500/90"
+                  >
+                    {offering ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gift className="h-4 w-4" />}
+                    Offrir 3 rendez-vous
+                  </Button>
+                )}
+              </div>
             </div>
           ) : null}
         </StepCard>
+
 
         {/* 4 — SUIVRE */}
         <StepCard n={4} title="Faire le suivi" subtitle="Voyez ce qui se passe vraiment" state={step4}>

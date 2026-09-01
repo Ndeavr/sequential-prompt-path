@@ -444,11 +444,35 @@ Deno.serve(async (req) => {
 
       redemptionId = promoResult.redemption_id;
 
+      // ── AFFILIATE-OWNED PROMO → PERMANENT ATTRIBUTION ──
+      // A personal affiliate promo keeps the originating affiliate attached even
+      // when the contractor lands without a ?ref= code. Never overrides an
+      // explicit, already-resolved referral.
+      if (!affiliateRefCode) {
+        const { data: promoRow } = await serviceClient
+          .from("promo_codes")
+          .select("affiliate_id")
+          .eq("code", promoCode.trim().toUpperCase())
+          .maybeSingle();
+        if (promoRow?.affiliate_id) {
+          const { data: promoAff } = await serviceClient
+            .from("affiliates")
+            .select("id, referral_code")
+            .eq("id", promoRow.affiliate_id)
+            .maybeSingle();
+          if (promoAff?.referral_code) {
+            affiliateRefCode = promoAff.referral_code as string;
+            affiliateRefId = promoAff.id as string;
+          }
+        }
+      }
+
       // Check if 100% discount = zero total
       if (promoResult.discount_type === "percentage" && promoResult.discount_value >= 100) {
         isZeroTotal = true;
       }
     }
+
 
     // ── ZERO-TOTAL ACTIVATION (no Stripe needed) ──
     if (isZeroTotal) {

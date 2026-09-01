@@ -5073,6 +5073,85 @@ export type Database = {
           },
         ]
       }
+      affiliate_free_appointment_offers: {
+        Row: {
+          accepted_at: string | null
+          affiliate_id: string
+          company_name: string | null
+          consumed_at: string | null
+          contractor_id: string | null
+          created_at: string
+          expires_at: string
+          free_appointments: number
+          id: string
+          lead_id: string | null
+          metadata: Json
+          notes: string | null
+          offered_at: string
+          promo_code_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          affiliate_id: string
+          company_name?: string | null
+          consumed_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          expires_at?: string
+          free_appointments?: number
+          id?: string
+          lead_id?: string | null
+          metadata?: Json
+          notes?: string | null
+          offered_at?: string
+          promo_code_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          affiliate_id?: string
+          company_name?: string | null
+          consumed_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          expires_at?: string
+          free_appointments?: number
+          id?: string
+          lead_id?: string | null
+          metadata?: Json
+          notes?: string | null
+          offered_at?: string
+          promo_code_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_free_appointment_offers_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_free_appointment_offers_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
+          },
+          {
+            foreignKeyName: "affiliate_free_appointment_offers_promo_code_id_fkey"
+            columns: ["promo_code_id"]
+            isOneToOne: false
+            referencedRelation: "promo_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affiliate_funnel_events: {
         Row: {
           affiliate_id: string | null
@@ -71803,6 +71882,7 @@ export type Database = {
       promo_codes: {
         Row: {
           active: boolean
+          affiliate_id: string | null
           applies_to_billing_intervals: string[] | null
           archived_at: string | null
           code: string
@@ -71834,6 +71914,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          affiliate_id?: string | null
           applies_to_billing_intervals?: string[] | null
           archived_at?: string | null
           code: string
@@ -71865,6 +71946,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          affiliate_id?: string | null
           applies_to_billing_intervals?: string[] | null
           archived_at?: string | null
           code?: string
@@ -71894,7 +71976,22 @@ export type Database = {
           usage_limit_per_business?: number | null
           usage_limit_total?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "promo_codes_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_codes_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "v_affiliate_workload"
+            referencedColumns: ["affiliate_id"]
+          },
+        ]
       }
       properties: {
         Row: {
@@ -96053,6 +96150,13 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      affiliate_ensure_personal_promo: {
+        Args: { _affiliate_id: string }
+        Returns: {
+          code: string
+          promo_code_id: string
+        }[]
+      }
       affiliate_entry_by_slug: {
         Args: { p_slug: string }
         Returns: {
@@ -96063,6 +96167,10 @@ export type Database = {
           slug: string
           status: string
         }[]
+      }
+      affiliate_offer_free_appointments: {
+        Args: { _company_name?: string; _lead_id: string; _notes?: string }
+        Returns: Json
       }
       aipp_is_published: { Args: { _profile_id: string }; Returns: boolean }
       apply_lead_normalization: { Args: { payload: Json }; Returns: number }
