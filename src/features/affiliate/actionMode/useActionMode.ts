@@ -152,7 +152,6 @@ export interface FreeAppointmentOffer {
   offer_id: string;
   promo_code: string;
   free_appointments: number;
-  expires_at: string;
 }
 
 export async function offerFreeAppointments(params: {
@@ -179,7 +178,6 @@ export async function offerFreeAppointments(params: {
     offer_id: res.offer_id,
     promo_code: res.promo_code,
     free_appointments: res.free_appointments,
-    expires_at: res.expires_at,
   };
 }
 
