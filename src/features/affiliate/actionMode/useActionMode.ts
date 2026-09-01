@@ -144,6 +144,46 @@ export async function logCallStarted(affiliateId: string, leadId: string) {
   trackAffiliateFunnel("call_started", { affiliate_id: affiliateId, metadata: { lead_id: leadId } });
 }
 
+/**
+ * Offre affilié : 3 rendez-vous qualifiés offerts + code promo personnel
+ * (50 % du premier mois payé seulement). Attribution permanente à l'affilié.
+ */
+export interface FreeAppointmentOffer {
+  offer_id: string;
+  promo_code: string;
+  free_appointments: number;
+  expires_at: string;
+}
+
+export async function offerFreeAppointments(params: {
+  affiliateId: string;
+  leadId: string;
+  companyName?: string | null;
+}): Promise<FreeAppointmentOffer> {
+  const { data, error } = await (supabase as any).rpc("affiliate_offer_free_appointments", {
+    _lead_id: params.leadId,
+    _company_name: params.companyName ?? null,
+    _notes: null,
+  });
+  if (error) throw new Error(error.message);
+  const res = data as any;
+  if (!res?.ok) throw new Error(res?.reason ?? "Offre impossible.");
+  await (supabase as any).from("affiliate_lead_events").insert({
+    affiliate_id: params.affiliateId,
+    lead_id: params.leadId,
+    event_type: "status_changed",
+    channel: "voice",
+    payload: { free_appointments_offered: res.free_appointments, promo_code: res.promo_code },
+  });
+  return {
+    offer_id: res.offer_id,
+    promo_code: res.promo_code,
+    free_appointments: res.free_appointments,
+    expires_at: res.expires_at,
+  };
+}
+
+
 export interface DayStats {
   contacted: number;
   auditsSent: number;
