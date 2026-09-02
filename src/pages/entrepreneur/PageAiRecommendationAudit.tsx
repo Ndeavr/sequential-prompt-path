@@ -19,13 +19,13 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
   BadgeCheck,
+  Check,
   Loader2,
   PenLine,
   Search,
   Sparkles,
   Clock3,
   MapPin,
-  
   Zap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";

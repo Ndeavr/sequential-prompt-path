@@ -10,6 +10,8 @@ export type ActivationEvent =
   | "landing_engaged"
   | "profile_section_expanded"
   | "correction_requested"
+  | "profile_continue_clicked"
+  | "personalized_quote_started"
   | "checkout_cta_clicked"
   | "customize_guarantee_clicked"
   | "checkout_cta_failed";
