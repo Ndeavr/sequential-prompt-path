@@ -62,8 +62,9 @@ export function FreeAppointmentOffersTab() {
   const q = useQuery({
     queryKey: ["admin-free-appointment-offers"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("affiliate_free_appointment_offers")
+      const { data, error } = await supabase
+        .from("affiliate_free_appointment_offers" as never)
+
         .select("id, affiliate_id, lead_id, city, trade, status, granted_appointments, consumed_appointments, promo_code_id, expires_at, created_at")
         .order("created_at", { ascending: false })
         .limit(200);
