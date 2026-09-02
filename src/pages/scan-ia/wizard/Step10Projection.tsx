@@ -104,8 +104,8 @@ export default function Step10Projection() {
                 <div className="text-white font-semibold text-sm">{plan.name}</div>
               </div>
               <div className="text-right">
-                <div className="text-white font-semibold text-sm">350&nbsp;$ aujourd'hui</div>
-                <div className="text-white/50 text-[10px]">paiement unique · aucun abonnement</div>
+                <div className="text-white font-semibold text-sm">Devis personnalisé</div>
+                <div className="text-white/50 text-[10px]">selon vos objectifs et votre capacité</div>
               </div>
             </button>
           )}
