@@ -145,8 +145,10 @@ export function SectionTwoPaths() {
             Courtiers, notaires, inspecteurs, évaluateurs, arpenteurs, entretien
             ménager, lavage de vitres, gazon, conduits… Devenez membre fondateur
             UNPRO : les 10 premiers membres de chaque ville profitent de 12 mois
-            gratuitement. Ensuite 350 $/an.
+            gratuitement. Ensuite, un montant calculé selon votre territoire et
+            vos objectifs.
           </p>
+
           <Link
             to="/fondateurs"
             className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-[15px] font-semibold text-primary-foreground shadow-md shadow-primary/25 transition-transform hover:-translate-y-0.5"
