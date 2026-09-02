@@ -145,13 +145,19 @@ export async function logCallStarted(affiliateId: string, leadId: string) {
 }
 
 /**
- * Offre affilié : 3 rendez-vous qualifiés offerts + code promo personnel
- * (50 % du premier mois payé seulement). Attribution permanente à l'affilié.
+ * Offre affilié : 3 rendez-vous qualifiés PROPOSÉS (accordés à l'activation)
+ * + code promo personnel (50 % du premier mois payé seulement).
+ * Plafond serveur atomique : 10 entrepreneurs par ville.
  */
 export interface FreeAppointmentOffer {
   offer_id: string;
   promo_code: string;
   free_appointments: number;
+  granted_appointments?: number;
+  status?: string;
+  city?: string | null;
+  city_cap?: number;
+  city_slots_remaining?: number;
 }
 
 export async function offerFreeAppointments(params: {
@@ -165,21 +171,32 @@ export async function offerFreeAppointments(params: {
     _notes: null,
   });
   if (error) throw new Error(error.message);
-  const res = data as any;
+  const res = data as (FreeAppointmentOffer & { ok?: boolean; reason?: string }) | null;
   if (!res?.ok) throw new Error(res?.reason ?? "Offre impossible.");
   await (supabase as any).from("affiliate_lead_events").insert({
     affiliate_id: params.affiliateId,
     lead_id: params.leadId,
     event_type: "status_changed",
     channel: "voice",
-    payload: { free_appointments_offered: res.free_appointments, promo_code: res.promo_code },
+    payload: {
+      free_appointments_offered: res.free_appointments,
+      promo_code: res.promo_code,
+      city: res.city ?? null,
+      city_slots_remaining: res.city_slots_remaining ?? null,
+    },
   });
   return {
     offer_id: res.offer_id,
     promo_code: res.promo_code,
     free_appointments: res.free_appointments,
+    granted_appointments: res.granted_appointments ?? 0,
+    status: res.status ?? "offered",
+    city: res.city ?? null,
+    city_cap: res.city_cap,
+    city_slots_remaining: res.city_slots_remaining,
   };
 }
+
 
 
 export interface DayStats {
