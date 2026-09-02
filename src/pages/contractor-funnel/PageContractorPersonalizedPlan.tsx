@@ -139,14 +139,15 @@ export default function PageContractorPersonalizedPlan() {
         },
       );
       if (error) throw error;
-      const url = (data as any)?.url;
+      const url = (data as { url?: string } | null)?.url;
       if (!url) throw new Error("URL Stripe manquante.");
       redirectToCheckout(url);
       setTimeout(() => setCheckoutLoading(false), 2500);
-    } catch (e: any) {
+    } catch {
       toast.error("Le paiement n'a pas pu démarrer. On réessaie dans un instant.");
       setCheckoutLoading(false);
     }
+
   };
 
   const triadPlans = useMemo(() => {
