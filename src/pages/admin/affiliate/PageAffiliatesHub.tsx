@@ -567,11 +567,12 @@ export default function PageAffiliatesHub() {
         </header>
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid grid-cols-4 lg:grid-cols-11 h-auto">
+          <TabsList className="grid grid-cols-4 lg:grid-cols-12 h-auto">
             <TabsTrigger value="dashboard" className="text-xs"><TrendingUp className="w-3.5 h-3.5 mr-1" />Dashboard</TabsTrigger>
             <TabsTrigger value="affiliates" className="text-xs"><Users className="w-3.5 h-3.5 mr-1" />Affiliés</TabsTrigger>
             <TabsTrigger value="prospects" className="text-xs"><ClipboardList className="w-3.5 h-3.5 mr-1" />Prospects</TabsTrigger>
             <TabsTrigger value="assignments" className="text-xs"><UserPlus className="w-3.5 h-3.5 mr-1" />Assignations</TabsTrigger>
+            <TabsTrigger value="offers" className="text-xs"><Gift className="w-3.5 h-3.5 mr-1" />Offres 3 RDV</TabsTrigger>
             <TabsTrigger value="applications" className="text-xs"><FileText className="w-3.5 h-3.5 mr-1" />Candidat.</TabsTrigger>
             <TabsTrigger value="commissions" className="text-xs"><DollarSign className="w-3.5 h-3.5 mr-1" />Comm.</TabsTrigger>
             <TabsTrigger value="payouts" className="text-xs"><Wallet className="w-3.5 h-3.5 mr-1" />Paiements</TabsTrigger>
@@ -580,6 +581,7 @@ export default function PageAffiliatesHub() {
             <TabsTrigger value="subaffiliates" className="text-xs"><UserPlus className="w-3.5 h-3.5 mr-1" />Équipes</TabsTrigger>
             <TabsTrigger value="settings" className="text-xs"><Settings className="w-3.5 h-3.5 mr-1" />Réglages</TabsTrigger>
           </TabsList>
+
 
           <div className="mt-6">
             <TabsContent value="dashboard">
