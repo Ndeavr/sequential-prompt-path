@@ -47,17 +47,52 @@ const PLAN_LABEL: Record<string, string> = {
 // Active catalog order (public.plans, audience=contractor, active=true).
 const PLAN_ORDER = ["presence", "depart", "croissance_v2", "pro_v2", "elite_v2", "signature_v2"];
 
+/** État EXACT de l'offre affilié, validé côté serveur. Jamais dérivé de l'URL. */
+interface AffiliateOfferState {
+  offer_exists: boolean;
+  status?: "offered" | "accepted" | "granted" | "consumed" | "expired" | "revoked";
+  offered_appointments?: number;
+  granted_appointments?: number;
+  consumed_appointments?: number;
+  remaining_appointments?: number;
+  promo_valid: boolean;
+  promo_code?: string | null;
+  discount_percent?: number | null;
+  discount_duration?: string | null;
+}
+
 export default function PageContractorPersonalizedPlan() {
   const { quoteId } = useParams<{ quoteId: string }>();
   const [searchParams] = useSearchParams();
   // Offre affilié : code promo personnel (50 % du premier mois payé seulement).
   const promoCode = (searchParams.get("promo") ?? "").trim().toUpperCase() || null;
   const affiliateRef = (searchParams.get("ref") ?? "").trim().toUpperCase() || null;
+  const offerId = (searchParams.get("offer") ?? "").trim() || null;
   const navigate = useNavigate();
   const [quote, setQuote] = useState<PricingQuote | null>(null);
+  const [offerState, setOfferState] = useState<AffiliateOfferState | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [breakdownOpen, setBreakdownOpen] = useState(false);
+
+  // Aucune offre n'est affichée sans preuve serveur : un entrepreneur organique
+  // non attribué ne voit jamais l'offre affilié.
+  useEffect(() => {
+    if (!promoCode && !offerId) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.rpc("affiliate_offer_public_state" as never, {
+        _offer_id: offerId,
+        _promo_code: promoCode,
+      } as never);
+      if (cancelled || error) return;
+      setOfferState(data as unknown as AffiliateOfferState);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [promoCode, offerId]);
+
 
   useEffect(() => {
     if (!quoteId) return;
