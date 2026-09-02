@@ -165,8 +165,9 @@ export default function PageAffiliateActionMode() {
         sent_at: new Date().toISOString(),
       } as ActionAudit));
       refreshStats();
-    } catch (e: any) {
-      toast.error("Envoi impossible", { description: e?.message ?? "Réessayez." });
+    } catch (e) {
+      toast.error("Envoi impossible", { description: e instanceof Error ? e.message : "Réessayez." });
+
     } finally {
       setSending(null);
     }
