@@ -339,11 +339,19 @@ export default function PageAffiliateActionMode() {
                   <Gift className="h-4 w-4 text-amber-500" />3 rendez-vous qualifiés offerts
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Réservé à vos appels personnels. S'il veut plus de volume ensuite, son plan
+                  Réservé à vos appels personnels · 10 entrepreneurs par ville. Les rendez-vous
+                  sont accordés à l'activation du profil. S'il veut plus de volume, son plan
                   personnalisé est calculé et votre code donne 50 % du premier mois payé.
                 </p>
                 {offer ? (
                   <div className="mt-3 space-y-2">
+                    <p className="text-xs text-muted-foreground">
+                      Offre proposée{offer.city ? ` · ${offer.city}` : ""}
+                      {typeof offer.city_slots_remaining === "number"
+                        ? ` · ${offer.city_slots_remaining} place(s) restante(s)`
+                        : ""}{" "}
+                      · accordés : {offer.granted_appointments ?? 0}/{offer.free_appointments}
+                    </p>
                     <div className="flex items-center justify-between rounded-xl bg-background px-3 py-2">
                       <span className="font-mono text-base font-bold tracking-wider text-foreground">{offer.promo_code}</span>
                       <Button
@@ -353,6 +361,7 @@ export default function PageAffiliateActionMode() {
                         <Copy className="h-3.5 w-3.5" />Copier
                       </Button>
                     </div>
+
                     <Button
                       variant="outline" size="sm" className="w-full gap-1.5 text-xs"
                       onClick={() => { navigator.clipboard.writeText(offerScript); toast.success("Message copié"); }}
