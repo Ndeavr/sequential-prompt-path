@@ -1,0 +1,1 @@
+ALTER VIEW public.v_outreach_command_funnel SET (security_invoker = true);

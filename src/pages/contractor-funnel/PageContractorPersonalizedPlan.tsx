@@ -4,7 +4,7 @@
  * Mobile-first cinematic dark glassmorphism. Outcome-first copy.
  */
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import {
@@ -49,6 +49,10 @@ const PLAN_ORDER = ["presence", "depart", "croissance_v2", "pro_v2", "elite_v2",
 
 export default function PageContractorPersonalizedPlan() {
   const { quoteId } = useParams<{ quoteId: string }>();
+  const [searchParams] = useSearchParams();
+  // Offre affilié : code promo personnel (50 % du premier mois payé seulement).
+  const promoCode = (searchParams.get("promo") ?? "").trim().toUpperCase() || null;
+  const affiliateRef = (searchParams.get("ref") ?? "").trim().toUpperCase() || null;
   const navigate = useNavigate();
   const [quote, setQuote] = useState<PricingQuote | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,6 +96,8 @@ export default function PageContractorPersonalizedPlan() {
             // Up/down triad picks fall back to catalog price for that plan.
             // Server-authoritative pricing: the browser sends identifiers only.
             ...(isRecommended && { quoteId: quote.id }),
+            ...(promoCode && { promoCode }),
+            ...(affiliateRef && { ref: affiliateRef }),
             successUrl: `${window.location.origin}/entrepreneur/plan-personnalise/${quote.id}?checkout=success`,
             cancelUrl: `${window.location.origin}/entrepreneur/plan-personnalise/${quote.id}?checkout=canceled`,
           },
@@ -200,7 +206,25 @@ export default function PageContractorPersonalizedPlan() {
           </h1>
         </motion.div>
 
+        {/* Offre affilié active */}
+        {promoCode && (
+          <GlassCard className="p-5 mb-5 border-emerald-400/30">
+            <div className="flex items-center gap-2 mb-2 text-emerald-300">
+              <CheckCircle2 className="w-4 h-4" />
+              <span className="text-xs uppercase tracking-wider">
+                Offre appliquée
+              </span>
+            </div>
+            <p className="text-sm text-white/80">
+              Vos 3 rendez-vous qualifiés offerts sont réservés. Avec le code{" "}
+              <span className="font-semibold text-white">{promoCode}</span>,
+              votre premier mois est à moitié prix — une seule fois.
+            </p>
+          </GlassCard>
+        )}
+
         {/* Hero plan card */}
+
         <GlassCard className="p-7 mb-5">
           <div className="flex items-center gap-2 mb-3">
             <Sparkles className="w-4 h-4 text-amber-400" />
