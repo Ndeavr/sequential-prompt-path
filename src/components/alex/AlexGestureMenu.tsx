@@ -21,7 +21,7 @@ const ITEMS: Array<{
   Icon: typeof Mic;
   angle: number; // deg from top, clockwise
 }> = [
-  { dir: "up",    label: "Parler à Alex",   Icon: Mic,         angle: 0   },
+  { dir: "up",    label: "Parler à Clara",   Icon: Mic,         angle: 0   },
   { dir: "right", label: "Actions rapides", Icon: Zap,         angle: 90  },
   { dir: "down",  label: "Réduire",         Icon: ChevronDown, angle: 180 },
   { dir: "left",  label: "Historique",      Icon: History,     angle: 270 },

@@ -36,7 +36,7 @@ const EntrepreneurWelcomeEmail = ({ businessName, ownerName }: EntrepreneurWelco
           <Text style={valueItem}>✓ Des propriétaires qualifiés dans votre zone</Text>
           <Text style={valueItem}>✓ Rendez-vous livrés sans cold-call</Text>
           <Text style={valueItem}>✓ Profil vérifié = confiance immédiate</Text>
-          <Text style={valueItem}>✓ Alex, votre assistant IA, gère le matching</Text>
+          <Text style={valueItem}>✓ Clara, votre assistant IA, gère le matching</Text>
         </Section>
 
         <Section style={ctaSection}>

@@ -13,12 +13,12 @@ interface Props {
 
 export default function HeroSectionAlexOrbLite({ isListening, isSpeaking, isThinking }: Props) {
   const statusText = isSpeaking
-    ? "Alex parle..."
+    ? "Clara parle..."
     : isListening
     ? "Je vous écoute"
     : isThinking
     ? "Un instant..."
-    : "Alex · UNPRO";
+    : "Clara · UNPRO";
 
   return (
     <div className="flex items-center gap-3 px-4 py-3 border-b border-border/20 bg-card/50 backdrop-blur-sm">
@@ -45,7 +45,7 @@ export default function HeroSectionAlexOrbLite({ isListening, isSpeaking, isThin
       </div>
 
       <div className="flex-1 min-w-0">
-        <h1 className="text-sm font-semibold text-foreground font-display">Alex</h1>
+        <h1 className="text-sm font-semibold text-foreground font-display">Clara</h1>
         <motion.p
           key={statusText}
           initial={{ opacity: 0 }}

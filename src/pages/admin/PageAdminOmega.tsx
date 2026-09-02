@@ -332,7 +332,7 @@ const PageAdminOmega = () => {
                   <div className="mt-3 grid grid-cols-3 gap-2">
                     <PipelineLink onClick={() => setPipelineOpen("revenue")} label="Revenu" />
                     <PipelineLink onClick={() => setPipelineOpen("booking")} label="RDV" />
-                    <PipelineLink onClick={() => setPipelineOpen("alex")} label="Alex" />
+                    <PipelineLink onClick={() => setPipelineOpen("alex")} label="Clara" />
                   </div>
                 </GlassCard>
 
@@ -490,7 +490,7 @@ const PageAdminOmega = () => {
         <div className="mx-auto flex max-w-2xl items-center justify-around px-2 py-2.5">
           <BottomNavItem to="/admin/omega" icon={<HomeIcon className="h-4 w-4" />} label="Omega" active />
           <BottomNavItem to="/admin/revenue" icon={<DollarSign className="h-4 w-4" />} label="Revenue" />
-          <BottomNavItem to="/alex" icon={<Sparkles className="h-4 w-4" />} label="Alex" />
+          <BottomNavItem to="/alex" icon={<Sparkles className="h-4 w-4" />} label="Clara" />
           <BottomNavItem to="/admin/agents" icon={<Bot className="h-4 w-4" />} label="Agents" />
           <BottomNavItem to="/admin" icon={<Activity className="h-4 w-4" />} label="Admin" />
         </div>

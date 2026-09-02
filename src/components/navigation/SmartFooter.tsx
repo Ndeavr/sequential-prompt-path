@@ -62,7 +62,7 @@ const SmartFooter = () => {
             <div className="space-y-1.5 text-xs text-muted-foreground">
               <p>🏠 {lang === "en" ? "Home Passport" : "Passeport Maison"}</p>
               <p>🤖 {lang === "en" ? "Smart Matching" : "Matching intelligent"}</p>
-              <p>✨ {lang === "en" ? "Alex Assistant" : "Alex assistant"}</p>
+              <p>✨ {lang === "en" ? "Clara Assistant" : "Clara assistant"}</p>
             </div>
           </div>
 

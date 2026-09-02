@@ -19,7 +19,7 @@ export default function AuthorityDashboardPage() {
         {/* Hero — Authority Score */}
         <AuthorityHero userId={user?.id} />
 
-        {/* Alex AI Control */}
+        {/* Clara AI Control */}
         <AuthorityAlexPanel userId={user?.id} />
 
         {/* Task Engine */}

@@ -33,7 +33,7 @@ export default function SmartFAQ({ contractor: c }: Props) {
 
   items.push({
     q: "Combien de temps pour obtenir une soumission ?",
-    a: "En général, une première réponse est confirmée sous 24 à 48 heures. Alex vous accompagne pour préqualifier le projet et accélérer la prise de rendez-vous.",
+    a: "En général, une première réponse est confirmée sous 24 à 48 heures. Clara vous accompagne pour préqualifier le projet et accélérer la prise de rendez-vous.",
   });
 
   if (services.length) {
@@ -83,7 +83,7 @@ export function buildFaqSchema(contractor: any): { q: string; a: string }[] {
   });
   items.push({
     q: "Combien de temps pour obtenir une soumission ?",
-    a: "Réponse typique sous 24 à 48 heures via Alex.",
+    a: "Réponse typique sous 24 à 48 heures via Clara.",
   });
   return items;
 }

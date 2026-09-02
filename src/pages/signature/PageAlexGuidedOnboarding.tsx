@@ -452,7 +452,7 @@ export default function PageAlexGuidedOnboarding() {
 
   // ─── Alex messages per step ───
   const alexMessages: Record<OnboardingStep, string> = useMemo(() => ({
-    welcome: "Bienvenue ! Je suis Alex, votre assistant IA. Je vais vous guider pour créer votre profil en quelques minutes.",
+    welcome: "Bienvenue ! Je suis Clara, votre assistant IA. Je vais vous guider pour créer votre profil en quelques minutes.",
     business_info: "Parfait ! Dites-moi un peu plus sur votre entreprise.",
     categories: "Excellent ! Sélectionnez votre catégorie principale et vos spécialités.",
     territories: "Où offrez-vous vos services ? Sélectionnez vos villes.",
@@ -472,8 +472,8 @@ export default function PageAlexGuidedOnboarding() {
   return (
     <>
       <Helmet>
-        <title>Commencer avec Alex — UNPRO</title>
-        <meta name="description" content="Créez votre profil professionnel avec Alex, votre assistant IA UNPRO." />
+        <title>Commencer avec Clara — UNPRO</title>
+        <meta name="description" content="Créez votre profil professionnel avec Clara, votre assistant IA UNPRO." />
       </Helmet>
       <div className="min-h-screen bg-background">
         {/* Progress bar */}
@@ -497,10 +497,10 @@ export default function PageAlexGuidedOnboarding() {
               {state.step === "welcome" && (
                 <div className="text-center space-y-6">
                   <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground">
-                    Commencer avec Alex
+                    Commencer avec Clara
                   </h1>
                   <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-                    En quelques minutes, Alex crée votre profil professionnel complet et vous active le plan Signature gratuitement.
+                    En quelques minutes, Clara crée votre profil professionnel complet et vous active le plan Signature gratuitement.
                   </p>
                   <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -664,7 +664,7 @@ export default function PageAlexGuidedOnboarding() {
                       onClick={() => navigate("/alex")}
                       className="h-12 rounded-xl border border-border text-foreground font-medium"
                     >
-                      Parler à Alex
+                      Parler à Clara
                     </motion.button>
                   </div>
                 </div>

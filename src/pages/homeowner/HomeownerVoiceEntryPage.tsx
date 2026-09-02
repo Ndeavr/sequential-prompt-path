@@ -65,7 +65,7 @@ export default function HomeownerVoiceEntryPage() {
             <Home className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-foreground">Alex</h1>
+            <h1 className="text-sm font-semibold text-foreground">Clara</h1>
             <p className="text-[10px] text-muted-foreground">
               {language === "fr" ? "Concierge intelligent" : "Smart concierge"}
             </p>

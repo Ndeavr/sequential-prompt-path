@@ -146,7 +146,7 @@ export default function PageAdminComplianceCenter() {
           Conformité professionnelle
         </h1>
         <p className="text-sm text-muted-foreground">
-          Règles par profession : organisme, titres, portée d'Alex, jumelage, publicité et rémunération.
+          Règles par profession : organisme, titres, portée de Clara, jumelage, publicité et rémunération.
           Toute règle absente ou ambiguë bloque l'action (échec fermé).
         </p>
       </header>

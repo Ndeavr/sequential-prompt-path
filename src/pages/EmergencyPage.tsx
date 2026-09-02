@@ -171,7 +171,7 @@ export default function EmergencyPage() {
                 {[
                   { icon: Camera, label: "Envoyer photo", action: () => document.getElementById("photo-input")?.click() },
                   { icon: MessageCircle, label: "Décrire le problème", action: () => setStep("intake") },
-                  { icon: Bot, label: "Parler à Alex", action: () => { addIntent("chat_started"); navigate("/alex?mode=emergency"); }},
+                  { icon: Bot, label: "Parler à Clara", action: () => { addIntent("chat_started"); navigate("/alex?mode=emergency"); }},
                   { icon: CalendarClock, label: "RDV maintenant", action: () => { addIntent("booking_clicked"); setAsapRequested(true); setStep("intake"); }},
                 ].map((item, i) => (
                   <Card key={i} className="p-4 cursor-pointer hover:border-primary/50 transition-colors active:scale-[0.98]" onClick={item.action}>

@@ -62,7 +62,7 @@ export default function HeroSectionImportRealtimeTerminal({
         maxVisibleLines={10}
       />
 
-      {/* Alex observations */}
+      {/* Clara observations */}
       <PanelAlexObservesImport messages={alexMessages} />
 
       {/* Reveal cards */}

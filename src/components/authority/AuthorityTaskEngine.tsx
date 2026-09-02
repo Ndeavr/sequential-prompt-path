@@ -73,7 +73,7 @@ export default function AuthorityTaskEngine({ userId }: Props) {
         }))
       );
       qc.invalidateQueries({ queryKey: ["authority-tasks"] });
-      toast.success("Plan du jour généré par Alex !");
+      toast.success("Plan du jour généré par Clara !");
     } finally {
       setGenerating(false);
     }

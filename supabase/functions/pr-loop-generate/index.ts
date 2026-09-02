@@ -99,7 +99,7 @@ Règles:
 - Mentions subtiles d'UNPRO (2-3 par asset)
 - Ton expert mais accessible
 - Français québécois naturel
-- Chaque asset doit inclure un CTA vers unpro.ca ou Ask Alex
+- Chaque asset doit inclure un CTA vers unpro.ca ou Ask Clara
 - Adapter le format au canal`;
 
 // Generate a SINGLE channel asset for a topic

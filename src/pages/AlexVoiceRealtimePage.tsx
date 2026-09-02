@@ -14,8 +14,8 @@ export default function AlexVoiceRealtimePage() {
   return (
     <>
       <Helmet>
-        <title>Alex Voice Temps Réel — UNPRO</title>
-        <meta name="description" content="Conversation vocale en temps réel avec Alex, votre assistant IA." />
+        <title>Clara Voice Temps Réel — UNPRO</title>
+        <meta name="description" content="Conversation vocale en temps réel avec Clara, votre assistant IA." />
       </Helmet>
       <div className="fixed inset-0 z-50 bg-background">
         <AlexVoiceRealtime

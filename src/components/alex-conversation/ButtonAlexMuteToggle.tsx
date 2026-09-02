@@ -21,7 +21,7 @@ export default function ButtonAlexMuteToggle({ isMuted, onToggle, disabled }: Pr
           ? "bg-muted/60 text-muted-foreground"
           : "bg-primary/10 text-primary"
       } disabled:opacity-30`}
-      aria-label={isMuted ? "Activer la voix d'Alex" : "Couper la voix d'Alex"}
+      aria-label={isMuted ? "Activer la voix de Clara" : "Couper la voix de Clara"}
       title={isMuted ? "Réactiver la voix" : "Couper la voix"}
     >
       {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}

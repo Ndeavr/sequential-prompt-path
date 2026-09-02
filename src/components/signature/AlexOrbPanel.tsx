@@ -33,7 +33,7 @@ export default function AlexOrbPanel({ message, step }: Props) {
         animate={{ opacity: 1, x: 0 }}
         className="flex-1 rounded-2xl rounded-tl-md bg-card border border-border/40 p-4 shadow-sm"
       >
-        <p className="text-[11px] font-semibold text-primary mb-1">Alex</p>
+        <p className="text-[11px] font-semibold text-primary mb-1">Clara</p>
         <p className="text-sm text-foreground leading-relaxed">{message}</p>
       </motion.div>
     </div>

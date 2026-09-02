@@ -374,7 +374,7 @@ export default function PageProLandingNuclearClose() {
           </div>
           <div className="min-w-0 flex-1 basis-full sm:basis-auto">
             <p className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-wider text-white/80">
-              Alex · Analyse vocale en direct
+              Clara · Analyse vocale en direct
             </p>
             <p className="truncate text-sm text-white">
               {isSpeaking ? "En train de vous parler…" : voiceArmed ? "Audio prêt" : "Touchez pour activer le son"}
@@ -547,7 +547,7 @@ export default function PageProLandingNuclearClose() {
             </p>
             <h3 className="mt-1 text-xl font-semibold text-white">Poser des questions</h3>
             <p className="mt-1 text-sm text-white/85">
-              Discutez avec Alex. Aucune pression. Aucune carte requise.
+              Discutez avec Clara. Aucune pression. Aucune carte requise.
             </p>
             <div className="mt-4 inline-flex items-center text-sm font-medium text-white">
               Démarrer la conversation{" "}

@@ -37,7 +37,7 @@ const EDITABLE: { key: EditableFields; label: string; long?: boolean }[] = [
   { key: "what", label: "What" },
   { key: "why", label: "Why", long: true },
   { key: "moneyImpact", label: "Money impact", long: true },
-  { key: "alexScript", label: "Alex script", long: true },
+  { key: "alexScript", label: "Clara script", long: true },
 ];
 
 function FieldEditor({ fieldId }: { fieldId: string }) {
@@ -174,7 +174,7 @@ export default function PageAdminSmartContext() {
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">Smart Context — éditeur live</h1>
           <p className="text-sm text-muted-foreground">
-            Éditez la copy contextuelle (what / why / money impact / Alex) sans redéployer.
+            Éditez la copy contextuelle (what / why / money impact / Clara) sans redéployer.
             Les overrides s'appliquent en temps réel sur toutes les surfaces.
           </p>
         </header>

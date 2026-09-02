@@ -74,7 +74,7 @@ export default function PageAdminAcquisitionPipeline() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Pipeline d'acquisition — Cockpit</h1>
           <p className="text-sm text-muted-foreground">
-            Scraping → Prospect → Outreach → Onboarding → Paiement → Activation → Alex
+            Scraping → Prospect → Outreach → Onboarding → Paiement → Activation → Clara
           </p>
         </div>
         <div className="flex items-center gap-3">

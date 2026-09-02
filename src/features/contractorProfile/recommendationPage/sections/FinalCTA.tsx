@@ -22,13 +22,13 @@ export default function FinalCTA({ contractorId, businessName }: Props) {
           Obtenir une recommandation personnalisée
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Alex analyse votre projet et confirme si {businessName} est le meilleur choix pour vous.
+          Clara analyse votre projet et confirme si {businessName} est le meilleur choix pour vous.
         </p>
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
         <Button asChild size="lg" className="w-full">
           <Link to={`/alex?contractor=${contractorId}`}>
-            <Sparkles className="w-4 h-4" /> Parler à Alex
+            <Sparkles className="w-4 h-4" /> Parler à Clara
           </Link>
         </Button>
         <Button asChild size="lg" variant="outline" className="w-full">

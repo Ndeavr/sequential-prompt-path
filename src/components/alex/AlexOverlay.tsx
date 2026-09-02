@@ -50,7 +50,7 @@ export default function AlexOverlay({ isOpen, onClose, message, subMessage, acti
                   <Bot className="h-4.5 w-4.5 text-primary" />
                 </div>
                 <div className="space-y-1 min-w-0">
-                  <p className="text-[11px] font-semibold text-primary">Alex</p>
+                  <p className="text-[11px] font-semibold text-primary">Clara</p>
                   <p className="text-sm text-foreground leading-relaxed">{message}</p>
                   {subMessage && (
                     <p className="text-xs text-muted-foreground">{subMessage}</p>

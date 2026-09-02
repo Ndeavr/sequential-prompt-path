@@ -12,7 +12,7 @@ export const homeFin3 = {
       eyebrow: "UNPRO + ALEX",
       title: "LA FIN DES 3 SOUMISSIONS.",
       subtitle: "L'IA trouve le bon entrepreneur pour vos travaux.",
-      body: "Plus besoin de contacter plusieurs entreprises, répéter votre projet et comparer des soumissions difficiles à départager. Expliquez votre projet à Alex. UNPRO analyse vos besoins et vous aide à identifier le professionnel qui correspond réellement à vos critères.",
+      body: "Plus besoin de contacter plusieurs entreprises, répéter votre projet et comparer des soumissions difficiles à départager. Expliquez votre projet à Clara. UNPRO analyse vos besoins et vous aide à identifier le professionnel qui correspond réellement à vos critères.",
       ctaPrimary: "Trouver mon PRO",
       ctaSecondary: "J'ai déjà des soumissions",
       microcopy:
@@ -26,8 +26,8 @@ export const homeFin3 = {
     },
     alex: {
       title: "Parlez de votre projet.",
-      titleAccent: "Alex s'occupe du reste.",
-      body: "Décrivez simplement vos travaux comme si vous parliez à quelqu'un. Alex vous pose quelques questions pour comprendre ce qui compte réellement avant de rechercher les entrepreneurs compatibles avec votre projet.",
+      titleAccent: "Clara s'occupe du reste.",
+      body: "Décrivez simplement vos travaux comme si vous parliez à quelqu'un. Clara vous pose quelques questions pour comprendre ce qui compte réellement avant de rechercher les entrepreneurs compatibles avec votre projet.",
       dimensions: [
         "Type de travaux",
         "Propriété",
@@ -38,7 +38,7 @@ export const homeFin3 = {
         "Besoins particuliers",
       ],
       note: "Une question à la fois. Jamais un long formulaire.",
-      cta: "Parler à Alex",
+      cta: "Parler à Clara",
     },
     modele: {
       title: "Avant, Internet vous donnait des listes.",
@@ -101,7 +101,7 @@ export const homeFin3 = {
     final: {
       title: "Arrêtez de chercher trois entrepreneurs.",
       titleAccent: "Trouvez le bon.",
-      body: "Expliquez votre projet à Alex et laissez UNPRO réduire la recherche.",
+      body: "Expliquez votre projet à Clara et laissez UNPRO réduire la recherche.",
       cta: "Trouver mon PRO",
       signature: "UNPRO — La fin des 3 soumissions.",
     },
@@ -111,7 +111,7 @@ export const homeFin3 = {
       eyebrow: "UNPRO + ALEX",
       title: "THE END OF THE 3-QUOTE RUNAROUND.",
       subtitle: "AI helps find the right contractor for your project.",
-      body: "No more calling several companies, repeating your project over and over and trying to compare quotes that never line up. Tell Alex about your project. UNPRO analyses what you need and helps you identify the professional who actually fits your criteria.",
+      body: "No more calling several companies, repeating your project over and over and trying to compare quotes that never line up. Tell Clara about your project. UNPRO analyses what you need and helps you identify the professional who actually fits your criteria.",
       ctaPrimary: "Find my PRO",
       ctaSecondary: "I already have quotes",
       microcopy:
@@ -125,8 +125,8 @@ export const homeFin3 = {
     },
     alex: {
       title: "Talk about your project.",
-      titleAccent: "Alex takes it from there.",
-      body: "Describe the work the way you'd explain it to someone. Alex asks a few questions to understand what really matters before looking for contractors that fit your project.",
+      titleAccent: "Clara takes it from there.",
+      body: "Describe the work the way you'd explain it to someone. Clara asks a few questions to understand what really matters before looking for contractors that fit your project.",
       dimensions: [
         "Type of work",
         "Property",
@@ -137,7 +137,7 @@ export const homeFin3 = {
         "Specific needs",
       ],
       note: "One question at a time. Never a long form.",
-      cta: "Talk to Alex",
+      cta: "Talk to Clara",
     },
     modele: {
       title: "The web used to hand you lists.",
@@ -200,7 +200,7 @@ export const homeFin3 = {
     final: {
       title: "Stop chasing three contractors.",
       titleAccent: "Find the right one.",
-      body: "Tell Alex about your project and let UNPRO narrow the search.",
+      body: "Tell Clara about your project and let UNPRO narrow the search.",
       cta: "Find my PRO",
       signature: "UNPRO — The end of the 3-quote runaround.",
     },

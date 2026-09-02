@@ -26,7 +26,7 @@ const KEY_ROUTES = [
   { label: "Entrepreneurs", url: "https://unpro.ca/entrepreneurs" },
   { label: "Copropriété", url: "https://unpro.ca/gestion-copropriete-quebec" },
   { label: "Journal", url: "https://unpro.ca/journal" },
-  { label: "Alex", url: "https://unpro.ca/alex" },
+  { label: "Clara", url: "https://unpro.ca/alex" },
   { label: "Passeport Maison", url: "https://unpro.ca/passeport-maison" },
   { label: "Recommandations", url: "https://unpro.ca/recommandations" },
 ];

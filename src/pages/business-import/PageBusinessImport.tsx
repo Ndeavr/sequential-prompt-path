@@ -144,7 +144,7 @@ export default function PageBusinessImport() {
     <>
       <Helmet>
         <title>Créer mon profil d'entreprise | UNPRO</title>
-        <meta name="description" content="Importez votre entreprise en quelques secondes et complétez votre profil avec Alex pour recevoir des rendez-vous qualifiés." />
+        <meta name="description" content="Importez votre entreprise en quelques secondes et complétez votre profil avec Clara pour recevoir des rendez-vous qualifiés." />
       </Helmet>
 
       <AippDeltaPreview delta={lastDelta} visible={showDelta} />
@@ -245,7 +245,7 @@ export default function PageBusinessImport() {
                   }
                 />
 
-                {/* Alex panel */}
+                {/* Clara panel */}
                 <AlexDataCompletionPanel
                   currentField={activeField}
                   onFieldCompleted={handleFieldCompleted}
@@ -276,7 +276,7 @@ export default function PageBusinessImport() {
                       </p>
                     </div>
                     <Button size="lg" className="w-full h-12 font-bold" onClick={() => navigate("/alex")}>
-                      <MessageCircle className="mr-2 h-4 w-4" /> Discuter avec Alex
+                      <MessageCircle className="mr-2 h-4 w-4" /> Discuter avec Clara
                     </Button>
                     <Button size="lg" variant="outline" className="w-full h-12" onClick={() => navigate("/pro/objectives")}>
                       <Target className="mr-2 h-4 w-4" /> Définir mes objectifs

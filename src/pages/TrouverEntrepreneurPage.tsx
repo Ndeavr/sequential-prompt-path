@@ -90,7 +90,7 @@ export default function TrouverEntrepreneurPage() {
           title="Vous ne savez pas qui contacter?"
           description="Décrivez votre projet ou votre problème, et nous vous guiderons vers le bon professionnel."
           primaryCta={{ label: "Décrire mon projet", to: "/decrire-mon-projet" }}
-          secondaryCta={{ label: "Parler à Alex", to: "/parler-a-alex" }}
+          secondaryCta={{ label: "Parler à Clara", to: "/parler-a-alex" }}
           variant="accent"
         />
       </div>

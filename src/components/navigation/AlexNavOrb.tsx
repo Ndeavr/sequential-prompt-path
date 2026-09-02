@@ -10,7 +10,7 @@ import { Sparkles, MessageCircle, Camera, Search, Phone } from "lucide-react";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 const alexActions = [
-  { feature: "general", label: "Parler avec Alex", labelEn: "Talk to Alex", icon: MessageCircle },
+  { feature: "general", label: "Parler avec Clara", labelEn: "Talk to Clara", icon: MessageCircle },
   { feature: "diagnostic", label: "Diagnostiquer un problème", labelEn: "Diagnose a Problem", icon: Search },
   { feature: "find", label: "Trouver un entrepreneur", labelEn: "Find a Contractor", icon: Phone },
   { feature: "photo", label: "Analyser une photo", labelEn: "Analyze a Photo", icon: Camera },
@@ -26,7 +26,7 @@ export default function AlexNavOrb({ lang = "fr" }: { lang?: "fr" | "en" }) {
       <button
         onClick={() => setOpen(!open)}
         className="relative flex items-center gap-1.5 h-8 px-3 rounded-full bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 border border-primary/20 hover:border-primary/40 transition-all duration-300 group"
-        aria-label="Alex AI Assistant"
+        aria-label="Clara AI Assistant"
       >
         {/* Animated glow */}
         <motion.div
@@ -38,7 +38,7 @@ export default function AlexNavOrb({ lang = "fr" }: { lang?: "fr" | "en" }) {
         <div className="relative z-10 flex items-center justify-center h-5 w-5 rounded-full bg-gradient-to-br from-primary via-secondary to-accent">
           <Sparkles className="h-3 w-3 text-primary-foreground" />
         </div>
-        <span className="relative z-10 text-meta font-semibold text-foreground hidden sm:inline">Alex</span>
+        <span className="relative z-10 text-meta font-semibold text-foreground hidden sm:inline">Clara</span>
         {/* Pulse */}
         <motion.div
           className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-success border-2 border-background"

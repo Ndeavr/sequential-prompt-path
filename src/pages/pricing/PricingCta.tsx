@@ -31,7 +31,7 @@ export default function PricingCta() {
                 </Button>
                 <Button asChild size="lg" variant="outline" className="rounded-2xl h-13 px-8 text-base">
                   <Link to="/alex">
-                    <Mic className="h-4 w-4 mr-2" /> Parler à Alex
+                    <Mic className="h-4 w-4 mr-2" /> Parler à Clara
                   </Link>
                 </Button>
               </div>

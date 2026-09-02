@@ -32,7 +32,7 @@ const CONTRACTOR_GROWTH = [
   { label: "Pourquoi être recommandé par l'IA",   to: "/pourquoi-unpro" },
   { label: "Comment fonctionne le score AIPP",    to: "/aipp-score" },
   { label: "Rendez-vous exclusifs",               to: "/entrepreneurs" },
-  { label: "Recommandations Alex",                to: "/alex" },
+  { label: "Recommandations Clara",                to: "/alex" },
   { label: "Tarifs",                              to: "/pricing" },
 ];
 

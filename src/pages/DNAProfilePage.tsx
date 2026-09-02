@@ -124,7 +124,7 @@ export default function DNAProfilePage() {
               <DNATraitsRadar traits={traits} variant="homeowner" />
             </div>
 
-            {/* Alex Insight */}
+            {/* Clara Insight */}
             <AlexExplanationBlock
               explanationFr={`En tant que "${homeownerDNA.dna_label_fr}", on cherche des entrepreneurs qui correspondent à votre style.`}
               subExplanationFr="Vos recommandations sont personnalisées en fonction de ces traits."

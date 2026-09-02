@@ -58,7 +58,7 @@ export const sidebarItems = [
   { label: "Vue d'ensemble", icon: "LayoutDashboard", href: "/pro" },
   { label: "Authority Score", icon: "Zap", href: "/pro/authority-score", active: true },
   { label: "Visibilité", icon: "Eye", href: "/pro/aipp" },
-  { label: "Recommandations Alex", icon: "Brain", href: "/pro/alex" },
+  { label: "Recommandations Clara", icon: "Brain", href: "/pro/alex" },
   { label: "Rendez-vous", icon: "CalendarCheck", href: "/pro/appointments" },
   { label: "Profil public", icon: "User", href: "/pro/profile" },
   { label: "Crédibilité", icon: "ShieldCheck", href: "/pro/reviews" },

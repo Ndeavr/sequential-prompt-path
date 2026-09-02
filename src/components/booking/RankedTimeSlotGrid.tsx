@@ -37,7 +37,7 @@ const badgeConfig: Record<SlotBadge, { label: string; icon: React.ReactNode; cla
     className: "bg-accent/10 text-accent border-accent/20",
   },
   recommended_by_alex: {
-    label: "Alex recommande",
+    label: "Clara recommande",
     icon: <Sparkles className="w-3 h-3" />,
     className: "bg-secondary/10 text-secondary border-secondary/20",
   },

@@ -89,7 +89,7 @@ async function sendResendEmail(to: string, subject: string, html: string): Promi
       "X-Connection-Api-Key": resendKey,
     },
     body: JSON.stringify({
-      from: "Alex d'UNPRO <alex@mail.unpro.ca>",
+      from: "Clara d'UNPRO <alex@mail.unpro.ca>",
       to: [to],
       subject,
       html,

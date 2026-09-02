@@ -115,7 +115,7 @@ export default function AlexVoiceAdmin() {
     <div className="min-h-screen bg-background p-4 md:p-6 space-y-6">
       <div className="flex items-center gap-3 mb-6">
         <Settings2 className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold text-foreground">Alex Voice Admin</h1>
+        <h1 className="text-2xl font-bold text-foreground">Clara Voice Admin</h1>
         <Badge variant="outline" className="ml-auto">Professional Stack</Badge>
       </div>
 
@@ -372,7 +372,7 @@ export default function AlexVoiceAdmin() {
                       )}
                       {t.response_text && (
                         <div className="text-xs">
-                          <span className="text-muted-foreground">Alex: </span>
+                          <span className="text-muted-foreground">Clara: </span>
                           <span>{t.response_text}</span>
                         </div>
                       )}

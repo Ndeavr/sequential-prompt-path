@@ -23,13 +23,13 @@ export default function SectionAlexConversationAd() {
           className="text-center mb-10 sm:mb-14"
         >
           <motion.p variants={fadeUp} className="text-meta font-medium text-primary mb-2 tracking-wide uppercase">
-            Voyez Alex en action
+            Voyez Clara en action
           </motion.p>
           <motion.h2 variants={fadeUp} className="text-title sm:text-hero-sm text-foreground">
             Photo. Diagnostic. Rendez-vous.
           </motion.h2>
           <motion.p variants={fadeUp} className="text-body text-muted-foreground mt-3 max-w-lg mx-auto">
-            Uploadez une photo, Alex identifie le problème, recommande le bon professionnel et vous propose un créneau — en quelques secondes.
+            Uploadez une photo, Clara identifie le problème, recommande le bon professionnel et vous propose un créneau — en quelques secondes.
           </motion.p>
         </motion.div>
 

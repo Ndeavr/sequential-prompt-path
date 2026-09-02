@@ -78,7 +78,7 @@ export default function PageOwnerMatch() {
     <>
       <Helmet>
         <title>Trouvez la bonne solution — UNPRO</title>
-        <meta name="description" content="Prenez une photo, décrivez votre projet ou parlez avec Alex. Trouvez rapidement la bonne direction pour votre propriété." />
+        <meta name="description" content="Prenez une photo, décrivez votre projet ou parlez avec Clara. Trouvez rapidement la bonne direction pour votre propriété." />
       </Helmet>
 
       <div className="min-h-screen bg-background flex flex-col">
@@ -98,7 +98,7 @@ export default function PageOwnerMatch() {
               variants={fadeUp} initial="hidden" animate="visible" transition={{ delay: 0.1 }}
               className="text-lg text-muted-foreground mb-10 max-w-lg mx-auto"
             >
-              Parlez avec Alex ou téléversez votre projet. Une photo peut remplacer mille mots.
+              Parlez avec Clara ou téléversez votre projet. Une photo peut remplacer mille mots.
             </motion.p>
 
             {/* Photo Upload - Primary CTA */}
@@ -159,7 +159,7 @@ export default function PageOwnerMatch() {
                 disabled={isCreating}
               >
                 <Mic className="h-5 w-5" />
-                Parler à Alex
+                Parler à Clara
               </Button>
             </motion.div>
 

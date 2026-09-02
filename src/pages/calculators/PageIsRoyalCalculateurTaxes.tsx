@@ -115,7 +115,7 @@ export default function PageIsRoyalCalculateurTaxes() {
                   to="/parler-a-alex"
                   className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-border bg-card hover:bg-muted/40 transition font-semibold"
                 >
-                  <Phone className="h-4 w-4" /> Parler à Alex
+                  <Phone className="h-4 w-4" /> Parler à Clara
                 </Link>
               </div>
             </div>
@@ -167,7 +167,7 @@ TVQ = sous-total × 0,09975`}
           <h2 className="text-lg font-bold mb-3">Continuer</h2>
           <ul className="grid sm:grid-cols-2 gap-2 text-sm">
             <LinkRow to="/calculateur-taxes-quebec" label="Calculateur taxes Québec (général)" />
-            <LinkRow to="/parler-a-alex" label="Parler à Alex" />
+            <LinkRow to="/parler-a-alex" label="Parler à Clara" />
             <LinkRow to="/soumission-travaux" label="Demander une soumission" />
             <LinkRow to="/verification-entrepreneur" label="Vérifier la licence RBQ" />
           </ul>

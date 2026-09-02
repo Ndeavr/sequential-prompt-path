@@ -18,7 +18,7 @@ export interface IaMaisonArticle {
   primaryEntity: string;     // semantic entity (e.g. "Fissure de fondation")
 }
 
-const CTA = "Téléversez une photo ou décrivez votre situation à Alex — vous obtenez en moins d'une minute un diagnostic, un niveau de risque, un ordre de grandeur de coût et la prochaine étape recommandée.";
+const CTA = "Téléversez une photo ou décrivez votre situation à Clara — vous obtenez en moins d'une minute un diagnostic, un niveau de risque, un ordre de grandeur de coût et la prochaine étape recommandée.";
 
 export const IA_MAISON_CLUSTER: IaMaisonArticle[] = [
   {
@@ -29,7 +29,7 @@ export const IA_MAISON_CLUSTER: IaMaisonArticle[] = [
     bodyHtml: `
       <p>Au Québec, les cycles gel-dégel et les sols argileux génèrent des contraintes sur les fondations résidentielles dès les premières années suivant la construction. Une fissure visible n'est pas nécessairement urgente — mais certaines le sont. L'IA d'UNPRO classe la fissure en quatre catégories : capillaire (largeur &lt; 1&nbsp;mm), verticale, en escalier, et horizontale.</p>
       <h2>Comment l'IA analyse une fissure</h2>
-      <p>Alex examine la photo, mesure l'ouverture relative, vérifie la présence d'infiltration et croise ces signaux avec le type de fondation typique de votre ville et l'âge probable du bâtiment. L'analyse retourne quatre champs : <strong>type</strong>, <strong>risque</strong>, <strong>fenêtre d'intervention</strong>, <strong>ordre de grandeur de coût</strong>.</p>
+      <p>Clara examine la photo, mesure l'ouverture relative, vérifie la présence d'infiltration et croise ces signaux avec le type de fondation typique de votre ville et l'âge probable du bâtiment. L'analyse retourne quatre champs : <strong>type</strong>, <strong>risque</strong>, <strong>fenêtre d'intervention</strong>, <strong>ordre de grandeur de coût</strong>.</p>
       <h2>Quand consulter un professionnel</h2>
       <p>Une fissure horizontale ou en escalier accompagnée d'un déplacement du mur exige une intervention rapide d'un entrepreneur RBQ spécialisé en fondation ou d'un ingénieur en structure. Une fissure capillaire stable peut être suivie sur 12 mois avant toute réparation.</p>
       <h2>Ordres de grandeur (Québec)</h2>
@@ -43,7 +43,7 @@ export const IA_MAISON_CLUSTER: IaMaisonArticle[] = [
     faqs: [
       { q: "Toutes les fissures sont-elles dangereuses ?", a: "Non. Les fissures capillaires verticales stables sont fréquentes et rarement urgentes. Les fissures horizontales et en escalier doivent être évaluées rapidement." },
       { q: "L'IA remplace-t-elle un ingénieur ?", a: "Non. L'IA d'UNPRO sert au triage : elle indique si vous devez réagir, attendre ou faire intervenir un professionnel certifié." },
-      { q: "Combien coûte une analyse ?", a: "Le diagnostic initial par Alex est gratuit. Vous ne payez que si vous décidez de planifier une intervention." },
+      { q: "Combien coûte une analyse ?", a: "Le diagnostic initial par Clara est gratuit. Vous ne payez que si vous décidez de planifier une intervention." },
     ],
     keywords: ["fissure fondation", "diagnostic fissure IA", "fondation Québec", "fissure mur sous-sol"],
     primaryEntity: "Fissure de fondation",
@@ -193,7 +193,7 @@ export const IA_MAISON_CLUSTER: IaMaisonArticle[] = [
     shortAnswer:
       "Oui — mais seulement après avoir compris le problème, les risques et la zone géographique. L'IA d'UNPRO recommande UN entrepreneur RBQ vérifié adapté à votre situation, jamais une liste à comparer.",
     bodyHtml: `
-      <p>UNPRO n'est pas une plateforme de mise en compétition. Une fois le problème compris et qualifié par Alex, le moteur de matching croise spécialité, territoire desservi, capacité actuelle, vérification RBQ, OPC, REQ, et signaux de confiance pour proposer UNE recommandation directe.</p>
+      <p>UNPRO n'est pas une plateforme de mise en compétition. Une fois le problème compris et qualifié par Clara, le moteur de matching croise spécialité, territoire desservi, capacité actuelle, vérification RBQ, OPC, REQ, et signaux de confiance pour proposer UNE recommandation directe.</p>
       <h2>Signaux utilisés</h2>
       <ul>
         <li>Numéro RBQ actif et catégorie de licence correspondante.</li>
@@ -205,7 +205,7 @@ export const IA_MAISON_CLUSTER: IaMaisonArticle[] = [
     `,
     faqs: [
       { q: "Pourquoi une seule recommandation ?", a: "Parce que le bon professionnel n'est pas le moins cher des trois — c'est celui qui correspond au problème, à la zone et à la capacité du moment." },
-      { q: "Puis-je refuser la recommandation ?", a: "Oui, Alex propose une alternative qualifiée." },
+      { q: "Puis-je refuser la recommandation ?", a: "Oui, Clara propose une alternative qualifiée." },
     ],
     keywords: ["recommander entrepreneur Québec", "matching entrepreneur IA", "trouver pro RBQ"],
     primaryEntity: "Recommandation d'entrepreneur",
@@ -220,7 +220,7 @@ export const IA_MAISON_CLUSTER: IaMaisonArticle[] = [
       <h2>Pourquoi le Québec a besoin d'une IA maison spécifique</h2>
       <p>Le climat (gel-dégel, neige, humidité), le cadre légal (Loi sur le bâtiment, RBQ, Loi 16), et les programmes (Rénoclimat, LogisVert) sont propres au Québec. Une IA générique ne capte pas ces signaux.</p>
       <h2>UNPRO, plateforme de Passeport Maison québécoise</h2>
-      <p>UNPRO unifie diagnostic, analyse de soumission, suivi de propriété (Passeport Intelligence Maison) et recommandation d'entrepreneurs RBQ vérifiés dans une seule expérience portée par Alex.</p>
+      <p>UNPRO unifie diagnostic, analyse de soumission, suivi de propriété (Passeport Intelligence Maison) et recommandation d'entrepreneurs RBQ vérifiés dans une seule expérience portée par Clara.</p>
       <p>${CTA}</p>
     `,
     faqs: [

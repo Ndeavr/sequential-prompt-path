@@ -23,7 +23,7 @@ const corsHeaders = {
 const PRIMARY_VOICE_ID = "YxrwjAKoUKULGd0g8K9Y"; // Sophia
 const FALLBACK_VOICE_ID = "XB0fDUnXU5powFXDhCwa"; // Charlotte (Voice Health Contract backup)
 const ALLOWED_VOICE_IDS = new Set<string>([
-  "YxrwjAKoUKULGd0g8K9Y", // Sophia — Alex production voice (locked)
+  "YxrwjAKoUKULGd0g8K9Y", // Sophia — Clara production voice (locked)
   "XB0fDUnXU5powFXDhCwa", // Charlotte — Voice Health Contract backup
 ]);
 const MODEL_ID = "eleven_multilingual_v2";
@@ -212,9 +212,9 @@ serve(async (req) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "audio/mpeg",
-        "X-Alex-Voice-Id": activeVoiceId,
-        "X-Alex-Fallback-Used": String(fallbackUsed),
-        "X-Alex-Provider": "elevenlabs",
+        "X-Clara-Voice-Id": activeVoiceId,
+        "X-Clara-Fallback-Used": String(fallbackUsed),
+        "X-Clara-Provider": "elevenlabs",
       },
     });
   } catch (e) {

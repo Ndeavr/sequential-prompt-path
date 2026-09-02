@@ -26,7 +26,7 @@ export default function SectionAlexActivation({ sectionRef }: { sectionRef?: Rea
           className="text-center mb-8"
         >
           <h2 className="font-display text-[22px] sm:text-[28px] md:text-[36px] font-bold text-foreground leading-tight">
-            Alex, votre <span className="text-primary">concierge IA</span>
+            Clara, votre <span className="text-primary">concierge IA</span>
           </h2>
           <p className="mt-2 text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
             Disponible 24/7. Parlez, écrivez ou laissez-le faire.
@@ -40,7 +40,7 @@ export default function SectionAlexActivation({ sectionRef }: { sectionRef?: Rea
           transition={{ duration: 0.6 }}
           className="space-y-5"
         >
-          {/* Alex orb CTA */}
+          {/* Clara orb CTA */}
           <div className="glass-card rounded-3xl p-6 sm:p-8 text-center">
             {/* Animated orb */}
             <div className="relative mx-auto mb-6 flex items-center justify-center">
@@ -67,7 +67,7 @@ export default function SectionAlexActivation({ sectionRef }: { sectionRef?: Rea
             </div>
 
             <h3 className="font-display text-lg font-bold text-foreground mb-1">
-              Bonjour, je suis Alex.
+              Bonjour, je suis Clara.
             </h3>
             <p className="text-sm text-muted-foreground mb-5 max-w-sm mx-auto">
               Dites-moi ce qui se passe chez vous. Je m'occupe du reste.
@@ -78,7 +78,7 @@ export default function SectionAlexActivation({ sectionRef }: { sectionRef?: Rea
               onClick={() => openAlex("general")}
               className="w-full h-12 rounded-xl flex items-center justify-center gap-2 text-sm font-bold cta-gradient mb-3"
             >
-              <Mic className="h-4 w-4" /> Parler à Alex
+              <Mic className="h-4 w-4" /> Parler à Clara
             </button>
 
             {/* Secondary options */}

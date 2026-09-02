@@ -17,7 +17,7 @@ export function generateRevealScript(score: number, businessName?: string): Reve
     {
       key: "preparation",
       spokenText: "J'ai terminé l'analyse de votre présence actuelle. Ce que je vais vous montrer maintenant, ce n'est pas juste un chiffre.",
-      displayText: "Analyse terminée. Alex prépare votre résultat.",
+      displayText: "Analyse terminée. Clara prépare votre résultat.",
       delayMs: 4000,
       triggerType: "auto",
     },

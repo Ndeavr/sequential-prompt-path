@@ -151,7 +151,7 @@ const AdminDashboard = () => {
   // Module health (lightweight heuristic)
   const modules = [
     { name: "Outbound", to: "/admin/outbound", status: "ok" as const, hint: "Pipeline actif" },
-    { name: "Alex", to: "/admin/alex", status: "ok" as const, hint: "Voix opérationnelle" },
+    { name: "Clara", to: "/admin/alex", status: "ok" as const, hint: "Voix opérationnelle" },
     { name: "Stripe", to: "/admin/pricing", status: "ok" as const, hint: "Paiements live" },
     { name: "Email", to: "/admin/outbound/email-health", status: critical.length ? "warn" : "ok", hint: "SPF/DKIM/DMARC" },
     { name: "Automation", to: "/admin/automation", status: blockers.length ? "warn" : "ok", hint: `${blockers.length} blocage(s)` },

@@ -175,7 +175,7 @@ export default function TunnelE2ETestPanel({ onGateChange }: Props) {
           <div>
             <div className="text-sm font-semibold text-sky-100">Test E2E réel</div>
             <div className="text-xs text-sky-100/70 mt-0.5">
-              Envoyer un seul SMS réel à un numéro contrôlé et vérifier tout le tunnel jusqu'à l'éligibilité Alex.
+              Envoyer un seul SMS réel à un numéro contrôlé et vérifier tout le tunnel jusqu'à l'éligibilité Clara.
             </div>
           </div>
         </div>

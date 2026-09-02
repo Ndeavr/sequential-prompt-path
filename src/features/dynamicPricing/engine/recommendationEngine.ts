@@ -99,7 +99,7 @@ export function computeDynamicPrice(
       priceCents: clamp(p.avgTicketCents, c.min_price_floor_cents, c.max_price_ceiling_cents),
       basePriceCents: 0,
       modifiers: {
-        bullets: ["Plan sur mesure — prix négocié avec Alex"],
+        bullets: ["Plan sur mesure — prix négocié avec Clara"],
         marketModifierPct: 0,
         exclusivityModifierPct: 0,
         rarityModifierPct: 0,

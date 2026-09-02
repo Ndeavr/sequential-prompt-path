@@ -222,10 +222,11 @@ const ProblemLocationPage = () => {
                     <DollarSign className="h-3.5 w-3.5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Comparez avant de choisir</p>
+                    <p className="text-sm font-semibold text-foreground">Une recommandation, pas une course aux soumissions</p>
                     <p className="text-xs text-muted-foreground">
-                      Obtenez 3 soumissions minimum. UNPRO analyse chaque soumission avec l'IA pour identifier les écarts de prix et les éléments manquants.
+                      Clara analyse votre situation et vous oriente vers le professionnel qui correspond réellement à vos besoins. Fini les 3 soumissions.
                     </p>
+
                   </div>
                 </div>
               </div>

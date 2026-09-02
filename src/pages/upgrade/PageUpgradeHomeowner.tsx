@@ -34,7 +34,7 @@ const FEATURE_LABELS: Record<string, string> = {
   maintenance_reminders: "Rappels d'entretien",
   document_archive_advanced: "Archivage avancé des documents",
   project_history: "Historique des projets et dépenses",
-  alex_priority: "Accompagnement Alex avancé",
+  alex_priority: "Accompagnement Clara avancé",
   work_prioritization: "Priorisation des travaux",
   proactive_suggestions: "Suggestions proactives",
   priority_support: "Support prioritaire",

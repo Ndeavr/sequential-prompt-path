@@ -14,19 +14,19 @@ export const CURIOSITY_STEPS: CuriosityStep[] = [
     step: 1,
     delay_hours: 0,
     body: ({ first_name, url }) =>
-      `${fallbackFirst(first_name)}, si un propriétaire demandait aujourd'hui à ChatGPT quel entrepreneur choisir dans votre domaine, votre entreprise serait-elle recommandée? Analyse gratuite: ${url} — Alex, UNPRO`,
+      `${fallbackFirst(first_name)}, si un propriétaire demandait aujourd'hui à ChatGPT quel entrepreneur choisir dans votre domaine, votre entreprise serait-elle recommandée? Analyse gratuite: ${url} — Clara, UNPRO`,
   },
   {
     step: 2,
     delay_hours: 24,
     body: ({ url }) =>
-      `Vos concurrents commencent à apparaître dans les réponses de ChatGPT et Gemini. Voyez où votre entreprise se situe: ${url} — Alex, UNPRO`,
+      `Vos concurrents commencent à apparaître dans les réponses de ChatGPT et Gemini. Voyez où votre entreprise se situe: ${url} — Clara, UNPRO`,
   },
   {
     step: 3,
     delay_hours: 24,
     body: ({ url }) =>
-      `Une entreprise de 3 employés peut maintenant rivaliser avec une de 100. L'IA ne mesure plus le budget, elle mesure les signaux. Votre analyse: ${url} — Alex, UNPRO`,
+      `Une entreprise de 3 employés peut maintenant rivaliser avec une de 100. L'IA ne mesure plus le budget, elle mesure les signaux. Votre analyse: ${url} — Clara, UNPRO`,
   },
 ];
 

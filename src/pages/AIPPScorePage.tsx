@@ -215,7 +215,7 @@ export default function AIPPScorePage() {
 
                   <div className="bg-muted/30 rounded-xl p-3">
                     <p className="text-[10px] text-muted-foreground">
-                      <strong className="text-foreground">Les entrepreneurs avec un Score AIPP élevé</strong> sont recommandés plus souvent par Alex et apparaissent en priorité dans les résultats.
+                      <strong className="text-foreground">Les entrepreneurs avec un Score AIPP élevé</strong> sont recommandés plus souvent par Clara et apparaissent en priorité dans les résultats.
                     </p>
                   </div>
                 </div>

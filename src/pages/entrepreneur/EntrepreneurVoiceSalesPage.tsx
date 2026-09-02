@@ -66,7 +66,7 @@ export default function EntrepreneurVoiceSalesPage() {
             <Bot className="w-5 h-5 text-primary" />
           </motion.div>
           <div>
-            <p className="text-sm font-semibold text-foreground">Alex</p>
+            <p className="text-sm font-semibold text-foreground">Clara</p>
             <p className="text-[10px] text-muted-foreground">
               {isLoading ? (lang === "fr" ? "Analyse en cours…" : "Analyzing…") : (lang === "fr" ? "Conseiller UNPRO" : "UNPRO Advisor")}
             </p>

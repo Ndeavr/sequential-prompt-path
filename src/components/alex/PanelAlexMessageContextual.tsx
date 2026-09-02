@@ -77,7 +77,7 @@ export default function PanelAlexMessageContextual({
             animate={{ opacity: 1 }}
             className="space-y-4"
           >
-            {/* Alex avatar + greeting */}
+            {/* Clara avatar + greeting */}
             <div className="flex items-start gap-3">
               <div className="relative shrink-0">
                 <UnproIcon size={40} variant="blue" className="rounded-full" />

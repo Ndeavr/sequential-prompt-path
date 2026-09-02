@@ -16,7 +16,7 @@ const FEATURES = [
   "Profil IA optimisé",
   "Recommandations propriétaires",
   "Présence UNPRO",
-  "Accès Alex (Conseiller Croissance IA)",
+  "Accès Clara (Conseiller Croissance IA)",
   "Jusqu'à 5 rendez-vous exclusifs garantis",
   "Aucun lead partagé",
   "Paiement unique · aucun abonnement",

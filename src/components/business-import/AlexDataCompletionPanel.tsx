@@ -44,9 +44,9 @@ export default function AlexDataCompletionPanel({ currentField, onFieldCompleted
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mx-auto mb-3">
             <MessageCircle className="h-6 w-6 text-primary-foreground" />
           </div>
-          <h3 className="font-bold text-foreground mb-1">Alex est prêt</h3>
+          <h3 className="font-bold text-foreground mb-1">Clara est prêt</h3>
           <p className="text-sm text-muted-foreground">
-            Sélectionnez un champ manquant ci-dessus et Alex vous guidera pour le compléter.
+            Sélectionnez un champ manquant ci-dessus et Clara vous guidera pour le compléter.
           </p>
         </CardContent>
       </Card>
@@ -62,7 +62,7 @@ export default function AlexDataCompletionPanel({ currentField, onFieldCompleted
               <MessageCircle className="h-4 w-4 text-primary-foreground" />
             </div>
             <div>
-              <p className="text-xs font-bold text-primary mb-0.5">Alex</p>
+              <p className="text-xs font-bold text-primary mb-0.5">Clara</p>
               <p className="text-sm text-foreground leading-relaxed">{currentField.alexPrompt}</p>
             </div>
           </div>

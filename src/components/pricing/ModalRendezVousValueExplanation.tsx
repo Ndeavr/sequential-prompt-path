@@ -70,11 +70,11 @@ export default function ModalRendezVousValueExplanation({ open, onOpenChange, on
                 </div>
               </div>
 
-              {/* STEP 6 — Alex Assist */}
+              {/* STEP 6 — Clara Assist */}
               <div className="rounded-xl bg-accent/5 border border-accent/15 p-4 flex items-start gap-3">
                 <MessageCircle className="h-5 w-5 text-accent shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold text-foreground mb-1">Alex, votre conseiller IA</p>
+                  <p className="text-xs font-semibold text-foreground mb-1">Clara, votre conseiller IA</p>
                   <p className="text-xs text-muted-foreground italic">
                     « Tu préfères 10 petits jobs… ou 3 gros contrats sécurisés ? Laisse-moi t'aider à choisir le bon plan. »
                   </p>

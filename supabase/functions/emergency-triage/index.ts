@@ -21,7 +21,7 @@ serve(async (req) => {
 
     if (action === "triage") {
       // AI Triage via Lovable AI
-      const triagePrompt = `Tu es Alex, experte en urgences résidentielles au Québec.
+      const triagePrompt = `Tu es Clara, experte en urgences résidentielles au Québec.
 Analyse cette urgence et retourne un JSON structuré.
 
 Catégorie: ${category || "inconnue"}

@@ -20,7 +20,7 @@ export default function ChatPhotoThumb({ url, name }: Props) {
       </div>
       <div className="pr-2 min-w-0">
         <p className="text-[12px] font-medium text-white truncate">{name || "Photo"}</p>
-        <p className="text-[10px] text-white/50">Reçue par Alex</p>
+        <p className="text-[10px] text-white/50">Reçue par Clara</p>
       </div>
     </div>
   );

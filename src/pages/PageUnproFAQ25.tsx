@@ -48,7 +48,7 @@ const FAQ_ITEMS: FAQItem[] = [
   },
   {
     q: "6. Est-ce que je parle à un humain ou à une IA ?",
-    a: "Vous êtes guidé par Alex, une IA conçue pour comprendre votre situation et vous orienter efficacement.",
+    a: "Vous êtes guidé par Clara, une IA conçue pour comprendre votre situation et vous orienter efficacement.",
   },
   {
     q: "7. Est-ce que je dois remplir un long formulaire ?",
@@ -220,13 +220,13 @@ export default function PageUnproFAQ25() {
                     Vous avez un projet ?
                   </h2>
                   <p className="text-muted-foreground text-base md:text-lg">
-                    Parlez à Alex.<br />
+                    Parlez à Clara.<br />
                     Elle va vous montrer exactement par où commencer.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
                     <Button asChild size="lg" className="rounded-2xl h-13 px-8 text-base shadow-glow">
                       <Link to="/alex">
-                        Parler à Alex <ArrowRight className="h-4 w-4 ml-2" />
+                        Parler à Clara <ArrowRight className="h-4 w-4 ml-2" />
                       </Link>
                     </Button>
                     <Button asChild size="lg" variant="outline" className="rounded-2xl h-13 px-8 text-base">

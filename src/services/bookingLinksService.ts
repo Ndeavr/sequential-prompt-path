@@ -79,8 +79,8 @@ export const QR_PRESETS: QrPreset[] = [
   },
   {
     key: "alex",
-    label: "QR Alex IA",
-    description: "Parler à Alex pour être guidé",
+    label: "QR Clara IA",
+    description: "Parler à Clara pour être guidé",
     icon: "bot",
     sourceTag: "qr_alex",
     alexMode: true,

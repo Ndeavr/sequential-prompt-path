@@ -151,7 +151,7 @@ const REVIEW_DIMENSION_LABELS: Record<string, string> = {
 const buildFallbackFAQ = (name: string, specialty: string | null, city: string | null) => [
   { q: `${name} est-elle une entreprise vérifiée sur UNPRO ?`, a: `Le profil de ${name} est affiché sur UNPRO. Les badges de vérification sont attribués après validation administrative des licences, assurances et identité.` },
   { q: `Quels services offre ${name} ?`, a: `${name} se spécialise en ${specialty || "services de construction"} dans la région de ${city || "Québec"}. Consultez la section Services pour le détail.` },
-  { q: `Comment prendre rendez-vous ?`, a: `Cliquez sur « Prendre rendez-vous » depuis cette page ou parlez avec Alex, notre assistant IA.` },
+  { q: `Comment prendre rendez-vous ?`, a: `Cliquez sur « Prendre rendez-vous » depuis cette page ou parlez avec Clara, notre assistant IA.` },
   { q: `Qu'est-ce que le score AIPP ?`, a: `Le score AIPP évalue la crédibilité, la visibilité et la qualité d'un entrepreneur sur 100 points répartis en 5 piliers.` },
 ];
 
@@ -1193,7 +1193,7 @@ const ContractorProfile = () => {
             <Card className="border-0 shadow-lg overflow-hidden bg-gradient-to-br from-primary/10 via-card to-accent/5">
               <CardContent className="p-5 text-center space-y-3">
                 <h2 className="text-base font-bold text-foreground">Intéressé par {contractor.business_name} ?</h2>
-                <p className="text-[13px] text-muted-foreground">Prenez rendez-vous, comparez avec d'autres entrepreneurs ou parlez avec Alex.</p>
+                <p className="text-[13px] text-muted-foreground">Prenez rendez-vous, comparez avec d'autres entrepreneurs ou parlez avec Clara.</p>
                 <div className="flex flex-wrap gap-2 justify-center">
                   {isHomeowner ? (
                     <>
@@ -1204,7 +1204,7 @@ const ContractorProfile = () => {
                         <Link to="/alex"><Users className="h-3.5 w-3.5" /> Comparer</Link>
                       </Button>
                       <Button variant="ghost" size="sm" className="rounded-xl gap-1.5" onClick={() => alexVoice.openAlex("general")}>
-                        <MessageSquare className="h-3.5 w-3.5" /> Parler à Alex
+                        <MessageSquare className="h-3.5 w-3.5" /> Parler à Clara
                       </Button>
                     </>
                   ) : (

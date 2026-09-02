@@ -607,7 +607,7 @@ export default function SyndicateGrowthDashboard() {
           </GlassCard>
         </motion.div>
 
-        {/* ── Alex AI Prompt ── */}
+        {/* ── Clara AI Prompt ── */}
         <motion.div {...fadeUp(12)}>
           <GlassCard className="bg-gradient-to-r from-violet-500/10 to-blue-500/10 border-violet-500/20">
             <div className="flex items-start gap-4">
@@ -615,7 +615,7 @@ export default function SyndicateGrowthDashboard() {
                 <Sparkles className="w-6 h-6 text-violet-400" />
               </div>
               <div>
-                <h3 className="font-display font-semibold text-sm mb-1">Alex — Assistant IA</h3>
+                <h3 className="font-display font-semibold text-sm mb-1">Clara — Assistant IA</h3>
                 <p className="text-sm text-slate-300 leading-relaxed">
                   Bonjour. Votre immeuble aura probablement besoin d'une réfection de toiture dans <span className="text-rose-400 font-semibold">4 ans</span>.
                   Le pipeline total représente <span className="text-emerald-400 font-semibold">{(totalProjectValue / 1000).toFixed(0)}k $</span> de travaux à planifier.

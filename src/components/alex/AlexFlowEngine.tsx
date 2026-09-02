@@ -127,7 +127,7 @@ export default function AlexFlowEngine({ feature, onComplete, onDismiss }: AlexF
               <Bot className="h-4 w-4 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-semibold text-primary">Alex</p>
+              <p className="text-[11px] font-semibold text-primary">Clara</p>
               {step >= 0 && (
                 <p className="text-[10px] text-muted-foreground">{step + 1}/{flow.steps.length}</p>
               )}

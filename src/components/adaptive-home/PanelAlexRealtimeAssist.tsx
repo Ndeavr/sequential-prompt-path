@@ -49,7 +49,7 @@ export default function PanelAlexRealtimeAssist({ selectedPain, onTalk }: Props)
             className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
           >
             <MessageCircle className="w-3.5 h-3.5" />
-            Parler à Alex
+            Parler à Clara
           </button>
         </div>
       </motion.div>

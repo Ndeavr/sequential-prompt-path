@@ -89,7 +89,7 @@ export default function CityHubPage() {
             <Button size="lg" asChild>
               <Link to="/alex">
                 <MessageCircle className="mr-2 h-5 w-5" />
-                Parler à Alex
+                Parler à Clara
               </Link>
             </Button>
           </div>
@@ -137,11 +137,11 @@ export default function CityHubPage() {
                 Besoin d'aide à {cityName}?
               </h2>
               <p className="text-muted-foreground max-w-xl mx-auto">
-                Décrivez votre problème et ajoutez une photo. Alex va analyser la situation et chercher le bon pro pour vous.
+                Décrivez votre problème et ajoutez une photo. Clara va analyser la situation et chercher le bon pro pour vous.
               </p>
               <div className="flex gap-3 justify-center flex-wrap">
                 <Button size="lg" asChild>
-                  <Link to="/alex"><MessageCircle className="mr-2 h-4 w-4" />Parler à Alex</Link>
+                  <Link to="/alex"><MessageCircle className="mr-2 h-4 w-4" />Parler à Clara</Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
                   <Link to="/decrire-projet">Demander une estimation</Link>

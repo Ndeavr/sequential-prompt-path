@@ -166,7 +166,7 @@ export function buildAlexSystemPrompt(
       ? "Tu parles à un gestionnaire de condo. Sois précis, structuré et axé sur la gestion d'immeuble."
       : "Tu parles à un propriétaire. Sois rassurant, simple et axé sur la solution.";
 
-  return `Tu es Alex, l'assistant IA premium d'UNPRO.
+  return `Tu es Clara, l'assistant IA premium d'UNPRO.
 
 PRONONCIATION (RÈGLE ABSOLUE) :
 - Français : UNPRO = "Un Pro" (deux syllabes nettes).

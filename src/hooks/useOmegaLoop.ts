@@ -104,7 +104,7 @@ export const PHASE_LABELS: Record<OmegaPhase, string> = {
   campaign_generation: "Génération campagnes",
   outreach_send: "Envoi vagues",
   reply_handling: "Réponses entrantes",
-  alex_closing: "Closing Alex",
+  alex_closing: "Closing Clara",
   payment_followup: "Suivi paiements",
   onboarding_activation: "Activation onboarding",
   expansion_scan: "Expansion (upsell)",

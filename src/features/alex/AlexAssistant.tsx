@@ -74,7 +74,7 @@ export function AlexAssistant() {
             className="bg-card/80 backdrop-blur-sm border border-border/30 rounded-full px-3 py-1 text-[11px] text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
             onClick={handleOrbTap}
           >
-            {lang === "fr-CA" ? "Reprendre avec Alex" : "Resume with Alex"}
+            {lang === "fr-CA" ? "Reprendre avec Clara" : "Resume with Clara"}
           </motion.div>
         )}
 
@@ -86,7 +86,7 @@ export function AlexAssistant() {
             onClick={handleOrbTap}
             className="text-right text-[11px] font-medium text-primary/70 transition-colors hover:text-primary"
           >
-            {lang === "fr-CA" ? "Touchez pour démarrer Alex." : "Tap to start Alex."}
+            {lang === "fr-CA" ? "Touchez pour démarrer Clara." : "Tap to start Clara."}
           </motion.button>
         )}
 

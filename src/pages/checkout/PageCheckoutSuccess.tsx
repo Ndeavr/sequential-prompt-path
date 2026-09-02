@@ -232,7 +232,7 @@ export default function PageCheckoutSuccess() {
           </motion.div>
         )}
 
-        {/* Alex welcome */}
+        {/* Clara welcome */}
         {!activating && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -245,7 +245,7 @@ export default function PageCheckoutSuccess() {
                 <MessageCircle className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-bold text-foreground">Alex</p>
+                <p className="text-sm font-bold text-foreground">Clara</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Bienvenue! Votre plan {PLAN_NAMES[planCode] || planCode} est activé. Je suis là pour vous guider dans les prochaines étapes. Connectez votre agenda et vous serez prêt à recevoir des rendez-vous.
                 </p>
@@ -280,7 +280,7 @@ export default function PageCheckoutSuccess() {
                 className="flex-1 h-10 rounded-xl text-sm"
                 onClick={() => navigate("/alex/voice/realtime")}
               >
-                <MessageCircle className="w-3.5 h-3.5 mr-1" /> Parler à Alex
+                <MessageCircle className="w-3.5 h-3.5 mr-1" /> Parler à Clara
               </Button>
             </div>
           </div>

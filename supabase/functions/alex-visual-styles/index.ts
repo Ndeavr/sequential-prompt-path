@@ -63,7 +63,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: "Tu es Alex d'UNPRO, conseillère visuelle. Analyse la photo et propose 2 directions stylistiques distinctes adaptées au bâtiment résidentiel québécois." },
+          { role: "system", content: "Tu es Clara d'UNPRO, conseillère visuelle. Analyse la photo et propose 2 directions stylistiques distinctes adaptées au bâtiment résidentiel québécois." },
           { role: "user", content: [
             { type: "text", text: "Analyse cette photo et propose deux styles de rénovation contrastés." },
             { type: "image_url", image_url: { url: originalDataUrl } },

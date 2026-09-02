@@ -53,7 +53,7 @@ export function AuditSuccessScreen({ businessName, plan }: Props) {
           Compléter mon profil <ArrowRight className="w-4 h-4" />
         </Button>
         <Button variant="outline" size="lg" onClick={() => navigate("/alex")}>
-          Parler à Alex pour continuer
+          Parler à Clara pour continuer
         </Button>
       </div>
     </div>

@@ -78,7 +78,7 @@ export function generateAlexScript(ctx: PredictiveContext): AlexScript {
       objection_handling: `Ce n'est pas un lead partagé avec 5 compétiteurs. C'est un rendez-vous exclusif, directement dans votre agenda. ${ctx.dynamic_price_cents ? `Le coût de ${fmt(ctx.dynamic_price_cents / 100)} est une fraction de ce que vous rapportera ce projet.` : ""}`,
       cta_label: "Voir le détail du prix",
       cta_action: "show_price_breakdown",
-      secondary_action: "Parler à Alex pour comprendre",
+      secondary_action: "Parler à Clara pour comprendre",
       confidence_note: `On détecte une sensibilité au prix élevée. Notre réponse : transparence totale sur la valeur.`,
     };
   }

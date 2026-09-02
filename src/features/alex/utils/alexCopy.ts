@@ -17,7 +17,7 @@ import { buildAlexOpening } from "@/services/alexOpeningTemplates";
 // ─── Greetings (first visit) ──────────────────────────────────────
 // Single canonical opening per Alex System Prompt (FR only).
 const GREETINGS_FR = [
-  "Bonjour. Je suis Alex d'UNPRO. Quel problème puis-je vous aider à régler aujourd'hui?",
+  "Bonjour. Je suis Clara d'UNPRO. Quel problème puis-je vous aider à régler aujourd'hui?",
 ] as const;
 
 // English fallback message (Alex is FR-only for now).
@@ -46,16 +46,16 @@ const SOFT_PROMPTS_EN = [
 ] as const;
 
 // ─── Fallback text mode ───────────────────────────────────────────
-const FALLBACK_TEXT_FR = "Alex reste disponible en mode texte.";
-const FALLBACK_TEXT_EN = "Alex is available in text mode.";
+const FALLBACK_TEXT_FR = "Clara reste disponible en mode texte.";
+const FALLBACK_TEXT_EN = "Clara is available in text mode.";
 
 // ─── Voice blocked ────────────────────────────────────────────────
-const VOICE_BLOCKED_FR = "Touchez ici pour démarrer Alex.";
-const VOICE_BLOCKED_EN = "Tap here to start Alex.";
+const VOICE_BLOCKED_FR = "Touchez ici pour démarrer Clara.";
+const VOICE_BLOCKED_EN = "Tap here to start Clara.";
 
 // ─── Minimize CTA ─────────────────────────────────────────────────
-const MINIMIZE_CTA_FR = "Réduire Alex";
-const MINIMIZE_CTA_EN = "Minimize Alex";
+const MINIMIZE_CTA_FR = "Réduire Clara";
+const MINIMIZE_CTA_EN = "Minimize Clara";
 
 // ─── Quick Action Labels ──────────────────────────────────────────
 export const QUICK_ACTIONS = {

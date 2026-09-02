@@ -80,7 +80,7 @@ export default function PageManifesteUnpro() {
               to="/alex"
               className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90 transition"
             >
-              Parler à Alex
+              Parler à Clara
             </Link>
             <Link
               to="/pourquoi-pas-trois-soumissions"

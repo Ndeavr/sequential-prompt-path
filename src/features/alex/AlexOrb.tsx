@@ -32,5 +32,5 @@ export function AlexOrb({ onTap, size = "md" }: AlexOrbProps) {
       ? "error"
       : "idle";
 
-  return <AlexMorphingOrb state={state} size={size} onClick={onTap} ariaLabel="Alex" />;
+  return <AlexMorphingOrb state={state} size={size} onClick={onTap} ariaLabel="Clara" />;
 }

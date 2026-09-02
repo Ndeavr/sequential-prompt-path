@@ -110,7 +110,7 @@ export default function HelpPopup() {
                   </div>
                   <div>
                     <p className="font-semibold">Je suis propriétaire</p>
-                    <p className="text-xs text-muted-foreground">Parler avec Alex</p>
+                    <p className="text-xs text-muted-foreground">Parler avec Clara</p>
                   </div>
                 </button>
 

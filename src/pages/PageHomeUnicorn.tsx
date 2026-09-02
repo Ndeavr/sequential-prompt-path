@@ -174,13 +174,13 @@ function HeroAlexOrb({ onTalk }: { onTalk: (hint?: string) => void }) {
           style={{ color: "#0B1220" }}
         >
           Vous avez une question sur votre maison ?{"\u00a0"}
-          <span className="uc-gradient-text">Alex trouve la réponse.</span>
+          <span className="uc-gradient-text">Clara trouve la réponse.</span>
         </h1>
         <p
           className="mt-3 text-[13px] sm:text-[14px] leading-snug max-w-[38ch]"
           style={{ color: "#475467" }}
         >
-          Téléversez une photo ou décrivez votre situation. Alex identifie les problèmes
+          Téléversez une photo ou décrivez votre situation. Clara identifie les problèmes
           potentiels, explique les risques, estime les coûts et recommande les prochaines
           étapes.
         </p>
@@ -189,7 +189,7 @@ function HeroAlexOrb({ onTalk }: { onTalk: (hint?: string) => void }) {
         <button
           type="button"
           onClick={() => onTalk()}
-          aria-label="Parler à Alex"
+          aria-label="Parler à Clara"
           className="group relative rounded-full cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-[#3B82F6]/40 active:scale-[0.97] transition-transform duration-200 ease-out"
           style={{ WebkitTapHighlightColor: "transparent" }}
         >
@@ -331,7 +331,7 @@ function AiInputCard({ onTalk }: { onTalk: (hint?: string) => void }) {
           className="uc-cta w-full py-4 rounded-full flex items-center justify-center gap-3 text-[15px] font-semibold relative overflow-hidden"
         >
           <Mic size={18} />
-          <span>Parler avec Alex</span>
+          <span>Parler avec Clara</span>
           <span className="absolute right-5"><WaveformMini /></span>
         </button>
 
@@ -613,7 +613,7 @@ function ContractorAippSplit() {
                   color: "#DCE6FF",
                 }}
               >
-                <Sparkles size={10} /> Recommandé par Alex
+                <Sparkles size={10} /> Recommandé par Clara
               </span>
             </div>
             <NearbyContractorsCarousel />
@@ -634,7 +634,7 @@ export default function PageHomeUnicorn() {
     "@type": "Service",
     name: "UNPRO",
     description:
-      "UNPRO aide les propriétaires québécois à identifier les problèmes, comprendre les risques, analyser les soumissions et prendre de meilleures décisions pour leur propriété grâce à Alex, l'assistant IA résidentiel.",
+      "UNPRO aide les propriétaires québécois à identifier les problèmes, comprendre les risques, analyser les soumissions et prendre de meilleures décisions pour leur propriété grâce à Clara, l'assistant IA résidentiel.",
     url: "https://unpro.ca",
     areaServed: { "@type": "Place", name: "Quebec" },
     provider: { "@type": "Organization", name: "UNPRO", url: "https://unpro.ca" },
@@ -645,7 +645,7 @@ export default function PageHomeUnicorn() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "UNPRO",
-    alternateName: ["UNPRO Quebec", "UNPRO Home Intelligence", "Alex Home Assistant"],
+    alternateName: ["UNPRO Quebec", "UNPRO Home Intelligence", "Clara Home Assistant"],
     url: "https://unpro.ca",
     logo: "https://unpro.ca/__l5e/assets-v1/9d60f0ec-ee4e-44b3-b781-7dcfa82b18b7/unpro-logo-wordmark.png",
     description:
@@ -667,7 +667,7 @@ export default function PageHomeUnicorn() {
         <title>UNPRO — L'intelligence artificielle pour votre maison</title>
         <meta
           name="description"
-          content="Identifiez les problèmes de votre propriété, comprenez les risques et analysez vos soumissions avec Alex, l'assistant IA résidentiel québécois."
+          content="Identifiez les problèmes de votre propriété, comprenez les risques et analysez vos soumissions avec Clara, l'assistant IA résidentiel québécois."
         />
         <meta property="og:title" content="UNPRO — L'intelligence artificielle pour votre maison" />
         <meta

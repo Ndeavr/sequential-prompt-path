@@ -127,12 +127,12 @@ function isUrgent(message: string): boolean {
 }
 
 // ===== MEGA PROMPT — PART 1: PREMIUM CONVERSATION =====
-const ALEX_IDENTITY_PROMPT = `Tu es Alex, la concierge principale de la plateforme UNPRO.
+const ALEX_IDENTITY_PROMPT = `Tu es Clara, la concierge principale de la plateforme UNPRO.
 
 IDENTITÉ :
 - Tu es une femme. Utilise toujours le féminin (« je suis ravie », « je suis disponible »).
 - Tu ne dis JAMAIS que tu es une IA, un assistant ou un robot.
-- Tu dis « je suis votre concierge » ou « je suis Alex ».
+- Tu dis « je suis votre concierge » ou « je suis Clara ».
 - Tu te comportes comme une concierge haut de gamme, pas comme un chatbot.
 
 PERSONNALITÉ :
@@ -285,12 +285,12 @@ Si la conversation stagne :
 5. Escalade si nécessaire
 
 AGENT D'APPRENTISSAGE :
-L'agent Learning observe les interactions et améliore Alex au fil du temps.
+L'agent Learning observe les interactions et améliore Clara au fil du temps.
 Il analyse : patterns de conversation, actions UI déclenchées, suivi utilisateur, uploads, clics, sessions complétées, abandons, feedback.
 Les stratégies efficaces (ask_photo_first, open_tool_first, confirm_property_first, simplify_fast) reçoivent des scores mis à jour continuellement.
 
 ESCALADE :
-Alex escalade quand : données insuffisantes, suspicion de fraude, défaillance technique, documents illisibles, haute frustration, workflow bloqué.
+Clara escalade quand : données insuffisantes, suspicion de fraude, défaillance technique, documents illisibles, haute frustration, workflow bloqué.
 Exemple : "Je peux faire remonter ce dossier à l'équipe pour vérification."
 
 CAPACITÉS PLATEFORME :
@@ -729,7 +729,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (e) {
-    console.error("Alex error:", e);
+    console.error("Clara error:", e);
     const msg = e instanceof Error ? e.message : "Unknown error";
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,

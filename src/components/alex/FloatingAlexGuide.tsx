@@ -45,7 +45,7 @@ export default function FloatingAlexGuide() {
             transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
             className="max-w-[260px] rounded-2xl bg-white/95 backdrop-blur-xl border border-border/40 px-3.5 py-2 shadow-lg pointer-events-auto"
           >
-            <p className="text-[11px] font-semibold text-primary mb-0.5">Alex</p>
+            <p className="text-[11px] font-semibold text-primary mb-0.5">Clara</p>
             <p className="text-[12.5px] leading-snug text-foreground">{message}</p>
           </motion.div>
         )}
@@ -54,7 +54,7 @@ export default function FloatingAlexGuide() {
       <button
         onClick={() => openAlex("contractor_funnel", `stage:${stage}`)}
         className="relative h-12 w-12 pointer-events-auto"
-        aria-label="Parler à Alex"
+        aria-label="Parler à Clara"
       >
         {/* Halo */}
         <motion.span

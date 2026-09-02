@@ -65,17 +65,17 @@ export default function OwnerMenuPreviewPage() {
                 {/* Progressive sections */}
                 <ProgressiveRevealSections onItemClick={handleItemClick} />
 
-                {/* Alex CTA */}
+                {/* Clara CTA */}
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="rounded-xl border border-border bg-card p-4 flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 shrink-0">
                     <Sparkles className="h-5 w-5 text-primary" />
                   </div>
                   <div className="flex-1">
                     <div className="text-sm font-semibold text-foreground">Pas certain ?</div>
-                    <p className="text-xs text-muted-foreground">Alex peut vous guider vers le bon service.</p>
+                    <p className="text-xs text-muted-foreground">Clara peut vous guider vers le bon service.</p>
                   </div>
                   <Button variant="outline" size="sm" className="rounded-lg text-xs shrink-0" onClick={() => openAlex("general")}>
-                    Parler à Alex
+                    Parler à Clara
                   </Button>
                 </motion.div>
 

@@ -64,7 +64,7 @@ export default function AlexChatFallbackPanel() {
               <UnproIcon size={22} variant="blue" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">Alex — Mode chat</p>
+              <p className="text-sm font-semibold text-foreground">Clara — Mode chat</p>
               <p className="text-xs text-muted-foreground">
                 {reason === "permission_denied"
                   ? "Micro désactivé. Je peux continuer ici avec vous."
@@ -104,7 +104,7 @@ export default function AlexChatFallbackPanel() {
             <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground">
               <div className="flex items-center gap-2 mb-1 text-primary">
                 <MessageSquare className="w-4 h-4" />
-                <span className="font-medium">Alex</span>
+                <span className="font-medium">Clara</span>
               </div>
               Décrivez votre besoin en quelques mots.
             </div>
@@ -130,7 +130,7 @@ export default function AlexChatFallbackPanel() {
           {isStreaming && (
             <div className="flex justify-start">
               <div className="rounded-2xl bg-muted px-4 py-2.5 text-sm text-muted-foreground">
-                Alex écrit…
+                Clara écrit…
               </div>
             </div>
           )}
@@ -148,7 +148,7 @@ export default function AlexChatFallbackPanel() {
                   handleSend();
                 }
               }}
-              placeholder="Écrivez à Alex…"
+              placeholder="Écrivez à Clara…"
               rows={1}
               className="min-h-[44px] max-h-32 resize-none rounded-xl"
             />

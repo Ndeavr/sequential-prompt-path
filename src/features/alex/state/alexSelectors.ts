@@ -68,21 +68,21 @@ export const selectLastMessage = (s: AlexState) =>
 export const selectModeLabel = (s: AlexState): string => {
   const labels: Record<string, { fr: string; en: string }> = {
     booting: { fr: "Chargement…", en: "Loading…" },
-    ready: { fr: "Alex en direct", en: "Alex live" },
+    ready: { fr: "Clara en direct", en: "Clara live" },
     connecting_voice: { fr: "Connexion…", en: "Connecting…" },
-    speaking: { fr: "Alex parle…", en: "Alex speaking…" },
+    speaking: { fr: "Clara parle…", en: "Clara speaking…" },
     listening: { fr: "Je vous écoute", en: "Listening" },
     thinking: { fr: "Réflexion…", en: "Thinking…" },
     waiting_for_reply: { fr: "En attente", en: "Waiting" },
-    soft_prompt_visible: { fr: "Alex en direct", en: "Alex live" },
+    soft_prompt_visible: { fr: "Clara en direct", en: "Clara live" },
     noise_detected: { fr: "Bruit détecté", en: "Noise detected" },
     low_confidence_audio: { fr: "Parlez plus clairement", en: "Speak more clearly" },
     guiding_ui: { fr: "Je vous montre", en: "Guiding" },
     analyzing_image: { fr: "Analyse en cours…", en: "Analyzing…" },
     showing_options: { fr: "Vos options", en: "Your options" },
     closing_due_to_inactivity: { fr: "Fermeture…", en: "Closing…" },
-    minimized: { fr: "Alex réduite", en: "Alex minimized" },
-    fallback_text: { fr: "Écrivez à Alex", en: "Write to Alex" },
+    minimized: { fr: "Clara réduite", en: "Clara minimized" },
+    fallback_text: { fr: "Écrivez à Clara", en: "Write to Clara" },
     error: { fr: "Erreur", en: "Error" },
   };
   const entry = labels[s.mode] ?? labels.ready;

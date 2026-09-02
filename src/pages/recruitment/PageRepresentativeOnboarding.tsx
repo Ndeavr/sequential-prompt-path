@@ -304,7 +304,7 @@ export default function PageRepresentativeOnboarding() {
             </motion.button>
           )}
 
-          {/* Alex orb */}
+          {/* Clara orb */}
           <div className="flex items-start gap-3 pt-2">
             <motion.div
               className="relative flex-shrink-0"
@@ -322,7 +322,7 @@ export default function PageRepresentativeOnboarding() {
               animate={{ opacity: 1, x: 0 }}
               className="flex-1 rounded-2xl rounded-tl-md bg-card border border-border/40 p-4 shadow-sm"
             >
-              <p className="text-[11px] font-semibold text-primary mb-1">Alex</p>
+              <p className="text-[11px] font-semibold text-primary mb-1">Clara</p>
               <p className="text-sm text-foreground leading-relaxed">
                 {ALEX_MESSAGES[state.step](state.mode)}
               </p>

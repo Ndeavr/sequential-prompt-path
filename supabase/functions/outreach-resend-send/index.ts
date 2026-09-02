@@ -45,7 +45,7 @@ async function logSend(row: Record<string, unknown>) {
 
 async function resolveSender(): Promise<{ from: string; verified: boolean; domain: string | null }> {
   // Canonical sender for UNPRO — never override.
-  return { from: "Alex d'UNPRO <alex@mail.unpro.ca>", verified: true, domain: "mail.unpro.ca" };
+  return { from: "Clara d'UNPRO <alex@mail.unpro.ca>", verified: true, domain: "mail.unpro.ca" };
 }
 
 function htmlToText(html: string): string {

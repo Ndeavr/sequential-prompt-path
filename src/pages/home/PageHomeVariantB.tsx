@@ -86,7 +86,7 @@ const STEPS = [
     icon: MessageCircle,
     title: "Décrivez votre projet",
     body:
-      "Parlez à Alex ou remplissez quelques informations simples. Adresse, type de propriété, budget, objectifs, photos, etc.",
+      "Parlez à Clara ou remplissez quelques informations simples. Adresse, type de propriété, budget, objectifs, photos, etc.",
   },
   {
     icon: Brain,
@@ -220,7 +220,7 @@ export default function PageHomeVariantB() {
                 >
                   <MessageCircle className="mr-2 h-5 w-5" />
                   <span className="flex flex-col items-start leading-tight">
-                    <span>Parler à Alex</span>
+                    <span>Parler à Clara</span>
                     <span className="text-[11px] font-normal opacity-80">
                       Recommandation en 2 minutes
                     </span>
@@ -542,7 +542,7 @@ export default function PageHomeVariantB() {
               >
                 <MessageCircle className="mr-2 h-5 w-5" />
                 <span className="flex flex-col items-start leading-tight">
-                  <span>Parler à Alex</span>
+                  <span>Parler à Clara</span>
                   <span className="text-[11px] font-normal opacity-80">
                     Recommandation en 2 minutes
                   </span>
@@ -568,7 +568,7 @@ export default function PageHomeVariantB() {
           onClick={() => goAlex("sticky_mobile")}
           className="w-full h-13 rounded-2xl text-base font-semibold shadow-glow"
         >
-          <MessageCircle className="mr-2 h-5 w-5" /> Parler à Alex
+          <MessageCircle className="mr-2 h-5 w-5" /> Parler à Clara
         </Button>
       </div>
     </>

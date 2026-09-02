@@ -6,7 +6,7 @@ const steps = [
   { icon: MessageSquare, label: "SMS reçu", color: "from-cyan-500 to-teal-500" },
   { icon: Sparkles, label: "IA génère l'avis", color: "from-teal-500 to-emerald-500" },
   { icon: Star, label: "Publié sur Google", color: "from-emerald-500 to-amber-500" },
-  { icon: TrendingUp, label: "Alex recommande", color: "from-amber-500 to-primary" },
+  { icon: TrendingUp, label: "Clara recommande", color: "from-amber-500 to-primary" },
 ];
 
 export default function DemoAnimated() {

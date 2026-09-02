@@ -56,7 +56,7 @@ export default function PageHomeIntentUNPRO() {
           </motion.p>
         </section>
 
-        {/* Alex Concierge V2 — State Machine UI */}
+        {/* Clara Concierge V2 — State Machine UI */}
         <section className="flex-1 px-5 pb-24">
           <motion.div
             initial={{ opacity: 0, y: 12 }}

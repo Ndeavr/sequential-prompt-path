@@ -80,7 +80,7 @@ export default function SmartRecommendationCard({
 
       {/* Header */}
       <div className="p-5 pb-0 space-y-4">
-        {/* Alex recommendation */}
+        {/* Clara recommendation */}
         <motion.div
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
@@ -92,7 +92,7 @@ export default function SmartRecommendationCard({
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-              Recommandation Alex
+              Recommandation Clara
             </p>
             <p className="text-sm text-foreground mt-0.5 leading-relaxed">
               {alexExplanationFr}

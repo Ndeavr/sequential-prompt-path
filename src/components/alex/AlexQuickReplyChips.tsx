@@ -45,7 +45,7 @@ function getChipsForStep(step: AlexStep): Chip[] {
     case "no_result_recovery":
       return [
         { label: "🔍 Élargir la recherche", value: "Oui, élargis la recherche." },
-        { label: "📞 Alex s'en occupe", value: "Je préfère que tu t'en occupes." },
+        { label: "📞 Clara s'en occupe", value: "Je préfère que tu t'en occupes." },
       ];
     default:
       return [];

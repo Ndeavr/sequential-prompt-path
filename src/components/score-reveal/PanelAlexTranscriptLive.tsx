@@ -19,7 +19,7 @@ export default function PanelAlexTranscriptLive({ lines, isTyping }: Props) {
     <div className="rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm p-4 space-y-3 max-h-48 overflow-y-auto">
       <div className="flex items-center gap-2 mb-2">
         <UnproIcon size={20} variant="primary" />
-        <span className="text-xs font-semibold text-foreground">Alex</span>
+        <span className="text-xs font-semibold text-foreground">Clara</span>
       </div>
 
       <AnimatePresence>

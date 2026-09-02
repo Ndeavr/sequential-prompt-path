@@ -13,7 +13,7 @@ export default function PageAdminAlexAnalytics() {
           <BarChart3 className="w-6 h-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-xl font-bold">Alex — Analytics voix</h1>
+          <h1 className="text-xl font-bold">Clara — Analytics voix</h1>
           <p className="text-sm text-muted-foreground">Métriques de compréhension, latence, fallbacks et qualité conversationnelle.</p>
         </div>
       </div>

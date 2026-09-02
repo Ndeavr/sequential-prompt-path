@@ -201,7 +201,7 @@ export const entrepreneurMessaging = {
     continue: "Continuer",
     activate: "Activer",
     increaseVisibility: "Augmenter ma visibilité",
-    talkToAlex: "Parler à Alex",
+    talkToAlex: "Parler à Clara",
   },
 
   /**

@@ -8,14 +8,14 @@ export default function DecrireMonProjetPage() {
     <>
       <Helmet>
         <title>Décrire mon projet de rénovation | UNPRO</title>
-        <meta name="description" content="Parlez à Alex, écrivez ou décrivez votre projet de rénovation. Simple, rapide, sans engagement. Obtenez un rendez-vous garanti." />
+        <meta name="description" content="Parlez à Clara, écrivez ou décrivez votre projet de rénovation. Simple, rapide, sans engagement. Obtenez un rendez-vous garanti." />
         <link rel="canonical" href="https://unpro.ca/decrire-mon-projet" />
       </Helmet>
 
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-10">
         <PageHero
           title="Comment pouvons-nous vous aider ?"
-          subtitle="Parlez à Alex, écrivez-lui ou décrivez votre projet. Il trouve le bon professionnel pour vous."
+          subtitle="Parlez à Clara, écrivez-lui ou décrivez votre projet. Il trouve le bon professionnel pour vous."
           compact
         />
 
@@ -28,7 +28,7 @@ export default function DecrireMonProjetPage() {
 
         <RelatedLinksSection links={[
           { to: "/alex", label: "Trouver un entrepreneur" },
-          { to: "/parler-a-alex", label: "Parler à Alex" },
+          { to: "/parler-a-alex", label: "Parler à Clara" },
           { to: "/problemes-maison", label: "Problèmes maison" },
         ]} />
       </div>

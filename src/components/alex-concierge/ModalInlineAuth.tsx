@@ -73,7 +73,7 @@ export default function ModalInlineAuth({ onClose, onSuccess }: Props) {
         </div>
 
         <p className="text-sm text-muted-foreground mb-5">
-          {mode === "signup" ? "Ça prend 10 secondes. Accédez à Alex et trouvez votre professionnel." : "Content de vous revoir."}
+          {mode === "signup" ? "Ça prend 10 secondes. Accédez à Clara et trouvez votre professionnel." : "Content de vous revoir."}
         </p>
 
         <Button

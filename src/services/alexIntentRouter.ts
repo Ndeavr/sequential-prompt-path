@@ -65,7 +65,7 @@ const REGISTRY: Record<AlexIntentId, AlexIntent> = {
   },
   talk_to_alex: {
     id: "talk_to_alex",
-    label: "Parler à Alex",
+    label: "Parler à Clara",
     preset: "",
     analyticsTag: "intent_talk_to_alex",
   },

@@ -86,7 +86,7 @@ export default function AlexVoiceRealtime({ onClose, userName, className = "" }:
               )}
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-foreground font-display">Alex Voice</h2>
+              <h2 className="text-sm font-semibold text-foreground font-display">Clara Voice</h2>
               <p className="text-[10px] text-muted-foreground">{statusText}</p>
             </div>
           </div>
@@ -122,7 +122,7 @@ export default function AlexVoiceRealtime({ onClose, userName, className = "" }:
                   }`}
                 >
                   {entry.role === "alex" && (
-                    <span className="text-xs font-semibold text-primary mb-1 block">Alex</span>
+                    <span className="text-xs font-semibold text-primary mb-1 block">Clara</span>
                   )}
                   <p className="text-sm leading-relaxed">{entry.text}</p>
                 </motion.div>
@@ -180,7 +180,7 @@ export default function AlexVoiceRealtime({ onClose, userName, className = "" }:
               : ""
           }`}
         >
-          {primaryControl === "start" && <><Phone className="w-5 h-5" />Parler à Alex</>}
+          {primaryControl === "start" && <><Phone className="w-5 h-5" />Parler à Clara</>}
           {primaryControl === "stop" && <><PhoneOff className="w-5 h-5" />Raccrocher</>}
           {primaryControl === "retry" && <><RefreshCw className="w-5 h-5" />Réessayer</>}
           {primaryControl === "permission" && <><Mic className="w-5 h-5" />Autoriser le micro</>}

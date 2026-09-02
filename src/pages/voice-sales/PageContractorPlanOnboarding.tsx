@@ -106,7 +106,7 @@ export default function PageContractorPlanOnboarding() {
     <>
       <Helmet>
         <title>Choisir mon plan — UNPRO</title>
-        <meta name="description" content="Parlez à Alex pour trouver le plan parfait pour votre entreprise. Rendez-vous qualifiés, pas des leads partagés." />
+        <meta name="description" content="Parlez à Clara pour trouver le plan parfait pour votre entreprise. Rendez-vous qualifiés, pas des leads partagés." />
       </Helmet>
 
       <div className="min-h-screen bg-background flex flex-col">
@@ -116,7 +116,7 @@ export default function PageContractorPlanOnboarding() {
             <Sparkles className="w-4 h-4 text-primary" />
           </div>
           <div>
-            <h1 className="text-sm font-bold">Alex — Conseiller UNPRO</h1>
+            <h1 className="text-sm font-bold">Clara — Conseiller UNPRO</h1>
             <p className="text-xs text-muted-foreground">
               {phase === "chat" ? "Qualification en cours…" : phase === "plans" ? "Choix du plan" : phase === "fit_check" ? "Validation du plan" : phase === "checkout" ? "Paiement" : "Configuration"}
             </p>
@@ -231,7 +231,7 @@ export default function PageContractorPlanOnboarding() {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleSend()}
-                placeholder="Répondez à Alex…"
+                placeholder="Répondez à Clara…"
                 className="flex-1"
                 disabled={isStreaming}
               />

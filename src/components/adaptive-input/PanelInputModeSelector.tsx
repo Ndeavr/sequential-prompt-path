@@ -7,7 +7,7 @@ import { Mic, MessageSquare, PenLine } from "lucide-react";
 import type { InputMode } from "@/hooks/useInputModeDetection";
 
 const MODES: { mode: InputMode; label: string; icon: typeof Mic; desc: string }[] = [
-  { mode: "voice", label: "Parler à Alex", icon: Mic, desc: "Le plus rapide" },
+  { mode: "voice", label: "Parler à Clara", icon: Mic, desc: "Le plus rapide" },
   { mode: "chat", label: "Écrire", icon: MessageSquare, desc: "Par messages" },
   { mode: "form", label: "Remplir manuellement", icon: PenLine, desc: "Formulaire classique" },
 ];

@@ -117,7 +117,7 @@ export default function PanelPlanFitCheck({ selectedPlanCode, onConfirm }: Props
               <Sparkles className="w-4 h-4 text-primary" />
             </div>
             <p className="text-xs uppercase tracking-wider font-bold text-primary">
-              {sameAsChoice ? "Choix confirmé par Alex" : "Recommandation d'Alex"}
+              {sameAsChoice ? "Choix confirmé par Clara" : "Recommandation de Clara"}
             </p>
           </div>
 
@@ -183,7 +183,7 @@ export default function PanelPlanFitCheck({ selectedPlanCode, onConfirm }: Props
         ))}
       </div>
 
-      {/* Alex bubble */}
+      {/* Clara bubble */}
       <div className="flex gap-2.5">
         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
           <Sparkles className="w-4 h-4 text-primary" />

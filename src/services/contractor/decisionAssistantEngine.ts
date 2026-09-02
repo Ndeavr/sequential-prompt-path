@@ -190,7 +190,7 @@ function suggestAction(c: DecisionContractor): { action: DecisionSuggestion["sug
     return { action: "upload_quote", label: "Soumettre une soumission" };
   }
   if ((c.unpro_score ?? 0) < 40 || (c.missing_proofs?.length ?? 0) >= 3) {
-    return { action: "ask_alex", label: "Demander l'aide d'Alex" };
+    return { action: "ask_alex", label: "Demander l'aide de Clara" };
   }
   return { action: "contact", label: "Contacter cet entrepreneur" };
 }

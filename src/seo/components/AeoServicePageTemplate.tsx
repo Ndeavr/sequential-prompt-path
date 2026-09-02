@@ -119,7 +119,7 @@ export default function AeoServicePageTemplate({
             <p className="text-sm text-muted-foreground mt-1">Recommandation IA en moins de 5 secondes.</p>
           </div>
           <Button asChild>
-            <Link to={ctaHref}>Parler à Alex <ArrowRight className="ml-2 h-4 w-4" /></Link>
+            <Link to={ctaHref}>Parler à Clara <ArrowRight className="ml-2 h-4 w-4" /></Link>
           </Button>
         </section>
 

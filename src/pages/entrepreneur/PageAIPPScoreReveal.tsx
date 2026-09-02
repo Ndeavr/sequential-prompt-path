@@ -125,7 +125,7 @@ function ScoreRevealFlow({ session }: { session: SessionData }) {
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-6 space-y-6">
-        {/* Section 1: Transcript / Alex speaking */}
+        {/* Section 1: Transcript / Clara speaking */}
         <PanelAlexTranscriptLive lines={engine.transcript} isTyping={engine.isTyping} />
 
         {/* Section 2: Score card — suspense or revealed */}

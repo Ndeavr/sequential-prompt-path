@@ -52,7 +52,7 @@ async function callGemini(apiKey: string, prompt: string): Promise<string> {
         {
           role: "system",
           content:
-            "Tu es Alex d'UNPRO, expert en acquisition entrepreneur au Québec. " +
+            "Tu es Clara d'UNPRO, expert en acquisition entrepreneur au Québec. " +
             "Tu écris en français québécois, ton calme et précis. " +
             "INTERDIT: 'leads', 'leads partagés', 'annuaire', 'soumission partagée'. " +
             "TOUJOURS: 'rendez-vous exclusifs', 'visibilité IA', 'territoire', 'capacité'. " +

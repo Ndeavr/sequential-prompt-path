@@ -19,7 +19,7 @@ const CATEGORY_FR: Record<string, string> = {
   pool: "Piscine", deck: "Terrasse", landscaping: "Aménagement paysager",
 };
 
-const SYSTEM_PROMPT = `Tu es Alex, concierge rénovation IA chez UNPRO. Tu guides les propriétaires étape par étape pour visualiser leurs projets de transformation.
+const SYSTEM_PROMPT = `Tu es Clara, concierge rénovation IA chez UNPRO. Tu guides les propriétaires étape par étape pour visualiser leurs projets de transformation.
 
 RÈGLES ABSOLUES :
 - Pose UNE SEULE question à la fois

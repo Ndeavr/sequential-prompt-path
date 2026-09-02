@@ -271,8 +271,8 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
 
                 <div className="space-y-1">
                   <p className="text-lg font-bold" style={{ color: "#0B1533" }}>
-                    {orbState === "speaking" ? "Alex vous parle…"
-                      : orbState === "thinking" ? "Alex réfléchit…"
+                    {orbState === "speaking" ? "Clara vous parle…"
+                      : orbState === "thinking" ? "Clara réfléchit…"
                       : orbState === "listening" ? "Je vous écoute…"
                       : "Décrivez-moi votre projet"}
                   </p>

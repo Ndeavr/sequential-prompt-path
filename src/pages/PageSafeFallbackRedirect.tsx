@@ -15,7 +15,7 @@ import { resolveDestinationForRole } from "@/config/routeRegistry";
 const intentConfig: Record<string, { title: string; subtitle: string; icon: typeof Compass; ctaLabel: string; ctaPath: string }> = {
   problem_detection: {
     title: "Besoin d'aide avec un problème?",
-    subtitle: "Alex peut vous aider à identifier et résoudre votre problème résidentiel.",
+    subtitle: "Clara peut vous aider à identifier et résoudre votre problème résidentiel.",
     icon: Wrench,
     ctaLabel: "Détecter un problème",
     ctaPath: "/alex",
@@ -35,10 +35,10 @@ const intentConfig: Record<string, { title: string; subtitle: string; icon: type
     ctaPath: "/services",
   },
   alex: {
-    title: "Parlez à Alex",
+    title: "Parlez à Clara",
     subtitle: "Votre assistant intelligent pour tous vos besoins résidentiels.",
     icon: MessageCircle,
-    ctaLabel: "Ouvrir Alex",
+    ctaLabel: "Ouvrir Clara",
     ctaPath: "/alex",
   },
   generic: {
@@ -105,7 +105,7 @@ export default function PageSafeFallbackRedirect() {
       : []),
     {
       icon: MessageCircle,
-      label: "Parler à Alex",
+      label: "Parler à Clara",
       sublabel: "Assistant intelligent UNPRO",
       onClick: () => navigate("/alex"),
       primary: false,

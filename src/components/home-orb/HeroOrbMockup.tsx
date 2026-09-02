@@ -62,8 +62,8 @@ export default function HeroOrbMockup() {
   };
 
   const greeting = isContractor
-    ? "Bonjour. Je suis Alex d'UNPRO. Voyons ensemble comment faire évoluer votre entreprise."
-    : "Bonjour. Je suis Alex d'UNPRO. Quel problème puis-je vous aider à régler aujourd'hui?";
+    ? "Bonjour. Je suis Clara d'UNPRO. Voyons ensemble comment faire évoluer votre entreprise."
+    : "Bonjour. Je suis Clara d'UNPRO. Quel problème puis-je vous aider à régler aujourd'hui?";
 
   const quickActions = isContractor
     ? [
@@ -148,7 +148,7 @@ export default function HeroOrbMockup() {
           className="relative flex items-center justify-center w-full"
           style={{ minHeight: 220 }}
         >
-          <AlexMorphingOrb state={orbState} size="lg" onClick={handleStart} ariaLabel="Alex" />
+          <AlexMorphingOrb state={orbState} size="lg" onClick={handleStart} ariaLabel="Clara" />
         </div>
 
         <div className="mt-2 flex items-center gap-3">

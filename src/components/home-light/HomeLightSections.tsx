@@ -76,7 +76,7 @@ export function SectionTwoPaths() {
           </div>
           <h3 className="mt-5 text-xl font-semibold text-foreground">Vous êtes propriétaire ?</h3>
           <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
-            Comprenez votre problème, documentez votre propriété et laissez Alex
+            Comprenez votre problème, documentez votre propriété et laissez Clara
             vous orienter vers le bon professionnel — sans courir après les
             soumissions.
           </p>
@@ -84,7 +84,7 @@ export function SectionTwoPaths() {
             onClick={startAlex}
             className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5"
           >
-            Parler à Alex <ArrowRight className="h-4 w-4" />
+            Parler à Clara <ArrowRight className="h-4 w-4" />
           </button>
         </motion.div>
 
@@ -164,12 +164,12 @@ const STEPS = [
   {
     icon: MessageSquare,
     title: "Décrivez votre situation",
-    body: "Alex pose une question à la fois pour cerner le problème, le risque et l'urgence — jamais un long formulaire.",
+    body: "Clara pose une question à la fois pour cerner le problème, le risque et l'urgence — jamais un long formulaire.",
   },
   {
     icon: Camera,
     title: "Montrez, c'est tout",
-    body: "Ajoutez une photo ou une soumission reçue. Alex l'analyse et vous explique ce qu'elle contient.",
+    body: "Ajoutez une photo ou une soumission reçue. Clara l'analyse et vous explique ce qu'elle contient.",
   },
   {
     icon: Search,
@@ -271,7 +271,7 @@ export function SectionPasseport() {
           <p className="mt-4 text-[15.5px] leading-relaxed text-muted-foreground">
             Conservez vos travaux, vos soumissions et vos documents au même
             endroit. Chaque intervention enrichit l'historique de la maison et
-            aide Alex à mieux vous conseiller la prochaine fois.
+            aide Clara à mieux vous conseiller la prochaine fois.
           </p>
           <Link
             to="/proprietaires/passeport-maison"
@@ -312,14 +312,14 @@ export function SectionFinalCta() {
           Commencez par une seule question.
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-[15.5px] leading-relaxed text-muted-foreground">
-          Alex vous répond en français, comprend votre situation et vous guide
+          Clara vous répond en français, comprend votre situation et vous guide
           vers la prochaine étape utile.
         </p>
         <button
           onClick={startAlex}
           className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-primary px-7 py-4 text-[15px] font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-transform hover:-translate-y-0.5"
         >
-          Parler à Alex <ArrowRight className="h-4 w-4" />
+          Parler à Clara <ArrowRight className="h-4 w-4" />
         </button>
       </div>
     </SectionWrap>

@@ -198,7 +198,7 @@ export const adminSecondaryGroup: NavGroup = {
 
 export const adminAdvancedGroups: NavGroup[] = [
   {
-    key: "alex", label: "Alex & IA", icon: Sparkles,
+    key: "alex", label: "Clara & IA", icon: Sparkles,
     items: [
       { to: "/admin/agents", label: "Agents IA", icon: Brain },
       { to: "/admin/answer-engine", label: "Base de connaissances", icon: Cpu },

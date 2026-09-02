@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
         payload: {
           message_id: messageId,
           to: p.email,
-          from: 'Alex UNPRO <alex@notify.unpro.ca>',
+          from: 'Clara UNPRO <alex@notify.unpro.ca>',
           sender_domain: 'notify.unpro.ca',
           subject,
           html,
@@ -136,7 +136,7 @@ function buildOutreachHtml(companyName: string, city: string): string {
     Bonjour${companyName ? ` ${companyName}` : ''},
   </h1>
   <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 16px;">
-    Ici Alex de UNPRO.
+    Ici Clara de UNPRO.
   </p>
   <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 16px;">
     Nous avons identifié de nouvelles demandes potentielles en isolation dans votre secteur${city ? ` (${city})` : ''}.
@@ -151,7 +151,7 @@ function buildOutreachHtml(companyName: string, city: string): string {
     <strong>Répondez OUI</strong> et je vous explique.
   </p>
   <p style="font-size:13px;color:#9CA3AF;margin:32px 0 0;">
-    — Alex, UNPRO.ca
+    — Clara, UNPRO.ca
   </p>
 </body>
 </html>`.trim()
@@ -160,7 +160,7 @@ function buildOutreachHtml(companyName: string, city: string): string {
 function buildOutreachText(companyName: string, city: string): string {
   return `Bonjour${companyName ? ` ${companyName}` : ''},
 
-Ici Alex de UNPRO.
+Ici Clara de UNPRO.
 
 Nous avons identifié de nouvelles demandes potentielles en isolation dans votre secteur${city ? ` (${city})` : ''}.
 
@@ -170,5 +170,5 @@ Souhaitez-vous voir les opportunités disponibles?
 
 Répondez OUI et je vous explique.
 
-— Alex, UNPRO.ca`
+— Clara, UNPRO.ca`
 }

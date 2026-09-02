@@ -85,7 +85,7 @@ export default function ChatAlexSecondary({
         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-primary via-secondary to-accent">
           <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
         </div>
-        <span className="text-sm font-semibold text-foreground">Alex</span>
+        <span className="text-sm font-semibold text-foreground">Clara</span>
         <div className="ml-auto flex gap-1">
           <button
             onClick={() => openAlex(feature)}

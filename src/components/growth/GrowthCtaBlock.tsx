@@ -25,8 +25,8 @@ const GrowthCtaBlock = ({ showAlex = false, cityName }: GrowthCtaBlockProps) => 
     },
     {
       icon: Search,
-      title: "Parler à Alex",
-      description: `Trouvez le bon pro avec Alex${location}`,
+      title: "Parler à Clara",
+      description: `Trouvez le bon pro avec Clara${location}`,
       to: `/alex`,
     },
     {
@@ -57,7 +57,7 @@ const GrowthCtaBlock = ({ showAlex = false, cityName }: GrowthCtaBlockProps) => 
       {showAlex && (
         <p className="text-sm text-muted-foreground text-center">
           <MessageCircle className="inline h-4 w-4 mr-1" />
-          Besoin d'aide ? <Link to="/signup" className="text-primary hover:underline">Créez un compte</Link> pour parler avec Alex, votre assistant IA.
+          Besoin d'aide ? <Link to="/signup" className="text-primary hover:underline">Créez un compte</Link> pour parler avec Clara, votre assistant IA.
         </p>
       )}
     </section>

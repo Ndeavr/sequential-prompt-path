@@ -19,7 +19,7 @@ import { dimensionsToFactors } from "./authority/data";
 import { DIMENSION_META } from "@/services/authorityScoreV2";
 import type { AuthorityDimensions } from "@/services/authorityScoreV2";
 
-const tabs = ["Vue d'ensemble", "Composition", "Historique", "Opportunités", "Analyse Alex", "Admin"] as const;
+const tabs = ["Vue d'ensemble", "Composition", "Historique", "Opportunités", "Analyse Clara", "Admin"] as const;
 type Tab = typeof tabs[number];
 
 function FactorBar({ label, value, weight, color, index }: {
@@ -211,7 +211,7 @@ export default function UNPROAuthorityScore() {
               <AuthorityHistory />
             )}
 
-            {(activeTab === "Vue d'ensemble" || activeTab === "Analyse Alex") && (
+            {(activeTab === "Vue d'ensemble" || activeTab === "Analyse Clara") && (
               <AuthorityAlexAnalysis />
             )}
 
@@ -237,7 +237,7 @@ export default function UNPROAuthorityScore() {
                 <div className="flex flex-col sm:flex-row gap-2 justify-center pt-1">
                   <Button className="gap-2 h-11 px-6 bg-primary hover:bg-primary/90 text-sm font-semibold">
                     <Brain className="w-4 h-4" />
-                    Analyser mon profil avec Alex
+                    Analyser mon profil avec Clara
                   </Button>
                   <Button variant="outline" className="gap-2 h-11 px-6 border-border/50 text-sm hover:border-primary/40">
                     Améliorer mon score

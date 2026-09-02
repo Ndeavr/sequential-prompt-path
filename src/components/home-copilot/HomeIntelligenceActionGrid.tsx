@@ -18,7 +18,7 @@ interface ActionCard {
 }
 
 const CARDS: ActionCard[] = [
-  { id: "diagnostic", title: "Diagnostic visuel IA", desc: "Importez une photo et laissez Alex analyser le problème.", icon: Camera, href: "/diagnostic-photo" },
+  { id: "diagnostic", title: "Diagnostic visuel IA", desc: "Importez une photo et laissez Clara analyser le problème.", icon: Camera, href: "/diagnostic-photo" },
   { id: "quote", title: "Vérifier une soumission", desc: "Détectez les oublis, écarts de prix et risques avant de signer.", icon: FileText, href: "/soumission/analyse" },
   { id: "verify-pro", title: "Vérifier un entrepreneur", desc: "Consultez les signaux de confiance et spécialités détectés par l'IA.", icon: ShieldCheck, href: "/trouver-entrepreneur" },
   { id: "passport", title: "Passeport Maison", desc: "Votre maison mérite une mémoire intelligente.", icon: Home, href: "/mes-proprietes" },

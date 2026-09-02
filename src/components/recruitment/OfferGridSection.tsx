@@ -5,7 +5,7 @@ const offers = [
   { icon: MapPin, title: "Territoire exclusif — personne d'autre ne prospecte ta zone" },
   { icon: Clock, title: "Horaire flexible — temps partiel, été, ou plein temps" },
   { icon: Smartphone, title: "Outils IA fournis — tu crées le profil en 5 min" },
-  { icon: GraduationCap, title: "Formation complète — Alex t'entraîne avant chaque RDV" },
+  { icon: GraduationCap, title: "Formation complète — Clara t'entraîne avant chaque RDV" },
   { icon: TrendingUp, title: "Commission récurrente — chaque client te paie chaque mois" },
   { icon: Users, title: "Pas de compétition — tu es le seul rep dans ta ville" },
 ];

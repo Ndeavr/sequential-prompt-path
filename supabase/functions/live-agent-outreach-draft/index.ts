@@ -50,7 +50,7 @@ Description: ${ex.description || ""}
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: "Tu es Alex d'UNPRO. Tu écris en français québécois (fr-CA). Court, direct, humain. Pas de jargon. Pas d'emojis. Toujours 2 phrases d'accroche personnalisée + 1 CTA clair pour parler. Ne mens jamais sur des faits." },
+          { role: "system", content: "Tu es Clara d'UNPRO. Tu écris en français québécois (fr-CA). Court, direct, humain. Pas de jargon. Pas d'emojis. Toujours 2 phrases d'accroche personnalisée + 1 CTA clair pour parler. Ne mens jamais sur des faits." },
           { role: "user", content: `Écris un courriel personnalisé pour cet entrepreneur. Mentionne 1 observation concrète tirée du contexte, propose qu'UNPRO l'aide à obtenir plus de contrats grâce à l'IA, CTA: répondre ou appeler 514-249-9522.\n\n${ctx}` },
         ],
         tools: [{

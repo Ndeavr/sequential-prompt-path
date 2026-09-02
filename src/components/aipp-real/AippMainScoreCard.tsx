@@ -61,7 +61,7 @@ export default function AippMainScoreCard({ model }: { model: AippAuditViewModel
           Corriger mes points faibles
         </button>
         <button className="px-5 py-2.5 rounded-xl border border-border text-foreground font-medium text-sm hover:bg-muted/50 transition">
-          Parler à Alex
+          Parler à Clara
         </button>
       </div>
     </div>

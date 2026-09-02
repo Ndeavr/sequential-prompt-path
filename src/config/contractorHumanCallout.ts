@@ -7,7 +7,7 @@ export const CONTRACTOR_HUMAN_CALLOUT = {
   title: "Vous voulez être recommandé par l'IA?",
   subtitle: "Parlez à un humain maintenant.",
   primaryCta: "Appeler",
-  secondaryCta: "Continuer avec Alex",
+  secondaryCta: "Continuer avec Clara",
   // Path prefixes that indicate contractor intent
   contractorPathPrefixes: [
     "/entrepreneur",

@@ -210,7 +210,7 @@ export default function AdminVoiceControlPage() {
           <div>
             <h1 className="text-2xl font-bold font-display text-foreground flex items-center gap-2">
               <Shield className="h-6 w-6 text-primary" />
-              Alex Voice Control
+              Clara Voice Control
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Single voice. Premium tone. Admin-controlled Voice IDs. No overlap.

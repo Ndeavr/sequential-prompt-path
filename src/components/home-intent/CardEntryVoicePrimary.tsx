@@ -21,7 +21,7 @@ export default function CardEntryVoicePrimary({ onClick }: Props) {
         transition-shadow duration-300"
     >
       <Mic className="w-5 h-5" />
-      Parler à Alex
+      Parler à Clara
     </motion.button>
   );
 }

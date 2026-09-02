@@ -14,7 +14,7 @@ export default function AlexBottomSheetLauncherUNPRO() {
     <button
       onClick={() => openAlex("general", "Navigation mobile")}
       className="relative flex flex-col items-center justify-center gap-0.5 flex-1 py-1"
-      aria-label="Alex"
+      aria-label="Clara"
     >
       <motion.div
         className="w-10 h-10 rounded-full flex items-center justify-center relative"
@@ -28,7 +28,7 @@ export default function AlexBottomSheetLauncherUNPRO() {
       >
         <Sparkles className="w-5 h-5 text-white relative z-10" />
       </motion.div>
-      <span className="text-[9px] font-semibold text-primary mt-0.5">Alex</span>
+      <span className="text-[9px] font-semibold text-primary mt-0.5">Clara</span>
     </button>
   );
 }

@@ -57,12 +57,12 @@ export default function OrbAlexVoicePrimary({
       {/* Primary label */}
       <div className="text-center space-y-2">
         <h3 className="text-lg font-bold text-foreground">
-          {voiceAvailable ? "Parlez à Alex" : "Discutez avec Alex"}
+          {voiceAvailable ? "Parlez à Clara" : "Discutez avec Clara"}
         </h3>
         <p className="text-sm text-muted-foreground max-w-xs mx-auto">
           {voiceAvailable
-            ? "Décrivez votre projet par la voix. Alex vous guide en temps réel."
-            : "Écrivez votre besoin. Alex vous aide à trouver la bonne solution."}
+            ? "Décrivez votre projet par la voix. Clara vous guide en temps réel."
+            : "Écrivez votre besoin. Clara vous aide à trouver la bonne solution."}
         </p>
       </div>
 
@@ -78,7 +78,7 @@ export default function OrbAlexVoicePrimary({
           </>
         ) : (
           <>
-            <MessageSquare className="h-5 w-5" /> Écrire à Alex
+            <MessageSquare className="h-5 w-5" /> Écrire à Clara
           </>
         )}
       </Button>

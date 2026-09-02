@@ -133,13 +133,13 @@ Deno.serve(async (req) => {
       { key: "sms_failed", label: "SMS échoués", count: smsFailed.length, lastAt: lastAt(smsFailed), err: topSmsError(["failed", "undelivered"]) },
       { key: "link_clicked", label: "Liens cliqués", count: evClicked.length, lastAt: lastAt(evClicked), err: null },
       { key: "landing_view", label: "Landing vue", count: evLanding.length, lastAt: lastAt(evLanding), err: null },
-      { key: "alex_started", label: "Alex démarré", count: evAlex.length, lastAt: lastAt(evAlex), err: null },
+      { key: "alex_started", label: "Clara démarré", count: evAlex.length, lastAt: lastAt(evAlex), err: null },
       { key: "signup_started", label: "Inscription commencée", count: evSignupStart.length, lastAt: lastAt(evSignupStart), err: topEventError(["registration_started", "signup_started"]) },
       { key: "signup_completed", label: "Inscription terminée", count: evSignupDone.length, lastAt: lastAt(evSignupDone), err: null },
       { key: "checkout_opened", label: "Checkout ouvert", count: evCheckoutOpen.length, lastAt: lastAt(evCheckoutOpen), err: topEventError(["checkout_started", "stripe_checkout_opened"]) },
       { key: "payment_success", label: "Paiement réussi", count: paidCount, lastAt: paidLeads[0]?.paid_at ?? lastAt(evPaid), err: null },
       { key: "activated", label: "Compte activé", count: activatedCount, lastAt: activatedLeads[0]?.activated_at ?? lastAt(evActivated), err: null },
-      { key: "recommendable", label: "Recommandable par Alex", count: activatedCount, lastAt: activatedLeads[0]?.activated_at ?? null, err: null },
+      { key: "recommendable", label: "Recommandable par Clara", count: activatedCount, lastAt: activatedLeads[0]?.activated_at ?? null, err: null },
     ];
 
     const anchor = raw[0].count || 1;

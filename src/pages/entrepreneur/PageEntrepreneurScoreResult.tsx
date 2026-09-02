@@ -162,7 +162,7 @@ const PageEntrepreneurScoreResult = () => {
           </Button>
         </div>
 
-        {/* Alex Intervention */}
+        {/* Clara Intervention */}
         {showAlex && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -174,7 +174,7 @@ const PageEntrepreneurScoreResult = () => {
                 <Sparkles className="w-5 h-5 text-primary-foreground" />
               </div>
               <div className="flex-1">
-                <p className="font-bold text-foreground text-sm mb-1">Alex d'UnPRO</p>
+                <p className="font-bold text-foreground text-sm mb-1">Clara d'UnPRO</p>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   Je vois exactement ce qui bloque votre visibilité. En quelques minutes, je peux optimiser votre profil et vous connecter avec des clients qualifiés. On le fait ensemble ?
                 </p>

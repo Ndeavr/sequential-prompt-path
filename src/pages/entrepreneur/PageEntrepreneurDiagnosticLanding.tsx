@@ -344,7 +344,7 @@ function Hero() {
 }
 
 const ALEX_STEP_SCRIPT: Record<0 | 1 | 2, string> = {
-  0: "Bonjour. Je suis Alex d'UNPRO. Pour commencer, donnez-moi le nom de votre entreprise, votre site web et votre téléphone. Je m'occupe du reste.",
+  0: "Bonjour. Je suis Clara d'UNPRO. Pour commencer, donnez-moi le nom de votre entreprise, votre site web et votre téléphone. Je m'occupe du reste.",
   1: "Parfait. Maintenant, ajustez les curseurs : projets par mois, valeur moyenne d'un contrat, taux de fermeture. Sautez ce que vous voulez.",
   2: "Voici votre score AIPP, votre potentiel de revenus, et le plan recommandé pour dominer votre territoire.",
 };
@@ -387,7 +387,7 @@ function AlexNarrator({
         state={orbState}
         size="lg"
         onClick={() => void speakNow(text)}
-        ariaLabel="Alex"
+        ariaLabel="Clara"
       />
       <p className="mt-6 max-w-xl text-[15px] sm:text-[17px] text-white/85 leading-relaxed">
         « {text} »

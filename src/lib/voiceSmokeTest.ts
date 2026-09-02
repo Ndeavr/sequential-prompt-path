@@ -106,7 +106,7 @@ export async function voice_smoke_test(): Promise<SmokeReport> {
   });
 
   // 2. Primary TTS returns audio
-  const primary = await timed(() => callTts(ALEX_VOICE_BASE.voiceId, "Test de voix Alex."));
+  const primary = await timed(() => callTts(ALEX_VOICE_BASE.voiceId, "Test de voix Clara."));
   if (primary.result) {
     lastPrimaryAudioBytes = primary.result.byteLength;
     checks.push({
@@ -189,7 +189,7 @@ export async function voice_smoke_test(): Promise<SmokeReport> {
     checks.push({
       name: "orb_present",
       pass: !!orb,
-      detail: orb ? "found" : "no [data-alex-orb] in DOM (page may not mount Alex)",
+      detail: orb ? "found" : "no [data-alex-orb] in DOM (page may not mount Clara)",
     });
     if (orb) {
       const startedAtMode = (window as unknown as { __alexMode?: string }).__alexMode;

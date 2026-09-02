@@ -135,8 +135,8 @@ export default function BlogPage({ categoryFilter, pageTitle, pageDescription }:
 
         <CTASection
           title="Vous avez un projet en tête?"
-          description="Parlez à Alex ou décrivez votre projet pour obtenir un rendez-vous garanti."
-          primaryCta={{ label: "Parler à Alex", to: "/parler-a-alex" }}
+          description="Parlez à Clara ou décrivez votre projet pour obtenir un rendez-vous garanti."
+          primaryCta={{ label: "Parler à Clara", to: "/parler-a-alex" }}
           secondaryCta={{ label: "Décrire mon projet", to: "/decrire-mon-projet" }}
           variant="subtle"
         />

@@ -82,14 +82,14 @@ const DecisionAssistantPage = () => {
         </section>
 
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-          {/* Alex tip */}
+          {/* Clara tip */}
           <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-card to-secondary/5">
             <CardContent className="p-4 flex items-start gap-3">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shrink-0">
                 <Sparkles className="w-4 h-4 text-primary-foreground" />
               </div>
               <div>
-                <p className="text-xs font-semibold mb-1">Conseil d'Alex</p>
+                <p className="text-xs font-semibold mb-1">Conseil de Clara</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   L'ordre de contact est basé sur la pertinence du service, le statut de vérification,
                   la confiance, la qualité de la soumission et la proximité. Ce n'est pas un classement absolu —

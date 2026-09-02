@@ -237,7 +237,7 @@ export default function PageAdLandingAipp() {
               {[
                 { icon: Brain, title: "Score AIPP", desc: "Mesurez votre visibilité IA" },
                 { icon: Shield, title: "Profil intelligent", desc: "Optimisé pour les recommandations" },
-                { icon: MessageCircle, title: "Alex vous guide", desc: "Votre stratégie personnalisée" },
+                { icon: MessageCircle, title: "Clara vous guide", desc: "Votre stratégie personnalisée" },
                 { icon: Calendar, title: "Rendez-vous", desc: "Exclusifs et qualifiés" },
               ].map((v) => (
                 <Card key={v.title} className="border-primary/10">
@@ -329,16 +329,16 @@ export default function PageAdLandingAipp() {
               <MessageCircle className="h-7 w-7 text-primary-foreground" />
             </div>
             <h2 className="text-lg font-bold text-foreground mb-2">
-              Alex peut vous guider
+              Clara peut vous guider
             </h2>
             <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-              Alex peut vous guider pour compléter votre profil et vous montrer exactement quoi faire ensuite pour recevoir vos premiers rendez-vous qualifiés.
+              Clara peut vous guider pour compléter votre profil et vous montrer exactement quoi faire ensuite pour recevoir vos premiers rendez-vous qualifiés.
             </p>
             <Button variant="outline" size="lg" onClick={() => {
               trackEvent("cta_alex_preview", "ad_landing");
               navigate("/alex");
             }}>
-              Parler à Alex <ArrowRight className="ml-2 h-4 w-4" />
+              Parler à Clara <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </section>

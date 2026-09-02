@@ -135,7 +135,7 @@ export default function PageOutreachActivationSuccess() {
             <Step done>Paiement confirmé</Step>
             <Step done={activated || (info?.has_contractor ?? false)}>Compte entrepreneur créé</Step>
             <Step done={activated || (info?.has_profile ?? false)}>Profil public initialisé</Step>
-            <Step done={!!info?.recommendable}>Éligibilité aux recommandations Alex</Step>
+            <Step done={!!info?.recommendable}>Éligibilité aux recommandations Clara</Step>
             <Step>Compléter mon profil</Step>
             <Step>Ajouter mes disponibilités</Step>
           </ul>

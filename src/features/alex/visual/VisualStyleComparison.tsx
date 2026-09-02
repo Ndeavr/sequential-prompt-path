@@ -82,7 +82,7 @@ export default function VisualStyleComparison({ actionId, data }: Props) {
       {recommendedId && reason && (
         <div className="flex items-start gap-2 rounded-xl bg-primary/10 border border-primary/30 px-3 py-2 text-xs text-foreground animate-fade-in">
           <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-          <span><strong>Alex recommande</strong> — {reason}</span>
+          <span><strong>Clara recommande</strong> — {reason}</span>
         </div>
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

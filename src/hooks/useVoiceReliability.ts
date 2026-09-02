@@ -299,7 +299,7 @@ export function useVoiceReliability(options: VoiceReliabilityOptions = {}) {
         }
       );
 
-      const fallbackUsed = response.headers.get("X-Alex-Fallback-Used") === "true";
+      const fallbackUsed = response.headers.get("X-Clara-Fallback-Used") === "true";
 
       if (!response.ok) {
         // TTS failed — show text fallback

@@ -15,7 +15,7 @@ import InternalLinksTrust from "@/components/trust/InternalLinksTrust";
 const FALLBACK_FEATURES = [
   { id: "1", title: "Matching IA instantané", description: "Recommandation du meilleur entrepreneur en <5 secondes", status: "live" as const, category: "Core" },
   { id: "2", title: "Score AIPP", description: "Évaluation automatique de la crédibilité des entrepreneurs", status: "live" as const, category: "Trust" },
-  { id: "3", title: "Alex — Assistant IA vocal", description: "Assistant conversationnel voice-first pour guider vos décisions", status: "live" as const, category: "Alex" },
+  { id: "3", title: "Clara — Assistant IA vocal", description: "Assistant conversationnel voice-first pour guider vos décisions", status: "live" as const, category: "Clara" },
   { id: "4", title: "Passeport Maison avancé", description: "Historique complet et score de santé de votre propriété", status: "in_progress" as const, category: "Propriétaire" },
   { id: "5", title: "Facturation + Taxes intégrées", description: "Gestion automatique des factures et taxes québécoises", status: "in_progress" as const, category: "Pro" },
   { id: "6", title: "Designer IA", description: "Visualisation de vos rénovations avant de commencer", status: "upcoming" as const, category: "Innovation" },

@@ -65,7 +65,7 @@ export default function AlexInlineTranscript({
         </div>
       ))}
 
-      {/* Live, sentence-by-sentence reveal while Alex speaks */}
+      {/* Live, sentence-by-sentence reveal while Clara speaks */}
       {hasLive && (
         <div className="flex justify-start">
           <div className="max-w-[92%] rounded-2xl rounded-bl-sm px-4 py-3 bg-white/[0.06] border border-white/10 text-white">

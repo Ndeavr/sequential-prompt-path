@@ -65,9 +65,9 @@ serve(async (req) => {
       <p>Ceci est un test administratif du pipeline d'envoi UNPRO. Un CTA suivi est inclus ci-dessous.</p>
       <p><a href="${ctaUrl}" style="display:inline-block;padding:12px 20px;background:#0f172a;color:#fff;border-radius:8px;text-decoration:none">Activer mon profil UNPRO</a></p>
       <p>OU répondez simplement <b>OUI</b> à ce message.</p>
-      <p>— Alex d'UNPRO</p>
+      <p>— Clara d'UNPRO</p>
     </div>`;
-  const text = body?.text || `Test UNPRO acquisition.\n\nActivez: ${ctaUrl}\nOU répondez OUI.\n\n— Alex`;
+  const text = body?.text || `Test UNPRO acquisition.\n\nActivez: ${ctaUrl}\nOU répondez OUI.\n\n— Clara`;
 
   // Enforce CTA presence
   if (!html.includes(ctaUrl) && !text.includes(ctaUrl)) {

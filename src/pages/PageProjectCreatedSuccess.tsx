@@ -34,7 +34,7 @@ export default function PageProjectCreatedSuccess() {
             </div>
             <div className="rounded-2xl border border-white/8 bg-black/30 p-4">
               <dt className="text-xs uppercase tracking-wide text-white/50">Suivi</dt>
-              <dd className="mt-1 text-lg font-medium">Alex vous guide</dd>
+              <dd className="mt-1 text-lg font-medium">Clara vous guide</dd>
             </div>
           </dl>
 
@@ -50,7 +50,7 @@ export default function PageProjectCreatedSuccess() {
                 Suivre ma demande
               </Link>
             )}
-            <PrimaryCTA cta="alex" size="lg" variant="secondary" label="Continuer avec Alex" />
+            <PrimaryCTA cta="alex" size="lg" variant="secondary" label="Continuer avec Clara" />
           </div>
         </div>
       </section>

@@ -354,7 +354,7 @@ export default function PageBadgesConsommateur2026() {
                 Analyser une entreprise <ArrowRight className="h-4 w-4" />
               </Button>
               <Button size="lg" variant="outline" onClick={askAlex} className="bg-transparent border-background/30 text-background hover:bg-background/10 hover:text-background">
-                Parler à Alex
+                Parler à Clara
               </Button>
             </div>
           </Card>

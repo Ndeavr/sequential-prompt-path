@@ -59,7 +59,7 @@ export function AlexPanel() {
             onClick={() => recoverAlex()}
             className="text-[11px] font-medium text-primary hover:underline shrink-0"
           >
-            {lang === "fr-CA" ? "Relancer Alex" : "Restart Alex"}
+            {lang === "fr-CA" ? "Relancer Clara" : "Restart Clara"}
           </button>
         </div>
       )}

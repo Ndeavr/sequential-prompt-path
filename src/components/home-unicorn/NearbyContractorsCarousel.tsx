@@ -233,7 +233,7 @@ export default function NearbyContractorsCarousel() {
       </div>
 
       <div className="text-center mt-1.5 text-[10px]" style={{ color: "#94A3B8" }}>
-        Recommandation faite par Alex selon votre besoin.
+        Recommandation faite par Clara selon votre besoin.
       </div>
     </div>
   );

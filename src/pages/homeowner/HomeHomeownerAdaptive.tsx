@@ -53,7 +53,7 @@ export default function HomeHomeownerAdaptive() {
       <div className="flex flex-col min-h-screen">
         <HeroSectionIntentWithAlexOrb
           title="Arrêtez les 3 soumissions. Trouvez le bon entrepreneur dès le départ."
-          subtitle="Décrivez votre situation, comparez vos soumissions ou laissez Alex prédire le bon match."
+          subtitle="Décrivez votre situation, comparez vos soumissions ou laissez Clara prédire le bon match."
           intentFeature="homeowner"
           ctaPrimary={{ label: "Trouver mon match parfait", onClick: () => openAlex("homeowner") }}
           ctaSecondary={{ label: "Analyser mes soumissions", onClick: () => navigate("/compare") }}

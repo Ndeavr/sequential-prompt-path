@@ -616,7 +616,7 @@ export default function PublicBookingPage() {
           onContinue={() => selectedSlot && handleSelectSlot(selectedSlot)}
         />
 
-        {/* Alex bubble (Signature only) */}
+        {/* Clara bubble (Signature only) */}
         {isSignature && step !== "confirmed" && (
           <AlexBookingBubble contextHint={alexHints[step]} />
         )}

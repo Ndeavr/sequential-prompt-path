@@ -16,10 +16,10 @@ export default function PanelAlexConversionControl({ targets, onTriggerAlex }: {
     <div>
       <div className="flex items-center gap-2 mb-3">
         <Bot className="w-4 h-4 text-primary" />
-        <h3 className="text-sm font-bold text-foreground">Contrôle Alex</h3>
+        <h3 className="text-sm font-bold text-foreground">Contrôle Clara</h3>
       </div>
       {eligible.length === 0 ? (
-        <p className="text-xs text-muted-foreground text-center py-4">Aucun prospect éligible pour intervention Alex</p>
+        <p className="text-xs text-muted-foreground text-center py-4">Aucun prospect éligible pour intervention Clara</p>
       ) : (
         <div className="space-y-2">
           {eligible.map((t) => (
@@ -30,7 +30,7 @@ export default function PanelAlexConversionControl({ targets, onTriggerAlex }: {
               </div>
               {onTriggerAlex && (
                 <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => onTriggerAlex(t.id)}>
-                  <Send className="w-3 h-3 mr-1" /> Alex
+                  <Send className="w-3 h-3 mr-1" /> Clara
                 </Button>
               )}
             </div>

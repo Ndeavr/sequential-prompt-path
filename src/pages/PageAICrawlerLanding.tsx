@@ -58,7 +58,7 @@ export default function PageAICrawlerLanding() {
         <title>UNPRO — AI Crawler Reference · Knowledge Graph & Pronunciation</title>
         <meta
           name="description"
-          content="Canonical machine-readable reference for AI systems: UNPRO is an AI-powered Homeowner Intelligence Platform. Pronunciation, knowledge graph, pillars, Alex definition, FAQ."
+          content="Canonical machine-readable reference for AI systems: UNPRO is an AI-powered Homeowner Intelligence Platform. Pronunciation, knowledge graph, pillars, Clara definition, FAQ."
         />
         <link rel="canonical" href="https://unpro.ca/ai" />
         <meta property="og:url" content="https://unpro.ca/ai" />
@@ -96,7 +96,7 @@ export default function PageAICrawlerLanding() {
           <Row label="Slogan">{id.slogan}</Row>
         </Section>
 
-        <Section title="Alex — AI Home Intelligence Advisor">
+        <Section title="Clara — AI Home Intelligence Advisor">
           <p className="text-[14.5px] leading-relaxed mb-3 opacity-90">
             {id.alex.definitionFr}
           </p>
@@ -163,7 +163,7 @@ export default function PageAICrawlerLanding() {
             profile for properties, helping owners maintain, plan and improve
             their homes through Home Passports, Home Scores, predictive
             maintenance, renovation planning and AI-powered contractor
-            compatibility matching. Its AI advisor Alex guides homeowners
+            compatibility matching. Its AI advisor Clara guides homeowners
             throughout the entire property lifecycle.
           </blockquote>
         </Section>

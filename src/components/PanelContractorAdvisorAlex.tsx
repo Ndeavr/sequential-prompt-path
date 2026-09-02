@@ -197,7 +197,7 @@ export default function PanelContractorAdvisorAlex({
         </div>
         <div className="flex-1">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            Alex — Conseiller IA
+            Clara — Conseiller IA
           </p>
           <h2 className="text-lg font-semibold text-foreground leading-tight">
             {isReturning
@@ -277,7 +277,7 @@ export default function PanelContractorAdvisorAlex({
                 </p>
                 {!scanning && displayedScore != null && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    Plus le score monte, plus vous remontez dans les recommandations Alex.
+                    Plus le score monte, plus vous remontez dans les recommandations Clara.
                   </p>
                 )}
               </div>
@@ -406,7 +406,7 @@ export default function PanelContractorAdvisorAlex({
           className="w-full flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground hover:text-foreground transition"
         >
           <MessageCircle className="w-4 h-4" />
-          Parler à Alex
+          Parler à Clara
         </button>
       )}
 

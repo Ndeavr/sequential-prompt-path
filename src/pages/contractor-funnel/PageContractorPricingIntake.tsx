@@ -307,7 +307,7 @@ export default function PageContractorPricingIntake() {
           >
             <div className="flex items-center gap-2 text-amber-300/80 text-xs uppercase tracking-wider mb-3">
               <Sparkles className="w-3.5 h-3.5" />
-              Alex vous guide
+              Clara vous guide
             </div>
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-[-0.03em] mb-2">
               {current.question}

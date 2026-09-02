@@ -168,7 +168,7 @@ export default function AippQuickResultCard({ result, businessName, city, websit
             Créer mon profil intelligent <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
           <Button size="lg" variant="outline" className="w-full h-12 text-base" onClick={onTalkToAlex}>
-            Continuer avec Alex
+            Continuer avec Clara
           </Button>
         </div>
       </motion.div>

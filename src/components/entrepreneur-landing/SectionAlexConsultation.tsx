@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 const cards = [
-  { icon: Eye, title: "Votre visibilité IA", desc: "Alex explique comment l'IA voit votre entreprise aujourd'hui." },
-  { icon: TrendingDown, title: "Vos revenus perdus", desc: "Alex montre ce que vous laissez sur la table chaque mois." },
-  { icon: Target, title: "Le bon plan", desc: "Alex recommande le plan selon vos objectifs, domaine et localisation." },
+  { icon: Eye, title: "Votre visibilité IA", desc: "Clara explique comment l'IA voit votre entreprise aujourd'hui." },
+  { icon: TrendingDown, title: "Vos revenus perdus", desc: "Clara montre ce que vous laissez sur la table chaque mois." },
+  { icon: Target, title: "Le bon plan", desc: "Clara recommande le plan selon vos objectifs, domaine et localisation." },
 ];
 
 const mockConvo = [
@@ -32,10 +32,10 @@ export default function SectionAlexConsultation({ onTrackCta }: Props) {
           className="text-center mb-10"
         >
           <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground font-display mb-3">
-            Alex vous guide vers le bon plan.
+            Clara vous guide vers le bon plan.
           </h2>
           <p className="text-muted-foreground text-sm max-w-lg mx-auto">
-            Votre situation, votre potentiel, votre plan — tout expliqué par Alex.
+            Votre situation, votre potentiel, votre plan — tout expliqué par Clara.
           </p>
         </motion.div>
 
@@ -86,7 +86,7 @@ export default function SectionAlexConsultation({ onTrackCta }: Props) {
             onClick={() => { onTrackCta("alex_consult", "alex"); navigate("/alex"); }}
           >
             <MessageCircle className="w-4 h-4" />
-            Parler à Alex maintenant
+            Parler à Clara maintenant
           </Button>
         </div>
       </div>

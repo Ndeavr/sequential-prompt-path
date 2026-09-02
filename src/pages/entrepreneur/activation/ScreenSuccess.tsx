@@ -105,10 +105,10 @@ export default function ScreenSuccess() {
           variant="outline"
           size="lg"
           className="w-full h-12 rounded-xl border-primary/30"
-          onClick={() => {/* Open Alex */}}
+          onClick={() => {/* Open Clara */}}
         >
           <Bot className="w-5 h-5 mr-2 text-primary" />
-          Continuer avec Alex
+          Continuer avec Clara
         </Button>
       </div>
     </div>

@@ -21,7 +21,7 @@ export function AlexAudioPermissionGate({ onRetryMic, onContinueText }: AlexAudi
         Microphone requis
       </h3>
       <p className="mb-6 text-sm text-muted-foreground">
-        Alex peut vous guider par la voix. Autorisez le micro pour une expérience plus fluide, ou continuez en écrivant.
+        Clara peut vous guider par la voix. Autorisez le micro pour une expérience plus fluide, ou continuez en écrivant.
       </p>
       <div className="flex flex-col gap-3">
         <Button onClick={onRetryMic} className="w-full gap-2">

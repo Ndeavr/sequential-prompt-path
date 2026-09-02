@@ -199,7 +199,7 @@ export default function SheetBookingMobile({ open, pro, onClose }: Props) {
                 />
               )}
 
-              {/* GATE: logged in but missing data → ask Alex for one field at a time */}
+              {/* GATE: logged in but missing data → ask Clara for one field at a time */}
               {gate.isLoggedIn && nextMissing && (
                 <MissingFieldPromptAlex
                   field={nextMissing}

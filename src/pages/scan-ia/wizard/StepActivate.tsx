@@ -107,7 +107,7 @@ export default function StepActivate() {
 
             <ul className="space-y-2 text-left text-sm mb-5">
               {[
-                "Profil IA visible sur Alex",
+                "Profil IA visible sur Clara",
                 "Territoires & catégories réservés",
                 "Rendez-vous propriétaires qualifiés",
                 "Paiement unique — aucun abonnement",

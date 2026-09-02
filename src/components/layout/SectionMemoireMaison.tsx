@@ -74,7 +74,7 @@ export default function SectionMemoireMaison() {
             className="inline-flex items-center justify-center gap-2 h-14 px-8 rounded-2xl border border-foreground/15 text-foreground text-base font-medium bg-foreground/[0.03] hover:bg-foreground/[0.06] hover:-translate-y-[2px] transition-all duration-[420ms] [transition-timing-function:cubic-bezier(.22,1,.36,1)]"
           >
             <Mic className="w-4 h-4" />
-            Parler à Alex
+            Parler à Clara
           </Link>
         </div>
       </div>

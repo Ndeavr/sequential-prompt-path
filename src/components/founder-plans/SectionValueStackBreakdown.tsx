@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Brain, CalendarCheck, TrendingDown, MapPin, TrendingUp } from "lucide-react";
 
 const VALUE_ITEMS = [
-  { icon: Brain, title: "Visibilité IA", desc: "Recommandé en priorité par Alex, ChatGPT, Gemini et tous les moteurs IA.", value: "48 000 $" },
+  { icon: Brain, title: "Visibilité IA", desc: "Recommandé en priorité par Clara, ChatGPT, Gemini et tous les moteurs IA.", value: "48 000 $" },
   { icon: CalendarCheck, title: "Rendez-vous exclusifs", desc: "Accès aux projets les plus rentables de votre territoire.", value: "36 000 $" },
   { icon: TrendingDown, title: "Réduction dépenses pub", desc: "Éliminez Google Ads, Facebook Ads. UNPRO vous amène les clients.", value: "24 000 $" },
   { icon: MapPin, title: "Position dominante locale", desc: "Verrouillez votre territoire pour 10 ans. Aucun concurrent.", value: "18 000 $" },

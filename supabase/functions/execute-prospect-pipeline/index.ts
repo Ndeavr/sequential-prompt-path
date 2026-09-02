@@ -360,7 +360,7 @@ Deno.serve(async (req: Request) => {
 
       const bodyText = `Bonjour,
 
-Je suis Alex d'UNPRO, la plateforme de recommandation IA pour les services résidentiels au Québec.
+Je suis Clara d'UNPRO, la plateforme de recommandation IA pour les services résidentiels au Québec.
 
 ${observation1}${observation2}
 
@@ -377,7 +377,7 @@ Voulez-vous voir comment UNPRO peut augmenter vos rendez-vous qualifiés ?
 
 Répondez à ce courriel ou visitez unpro.ca pour démarrer.
 
-Alex
+Clara
 UNPRO — Recommandation IA pour les pros`;
 
       const bodyHtml = bodyText.replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br>");

@@ -56,14 +56,14 @@ const ACTION_REGISTRY: Record<ActionKey, Omit<PhaseAction, "phase">> = {
   upload_photo: {
     key: "upload_photo",
     title: "Téléverser une photo",
-    description: "Envoyez une photo pour aider Alex à mieux comprendre.",
+    description: "Envoyez une photo pour aider Clara à mieux comprendre.",
     icon: "upload",
     ctaLink: "#photo",
   },
   answer_questions: {
     key: "answer_questions",
     title: "Répondre aux questions",
-    description: "Alex vous guide étape par étape.",
+    description: "Clara vous guide étape par étape.",
     icon: "message",
     ctaLink: "#",
   },
@@ -77,7 +77,7 @@ const ACTION_REGISTRY: Record<ActionKey, Omit<PhaseAction, "phase">> = {
   continue_discussion: {
     key: "continue_discussion",
     title: "Continuer la discussion",
-    description: "Alex peut approfondir avec vous.",
+    description: "Clara peut approfondir avec vous.",
     icon: "message",
     ctaLink: "#",
   },
@@ -91,7 +91,7 @@ const ACTION_REGISTRY: Record<ActionKey, Omit<PhaseAction, "phase">> = {
   view_recommendations: {
     key: "view_recommendations",
     title: "Voir les recommandations",
-    description: "Options et solutions recommandées par Alex.",
+    description: "Options et solutions recommandées par Clara.",
     icon: "star",
     ctaLink: "#",
   },

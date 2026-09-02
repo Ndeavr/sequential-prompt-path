@@ -32,8 +32,8 @@ interface LockRow {
 }
 
 const LANGUAGES: Array<{ code: "fr" | "en"; label: string; sample: string }> = [
-  { code: "fr", label: "Français (Canada)", sample: "Bienvenue chez UNPRO. Je suis Alex, votre concierge." },
-  { code: "en", label: "English", sample: "Welcome to UNPRO. I am Alex, your concierge." },
+  { code: "fr", label: "Français (Canada)", sample: "Bienvenue chez UNPRO. Je suis Clara, votre concierge." },
+  { code: "en", label: "English", sample: "Welcome to UNPRO. I am Clara, your concierge." },
 ];
 
 const FORBIDDEN = ["U N Pro", "You N Pro", "You En Pro", "Une Pro", "Un-PRO", "U-N-P-R-O"];

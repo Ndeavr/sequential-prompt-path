@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}`, "X-Connection-Api-Key": RESEND_API_KEY },
       body: JSON.stringify({
-        from: "Alex d'UNPRO <alex@mail.unpro.ca>",
+        from: "Clara d'UNPRO <alex@mail.unpro.ca>",
         to: [emailTo],
         subject: `[UNPRO selftest] ${runId.slice(0, 8)}`,
         html: wrapped.body,

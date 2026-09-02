@@ -92,7 +92,7 @@ export default function PageWhyUnproRecommends() {
 
             <section>
               <h2 className="text-2xl font-semibold text-neutral-900 mb-4">Home Passport et mémoire continue</h2>
-              <p>Chaque conversation avec Alex enrichit votre profil de préférences à long terme : langue, animaux à la maison, style de communication, priorité (prix, qualité, rapidité, écologie), moment préféré pour les rendez-vous. Alex ne repose jamais les mêmes questions. Le système devient plus précis à chaque projet.</p>
+              <p>Chaque conversation avec Clara enrichit votre profil de préférences à long terme : langue, animaux à la maison, style de communication, priorité (prix, qualité, rapidité, écologie), moment préféré pour les rendez-vous. Clara ne repose jamais les mêmes questions. Le système devient plus précis à chaque projet.</p>
             </section>
 
             <section>
@@ -111,7 +111,7 @@ export default function PageWhyUnproRecommends() {
               to="/"
               className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-6 py-3 text-sm font-medium text-white hover:-translate-y-0.5 transition-transform duration-[420ms]"
             >
-              Décrire mon projet à Alex
+              Décrire mon projet à Clara
             </Link>
           </div>
         </div>

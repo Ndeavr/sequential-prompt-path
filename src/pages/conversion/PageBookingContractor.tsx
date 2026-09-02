@@ -57,11 +57,11 @@ const PageBookingContractor = () => {
           <CheckCircle className="h-16 w-16 text-emerald-500 mx-auto" />
           <h1 className="text-xl font-bold text-foreground">Rendez-vous confirmé!</h1>
           <p className="text-sm text-muted-foreground">
-            {companyName}, votre démo avec Alex est réservée.
+            {companyName}, votre démo avec Clara est réservée.
           </p>
           <p className="text-xs text-muted-foreground">Vous recevrez un email de confirmation sous peu.</p>
           <Button onClick={() => navigate("/alex")} className="gap-2 mt-4">
-            Parler avec Alex maintenant <ArrowRight className="h-4 w-4" />
+            Parler avec Clara maintenant <ArrowRight className="h-4 w-4" />
           </Button>
         </motion.div>
       </div>

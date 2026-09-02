@@ -103,7 +103,7 @@ export default function PageSMSPipeline() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">📱 SMS Sniper</h1>
-            <p className="text-sm text-muted-foreground">Pipeline SMS — Alex d'UNPRO</p>
+            <p className="text-sm text-muted-foreground">Pipeline SMS — Clara d'UNPRO</p>
           </div>
           <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-1.5">
             <RefreshCw className="h-3.5 w-3.5" /> Rafraîchir

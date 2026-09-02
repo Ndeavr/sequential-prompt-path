@@ -105,7 +105,7 @@ export function resolveAlexState(ctx: AlexContext): StateResolution {
       greeting: "Qu'est-ce qu'on fait aujourd'hui?",
       actions: [
         { type: "show_quick_intents", label: "Choisir un besoin" },
-        { type: "start_voice", label: "Parler à Alex" },
+        { type: "start_voice", label: "Parler à Clara" },
       ],
       quickIntents: QUICK_INTENTS,
     };
@@ -140,7 +140,7 @@ export function resolveAlexState(ctx: AlexContext): StateResolution {
  * Keeps it SHORT for Gemini Live (long instructions cause WebSocket close).
  */
 export function getVoiceInstructionForState(state: AlexState, ctx: AlexContext): string {
-  const base = "Tu es Alex, concierge IA vocale d'UnPRO.ca. Français québécois naturel. Phrases courtes, maximum 2 phrases. Une seule question à la fois. Jamais de markdown. Ton calme, posé, humain. Féminin : 'ravie', 'certaine', 'prête'.";
+  const base = "Tu es Clara, concierge IA vocale d'UnPRO.ca. Français québécois naturel. Phrases courtes, maximum 2 phrases. Une seule question à la fois. Jamais de markdown. Ton calme, posé, humain. Féminin : 'ravie', 'certaine', 'prête'.";
   
   switch (state) {
     case "CONTEXT_UNKNOWN":

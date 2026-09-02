@@ -119,7 +119,7 @@ export default function AlexConversationShell({ onClose, entrypoint = "voice" }:
             <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-success rounded-full border-2 border-background" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-foreground font-display">Alex</h2>
+            <h2 className="text-sm font-semibold text-foreground font-display">Clara</h2>
             <p className="text-[10px] text-muted-foreground">
               {alexSession.currentStep === "listening"
                 ? "Je vous écoute…"
@@ -132,7 +132,7 @@ export default function AlexConversationShell({ onClose, entrypoint = "voice" }:
                 : alexSession.currentStep === "opening_calendar"
                 ? "Ouverture du calendrier…"
                 : alexSession.currentStep === "speaking"
-                ? "Alex parle…"
+                ? "Clara parle…"
                 : "En ligne"}
             </p>
           </div>
@@ -289,7 +289,7 @@ function MessageBubble({ message }: { message: AlexMessage }) {
       >
         {!isUser && (
           <span className="text-[10px] font-bold text-primary mb-1 block tracking-wide uppercase">
-            Alex
+            Clara
           </span>
         )}
         <div className="text-sm leading-relaxed prose prose-sm max-w-none dark:prose-invert [&>p]:mb-1 [&>p:last-child]:mb-0">

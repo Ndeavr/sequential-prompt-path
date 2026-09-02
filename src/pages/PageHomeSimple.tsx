@@ -34,7 +34,7 @@ export default function PageHomeSimple() {
     "@type": "Service",
     name: "UNPRO",
     description:
-      "Décrivez vos travaux à Alex. UNPRO utilise l'IA pour comprendre votre projet et vous aider à trouver l'entrepreneur qui correspond à vos besoins, sans courir après 3 soumissions.",
+      "Décrivez vos travaux à Clara. UNPRO utilise l'IA pour comprendre votre projet et vous aider à trouver l'entrepreneur qui correspond à vos besoins, sans courir après 3 soumissions.",
     url: "https://unpro.ca",
     areaServed: { "@type": "Place", name: "Quebec" },
     provider: { "@type": "Organization", name: "UNPRO", url: "https://unpro.ca" },
@@ -48,7 +48,7 @@ export default function PageHomeSimple() {
           <title>UNPRO | La fin des 3 soumissions</title>
           <meta
             name="description"
-            content="Décrivez vos travaux à Alex. UNPRO utilise l'IA pour comprendre votre projet et vous aider à trouver l'entrepreneur qui correspond à vos besoins, sans courir après 3 soumissions."
+            content="Décrivez vos travaux à Clara. UNPRO utilise l'IA pour comprendre votre projet et vous aider à trouver l'entrepreneur qui correspond à vos besoins, sans courir après 3 soumissions."
           />
           <meta property="og:title" content="UNPRO — La fin des 3 soumissions" />
           <meta

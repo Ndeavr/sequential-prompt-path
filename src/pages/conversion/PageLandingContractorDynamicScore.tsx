@@ -255,7 +255,7 @@ const PageLandingContractorDynamicScore = () => {
             className="w-full gap-2 rounded-xl h-10"
           >
             <MessageSquare className="h-4 w-4" />
-            Parler à Alex — Assistant IA
+            Parler à Clara — Assistant IA
           </Button>
         </motion.div>
 

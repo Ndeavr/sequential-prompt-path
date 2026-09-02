@@ -28,7 +28,7 @@ export default function AuthorityAlexAnalysis() {
           <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
             <Brain className="w-4 h-4 text-primary" />
           </div>
-          <h3 className="font-display text-sm font-semibold text-foreground">Analyse Alex</h3>
+          <h3 className="font-display text-sm font-semibold text-foreground">Analyse Clara</h3>
           <span className="ml-auto px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold">IA</span>
         </div>
 

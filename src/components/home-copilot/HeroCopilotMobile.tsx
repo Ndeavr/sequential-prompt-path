@@ -77,7 +77,7 @@ export default function HeroCopilotMobile() {
         <motion.button
           type="button"
           onClick={handleOrbTap}
-          aria-label="Parler à Alex"
+          aria-label="Parler à Clara"
           initial={{ opacity: 0, scale: 0.92 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6 }}
@@ -133,7 +133,7 @@ export default function HeroCopilotMobile() {
           Gratuit • Vos informations restent privées
         </p>
 
-        {/* Compact text input — talk to Alex */}
+        {/* Compact text input — talk to Clara */}
         <motion.form
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -154,12 +154,12 @@ export default function HeroCopilotMobile() {
               }}
               rows={1}
               inputMode="text"
-              placeholder="Demander à Alex…"
+              placeholder="Demander à Clara…"
               className="w-full bg-transparent resize-none px-4 py-3 pr-14 text-[14px] text-white placeholder:text-white/45 outline-none rounded-2xl"
             />
             <button
               type="submit"
-              aria-label="Envoyer à Alex"
+              aria-label="Envoyer à Clara"
               className="absolute right-2 bottom-2 w-10 h-10 rounded-full bg-gradient-to-br from-[hsl(220_100%_55%)] to-[hsl(207_100%_60%)] flex items-center justify-center text-white shadow-[0_4px_14px_-2px_hsl(220_100%_50%/0.6)] active:scale-95 transition"
             >
               <ArrowUp className="w-4 h-4" />

@@ -32,7 +32,7 @@ const MobileBottomNav = () => {
     return pathname.startsWith(to);
   };
 
-  const isAlexTab = (tab: typeof tabs[0]) => tab.label === "Alex";
+  const isAlexTab = (tab: typeof tabs[0]) => tab.label === "Clara";
   const regularTabs = tabs.filter(t => !isAlexTab(t));
   const leftTabs = regularTabs.slice(0, 2);
   const rightTabs = regularTabs.slice(2, 4);
@@ -73,7 +73,7 @@ const MobileBottomNav = () => {
           );
         })}
 
-        {/* Center Alex Orb — slightly smaller */}
+        {/* Center Clara Orb — slightly smaller */}
         <AlexBottomSheetLauncherUNPRO />
 
         {rightTabs.map((tab) => {

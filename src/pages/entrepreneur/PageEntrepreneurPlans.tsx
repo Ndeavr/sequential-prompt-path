@@ -225,7 +225,7 @@ export default function PageEntrepreneurPlans() {
           {/* FAQ */}
           <div className="mt-20 max-w-3xl mx-auto text-center">
             <p className="text-muted-foreground">
-              Tous les plans incluent le profil public, le score AIPP et l'accès à Alex.
+              Tous les plans incluent le profil public, le score AIPP et l'accès à Clara.
               <br />
               <span className="text-sm">Taxes en sus. Annulation possible en tout temps.</span>
             </p>

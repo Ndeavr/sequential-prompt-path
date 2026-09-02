@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
       meta: { clicks: clickEvents, landing_views: landingViews, window: "24h" },
     },
     {
-      stage: "alex_started", label: "4. Alex Démarre", order: 4,
+      stage: "alex_started", label: "4. Clara Démarre", order: 4,
       value: alexFromOutreach, top_failures: [],
       meta: { from_outreach: alexFromOutreach, total_sessions: alexStarted, window: "24h" },
     },

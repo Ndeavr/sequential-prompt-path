@@ -47,9 +47,9 @@ export default function ScreenChecklist() {
         await new Promise((r) => setTimeout(r, 1500));
         await pollImportStatus();
       }
-      toast({ title: "Alex a complété votre profil", description: "Vérifiez chaque section ci-dessous — vous pouvez tout ajuster." });
+      toast({ title: "Clara a complété votre profil", description: "Vérifiez chaque section ci-dessous — vous pouvez tout ajuster." });
     } catch (e) {
-      toast({ title: "Alex n'a pas pu tout compléter", description: "Complétez les sections manuellement — vos données sont sauvegardées." , variant: "destructive" });
+      toast({ title: "Clara n'a pas pu tout compléter", description: "Complétez les sections manuellement — vos données sont sauvegardées." , variant: "destructive" });
     } finally {
       setAlexBusy(false);
     }
@@ -131,7 +131,7 @@ export default function ScreenChecklist() {
           )}
         </div>
 
-        {/* Alex — real autocomplete action */}
+        {/* Clara — real autocomplete action */}
         <motion.button
           type="button"
           onClick={runAlexAutocomplete}
@@ -147,7 +147,7 @@ export default function ScreenChecklist() {
             {alexBusy ? <Loader2 className="w-5 h-5 text-primary animate-spin shrink-0" /> : <Sparkles className="w-5 h-5 text-primary shrink-0" />}
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold text-foreground">
-                {alexBusy ? "Alex analyse votre entreprise…" : "Alex complète mon profil"}
+                {alexBusy ? "Clara analyse votre entreprise…" : "Clara complète mon profil"}
               </div>
               <div className="text-xs text-muted-foreground mt-0.5">
                 {alexBusy

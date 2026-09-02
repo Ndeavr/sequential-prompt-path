@@ -27,7 +27,7 @@ const labelMap: Record<string, string> = {
   opened: "Email ouvert",
   clicked: "Lien cliqué",
   replied: "Réponse reçue",
-  alex_triggered: "Alex intervient",
+  alex_triggered: "Clara intervient",
   converted: "Conversion!",
   error: "Erreur",
   adjustment: "Ajustement",

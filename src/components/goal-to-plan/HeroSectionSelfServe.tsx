@@ -56,7 +56,7 @@ export default function HeroSectionSelfServe({ onCalculate, onAlex, onCheckCity 
               <Target className="w-4 h-4" /> Calculer mon plan
             </Button>
             <Button variant="outline" size="lg" onClick={onAlex} className="w-full sm:w-auto gap-2">
-              <MessageCircle className="w-4 h-4" /> Parler à Alex
+              <MessageCircle className="w-4 h-4" /> Parler à Clara
             </Button>
             <Button variant="ghost" size="lg" onClick={onCheckCity} className="w-full sm:w-auto gap-2 text-muted-foreground">
               <MapPin className="w-4 h-4" /> Vérifier ma ville

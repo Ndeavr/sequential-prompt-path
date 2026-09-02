@@ -133,7 +133,7 @@ function DeepLinkLanding({ resolved }: { resolved: ResolvedDeepLink }) {
         </Card>
       </motion.div>
 
-      {/* Alex AI Concierge — integrated in QR flow */}
+      {/* Clara AI Concierge — integrated in QR flow */}
       <AlexLandingConcierge
         feature={feature}
         deepLinkId={resolved.link?.id}

@@ -116,7 +116,7 @@ export default function PageVoiceHealth() {
     setSpeaking(true);
     try {
       const { data, error } = await supabase.functions.invoke("alex-voice-test", {
-        body: { voice_id: voiceId, test_text: "Bonjour. Ceci est un test de la voix d'Alex.", language: "fr" },
+        body: { voice_id: voiceId, test_text: "Bonjour. Ceci est un test de la voix de Clara.", language: "fr" },
       });
       if (error) throw error;
       let buf: ArrayBuffer;
@@ -177,7 +177,7 @@ export default function PageVoiceHealth() {
     <div className="container mx-auto max-w-5xl py-10 space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Admin · System Health · Alex Voice</h1>
+          <h1 className="text-3xl font-bold">Admin · System Health · Clara Voice</h1>
           <p className="text-muted-foreground mt-1">
             Voice Health Contract. Block deploys whenever a check fails.
           </p>

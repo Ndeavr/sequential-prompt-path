@@ -74,7 +74,7 @@ export default function IsrAlexConversation({ answers, onAnswer, recommended }: 
           <div className="absolute inset-1 rounded-full bg-[#050816]/40 backdrop-blur" />
         </div>
         <div>
-          <div className="text-sm font-medium text-white">Alex</div>
+          <div className="text-sm font-medium text-white">Clara</div>
           <div className="text-[11px] text-cyan-200/70">Concierge UNPRO</div>
         </div>
       </div>

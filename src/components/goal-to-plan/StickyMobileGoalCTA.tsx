@@ -18,7 +18,7 @@ export default function StickyMobileGoalCTA({ onCalculate, onAlex, onCheckCity, 
         </button>
         <button onClick={onAlex} className="flex flex-col items-center gap-0.5 py-1.5 text-muted-foreground hover:text-accent transition-colors">
           <MessageCircle className="w-4 h-4" />
-          <span className="text-[10px]">Alex</span>
+          <span className="text-[10px]">Clara</span>
         </button>
         <button onClick={onCheckCity} className="flex flex-col items-center gap-0.5 py-1.5 text-muted-foreground hover:text-warning transition-colors">
           <MapPin className="w-4 h-4" />

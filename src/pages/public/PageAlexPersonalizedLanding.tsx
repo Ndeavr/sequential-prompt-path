@@ -187,7 +187,7 @@ const PageAlexPersonalizedLanding = () => {
                 <h3 className="font-semibold mb-1">Opportunité identifiée</h3>
                 <p className="text-sm text-muted-foreground">
                   Les entrepreneurs avec un score AIPP supérieur à 75 reçoivent en moyenne <span className="text-foreground font-medium">3x plus de demandes qualifiées</span>. 
-                  Alex peut compléter et optimiser votre profil en quelques minutes.
+                  Clara peut compléter et optimiser votre profil en quelques minutes.
                 </p>
               </div>
             </div>
@@ -201,7 +201,7 @@ const PageAlexPersonalizedLanding = () => {
           onClick={handleStartAlex}
         >
           <Sparkles className="h-5 w-5" />
-          Compléter ma fiche avec Alex
+          Compléter ma fiche avec Clara
           <ArrowRight className="h-5 w-5" />
         </Button>
 

@@ -18,7 +18,7 @@ export default function StickyFooterPrimaryCTA({ onVoice, onChat }: Props) {
           variant="outline"
           onClick={onVoice}
           className="h-12 px-4 rounded-xl border-primary/30"
-          aria-label="Parler à Alex"
+          aria-label="Parler à Clara"
         >
           <Mic className="w-4 h-4 text-primary" />
         </Button>

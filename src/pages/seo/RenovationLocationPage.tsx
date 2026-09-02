@@ -247,7 +247,7 @@ const RenovationLocationPage = () => {
             <Button variant="outline" asChild>
               <Link to="/alex/renovation">
                 <Sparkles className="mr-2 h-4 w-4" />
-                Visualiser ma rénovation avec Alex
+                Visualiser ma rénovation avec Clara
               </Link>
             </Button>
           </div>

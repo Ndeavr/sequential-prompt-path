@@ -15,7 +15,7 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 const fadeUp = { hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0 } };
 
 const STEPS = [
-  { icon: MessageSquare, title: "Parlez avec Alex", desc: "Dites le nom de votre entreprise. Alex s'occupe du reste." },
+  { icon: MessageSquare, title: "Parlez avec Clara", desc: "Dites le nom de votre entreprise. Clara s'occupe du reste." },
   { icon: Sparkles, title: "Profil créé par l'IA", desc: "Import automatique depuis Google, votre site web et les registres publics." },
   { icon: CalendarCheck, title: "Territoires et catégories", desc: "Choisissez où et quoi. Visibilité activée en quelques clics." },
   { icon: TrendingUp, title: "Recevez des rendez-vous", desc: "Pas des leads. Des rendez-vous qualifiés, directement dans votre agenda." },
@@ -63,7 +63,7 @@ export default function PageEntrepreneurJoin() {
               variants={fadeUp} initial="hidden" animate="visible" transition={{ delay: 0.2, duration: 0.5 }}
               className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto"
             >
-              Parlez avec Alex. Nous construisons votre profil, activons votre visibilité
+              Parlez avec Clara. Nous construisons votre profil, activons votre visibilité
               et vous guidons étape par étape.
             </motion.p>
 
@@ -77,7 +77,7 @@ export default function PageEntrepreneurJoin() {
                 onClick={() => openAlex("contractor_onboarding")}
               >
                 <Mic className="h-5 w-5" />
-                Parler avec Alex
+                Parler avec Clara
               </Button>
               <Button
                 size="lg"
@@ -149,7 +149,7 @@ export default function PageEntrepreneurJoin() {
                 { title: "Score AIPP transparent", desc: "Votre score de visibilité IA, avec des recommandations claires." },
                 { title: "Exclusivité territoriale", desc: "Places limitées par territoire. Votre visibilité protégée." },
                 { title: "Dashboard complet", desc: "Rendez-vous, score, visibilité, facturation — tout en un." },
-                { title: "Alex, votre copilote", desc: "Assistant IA disponible 24/7 pour optimiser votre présence." },
+                { title: "Clara, votre copilote", desc: "Assistant IA disponible 24/7 pour optimiser votre présence." },
               ].map((item, i) => (
                 <motion.div
                   key={item.title}
@@ -178,7 +178,7 @@ export default function PageEntrepreneurJoin() {
               Prêt à activer votre présence?
             </h2>
             <p className="text-muted-foreground mb-8">
-              L'activation prend moins de 5 minutes. Alex fait le gros du travail.
+              L'activation prend moins de 5 minutes. Clara fait le gros du travail.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button
@@ -187,7 +187,7 @@ export default function PageEntrepreneurJoin() {
                 onClick={() => openAlex("contractor_onboarding")}
               >
                 <Mic className="h-5 w-5" />
-                Parler avec Alex
+                Parler avec Clara
               </Button>
               <Button
                 size="lg"

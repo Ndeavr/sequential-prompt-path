@@ -69,7 +69,7 @@ const PROS = [
 const STEPS = [
   { icon: Upload, title: "Téléversez vos photos", desc: "Dalle, fissures, anciennes réparations." },
   { icon: MessageSquare, title: "Décrivez la découverte", desc: "Quand, comment, ce que vous avez vu." },
-  { icon: Sparkles, title: "Alex analyse et recommande", desc: "Signes visibles, risques, prochaine action." },
+  { icon: Sparkles, title: "Clara analyse et recommande", desc: "Signes visibles, risques, prochaine action." },
 ];
 
 export default function PagePyriteSousSol() {
@@ -130,7 +130,7 @@ export default function PagePyriteSousSol() {
               className="flex flex-col sm:flex-row gap-3 justify-center pt-2"
             >
               <Button size="lg" onClick={startAlex} className="gap-2">
-                Analyser mes photos avec Alex <ArrowRight className="h-4 w-4" />
+                Analyser mes photos avec Clara <ArrowRight className="h-4 w-4" />
               </Button>
               <Button asChild size="lg" variant="outline">
                 <Link to="/entrepreneurs?q=pyrite">Trouver un expert pyrite</Link>
@@ -281,7 +281,7 @@ export default function PagePyriteSousSol() {
             </div>
             <div className="text-center pt-10">
               <Button size="lg" onClick={startAlex} className="gap-2">
-                Analyser mon sous-sol avec Alex <ArrowRight className="h-4 w-4" />
+                Analyser mon sous-sol avec Clara <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -303,7 +303,7 @@ export default function PagePyriteSousSol() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
               <Button size="lg" onClick={startAlex} className="gap-2">
-                Analyser mes photos avec Alex <ArrowRight className="h-4 w-4" />
+                Analyser mes photos avec Clara <ArrowRight className="h-4 w-4" />
               </Button>
               <Button asChild size="lg" variant="outline">
                 <Link to="/entrepreneurs?q=pyrite">Trouver un expert pyrite</Link>

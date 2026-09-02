@@ -18,7 +18,7 @@ const DAILY_SMS = parseInt(Deno.env.get("GROWTH_DAILY_SMS") ?? "50", 10);
 const DAILY_EMAIL = parseInt(Deno.env.get("GROWTH_DAILY_EMAIL") ?? "25", 10);
 
 const SMS_TEMPLATE = (firstName: string, company: string, city: string, specialty: string) =>
-  `Bonjour ${firstName}, aimeriez-vous que ${company} soit recommandée quand un propriétaire demande à ChatGPT, Gemini ou UNPRO « Quel est le meilleur entrepreneur en ${specialty} à ${city}? » Répondez OUI et je vous montre votre visibilité actuelle gratuitement. — Alex, UNPRO`;
+  `Bonjour ${firstName}, aimeriez-vous que ${company} soit recommandée quand un propriétaire demande à ChatGPT, Gemini ou UNPRO « Quel est le meilleur entrepreneur en ${specialty} à ${city}? » Répondez OUI et je vous montre votre visibilité actuelle gratuitement. — Clara, UNPRO`;
 
 async function sendTwilioSms(to: string, body: string, contractor_id?: string): Promise<{ ok: boolean; sid?: string; error?: string }> {
   const r = await sendSmsCanonical({ to, body, message_type: "outreach", template_key: "growth_outreach_v1", contractor_id });

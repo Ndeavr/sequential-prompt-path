@@ -67,7 +67,7 @@ const OFFERS = [
     id: "radon_report",
     icon: FileSearch,
     title: "Analyse de rapport existant",
-    desc: "Téléversez votre résultat. Alex vous explique exactement quoi faire.",
+    desc: "Téléversez votre résultat. Clara vous explique exactement quoi faire.",
     href: "/onboarding?intent=radon_report_analysis&utm_source=radon_landing",
   },
   {
@@ -151,7 +151,7 @@ export default function PageRadonLanding() {
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2 justify-center">
               <Button size="lg" className="gap-2 w-full sm:w-auto" onClick={() => handleAlex("hero")}>
-                Vérifier mon risque avec Alex <ArrowRight className="h-4 w-4" />
+                Vérifier mon risque avec Clara <ArrowRight className="h-4 w-4" />
               </Button>
               <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
                 <Link
@@ -231,9 +231,9 @@ export default function PageRadonLanding() {
         </div>
       </section>
 
-      {/* Flow Alex */}
+      {/* Flow Clara */}
       <section className="mx-auto max-w-3xl px-5 py-12 md:py-16">
-        <h2 className="text-2xl md:text-3xl font-bold mb-2">Comment Alex vous guide</h2>
+        <h2 className="text-2xl md:text-3xl font-bold mb-2">Comment Clara vous guide</h2>
         <p className="text-muted-foreground mb-6">5 questions courtes. Pas de formulaire.</p>
         <ol className="space-y-3">
           {ALEX_STEPS.map((step, i) => (
@@ -273,10 +273,10 @@ export default function PageRadonLanding() {
       {/* CTA final */}
       <section className="mx-auto max-w-3xl px-5 pb-20">
         <div className="rounded-3xl border border-primary/30 bg-primary/5 p-8 md:p-10 text-center space-y-4">
-          <h2 className="text-2xl md:text-3xl font-bold">Parlez à Alex maintenant</h2>
+          <h2 className="text-2xl md:text-3xl font-bold">Parlez à Clara maintenant</h2>
           <p className="text-muted-foreground italic">« Je veux vérifier le radon dans ma maison. »</p>
           <Button size="lg" className="gap-2 w-full sm:w-auto" onClick={() => handleAlex("final_cta")}>
-            Vérifier mon risque avec Alex <ArrowRight className="h-4 w-4" />
+            Vérifier mon risque avec Clara <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
       </section>

@@ -145,7 +145,7 @@ export async function request(kind: PermissionKind): Promise<PermissionStatus> {
  * Convenience copy for UI surfaces. Always French-first, premium tone.
  */
 export const PERMISSION_COPY: Record<PermissionKind, string> = {
-  mic: "Activez le micro pour parler avec Alex.",
+  mic: "Activez le micro pour parler avec Clara.",
   camera: "Vous pouvez prendre une photo si vous voulez que je regarde.",
   location: "Pour trouver les bons professionnels près de chez vous, puis-je utiliser votre position ?",
   notifications: "Voulez-vous recevoir les mises à jour de votre demande ?",

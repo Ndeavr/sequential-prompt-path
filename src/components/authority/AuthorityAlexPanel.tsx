@@ -74,7 +74,7 @@ export default function AuthorityAlexPanel({ userId }: Props) {
         <div className="flex-1 w-full space-y-3">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
-            <h2 className="text-base font-bold text-foreground font-display">Alex AI</h2>
+            <h2 className="text-base font-bold text-foreground font-display">Clara AI</h2>
             <span className="text-[10px] text-muted-foreground px-2 py-0.5 rounded-full bg-muted/50 border border-border/40">
               {orbState === "thinking" ? "Réflexion..." : "Prêt"}
             </span>
@@ -115,7 +115,7 @@ export default function AuthorityAlexPanel({ userId }: Props) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder="Demandez à Alex quoi faire ensuite..."
+              placeholder="Demandez à Clara quoi faire ensuite..."
               className="flex-1 rounded-xl border border-border/40 bg-card/40 backdrop-blur-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30"
             />
             <Button

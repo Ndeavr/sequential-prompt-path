@@ -39,7 +39,7 @@ interface FlowStep {
 }
 
 const DEMO_FLOW: FlowStep[] = [
-  { id: "a1", type: "alex_text", content: "Bonjour ! Je suis Alex, votre assistant UNPRO. Comment puis-je vous aider aujourd'hui ?", delay: 600 },
+  { id: "a1", type: "alex_text", content: "Bonjour ! Je suis Clara, votre assistant UNPRO. Comment puis-je vous aider aujourd'hui ?", delay: 600 },
   { id: "u1", type: "user_text", content: "J'ai un problème d'isolation dans mon entretoit. Il y a des barrages de glace.", delay: 2200 },
   { id: "t1", type: "thinking", delay: 1200 },
   { id: "a2", type: "alex_text", content: "Je comprends — les barrages de glace sont souvent causés par une mauvaise isolation de l'entretoit. Pourriez-vous m'envoyer une photo pour que je puisse mieux évaluer la situation ?", delay: 800 },

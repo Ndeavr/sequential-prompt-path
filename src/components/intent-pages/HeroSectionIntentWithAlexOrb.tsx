@@ -46,7 +46,7 @@ export default function HeroSectionIntentWithAlexOrb({
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/6 blur-[140px]" />
       </div>
 
-      {/* Alex Orb — dominant, above the fold */}
+      {/* Clara Orb — dominant, above the fold */}
       <motion.div
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

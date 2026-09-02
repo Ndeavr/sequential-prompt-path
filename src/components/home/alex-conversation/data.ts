@@ -8,7 +8,7 @@ export interface ConversationStep {
   content?: string;
   delay: number; // ms before this step appears
   duration?: number; // ms this step takes to fully render
-  voice?: boolean; // whether Alex speaks this step
+  voice?: boolean; // whether Clara speaks this step
 }
 
 export const SCENARIO = {

@@ -69,7 +69,7 @@ export default function PricingContractorsPage() {
                 className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5"
               >
                 <Sparkles className="h-4 w-4" />
-                Créer mon plan avec Alex
+                Créer mon plan avec Clara
               </Link>
               <a
                 href="#plans"

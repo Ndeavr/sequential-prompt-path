@@ -11,7 +11,7 @@ const corsHeaders = {
 // ─── Microcopy (international French + English) ───
 const MICROCOPY = {
   fr: {
-    greeting: "Bonjour ! Je suis Alex, votre conseiller UNPRO. Comment puis-je vous aider aujourd'hui ?",
+    greeting: "Bonjour ! Je suis Clara, votre conseiller UNPRO. Comment puis-je vous aider aujourd'hui ?",
     ask_service: "Quel est votre domaine d'activité principal ?",
     ask_city: "Quelle zone géographique couvrez-vous ?",
     ask_revenue: "Quel chiffre d'affaires visez-vous cette année ?",
@@ -27,7 +27,7 @@ const MICROCOPY = {
     activation_done: "Parfait. Votre compte est activé. Voici les prochaines étapes.",
   },
   en: {
-    greeting: "Hello! I'm Alex, your UNPRO advisor. How can I help you today?",
+    greeting: "Hello! I'm Clara, your UNPRO advisor. How can I help you today?",
     ask_service: "What's your main line of work?",
     ask_city: "What area do you cover?",
     ask_revenue: "What revenue are you targeting this year?",

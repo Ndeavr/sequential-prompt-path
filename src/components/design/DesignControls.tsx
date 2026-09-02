@@ -162,7 +162,7 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
               <div className="absolute bottom-2 right-2 flex gap-1">
                 <button
                   className="p-1.5 rounded-lg hover:bg-muted transition-colors"
-                  title="Entrée vocale (Alex)"
+                  title="Entrée vocale (Clara)"
                 >
                   <Mic className="w-4 h-4 text-muted-foreground" />
                 </button>

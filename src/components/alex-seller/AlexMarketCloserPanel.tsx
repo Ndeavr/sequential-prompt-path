@@ -37,14 +37,14 @@ export default function AlexMarketCloserPanel({ script, onCtaClick, onSecondaryC
       transition={{ type: "spring", damping: 20 }}
       className={`rounded-2xl border ${toneBorder[script.tone] || "border-border/30"} bg-card/80 backdrop-blur-sm p-4 space-y-3 shadow-lg ${toneGlow[script.tone] || ""}`}
     >
-      {/* Alex header */}
+      {/* Clara header */}
       <div className="flex items-center gap-2.5">
         <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shrink-0">
           <Bot className="h-4 w-4 text-primary-foreground" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-semibold text-foreground">Alex</span>
+            <span className="text-xs font-semibold text-foreground">Clara</span>
             <span className="px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-semibold flex items-center gap-0.5">
               {getAlexToneEmoji(script.tone)} {getAlexToneLabel(script.tone)}
             </span>

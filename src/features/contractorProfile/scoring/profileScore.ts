@@ -52,7 +52,7 @@ export function computeProfileScore(input: ContractorPageInput): ProfileScore {
   let conversion = 0;
   if (input.ctas.book_appointment) conversion += 10;
   if (input.ctas.alex) conversion += 8;
-  else breakdown.push("conversion: Alex CTA missing");
+  else breakdown.push("conversion: Clara CTA missing");
   if (input.ctas.evaluation) conversion += 7;
   else breakdown.push("conversion: evaluation CTA missing");
 

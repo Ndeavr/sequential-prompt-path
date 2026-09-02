@@ -15,7 +15,7 @@ export default function PanelSoundSettings() {
     <div className="space-y-4 p-4 rounded-xl border border-border/40 bg-card/80 backdrop-blur-sm">
       <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
         {enabled ? <Volume2 className="h-4 w-4 text-primary" /> : <VolumeX className="h-4 w-4 text-muted-foreground" />}
-        Sons Alex
+        Sons Clara
       </h3>
 
       {/* Master toggle */}

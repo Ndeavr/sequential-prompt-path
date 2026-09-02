@@ -285,7 +285,7 @@ export default function HomeownersPage() {
           </div>
         </section>
 
-        {/* Alex Conversation Overlay */}
+        {/* Clara Conversation Overlay */}
         <AnimatePresence>
           {alexOpen && (
             <AlexConversationShell

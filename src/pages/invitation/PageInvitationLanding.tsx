@@ -85,7 +85,7 @@ export default function PageInvitationLanding() {
         </div>
 
         <h1 className="text-4xl md:text-5xl font-semibold leading-[1.05] tracking-[-0.03em]">
-          Votre entreprise peut être recommandée par Alex.
+          Votre entreprise peut être recommandée par Clara.
         </h1>
         <p className="mt-4 text-lg text-white/75">
           Nous avons préparé une première fiche pour <span className="font-medium text-white">{prospect.business_name}</span>

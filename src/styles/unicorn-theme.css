@@ -177,7 +177,7 @@
   transition: opacity 320ms ease;
 }
 .uc-orb-shell[data-orb-state="thinking"] .uc-orb-caption { opacity: 1; }
-.uc-orb-shell[data-orb-state="thinking"] .uc-orb-caption::before { content: "Alex réfléchit…"; }
+.uc-orb-shell[data-orb-state="thinking"] .uc-orb-caption::before { content: "Clara réfléchit…"; }
 .uc-orb-shell[data-orb-state="thinking"] .uc-orb-core-spin {
   animation: uc-orb-spin-slow 12s linear infinite;
 }

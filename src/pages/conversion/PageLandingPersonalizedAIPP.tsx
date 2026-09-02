@@ -156,14 +156,14 @@ const PageLandingPersonalizedAIPP = () => {
             ) : (
               <>
                 <Calendar className="h-5 w-5" />
-                Réserver une démo avec Alex
+                Réserver une démo avec Clara
                 <ArrowRight className="h-4 w-4" />
               </>
             )}
           </Button>
         </motion.div>
 
-        {/* Alex Assist Panel */}
+        {/* Clara Assist Panel */}
         {showAlex && alexData?.greeting && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -172,11 +172,11 @@ const PageLandingPersonalizedAIPP = () => {
           >
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold text-foreground">Alex — Assistant IA</span>
+              <span className="text-sm font-semibold text-foreground">Clara — Assistant IA</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">{alexData.greeting}</p>
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => navigate("/alex")}>
-              <Sparkles className="h-3 w-3" /> Parler avec Alex
+              <Sparkles className="h-3 w-3" /> Parler avec Clara
             </Button>
           </motion.div>
         )}

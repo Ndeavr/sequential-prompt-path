@@ -4,7 +4,7 @@ import { svc, startRun, finishRun, log, cors, requireService } from "../_shared/
 import { requireSecrets, structuredError, structuredOk, jsonResponse } from "../_shared/acq-preflight.ts";
 
 const FROM_EMAIL = "alex@mail.unpro.ca";
-const FROM_NAME = "Alex d'UNPRO";
+const FROM_NAME = "Clara d'UNPRO";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });

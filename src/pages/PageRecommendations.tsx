@@ -67,14 +67,14 @@ export default function PageRecommendations() {
             <div className="text-white/70">
               <p className="font-medium text-white">Nous confirmons votre entrepreneur.</p>
               <p className="mt-1 text-sm">
-                Alex finalise la recommandation. Vous pouvez déjà réserver un
+                Clara finalise la recommandation. Vous pouvez déjà réserver un
                 créneau prioritaire.
               </p>
             </div>
           )}
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <PrimaryCTA cta="book" size="lg" label="Prendre rendez-vous" />
-            <PrimaryCTA cta="alex" size="lg" variant="secondary" label="Poser une question à Alex" />
+            <PrimaryCTA cta="alex" size="lg" variant="secondary" label="Poser une question à Clara" />
           </div>
         </div>
       </section>

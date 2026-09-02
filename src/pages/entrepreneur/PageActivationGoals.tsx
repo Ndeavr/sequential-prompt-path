@@ -244,7 +244,7 @@ export default function PageActivationGoals() {
     <div className="min-h-screen bg-background">
       <Helmet>
         <title>Votre plan personnalisé | UNPRO</title>
-        <meta name="description" content="Alex bâtit votre plan UNPRO à partir de votre objectif ou de votre budget." />
+        <meta name="description" content="Clara bâtit votre plan UNPRO à partir de votre objectif ou de votre budget." />
       </Helmet>
 
       <div className="sticky top-0 z-30 bg-background/85 backdrop-blur-xl border-b border-border/40">

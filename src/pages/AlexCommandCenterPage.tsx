@@ -100,7 +100,7 @@ function StateLabel({ state, holding }: { state: VoiceState; holding: boolean })
   const label = holding ? "Parlez maintenant…"
     : state === "listening" ? "Je vous écoute…"
     : state === "thinking" ? "Je réfléchis…"
-    : state === "speaking" ? "Alex parle…"
+    : state === "speaking" ? "Clara parle…"
     : "Maintenez pour parler";
 
   return (
@@ -117,7 +117,7 @@ function Bubble({ role, text }: { role: "user" | "assistant"; text: string }) {
   return (
     <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
       className={`rounded-2xl px-4 py-3 max-w-[85%] ${isUser ? "self-end bg-primary/10" : "self-start bg-card border border-border/50"}`}>
-      {!isUser && <span className="text-[11px] font-semibold text-primary mb-0.5 block">Alex</span>}
+      {!isUser && <span className="text-[11px] font-semibold text-primary mb-0.5 block">Clara</span>}
       <p className="text-sm leading-relaxed text-foreground">{text}</p>
     </motion.div>
   );
@@ -227,8 +227,8 @@ export default function AlexCommandCenterPage() {
   return (
     <>
       <Helmet>
-        <title>Alex — Commande vocale | UNPRO</title>
-        <meta name="description" content="Parlez à Alex, votre concierge intelligente pour la maison et la rénovation." />
+        <title>Clara — Commande vocale | UNPRO</title>
+        <meta name="description" content="Parlez à Clara, votre concierge intelligente pour la maison et la rénovation." />
       </Helmet>
 
       <div className="fixed inset-0 z-50 flex flex-col bg-background">
@@ -239,7 +239,7 @@ export default function AlexCommandCenterPage() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-sm font-bold text-foreground">Alex</h1>
+              <h1 className="text-sm font-bold text-foreground">Clara</h1>
               <p className="text-[11px] text-muted-foreground">Concierge intelligente</p>
             </div>
           </div>
@@ -363,7 +363,7 @@ export default function AlexCommandCenterPage() {
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="flex gap-2">
                 <Input value={textInput} onChange={e => setTextInput(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && handleTextSend()}
-                  placeholder="Écrire à Alex…" className="flex-1 rounded-full bg-muted/50 h-10"
+                  placeholder="Écrire à Clara…" className="flex-1 rounded-full bg-muted/50 h-10"
                   disabled={state === "thinking"} />
                 <Button size="icon" onClick={handleTextSend} disabled={!textInput.trim() || state === "thinking"} className="rounded-full h-10 w-10">
                   <Send className="w-4 h-4" />

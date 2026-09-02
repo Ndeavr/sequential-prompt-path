@@ -62,7 +62,7 @@ export default function HeroSectionContractorVoiceEntry({ onVoiceStart, onChatSt
               <Mic className="w-5 h-5 text-primary" />
               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full animate-pulse" />
             </div>
-            Parler à Alex
+            Parler à Clara
           </Button>
         </motion.div>
 

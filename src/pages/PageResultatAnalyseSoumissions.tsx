@@ -112,7 +112,7 @@ export default function PageResultatAnalyseSoumissions() {
               </Button>
               <Button asChild variant="outline" className="w-full gap-2 rounded-xl" size="lg">
                 <Link to="/alex">
-                  <MessageCircle className="h-4 w-4" /> Demander l'avis d'Alex
+                  <MessageCircle className="h-4 w-4" /> Demander l'avis de Clara
                 </Link>
               </Button>
               <Button asChild variant="ghost" className="w-full gap-2 rounded-xl text-muted-foreground" size="sm">

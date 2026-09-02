@@ -28,12 +28,12 @@ const HOW_IT_WORKS = [
   {
     icon: Brain,
     title: "Profil AIPP",
-    desc: "Un profil intelligent, structuré pour être recommandé par Alex, notre IA concierge. Plus votre profil est complet, plus vous êtes visible.",
+    desc: "Un profil intelligent, structuré pour être recommandé par Clara, notre IA concierge. Plus votre profil est complet, plus vous êtes visible.",
   },
   {
     icon: Sparkles,
     title: "Recommandation IA",
-    desc: "Quand un propriétaire décrit un problème, Alex analyse le contexte et recommande les entrepreneurs les plus pertinents.",
+    desc: "Quand un propriétaire décrit un problème, Clara analyse le contexte et recommande les entrepreneurs les plus pertinents.",
   },
   {
     icon: Calendar,
@@ -44,13 +44,13 @@ const HOW_IT_WORKS = [
 
 const AIPP_BENEFITS = [
   { icon: Eye, label: "Visibilité dans les résultats de recherche", desc: "Plus votre score est élevé, plus vous apparaissez en haut." },
-  { icon: TrendingUp, label: "Position dans les recommandations Alex", desc: "Alex priorise les profils avec un AIPP élevé." },
+  { icon: TrendingUp, label: "Position dans les recommandations Clara", desc: "Clara priorise les profils avec un AIPP élevé." },
   { icon: Shield, label: "Crédibilité auprès des propriétaires", desc: "Un badge vérifié et un score fort inspirent confiance." },
 ];
 
 const FOUNDER_BENEFITS = [
   "Profil AIPP complet",
-  "Recommandation Alex activée",
+  "Recommandation Clara activée",
   "Territoire réservé selon disponibilité",
   "Badge Fondateur",
   "Analyse privée de votre marché",
@@ -381,7 +381,7 @@ export default function ProfessionalsPage() {
                     <div className="space-y-2.5">
                       {[
                         { label: "Boost visibilité", value: "+25 %", color: "text-success" },
-                        { label: "Priorité Alex", value: "+1 niveau", color: "text-primary" },
+                        { label: "Priorité Clara", value: "+1 niveau", color: "text-primary" },
                         { label: "Score AIPP", value: "+5 pts", color: "text-secondary" },
                       ].map((r) => (
                         <div key={r.label} className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">

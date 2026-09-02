@@ -43,7 +43,7 @@ export async function triggerAgent(input: AgentTriggerInput): Promise<{ success:
   await supabase.from("agent_logs").insert({
     agent_name: input.agentKey,
     log_type: "trigger",
-    message: `Alex triggered ${input.agentKey}: ${input.reason}`,
+    message: `Clara triggered ${input.agentKey}: ${input.reason}`,
     metadata: {
       triggered_by: input.triggeredBy,
       context_keys: Object.keys(input.context),

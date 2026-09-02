@@ -128,7 +128,7 @@ function BubbleBody({
           onClick={() => onAskAlex(entry.id)}
         >
           <Sparkles className="h-3.5 w-3.5" />
-          Demander à Alex
+          Demander à Clara
         </Button>
       )}
     </div>

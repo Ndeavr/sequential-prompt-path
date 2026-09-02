@@ -167,8 +167,8 @@ export const EXPERIMENT_TYPE_LABELS: Record<ExperimentType, string> = {
   share_prompt_test: 'Test prompt partage',
   booking_reassurance_test: 'Test réassurance booking',
   compare_prompt_test: 'Test prompt comparaison',
-  alex_timing_test: 'Test timing Alex',
-  alex_copy_test: 'Test copy Alex',
+  alex_timing_test: 'Test timing Clara',
+  alex_copy_test: 'Test copy Clara',
   empty_state_test: 'Test état vide',
   sticky_cta_test: 'Test CTA sticky',
   section_order_test: 'Test ordre sections',
@@ -194,5 +194,5 @@ export const QUICK_EXPERIMENT_TEMPLATES = [
   { type: 'cta_copy_test' as ExperimentType, label: 'Test CTA', icon: 'MousePointer', description: 'Tester un nouveau texte de bouton' },
   { type: 'share_prompt_test' as ExperimentType, label: 'Test partage', icon: 'Share2', description: 'Tester un prompt de partage' },
   { type: 'booking_reassurance_test' as ExperimentType, label: 'Test réassurance', icon: 'ShieldCheck', description: 'Tester un bloc de confiance booking' },
-  { type: 'alex_timing_test' as ExperimentType, label: 'Test Alex', icon: 'Bot', description: 'Tester le moment d\'intervention Alex' },
+  { type: 'alex_timing_test' as ExperimentType, label: 'Test Clara', icon: 'Bot', description: 'Tester le moment d\'intervention Clara' },
 ];

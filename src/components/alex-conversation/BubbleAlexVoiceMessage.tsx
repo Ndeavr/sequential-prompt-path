@@ -22,7 +22,7 @@ export default function BubbleAlexVoiceMessage({ content, hasVoice, isPlaying, o
       transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94], delay }}
       className="flex gap-2.5 items-start max-w-[88%]"
     >
-      {/* Alex avatar */}
+      {/* Clara avatar */}
       <div className="flex-shrink-0 relative">
         <div
           className="w-8 h-8 rounded-full flex items-center justify-center border border-primary/20"

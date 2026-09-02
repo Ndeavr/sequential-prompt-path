@@ -40,7 +40,7 @@ export default function PanelAlexInterpretation({ scores, domain }: { scores: AI
     <div className="bg-card border border-primary/20 rounded-2xl p-5">
       <div className="flex items-center gap-2 mb-3">
         <MessageSquare className="w-5 h-5 text-primary" />
-        <h3 className="text-sm font-semibold text-foreground">Ce qu'Alex en pense</h3>
+        <h3 className="text-sm font-semibold text-foreground">Ce qu'Clara en pense</h3>
       </div>
       <p className="text-sm text-muted-foreground leading-relaxed">{text}</p>
     </div>

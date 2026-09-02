@@ -63,7 +63,7 @@ export default function HeroSectionIntentTrigger({ title, subtitle, ctaPrimary, 
         )}
       </motion.div>
 
-      {/* Alex mini entry */}
+      {/* Clara mini entry */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -75,7 +75,7 @@ export default function HeroSectionIntentTrigger({ title, subtitle, ctaPrimary, 
           className="flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors"
         >
           <Mic className="w-4 h-4" />
-          Parler à Alex
+          Parler à Clara
         </button>
         <span className="text-border">|</span>
         <button
@@ -83,7 +83,7 @@ export default function HeroSectionIntentTrigger({ title, subtitle, ctaPrimary, 
           className="flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors"
         >
           <MessageSquare className="w-4 h-4" />
-          Écrire à Alex
+          Écrire à Clara
         </button>
       </motion.div>
     </section>

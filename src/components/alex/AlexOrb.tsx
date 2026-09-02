@@ -95,7 +95,7 @@ const AlexOrbBase = ({
   volumeLevel = 0,
   theme = "dark",
   className,
-  ariaLabel = "Alex",
+  ariaLabel = "Clara",
 }: AlexOrbProps) => {
   const reduce = useReducedMotion();
   const px = SIZES[size];

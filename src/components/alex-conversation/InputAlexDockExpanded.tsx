@@ -84,7 +84,7 @@ export default function InputAlexDockExpanded({
               ? "bg-destructive text-destructive-foreground shadow-lg shadow-destructive/25 scale-105"
               : "bg-primary/10 text-primary hover:bg-primary/20 hover:scale-105 active:scale-95"
           }`}
-          aria-label={isMicActive ? "Arrêter" : "Parler à Alex"}
+          aria-label={isMicActive ? "Arrêter" : "Parler à Clara"}
         >
           {isVoiceConnecting ? (
             <Sparkles className="w-5 h-5 animate-spin" />
@@ -116,7 +116,7 @@ export default function InputAlexDockExpanded({
           {isMicActive && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <span className="text-xs text-primary font-medium animate-pulse">
-                Alex écoute...
+                Clara écoute...
               </span>
             </div>
           )}

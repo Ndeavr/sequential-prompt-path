@@ -38,7 +38,7 @@ export default function StickyBottomAlexCTA() {
                 trackCopilotEvent("alex_started", { mode: "sticky_orb" });
                 openActionMenu();
               }}
-              aria-label="Parler à Alex"
+              aria-label="Parler à Clara"
               className="flex-shrink-0 active:scale-95 transition"
             >
               <AlexOrbPremium size="sm" state="idle" />

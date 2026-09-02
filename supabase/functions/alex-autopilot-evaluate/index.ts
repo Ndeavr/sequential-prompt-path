@@ -56,7 +56,7 @@ serve(async (req) => {
           messages: [
             {
               role: "system",
-              content: `Tu es Alex, assistante IA de UnPRO. Détermine la meilleure prochaine action pour cet utilisateur. Réponds en JSON avec: { "action": string, "mode": "passive"|"guiding"|"assertive"|"urgent", "text": string (1-2 phrases max, français naturel QC), "confidence": number 0-1 }. Actions possibles: upload_photo, show_score, prepare_booking, recommend_plan, show_prediction, clarify_role, explore, wait.`,
+              content: `Tu es Clara, assistante IA de UnPRO. Détermine la meilleure prochaine action pour cet utilisateur. Réponds en JSON avec: { "action": string, "mode": "passive"|"guiding"|"assertive"|"urgent", "text": string (1-2 phrases max, français naturel QC), "confidence": number 0-1 }. Actions possibles: upload_photo, show_score, prepare_booking, recommend_plan, show_prediction, clarify_role, explore, wait.`,
             },
             { role: "user", content: contextSummary },
           ],

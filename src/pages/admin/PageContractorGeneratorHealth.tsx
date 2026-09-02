@@ -63,7 +63,7 @@ export default function PageContractorGeneratorHealth() {
         faqs: [],
         ctas: {
           book_appointment: "Planifier une évaluation (60 min.)",
-          alex: "Parler à Alex",
+          alex: "Parler à Clara",
           evaluation: "Demander une évaluation",
         },
         service_area: r.service_area ?? [],

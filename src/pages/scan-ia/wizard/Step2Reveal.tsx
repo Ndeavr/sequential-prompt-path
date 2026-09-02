@@ -54,7 +54,7 @@ export default function Step2Reveal() {
 
         <div className="inline-flex items-center gap-2 text-sky-300 text-sm">
           <Sparkles className="h-4 w-4" />
-          Alex a terminé votre évaluation
+          Clara a terminé votre évaluation
         </div>
       </div>
     </WizardShell>

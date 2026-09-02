@@ -53,7 +53,7 @@ export default function ReadinessMeter({
       {missing.length > 0 && (
         <p className="mt-3 text-[12.5px] leading-relaxed text-white/60">
           {tone === "activation"
-            ? `Dès l'activation, Alex complète ces ${missing.length} élément${missing.length > 1 ? "s" : ""} avec vous en quelques minutes.`
+            ? `Dès l'activation, Clara complète ces ${missing.length} élément${missing.length > 1 ? "s" : ""} avec vous en quelques minutes.`
             : `${missing.length} élément${missing.length > 1 ? "s" : ""} manquant${missing.length > 1 ? "s" : ""} limite${missing.length > 1 ? "nt" : ""} votre visibilité dans les recommandations UNPRO.`}
         </p>
       )}

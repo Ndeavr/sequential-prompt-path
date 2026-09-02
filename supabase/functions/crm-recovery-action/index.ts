@@ -57,7 +57,7 @@ function shell(body: string, ctaLabel: string, ctaUrl: string) {
   return `<div style="font-family:Inter,Arial,sans-serif;background:#ffffff;color:#111;padding:24px;max-width:560px">
 ${body}
 <p style="margin:24px 0"><a href="${esc(ctaUrl)}" style="display:inline-block;padding:14px 22px;background:#0F62FE;color:#fff;text-decoration:none;border-radius:10px;font-weight:600">${esc(ctaLabel)}</a></p>
-<p style="color:#666;font-size:12px">Alex d'UNPRO — plateforme d'intelligence résidentielle québécoise.</p>
+<p style="color:#666;font-size:12px">Clara d'UNPRO — plateforme d'intelligence résidentielle québécoise.</p>
 </div>`;
 }
 

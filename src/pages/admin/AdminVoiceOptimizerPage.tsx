@@ -122,7 +122,7 @@ export default function AdminVoiceOptimizerPage() {
               Voice Optimizer
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              A/B test des voix Alex. Score automatique. Auto-promotion du gagnant.
+              A/B test des voix Clara. Score automatique. Auto-promotion du gagnant.
             </p>
           </div>
           <div className="flex items-center gap-2">
