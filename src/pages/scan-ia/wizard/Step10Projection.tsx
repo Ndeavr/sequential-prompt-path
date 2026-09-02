@@ -13,7 +13,7 @@ export default function Step10Projection() {
 
   const opp = Number(report?.opportunities?.estimated_revenue ?? 0);
   const recs = useMemo(
-    () => (report ? buildGrowthPlan(report as any, (goal ?? "grow_revenue") as BusinessGoal, capacity) : []),
+    () => (report ? buildGrowthPlan(report, (goal ?? "grow_revenue") as BusinessGoal, capacity) : []),
     [report, goal, capacity],
   );
   const totalPlan = recs.reduce((s, r) => s + r.annual_value_cad, 0);
