@@ -47,17 +47,52 @@ const PLAN_LABEL: Record<string, string> = {
 // Active catalog order (public.plans, audience=contractor, active=true).
 const PLAN_ORDER = ["presence", "depart", "croissance_v2", "pro_v2", "elite_v2", "signature_v2"];
 
+/** État EXACT de l'offre affilié, validé côté serveur. Jamais dérivé de l'URL. */
+interface AffiliateOfferState {
+  offer_exists: boolean;
+  status?: "offered" | "accepted" | "granted" | "consumed" | "expired" | "revoked";
+  offered_appointments?: number;
+  granted_appointments?: number;
+  consumed_appointments?: number;
+  remaining_appointments?: number;
+  promo_valid: boolean;
+  promo_code?: string | null;
+  discount_percent?: number | null;
+  discount_duration?: string | null;
+}
+
 export default function PageContractorPersonalizedPlan() {
   const { quoteId } = useParams<{ quoteId: string }>();
   const [searchParams] = useSearchParams();
   // Offre affilié : code promo personnel (50 % du premier mois payé seulement).
   const promoCode = (searchParams.get("promo") ?? "").trim().toUpperCase() || null;
   const affiliateRef = (searchParams.get("ref") ?? "").trim().toUpperCase() || null;
+  const offerId = (searchParams.get("offer") ?? "").trim() || null;
   const navigate = useNavigate();
   const [quote, setQuote] = useState<PricingQuote | null>(null);
+  const [offerState, setOfferState] = useState<AffiliateOfferState | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [breakdownOpen, setBreakdownOpen] = useState(false);
+
+  // Aucune offre n'est affichée sans preuve serveur : un entrepreneur organique
+  // non attribué ne voit jamais l'offre affilié.
+  useEffect(() => {
+    if (!promoCode && !offerId) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.rpc("affiliate_offer_public_state" as never, {
+        _offer_id: offerId,
+        _promo_code: promoCode,
+      } as never);
+      if (cancelled || error) return;
+      setOfferState(data as unknown as AffiliateOfferState);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [promoCode, offerId]);
+
 
   useEffect(() => {
     if (!quoteId) return;
@@ -104,14 +139,15 @@ export default function PageContractorPersonalizedPlan() {
         },
       );
       if (error) throw error;
-      const url = (data as any)?.url;
+      const url = (data as { url?: string } | null)?.url;
       if (!url) throw new Error("URL Stripe manquante.");
       redirectToCheckout(url);
       setTimeout(() => setCheckoutLoading(false), 2500);
-    } catch (e: any) {
+    } catch {
       toast.error("Le paiement n'a pas pu démarrer. On réessaie dans un instant.");
       setCheckoutLoading(false);
     }
+
   };
 
   const triadPlans = useMemo(() => {
@@ -206,22 +242,58 @@ export default function PageContractorPersonalizedPlan() {
           </h1>
         </motion.div>
 
-        {/* Offre affilié active */}
-        {promoCode && (
+        {/* Offre affilié — état EXACT vérifié en base. Aucune promesse non prouvée. */}
+        {offerState && (offerState.promo_valid || offerState.offer_exists) && (
           <GlassCard className="p-5 mb-5 border-emerald-400/30">
             <div className="flex items-center gap-2 mb-2 text-emerald-300">
               <CheckCircle2 className="w-4 h-4" />
               <span className="text-xs uppercase tracking-wider">
-                Offre appliquée
+                Offre vérifiée
               </span>
             </div>
-            <p className="text-sm text-white/80">
-              Vos 3 rendez-vous qualifiés offerts sont réservés. Avec le code{" "}
-              <span className="font-semibold text-white">{promoCode}</span>,
-              votre premier mois est à moitié prix — une seule fois.
-            </p>
+            {offerState.offer_exists && offerState.status === "granted" && (
+              <p className="text-sm text-white/80">
+                {offerState.remaining_appointments} rendez-vous qualifiés offerts
+                disponibles sur {offerState.granted_appointments} accordés.
+              </p>
+            )}
+            {offerState.offer_exists && offerState.status === "accepted" && (
+              <p className="text-sm text-white/80">
+                Offre acceptée : {offerState.offered_appointments} rendez-vous
+                qualifiés seront accordés dès l'activation de votre profil.
+              </p>
+            )}
+            {offerState.offer_exists && offerState.status === "offered" && (
+              <p className="text-sm text-white/80">
+                {offerState.offered_appointments} rendez-vous qualifiés vous sont
+                proposés. Ils sont accordés une fois votre profil activé.
+              </p>
+            )}
+            {offerState.offer_exists && offerState.status === "consumed" && (
+              <p className="text-sm text-white/80">
+                Vos {offerState.consumed_appointments} rendez-vous offerts ont été
+                utilisés.
+              </p>
+            )}
+            {offerState.offer_exists &&
+              (offerState.status === "expired" || offerState.status === "revoked") && (
+                <p className="text-sm text-white/70">
+                  Cette offre de rendez-vous n'est plus active.
+                </p>
+              )}
+            {offerState.promo_valid && (
+              <p className="mt-2 text-sm text-white/80">
+                Code{" "}
+                <span className="font-semibold text-white">
+                  {offerState.promo_code}
+                </span>{" "}
+                : {offerState.discount_percent ?? 50} % sur le premier mois payé —
+                une seule fois.
+              </p>
+            )}
           </GlassCard>
         )}
+
 
         {/* Hero plan card */}
 

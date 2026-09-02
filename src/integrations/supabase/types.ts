@@ -5077,12 +5077,16 @@ export type Database = {
         Row: {
           accepted_at: string | null
           affiliate_id: string
+          city: string | null
           company_name: string | null
+          consumed_appointments: number
           consumed_at: string | null
           contractor_id: string | null
           created_at: string
           expires_at: string
           free_appointments: number
+          granted_appointments: number
+          granted_at: string | null
           id: string
           lead_id: string | null
           metadata: Json
@@ -5090,17 +5094,22 @@ export type Database = {
           offered_at: string
           promo_code_id: string | null
           status: string
+          trade: string | null
           updated_at: string
         }
         Insert: {
           accepted_at?: string | null
           affiliate_id: string
+          city?: string | null
           company_name?: string | null
+          consumed_appointments?: number
           consumed_at?: string | null
           contractor_id?: string | null
           created_at?: string
           expires_at?: string
           free_appointments?: number
+          granted_appointments?: number
+          granted_at?: string | null
           id?: string
           lead_id?: string | null
           metadata?: Json
@@ -5108,17 +5117,22 @@ export type Database = {
           offered_at?: string
           promo_code_id?: string | null
           status?: string
+          trade?: string | null
           updated_at?: string
         }
         Update: {
           accepted_at?: string | null
           affiliate_id?: string
+          city?: string | null
           company_name?: string | null
+          consumed_appointments?: number
           consumed_at?: string | null
           contractor_id?: string | null
           created_at?: string
           expires_at?: string
           free_appointments?: number
+          granted_appointments?: number
+          granted_at?: string | null
           id?: string
           lead_id?: string | null
           metadata?: Json
@@ -5126,6 +5140,7 @@ export type Database = {
           offered_at?: string
           promo_code_id?: string | null
           status?: string
+          trade?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -96150,6 +96165,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      affiliate_city_free_slots: { Args: { _city: string }; Returns: Json }
       affiliate_ensure_personal_promo: {
         Args: { _affiliate_id: string }
         Returns: {
@@ -96170,6 +96186,10 @@ export type Database = {
       }
       affiliate_offer_free_appointments: {
         Args: { _company_name?: string; _lead_id: string; _notes?: string }
+        Returns: Json
+      }
+      affiliate_offer_public_state: {
+        Args: { _offer_id?: string; _promo_code?: string }
         Returns: Json
       }
       aipp_is_published: { Args: { _profile_id: string }; Returns: boolean }

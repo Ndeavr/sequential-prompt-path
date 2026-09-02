@@ -36,6 +36,16 @@ const SKIP_REASONS = [
   { key: "pas_maintenant", label: "Pas maintenant" },
 ];
 
+/** Refus serveur → message clair pour l'affilié. */
+const OFFER_ERRORS: Record<string, string> = {
+  city_cap_reached: "Les 10 places de cette ville sont déjà prises.",
+  no_personal_contact_proof: "Appelez ou contactez d'abord ce prospect.",
+  lead_city_missing: "Ce prospect n'a pas de ville — complétez sa fiche.",
+  not_an_active_affiliate: "Votre compte affilié n'est pas actif.",
+  lead_not_found: "Prospect introuvable.",
+};
+
+
 function StepCard({
   n, title, subtitle, state, children,
 }: { n: number; title: string; subtitle: string; state: StepState; children?: React.ReactNode }) {
@@ -165,8 +175,9 @@ export default function PageAffiliateActionMode() {
         sent_at: new Date().toISOString(),
       } as ActionAudit));
       refreshStats();
-    } catch (e: any) {
-      toast.error("Envoi impossible", { description: e?.message ?? "Réessayez." });
+    } catch (e) {
+      toast.error("Envoi impossible", { description: e instanceof Error ? e.message : "Réessayez." });
+
     } finally {
       setSending(null);
     }
@@ -180,8 +191,10 @@ export default function PageAffiliateActionMode() {
     void loadNext(prospect.id);
   }
 
+  // Formulation honnête : l'offre est PROPOSÉE. Les rendez-vous ne sont accordés
+  // qu'à l'activation du profil — jamais annoncés comme « réservés ».
   const offerScript = offer
-    ? `Je vous réserve 3 rendez-vous qualifiés offerts — aucun frais, aucun engagement.\n\nSi vous voulez plus de volume ensuite, UNPRO calcule votre plan personnalisé et mon code ${offer.promo_code} vous donne 50 % sur le premier mois payé (une seule fois).`
+    ? `Je vous propose 3 rendez-vous qualifiés offerts — aucun frais, aucun engagement. Ils sont accordés dès l'activation de votre profil.\n\nSi vous voulez plus de volume ensuite, UNPRO calcule votre plan personnalisé et mon code ${offer.promo_code} vous donne 50 % sur le premier mois payé (une seule fois).`
     : "";
 
   async function onOfferFree() {
@@ -195,13 +208,21 @@ export default function PageAffiliateActionMode() {
       });
       setOffer(res);
       refreshStats();
-      toast.success("3 rendez-vous offerts enregistrés", { description: `Code personnel : ${res.promo_code}` });
-    } catch (e: any) {
-      toast.error("Offre impossible", { description: e?.message ?? "Réessayez." });
+      toast.success("Offre enregistrée", {
+        description: `Code personnel : ${res.promo_code}${
+          typeof res.city_slots_remaining === "number"
+            ? ` · ${res.city_slots_remaining} place(s) restante(s) à ${res.city}`
+            : ""
+        }`,
+      });
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Réessayez.";
+      toast.error("Offre impossible", { description: OFFER_ERRORS[message] ?? message });
     } finally {
       setOffering(false);
     }
   }
+
 
   if (loadingAffiliate) {
     return (
@@ -318,11 +339,19 @@ export default function PageAffiliateActionMode() {
                   <Gift className="h-4 w-4 text-amber-500" />3 rendez-vous qualifiés offerts
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Réservé à vos appels personnels. S'il veut plus de volume ensuite, son plan
+                  Réservé à vos appels personnels · 10 entrepreneurs par ville. Les rendez-vous
+                  sont accordés à l'activation du profil. S'il veut plus de volume, son plan
                   personnalisé est calculé et votre code donne 50 % du premier mois payé.
                 </p>
                 {offer ? (
                   <div className="mt-3 space-y-2">
+                    <p className="text-xs text-muted-foreground">
+                      Offre proposée{offer.city ? ` · ${offer.city}` : ""}
+                      {typeof offer.city_slots_remaining === "number"
+                        ? ` · ${offer.city_slots_remaining} place(s) restante(s)`
+                        : ""}{" "}
+                      · accordés : {offer.granted_appointments ?? 0}/{offer.free_appointments}
+                    </p>
                     <div className="flex items-center justify-between rounded-xl bg-background px-3 py-2">
                       <span className="font-mono text-base font-bold tracking-wider text-foreground">{offer.promo_code}</span>
                       <Button
@@ -332,6 +361,7 @@ export default function PageAffiliateActionMode() {
                         <Copy className="h-3.5 w-3.5" />Copier
                       </Button>
                     </div>
+
                     <Button
                       variant="outline" size="sm" className="w-full gap-1.5 text-xs"
                       onClick={() => { navigator.clipboard.writeText(offerScript); toast.success("Message copié"); }}
