@@ -265,12 +265,37 @@ export interface ProfessionalCredential {
   verified_at: string | null;
 }
 
+/**
+ * Public-safe credential read.
+ * Uses the `public_contractor_credentials` RPC (SECURITY DEFINER, strictly
+ * filtered): no documents, no internal notes, no private evidence.
+ * Anonymous visitors get the same public truth as signed-in users.
+ * Errors THROW so the UI can say "temporarily unavailable" instead of
+ * concluding that the professional has no credentials.
+ */
 export async function fetchProfessionalCredentials(
   contractorId: string,
 ): Promise<ProfessionalCredential[]> {
-  const { data, error } = await supabase.functions.invoke("compliance-guard", {
-    body: { op: "credential_status", contractor_id: contractorId },
+  const { data, error } = await supabase.rpc("public_contractor_credentials", {
+    _contractor_id: contractorId,
   });
-  if (error || !data?.credentials) return [];
-  return data.credentials as ProfessionalCredential[];
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
+    id: String(row.id),
+    contractor_id: contractorId,
+    profession_code: (row.profession_code as string) ?? null,
+    credential_type: (row.credential_type as string) ?? null,
+    credential_value: (row.public_value as string) ?? null,
+    issuer: (row.issuer as string) ?? null,
+    issued_at: (row.issued_at as string) ?? null,
+    expires_at: (row.expires_at as string) ?? null,
+    verification_state: (row.verification_state as VerificationState) ?? "PENDING",
+    credential_status: (row.credential_status as CredentialStatus) ?? "UNVERIFIED",
+    effective_verification_state: (row.verification_state as VerificationState) ?? "PENDING",
+    effective_status: (row.credential_status as CredentialStatus) ?? "UNVERIFIED",
+    source_url: null,
+    source_last_verified_at: (row.source_last_verified_at as string) ?? null,
+    verified_at: (row.verified_at as string) ?? null,
+  })) as ProfessionalCredential[];
 }
+
