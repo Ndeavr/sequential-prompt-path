@@ -9,7 +9,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Phone, Send, Search, LineChart, Trophy, Loader2, Plus, SkipForward,
-  Check, Clock, MailOpen, MessageSquare, ExternalLink, Copy, ListFilter,
+  Check, Clock, MailOpen, MessageSquare, ExternalLink, Copy, ListFilter, Gift,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +22,8 @@ import { useAffiliateSelf } from "@/hooks/useAffiliateSelf";
 import AddProspectSheet from "@/features/affiliate/actionMode/AddProspectSheet";
 import {
   useNextProspect, sendAuditInvite, recordCallOutcome, logCallStarted,
-  useDayStats, useRefreshStats, type ActionProspect, type ActionAudit,
+  offerFreeAppointments, useDayStats, useRefreshStats,
+  type ActionProspect, type ActionAudit, type FreeAppointmentOffer,
 } from "@/features/affiliate/actionMode/useActionMode";
 import { formatPhoneDisplay } from "@/features/affiliate/lib/phoneUtils";
 
@@ -81,6 +82,8 @@ export default function PageAffiliateActionMode() {
   const [sending, setSending] = useState<"sms" | "email" | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [skipOpen, setSkipOpen] = useState(false);
+  const [offer, setOffer] = useState<FreeAppointmentOffer | null>(null);
+  const [offering, setOffering] = useState(false);
 
   const loadNext = useCallback(
     async (excludeId?: string | null) => {
@@ -91,6 +94,7 @@ export default function PageAffiliateActionMode() {
       setRemaining(res.remaining ?? 0);
       setEmptyReason(res.prospect ? null : res.reason ?? "no_eligible_prospect");
       setCalled(false);
+      setOffer(null);
     },
     [next]
   );
@@ -174,6 +178,29 @@ export default function PageAffiliateActionMode() {
     await skip(prospect.id, reason);
     refreshStats();
     void loadNext(prospect.id);
+  }
+
+  const offerScript = offer
+    ? `Je vous réserve 3 rendez-vous qualifiés offerts — aucun frais, aucun engagement.\n\nSi vous voulez plus de volume ensuite, UNPRO calcule votre plan personnalisé et mon code ${offer.promo_code} vous donne 50 % sur le premier mois payé (une seule fois).`
+    : "";
+
+  async function onOfferFree() {
+    if (!prospect || !affiliate || offering) return;
+    setOffering(true);
+    try {
+      const res = await offerFreeAppointments({
+        affiliateId: affiliate.id,
+        leadId: prospect.id,
+        companyName: name || null,
+      });
+      setOffer(res);
+      refreshStats();
+      toast.success("3 rendez-vous offerts enregistrés", { description: `Code personnel : ${res.promo_code}` });
+    } catch (e: any) {
+      toast.error("Offre impossible", { description: e?.message ?? "Réessayez." });
+    } finally {
+      setOffering(false);
+    }
   }
 
   if (loadingAffiliate) {
