@@ -161,7 +161,105 @@ Deno.serve(async (req) => {
     });
 
 
+
+    /* ─────────────────────────────────────────────────────────────
+     * Booking payments (smart_bookings + booking_transactions).
+     * Idempotent: the transaction is located by Stripe session id or
+     * payment intent id, then moved forward in its own state machine.
+     * ───────────────────────────────────────────────────────────── */
+    try {
+      const bookingEvents = new Set([
+        "checkout.session.completed",
+        "checkout.session.async_payment_succeeded",
+        "checkout.session.async_payment_failed",
+        "checkout.session.expired",
+        "payment_intent.payment_failed",
+        "charge.refunded",
+      ]);
+
+      if (bookingEvents.has(event.type)) {
+        const obj = event.data.object as any;
+        const sid = obj?.object === "checkout.session" ? obj.id : null;
+        const piId =
+          typeof obj?.payment_intent === "string"
+            ? obj.payment_intent
+            : obj?.payment_intent?.id ?? (obj?.object === "payment_intent" ? obj.id : null);
+
+        let txQuery = supabase
+          .from("booking_transactions")
+          .select("id, booking_id, status, refunded")
+          .limit(1);
+        txQuery = sid
+          ? txQuery.eq("stripe_session_id", sid)
+          : txQuery.eq("stripe_payment_intent_id", piId ?? "__none__");
+
+        const { data: txRows, error: txErr } = await txQuery;
+        if (txErr) console.error("[stripe-webhook][booking] lookup failed:", txErr.message);
+
+        const tx = txRows?.[0];
+        if (tx) {
+          const nowIso = new Date().toISOString();
+          let update: Record<string, unknown> | null = null;
+          let bookingStatus: string | null = null;
+
+          if (
+            (event.type === "checkout.session.completed" ||
+              event.type === "checkout.session.async_payment_succeeded") &&
+            obj?.payment_status === "paid"
+          ) {
+            if (tx.status !== "completed") {
+              update = {
+                status: "completed",
+                stripe_payment_intent_id: piId,
+                payment_method: "stripe",
+                payment_reference: piId ?? sid,
+                paid_at: nowIso,
+              };
+              bookingStatus = "confirmed";
+            }
+          } else if (
+            event.type === "checkout.session.async_payment_failed" ||
+            event.type === "payment_intent.payment_failed" ||
+            event.type === "checkout.session.expired"
+          ) {
+            if (tx.status !== "completed" && tx.status !== "failed") {
+              update = { status: "failed", stripe_payment_intent_id: piId, failed_at: nowIso };
+              bookingStatus = "payment_failed";
+            }
+          } else if (event.type === "charge.refunded") {
+            if (!tx.refunded) {
+              update = {
+                status: "refunded",
+                refunded: true,
+                refund_amount_cents: obj?.amount_refunded ?? null,
+                refunded_at: nowIso,
+                stripe_payment_intent_id: piId,
+              };
+              bookingStatus = "cancelled";
+            }
+          }
+
+          if (update) {
+            const { error: upErr } = await supabase
+              .from("booking_transactions")
+              .update(update)
+              .eq("id", tx.id);
+            if (upErr) console.error("[stripe-webhook][booking] update failed:", upErr.message);
+            if (!upErr && bookingStatus && tx.booking_id) {
+              await supabase
+                .from("smart_bookings")
+                .update({ status: bookingStatus })
+                .eq("id", tx.booking_id);
+            }
+          }
+        }
+      }
+    } catch (bookingErr) {
+      console.error("[stripe-webhook][booking] handler error:", String(bookingErr));
+    }
+
     switch (event.type) {
+
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const contractorId = session.metadata?.contractor_id;

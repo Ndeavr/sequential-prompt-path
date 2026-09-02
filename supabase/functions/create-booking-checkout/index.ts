@@ -73,23 +73,45 @@ serve(async (req) => {
       },
     });
 
-    // Create pending transaction
-    await supabase.from("booking_transactions").insert({
-      booking_id,
-      contractor_id,
-      amount_total_cents: price_cents,
-      unpro_fee_cents: unproFeeCents,
-      contractor_amount_cents: contractorAmountCents,
-      fee_rate: UNPRO_FEE_RATE,
-      stripe_session_id: session.id,
-      status: "pending",
-    });
+    // Persist the pending transaction (idempotent on the Stripe session id).
+    const { error: txError } = await supabase
+      .from("booking_transactions")
+      .upsert(
+        {
+          booking_id,
+          contractor_id,
+          amount_total_cents: price_cents,
+          unpro_fee_cents: unproFeeCents,
+          contractor_amount_cents: contractorAmountCents,
+          fee_rate: UNPRO_FEE_RATE,
+          currency: "cad",
+          payment_method: "stripe",
+          payer_email: client_email ?? null,
+          payer_name: client_name ?? null,
+          stripe_session_id: session.id,
+          status: "pending",
+          metadata: {
+            appointment_type_title: appointment_type_title ?? null,
+            source: "unpro_booking_intelligence",
+          },
+        },
+        { onConflict: "stripe_session_id" },
+      );
+
+    if (txError) {
+      console.error("[create-booking-checkout] transaction insert failed:", txError.message);
+      throw new Error(`Payment record could not be saved: ${txError.message}`);
+    }
 
     // Update booking status
-    await supabase
+    const { error: bookingErr } = await supabase
       .from("smart_bookings")
       .update({ status: "pending_payment" })
       .eq("id", booking_id);
+    if (bookingErr) {
+      console.error("[create-booking-checkout] booking status update failed:", bookingErr.message);
+    }
+
 
     return new Response(JSON.stringify({ url: session.url, session_id: session.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
