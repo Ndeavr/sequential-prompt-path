@@ -241,22 +241,58 @@ export default function PageContractorPersonalizedPlan() {
           </h1>
         </motion.div>
 
-        {/* Offre affilié active */}
-        {promoCode && (
+        {/* Offre affilié — état EXACT vérifié en base. Aucune promesse non prouvée. */}
+        {offerState && (offerState.promo_valid || offerState.offer_exists) && (
           <GlassCard className="p-5 mb-5 border-emerald-400/30">
             <div className="flex items-center gap-2 mb-2 text-emerald-300">
               <CheckCircle2 className="w-4 h-4" />
               <span className="text-xs uppercase tracking-wider">
-                Offre appliquée
+                Offre vérifiée
               </span>
             </div>
-            <p className="text-sm text-white/80">
-              Vos 3 rendez-vous qualifiés offerts sont réservés. Avec le code{" "}
-              <span className="font-semibold text-white">{promoCode}</span>,
-              votre premier mois est à moitié prix — une seule fois.
-            </p>
+            {offerState.offer_exists && offerState.status === "granted" && (
+              <p className="text-sm text-white/80">
+                {offerState.remaining_appointments} rendez-vous qualifiés offerts
+                disponibles sur {offerState.granted_appointments} accordés.
+              </p>
+            )}
+            {offerState.offer_exists && offerState.status === "accepted" && (
+              <p className="text-sm text-white/80">
+                Offre acceptée : {offerState.offered_appointments} rendez-vous
+                qualifiés seront accordés dès l'activation de votre profil.
+              </p>
+            )}
+            {offerState.offer_exists && offerState.status === "offered" && (
+              <p className="text-sm text-white/80">
+                {offerState.offered_appointments} rendez-vous qualifiés vous sont
+                proposés. Ils sont accordés une fois votre profil activé.
+              </p>
+            )}
+            {offerState.offer_exists && offerState.status === "consumed" && (
+              <p className="text-sm text-white/80">
+                Vos {offerState.consumed_appointments} rendez-vous offerts ont été
+                utilisés.
+              </p>
+            )}
+            {offerState.offer_exists &&
+              (offerState.status === "expired" || offerState.status === "revoked") && (
+                <p className="text-sm text-white/70">
+                  Cette offre de rendez-vous n'est plus active.
+                </p>
+              )}
+            {offerState.promo_valid && (
+              <p className="mt-2 text-sm text-white/80">
+                Code{" "}
+                <span className="font-semibold text-white">
+                  {offerState.promo_code}
+                </span>{" "}
+                : {offerState.discount_percent ?? 50} % sur le premier mois payé —
+                une seule fois.
+              </p>
+            )}
           </GlassCard>
         )}
+
 
         {/* Hero plan card */}
 
