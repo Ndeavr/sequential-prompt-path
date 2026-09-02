@@ -180,8 +180,10 @@ export default function PageAffiliateActionMode() {
     void loadNext(prospect.id);
   }
 
+  // Formulation honnête : l'offre est PROPOSÉE. Les rendez-vous ne sont accordés
+  // qu'à l'activation du profil — jamais annoncés comme « réservés ».
   const offerScript = offer
-    ? `Je vous réserve 3 rendez-vous qualifiés offerts — aucun frais, aucun engagement.\n\nSi vous voulez plus de volume ensuite, UNPRO calcule votre plan personnalisé et mon code ${offer.promo_code} vous donne 50 % sur le premier mois payé (une seule fois).`
+    ? `Je vous propose 3 rendez-vous qualifiés offerts — aucun frais, aucun engagement. Ils sont accordés dès l'activation de votre profil.\n\nSi vous voulez plus de volume ensuite, UNPRO calcule votre plan personnalisé et mon code ${offer.promo_code} vous donne 50 % sur le premier mois payé (une seule fois).`
     : "";
 
   async function onOfferFree() {
@@ -195,13 +197,21 @@ export default function PageAffiliateActionMode() {
       });
       setOffer(res);
       refreshStats();
-      toast.success("3 rendez-vous offerts enregistrés", { description: `Code personnel : ${res.promo_code}` });
-    } catch (e: any) {
-      toast.error("Offre impossible", { description: e?.message ?? "Réessayez." });
+      toast.success("Offre enregistrée", {
+        description: `Code personnel : ${res.promo_code}${
+          typeof res.city_slots_remaining === "number"
+            ? ` · ${res.city_slots_remaining} place(s) restante(s) à ${res.city}`
+            : ""
+        }`,
+      });
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Réessayez.";
+      toast.error("Offre impossible", { description: OFFER_ERRORS[message] ?? message });
     } finally {
       setOffering(false);
     }
   }
+
 
   if (loadingAffiliate) {
     return (
