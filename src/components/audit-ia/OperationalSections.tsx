@@ -2,10 +2,9 @@
  * UNPRO — Audit IA : sections publiques.
  *
  * Hiérarchie : valeur de l'audit → vidéo → ce que l'entrepreneur obtient →
- * offre canonique unique (OFFER_350, la seule source alimentant le vrai
- * checkout) → FAQ courte → CTA final.
+ * parcours canonique vers le devis personnalisé → FAQ courte → CTA final.
  *
- * Interdit ici : grille historique de forfaits mensuels, variantes de prix,
+ * Interdit ici : grille historique de forfaits mensuels, prix fixe par défaut,
  * mécanique interne (attribution, événements, fournisseurs, infrastructure).
  */
 import { Link } from "react-router-dom";
@@ -20,7 +19,6 @@ import {
   ScanSearch,
   ShieldCheck,
 } from "lucide-react";
-import { OFFER_350 } from "@/lib/copy/offer350";
 import { AuditVideoBlock } from "./AuditVideoBlock";
 
 /* --------------------------------------------------------------- helpers */
@@ -130,28 +128,30 @@ function WhatYouGetSection() {
   );
 }
 
-/* ---------------------------------------------- C. Offre canonique unique */
+/* ---------------------------------------------- C. Parcours de valeur */
 function OfferSection() {
   return (
     <SectionShell
       id="forfaits"
-      eyebrow="L'offre entrepreneur"
-      title={OFFER_350.card.title}
-      intro={OFFER_350.subtitle}
+      eyebrow="Votre plan de croissance"
+      title="Un plan calculé pour votre entreprise"
+      intro="Complétez votre profil et vos objectifs. UNPRO calcule ensuite un devis mensuel personnalisé selon votre métier, votre territoire, votre capacité et la demande disponible."
     >
       <div className="mx-auto w-full max-w-xl rounded-[24px] border border-primary/40 bg-card p-6 shadow-md sm:p-7">
         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
-          {OFFER_350.card.eyebrow}
+          Analyse gratuite avant tout prix
         </p>
-        <div className="mt-2 flex items-end gap-2">
-          <span className="text-[40px] font-bold leading-none tracking-tight text-foreground">
-            {OFFER_350.price_label}
-          </span>
-          <span className="pb-1.5 text-[13px] text-muted-foreground">{OFFER_350.paymentNote}</span>
-        </div>
+        <h3 className="mt-2 text-[24px] font-bold leading-tight tracking-tight text-foreground">
+          Voyez d'abord la valeur, puis votre devis
+        </h3>
 
         <ul className="mt-5 space-y-2">
-          {OFFER_350.card.bullets.map((b) => (
+          {[
+            "Analyse IA gratuite de votre présence actuelle",
+            "Profil à vérifier et compléter",
+            "Objectifs et capacité pris en compte",
+            "Prix calculé côté serveur et révélé avec votre plan",
+          ].map((b) => (
             <li key={b} className="flex items-start gap-2.5 text-[13.5px] leading-relaxed text-foreground/85">
               <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
               <span>{b}</span>
@@ -160,15 +160,15 @@ function OfferSection() {
         </ul>
 
         <Link
-          to="/entrepreneurs/garantie"
+          to="/entrepreneurs/profil"
           className="gold-btn mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-4 text-[15px] font-bold transition-transform hover:-translate-y-0.5"
         >
-          {OFFER_350.ctaCalculate}
+          Commencer mon analyse gratuite
           <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
         </Link>
 
         <p className="mt-4 text-[12px] leading-relaxed text-muted-foreground">
-          {OFFER_350.disclaimer}
+          Aucun forfait fixe n'est imposé. Le plan dépend de vos réponses et de la capacité réelle de votre marché.
         </p>
       </div>
     </SectionShell>
@@ -190,8 +190,8 @@ const FAQ = [
     a: "Non. Aucune plateforme d'IA ne vend de classement. UNPRO structure et vérifie votre profil pour vous rendre admissible aux recommandations UNPRO.",
   },
   {
-    q: "Est-ce un abonnement ?",
-    a: `Non. ${OFFER_350.paymentNote} ${OFFER_350.disclaimer}`,
+    q: "Quand est-ce que je vois le prix ?",
+    a: "Après l'analyse gratuite, la vérification du profil et vos objectifs. Le devis mensuel est calculé pour votre entreprise, puis affiché avant tout paiement.",
   },
 ] as const;
 

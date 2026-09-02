@@ -1,7 +1,7 @@
 // UNPRO — Canonical email sender. Single source of truth.
 // Any outbound email NOT using EMAIL_FROM must be rejected before send.
-export const EMAIL_FROM = "Clara d'UNPRO <alex@mail.unpro.ca>";
-export const EMAIL_FROM_ADDRESS = "alex@mail.unpro.ca";
+export const EMAIL_FROM = "Clara d'UNPRO <clara@mail.unpro.ca>";
+export const EMAIL_FROM_ADDRESS = "clara@mail.unpro.ca";
 export const EMAIL_FROM_NAME = "Clara d'UNPRO";
 export const EMAIL_FROM_DOMAIN = "mail.unpro.ca";
 

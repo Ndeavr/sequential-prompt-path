@@ -3,12 +3,10 @@
  * Reads ?t=<tracking_slug>, marks click, launches the canonical entry-pack checkout.
  */
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { redirectToCheckout } from "@/lib/redirectToCheckout";
-import { OFFER_350 } from "@/lib/copy/offer350";
 
 interface TrackContext {
   company_name?: string;
@@ -19,6 +17,7 @@ interface TrackContext {
 
 export default function SolicitationActivationPage() {
   const [params] = useSearchParams();
+  const navigate = useNavigate();
   const trackingSlug = params.get("t");
   const [ctx, setCtx] = useState<TrackContext>({});
   const [loading, setLoading] = useState(false);
@@ -48,14 +47,9 @@ export default function SolicitationActivationPage() {
           body: { slug: trackingSlug, event: "payment_started" },
         }).catch(() => {});
       }
-      const { data, error: fnErr } = await supabase.functions.invoke("create-activation-checkout", {
-        body: { slug: trackingSlug || `solicit-${Date.now()}`, source: "solicitation" },
-      });
-      if (fnErr || !data?.url) {
-        setError("Activation indisponible — réessayez dans quelques instants.");
-        return;
-      }
-      redirectToCheckout(data.url);
+      const carry = new URLSearchParams(params);
+      if (trackingSlug) carry.set("t", trackingSlug);
+      navigate(`/entrepreneurs/audit-ia?${carry.toString()}`);
     } catch {
       setError("Activation indisponible — réessayez dans quelques instants.");
     } finally {
@@ -86,7 +80,7 @@ export default function SolicitationActivationPage() {
           <span className="text-white/60">Pas des leads partagés.</span>
         </h1>
         <p className="mt-5 text-lg text-white/75">
-          {OFFER_350.title} <span className="text-white/60">{OFFER_350.paymentNote}</span>
+          Commencez par votre analyse IA gratuite, puis recevez un plan personnalisé selon vos objectifs.
         </p>
 
         <Button
@@ -95,13 +89,13 @@ export default function SolicitationActivationPage() {
           size="lg"
           className="mt-8 h-14 w-full text-base bg-white text-black hover:bg-white/90 rounded-2xl font-medium"
         >
-          {loading ? "Préparation…" : (<>Activer mon profil <ArrowRight className="ml-2 h-4 w-4" /></>)}
+          {loading ? "Préparation…" : (<>Voir mon analyse gratuite <ArrowRight className="ml-2 h-4 w-4" /></>)}
         </Button>
 
         {error && <p className="mt-4 text-sm text-rose-300">{error}</p>}
 
         <p className="mt-8 text-xs text-white/40">
-          Aucun renouvellement automatique. Vous choisirez votre plan pendant l'essai.
+          Aucun paiement avant votre analyse, vos objectifs et votre devis personnalisé.
         </p>
       </section>
     </main>

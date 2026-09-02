@@ -4,7 +4,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const SENDER_DOMAIN = "mail.unpro.ca";
-const SENDER_EMAIL = "alex@mail.unpro.ca";
+const SENDER_EMAIL = "clara@mail.unpro.ca";
 const SENDER_NAME = "Clara d'UNPRO";
 const REPLY_TO = "support@unpro.ca";
 

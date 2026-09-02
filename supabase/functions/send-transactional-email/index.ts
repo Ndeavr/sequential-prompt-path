@@ -7,7 +7,7 @@ import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 const SITE_NAME = "UNPRO"
 const SENDER_DOMAIN = "mail.unpro.ca"
 const FROM_DOMAIN = "mail.unpro.ca"
-const DEFAULT_FROM_EMAIL = "alex@mail.unpro.ca"
+const DEFAULT_FROM_EMAIL = "clara@mail.unpro.ca"
 const DEFAULT_FROM_NAME = "Clara d'UNPRO"
 
 const corsHeaders = {

@@ -114,15 +114,15 @@ export default function PageInvitationLanding() {
             Rendez-vous exclusifs avec des propriétaires compatibles avec vos services.
           </ValueRow>
           <ValueRow icon={<Sparkles className="h-4 w-4" />}>
-            Jusqu'à 5 rendez-vous exclusifs garantis dès <span className="font-semibold text-white">350&nbsp;$</span> (paiement unique).
+            Votre plan est calculé selon vos objectifs, votre territoire et votre capacité.
           </ValueRow>
         </div>
 
         {/* CTAs */}
         <div className="mt-8 flex flex-col sm:flex-row gap-3">
           <Button asChild size="lg" className="h-14 flex-1 text-base bg-white text-black hover:bg-white/90 rounded-2xl font-medium">
-            <Link to="/entrepreneur/garantie">
-              Voir ce que 350 $ peut me garantir <ArrowRight className="ml-2 h-4 w-4" />
+            <Link to="/entrepreneur/devis-personnalise">
+              Obtenir mon devis personnalisé <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
           <Button asChild size="lg" variant="outline" className="h-14 flex-1 text-base rounded-2xl border-white/20 bg-white/5 text-white hover:bg-white/10">
@@ -131,7 +131,7 @@ export default function PageInvitationLanding() {
         </div>
 
         <p className="mt-6 text-xs text-white/40">
-          Aucun renouvellement automatique. Vous choisirez votre plan pendant l'essai.
+          Aucun montant n'est proposé avant l'analyse de votre profil et de vos objectifs.
         </p>
       </section>
     </main>

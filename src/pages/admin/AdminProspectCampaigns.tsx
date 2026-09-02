@@ -137,7 +137,7 @@ export default function AdminProspectCampaigns() {
           subject,
           body_text: body,
           from_name: "Clara d'UNPRO",
-          from_email: "alex@mail.unpro.ca",
+          from_email: "clara@mail.unpro.ca",
           tracking_id: trackingId,
           sent_at: new Date().toISOString(),
         });

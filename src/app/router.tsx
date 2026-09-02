@@ -979,7 +979,7 @@ export const AppRouter = () => (
 
         <Route path="/pro/score" element={<Suspense fallback={<LazyFallback />}><PageProScoreInstant /></Suspense>} />
         <Route path="/pro/activate" element={<Suspense fallback={<LazyFallback />}><PageProActivate /></Suspense>} />
-        <Route path="/isolation-qc" element={<Suspense fallback={<LazyFallback />}><PageProIsolationQC /></Suspense>} />
+        <Route path="/isolation-qc" element={<Navigate to="/entrepreneurs/audit-ia?source=isolation_qc" replace />} />
         <Route path="/admin/first-dollar-sprint" element={<Suspense fallback={<LazyFallback />}><PageFirstDollarSprint /></Suspense>} />
         <Route path="/admin/first-dollar" element={<Suspense fallback={<LazyFallback />}><PageAdminFirstDollar /></Suspense>} />
         <Route path="/admin/first-dollar/batches" element={<Suspense fallback={<LazyFallback />}><PageAdminFirstDollarBatches /></Suspense>} />
@@ -1088,8 +1088,8 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/activer/score" element={<Suspense fallback={<LazyFallback />}><ScreenActivationScore /></Suspense>} />
         <Route path="/entrepreneur/activer/profil" element={<Suspense fallback={<LazyFallback />}><ScreenActivationChecklist /></Suspense>} />
         <Route path="/entrepreneur/activer/calendrier" element={<Suspense fallback={<LazyFallback />}><ScreenActivationCalendar /></Suspense>} />
-        <Route path="/entrepreneur/activer/plan" element={<Suspense fallback={<LazyFallback />}><ScreenActivationPlan /></Suspense>} />
-        <Route path="/entrepreneur/activer/paiement" element={<Suspense fallback={<LazyFallback />}><ScreenActivationPayment /></Suspense>} />
+        <Route path="/entrepreneur/activer/plan" element={<Navigate to="/entrepreneur/devis-personnalise" replace />} />
+        <Route path="/entrepreneur/activer/paiement" element={<Navigate to="/entrepreneur/devis-personnalise" replace />} />
         <Route path="/entrepreneur/activer/succes" element={<Suspense fallback={<LazyFallback />}><ScreenActivationSuccess /></Suspense>} />
 
         {/* Entrepreneur Funnel */}
@@ -1103,7 +1103,7 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/pricing" element={<PageEntrepreneurPricing />} />
         <Route path="/entrepreneur/pricing-calculator" element={<PagePricingCalculator />} />
         <Route path="/entrepreneur/garantie" element={<PageGuaranteeCalculator />} />
-        <Route path="/entrepreneur/calculateur-forfait" element={<Suspense fallback={<LazyFallback />}><PageForfaitGrowthCalculator /></Suspense>} />
+        <Route path="/entrepreneur/calculateur-forfait" element={<Navigate to="/entrepreneur/devis-personnalise" replace />} />
 
         <Route path="/entrepreneurs/audit-ia" element={<PageAiRecommendationAudit />} />
         {/* Profil de matching — complétion progressive avant les forfaits */}
@@ -1176,7 +1176,7 @@ export const AppRouter = () => (
         <Route path="/activation/success" element={<Suspense fallback={<LazyFallback />}><PageOutreachActivationSuccess /></Suspense>} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/pricing/proprietaires" element={<PricingHomeownersPage />} />
-        <Route path="/pricing/entrepreneurs" element={<PricingContractorsPage />} />
+        <Route path="/pricing/entrepreneurs" element={<Navigate to="/entrepreneur/devis-personnalise" replace />} />
         {/* Canonical upgrade surface (with feature + return context) */}
         <Route path="/upgrade" element={<PageUpgradeHomeowner />} />
         <Route path="/proprietaires/abonnement" element={<PageUpgradeHomeowner />} />
@@ -1184,7 +1184,7 @@ export const AppRouter = () => (
         {/* Legacy /tarifs links used across emails, checkout and SMS */}
         <Route path="/tarifs" element={<PricingHomeownersPage />} />
         <Route path="/tarifs/proprietaires" element={<PricingHomeownersPage />} />
-        <Route path="/tarifs/entrepreneurs" element={<PricingContractorsPage />} />
+        <Route path="/tarifs/entrepreneurs" element={<Navigate to="/entrepreneur/devis-personnalise" replace />} />
         <Route path="/aipp-score" element={<AIPPScorePage />} />
         <Route path="/audit-aipp" element={<PageAuditAIPPv2 />} />
         <Route path="/audit-aipp/results/:auditId" element={<PageAuditResultsAIPPv2 />} />
@@ -1377,7 +1377,7 @@ export const AppRouter = () => (
         {/* Entrepreneur Onboarding Flow */}
         <Route path="/entrepreneur/onboarding/import" element={<PageOnboardingImport />} />
         <Route path="/entrepreneur/onboarding/analyse" element={<PageOnboardingAnalyse />} />
-        <Route path="/entrepreneur/onboarding/plan" element={<PageOnboardingPlan />} />
+        <Route path="/entrepreneur/onboarding/plan" element={<Navigate to="/entrepreneur/devis-personnalise" replace />} />
         <Route path="/entrepreneur/onboarding/payment" element={<PageOnboardingPayment />} />
         <Route path="/entrepreneur/onboarding/success" element={<PageOnboardingSuccess />} />
         <Route path="/entrepreneur/vision-5-ans/:companyId" element={<PageVision5Ans />} />
@@ -1689,8 +1689,8 @@ export const AppRouter = () => (
         <Route path="/admin/founder-pipeline" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminFounderPipeline /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/revenue-intelligence" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminRevenueIntelligence /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/acquisition/sms-sprint" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminSmsSprint /></Suspense></AdminProtectedRoute>} />
-        <Route path="/activer/:slug" element={<Suspense fallback={<LazyFallback />}><PageActivationSprint /></Suspense>} />
-        <Route path="/activer/:slug/succes" element={<Suspense fallback={<LazyFallback />}><PageActivationSprint /></Suspense>} />
+        <Route path="/activer/:slug" element={<Navigate to="/entrepreneurs/audit-ia?source=legacy_activation" replace />} />
+        <Route path="/activer/:slug/succes" element={<Navigate to="/entrepreneurs/audit-ia?source=legacy_activation" replace />} />
         <Route path="/admin/content-audit" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminContentAudit /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/acquisition-tests" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionTests /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/revenue-gate-audit" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminRevenueGateAudit /></Suspense></AdminProtectedRoute>} />

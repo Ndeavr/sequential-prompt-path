@@ -10,7 +10,7 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
 });
 
 // src/lib/mcp/index.ts
-import { defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
 
 // src/lib/mcp/tools/search-contractors.ts
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.0";
@@ -116,11 +116,18 @@ var list_cities_default = defineTool3({
 });
 
 // src/lib/mcp/index.ts
+var supabaseUrl = process.env.SUPABASE_URL?.replace(/\/+$/, "");
+if (!supabaseUrl) throw new Error("SUPABASE_URL is required to protect the MCP server");
 var mcp_default = defineMcp({
   name: "unpro-mcp",
   title: "UNPRO \u2014 Home Intelligence Platform",
   version: "0.1.0",
   instructions: "UNPRO is a Qu\xE9bec home intelligence platform. Use `search_contractors` to find verified contractors by city and trade, `get_contractor` for a full public profile, and `list_cities` to discover served Qu\xE9bec cities. All responses are in French (fr-CA).",
+  auth: auth.oauth.issuer({
+    issuer: `${supabaseUrl}/auth/v1`,
+    acceptedAudiences: "authenticated",
+    jwksUri: `${supabaseUrl}/auth/v1/.well-known/jwks.json`
+  }),
   tools: [search_contractors_default, get_contractor_default, list_cities_default]
 });
 

@@ -13,7 +13,7 @@ export default function Step10Projection() {
 
   const opp = Number(report?.opportunities?.estimated_revenue ?? 0);
   const recs = useMemo(
-    () => (report ? buildGrowthPlan(report as any, (goal ?? "grow_revenue") as BusinessGoal, capacity) : []),
+    () => (report ? buildGrowthPlan(report, (goal ?? "grow_revenue") as BusinessGoal, capacity) : []),
     [report, goal, capacity],
   );
   const totalPlan = recs.reduce((s, r) => s + r.annual_value_cad, 0);
@@ -104,8 +104,8 @@ export default function Step10Projection() {
                 <div className="text-white font-semibold text-sm">{plan.name}</div>
               </div>
               <div className="text-right">
-                <div className="text-white font-semibold text-sm">350&nbsp;$ aujourd'hui</div>
-                <div className="text-white/50 text-[10px]">paiement unique · aucun abonnement</div>
+                <div className="text-white font-semibold text-sm">Devis personnalisé</div>
+                <div className="text-white/50 text-[10px]">selon vos objectifs et votre capacité</div>
               </div>
             </button>
           )}
