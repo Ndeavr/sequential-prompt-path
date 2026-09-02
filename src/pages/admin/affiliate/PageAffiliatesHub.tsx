@@ -18,8 +18,10 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   Users, UserPlus, DollarSign, TrendingUp, Award, FileText, Settings,
-  ClipboardList, Wallet, Send,
+  ClipboardList, Wallet, Send, Gift,
 } from "lucide-react";
+import { FreeAppointmentOffersTab } from "@/features/affiliate/admin/FreeAppointmentOffersTab";
+
 
 type Aff = {
   id: string;
