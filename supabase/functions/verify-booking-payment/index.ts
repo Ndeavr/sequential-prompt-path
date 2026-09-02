@@ -33,21 +33,33 @@ serve(async (req) => {
     const isPaid = session.payment_status === "paid";
 
     if (isPaid) {
-      // Update transaction
-      await supabase
+      const piId =
+        typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : (session.payment_intent as { id?: string } | null)?.id ?? null;
+
+      // Idempotent: only move a transaction that is not already completed.
+      const { error: txError } = await supabase
         .from("booking_transactions")
         .update({
           status: "completed",
-          stripe_payment_intent_id: session.payment_intent as string,
+          stripe_payment_intent_id: piId,
+          payment_method: "stripe",
+          payment_reference: piId ?? session_id,
+          paid_at: new Date().toISOString(),
         })
-        .eq("stripe_session_id", session_id);
+        .eq("stripe_session_id", session_id)
+        .neq("status", "completed");
+      if (txError) console.error("[verify-booking-payment] tx update failed:", txError.message);
 
       // Update booking
-      await supabase
+      const { error: bookingErr } = await supabase
         .from("smart_bookings")
         .update({ status: "confirmed" })
         .eq("id", booking_id);
+      if (bookingErr) console.error("[verify-booking-payment] booking update failed:", bookingErr.message);
     }
+
 
     return new Response(
       JSON.stringify({

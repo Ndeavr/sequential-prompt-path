@@ -20471,13 +20471,19 @@ export type Database = {
           contractor_id: string
           created_at: string
           currency: string
+          failed_at: string | null
           fee_rate: number
           id: string
+          metadata: Json
           notes: string | null
+          paid_at: string | null
+          payer_email: string | null
+          payer_name: string | null
           payment_method: string | null
           payment_reference: string | null
           refund_amount_cents: number | null
           refunded: boolean
+          refunded_at: string | null
           status: string
           stripe_payment_intent_id: string | null
           stripe_session_id: string | null
@@ -20491,13 +20497,19 @@ export type Database = {
           contractor_id: string
           created_at?: string
           currency?: string
+          failed_at?: string | null
           fee_rate?: number
           id?: string
+          metadata?: Json
           notes?: string | null
+          paid_at?: string | null
+          payer_email?: string | null
+          payer_name?: string | null
           payment_method?: string | null
           payment_reference?: string | null
           refund_amount_cents?: number | null
           refunded?: boolean
+          refunded_at?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -20511,13 +20523,19 @@ export type Database = {
           contractor_id?: string
           created_at?: string
           currency?: string
+          failed_at?: string | null
           fee_rate?: number
           id?: string
+          metadata?: Json
           notes?: string | null
+          paid_at?: string | null
+          payer_email?: string | null
+          payer_name?: string | null
           payment_method?: string | null
           payment_reference?: string | null
           refund_amount_cents?: number | null
           refunded?: boolean
+          refunded_at?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -96861,6 +96879,22 @@ export type Database = {
           p_prospect_id: string
         }
         Returns: string
+      }
+      public_contractor_credentials: {
+        Args: { _contractor_id: string }
+        Returns: {
+          credential_status: string
+          credential_type: string
+          expires_at: string
+          id: string
+          issued_at: string
+          issuer: string
+          profession_code: string
+          public_value: string
+          source_last_verified_at: string
+          verification_state: string
+          verified_at: string
+        }[]
       }
       qc_now: { Args: never; Returns: string }
       read_email_batch: {
