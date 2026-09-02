@@ -43,9 +43,9 @@ Deno.serve(async (req) => {
     const name = first_name || company_name || "entrepreneur";
     const biz = company_name || "";
     const messages: Record<string, string> = {
-      intro: `Bonjour ${name} 👋\n\nC'est Clara d'UNPRO. On aide les entreprises comme ${biz} à recevoir des rendez-vous qualifiés avec des propriétaires dans votre secteur.\n\nÇa vous intéresse?\n\nAlex d'UNPRO\nunpro.ca`,
-      followup: `Bonjour ${name},\n\nPetit suivi — on a toujours des propriétaires qui cherchent vos services.\n\nRépondez OUI pour en discuter.\n\nAlex d'UNPRO`,
-      value: `${name}, les entrepreneurs UNPRO reçoivent en moyenne 12 rendez-vous qualifiés par mois.\n\nunpro.ca\n\nAlex d'UNPRO`,
+      intro: `Bonjour ${name} 👋\n\nC'est Clara d'UNPRO. On aide les entreprises comme ${biz} à recevoir des rendez-vous qualifiés avec des propriétaires dans votre secteur.\n\nÇa vous intéresse?\n\nClara d'UNPRO\nunpro.ca`,
+      followup: `Bonjour ${name},\n\nPetit suivi — on a toujours des propriétaires qui cherchent vos services.\n\nRépondez OUI pour en discuter.\n\nClara d'UNPRO`,
+      value: `${name}, les entrepreneurs UNPRO reçoivent en moyenne 12 rendez-vous qualifiés par mois.\n\nunpro.ca\n\nClara d'UNPRO`,
     };
     const body = messages[template || "intro"] || messages.intro;
 

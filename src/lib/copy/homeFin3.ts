@@ -9,7 +9,7 @@ export type Lang = "fr" | "en";
 export const homeFin3 = {
   fr: {
     hero: {
-      eyebrow: "UNPRO + ALEX",
+      eyebrow: "UNPRO + CLARA",
       title: "LA FIN DES 3 SOUMISSIONS.",
       subtitle: "L'IA trouve le bon entrepreneur pour vos travaux.",
       body: "Plus besoin de contacter plusieurs entreprises, répéter votre projet et comparer des soumissions difficiles à départager. Expliquez votre projet à Clara. UNPRO analyse vos besoins et vous aide à identifier le professionnel qui correspond réellement à vos critères.",
@@ -95,8 +95,8 @@ export const homeFin3 = {
         "Demain, vos clients ne chercheront plus seulement qui apparaît en premier. Ils demanderont à l'IA qui elle recommande.",
       body: "Découvrez comment UNPRO comprend actuellement votre entreprise, complétez votre profil et améliorez les informations utilisées pour vous associer aux bons projets.",
       ctaPrimary: "Voir mon profil IA",
-      ctaSecondary: "Voir ce que 350 $ peut me garantir",
-      note: "L'offre d'entrée est de 350 $, paiement unique. Aucun abonnement.",
+      ctaSecondary: "Calculer mon plan personnalisé",
+      note: "Analyse gratuite d'abord. Votre plan et son prix sont calculés selon vos objectifs, votre capacité et votre territoire.",
     },
     final: {
       title: "Arrêtez de chercher trois entrepreneurs.",
@@ -108,7 +108,7 @@ export const homeFin3 = {
   },
   en: {
     hero: {
-      eyebrow: "UNPRO + ALEX",
+      eyebrow: "UNPRO + CLARA",
       title: "THE END OF THE 3-QUOTE RUNAROUND.",
       subtitle: "AI helps find the right contractor for your project.",
       body: "No more calling several companies, repeating your project over and over and trying to compare quotes that never line up. Tell Clara about your project. UNPRO analyses what you need and helps you identify the professional who actually fits your criteria.",

@@ -70,7 +70,7 @@ export default function PageAdminEmailSenderHealth() {
         <header className="space-y-1">
           <h1 className="text-2xl font-bold">Email Sender Health</h1>
           <p className="text-sm text-muted-foreground">
-            Chemin canonique : <code>outreach-resend-send</code> depuis <code>alex@mail.unpro.ca</code>. Chaque
+            Chemin canonique : <code>outreach-resend-send</code> depuis <code>clara@mail.unpro.ca</code>. Chaque
             dimension est évaluée séparément — un sender configuré n'est jamais une preuve de conformité.
           </p>
         </header>

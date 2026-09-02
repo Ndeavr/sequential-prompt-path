@@ -15,7 +15,6 @@ import {
 import { getContractorPlan } from "@/config/contractorPlans";
 import { formatPrice } from "@/lib/formatPrice";
 import { Sparkles, TrendingUp, Target, DollarSign, MessageSquareQuote, Loader2 } from "lucide-react";
-import { OFFER_350 } from "@/lib/copy/offer350";
 
 export interface AffiliateRevenueIntelligencePanelProps {
   /** Company name for the motivation widget */
@@ -291,7 +290,7 @@ function defaultTalkingPoints(slug: string): string[] {
     "Positionnement aligné sur votre volume actuel d'activité.",
     "Visibilité IA renforcée auprès des propriétaires du secteur.",
     "Rendez-vous préqualifiés directement à votre agenda.",
-    `Aucun abonnement requis — pack d'entrée ${OFFER_350.price_label}.`,
+    "Le montant est calculé selon les objectifs, le territoire et la capacité.",
   ];
   if (slug === "premium" || slug === "elite" || slug === "signature") {
     base.push("Territoire à fort potentiel — protection de la place recommandée.");

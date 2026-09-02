@@ -276,11 +276,11 @@ export function SectionEntrepreneursEntree() {
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              to="/entrepreneur/garantie"
+              to="/entrepreneur/devis-personnalise"
               onClick={() =>
                 trackCopilotEvent("contractor_entry_offer_click", {
                   source: "home_section_contractor",
-                  offer: "pack_350",
+                  offer: "personalized_quote",
                 })
               }
               className="inline-flex items-center justify-center glass-btn px-6 py-3 text-sm font-bold text-foreground transition-transform duration-300 hover:-translate-y-0.5"

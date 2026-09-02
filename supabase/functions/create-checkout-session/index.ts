@@ -61,10 +61,10 @@ Deno.serve(async (req) => {
       returnUrl,
       quoteId,
       displayedPriceCents,
-      packQuoteId,
       displayedGuaranteedAppointments,
       includeProfileFee,
       ref,
+      offerId,
       professionCode,
 
     } = await req.json();
@@ -83,9 +83,7 @@ Deno.serve(async (req) => {
       const declaredProfession =
         (typeof professionCode === "string" && professionCode.trim()) || null;
       if (declaredProfession) {
-        const compensationType = packQuoteId
-          ? "referral_fee_fixed"
-          : interval === "year"
+        const compensationType = interval === "year"
             ? "membership_annual"
             : "membership_monthly";
         const gate = await assertCompensationAllowed(serviceClient, {
@@ -94,7 +92,7 @@ Deno.serve(async (req) => {
           entityType: "stripe_checkout_session",
           entityId: userId,
           actorId: userId,
-          metadata: { plan_id: planId ?? null, pack_quote_id: packQuoteId ?? null },
+          metadata: { plan_id: planId ?? null, quote_id: quoteId ?? null },
         });
         if (!gate.ok) {
           return new Response(JSON.stringify(complianceErrorPayload(gate.verdict)), {
@@ -127,126 +125,13 @@ Deno.serve(async (req) => {
     }
 
 
-    // ── ENTRY PACK (350 $, one-time payment) ──
-    // The guarantee comes from the stored quote ONLY. Never recomputed here,
-    // never the public maximum.
-    if (packQuoteId) {
-      const { data: q, error: qErr } = await serviceClient
-        .from("contractor_pricing_quotes")
-        .select(
-          "id, offer_kind, total_price_cents, guaranteed_appointments, guarantee_duration_months, pricing_status, trade_primary, city",
-        )
-        .eq("id", packQuoteId)
-        .maybeSingle();
-
-      if (qErr || !q) {
-        return new Response(JSON.stringify({ error: "Devis introuvable", code: "quote_not_found" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (q.offer_kind !== "pack_350") {
-        return new Response(JSON.stringify({ error: "Ce devis n'est pas un forfait d'entrée.", code: "invalid_offer_kind" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (q.pricing_status === "waitlisted" || q.pricing_status === "analysis_required" || Number(q.guaranteed_appointments ?? 0) <= 0) {
-        return new Response(
-          JSON.stringify({ error: "Analyse du territoire requise avant paiement.", code: "analysis_required" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
-      const packTotal = Math.round(Number(q.total_price_cents ?? 0));
-      if (packTotal <= 0) {
-        return new Response(JSON.stringify({ error: "Montant du forfait invalide.", code: "invalid_amount" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      // Closed loop: what the browser displayed must equal the server truth.
-      if (typeof displayedPriceCents === "number" && Math.abs(displayedPriceCents - packTotal) > 1) {
-        return new Response(
-          JSON.stringify({ error: "Désaccord de prix détecté entre l'écran et le serveur.", code: "pricing_mismatch" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
-      if (
-        typeof displayedGuaranteedAppointments === "number" &&
-        displayedGuaranteedAppointments !== Number(q.guaranteed_appointments)
-      ) {
-        return new Response(
-          JSON.stringify({ error: "Désaccord de garantie détecté entre l'écran et le serveur.", code: "guarantee_mismatch" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
-
-      let { data: packContractor } = await serviceClient
-        .from("contractors")
-        .select("id")
-        .eq("user_id", userId)
-        .maybeSingle();
-      if (!packContractor) {
-        const { data: created } = await serviceClient
-          .from("contractors")
-          .insert({ user_id: userId, business_name: userEmail })
-          .select("id")
-          .single();
-        packContractor = created;
-      }
-
-      const stripePack = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-      const guaranteed = Number(q.guaranteed_appointments);
-      const durationMonths = Number(q.guarantee_duration_months ?? 6);
-
-      const packSession = await stripePack.checkout.sessions.create({
-        mode: "payment",
-        locale: "fr",
-        customer_email: userEmail,
-        line_items: [
-          {
-            price_data: {
-              currency: "cad",
-              unit_amount: packTotal,
-              product_data: {
-                name: `UNPRO — ${guaranteed} rendez-vous exclusifs garantis`,
-                description: `${q.trade_primary} · ${q.city} · livraison sur ${durationMonths} mois maximum`,
-              },
-            },
-            quantity: 1,
-          },
-        ],
-        metadata: {
-          platform: "unpro",
-          brand: "unpro",
-          offer_kind: "pack_350",
-          quote_id: String(q.id),
-          contractor_id: String(packContractor?.id ?? ""),
-          guaranteed_appointments: String(guaranteed),
-          guarantee_duration_months: String(durationMonths),
-          ...(affiliateRefCode && { ref: affiliateRefCode, affiliate_id: affiliateRefId }),
-        },
-        success_url:
-          successUrl || `${req.headers.get("origin")}/entrepreneur/payment-success?quote_id=${q.id}&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: cancelUrl || `${req.headers.get("origin")}/entrepreneur/payment-cancelled?quote_id=${q.id}`,
-      });
-
-      await serviceClient.from("checkout_sessions").insert({
-        contractor_profile_id: packContractor?.id ?? null,
-        selected_plan_code: "pack_350",
-        selected_plan_name: `Forfait d'entrée — ${guaranteed} rendez-vous garantis`,
-        billing_cycle: "one_time",
-        external_checkout_id: packSession.id,
-        checkout_status: "pending",
-        payment_provider: "stripe",
-        adaptive_pricing_enabled: false,
-        quote_id: q.id,
-        personalized_monthly_price_cents: packTotal,
-      });
-
-      return new Response(JSON.stringify({ url: packSession.url, guaranteed_appointments: guaranteed }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // The current contractor checkout always requires a persisted personalized
+    // quote. Historical one-time campaigns use isolated, campaign-token routes.
+    if (!quoteId) {
+      return new Response(
+        JSON.stringify({ error: "Un devis personnalisé valide est requis.", code: "quote_required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     // Canonical source of truth: public.plans (legacy codes resolved server-side)
@@ -280,7 +165,7 @@ Deno.serve(async (req) => {
     if (quoteId) {
       const { data: q, error: qErr } = await serviceClient
         .from("contractor_pricing_quotes")
-        .select("id, recommended_plan, recommended_monthly_price, annual_price_cents, profile_fee_cents, pricing_status")
+        .select("id, user_id, contractor_id, recommended_plan, recommended_monthly_price, annual_price_cents, profile_fee_cents, pricing_status, pricing_mode, expires_at")
         .eq("id", quoteId)
         .maybeSingle();
       if (qErr || !q) {
@@ -290,6 +175,24 @@ Deno.serve(async (req) => {
         });
       }
       quoteRow = q;
+      if (q.pricing_mode === "pack") {
+        return new Response(JSON.stringify({ error: "Cette campagne historique n'est pas accessible ici.", code: "historical_campaign_only" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (q.user_id && q.user_id !== userId) {
+        return new Response(JSON.stringify({ error: "Ce devis ne vous appartient pas.", code: "quote_forbidden" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (q.expires_at && new Date(q.expires_at).getTime() <= Date.now()) {
+        return new Response(JSON.stringify({ error: "Ce devis est expiré.", code: "quote_expired" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       if (q.pricing_status === "waitlisted") {
         return new Response(JSON.stringify({ error: "Ce territoire est en liste d'attente", code: "waitlisted" }), {
           status: 400,
@@ -385,6 +288,51 @@ Deno.serve(async (req) => {
     let isZeroTotal = false;
 
     if (promoCode && promoCode.trim()) {
+      const normalizedPromoCode = promoCode.trim().toUpperCase();
+      const { data: affiliatePromo, error: affiliatePromoError } = await serviceClient
+        .from("promo_codes")
+        .select("id, affiliate_id, discount_type, discount_value, duration_type, active, valid_until")
+        .eq("code", normalizedPromoCode)
+        .maybeSingle();
+      if (
+        affiliatePromoError ||
+        !affiliatePromo?.affiliate_id ||
+        affiliatePromo.active !== true ||
+        affiliatePromo.discount_type !== "percentage" ||
+        Number(affiliatePromo.discount_value) !== 50 ||
+        affiliatePromo.duration_type !== "once" ||
+        (affiliatePromo.valid_until && new Date(affiliatePromo.valid_until).getTime() <= Date.now())
+      ) {
+        return new Response(
+          JSON.stringify({ error: "Ce code affilié n'est pas valide pour cette offre.", code: "affiliate_promo_invalid" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      const { data: promoAffiliate } = await serviceClient
+        .from("affiliates")
+        .select("id, referral_code")
+        .eq("id", affiliatePromo.affiliate_id)
+        .eq("status", "active")
+        .maybeSingle();
+      if (!promoAffiliate) {
+        return new Response(
+          JSON.stringify({ error: "Ce code affilié n'est plus actif.", code: "affiliate_inactive" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      if (offerId) {
+        const { data: linkedOffer } = await serviceClient
+          .from("affiliate_free_appointment_offers")
+          .select("id, promo_code_id, affiliate_id")
+          .eq("id", offerId)
+          .maybeSingle();
+        if (!linkedOffer || linkedOffer.promo_code_id !== affiliatePromo.id || linkedOffer.affiliate_id !== affiliatePromo.affiliate_id) {
+          return new Response(
+            JSON.stringify({ error: "L'offre et le code affilié ne correspondent pas.", code: "affiliate_offer_mismatch" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+      }
       const normalizedEmail = userEmail?.toLowerCase().trim() || null;
       const normalizedPhone = contractor.phone?.replace(/\D/g, "") || null;
 
@@ -449,22 +397,8 @@ Deno.serve(async (req) => {
       // when the contractor lands without a ?ref= code. Never overrides an
       // explicit, already-resolved referral.
       if (!affiliateRefCode) {
-        const { data: promoRow } = await serviceClient
-          .from("promo_codes")
-          .select("affiliate_id")
-          .eq("code", promoCode.trim().toUpperCase())
-          .maybeSingle();
-        if (promoRow?.affiliate_id) {
-          const { data: promoAff } = await serviceClient
-            .from("affiliates")
-            .select("id, referral_code")
-            .eq("id", promoRow.affiliate_id)
-            .maybeSingle();
-          if (promoAff?.referral_code) {
-            affiliateRefCode = promoAff.referral_code as string;
-            affiliateRefId = promoAff.id as string;
-          }
-        }
+        affiliateRefCode = promoAffiliate.referral_code as string;
+        affiliateRefId = promoAffiliate.id as string;
       }
 
       // Check if 100% discount = zero total
@@ -675,10 +609,10 @@ Deno.serve(async (req) => {
       try {
         const couponParams: any = {
           duration: "once",
-          metadata: { promo_code: promoCode, redemption_id: redemptionId },
+          metadata: { promo_code: promoCode, redemption_id: redemptionId, affiliate_first_month_only: "true" },
         };
         if (promoResult.discount_type === "percentage") {
-          couponParams.percent_off = Math.min(promoResult.discount_value, 100);
+          couponParams.percent_off = 50;
         } else {
           couponParams.amount_off = promoResult.discount_value;
           couponParams.currency = "cad";
@@ -686,7 +620,14 @@ Deno.serve(async (req) => {
         const coupon = await stripe.coupons.create(couponParams);
         checkoutConfig.discounts = [{ coupon: coupon.id }];
       } catch (couponErr) {
-        console.error("Coupon creation failed, proceeding without discount:", couponErr);
+        console.error("Coupon creation failed; checkout aborted:", couponErr);
+        if (redemptionId) {
+          await serviceClient.from("promo_code_redemptions").update({ status: "rejected" }).eq("id", redemptionId);
+        }
+        return new Response(
+          JSON.stringify({ error: "La réduction n'a pas pu être appliquée. Aucun paiement n'a été créé.", code: "promo_application_failed" }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
       }
     }
 

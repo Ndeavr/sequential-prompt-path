@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       const r = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${lov}`, "X-Connection-Api-Key": rk },
-        body: JSON.stringify({ from: "Clara d'UNPRO <alex@mail.unpro.ca>", to: [email], subject: subject || "Test UNPRO", html: `<p>${message}</p>` }),
+        body: JSON.stringify({ from: "Clara d'UNPRO <clara@mail.unpro.ca>", to: [email], subject: subject || "Test UNPRO", html: `<p>${message}</p>` }),
       });
       const data = await r.json().catch(() => ({}));
       return new Response(JSON.stringify({ ok: r.ok, status: r.status, recipient: email, provider_response: data }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });

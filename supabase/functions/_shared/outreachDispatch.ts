@@ -112,7 +112,7 @@ async function sendEmailViaResend(
         "X-Connection-Api-Key": RESEND_API_KEY,
       },
       body: JSON.stringify({
-        from: "Clara d'UNPRO <alex@mail.unpro.ca>",
+        from: "Clara d'UNPRO <clara@mail.unpro.ca>",
         to: [to],
         subject,
         html: wrapped.body,

@@ -3,16 +3,15 @@
  * Summary + CTA to Stripe Checkout with landing_token metadata.
  */
 import { useEffect, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { redirectToCheckout } from "@/lib/redirectToCheckout";
-import { OFFER_350 } from "@/lib/copy/offer350";
 
 export default function PageInvitationActivate() {
   const { token } = useParams<{ token: string }>();
   const [params] = useSearchParams();
+  const navigate = useNavigate();
   const cancelled = params.get("cancelled") === "true";
   const [prospect, setProspect] = useState<{ business_name: string; city: string | null; already_paid: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,15 +36,7 @@ export default function PageInvitationActivate() {
     setStarting(true);
     setError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("create-activation-checkout", {
-        body: { slug: `outreach-${token}`, source: "sms_outreach", landing_token: token },
-      });
-      if (error || !data?.url) {
-        setError("Activation indisponible — réessayez dans quelques instants.");
-        setStarting(false);
-        return;
-      }
-      redirectToCheckout(data.url);
+      navigate(`/entrepreneurs/audit-ia?at=${encodeURIComponent(token)}&utm_source=invitation`);
     } catch {
       setError("Activation indisponible — réessayez dans quelques instants.");
       setStarting(false);
@@ -82,19 +73,10 @@ export default function PageInvitationActivate() {
         )}
 
         <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur">
-          <Row label="Offre" value="Pack d'entrée UNPRO" />
-          <Row label="Prix aujourd'hui" value={`${OFFER_350.price_label} CA`} strong />
-          <Row label="Garantie" value={`Jusqu'à ${OFFER_350.max_appointments} rendez-vous exclusifs`} />
-          <Row label="Après le pack" value="Aucun engagement" />
-          <Row label="Prochain prélèvement" value="Aucun" />
-          <Row label="Taxes" value="Incluses (facturation Québec)" />
-          <Row label="Annulation" value="Possible à tout moment, aucun frais caché" />
-        </div>
-
-        <div className="mt-8 grid gap-2 text-sm text-white/80">
-          <RowIcon>Paiement unique de {OFFER_350.price_label} CA</RowIcon>
-          <RowIcon>Aucun abonnement créé aujourd'hui</RowIcon>
-          <RowIcon>Le nombre exact de rendez-vous garantis est calculé avant le paiement</RowIcon>
+          <Row label="Étape 1" value="Analyse IA gratuite" />
+          <Row label="Étape 2" value="Profil à vérifier" strong />
+          <Row label="Étape 3" value="Objectifs et capacité" />
+          <Row label="Résultat" value="Plan et devis personnalisés" />
         </div>
 
         <Button
@@ -103,7 +85,7 @@ export default function PageInvitationActivate() {
           size="lg"
           className="mt-8 h-14 w-full text-base bg-white text-black hover:bg-white/90 rounded-2xl font-medium"
         >
-          {prospect.already_paid ? "Déjà activé" : starting ? "Préparation…" : (<>Activer maintenant pour {OFFER_350.price_label} <ArrowRight className="ml-2 h-4 w-4" /></>)}
+          {prospect.already_paid ? "Déjà activé" : starting ? "Préparation…" : (<>Commencer mon analyse gratuite <ArrowRight className="ml-2 h-4 w-4" /></>)}
         </Button>
 
         {error && <p className="mt-4 text-sm text-rose-300">{error}</p>}
@@ -117,14 +99,6 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
     <div className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
       <span className="text-sm text-white/60">{label}</span>
       <span className={strong ? "text-white font-semibold" : "text-white/90 text-sm"}>{value}</span>
-    </div>
-  );
-}
-function RowIcon({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-2">
-      <CheckCircle2 className="h-4 w-4 text-emerald-300" />
-      <span>{children}</span>
     </div>
   );
 }

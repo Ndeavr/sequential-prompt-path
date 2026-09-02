@@ -4,7 +4,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? "";
-const SENDER_EMAIL = "alex@mail.unpro.ca";
+const SENDER_EMAIL = "clara@mail.unpro.ca";
 const SENDER_NAME = "Clara d'UNPRO";
 
 function classify(status: number, body: any): string {

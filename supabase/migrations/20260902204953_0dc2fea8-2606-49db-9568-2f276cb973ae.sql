@@ -1,0 +1,22 @@
+CREATE POLICY "internal_agent_tokens_deny_client_access" ON public.internal_agent_tokens FOR ALL TO anon, authenticated USING (false) WITH CHECK (false);
+CREATE POLICY "private_access_attempts_deny_client_access" ON public.private_access_attempts FOR ALL TO anon, authenticated USING (false) WITH CHECK (false);
+CREATE POLICY "private_access_slugs_deny_client_access" ON public.private_access_slugs FOR ALL TO anon, authenticated USING (false) WITH CHECK (false);
+
+ALTER FUNCTION public.aipp_touch_updated_at() SET search_path = public, pg_temp;
+ALTER FUNCTION public.brands_set_updated_at() SET search_path = public, pg_temp;
+ALTER FUNCTION public.compute_scarcity_status(integer, integer) SET search_path = public, pg_temp;
+ALTER FUNCTION public.curiosity_sequences_touch() SET search_path = public, pg_temp;
+ALTER FUNCTION public.delete_email(text, bigint) SET search_path = public, pg_temp;
+ALTER FUNCTION public.enqueue_email(text, jsonb) SET search_path = public, pg_temp;
+ALTER FUNCTION public.generate_form_reference_code() SET search_path = public, pg_temp;
+ALTER FUNCTION public.mission_touch_updated_at() SET search_path = public, pg_temp;
+ALTER FUNCTION public.move_to_dlq(text, text, bigint, jsonb) SET search_path = public, pg_temp;
+ALTER FUNCTION public.partner_leads_set_updated_at() SET search_path = public, pg_temp;
+ALTER FUNCTION public.read_email_batch(text, integer, integer) SET search_path = public, pg_temp;
+ALTER FUNCTION public.set_aipp_updated_at() SET search_path = public, pg_temp;
+ALTER FUNCTION public.set_prospect_updated_at() SET search_path = public, pg_temp;
+ALTER FUNCTION public.set_updated_at() SET search_path = public, pg_temp;
+ALTER FUNCTION public.set_updated_at_nav() SET search_path = public, pg_temp;
+ALTER FUNCTION public.tg_touch_updated_at() SET search_path = public, pg_temp;
+ALTER FUNCTION public.touch_updated_at() SET search_path = public, pg_temp;
+ALTER FUNCTION public.update_voice_experiment_updated_at() SET search_path = public, pg_temp;

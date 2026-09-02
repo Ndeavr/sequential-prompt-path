@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, TrendingUp, DollarSign, ArrowRight } from "lucide-react";
-import { OFFER_350 } from "@/lib/copy/offer350";
 
 const fmtMoney = (n: number) =>
   new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format(n);
@@ -78,9 +77,9 @@ export default function PageContractorDemandLanding() {
         <div className="flex justify-center">
           <Button
             size="lg"
-            onClick={() => navigate(`/contractor-onboarding?city=${encodeURIComponent(cityLabel)}&category=${encodeURIComponent(catLabel)}&source=demand_landing`)}
+            onClick={() => navigate(`/entrepreneur/devis-personnalise?city=${encodeURIComponent(cityLabel)}&trade=${encodeURIComponent(catLabel)}&source=demand_landing`)}
           >
-            Activer mon profil — {OFFER_350.price_label} <ArrowRight className="ml-2 h-4 w-4" />
+            Calculer mon plan personnalisé <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
 

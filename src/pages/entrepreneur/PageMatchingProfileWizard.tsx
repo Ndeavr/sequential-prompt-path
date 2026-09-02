@@ -188,7 +188,7 @@ export default function PageMatchingProfileWizard() {
       const v = sp.get(k);
       if (v) params.set(k, v);
     }
-    navigate(`/entrepreneurs/garantie?${params.toString()}`);
+    navigate(`/entrepreneur/devis-personnalise?${params.toString()}`);
   }
 
   return (

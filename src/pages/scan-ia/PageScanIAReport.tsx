@@ -3,7 +3,6 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Helmet } from "react-helmet-async";
 import { AlertTriangle, TrendingUp, Loader2, ArrowRight, Sparkles } from "lucide-react";
-import { OFFER_350 } from "@/lib/copy/offer350";
 
 type ScanReport = {
   id: string;
@@ -47,7 +46,6 @@ export default function PageScanIAReport() {
   const token = sp.get("st");
   const [report, setReport] = useState<ScanReport | null>(null);
   const [loading, setLoading] = useState(true);
-  const [checkingOut, setCheckingOut] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -69,23 +67,7 @@ export default function PageScanIAReport() {
     })();
   }, [token, navigate]);
 
-  const activate = async () => {
-    if (!report || checkingOut) return;
-    setCheckingOut(true);
-    const { data, error } = await supabase.functions.invoke("scan-ia-activate", {
-      body: {
-        report_id: report.id,
-        session_token: report.session_token,
-        business_name: report.business_name,
-      },
-    });
-    if (error || !data?.url) {
-      setCheckingOut(false);
-      alert("Checkout indisponible pour le moment.");
-      return;
-    }
-    window.location.href = data.url;
-  };
+  const activate = () => navigate(`/entrepreneur/devis-personnalise?source=scan_ia&scan=${report.id}`);
 
   if (loading || !report) {
     return (
@@ -214,13 +196,10 @@ export default function PageScanIAReport() {
         {/* Activation */}
         <div className="rounded-3xl border border-white/10 bg-white p-8 text-[#050816]">
           <div className="mb-2 text-xs uppercase tracking-widest text-[#050816]/50">
-            Offre d'activation
+            Prochaine étape
           </div>
-          <h2 className="mb-2 text-3xl font-semibold">Activation IA</h2>
-          <div className="mb-6 flex items-baseline gap-2">
-            <span className="text-5xl font-semibold">{OFFER_350.price_label}</span>
-            <span className="text-[#050816]/60">{OFFER_350.paymentNote}</span>
-          </div>
+          <h2 className="mb-2 text-3xl font-semibold">Votre plan personnalisé</h2>
+          <p className="mb-6 text-[#050816]/65">Précisez vos objectifs et votre capacité pour voir le plan et le prix calculés pour votre entreprise.</p>
           <ul className="mb-6 grid grid-cols-1 gap-2 text-sm text-[#050816]/80 md:grid-cols-2">
             {[
               "Profil IA",
@@ -238,18 +217,9 @@ export default function PageScanIAReport() {
           </ul>
           <button
             onClick={activate}
-            disabled={checkingOut}
             className="inline-flex items-center gap-2 rounded-2xl bg-[#050816] px-8 py-4 text-base font-semibold text-white transition hover:-translate-y-0.5 disabled:opacity-60"
           >
-            {checkingOut ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Redirection…
-              </>
-            ) : (
-              <>
-                Activer maintenant <ArrowRight className="h-4 w-4" />
-              </>
-            )}
+            Calculer mon plan <ArrowRight className="h-4 w-4" />
           </button>
         </div>
       </div>

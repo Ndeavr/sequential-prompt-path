@@ -4,7 +4,7 @@
  * Mobile-first cinematic. Collects the 17 fields in ~7 steps, then computes the quote.
  */
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Loader2, Sparkles } from "lucide-react";
@@ -46,6 +46,7 @@ const SEASONS = [
 
 export default function PageContractorPricingIntake() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState(0);
   const [data, setData] = useState<Partial<PricingIntakeInput>>({
     seasonal_priority: "all",
@@ -252,7 +253,12 @@ export default function PageContractorPricingIntake() {
     setSubmitting(true);
     try {
       const quote = await computePricingQuote(data as PricingIntakeInput);
-      navigate(`/entrepreneur/plan-personnalise/${quote.id}`);
+      const carry = new URLSearchParams();
+      for (const key of ["promo", "ref", "offer", "audit", "audit_token", "t"]) {
+        const value = searchParams.get(key);
+        if (value) carry.set(key, value);
+      }
+      navigate(`/entrepreneur/plan-personnalise/${quote.id}${carry.size ? `?${carry}` : ""}`);
     } catch (e: any) {
       toast.error(e?.message ?? "Impossible de calculer votre plan.");
       setSubmitting(false);

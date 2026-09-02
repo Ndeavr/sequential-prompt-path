@@ -21,8 +21,8 @@ const cors = {
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
-const EXPECTED_SENDER = "Clara d'UNPRO <alex@mail.unpro.ca>";
-const EXPECTED_ADDRESS = "alex@mail.unpro.ca";
+const EXPECTED_SENDER = "Clara d'UNPRO <clara@mail.unpro.ca>";
+const EXPECTED_ADDRESS = "clara@mail.unpro.ca";
 const EXPECTED_DOMAIN = "mail.unpro.ca";
 
 type Level = "ok" | "warn" | "blocked" | "unknown";

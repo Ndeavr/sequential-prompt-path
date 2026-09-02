@@ -26,13 +26,11 @@ import {
   Clock3,
   MapPin,
   
-  Check,
   Zap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { OFFER_350 } from "@/lib/copy/offer350";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { AuditProHeader } from "@/components/audit-ia/AuditProHeader";
 import { JourneySteps } from "@/components/audit-ia/JourneySteps";
@@ -307,7 +305,7 @@ export default function PageAiRecommendationAudit() {
     params.set("audit", result.audit_id);
     params.set("audit_token", result.token);
     // Preserve outreach attribution: garantie reads `t` for the attributed
-    // activation checkout (create-activation-checkout).
+    // personalized profile and quote flow.
     if (activationToken) params.set("t", activationToken);
     const ref = sp.get("ref");
     if (ref) params.set("ref", ref);
@@ -769,25 +767,17 @@ function AuditReport({
       {/* Comment ça fonctionne — AVANT le prix */}
       <HowItWorksBlock />
 
-      {/* Activation — offre canonique résolue depuis la config production */}
+      {/* Prochaine étape — le prix vient seulement après le profil et les objectifs. */}
       <section className="rounded-2xl border border-primary/40 bg-gradient-to-br from-secondary to-card p-5 shadow-md">
         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Étape 5 — Activation</p>
         <h2 className="mt-2 text-[19px] font-bold leading-tight text-foreground">
           Soyez le professionnel que l'IA peut recommander.
         </h2>
         <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">
-          Rendez-vous exclusifs garantis. Jamais de leads partagés. {OFFER_350.subtitle}
+          Vérifiez votre profil, précisez vos objectifs et recevez ensuite un plan personnalisé calculé pour votre entreprise.
         </p>
-        <div className="mt-4 flex items-end gap-2">
-          <span className="text-[34px] font-bold leading-none tracking-tight text-foreground">
-            {OFFER_350.price_label}
-          </span>
-          <span className="pb-1 text-[12.5px] text-muted-foreground">
-            {OFFER_350.card.eyebrow.replace("À partir de ", "à partir de ")}
-          </span>
-        </div>
         <ul className="mt-3 space-y-1.5">
-          {OFFER_350.card.bullets.map((b) => (
+          {["Profil vérifié et complété", "Objectifs et capacité analysés", "Devis mensuel calculé côté serveur"].map((b) => (
             <li key={b} className="flex items-start gap-2 text-[13px] text-foreground/85">
               <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" aria-hidden />
               <span>{b}</span>
@@ -795,7 +785,7 @@ function AuditReport({
           ))}
         </ul>
         <p className="mt-3 text-center text-[12px] text-muted-foreground">
-          {OFFER_350.paymentNote} · {OFFER_350.disclaimer}
+          Aucun paiement avant l'affichage de votre devis personnalisé.
         </p>
       </section>
 

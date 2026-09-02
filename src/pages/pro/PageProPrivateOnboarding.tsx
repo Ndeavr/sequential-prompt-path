@@ -4,10 +4,9 @@
  * by reusing the existing pro-founder-checkout-guest function.
  */
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { Loader2, Sparkles, Star, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Loader2, Sparkles, Star, ShieldCheck, CheckCircle2, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { OFFER_350 } from "@/lib/copy/offer350";
 
 type Lead = {
   lead_id: string;
@@ -31,8 +30,7 @@ export default function PageProPrivateOnboarding() {
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let active = true;
@@ -56,27 +54,8 @@ export default function PageProPrivateOnboarding() {
     return () => { active = false; };
   }, [token]);
 
-  async function startCheckout() {
-    if (!lead || busy) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const { data, error } = await supabase.functions.invoke("pro-founder-checkout-guest", {
-        body: {
-          prospectId: lead.lead_id,
-          email: lead.email ?? undefined,
-          planSlug: lead.recommended_plan_slug,
-        },
-      });
-      if (error) throw error;
-      const url = (data as { url?: string })?.url;
-      if (!url) throw new Error("Checkout indisponible. Réessayez.");
-      setCheckoutUrl(url);
-      try { window.top!.location.href = url; } catch { window.location.href = url; }
-    } catch (e) {
-      setError((e as Error).message);
-      setBusy(false);
-    }
+  function continueToAudit() {
+    navigate(`/entrepreneurs/audit-ia?t=${encodeURIComponent(token ?? "")}&source=private_outreach`);
   }
 
   if (loading) {
@@ -102,7 +81,7 @@ export default function PageProPrivateOnboarding() {
       <div className="mx-auto max-w-xl px-5 py-10 space-y-6">
         <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
           <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span>Profil privé · Activation Fondateur</span>
+          <span>Profil privé · Analyse personnalisée</span>
         </div>
 
         <h1 className="text-3xl font-semibold tracking-tight">
@@ -147,34 +126,19 @@ export default function PageProPrivateOnboarding() {
         </section>
 
         <section className="rounded-2xl border border-amber-400/30 bg-gradient-to-br from-amber-400/10 to-transparent p-5">
-          <p className="text-xs uppercase tracking-wider text-amber-300 mb-1">Plan recommandé</p>
-          <p className="text-xl font-semibold mb-2">{OFFER_350.card.title}</p>
+          <p className="text-xs uppercase tracking-wider text-amber-300 mb-1">Prochaine étape</p>
+          <p className="text-xl font-semibold mb-2">Votre analyse IA gratuite</p>
           <p className="text-sm text-white/70 mb-4">
-            {OFFER_350.subtitle} Rendez-vous exclusifs garantis, jamais partagés.
+            Vérifiez votre profil, précisez vos objectifs et recevez ensuite un plan personnalisé calculé pour votre entreprise.
           </p>
-          {checkoutUrl ? (
-            <a
-              href={checkoutUrl}
-              target="_top"
-              className="block w-full text-center rounded-2xl bg-amber-400 text-[#060B14] py-4 font-semibold"
-            >
-              Ouvrir le paiement sécurisé
-            </a>
-          ) : (
-            <button
-              onClick={startCheckout}
-              disabled={busy}
-              className="w-full rounded-2xl bg-amber-400 text-[#060B14] py-4 font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
-            >
-              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-              {busy ? "Préparation du paiement…" : OFFER_350.ctaActivate}
-            </button>
-          )}
+          <button onClick={continueToAudit} className="w-full rounded-2xl bg-amber-400 text-[#060B14] py-4 font-semibold flex items-center justify-center gap-2">
+            Commencer mon analyse <ArrowRight className="h-4 w-4" />
+          </button>
           {error && <p className="mt-3 text-sm text-red-400 text-center">{error}</p>}
         </section>
 
         <p className="text-center text-xs text-white/40">
-          Paiement sécurisé Stripe · Annulable en tout temps
+          Aucun paiement avant votre devis personnalisé
         </p>
       </div>
     </main>

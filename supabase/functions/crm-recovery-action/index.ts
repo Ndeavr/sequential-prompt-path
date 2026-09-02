@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
           case "send_email":
           case "onboarding_email": {
             if (!p.email) throw new Error("no_email");
-            // Canonical outbound path: outreach-resend-send (alex@mail.unpro.ca).
+            // Canonical outbound path: outreach-resend-send (clara@mail.unpro.ca).
             // The legacy Lovable Emails path (send-transactional-email) is disabled
             // for this project (403 "Emails disabled for this project") and would
             // dead-letter silently, so it is never used for recruitment email.

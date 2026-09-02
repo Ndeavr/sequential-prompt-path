@@ -3,7 +3,7 @@
  * Route: /entrepreneur/plan-personnalise/:quoteId
  * Mobile-first cinematic dark glassmorphism. Outcome-first copy.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
@@ -43,9 +43,6 @@ const PLAN_LABEL: Record<string, string> = {
   elite: "Élite",
   signature: "Signature",
 };
-
-// Active catalog order (public.plans, audience=contractor, active=true).
-const PLAN_ORDER = ["presence", "depart", "croissance_v2", "pro_v2", "elite_v2", "signature_v2"];
 
 /** État EXACT de l'offre affilié, validé côté serveur. Jamais dérivé de l'URL. */
 interface AffiliateOfferState {
@@ -115,24 +112,20 @@ export default function PageContractorPersonalizedPlan() {
   const waitlisted = quote?.pricing_status === "waitlisted";
   const planLabel = PLAN_LABEL[quote?.recommended_plan ?? ""] ?? "Pro";
 
-  const handleActivate = async (planCode?: string) => {
+  const handleActivate = async () => {
     if (!quote) return;
     setCheckoutLoading(true);
     try {
-      const targetPlan = planCode ?? quote.recommended_plan;
-      const isRecommended = targetPlan === quote.recommended_plan;
       const { data, error } = await supabase.functions.invoke(
         "create-checkout-session",
         {
           body: {
-            planId: targetPlan,
+            planId: quote.recommended_plan,
             billingInterval: "month",
-            // Only attach quoteId for the recommended plan (server enforces plan == quote.recommended_plan).
-            // Up/down triad picks fall back to catalog price for that plan.
-            // Server-authoritative pricing: the browser sends identifiers only.
-            ...(isRecommended && { quoteId: quote.id }),
+            quoteId: quote.id,
             ...(promoCode && { promoCode }),
             ...(affiliateRef && { ref: affiliateRef }),
+            ...(offerId && { offerId }),
             successUrl: `${window.location.origin}/entrepreneur/plan-personnalise/${quote.id}?checkout=success`,
             cancelUrl: `${window.location.origin}/entrepreneur/plan-personnalise/${quote.id}?checkout=canceled`,
           },
@@ -149,38 +142,6 @@ export default function PageContractorPersonalizedPlan() {
     }
 
   };
-
-  const triadPlans = useMemo(() => {
-    if (!quote) return [];
-    const order = PLAN_ORDER;
-    const idx = Math.max(0, order.indexOf(quote.recommended_plan));
-    const down = order[Math.max(0, idx - 1)];
-    const up = order[Math.min(order.length - 1, idx + 1)];
-    return [
-      {
-        key: "down",
-        title: "Commencer petit",
-        plan: down,
-        price: quote.min_monthly_price,
-        sub: `Tester sans pression — plan ${PLAN_LABEL[down]}`,
-      },
-      {
-        key: "reco",
-        title: "Plan recommandé",
-        plan: quote.recommended_plan,
-        price: quote.recommended_monthly_price,
-        sub: `Calibré pour vos objectifs — plan ${planLabel}`,
-        primary: true,
-      },
-      {
-        key: "up",
-        title: "Accélérer + exclusivité",
-        plan: up,
-        price: quote.max_monthly_price,
-        sub: `Domination du territoire — plan ${PLAN_LABEL[up]}`,
-      },
-    ];
-  }, [quote, planLabel]);
 
   if (loading) {
     return (
@@ -377,39 +338,6 @@ export default function PageContractorPersonalizedPlan() {
           ))}
         </div>
 
-        {/* Choice trio */}
-        <div className="mb-6">
-          <div className="text-xs uppercase tracking-wider text-white/50 mb-3">
-            Choisissez votre rythme
-          </div>
-          <div className="flex gap-3 overflow-x-auto -mx-5 px-5 snap-x snap-mandatory pb-2">
-            {triadPlans.map((p) => (
-              <button
-                key={p.key}
-                onClick={() => !waitlisted && handleActivate(p.plan)}
-                disabled={waitlisted || checkoutLoading}
-                className={`snap-center shrink-0 w-[78%] sm:w-[60%] text-left rounded-[28px] p-5 border transition-all ${
-                  p.primary
-                    ? "bg-gradient-to-br from-amber-500/20 to-amber-300/5 border-amber-400/40 shadow-[0_0_40px_-15px_rgba(251,191,36,0.5)]"
-                    : "bg-white/[0.04] border-white/10 hover:bg-white/[0.06]"
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                <div className="text-xs uppercase tracking-wider text-white/60">
-                  {p.title}
-                </div>
-                <div className="mt-2 text-2xl font-semibold tracking-[-0.03em]">
-                  {formatCAD(p.price)}
-                  <span className="text-sm text-white/50 font-normal">
-                    {" "}
-                    / mois
-                  </span>
-                </div>
-                <div className="text-xs text-white/60 mt-2">{p.sub}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Breakdown */}
         <GlassCard className="p-0 mb-6 overflow-hidden">
           <button
@@ -467,14 +395,14 @@ export default function PageContractorPersonalizedPlan() {
         <div className="max-w-2xl mx-auto flex gap-2">
           {waitlisted ? (
             <button
-              onClick={() => handleActivate("presence")}
+              onClick={() => navigate("/entrepreneur/devis-personnalise?status=waitlisted")}
               disabled={checkoutLoading}
               className="flex-1 h-14 rounded-[18px] bg-amber-500 text-black font-semibold flex items-center justify-center disabled:opacity-60"
             >
               {checkoutLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                "Rejoindre la liste d'attente"
+                "Modifier mes objectifs"
               )}
             </button>
           ) : (

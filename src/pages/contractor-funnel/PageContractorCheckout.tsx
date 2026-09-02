@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, CreditCard, Shield, Lock, CheckCircle2, Gift, Loader2 } from "lucide-react";
+import { ArrowLeft, CreditCard, Shield, Lock, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import FunnelLayout from "@/components/contractor-funnel/FunnelLayout";
@@ -36,11 +36,9 @@ export default function PageContractorCheckout() {
   const [quote, setQuote] = useState<PricingQuote | null>(null);
 
   const quoteId = searchParams.get("quoteId") || searchParams.get("quote_id") || (state as any).quoteId || null;
-  const planParam = searchParams.get("plan");
-
-  // Plan resolution priority: explicit ?plan= > quote > funnel state > fallback
-  const planSlug = planParam || (quote?.recommended_plan as string) || state.selectedPlanId || "pro_v2";
-  const plan = PLAN_DETAILS[planSlug] || PLAN_DETAILS["pro_v2"];
+  // No catalog or URL fallback: the persisted quote is authoritative.
+  const planSlug = (quote?.recommended_plan as string) || "";
+  const plan = planSlug ? PLAN_DETAILS[planSlug] : null;
   const planName = plan?.name || planSlug;
   // AUTHORITATIVE PRICING: quotes store CENTS (public.contractor_pricing_quotes),
   // the static catalog stores DOLLARS. Never mix. The server (create-checkout-session)
@@ -49,16 +47,7 @@ export default function PageContractorCheckout() {
     typeof quote?.recommended_monthly_price === "number"
       ? quote.recommended_monthly_price / 100
       : null;
-  const planPrice = (planParam ? plan?.price : quoteMonthlyDollars ?? plan?.price) ?? plan?.price ?? 0;
-
-  // Recommendation context — used to display "Premium recommandé → Pro Fondateur appliqué"
-  const recommendedSlug = (quote?.recommended_plan as string) || null;
-  const recommendedPlan = recommendedSlug ? PLAN_DETAILS[recommendedSlug] : null;
-  const showDowngradeBanner =
-    !!recommendedPlan &&
-    recommendedSlug !== planSlug &&
-    recommendedPlan.price > planPrice;
-  const monthlySavings = showDowngradeBanner ? Math.round(recommendedPlan!.price - planPrice) : 0;
+  const planPrice = quoteMonthlyDollars ?? 0;
 
   // Load personalized quote if URL provides it
   useEffect(() => {
@@ -69,7 +58,7 @@ export default function PageContractorCheckout() {
         const q = await fetchPricingQuote(quoteId);
         if (!cancelled && q) setQuote(q);
       } catch {
-        if (!cancelled) toast.error("Impossible de charger votre devis personnalisé. Tarif catalogue affiché.");
+        if (!cancelled) toast.error("Impossible de charger votre devis personnalisé.");
       }
     })();
     return () => { cancelled = true; };
@@ -86,6 +75,11 @@ export default function PageContractorCheckout() {
 
   const tax = Math.round(planPrice * 0.14975 * 100) / 100;
   const total = Math.round((planPrice + tax) * 100) / 100;
+
+  if (!quoteId) {
+    navigate("/entrepreneur/devis-personnalise", { replace: true });
+    return null;
+  }
 
   if (authLoading) {
     return (
@@ -159,51 +153,6 @@ export default function PageContractorCheckout() {
           </motion.div>
 
           <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="space-y-4">
-            {/* Founder offer banner */}
-            <motion.div variants={fadeUp}>
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
-                <Gift className="h-5 w-5 text-primary flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-foreground">Offre Fondateur 🎉</p>
-                  <p className="text-xs text-muted-foreground">
-                    Tarif exclusif pour les premiers entrepreneurs. Garanti à vie.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Recommendation vs applied plan banner */}
-            {showDowngradeBanner && (
-              <motion.div variants={fadeUp}>
-                <div
-                  aria-live="polite"
-                  className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-1.5"
-                >
-                  <p className="text-sm font-semibold text-foreground">
-                    Plan recommandé : {recommendedPlan!.name} {recommendedPlan!.price} $/mois
-                  </p>
-                  <p className="text-sm text-foreground/90">
-                    Offre Fondateur appliquée : {planName} {planPrice} $/mois
-                  </p>
-                  <p className="text-xs text-emerald-500 font-semibold">
-                    Économie : {monthlySavings} $/mois
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const params = new URLSearchParams();
-                      if (quoteId) params.set("quoteId", quoteId);
-                      params.set("plan", recommendedSlug!);
-                      navigate(`/entrepreneur/checkout?${params.toString()}`, { replace: true });
-                    }}
-                    className="mt-1 text-xs font-semibold text-amber-600 hover:text-amber-700 underline underline-offset-2"
-                  >
-                    Choisir plutôt le plan recommandé ({recommendedPlan!.name})
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
             {/* Plan summary */}
             <motion.div variants={fadeUp}>
               <CardGlass noAnimation elevated>
