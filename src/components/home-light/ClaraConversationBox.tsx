@@ -61,7 +61,7 @@ export default function ClaraConversationBox() {
       const history = [...messages, { id: uid(), role: "user" as const, text }];
       setMessages(history);
       setBusy(true);
-      trackCopilotEvent("home_clara_message_sent");
+      trackCopilotEvent("message_sent", { surface: "home_clara_box" });
 
       const assistantId = uid();
       try {
