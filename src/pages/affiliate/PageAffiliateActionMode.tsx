@@ -36,6 +36,16 @@ const SKIP_REASONS = [
   { key: "pas_maintenant", label: "Pas maintenant" },
 ];
 
+/** Refus serveur → message clair pour l'affilié. */
+const OFFER_ERRORS: Record<string, string> = {
+  city_cap_reached: "Les 10 places de cette ville sont déjà prises.",
+  no_personal_contact_proof: "Appelez ou contactez d'abord ce prospect.",
+  lead_city_missing: "Ce prospect n'a pas de ville — complétez sa fiche.",
+  not_an_active_affiliate: "Votre compte affilié n'est pas actif.",
+  lead_not_found: "Prospect introuvable.",
+};
+
+
 function StepCard({
   n, title, subtitle, state, children,
 }: { n: number; title: string; subtitle: string; state: StepState; children?: React.ReactNode }) {
