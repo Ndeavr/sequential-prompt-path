@@ -65,7 +65,6 @@ export default function PageUnproActivate() {
         if (error || !data?.ok) {
           const serverReason =
             (data as { reason?: string } | null)?.reason ?? (error ? "network_error" : "unknown");
-          // eslint-disable-next-line no-console
           console.error("[ACTIVATION_RESOLVE_FAILED]", { token, reason: serverReason, error });
           setReason(serverReason);
           setState(
@@ -82,7 +81,6 @@ export default function PageUnproActivate() {
         setState("ready");
       } catch (e) {
         if (!cancelled) {
-          // eslint-disable-next-line no-console
           console.error("[ACTIVATION_RESOLVE_THREW]", e);
           setReason("client_exception");
           setState("error");

@@ -91,7 +91,19 @@ interface AuditResult {
     review_note: string | null;
   };
   gaps: Gap[];
-  capacity: Record<string, any>;
+  capacity: Record<string, unknown>;
+}
+
+interface AffiliateAuditTrackResponse {
+  audit?: Candidate | null;
+}
+
+interface AuditSearchResponse {
+  candidates?: Candidate[];
+}
+
+interface AuditFunctionResponse extends AuditResult {
+  ok?: boolean;
 }
 
 const PROVENANCE_META: Record<Provenance, { label: string; cls: string; Icon: typeof BadgeCheck }> = {
@@ -168,7 +180,7 @@ export default function PageAiRecommendationAudit() {
       const { data } = await supabase.functions.invoke("affiliate-audit-track", {
         body: { token: inviteToken, event },
       });
-      return (data as any)?.audit ?? null;
+      return (data as AffiliateAuditTrackResponse | null)?.audit ?? null;
     },
     [inviteToken],
   );
@@ -200,7 +212,7 @@ export default function PageAiRecommendationAudit() {
     const { data } = await supabase.functions.invoke("ai-recommendation-audit", {
       body: { action: "search", query: q },
     });
-    setCandidates(((data as any)?.candidates ?? []) as Candidate[]);
+    setCandidates((data as AuditSearchResponse | null)?.candidates ?? []);
     setSearching(false);
   }, []);
 
@@ -250,7 +262,7 @@ export default function PageAiRecommendationAudit() {
           utm,
         },
       });
-      if (fnErr || !(data as any)?.ok) {
+      if (fnErr || !(data as AuditFunctionResponse | null)?.ok) {
         setError("Analyse indisponible pour le moment. Réessayez dans quelques secondes.");
         return;
       }

@@ -4,4 +4,4 @@
 - [ ] Valider parcours organique et sollicité affilié
 - [ ] Rejouer typecheck, lint, build, tests et navigateur responsive
 
-- [ ] Corriger toutes les erreurs typecheck/build du preview signalées dans /tmp/observability/build-errors.log et revalider le rendu.
+- [x] Corriger toutes les erreurs typecheck/build du preview signalées dans /tmp/observability/build-errors.log et revalider le rendu.
