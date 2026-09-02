@@ -73,6 +73,17 @@ interface Gap {
   why: string;
   impact: "high" | "medium" | "low";
 }
+
+interface TerritoryCapacity {
+  status?: string;
+  market_open?: boolean;
+  trade?: string;
+  city?: string;
+  remaining?: number;
+  max?: number;
+  label?: string;
+}
+
 interface AuditResult {
   audit_id: string;
   token: string;
@@ -91,7 +102,7 @@ interface AuditResult {
     review_note: string | null;
   };
   gaps: Gap[];
-  capacity: Record<string, unknown>;
+  capacity: TerritoryCapacity;
 }
 
 interface AffiliateAuditTrackResponse {
