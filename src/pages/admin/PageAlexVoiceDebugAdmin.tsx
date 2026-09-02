@@ -97,7 +97,7 @@ export default function PageAlexVoiceDebugAdmin() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold font-display text-foreground">🎙️ Voice Reliability Debug</h1>
-            <p className="text-sm text-muted-foreground">Diagnostics en temps réel du pipeline vocal Alex</p>
+            <p className="text-sm text-muted-foreground">Diagnostics en temps réel du pipeline vocal Clara</p>
           </div>
           <Button onClick={fetchAll} disabled={loading} variant="outline" size="sm" className="gap-2">
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />

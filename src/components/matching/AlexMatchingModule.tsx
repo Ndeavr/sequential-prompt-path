@@ -45,7 +45,7 @@ const AlexMatchingModule = ({ projectType, matchCount, topScore, onFilter }: Ale
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-display text-sm font-semibold">Alex</h3>
+              <h3 className="font-display text-sm font-semibold">Clara</h3>
               <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-primary/20 text-primary">
                 Copilote décision
               </Badge>

@@ -383,7 +383,7 @@ export default function PageHomeAlexConversationalLite() {
 
   // Voice state labels
   const thinkingLabel = voiceActive
-    ? (voice.isSpeaking ? "Alex parle..." : "Alex écoute...")
+    ? (voice.isSpeaking ? "Clara parle..." : "Clara écoute...")
     : undefined;
 
   // Contractor mode short-circuit: skip homeowner shell, mount Advisor only.
@@ -438,7 +438,7 @@ export default function PageHomeAlexConversationalLite() {
 
           {/* Voice listening indicator */}
           {voiceActive && !isThinking && !voice.isSpeaking && (
-            <LoaderAlexThinking label="Alex écoute..." />
+            <LoaderAlexThinking label="Clara écoute..." />
           )}
 
           {/* Account prompt */}
@@ -470,7 +470,7 @@ export default function PageHomeAlexConversationalLite() {
               isMicActive={voiceActive}
               isVoiceConnecting={voiceConnecting}
               disabled={isThinking}
-              placeholder={voiceActive ? "Mode vocal actif — Alex vous écoute" : "Décrivez votre besoin..."}
+              placeholder={voiceActive ? "Mode vocal actif — Clara vous écoute" : "Décrivez votre besoin..."}
             />
           </div>
         </div>

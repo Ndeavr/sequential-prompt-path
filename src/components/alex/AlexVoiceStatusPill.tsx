@@ -12,8 +12,8 @@ interface AlexVoiceStatusPillProps {
 const stateLabels: Record<VoiceSessionState, string> = {
   idle: '',
   connecting: 'Connexion…',
-  listening: 'Alex en direct',
-  speaking: 'Alex parle',
+  listening: 'Clara en direct',
+  speaking: 'Clara parle',
   interrupted: 'Un instant…',
   recovering: 'Reconnexion…',
   error: 'Mode texte',

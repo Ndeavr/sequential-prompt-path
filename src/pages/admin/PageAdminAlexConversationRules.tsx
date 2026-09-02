@@ -142,7 +142,7 @@ export default function PageAdminAlexConversationRules() {
           <Shield className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-lg font-bold text-foreground">Garde-fous Alex</h1>
+          <h1 className="text-lg font-bold text-foreground">Garde-fous Clara</h1>
           <p className="text-xs text-muted-foreground">Contrôle du ton, style et qualité des réponses</p>
         </div>
       </div>

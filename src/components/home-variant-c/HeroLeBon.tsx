@@ -51,7 +51,7 @@ export default function HeroLeBon({ onTrackCta }: Props) {
             >
               <MessageCircle className="h-5 w-5 mr-2" />
               <span className="flex flex-col items-start leading-tight">
-                <span>Parler à Alex</span>
+                <span>Parler à Clara</span>
                 <span className="text-[11px] font-normal opacity-80">Réponse en 2 minutes</span>
               </span>
             </Button>

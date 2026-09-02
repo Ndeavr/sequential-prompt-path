@@ -125,7 +125,7 @@ export default function NoMatchConversionCard({
         )}
         {onAlex && (
           <Button variant="ghost" size="sm" className="w-full" onClick={onAlex}>
-            <MessageCircle className="h-4 w-4 mr-2" /> Parler à Alex
+            <MessageCircle className="h-4 w-4 mr-2" /> Parler à Clara
           </Button>
         )}
       </div>

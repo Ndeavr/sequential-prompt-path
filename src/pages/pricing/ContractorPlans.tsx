@@ -222,7 +222,7 @@ function PlanCard({
                 className="w-full rounded-2xl text-xs mb-5 h-9"
               >
                 <Link to="/alex">
-                  <Mic className="h-3.5 w-3.5 mr-1.5" /> Parler à Alex
+                  <Mic className="h-3.5 w-3.5 mr-1.5" /> Parler à Clara
                 </Link>
               </Button>
             </>

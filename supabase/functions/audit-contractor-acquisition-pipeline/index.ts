@@ -52,7 +52,7 @@ const STEPS: Array<{ key: string; label: string }> = [
   { key: "23_contractor_status_activated",   label: "Statut entrepreneur = actif" },
   { key: "24_public_profile_visible",        label: "Profil public visible" },
   { key: "25_matching_eligibility_created",  label: "Éligibilité matching créée" },
-  { key: "26_alex_can_recommend",            label: "Alex peut recommander" },
+  { key: "26_alex_can_recommend",            label: "Clara peut recommander" },
   { key: "27_appointment_flow_available",    label: "Flux de réservation disponible" },
 ];
 
@@ -379,7 +379,7 @@ Deno.serve(async (req) => {
 
   // ── 26 Alex can recommend
   const canBeMatched = await countRows("contractor_entitlements", (q) => q.eq("can_be_matched", true));
-  await runStep("26_alex_can_recommend", "Alex peut recommander", async () => {
+  await runStep("26_alex_can_recommend", "Clara peut recommander", async () => {
     if (canBeMatched === 0 && eligible > 0) return { status: "failed", error_code: "ELIGIBLE_NO_ENTITLEMENT", error_message: "Éligibles présents mais entitlement 'can_be_matched' à false." };
     if (canBeMatched === 0) return { status: "warning", error_code: "NO_ENTITLEMENT", error_message: "Aucun entrepreneur autorisé au matching." };
     return { status: "success", metadata: { can_be_matched: canBeMatched } };

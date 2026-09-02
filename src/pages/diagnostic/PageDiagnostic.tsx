@@ -70,9 +70,9 @@ export default function PageDiagnostic() {
   const sessionIdRef = useRef<string>("");
 
   useEffect(() => {
-    document.title = "Diagnostic maison — Alex analyse tes photos • UNPRO";
+    document.title = "Diagnostic maison — Clara analyse tes photos • UNPRO";
     const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute("content", "Envoie une photo, décris ton problème. Alex identifie la cause, estime le coût et recommande le bon pro au Québec.");
+    if (meta) meta.setAttribute("content", "Envoie une photo, décris ton problème. Clara identifie la cause, estime le coût et recommande le bon pro au Québec.");
     if (!sessionIdRef.current) {
       try {
         sessionIdRef.current = (crypto as any).randomUUID?.() ?? String(Date.now());
@@ -148,7 +148,7 @@ export default function PageDiagnostic() {
         <header className="mb-6">
           <p className="text-xs uppercase tracking-[0.2em] text-white/50 mb-2">Diagnostic maison</p>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight leading-[1.05]">
-            Envoie une photo.<br />Alex te dit quoi faire.
+            Envoie une photo.<br />Clara te dit quoi faire.
           </h1>
           <p className="text-white/70 mt-3 text-[15px] leading-relaxed">
             Cause probable, niveau de risque, fourchette de coût, prochaines étapes — en 30 secondes.
@@ -244,7 +244,7 @@ export default function PageDiagnostic() {
               className="w-full h-16 rounded-2xl bg-gradient-to-b from-blue-500 to-blue-600 text-white font-bold text-[17px] shadow-lg shadow-blue-500/30 hover:from-blue-400 hover:to-blue-500 active:scale-[0.99] transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
-                <><Loader2 className="w-5 h-5 animate-spin" /> Alex analyse tes photos…</>
+                <><Loader2 className="w-5 h-5 animate-spin" /> Clara analyse tes photos…</>
               ) : (
                 <>Lancer le diagnostic</>
               )}

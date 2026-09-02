@@ -102,7 +102,7 @@ export default function PanelAlexVoiceSurface({ feature = "general", onClose, co
                 }`}
               >
                 {entry.role === "alex" && (
-                  <span className="text-[10px] font-semibold text-primary block mb-0.5">Alex</span>
+                  <span className="text-[10px] font-semibold text-primary block mb-0.5">Clara</span>
                 )}
                 {entry.text}
               </motion.div>
@@ -124,7 +124,7 @@ export default function PanelAlexVoiceSurface({ feature = "general", onClose, co
               : ""
           }`}
         >
-          {primaryControl === "start" && <><Phone className="w-4 h-4" />Parler à Alex</>}
+          {primaryControl === "start" && <><Phone className="w-4 h-4" />Parler à Clara</>}
           {primaryControl === "stop" && <><PhoneOff className="w-4 h-4" />Raccrocher</>}
           {primaryControl === "retry" && <><RefreshCw className="w-4 h-4" />Réessayer</>}
           {primaryControl === "permission" && <><Mic className="w-4 h-4" />Autoriser le micro</>}

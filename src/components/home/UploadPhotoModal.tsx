@@ -78,7 +78,7 @@ export default function UploadPhotoModal({ open, onClose, onFilesSelected }: Upl
                 Téléversez votre photo
               </h3>
               <p className="text-sm text-white/50 text-center mb-6">
-                Alex va analyser l'image pour identifier le problème.
+                Clara va analyser l'image pour identifier le problème.
               </p>
 
               {/* Drop zone */}

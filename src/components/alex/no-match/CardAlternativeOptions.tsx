@@ -15,7 +15,7 @@ export default function CardAlternativeOptions({ onExpandRadius, onAcceptDelay, 
     { icon: Clock, label: "Accepter un délai plus long", desc: "Disponibilité dans 1-2 semaines", action: onAcceptDelay },
     { icon: Search, label: "Changer de type de service", desc: "Voir d'autres spécialités", action: onChangeService },
     { icon: Zap, label: "Me prévenir quand disponible", desc: "Liste d'attente intelligente", action: onJoinWaitlist },
-    { icon: MessageSquare, label: "Continuer par écrit", desc: "Parler à Alex par texte", action: onWriteInstead },
+    { icon: MessageSquare, label: "Continuer par écrit", desc: "Parler à Clara par texte", action: onWriteInstead },
   ];
 
   return (

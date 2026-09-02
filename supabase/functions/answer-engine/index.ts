@@ -177,7 +177,7 @@ Règles:
 - Évalue ton niveau de confiance honnêtement`;
 
     if (mode === "alex") {
-      systemPrompt += `\n\nMode Alex AI Concierge:
+      systemPrompt += `\n\nMode Clara AI Concierge:
 - Ton chaleureux et professionnel
 - ${user_name ? `Salue l'utilisateur par son prénom: ${user_name}` : "Salue poliment"}
 - Maximum 3 questions de suivi

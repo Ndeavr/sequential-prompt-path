@@ -29,7 +29,7 @@ const ACTION_LABELS: Record<string, string> = {
   compare_quotes: "Comparer mes soumissions",
   passport_maison: "Ouvrir Passeport Maison",
   passport_condo: "Ouvrir Passeport Condo",
-  continue_alex: "Continuer avec Alex",
+  continue_alex: "Continuer avec Clara",
   login_interstitial: "Accéder à votre espace",
 };
 

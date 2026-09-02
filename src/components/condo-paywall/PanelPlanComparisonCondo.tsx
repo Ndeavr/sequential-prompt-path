@@ -6,7 +6,7 @@ const FEATURES = [
   { label: "3 actions guidées", free: true, paid: true },
   { label: "Aperçu des risques", free: true, paid: true },
   { label: "Checklist complète", free: false, paid: true },
-  { label: "Flow Alex illimité", free: false, paid: true },
+  { label: "Flow Clara illimité", free: false, paid: true },
   { label: "Documents + archivage", free: false, paid: true },
   { label: "Alertes automatiques", free: false, paid: true },
   { label: "Passeport Condo", free: false, paid: true },

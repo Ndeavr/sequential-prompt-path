@@ -32,7 +32,7 @@ const ContractorFallbackAnalysis = ({ company_name, city, private_score_url }: P
           <Text style={small}>
             Ou copiez ce lien : <Link href={url} style={link}>{url}</Link>
           </Text>
-          <Text style={signature}>— Alex<br />UNPRO</Text>
+          <Text style={signature}>— Clara<br />UNPRO</Text>
         </Container>
       </Body>
     </Html>

@@ -15,7 +15,7 @@ const navItems = [
   { label: "Vue d'ensemble", icon: "LayoutDashboard", href: "/pro" },
   { label: "Authority Score", icon: "Zap", href: "/pro/authority-score" },
   { label: "Visibilité", icon: "Eye", href: "/pro/aipp" },
-  { label: "Recommandations Alex", icon: "Brain", href: "#" },
+  { label: "Recommandations Clara", icon: "Brain", href: "#" },
   { label: "Rendez-vous", icon: "CalendarCheck", href: "/pro/appointments" },
   { label: "Profil public", icon: "User", href: "/pro/profile" },
   { label: "Crédibilité", icon: "ShieldCheck", href: "/pro/reviews" },

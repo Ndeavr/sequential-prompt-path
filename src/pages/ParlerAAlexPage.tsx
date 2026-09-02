@@ -24,28 +24,28 @@ export default function ParlerAAlexPage() {
   return (
     <>
       <Helmet>
-        <title>Parler à Alex — Assistant IA immobilier | UNPRO</title>
-        <meta name="description" content="Posez vos questions à Alex, l'assistant IA d'UNPRO. Diagnostics, conseils, comparaisons — des réponses claires pour les propriétaires du Québec." />
+        <title>Parler à Clara — Assistant IA immobilier | UNPRO</title>
+        <meta name="description" content="Posez vos questions à Clara, l'assistant IA d'UNPRO. Diagnostics, conseils, comparaisons — des réponses claires pour les propriétaires du Québec." />
         <link rel="canonical" href="https://unpro.ca/parler-a-alex" />
       </Helmet>
 
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-10">
         <PageHero
-          title="Parler à Alex"
+          title="Parler à Clara"
           subtitle="Votre assistant IA qui comprend les problèmes de maison. Posez vos questions, obtenez des réponses claires et passez à l'action."
           compact
         />
 
-        {/* Alex card */}
+        {/* Clara card */}
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
           <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5 overflow-hidden">
             <CardContent className="p-8 text-center space-y-4">
               <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
                 <Sparkles className="h-8 w-8 text-primary" />
               </div>
-              <h2 className="text-xl font-bold text-foreground">Alex, intelligence immobilière</h2>
+              <h2 className="text-xl font-bold text-foreground">Clara, intelligence immobilière</h2>
               <p className="text-muted-foreground max-w-lg mx-auto">
-                Alex analyse vos problèmes de maison, compare les solutions, estime les coûts et vous guide vers le bon professionnel. Pensé pour les propriétaires du Québec.
+                Clara analyse vos problèmes de maison, compare les solutions, estime les coûts et vous guide vers le bon professionnel. Pensé pour les propriétaires du Québec.
               </p>
               <Button size="lg" className="gap-2" onClick={() => openAlex("general")}>
                 Parler maintenant <ArrowRight className="h-4 w-4" />
@@ -74,7 +74,7 @@ export default function ParlerAAlexPage() {
         {/* Capabilities */}
         <div className="grid gap-4 md:grid-cols-3">
           {[
-            { icon: <Brain className="h-6 w-6" />, title: "Diagnostic intelligent", desc: "Décrivez un symptôme, Alex identifie les causes probables et les solutions." },
+            { icon: <Brain className="h-6 w-6" />, title: "Diagnostic intelligent", desc: "Décrivez un symptôme, Clara identifie les causes probables et les solutions." },
             { icon: <Zap className="h-6 w-6" />, title: "Réponses instantanées", desc: "Coûts estimés, délais, professionnels recommandés — en quelques secondes." },
             { icon: <Shield className="h-6 w-6" />, title: "Pensé pour le Québec", desc: "Normes, climat, matériaux et réalités locales intégrés dans chaque réponse." },
           ].map((item, i) => (
@@ -93,7 +93,7 @@ export default function ParlerAAlexPage() {
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button size="lg" className="gap-2" onClick={() => openAlex("general")}>
-            Parler à Alex <Sparkles className="h-4 w-4" />
+            Parler à Clara <Sparkles className="h-4 w-4" />
           </Button>
           <Button asChild variant="outline" size="lg" className="gap-2">
             <Link to="/decrire-mon-projet">Décrire mon projet <ArrowRight className="h-4 w-4" /></Link>

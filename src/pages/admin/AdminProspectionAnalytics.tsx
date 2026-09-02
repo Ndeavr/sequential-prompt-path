@@ -47,7 +47,7 @@ const AdminProspectionAnalytics = () => {
     { label: "Contactés", value: funnel.contacted, icon: Mail, color: "text-amber-400" },
     { label: "Ouvert email", value: funnel.opened, icon: Mail, color: "text-orange-400" },
     { label: "Cliqué lien", value: funnel.clicked, icon: MousePointer, color: "text-pink-400" },
-    { label: "Démarré Alex", value: funnel.started, icon: Play, color: "text-emerald-400" },
+    { label: "Démarré Clara", value: funnel.started, icon: Play, color: "text-emerald-400" },
     { label: "Converti Signature", value: funnel.converted, icon: CheckCircle2, color: "text-green-400" },
   ] : [];
 

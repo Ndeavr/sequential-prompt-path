@@ -83,7 +83,7 @@ export default function HomeownerCheckoutDrawer({
             <p className="text-xs text-muted-foreground mt-1">
               {planCode === "plus"
                 ? "Jusqu'à 3 adresses, analyses illimitées, comparaison de soumissions"
-                : "Jusqu'à 5 adresses, accompagnement Alex avancé, vue consolidée premium"}
+                : "Jusqu'à 5 adresses, accompagnement Clara avancé, vue consolidée premium"}
             </p>
           </div>
 

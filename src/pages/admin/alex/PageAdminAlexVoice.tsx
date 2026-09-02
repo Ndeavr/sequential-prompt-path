@@ -12,7 +12,7 @@ import WidgetVoiceMetrics from "@/components/alex-voice-engine/WidgetVoiceMetric
 import { Skeleton } from "@/components/ui/skeleton";
 import { Mic } from "lucide-react";
 
-const DEFAULT_TEST_TEXT = "Bonjour, je suis Alex, votre assistant UNPRO. Comment puis-je vous aider aujourd'hui?";
+const DEFAULT_TEST_TEXT = "Bonjour, je suis Clara, votre assistant UNPRO. Comment puis-je vous aider aujourd'hui?";
 
 export default function PageAdminAlexVoice() {
   const { data: profiles = [], isLoading } = useVoiceProfiles();
@@ -31,8 +31,8 @@ export default function PageAdminAlexVoice() {
           <Mic className="w-6 h-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-xl font-bold">Alex — Sélection voix française</h1>
-          <p className="text-sm text-muted-foreground">Comparer, tester et verrouiller la voix française native d'Alex.</p>
+          <h1 className="text-xl font-bold">Clara — Sélection voix française</h1>
+          <p className="text-sm text-muted-foreground">Comparer, tester et verrouiller la voix française native de Clara.</p>
         </div>
       </div>
 

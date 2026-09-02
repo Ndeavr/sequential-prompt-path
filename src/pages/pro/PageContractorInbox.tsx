@@ -280,7 +280,7 @@ const PageContractorInbox = () => {
   return (
     <ContractorLayout>
       <div className="dark max-w-lg mx-auto space-y-4 pb-20 px-4">
-        <PageHeader title="Inbox intelligent" description="Jobs structurés par Alex, prêts à accepter" />
+        <PageHeader title="Inbox intelligent" description="Jobs structurés par Clara, prêts à accepter" />
 
         {/* Revenue prediction widget */}
         {tickets && tickets.length > 0 && (
@@ -327,7 +327,7 @@ const PageContractorInbox = () => {
         {!tickets || tickets.length === 0 ? (
           <EmptyState
             icon={<Inbox className="w-10 h-10 text-muted-foreground/50" />}
-            message="Aucun job pour le moment — les demandes structurées par Alex apparaîtront ici."
+            message="Aucun job pour le moment — les demandes structurées par Clara apparaîtront ici."
           />
         ) : (
           <div className="space-y-3">

@@ -36,8 +36,8 @@ export default function SectionAlexAdvisor({ results, onAlex }: Props) {
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
           <Bot className="w-6 h-6 text-accent mx-auto mb-3" />
-          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Alex, votre conseiller IA</h2>
-          <p className="text-muted-foreground">Alex analyse vos résultats et vous guide.</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Clara, votre conseiller IA</h2>
+          <p className="text-muted-foreground">Clara analyse vos résultats et vous guide.</p>
         </div>
 
         <div className="rounded-2xl border border-accent/20 bg-accent/5 backdrop-blur-sm p-6 space-y-3">
@@ -53,7 +53,7 @@ export default function SectionAlexAdvisor({ results, onAlex }: Props) {
 
         <div className="flex flex-col sm:flex-row gap-3 mt-6 justify-center">
           <Button onClick={onAlex} className="gap-2 bg-gradient-to-r from-accent to-primary text-primary-foreground">
-            <MessageCircle className="w-4 h-4" /> Parler à Alex maintenant
+            <MessageCircle className="w-4 h-4" /> Parler à Clara maintenant
           </Button>
           <Button variant="outline" size="sm" className="text-muted-foreground">
             Me faire expliquer le calcul

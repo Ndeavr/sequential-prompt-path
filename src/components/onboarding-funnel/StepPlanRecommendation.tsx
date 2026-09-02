@@ -139,9 +139,9 @@ export default function StepPlanRecommendation({ objectives, businessName, city,
         </div>
       </div>
 
-      {/* Alex conclusion */}
+      {/* Clara conclusion */}
       <div className="rounded-xl bg-primary/5 border border-primary/10 p-4">
-        <p className="text-xs font-semibold text-primary mb-1">Alex</p>
+        <p className="text-xs font-semibold text-primary mb-1">Clara</p>
         <p className="text-sm text-foreground">
           Voici le plan le plus logique pour {businessName}. Avec {match.monthly_rdv_needed} rendez-vous qualifiés par mois, 
           vous pouvez récupérer ce que vous laissez sur la table.

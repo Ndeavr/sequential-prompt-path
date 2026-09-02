@@ -21,7 +21,7 @@ export function AlexDebugPanel() {
         onClick={() => setOpen(true)}
         className="fixed bottom-6 left-6 z-[200] bg-card/90 border border-border/40 rounded-full px-2 py-1 text-[9px] text-muted-foreground hover:text-foreground"
       >
-        🔧 Alex V7
+        🔧 Clara V7
       </button>
     );
   }
@@ -55,7 +55,7 @@ export function AlexDebugPanel() {
   return (
     <div className="fixed bottom-6 left-6 z-[200] bg-card/95 backdrop-blur-sm border border-border/40 rounded-lg p-2 text-[10px] font-mono text-muted-foreground w-60 max-h-96 overflow-y-auto">
       <div className="flex items-center justify-between mb-1">
-        <span className="font-bold text-foreground text-[11px]">Alex V7 Debug</span>
+        <span className="font-bold text-foreground text-[11px]">Clara V7 Debug</span>
         <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">✕</button>
       </div>
       <table className="w-full">

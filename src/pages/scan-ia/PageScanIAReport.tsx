@@ -179,11 +179,11 @@ export default function PageScanIAReport() {
           </div>
         </div>
 
-        {/* Ce que voit Alex */}
+        {/* Ce que voit Clara */}
         <div className="mb-8 rounded-3xl border border-white/10 bg-gradient-to-br from-sky-500/10 to-blue-500/5 p-8 backdrop-blur">
           <div className="mb-3 flex items-center gap-2 text-sm font-medium text-sky-300">
             <Sparkles className="h-4 w-4" />
-            Ce que voit Alex
+            Ce que voit Clara
           </div>
           <div className="mb-4 text-white/80">
             Un propriétaire demande : <em className="text-white">« {report.alex_simulation.question} »</em>
@@ -227,7 +227,7 @@ export default function PageScanIAReport() {
               "Territoires",
               "Catégories",
               "Vérification conformité",
-              "Apparition dans Alex",
+              "Apparition dans Clara",
               "Réception de rendez-vous",
             ].map((f) => (
               <li key={f} className="flex items-center gap-2">

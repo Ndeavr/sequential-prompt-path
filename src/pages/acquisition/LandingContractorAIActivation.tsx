@@ -158,7 +158,7 @@ export default function LandingContractorAIActivation() {
                   className="w-full h-11 gap-2"
                 >
                   <Mic className="w-4 h-4" />
-                  Parler avec Alex
+                  Parler avec Clara
                 </Button>
               </div>
             </motion.div>
@@ -187,7 +187,7 @@ export default function LandingContractorAIActivation() {
                   className="w-full h-11 gap-2"
                 >
                   <Mic className="w-4 h-4" />
-                  Parler avec Alex
+                  Parler avec Clara
                 </Button>
               </div>
             </motion.div>

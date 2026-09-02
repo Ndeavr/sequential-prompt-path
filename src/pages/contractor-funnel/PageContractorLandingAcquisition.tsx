@@ -158,7 +158,7 @@ export default function PageContractorLandingAcquisition() {
                 onClick={startAlexVoice}
               >
                 <Mic className="h-4 w-4 text-primary" />
-                Parler à Alex
+                Parler à Clara
               </Button>
             </motion.div>
 

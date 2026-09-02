@@ -61,7 +61,7 @@ export default function AlexSalesPanel() {
           </div>
           <div>
             <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
-              Alex — Mode Vente
+              Clara — Mode Vente
               <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-semibold uppercase tracking-wider">IA</span>
             </h3>
             <p className="text-[10px] text-muted-foreground">Analyse de vos opportunités</p>
@@ -82,7 +82,7 @@ export default function AlexSalesPanel() {
             <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-spin border-t-primary" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-foreground">Alex analyse votre profil…</p>
+            <p className="text-xs font-semibold text-foreground">Clara analyse votre profil…</p>
             <p className="text-[10px] text-muted-foreground">Évaluation des opportunités manquées</p>
           </div>
         </div>
@@ -219,7 +219,7 @@ function PlanRecommendation({ analysis }: { analysis: SalesAnalysis }) {
           <Icon className="w-5 h-5 text-white" />
         </div>
         <div className="flex-1">
-          <p className="text-xs font-bold text-foreground">Recommandation Alex</p>
+          <p className="text-xs font-bold text-foreground">Recommandation Clara</p>
           <p className="text-sm font-bold text-primary">{label}</p>
         </div>
         {analysis.estimated_monthly_loss_cad > 0 && (

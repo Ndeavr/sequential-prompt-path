@@ -14,8 +14,8 @@ const steps = [
   },
   {
     icon: MessageCircle,
-    title: "Consultation avec Alex",
-    desc: "Alex vous montre votre score, vos pertes, et vous guide vers le bon plan.",
+    title: "Consultation avec Clara",
+    desc: "Clara vous montre votre score, vos pertes, et vous guide vers le bon plan.",
   },
   {
     icon: Target,

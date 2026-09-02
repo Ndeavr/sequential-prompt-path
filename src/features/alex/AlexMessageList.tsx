@@ -38,7 +38,7 @@ export function AlexMessageList() {
             >
               {msg.role === "assistant" && (
                 <span className="text-[10px] font-medium text-primary/70 uppercase tracking-wider block mb-1">
-                  Alex
+                  Clara
                 </span>
               )}
               {msg.text}
@@ -68,7 +68,7 @@ export function AlexMessageList() {
           className="flex justify-start"
         >
           <div className="bg-card/80 border border-border/50 rounded-2xl px-4 py-2.5 flex items-center gap-1.5">
-            <span className="text-[10px] font-medium text-primary/70 uppercase tracking-wider">Alex</span>
+            <span className="text-[10px] font-medium text-primary/70 uppercase tracking-wider">Clara</span>
             {[0, 1, 2].map((i) => (
               <motion.span
                 key={i}

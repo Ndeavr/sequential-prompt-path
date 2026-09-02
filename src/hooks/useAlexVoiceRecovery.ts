@@ -40,8 +40,8 @@ const PHASE_LABELS: Record<RecoveryPhase, string> = {
   killing: 'Réinitialisation…',
   probing: 'Vérification du micro…',
   rebuilding: 'Reconnexion vocale…',
-  greeting_test: 'Connexion d\'Alex…',
-  recovered: 'Alex est reconnectée',
+  greeting_test: 'Connexion d\'Clara…',
+  recovered: 'Clara est reconnectée',
   failed_fallback_chat: 'Mode chat activé',
   closed: '',
 };

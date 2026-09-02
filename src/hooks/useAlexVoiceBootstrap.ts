@@ -241,14 +241,14 @@ export function useAlexVoiceBootstrap(options: UseAlexVoiceBootstrapOptions = {}
   const statusText =
     bootState === "intro_playing" ? "Préparation…"
     : bootState === "connecting" || bootState === "preloading" ? "Connexion…"
-    : bootState === "alex_speaking" || bootState === "alex_speaking_response" ? "Alex parle…"
+    : bootState === "alex_speaking" || bootState === "alex_speaking_response" ? "Clara parle…"
     : bootState === "alex_listening" ? "Je vous écoute…"
     : bootState === "user_speaking" ? "Vous parlez…"
     : bootState === "processing" ? "Réflexion…"
     : bootState === "session_error" ? "Erreur"
     : bootState === "permission_check" ? "Micro requis"
     : bootState === "session_closed" ? "Session terminée"
-    : "Parler à Alex";
+    : "Parler à Clara";
 
   return {
     bootState,

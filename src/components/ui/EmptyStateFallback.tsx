@@ -23,7 +23,7 @@ export default function EmptyStateFallback({
   onAlex,
   retryLabel = "Réessayer",
   manualLabel = "Ajouter manuellement",
-  alexLabel = "Parler à Alex",
+  alexLabel = "Parler à Clara",
 }: Props) {
   return (
     <div className="text-center py-8 px-4">

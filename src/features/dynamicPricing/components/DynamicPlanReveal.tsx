@@ -155,7 +155,7 @@ export function DynamicPlanReveal({
           onClick={onCustom}
           className="w-full text-white/70 hover:text-white hover:bg-white/5 h-12 rounded-2xl"
         >
-          Créer mon plan sur mesure avec Alex
+          Créer mon plan sur mesure avec Clara
         </Button>
       </motion.div>
     </div>

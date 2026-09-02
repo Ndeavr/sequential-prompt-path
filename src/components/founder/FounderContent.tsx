@@ -7,7 +7,7 @@ import { Crown, Zap, Shield, Star, Users, Rocket } from "lucide-react";
 
 const BENEFITS = [
   { icon: Crown, title: "Accès fondateur permanent", desc: "Aucun frais mensuel récurrent. Un paiement unique, un accès à vie." },
-  { icon: Zap, title: "Recommandation Alex activée", desc: "L'IA d'UNPRO recommande votre entreprise en priorité aux propriétaires." },
+  { icon: Zap, title: "Recommandation Clara activée", desc: "L'IA d'UNPRO recommande votre entreprise en priorité aux propriétaires." },
   { icon: Shield, title: "Profil AIPP vérifié", desc: "Score de confiance certifié et badge fondateur sur votre profil public." },
   { icon: Star, title: "Visibilité maximale", desc: "Position premium dans les résultats de recherche et les recommandations." },
   { icon: Users, title: "Territoire exclusif", desc: "Réservez votre zone de service avant qu'elle ne soit complète." },
@@ -69,7 +69,7 @@ export default function FounderContent() {
               pour obtenir une évaluation confidentielle et les conditions actuelles.
             </p>
             <div className="pt-2 space-y-2 text-sm text-left max-w-xs mx-auto">
-              {["Profil AIPP complet", "Recommandation Alex", "Territoire réservé", "Badge Fondateur", "Support prioritaire"].map(f => (
+              {["Profil AIPP complet", "Recommandation Clara", "Territoire réservé", "Badge Fondateur", "Support prioritaire"].map(f => (
                 <div key={f} className="flex items-center gap-2 text-muted-foreground">
                   <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                   {f}

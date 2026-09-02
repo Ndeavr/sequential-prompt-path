@@ -31,9 +31,9 @@ export default function PanelAlexVoiceChat() {
         </motion.button>
 
         <div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Parlez à Alex</h2>
+          <h2 className="text-xl font-bold text-foreground mb-2">Parlez à Clara</h2>
           <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-            Décrivez votre situation en quelques mots. Alex comprend et trouve la solution.
+            Décrivez votre situation en quelques mots. Clara comprend et trouve la solution.
           </p>
         </div>
 
@@ -50,7 +50,7 @@ export default function PanelAlexVoiceChat() {
             hover:bg-muted hover:text-foreground transition-all text-sm"
         >
           <MessageCircle className="w-4 h-4" />
-          Écrire à Alex
+          Écrire à Clara
         </button>
       </motion.div>
     </div>

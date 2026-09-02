@@ -110,12 +110,12 @@ export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole 
                 </div>
               ))}
 
-              {/* Alex CTA */}
+              {/* Clara CTA */}
               <button
                 onClick={() => { onClose(); openAlex("general"); }}
                 className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-sm mb-4 w-full text-left"
               >
-                ✨ {lang === "en" ? "Talk to Alex" : "Parler à Alex"}
+                ✨ {lang === "en" ? "Talk to Clara" : "Parler à Clara"}
               </button>
 
               {/* Footer */}
@@ -145,7 +145,7 @@ export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole 
                   onClick={() => { onClose(); openAlex("general"); }}
                   className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-sm w-full text-left"
                 >
-                  ✨ {lang === "en" ? "Talk to Alex" : "Parler à Alex"}
+                  ✨ {lang === "en" ? "Talk to Clara" : "Parler à Clara"}
                 </button>
                 <Link to="/proprietaires/passeport-maison" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl surface-metal-glass text-foreground font-medium text-sm">
                   {lang === "en" ? "Create My Home Passport" : "Créer mon Passeport Maison"}

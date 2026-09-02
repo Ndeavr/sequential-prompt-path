@@ -94,7 +94,7 @@ export default function AlexAutopilotBanner({
             {/* Momentum indicator */}
             <div className="flex items-center gap-2 mt-2">
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
-                {suggestion.autopilotMode === "urgent" ? "Urgent" : "Alex"}
+                {suggestion.autopilotMode === "urgent" ? "Urgent" : "Clara"}
               </span>
               <div className="flex gap-0.5">
                 {["cold", "warming", "active", "ready_to_convert"].map((level, i) => {

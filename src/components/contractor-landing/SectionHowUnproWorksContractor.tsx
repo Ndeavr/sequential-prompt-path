@@ -1,5 +1,5 @@
 const steps = [
-  { title: "Parlez à Alex", desc: "Notre IA analyse votre entreprise en 30 secondes." },
+  { title: "Parlez à Clara", desc: "Notre IA analyse votre entreprise en 30 secondes." },
   { title: "Recevez votre score", desc: "Visibilité IA, présence locale, avis et conversion." },
   { title: "Activez vos rendez-vous", desc: "Rendez-vous qualifiés, pas des leads génériques." },
 ];

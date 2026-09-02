@@ -24,7 +24,7 @@ export default function PanelAlexLiveIntentState({
     >
       <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
         <Shield className="h-3.5 w-3.5 text-primary" />
-        Alex Brain State
+        Clara Brain State
       </div>
       
       <div className="grid grid-cols-2 gap-x-3 gap-y-1">

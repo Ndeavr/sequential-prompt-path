@@ -110,7 +110,7 @@ export default function PageContractorAIGrowth() {
                     Quelle est votre <span className="text-primary">tension</span> en ce moment ?
                   </h1>
                   <p className="text-sm text-muted-foreground">
-                    Alex va analyser votre présence et vous montrer comment combler le manque.
+                    Clara va analyser votre présence et vous montrer comment combler le manque.
                   </p>
                 </div>
 

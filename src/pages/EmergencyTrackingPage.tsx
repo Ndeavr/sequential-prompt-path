@@ -17,7 +17,7 @@ import { fr } from "date-fns/locale";
 
 const STATUS_CONFIG: Record<string, { label: string; icon: any; color: string; step: number }> = {
   new: { label: "Analyse de votre demande…", icon: Clock, color: "text-primary", step: 0 },
-  triage: { label: "Analyse Alex en cours…", icon: Bot, color: "text-primary", step: 1 },
+  triage: { label: "Analyse Clara en cours…", icon: Bot, color: "text-primary", step: 1 },
   ready: { label: "Recherche du meilleur entrepreneur…", icon: MapPin, color: "text-warning", step: 2 },
   sent: { label: "Demande envoyée…", icon: Truck, color: "text-warning", step: 2 },
   dispatching: { label: "Dispatch en cours…", icon: Truck, color: "text-warning", step: 2 },
@@ -32,7 +32,7 @@ const STATUS_CONFIG: Record<string, { label: string; icon: any; color: string; s
 
 const STEPS = [
   "Demande reçue",
-  "Analyse Alex",
+  "Analyse Clara",
   "Dispatch en cours",
   "Entrepreneur assigné",
   "En route",
@@ -313,7 +313,7 @@ export default function EmergencyTrackingPage() {
         {/* ─── HELP ACTIONS ─── */}
         <div className="space-y-2">
           <Button variant="outline" size="sm" className="w-full justify-start text-xs" onClick={() => navigate("/alex?mode=emergency")}>
-            <Bot className="w-4 h-4 mr-2 text-primary" /> Parler à Alex
+            <Bot className="w-4 h-4 mr-2 text-primary" /> Parler à Clara
           </Button>
           <Button variant="outline" size="sm" className="w-full justify-start text-xs">
             <Camera className="w-4 h-4 mr-2" /> Ajouter des photos
@@ -351,7 +351,7 @@ export default function EmergencyTrackingPage() {
         ) : (
           <>
             <Button className="flex-1" onClick={() => navigate("/alex?mode=emergency")}>
-              <Bot className="w-4 h-4 mr-2" /> Parler à Alex
+              <Bot className="w-4 h-4 mr-2" /> Parler à Clara
             </Button>
             <Button variant="outline" className="flex-1">
               <Camera className="w-4 h-4 mr-2" /> Photos

@@ -28,7 +28,7 @@ interface PaletteItem {
 const paletteItems: PaletteItem[] = [
   // Actions rapides
   { id: "create-project", label: "Créer mon projet", labelEn: "Create My Project", to: "/signup", icon: Plus, group: "Actions rapides", groupEn: "Quick Actions", keywords: "project create nouveau" },
-  { id: "talk-alex", label: "Parler à Alex", labelEn: "Talk to Alex", to: "/alex", icon: Sparkles, group: "Actions rapides", groupEn: "Quick Actions", keywords: "ai assistant copilot" },
+  { id: "talk-alex", label: "Parler à Clara", labelEn: "Talk to Clara", to: "/alex", icon: Sparkles, group: "Actions rapides", groupEn: "Quick Actions", keywords: "ai assistant copilot" },
   { id: "verify", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", to: "/verifier-entrepreneur", icon: ShieldCheck, group: "Actions rapides", groupEn: "Quick Actions", keywords: "verify check" },
   { id: "compare", label: "Comparer mes soumissions", labelEn: "Compare My Quotes", to: "/compare-quotes", icon: BarChart3, group: "Actions rapides", groupEn: "Quick Actions", keywords: "compare quotes soumissions" },
   { id: "diagnostic", label: "Diagnostiquer un problème", labelEn: "Diagnose a Problem", to: "/alex?intent=diagnostic", icon: Search, group: "Actions rapides", groupEn: "Quick Actions", keywords: "diagnostic problem" },

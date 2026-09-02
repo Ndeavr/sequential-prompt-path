@@ -151,7 +151,7 @@ export default function PageProWelcome() {
           </h1>
           <p className="text-[14px] mb-6" style={{ color: "rgba(255,255,255,0.78)" }}>
             {confirmed
-              ? "Alex prépare votre profil professionnel."
+              ? "Clara prépare votre profil professionnel."
               : "Vous serez redirigé automatiquement dès la confirmation Stripe."}
           </p>
 

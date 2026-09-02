@@ -78,7 +78,7 @@ export function buildGrowthPlan(
     {
       rank: 3,
       title: "Matching propriétaires (IA)",
-      detail: "Rendez-vous exclusifs, qualifiés, livrés par Alex",
+      detail: "Rendez-vous exclusifs, qualifiés, livrés par Clara",
       annual_value_cad: matchingValue,
       accent: "amber",
     },

@@ -44,7 +44,7 @@ export const FALLBACK_RULES: ContentRule[] = [
   { pattern: "intelligence résidentielle", matchType: "plain", severity: "block", category: "jargon", description: "Legacy category — use Passeport Maison" },
   { pattern: "residential intelligence", matchType: "plain", severity: "block", category: "jargon", description: "Legacy category — use home passport" },
   { pattern: "La propriété se souvient", matchType: "plain", severity: "block", category: "jargon", description: "Legacy tagline" },
-  { pattern: "Alex doit", matchType: "plain", severity: "block", category: "llm_instruction", description: "Imperative addressed to the AI" },
+  { pattern: "Clara doit", matchType: "plain", severity: "block", category: "llm_instruction", description: "Imperative addressed to the AI" },
   { pattern: "l'IA doit", matchType: "plain", severity: "block", category: "llm_instruction", description: "Imperative addressed to the AI" },
   { pattern: "le système doit", matchType: "plain", severity: "block", category: "llm_instruction", description: "System-level imperative" },
   { pattern: "prompt:", matchType: "plain", severity: "block", category: "prompt_leak", description: "Prompt prefix" },

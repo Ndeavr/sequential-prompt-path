@@ -29,7 +29,7 @@ export function AlexBookingBubble({ contextHint }: AlexBookingBubbleProps) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-primary" />
-                <span className="text-meta font-semibold text-foreground">Alex</span>
+                <span className="text-meta font-semibold text-foreground">Clara</span>
               </div>
               <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
                 <X className="w-4 h-4" />
@@ -42,7 +42,7 @@ export function AlexBookingBubble({ contextHint }: AlexBookingBubbleProps) {
               onClick={() => { setOpen(false); openAlex("general"); }}
               className="block w-full text-center text-caption font-medium text-primary hover:underline"
             >
-              Parler à Alex →
+              Parler à Clara →
             </button>
           </motion.div>
         )}

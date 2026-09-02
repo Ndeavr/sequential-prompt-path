@@ -261,7 +261,7 @@ Deno.serve(async (req) => {
       { key: "payment_confirmed", label: "Paiement confirmé", state: paymentConfirmed },
       { key: "contractor_created", label: "Entrepreneur créé", state: contractorCreated },
       { key: "profile_enriched", label: "Profil enrichi", state: profileEnriched },
-      { key: "recommendable", label: "Recommandable par Alex", state: recommendable },
+      { key: "recommendable", label: "Recommandable par Clara", state: recommendable },
     ];
 
     const allPass = steps.every((s) => s.state === "PASS");

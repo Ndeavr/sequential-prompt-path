@@ -9,8 +9,8 @@ interface Props {
 }
 
 const stageText = {
-  preparing: "Alex prépare votre résultat…",
-  speaking: "Alex analyse votre présence…",
+  preparing: "Clara prépare votre résultat…",
+  speaking: "Clara analyse votre présence…",
   awaiting: "Voici ce que votre présence actuelle révèle",
 };
 

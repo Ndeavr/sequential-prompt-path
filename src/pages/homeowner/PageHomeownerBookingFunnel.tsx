@@ -438,7 +438,7 @@ export default function PageHomeownerBookingFunnel() {
               </motion.section>
             )}
 
-            {/* Step 3 — Alex qualification (loading) */}
+            {/* Step 3 — Clara qualification (loading) */}
             {step === 3 && (
               <motion.section
                 key="s3"

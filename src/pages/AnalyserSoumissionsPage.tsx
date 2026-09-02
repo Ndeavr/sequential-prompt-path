@@ -102,7 +102,7 @@ export default function AnalyserSoumissionsPage() {
           title="Prêt à analyser?"
           description="Téléversez vos soumissions et obtenez une analyse détaillée en quelques minutes."
           primaryCta={{ label: "Analyser jusqu'à 3 soumissions", to: "/analyse-soumissions/importer" }}
-          secondaryCta={{ label: "Parler à Alex", to: "/parler-a-alex" }}
+          secondaryCta={{ label: "Parler à Clara", to: "/parler-a-alex" }}
           variant="accent"
         />
       </div>

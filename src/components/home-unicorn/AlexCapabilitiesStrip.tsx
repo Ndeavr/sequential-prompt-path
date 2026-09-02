@@ -22,7 +22,7 @@ export default function AlexCapabilitiesStrip() {
   const { openAlex } = useAlexVoice();
   return (
     <section
-      aria-label="Ce qu'Alex peut faire"
+      aria-label="Ce qu'Clara peut faire"
       className="px-4 mt-5 relative z-10 uc-fade-up"
       style={{ animationDelay: "90ms" }}
     >
@@ -30,7 +30,7 @@ export default function AlexCapabilitiesStrip() {
         className="text-[10px] font-semibold tracking-[0.14em] uppercase mb-2 px-1"
         style={{ color: "#2563FF" }}
       >
-        Ce qu'Alex peut faire
+        Ce qu'Clara peut faire
       </div>
 
       {/* Featured — Trouver un pro */}
@@ -43,7 +43,7 @@ export default function AlexCapabilitiesStrip() {
           background: "linear-gradient(135deg, #2563FF 0%, #1D4FE0 100%)",
           boxShadow: "0 12px 28px -10px rgba(37,99,255,0.55), 0 2px 6px rgba(37,99,255,0.25)",
         }}
-        aria-label="Parler à Alex pour trouver un pro"
+        aria-label="Parler à Clara pour trouver un pro"
       >
         <div
           className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
@@ -65,7 +65,7 @@ export default function AlexCapabilitiesStrip() {
             className="text-[12.5px] leading-snug mt-0.5"
             style={{ color: "rgba(255,255,255,0.88)" }}
           >
-            Alex vous recommande le bon professionnel selon votre besoin.
+            Clara vous recommande le bon professionnel selon votre besoin.
           </div>
         </div>
         <ArrowRight size={20} color="#FFFFFF" strokeWidth={2.4} className="shrink-0" />
@@ -88,7 +88,7 @@ export default function AlexCapabilitiesStrip() {
                 boxShadow: "0 4px 14px -8px rgba(15,23,42,0.10), 0 1px 2px rgba(15,23,42,0.04)",
                 minHeight: 68,
               }}
-              aria-label={`Parler à Alex pour ${c.label.toLowerCase()}`}
+              aria-label={`Parler à Clara pour ${c.label.toLowerCase()}`}
             >
               <div
                 className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"

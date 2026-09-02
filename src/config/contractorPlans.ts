@@ -104,7 +104,7 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     appointmentsIncluded: 3,
     features: [
       "3 rendez-vous exclusifs garantis par mois",
-      "Demandes qualifiées par Alex",
+      "Demandes qualifiées par Clara",
       "Statistiques de performance",
       "Optimisation continue du profil (AIPP)",
     ],

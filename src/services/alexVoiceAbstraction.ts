@@ -140,7 +140,7 @@ export class HybridVoiceProvider implements IAlexVoiceProvider {
     console.warn('[AlexVoice] blocked_browser_tts — speechSynthesis disabled by ALEX_DISABLE_BROWSER_TTS');
     this.events?.onError({
       code: 'browser_tts_blocked',
-      message: 'Browser TTS is disabled. Audio routes only through the ElevenLabs Alex voice.',
+      message: 'Browser TTS is disabled. Audio routes only through the ElevenLabs Clara voice.',
       provider: this.providerKey,
       recoverable: true,
     });

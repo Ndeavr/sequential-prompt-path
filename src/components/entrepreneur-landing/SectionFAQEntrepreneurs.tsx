@@ -6,7 +6,7 @@ const faqs = [
   { q: "Est-ce que je dois tout repartir mon SEO?", a: "Non. Le système optimise votre visibilité IA sans que vous ayez à toucher au SEO vous-même." },
   { q: "Est-ce que ce sont des leads partagés?", a: "Non. Chaque demande est envoyée à un seul entrepreneur à la fois. Pas de course contre 5 concurrents." },
   { q: "Comment UNPRO choisit les clients pour moi?", a: "L'IA analyse le domaine, la localisation, la capacité et les objectifs pour envoyer les clients les plus compatibles." },
-  { q: "Comment fonctionne Alex?", a: "Alex est une IA conversationnelle qui vous guide à chaque étape : score, revenus perdus, plan recommandé, activation." },
+  { q: "Comment fonctionne Clara?", a: "Clara est une IA conversationnelle qui vous guide à chaque étape : score, revenus perdus, plan recommandé, activation." },
   { q: "Comment le plan est recommandé?", a: "Le système calcule le plan optimal basé sur vos objectifs de revenus, votre capacité et votre marché." },
   { q: "Est-ce qu'il y a de l'exclusivité?", a: "Oui. Selon votre ville et votre domaine, vous pouvez obtenir une zone exclusive sans concurrence directe." },
   { q: "Est-ce que je peux voir mon score avant de payer?", a: "Oui. L'évaluation initiale est gratuite. Vous voyez votre score et vos revenus perdus avant tout engagement." },

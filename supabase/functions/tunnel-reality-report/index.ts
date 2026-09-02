@@ -236,7 +236,7 @@ Deno.serve(async (req) => {
       { key: "paid_failed", label: "Paiement échoué", order: 9, totals: paidFailed, last_event_at: null, top_error: null },
       { key: "profile_completed", label: "Profil complété", order: 10, totals: completed, last_event_at: null, top_error: null },
       { key: "activated", label: "Entrepreneur activé", order: 11, totals: activated, last_event_at: null, top_error: null },
-      { key: "recommendable", label: "Recommandable par Alex", order: 12, totals: recommendable, last_event_at: null, top_error: null },
+      { key: "recommendable", label: "Recommandable par Clara", order: 12, totals: recommendable, last_event_at: null, top_error: null },
     ];
 
     // ------------------------------------------------------------------

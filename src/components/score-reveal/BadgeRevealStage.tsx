@@ -7,7 +7,7 @@ type Stage = "preparing" | "speaking" | "revealing" | "revealed" | "interpreting
 
 const stageLabels: Record<Stage, string> = {
   preparing: "Préparation",
-  speaking: "Alex parle",
+  speaking: "Clara parle",
   revealing: "Dévoilement",
   revealed: "Score dévoilé",
   interpreting: "Interprétation",

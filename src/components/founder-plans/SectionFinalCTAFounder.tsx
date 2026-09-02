@@ -83,7 +83,7 @@ export default function SectionFinalCTAFounder({ elite, signature }: Props) {
           </Button>
           <Button variant="outline" size="lg" asChild className="w-full">
             <a href="/alex">
-              <MessageCircle className="h-4 w-4" /> Parler à Alex
+              <MessageCircle className="h-4 w-4" /> Parler à Clara
             </a>
           </Button>
         </motion.div>

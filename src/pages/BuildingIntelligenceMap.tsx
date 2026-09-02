@@ -722,7 +722,7 @@ export default function BuildingIntelligenceMap() {
           </AnimatePresence>
         </div>
 
-        {/* ── Alex AI Footer ── */}
+        {/* ── Clara AI Footer ── */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
     // Send the link via SMS
     const phone = reply.from_address || lead.mobile_phone || lead.phone;
     const greeting = lead.first_name ? `${lead.first_name}, ` : "";
-    const msg = `${greeting}voici votre lien sécurisé pour activer UNPRO (plan ${plan}) : ${checkoutUrl}\n— Alex d'UNPRO`;
+    const msg = `${greeting}voici votre lien sécurisé pour activer UNPRO (plan ${plan}) : ${checkoutUrl}\n— Clara d'UNPRO`;
 
     let providerId: string | undefined;
     if (phone) {

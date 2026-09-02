@@ -334,7 +334,7 @@ export default function VerifyLandingPage() {
                 Avant de signer, vérifiez ce que le prix ne dit pas
               </motion.h2>
               <motion.p variants={fadeUp} custom={2} className="text-muted-foreground text-sm md:text-base mb-8 max-w-md mx-auto leading-relaxed">
-                Vérifiez un entrepreneur, analysez une soumission ou demandez l'aide d'Alex — gratuitement.
+                Vérifiez un entrepreneur, analysez une soumission ou demandez l'aide de Clara — gratuitement.
               </motion.p>
 
               <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -345,7 +345,7 @@ export default function VerifyLandingPage() {
                   <Upload className="w-4 h-4" /> Analyser une soumission
                 </Button>
                 <Button size="lg" variant="ghost" className="gap-2 font-semibold h-12 px-6 text-primary" onClick={() => openAlex("general")}>
-                  <MessageSquare className="w-4 h-4" /> Parler à Alex
+                  <MessageSquare className="w-4 h-4" /> Parler à Clara
                 </Button>
               </motion.div>
 

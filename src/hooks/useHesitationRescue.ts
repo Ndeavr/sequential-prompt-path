@@ -14,10 +14,10 @@ interface HesitationConfig {
 }
 
 const DEFAULT_MESSAGES: Record<string, { title: string; description: string }> = {
-  account: { title: "Besoin d'aide?", description: "Alex peut compléter votre inscription en quelques secondes." },
+  account: { title: "Besoin d'aide?", description: "Clara peut compléter votre inscription en quelques secondes." },
   import: { title: "L'analyse prend du temps?", description: "Ne vous inquiétez pas, nous importons toutes vos données." },
   score: { title: "Des questions sur votre score?", description: "Chaque section peut être améliorée facilement." },
-  checklist: { title: "Alex peut compléter ça pour vous", description: "Passez en mode Alex pour remplir automatiquement." },
+  checklist: { title: "Clara peut compléter ça pour vous", description: "Passez en mode Clara pour remplir automatiquement." },
   calendar: { title: "Pas de calendrier Google?", description: "Vous pouvez passer cette étape et la configurer plus tard." },
   plan: { title: "Des questions sur les plans?", description: "Le Premium est le plus populaire auprès des entrepreneurs." },
   payment: { title: "Paiement 100% sécurisé", description: "Annulez en tout temps. Aucun engagement à long terme." },

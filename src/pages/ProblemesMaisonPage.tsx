@@ -102,7 +102,7 @@ export default function ProblemesMaisonPage() {
           title="Besoin d'aide avec un problème?"
           description="Décrivez votre situation et trouvez un professionnel qualifié rapidement."
           primaryCta={{ label: "Décrire mon problème", to: "/decrire-mon-projet" }}
-          secondaryCta={{ label: "Parler à Alex", to: "/parler-a-alex" }}
+          secondaryCta={{ label: "Parler à Clara", to: "/parler-a-alex" }}
           variant="accent"
         />
 

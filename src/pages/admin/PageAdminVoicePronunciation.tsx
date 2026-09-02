@@ -152,7 +152,7 @@ export default function PageAdminVoicePronunciation() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Prononciation Alex</h1>
+          <h1 className="text-2xl font-bold text-foreground">Prononciation Clara</h1>
           <p className="text-sm text-muted-foreground">Règles de prononciation pour le pipeline vocal</p>
         </div>
         <div className="flex gap-2">

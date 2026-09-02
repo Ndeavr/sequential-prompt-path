@@ -51,7 +51,7 @@ export default function AlexRouterDebugHUD() {
         type="button"
         onClick={() => setOpen(true)}
         className="fixed bottom-4 right-4 z-[200] rounded-full bg-card/90 backdrop-blur border border-border/40 px-2.5 py-1 text-[10px] font-mono text-foreground hover:text-foreground shadow-lg"
-        title="Alex Router HUD"
+        title="Clara Router HUD"
       >
         🧭 {trace?.winningRoute ?? "router"}
       </button>
@@ -61,7 +61,7 @@ export default function AlexRouterDebugHUD() {
   return (
     <div className="fixed bottom-4 right-4 z-[200] w-72 max-h-[70vh] overflow-y-auto rounded-lg border border-border/40 bg-card/95 backdrop-blur p-3 text-[11px] font-mono text-muted-foreground shadow-xl">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-foreground font-bold">Alex Router</span>
+        <span className="text-foreground font-bold">Clara Router</span>
         <button
           type="button"
           onClick={() => setOpen(false)}

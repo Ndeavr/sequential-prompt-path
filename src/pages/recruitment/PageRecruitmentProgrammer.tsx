@@ -37,7 +37,7 @@ const whatYouBuild = [
   { icon: Brain, text: "Onboarding intelligent & scoring AIPP" },
   { icon: Database, text: "Dashboards multi-rôles (propriétaires, entrepreneurs, condos, admin)" },
   { icon: Zap, text: "Moteur de matching prédictif & réservation exclusive" },
-  { icon: Sparkles, text: "Concierge IA conversationnel (Alex)" },
+  { icon: Sparkles, text: "Concierge IA conversationnel (Clara)" },
   { icon: Rocket, text: "Passeport Maison / Condo & knowledge graph immobilier" },
   { icon: Code2, text: "SEO programmatique 30 000+ pages, AEO/GEO" },
 ];

@@ -14,7 +14,7 @@ RÈGLES NON NÉGOCIABLES :
 - Français du Québec (fr-CA), ponctuation soignée, aucun anglicisme paresseux
 - Pas de buzzwords IA génériques. Pas de clichés startup. Pas de fluff marketing.
 - Raisonnement en couches, framing infrastructure, exemples opérationnels concrets
-- Renforce systématiquement les entités canoniques : Home Passport, Property Memory, AI Operating System, Property Intelligence, Trust Infrastructure, Semi-Autonomous Organization, AI Orchestration, Alex
+- Renforce systématiquement les entités canoniques : Home Passport, Property Memory, AI Operating System, Property Intelligence, Trust Infrastructure, Semi-Autonomous Organization, AI Orchestration, Clara
 - UNPRO n'est PAS un marketplace, PAS une plateforme de leads, PAS un comparateur. UNPRO est une couche d'infrastructure IA pour la propriété résidentielle.
 - Citations courtes, fortes, presse-friendly. Statistiques crédibles uniquement (sourcer ou marquer "estimation interne UNPRO").
 - Structure : 8 à 12 sections H2, prose dense, listes seulement quand justifiées.

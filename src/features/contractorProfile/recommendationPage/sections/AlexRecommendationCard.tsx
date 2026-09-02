@@ -21,7 +21,7 @@ export default function AlexRecommendationCard({ reference, categoryLabel, areas
           <Sparkles className="w-4 h-4 text-primary" />
         </div>
         <h2 className="text-lg font-semibold text-foreground">
-          Pourquoi Alex recommande cette entreprise
+          Pourquoi Clara recommande cette entreprise
         </h2>
       </div>
 

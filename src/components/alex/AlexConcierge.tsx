@@ -244,7 +244,7 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
             transition={{ delay: 1.5, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             onClick={() => openAlexVoice("general")}
             className="fixed bottom-20 right-5 z-50 group lg:bottom-8 hidden lg:block"
-            aria-label="Ouvrir Alex"
+            aria-label="Ouvrir Clara"
           >
             {/* Ambient glow */}
             <motion.div
@@ -282,7 +282,7 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
               className="absolute right-full mr-3 top-1/2 -translate-y-1/2 whitespace-nowrap bg-card/90 backdrop-blur-xl border border-border/40 rounded-2xl px-3.5 py-2 shadow-elevated pointer-events-none"
             >
               <p className="text-[0.65rem] font-medium text-foreground">
-                Besoin d'aide ? Demandez à Alex 💡
+                Besoin d'aide ? Demandez à Clara 💡
               </p>
               <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1 w-2 h-2 rotate-45 bg-card/90 border-r border-t border-border/40" />
             </motion.div>
@@ -317,7 +317,7 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
                   <Sparkles className="text-primary-foreground h-3.5 w-3.5" />
                 </motion.div>
                 <div>
-                  <p className="text-meta font-bold text-foreground leading-none">Alex</p>
+                  <p className="text-meta font-bold text-foreground leading-none">Clara</p>
                   <p className="text-caption text-muted-foreground mt-0.5">Concierge IA UNPRO</p>
                 </div>
               </div>
@@ -344,7 +344,7 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
                 <div className="space-y-4">
                   <div className="text-center pt-2">
                     <p className="text-body font-semibold text-foreground mb-1">
-                      Bonjour, je suis Alex 👋
+                      Bonjour, je suis Clara 👋
                     </p>
                     <p className="text-meta text-muted-foreground leading-relaxed">
                       Votre concierge IA. Je peux vous aider à décrire un projet, analyser des soumissions, trouver un entrepreneur ou planifier un rendez-vous.
@@ -452,7 +452,7 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
                   ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Posez votre question à Alex…"
+                  placeholder="Posez votre question à Clara…"
                   className="flex-1 text-meta rounded-2xl border-border/30 bg-muted/20 focus-visible:ring-1 h-9"
                   disabled={isStreaming}
                 />

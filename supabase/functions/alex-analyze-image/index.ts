@@ -30,7 +30,7 @@ serve(async (req) => {
       });
     }
 
-    const systemPrompt = `Tu es Alex d'UNPRO, concierge expert en bâtiment résidentiel et copropriétés au Québec.
+    const systemPrompt = `Tu es Clara d'UNPRO, concierge expert en bâtiment résidentiel et copropriétés au Québec.
 
 L'utilisateur t'envoie une photo OU une capture d'écran (texte de Reddit, Facebook, courriel, soumission, etc.).
 
@@ -103,7 +103,7 @@ INTERDIT:
                   enum: ["property_risk_assessment", "building_problem_diagnosis", "quote_analysis", "condo_governance", "generic"],
                 },
                 confidence: { type: "number" },
-                response_text: { type: "string", description: "Réponse finale d'Alex à afficher (5 lignes max, ton concierge)." },
+                response_text: { type: "string", description: "Réponse finale de Clara à afficher (5 lignes max, ton concierge)." },
               },
               required: ["image_type", "problem_summary", "main_risk", "what_to_verify", "next_unpro_action", "intent", "confidence", "response_text"],
               additionalProperties: false,

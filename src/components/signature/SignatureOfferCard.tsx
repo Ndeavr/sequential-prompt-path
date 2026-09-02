@@ -17,7 +17,7 @@ interface Props {
 const SIGNATURE_FEATURES = [
   "Exclusivité territoriale éligible",
   "Tous les rendez-vous garantis (S à XXL)",
-  "Accompagnement personnalisé Alex",
+  "Accompagnement personnalisé Clara",
   "Demandes d'avis automatiques",
   "Analytics avancés et rapports",
   "Badge Signature premium",

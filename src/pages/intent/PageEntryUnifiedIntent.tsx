@@ -58,7 +58,7 @@ export default function PageEntryUnifiedIntent() {
     <MainLayout>
       <Helmet>
         <title>UNPRO — Décrivez votre besoin</title>
-        <meta name="description" content="Décrivez votre besoin en quelques mots. Alex trouve le bon professionnel et vous donne un rendez-vous garanti." />
+        <meta name="description" content="Décrivez votre besoin en quelques mots. Clara trouve le bon professionnel et vous donne un rendez-vous garanti." />
       </Helmet>
 
       <div className="relative min-h-screen">

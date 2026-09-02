@@ -350,7 +350,7 @@ export default function BookingSettingsPage() {
                       </label>
                       <label className="flex items-center gap-2 text-meta">
                         <Switch checked={type.supports_alex_booking ?? true} onCheckedChange={(v) => updateType(i, { supports_alex_booking: v })} />
-                        Via Alex
+                        Via Clara
                       </label>
                     </div>
 

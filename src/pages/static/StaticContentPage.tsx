@@ -32,7 +32,7 @@ const CONTENT: Record<StaticSlug, StaticContent> = {
     intro: "UNPRO est la plateforme d'intelligence artificielle qui connecte les propriétaires québécois aux meilleurs entrepreneurs locaux, sans formulaire interminable ni course aux soumissions.",
     sections: [
       { heading: "Notre mission", body: "Remplacer le modèle des « 3 soumissions » par une recommandation décisive : un seul professionnel, le bon, à prix juste, disponible rapidement." },
-      { heading: "Notre approche", body: "Alex, notre concierge IA, comprend votre besoin en quelques secondes, estime le coût, et vous met en contact avec un entrepreneur vérifié." },
+      { heading: "Notre approche", body: "Clara, notre concierge IA, comprend votre besoin en quelques secondes, estime le coût, et vous met en contact avec un entrepreneur vérifié." },
       { heading: "Au Québec, fait au Québec", body: "Plateforme conçue à Montréal, optimisée pour le climat, le marché et la réglementation québécoise (Loi 16, RBQ, NEQ)." },
     ],
   },
@@ -78,7 +78,7 @@ const CONTENT: Record<StaticSlug, StaticContent> = {
     intro: "UNPRO s'engage à offrir une expérience accessible à toutes et à tous, conforme aux directives WCAG 2.1 niveau AA.",
     sections: [
       { heading: "Engagements", body: "Contraste élevé, navigation clavier, libellés ARIA, support des lecteurs d'écran." },
-      { heading: "Voix Alex", body: "Notre concierge IA Alex permet une utilisation entièrement vocale, idéale pour les utilisateurs avec déficience visuelle ou motrice." },
+      { heading: "Voix Clara", body: "Notre concierge IA Clara permet une utilisation entièrement vocale, idéale pour les utilisateurs avec déficience visuelle ou motrice." },
       { heading: "Signaler un problème", body: "Écrivez à accessibilite@unpro.ca pour tout obstacle rencontré." },
     ],
   },
@@ -96,7 +96,7 @@ const CONTENT: Record<StaticSlug, StaticContent> = {
     intro: "Le modèle traditionnel vous fait perdre du temps, oppose les entrepreneurs sur le prix, et finit souvent par un mauvais choix.",
     sections: [
       { heading: "Le vrai problème", body: "Comparer 3 prix sans contexte ne dit rien sur la qualité, la disponibilité ou la fiabilité." },
-      { heading: "Notre solution", body: "Alex analyse votre besoin précisément, croise avec les 200+ paramètres de chaque entrepreneur, et recommande UN seul match — le bon." },
+      { heading: "Notre solution", body: "Clara analyse votre besoin précisément, croise avec les 200+ paramètres de chaque entrepreneur, et recommande UN seul match — le bon." },
       { heading: "Résultat", body: "Décision en moins de 30 secondes, rendez-vous fixé, zéro ping-pong de courriels." },
     ],
   },
@@ -121,11 +121,11 @@ const CONTENT: Record<StaticSlug, StaticContent> = {
   },
   "aide": {
     title: "Centre d'aide",
-    intro: "Réponses rapides aux questions courantes. Pour tout le reste, Alex est disponible 24/7.",
+    intro: "Réponses rapides aux questions courantes. Pour tout le reste, Clara est disponible 24/7.",
     sections: [
-      { heading: "Comment trouver un entrepreneur ?", body: "Décrivez votre besoin à Alex (texte ou voix). Il vous propose un match en moins de 30 secondes." },
+      { heading: "Comment trouver un entrepreneur ?", body: "Décrivez votre besoin à Clara (texte ou voix). Il vous propose un match en moins de 30 secondes." },
       { heading: "Combien ça coûte ?", body: "Gratuit pour les propriétaires. Les entrepreneurs paient un abonnement mensuel." },
-      { heading: "Comment annuler un rendez-vous ?", body: "Depuis votre tableau de bord ou en parlant à Alex." },
+      { heading: "Comment annuler un rendez-vous ?", body: "Depuis votre tableau de bord ou en parlant à Clara." },
       { heading: "Garanties", body: "Chaque travail est couvert par la garantie de l'entrepreneur (minimum 1 an pour les abonnés UNPRO)." },
     ],
   },
@@ -171,13 +171,13 @@ export default function StaticContentPage({ slug }: { slug: StaticSlug }) {
         <div className="mt-14 p-6 rounded-2xl bg-foreground/5 border border-foreground/10 flex items-center justify-between gap-4">
           <div>
             <p className="font-semibold text-foreground">Une question précise ?</p>
-            <p className="text-sm text-foreground/60">Alex peut vous répondre en quelques secondes.</p>
+            <p className="text-sm text-foreground/60">Clara peut vous répondre en quelques secondes.</p>
           </div>
           <Link
             to="/parler-a-alex"
             className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-foreground text-background font-medium hover:opacity-90 transition whitespace-nowrap"
           >
-            <Sparkles className="w-4 h-4" /> Parler à Alex
+            <Sparkles className="w-4 h-4" /> Parler à Clara
           </Link>
         </div>
       </div>

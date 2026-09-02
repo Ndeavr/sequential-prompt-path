@@ -15,8 +15,8 @@ export default function PageAlexConversationIntent() {
   return (
     <MainLayout>
       <Helmet>
-        <title>UNPRO — Parler à Alex</title>
-        <meta name="description" content="Décrivez votre besoin à Alex, notre assistant IA, et obtenez une recommandation instantanée." />
+        <title>UNPRO — Parler à Clara</title>
+        <meta name="description" content="Décrivez votre besoin à Clara, notre assistant IA, et obtenez une recommandation instantanée." />
       </Helmet>
       <div className="min-h-screen">
         {isContractorMode && (

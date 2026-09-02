@@ -14,7 +14,7 @@ export const FUNNEL_STAGES = [
   { key: "sms_delivered", label: "Delivered" },
   { key: "clicked", label: "Link Clicked" },
   { key: "landing_viewed", label: "Landing Viewed" },
-  { key: "alex_started", label: "Alex Started" },
+  { key: "alex_started", label: "Clara Started" },
   { key: "profile_started", label: "Profile Started" },
   { key: "checkout_started", label: "Checkout Started" },
   { key: "payment_success", label: "Payment ✓" },

@@ -53,7 +53,7 @@ export default function SectionFinalCTA({ onTrackCta }: Props) {
               onClick={() => { onTrackCta("final_alex", "final_cta"); navigate("/alex"); }}
             >
               <MessageCircle className="w-4 h-4" />
-              Parler à Alex
+              Parler à Clara
             </Button>
             <Button
               variant="ghost"

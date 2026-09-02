@@ -161,7 +161,7 @@ export default function PlanRecommendationHero({ recommendedPlan, primaryObjecti
           className="w-full h-12 rounded-xl"
           onClick={onTalkToAlex}
         >
-          Parler à Alex
+          Parler à Clara
         </Button>
       </div>
     </motion.div>

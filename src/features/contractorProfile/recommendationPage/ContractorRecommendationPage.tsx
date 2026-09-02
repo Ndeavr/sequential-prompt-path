@@ -60,7 +60,7 @@ export default function ContractorRecommendationPage() {
   const title = `${c.business_name}${c.specialty ? ` — ${c.specialty}` : ""} à ${cityName} | Recommandation UNPRO`;
   const description = (
     c.description ||
-    `Pourquoi Alex recommande ${c.business_name} à ${cityName}. Vérifications UNPRO, zone desservie, compatibilité, disponibilité.`
+    `Pourquoi Clara recommande ${c.business_name} à ${cityName}. Vérifications UNPRO, zone desservie, compatibilité, disponibilité.`
   ).slice(0, 155);
 
   const breadcrumbs = [
@@ -105,8 +105,8 @@ export default function ContractorRecommendationPage() {
     })),
     faqs: faqs.map((f) => ({ question: f.q, answer: f.a })),
     ctas: {
-      book_appointment: "Parler à Alex",
-      alex: "Parler à Alex",
+      book_appointment: "Parler à Clara",
+      alex: "Parler à Clara",
       evaluation: "Voir mon niveau de compatibilité",
     },
     service_area: c.service_areas ?? [cityName],

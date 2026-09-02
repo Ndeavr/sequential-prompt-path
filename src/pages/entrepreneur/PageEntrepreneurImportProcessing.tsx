@@ -304,7 +304,7 @@ export default function PageEntrepreneurImportProcessing() {
           </Card>
         )}
 
-        {/* Alex live commentary */}
+        {/* Clara live commentary */}
         {alexLines.length > 0 && !completed && (
           <Card className="p-3 bg-blue-500/5 border-blue-400/20 rounded-2xl">
             <AnimatePresence mode="popLayout">

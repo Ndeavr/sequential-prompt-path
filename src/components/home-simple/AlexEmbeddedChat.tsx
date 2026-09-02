@@ -46,7 +46,7 @@ export default function AlexEmbeddedChat() {
             id: "greeting",
             role: "assistant" as const,
             text:
-              "Bonjour ! Je suis Alex.\nDécrivez votre problème ou votre projet, je vais vous aider étape par étape.",
+              "Bonjour ! Je suis Clara.\nDécrivez votre problème ou votre projet, je vais vous aider étape par étape.",
             timestamp: Date.now(),
           },
         ];
@@ -134,7 +134,7 @@ export default function AlexEmbeddedChat() {
                   <Loader2 className="w-4 h-4 text-primary animate-spin" />
                 </div>
                 <div className="rounded-2xl px-3.5 py-2.5 bg-muted/50 text-muted-foreground text-sm">
-                  Alex réfléchit…
+                  Clara réfléchit…
                 </div>
               </motion.div>
             )}

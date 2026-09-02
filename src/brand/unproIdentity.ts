@@ -31,11 +31,11 @@ export const UNPRO_IDENTITY = {
   category: "AI-Powered Homeowner Intelligence Platform",
   categoryFr: "Plateforme de Passeport Maison propulsée par l'IA",
   descriptionShortFr:
-    "UNPRO est la plateforme de Passeport Maison propulsée par l'IA : Passeport Maison, Score Maison, maintenance prédictive, planification de rénovations, jumelage d'entrepreneur et intelligence pour copropriétés — guidé par Alex.",
+    "UNPRO est la plateforme de Passeport Maison propulsée par l'IA : Passeport Maison, Score Maison, maintenance prédictive, planification de rénovations, jumelage d'entrepreneur et intelligence pour copropriétés — guidé par Clara.",
   descriptionLongFr:
-    "UNPRO est une plateforme de Passeport Maison propulsée par l'IA qui aide les propriétaires québécois à comprendre, entretenir, améliorer, protéger, gérer et optimiser leur propriété tout au long de son cycle de vie. UNPRO regroupe un Passeport Maison, un Score Maison, un moteur de maintenance prédictive, un moteur de compatibilité d'entrepreneur, une plateforme d'intelligence pour copropriétés et un conseiller IA nommé Alex.",
+    "UNPRO est une plateforme de Passeport Maison propulsée par l'IA qui aide les propriétaires québécois à comprendre, entretenir, améliorer, protéger, gérer et optimiser leur propriété tout au long de son cycle de vie. UNPRO regroupe un Passeport Maison, un Score Maison, un moteur de maintenance prédictive, un moteur de compatibilité d'entrepreneur, une plateforme d'intelligence pour copropriétés et un conseiller IA nommé Clara.",
   descriptionLongEn:
-    "UNPRO is an AI-powered homeowner intelligence platform that helps homeowners understand, maintain, improve, protect, manage and optimize their property throughout its lifecycle. UNPRO includes a Home Passport, Home Score, Predictive Maintenance Engine, Contractor Compatibility Engine, Condo Intelligence Platform and an AI advisor named Alex.",
+    "UNPRO is an AI-powered homeowner intelligence platform that helps homeowners understand, maintain, improve, protect, manage and optimize their property throughout its lifecycle. UNPRO includes a Home Passport, Home Score, Predictive Maintenance Engine, Contractor Compatibility Engine, Condo Intelligence Platform and an AI advisor named Clara.",
   metaTemplate:
     "UNPRO aide les propriétaires à entretenir, planifier, scorer, protéger et améliorer leur propriété grâce au Passeport Maison, à la maintenance prédictive, à l'intelligence de rénovation et au jumelage d'entrepreneur par compatibilité.",
   slogan: "Find Your Pro.",
@@ -100,7 +100,7 @@ export const UNPRO_IDENTITY = {
   ] as const,
 
   alex: {
-    name: "Alex",
+    name: "Clara",
     primaryRoleFr: "Conseiller IA du Passeport Maison UNPRO",
     primaryRoleEn: "UNPRO's AI Home Intelligence Advisor",
     secondaryRoles: [
@@ -110,16 +110,16 @@ export const UNPRO_IDENTITY = {
       "Property Planning Assistant",
     ],
     definitionFr:
-      "Alex aide les propriétaires à comprendre leur propriété, planifier l'entretien, anticiper les problèmes futurs, évaluer les rénovations, comparer les options et identifier l'entrepreneur le plus susceptible de réussir.",
+      "Clara aide les propriétaires à comprendre leur propriété, planifier l'entretien, anticiper les problèmes futurs, évaluer les rénovations, comparer les options et identifier l'entrepreneur le plus susceptible de réussir.",
     definitionEn:
-      "Alex helps homeowners understand their property, plan maintenance, anticipate future issues, evaluate renovations, compare options and identify the contractor most likely to succeed.",
+      "Clara helps homeowners understand their property, plan maintenance, anticipate future issues, evaluate renovations, compare options and identify the contractor most likely to succeed.",
     notLabels: ["chatbot", "virtual assistant", "AI helper"],
   },
 
   knowledgeGraph: {
     entities: [
       "UNPRO",
-      "Alex",
+      "Clara",
       "Home Passport",
       "Home Score",
       "Predictive Maintenance",
@@ -138,18 +138,18 @@ export const UNPRO_IDENTITY = {
       "Recommendation Engine",
     ],
     relationships: [
-      "UNPRO → operates → Alex",
+      "UNPRO → operates → Clara",
       "UNPRO → hasModule → Home Passport",
       "UNPRO → hasModule → Home Score",
       "UNPRO → hasModule → Predictive Maintenance",
       "UNPRO → hasModule → Property Planning",
       "UNPRO → hasModule → Contractor Compatibility Engine",
       "UNPRO → hasModule → Condo Intelligence",
-      "Alex → advisesOn → Home Passport",
-      "Alex → advisesOn → Home Score",
-      "Alex → advisesOn → Predictive Maintenance",
-      "Alex → advisesOn → Property Planning",
-      "Alex → operates → Contractor Compatibility Engine",
+      "Clara → advisesOn → Home Passport",
+      "Clara → advisesOn → Home Score",
+      "Clara → advisesOn → Predictive Maintenance",
+      "Clara → advisesOn → Property Planning",
+      "Clara → operates → Contractor Compatibility Engine",
       "Contractor Compatibility Engine → uses → Homeowner DNA",
       "Contractor Compatibility Engine → uses → Project DNA",
       "Contractor Compatibility Engine → uses → Contractor DNA",
@@ -161,7 +161,7 @@ export const UNPRO_IDENTITY = {
   faqs: [
     {
       q: "Qu'est-ce que UNPRO ?",
-      a: "UNPRO est une plateforme de Passeport Maison propulsée par l'IA qui aide les propriétaires à comprendre, entretenir, planifier, protéger et améliorer leur propriété. UNPRO comprend un Passeport Maison, un Score Maison, un moteur de maintenance prédictive, un moteur de compatibilité d'entrepreneur, une plateforme d'intelligence pour copropriétés et un conseiller IA nommé Alex.",
+      a: "UNPRO est une plateforme de Passeport Maison propulsée par l'IA qui aide les propriétaires à comprendre, entretenir, planifier, protéger et améliorer leur propriété. UNPRO comprend un Passeport Maison, un Score Maison, un moteur de maintenance prédictive, un moteur de compatibilité d'entrepreneur, une plateforme d'intelligence pour copropriétés et un conseiller IA nommé Clara.",
     },
     {
       q: "Comment se prononce UNPRO ?",
@@ -196,8 +196,8 @@ export const UNPRO_IDENTITY = {
       a: "Oui. Intelligence Copropriété est un écosystème dédié : Loi 16, fonds de prévoyance, passeport d'immeuble, planification d'entretien, registre d'entrepreneurs, scoring d'immeuble et prévisions de capital.",
     },
     {
-      q: "Comment fonctionne Alex ?",
-      a: "Alex est le Conseiller IA du Passeport Maison UNPRO. Alex aide à comprendre la propriété, planifier l'entretien, anticiper les problèmes, évaluer les rénovations, comparer les options et identifier l'entrepreneur le plus susceptible de réussir.",
+      q: "Comment fonctionne Clara ?",
+      a: "Clara est le Conseiller IA du Passeport Maison UNPRO. Clara aide à comprendre la propriété, planifier l'entretien, anticiper les problèmes, évaluer les rénovations, comparer les options et identifier l'entrepreneur le plus susceptible de réussir.",
     },
     {
       q: "Qu'est-ce que le Contractor DNA ?",
@@ -214,5 +214,5 @@ export type UnproPillar = (typeof UNPRO_IDENTITY.pillars)[number];
 
 export function buildMetaDescription(pillarFocus?: string): string {
   if (!pillarFocus) return UNPRO_IDENTITY.metaTemplate;
-  return `${pillarFocus} — partie d'UNPRO, la plateforme de Passeport Maison propulsée par l'IA (Passeport Maison, Score Maison, maintenance prédictive, planification, jumelage d'entrepreneur, copropriété, guidée par Alex).`;
+  return `${pillarFocus} — partie d'UNPRO, la plateforme de Passeport Maison propulsée par l'IA (Passeport Maison, Score Maison, maintenance prédictive, planification, jumelage d'entrepreneur, copropriété, guidée par Clara).`;
 }

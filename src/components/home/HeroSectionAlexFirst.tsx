@@ -178,18 +178,18 @@ export default function HeroSectionAlexFirst() {
               </span>
             </h1>
             <p className="text-[15px] sm:text-base text-white/75 max-w-md leading-relaxed">
-              UNPRO est votre plateforme de Passeport Maison : Passeport Maison, Score Maison, maintenance prédictive, planification de rénovations et jumelage d'entrepreneur — guidé par Alex.
+              UNPRO est votre plateforme de Passeport Maison : Passeport Maison, Score Maison, maintenance prédictive, planification de rénovations et jumelage d'entrepreneur — guidé par Clara.
             </p>
             <p className="text-[13px] sm:text-sm text-white/55 max-w-md leading-relaxed">
               Pas trois soumissions. Pas dix appels. Une intelligence complète pour votre propriété.
             </p>
           </header>
 
-          {/* ── Alex Orb (96px, breathing) ── */}
+          {/* ── Clara Orb (96px, breathing) ── */}
           <button
             type="button"
             onClick={startVoice}
-            aria-label="Démarrer la conversation vocale avec Alex"
+            aria-label="Démarrer la conversation vocale avec Clara"
             data-testid="alex-orb-button"
             className="relative flex items-center justify-center group focus:outline-none"
             style={{ width: 150, height: 150 }}
@@ -242,7 +242,7 @@ export default function HeroSectionAlexFirst() {
               <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-70" />
               <span className="relative rounded-full h-2 w-2 bg-emerald-400" />
             </span>
-            <span>Alex est prêt à vous aider</span>
+            <span>Clara est prêt à vous aider</span>
           </div>
 
           {/* ── Input bar ── */}
@@ -266,7 +266,7 @@ export default function HeroSectionAlexFirst() {
               <button
                 type="button"
                 onClick={startVoice}
-                aria-label="Démarrer la conversation vocale avec Alex"
+                aria-label="Démarrer la conversation vocale avec Clara"
                 className="h-10 w-10 flex items-center justify-center rounded-full text-white transition-all active:scale-95"
                 style={{
                   background:

@@ -15,7 +15,7 @@ const NEXT_STEPS = [
   { icon: User, label: "Voir mon profil", route: "/pro/profile", delay: 0 },
   { icon: BarChart3, label: "Mon cockpit", route: "/pro", delay: 0.1 },
   { icon: Calendar, label: "Mes rendez-vous", route: "/pro/appointments", delay: 0.2 },
-  { icon: MessageCircle, label: "Parler à Alex", route: "/alex", delay: 0.3 },
+  { icon: MessageCircle, label: "Parler à Clara", route: "/alex", delay: 0.3 },
 ];
 
 export default function StepActivationSuccess({ businessName, planName, score }: Props) {
@@ -76,9 +76,9 @@ export default function StepActivationSuccess({ businessName, planName, score }:
         ))}
       </div>
 
-      {/* Alex */}
+      {/* Clara */}
       <div className="rounded-xl bg-primary/5 border border-primary/10 p-4">
-        <p className="text-xs font-semibold text-primary mb-1">Alex</p>
+        <p className="text-xs font-semibold text-primary mb-1">Clara</p>
         <p className="text-sm text-foreground">
           🎉 Félicitations ! Votre profil est en cours d'optimisation. Vous allez commencer à recevoir des rendez-vous qualifiés très bientôt.
         </p>

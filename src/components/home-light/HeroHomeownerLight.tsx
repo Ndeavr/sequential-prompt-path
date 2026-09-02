@@ -2,34 +2,15 @@
  * HeroHomeownerLight — Homeowner-first hero on the light UNPRO surface.
  * White / light-blue background, navy typography, royal-blue actions.
  * Headline: « Fini les 3 soumissions. Un pro. C'est tout. »
- * Alex orb + CTA, homeowner photographic visual.
+ * Clara is presented as a large inline conversation box — never a voice popup.
  */
-import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
 
-import { useAlexVoice } from "@/contexts/AlexVoiceContext";
-import { useAlexStore } from "@/features/alex/state/alexStore";
-import AlexOrb, { type AlexOrbState } from "@/components/alex/AlexOrb";
+import ClaraConversationBox from "@/components/home-light/ClaraConversationBox";
 import heroImage from "@/assets/home-hero-homeowner.jpg";
 
 export default function HeroHomeownerLight() {
-  const { openAlex } = useAlexVoice();
-  const mode = useAlexStore((s) => s.mode);
 
-  const orbState: AlexOrbState = useMemo(() => {
-    switch (mode) {
-      case "speaking": return "speaking";
-      case "listening": return "listening";
-      case "thinking": return "thinking";
-      default: return "idle";
-    }
-  }, [mode]);
-
-  const startAlex = () => {
-    useAlexStore.getState().markUserEngaged();
-    openAlex("home_hero", "user_tapped_orb");
-  };
 
   return (
     <section className="relative overflow-hidden">
@@ -60,39 +41,17 @@ export default function HeroHomeownerLight() {
           transition={{ duration: 0.45, delay: 0.1 }}
           className="mx-auto mt-5 max-w-2xl text-[16.5px] leading-relaxed text-muted-foreground md:text-lg"
         >
-          Décrivez vos travaux à Alex, une question à la fois. L'IA comprend
+          Décrivez vos travaux à Clara, une question à la fois. L'IA comprend
           votre projet et vous oriente vers l'entrepreneur qui correspond
           réellement à vos besoins.
         </motion.p>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.16, type: "spring", stiffness: 110, damping: 18 }}
-          className="mt-9 flex justify-center"
-        >
-          <AlexOrb state={orbState} size="hero" theme="light" onClick={startAlex} ariaLabel="Parler à Alex" />
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.22 }}
-          className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
-        >
-          <button
-            data-cta-canonical="home_alex"
-            onClick={startAlex}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-7 py-4 text-[15px] font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-transform hover:-translate-y-0.5 sm:w-auto"
-          >
-            Parler à Alex
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        </motion.div>
+        <ClaraConversationBox />
 
         <p className="mt-4 text-[13px] text-muted-foreground">
           Gratuit pour les propriétaires. Aucune obligation.
         </p>
+
 
         {/* Homeowner visual */}
         <motion.div

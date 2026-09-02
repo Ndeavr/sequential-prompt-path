@@ -92,7 +92,7 @@ export default function HeroSectionPIMLanding() {
               }}
             >
               <Mic size={18} />
-              Parler à Alex
+              Parler à Clara
             </button>
           </motion.div>
 

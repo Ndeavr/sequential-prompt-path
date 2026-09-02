@@ -19,7 +19,7 @@ const stepConfig: Record<AlexStep, { icon: typeof Mic; label: string; pulse: boo
   predicting: { icon: Search, label: "J'analyse…", pulse: true, color: "var(--secondary)" },
   matching: { icon: Search, label: "Recherche du meilleur profil…", pulse: true, color: "var(--secondary)" },
   preparing_booking: { icon: Calendar, label: "Préparation en cours…", pulse: true, color: "var(--accent)" },
-  speaking: { icon: Sparkles, label: "Alex parle…", pulse: false, color: "var(--primary)" },
+  speaking: { icon: Sparkles, label: "Clara parle…", pulse: false, color: "var(--primary)" },
   opening_calendar: { icon: Calendar, label: "Ouverture du calendrier…", pulse: true, color: "var(--accent)" },
   waiting_input: { icon: Mic, label: "Je vous écoute…", pulse: false, color: "var(--primary)" },
   objection_handling: { icon: Sparkles, label: "Je comprends…", pulse: false, color: "var(--primary)" },

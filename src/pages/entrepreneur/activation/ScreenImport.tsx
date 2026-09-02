@@ -199,7 +199,7 @@ export default function ScreenImport() {
         )}
       </div>
 
-      {/* Alex observation */}
+      {/* Clara observation */}
       <div className="px-4 pb-6">
         <PanelAlexObservesImport messages={alexMessages} />
       </div>

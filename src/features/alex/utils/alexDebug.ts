@@ -14,7 +14,7 @@ export function alexLog(tag: string, payload?: unknown): void {
   buffer.push(entry);
   if (buffer.length > MAX_ENTRIES) buffer.shift();
   if (isDev) {
-    console.log(`[Alex] ${tag}`, payload ?? "");
+    console.log(`[Clara] ${tag}`, payload ?? "");
   }
 }
 

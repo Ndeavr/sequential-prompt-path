@@ -133,7 +133,7 @@ export default function PageContractorAippProfile() {
       {/* CTA */}
       <section className="px-6 py-16 max-w-5xl mx-auto text-center">
         <Link to="/alex" className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-cyan-500 text-[#050816] font-semibold hover:bg-cyan-400 transition">
-          Parler à Alex →
+          Parler à Clara →
         </Link>
       </section>
     </div>

@@ -42,7 +42,7 @@ const PILLARS = [
   {
     icon: Brain,
     title: "Recommandations IA explicables",
-    body: "Chaque recommandation d'Alex est traçable jusqu'à sa source : score, territoire, disponibilité, avis. Aucune boîte noire — chaque sortie est citable.",
+    body: "Chaque recommandation de Clara est traçable jusqu'à sa source : score, territoire, disponibilité, avis. Aucune boîte noire — chaque sortie est citable.",
   },
 ];
 

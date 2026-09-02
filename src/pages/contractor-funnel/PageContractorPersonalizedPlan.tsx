@@ -199,7 +199,7 @@ export default function PageContractorPersonalizedPlan() {
             onClick={() => navigate("/entrepreneur/onboarding")}
             className="rounded-full px-5 py-3 bg-amber-500 text-black font-semibold"
           >
-            Repartir avec Alex
+            Repartir avec Clara
           </button>
         </div>
       </div>
@@ -494,7 +494,7 @@ export default function PageContractorPersonalizedPlan() {
             onClick={() => navigate("/entrepreneur/onboarding?focus=alex")}
             className="h-14 px-4 rounded-[18px] bg-white/[0.06] border border-white/10 text-white text-sm"
           >
-            Parler à Alex
+            Parler à Clara
           </button>
         </div>
       </div>

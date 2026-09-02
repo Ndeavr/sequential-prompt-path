@@ -265,7 +265,7 @@ export function actionsForStage(r: CrmProspect): { action: string; label: string
   if (r.paid_at) {
     return [
       { action: "activate_now", label: "Activer" },
-      { action: "alex_onboarding", label: "Onboarding Alex" },
+      { action: "alex_onboarding", label: "Onboarding Clara" },
     ];
   }
   if (r.checkout_at) {

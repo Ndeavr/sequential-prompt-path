@@ -163,7 +163,7 @@ export default function StartPage() {
                 })}
               </div>
 
-              {/* Alex micro-interaction */}
+              {/* Clara micro-interaction */}
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4 }} className="flex items-start gap-4 p-5 rounded-xl border border-border bg-card/80 backdrop-blur-sm mb-10">
                 <div className="relative flex-shrink-0">
                   <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
@@ -172,7 +172,7 @@ export default function StartPage() {
                   <motion.div className="absolute inset-0 rounded-full bg-primary/20" animate={{ scale: [1, 1.4, 1], opacity: [0.4, 0, 0.4] }} transition={{ duration: 2.5, repeat: Infinity }} />
                 </div>
                 <div>
-                  <div className="font-semibold text-sm text-foreground">Alex — Assistant IA UNPRO</div>
+                  <div className="font-semibold text-sm text-foreground">Clara — Assistant IA UNPRO</div>
                   <p className="text-sm text-muted-foreground mt-1">« Je peux analyser vos soumissions ou vous aider à trouver le bon entrepreneur. »</p>
                 </div>
               </motion.div>

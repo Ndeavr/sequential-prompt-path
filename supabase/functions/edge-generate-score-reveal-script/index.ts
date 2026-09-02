@@ -27,7 +27,7 @@ Deno.serve(async (req: Request) => {
       {
         key: "preparation",
         spoken_text: "J'ai terminé l'analyse de votre présence actuelle. Ce que je vais vous montrer maintenant, ce n'est pas juste un chiffre. C'est un indicateur de la façon dont votre entreprise est comprise, structurée et recommandable dans un environnement piloté par l'IA.",
-        display_text: "Analyse terminée. Alex prépare votre résultat.",
+        display_text: "Analyse terminée. Clara prépare votre résultat.",
         delay_ms: 5000,
         trigger_type: "auto",
       },

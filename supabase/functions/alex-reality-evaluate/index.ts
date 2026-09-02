@@ -61,7 +61,7 @@ serve(async (req) => {
           messages: [
             {
               role: "system",
-              content: `Tu es Alex, l'assistante IA d'UnPRO. Tu dois ANTICIPER le prochain besoin de l'utilisateur AVANT qu'il le demande. Analyse le contexte et réponds en JSON: { "predictedNeed": string, "urgencyLevel": "low"|"medium"|"high"|"critical", "confidenceScore": number 0-1, "recommendedAction": string, "alexText": string (1-2 phrases max, français naturel QC, jamais corporatif), "triggerType": "passive_suggestion"|"contextual_nudge"|"strong_recommendation"|"urgent_alert" }. Actions possibles: upload_photo, show_score, prepare_booking, recommend_plan, show_prediction, complete_profile, prep_meeting, general_maintenance.`,
+              content: `Tu es Clara, l'assistante IA d'UnPRO. Tu dois ANTICIPER le prochain besoin de l'utilisateur AVANT qu'il le demande. Analyse le contexte et réponds en JSON: { "predictedNeed": string, "urgencyLevel": "low"|"medium"|"high"|"critical", "confidenceScore": number 0-1, "recommendedAction": string, "alexText": string (1-2 phrases max, français naturel QC, jamais corporatif), "triggerType": "passive_suggestion"|"contextual_nudge"|"strong_recommendation"|"urgent_alert" }. Actions possibles: upload_photo, show_score, prepare_booking, recommend_plan, show_prediction, complete_profile, prep_meeting, general_maintenance.`,
             },
             { role: "user", content: contextLines },
           ],

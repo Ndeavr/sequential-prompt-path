@@ -16,28 +16,28 @@ export const headerNavByRole: Record<UserRole | "guest", NavItem[]> = {
     { to: "/proprietaires", label: "Propriétaires", labelEn: "Homeowners", icon: "Building2" },
     { to: "/entrepreneurs", label: "Entrepreneurs", labelEn: "Contractors", icon: "Briefcase" },
     { to: "/condo", label: "Condo", icon: "Building" },
-    { to: "/alex", label: "Alex", labelEn: "Alex", icon: "Sparkles" },
+    { to: "/alex", label: "Clara", labelEn: "Clara", icon: "Sparkles" },
   ],
   homeowner: [
     { to: "/dashboard", label: "Accueil", labelEn: "Home", icon: "Home" },
     { to: "/dashboard/properties", label: "Mes propriétés", labelEn: "My Properties", icon: "Building2" },
     { to: "/dashboard/projects/new", label: "Mes projets", labelEn: "My Projects", icon: "FolderOpen" },
     { to: "/dashboard/projects/new", label: "Nouveau projet", labelEn: "New Project", icon: "Briefcase" },
-    { to: "/alex", label: "Alex", labelEn: "Alex", icon: "Sparkles" },
+    { to: "/alex", label: "Clara", labelEn: "Clara", icon: "Sparkles" },
   ],
   contractor: [
     { to: "/pro", label: "Accueil", labelEn: "Home", icon: "Home" },
     { to: "/pro/profile", label: "Mon profil", labelEn: "My Profile", icon: "User" },
     { to: "/pro/leads", label: "Rendez-vous garantis", labelEn: "Guaranteed Appointments", icon: "CalendarCheck" },
     { to: "/pro/appointments", label: "Mes rendez-vous", labelEn: "My Appointments", icon: "CalendarDays" },
-    { to: "/alex", label: "Alex", labelEn: "Alex", icon: "Sparkles" },
+    { to: "/alex", label: "Clara", labelEn: "Clara", icon: "Sparkles" },
   ],
   partner: [
     { to: "/dashboard", label: "Accueil", labelEn: "Home", icon: "Home" },
     { to: "/dashboard/syndicates", label: "Dossiers", labelEn: "Cases", icon: "FolderOpen" },
     { to: "/pro/leads", label: "Rendez-vous garantis", labelEn: "Guaranteed Appointments", icon: "CalendarCheck" },
     { to: "/dashboard/home-score", label: "Rapports", labelEn: "Reports", icon: "BarChart3" },
-    { to: "/alex", label: "Alex", labelEn: "Alex", icon: "Sparkles" },
+    { to: "/alex", label: "Clara", labelEn: "Clara", icon: "Sparkles" },
   ],
   admin: [
     { to: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
@@ -194,35 +194,35 @@ export const mobileTabsByRole: Record<UserRole | "guest", NavItem[]> = {
   guest: [
     { to: "/", label: "Accueil", labelEn: "Home", icon: "Home" },
     { to: "/entrepreneurs", label: "Explorer", labelEn: "Explore", icon: "Compass" },
-    { to: "/alex", label: "Alex", icon: "Sparkles" },
+    { to: "/alex", label: "Clara", icon: "Sparkles" },
     { to: "/pricing", label: "Tarifs", labelEn: "Pricing", icon: "CreditCard" },
     { to: "/login", label: "Connexion", labelEn: "Sign In", icon: "LogIn" },
   ],
   homeowner: [
     { to: "/dashboard", label: "Accueil", labelEn: "Home", icon: "Home" },
     { to: "/alex", label: "Pro", labelEn: "Pro", icon: "Search" },
-    { to: "/alex", label: "Alex", icon: "Sparkles" },
+    { to: "/alex", label: "Clara", icon: "Sparkles" },
     { to: "/compare-quotes", label: "Soumissions", labelEn: "Quotes", icon: "Scale" },
     { to: "/dashboard/account", label: "Compte", labelEn: "Account", icon: "User" },
   ],
   contractor: [
     { to: "/pro", label: "Accueil", labelEn: "Home", icon: "Home" },
     { to: "/pro/leads", label: "Croissance", labelEn: "Growth", icon: "TrendingUp" },
-    { to: "/alex", label: "Alex", icon: "Sparkles" },
+    { to: "/alex", label: "Clara", icon: "Sparkles" },
     { to: "/pro/profile", label: "Profil", labelEn: "Profile", icon: "User" },
     { to: "/pro/account", label: "Compte", labelEn: "Account", icon: "Settings" },
   ],
   partner: [
     { to: "/dashboard", label: "Accueil", labelEn: "Home", icon: "Home" },
     { to: "/condo", label: "Condo", labelEn: "Condo", icon: "Building" },
-    { to: "/alex", label: "Alex", icon: "Sparkles" },
+    { to: "/alex", label: "Clara", icon: "Sparkles" },
     { to: "/dashboard/syndicates", label: "Conformité", labelEn: "Compliance", icon: "ShieldCheck" },
     { to: "/dashboard/account", label: "Compte", labelEn: "Account", icon: "User" },
   ],
   admin: [
     { to: "/admin", label: "Dashboard", labelEn: "Dashboard", icon: "LayoutDashboard" },
     { to: "/admin/contractors", label: "Entrepreneurs", labelEn: "Contractors", icon: "Briefcase" },
-    { to: "/alex", label: "Alex", icon: "Sparkles" },
+    { to: "/alex", label: "Clara", icon: "Sparkles" },
     { to: "/admin/outbound", label: "Acquisition", labelEn: "Acquisition", icon: "TrendingUp" },
     { to: "/dashboard/account", label: "Compte", labelEn: "Account", icon: "User" },
   ],
@@ -235,7 +235,7 @@ export const mobileTabsByRole: Record<UserRole | "guest", NavItem[]> = {
 export const quickActionsByRole: Record<UserRole | "guest", NavItem[]> = {
   guest: [],
   homeowner: [
-    { to: "/alex", label: "Parler à Alex", labelEn: "Talk to Alex", icon: "Sparkles" },
+    { to: "/alex", label: "Parler à Clara", labelEn: "Talk to Clara", icon: "Sparkles" },
     { to: "/compare-quotes", label: "Comparer soumissions", labelEn: "Compare quotes", icon: "Scale" },
   ],
   contractor: [
@@ -290,7 +290,7 @@ export function getDrawerSections(role: UserRole | "guest"): DrawerSection[] {
     label: "Outils",
     labelEn: "Tools",
     items: [
-      { to: "/alex", label: "Support Alex", labelEn: "Alex Support", icon: "Sparkles" },
+      { to: "/alex", label: "Support Clara", labelEn: "Clara Support", icon: "Sparkles" },
     ],
   };
 
@@ -321,7 +321,7 @@ export function getDrawerItems(ctx: NavigationContext): NavItem[] {
       { to: "/dashboard/quotes", label: "Mes soumissions", labelEn: "My Quotes", icon: "FileText" },
       { to: "/compare-quotes", label: "Analyser mes soumissions", labelEn: "Analyze My Quotes", icon: "Scale" },
       { to: "/design", label: "UNPRO Design", icon: "Palette" },
-      { to: "/alex", label: "Parler à Alex", labelEn: "Talk to Alex", icon: "Sparkles" },
+      { to: "/alex", label: "Parler à Clara", labelEn: "Talk to Clara", icon: "Sparkles" },
     ];
   }
 
@@ -357,7 +357,7 @@ export function getDrawerItems(ctx: NavigationContext): NavItem[] {
     { to: "/condo", label: "Condo / Immeubles", labelEn: "Condos", icon: "Building" },
     { to: "/design", label: "UNPRO Design", icon: "Palette" },
     { to: "/compare-quotes", label: "Analyser des soumissions", labelEn: "Analyze Quotes", icon: "Scale" },
-    { to: "/alex", label: "Parler à Alex", labelEn: "Talk to Alex", icon: "Sparkles" },
+    { to: "/alex", label: "Parler à Clara", labelEn: "Talk to Clara", icon: "Sparkles" },
     { to: "/score-maison", label: "Score Maison", labelEn: "Home Score", icon: "BarChart3" },
     { to: "/aipp-score", label: "Score AIPP", icon: "Star" },
     { to: "/pricing", label: "Tarifs", labelEn: "Pricing", icon: "CreditCard" },
@@ -409,9 +409,9 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
         items: [
           { to: "/proprietaires", label: "Passeport Maison", icon: "FileText" },
           { to: "/compare-quotes", label: "Analyser des soumissions", labelEn: "Analyze Quotes", icon: "Scale" },
-          { to: "/alex", label: "Parler à Alex", labelEn: "Talk to Alex", icon: "Sparkles" },
+          { to: "/alex", label: "Parler à Clara", labelEn: "Talk to Clara", icon: "Sparkles" },
           { to: "/decrire-projet", label: "Décrire mon projet", labelEn: "Describe My Project", icon: "PenLine" },
-          { to: "/alex", label: "Parler à Alex", labelEn: "Talk to Alex", icon: "Sparkles" },
+          { to: "/alex", label: "Parler à Clara", labelEn: "Talk to Clara", icon: "Sparkles" },
         ],
       },
       {
@@ -436,9 +436,9 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
         items: [
           { to: "/dashboard/properties", label: "Mes propriétés", labelEn: "My Properties", icon: "Building2" },
           { to: "/compare-quotes", label: "Analyser mes soumissions", labelEn: "Analyze My Quotes", icon: "Scale" },
-          { to: "/alex", label: "Parler à Alex", labelEn: "Talk to Alex", icon: "Sparkles" },
+          { to: "/alex", label: "Parler à Clara", labelEn: "Talk to Clara", icon: "Sparkles" },
           { to: "/decrire-projet", label: "Décrire mon projet", labelEn: "Describe My Project", icon: "PenLine" },
-          { to: "/alex", label: "Parler à Alex", labelEn: "Talk to Alex", icon: "Sparkles" },
+          { to: "/alex", label: "Parler à Clara", labelEn: "Talk to Clara", icon: "Sparkles" },
         ],
       },
       discoverSection,

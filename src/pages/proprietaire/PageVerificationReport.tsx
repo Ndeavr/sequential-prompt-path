@@ -365,11 +365,11 @@ export default function PageVerificationReport() {
               Besoin d'un accompagnement ?
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Alex peut vous guider vers l'entrepreneur adéquat pour votre projet.
+              Clara peut vous guider vers l'entrepreneur adéquat pour votre projet.
             </p>
           </div>
           <Button asChild size="sm">
-            <Link to="/">Ouvrir Alex</Link>
+            <Link to="/">Ouvrir Clara</Link>
           </Button>
         </div>
       </div>

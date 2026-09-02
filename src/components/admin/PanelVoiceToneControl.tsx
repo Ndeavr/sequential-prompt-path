@@ -25,7 +25,7 @@ import {
 const FLAVOR_LABELS = ["International pur", "Neutre + QC subtil", "Québécois léger"];
 
 const TEST_SENTENCES_FR = [
-  "Bonjour. Je suis Alex, votre assistant UNPRO.",
+  "Bonjour. Je suis Clara, votre assistant UNPRO.",
   "Je peux vous aider à trouver le bon entrepreneur pour votre projet.",
   "Bienvenue sur UNPRO. Décrivez-moi votre problème.",
   "Votre copropriété nécessite une inspection complète.",
@@ -34,7 +34,7 @@ const TEST_SENTENCES_FR = [
 ];
 
 const TEST_SENTENCES_EN = [
-  "Hello. I'm Alex, your UNPRO assistant.",
+  "Hello. I'm Clara, your UNPRO assistant.",
   "I can help you find the right contractor for your project.",
   "Welcome to UNPRO. Tell me about your issue.",
 ];

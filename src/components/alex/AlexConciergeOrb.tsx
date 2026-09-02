@@ -54,7 +54,7 @@ export default function AlexConciergeOrb({ onClick, hasMessage = false }: AlexCo
             exit={{ opacity: 0, x: 10 }}
             className="absolute right-full mr-3 bg-card/95 backdrop-blur-sm border border-border rounded-xl px-3 py-1.5 whitespace-nowrap shadow-[var(--shadow-lg)]"
           >
-            <span className="text-xs font-medium text-foreground">Alex — Concierge IA</span>
+            <span className="text-xs font-medium text-foreground">Clara — Concierge IA</span>
           </motion.div>
         )}
       </AnimatePresence>

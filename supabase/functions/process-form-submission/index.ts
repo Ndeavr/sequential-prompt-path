@@ -23,7 +23,7 @@ const FORM_LABELS: Record<string, string> = {
   condo_priority_access: 'Accès prioritaire Copropriété',
   contact: 'Contact',
   contractor_onboarding: 'Onboarding Entrepreneur',
-  alex_callback: 'Rappel Alex',
+  alex_callback: 'Rappel Clara',
   quote_upload: 'Téléversement de devis',
   project_analysis: 'Analyse de projet',
   contractor_signup: 'Devenir Entrepreneur',

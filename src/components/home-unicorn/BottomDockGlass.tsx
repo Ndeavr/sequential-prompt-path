@@ -98,12 +98,12 @@ export default function BottomDockGlass() {
         <div className="glass-dock grid grid-cols-5 items-end rounded-[28px] px-0 pt-1 pb-1 relative">
           <Tab item={left[0]} />
           <Tab item={left[1]} />
-          {/* Center Alex slot — orb is absolutely anchored to this cell */}
+          {/* Center Clara slot — orb is absolutely anchored to this cell */}
           <div className="relative flex flex-col items-center justify-center">
             <button
               type="button"
               onClick={() => openAlex("home_dock")}
-              aria-label="Parler à Alex"
+              aria-label="Parler à Clara"
               className="w-11 h-11 rounded-full flex items-center justify-center text-white pointer-events-auto transition-transform duration-200 ease-out active:scale-[0.92] hover:scale-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#3B82F6]/40"
               style={{
                 background:
@@ -116,7 +116,7 @@ export default function BottomDockGlass() {
             >
               <Sparkles size={18} strokeWidth={2.2} />
             </button>
-            <span className="text-[11px] font-semibold text-primary-tint mt-0.5">Alex</span>
+            <span className="text-[11px] font-semibold text-primary-tint mt-0.5">Clara</span>
           </div>
 
           <Tab item={right[0]} />

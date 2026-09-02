@@ -18,7 +18,7 @@ export default function AlexCompanionOrb() {
         className="fixed right-4 z-50 bottom-24 md:bottom-5 md:right-5"
         data-testid="alex-companion-orb"
       >
-        <AlexMorphingOrb size="sm" onClick={onClick} ariaLabel="Parler à Alex" />
+        <AlexMorphingOrb size="sm" onClick={onClick} ariaLabel="Parler à Clara" />
       </div>
       <Suspense fallback={null}>
         {open && <AlexAssistantSheet open={open} onClose={onClose} />}

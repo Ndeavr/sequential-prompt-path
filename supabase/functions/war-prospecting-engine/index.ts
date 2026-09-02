@@ -202,7 +202,7 @@ async function generateEmail(prospectId: string) {
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: "Tu es Alex, partenaire d'UNPRO. Tu écris des courriels courts, premium, en français québécois pour entrepreneurs résidentiels. Pas de blabla. Direct, chaleureux, focalisé sur la valeur." },
+          { role: "system", content: "Tu es Clara, partenaire d'UNPRO. Tu écris des courriels courts, premium, en français québécois pour entrepreneurs résidentiels. Pas de blabla. Direct, chaleureux, focalisé sur la valeur." },
           { role: "user", content: `Génère un courriel pour:\nEntreprise: ${p.company_name}\nCatégorie: ${p.category}\nVille: ${p.city}\nNote Google: ${p.rating || "n/a"} (${p.reviews_count || 0} avis)\n\nObjectif: leur offrir des rendez-vous garantis UNPRO (pas des leads). 120 mots max. Termine avec un CTA clair.\n\nRetourne un JSON: { "subject": "...", "body": "..." }` },
         ],
       }),

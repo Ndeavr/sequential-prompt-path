@@ -81,7 +81,7 @@ export default function ContractorIntakePanel({ actionId, onResult }: Props) {
     <div className="rounded-2xl border border-primary/30 bg-card/80 backdrop-blur p-4 space-y-3">
       <div>
         <p className="text-sm font-medium text-foreground">Bâtir votre profil entrepreneur</p>
-        <p className="text-xs text-muted-foreground">Une seule donnée suffit. Alex trouve le reste.</p>
+        <p className="text-xs text-muted-foreground">Une seule donnée suffit. Clara trouve le reste.</p>
       </div>
 
       <div className="flex gap-1.5">

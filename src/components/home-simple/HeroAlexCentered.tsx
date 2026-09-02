@@ -54,7 +54,7 @@ export default function HeroAlexCentered() {
           transition={{ delay: 0.12, duration: 0.4 }}
           className="mt-4 text-base md:text-lg text-white/85 max-w-md mx-auto drop-shadow-[0_1px_8px_rgba(0,0,0,0.7)]"
         >
-          Alex vous aide à estimer, comprendre, comparer et trouver le bon pro.
+          Clara vous aide à estimer, comprendre, comparer et trouver le bon pro.
         </motion.p>
       </div>
 
@@ -69,7 +69,7 @@ export default function HeroAlexCentered() {
           state={orbState}
           size="hero"
           onClick={handleOrb}
-          ariaLabel="Parler à Alex"
+          ariaLabel="Parler à Clara"
         />
       </motion.div>
 
@@ -80,7 +80,7 @@ export default function HeroAlexCentered() {
             <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 animate-ping" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
           </span>
-          <span className="text-sm font-medium text-white">Alex</span>
+          <span className="text-sm font-medium text-white">Clara</span>
           <span className="text-sm text-white/70">· Votre expert IA</span>
         </div>
       </div>

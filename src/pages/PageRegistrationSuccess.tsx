@@ -28,7 +28,7 @@ export default function PageRegistrationSuccess() {
   }
 
   const options: { role: Role; icon: string; title: string; sub: string; href: string }[] = [
-    { role: "homeowner", icon: "🏠", title: "Je suis propriétaire", sub: "Décrire un problème à Alex", href: "/alex" },
+    { role: "homeowner", icon: "🏠", title: "Je suis propriétaire", sub: "Décrire un problème à Clara", href: "/alex" },
     { role: "contractor", icon: "🔨", title: "Je suis entrepreneur", sub: "Activer mon profil", href: "/entrepreneurs" },
     { role: "condo_manager", icon: "🏢", title: "Je gère un immeuble", sub: "Ouvrir le module copropriété", href: "/condo" },
   ];

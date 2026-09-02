@@ -177,7 +177,7 @@ export default function PageContractorPersonalizedLanding() {
                 }}
               >
                 <Bot className="mr-2 h-5 w-5 text-primary" />
-                Parler à Alex
+                Parler à Clara
               </Button>
             </motion.div>
 

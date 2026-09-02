@@ -15,7 +15,7 @@ export default function PageAdminAlexContext() {
           <Brain className="w-6 h-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-xl font-bold">Alex — Contexte & Intentions</h1>
+          <h1 className="text-xl font-bold">Clara — Contexte & Intentions</h1>
           <p className="text-sm text-muted-foreground">Mémoire de session, détection d'intention et normalisation STT.</p>
         </div>
       </div>

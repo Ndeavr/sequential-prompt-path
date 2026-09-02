@@ -104,7 +104,7 @@ export default function HeroSection() {
       const lower = alexTranscriptRef.current.toLowerCase();
       const photoKw = ["photo", "image", "téléverser", "envoyer une photo"];
       if (photoKw.some((kw) => lower.includes(kw)) && !uploadModalOpen) {
-        console.log("[Hero] Alex mentioned photo");
+        console.log("[Hero] Clara mentioned photo");
       }
     },
     onUserTranscript: (text) => {
@@ -289,12 +289,12 @@ export default function HeroSection() {
   // V7: Honest status text — no "Alex parle…" until real audio
   const localGreeting = buildFrenchGreeting(verifiedName);
   const presenceLabel =
-    orbState === "speaking" ? "Alex vous parle…"
-    : orbState === "listening" ? "Alex vous écoute…"
+    orbState === "speaking" ? "Clara vous parle…"
+    : orbState === "listening" ? "Clara vous écoute…"
     : orbState === "thinking" || phase === "connecting" ? "Connexion…"
     : voiceFailed ? "Réessayer"
-    : phase === "presence" ? "Alex en direct"
-    : "Parlez à Alex";
+    : phase === "presence" ? "Clara en direct"
+    : "Parlez à Clara";
 
   return (
     <>
@@ -518,11 +518,11 @@ export default function HeroSection() {
                 >
                   {liveTranscript ? (
                     <p className="text-sm text-white/80 leading-relaxed">
-                      <span className="text-white/40 text-xs mr-1.5">Alex :</span>
+                      <span className="text-white/40 text-xs mr-1.5">Clara :</span>
                       {liveTranscript}
                     </p>
                   ) : phase === "presence" ? (
-                    <p className="text-sm text-white/30 italic">Alex prête…</p>
+                    <p className="text-sm text-white/30 italic">Clara prête…</p>
                   ) : (phase === "connecting") ? (
                     <div className="flex items-center gap-2">
                       <Loader2 className="h-3 w-3 text-white/30 animate-spin" />
@@ -540,7 +540,7 @@ export default function HeroSection() {
                           />
                         ))}
                       </motion.div>
-                      <span className="text-xs text-white/30">Alex parle…</span>
+                      <span className="text-xs text-white/30">Clara parle…</span>
                     </div>
                   ) : (
                     <p className="text-sm text-white/25 italic">{localGreeting}</p>
@@ -566,7 +566,7 @@ export default function HeroSection() {
                         onClick={() => setTextSheetOpen(true)}
                         className="flex items-center gap-1.5 text-xs font-medium px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/70 hover:bg-white/15 transition-colors"
                       >
-                        <Keyboard className="h-3 w-3" /> Écrire à Alex
+                        <Keyboard className="h-3 w-3" /> Écrire à Clara
                       </button>
                     </motion.div>
                   )}
@@ -655,7 +655,7 @@ export default function HeroSection() {
                 className="flex items-center gap-2 text-xs text-white/40 hover:text-white/60 transition-colors"
               >
                 <Keyboard className="h-3.5 w-3.5" />
-                Écrire à Alex
+                Écrire à Clara
               </button>
             </motion.div>
           </AnimatePresence>

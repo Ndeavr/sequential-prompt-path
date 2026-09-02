@@ -245,13 +245,13 @@ export default function BlogArticlePage() {
           className="rounded-xl bg-primary/5 border border-primary/20 p-6 text-center space-y-3"
         >
           <h3 className="text-lg font-semibold text-foreground">Une question sur ce sujet?</h3>
-          <p className="text-muted-foreground text-sm">Alex, notre assistant IA, peut vous aider à comprendre et vous guider vers la meilleure solution.</p>
+          <p className="text-muted-foreground text-sm">Clara, notre assistant IA, peut vous aider à comprendre et vous guider vers la meilleure solution.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={() => openAlex("general")}
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-lg font-medium hover:bg-primary/90 transition"
             >
-              <Sparkles className="h-4 w-4" /> Parler à Alex
+              <Sparkles className="h-4 w-4" /> Parler à Clara
             </button>
             <Link
               to="/decrire-mon-projet"

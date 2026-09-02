@@ -299,13 +299,13 @@ export default function SeoArticlePage() {
           >
             <div className="flex-1">
               <p className="text-sm font-medium text-foreground">Ce problème vous concerne?</p>
-              <p className="text-xs text-muted-foreground">Alex peut vous aider à trouver une solution adaptée.</p>
+              <p className="text-xs text-muted-foreground">Clara peut vous aider à trouver une solution adaptée.</p>
             </div>
             <button
               onClick={openAlexContextual}
               className="shrink-0 inline-flex items-center gap-1.5 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition"
             >
-              Alex <ArrowRight className="h-3.5 w-3.5" />
+              Clara <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </motion.div>
         )}
@@ -325,13 +325,13 @@ export default function SeoArticlePage() {
         >
           <h3 className="text-lg font-semibold text-foreground">Besoin d'aide avec ce problème?</h3>
           <p className="text-muted-foreground text-sm">
-            Alex connaît déjà le sujet de cet article. Décrivez votre situation et trouvez un professionnel vérifié.
+            Clara connaît déjà le sujet de cet article. Décrivez votre situation et trouvez un professionnel vérifié.
           </p>
           <button
             onClick={openAlexContextual}
             className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-lg font-medium hover:bg-primary/90 transition"
           >
-            Parler à Alex <ArrowRight className="h-4 w-4" />
+            Parler à Clara <ArrowRight className="h-4 w-4" />
           </button>
         </motion.div>
       </article>
@@ -352,7 +352,7 @@ export default function SeoArticlePage() {
                 onClick={openAlexContextual}
                 className="shrink-0 flex items-center gap-1.5 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition"
               >
-                Alex <ArrowRight className="h-3.5 w-3.5" />
+                Clara <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </div>
           </motion.div>

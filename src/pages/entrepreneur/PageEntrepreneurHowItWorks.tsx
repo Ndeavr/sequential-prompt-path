@@ -17,7 +17,7 @@ const DETAILED_STEPS = [
   {
     icon: Search,
     title: "1. On trouve votre entreprise",
-    desc: "Dites le nom de votre entreprise à Alex ou entrez-le. On cherche automatiquement sur Google Business, votre site web et les registres publics pour pré-remplir votre profil.",
+    desc: "Dites le nom de votre entreprise à Clara ou entrez-le. On cherche automatiquement sur Google Business, votre site web et les registres publics pour pré-remplir votre profil.",
   },
   {
     icon: Sparkles,
@@ -125,7 +125,7 @@ export default function PageEntrepreneurHowItWorks() {
           <div className="mt-16 text-center">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="lg" className="gap-2 px-8 py-6 rounded-xl" onClick={() => openAlex("contractor_onboarding")}>
-                <Mic className="h-5 w-5" /> Parler avec Alex
+                <Mic className="h-5 w-5" /> Parler avec Clara
               </Button>
               <Button size="lg" variant="outline" className="gap-2 px-8 py-6 rounded-xl" onClick={() => navigate("/entrepreneur")}>
                 Commencer maintenant <ArrowRight className="h-4 w-4" />

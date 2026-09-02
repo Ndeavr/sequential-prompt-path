@@ -15,7 +15,7 @@ export const STEP_LABELS: Record<string, string> = {
   sms_delivered: "SMS Liv",
   link_clicked: "Clic",
   landing_view: "Landing",
-  alex_started: "Alex",
+  alex_started: "Clara",
   signup_started: "Signup",
   signup_completed: "Signup ✓",
   checkout_opened: "Checkout",

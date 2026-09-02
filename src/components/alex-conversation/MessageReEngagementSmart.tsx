@@ -27,7 +27,7 @@ export default function MessageReEngagementSmart({ text, index }: Props) {
         </p>
         {index === 3 && (
           <span className="text-[10px] text-muted-foreground/50 mt-1 block">
-            Alex reste disponible
+            Clara reste disponible
           </span>
         )}
       </div>

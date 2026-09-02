@@ -9,7 +9,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 const NAV_ITEMS = [
   { key: "kpis", icon: BarChart3, label: "KPIs", path: "/dashboard" },
   { key: "alerts", icon: Bell, label: "Alertes", path: "/notifications" },
-  { key: "alex", icon: Bot, label: "Alex", path: "/alex", isCenter: true },
+  { key: "alex", icon: Bot, label: "Clara", path: "/alex", isCenter: true },
   { key: "admin", icon: Settings, label: "Admin", path: "/admin" },
   { key: "account", icon: User, label: "Compte", path: "/compte" },
 ];

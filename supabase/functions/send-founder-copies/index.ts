@@ -5,7 +5,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 const GATEWAY_URL = 'https://connector-gateway.lovable.dev/resend'
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY') ?? ''
-const FROM = "Alex d'UNPRO <alex@mail.unpro.ca>"
+const FROM = "Clara d'UNPRO <alex@mail.unpro.ca>"
 const FOUNDER = 'yturcotte@gmail.com'
 
 interface CopyItem {

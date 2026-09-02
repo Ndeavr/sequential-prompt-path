@@ -115,7 +115,7 @@ export const QR_INTENTS: QrIntent[] = [
     badge: "Urgent",
     copyVariants: [
       "Dégât urgent ? Commence ici.",
-      "Ajoute une photo, décris le problème, parle à Alex.",
+      "Ajoute une photo, décris le problème, parle à Clara.",
     ],
     stylePreset: "default",
   },

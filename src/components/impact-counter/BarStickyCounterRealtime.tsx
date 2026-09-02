@@ -70,7 +70,7 @@ export default function BarStickyCounterRealtime({
           )}
         >
           <div className="max-w-5xl mx-auto flex items-center justify-center gap-3">
-            {/* Alex mini orb */}
+            {/* Clara mini orb */}
             <button
               onClick={() => openAlex("sticky_bar")}
               className="flex items-center justify-center h-6 w-6 rounded-full bg-gradient-to-br from-primary via-secondary to-accent shadow-sm flex-shrink-0"

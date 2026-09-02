@@ -31,7 +31,7 @@ export const HOMEOWNER_PAINS: PainOption[] = [
   {
     id: "moving", label: "Je déménage bientôt", icon: "clock",
     heroTitle: "Déménagement? Tout organiser en 1 endroit.",
-    heroSub: "Inspections, réparations, transferts — Alex coordonne tout.",
+    heroSub: "Inspections, réparations, transferts — Clara coordonne tout.",
     ctaLabel: "Planifier mon déménagement",
     ctaHref: "/alex",
     benefits: ["Checklist personnalisée", "Pros disponibles à votre date", "Coordination automatique"],
@@ -39,8 +39,8 @@ export const HOMEOWNER_PAINS: PainOption[] = [
   {
     id: "dont-know", label: "Je ne sais pas quoi faire", icon: "help",
     heroTitle: "Pas sûr? C'est exactement pour ça qu'on existe.",
-    heroSub: "Décrivez votre situation. Alex identifie le besoin.",
-    ctaLabel: "Parler à Alex",
+    heroSub: "Décrivez votre situation. Clara identifie le besoin.",
+    ctaLabel: "Parler à Clara",
     ctaHref: "/alex",
     benefits: ["Aucune connaissance requise", "Diagnostic conversationnel", "Recommandation en 30 secondes"],
   },
@@ -133,7 +133,7 @@ export const CONDO_PAINS: PainOption[] = [
   {
     id: "infiltration", label: "Infiltration / urgence", icon: "shield",
     heroTitle: "Infiltration détectée? Chaque heure compte.",
-    heroSub: "Intervention d'urgence coordonnée par Alex.",
+    heroSub: "Intervention d'urgence coordonnée par Clara.",
     ctaLabel: "Déclencher une intervention",
     ctaHref: "/condo",
     benefits: ["Réponse en moins de 30 min", "Coordination multi-corps de métier", "Rapport pour assurance"],
@@ -141,8 +141,8 @@ export const CONDO_PAINS: PainOption[] = [
   {
     id: "condo-dont-know", label: "Je ne sais pas par où commencer", icon: "help",
     heroTitle: "Gérer une copropriété, c'est complexe. On simplifie.",
-    heroSub: "Alex analyse votre situation et propose un plan d'action.",
-    ctaLabel: "Parler à Alex",
+    heroSub: "Clara analyse votre situation et propose un plan d'action.",
+    ctaLabel: "Parler à Clara",
     ctaHref: "/alex",
     benefits: ["Diagnostic gratuit", "Plan d'action personnalisé", "Accompagnement continu"],
   },

@@ -150,13 +150,13 @@ export default function PageAlexGoalsStrategy() {
           {/* Step 0: Objectives */}
           {step === 0 && (
             <motion.div key="objectives" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-              {/* Alex intro */}
+              {/* Clara intro */}
               <div className="rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/5 p-4 flex items-start gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                   <MessageCircle className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">Alex</p>
+                  <p className="text-sm font-semibold text-foreground">Clara</p>
                   <p className="text-sm text-muted-foreground mt-1">
                     J'ai analysé votre profil. Votre score AIPP est de <span className="font-bold text-foreground">{aippScore}/100</span>.
                     Quel est votre vrai objectif maintenant?

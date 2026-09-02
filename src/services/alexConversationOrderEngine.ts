@@ -201,7 +201,7 @@ export function generatePhaseResponse(state: ConversationFlowState): FlowRespons
       if (problem.questionsAsked === 0) {
         const greeting = userContext.firstName
           ? `Bonjour ${userContext.firstName}. Décrivez-moi votre besoin, je m'en occupe.`
-          : "Bonjour. Je suis Alex, votre assistante UNPRO. Décrivez-moi votre besoin, je m'en occupe.";
+          : "Bonjour. Je suis Clara, votre assistante UNPRO. Décrivez-moi votre besoin, je m'en occupe.";
         return { alexMessage: greeting, nextPhase: phase, shouldWaitForInput: true };
       }
       if (problem.problemType && !problem.projectType) {

@@ -44,7 +44,7 @@ export default function StepObjectivesCapture({ city, activity, onContinue }: Pr
       <div className="text-center space-y-2">
         <h2 className="text-xl font-bold text-foreground">Vos objectifs</h2>
         <p className="text-sm text-muted-foreground">
-          Alex va calculer le plan optimal pour {activity} à {city}
+          Clara va calculer le plan optimal pour {activity} à {city}
         </p>
       </div>
 
@@ -120,9 +120,9 @@ export default function StepObjectivesCapture({ city, activity, onContinue }: Pr
         </div>
       </div>
 
-      {/* Alex summary */}
+      {/* Clara summary */}
       <div className="rounded-xl bg-primary/5 border border-primary/10 p-4">
-        <p className="text-xs font-semibold text-primary mb-1">Alex</p>
+        <p className="text-xs font-semibold text-primary mb-1">Clara</p>
         <p className="text-sm text-foreground">
           Avec {obj.appointments_capacity_weekly} rendez-vous/semaine et un objectif de {fmt(obj.revenue_target_monthly)}/mois, 
           je vais trouver le plan qui maximise votre conversion.

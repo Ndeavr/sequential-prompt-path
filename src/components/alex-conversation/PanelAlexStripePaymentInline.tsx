@@ -142,7 +142,7 @@ export default function PanelAlexStripePaymentInline({ planCode, planName, price
         </div>
         <h4 className="text-sm font-bold text-foreground">Paiement confirmé!</h4>
         <p className="text-xs text-muted-foreground">
-          Votre plan {planName} est en cours d'activation. Alex va vous guider pour les prochaines étapes.
+          Votre plan {planName} est en cours d'activation. Clara va vous guider pour les prochaines étapes.
         </p>
       </motion.div>
     );

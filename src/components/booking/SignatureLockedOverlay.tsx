@@ -17,7 +17,7 @@ const FEATURES = [
   { icon: Calendar, label: "Page de réservation publique premium" },
   { icon: MapPin, label: "Moteur intelligent avec transport" },
   { icon: QrCode, label: "QR codes et liens de réservation" },
-  { icon: Sparkles, label: "Recommandations IA par Alex" },
+  { icon: Sparkles, label: "Recommandations IA par Clara" },
 ];
 
 const PLAN_TEASERS: Record<string, { headline: string; sub: string }> = {

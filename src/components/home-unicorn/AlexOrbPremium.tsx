@@ -224,7 +224,7 @@ export default function AlexOrbPremium({
         ))}
       </div>
       </div>
-      {showLabel && <span className="uc-orb-label">Parler à Alex</span>}
+      {showLabel && <span className="uc-orb-label">Parler à Clara</span>}
       {showCaption && <span className="uc-orb-caption" />}
     </div>
   );

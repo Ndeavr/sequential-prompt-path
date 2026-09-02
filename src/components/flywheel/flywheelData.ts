@@ -50,9 +50,9 @@ export const flywheelNodes: FlywheelNodeData[] = [
   },
   {
     id: 4,
-    label: "Intelligence Alex",
-    description: "Alex interprète les problèmes, suggère des actions et guide les décisions.",
-    detail: "Alex est le moteur d'intelligence conversationnelle d'UNPRO. Il comprend le contexte du propriétaire, détecte les priorités et propose les meilleures prochaines étapes.",
+    label: "Intelligence Clara",
+    description: "Clara interprète les problèmes, suggère des actions et guide les décisions.",
+    detail: "Clara est le moteur d'intelligence conversationnelle d'UNPRO. Il comprend le contexte du propriétaire, détecte les priorités et propose les meilleures prochaines étapes.",
     whyItMatters: "L'IA réduit la friction de décision et accélère le passage à l'action.",
     metric: "+ recommandations pertinentes",
     icon: Brain,

@@ -185,7 +185,7 @@ export default function PageAIGrowthDiagnostic() {
       {/* HERO */}
       <section id="section-hero" className="diag-section">
         <div className="max-w-3xl mx-auto w-full text-center">
-          <div className="flex justify-center mb-10"><Orb label="Alex · Analyste IA" /></div>
+          <div className="flex justify-center mb-10"><Orb label="Clara · Analyste IA" /></div>
           <h1 className="text-3xl sm:text-5xl font-bold leading-tight tracking-tight">
             Combien de revenus votre entreprise perd-elle chaque mois?
           </h1>
@@ -305,7 +305,7 @@ export default function PageAIGrowthDiagnostic() {
               </div>
               {inputs.uses_shared_leads === "yes" && (
                 <div className="diag-bubble diag-bubble--loss mt-6 p-5">
-                  <div className="text-cyan-200 font-semibold">Détection Alex</div>
+                  <div className="text-cyan-200 font-semibold">Détection Clara</div>
                   <p className="mt-2 opacity-90 text-sm">
                     Chaque lead que vous achetez est partagé avec 4 à 5 concurrents. Votre marge se compresse même quand vous closez.
                     UNPRO opère sur un modèle de rendez-vous exclusifs — un seul entrepreneur par opportunité.
@@ -370,7 +370,7 @@ export default function PageAIGrowthDiagnostic() {
           {/* PLAN */}
           <section id="section-plan" className="diag-section">
             <div className="max-w-3xl mx-auto w-full text-center">
-              <div className="text-sm uppercase tracking-wider opacity-60">Plan recommandé par Alex</div>
+              <div className="text-sm uppercase tracking-wider opacity-60">Plan recommandé par Clara</div>
               <h2 className="text-3xl sm:text-5xl font-bold mt-2 tracking-tight">
                 {r.recommended_plan}
               </h2>
@@ -385,7 +385,7 @@ export default function PageAIGrowthDiagnostic() {
                 </div>
                 <ul className="mt-5 space-y-2 text-sm opacity-90">
                   <li>✓ Rendez-vous exclusifs dans votre territoire</li>
-                  <li>✓ Réponse Alex IA en moins de 5 minutes</li>
+                  <li>✓ Réponse Clara IA en moins de 5 minutes</li>
                   <li>✓ Profil optimisé pour les moteurs de réponse IA</li>
                   <li>✓ Tableau de bord de croissance temps réel</li>
                 </ul>

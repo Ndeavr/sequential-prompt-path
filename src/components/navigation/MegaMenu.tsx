@@ -54,7 +54,7 @@ const megaMenus: Record<string, MegaMenuConfig> = {
           { to: "/alex?intent=diagnostic", label: "Diagnostic IA", labelEn: "AI Diagnosis", icon: Sparkles, badge: "IA" },
           { to: "/problemes", label: "Causes possibles", labelEn: "Possible Causes", icon: HelpCircle },
           { to: "/outils-ia", label: "Estimation des coûts", labelEn: "Cost Estimate", icon: DollarSign },
-          { to: "/alex", label: "Conseils Alex", labelEn: "Alex Advice", icon: Sparkles },
+          { to: "/alex", label: "Conseils Clara", labelEn: "Clara Advice", icon: Sparkles },
         ],
       },
       {

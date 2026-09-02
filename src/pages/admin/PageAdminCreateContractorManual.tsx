@@ -344,9 +344,9 @@ const PageAdminCreateContractorManual = () => {
               "Profil public publié",
               "Abonnement marqué payé",
               `Plan ${selectedPlan.label} — expire le ${new Date(success.expiry_date).toLocaleDateString("fr-CA")}`,
-              "Admissible au matching Alex",
+              "Admissible au matching Clara",
               "Prêt à recevoir des rendez-vous",
-              "Alex peut recommander cet entrepreneur",
+              "Clara peut recommander cet entrepreneur",
             ].map((line) => (
               <li key={line} className="flex items-center gap-2 text-white/85">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -387,7 +387,7 @@ const PageAdminCreateContractorManual = () => {
               className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/15 p-4 text-white transition flex items-center gap-3"
             >
               <Sparkles className="w-5 h-5 text-emerald-300" />
-              <span className="text-sm font-semibold">Tester dans Alex</span>
+              <span className="text-sm font-semibold">Tester dans Clara</span>
             </Link>
           </div>
 

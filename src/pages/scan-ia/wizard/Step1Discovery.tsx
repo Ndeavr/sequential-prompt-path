@@ -43,7 +43,7 @@ export default function Step1Discovery() {
         <h1 className="text-2xl font-semibold tracking-tight text-white mb-2">
           Analyse de {report?.business_name ?? "votre entreprise"}
         </h1>
-        <p className="text-white/50 text-sm mb-8">Alex récupère vos données publiques en temps réel.</p>
+        <p className="text-white/50 text-sm mb-8">Clara récupère vos données publiques en temps réel.</p>
 
         <ul className="w-full max-w-xs space-y-3 mb-8">
           {CHECKS.map((c, i) => (

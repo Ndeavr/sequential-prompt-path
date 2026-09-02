@@ -759,7 +759,7 @@ serve(async (req) => {
     duration_ms: duration,
     results: allResults,
     summary: failed === 0
-      ? `✅ Tous les ${passed} tests passent. Alex Voice est opérationnelle.`
+      ? `✅ Tous les ${passed} tests passent. Clara Voice est opérationnelle.`
       : `⚠️ ${failed}/${allResults.length} tests échoués. Corrections requises.`,
     fixes_needed: [...new Set(fixesNeeded)],
   };

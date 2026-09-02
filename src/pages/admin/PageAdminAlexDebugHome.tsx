@@ -58,14 +58,14 @@ export default function PageAdminAlexDebugHome() {
   return (
     <MainLayout>
       <Helmet>
-        <title>Alex Runtime Debug | Admin</title>
+        <title>Clara Runtime Debug | Admin</title>
       </Helmet>
 
       <div className="container max-w-5xl py-8 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Alex Runtime Debug</h1>
-            <p className="text-sm text-muted-foreground">Diagnostic temps réel du singleton Alex sur la home page</p>
+            <h1 className="text-2xl font-bold text-foreground">Clara Runtime Debug</h1>
+            <p className="text-sm text-muted-foreground">Diagnostic temps réel du singleton Clara sur la home page</p>
           </div>
           <Button variant="outline" size="sm" onClick={() => alexRuntime.hardReset()}>
             <Trash2 className="h-4 w-4 mr-1.5" /> Hard Reset
@@ -136,7 +136,7 @@ export default function PageAdminAlexDebugHome() {
           </CardHeader>
           <CardContent>
             {mountedSources.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Aucune source Alex montée</p>
+              <p className="text-sm text-muted-foreground">Aucune source Clara montée</p>
             ) : (
               <div className="space-y-2">
                 {mountedSources.map(([name, role]) => (

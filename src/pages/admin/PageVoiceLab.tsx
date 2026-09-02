@@ -59,7 +59,7 @@ const VOICES: VoiceCard[] = [
   },
   {
     id: "alex-legacy",
-    name: "Alex (Ancienne voix — archive)",
+    name: "Clara (Ancienne voix — archive)",
     voice_id: "or4EV8aZq78KWcXw48wd",
     gender: "female",
     accent: "Québec premium",
@@ -89,8 +89,8 @@ const VOICES: VoiceCard[] = [
   },
 ];
 
-const SAMPLE_FR = "Bonjour, je suis Alex de Un Pro. Décrivez votre problème ou votre projet.";
-const SAMPLE_EN = "Hi, I'm Alex from Un Pro. Tell me about your project.";
+const SAMPLE_FR = "Bonjour, je suis Clara de Un Pro. Décrivez votre problème ou votre projet.";
+const SAMPLE_EN = "Hi, I'm Clara from Un Pro. Tell me about your project.";
 
 export default function PageVoiceLab() {
   const [playingId, setPlayingId] = useState<string | null>(null);

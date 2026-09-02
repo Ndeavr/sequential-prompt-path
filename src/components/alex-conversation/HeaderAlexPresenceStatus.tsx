@@ -62,7 +62,7 @@ export default function HeaderAlexPresenceStatus({ status }: Props) {
       </div>
 
       <div className="flex-1 min-w-0">
-        <h1 className="text-sm font-semibold text-foreground font-display tracking-tight">Alex · UNPRO</h1>
+        <h1 className="text-sm font-semibold text-foreground font-display tracking-tight">Clara · UNPRO</h1>
         <AnimatePresence mode="wait">
           <motion.p
             key={status}

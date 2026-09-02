@@ -12,7 +12,7 @@ const HOMEOWNER_LINKS: FooterLink[] = [
   { label: "Trouver un entrepreneur", to: "/alex" },
   { label: "Vérifier un entrepreneur", to: "/verifier-entrepreneur" },
   { label: "Intelligence copropriété", to: "/copropriete" },
-  { label: "Alex", to: "/alex" },
+  { label: "Clara", to: "/alex" },
 ];
 
 const CONTRACTOR_LINKS: FooterLink[] = [

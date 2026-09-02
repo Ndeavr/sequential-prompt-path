@@ -92,7 +92,7 @@ export default function SectionBookingCTA() {
                 size="lg"
                 className="w-full h-12 rounded-xl gap-2 text-sm font-bold"
               >
-                <Mic className="h-4 w-4" /> Parler à Alex pour réserver
+                <Mic className="h-4 w-4" /> Parler à Clara pour réserver
               </Button>
               <Link
                 to="/describe-project"
@@ -104,7 +104,7 @@ export default function SectionBookingCTA() {
           </div>
         </motion.div>
 
-        {/* Alex micro-prompt */}
+        {/* Clara micro-prompt */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}

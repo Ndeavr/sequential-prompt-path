@@ -3,14 +3,14 @@ import { prepareAlexSpeechText } from "@/lib/prepareAlexSpeechText";
 
 describe("prepareAlexSpeechText", () => {
   it("rewrites d'UNPRO in French", () => {
-    expect(prepareAlexSpeechText("Bonjour. Je suis Alex d'UNPRO.", "fr")).toBe(
-      "Bonjour. Je suis Alex d'Un Pro.",
+    expect(prepareAlexSpeechText("Bonjour. Je suis Clara d'UNPRO.", "fr")).toBe(
+      "Bonjour. Je suis Clara d'Un Pro.",
     );
   });
 
   it("handles curly apostrophe", () => {
-    expect(prepareAlexSpeechText("Alex d’UNPRO ici.", "fr")).toBe(
-      "Alex d'Un Pro ici.",
+    expect(prepareAlexSpeechText("Clara d’UNPRO ici.", "fr")).toBe(
+      "Clara d'Un Pro ici.",
     );
   });
 

@@ -66,7 +66,7 @@ export default function PillarStrip({
         >
           Le jumelage d'entrepreneur est <strong>un</strong> pilier d'UNPRO, pas
           l'entreprise au complet. UNPRO est la couche d'intelligence pour
-          votre propriété, guidée par Alex.
+          votre propriété, guidée par Clara.
         </p>
       </div>
     </section>

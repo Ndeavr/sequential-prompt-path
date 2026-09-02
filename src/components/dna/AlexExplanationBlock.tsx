@@ -46,7 +46,7 @@ export default function AlexExplanationBlock({
         <Sparkles className="h-4 w-4 text-background" />
       </div>
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Alex</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Clara</p>
         <p className="text-sm text-foreground leading-relaxed">{explanationFr}</p>
         {subExplanationFr && (
           <p className="text-xs text-muted-foreground mt-1">{subExplanationFr}</p>

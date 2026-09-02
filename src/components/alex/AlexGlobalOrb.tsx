@@ -27,7 +27,7 @@ const AlexGlobalOrb = () => {
             transition={{ delay: 2, duration: 0.4 }}
             onClick={() => setExpanded(true)}
             className="fixed bottom-5 right-5 z-50 h-14 w-14 rounded-full bg-gradient-to-br from-primary via-secondary to-accent text-primary-foreground shadow-glow-lg alex-orb flex items-center justify-center"
-            aria-label="Alex IA"
+            aria-label="Clara IA"
           >
             <Sparkles className="h-5 w-5" />
           </motion.button>
@@ -50,7 +50,7 @@ const AlexGlobalOrb = () => {
                   <Sparkles className="text-primary-foreground h-3.5 w-3.5" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-foreground">Alex</p>
+                  <p className="text-xs font-bold text-foreground">Clara</p>
                   <p className="text-[10px] text-muted-foreground">Concierge IA</p>
                 </div>
               </div>

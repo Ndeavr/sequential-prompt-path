@@ -10,7 +10,7 @@ export default function StickyMobileCTAEntrepreneur({ onTrackCta }: Props) {
 
   const actions = [
     { icon: BarChart3, label: "Score", onClick: () => { onTrackCta("sticky_score", "sticky"); navigate("/entrepreneur/score"); } },
-    { icon: MessageCircle, label: "Alex", onClick: () => { onTrackCta("sticky_alex", "sticky"); navigate("/alex"); } },
+    { icon: MessageCircle, label: "Clara", onClick: () => { onTrackCta("sticky_alex", "sticky"); navigate("/alex"); } },
     { icon: MapPin, label: "Ville", onClick: () => { onTrackCta("sticky_city", "sticky"); document.getElementById("section-territories")?.scrollIntoView({ behavior: "smooth" }); } },
   ];
 

@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     if (!lead) {
       return new Response(JSON.stringify({
         context: { company_name: "Votre entreprise", city: "Votre ville", category: "Services résidentiels" },
-        greeting: "Bonjour! Je suis Alex, votre conseiller UNPRO. Comment puis-je vous aider aujourd'hui?",
+        greeting: "Bonjour! Je suis Clara, votre conseiller UNPRO. Comment puis-je vous aider aujourd'hui?",
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 

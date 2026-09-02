@@ -122,7 +122,7 @@ export default function PageProPublicProfile() {
                   </span>
                 </div>
                 <p className="text-[12px] mt-1" style={{ color: "rgba(255,255,255,0.6)" }}>
-                  Calculé par Alex à partir de votre présence numérique.
+                  Calculé par Clara à partir de votre présence numérique.
                 </p>
               </Section>
 
@@ -135,7 +135,7 @@ export default function PageProPublicProfile() {
                   </div>
                 ) : (
                   <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.6)" }}>
-                    À compléter avec Alex.
+                    À compléter avec Clara.
                   </p>
                 )}
               </Section>
@@ -149,7 +149,7 @@ export default function PageProPublicProfile() {
                   </div>
                 ) : (
                   <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.6)" }}>
-                    À compléter avec Alex.
+                    À compléter avec Clara.
                   </p>
                 )}
               </Section>
@@ -157,7 +157,7 @@ export default function PageProPublicProfile() {
               <Section title="Prochaines actions">
                 <ul className="space-y-2">
                   {[
-                    "Compléter votre profil avec Alex",
+                    "Compléter votre profil avec Clara",
                     "Ajouter vos photos de réalisations",
                     "Confirmer vos disponibilités",
                   ].map((a) => (
@@ -192,7 +192,7 @@ export default function PageProPublicProfile() {
                     color: "#fff",
                   }}
                 >
-                  Voir comment Alex me recommande
+                  Voir comment Clara me recommande
                 </button>
                 <button
                   onClick={() => navigate("/")}

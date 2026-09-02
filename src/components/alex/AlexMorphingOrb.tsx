@@ -81,7 +81,7 @@ export default function AlexMorphingOrb({
   onSwipeRight,
   gesturesDisabled,
   className,
-  ariaLabel = "Alex",
+  ariaLabel = "Clara",
 }: Props) {
   const [ripple, setRipple] = useState(0);
   const [recognisedDir, setRecognisedDir] = useState<GestureDirection>(null);

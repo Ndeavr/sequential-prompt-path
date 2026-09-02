@@ -43,12 +43,12 @@ export default function FormProjectFallbackAdaptive({ prefillData, onSubmit }: P
       animate={{ opacity: 1, y: 0 }}
       className="mx-auto max-w-lg"
     >
-      {/* Alex helper banner */}
+      {/* Clara helper banner */}
       {hasAlexData && (
         <div className="mb-4 flex items-center gap-2 rounded-xl bg-primary/5 border border-primary/10 px-4 py-3">
           <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
           <p className="text-xs text-muted-foreground">
-            Alex a pré-rempli certains champs à partir de votre conversation.
+            Clara a pré-rempli certains champs à partir de votre conversation.
           </p>
         </div>
       )}

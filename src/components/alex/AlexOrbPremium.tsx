@@ -38,7 +38,7 @@ export default function AlexOrbPremium({
     <div className={cn("flex flex-col items-center gap-3", className)}>
       <Wrapper
         onClick={onClick}
-        aria-label={onClick ? "Activer Alex" : undefined}
+        aria-label={onClick ? "Activer Clara" : undefined}
         className="relative flex items-center justify-center"
         style={{ width: px, height: px }}
         whileTap={onClick ? { scale: 0.96 } : undefined}

@@ -197,13 +197,13 @@ export default function LocalSeoPage() {
                 <h3 className="font-semibold text-foreground">Entrepreneur compatible</h3>
               </div>
               <p className="text-muted-foreground">
-                On cherche un pro compatible pour vous à {page.city}. Décrivez votre problème et Alex vous aide.
+                On cherche un pro compatible pour vous à {page.city}. Décrivez votre problème et Clara vous aide.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button asChild>
                   <Link to="/alex">
                     <MessageCircle className="mr-2 h-4 w-4" />
-                    Parler à Alex
+                    Parler à Clara
                   </Link>
                 </Button>
                 <Button variant="outline" asChild>
@@ -276,7 +276,7 @@ export default function LocalSeoPage() {
           <Button size="sm" className="flex-1 max-w-[200px]" asChild>
             <Link to="/alex">
               <MessageCircle className="mr-2 h-4 w-4" />
-              Urgence — parler à Alex
+              Urgence — parler à Clara
             </Link>
           </Button>
           <Button size="sm" variant="outline" className="flex-1 max-w-[200px]" asChild>

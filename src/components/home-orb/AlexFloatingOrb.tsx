@@ -84,7 +84,7 @@ export default function AlexFloatingOrb({
       <button
         type="button"
         onClick={onClick}
-        aria-label="Alex"
+        aria-label="Clara"
         className="relative block rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/60"
         style={{
           width: px,

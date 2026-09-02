@@ -192,12 +192,12 @@ export default function TaxCalculatorQuebec() {
                   Vous calculez des taxes pour une soumission ou des travaux?
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Alex peut vous aider à vérifier le prix, comparer la facture et trouver un entrepreneur compatible.
+                  Clara peut vous aider à vérifier le prix, comparer la facture et trouver un entrepreneur compatible.
                 </p>
               </div>
             </div>
             <Button onClick={onCta} className="w-full mt-4 gap-2">
-              Analyser mon projet avec Alex <ArrowRight className="h-4 w-4" />
+              Analyser mon projet avec Clara <ArrowRight className="h-4 w-4" />
             </Button>
           </motion.div>
         )}

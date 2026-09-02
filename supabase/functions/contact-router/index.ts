@@ -291,5 +291,5 @@ async function sendEmail(supa: any, contact: any, body: Body) {
 
 function defaultSms(_key: string, contact: any, _data?: Record<string, unknown>) {
   const name = contact.first_name || "";
-  return `Bonjour ${name}, c'est Alex d'UNPRO. Répondez STOP pour ne plus recevoir nos messages.`;
+  return `Bonjour ${name}, c'est Clara d'UNPRO. Répondez STOP pour ne plus recevoir nos messages.`;
 }

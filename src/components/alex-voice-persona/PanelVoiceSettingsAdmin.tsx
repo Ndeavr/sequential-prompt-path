@@ -20,7 +20,7 @@ export default function PanelVoiceSettingsAdmin() {
           <Settings className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h2 className="text-base font-semibold text-foreground">Persona vocale Alex</h2>
+          <h2 className="text-base font-semibold text-foreground">Persona vocale Clara</h2>
           <p className="text-xs text-muted-foreground">Voix masculine premium · ElevenLabs</p>
         </div>
       </div>
@@ -72,7 +72,7 @@ export default function PanelVoiceSettingsAdmin() {
         <div>
           <p className="text-xs font-medium text-emerald-400">Guardrails identité actifs</p>
           <p className="text-[10px] text-muted-foreground">
-            Zéro mention technique · Ton constant · Identité : Alex, l'assistant IA d'UNPRO
+            Zéro mention technique · Ton constant · Identité : Clara, l'assistant IA d'UNPRO
           </p>
         </div>
       </div>

@@ -123,7 +123,7 @@ export default function AlexCopilotConversation() {
             <div className="flex items-center gap-2.5">
               <AlexOrbPremium size="sm" state={thinking ? "thinking" : "idle"} />
               <div className="leading-tight">
-                <p className="text-[15px] font-bold">Alex</p>
+                <p className="text-[15px] font-bold">Clara</p>
                 <p className="text-[11px] text-emerald-400 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> En ligne
                 </p>
@@ -309,7 +309,7 @@ function ActionMenu({ onDescribe, onVoice, onUpload, onQuotes, onVerify, onPro }
   );
 
   const items: { id: string; label: string; icon: typeof Mic; onClick: () => void; primary?: boolean }[] = [
-    { id: "voice", label: "Parler à Alex", icon: Mic, onClick: onVoice, primary: true },
+    { id: "voice", label: "Parler à Clara", icon: Mic, onClick: onVoice, primary: true },
     { id: "describe", label: "Décrire mon projet", icon: Pencil, onClick: onDescribe },
     { id: "photo", label: "Téléverser une photo", icon: Camera, onClick: onUpload },
     { id: "quotes", label: "Analyser mes soumissions", icon: FileText, onClick: onQuotes },

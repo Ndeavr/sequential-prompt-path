@@ -24,7 +24,7 @@ export default function SectionWhatHomeownerSees() {
             </div>
           </div>
 
-          {/* Alex answer */}
+          {/* Clara answer */}
           <div className="flex gap-3 items-start">
             <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center shrink-0 shadow-glow">
               <span className="text-primary-foreground text-xs font-bold">A</span>

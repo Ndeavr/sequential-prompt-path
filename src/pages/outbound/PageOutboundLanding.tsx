@@ -18,7 +18,7 @@ interface LandingPayload {
 
 const PLANS = [
   { code: "pro", name: "Pro", price: 349, tagline: "Démarrage rapide", features: ["Visibilité IA de base", "Profil vérifié", "10 RDV/mois"] },
-  { code: "premium", name: "Premium", price: 599, tagline: "Recommandé", featured: true, features: ["Visibilité IA prioritaire", "Boost SEO local", "25 RDV/mois", "Alex matching IA"] },
+  { code: "premium", name: "Premium", price: 599, tagline: "Recommandé", featured: true, features: ["Visibilité IA prioritaire", "Boost SEO local", "25 RDV/mois", "Clara matching IA"] },
   { code: "elite", name: "Élite", price: 999, tagline: "Domination locale", features: ["Visibilité maximale", "Citations LLM (ChatGPT, Gemini)", "Volume illimité", "Concierge dédié"] },
 ];
 

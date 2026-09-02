@@ -8,7 +8,7 @@ const SITE_NAME = "UNPRO"
 const SENDER_DOMAIN = "mail.unpro.ca"
 const FROM_DOMAIN = "mail.unpro.ca"
 const DEFAULT_FROM_EMAIL = "alex@mail.unpro.ca"
-const DEFAULT_FROM_NAME = "Alex d'UNPRO"
+const DEFAULT_FROM_NAME = "Clara d'UNPRO"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

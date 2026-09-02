@@ -5,7 +5,7 @@ import { Clock, Shield, Sparkles, Zap } from "lucide-react";
 
 const benefitsByRole: Record<string, { icon: typeof Clock; title: string; desc: string }[]> = {
   homeowner: [
-    { icon: Clock, title: "Plus d'aller-retour", desc: "Alex propose seulement des heures qui marchent vraiment pour vous." },
+    { icon: Clock, title: "Plus d'aller-retour", desc: "Clara propose seulement des heures qui marchent vraiment pour vous." },
     { icon: Shield, title: "Vous contrôlez tout", desc: "On lit votre disponibilité. Rien n'est réservé sans votre accord." },
     { icon: Sparkles, title: "Suggestions précises", desc: "Adaptées à votre vrai horaire, en quelques secondes." },
   ],

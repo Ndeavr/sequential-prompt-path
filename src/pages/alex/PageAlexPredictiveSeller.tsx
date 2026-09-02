@@ -104,7 +104,7 @@ export default function PageAlexPredictiveSeller() {
           <Bot className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
           <p className="text-sm font-semibold text-foreground">Aucune opportunité pour le moment</p>
           <p className="text-xs text-muted-foreground mt-1">
-            Alex vous notifiera dès qu'un rendez-vous qualifié correspondra à votre profil.
+            Clara vous notifiera dès qu'un rendez-vous qualifié correspondra à votre profil.
           </p>
         </div>
       </div>
@@ -139,7 +139,7 @@ export default function PageAlexPredictiveSeller() {
   const script = generateAlexScript(ctx);
 
   const handleCta = () => toast.success(`Action : ${script.cta_action}`);
-  const handleSecondary = () => toast.info("Ouverture du chat Alex…");
+  const handleSecondary = () => toast.info("Ouverture du chat Clara…");
 
   return (
     <div className="min-h-screen bg-background">
@@ -185,13 +185,13 @@ export default function PageAlexPredictiveSeller() {
           />
         )}
 
-        {/* Alex closer — sticky at bottom on mobile */}
+        {/* Clara closer — sticky at bottom on mobile */}
         <div className="hidden lg:block">
           <AlexMarketCloserPanel script={script} onCtaClick={handleCta} onSecondaryClick={handleSecondary} />
         </div>
       </div>
 
-      {/* Mobile sticky Alex panel */}
+      {/* Mobile sticky Clara panel */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 p-3 bg-background/80 backdrop-blur-md border-t border-border/20 z-40">
         <AlexMarketCloserPanel script={script} onCtaClick={handleCta} onSecondaryClick={handleSecondary} />
       </div>

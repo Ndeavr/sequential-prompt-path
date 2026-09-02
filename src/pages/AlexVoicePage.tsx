@@ -160,7 +160,7 @@ function StateLabel({ state, holding }: { state: VoiceState; holding: boolean })
       ? "Je vous écoute…"
       : state === "thinking"
       ? "Je réfléchis…"
-      : "Alex parle…";
+      : "Clara parle…";
 
   return (
     <motion.p
@@ -188,7 +188,7 @@ function TranscriptCard({ role, text }: { role: "user" | "assistant"; text: stri
           : "self-start bg-card border border-border/60 text-foreground"
       }`}
     >
-      {!isUser && <span className="text-xs font-semibold text-primary mb-1 block">Alex</span>}
+      {!isUser && <span className="text-xs font-semibold text-primary mb-1 block">Clara</span>}
       <p className="text-sm leading-relaxed">{text}</p>
     </motion.div>
   );
@@ -325,10 +325,10 @@ export default function AlexVoicePage() {
   return (
     <>
       <Helmet>
-        <title>Alex Voice — Concierge vocale | UNPRO</title>
+        <title>Clara Voice — Concierge vocale | UNPRO</title>
         <meta
           name="description"
-          content="Parlez directement à Alex, votre concierge vocale intelligente pour la maison et la rénovation."
+          content="Parlez directement à Clara, votre concierge vocale intelligente pour la maison et la rénovation."
         />
       </Helmet>
 
@@ -340,7 +340,7 @@ export default function AlexVoicePage() {
               <X className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-sm font-semibold text-foreground font-display">Alex</h1>
+              <h1 className="text-sm font-semibold text-foreground font-display">Clara</h1>
               <p className="text-xs text-muted-foreground">Concierge vocale</p>
             </div>
           </div>
@@ -440,7 +440,7 @@ export default function AlexVoicePage() {
           {/* ─── Quick action chips ─── */}
           <div className="w-full px-4 pb-2 relative z-10">
             <AnimatePresence>
-              {/* Dynamic chips from Alex */}
+              {/* Dynamic chips from Clara */}
               {dynamicChips.length > 0 && state === "idle" && (
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
@@ -491,13 +491,13 @@ export default function AlexVoicePage() {
           className="px-4 pt-2 space-y-3 border-t border-border/20"
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1.5rem)" }}
         >
-          {/* Text input — always visible: chat is the extension of Alex's voice */}
+          {/* Text input — always visible: chat is the extension of Clara's voice */}
           <div className="flex gap-2">
             <Input
               value={textInput}
               onChange={(e) => setTextInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleTextSend()}
-              placeholder="Écrire à Alex…"
+              placeholder="Écrire à Clara…"
               className="flex-1 rounded-full bg-muted/50"
               disabled={state === "thinking"}
               autoComplete="off"

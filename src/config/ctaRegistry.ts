@@ -15,7 +15,7 @@ export interface CTADescriptor {
 export const CTA_DEST: Record<CanonicalCTA, CTADescriptor> = {
   alex: {
     href: "/alex",
-    label: "Parler à Alex",
+    label: "Parler à Clara",
     analyticsId: "cta_alex",
   },
   create_project: {

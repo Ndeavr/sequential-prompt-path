@@ -269,7 +269,7 @@ export default function PageUnproActivate() {
 
             {correctionSent && (
               <div className="rounded-2xl border border-sky-300/25 bg-sky-400/10 p-4 text-[13px] leading-relaxed text-sky-100">
-                Parfait. Dès l'activation, Alex vous guide pour corriger et compléter chaque information en
+                Parfait. Dès l'activation, Clara vous guide pour corriger et compléter chaque information en
                 quelques secondes.
               </div>
             )}

@@ -40,7 +40,7 @@ const STABILIZATION_MS = 1500;
 const HEARTBEAT_INTERVAL_MS = 2500; // Slower → less battery
 const BOOT_TIMEOUT_MS = 12_000;
 const FIRST_AUDIO_TIMEOUT_MS = 12_000;
-const TOKEN_SLOW_THRESHOLD_MS = 1500; // Show "Connexion d'Alex…" sooner
+const TOKEN_SLOW_THRESHOLD_MS = 1500; // Show "Connexion de Clara…" sooner
 const MAX_AUTO_RETRIES = 0; // Strictly event-driven — never silently retry.
 
 // Helper to always get fresh state
@@ -278,7 +278,7 @@ export default function OverlayAlexVoiceFullScreen() {
         nudgeTimerRef.current = setTimeout(() => {
           if (firstAudioReceivedRef.current || !getStore().isOverlayOpen) return;
           try {
-            const seed = "Bonjour Alex.";
+            const seed = "Bonjour Clara.";
             console.log("[VoiceOverlay] 👋 No first audio in 1.2s — sending nudge:", seed);
             (conversation as any)?.sendUserMessage?.(seed);
           } catch (e) {
@@ -485,7 +485,7 @@ export default function OverlayAlexVoiceFullScreen() {
         // "Connexion d'Alex…" if token is slow (>2s)
         slowTokenTimerRef.current = setTimeout(() => {
           if (!firstAudioReceivedRef.current && getStore().isOverlayOpen) {
-            console.log("[ALEX VOICE] 🐢 Token slow (>2s) — showing 'Connexion d'Alex…' label");
+            console.log("[ALEX VOICE] 🐢 Token slow (>2s) — showing 'Connexion de Clara…' label");
             setSlowToken(true);
           }
         }, TOKEN_SLOW_THRESHOLD_MS);
@@ -675,7 +675,7 @@ export default function OverlayAlexVoiceFullScreen() {
       () => {
         setBootStep("waiting_audio");
         bootTimeRef.current = Date.now();
-        toast.success("Alex est reconnectée", { duration: 2000 });
+        toast.success("Clara est reconnectée", { duration: 2000 });
 
         firstAudioTimerRef.current = setTimeout(() => {
           const latest = getStore();
@@ -714,22 +714,22 @@ export default function OverlayAlexVoiceFullScreen() {
 
   // Calm, single-line state caption — never echo error copy in the panel header.
   const calmCaption =
-    isStabilizing ? "Alex démarre…"
-    : state === "speaking" ? "Alex répond…"
-    : state === "processing_stt" || state === "processing_response" ? "Alex réfléchit…"
-    : state === "capturing_voice" ? "Alex écoute…"
-    : state === "listening" || state === "awaiting_user" || state === "session_ready" ? "Alex écoute…"
-    : "Alex est là.";
+    isStabilizing ? "Clara démarre…"
+    : state === "speaking" ? "Clara répond…"
+    : state === "processing_stt" || state === "processing_response" ? "Clara réfléchit…"
+    : state === "capturing_voice" ? "Clara écoute…"
+    : state === "listening" || state === "awaiting_user" || state === "session_ready" ? "Clara écoute…"
+    : "Clara est là.";
 
   const statusText =
     isRecoveringNow ? recovery.phaseLabel
-    : isError ? "Alex est là."
-    : slowToken && isStabilizing ? "Connexion d'Alex…"
+    : isError ? "Clara est là."
+    : slowToken && isStabilizing ? "Connexion de Clara…"
     : isStabilizing ? getBootStepLabel(bootStep)
-    : state === "listening" || state === "awaiting_user" ? "Alex écoute…"
+    : state === "listening" || state === "awaiting_user" ? "Clara écoute…"
     : state === "capturing_voice" ? "Vous parlez…"
     : state === "processing_stt" || state === "processing_response" ? "Réflexion…"
-    : state === "speaking" ? "Alex parle…"
+    : state === "speaking" ? "Clara parle…"
     : "Session vocale";
 
   const isFloating = store.displayMode === "floating";
@@ -756,14 +756,14 @@ export default function OverlayAlexVoiceFullScreen() {
           transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
           className="uc-alex-floating-panel flex flex-col"
           role="dialog"
-          aria-label="Alex — conversation en cours"
+          aria-label="Clara — conversation en cours"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10" style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top))" }}>
             <div className="flex items-center gap-3 min-w-0">
-              <AlexMorphingOrb state={deriveOrbStateV2(state, isSpeaking)} size="sm" ariaLabel="Alex" />
+              <AlexMorphingOrb state={deriveOrbStateV2(state, isSpeaking)} size="sm" ariaLabel="Clara" />
               <div className="min-w-0">
-                <p className="text-[13px] font-semibold leading-tight truncate">Alex</p>
+                <p className="text-[13px] font-semibold leading-tight truncate">Clara</p>
                 <p className="text-[11px] text-white/70 leading-tight truncate">{calmCaption}</p>
               </div>
             </div>
@@ -779,7 +779,7 @@ export default function OverlayAlexVoiceFullScreen() {
               <button
                 type="button"
                 onClick={handleClose}
-                aria-label="Fermer Alex"
+                aria-label="Fermer Clara"
                 className="w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
               >
                 <X className="w-4 h-4" />
@@ -792,7 +792,7 @@ export default function OverlayAlexVoiceFullScreen() {
             <div className="flex flex-col gap-2">
               {recentTranscripts.length === 0 && (
                 <p className="text-[12px] text-white/65 text-center py-3">
-                  {isStabilizing ? "Alex démarre…" : "Je vous écoute…"}
+                  {isStabilizing ? "Clara démarre…" : "Je vous écoute…"}
                 </p>
               )}
               {recentTranscripts.map((entry) => (
@@ -871,7 +871,7 @@ export default function OverlayAlexVoiceFullScreen() {
                 )}
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-foreground font-display">Alex Voice</h2>
+                <h2 className="text-sm font-semibold text-foreground font-display">Clara Voice</h2>
                 <p className="text-[10px] text-muted-foreground">{statusText}</p>
               </div>
             </div>
@@ -897,7 +897,7 @@ export default function OverlayAlexVoiceFullScreen() {
                   }`}
                 >
                   {entry.role === "alex" && (
-                    <span className="text-xs font-semibold text-primary mb-1 block">Alex</span>
+                    <span className="text-xs font-semibold text-primary mb-1 block">Clara</span>
                   )}
                   <p className="text-sm leading-relaxed">{entry.text}</p>
                 </motion.div>
@@ -905,7 +905,7 @@ export default function OverlayAlexVoiceFullScreen() {
 
               {transcripts.length === 0 && !isStabilizing && isSessionActive && (
                 <div className="text-center py-8">
-                  <p className="text-sm text-muted-foreground">Alex est prête. Parlez…</p>
+                  <p className="text-sm text-muted-foreground">Clara est prête. Parlez…</p>
                 </div>
               )}
             </div>
@@ -913,7 +913,7 @@ export default function OverlayAlexVoiceFullScreen() {
 
           {/* Voice Orb — same AlexMorphingOrb used on the homepage */}
           <div className="flex flex-col items-center py-6">
-            <AlexMorphingOrb state={deriveOrbStateV2(state, isSpeaking)} size="lg" ariaLabel="Alex" />
+            <AlexMorphingOrb state={deriveOrbStateV2(state, isSpeaking)} size="lg" ariaLabel="Clara" />
           </div>
 
           {/* Error banner */}
@@ -945,7 +945,7 @@ export default function OverlayAlexVoiceFullScreen() {
             ) : isError ? (
               <>
                 <Button onClick={handleRetry} className="rounded-full gap-2 px-6" variant="default">
-                  <Zap className="w-4 h-4" /> Réinitialiser Alex
+                  <Zap className="w-4 h-4" /> Réinitialiser Clara
                 </Button>
                 <Button onClick={handleFallbackChat} variant="outline" className="rounded-full gap-2 px-6">
                   <MessageSquare className="w-4 h-4" /> Passer au chat
@@ -954,7 +954,7 @@ export default function OverlayAlexVoiceFullScreen() {
             ) : isStabilizing ? (
               <div className="flex gap-3">
                 <Button disabled className="rounded-full gap-2 px-6" variant="default">
-                  <Sparkles className="w-4 h-4 animate-spin" /> Alex démarre…
+                  <Sparkles className="w-4 h-4 animate-spin" /> Clara démarre…
                 </Button>
                 <Button onClick={handleFallbackChat} variant="outline" className="rounded-full gap-2 px-4">
                   <MessageSquare className="w-4 h-4" />
@@ -979,15 +979,15 @@ export default function OverlayAlexVoiceFullScreen() {
 // ─── Boot Step Label ───
 function getBootStepLabel(step: string): string {
   switch (step) {
-    case "init": return "Alex démarre…";
-    case "opening": return "Alex démarre…";
-    case "stabilizing": return "Alex démarre…";
-    case "connecting": return "Alex démarre…";
-    case "connected": return "Alex se prépare…";
-    case "waiting_audio": return "Alex se prépare…";
-    case "live": return "Alex vous parle";
+    case "init": return "Clara démarre…";
+    case "opening": return "Clara démarre…";
+    case "stabilizing": return "Clara démarre…";
+    case "connecting": return "Clara démarre…";
+    case "connected": return "Clara se prépare…";
+    case "waiting_audio": return "Clara se prépare…";
+    case "live": return "Clara vous parle";
     case "error": return "Erreur de démarrage";
-    default: return "Alex démarre…";
+    default: return "Clara démarre…";
   }
 }
 
@@ -998,7 +998,7 @@ function BootChecklist({ step }: { step: string }) {
     { key: "stabilizing", label: "Préparation audio" },
     { key: "connecting", label: "Activation vocale" },
     { key: "connected", label: "Moteur vocal prêt" },
-    { key: "waiting_audio", label: "Alex démarre sa salutation" },
+    { key: "waiting_audio", label: "Clara démarre sa salutation" },
   ];
 
   const stepOrder = ["init", "opening", "stabilizing", "connecting", "connected", "waiting_audio", "live"];

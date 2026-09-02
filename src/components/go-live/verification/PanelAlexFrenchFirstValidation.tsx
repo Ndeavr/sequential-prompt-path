@@ -27,12 +27,12 @@ export default function PanelAlexFrenchFirstValidation() {
       const response = data?.reply || data?.message || data?.response || "";
       const isFrench = /[àâéèêëïîôùûüç]|bonjour|bienvenue|comment|aide|entrepreneur/i.test(response);
       results.push({
-        label: "Alex répond en français",
+        label: "Clara répond en français",
         status: error ? "failed" : isFrench ? "passed" : "partial",
         detail: error ? error.message : isFrench ? `"${response.substring(0, 80)}…"` : `Réponse non-FR détectée: "${response.substring(0, 80)}"`,
       });
     } catch (err: any) {
-      results.push({ label: "Alex répond en français", status: "failed", detail: err?.message || "Unreachable" });
+      results.push({ label: "Clara répond en français", status: "failed", detail: err?.message || "Unreachable" });
     }
 
     // 2. Test alex-start-session
@@ -41,12 +41,12 @@ export default function PanelAlexFrenchFirstValidation() {
         body: { surface: "onboarding", language: "fr", test: true },
       });
       results.push({
-        label: "Session Alex démarrable",
+        label: "Session Clara démarrable",
         status: error ? "failed" : "passed",
         detail: error ? error.message : `Session: ${data?.session_id || "OK"}`,
       });
     } catch (err: any) {
-      results.push({ label: "Session Alex démarrable", status: "failed", detail: err?.message || "Unreachable" });
+      results.push({ label: "Session Clara démarrable", status: "failed", detail: err?.message || "Unreachable" });
     }
 
     // 3. Test alex-voice-get-config
@@ -105,14 +105,14 @@ export default function PanelAlexFrenchFirstValidation() {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
           <MessageCircle className="h-4 w-4 text-primary" />
-          Alex FR-First
+          Clara FR-First
           {total > 0 && <Badge variant={passed === total ? "default" : passed > 0 ? "secondary" : "destructive"} className="text-[10px]">{passed}/{total}</Badge>}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
         <Button size="sm" onClick={runTest} disabled={running} className="h-7 text-xs gap-1">
           <MessageCircle className="h-3 w-3" />
-          {running ? "Test…" : "Tester Alex FR"}
+          {running ? "Test…" : "Tester Clara FR"}
         </Button>
         {checks.length > 0 && (
           <div className="space-y-1">

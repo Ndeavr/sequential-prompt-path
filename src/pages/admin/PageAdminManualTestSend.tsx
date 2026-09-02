@@ -69,7 +69,7 @@ export default function PageAdminManualTestSend() {
           templateName: "manual-live-test",
           recipientEmail: trimmedRecipient,
           senderEmail: SENDER_EMAIL,
-          senderName: mailbox.data?.sender_name || "Alex UNPRO",
+          senderName: mailbox.data?.sender_name || "Clara UNPRO",
           messageId: id,
           idempotencyKey: `manual-live-test-${id}`,
           templateData: { subject: subject.trim(), body: body.trim() },

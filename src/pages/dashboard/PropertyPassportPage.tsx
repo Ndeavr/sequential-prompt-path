@@ -391,7 +391,7 @@ export default function PropertyPassportPage() {
             </Link>
           </Button>
           <Button variant="outline" size="sm" className="text-xs gap-1" onClick={() => alexVoice.openAlex("general")}>
-            <Sparkles className="w-3 h-3" /> Parler à Alex
+            <Sparkles className="w-3 h-3" /> Parler à Clara
           </Button>
           <Button asChild variant="outline" size="sm" className="text-xs gap-1">
             <Link to="/describe-project">

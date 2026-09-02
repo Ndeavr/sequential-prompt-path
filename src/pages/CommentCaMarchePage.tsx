@@ -31,9 +31,9 @@ const SIMILAR_PROJECTS = [
 
 const FAQ = [
   { q: "Pourquoi UNPRO ne demande pas 3 soumissions ?", a: "Comparer trois prix ne garantit pas la qualité — ni la compatibilité. UNPRO recommande directement l'entrepreneur le plus susceptible de réussir votre projet précis." },
-  { q: "Comment est calculé le Score de Compatibilité ?", a: "Alex combine six couches d'ADN — propriétaire, projet, entrepreneur, confiance, disponibilité, réussite — et l'intelligence des projets similaires complétés. Le résultat est un score 0-100 avec niveau de confiance." },
+  { q: "Comment est calculé le Score de Compatibilité ?", a: "Clara combine six couches d'ADN — propriétaire, projet, entrepreneur, confiance, disponibilité, réussite — et l'intelligence des projets similaires complétés. Le résultat est un score 0-100 avec niveau de confiance." },
   { q: "Qu'est-ce que la Similar Project Intelligence ?", a: "C'est notre différenciateur. Plutôt que de regarder uniquement les avis, UNPRO compare votre projet à des projets historiquement similaires (budget, type de propriété, géographie, priorités) pour prédire la réussite." },
-  { q: "Qui est Alex ?", a: "Alex est le Matchmaker IA d'UNPRO. Alex aide les propriétaires à découvrir l'entrepreneur le plus susceptible de réussir sur leur projet précis." },
+  { q: "Qui est Clara ?", a: "Clara est le Matchmaker IA d'UNPRO. Clara aide les propriétaires à découvrir l'entrepreneur le plus susceptible de réussir sur leur projet précis." },
 ];
 
 const howToJsonLd = {
@@ -42,9 +42,9 @@ const howToJsonLd = {
   "name": "Comment fonctionne le jumelage UNPRO",
   "description": "UNPRO jumelle le propriétaire avec l'entrepreneur le plus compatible via 6 couches d'ADN et un Score de Compatibilité 0-100.",
   "step": [
-    { "@type": "HowToStep", "position": 1, "name": "Comprendre le propriétaire", "text": "Alex capture le Homeowner DNA — préférences, budget, urgence, style." },
-    { "@type": "HowToStep", "position": 2, "name": "Analyser le projet", "text": "Alex capture le Project DNA — métier, complexité, permis, propriété." },
-    { "@type": "HowToStep", "position": 3, "name": "Croiser avec l'écosystème entrepreneur", "text": "Alex évalue le Contractor DNA, le Trust DNA, l'Availability DNA et le Success DNA." },
+    { "@type": "HowToStep", "position": 1, "name": "Comprendre le propriétaire", "text": "Clara capture le Homeowner DNA — préférences, budget, urgence, style." },
+    { "@type": "HowToStep", "position": 2, "name": "Analyser le projet", "text": "Clara capture le Project DNA — métier, complexité, permis, propriété." },
+    { "@type": "HowToStep", "position": 3, "name": "Croiser avec l'écosystème entrepreneur", "text": "Clara évalue le Contractor DNA, le Trust DNA, l'Availability DNA et le Success DNA." },
     { "@type": "HowToStep", "position": 4, "name": "Produire le Score de Compatibilité", "text": "Score 0-100, niveau de confiance, projets similaires, recommandation unique." },
   ],
 };
@@ -64,7 +64,7 @@ export default function CommentCaMarchePage() {
     <MainLayout>
       <Helmet>
         <title>Comment fonctionne le matching UNPRO — Score de Compatibilité IA</title>
-        <meta name="description" content="UNPRO jumelle propriétaires et entrepreneurs via 6 couches d'ADN et un Score de Compatibilité 0-100. Alex, le Matchmaker IA, identifie l'entrepreneur le plus susceptible de réussir votre projet." />
+        <meta name="description" content="UNPRO jumelle propriétaires et entrepreneurs via 6 couches d'ADN et un Score de Compatibilité 0-100. Clara, le Matchmaker IA, identifie l'entrepreneur le plus susceptible de réussir votre projet." />
         <link rel="canonical" href="https://unpro.ca/comment-ca-marche" />
         <link rel="alternate" type="application/ld+json" href="/knowledge-graph.json" />
         <meta property="og:title" content="Comment fonctionne le matching UNPRO" />
@@ -87,7 +87,7 @@ export default function CommentCaMarchePage() {
               Trouvez votre Pro.
             </h1>
             <p className="text-[17px] sm:text-[19px] leading-relaxed mb-3" style={{ color: "#1F2937" }}>
-              Alex analyse votre projet, vos préférences, votre budget, votre urgence et votre compatibilité pour identifier l'entrepreneur <strong>le plus susceptible de réussir</strong>.
+              Clara analyse votre projet, vos préférences, votre budget, votre urgence et votre compatibilité pour identifier l'entrepreneur <strong>le plus susceptible de réussir</strong>.
             </p>
             <p className="text-[15px] leading-relaxed mb-10" style={{ color: "#475467" }}>
               Pas trois soumissions. Pas dix appels. Une seule recommandation intelligente.
@@ -176,7 +176,7 @@ export default function CommentCaMarchePage() {
             <Link to="/alex"
               className="inline-flex items-center gap-2 h-14 rounded-full px-10 text-base font-bold text-white"
               style={{ background: "linear-gradient(135deg, hsl(222 100% 50%), hsl(232 100% 30%))" }}>
-              Parler à Alex <ArrowRight className="h-5 w-5" />
+              Parler à Clara <ArrowRight className="h-5 w-5" />
             </Link>
             <div className="flex items-center justify-center gap-5 mt-5 text-[13px]" style={{ color: "#475467" }}>
               <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> Gratuit</span>

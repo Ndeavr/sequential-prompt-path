@@ -70,7 +70,7 @@ export function WaitingPositionCard({ projectId, homeownerId, city, category, po
           Vous êtes {positionLabel} en attente d'une recommandation {category} à {city}.
         </h2>
         <p className="text-readable-body">
-          Alex cherche activement un entrepreneur compatible. Votre projet reste prioritaire.
+          Clara cherche activement un entrepreneur compatible. Votre projet reste prioritaire.
         </p>
         <p className="text-xs text-readable-muted">Référence : {projectId.slice(0, 8)}</p>
       </div>

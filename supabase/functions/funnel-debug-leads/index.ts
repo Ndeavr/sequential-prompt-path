@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
                s === "sms_delivered" ? "SMS envoyé mais non livré (statut Twilio manquant)" :
                s === "link_clicked" ? "Lien SMS jamais cliqué" :
                s === "landing_view" ? "Clic sans landing_view (tracking front cassé ?)" :
-               s === "alex_started" ? "Alex jamais démarré sur la landing" :
+               s === "alex_started" ? "Clara jamais démarré sur la landing" :
                s === "signup_started" ? "Aucune inscription initiée" :
                s === "signup_completed" ? "Inscription abandonnée" :
                s === "checkout_opened" ? "Checkout Stripe jamais ouvert" :

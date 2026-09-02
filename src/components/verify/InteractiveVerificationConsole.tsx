@@ -96,7 +96,7 @@ export default function InteractiveVerificationConsole() {
                       <p className="text-sm text-foreground leading-relaxed">{verdict.short}</p>
                       <div className="flex flex-wrap gap-2 mt-4">
                         <Button size="sm" onClick={() => openAlex?.("general")} className="gap-2">
-                          <Sparkles className="w-4 h-4" /> Réserver via Alex
+                          <Sparkles className="w-4 h-4" /> Réserver via Clara
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => navigate(`/verifier-un-entrepreneur?q=${encodeURIComponent(pick.business_name)}`, {
                           state: { autoRun: true, prefill: { business_name: pick.business_name, phone: pick.phone, website: pick.website, city: pick.city, place_id: pick.place_id } },

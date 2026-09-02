@@ -166,7 +166,7 @@ export default function SectionInstantMatch() {
                   <div className="h-10 w-10 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
                     <Mic className="h-5 w-5 text-accent" />
                   </div>
-                  <p className="text-sm font-semibold text-foreground">Parler à Alex</p>
+                  <p className="text-sm font-semibold text-foreground">Parler à Clara</p>
                   <p className="text-[10px] text-muted-foreground">Décrivez par la voix</p>
                 </button>
 

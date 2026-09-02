@@ -57,7 +57,7 @@ const REASONS: Record<string, string> = {
   landing_view: "Clic sans landing_view (tracking front cassé)",
   landing_visible_3s: "Landing quittée en moins de 3 secondes",
   cta_clicked: "Landing vue mais CTA jamais cliqué",
-  alex_started: "Alex jamais démarré sur la landing",
+  alex_started: "Clara jamais démarré sur la landing",
   signup_started: "Aucune inscription initiée",
   signup_completed: "Inscription abandonnée",
   checkout_opened: "Checkout Stripe jamais ouvert",

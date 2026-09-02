@@ -71,7 +71,7 @@ export default function ScreenLanding() {
             onClick={() => navigate("/entrepreneur/activer/compte?mode=alex")}
           >
             <Bot className="w-5 h-5 mr-2 text-primary" />
-            Le faire avec Alex
+            Le faire avec Clara
           </Button>
         </div>
 

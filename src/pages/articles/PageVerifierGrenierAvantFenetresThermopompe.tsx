@@ -413,7 +413,7 @@ export default function PageVerifierGrenierAvantFenetresThermopompe() {
                 Diagnostic gratuit <ArrowRight className="h-4 w-4" />
               </Button>
               <Button size="lg" variant="outline" onClick={askAlex}>
-                Parler à Alex
+                Parler à Clara
               </Button>
             </div>
           </Card>

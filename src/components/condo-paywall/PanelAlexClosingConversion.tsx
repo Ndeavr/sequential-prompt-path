@@ -12,7 +12,7 @@ export default function PanelAlexClosingConversion({ score, riskCount }: Props) 
         <Bot className="h-5 w-5 text-primary" />
       </div>
       <div className="space-y-1">
-        <p className="text-sm font-medium text-foreground">Alex</p>
+        <p className="text-sm font-medium text-foreground">Clara</p>
         <p className="text-sm text-muted-foreground leading-relaxed">
           Votre score est de {score}% avec {riskCount} risque{riskCount > 1 ? "s" : ""} détecté{riskCount > 1 ? "s" : ""}.
           Débloquez l'accès complet pour corriger chaque point et atteindre la pleine conformité Loi 16.

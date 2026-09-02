@@ -8,7 +8,7 @@ const Home = () => {
     "@type": "Service",
     name: "UNPRO",
     description:
-      "Concierge IA québécois. Décrivez votre problème, Alex analyse, vérifie et planifie le rendez-vous avec le bon entrepreneur.",
+      "Concierge IA québécois. Décrivez votre problème, Clara analyse, vérifie et planifie le rendez-vous avec le bon entrepreneur.",
     url: "https://unpro.ca",
     areaServed: { "@type": "Place", name: "Quebec" },
     provider: { "@type": "Organization", name: "UNPRO", url: "https://unpro.ca" },
@@ -24,7 +24,7 @@ const Home = () => {
         name: "Comment fonctionne UNPRO ?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Vous décrivez votre besoin à Alex (voix, texte ou photo). Alex analyse, recommande le bon professionnel vérifié et planifie le rendez-vous.",
+          text: "Vous décrivez votre besoin à Clara (voix, texte ou photo). Clara analyse, recommande le bon professionnel vérifié et planifie le rendez-vous.",
         },
       },
       {
@@ -40,7 +40,7 @@ const Home = () => {
         name: "Le rendez-vous est-il garanti ?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Oui. Chaque demande qualifiée par Alex devient un rendez-vous confirmé avec un entrepreneur vérifié.",
+          text: "Oui. Chaque demande qualifiée par Clara devient un rendez-vous confirmé avec un entrepreneur vérifié.",
         },
       },
     ],

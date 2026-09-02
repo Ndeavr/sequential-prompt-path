@@ -148,7 +148,7 @@ const AlexChat = () => {
           <Sparkles className="text-primary-foreground h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-sm font-bold text-foreground">Alex</h1>
+          <h1 className="text-sm font-bold text-foreground">Clara</h1>
           <p className="text-[10px] text-muted-foreground">Concierge IA UNPRO</p>
         </div>
         <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={handleReset} title="Nouvelle conversation">
@@ -172,7 +172,7 @@ const AlexChat = () => {
 
               <div className="space-y-2">
                 <h2 className="text-xl font-bold text-foreground">
-                  {userName ? `Bonjour ${userName} 👋` : "Bonjour, je suis Alex"}
+                  {userName ? `Bonjour ${userName} 👋` : "Bonjour, je suis Clara"}
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
                   {userName
@@ -197,7 +197,7 @@ const AlexChat = () => {
 
               {isSupported && (
                 <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
-                  <Mic className="h-3 w-3" /> Vous pouvez aussi utiliser le micro pour parler à Alex
+                  <Mic className="h-3 w-3" /> Vous pouvez aussi utiliser le micro pour parler à Clara
                 </p>
               )}
             </motion.div>
@@ -305,7 +305,7 @@ const AlexChat = () => {
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder={isListening ? "Parlez maintenant…" : "Posez votre question à Alex…"}
+                placeholder={isListening ? "Parlez maintenant…" : "Posez votre question à Clara…"}
                 className="pr-4 text-sm rounded-2xl border-border/60 bg-muted/30 focus-visible:ring-1 h-11"
                 disabled={isStreaming}
               />
@@ -341,7 +341,7 @@ const AlexChat = () => {
           </form>
 
           <p className="text-[10px] text-muted-foreground text-center mt-2">
-            Alex peut faire des erreurs. Vérifiez les informations importantes.
+            Clara peut faire des erreurs. Vérifiez les informations importantes.
           </p>
         </div>
       </div>

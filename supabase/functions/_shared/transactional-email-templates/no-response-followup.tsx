@@ -49,7 +49,7 @@ const NoResponseFollowupEmail = ({ firstName, pendingAction, actionUrl }: NoResp
         </Section>
 
         <Hr style={hr} />
-        <Text style={footer}>Alex d'{SITE_NAME}</Text>
+        <Text style={footer}>Clara d'{SITE_NAME}</Text>
       </Container>
     </Body>
   </Html>

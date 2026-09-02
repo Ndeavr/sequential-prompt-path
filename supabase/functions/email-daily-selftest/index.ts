@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
       <p>Daily production-pipeline verification.</p>
       <p>Timestamp: <code>${now}</code></p>
       <p><a href="${ctaUrl}" style="display:inline-block;padding:12px 18px;background:#0F62FE;color:#fff;text-decoration:none;border-radius:8px">Open Email Health</a></p>
-      <p style="color:#666;font-size:12px">Sent from Alex d'UNPRO &lt;alex@mail.unpro.ca&gt;</p>
+      <p style="color:#666;font-size:12px">Sent from Clara d'UNPRO &lt;alex@mail.unpro.ca&gt;</p>
     </div>`;
 
   try {

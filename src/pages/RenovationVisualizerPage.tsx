@@ -74,7 +74,7 @@ const RenovationVisualizerPage = () => {
           <Wand2 className="text-primary-foreground h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-sm font-bold text-foreground">Alex — Visualiseur</h1>
+          <h1 className="text-sm font-bold text-foreground">Clara — Visualiseur</h1>
           <p className="text-[10px] text-muted-foreground">Transformez vos espaces</p>
         </div>
         <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={reset}>
@@ -104,7 +104,7 @@ const RenovationVisualizerPage = () => {
               <div className="space-y-2 max-w-xs">
                 <h2 className="text-xl font-bold text-foreground">Visualisez votre rénovation</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Prenez une photo de votre espace et Alex vous guidera vers des concepts de transformation personnalisés.
+                  Prenez une photo de votre espace et Clara vous guidera vers des concepts de transformation personnalisés.
                 </p>
               </div>
 
@@ -173,7 +173,7 @@ const RenovationVisualizerPage = () => {
               )}
               <div className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Alex analyse votre photo…</p>
+                <p className="text-sm text-muted-foreground">Clara analyse votre photo…</p>
               </div>
             </motion.div>
           )}
@@ -335,7 +335,7 @@ const RenovationVisualizerPage = () => {
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Répondez à Alex…"
+                placeholder="Répondez à Clara…"
                 className="flex-1 text-sm rounded-2xl border-border/60 bg-muted/30 h-11"
                 disabled={isStreaming || isGenerating}
               />

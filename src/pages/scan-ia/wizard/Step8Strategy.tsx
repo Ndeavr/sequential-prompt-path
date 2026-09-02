@@ -21,7 +21,7 @@ export default function Step8Strategy() {
           </div>
         </div>
 
-        <h1 className="text-2xl font-semibold text-white mb-6">Alex compose votre plan</h1>
+        <h1 className="text-2xl font-semibold text-white mb-6">Clara compose votre plan</h1>
 
         <ul className="space-y-2">
           {LINES.map((l, i) => (

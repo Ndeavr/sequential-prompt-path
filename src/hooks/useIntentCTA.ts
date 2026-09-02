@@ -62,7 +62,7 @@ const INTENT_CTA_MAP: Record<UserIntent, CTAConfig> = {
   create_project: {
     intent: "create_project",
     primary: { label: "Créer un Projet", labelEn: "Create Project", to: "/signup" },
-    secondary: { label: "Parler à Alex", labelEn: "Talk to Alex", to: "/alex" },
+    secondary: { label: "Parler à Clara", labelEn: "Talk to Clara", to: "/alex" },
   },
   default: {
     intent: "default",

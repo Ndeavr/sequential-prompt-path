@@ -70,7 +70,7 @@ export default function HomepageRevealFlow() {
       timerRef.current.push(t);
     };
 
-    schedule(STEP_DELAYS.bubble, 1);   // Alex bubble
+    schedule(STEP_DELAYS.bubble, 1);   // Clara bubble
     schedule(STEP_DELAYS.card, 2);     // Card reveal
     schedule(STEP_DELAYS.cta, 3);      // Primary CTA
     schedule(STEP_DELAYS.secondary, 4); // Secondary CTAs
@@ -102,7 +102,7 @@ export default function HomepageRevealFlow() {
 
       <div className="relative z-10 max-w-lg mx-auto space-y-5">
 
-        {/* ═══ STEP 1 — Alex Bubble ═══ */}
+        {/* ═══ STEP 1 — Clara Bubble ═══ */}
         <AnimatePresence>
           {step >= 1 && (
             <motion.div
@@ -111,7 +111,7 @@ export default function HomepageRevealFlow() {
               transition={{ duration: 0.5, type: "spring", stiffness: 120, damping: 14 }}
               className="flex items-end gap-3"
             >
-              {/* Alex avatar */}
+              {/* Clara avatar */}
               <div className="shrink-0 relative">
                 <div className="h-10 w-10 rounded-full overflow-hidden shadow-soft border-2 border-card">
                   <UnproIcon size={40} variant="blue" />

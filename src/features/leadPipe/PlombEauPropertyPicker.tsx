@@ -181,7 +181,7 @@ export default function PlombEauPropertyPicker({ citySlug, cityName }: Props) {
           </ul>
           <div className="grid grid-cols-2 gap-2">
             <Button onClick={() => openAlex("lead_pipe_chat")} variant="outline">
-              Parler à Alex
+              Parler à Clara
             </Button>
             <Button onClick={handleBookPlumber}>
               <Phone className="size-4 mr-1" /> Plombier

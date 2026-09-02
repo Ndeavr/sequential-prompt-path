@@ -33,7 +33,7 @@ export default function FallbackLandingTemplateUNPRO({ data }: FallbackLandingPr
     subtitle: "Notre équipe travaille activement sur cette section. Restez connecté.",
     primaryCtaLabel: "Retour à l'accueil",
     primaryCtaPath: "/",
-    secondaryCtaLabel: "Parler à Alex",
+    secondaryCtaLabel: "Parler à Clara",
     secondaryCtaPath: "/alex",
     benefits: ["Intelligence artificielle intégrée", "Expérience premium", "Support 24/7"],
   };
@@ -62,7 +62,7 @@ export default function FallbackLandingTemplateUNPRO({ data }: FallbackLandingPr
             {d.secondaryCtaPath && (
               <Button onClick={() => navigate(d.secondaryCtaPath!)} variant="outline" size="lg" className="gap-2">
                 <Sparkles className="w-4 h-4" />
-                {d.secondaryCtaLabel || "Alex"}
+                {d.secondaryCtaLabel || "Clara"}
               </Button>
             )}
           </motion.div>

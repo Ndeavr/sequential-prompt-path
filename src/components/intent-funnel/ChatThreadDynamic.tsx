@@ -30,7 +30,7 @@ export default function ChatThreadDynamic({ questions, answers, onAnswer }: Prop
             transition={{ delay: i * 0.1 }}
             className="space-y-2"
           >
-            {/* Alex question */}
+            {/* Clara question */}
             <div className="flex justify-start">
               <div className="max-w-[85%] rounded-2xl rounded-tl-md bg-muted/80 px-4 py-3 border border-border/40">
                 <p className="text-sm text-foreground">{q.question}</p>

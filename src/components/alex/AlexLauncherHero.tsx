@@ -72,7 +72,7 @@ export default function AlexLauncherHero({ onLaunch, isActivating = false, class
           transition={{ delay: 0.2 }}
           className="font-display text-2xl md:text-3xl font-extrabold tracking-tight text-foreground"
         >
-          Parlez à Alex
+          Parlez à Clara
         </motion.h2>
 
         <motion.p

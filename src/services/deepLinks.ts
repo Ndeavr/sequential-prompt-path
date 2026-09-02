@@ -112,7 +112,7 @@ export const FEATURE_META: Record<string, { icon: string; headline: string; desc
   },
   alex: {
     icon: "Bot",
-    headline: "Parlez à Alex",
+    headline: "Parlez à Clara",
     description: "Posez vos questions sur votre maison à notre assistant IA spécialisé.",
     previewColor: "from-indigo-500/20 to-purple-500/20",
   },

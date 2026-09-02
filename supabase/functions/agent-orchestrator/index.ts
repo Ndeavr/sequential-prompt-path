@@ -574,7 +574,7 @@ function analyzeSEO(ctx: SystemContext): AgentProposal[] {
     proposals.push({
       agent_name: "Content Writer Agent", agent_key: "op-content-writer", agent_domain: "seo",
       task_title: "Base de connaissances RAG insuffisante",
-      task_description: `${ctx.ragDocuments} documents. Alex manque de contexte.`,
+      task_description: `${ctx.ragDocuments} documents. Clara manque de contexte.`,
       action_plan: ["Ingérer FAQ manquantes", "Créer guides travaux", "Indexer coûts"],
       impact_score: 65, urgency: "medium", auto_executable: true, execution_mode: "semi_auto",
     });

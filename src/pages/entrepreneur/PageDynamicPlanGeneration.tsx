@@ -78,7 +78,7 @@ export default function PageDynamicPlanGeneration() {
                   onClick={openCustomPlanAlex}
                   className="text-sm text-white/60 hover:text-white underline-offset-4 hover:underline transition"
                 >
-                  Créer mon plan sur mesure avec Alex
+                  Créer mon plan sur mesure avec Clara
                 </button>
               </div>
             </motion.section>

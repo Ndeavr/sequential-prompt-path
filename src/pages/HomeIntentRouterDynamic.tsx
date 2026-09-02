@@ -41,10 +41,10 @@ export default function HomeIntentRouterDynamic() {
 
       <div className="flex flex-col min-h-screen">
         <HeroSectionIntentWithAlexOrb
-          title="Bonjour, je suis Alex. Qu'est-ce qui se passe chez vous ?"
+          title="Bonjour, je suis Clara. Qu'est-ce qui se passe chez vous ?"
           subtitle="Décrivez le problème, ajoutez une photo ou laissez l'IA vous guider."
           intentFeature="home_intent"
-          ctaPrimary={{ label: "Parler à Alex", onClick: () => openAlex("home_intent") }}
+          ctaPrimary={{ label: "Parler à Clara", onClick: () => openAlex("home_intent") }}
           ctaSecondary={{ label: "Ajouter une photo ou une soumission", onClick: () => navigate("/diagnostic-photo") }}
           counterPrimary={{ type: "submissions", label: "soumissions évitées" }}
           counterSecondary={{ type: "custom", label: "décisions accélérées", customValue: 12482 }}

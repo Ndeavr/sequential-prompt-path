@@ -227,7 +227,7 @@ function AlexConversation() {
               {msg.role === "alex" && (
                 <div className="flex items-center gap-1.5 mb-1">
                   <Sparkles className="h-3 w-3 text-primary" />
-                  <span className="text-[10px] font-semibold text-primary">Alex</span>
+                  <span className="text-[10px] font-semibold text-primary">Clara</span>
                 </div>
               )}
               <p className="text-xs leading-relaxed">{msg.text}</p>
@@ -430,7 +430,7 @@ export default function PreventiveMaintenancePage() {
         </div>
       </section>
 
-      {/* ─── Alex AI Section ─── */}
+      {/* ─── Clara AI Section ─── */}
       <section className="py-16 px-5">
         <div className="mx-auto max-w-5xl">
           <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -441,7 +441,7 @@ export default function PreventiveMaintenancePage() {
                   <div className="h-6 w-6 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                     <Sparkles className="h-3 w-3 text-primary-foreground" />
                   </div>
-                  <span className="font-display text-xs font-semibold text-foreground">Alex · Assistant IA</span>
+                  <span className="font-display text-xs font-semibold text-foreground">Clara · Assistant IA</span>
                 </div>
                 <AlexConversation />
               </div>
@@ -453,10 +453,10 @@ export default function PreventiveMaintenancePage() {
                 <Brain className="h-3 w-3" /> Intelligence artificielle
               </span>
               <h2 className="font-display text-2xl font-bold text-foreground mb-3">
-                Alex vous explique les risques
+                Clara vous explique les risques
               </h2>
               <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                Alex analyse les données de votre maison et vous explique clairement les risques, les priorités et les prochaines étapes — sans jargon technique.
+                Clara analyse les données de votre maison et vous explique clairement les risques, les priorités et les prochaines étapes — sans jargon technique.
               </p>
               <div className="space-y-2">
                 {[
@@ -473,7 +473,7 @@ export default function PreventiveMaintenancePage() {
               </div>
               <div className="mt-6">
                 <Button variant="soft" size="sm" onClick={() => alexVoice.openAlex("general")}>
-                  Parler à Alex <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                  Parler à Clara <ChevronRight className="h-3.5 w-3.5 ml-1" />
                 </Button>
               </div>
             </motion.div>

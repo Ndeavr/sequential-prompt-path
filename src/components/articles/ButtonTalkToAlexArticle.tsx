@@ -28,7 +28,7 @@ export default function ButtonTalkToAlexArticle({ title, slug, category, classNa
       onClick={handleClick}
       className={`inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition ${className}`}
     >
-      Parler à Alex <ArrowRight className="h-3 w-3" />
+      Parler à Clara <ArrowRight className="h-3 w-3" />
     </button>
   );
 }

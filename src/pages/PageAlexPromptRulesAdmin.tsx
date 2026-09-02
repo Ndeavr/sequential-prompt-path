@@ -110,9 +110,9 @@ export default function PageAlexPromptRulesAdmin() {
     <div className="min-h-screen bg-background p-4 md:p-8 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-foreground">Règles Alex — Administration</h1>
+          <h1 className="text-xl font-bold text-foreground">Règles Clara — Administration</h1>
           <p className="text-sm text-muted-foreground">
-            Gérez les règles système, voix, sécurité et booking d'Alex.
+            Gérez les règles système, voix, sécurité et booking de Clara.
           </p>
         </div>
         <Button onClick={addRule} size="sm">

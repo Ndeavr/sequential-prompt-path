@@ -74,7 +74,7 @@ export default function CardConversationPreview() {
               <Bot className="w-3.5 h-3.5 text-primary" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-foreground">Alex · UNPRO</p>
+              <p className="text-xs font-semibold text-foreground">Clara · UNPRO</p>
               <p className="text-[10px] text-muted-foreground">
                 {isPlaying ? "En ligne · Parle…" : isComplete ? "Conversation terminée" : "En ligne"}
               </p>

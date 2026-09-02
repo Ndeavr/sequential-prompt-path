@@ -919,7 +919,7 @@ export default function PaintingCalculatorPage() {
                     to="/alex"
                     className="text-center text-sm text-cyan-200 hover:text-cyan-100 py-2"
                   >
-                    Parler à Alex
+                    Parler à Clara
                   </Link>
                 </div>
               </CardContent>

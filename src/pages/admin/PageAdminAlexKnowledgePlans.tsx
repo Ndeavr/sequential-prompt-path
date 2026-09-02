@@ -43,10 +43,10 @@ export default function PageAdminAlexKnowledgePlans() {
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Shield className="w-6 h-6 text-primary" />
-            Alex — Knowledge Plans
+            Clara — Knowledge Plans
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Base de connaissances et règles de vérité pour les réponses Alex
+            Base de connaissances et règles de vérité pour les réponses Clara
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={loadData} disabled={loading}>

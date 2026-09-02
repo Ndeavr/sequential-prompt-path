@@ -181,7 +181,7 @@ export default function ContractorBookingDemo() {
             Trouvez le bon professionnel et réservez directement.
           </h2>
           <p className="text-[13px] md:text-[14px] leading-relaxed mb-4" style={{ color: "#475467" }}>
-            Alex analyse votre besoin, vous recommande un entrepreneur compatible et vous
+            Clara analyse votre besoin, vous recommande un entrepreneur compatible et vous
             présente ses disponibilités réelles.
           </p>
 
@@ -360,7 +360,7 @@ function AlexBubble({ step }: { step: DemoStep }) {
       ? "Vous souhaitez améliorer l'isolation de votre entretoit à Terrebonne."
       : step === "recommendation" || step === "availability" || step === "booking"
         ? "Pour l'isolation de votre entretoit, je vous propose Isolation Solution Royal."
-        : "Vous n'avez pas eu à comparer trois entrepreneurs. Alex a trouvé un professionnel compatible et réservé votre rendez-vous.";
+        : "Vous n'avez pas eu à comparer trois entrepreneurs. Clara a trouvé un professionnel compatible et réservé votre rendez-vous.";
 
   return (
     <div
@@ -643,7 +643,7 @@ function ConfirmationCard({ selected }: { selected: { dateKey: string; slot: str
         className="mt-3 text-[11.5px] leading-snug px-2 py-2 rounded-xl"
         style={{ background: "rgba(37,99,255,0.06)", color: "#1D4ED8" }}
       >
-        Vous n'avez pas eu à comparer trois entrepreneurs. Alex a trouvé un
+        Vous n'avez pas eu à comparer trois entrepreneurs. Clara a trouvé un
         professionnel compatible et réservé votre rendez-vous.
       </p>
     </div>

@@ -216,7 +216,7 @@ export default function PageActivationStart() {
             className="w-full h-10 rounded-xl text-sm"
             onClick={() => navigate("/alex/voice/realtime")}
           >
-            <MessageCircle className="w-4 h-4 mr-2" /> Parler à Alex
+            <MessageCircle className="w-4 h-4 mr-2" /> Parler à Clara
           </Button>
         </div>
       </div>

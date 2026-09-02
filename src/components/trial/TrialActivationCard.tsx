@@ -14,7 +14,7 @@ const BENEFITS = [
   "Accès complet au tableau de bord",
   "Connexion de votre agenda",
   "Visibilité IA dans votre territoire",
-  "Conversations avec Alex incluses",
+  "Conversations avec Clara incluses",
   "Premières opportunités envoyées",
 ];
 

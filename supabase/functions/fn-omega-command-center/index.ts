@@ -233,7 +233,7 @@ Deno.serve(async (req) => {
     };
     const subsystemHealth = [
       { key: "revenue", label: "Revenue Engine", ...healthByEngine(["subscription", "checkout", "stripe", "payment"]) },
-      { key: "alex", label: "Alex AI", ...healthByEngine(["alex", "voice", "elevenlabs"]) },
+      { key: "alex", label: "Clara AI", ...healthByEngine(["alex", "voice", "elevenlabs"]) },
       { key: "booking", label: "Booking", ...healthByEngine(["booking", "appointment", "slot"]) },
       { key: "outbound", label: "Outbound", ...healthByEngine(["outbound", "email", "send", "queue", "sms"]) },
       { key: "core", label: "Core App", ...healthByEngine(["omega", "orchestrat", "intent", "router"]) },
@@ -303,7 +303,7 @@ Deno.serve(async (req) => {
       ticker.push({ ts: a.created_at, label: a.action_label ?? a.engine_name, kind: a.action_status ?? "action", source: "automation_action_logs" });
     }
     for (const s of (alexSessionsRes.data ?? [])) {
-      ticker.push({ ts: s.started_at, label: `Alex session · ${s.surface ?? "web"}`, kind: "alex", source: "alex_sessions" });
+      ticker.push({ ts: s.started_at, label: `Clara session · ${s.surface ?? "web"}`, kind: "alex", source: "alex_sessions" });
     }
     for (const e of (systemEventsRes.data ?? [])) {
       ticker.push({ ts: e.created_at, label: e.event_type, kind: e.severity ?? "info", source: "system_events" });

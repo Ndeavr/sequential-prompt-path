@@ -119,10 +119,10 @@ export default function AlexVoiceMode({ feature, onFlowComplete, onDismiss, inli
   const orbState = isConnecting ? "connecting" : isActive ? (isSpeaking ? "speaking" : "listening") : "idle";
 
   const statusText =
-    orbState === "speaking" ? "Alex vous parle…"
+    orbState === "speaking" ? "Clara vous parle…"
     : orbState === "connecting" ? "Connexion…"
     : orbState === "listening" ? "Je vous écoute…"
-    : "Parlez à Alex";
+    : "Parlez à Clara";
 
   return (
     <motion.div
@@ -143,7 +143,7 @@ export default function AlexVoiceMode({ feature, onFlowComplete, onDismiss, inli
               <Volume2 className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-[11px] font-semibold text-primary">Alex Voice</p>
+              <p className="text-[11px] font-semibold text-primary">Clara Voice</p>
               <p className="text-[9px] text-muted-foreground">{statusText}</p>
             </div>
           </div>

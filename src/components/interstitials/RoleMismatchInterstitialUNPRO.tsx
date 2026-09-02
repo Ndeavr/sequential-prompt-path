@@ -18,7 +18,7 @@ export default function RoleMismatchInterstitialUNPRO({
   title = "Cette section n'est pas disponible pour votre rôle",
   subtitle = "Explorez les fonctionnalités adaptées à votre profil.",
   primaryCta = { label: "Mon tableau de bord", path: "/dashboard" },
-  secondaryCta = { label: "Parler à Alex", path: "/alex" },
+  secondaryCta = { label: "Parler à Clara", path: "/alex" },
 }: RoleMismatchProps) {
   const navigate = useNavigate();
 

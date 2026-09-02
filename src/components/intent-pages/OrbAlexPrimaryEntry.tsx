@@ -31,7 +31,7 @@ export default function OrbAlexPrimaryEntry({
       onClick={() => openAlex(intentFeature, contextHint)}
       className={cn("relative flex items-center justify-center group", className)}
       style={{ isolation: "isolate" }}
-      aria-label="Parler à Alex"
+      aria-label="Parler à Clara"
     >
       {/* Halo ring — very slow spin (decorative) */}
       <motion.div

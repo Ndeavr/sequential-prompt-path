@@ -330,7 +330,7 @@ export default function OnboardingPageUnpro() {
               <div className="text-center space-y-4 py-8">
                 <h2 className="text-xl font-bold text-foreground">C'est tout pour le moment !</h2>
                 <p className="text-sm text-muted-foreground">
-                  Votre profil sera complété sous peu. Alex vous guidera.
+                  Votre profil sera complété sous peu. Clara vous guidera.
                 </p>
                 <button
                   onClick={async () => {
@@ -347,7 +347,7 @@ export default function OnboardingPageUnpro() {
         </AnimatePresence>
       </div>
 
-      {/* Alex Panel - subtle at bottom */}
+      {/* Clara Panel - subtle at bottom */}
       {step > 0 && (
         <div className="fixed bottom-0 left-0 right-0 px-4 pb-4 pointer-events-none">
           <div className="max-w-md mx-auto pointer-events-auto">

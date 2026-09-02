@@ -38,7 +38,7 @@ export default function PageMatchResultsDynamic() {
     <MainLayout>
       <Helmet>
         <title>UNPRO — Vos recommandations</title>
-        <meta name="description" content="Voici les professionnels recommandés par Alex pour votre projet." />
+        <meta name="description" content="Voici les professionnels recommandés par Clara pour votre projet." />
       </Helmet>
 
       <div className="px-5 pt-12 pb-24 max-w-2xl mx-auto">

@@ -52,10 +52,10 @@ export default function HomeCondoAdaptive() {
       <div className="flex flex-col min-h-screen">
         <HeroSectionIntentWithAlexOrb
           title="Simplifiez la gestion de votre immeuble avec une intelligence structurée."
-          subtitle="Centralisez les travaux, la conformité et les prochaines décisions avec Alex."
+          subtitle="Centralisez les travaux, la conformité et les prochaines décisions avec Clara."
           intentFeature="condo"
           ctaPrimary={{ label: "Créer mon Passeport Condo", onClick: () => navigate("/condo") }}
-          ctaSecondary={{ label: "Parler à Alex", onClick: () => openAlex("condo") }}
+          ctaSecondary={{ label: "Parler à Clara", onClick: () => openAlex("condo") }}
           counterPrimary={{ type: "custom", label: "interventions mieux structurées", customValue: 11624 }}
           counterSecondary={{ type: "custom", label: "décisions accélérées", customValue: 7436 }}
           graphStyle="steady"

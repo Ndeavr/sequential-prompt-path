@@ -127,7 +127,7 @@ export default function CityServicePage() {
           title={`Besoin d'un professionnel à ${cityName}?`}
           description="Décrivez votre projet et obtenez un rendez-vous garanti avec un entrepreneur vérifié."
           primaryCta={{ label: "Décrire mon projet", to: "/decrire-mon-projet" }}
-          secondaryCta={{ label: "Parler à Alex", to: "/parler-a-alex" }}
+          secondaryCta={{ label: "Parler à Clara", to: "/parler-a-alex" }}
           variant="accent"
         />
 

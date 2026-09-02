@@ -37,7 +37,7 @@ const FAQS: { question: string; answer: string; topics: string[] }[] = ([
   },
   {
     question: "Est-ce qu'UNPRO peut m'aider à comparer une soumission?",
-    answer: "Oui. Alex, l'assistante UNPRO, peut analyser vos soumissions, vérifier le calcul des taxes, repérer les anomalies et vous recommander un entrepreneur compatible.",
+    answer: "Oui. Clara, l'assistante UNPRO, peut analyser vos soumissions, vérifier le calcul des taxes, repérer les anomalies et vous recommander un entrepreneur compatible.",
   },
 ] as const).map((f) => ({ ...f, topics: [] as string[] }));
 
@@ -148,7 +148,7 @@ TVQ = sous-total × 0,09975`}
           <p>
             UNPRO aide les propriétaires québécois à comprendre le vrai coût de leurs travaux. Un calcul de taxes précis
             permet de comparer correctement les soumissions, valider une facture et éviter les mauvaises surprises. Notre
-            assistante <strong>Alex</strong> peut aller plus loin : analyser une soumission, valider les prix au marché et vous
+            assistante <strong>Clara</strong> peut aller plus loin : analyser une soumission, valider les prix au marché et vous
             recommander un entrepreneur compatible.
           </p>
         </Section>
@@ -159,7 +159,7 @@ TVQ = sous-total × 0,09975`}
         <nav aria-label="Liens utiles" className="rounded-2xl border border-border/50 p-5 bg-card/40">
           <h2 className="text-lg font-bold mb-3">Continuer avec UNPRO</h2>
           <ul className="grid sm:grid-cols-2 gap-2 text-sm">
-            <LinkRow to="/parler-a-alex" label="Parler à Alex" />
+            <LinkRow to="/parler-a-alex" label="Parler à Clara" />
             <LinkRow to="/soumission-travaux" label="Demander une soumission" />
             <LinkRow to="/entrepreneurs" label="Trouver un entrepreneur" />
             <LinkRow to="/verification-entrepreneur" label="Vérifier un entrepreneur (RBQ)" />
@@ -170,13 +170,13 @@ TVQ = sous-total × 0,09975`}
         <div className="rounded-3xl border border-primary/30 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent p-6 sm:p-8 text-center space-y-3">
           <h3 className="text-xl sm:text-2xl font-bold">Besoin d'un prix pour vos travaux?</h3>
           <p className="text-muted-foreground">
-            Alex évalue votre projet, calcule les taxes et vous met en lien avec le bon entrepreneur.
+            Clara évalue votre projet, calcule les taxes et vous met en lien avec le bon entrepreneur.
           </p>
           <Link
             to="/parler-a-alex"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition"
           >
-            Parler à Alex <ArrowRight className="h-4 w-4" />
+            Parler à Clara <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </article>

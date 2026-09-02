@@ -27,7 +27,7 @@ const PAGES_TO_VALIDATE = [
   { route: "/flywheel", name: "Flywheel", priority: 9, category: "internal" },
   { route: "/building-map", name: "Carte Intelligence", priority: 8, category: "public" },
   { route: "/property-graph", name: "Graphe Propriété", priority: 9, category: "public" },
-  { route: "/alex", name: "Alex Chat", priority: 7, category: "public" },
+  { route: "/alex", name: "Clara Chat", priority: 7, category: "public" },
   { route: "/services", name: "Répertoire SEO", priority: 9, category: "seo" },
 ];
 
@@ -185,7 +185,7 @@ Score de 0 à 100 pour chaque dimension.`;
         try {
           const pageContext = `Page: "${page.name}" (route: ${page.route}, catégorie: ${page.category}, priorité: ${page.priority}/9)
 
-Cette page fait partie de la plateforme UNPRO, une marketplace premium qui connecte propriétaires et entrepreneurs au Québec. La plateforme utilise un design dark premium avec des animations Framer Motion, des composants shadcn/ui, et un assistant AI nommé Alex.
+Cette page fait partie de la plateforme UNPRO, une marketplace premium qui connecte propriétaires et entrepreneurs au Québec. La plateforme utilise un design dark premium avec des animations Framer Motion, des composants shadcn/ui, et un assistant AI nommé Clara.
 
 Analyse cette page en profondeur. Identifie les problèmes réels qu'un utilisateur rencontrerait. Pense aux parcours utilisateur: un propriétaire qui cherche un entrepreneur, un entrepreneur qui veut s'inscrire, un gestionnaire de copropriété qui veut analyser son immeuble.`;
 

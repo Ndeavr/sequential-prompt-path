@@ -137,7 +137,7 @@ export default function PageIsrDemoPlanTest() {
             Démo ISR — Sélection intelligente du plan UNPRO
           </h1>
           <p className="mt-3 text-sm sm:text-base text-white/65 max-w-2xl">
-            Alex analyse les objectifs, le territoire et la capacité d'ISR pour recommander
+            Clara analyse les objectifs, le territoire et la capacité d'ISR pour recommander
             le bon plan avant activation.
           </p>
         </header>

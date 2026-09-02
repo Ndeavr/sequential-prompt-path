@@ -19,7 +19,7 @@ export default function PanelAlexPredictionSavings({
     <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm p-5">
       <div className="flex items-center gap-2 mb-4">
         <Sparkles className="w-4 h-4 text-primary" />
-        <h3 className="text-sm font-semibold text-foreground">Économies estimées par Alex</h3>
+        <h3 className="text-sm font-semibold text-foreground">Économies estimées par Clara</h3>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
