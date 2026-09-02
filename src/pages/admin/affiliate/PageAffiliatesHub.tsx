@@ -603,7 +603,9 @@ export default function PageAffiliatesHub() {
                 <p className="text-xs text-muted-foreground">Règles automatiques (ville → catégorie → affilié) : Sprint D.</p>
               </div>
             </TabsContent>
+            <TabsContent value="offers"><FreeAppointmentOffersTab /></TabsContent>
             <TabsContent value="applications"><ApplicationsTab /></TabsContent>
+
             <TabsContent value="commissions"><CommissionsTab /></TabsContent>
             <TabsContent value="payouts"><ComingSoon title="Paiements" subtitle="Lots de paiement, exports CSV / Stripe / QuickBooks." sprint="Sprint C" /></TabsContent>
             <TabsContent value="leaderboard"><ComingSoon title="Leaderboard" subtitle="Classement par conversions, revenus et commissions." sprint="Sprint D" /></TabsContent>
