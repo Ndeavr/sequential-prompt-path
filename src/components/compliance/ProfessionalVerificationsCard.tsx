@@ -55,11 +55,12 @@ export function ProfessionalVerificationsCard({
   neq,
   className,
 }: Props) {
-  const { data: credentials, isLoading } = useProfessionalCredentials(contractorId);
+  const { data: credentials, isLoading, isError } = useProfessionalCredentials(contractorId);
   const { data: rule } = useComplianceRule(professionCode);
 
   const hasAnything = (credentials?.length ?? 0) > 0 || !!businessName || !!neq;
-  if (!isLoading && !hasAnything) return null;
+  // Never hide or conclude "no credentials" when the read failed.
+  if (!isLoading && !isError && !hasAnything) return null;
 
   return (
     <Card className={className}>
@@ -117,9 +118,16 @@ export function ProfessionalVerificationsCard({
             );
           })}
 
-        {!isLoading && (credentials?.length ?? 0) === 0 && (
+        {!isLoading && isError && (
+          <p className="flex items-center gap-2 text-xs text-amber-600">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            Vérification temporairement indisponible. Réessayez dans un instant.
+          </p>
+        )}
+
+        {!isLoading && !isError && (credentials?.length ?? 0) === 0 && (
           <p className="text-xs text-muted-foreground">
-            Aucun titre professionnel vérifié n'est disponible pour ce professionnel.
+            Titre professionnel : non fourni. Aucun titre n'a encore été déclaré ni vérifié pour ce professionnel.
           </p>
         )}
 
