@@ -12,6 +12,8 @@ export interface PublicSource { label: string; url: string }
 export interface ContractorRecommendationData {
   contractor: any;
   projects: any[];
+  services: any[];
+  serviceAreas: any[];
   publicSources: PublicSource[];
   aiReference: AIReferencePayload;
   compatibility: { fits: string[]; not_fits: string[] };
@@ -122,6 +124,8 @@ export function useContractorRecommendation(slug: string | undefined) {
       return {
         contractor: { ...c, service_areas, services_structured },
         projects: projects ?? [],
+        services: svcRows ?? [],
+        serviceAreas: areaRows ?? [],
         publicSources,
         aiReference,
         compatibility,

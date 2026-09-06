@@ -11,23 +11,9 @@ import ContractorSchemaStack from "@/seo/components/ContractorSchemaStack";
 import NotFound from "@/pages/NotFound";
 import { canonicals } from "@/seo/services/canonicalManager";
 import { useContractorRecommendation } from "./hooks/useContractorRecommendation";
-import HeroRecommendation from "./sections/HeroRecommendation";
-import AlexRecommendationCard from "./sections/AlexRecommendationCard";
-import MediaGallery from "./sections/MediaGallery";
-import ServiceAreaMap from "./sections/ServiceAreaMap";
-import StructuredServices from "./sections/StructuredServices";
-import VerificationsByProfession from "./sections/VerificationsByProfession";
-import CompatibilityCard from "./sections/CompatibilityCard";
-import AvailabilityCard from "./sections/AvailabilityCard";
-import SmartFAQ, { buildFaqSchema } from "./sections/SmartFAQ";
-import ProjectsShowcase from "./sections/ProjectsShowcase";
-import AboutContractor from "./sections/AboutContractor";
-import FinalCTA from "./sections/FinalCTA";
+import { buildFaqSchema } from "./sections/SmartFAQ";
 import AIReferenceBlock from "./sections/AIReferenceBlock";
-import DataProvenance from "./sections/DataProvenance";
-import CorrectionRequestCard from "./sections/CorrectionRequestCard";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import ContractorPublicExperience from "@/features/contractorProfile/public/ContractorPublicExperience";
 
 export default function ContractorRecommendationPage() {
   const { slug, city } = useParams<{ slug: string; city?: string }>();
@@ -54,7 +40,7 @@ export default function ContractorRecommendationPage() {
 
   if (!data) return <NotFound />;
 
-  const { contractor: c, projects, aiReference, compatibility, publicSources } = data;
+  const { contractor: c, projects, aiReference } = data;
   const cityName = city || c.city || c.service_areas?.[0] || "Québec";
 
   const title = `${c.business_name}${c.specialty ? ` — ${c.specialty}` : ""} à ${cityName} | Recommandation UNPRO`;
@@ -105,9 +91,9 @@ export default function ContractorRecommendationPage() {
     })),
     faqs: faqs.map((f) => ({ question: f.q, answer: f.a })),
     ctas: {
-      book_appointment: "Parler à Clara",
-      alex: "Parler à Clara",
-      evaluation: "Voir mon niveau de compatibilité",
+      book_appointment: "Planifier un rendez-vous",
+      alex: "Planifier un rendez-vous",
+      evaluation: "Planifier un rendez-vous",
     },
     service_area: c.service_areas ?? [cityName],
     service_types: c.services_structured?.length ? c.services_structured : [c.specialty || "Services résidentiels"],
@@ -139,49 +125,17 @@ export default function ContractorRecommendationPage() {
 
       <AIReferenceBlock reference={aiReference} />
 
-      <article className="max-w-3xl mx-auto px-4 py-6 md:py-10 space-y-8">
-        <HeroRecommendation contractor={c} />
-        <AlexRecommendationCard
-          reference={aiReference}
-          categoryLabel={c.specialty}
-          areas={c.service_areas ?? [cityName]}
+      <div className="mx-auto max-w-3xl overflow-hidden border-x border-border/60 shadow-2xl">
+        <ContractorPublicExperience
+          profileData={{
+            contractor: c,
+            projects,
+            services: data.services,
+            service_areas: data.serviceAreas,
+            media: gallery.map((item) => ({ public_url: item.url })),
+          }}
         />
-        <MediaGallery items={gallery} businessName={c.business_name} />
-        <ServiceAreaMap
-          areas={c.service_areas ?? []}
-          radiusKm={c.travel_radius_km ?? null}
-          primaryCity={c.city}
-        />
-        <StructuredServices services={c.services_structured ?? []} />
-        <VerificationsByProfession categorySlug={c.specialty} contractor={c} />
-        <CompatibilityCard fits={compatibility.fits} not_fits={compatibility.not_fits} />
-        {c.availability_estimate ? <AvailabilityCard key_={c.availability_estimate} /> : null}
-        <SmartFAQ contractor={c} />
-        <ProjectsShowcase projects={projects} businessName={c.business_name} />
-        <AboutContractor contractor={c} />
-        <DataProvenance contractor={c} sources={publicSources} />
-        <CorrectionRequestCard
-          contractorId={c.id}
-          contractorSlug={c.slug ?? slug!}
-          businessName={c.business_name}
-        />
-        {!c.admin_verified && (
-          <section className="rounded-2xl border border-primary/30 bg-primary/5 p-5 space-y-3">
-            <h2 className="text-lg font-semibold text-foreground">
-              Vous êtes {c.business_name} ?
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Réclamez ce profil, corrigez vos informations et voyez ce que 350 $ peut vous garantir en rendez-vous exclusifs.
-            </p>
-            <Button asChild className="w-full sm:w-auto">
-              <Link to={`/entrepreneur/${c.slug ?? slug}/reclamer`}>
-                Réclamer mon profil — 1 $
-              </Link>
-            </Button>
-          </section>
-        )}
-        <FinalCTA contractorId={c.id} businessName={c.business_name} />
-      </article>
+      </div>
     </MainLayout>
   );
 }
