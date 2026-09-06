@@ -17,7 +17,7 @@ const OPTIONS: { value: ThemeMode; label: string; Icon: typeof Sun }[] = [
 interface Props {
   className?: string;
   /** `compact` = single cycling button (mobile / dense headers). */
-  variant?: "segmented" | "compact";
+  variant?: "segmented" | "compact" | "light-dark";
 }
 
 export default function ThemeSwitcher({ className, variant = "segmented" }: Props) {
@@ -49,6 +49,10 @@ export default function ThemeSwitcher({ className, variant = "segmented" }: Prop
     );
   }
 
+  const visibleOptions = variant === "light-dark"
+    ? OPTIONS.filter(({ value }) => value !== "system")
+    : OPTIONS;
+
   return (
     <div
       role="radiogroup"
@@ -58,7 +62,7 @@ export default function ThemeSwitcher({ className, variant = "segmented" }: Prop
         className,
       )}
     >
-      {OPTIONS.map(({ value, label, Icon }) => {
+      {visibleOptions.map(({ value, label, Icon }) => {
         const active = mode === value;
         return (
           <button

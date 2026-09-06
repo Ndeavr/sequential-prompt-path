@@ -1464,6 +1464,7 @@ html[data-theme-ready="true"] .glass-btn {
 }
 
 .glass-nav {
+  background: hsl(var(--background) / 0.94);
   box-shadow: 0 1px 0 0 var(--glass-surface-border);
 }
 

@@ -79,7 +79,7 @@ const SmartHeader = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground mr-0.5"
+                className="hidden lg:inline-flex h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground mr-0.5"
                 onClick={() => {
                   if (window.history.length > 1) {
                     navigate(-1);
@@ -98,13 +98,13 @@ const SmartHeader = () => {
               <UnproLogo
                 unsized
                 tone={isHome ? "light" : "auto"}
-                className="hidden min-[360px]:block h-[31px] md:h-[38px] w-auto min-h-0 transition-transform duration-300 group-hover:scale-105"
+                className="hidden min-[360px]:block h-[29px] sm:h-[31px] md:h-[38px] w-auto max-w-[128px] sm:max-w-none min-h-0 transition-transform duration-300 group-hover:-translate-y-0.5"
               />
               <UnproIcon
                 unsized
                 shape="bare"
-                tone={isHome ? "light" : "auto"}
-                className="block min-[360px]:hidden h-[31px] w-auto transition-transform duration-300 group-hover:scale-105"
+                tone="auto"
+                className="block min-[360px]:hidden h-[29px] w-auto transition-transform duration-300 group-hover:-translate-y-0.5"
               />
             </Link>
 
@@ -168,7 +168,7 @@ const SmartHeader = () => {
             </div>
 
             {/* Zone 4 — Right actions / User state */}
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex shrink-0 items-center gap-0 sm:gap-1.5">
               <div className="hidden lg:block">
                 <AlexNavOrb lang={lang} />
               </div>
@@ -266,6 +266,7 @@ const SmartHeader = () => {
             onClose={() => setMobileOpen(false)}
             ctx={ctx}
             activeRole={activeRole}
+            logoTone={isHome ? "light" : "auto"}
           />
         )}
       </AnimatePresence>

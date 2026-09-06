@@ -24,9 +24,10 @@ interface Props {
   onClose: () => void;
   ctx: any;
   activeRole: string;
+  logoTone?: "auto" | "light" | "dark";
 }
 
-export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole }: Props) {
+export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole, logoTone = "auto" }: Props) {
   const { signOut } = useAuth();
   const { lang, setLang } = useLanguage();
   const { openAlex } = useAlexVoice();
@@ -41,7 +42,7 @@ export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-40 lg:hidden"
+      className="fixed inset-0 z-[70] lg:hidden"
     >
       <div className="absolute inset-0 bg-background/95 backdrop-blur-xl" onClick={onClose} />
 
@@ -55,7 +56,7 @@ export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole 
         <div className="p-5 flex-1 overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-5">
-            <UnproLogo size={100} className="h-6 w-auto" />
+            <UnproLogo size={100} tone={logoTone} className="h-6 w-auto" />
             <div className="flex items-center gap-1.5">
               <Button variant="ghost" size="icon" onClick={onClose} className="h-11 w-11 rounded-lg" aria-label={lang === "en" ? "Close menu" : "Fermer le menu"}>
                 <X className="h-5 w-5" />
@@ -66,7 +67,7 @@ export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole 
           {/* Mobile-only display controls — kept out of the top bar. */}
           <div className="mb-5 flex min-h-12 items-center justify-between gap-3 border-y border-border/30 py-2">
             <LanguageToggle lang={lang} onChange={setLang} />
-            <ThemeSwitcher />
+            <ThemeSwitcher variant="light-dark" />
           </div>
 
           {/* Search */}
