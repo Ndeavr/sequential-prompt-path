@@ -25,14 +25,26 @@ import {
 } from "@/hooks/useContractorPublicPage";
 import { usePublicContractorReviews } from "@/hooks/usePublicContractors";
 
-type ProfileData = {
-  contractor?: Record<string, any>;
-  services?: Array<Record<string, any>>;
-  service_areas?: Array<Record<string, any>>;
-  media?: Array<Record<string, any>>;
-  credentials?: Array<Record<string, any>>;
-  public_page?: Record<string, any> | null;
-} & Record<string, any>;
+type ContractorRecord = {
+  id?: string;
+  business_name?: string | null;
+  specialty?: string | null;
+  city?: string | null;
+  admin_verified?: boolean | null;
+  logo_url?: string | null;
+  portfolio_urls?: string[] | null;
+  profession_code?: string | null;
+  neq?: string | null;
+  rating?: number | null;
+  review_count?: number | null;
+};
+
+type ProfileData = ContractorRecord & {
+  contractor?: ContractorRecord;
+  services?: Array<{ service_name_fr?: string | null }>;
+  service_areas?: Array<{ city_name?: string | null }>;
+  media?: Array<{ public_url?: string | null }>;
+};
 
 type Props = {
   profileData: ProfileData;
@@ -53,7 +65,7 @@ export default function ContractorPublicExperience({ profileData, compact = fals
   const contractorId = contractor.id as string | undefined;
   const services = profileData.services ?? [];
   const areas = profileData.service_areas ?? [];
-  const media = profileData.media ?? [];
+  const media = useMemo(() => profileData.media ?? [], [profileData.media]);
   const { user } = useAuth();
   const clara = useAlexVoice();
   const { data: compatibility } = useHomeownerContractorCompatibility(contractorId);
@@ -177,7 +189,7 @@ export default function ContractorPublicExperience({ profileData, compact = fals
         <section ref={(node) => { sectionRefs.current.services = node; }} className="scroll-mt-32 rounded-xl border border-border bg-card p-4" aria-labelledby="services-title">
           <h2 id="services-title" className="flex items-center gap-2 font-semibold text-text-strong"><Wrench className="h-4 w-4 text-primary" />Services</h2>
           <div className="mt-3 flex flex-wrap gap-2">
-            {(services.length ? services.map((service) => service.service_name_fr) : [contractor.specialty]).filter(Boolean).map((service: string) => (
+            {(services.length ? services.map((service) => service.service_name_fr) : [contractor.specialty]).filter((service): service is string => !!service).map((service) => (
               <Badge key={service} variant="outline" className="border-border bg-muted text-text-secondary">{service}</Badge>
             ))}
             {!contractor.specialty && services.length === 0 && <p className="text-sm text-text-muted-2">Aucun service publié.</p>}
@@ -187,7 +199,7 @@ export default function ContractorPublicExperience({ profileData, compact = fals
         <section ref={(node) => { sectionRefs.current.territory = node; }} className="scroll-mt-32 rounded-xl border border-border bg-card p-4" aria-labelledby="territory-title">
           <h2 id="territory-title" className="flex items-center gap-2 font-semibold text-text-strong"><MapPin className="h-4 w-4 text-primary" />Territoire</h2>
           <div className="mt-3 flex flex-wrap gap-2">
-            {(areas.length ? areas.map((area) => area.city_name) : [contractor.city]).filter(Boolean).map((city: string) => (
+            {(areas.length ? areas.map((area) => area.city_name) : [contractor.city]).filter((city): city is string => !!city).map((city) => (
               <Badge key={city} variant="outline" className="border-border bg-muted text-text-secondary">{city}</Badge>
             ))}
             {!contractor.city && areas.length === 0 && <p className="text-sm text-text-muted-2">Aucun territoire publié.</p>}
