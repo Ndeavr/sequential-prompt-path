@@ -96155,7 +96155,7 @@ export type Database = {
         Returns: Json
       }
       activate_my_contractor_account: {
-        Args: { _activation_token?: string; _context?: Json }
+        Args: { _activation_token?: string; _context?: Json; _user_id: string }
         Returns: Json
       }
       admin_activate_contractor_finalize: {
