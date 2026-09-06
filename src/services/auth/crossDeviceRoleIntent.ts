@@ -29,15 +29,33 @@ export function isSelfAssignableRole(role: string | null | undefined): role is S
 }
 
 /**
+ * Raw UI keys that must NEVER be turned into a self-assignable public role,
+ * even when a legacy mapping would downgrade them to `homeowner`. Refusing is
+ * explicit: a "partner"/"affiliate" choice is not a homeowner signup.
+ */
+const REFUSED_PUBLIC_ROLE_KEYS = new Set([
+  "admin",
+  "superadmin",
+  "affiliate",
+  "affilie",
+  "affilié",
+  "partner",
+  "partenaire",
+  "ambassador",
+]);
+
+/**
  * Map a UI role key onto a self-assignable role + account type.
  * Privileged roles (admin/affiliate/partner) are refused outright.
  */
 export function resolvePublicRoleSelection(
   rawRole: string | null | undefined,
 ): { role: SelfAssignableRole; accountType: string } | null {
-  const canonical = toCanonicalRole(rawRole ?? null);
+  const key = (rawRole ?? "").trim().toLowerCase();
+  if (!key || REFUSED_PUBLIC_ROLE_KEYS.has(key)) return null;
+  const canonical = toCanonicalRole(key);
   if (!canonical || !isSelfAssignableRole(canonical)) return null;
-  const accountType = toAccountType(rawRole as string);
+  const accountType = toAccountType(key);
   const safeAccountType =
     accountType === "property_manager" || accountType === "contractor" || accountType === "homeowner"
       ? accountType
@@ -58,16 +76,26 @@ function isSafeReturnPath(path: string | null | undefined): path is string {
 }
 
 /**
- * Mint a server-side intent and return the opaque token to append to the
- * magic-link redirect. Returns null when there is nothing legitimate to carry.
+ * Result of minting a cross-device intent.
+ *  - `none`   : nothing legitimate to carry — sending the link is safe.
+ *  - `ok`     : token minted, append it to the redirect.
+ *  - `failed` : a valid public intent existed but the token could NOT be
+ *               created. The caller MUST fail closed (never send a link that
+ *               would silently drop the role).
  */
+export type RoleIntentTokenResult =
+  | { status: "none" }
+  | { status: "ok"; token: string }
+  | { status: "failed"; reason: string };
+
+/** Mint a server-side intent for the magic-link redirect. */
 export async function issueRoleIntentToken(
   email: string,
   intent: RoleIntentMeta | null,
-): Promise<string | null> {
-  if (!intent) return null;
+): Promise<RoleIntentTokenResult> {
+  if (!intent) return { status: "none" };
   const selection = resolvePublicRoleSelection(intent.rawRole ?? intent.role);
-  if (!selection) return null;
+  if (!selection) return { status: "none" };
 
   const token = randomToken();
   const { data, error } = await supabase.rpc("create_auth_role_intent", {
@@ -90,12 +118,14 @@ export async function issueRoleIntentToken(
     },
   } as never);
 
-  if (error || !(data as { ok?: boolean } | null)?.ok) {
-    console.warn("[crossDeviceRoleIntent] mint failed", error?.message ?? data);
-    return null;
+  const payload = data as { ok?: boolean; reason?: string } | null;
+  if (error || !payload?.ok) {
+    // Never log the token, the email or the metadata.
+    return { status: "failed", reason: payload?.reason ?? error?.message ?? "intent_mint_failed" };
   }
-  return token;
+  return { status: "ok", token };
 }
+
 
 /** Append the opaque token to a redirect URL. */
 export function withIntentToken(url: string, token: string | null): string {
@@ -127,6 +157,35 @@ export function readIntentTokenFromUrl(): string | null {
 export function clearStashedIntentToken() {
   try { sessionStorage.removeItem(TOKEN_STASH_KEY); } catch { /* noop */ }
 }
+
+/**
+ * Remove `?ri=` / `#ri=` from the current URL so a real refresh (or a fresh
+ * cache) cannot re-resolve an already applied intent.
+ */
+export function stripIntentTokenFromUrl() {
+  if (typeof window === "undefined" || !window.history?.replaceState) return;
+  try {
+    const url = new URL(window.location.href);
+    let touched = false;
+    if (url.searchParams.has(INTENT_TOKEN_PARAM)) {
+      url.searchParams.delete(INTENT_TOKEN_PARAM);
+      touched = true;
+    }
+    if (url.hash) {
+      const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
+      if (hashParams.has(INTENT_TOKEN_PARAM)) {
+        hashParams.delete(INTENT_TOKEN_PARAM);
+        const rest = hashParams.toString();
+        url.hash = rest ? `#${rest}` : "";
+        touched = true;
+      }
+    }
+    if (touched) {
+      window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+  } catch { /* noop */ }
+}
+
 
 export interface ServerRoleIntent {
   role: SelfAssignableRole;

@@ -20,6 +20,7 @@ import {
   readIntentTokenFromUrl,
   releaseRoleIntentToken,
   serverIntentToMeta,
+  stripIntentTokenFromUrl,
 } from "@/services/auth/crossDeviceRoleIntent";
 
 export interface AuthIntentOutcome {
@@ -66,6 +67,7 @@ export function resolveAuthIntentOnce(user: { id: string; email?: string | null 
           };
         }
         clearStashedIntentToken();
+        stripIntentTokenFromUrl();
         clearRoleIntent();
         return {
           role: intent.role, applied: true, failed: false,

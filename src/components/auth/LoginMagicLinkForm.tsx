@@ -59,7 +59,16 @@ export default function LoginMagicLinkForm({
     try {
       // Cross-device: carry the public role choice in an opaque server-side
       // token so the magic link works in another browser/device.
-      const intentToken = await issueRoleIntentToken(cleaned, readRoleIntent());
+      const intentResult = await issueRoleIntentToken(cleaned, readRoleIntent());
+      if (intentResult.status === "failed") {
+        // Fail closed: never send a link that would silently lose the role.
+        window.clearTimeout(safety);
+        authDebug.set({ auth_step: "error", last_error: intentResult.reason, last_error_step: "applying_prelogin_role" });
+        setLoading(false);
+        toast.error("Impossible de préparer votre lien de connexion. Réessayez dans un instant.");
+        return;
+      }
+      const intentToken = intentResult.status === "ok" ? intentResult.token : null;
       const { error } = await supabase.auth.signInWithOtp({
         email: cleaned,
         options: {

@@ -56,11 +56,24 @@ describe("public role whitelist", () => {
     expect(isSelfAssignableRole("partner")).toBe(false);
   });
 
+  it("explicitly refuses partner/partenaire instead of remapping them to homeowner", () => {
+    expect(resolvePublicRoleSelection("partner")).toBeNull();
+    expect(resolvePublicRoleSelection("partenaire")).toBeNull();
+    expect(resolvePublicRoleSelection("ambassador")).toBeNull();
+  });
+
   it("never mints a token for a privileged role", async () => {
     saveRoleIntent("affiliate");
-    const token = await issueRoleIntentToken("x@y.ca", readRoleIntent());
-    expect(token).toBeNull();
+    const result = await issueRoleIntentToken("x@y.ca", readRoleIntent());
+    expect(result).toEqual({ status: "none" });
     expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("reports a discriminated failure when the mint RPC fails", async () => {
+    saveRoleIntent("contractor");
+    rpc.mockResolvedValue({ data: null, error: { message: "boom" } });
+    const result = await issueRoleIntentToken("pro@example.com", readRoleIntent());
+    expect(result).toEqual({ status: "failed", reason: "boom" });
   });
 
   it("appends the opaque token only, never the email or the role", () => {
@@ -126,8 +139,74 @@ describe("cross-device magic link", () => {
   });
 });
 
+describe("true single use", () => {
+  it("a successful application strips ?ri= so a refresh never re-invokes matching-profile", async () => {
+    setUrl("?ri=tok-single");
+    rpc.mockImplementation((fn: string) => {
+      if (fn === "consume_auth_role_intent") {
+        return Promise.resolve({ data: { ok: true, role: "contractor", account_type: "contractor", metadata: {} }, error: null });
+      }
+      return Promise.resolve({ data: { ok: true }, error: null });
+    });
+    invoke.mockResolvedValue({ data: { ok: true, contractor_id: "c-9" }, error: null });
+
+    const first = await resolveAuthIntentOnce(USER);
+    expect(first.applied).toBe(true);
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(window.location.search).not.toContain("ri=");
+    expect(sessionStorage.getItem("unpro_role_intent_token")).toBeNull();
+
+    // Real refresh: cache reset, URL re-read from scratch.
+    resetAuthIntentCache();
+    const second = await resolveAuthIntentOnce(USER);
+    expect(second.source).toBe("none");
+    expect(invoke).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses a token the server reports as already consumed", async () => {
+    setUrl("?ri=tok-used");
+    rpc.mockResolvedValue({ data: { ok: false, reason: "intent_already_consumed" }, error: null });
+    const outcome = await resolveAuthIntentOnce(USER);
+    expect(outcome).toMatchObject({ applied: false, failed: true, error: "intent_already_consumed" });
+    expect(invoke).not.toHaveBeenCalled();
+  });
+
+  it("releases on application failure and lets a retry succeed", async () => {
+    setUrl("?ri=tok-retry");
+    rpc.mockImplementation((fn: string) => {
+      if (fn === "consume_auth_role_intent") {
+        return Promise.resolve({ data: { ok: true, role: "contractor", account_type: "contractor", metadata: {} }, error: null });
+      }
+      return Promise.resolve({ data: { ok: true }, error: null });
+    });
+    invoke.mockResolvedValueOnce({ data: { ok: false, reason: "transient" }, error: null });
+
+    const failed = await resolveAuthIntentOnce(USER);
+    expect(failed).toMatchObject({ applied: false, failed: true, role: "contractor" });
+    expect(rpc).toHaveBeenCalledWith("release_auth_role_intent", { _token: "tok-retry" });
+    expect(window.location.search).toContain("ri=");
+
+    invoke.mockResolvedValue({ data: { ok: true, contractor_id: "c-10" }, error: null });
+    const retry = await resolveAuthIntentOnce(USER);
+    expect(retry.applied).toBe(true);
+  });
+});
+
 describe("same-device intent", () => {
-  it("B/D — a stored contractor intent (SMS or same browser) is applied", async () => {
+  it("D — the SMS same-device path keeps the local intent and uses the same orchestrator", async () => {
+    saveRoleIntent("contractor", { returnPath: "/join/profile" });
+    expect(readRoleIntent()?.role).toBe("contractor");
+    invoke.mockResolvedValue({ data: { ok: true, contractor_id: "c-sms" }, error: null });
+
+    const outcome = await resolveAuthIntentOnce(USER);
+    expect(outcome).toMatchObject({ role: "contractor", applied: true, failed: false, source: "local" });
+    expect(invoke).toHaveBeenCalledWith("matching-profile", expect.objectContaining({
+      body: expect.objectContaining({ action: "activate_account" }),
+    }));
+    expect(rpc).not.toHaveBeenCalledWith("consume_auth_role_intent", expect.anything());
+  });
+
+  it("B — a stored contractor intent (same browser) is applied", async () => {
     saveRoleIntent("contractor", { returnPath: "/join/profile" });
     invoke.mockResolvedValue({ data: { ok: true, contractor_id: "c-2" }, error: null });
 
