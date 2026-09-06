@@ -7,7 +7,7 @@
  * conformité, identifiants) n'est exposée ici.
  */
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -30,6 +30,8 @@ interface AffiliateEntry {
 export default function PageAffiliateEntry() {
   const { affiliateSlug } = useParams<{ affiliateSlug: string }>();
   const nav = useNavigate();
+  const location = useLocation();
+  const cameFromAffiliateAlias = Boolean((location.state as { affiliateAlias?: boolean } | null)?.affiliateAlias);
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [affiliate, setAffiliate] = useState<AffiliateEntry | null>(null);
@@ -146,6 +148,28 @@ export default function PageAffiliateEntry() {
   // Slug inconnu / désactivé — on rend le comportement normal du site
   // (page de repli / 404 existante) plutôt qu'une page affiliée trompeuse.
   if (!affiliate) {
+    // Depuis l'alias /a/:slug l'intention est explicitement affiliée : on
+    // affiche « introuvable » plutôt que le repli générique du site.
+    if (cameFromAffiliateAlias) {
+      return (
+        <div className="min-h-screen bg-background text-foreground">
+          <Helmet>
+            <title>Affilié introuvable — UNPRO</title>
+            <meta name="robots" content="noindex" />
+          </Helmet>
+          <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-14">
+            <div className="text-sm font-semibold tracking-[0.3em] text-primary">UNPRO</div>
+            <h1 className="mt-8 text-2xl font-semibold tracking-tight">Affilié introuvable</h1>
+            <p className="mt-4 text-muted-foreground">
+              Ce lien n'existe plus ou n'est pas actif.
+            </p>
+            <Link to="/" className="mt-8 text-sm text-muted-foreground underline-offset-2 hover:underline">
+              Retour à l'accueil
+            </Link>
+          </div>
+        </div>
+      );
+    }
     return <FallbackRoutePage />;
   }
 
