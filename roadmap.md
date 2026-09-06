@@ -2,6 +2,7 @@
 
 ## Profil public entrepreneur premium (2026-09-06) — EN COURS, non publié
 
+- [x] Corriger la route publique `/isolation-solution-royal` pour rendre directement la fiche canonique réelle, sans page Signature legacy ni données inventées; valider le DOM déconnecté et verrouiller par test de non-régression.
 - [x] Consolider `/entrepreneur/:slug`, `/contractors/:id` et l’aperçu privé autour d’une fiche publique partagée, sans donnée de démonstration.
 - [x] Activer Aperçu, Services, Territoire, Réalisations, Vérifications et Avis; conserver uniquement « Planifier un rendez-vous » comme bouton public.
 - [x] Afficher le score de compatibilité réel du propriétaire/projet actif ou « — % » avec ouverture contextuelle de Clara.
