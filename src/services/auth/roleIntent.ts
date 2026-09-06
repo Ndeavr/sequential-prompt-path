@@ -166,7 +166,6 @@ export async function applyRoleIntent(
         {
           user_id: user.id,
           account_type: intent.accountType,
-          ...(intent.propertyType ? { property_type: intent.propertyType } : {}),
         } as never,
         { onConflict: "user_id", ignoreDuplicates: false },
       );
