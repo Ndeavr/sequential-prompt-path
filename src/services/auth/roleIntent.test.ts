@@ -88,3 +88,44 @@ describe("roleIntent — dernier choix explicite", () => {
     expect(localStorage.getItem("unpro_prelogin_role")).toBeNull();
   });
 });
+
+describe("roleIntent — attribution affiliée", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    clearRoleIntent();
+  });
+
+  it("conserve la référence affiliée captée avant le choix de rôle", () => {
+    localStorage.setItem(
+      "unpro_ref",
+      JSON.stringify({ refCode: "YANIS6S1", capturedAt: new Date().toISOString() }),
+    );
+    saveRoleIntent("contractor", { returnPath: "/join/profile" });
+    expect(readRoleIntent()?.affiliateRef).toBe("YANIS6S1");
+  });
+
+  it("n'invente aucune référence quand aucune n'a été captée", () => {
+    saveRoleIntent("contractor", { returnPath: "/join/profile" });
+    expect(readRoleIntent()?.affiliateRef).toBeUndefined();
+  });
+
+  it("laisse une référence explicite primer sur celle du stockage", () => {
+    localStorage.setItem("unpro_ref", JSON.stringify({ refCode: "YANIS6S1" }));
+    saveRoleIntent("contractor", { affiliateRef: "TOKEN-REF" });
+    expect(readRoleIntent()?.affiliateRef).toBe("TOKEN-REF");
+  });
+
+  it("récupère la référence même si seul le choix brut de rôle subsiste", () => {
+    localStorage.setItem("unpro_ref", JSON.stringify({ refCode: "YANIS6S1" }));
+    localStorage.setItem("unpro_prelogin_role", "contractor");
+    expect(readRoleIntent()).toMatchObject({ role: "contractor", affiliateRef: "YANIS6S1" });
+  });
+
+  it("ne perd pas l'attribution quand le rôle change", () => {
+    localStorage.setItem("unpro_ref", JSON.stringify({ refCode: "YANIS6S1" }));
+    saveRoleIntent("homeowner", {});
+    saveRoleIntent("contractor", {});
+    expect(readRoleIntent()).toMatchObject({ role: "contractor", affiliateRef: "YANIS6S1" });
+  });
+});
