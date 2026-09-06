@@ -125,7 +125,7 @@ export default function AuthCallbackPage() {
       }
 
       // Check role
-      let { data: roles } = await supabase
+      const { data: roles } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id);
@@ -210,11 +210,11 @@ export default function AuthCallbackPage() {
       navigate(target, { replace: true });
       clearAuthIntent();
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Auth callback error:", err);
       authDebug.error(err, "callback_processing");
       setState("error");
-      setError(err?.message || "Erreur d'authentification");
+      setError(err instanceof Error ? err.message : "Erreur d'authentification");
     }
   }
 

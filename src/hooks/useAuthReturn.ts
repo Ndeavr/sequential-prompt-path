@@ -22,7 +22,7 @@ export function useAuthReturn(opts: Options = {}) {
   const { auto = true, delayMs = 350 } = opts;
   const navigate = useNavigate();
   const { session, loading: sessionLoading } = useAuthSession();
-  const { role, isAdmin } = useAuth() as any;
+  const { role, isAdmin } = useAuth();
 
   const isAuthenticated = !!session?.user;
 

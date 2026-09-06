@@ -70,13 +70,23 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
     return () => clearTimeout(t);
   }, [cooldown]);
 
-  const callOtp = async (fnName: "send-otp" | "verify-otp", body: Record<string, string>) => {
+  const callOtp = async (fnName: "send-otp" | "verify-otp", body: Record<string, string>): Promise<{
+    error?: string;
+    fallback?: boolean;
+    code?: string;
+    session?: { access_token: string; refresh_token: string };
+  }> => {
     const { data, error } = await supabase.functions.invoke(fnName, { body });
     if (error) {
       console.error(`[PhoneOtp] ${fnName} invoke error`, error);
-      return { error: error.message || "network_error" } as any;
+      return { error: error.message || "network_error" };
     }
-    return data;
+    return (data ?? {}) as {
+      error?: string;
+      fallback?: boolean;
+      code?: string;
+      session?: { access_token: string; refresh_token: string };
+    };
   };
 
   const handleSendOtp = async () => {

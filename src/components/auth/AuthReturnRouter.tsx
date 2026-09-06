@@ -14,6 +14,7 @@ import { closeAuthOverlay } from "@/hooks/useAuthOverlay";
 import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
 import { authDebug } from "@/services/auth/authDebugBus";
 import { applyRoleIntent, readRoleIntent } from "@/services/auth/roleIntent";
+import type { User } from "@supabase/supabase-js";
 
 const AUTH_SURFACES = /^\/(login|signup|role|start|auth\/callback)\/?$/;
 
@@ -22,7 +23,7 @@ function isAuthSurface(pathname: string): boolean {
   return AUTH_SURFACES.test(pathname);
 }
 
-async function upsertProfile(user: { id: string; email?: string; phone?: string; user_metadata?: Record<string, any> }) {
+async function upsertProfile(user: Pick<User, "id" | "email" | "phone" | "user_metadata">) {
   const meta = user.user_metadata ?? {};
 
   const provider = meta.iss?.includes("google") ? "google"
@@ -49,7 +50,7 @@ async function upsertProfile(user: { id: string; email?: string; phone?: string;
 
   try {
     await supabase.from("profiles").upsert(
-      profileData as any,
+      profileData as never,
       { onConflict: "user_id", ignoreDuplicates: false }
     );
   } catch {
@@ -138,11 +139,11 @@ export default function AuthReturnRouter() {
       let isApprovedPartner = false;
       try {
         const { data: pr } = await supabase
-          .from("partners" as any)
+          .from("partners")
           .select("partner_status, partner_application_status")
           .eq("user_id", session.user.id)
           .maybeSingle();
-        const p = pr as any;
+        const p = pr as { partner_status?: string; partner_application_status?: string } | null;
         isApprovedPartner = !!p && p.partner_application_status === "approved" && p.partner_status !== "suspended";
       } catch { /* noop */ }
 
@@ -184,7 +185,6 @@ export default function AuthReturnRouter() {
     });
 
     return () => subscription.unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, location.pathname]);
 
   return null;
