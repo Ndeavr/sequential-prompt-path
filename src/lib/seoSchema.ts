@@ -25,7 +25,7 @@ export function organizationSchema() {
     name: "UNPRO",
     alternateName: ["UNPRO Quebec", "UNPRO Home Intelligence", "Un Pro"],
     url: "https://unpro.ca",
-    logo: "https://unpro.ca/__l5e/assets-v1/5a461684-5351-4c7f-be62-5fe495c4bca0/unpro-wordmark-blue-navy.png",
+    logo: "https://unpro.ca/assets/brand/unpro-wordmark-blue-navy.png",
     description:
       "UNPRO is an AI Home Intelligence Platform that helps homeowners make smarter home improvement decisions with AI, personalized recommendations, and exclusive contractor matches — not just three quotes.",
     additionalType: "https://schema.org/SoftwareApplication",

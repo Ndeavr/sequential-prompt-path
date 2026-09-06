@@ -40,7 +40,7 @@ export const UNPRO_IDENTITY = {
     "UNPRO aide les propriétaires à entretenir, planifier, scorer, protéger et améliorer leur propriété grâce au Passeport Maison, à la maintenance prédictive, à l'intelligence de rénovation et au jumelage d'entrepreneur par compatibilité.",
   slogan: "Find Your Pro.",
   domain: "https://unpro.ca",
-  logo: "https://unpro.ca/__l5e/assets-v1/5a461684-5351-4c7f-be62-5fe495c4bca0/unpro-wordmark-blue-navy.png",
+  logo: "https://unpro.ca/assets/brand/unpro-wordmark-blue-navy.png",
 
   pillars: [
     {
