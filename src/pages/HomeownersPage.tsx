@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { useRef } from "react";
 import AlexLauncherHero from "@/components/alex/AlexLauncherHero";
+import UnproLogo from "@/components/brand/UnproLogo";
+
 import AlexConversationShell from "@/components/alex/AlexConversationShell";
 
 /* ═══ Animation helpers ═══ */
@@ -446,7 +448,7 @@ export default function HomeownersPage() {
                 <Award className="h-8 w-8 text-foreground" />
               </div>
               <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground mb-2">Maison certifiée</p>
-              <p className="font-display text-2xl font-bold text-foreground mb-1">UNPRO</p>
+              <UnproLogo size={132} tone="light" className="mx-auto mb-1" />
               <div className="h-px w-12 bg-border mx-auto my-4" />
               <p className="text-xs text-muted-foreground mb-1">Score Maison</p>
               <p className="font-display text-4xl font-bold text-foreground">86</p>
