@@ -9,7 +9,8 @@ import { clearAuthIntent, peekAuthIntent, getDefaultRedirectForRole } from "@/se
 import { motion } from "framer-motion";
 import UnproIcon from "@/components/brand/UnproIcon";
 import { authDebug } from "@/services/auth/authDebugBus";
-import { applyRoleIntent, readRoleIntent } from "@/services/auth/roleIntent";
+import { readRoleIntent } from "@/services/auth/roleIntent";
+import { resolveAuthIntentOnce } from "@/services/auth/authIntentOrchestrator";
 
 type CallbackState = "processing" | "creating_profile" | "redirecting" | "error";
 
@@ -123,21 +124,19 @@ export default function AuthCallbackPage() {
       let roleList = (roles ?? []).map((r) => r.role as string);
       authDebug.set({ auth_step: "roles_resolved", roles: roleList });
 
-      // Apply pre-login role choice if any (idempotent, never downgrades)
-      if (roleIntent) {
-        authDebug.set({ auth_step: "applying_prelogin_role" });
-        const { role: applied, error: roleErr } = await applyRoleIntent(
-          { id: user.id, email: user.email },
-          roleIntent,
-        );
-        if (roleErr) {
-          authDebug.error(new Error(roleErr), "applying_prelogin_role");
-          throw new Error(roleErr);
-        } else if (applied && !roleList.includes(applied)) {
-          roleList = [...roleList, applied];
-          authDebug.set({ roles: roleList });
-        }
+      // Canonical orchestrator: consumes the cross-device server intent (?ri=)
+      // or the local one, exactly once. Never applied twice, never silent.
+      authDebug.set({ auth_step: "applying_prelogin_role" });
+      const outcome = await resolveAuthIntentOnce({ id: user.id, email: user.email });
+      if (outcome.failed) {
+        authDebug.error(new Error(outcome.error || "role_activation_failed"), "applying_prelogin_role");
+        throw new Error(outcome.error || "role_activation_failed");
       }
+      if (outcome.applied && outcome.role && !roleList.includes(outcome.role)) {
+        roleList = [...roleList, outcome.role];
+        authDebug.set({ roles: roleList });
+      }
+      const intentReturnPath = outcome.returnPath ?? intent?.returnPath ?? null;
 
 
       setState("redirecting");
@@ -159,9 +158,9 @@ export default function AuthCallbackPage() {
       }
 
       // Honor explicit return path
-      if (intent?.returnPath && hasRole && !/^\/(login|signup|auth\/callback)\b/.test(intent.returnPath)) {
-        authDebug.set({ auth_step: "redirecting", redirect_target: intent.returnPath });
-        navigate(intent.returnPath, { replace: true });
+      if (intentReturnPath && hasRole && !/^\/(login|signup|auth\/callback)\b/.test(intentReturnPath)) {
+        authDebug.set({ auth_step: "redirecting", redirect_target: intentReturnPath });
+        navigate(intentReturnPath, { replace: true });
         clearAuthIntent();
         return;
       }

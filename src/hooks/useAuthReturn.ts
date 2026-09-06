@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthSession } from "@/stores/authSessionStore";
 import { useAuth } from "@/hooks/useAuth";
 import { clearReturnPath, resolveReturnDestination } from "@/lib/authReturn";
-import { applyRoleIntent, readRoleIntent } from "@/services/auth/roleIntent";
+import { resolveAuthIntentOnce } from "@/services/auth/authIntentOrchestrator";
 
 interface Options {
   /** Auto-redirect once authenticated. Default true. */
@@ -36,15 +36,18 @@ export function useAuthReturn(opts: Options = {}) {
 
   const goNow = useCallback(async () => {
     if (didNavigateRef.current) return;
-    const intent = readRoleIntent();
-    if (intent && session?.user) {
-      const applied = await applyRoleIntent({ id: session.user.id, email: session.user.email }, intent);
-      if (!applied.applied) {
+    let intentRole: string | null = null;
+    let intentReturnPath: string | null = null;
+    if (session?.user) {
+      const outcome = await resolveAuthIntentOnce({ id: session.user.id, email: session.user.email });
+      if (outcome.failed) {
         setShowFallback(true);
         return;
       }
+      intentRole = outcome.applied ? outcome.role : null;
+      intentReturnPath = outcome.returnPath;
     }
-    const dest = resolveReturnDestination({ role, isAdmin });
+    const dest = intentReturnPath ?? resolveReturnDestination({ role: intentRole ?? role, isAdmin });
     setDestination(dest);
     didNavigateRef.current = true;
     setRedirected(true);
@@ -69,15 +72,18 @@ export function useAuthReturn(opts: Options = {}) {
     const t = window.setTimeout(async () => {
       if (didNavigateRef.current) return;
       try {
-        const intent = readRoleIntent();
-        if (intent && session?.user) {
-          const applied = await applyRoleIntent({ id: session.user.id, email: session.user.email }, intent);
-          if (!applied.applied) {
+        let intentRole: string | null = null;
+        let intentReturnPath: string | null = null;
+        if (session?.user) {
+          const outcome = await resolveAuthIntentOnce({ id: session.user.id, email: session.user.email });
+          if (outcome.failed) {
             setShowFallback(true);
             return;
           }
+          intentRole = outcome.applied ? outcome.role : null;
+          intentReturnPath = outcome.returnPath;
         }
-        const dest = resolveReturnDestination({ role, isAdmin });
+        const dest = intentReturnPath ?? resolveReturnDestination({ role: intentRole ?? role, isAdmin });
         setDestination(dest);
         didNavigateRef.current = true;
         setRedirected(true);
