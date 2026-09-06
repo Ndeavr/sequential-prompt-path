@@ -875,7 +875,7 @@ const PageAffiliateAssignment = lazyWithRetry(() => import("@/pages/admin/affili
 const PageAffiliateAttribution = lazyWithRetry(() => import("@/pages/admin/affiliate/PageAffiliateAttribution"));
 const PageAffiliesPublic = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliesPublic"));
 const PageAffiliateOnboarding = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateOnboarding"));
-const PageAffiliePublicProfile = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliePublicProfile"));
+const PageAffiliateAliasRedirect = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateAliasRedirect"));
 const PageAffiliateLogin = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateLogin"));
 const PageAffiliateEntry = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateEntry"));
 const PageAffiliateShortLink = lazyWithRetry(() => import("@/pages/affiliate/PageAffiliateShortLink"));
@@ -1816,7 +1816,7 @@ export const AppRouter = () => (
         <Route path="/affilies" element={<Suspense fallback={<LazyFallback />}><PageAffiliesPublic /></Suspense>} />
         <Route path="/affilies/onboarding" element={<Suspense fallback={<LazyFallback />}><PageAffiliateOnboarding /></Suspense>} />
         <Route path="/affilies/activer" element={<Navigate to="/affilies/onboarding" replace />} />
-        <Route path="/a/:slug" element={<Suspense fallback={<LazyFallback />}><PageAffiliePublicProfile /></Suspense>} />
+        <Route path="/a/:slug" element={<Suspense fallback={<LazyFallback />}><PageAffiliateAliasRedirect /></Suspense>} />
         <Route path="/admin/email-health" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageEmailHealthCenterV2 /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/email-health-legacy" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageEmailAuditCenter /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/email-audit-history" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageEmailAuditHistory /></Suspense></AdminProtectedRoute>} />
