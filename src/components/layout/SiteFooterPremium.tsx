@@ -3,6 +3,7 @@
  * Replaces SiteFooterIntelligence + SmartFooter. Trust-focused, mobile-first.
  */
 import { Link } from "react-router-dom";
+import UnproLogo from "@/components/brand/UnproLogo";
 
 type FooterLink = { label: string; to: string };
 
@@ -69,9 +70,8 @@ export default function SiteFooterPremium() {
       <div className="mx-auto max-w-7xl px-6 pt-16 md:pt-20 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-20">
         {/* Brand block */}
         <div className="max-w-2xl mb-14 md:mb-16">
-          <div className="text-3xl md:text-4xl font-bold tracking-[-0.04em] text-foreground mb-5">
-            UNPRO
-          </div>
+          <UnproLogo size={168} tone="dark" className="mb-5" />
+
           <p className="text-base md:text-lg text-foreground/85 leading-relaxed mb-3">
             L'intelligence artificielle au service des propriétaires québécois.
           </p>

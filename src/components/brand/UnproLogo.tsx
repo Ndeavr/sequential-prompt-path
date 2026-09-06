@@ -1,21 +1,29 @@
 /**
- * UNPRO — Primary Logo (official wordmark lockup)
- * `showWordmark={false}` falls back to the official round / square mark.
- * Fallback chain: official asset → other official variant → clean "UNPRO" text.
- * Never a generated avatar or single-letter badge.
+ * UNPRO — Primary logo (official horizontal lockup).
+ *
+ * Contrast is handled automatically: the navy-text lockup is used on light
+ * surfaces, the white-text lockup on dark surfaces. `tone` forces a surface
+ * when a block is dark inside a light theme (or the reverse).
+ *
+ * Never recolored, filtered, stretched or cropped — original proportions only.
+ * Fallback chain: official asset → blue disc mark → clean "UNPRO" text.
  */
 import { useState } from "react";
 import { BRAND } from "@/config/branding";
 
 type UnproLogoProps = {
   size?: number;
-  /** Historical variants are preserved; all resolve to the official lockup. */
+  /** Historical variants preserved for API compatibility. */
   variant?: "primary" | "blue" | "mono" | "mono-invert" | "rubber";
-  /** Kept for API compatibility; the master lockup is a static image. */
+  /** Kept for API compatibility; the lockup is a static image. */
   animated?: boolean;
   showWordmark?: boolean;
   /** Mark shape when the wordmark is hidden. */
-  markShape?: "round" | "square";
+  markShape?: "round" | "square" | "bare";
+  /** Surface the logo sits on. `auto` follows the app theme. */
+  tone?: "auto" | "light" | "dark";
+  /** Skip inline width/height so CSS classes control the size. */
+  unsized?: boolean;
   className?: string;
 };
 
@@ -25,14 +33,16 @@ export default function UnproLogo({
   size = 320,
   showWordmark = true,
   markShape = "round",
+  tone = "auto",
+  unsized = false,
   className = "",
 }: UnproLogoProps) {
-  const [step, setStep] = useState(0);
+  const [failed, setFailed] = useState(false);
 
   const height = showWordmark ? Math.round(size / WORDMARK_RATIO) : size;
 
   // Last resort: clean wordmark text, never an initial badge.
-  if (step >= 2) {
+  if (failed) {
     return (
       <span
         className={`inline-flex items-center font-semibold tracking-[-0.04em] text-current ${className}`}
@@ -43,28 +53,60 @@ export default function UnproLogo({
     );
   }
 
-  const primarySrc = showWordmark
+  const lightSrc = showWordmark
     ? BRAND.logo
-    : markShape === "square"
-      ? BRAND.logoSquare
+    : markShape === "bare"
+      ? BRAND.logoIconBlue
       : BRAND.logoRound;
-  const src = step === 0 ? primarySrc : BRAND.logoRound;
-  const isMark = step === 1 || !showWordmark;
+  const darkSrc = showWordmark
+    ? BRAND.logoWordmarkOnDark
+    : markShape === "bare"
+      ? BRAND.logoIconWhite
+      : BRAND.logoRound;
+
+  const style = unsized
+    ? undefined
+    : { width: size, height: showWordmark ? height : size };
+  const base = `object-contain ${className}`;
+
+  if (tone !== "auto") {
+    return (
+      <img
+        src={tone === "dark" ? darkSrc : lightSrc}
+        alt="UNPRO"
+        width={size}
+        height={showWordmark ? height : size}
+        onError={() => setFailed(true)}
+        className={base}
+        style={style}
+        draggable={false}
+      />
+    );
+  }
 
   return (
-    <img
-      src={src}
-      alt="UNPRO"
-      width={isMark ? (step === 1 ? height : size) : size}
-      height={isMark ? (step === 1 ? height : size) : height}
-      onError={() => setStep((s) => s + 1)}
-      className={`object-contain ${className}`}
-      style={
-        isMark && step === 1
-          ? { width: height, height }
-          : { width: size, height: isMark ? size : height }
-      }
-      draggable={false}
-    />
+    <>
+      <img
+        src={lightSrc}
+        alt="UNPRO"
+        width={size}
+        height={showWordmark ? height : size}
+        onError={() => setFailed(true)}
+        className={`${base} dark:hidden`}
+        style={style}
+        draggable={false}
+      />
+      <img
+        src={darkSrc}
+        alt=""
+        aria-hidden="true"
+        width={size}
+        height={showWordmark ? height : size}
+        onError={() => setFailed(true)}
+        className={`${base} hidden dark:block`}
+        style={style}
+        draggable={false}
+      />
+    </>
   );
 }
