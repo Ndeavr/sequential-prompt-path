@@ -2,10 +2,10 @@
 
 ## Profil public entrepreneur premium (2026-09-06) — EN COURS, non publié
 
-- [ ] Consolider `/entrepreneur/:slug`, `/contractors/:id` et l’aperçu privé autour d’une fiche publique partagée, sans donnée de démonstration.
-- [ ] Activer Aperçu, Services, Territoire, Réalisations, Vérifications et Avis; conserver uniquement « Planifier un rendez-vous » comme bouton public.
-- [ ] Afficher le score de compatibilité réel du propriétaire/projet actif ou « — % » avec ouverture contextuelle de Clara.
-- [ ] Séparer Avis UNPRO et Avis Google avec provenance explicite et aucune valeur inventée.
+- [x] Consolider `/entrepreneur/:slug`, `/contractors/:id` et l’aperçu privé autour d’une fiche publique partagée, sans donnée de démonstration.
+- [x] Activer Aperçu, Services, Territoire, Réalisations, Vérifications et Avis; conserver uniquement « Planifier un rendez-vous » comme bouton public.
+- [x] Afficher le score de compatibilité réel du propriétaire/projet actif ou « — % » avec ouverture contextuelle de Clara.
+- [x] Séparer Avis UNPRO et Avis Google avec provenance explicite et aucune valeur inventée.
 - [ ] Relier Modifier → formulaire prérempli → Enregistrer → aperçu avec confirmation, puis valider mobile/tablette/ordinateur.
 
 ## P0 — 6 régressions Project Monitoring (2026-09-08) — TERMINÉ, non publié

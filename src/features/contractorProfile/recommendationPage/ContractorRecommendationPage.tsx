@@ -91,9 +91,9 @@ export default function ContractorRecommendationPage() {
     })),
     faqs: faqs.map((f) => ({ question: f.q, answer: f.a })),
     ctas: {
-      book_appointment: "Parler à Clara",
-      alex: "Parler à Clara",
-      evaluation: "Voir mon niveau de compatibilité",
+      book_appointment: "Planifier un rendez-vous",
+      alex: "Planifier un rendez-vous",
+      evaluation: "Planifier un rendez-vous",
     },
     service_area: c.service_areas ?? [cityName],
     service_types: c.services_structured?.length ? c.services_structured : [c.specialty || "Services résidentiels"],
