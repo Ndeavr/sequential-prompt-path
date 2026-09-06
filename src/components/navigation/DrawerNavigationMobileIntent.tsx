@@ -3,9 +3,8 @@
  */
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import LanguageToggle from "@/components/ui/LanguageToggle";
@@ -13,7 +12,6 @@ import ThemeSwitcher from "@/components/theme/ThemeSwitcher";
 import { getDrawerSections } from "@/config/navigationConfig";
 import { resolveIcon } from "./IconResolver";
 import BadgePersonaActiveNavigation from "./BadgePersonaActiveNavigation";
-import UnproLogo from "@/components/brand/UnproLogo";
 import MenuRoleSwitcherUniversal from "./MenuRoleSwitcherUniversal";
 import HeaderSearch from "./HeaderSearch";
 import SmartCTA from "@/components/cta/SmartCTA";
@@ -24,10 +22,9 @@ interface Props {
   onClose: () => void;
   ctx: any;
   activeRole: string;
-  logoTone?: "auto" | "light" | "dark";
 }
 
-export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole, logoTone = "auto" }: Props) {
+export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole }: Props) {
   const { signOut } = useAuth();
   const { lang, setLang } = useLanguage();
   const { openAlex } = useAlexVoice();
