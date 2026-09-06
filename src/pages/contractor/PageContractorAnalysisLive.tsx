@@ -46,14 +46,6 @@ const PLAN_LABEL: Record<string, string> = {
   elite: "Élite",
   signature: "Signature",
 };
-const PLAN_PRICE: Record<string, number> = {
-  recrue: 149,
-  pro: 349,
-  premium: 599,
-  elite: 999,
-  signature: 1799,
-};
-
 function planLabel(slug: string): string {
   return PLAN_LABEL[slug] ?? (slug.charAt(0).toUpperCase() + slug.slice(1));
 }
@@ -72,7 +64,7 @@ export default function PageContractorAnalysisLive() {
 
     const fetchRun = async () => {
       const { data, error } = await supabase
-        .from("activation_pipeline_runs_public" as any)
+        .from("activation_pipeline_runs_public" as "activation_pipeline_runs")
         .select("*")
         .eq("id", runId)
         .maybeSingle();

@@ -36,7 +36,6 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CANONICAL_PLAN_LABELS, type ContractorPlanSlug } from "@/config/pricing";
 import { trackFunnelEvent } from "@/utils/trackFunnelEvent";
 import { CONTRACTOR_OFFER } from "@/lib/copy/contractorOffer";
 import { buildContractorEntryUrl, CONTRACTOR_ACTIVATION_PATH, readAttribution } from "@/config/contractorFunnel";
@@ -366,10 +365,7 @@ function ResultPanel({
   onCta: () => void;
   onRestart: () => void;
 }) {
-  const { profile, aipp, revenue_gap, recommended_plan, narrative } = result;
-  const planLabel =
-    CANONICAL_PLAN_LABELS[recommended_plan.code as ContractorPlanSlug] ??
-    recommended_plan.label;
+  const { profile, aipp, revenue_gap, narrative } = result;
 
   return (
     <motion.div
