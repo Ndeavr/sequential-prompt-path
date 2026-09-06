@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import ContractorLayout from "@/layouts/ContractorLayout";
 import { PageHeader, LoadingState } from "@/components/shared";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import { RbqStatusBadge } from "@/features/compliance/RbqStatusBadge";
 import { getRbqCompliance, type RbqStatus } from "@/lib/compliance/rbqStatus";
 
 const ProProfile = () => {
+  const navigate = useNavigate();
   const { data: profile, isLoading } = useContractorProfile();
   const upsert = useUpsertContractorProfile();
   const [form, setForm] = useState({
@@ -63,13 +65,14 @@ const ProProfile = () => {
         form.rbq_compliance_status === "verified" || form.rbq_compliance_status === "expired"
           ? (profile as any)?.rbq_compliance_status || "in_progress"
           : form.rbq_compliance_status;
-      await upsert.mutateAsync({
+      const savedProfile = await upsert.mutateAsync({
         ...form,
         years_experience: form.years_experience ? parseInt(form.years_experience) : undefined,
         rbq_compliance_status: submitStatus,
         rbq_expiry_date: form.rbq_expiry_date || null,
       });
       toast.success("Profil enregistré !");
+      navigate(`/pro/profile/public/${savedProfile.id}`, { replace: true, state: { saved: true } });
     } catch {
       toast.error("Erreur lors de l'enregistrement.");
     }

@@ -11,21 +11,8 @@ import ContractorSchemaStack from "@/seo/components/ContractorSchemaStack";
 import NotFound from "@/pages/NotFound";
 import { canonicals } from "@/seo/services/canonicalManager";
 import { useContractorRecommendation } from "./hooks/useContractorRecommendation";
-import HeroRecommendation from "./sections/HeroRecommendation";
-import AlexRecommendationCard from "./sections/AlexRecommendationCard";
-import MediaGallery from "./sections/MediaGallery";
-import ServiceAreaMap from "./sections/ServiceAreaMap";
-import StructuredServices from "./sections/StructuredServices";
-import VerificationsByProfession from "./sections/VerificationsByProfession";
-import CompatibilityCard from "./sections/CompatibilityCard";
-import AvailabilityCard from "./sections/AvailabilityCard";
-import SmartFAQ, { buildFaqSchema } from "./sections/SmartFAQ";
-import ProjectsShowcase from "./sections/ProjectsShowcase";
-import AboutContractor from "./sections/AboutContractor";
-import FinalCTA from "./sections/FinalCTA";
+import { buildFaqSchema } from "./sections/SmartFAQ";
 import AIReferenceBlock from "./sections/AIReferenceBlock";
-import DataProvenance from "./sections/DataProvenance";
-import CorrectionRequestCard from "./sections/CorrectionRequestCard";
 import ContractorPublicExperience from "@/features/contractorProfile/public/ContractorPublicExperience";
 
 export default function ContractorRecommendationPage() {
