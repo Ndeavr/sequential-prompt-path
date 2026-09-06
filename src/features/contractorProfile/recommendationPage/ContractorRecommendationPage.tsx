@@ -14,6 +14,7 @@ import { useContractorRecommendation } from "./hooks/useContractorRecommendation
 import { buildFaqSchema } from "./sections/SmartFAQ";
 import AIReferenceBlock from "./sections/AIReferenceBlock";
 import ContractorPublicExperience from "@/features/contractorProfile/public/ContractorPublicExperience";
+import type { ContractorPageInput } from "@/features/contractorProfile/generator/pageTypes";
 
 export default function ContractorRecommendationPage() {
   const { slug, city } = useParams<{ slug: string; city?: string }>();
@@ -62,7 +63,7 @@ export default function ContractorRecommendationPage() {
 
   const faqs = buildFaqSchema(c);
 
-  const schemaInput = {
+  const schemaInput: ContractorPageInput = {
     page_type: "contractor_recommendation" as const,
     language: "fr" as const,
     contractor_id: c.id,
@@ -103,7 +104,7 @@ export default function ContractorRecommendationPage() {
   return (
     <MainLayout>
       <SeoHead title={title} description={description} canonical={canonical} />
-      <ContractorSchemaStack input={schemaInput as any} breadcrumbs={breadcrumbs} />
+      <ContractorSchemaStack input={schemaInput} breadcrumbs={breadcrumbs} />
 
       {/* GeoCircle for service radius */}
       <script

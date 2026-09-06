@@ -24,6 +24,7 @@ import {
   useHomeownerContractorCompatibility,
 } from "@/hooks/useContractorPublicPage";
 import { usePublicContractorReviews } from "@/hooks/usePublicContractors";
+import type { Json } from "@/integrations/supabase/types";
 
 type ContractorRecord = {
   id?: string;
@@ -41,6 +42,16 @@ type ContractorRecord = {
 
 type ProfileData = ContractorRecord & {
   contractor?: ContractorRecord;
+  projects?: Array<{
+    id: string;
+    title?: string | null;
+    city?: string | null;
+    year?: number | null;
+    description?: string | null;
+    before_url?: string | null;
+    after_url?: string | null;
+    photos?: Json;
+  }>;
   services?: Array<{ service_name_fr?: string | null }>;
   service_areas?: Array<{ city_name?: string | null }>;
   media?: Array<{ public_url?: string | null }>;
@@ -71,7 +82,8 @@ export default function ContractorPublicExperience({ profileData, compact = fals
   const { data: compatibility } = useHomeownerContractorCompatibility(contractorId);
   const { data: reviews = [] } = usePublicContractorReviews(contractorId);
   const { data: reviewSources = [] } = useContractorReviewSources(contractorId);
-  const { data: projects = [] } = useContractorPublicProjects(contractorId);
+  const { data: queriedProjects = [] } = useContractorPublicProjects(contractorId);
+  const projects = profileData.projects ?? queriedProjects;
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]["id"]>("overview");
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
@@ -165,11 +177,12 @@ export default function ContractorPublicExperience({ profileData, compact = fals
 
       <div className="space-y-4 px-4 py-5 sm:px-6">
         <section aria-labelledby="compatibility-title">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={openCompatibility}
             disabled={!!compatibility}
-            className="group w-full rounded-xl border border-primary/30 bg-primary/10 p-4 text-left transition-transform duration-300 enabled:hover:-translate-y-0.5 disabled:cursor-default"
+            className="group h-auto w-full justify-start whitespace-normal rounded-xl border border-primary/30 bg-primary/10 p-4 text-left transition-transform duration-300 enabled:hover:-translate-y-0.5 enabled:hover:bg-primary/10 disabled:cursor-default disabled:opacity-100"
           >
             <div className="flex items-center gap-4">
               <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-4 border-primary/30 bg-card shadow-glow">
@@ -183,7 +196,7 @@ export default function ContractorPublicExperience({ profileData, compact = fals
                 {!compatibility && <p className="mt-2 text-xs text-primary-tint">Clara complétera seulement les renseignements manquants.</p>}
               </div>
             </div>
-          </button>
+          </Button>
         </section>
 
         <section ref={(node) => { sectionRefs.current.services = node; }} className="scroll-mt-32 rounded-xl border border-border bg-card p-4" aria-labelledby="services-title">
