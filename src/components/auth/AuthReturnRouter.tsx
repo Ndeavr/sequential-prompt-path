@@ -13,7 +13,7 @@ import { clearAuthIntent, peekAuthIntent, getDefaultRedirectForRole } from "@/se
 import { closeAuthOverlay } from "@/hooks/useAuthOverlay";
 import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
 import { authDebug } from "@/services/auth/authDebugBus";
-import { applyRoleIntent, readRoleIntent } from "@/services/auth/roleIntent";
+import { resolveAuthIntentOnce } from "@/services/auth/authIntentOrchestrator";
 import type { User } from "@supabase/supabase-js";
 
 const AUTH_SURFACES = /^\/(login|signup|role|start|auth\/callback)\/?$/;
@@ -99,7 +99,9 @@ export default function AuthReturnRouter() {
 
       const intent = peekAuthIntent();
       const here = location.pathname;
-      const roleIntent = readRoleIntent();
+
+      // /auth/callback is the canonical orchestrator surface — do not race it.
+      if (here === "/auth/callback") return;
 
       // 1) Resolve current roles
       const { data: roles, error: rolesErr } = await supabase
@@ -113,20 +115,18 @@ export default function AuthReturnRouter() {
 
       let roleList = (roles ?? []).map((r) => r.role as string);
 
-      // 2) If user pre-selected a role, apply it now (idempotent)
-      if (roleIntent) {
-        const { role: applied, applied: succeeded, error } = await applyRoleIntent(
-          { id: session.user.id, email: session.user.email },
-          roleIntent,
-        );
-        if (!succeeded) {
-          authDebug.error(new Error(error || "role_activation_failed"), "applying_prelogin_role");
-          return;
-        }
-        if (applied && !roleList.includes(applied)) {
-          roleList = [...roleList, applied];
-        }
+      // 2) Canonical intent resolution (server cross-device token or local), once.
+      const outcome = await resolveAuthIntentOnce({ id: session.user.id, email: session.user.email });
+      if (outcome.failed) {
+        // Never fall back to the homeowner dashboard on a failed contractor intent.
+        authDebug.error(new Error(outcome.error || "role_activation_failed"), "applying_prelogin_role");
+        navigate("/auth/callback", { replace: true });
+        return;
       }
+      if (outcome.applied && outcome.role && !roleList.includes(outcome.role)) {
+        roleList = [...roleList, outcome.role];
+      }
+      const intentReturnPath = outcome.returnPath ?? intent?.returnPath ?? null;
 
       // 3) Pick primary role
       let primaryRole: string | null = null;
@@ -147,13 +147,10 @@ export default function AuthReturnRouter() {
         isApprovedPartner = !!p && p.partner_application_status === "approved" && p.partner_status !== "suspended";
       } catch { /* noop */ }
 
-      // 4) /auth/callback handles its own routing
-      if (here === "/auth/callback") return;
-
       // 5) Honor explicit return path even from non-auth surfaces
-      if (intent?.returnPath && !/^\/(login|signup|auth\/callback)\b/.test(intent.returnPath)) {
-        console.log("[AuthReturnRouter] -> intent path", intent.returnPath);
-        navigate(intent.returnPath, { replace: true });
+      if (intentReturnPath && !/^\/(login|signup|auth\/callback)\b/.test(intentReturnPath)) {
+        console.log("[AuthReturnRouter] -> intent path", intentReturnPath);
+        navigate(intentReturnPath, { replace: true });
         clearAuthIntent();
         return;
       }
@@ -177,7 +174,7 @@ export default function AuthReturnRouter() {
         return;
       }
 
-      const target = postLoginPathForRole(primaryRole, intent?.returnPath ?? null);
+      const target = postLoginPathForRole(primaryRole, intentReturnPath);
       console.log("[AuthReturnRouter] -> role redirect", { primaryRole, target });
       navigate(target, { replace: true });
       clearAuthIntent();
