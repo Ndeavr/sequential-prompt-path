@@ -4,9 +4,13 @@ import NotFound from "@/pages/NotFound";
 import ContractorPublicExperience from "@/features/contractorProfile/public/ContractorPublicExperience";
 import { useContractorFullProfile } from "@/hooks/useContractorPublicPage";
 
-export default function ContractorProfile() {
+type ContractorProfileProps = {
+  slug?: string;
+};
+
+export default function ContractorProfile({ slug }: ContractorProfileProps) {
   const { id } = useParams<{ id: string }>();
-  const { data, isLoading } = useContractorFullProfile(id);
+  const { data, isLoading } = useContractorFullProfile(slug ?? id);
 
   if (isLoading) {
     return <MainLayout><div className="mx-auto min-h-screen max-w-3xl animate-pulse bg-muted" /></MainLayout>;

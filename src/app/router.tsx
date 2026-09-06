@@ -939,7 +939,7 @@ export const AppRouter = () => (
       <Routes>
         {/* Redirects for common mismatched entry points */}
         <Route path="/index" element={<HomeWithFeatureFlag />} />
-        <Route path="/isolation-solution-royal" element={<Suspense fallback={<LazyFallback />}><PageSignaturePartner slug="isolation-solution-royal" /></Suspense>} />
+        <Route path="/isolation-solution-royal" element={<ContractorProfile slug="isolation-solution-royal" />} />
         <Route path="/partenaires/:slug" element={<Suspense fallback={<LazyFallback />}><PageSignaturePartner /></Suspense>} />
         <Route path="/admin/partners" element={<Suspense fallback={<LazyFallback />}><PageAdminPartners /></Suspense>} />
         <Route path="/emergency-reset" element={<PageEmergencyReset />} />

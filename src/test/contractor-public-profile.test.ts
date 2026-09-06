@@ -6,6 +6,7 @@ const publicExperience = readFileSync(
   "utf8",
 );
 const legacyRoute = readFileSync("src/pages/ContractorProfile.tsx", "utf8");
+const router = readFileSync("src/app/router.tsx", "utf8");
 const privatePreview = readFileSync("src/pages/pro/PageProPublicProfile.tsx", "utf8");
 const editor = readFileSync("src/pages/pro/ProProfile.tsx", "utf8");
 
@@ -35,6 +36,27 @@ describe("contractor public profile contract", () => {
     expect(privatePreview).toContain("ContractorPublicExperience");
     expect(privatePreview).toContain("Modifications enregistrées");
     expect(editor).toContain("state: { saved: true }");
+  });
+
+  it("resolves the ISR vanity URL to the canonical public experience without legacy claims", () => {
+    const isrRoute = router.match(
+      /<Route path="\/isolation-solution-royal"[^\n]+/,
+    )?.[0];
+
+    expect(isrRoute).toBeDefined();
+    expect(isrRoute).toContain('ContractorProfile slug="isolation-solution-royal"');
+    expect(isrRoute).not.toContain("PageSignaturePartner");
+
+    const renderedPath = `${isrRoute ?? ""}\n${legacyRoute}\n${publicExperience}`;
+    for (const forbidden of [
+      "4.9",
+      "320 avis Google",
+      "Réserver maintenant",
+      "Exemples illustratifs",
+      "UNPRO Signature",
+    ]) {
+      expect(renderedPath).not.toContain(forbidden);
+    }
   });
 
   it("contains none of the obsolete profile offers or controls", () => {
