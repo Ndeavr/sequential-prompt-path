@@ -49,7 +49,7 @@ const Signup = () => {
   const persistRoleIntent = (propertyTypeValue?: string) => {
     const returnPath = peekAuthIntent()?.returnPath;
     saveRoleIntent(selectedRole, { propertyType: propertyTypeValue || undefined, returnPath });
-    if (selectedRole === "contractor" || selectedRole === "professional") {
+    if (selectedRole === "service_business" || selectedRole === "contractor") {
       if (!returnPath) saveAuthIntent({ returnPath: "/join/profile", action: "contractor_activation", roleHint: "contractor" });
     }
   };
