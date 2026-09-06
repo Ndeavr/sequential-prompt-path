@@ -48,7 +48,7 @@ describe("roleIntent", () => {
     expect(toCanonicalRole("entrepreneur")).toBe("contractor");
   });
 
-  it("rejects unknown or privileged-looking role strings", () => {
+  it("rejects unknown or server-only role strings", () => {
     expect(toCanonicalRole("superadmin")).toBeNull();
     expect(toCanonicalRole("service_role")).toBeNull();
   });
