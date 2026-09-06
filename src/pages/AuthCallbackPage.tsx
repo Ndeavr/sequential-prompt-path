@@ -43,27 +43,13 @@ export default function AuthCallbackPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const ROLE_MAP: Record<string, string> = {
-    homeowner: "homeowner", owner: "homeowner",
-    contractor: "contractor", professional: "contractor",
-    condo_manager: "condo_manager", property_manager: "condo_manager",
-    partner: "homeowner", municipality: "homeowner",
-    public_org: "homeowner", enterprise: "homeowner", ambassador: "homeowner",
-  };
-
-  function readPreloginRole(): string | null {
-    try {
-      const raw = sessionStorage.getItem("unpro_prelogin_role");
-      if (raw && ROLE_MAP[raw]) return ROLE_MAP[raw];
-    } catch { /* noop */ }
-    return null;
-  }
-
   async function handleCallback() {
     // Read intent FIRST (before any awaits) so it survives storage races
     // when sessionStorage gets cleared by Supabase auth handshake.
     const intent = consumeAuthIntent();
-    const preloginRole = readPreloginRole();
+    const roleIntent = readRoleIntent();
+    const preloginRole = roleIntent?.role ?? null;
+
 
     authDebug.set({
       auth_step: "callback_processing",
