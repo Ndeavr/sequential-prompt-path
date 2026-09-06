@@ -35,8 +35,10 @@ export default function PageUnproActivate() {
   const { token } = useParams<{ token: string }>();
   // QA : ?preview=1 rend la page réelle sans écrire de clic ni d'événement
   // d'entonnoir, afin de ne pas contaminer la cohorte de production.
-  const preview =
-    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("preview") === "1";
+  const preview = typeof window !== "undefined" && (() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("preview") === "1" || params.get("qa") === "1";
+  })();
   const [state, setState] = useState<"loading" | "ready" | "invalid" | "error">("loading");
   const [prospect, setProspect] = useState<ResolvedProspect | null>(null);
   const [profile, setProfile] = useState<ActivationProfile | null>(null);

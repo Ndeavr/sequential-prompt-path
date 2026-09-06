@@ -27,6 +27,8 @@ export const ATTRIBUTION_PARAMS = [
   "utm_content",
   "utm_term",
   "source",
+  "qa",
+  "preview",
 ] as const;
 
 /** Extract the attribution params from a search string (defaults to the URL). */
