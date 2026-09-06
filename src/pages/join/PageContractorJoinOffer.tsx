@@ -9,6 +9,7 @@ import { buildContractorEntryUrl, CONTRACTOR_ACTIVATION_PATH } from "@/config/co
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CheckCircle, MapPin, Star, Shield, Clock, ArrowRight } from "lucide-react";
+import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 
 export default function PageContractorJoinOffer() {
   const { token } = useParams<{ token: string }>();
@@ -23,7 +24,11 @@ export default function PageContractorJoinOffer() {
       const { data, error: err } = await (supabase as any)
         .rpc("get_recruitment_offer_by_token", { _token: token });
       if (err || !data) setError("Offre introuvable ou expirée");
-      else setOffer(data);
+      else {
+        setOffer(data);
+        void logFunnelEvent({ event_type: "landing_view", step: "join_offer_token" });
+        void logFunnelEvent({ event_type: "offer_eligible", step: "join_offer_token" });
+      }
       setLoading(false);
     })();
   }, [token]);
@@ -124,7 +129,10 @@ export default function PageContractorJoinOffer() {
         <Button
           size="lg"
           className="w-full"
-          onClick={() => navigate(buildContractorEntryUrl({ token }, CONTRACTOR_ACTIVATION_PATH))}
+          onClick={() => {
+            void logFunnelEvent({ event_type: "cta_click", step: "join_offer_token", metadata: { cta: CONTRACTOR_OFFER.ctaClaim } });
+            navigate(buildContractorEntryUrl({ token }, CONTRACTOR_ACTIVATION_PATH));
+          }}
         >
           {CONTRACTOR_OFFER.ctaClaim} <ArrowRight className="h-4 w-4 ml-2" />
         </Button>

@@ -32263,6 +32263,7 @@ export type Database = {
       }
       contractor_funnel_events: {
         Row: {
+          affiliate_code: string | null
           contractor_id: string | null
           created_at: string
           current_path: string | null
@@ -32271,14 +32272,21 @@ export type Database = {
           event_source: string | null
           event_type: string
           id: string
+          is_test: boolean
           metadata: Json | null
           phone: string | null
+          prospect_id: string | null
           session_id: string | null
           source: string | null
           step: string | null
+          token: string | null
           user_id: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }
         Insert: {
+          affiliate_code?: string | null
           contractor_id?: string | null
           created_at?: string
           current_path?: string | null
@@ -32287,14 +32295,21 @@ export type Database = {
           event_source?: string | null
           event_type: string
           id?: string
+          is_test?: boolean
           metadata?: Json | null
           phone?: string | null
+          prospect_id?: string | null
           session_id?: string | null
           source?: string | null
           step?: string | null
+          token?: string | null
           user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Update: {
+          affiliate_code?: string | null
           contractor_id?: string | null
           created_at?: string
           current_path?: string | null
@@ -32303,12 +32318,18 @@ export type Database = {
           event_source?: string | null
           event_type?: string
           id?: string
+          is_test?: boolean
           metadata?: Json | null
           phone?: string | null
+          prospect_id?: string | null
           session_id?: string | null
           source?: string | null
           step?: string | null
+          token?: string | null
           user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Relationships: [
           {
@@ -94295,6 +94316,18 @@ export type Database = {
             | Database["public"]["Enums"]["verification_status"]
             | null
           years_experience: number | null
+        }
+        Relationships: []
+      }
+      v_contractor_funnel_canonical: {
+        Row: {
+          affiliates: number | null
+          day: string | null
+          event_type: string | null
+          events: number | null
+          sessions: number | null
+          tokenized: number | null
+          users: number | null
         }
         Relationships: []
       }

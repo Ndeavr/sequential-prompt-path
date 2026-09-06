@@ -4,6 +4,7 @@
  * Never overwrites — one row per event.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { readAttribution } from "@/config/contractorFunnel";
 
 export type FunnelEventType =
   | "sms_queued"
@@ -42,7 +43,16 @@ export type FunnelEventType =
   | "plans_viewed"
   | "checkout_started"
   | "payment_completed"
-  | "recommendation_eligible";
+  | "recommendation_eligible"
+  // Parcours canonique P0 (activation entrepreneur sans paiement)
+  | "cta_click"
+  | "auth_started"
+  | "otp_sent"
+  | "otp_verified"
+  | "auth_completed"
+  | "contractor_account_created"
+  | "offer_eligible"
+  | "paid";
 
 export type FunnelEventSource =
   | "twilio"
@@ -61,6 +71,42 @@ export interface LogFunnelEventInput {
   current_path?: string | null;
   step?: string | null;
   metadata?: Record<string, unknown>;
+  /** Marque explicitement l'événement comme QA/test (exclu des vues de production). */
+  is_test?: boolean;
+}
+
+const ATTRIBUTION_KEY = "unpro_funnel_attribution";
+
+/** Attribution première-touche : capturée une fois, conservée pour toute la session. */
+export function getFunnelAttribution(): Record<string, string> {
+  try {
+    const stored = sessionStorage.getItem(ATTRIBUTION_KEY);
+    const current = readAttribution();
+    if (stored) {
+      const parsed = JSON.parse(stored) as Record<string, string>;
+      // Une nouvelle arrivée attribuée écrase seulement si la session n'avait rien.
+      if (Object.keys(parsed).length > 0) return parsed;
+    }
+    if (Object.keys(current).length > 0) {
+      sessionStorage.setItem(ATTRIBUTION_KEY, JSON.stringify(current));
+    }
+    return current;
+  } catch {
+    return {};
+  }
+}
+
+/** Vrai si la session est marquée QA (jamais comptée dans les vues de production). */
+export function isQaSession(): boolean {
+  try {
+    if (sessionStorage.getItem("unpro_qa_session") === "1") return true;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("qa") === "1") {
+      sessionStorage.setItem("unpro_qa_session", "1");
+      return true;
+    }
+  } catch { /* noop */ }
+  return false;
 }
 
 let sessionIdCache: string | null = null;
@@ -103,7 +149,16 @@ export async function logFunnelEvent(input: LogFunnelEventInput): Promise<void> 
       input.current_path ??
       (typeof window !== "undefined" ? window.location.pathname + window.location.search : null);
 
+    const attribution = getFunnelAttribution();
+
     await supabase.from("contractor_funnel_events").insert({
+      prospect_id: attribution.prospect_id ?? attribution.prospect ?? null,
+      token: attribution.token ?? attribution.t ?? null,
+      affiliate_code: attribution.aff ?? attribution.affiliate ?? attribution.ref ?? null,
+      utm_source: attribution.utm_source ?? null,
+      utm_medium: attribution.utm_medium ?? null,
+      utm_campaign: attribution.utm_campaign ?? null,
+      is_test: input.is_test ?? isQaSession(),
       session_id: getSessionId(),
       user_id: user?.id ?? null,
       contractor_id: input.contractor_id ?? null,

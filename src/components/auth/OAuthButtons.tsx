@@ -9,6 +9,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { captureCurrentRouteAsIntent, peekAuthIntent } from "@/services/auth/authIntentService";
 import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
 import { authDebug } from "@/services/auth/authDebugBus";
+import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 
 interface OAuthButtonsProps {
   loading?: boolean;
@@ -34,6 +35,7 @@ export default function OAuthButtons({ loading: externalLoading, className = "" 
     const watchdog = window.setTimeout(() => setGoogleLoading(false), 8000);
 
     try {
+      void logFunnelEvent({ event_type: "auth_started", step: "oauth_google", metadata: { method: "google" } });
       if (!peekAuthIntent()) {
         captureCurrentRouteAsIntent("oauth_signin");
       }
