@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import LanguageToggle from "@/components/ui/LanguageToggle";
+import ThemeSwitcher from "@/components/theme/ThemeSwitcher";
 import { getDrawerSections } from "@/config/navigationConfig";
 import { resolveIcon } from "./IconResolver";
 import BadgePersonaActiveNavigation from "./BadgePersonaActiveNavigation";
@@ -56,11 +57,16 @@ export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole 
           <div className="flex items-center justify-between mb-5">
             <UnproLogo size={100} className="h-6 w-auto" />
             <div className="flex items-center gap-1.5">
-              <LanguageToggle lang={lang} onChange={setLang} />
-              <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9 rounded-lg">
+              <Button variant="ghost" size="icon" onClick={onClose} className="h-11 w-11 rounded-lg" aria-label={lang === "en" ? "Close menu" : "Fermer le menu"}>
                 <X className="h-5 w-5" />
               </Button>
             </div>
+          </div>
+
+          {/* Mobile-only display controls — kept out of the top bar. */}
+          <div className="mb-5 flex min-h-12 items-center justify-between gap-3 border-y border-border/30 py-2">
+            <LanguageToggle lang={lang} onChange={setLang} />
+            <ThemeSwitcher />
           </div>
 
           {/* Search */}
