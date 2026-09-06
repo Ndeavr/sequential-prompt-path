@@ -4,9 +4,7 @@
  * Post-auth landing for contractors. Ensures:
  *  - User is authenticated (otherwise redirect to /role with intent)
  *  - User has contractor role (apply prelogin role if needed)
- *  - Redirects into the voice-first onboarding flow
- *
- * Hard 3s safety timeout — never strands the user on a loading screen.
+ *  - Resumes the canonical matching-profile step with its full query context
  */
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";

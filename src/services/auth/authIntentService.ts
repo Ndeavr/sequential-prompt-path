@@ -1,7 +1,7 @@
 /**
  * UNPRO — Auth Intent Preservation Service
  * Saves/restores user context across auth redirects.
- * Persists in BOTH sessionStorage (per-tab) and localStorage (cross-tab, 15-min TTL)
+ * Persists in BOTH sessionStorage (per-tab) and localStorage (cross-tab, 1-hour TTL)
  * so magic-link/OAuth callbacks landing in a fresh tab still recover the return path.
  */
 
