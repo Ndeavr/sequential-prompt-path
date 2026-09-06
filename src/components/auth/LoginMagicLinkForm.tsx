@@ -63,7 +63,7 @@ export default function LoginMagicLinkForm({
       if (intentResult.status === "failed") {
         // Fail closed: never send a link that would silently lose the role.
         window.clearTimeout(safety);
-        authDebug.set({ auth_step: "magic_link_intent_failed", last_error: intentResult.reason, last_error_step: "role_intent" });
+        authDebug.set({ auth_step: "error", last_error: intentResult.reason, last_error_step: "applying_prelogin_role" });
         setLoading(false);
         toast.error("Impossible de préparer votre lien de connexion. Réessayez dans un instant.");
         return;
