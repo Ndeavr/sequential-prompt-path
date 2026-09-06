@@ -4,6 +4,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 export const useContractorFullProfile = (slugOrId: string | undefined) => {
   return useQuery({
@@ -126,5 +127,73 @@ export const useContractorReviewAggregate = (contractorId: string | undefined) =
       return data;
     },
     enabled: !!contractorId,
+  });
+};
+
+export const useContractorPublicProjects = (contractorId: string | undefined) =>
+  useQuery({
+    queryKey: ["contractor-public-projects", contractorId],
+    enabled: !!contractorId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contractor_projects")
+        .select("id, title, city, year, description, before_url, after_url, photos")
+        .eq("contractor_id", contractorId as string)
+        .eq("status", "published")
+        .order("sort_order", { ascending: true })
+        .limit(12);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+export const useContractorReviewSources = (contractorId: string | undefined) =>
+  useQuery({
+    queryKey: ["contractor-review-sources", contractorId],
+    enabled: !!contractorId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contractor_review_sources")
+        .select("id, source_name, profile_url, sync_status, last_synced_at")
+        .eq("contractor_id", contractorId as string);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+export const useHomeownerContractorCompatibility = (contractorId: string | undefined) => {
+  const { user, role } = useAuth();
+  return useQuery({
+    queryKey: ["homeowner-contractor-compatibility", user?.id, contractorId],
+    enabled: !!user?.id && role === "homeowner" && !!contractorId,
+    queryFn: async () => {
+      const { data: evaluations, error } = await supabase
+        .from("match_evaluations")
+        .select("project_id, recommendation_score, ccai_score, updated_at")
+        .eq("user_id", user?.id as string)
+        .eq("contractor_id", contractorId as string)
+        .not("project_id", "is", null)
+        .order("updated_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+
+      const projectIds = (evaluations ?? []).map((row) => row.project_id).filter((id): id is string => !!id);
+      if (projectIds.length === 0) return null;
+
+      const { data: projects, error: projectError } = await supabase
+        .from("projects")
+        .select("id, status, updated_at")
+        .eq("user_id", user?.id as string)
+        .in("id", projectIds)
+        .order("updated_at", { ascending: false });
+      if (projectError) throw projectError;
+
+      const inactive = new Set(["completed", "cancelled", "closed", "archived"]);
+      const activeProject = (projects ?? []).find((project) => !inactive.has(project.status.toLowerCase()));
+      if (!activeProject) return null;
+      const match = (evaluations ?? []).find((evaluation) => evaluation.project_id === activeProject.id);
+      const score = match?.recommendation_score ?? match?.ccai_score ?? null;
+      return score == null ? null : { score: Math.max(0, Math.min(100, Math.round(score))), projectId: activeProject.id };
+    },
   });
 };
