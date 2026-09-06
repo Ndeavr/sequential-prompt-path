@@ -66,7 +66,10 @@ interface ProfilePayload {
 }
 
 async function gmbLookup(input: DemoInput): Promise<ProfilePayload> {
-  const apiKey = Deno.env.get("GOOGLE_PLACES_SERVER_KEY") || Deno.env.get("GOOGLE_PLACES_API_KEY");
+  // P0 cost guard: this public preview must never call Google Places directly.
+  // Acquisition providers remain behind the shared circuit breaker; this path
+  // uses only existing internal data and deterministic fallback content.
+  const apiKey: string | undefined = undefined;
   const phoneDigits = normalizePhone(input.phone);
   const domain = extractDomain(input.website || input.google_url);
 
