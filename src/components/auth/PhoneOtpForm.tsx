@@ -14,6 +14,7 @@ import { Phone, ArrowLeft, RefreshCw, ShieldCheck, Loader2, CheckCircle2 } from 
 import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
 import { authDebug } from "@/services/auth/authDebugBus";
 import { motion, AnimatePresence } from "framer-motion";
+import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 
 interface PhoneOtpFormProps {
   onSuccess?: () => void;
@@ -83,6 +84,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       last_error: null,
       last_error_step: null,
     });
+    void logFunnelEvent({ event_type: "auth_started", step: "phone_otp", metadata: { method: "phone_otp" } });
     // Hard 8s safety so the button never looks frozen (Twilio Verify can take 4-5s)
     const safety = window.setTimeout(() => {
       setSending(false);
@@ -103,6 +105,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
         toast.error(data.error);
       } else {
         trackAuthEvent("sms_sent");
+        void logFunnelEvent({ event_type: "otp_sent", step: "phone_otp" });
         authDebug.set({ auth_step: "sms_sent" });
         toast.success("Code envoyé !");
         setStep("code");
@@ -160,6 +163,8 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       }
 
       trackAuthEvent("sms_success");
+      void logFunnelEvent({ event_type: "otp_verified", step: "phone_otp" });
+      void logFunnelEvent({ event_type: "auth_completed", step: "phone_otp", metadata: { method: "phone_otp" } });
       authDebug.set({ auth_step: "otp_verified" });
       setVerified(true);
 

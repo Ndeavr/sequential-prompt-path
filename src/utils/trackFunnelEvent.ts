@@ -3,6 +3,7 @@
  * Tracks every contractor funnel step for conversion analytics.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 
 export type FunnelEventType =
   | "landing_viewed"
@@ -40,26 +41,20 @@ function getDevice(): string {
   return "desktop";
 }
 
+/**
+ * Legacy signature — délègue au logger canonique (`src/lib/analytics/logFunnelEvent.ts`)
+ * pour que TOUT le tunnel écrive une seule et même table avec attribution.
+ */
 export async function trackFunnelEvent(
   eventType: FunnelEventType,
   metadata: Record<string, string | number | boolean | null> = {},
   step?: string
 ) {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-
-    await supabase.from("contractor_funnel_events").insert([{
-      session_id: getSessionId(),
-      user_id: user?.id || null,
-      event_type: eventType,
-      step: step || eventType,
-      metadata,
-      source: document.referrer ? new URL(document.referrer).hostname : "direct",
-      device: getDevice(),
-    }]);
-  } catch (e) {
-    console.error("[trackFunnelEvent]", e);
-  }
+  await logFunnelEvent({
+    event_type: eventType as never,
+    step: step || eventType,
+    metadata,
+  });
 }
 
 /**

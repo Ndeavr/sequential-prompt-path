@@ -16,6 +16,7 @@
  * compatibility with pages that already write it.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 
 export const ROLE_INTENT_KEY = "unpro_prelogin_role";
 const META_KEY = "unpro_prelogin_role_meta";
@@ -179,10 +180,17 @@ export async function applyRoleIntent(
       await supabase
         .from("contractors")
         .upsert({ user_id: user.id, email: user.email || "" } as never, { onConflict: "user_id" });
+      void logFunnelEvent({
+        event_type: "contractor_account_created",
+        step: "role_intent",
+        email: user.email ?? null,
+        metadata: { return_path: intent.returnPath ?? null },
+      });
     } catch (e) {
       console.warn("[roleIntent] contractor stub non-fatal", e);
     }
   }
+
 
   clearRoleIntent();
   return { role: intent.role, applied: true };
