@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { consumeAuthIntent, getDefaultRedirectForRole } from "@/services/auth/authIntentService";
+import { clearAuthIntent, peekAuthIntent, getDefaultRedirectForRole } from "@/services/auth/authIntentService";
 import { motion } from "framer-motion";
 import UnproIcon from "@/components/brand/UnproIcon";
 import { authDebug } from "@/services/auth/authDebugBus";
@@ -47,7 +47,7 @@ export default function AuthCallbackPage() {
   async function handleCallback() {
     // Read intent FIRST (before any awaits) so it survives storage races
     // when sessionStorage gets cleared by Supabase auth handshake.
-    const intent = consumeAuthIntent();
+    const intent = peekAuthIntent();
     const roleIntent = readRoleIntent();
     const preloginRole = roleIntent?.role ?? null;
 
@@ -98,6 +98,7 @@ export default function AuthCallbackPage() {
         setState("redirecting");
         authDebug.set({ auth_step: "redirecting", redirect_target: nextParam });
         navigate(nextParam, { replace: true });
+        clearAuthIntent();
         return;
       }
 
@@ -141,6 +142,7 @@ export default function AuthCallbackPage() {
         );
         if (roleErr) {
           authDebug.error(new Error(roleErr), "applying_prelogin_role");
+          throw new Error(roleErr);
         } else if (applied && !roleList.includes(applied)) {
           roleList = [...roleList, applied];
           authDebug.set({ roles: roleList });
@@ -162,6 +164,7 @@ export default function AuthCallbackPage() {
             : "/admin";
         authDebug.set({ auth_step: "redirecting", redirect_target: target });
         navigate(target, { replace: true });
+        clearAuthIntent();
         return;
       }
 
@@ -169,12 +172,14 @@ export default function AuthCallbackPage() {
       if (intent?.returnPath && hasRole && !/^\/(login|signup|auth\/callback)\b/.test(intent.returnPath)) {
         authDebug.set({ auth_step: "redirecting", redirect_target: intent.returnPath });
         navigate(intent.returnPath, { replace: true });
+        clearAuthIntent();
         return;
       }
 
       if (!hasRole) {
         authDebug.set({ auth_step: "redirecting", redirect_target: "/onboarding" });
         navigate("/onboarding", { replace: true });
+        clearAuthIntent();
         return;
       }
 
@@ -189,18 +194,21 @@ export default function AuthCallbackPage() {
         const target = onboardingDone ? "/pro" : "/join/profile";
         authDebug.set({ auth_step: "redirecting", redirect_target: target });
         navigate(target, { replace: true });
+        clearAuthIntent();
         return;
       }
 
       if (!onboardingDone) {
         authDebug.set({ auth_step: "redirecting", redirect_target: "/onboarding" });
         navigate("/onboarding", { replace: true });
+        clearAuthIntent();
         return;
       }
 
       const target = getDefaultRedirectForRole(primaryRole);
       authDebug.set({ auth_step: "redirecting", redirect_target: target });
       navigate(target, { replace: true });
+      clearAuthIntent();
 
     } catch (err: any) {
       console.error("Auth callback error:", err);

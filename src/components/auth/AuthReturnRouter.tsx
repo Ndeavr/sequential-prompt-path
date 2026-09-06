@@ -9,7 +9,7 @@
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { consumeAuthIntent, getDefaultRedirectForRole } from "@/services/auth/authIntentService";
+import { clearAuthIntent, peekAuthIntent, getDefaultRedirectForRole } from "@/services/auth/authIntentService";
 import { closeAuthOverlay } from "@/hooks/useAuthOverlay";
 import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
 import { authDebug } from "@/services/auth/authDebugBus";
@@ -96,7 +96,7 @@ export default function AuthReturnRouter() {
       const provider = session.user.app_metadata?.provider;
       if (provider === "google") trackAuthEvent("google_success");
 
-      const intent = consumeAuthIntent();
+      const intent = peekAuthIntent();
       const here = location.pathname;
       const roleIntent = readRoleIntent();
 
@@ -114,10 +114,14 @@ export default function AuthReturnRouter() {
 
       // 2) If user pre-selected a role, apply it now (idempotent)
       if (roleIntent) {
-        const { role: applied } = await applyRoleIntent(
+        const { role: applied, applied: succeeded, error } = await applyRoleIntent(
           { id: session.user.id, email: session.user.email },
           roleIntent,
         );
+        if (!succeeded) {
+          authDebug.error(new Error(error || "role_activation_failed"), "applying_prelogin_role");
+          return;
+        }
         if (applied && !roleList.includes(applied)) {
           roleList = [...roleList, applied];
         }
@@ -149,6 +153,7 @@ export default function AuthReturnRouter() {
       if (intent?.returnPath && !/^\/(login|signup|auth\/callback)\b/.test(intent.returnPath)) {
         console.log("[AuthReturnRouter] -> intent path", intent.returnPath);
         navigate(intent.returnPath, { replace: true });
+        clearAuthIntent();
         return;
       }
 
@@ -156,6 +161,7 @@ export default function AuthReturnRouter() {
       if (isApprovedPartner) {
         console.log("[AuthReturnRouter] -> /partenaire/dashboard (approved partner)");
         navigate("/partenaire/dashboard", { replace: true });
+        clearAuthIntent();
         return;
       }
 
@@ -166,12 +172,14 @@ export default function AuthReturnRouter() {
       if (roleList.length === 0) {
         console.log("[AuthReturnRouter] -> /onboarding (no role)");
         navigate("/onboarding", { replace: true });
+        clearAuthIntent();
         return;
       }
 
       const target = postLoginPathForRole(primaryRole, intent?.returnPath ?? null);
       console.log("[AuthReturnRouter] -> role redirect", { primaryRole, target });
       navigate(target, { replace: true });
+      clearAuthIntent();
       }, 0);
     });
 
