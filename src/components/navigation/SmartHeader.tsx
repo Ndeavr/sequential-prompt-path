@@ -17,7 +17,6 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import MegaMenuPanel from "./MegaMenu";
 import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
 import ThemeSwitcher from "@/components/theme/ThemeSwitcher";
-import SwitchLanguagePillAnimated from "@/components/ui/SwitchLanguagePillAnimated";
 import SmartCTA from "@/components/cta/SmartCTA";
 import QRShareSheet from "@/components/sharing/QRShareSheet";
 import MenuQuickActionsContextual from "./MenuQuickActionsContextual";
@@ -98,11 +97,13 @@ const SmartHeader = () => {
             <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0 -ml-1 sm:ml-0" style={{ minWidth: "fit-content" }}>
               <UnproLogo
                 unsized
+                tone={isHome ? "light" : "auto"}
                 className="hidden min-[360px]:block h-[31px] md:h-[38px] w-auto min-h-0 transition-transform duration-300 group-hover:scale-105"
               />
               <UnproIcon
                 unsized
                 shape="bare"
+                tone={isHome ? "light" : "auto"}
                 className="block min-[360px]:hidden h-[31px] w-auto transition-transform duration-300 group-hover:scale-105"
               />
             </Link>
@@ -162,54 +163,48 @@ const SmartHeader = () => {
             <MenuQuickActionsContextual variant="header" />
 
             {/* Search */}
-            <div className="flex-1 mx-4 hidden md:block max-w-lg">
+            <div className="flex-1 mx-4 hidden lg:block max-w-lg">
               <HeaderSearch lang={lang} />
             </div>
 
             {/* Zone 4 — Right actions / User state */}
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="hidden sm:block">
+              <div className="hidden lg:block">
                 <AlexNavOrb lang={lang} />
               </div>
 
-              {/* Language */}
-              <div className="sm:hidden">
-                <SwitchLanguagePillAnimated lang={lang} onChange={setLang} />
-              </div>
-              <div className="hidden sm:block">
+              {/* Desktop only — mobile language and theme controls live in the drawer. */}
+              <div className="hidden lg:block">
                 <LanguageToggle lang={lang} onChange={setLang} />
               </div>
 
-              {/* Theme — Clair / Auto / Sombre */}
+              {/* Desktop only — Clair / Auto / Sombre */}
               <ThemeSwitcher className="hidden lg:inline-flex" />
-              <ThemeSwitcher variant="compact" className="lg:hidden h-8 w-8" />
+
+              {/* Notifications — always available from the compact top bar. */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative h-10 w-10 lg:h-9 lg:w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                onClick={() => navigate(ctx ? "/dashboard/notifications" : "/login")}
+                aria-label={lang === "en" ? "Notifications" : "Notifications"}
+              >
+                <Bell className="h-4 w-4" />
+                {ctx && ctx.system.notificationsCount > 0 && (
+                  <span className="absolute top-2 right-2 lg:top-1 lg:right-1 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                )}
+              </Button>
 
               {/* Share QR */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 sm:h-9 sm:w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                className="h-10 w-10 lg:h-9 lg:w-9 rounded-lg text-muted-foreground hover:text-foreground"
                 onClick={() => setShareOpen(true)}
-                aria-label="Partager"
+                aria-label={lang === "en" ? "Share QR code" : "Partager par code QR"}
               >
-                <QrCode className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <QrCode className="h-4 w-4" />
               </Button>
-
-              {/* Notifications */}
-              {ctx && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="relative h-7 w-7 sm:h-9 sm:w-9 rounded-lg text-muted-foreground hover:text-foreground"
-                  onClick={() => navigate("/dashboard/notifications")}
-                  aria-label={lang === "en" ? "Notifications" : "Notifications"}
-                >
-                  <Bell className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  {ctx.system.notificationsCount > 0 && (
-                    <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                  )}
-                </Button>
-              )}
 
               {/* Context label */}
               {contextLabel && (
@@ -221,23 +216,20 @@ const SmartHeader = () => {
 
               {/* Auth */}
               {ctx ? (
-                <ProfileMenu />
+                <div className="hidden lg:block">
+                  <ProfileMenu />
+                </div>
               ) : (
                 <>
                   <Button asChild variant="ghost" size="sm" className="rounded-full h-9 text-[13px] px-3 hidden md:inline-flex text-muted-foreground hover:text-foreground">
                     <Link to="/entrepreneur">{lang === "en" ? "Contractors" : "Entrepreneurs"}</Link>
                   </Button>
-                  <Button asChild size="sm" className="rounded-full h-7 text-[11px] px-3 font-bold sm:hidden btn-liquid-metal border-0">
-                    <Link to="/role">
-                      {lang === "en" ? "Sign In" : "Connexion"}
-                    </Link>
-                  </Button>
-                  <Button asChild variant="ghost" size="sm" className="rounded-full h-9 text-[13px] px-4 hidden sm:inline-flex text-muted-foreground hover:text-foreground">
+                  <Button asChild variant="ghost" size="sm" className="rounded-full h-9 text-[13px] px-4 hidden lg:inline-flex text-muted-foreground hover:text-foreground">
                     <Link to="/role">{lang === "en" ? "Sign In" : "Connexion"}</Link>
                   </Button>
                   <Button
                     size="sm"
-                    className="rounded-full h-8 text-xs px-4 font-semibold hidden sm:inline-flex"
+                    className="rounded-full h-8 text-xs px-4 font-semibold hidden lg:inline-flex"
                     onClick={() => openAlex("homeowner")}
                   >
                     {lang === "en" ? "Find my PRO" : "Trouver mon PRO"}
@@ -249,7 +241,7 @@ const SmartHeader = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="lg:hidden h-8 w-8 rounded-lg"
+                className="lg:hidden h-10 w-10 rounded-lg"
                 onClick={() => setMobileOpen(!mobileOpen)}
                 aria-label="Menu"
               >
