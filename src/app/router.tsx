@@ -1689,8 +1689,8 @@ export const AppRouter = () => (
         <Route path="/admin/founder-pipeline" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminFounderPipeline /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/revenue-intelligence" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminRevenueIntelligence /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/acquisition/sms-sprint" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminSmsSprint /></Suspense></AdminProtectedRoute>} />
-        <Route path="/activer/:slug" element={<Navigate to="/entrepreneurs/audit-ia?source=legacy_activation" replace />} />
-        <Route path="/activer/:slug/succes" element={<Navigate to="/entrepreneurs/audit-ia?source=legacy_activation" replace />} />
+        <Route path="/activer/:slug" element={<Suspense fallback={<LazyFallback />}><PageActivationSprint /></Suspense>} />
+        <Route path="/activer/:slug/succes" element={<Suspense fallback={<LazyFallback />}><PageActivationSprint /></Suspense>} />
         <Route path="/admin/content-audit" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminContentAudit /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/acquisition-tests" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminAcquisitionTests /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/revenue-gate-audit" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminRevenueGateAudit /></Suspense></AdminProtectedRoute>} />

@@ -1,5 +1,14 @@
 # UNPRO — Roadmap
 
+## P0 — 6 régressions Project Monitoring (2026-09-08) — TERMINÉ, non publié
+
+- [x] 1. Permissions RLS/helpers : EXECUTE rétabli sur `has_role(uuid, app_role)`, `is_admin()`, `is_syndicate_admin(uuid,uuid)` (authenticated/service_role seulement), `affiliate_entry_by_slug(text)`, `public_contractor_credentials(uuid)`. Vérifié via `pg_proc.proacl` + `has_function_privilege` en production.
+- [x] 2. Entrée affiliée `/:slug` : erreur RPC journalisée (`affiliate_entry_lookup_failed`) + état d'erreur explicite avec réessai; `unpro_ref` n'est écrit que depuis une réponse valide. Testé avec le slug réel `yanis6s1` (affilié affiché) et un slug inconnu (repli, aucun affilié inventé).
+- [x] 3. Activation `/activer/:slug` et `/activer/:slug/succes` : routes restaurées vers `PageActivationSprint`, `session_id` conservé et journalisé (`activation_checkout_return`), écran de confirmation de retour de paiement ajouté. Cause racine réelle : `v_sms_sprint_landing` (security_invoker) sur une table admin-only → tout lien public affichait « lien invalide ». Corrigé par grants colonne par colonne + politique de lecture limitée aux lignes portant un `tracking_slug`; téléphone/courriel restent inaccessibles.
+- [x] 4. Booking transactions : `stripe_session_id` confirmé comme clé canonique unique (index unique complet, plus partiel), cohérent entre `create-booking-checkout`, `verify-booking-payment` et `stripe-webhook`; l'échec d'insert lève avant tout passage à `pending_payment`.
+- [x] 5. Role intent : `readRoleIntent()` fait primer le dernier choix explicite et purge le meta contradictoire ou expiré; `AuthOverlayPremium` et `PageEmergencyReset` passent par la source unique. 4 tests ajoutés (propriétaire→entrepreneur, entrepreneur→propriétaire, meta obsolète, purge).
+- [x] 6. Vérifications publiques : `get_contractor_public_profile(text)` renvoyait 401 en anonyme (page vidée) → EXECUTE rétabli. `public_contractor_credentials` expose désormais aussi les RBQ/NEQ inscrits au dossier, marqués « Déclaré / Non vérifié ». Erreur backend → « Vérification temporairement indisponible », jamais « aucun titre ».
+
 ## P0 — Incident revenu production (2026-09-04) — EN COURS, rien modifié encore
 
 ### Priorité active — parcours d’authentification entrepreneur

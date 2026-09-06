@@ -133,18 +133,36 @@ export function saveRoleIntent(
 }
 
 export function readRoleIntent(): RoleIntentMeta | null {
+  // The legacy raw key is the *last explicit choice* written by any page.
+  // It always wins over an older meta blob so a newer selection is never
+  // overridden by a stale one (e.g. Signup abandoned, then /role revisited).
+  const legacy = readEither(ROLE_INTENT_KEY);
+  const legacyRole = toCanonicalRole(legacy);
+
   const raw = readEither(META_KEY);
   if (raw) {
     try {
       const meta = JSON.parse(raw) as RoleIntentMeta;
-      if (meta?.role && Date.now() - meta.timestamp <= TTL_MS) return meta;
-    } catch { /* fall through */ }
+      const fresh = meta?.role && Date.now() - meta.timestamp <= TTL_MS;
+      if (fresh) {
+        if (!legacyRole || legacyRole === meta.role) return meta;
+        // Divergence: the raw key is newer/explicit — drop the stale meta.
+        clearBoth(META_KEY);
+      } else {
+        clearBoth(META_KEY);
+      }
+    } catch {
+      clearBoth(META_KEY);
+    }
   }
-  // Legacy fallback: only the raw role key is present.
-  const legacy = readEither(ROLE_INTENT_KEY);
-  const role = toCanonicalRole(legacy);
-  if (!legacy || !role) return null;
-  return { rawRole: legacy, role, accountType: toAccountType(legacy), timestamp: Date.now() };
+
+  if (!legacy || !legacyRole) return null;
+  return {
+    rawRole: legacy,
+    role: legacyRole,
+    accountType: toAccountType(legacy),
+    timestamp: Date.now(),
+  };
 }
 
 export function clearRoleIntent() {
