@@ -9,6 +9,7 @@ import { consumeAuthIntent, getDefaultRedirectForRole } from "@/services/auth/au
 import { motion } from "framer-motion";
 import UnproIcon from "@/components/brand/UnproIcon";
 import { authDebug } from "@/services/auth/authDebugBus";
+import { applyRoleIntent, readRoleIntent } from "@/services/auth/roleIntent";
 
 type CallbackState = "processing" | "creating_profile" | "redirecting" | "error";
 
