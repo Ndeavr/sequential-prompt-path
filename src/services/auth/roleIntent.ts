@@ -184,8 +184,10 @@ export function readRoleIntent(): RoleIntentMeta | null {
     rawRole: legacy,
     role: legacyRole,
     accountType: toAccountType(legacy),
+    affiliateRef: readCapturedAffiliateRef(),
     timestamp: Date.now(),
   };
+
 }
 
 export function clearRoleIntent() {
