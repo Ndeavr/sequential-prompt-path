@@ -55,6 +55,19 @@ describe("magic link fail-closed on role intent", () => {
     expect(options.emailRedirectTo).not.toMatch(/contractor|pro@example/);
   });
 
+  it("does NOT send the link when the server refuses an incoherent role/account_type pair", async () => {
+    saveRoleIntent("contractor", { returnPath: "/join/profile" });
+    rpc.mockResolvedValue({
+      data: { ok: false, reason: "account_type_role_mismatch" },
+      error: null,
+    });
+
+    await submit("pro@example.com");
+
+    await waitFor(() => expect(rpc).toHaveBeenCalled());
+    expect(signInWithOtp).not.toHaveBeenCalled();
+  });
+
   it("sends the link normally when there is no public intent at all", async () => {
     await submit("someone@example.com");
 
