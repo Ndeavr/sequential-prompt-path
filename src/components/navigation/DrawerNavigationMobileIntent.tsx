@@ -3,9 +3,8 @@
  */
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import LanguageToggle from "@/components/ui/LanguageToggle";
@@ -13,7 +12,6 @@ import ThemeSwitcher from "@/components/theme/ThemeSwitcher";
 import { getDrawerSections } from "@/config/navigationConfig";
 import { resolveIcon } from "./IconResolver";
 import BadgePersonaActiveNavigation from "./BadgePersonaActiveNavigation";
-import UnproLogo from "@/components/brand/UnproLogo";
 import MenuRoleSwitcherUniversal from "./MenuRoleSwitcherUniversal";
 import HeaderSearch from "./HeaderSearch";
 import SmartCTA from "@/components/cta/SmartCTA";
@@ -24,10 +22,9 @@ interface Props {
   onClose: () => void;
   ctx: any;
   activeRole: string;
-  logoTone?: "auto" | "light" | "dark";
 }
 
-export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole, logoTone = "auto" }: Props) {
+export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole }: Props) {
   const { signOut } = useAuth();
   const { lang, setLang } = useLanguage();
   const { openAlex } = useAlexVoice();
@@ -37,12 +34,16 @@ export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole,
 
   const dashboardTo = activeRole === "contractor" ? "/pro" : "/dashboard";
 
+  // Page scroll stays locked while the drawer is open; only the drawer content scrolls.
+  useScrollLock(true);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[70] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-[55] lg:hidden"
+      style={{ top: "calc(3rem + env(safe-area-inset-top))" }}
     >
       <div className="absolute inset-0 bg-background/95 backdrop-blur-xl" onClick={onClose} />
 
@@ -53,16 +54,9 @@ export default function DrawerNavigationMobileIntent({ onClose, ctx, activeRole,
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
         className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-card flex flex-col"
       >
-        <div className="p-5 flex-1 overflow-y-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-5">
-            <UnproLogo size={100} tone={logoTone} className="h-6 w-auto" />
-            <div className="flex items-center gap-1.5">
-              <Button variant="ghost" size="icon" onClick={onClose} className="h-11 w-11 rounded-lg" aria-label={lang === "en" ? "Close menu" : "Fermer le menu"}>
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
+        <div className="p-5 flex-1 overflow-y-auto overscroll-contain">
+          {/* Header — the top bar above already shows the logo and the close control. */}
+
 
           {/* Mobile-only display controls — kept out of the top bar. */}
           <div className="mb-5 flex min-h-12 items-center justify-between gap-3 border-y border-border/30 py-2">

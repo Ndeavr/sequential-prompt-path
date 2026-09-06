@@ -71,9 +71,17 @@ const SmartHeader = () => {
 
   return (
     <>
-      <header className="glass-nav sticky top-0 z-[60] pointer-events-auto">
-        <div className="mx-auto max-w-7xl px-1 sm:px-4 lg:px-6">
-          <div className="flex items-center justify-between h-10 sm:h-12 lg:h-14">
+      <header
+        className="glass-nav sticky top-0 z-[60] pointer-events-auto"
+        style={{
+          paddingTop: "max(env(safe-area-inset-top), 0px)",
+          paddingLeft: "env(safe-area-inset-left)",
+          paddingRight: "env(safe-area-inset-right)",
+        }}
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-4 lg:px-6">
+          <div className="flex items-center justify-between h-12 py-1 sm:h-14 lg:h-14">
+
             {/* Back button */}
             {!isHome && (
               <Button
@@ -94,7 +102,7 @@ const SmartHeader = () => {
             )}
 
             {/* Zone 1 — Brand */}
-            <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0 -ml-1 sm:ml-0" style={{ minWidth: "fit-content" }}>
+            <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0" style={{ minWidth: "fit-content" }}>
               <UnproLogo
                 unsized
                 tone={isHome ? "light" : "auto"}
@@ -266,7 +274,6 @@ const SmartHeader = () => {
             onClose={() => setMobileOpen(false)}
             ctx={ctx}
             activeRole={activeRole}
-            logoTone={isHome ? "light" : "auto"}
           />
         )}
       </AnimatePresence>

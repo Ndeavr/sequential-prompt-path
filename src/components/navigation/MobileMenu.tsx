@@ -27,8 +27,9 @@ export default function MegaMenuMobileSection({ lang, onClose }: MobileMenuSecti
   return (
     <div className="space-y-1">
       <p className="text-caption font-bold text-muted-foreground uppercase tracking-wider mb-2">
-        {lang === "en" ? "Navigation" : "Navigation"}
+        {lang === "en" ? "Browse the site" : "Explorer le site"}
       </p>
+
       {menuKeys.map(({ key, label, labelEn }) => {
         const config = getMegaMenuConfig(key);
         const isOpen = openSection === key;
