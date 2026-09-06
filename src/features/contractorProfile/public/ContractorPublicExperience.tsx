@@ -41,6 +41,16 @@ type ContractorRecord = {
 
 type ProfileData = ContractorRecord & {
   contractor?: ContractorRecord;
+  projects?: Array<{
+    id: string;
+    title?: string | null;
+    city?: string | null;
+    year?: number | null;
+    description?: string | null;
+    before_url?: string | null;
+    after_url?: string | null;
+    photos?: string[] | null;
+  }>;
   services?: Array<{ service_name_fr?: string | null }>;
   service_areas?: Array<{ city_name?: string | null }>;
   media?: Array<{ public_url?: string | null }>;
@@ -71,7 +81,8 @@ export default function ContractorPublicExperience({ profileData, compact = fals
   const { data: compatibility } = useHomeownerContractorCompatibility(contractorId);
   const { data: reviews = [] } = usePublicContractorReviews(contractorId);
   const { data: reviewSources = [] } = useContractorReviewSources(contractorId);
-  const { data: projects = [] } = useContractorPublicProjects(contractorId);
+  const { data: queriedProjects = [] } = useContractorPublicProjects(contractorId);
+  const projects = profileData.projects ?? queriedProjects;
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]["id"]>("overview");
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 

@@ -66,9 +66,9 @@ export const useContractorFullProfile = (slugOrId: string | undefined) => {
 
       // Fetch problem names
       const problemIds = (problemLinks.data ?? []).map((p) => p.problem_id);
-      let problemDetails: Pick<Tables<"home_problems">, "id" | "name_fr" | "slug" | "icon_name">[] = [];
+      let problemDetails: Pick<Tables<"home_problems">, "id" | "name_fr" | "slug">[] = [];
       if (problemIds.length > 0) {
-        const { data: pd } = await supabase.from("home_problems").select("id, name_fr, slug, icon_name").in("id", problemIds);
+        const { data: pd } = await supabase.from("home_problems").select("id, name_fr, slug").in("id", problemIds);
         problemDetails = pd ?? [];
       }
 

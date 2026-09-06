@@ -108,9 +108,11 @@ export function useContractorRecommendation(slug: string | undefined) {
       const customSections = asRecord(pageRow?.custom_sections ?? null);
       const rawSources = customSections?.public_sources;
       const publicSources = Array.isArray(rawSources)
-        ? rawSources.filter((source): source is PublicSource => {
+        ? rawSources.flatMap((source): PublicSource[] => {
             const record = asRecord(source);
-            return typeof record?.label === "string" && typeof record.url === "string";
+            return typeof record?.label === "string" && typeof record.url === "string"
+              ? [{ label: record.label, url: record.url }]
+              : [];
           })
         : [];
 
