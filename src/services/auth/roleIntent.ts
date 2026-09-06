@@ -101,6 +101,27 @@ function clearBoth(key: string) {
   try { localStorage.removeItem(key); } catch { /* noop */ }
 }
 
+/**
+ * Referral code already captured on this device (affiliate entry `/:slug`,
+ * `?ref=` link, QR). Read-only: the affiliate attribution itself is never
+ * written or invented here.
+ */
+export function readCapturedAffiliateRef(): string | undefined {
+  try {
+    const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+    const fromUrl = params.get("ref") || params.get("aff") || params.get("affiliate");
+    if (fromUrl) return fromUrl;
+  } catch { /* noop */ }
+  try {
+    const raw = localStorage.getItem("unpro_ref");
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw) as { refCode?: string } | null;
+    return parsed?.refCode || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Persist the selected role BEFORE any auth redirect. */
 export function saveRoleIntent(
   rawRole: string,
@@ -117,7 +138,9 @@ export function saveRoleIntent(
     token: extra.token,
     prospectId: extra.prospectId,
     leadId: extra.leadId,
-    affiliateRef: extra.affiliateRef,
+    // Never lose an affiliate attribution captured before the role choice.
+    affiliateRef: extra.affiliateRef ?? readCapturedAffiliateRef(),
+
     campaignId: extra.campaignId,
     onboardingStep: extra.onboardingStep,
     businessName: extra.businessName,
