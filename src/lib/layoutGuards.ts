@@ -77,11 +77,20 @@ export function scanLayout(): LayoutScan {
     if (el) {
       const inDock = el.closest("[data-bottom-dock]");
       const hostShell = el.closest("[data-page-shell]");
-      if (!inDock && hostShell) {
-        // Content sits behind the dock only if this pixel is *inside* a
-        // shell but *not* inside the dock — i.e. the shell has too little
-        // padding-bottom. If the shell owns the padding correctly, this
-        // pixel is the padded gap and elementFromPoint returns the shell.
+      // Content that merely *passes* behind the dock while the page can
+      // still scroll is reachable — not a regression. A real regression is
+      // content stuck behind the dock: either the page is scrolled to the
+      // very bottom (nothing left to reveal) or the element is pinned
+      // (fixed / sticky) so scrolling can never free it.
+      const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+      const maxScroll = Math.max(
+        0,
+        document.documentElement.scrollHeight - window.innerHeight,
+      );
+      const atBottom = scrollTop >= maxScroll - 2;
+      const pos = el instanceof HTMLElement ? getComputedStyle(el).position : "static";
+      const pinned = pos === "fixed" || pos === "sticky";
+      if (!inDock && hostShell && (atBottom || pinned)) {
         const shellRect = hostShell.getBoundingClientRect();
         contentBehindDock =
           y > shellRect.top && y < shellRect.bottom &&
@@ -95,15 +104,33 @@ export function scanLayout(): LayoutScan {
   const missingCanonicalCTA = ctaEls.length === 0;
 
   // Placeholder text sniff — flag copy that leaks unfinished states.
-  // The QA overlay itself prints the word "placeholder", so it is excluded
-  // from the scan to avoid a self-referential false positive.
-  const bodyText = Array.from(document.body?.children ?? [])
-    .filter((el) => !el.hasAttribute("data-mobile-qa-overlay"))
-    .map((el) => (el as HTMLElement).innerText ?? "")
-    .join("\n");
+  // Only *visible page copy* counts: the QA overlay subtree (which prints
+  // the word "placeholder" in its own report) and non-rendered nodes such
+  // as <script>/<style> are skipped, and `placeholder=""` attributes on
+  // real inputs are never treated as visible content.
   const placeholderText: string[] = [];
-  const m = bodyText.match(PLACEHOLDER_RE);
-  if (m) placeholderText.push(m[0]);
+  const root = document.body;
+  if (root) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const parent = node.parentElement;
+        if (!parent) return NodeFilter.FILTER_REJECT;
+        const tag = parent.tagName;
+        if (tag === "SCRIPT" || tag === "STYLE" || tag === "NOSCRIPT" || tag === "TEMPLATE") {
+          return NodeFilter.FILTER_REJECT;
+        }
+        if (parent.closest("[data-mobile-qa-overlay]")) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      },
+    });
+    let node = walker.nextNode();
+    while (node && placeholderText.length === 0) {
+      const m = (node.textContent ?? "").match(PLACEHOLDER_RE);
+      if (m) placeholderText.push(m[0]);
+      node = walker.nextNode();
+    }
+  }
+
 
 
   return {
