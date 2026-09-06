@@ -102,7 +102,7 @@ const SmartHeader = () => {
             )}
 
             {/* Zone 1 — Brand */}
-            <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0 -ml-1 sm:ml-0" style={{ minWidth: "fit-content" }}>
+            <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0" style={{ minWidth: "fit-content" }}>
               <UnproLogo
                 unsized
                 tone={isHome ? "light" : "auto"}
