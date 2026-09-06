@@ -93,7 +93,7 @@ export const usePublicContractorReviews = (contractorId: string | undefined) => 
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reviews")
-        .select("id, title, content, rating, created_at")
+        .select("id, title, content, rating, created_at, verification_status")
         .eq("contractor_id", contractorId!)
         .eq("is_published", true)
         .order("created_at", { ascending: false });
