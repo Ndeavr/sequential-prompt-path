@@ -577,7 +577,6 @@ const PageCommandCenterTerritories = lazyWithRetry(() => import("@/pages/admin/P
 
 // SEO Index Domination
 const ContractorSeoPage = lazyWithRetry(() => import("@/pages/seo/ContractorSeoPage"));
-const PageContractorPublicProfileISR = lazyWithRetry(() => import("@/pages/entrepreneur/PageContractorPublicProfileISR"));
 const PageHomeownerBookingFunnel = lazyWithRetry(() => import("@/pages/homeowner/PageHomeownerBookingFunnel"));
 const PageClaimWizard = lazyWithRetry(() => import("@/pages/entrepreneur/PageClaimWizard"));
 const PageClaimWelcome = lazyWithRetry(() => import("@/pages/entrepreneur/PageClaimWelcome"));
