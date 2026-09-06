@@ -45,7 +45,12 @@ export default function PreLoginRolePage() {
     const state = location.state as { from?: string } | null;
     const params = new URLSearchParams(location.search);
     const queryReturn = params.get("returnTo");
-    saveRoleIntent(selected, { returnPath: queryReturn || state?.from || undefined });
+    const existing = readRoleIntent();
+    const returnPath = queryReturn || state?.from || existing?.returnPath;
+    saveRoleIntent(selected, {
+      ...(existing?.rawRole === selected ? existing : {}),
+      returnPath,
+    });
     // Forward any state (like `from`) to the login page
     navigate("/login", { state: location.state });
   };

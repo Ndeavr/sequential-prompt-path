@@ -54,9 +54,9 @@ export default function OAuthButtons({ loading: externalLoading, className = "" 
         toast.error(result.error.message || "Erreur de connexion");
         setGoogleLoading(false);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       authDebug.error(err, "oauth_initiating");
-      toast.error(err?.message || "Erreur de connexion");
+      toast.error(err instanceof Error ? err.message : "Erreur de connexion");
       setGoogleLoading(false);
     } finally {
       window.clearTimeout(watchdog);

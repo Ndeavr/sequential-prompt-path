@@ -31,16 +31,6 @@ export default function AuthCallbackPage() {
     }
 
     handleCallback();
-    // Hard safety timeout: never leave the user stuck > 5s
-    const t = setTimeout(() => {
-      setState((curr) => {
-        if (curr === "redirecting") return curr;
-        console.warn("[AuthCallback] safety timeout reached, falling back to /login");
-        navigate("/login", { replace: true });
-        return curr;
-      });
-    }, 5000);
-    return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

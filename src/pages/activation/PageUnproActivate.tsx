@@ -143,7 +143,6 @@ export default function PageUnproActivate() {
 
   /** Action secondaire : calculer une garantie personnalisée (jeton conservé). */
   function handleCustomize() {
-    track("personalized_quote_started", {});
     const attribution = readAttribution();
     const params = new URLSearchParams(attribution);
     if (token) params.set("t", token);
