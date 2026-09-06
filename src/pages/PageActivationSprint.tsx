@@ -135,7 +135,7 @@ export default function PageActivationSprint() {
           disabled={busy}
           className="w-full h-14 text-base font-semibold rounded-2xl bg-white text-[#050816] hover:bg-white/90"
         >
-          {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : {CONTRACTOR_OFFER.ctaPrimary}}
+          {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : CONTRACTOR_OFFER.ctaPrimary}
         </Button>
 
         {err && <div className="mt-3 text-sm text-red-400">{err}</div>}
