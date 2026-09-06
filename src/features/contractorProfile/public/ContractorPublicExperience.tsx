@@ -24,6 +24,7 @@ import {
   useHomeownerContractorCompatibility,
 } from "@/hooks/useContractorPublicPage";
 import { usePublicContractorReviews } from "@/hooks/usePublicContractors";
+import type { Json } from "@/integrations/supabase/types";
 
 type ContractorRecord = {
   id?: string;
@@ -49,7 +50,7 @@ type ProfileData = ContractorRecord & {
     description?: string | null;
     before_url?: string | null;
     after_url?: string | null;
-    photos?: string[] | null;
+    photos?: Json;
   }>;
   services?: Array<{ service_name_fr?: string | null }>;
   service_areas?: Array<{ city_name?: string | null }>;
