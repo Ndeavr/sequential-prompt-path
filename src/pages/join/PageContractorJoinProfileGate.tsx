@@ -87,12 +87,12 @@ export default function PageContractorJoinProfileGate() {
         void logFunnelEvent({ event_type: "onboarding_resumed", step: "matching_profile" });
         authDebug.set({ auth_step: "redirecting", redirect_target: resume });
         navigate(resume, { replace: true });
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error("[JoinProfileGate] error", e);
         authDebug.error(e, "gate_checking");
         if (!alive) return;
         setStatus("error");
-        setError(e?.message || "Erreur d'authentification");
+        setError(e instanceof Error ? e.message : "Erreur d'authentification");
       }
     })();
 
