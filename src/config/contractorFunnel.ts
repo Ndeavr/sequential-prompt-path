@@ -61,5 +61,5 @@ export function buildContractorEntryUrl(
 
 /** Canonical activation URL for a solicited contractor holding a token. */
 export function buildTokenActivationUrl(token: string): string {
-  return buildContractorEntryUrl({}, `/join/${encodeURIComponent(token)}`);
+  return buildContractorEntryUrl({}, `/unpro/activate/${encodeURIComponent(token)}`);
 }
