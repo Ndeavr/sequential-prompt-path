@@ -16,6 +16,8 @@ type UnproIconProps = {
   shape?: "round" | "square" | "bare";
   /** Surface the mark sits on. `auto` follows the app theme. */
   tone?: "auto" | "light" | "dark";
+  /** Skip inline width/height so CSS classes control the size. */
+  unsized?: boolean;
   className?: string;
 };
 
@@ -23,6 +25,7 @@ export default function UnproIcon({
   size = 64,
   shape = "round",
   tone = "auto",
+  unsized = false,
   className = "",
 }: UnproIconProps) {
   const [failed, setFailed] = useState(false);
@@ -38,7 +41,7 @@ export default function UnproIcon({
     );
   }
 
-  const style = { width: size, height: size };
+  const style = unsized ? undefined : { width: size, height: size };
   const base = `object-contain ${className}`;
 
   if (shape !== "bare") {

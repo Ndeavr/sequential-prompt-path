@@ -22,6 +22,8 @@ type UnproLogoProps = {
   markShape?: "round" | "square" | "bare";
   /** Surface the logo sits on. `auto` follows the app theme. */
   tone?: "auto" | "light" | "dark";
+  /** Skip inline width/height so CSS classes control the size. */
+  unsized?: boolean;
   className?: string;
 };
 
@@ -32,6 +34,7 @@ export default function UnproLogo({
   showWordmark = true,
   markShape = "round",
   tone = "auto",
+  unsized = false,
   className = "",
 }: UnproLogoProps) {
   const [failed, setFailed] = useState(false);
@@ -61,7 +64,9 @@ export default function UnproLogo({
       ? BRAND.logoIconWhite
       : BRAND.logoRound;
 
-  const style = { width: size, height: showWordmark ? height : size };
+  const style = unsized
+    ? undefined
+    : { width: size, height: showWordmark ? height : size };
   const base = `object-contain ${className}`;
 
   if (tone !== "auto") {
