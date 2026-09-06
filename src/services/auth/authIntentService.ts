@@ -6,7 +6,7 @@
  */
 
 const INTENT_KEY = "unpro_auth_intent";
-const TTL_MS = 15 * 60 * 1000; // 15 min
+const TTL_MS = 60 * 60 * 1000; // 1h — survives OTP expiry/retry and OAuth
 
 export interface AuthIntent {
   returnPath: string;
@@ -14,6 +14,10 @@ export interface AuthIntent {
   roleHint?: string;
   metadata?: Record<string, unknown>;
   timestamp: number;
+}
+
+export function clearAuthIntent() {
+  clearBoth(INTENT_KEY);
 }
 
 function writeBoth(key: string, value: string) {
@@ -57,12 +61,16 @@ export function captureCurrentRouteAsIntent(action?: string) {
 export function consumeAuthIntent(): AuthIntent | null {
   const raw = readEither(INTENT_KEY);
   if (!raw) return null;
-  clearBoth(INTENT_KEY);
   try {
     const intent: AuthIntent = JSON.parse(raw);
-    if (Date.now() - intent.timestamp > TTL_MS) return null;
+    if (Date.now() - intent.timestamp > TTL_MS) {
+      clearBoth(INTENT_KEY);
+      return null;
+    }
+    clearBoth(INTENT_KEY);
     return intent;
   } catch {
+    clearBoth(INTENT_KEY);
     return null;
   }
 }
@@ -86,7 +94,7 @@ export function getDefaultRedirectForRole(role: string | null): string {
     case "admin":
       return "/admin";
     case "contractor":
-      return "/pro";
+      return "/join/profile";
     case "partner":
       return "/partenaire/dashboard";
     case "homeowner":

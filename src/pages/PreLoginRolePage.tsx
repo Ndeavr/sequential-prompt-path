@@ -8,6 +8,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, Wrench, Building2, Briefcase, Users, Landmark, Globe, Factory, Star, ChevronDown, ArrowRight } from "lucide-react";
 import UnproIcon from "@/components/brand/UnproIcon";
+import { saveRoleIntent } from "@/services/auth/roleIntent";
 
 interface RoleOption {
   key: string;
@@ -41,7 +42,10 @@ export default function PreLoginRolePage() {
   const handleContinue = () => {
     if (!selected) return;
     // Persist selected role for post-login assignment
-    try { sessionStorage.setItem("unpro_prelogin_role", selected); } catch {}
+    const state = location.state as { from?: string } | null;
+    const params = new URLSearchParams(location.search);
+    const queryReturn = params.get("returnTo");
+    saveRoleIntent(selected, { returnPath: queryReturn || state?.from || undefined });
     // Forward any state (like `from`) to the login page
     navigate("/login", { state: location.state });
   };

@@ -2,6 +2,10 @@
 
 ## P0 — Incident revenu production (2026-09-04) — EN COURS, rien modifié encore
 
+### Priorité active — parcours d’authentification entrepreneur
+- [ ] Unifier et vérifier le parcours token/organique → authentification minimale → rôle/profil entrepreneur → reprise exacte, avec attribution complète, offre gratuite admissible et aucune étape de paiement avant activation.
+- [ ] Exécuter les scénarios A–J, les contrôles sécurité/RLS et le rendu mobile 390 px sans communication ni paiement réel.
+
 Contexte vérifié : 311 visiteurs / 85 % rebond, /login route la plus vue, 9 checkout_started → 0 conversion, 0 profil entrepreneur depuis le 13 juillet, pipelines d'acquisition arrêtés depuis le 24 août. Google Places reste STOPPÉ (incident coût). Aucun envoi réel, aucun paiement réel durant la réparation.
 
 - [x] 1. Inventaire des entrées entrepreneur actives (accueil « Je suis entrepreneur », /entrepreneurs, /contractor/join, /unpro/activate/:token, liens personnalisés, /signup, retour /login) + trafic réel par route (analytics). Consolider tous les CTA vers UN chemin canonique d'activation sans paiement en préservant token/affilié/UTM. Ne pas supprimer les routes legacy — rediriger leurs CTA primaires.

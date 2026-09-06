@@ -52,6 +52,12 @@ export type FunnelEventType =
   | "auth_completed"
   | "contractor_account_created"
   | "offer_eligible"
+  | "activation_page_viewed"
+  | "activation_cta_clicked"
+  | "contractor_profile_created"
+  | "onboarding_resumed"
+  | "free_offer_accepted"
+  | "plan_requested"
   | "paid";
 
 export type FunnelEventSource =
