@@ -58,6 +58,8 @@ export type FunnelEventType =
   | "onboarding_resumed"
   | "free_offer_accepted"
   | "plan_requested"
+  // Entrée affiliée /:slug — échec de lecture (jamais silencieux)
+  | "affiliate_entry_lookup_failed"
   | "paid";
 
 export type FunnelEventSource =

@@ -53,3 +53,38 @@ describe("roleIntent", () => {
     expect(toCanonicalRole("service_role")).toBeNull();
   });
 });
+describe("roleIntent — dernier choix explicite", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    clearRoleIntent();
+  });
+
+  it("remplace un intent propriétaire par un intent entrepreneur", () => {
+    saveRoleIntent("homeowner", { returnPath: "/dashboard" });
+    saveRoleIntent("contractor", { returnPath: "/join/profile" });
+    expect(readRoleIntent()?.role).toBe("contractor");
+  });
+
+  it("remplace un intent entrepreneur par un intent propriétaire", () => {
+    saveRoleIntent("contractor", { returnPath: "/join/profile" });
+    saveRoleIntent("homeowner", { returnPath: "/dashboard" });
+    expect(readRoleIntent()?.role).toBe("homeowner");
+  });
+
+  it("laisse le choix brut le plus récent primer sur un meta obsolète", () => {
+    saveRoleIntent("homeowner", { returnPath: "/dashboard" });
+    localStorage.setItem("unpro_prelogin_role", "contractor");
+    sessionStorage.setItem("unpro_prelogin_role", "contractor");
+    expect(readRoleIntent()?.role).toBe("contractor");
+    // le meta contradictoire est purgé
+    expect(localStorage.getItem("unpro_prelogin_role_meta")).toBeNull();
+  });
+
+  it("clearRoleIntent purge les deux clés", () => {
+    saveRoleIntent("contractor", { returnPath: "/join/profile" });
+    clearRoleIntent();
+    expect(readRoleIntent()).toBeNull();
+    expect(localStorage.getItem("unpro_prelogin_role")).toBeNull();
+  });
+});

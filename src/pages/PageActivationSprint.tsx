@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,9 @@ import { CONTRACTOR_OFFER } from "@/lib/copy/contractorOffer";
 export default function PageActivationSprint() {
   const { slug } = useParams<{ slug: string }>();
   const [params] = useSearchParams();
+  const location = useLocation();
+  const isSuccess = location.pathname.endsWith("/succes");
+  const sessionId = params.get("session_id");
   const [loading, setLoading] = useState(true);
   const [prospect, setProspect] = useState<any>(null);
   const [email, setEmail] = useState("");
@@ -25,14 +28,14 @@ export default function PageActivationSprint() {
         .maybeSingle();
       setProspect(data);
       setLoading(false);
-      // fire activation_view
+      // fire activation_view (ou retour de paiement, session_id préservé)
       await supabase.from("sms_sprint_link_events").insert({
         tracking_slug: slug,
-        event: "activation_view",
-        meta: { c: params.get("c") ?? null },
+        event: isSuccess ? "activation_checkout_return" : "activation_view",
+        meta: { c: params.get("c") ?? null, session_id: sessionId },
       });
     })();
-  }, [slug, params]);
+  }, [slug, params, isSuccess, sessionId]);
 
   async function activate() {
     if (!slug) return;
@@ -90,6 +93,41 @@ export default function PageActivationSprint() {
             className="mt-4 inline-flex items-center justify-center w-full h-12 rounded-2xl border border-white/15 text-white/80 text-sm"
           >
             Découvrir UNPRO pour entrepreneurs
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  if (isSuccess) {
+    return (
+      <div className="alex-immersive min-h-screen bg-[#050816] text-white">
+        <div className="max-w-lg mx-auto px-6 pt-24 pb-24">
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/60 mb-8">
+            <ShieldCheck className="w-3.5 h-3.5" /> UNPRO Founder Access
+          </div>
+          <h1 className="text-3xl font-semibold leading-tight tracking-tight mb-4">
+            Paiement reçu. Votre activation est enclenchée.
+          </h1>
+          <div className="rounded-2xl bg-white/[0.04] backdrop-blur-xl border border-white/10 p-5 mb-8">
+            <div className="text-xs uppercase tracking-widest text-white/50 mb-2">Entreprise</div>
+            <div className="text-lg font-medium">{prospect.company_name ?? "Entrepreneur qualifié"}</div>
+            <div className="text-sm text-white/60 mt-1">
+              {[prospect.city, prospect.category].filter(Boolean).join(" • ")}
+            </div>
+            {sessionId && (
+              <div className="text-xs text-white/40 mt-3 break-all">Référence : {sessionId}</div>
+            )}
+          </div>
+          <p className="text-white/70 text-base leading-relaxed mb-8">
+            Notre équipe finalise votre profil. Vous recevrez la confirmation par courriel
+            et par message dès qu'il est en ligne.
+          </p>
+          <a
+            href="/join/profile"
+            className="inline-flex items-center justify-center w-full h-14 rounded-2xl bg-white text-[#050816] font-semibold"
+          >
+            Compléter mon profil
           </a>
         </div>
       </div>

@@ -19,6 +19,7 @@ import OAuthButtons from "@/components/auth/OAuthButtons";
 import PhoneOtpForm from "@/components/auth/PhoneOtpForm";
 import LoginMagicLinkForm from "@/components/auth/LoginMagicLinkForm";
 import UnproIcon from "@/components/brand/UnproIcon";
+import { readRoleIntent } from "@/services/auth/roleIntent";
 
 type OverlayView = "main" | "sms" | "magic";
 
@@ -39,7 +40,7 @@ function resolveActionLabel(pending: PendingAction | null): string | null {
 }
 
 function readPreloginRole(): string | null {
-  try { return sessionStorage.getItem("unpro_prelogin_role"); } catch { return null; }
+  return readRoleIntent()?.rawRole ?? null;
 }
 
 export default function AuthOverlayPremium() {

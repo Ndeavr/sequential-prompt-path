@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAlexVoiceLockedStore } from "@/stores/alexVoiceLockedStore";
 import { useAlexChatFallbackStore } from "@/stores/alexChatFallbackStore";
+import { clearRoleIntent } from "@/services/auth/roleIntent";
 
 export default function PageEmergencyReset() {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ export default function PageEmergencyReset() {
         if (k && /^(unpro_onboarding_|alex_|copilot_|unpro_prelogin_)/i.test(k)) keys.push(k);
       }
       keys.forEach((k) => localStorage.removeItem(k));
-      sessionStorage.removeItem("unpro_prelogin_role");
+      clearRoleIntent();
     } catch { /* noop */ }
     try { window.dispatchEvent(new CustomEvent("alex-voice-cleanup")); } catch { /* noop */ }
 
