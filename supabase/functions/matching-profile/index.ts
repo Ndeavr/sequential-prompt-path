@@ -65,6 +65,7 @@ Deno.serve(async (req) => {
     });
 
   try {
+    const authHeader = req.headers.get("Authorization") ?? "";
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -73,6 +74,27 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const action = String(body.action ?? "get");
+
+    if (action === "activate_account") {
+      if (!authHeader.startsWith("Bearer ")) return json({ ok: false, error: "authentication_required" }, 401);
+      const anon = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false } },
+      );
+      const { data: { user }, error: userError } = await anon.auth.getUser();
+      if (userError || !user) return json({ ok: false, error: "invalid_session" }, 401);
+
+      const token = typeof body.activation_token === "string" ? body.activation_token.trim() : null;
+      const context = body.context && typeof body.context === "object" ? body.context : {};
+      const { data, error } = await supabase.rpc("activate_my_contractor_account", {
+        _activation_token: token || null,
+        _context: context,
+      });
+      if (error) return json({ ok: false, error: error.message }, 400);
+      return json(data);
+    }
+
     const session_key = String(body.session_key ?? "").trim();
     if (!session_key || session_key.length < 8) return json({ ok: false, error: "session_key required" }, 400);
 
