@@ -10,6 +10,7 @@ const ALEX_FLOW_KEY = "unpro_alex_active_flow";
 const ALEX_INTENT_KEY = "unpro_pending_alex_intent";
 const CONTRACTOR_STEP_KEY = "unpro_contractor_onboarding_step";
 const SESSION_INTENT_KEY = "unpro_pending_intent_path";
+import { readRoleIntent } from "@/services/auth/roleIntent";
 
 const UNSAFE_PREFIXES = ["/login", "/auth", "/auth/callback", "/logout", "/signup"];
 
@@ -95,6 +96,13 @@ export function resolveReturnDestination(opts: ResolveOptions = {}): string {
   if (typeof window === "undefined") return "/dashboard";
   const role = opts.role ?? null;
   const isAdmin = opts.isAdmin ?? role === "admin";
+  const roleIntent = readRoleIntent();
+
+  // A known contractor intent always wins over stale/default homeowner state.
+  if (roleIntent?.role === "contractor") {
+    if (isSafeReturnPath(roleIntent.returnPath)) return roleIntent.returnPath;
+    return "/join/profile";
+  }
 
   // 1. Query param
   const q = readQueryReturn();
@@ -129,7 +137,7 @@ export function resolveReturnDestination(opts: ResolveOptions = {}): string {
 function roleDefault(role: string | null): string {
   switch (role) {
     case "admin": return "/admin";
-    case "contractor": return "/pro";
+    case "contractor": return "/join/profile";
     case "condo_manager": return "/condo";
     case "partner": return "/partenaire/dashboard";
     case "homeowner": return "/dashboard";

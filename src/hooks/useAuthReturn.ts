@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthSession } from "@/stores/authSessionStore";
 import { useAuth } from "@/hooks/useAuth";
 import { clearReturnPath, resolveReturnDestination } from "@/lib/authReturn";
+import { applyRoleIntent, readRoleIntent } from "@/services/auth/roleIntent";
 
 interface Options {
   /** Auto-redirect once authenticated. Default true. */
@@ -33,8 +34,16 @@ export function useAuthReturn(opts: Options = {}) {
   const fallbackTimer = useRef<number | null>(null);
   const didNavigateRef = useRef(false);
 
-  const goNow = useCallback(() => {
+  const goNow = useCallback(async () => {
     if (didNavigateRef.current) return;
+    const intent = readRoleIntent();
+    if (intent && session?.user) {
+      const applied = await applyRoleIntent({ id: session.user.id, email: session.user.email }, intent);
+      if (!applied.applied) {
+        setShowFallback(true);
+        return;
+      }
+    }
     const dest = resolveReturnDestination({ role, isAdmin });
     setDestination(dest);
     didNavigateRef.current = true;
@@ -47,7 +56,7 @@ export function useAuthReturn(opts: Options = {}) {
       console.error("[useAuthReturn] manual navigate failed", err);
       setShowFallback(true);
     }
-  }, [navigate, role, isAdmin]);
+  }, [navigate, role, isAdmin, session]);
 
   useEffect(() => {
     if (!auto) return;
@@ -57,9 +66,17 @@ export function useAuthReturn(opts: Options = {}) {
 
     const safeDelay = Math.min(Math.max(delayMs, 0), 500);
 
-    const t = window.setTimeout(() => {
+    const t = window.setTimeout(async () => {
       if (didNavigateRef.current) return;
       try {
+        const intent = readRoleIntent();
+        if (intent && session?.user) {
+          const applied = await applyRoleIntent({ id: session.user.id, email: session.user.email }, intent);
+          if (!applied.applied) {
+            setShowFallback(true);
+            return;
+          }
+        }
         const dest = resolveReturnDestination({ role, isAdmin });
         setDestination(dest);
         didNavigateRef.current = true;
@@ -83,7 +100,7 @@ export function useAuthReturn(opts: Options = {}) {
       window.clearTimeout(t);
       if (fallbackTimer.current) window.clearTimeout(fallbackTimer.current);
     };
-  }, [auto, sessionLoading, isAuthenticated, role, isAdmin, delayMs, navigate]);
+  }, [auto, sessionLoading, isAuthenticated, role, isAdmin, delayMs, navigate, session]);
 
   return { destination, goNow, showFallback, redirected };
 }
