@@ -194,7 +194,7 @@ export async function applyRoleIntent(
       console.error("[roleIntent] secure contractor activation failed", message);
       return { role: intent.role, applied: false, error: message };
     }
-    const result = data as { contractor_id?: string; business_name?: string };
+    const result = data as { contractor_id?: string; business_name?: string; free_offer_accepted?: boolean; free_offer_id?: string };
     await logFunnelEvent({
       event_type: "contractor_profile_created",
       step: "role_intent",
@@ -202,6 +202,15 @@ export async function applyRoleIntent(
       email: user.email ?? null,
       metadata: { return_path: intent.returnPath ?? null, business_name: result.business_name ?? null },
     });
+    if (result.free_offer_accepted) {
+      await logFunnelEvent({
+        event_type: "free_offer_accepted",
+        step: "role_intent",
+        contractor_id: result.contractor_id ?? null,
+        email: user.email ?? null,
+        metadata: { offer_id: result.free_offer_id ?? null },
+      });
+    }
   } else if (intent.role === "homeowner") {
     const { error } = await supabase.from("profiles").upsert({
       user_id: user.id,

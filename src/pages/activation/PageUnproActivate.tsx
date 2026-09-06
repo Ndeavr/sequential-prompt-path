@@ -73,7 +73,7 @@ export default function PageUnproActivate() {
         if (error || !data?.ok) {
           const serverReason =
             (data as { reason?: string } | null)?.reason ?? (error ? "network_error" : "unknown");
-          console.error("[ACTIVATION_RESOLVE_FAILED]", { token, reason: serverReason, error });
+          console.error("[ACTIVATION_RESOLVE_FAILED]", { reason: serverReason, error });
           setReason(serverReason);
           setState(
             serverReason === "lookup_failed" ||

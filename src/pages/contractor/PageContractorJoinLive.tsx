@@ -85,8 +85,8 @@ export default function PageContractorJoinLive() {
           </form>
 
           <p className="mt-6 text-center text-xs text-white/75">
-            Aucune carte requise pour l'analyse. Profil activable au tarif
-            Fondateur.
+            {CONTRACTOR_OFFER.noPaymentNote}. Le plan personnalisé vient après
+            votre profil et vos objectifs.
           </p>
         </div>
       </div>
