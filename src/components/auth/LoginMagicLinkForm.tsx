@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Mail, CheckCircle, Loader2 } from "lucide-react";
 import { authDebug } from "@/services/auth/authDebugBus";
+import { readRoleIntent } from "@/services/auth/roleIntent";
+import { issueRoleIntentToken, withIntentToken } from "@/services/auth/crossDeviceRoleIntent";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -55,11 +57,14 @@ export default function LoginMagicLinkForm({
     }, 8000);
 
     try {
+      // Cross-device: carry the public role choice in an opaque server-side
+      // token so the magic link works in another browser/device.
+      const intentToken = await issueRoleIntentToken(cleaned, readRoleIntent());
       const { error } = await supabase.auth.signInWithOtp({
         email: cleaned,
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: withIntentToken(`${window.location.origin}/auth/callback`, intentToken),
         },
       });
       window.clearTimeout(safety);
