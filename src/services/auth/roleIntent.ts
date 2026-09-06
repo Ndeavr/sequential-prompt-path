@@ -79,7 +79,10 @@ export interface RoleIntentMeta {
 
 export function toCanonicalRole(raw: string | null | undefined): CanonicalRole | null {
   if (!raw) return null;
-  return ROLE_MAP[raw.trim().toLowerCase()] ?? null;
+  const role = ROLE_MAP[raw.trim().toLowerCase()] ?? null;
+  // Browser intent can choose only consumer account types. Privileged roles are
+  // resolved from server-owned records after authentication.
+  return role === "homeowner" || role === "contractor" ? role : null;
 }
 
 export function toAccountType(raw: string): string {
