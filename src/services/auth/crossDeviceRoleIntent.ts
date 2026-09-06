@@ -158,6 +158,35 @@ export function clearStashedIntentToken() {
   try { sessionStorage.removeItem(TOKEN_STASH_KEY); } catch { /* noop */ }
 }
 
+/**
+ * Remove `?ri=` / `#ri=` from the current URL so a real refresh (or a fresh
+ * cache) cannot re-resolve an already applied intent.
+ */
+export function stripIntentTokenFromUrl() {
+  if (typeof window === "undefined" || !window.history?.replaceState) return;
+  try {
+    const url = new URL(window.location.href);
+    let touched = false;
+    if (url.searchParams.has(INTENT_TOKEN_PARAM)) {
+      url.searchParams.delete(INTENT_TOKEN_PARAM);
+      touched = true;
+    }
+    if (url.hash) {
+      const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
+      if (hashParams.has(INTENT_TOKEN_PARAM)) {
+        hashParams.delete(INTENT_TOKEN_PARAM);
+        const rest = hashParams.toString();
+        url.hash = rest ? `#${rest}` : "";
+        touched = true;
+      }
+    }
+    if (touched) {
+      window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+  } catch { /* noop */ }
+}
+
+
 export interface ServerRoleIntent {
   role: SelfAssignableRole;
   accountType: string;
