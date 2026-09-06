@@ -23,6 +23,10 @@ import { useActivationTracking } from "@/features/activationProfile/useActivatio
 import type { ActivationProfile, ResolvedProspect } from "@/features/activationProfile/types";
 import { CONTRACTOR_OFFER } from "@/lib/copy/contractorOffer";
 import { buildContractorEntryUrl, CONTRACTOR_ACTIVATION_PATH } from "@/config/contractorFunnel";
+import { readAttribution } from "@/config/contractorFunnel";
+import { saveRoleIntent } from "@/services/auth/roleIntent";
+import { saveAuthIntent } from "@/services/auth/authIntentService";
+import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 
 const BENEFITS = [
   "Votre profil publié et optimisé pour les IA et les propriétaires",
@@ -69,7 +73,7 @@ export default function PageUnproActivate() {
         if (error || !data?.ok) {
           const serverReason =
             (data as { reason?: string } | null)?.reason ?? (error ? "network_error" : "unknown");
-          console.error("[ACTIVATION_RESOLVE_FAILED]", { token, reason: serverReason, error });
+          console.error("[ACTIVATION_RESOLVE_FAILED]", { reason: serverReason, error });
           setReason(serverReason);
           setState(
             serverReason === "lookup_failed" ||
@@ -83,6 +87,12 @@ export default function PageUnproActivate() {
         setProspect(data.prospect as ResolvedProspect);
         setProfile((data.profile as ActivationProfile) ?? null);
         setState("ready");
+        void logFunnelEvent({
+          event_type: "activation_page_viewed",
+          step: "company_value",
+          metadata: { prospect_id: data.prospect?.id ?? null },
+          is_test: preview,
+        });
       } catch (e) {
         if (!cancelled) {
           console.error("[ACTIVATION_RESOLVE_THREW]", e);
@@ -133,13 +143,38 @@ export default function PageUnproActivate() {
 
   /** Action secondaire : calculer une garantie personnalisée (jeton conservé). */
   function handleCustomize() {
-    track("personalized_quote_started", {});
-    const params = new URLSearchParams();
+    const attribution = readAttribution();
+    const params = new URLSearchParams(attribution);
     if (token) params.set("t", token);
     const trade = profile?.trade ?? prospect?.category ?? "";
     const city = profile?.city ?? prospect?.city ?? "";
     if (trade) params.set("trade", trade);
     if (city) params.set("city", city);
+    if (prospect?.id) params.set("prospect_id", prospect.id);
+    if (company) params.set("entreprise", company);
+    if (trade) params.set("metier", trade);
+    if (city) params.set("ville", city);
+    params.set("step", "profile");
+    const returnPath = `${CONTRACTOR_ACTIVATION_PATH}?${params.toString()}`;
+    saveRoleIntent("contractor", {
+      returnPath,
+      token,
+      prospectId: prospect?.id,
+      affiliateRef: attribution.aff ?? attribution.affiliate ?? attribution.ref,
+      campaignId: attribution.campaign_id ?? attribution.campaign ?? attribution.utm_campaign,
+      onboardingStep: "profile",
+      businessName: company,
+      city,
+      trade,
+      attribution,
+    });
+    saveAuthIntent({ returnPath, action: "contractor_activation", roleHint: "contractor", metadata: attribution });
+    void logFunnelEvent({
+      event_type: "activation_cta_clicked",
+      step: "profile_activation",
+      metadata: { prospect_id: prospect?.id ?? null },
+      is_test: preview,
+    });
     navigate(buildContractorEntryUrl(Object.fromEntries(params), CONTRACTOR_ACTIVATION_PATH));
   }
 

@@ -4,9 +4,7 @@
  * Post-auth landing for contractors. Ensures:
  *  - User is authenticated (otherwise redirect to /role with intent)
  *  - User has contractor role (apply prelogin role if needed)
- *  - Redirects into the voice-first onboarding flow
- *
- * Hard 3s safety timeout — never strands the user on a loading screen.
+ *  - Resumes the canonical matching-profile step with its full query context
  */
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -14,7 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import UnproIcon from "@/components/brand/UnproIcon";
 import { authDebug } from "@/services/auth/authDebugBus";
-import { saveRoleIntent } from "@/services/auth/roleIntent";
+import { applyRoleIntent, readRoleIntent, saveRoleIntent } from "@/services/auth/roleIntent";
+import { saveAuthIntent } from "@/services/auth/authIntentService";
+import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 
 export default function PageContractorJoinProfileGate() {
   const navigate = useNavigate();
@@ -23,12 +23,6 @@ export default function PageContractorJoinProfileGate() {
 
   useEffect(() => {
     let alive = true;
-    const safety = setTimeout(() => {
-      if (!alive) return;
-      console.warn("[JoinProfileGate] safety timeout — forwarding to /entrepreneur/onboarding-voice");
-      navigate("/entrepreneur/onboarding-voice", { replace: true });
-    }, 3000);
-
     (async () => {
       authDebug.set({
         auth_step: "gate_checking",
@@ -43,9 +37,23 @@ export default function PageContractorJoinProfileGate() {
         if (!alive) return;
 
         if (!session?.user) {
+          const params = new URLSearchParams(window.location.search);
+          const returnPath = `/join/profile${window.location.search}`;
+          const attribution = Object.fromEntries(params);
           saveRoleIntent("contractor", {
-            returnPath: `/join/profile${typeof window !== "undefined" ? window.location.search : ""}`,
+            returnPath,
+            token: params.get("t") ?? params.get("token") ?? undefined,
+            prospectId: params.get("prospect_id") ?? params.get("prospect") ?? undefined,
+            leadId: params.get("lead_id") ?? params.get("lead") ?? undefined,
+            affiliateRef: params.get("aff") ?? params.get("affiliate") ?? params.get("ref") ?? undefined,
+            campaignId: params.get("campaign_id") ?? params.get("campaign") ?? params.get("utm_campaign") ?? undefined,
+            onboardingStep: params.get("step") ?? "profile",
+            businessName: params.get("entreprise") ?? undefined,
+            city: params.get("ville") ?? params.get("city") ?? undefined,
+            trade: params.get("metier") ?? params.get("trade") ?? undefined,
+            attribution,
           });
+          saveAuthIntent({ returnPath, action: "contractor_activation", roleHint: "contractor", metadata: attribution });
           authDebug.set({ auth_step: "redirecting", redirect_target: "/login", session_found: false });
           navigate("/login", { replace: true, state: { from: "/join/profile" } });
           return;
@@ -53,47 +61,43 @@ export default function PageContractorJoinProfileGate() {
 
         authDebug.setSession({ id: session.user.id, email: session.user.email });
 
-        // Ensure contractor role exists
-        const { data: roles } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", session.user.id);
-        const roleList = (roles ?? []).map((r) => r.role as string);
-
-        if (!roleList.includes("contractor")) {
-          await supabase
-            .from("user_roles")
-            .upsert(
-              { user_id: session.user.id, role: "contractor" as any },
-              { onConflict: "user_id,role" }
-            );
-          try {
-            await (supabase.from("contractors") as any).upsert(
-              { user_id: session.user.id, email: session.user.email || "" },
-              { onConflict: "user_id" }
-            );
-          } catch { /* non-fatal */ }
+        let roleIntent = readRoleIntent();
+        if (!roleIntent) {
+          const params = new URLSearchParams(window.location.search);
+          roleIntent = saveRoleIntent("contractor", {
+            returnPath: `/join/profile${window.location.search}`,
+            token: params.get("t") ?? params.get("token") ?? undefined,
+            prospectId: params.get("prospect_id") ?? undefined,
+            affiliateRef: params.get("aff") ?? params.get("affiliate") ?? params.get("ref") ?? undefined,
+            onboardingStep: params.get("step") ?? "profile",
+            businessName: params.get("entreprise") ?? undefined,
+            city: params.get("ville") ?? params.get("city") ?? undefined,
+            trade: params.get("metier") ?? params.get("trade") ?? undefined,
+            attribution: Object.fromEntries(params),
+          });
         }
-
-        const finalRoles = roleList.includes("contractor") ? roleList : [...roleList, "contractor"];
+        const applied = await applyRoleIntent({ id: session.user.id, email: session.user.email }, roleIntent);
+        if (!applied.applied) throw new Error(applied.error || "Impossible d’activer le profil entrepreneur.");
+        const finalRoles = ["contractor"];
         authDebug.set({ auth_step: "gate_role_ensured", roles: finalRoles });
 
         if (!alive) return;
         setStatus("redirecting");
-        authDebug.set({ auth_step: "redirecting", redirect_target: "/entrepreneur/onboarding-voice" });
-        navigate("/entrepreneur/onboarding-voice", { replace: true });
-      } catch (e: any) {
+        const resume = `/entrepreneurs/profil${window.location.search}`;
+        void logFunnelEvent({ event_type: "onboarding_resumed", step: "matching_profile" });
+        authDebug.set({ auth_step: "redirecting", redirect_target: resume });
+        navigate(resume, { replace: true });
+      } catch (e: unknown) {
         console.error("[JoinProfileGate] error", e);
         authDebug.error(e, "gate_checking");
         if (!alive) return;
         setStatus("error");
-        setError(e?.message || "Erreur d'authentification");
+        setError(e instanceof Error ? e.message : "Erreur d'authentification");
       }
     })();
 
     return () => {
       alive = false;
-      clearTimeout(safety);
     };
   }, [navigate]);
 
@@ -130,12 +134,6 @@ export default function PageContractorJoinProfileGate() {
                 className="px-4 py-2 text-xs rounded-lg bg-white/10 text-white hover:bg-white/15"
               >
                 Réessayer
-              </button>
-              <button
-                onClick={() => navigate("/entrepreneur/onboarding-voice", { replace: true })}
-                className="px-4 py-2 text-xs rounded-lg bg-primary text-primary-foreground"
-              >
-                Continuer
               </button>
             </div>
           </div>

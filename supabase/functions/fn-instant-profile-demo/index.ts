@@ -66,97 +66,11 @@ interface ProfilePayload {
 }
 
 async function gmbLookup(input: DemoInput): Promise<ProfilePayload> {
-  const apiKey = Deno.env.get("GOOGLE_PLACES_SERVER_KEY") || Deno.env.get("GOOGLE_PLACES_API_KEY");
   const phoneDigits = normalizePhone(input.phone);
   const domain = extractDomain(input.website || input.google_url);
 
-  // Build a query that maximises hits across signals
-  const query = [
-    input.business_name,
-    domain,
-    input.phone,
-    input.city,
-    "Québec",
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  if (apiKey && query.trim().length > 2) {
-    try {
-      const res = await fetch(
-        "https://places.googleapis.com/v1/places:searchText",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Goog-Api-Key": apiKey,
-            "X-Goog-FieldMask":
-              "places.id,places.displayName,places.formattedAddress,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.primaryTypeDisplayName,places.regularOpeningHours,places.photos,places.editorialSummary,places.iconMaskBaseUri,places.addressComponents",
-          },
-          body: JSON.stringify({
-            textQuery: query,
-            languageCode: "fr",
-            regionCode: "ca",
-            maxResultCount: 5,
-          }),
-        }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        const places: any[] = data.places || [];
-        if (places.length > 0) {
-          // Score by phone / domain match if possible
-          const ranked = places
-            .map((p) => {
-              let score = 0;
-              if (phoneDigits && normalizePhone(p.internationalPhoneNumber) === phoneDigits) score += 50;
-              if (domain && extractDomain(p.websiteUri) === domain) score += 40;
-              if (input.business_name) {
-                const a = input.business_name.toLowerCase();
-                const b = (p.displayName?.text || "").toLowerCase();
-                if (b.includes(a) || a.includes(b)) score += 20;
-              }
-              return { place: p, score };
-            })
-            .sort((a, b) => b.score - a.score);
-          const best = ranked[0].place;
-          const cityComp = best.addressComponents?.find((c: any) =>
-            c.types?.includes("locality")
-          );
-          const provComp = best.addressComponents?.find((c: any) =>
-            c.types?.includes("administrative_area_level_1")
-          );
-          return {
-            business_name: best.displayName?.text || input.business_name || "Votre entreprise",
-            phone: best.internationalPhoneNumber || input.phone || "",
-            website: best.websiteUri || input.website || "",
-            domain: extractDomain(best.websiteUri || input.website),
-            address: best.formattedAddress || "",
-            city: cityComp?.longText || input.city || "",
-            province: provComp?.longText || "Québec",
-            rating: best.rating || 0,
-            review_count: best.userRatingCount || 0,
-            category: best.primaryTypeDisplayName?.text || "Entrepreneur",
-            hours: best.regularOpeningHours?.weekdayDescriptions || [],
-            photos: (best.photos || []).slice(0, 6).map((ph: any) => ({
-              url: `https://places.googleapis.com/v1/${ph.name}/media?key=${apiKey}&maxWidthPx=800`,
-            })),
-            logo_url: best.iconMaskBaseUri ? `${best.iconMaskBaseUri}.png` : null,
-            description: best.editorialSummary?.text || "",
-            years_active: null,
-            is_mock: false,
-            match_confidence: Math.min(1, ranked[0].score / 100),
-          };
-        }
-      } else {
-        console.warn("Google Places API non-OK:", res.status, await res.text());
-      }
-    } catch (err) {
-      console.error("GMB lookup failed:", err);
-    }
-  }
-
-  // Mock fallback — still magical UX
+  // P0 cost guard: this public preview never calls Google Places directly.
+  // It uses the submitted signals only and clearly marks the result as a demo.
   const name = input.business_name || (domain ? domain.split(".")[0] : null) || "Votre entreprise";
   const city = input.city || "Montréal";
   return {

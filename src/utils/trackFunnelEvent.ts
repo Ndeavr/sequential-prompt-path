@@ -16,6 +16,13 @@ export type FunnelEventType =
   | "checkout_started"
   | "payment_completed"
   | "activation_viewed"
+  | "activation_cta_clicked"
+  | "auth_started"
+  | "auth_completed"
+  | "contractor_profile_created"
+  | "onboarding_resumed"
+  | "free_offer_accepted"
+  | "plan_requested"
   | "alex_started"
   | "dropoff";
 

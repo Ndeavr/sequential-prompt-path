@@ -11,8 +11,10 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { formatPrice } from "@/lib/formatPrice";
 import { CONTRACTOR_OFFER } from "@/lib/copy/contractorOffer";
+import { buildContractorEntryUrl, CONTRACTOR_ACTIVATION_PATH, readAttribution } from "@/config/contractorFunnel";
+import { saveRoleIntent } from "@/services/auth/roleIntent";
+import { saveAuthIntent } from "@/services/auth/authIntentService";
 
 interface RunRow {
   id: string;
@@ -44,14 +46,6 @@ const PLAN_LABEL: Record<string, string> = {
   elite: "Élite",
   signature: "Signature",
 };
-const PLAN_PRICE: Record<string, number> = {
-  recrue: 149,
-  pro: 349,
-  premium: 599,
-  elite: 999,
-  signature: 1799,
-};
-
 function planLabel(slug: string): string {
   return PLAN_LABEL[slug] ?? (slug.charAt(0).toUpperCase() + slug.slice(1));
 }
@@ -70,7 +64,7 @@ export default function PageContractorAnalysisLive() {
 
     const fetchRun = async () => {
       const { data, error } = await supabase
-        .from("activation_pipeline_runs_public" as any)
+        .from("activation_pipeline_runs_public" as "activation_pipeline_runs")
         .select("*")
         .eq("id", runId)
         .maybeSingle();
@@ -145,8 +139,6 @@ export default function PageContractorAnalysisLive() {
   const plan = run?.recommended_plan ?? null;
   const ready = run?.pipeline_status === "ready";
   const projected = run?.recommendation?.projected_appointments ?? 0;
-  const planPrice = plan ? PLAN_PRICE[plan] ?? 0 : 0;
-  const monthlyValueRdv = projected * 1500 * 0.4; // close-rate baseline
 
   return (
     <main className="min-h-screen bg-[#060B14] text-white pb-32">
@@ -251,22 +243,16 @@ export default function PageContractorAnalysisLive() {
             <p className="mt-2 text-sm text-white/70 leading-snug">
               {run?.recommendation?.reason}
             </p>
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="mt-4 grid grid-cols-1 gap-3">
               <div className="rounded-xl bg-white/[0.04] p-3">
                 <p className="text-xs text-white/50">Rendez-vous qualifiés</p>
                 <p className="text-lg font-semibold tabular-nums">
                   {projected}/mois
                 </p>
               </div>
-              <div className="rounded-xl bg-white/[0.04] p-3">
-                <p className="text-xs text-white/50">Valeur potentielle</p>
-                <p className="text-lg font-semibold tabular-nums">
-                  {formatPrice(monthlyValueRdv)}
-                </p>
-              </div>
             </div>
             <p className="mt-3 text-xs text-white/40">
-              Tarif courant : {formatPrice(planPrice)} / mois.
+              Le plan et son prix seront personnalisés après votre profil et vos objectifs.
             </p>
           </section>
         )}
@@ -276,7 +262,7 @@ export default function PageContractorAnalysisLive() {
       {ready && plan && (
         <div className="fixed bottom-0 inset-x-0 border-t border-white/10 bg-[#060B14]/95 backdrop-blur p-4">
           <div className="max-w-2xl mx-auto">
-            <CheckoutButton runId={runId!} />
+            <ActivationButton runId={runId!} businessName={run?.domain ?? undefined} />
             <p className="mt-2 text-center text-[11px] text-white/40">
               Fondateur UNPRO — accès privilégié activé
             </p>
@@ -287,81 +273,18 @@ export default function PageContractorAnalysisLive() {
   );
 }
 
-function CheckoutButton({ runId }: { runId: string }) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const prepare = useMemo(
-    () => async () => {
-      setLoading(true);
-      setErr(null);
-      try {
-        const { data, error } = await supabase.functions.invoke(
-          "activation-create-checkout",
-          { body: { run_id: runId } },
-        );
-        if (error) throw error;
-        const u = (data as { url?: string })?.url;
-        if (!u) throw new Error("Lien de paiement manquant.");
-        setUrl(u);
-      } catch (e) {
-        setErr(e instanceof Error ? e.message : "Erreur de paiement.");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [runId],
-  );
-
-  useEffect(() => {
-    prepare();
-  }, [prepare]);
-
-  if (err && !url) {
-    return (
-      <>
-        <p className="mb-2 text-center text-xs text-red-400">{err}</p>
-        <button
-          onClick={prepare}
-          className="w-full rounded-2xl bg-amber-400 text-[#060B14] py-4 text-base font-semibold flex items-center justify-center gap-2 active:scale-[0.99] transition"
-        >
-          Réessayer
-        </button>
-      </>
-    );
-  }
-
-  if (loading || !url) {
-    return (
-      <button
-        disabled
-        className="w-full rounded-2xl bg-amber-400/60 text-[#060B14] py-4 text-base font-semibold flex items-center justify-center gap-2 cursor-wait"
-      >
-        <Loader2 className="w-4 h-4 animate-spin" />
-        Préparation du paiement sécurisé…
-      </button>
-    );
-  }
-
+function ActivationButton({ runId, businessName }: { runId: string; businessName?: string }) {
+  const navigate = useNavigate();
+  const activate = () => {
+    const attribution = readAttribution();
+    const returnPath = buildContractorEntryUrl({ ...attribution, run: runId, entreprise: businessName, step: "profile" }, CONTRACTOR_ACTIVATION_PATH);
+    saveRoleIntent("contractor", { returnPath, businessName, onboardingStep: "profile", attribution });
+    saveAuthIntent({ returnPath, action: "contractor_activation", roleHint: "contractor", metadata: attribution });
+    navigate(returnPath);
+  };
   return (
-    <>
-      <a
-        href={url}
-        target="_top"
-        rel="noopener"
-        className="w-full rounded-2xl bg-amber-400 text-[#060B14] py-4 text-base font-semibold flex items-center justify-center gap-2 active:scale-[0.99] transition"
-      >
-        {CONTRACTOR_OFFER.ctaPrimary} <ArrowRight className="w-4 h-4" />
-      </a>
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-2 block text-center text-[11px] text-white/60 underline"
-      >
-        Ouvrir le paiement dans un nouvel onglet →
-      </a>
-    </>
+    <button onClick={activate} className="w-full rounded-2xl bg-amber-400 text-[#060B14] py-4 text-base font-semibold flex items-center justify-center gap-2 active:scale-[0.99] transition">
+      {CONTRACTOR_OFFER.ctaPrimary} <ArrowRight className="w-4 h-4" />
+    </button>
   );
 }

@@ -9,11 +9,12 @@
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { consumeAuthIntent, getDefaultRedirectForRole } from "@/services/auth/authIntentService";
+import { clearAuthIntent, peekAuthIntent, getDefaultRedirectForRole } from "@/services/auth/authIntentService";
 import { closeAuthOverlay } from "@/hooks/useAuthOverlay";
 import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
 import { authDebug } from "@/services/auth/authDebugBus";
 import { applyRoleIntent, readRoleIntent } from "@/services/auth/roleIntent";
+import type { User } from "@supabase/supabase-js";
 
 const AUTH_SURFACES = /^\/(login|signup|role|start|auth\/callback)\/?$/;
 
@@ -22,7 +23,7 @@ function isAuthSurface(pathname: string): boolean {
   return AUTH_SURFACES.test(pathname);
 }
 
-async function upsertProfile(user: { id: string; email?: string; phone?: string; user_metadata?: Record<string, any> }) {
+async function upsertProfile(user: Pick<User, "id" | "email" | "phone" | "user_metadata">) {
   const meta = user.user_metadata ?? {};
 
   const provider = meta.iss?.includes("google") ? "google"
@@ -49,7 +50,7 @@ async function upsertProfile(user: { id: string; email?: string; phone?: string;
 
   try {
     await supabase.from("profiles").upsert(
-      profileData as any,
+      profileData as never,
       { onConflict: "user_id", ignoreDuplicates: false }
     );
   } catch {
@@ -96,7 +97,7 @@ export default function AuthReturnRouter() {
       const provider = session.user.app_metadata?.provider;
       if (provider === "google") trackAuthEvent("google_success");
 
-      const intent = consumeAuthIntent();
+      const intent = peekAuthIntent();
       const here = location.pathname;
       const roleIntent = readRoleIntent();
 
@@ -114,10 +115,14 @@ export default function AuthReturnRouter() {
 
       // 2) If user pre-selected a role, apply it now (idempotent)
       if (roleIntent) {
-        const { role: applied } = await applyRoleIntent(
+        const { role: applied, applied: succeeded, error } = await applyRoleIntent(
           { id: session.user.id, email: session.user.email },
           roleIntent,
         );
+        if (!succeeded) {
+          authDebug.error(new Error(error || "role_activation_failed"), "applying_prelogin_role");
+          return;
+        }
         if (applied && !roleList.includes(applied)) {
           roleList = [...roleList, applied];
         }
@@ -134,11 +139,11 @@ export default function AuthReturnRouter() {
       let isApprovedPartner = false;
       try {
         const { data: pr } = await supabase
-          .from("partners" as any)
+          .from("partners")
           .select("partner_status, partner_application_status")
           .eq("user_id", session.user.id)
           .maybeSingle();
-        const p = pr as any;
+        const p = pr as { partner_status?: string; partner_application_status?: string } | null;
         isApprovedPartner = !!p && p.partner_application_status === "approved" && p.partner_status !== "suspended";
       } catch { /* noop */ }
 
@@ -149,6 +154,7 @@ export default function AuthReturnRouter() {
       if (intent?.returnPath && !/^\/(login|signup|auth\/callback)\b/.test(intent.returnPath)) {
         console.log("[AuthReturnRouter] -> intent path", intent.returnPath);
         navigate(intent.returnPath, { replace: true });
+        clearAuthIntent();
         return;
       }
 
@@ -156,6 +162,7 @@ export default function AuthReturnRouter() {
       if (isApprovedPartner) {
         console.log("[AuthReturnRouter] -> /partenaire/dashboard (approved partner)");
         navigate("/partenaire/dashboard", { replace: true });
+        clearAuthIntent();
         return;
       }
 
@@ -166,17 +173,18 @@ export default function AuthReturnRouter() {
       if (roleList.length === 0) {
         console.log("[AuthReturnRouter] -> /onboarding (no role)");
         navigate("/onboarding", { replace: true });
+        clearAuthIntent();
         return;
       }
 
       const target = postLoginPathForRole(primaryRole, intent?.returnPath ?? null);
       console.log("[AuthReturnRouter] -> role redirect", { primaryRole, target });
       navigate(target, { replace: true });
+      clearAuthIntent();
       }, 0);
     });
 
     return () => subscription.unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, location.pathname]);
 
   return null;

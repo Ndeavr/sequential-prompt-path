@@ -91356,6 +91356,7 @@ export type Database = {
           click_count: number
           clicked_at: string | null
           created_at: string
+          expires_at: string
           first_touch_source: string | null
           human_unpro_touches: number
           last_touch_source: string | null
@@ -91376,6 +91377,7 @@ export type Database = {
           click_count?: number
           clicked_at?: string | null
           created_at?: string
+          expires_at?: string
           first_touch_source?: string | null
           human_unpro_touches?: number
           last_touch_source?: string | null
@@ -91396,6 +91398,7 @@ export type Database = {
           click_count?: number
           clicked_at?: string | null
           created_at?: string
+          expires_at?: string
           first_touch_source?: string | null
           human_unpro_touches?: number
           last_touch_source?: string | null
@@ -96152,6 +96155,10 @@ export type Database = {
           p_plan_id?: string
           p_source: string
         }
+        Returns: Json
+      }
+      activate_my_contractor_account: {
+        Args: { _activation_token?: string; _context?: Json; _user_id: string }
         Returns: Json
       }
       admin_activate_contractor_finalize: {

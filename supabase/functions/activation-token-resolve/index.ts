@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
     }
 
     // ---------------------------------------------------------------- resolve
-    const cols = "token, prospect_id, created_at, clicked_at, click_count, campaign_id";
+    const cols = "token, prospect_id, created_at, expires_at, clicked_at, click_count, campaign_id";
     const { data: row, error } = await supabase
       .from("verified_prospect_tokens")
       .select(cols)
@@ -145,6 +145,9 @@ Deno.serve(async (req) => {
       }
     }
     if (!resolved) return json({ ok: false, reason: "token_not_found" }, 404);
+    if (resolved.expires_at && new Date(resolved.expires_at).getTime() <= Date.now()) {
+      return json({ ok: false, reason: "token_expired" }, 410);
+    }
 
     const { data: prospect } = await supabase
       .from("verified_contractor_prospects")

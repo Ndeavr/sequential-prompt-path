@@ -24,6 +24,7 @@ interface PhoneOtpFormProps {
 
 const MAX_ATTEMPTS = 5;
 const COOLDOWN_SECONDS = 30;
+const OTP_STATE_KEY = "unpro_phone_otp_state";
 
 function formatPhoneDisplay(value: string): string {
   const digits = value.replace(/\D/g, "");
@@ -51,18 +52,41 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
   const codeRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(OTP_STATE_KEY) || "null") as
+        | { phone?: string; attempts?: number; cooldownUntil?: number; codeSent?: boolean }
+        | null;
+      if (!saved) return;
+      if (saved.phone) setPhone(formatPhoneDisplay(saved.phone.replace(/^1/, "")));
+      setAttempts(saved.attempts ?? 0);
+      setCooldown(Math.max(0, Math.ceil(((saved.cooldownUntil ?? 0) - Date.now()) / 1000)));
+      if (saved.codeSent) setStep("code");
+    } catch { /* recover with a fresh OTP form */ }
+  }, []);
+
+  useEffect(() => {
     if (cooldown <= 0) return;
     const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
     return () => clearTimeout(t);
   }, [cooldown]);
 
-  const callOtp = async (fnName: "send-otp" | "verify-otp", body: Record<string, string>) => {
+  const callOtp = async (fnName: "send-otp" | "verify-otp", body: Record<string, string>): Promise<{
+    error?: string;
+    fallback?: boolean;
+    code?: string;
+    session?: { access_token: string; refresh_token: string };
+  }> => {
     const { data, error } = await supabase.functions.invoke(fnName, { body });
     if (error) {
       console.error(`[PhoneOtp] ${fnName} invoke error`, error);
-      return { error: error.message || "network_error" } as any;
+      return { error: error.message || "network_error" };
     }
-    return data;
+    return (data ?? {}) as {
+      error?: string;
+      fallback?: boolean;
+      code?: string;
+      session?: { access_token: string; refresh_token: string };
+    };
   };
 
   const handleSendOtp = async () => {
@@ -110,7 +134,11 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
         toast.success("Code envoyé !");
         setStep("code");
         setCooldown(COOLDOWN_SECONDS);
-        setAttempts((a) => a + 1);
+        setAttempts((a) => {
+          const next = a + 1;
+          try { sessionStorage.setItem(OTP_STATE_KEY, JSON.stringify({ phone: e164, attempts: next, cooldownUntil: Date.now() + COOLDOWN_SECONDS * 1000, codeSent: true })); } catch { /* noop */ }
+          return next;
+        });
         setTimeout(() => codeRefs.current[0]?.focus(), 100);
       }
     } catch (e) {
@@ -149,6 +177,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
         const msg = map[data.error] || "Erreur. Réessayez.";
         authDebug.error(data.error, "otp_verifying");
         toast.error(msg);
+        if (data.error === "expired_or_invalid") handleExpiredRecovery();
         setCode(["", "", "", "", "", ""]);
         codeRefs.current[0]?.focus();
         return;
@@ -167,6 +196,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       void logFunnelEvent({ event_type: "auth_completed", step: "phone_otp", metadata: { method: "phone_otp" } });
       authDebug.set({ auth_step: "otp_verified" });
       setVerified(true);
+      try { sessionStorage.removeItem(OTP_STATE_KEY); } catch { /* noop */ }
 
       // Brief success animation then callback (≤500ms per AuthReturnManager spec)
       setTimeout(() => onSuccess?.(), 400);
@@ -213,6 +243,12 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
   const handleResend = async () => {
     if (cooldown > 0) return;
     await handleSendOtp();
+  };
+
+  const handleExpiredRecovery = () => {
+    setCode(["", "", "", "", "", ""]);
+    setCooldown(0);
+    toast.info("Demandez un nouveau code; votre activation est conservée.");
   };
 
   const isDisabled = externalLoading || sending || verifying;

@@ -4,7 +4,7 @@
  * Assistant de complétion du profil de MATCHING. Une question à la fois,
  * sauvegarde progressive à chaque réponse, reprise automatique (jamais de
  * redémarrage), puis transition vers les forfaits — le prix n'apparaît
- * qu'après la démonstration de valeur.
+ * qu'après l'activation et la démonstration de valeur.
  *
  * Attribution : audit, audit_token, jeton d'activation (?t=), ref affilié et
  * UTM sont conservés sur la ligne serveur ET dans l'URL vers les forfaits.
@@ -41,6 +41,10 @@ function getSessionKey(): string {
 }
 
 type Answers = Record<string, unknown>;
+type MatchingProfileResponse = {
+  error?: string;
+  profile?: { answers?: Answers; status?: string } & Record<string, unknown>;
+};
 
 export default function PageMatchingProfileWizard() {
   const navigate = useNavigate();
@@ -66,6 +70,7 @@ export default function PageMatchingProfileWizard() {
   const [index, setIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [chipDraft, setChipDraft] = useState("");
   const startedLogged = useRef(false);
@@ -94,11 +99,15 @@ export default function PageMatchingProfileWizard() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.functions.invoke("matching-profile", {
+      const { data, error } = await supabase.functions.invoke("matching-profile", {
         body: { action: "get", session_key: sessionKey },
       });
       if (cancelled) return;
-      const profile = (data as any)?.profile;
+      const response = data as MatchingProfileResponse | null;
+      const profile = response?.profile;
+      if (error || response?.error) {
+        setLoadError(response?.error || error?.message || "Impossible de reprendre le profil.");
+      }
       if (profile?.answers) {
         setAnswers(profile.answers as Answers);
         if (profile.status === "completed") setDone(true);
@@ -129,11 +138,16 @@ export default function PageMatchingProfileWizard() {
   const save = useCallback(
     async (next: Answers, complete = false) => {
       setSaving(true);
-      const { data } = await supabase.functions.invoke("matching-profile", {
+      const { data, error } = await supabase.functions.invoke("matching-profile", {
         body: { ...context, action: complete ? "complete" : "save", answers: next },
       });
       setSaving(false);
-      return (data as any)?.profile ?? null;
+      const response = data as MatchingProfileResponse | null;
+      if (error || response?.error) {
+        setLoadError(response?.error || error?.message || "La sauvegarde a échoué. Réessayez.");
+        return null;
+      }
+      return response?.profile ?? null;
     },
     [context],
   );
@@ -154,7 +168,8 @@ export default function PageMatchingProfileWizard() {
       metadata: { completion: completionOf(next) },
     });
     const isLast = index >= questions.length - 1;
-    await save(next, isLast);
+    const saved = await save(next, isLast);
+    if (!saved) return;
     if (isLast) {
       setDone(true);
       void logFunnelEvent({
@@ -222,7 +237,15 @@ export default function PageMatchingProfileWizard() {
           )}
         </div>
 
-        {loading ? (
+        {loadError ? (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
+            <p className="font-semibold text-destructive">Votre progression n’a pas été perdue.</p>
+            <p className="mt-1 text-muted-foreground">{loadError}</p>
+            <Button className="mt-3" variant="outline" onClick={() => window.location.reload()}>
+              Réessayer
+            </Button>
+          </div>
+        ) : loading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
             {fr ? "Reprise de votre profil…" : "Resuming your profile…"}

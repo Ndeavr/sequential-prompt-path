@@ -1,13 +1,13 @@
 /**
  * UNPRO — Public cold-entry contractor onboarding (master)
  * Route: /join (no token — public)
- * One screen → instant magical demo → CTA to existing AIPP/plan/checkout flow.
+ * One screen → free preview → canonical profile activation (no payment).
  *
  * Pipeline:
  *   1. User enters phone OR website OR business name
  *   2. fn-instant-profile-demo runs (≤10s)
- *   3. Profile + AIPP score + revenue gap + recommended plan revealed
- *   4. CTA → /entrepreneur/plans (existing native checkout)
+ *   3. Profile + AIPP score revealed
+ *   4. CTA → /join/profile (auth, then profile/objectives)
  *
  * Reuses existing modules: search-gmb-profile pipeline, AIPP scoring,
  * canonical pricing config. Does NOT duplicate /entrepreneur/join (form-based)
@@ -36,8 +36,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CANONICAL_PLAN_LABELS, type ContractorPlanSlug } from "@/config/pricing";
 import { trackFunnelEvent } from "@/utils/trackFunnelEvent";
+import { CONTRACTOR_OFFER } from "@/lib/copy/contractorOffer";
+import { buildContractorEntryUrl, CONTRACTOR_ACTIVATION_PATH, readAttribution } from "@/config/contractorFunnel";
+import { saveRoleIntent } from "@/services/auth/roleIntent";
+import { saveAuthIntent } from "@/services/auth/authIntentService";
 
 type EntryMode = "phone" | "website" | "name";
 
@@ -160,9 +163,7 @@ export default function PageContractorJoinPublic() {
 
   const handleClose = async () => {
     if (!result) return;
-    void trackFunnelEvent("plan_selected", { source: "join_public",
-      plan: result.recommended_plan.code,
-    });
+    void trackFunnelEvent("activation_cta_clicked", { source: "join_public" });
     // Persist demo so the next page can resume
     try {
       sessionStorage.setItem(
@@ -180,7 +181,28 @@ export default function PageContractorJoinPublic() {
     } catch {
       /* sessionStorage unavailable */
     }
-    navigate("/entrepreneurs/plans");
+    const attribution = readAttribution();
+    const returnPath = buildContractorEntryUrl({
+      ...attribution,
+      entreprise: result.profile.business_name,
+      ville: result.profile.city,
+      metier: result.profile.category,
+      step: "profile",
+    }, CONTRACTOR_ACTIVATION_PATH);
+    saveRoleIntent("contractor", {
+      returnPath,
+      prospectId: attribution.prospect_id ?? attribution.prospect,
+      leadId: attribution.lead_id ?? attribution.lead,
+      affiliateRef: attribution.aff ?? attribution.affiliate ?? attribution.ref,
+      campaignId: attribution.campaign_id ?? attribution.campaign ?? attribution.utm_campaign,
+      onboardingStep: "profile",
+      businessName: result.profile.business_name,
+      city: result.profile.city,
+      trade: result.profile.category,
+      attribution,
+    });
+    saveAuthIntent({ returnPath, action: "contractor_activation", roleHint: "contractor", metadata: attribution });
+    navigate(returnPath);
   };
 
   return (
@@ -343,10 +365,7 @@ function ResultPanel({
   onCta: () => void;
   onRestart: () => void;
 }) {
-  const { profile, aipp, revenue_gap, recommended_plan, narrative } = result;
-  const planLabel =
-    CANONICAL_PLAN_LABELS[recommended_plan.code as ContractorPlanSlug] ??
-    recommended_plan.label;
+  const { profile, aipp, revenue_gap, narrative } = result;
 
   return (
     <motion.div
@@ -447,28 +466,24 @@ function ResultPanel({
         </div>
       </Card>
 
-      {/* Plan recommendation + CTA */}
+      {/* Value preview + canonical free activation CTA */}
       <Card className="bg-gradient-to-br from-blue-500/15 to-cyan-400/10 border-blue-400/30 p-5">
         <div className="flex items-center justify-between mb-3">
           <div>
             <div className="text-xs uppercase tracking-wider text-blue-300/80 mb-1">
-              Plan recommandé
+              Prochaine étape
             </div>
-            <div className="text-2xl font-bold">{planLabel}</div>
+            <div className="text-2xl font-bold">Votre profil UNPRO</div>
           </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-white">
-              {recommended_plan.price_monthly} $
-            </div>
-            <div className="text-xs text-white/50">/mois</div>
-          </div>
+          <Badge className="bg-emerald-500/20 text-emerald-200 border-emerald-400/30">Sans carte</Badge>
         </div>
-        <p className="text-sm text-white/70 mb-4">{recommended_plan.reason}</p>
+        <p className="text-sm text-white/70 mb-2">{CONTRACTOR_OFFER.headline} {CONTRACTOR_OFFER.subheadline}</p>
+        <p className="text-xs text-white/50 mb-4">Votre plan personnalisé viendra après votre profil et vos objectifs.</p>
         <Button
           onClick={onCta}
           className="w-full h-12 bg-gradient-to-r from-blue-500 to-cyan-400 text-black font-semibold hover:opacity-90"
         >
-          Activer {planLabel} maintenant
+          {CONTRACTOR_OFFER.ctaPrimary}
           <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
       </Card>

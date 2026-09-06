@@ -49,14 +49,17 @@ export default function OAuthButtons({ loading: externalLoading, className = "" 
         // Browser is navigating away — keep the loader, don't clear it.
         return;
       }
+      if (!result?.error) {
+        void logFunnelEvent({ event_type: "auth_completed", step: "oauth_google", metadata: { method: "google" } });
+      }
       if (result?.error) {
         authDebug.error(result.error, "oauth_redirecting");
         toast.error(result.error.message || "Erreur de connexion");
         setGoogleLoading(false);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       authDebug.error(err, "oauth_initiating");
-      toast.error(err?.message || "Erreur de connexion");
+      toast.error(err instanceof Error ? err.message : "Erreur de connexion");
       setGoogleLoading(false);
     } finally {
       window.clearTimeout(watchdog);
