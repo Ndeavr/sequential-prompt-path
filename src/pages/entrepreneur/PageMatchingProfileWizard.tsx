@@ -41,6 +41,10 @@ function getSessionKey(): string {
 }
 
 type Answers = Record<string, unknown>;
+type MatchingProfileResponse = {
+  error?: string;
+  profile?: { answers?: Answers; status?: string } & Record<string, unknown>;
+};
 
 export default function PageMatchingProfileWizard() {
   const navigate = useNavigate();
@@ -99,9 +103,10 @@ export default function PageMatchingProfileWizard() {
         body: { action: "get", session_key: sessionKey },
       });
       if (cancelled) return;
-      const profile = (data as any)?.profile;
-      if (error || (data as any)?.error) {
-        setLoadError((data as any)?.error || error?.message || "Impossible de reprendre le profil.");
+      const response = data as MatchingProfileResponse | null;
+      const profile = response?.profile;
+      if (error || response?.error) {
+        setLoadError(response?.error || error?.message || "Impossible de reprendre le profil.");
       }
       if (profile?.answers) {
         setAnswers(profile.answers as Answers);
@@ -137,11 +142,12 @@ export default function PageMatchingProfileWizard() {
         body: { ...context, action: complete ? "complete" : "save", answers: next },
       });
       setSaving(false);
-      if (error || (data as any)?.error) {
-        setLoadError((data as any)?.error || error?.message || "La sauvegarde a échoué. Réessayez.");
+      const response = data as MatchingProfileResponse | null;
+      if (error || response?.error) {
+        setLoadError(response?.error || error?.message || "La sauvegarde a échoué. Réessayez.");
         return null;
       }
-      return (data as any)?.profile ?? null;
+      return response?.profile ?? null;
     },
     [context],
   );
