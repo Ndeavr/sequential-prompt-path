@@ -88,6 +88,7 @@ Deno.serve(async (req) => {
       const token = typeof body.activation_token === "string" ? body.activation_token.trim() : null;
       const context = body.context && typeof body.context === "object" ? body.context : {};
       const { data, error } = await supabase.rpc("activate_my_contractor_account", {
+        _user_id: user.id,
         _activation_token: token || null,
         _context: context,
       });
@@ -98,6 +99,17 @@ Deno.serve(async (req) => {
     const session_key = String(body.session_key ?? "").trim();
     if (!session_key || session_key.length < 8) return json({ ok: false, error: "session_key required" }, 400);
 
+    let authenticatedUserId: string | null = null;
+    if (authHeader.startsWith("Bearer ")) {
+      const anon = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false } },
+      );
+      const { data: { user } } = await anon.auth.getUser();
+      authenticatedUserId = user?.id ?? null;
+    }
+
     const { data: existing } = await supabase
       .from("contractor_matching_profiles")
       .select("*")
@@ -105,10 +117,23 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (action === "get") {
+      if (existing?.contractor_id) {
+        if (!authenticatedUserId) return json({ ok: false, error: "authentication_required" }, 401);
+        const { data: owned } = await supabase.from("contractors").select("id")
+          .eq("id", existing.contractor_id).eq("user_id", authenticatedUserId).maybeSingle();
+        if (!owned) return json({ ok: false, error: "profile_access_denied" }, 403);
+      }
       return json({ ok: true, profile: existing ?? null });
     }
 
     if (action !== "save" && action !== "complete") return json({ ok: false, error: "unknown action" }, 400);
+
+    if (existing?.contractor_id) {
+      if (!authenticatedUserId) return json({ ok: false, error: "authentication_required" }, 401);
+      const { data: owned } = await supabase.from("contractors").select("id")
+        .eq("id", existing.contractor_id).eq("user_id", authenticatedUserId).maybeSingle();
+      if (!owned) return json({ ok: false, error: "profile_access_denied" }, 403);
+    }
 
     const answers = {
       ...((existing?.answers as Record<string, unknown>) ?? {}),
@@ -139,6 +164,8 @@ Deno.serve(async (req) => {
       "city",
       "trade",
     ]) {
+      if (existing && ["contractor_id", "prospect_id", "activation_token"].includes(k)) continue;
+      if (k === "contractor_id") continue;
       const v = body[k];
       if (v !== undefined && v !== null && String(v).length > 0) row[k] = v;
     }
