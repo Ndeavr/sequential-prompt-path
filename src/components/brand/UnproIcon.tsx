@@ -1,23 +1,33 @@
 /**
- * UNPRO — Icon-only (official mark)
- * Used across avatars, auth surfaces, navigation marks.
- * Fallback chain: requested official mark → other official mark → "UNPRO" text.
+ * UNPRO — Icon-only official mark.
+ * Used for avatars, auth surfaces, app/square contexts and narrow navigation.
+ *
+ * `shape="round" | "square"` → white mark inside the blue disc (app icon).
+ * `shape="bare"` → transparent mark, blue on light surfaces, white on dark.
+ * Fallback: official mark → "UNPRO" text. Never a generated initial badge.
  */
 import { useState } from "react";
 import { BRAND } from "@/config/branding";
 
 type UnproIconProps = {
   size?: number;
-  /** Historical variants preserved; `shape` controls the official mark used. */
+  /** Historical variants preserved for API compatibility. */
   variant?: "primary" | "mono" | "blue" | "rubber";
-  shape?: "round" | "square";
+  shape?: "round" | "square" | "bare";
+  /** Surface the mark sits on. `auto` follows the app theme. */
+  tone?: "auto" | "light" | "dark";
   className?: string;
 };
 
-export default function UnproIcon({ size = 64, shape = "round", className = "" }: UnproIconProps) {
-  const [step, setStep] = useState(0);
+export default function UnproIcon({
+  size = 64,
+  shape = "round",
+  tone = "auto",
+  className = "",
+}: UnproIconProps) {
+  const [failed, setFailed] = useState(false);
 
-  if (step >= 2) {
+  if (failed) {
     return (
       <span
         className={`inline-flex items-center justify-center font-semibold tracking-[-0.04em] text-current ${className}`}
@@ -28,19 +38,62 @@ export default function UnproIcon({ size = 64, shape = "round", className = "" }
     );
   }
 
-  const primary = shape === "square" ? BRAND.logoSquare : BRAND.logoRound;
-  const src = step === 0 ? primary : shape === "square" ? BRAND.logoRound : BRAND.logoSquare;
+  const style = { width: size, height: size };
+  const base = `object-contain ${className}`;
+
+  if (shape !== "bare") {
+    return (
+      <img
+        src={BRAND.logoRound}
+        alt="UNPRO"
+        width={size}
+        height={size}
+        onError={() => setFailed(true)}
+        className={base}
+        style={style}
+        draggable={false}
+      />
+    );
+  }
+
+  if (tone !== "auto") {
+    return (
+      <img
+        src={tone === "dark" ? BRAND.logoIconWhite : BRAND.logoIconBlue}
+        alt="UNPRO"
+        width={size}
+        height={size}
+        onError={() => setFailed(true)}
+        className={base}
+        style={style}
+        draggable={false}
+      />
+    );
+  }
 
   return (
-    <img
-      src={src}
-      alt="UNPRO"
-      width={size}
-      height={size}
-      onError={() => setStep((s) => s + 1)}
-      className={`object-contain ${className}`}
-      style={{ width: size, height: size }}
-      draggable={false}
-    />
+    <>
+      <img
+        src={BRAND.logoIconBlue}
+        alt="UNPRO"
+        width={size}
+        height={size}
+        onError={() => setFailed(true)}
+        className={`${base} dark:hidden`}
+        style={style}
+        draggable={false}
+      />
+      <img
+        src={BRAND.logoIconWhite}
+        alt=""
+        aria-hidden="true"
+        width={size}
+        height={size}
+        onError={() => setFailed(true)}
+        className={`${base} hidden dark:block`}
+        style={style}
+        draggable={false}
+      />
+    </>
   );
 }
