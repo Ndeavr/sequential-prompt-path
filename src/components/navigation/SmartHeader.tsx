@@ -95,14 +95,17 @@ const SmartHeader = () => {
 
             {/* Zone 1 — Brand */}
             <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0 -ml-1 sm:ml-0" style={{ minWidth: "fit-content" }}>
-              <img
-                src={BRAND.logo}
-                alt="UNPRO"
-                className="h-[31px] md:h-[38px] w-auto min-h-0 object-contain transition-transform duration-300 group-hover:scale-105"
-                draggable={false}
+              <UnproLogo
+                unsized
+                className="hidden min-[360px]:block h-[31px] md:h-[38px] w-auto min-h-0 transition-transform duration-300 group-hover:scale-105"
               />
-
+              <UnproIcon
+                unsized
+                shape="bare"
+                className="block min-[360px]:hidden h-[31px] w-auto transition-transform duration-300 group-hover:scale-105"
+              />
             </Link>
+
 
             {/* Zone 2 — Desktop main nav */}
             <nav className="hidden lg:flex items-center gap-0.5 ml-6" role="navigation" aria-label="Main">

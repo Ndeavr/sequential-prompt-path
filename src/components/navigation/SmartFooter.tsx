@@ -8,7 +8,8 @@ import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { getFooterSections } from "@/config/navigationConfig";
 import type { UserRole } from "@/types/navigation";
 import { BRAND } from "@/config/branding";
-const unproWordmarkChrome = BRAND.logo;
+// Footer surface is always dark → white-wordmark lockup.
+const unproWordmarkChrome = BRAND.logoWordmarkOnDark;
 
 const socialLinks = [
   { href: "#", label: "Facebook", icon: "f" },
