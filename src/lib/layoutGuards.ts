@@ -5,6 +5,34 @@
  */
 
 import { logVisualEvent } from "./visualStabilityLogger";
+import { CTA_DEST } from "@/config/ctaRegistry";
+
+/**
+ * Canonical CTA recognition — a page satisfies the contract either by
+ * rendering a <PrimaryCTA> (data-cta-canonical marker) or by surfacing a
+ * semantic link/button whose accessible label is one of the canonical CTA
+ * labels. Contractor public pages render their own booking CTA
+ * (« Planifier un rendez-vous ») which is canonical for that surface even
+ * though it is not rendered through <PrimaryCTA>.
+ */
+const CANONICAL_CTA_LABELS: readonly string[] = [
+  ...Object.values(CTA_DEST).map((d) => d.label),
+  "Planifier un rendez-vous",
+];
+
+function hasCanonicalCTA(): boolean {
+  if (document.querySelector("[data-cta-canonical]")) return true;
+  const candidates = document.querySelectorAll<HTMLElement>(
+    "a[href], button, [role='button'], [role='link']",
+  );
+  for (const el of Array.from(candidates)) {
+    if (el.closest("[data-mobile-qa-overlay]")) continue;
+    const label = (el.getAttribute("aria-label") ?? el.textContent ?? "").trim();
+    if (!label) continue;
+    if (CANONICAL_CTA_LABELS.some((l) => label.includes(l))) return true;
+  }
+  return false;
+}
 
 export interface LayoutScan {
   timestamp: number;
@@ -100,8 +128,7 @@ export function scanLayout(): LayoutScan {
   }
 
   // Canonical CTA presence — every page should surface at least one.
-  const ctaEls = document.querySelectorAll("[data-cta-canonical]");
-  const missingCanonicalCTA = ctaEls.length === 0;
+  const missingCanonicalCTA = !hasCanonicalCTA();
 
   // Placeholder text sniff — flag copy that leaks unfinished states.
   // Only *visible page copy* counts: the QA overlay subtree (which prints

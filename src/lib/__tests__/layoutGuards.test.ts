@@ -69,4 +69,39 @@ describe("layoutGuards.scanLayout", () => {
     content.getBoundingClientRect = () => ({ top: 700, bottom: 880 }) as DOMRect;
     expect(scanLayout().contentBehindDock).toBe(true);
   });
+
+  it("recognizes the contractor public profile booking CTA as canonical", () => {
+    mountPage({ scrollHeight: 6000, scrollTop: 0 });
+    document.getElementById("content")!.innerHTML =
+      '<a href="/recommandations?contractor=abc">Planifier un rendez-vous</a>';
+    expect(scanLayout().missingCanonicalCTA).toBe(false);
+  });
+
+  it("recognizes a canonical CTA by its aria-label", () => {
+    mountPage({ scrollHeight: 6000, scrollTop: 0 });
+    document.getElementById("content")!.innerHTML =
+      '<a href="/recommandations" aria-label="Planifier un rendez-vous"></a>';
+    expect(scanLayout().missingCanonicalCTA).toBe(false);
+  });
+
+  it("still flags a page with no canonical CTA at all", () => {
+    mountPage({ scrollHeight: 6000, scrollTop: 0 });
+    document.getElementById("content")!.innerHTML =
+      '<a href="/a-propos">À propos</a><button>Voir plus</button>';
+    expect(scanLayout().missingCanonicalCTA).toBe(true);
+  });
+
+  it("recognizes the PrimaryCTA marker used on the home page", () => {
+    mountPage({ scrollHeight: 6000, scrollTop: 0 });
+    document.getElementById("content")!.innerHTML =
+      '<a href="/alex" data-cta-canonical="alex">Parler à Clara</a>';
+    expect(scanLayout().missingCanonicalCTA).toBe(false);
+  });
+
+  it("ignores canonical-sounding labels inside the QA overlay itself", () => {
+    mountPage({ scrollHeight: 6000, scrollTop: 0 });
+    document.querySelector("[data-mobile-qa-overlay]")!.innerHTML =
+      "<div>Planifier un rendez-vous</div>";
+    expect(scanLayout().missingCanonicalCTA).toBe(true);
+  });
 });
