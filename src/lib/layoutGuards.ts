@@ -128,8 +128,7 @@ export function scanLayout(): LayoutScan {
   }
 
   // Canonical CTA presence — every page should surface at least one.
-  const ctaEls = document.querySelectorAll("[data-cta-canonical]");
-  const missingCanonicalCTA = ctaEls.length === 0;
+  const missingCanonicalCTA = !hasCanonicalCTA();
 
   // Placeholder text sniff — flag copy that leaks unfinished states.
   // Only *visible page copy* counts: the QA overlay subtree (which prints
