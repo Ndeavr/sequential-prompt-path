@@ -21,6 +21,8 @@ import ReviewSignalCard from "@/features/activationProfile/components/ReviewSign
 import ReadinessMeter from "@/features/activationProfile/components/ReadinessMeter";
 import { useActivationTracking } from "@/features/activationProfile/useActivationTracking";
 import type { ActivationProfile, ResolvedProspect } from "@/features/activationProfile/types";
+import { CONTRACTOR_OFFER } from "@/lib/copy/contractorOffer";
+import { buildContractorEntryUrl, CONTRACTOR_ACTIVATION_PATH } from "@/config/contractorFunnel";
 
 const BENEFITS = [
   "Votre profil publié et optimisé pour les IA et les propriétaires",
@@ -33,8 +35,10 @@ export default function PageUnproActivate() {
   const { token } = useParams<{ token: string }>();
   // QA : ?preview=1 rend la page réelle sans écrire de clic ni d'événement
   // d'entonnoir, afin de ne pas contaminer la cohorte de production.
-  const preview =
-    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("preview") === "1";
+  const preview = typeof window !== "undefined" && (() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("preview") === "1" || params.get("qa") === "1";
+  })();
   const [state, setState] = useState<"loading" | "ready" | "invalid" | "error">("loading");
   const [prospect, setProspect] = useState<ResolvedProspect | null>(null);
   const [profile, setProfile] = useState<ActivationProfile | null>(null);
@@ -136,7 +140,7 @@ export default function PageUnproActivate() {
     const city = profile?.city ?? prospect?.city ?? "";
     if (trade) params.set("trade", trade);
     if (city) params.set("city", city);
-    navigate(`/entrepreneurs/profil?${params.toString()}`);
+    navigate(buildContractorEntryUrl(Object.fromEntries(params), CONTRACTOR_ACTIVATION_PATH));
   }
 
 
@@ -272,7 +276,7 @@ export default function PageUnproActivate() {
                 onClick={() => handleActivate("offer")}
                 className="mt-5 h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#050816] hover:bg-white/90"
               >
-                <>Vérifier mon profil <ArrowRight className="ml-1 h-4 w-4" /></>
+                <>{CONTRACTOR_OFFER.ctaClaim} <ArrowRight className="ml-1 h-4 w-4" /></>
               </Button>
 
               <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[11px] text-white/50">
@@ -292,7 +296,7 @@ export default function PageUnproActivate() {
               onClick={handleCustomize}
               className="mx-auto block pb-2 text-center text-xs text-white/50 underline underline-offset-4 hover:text-white/75"
             >
-              Continuer vers mon plan personnalisé
+              {CONTRACTOR_OFFER.ctaPrimary}
             </button>
           </div>
         )}
@@ -305,7 +309,7 @@ export default function PageUnproActivate() {
             onClick={() => handleActivate("sticky_mobile")}
             className="h-13 w-full rounded-2xl bg-white py-3.5 text-base font-semibold text-[#050816] hover:bg-white/90"
           >
-            Vérifier mon profil
+            {CONTRACTOR_OFFER.ctaClaim}
           </Button>
 
         </div>

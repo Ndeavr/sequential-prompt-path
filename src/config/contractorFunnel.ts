@@ -27,6 +27,8 @@ export const ATTRIBUTION_PARAMS = [
   "utm_content",
   "utm_term",
   "source",
+  "qa",
+  "preview",
 ] as const;
 
 /** Extract the attribution params from a search string (defaults to the URL). */
@@ -61,5 +63,5 @@ export function buildContractorEntryUrl(
 
 /** Canonical activation URL for a solicited contractor holding a token. */
 export function buildTokenActivationUrl(token: string): string {
-  return buildContractorEntryUrl({}, `/join/${encodeURIComponent(token)}`);
+  return buildContractorEntryUrl({}, `/unpro/activate/${encodeURIComponent(token)}`);
 }

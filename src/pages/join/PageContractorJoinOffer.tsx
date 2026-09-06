@@ -1,147 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { CONTRACTOR_OFFER } from "@/lib/copy/contractorOffer";
-import { buildContractorEntryUrl, CONTRACTOR_ACTIVATION_PATH } from "@/config/contractorFunnel";
-import { Progress } from "@/components/ui/progress";
+import { buildTokenActivationUrl } from "@/config/contractorFunnel";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle, MapPin, Star, Shield, Clock, ArrowRight } from "lucide-react";
-import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 
 export default function PageContractorJoinOffer() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
-  const [offer, setOffer] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!token) return;
-    (async () => {
-      const { data, error: err } = await (supabase as any)
-        .rpc("get_recruitment_offer_by_token", { _token: token });
-      if (err || !data) setError("Offre introuvable ou expirée");
-      else {
-        setOffer(data);
-        void logFunnelEvent({ event_type: "landing_view", step: "join_offer_token" });
-        void logFunnelEvent({ event_type: "offer_eligible", step: "join_offer_token" });
-      }
-      setLoading(false);
-    })();
-  }, [token]);
-
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <Skeleton className="h-96 w-full max-w-lg rounded-2xl" />
-    </div>
-  );
-
-  if (error) return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <Card className="max-w-md w-full">
-        <CardContent className="py-12 text-center">
-          <p className="text-lg font-semibold mb-2">Offre introuvable</p>
-          <p className="text-sm text-muted-foreground">{error}</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const prospect = offer.contractor_prospects;
-  const cluster = offer.recruitment_clusters;
+    if (token) navigate(buildTokenActivationUrl(token), { replace: true });
+    else navigate("/join", { replace: true });
+  }, [navigate, token]);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero */}
-      <div className="bg-gradient-to-b from-primary/10 to-background px-4 pt-12 pb-8">
-        <div className="max-w-lg mx-auto text-center space-y-3">
-          <Badge className="bg-primary/20 text-primary border-0">Offre exclusive</Badge>
-          <h1 className="text-2xl md:text-3xl font-bold">
-            {prospect?.owner_name || "Entrepreneur"}, votre place est réservée
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            UNPRO recrute les meilleurs entrepreneurs en <strong className="capitalize">{prospect?.category_slug}</strong> dans la région de <strong>{cluster?.name}</strong>
-          </p>
-        </div>
-      </div>
-
-      <div className="max-w-lg mx-auto px-4 space-y-6 pb-12">
-        {/* Business info */}
-        <Card className="bg-card/80 backdrop-blur border-border/50">
-          <CardContent className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold">{prospect?.business_name}</p>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <MapPin className="h-3 w-3" /> {prospect?.city}
-                </p>
-              </div>
-              {prospect?.review_rating && (
-                <div className="flex items-center gap-1 text-sm">
-                  <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                  {prospect.review_rating} ({prospect.review_count})
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Scarcity */}
-        {offer.scarcity_message && (
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center gap-2">
-            <Clock className="h-4 w-4 text-amber-500 shrink-0" />
-            <p className="text-sm text-amber-700 dark:text-amber-300">{offer.scarcity_message}</p>
-          </div>
-        )}
-
-        {/* Value prop */}
-        <Card className="bg-card/80 backdrop-blur border-border/50">
-          <CardContent className="p-4 space-y-3">
-            <h3 className="font-semibold text-sm">Ce que vous obtenez avec UNPRO</h3>
-            {[
-              "Rendez-vous qualifiés dans votre territoire",
-              "Matching intelligent avec les bons propriétaires",
-              "Profil vérifié et mis en valeur",
-              "Score AIPP et visibilité premium",
-              "Zéro compétition de soumissions",
-            ].map((item) => (
-              <div key={item} className="flex items-start gap-2 text-sm">
-                <CheckCircle className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                <span>{item}</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Activation — aucun paiement requis */}
-        <Card className="bg-card/80 backdrop-blur border-primary/30 border-2">
-          <CardContent className="p-4 space-y-2">
-            <p className="text-base font-semibold">{CONTRACTOR_OFFER.headline}</p>
-            <p className="text-sm text-muted-foreground">{CONTRACTOR_OFFER.subheadline}</p>
-            <p className="text-xs text-muted-foreground">{CONTRACTOR_OFFER.planNote}</p>
-          </CardContent>
-        </Card>
-
-        {/* CTA — activation gratuite, jamais de paiement avant le profil */}
-        <Button
-          size="lg"
-          className="w-full"
-          onClick={() => {
-            void logFunnelEvent({ event_type: "cta_click", step: "join_offer_token", metadata: { cta: CONTRACTOR_OFFER.ctaClaim } });
-            navigate(buildContractorEntryUrl({ token }, CONTRACTOR_ACTIVATION_PATH));
-          }}
-        >
-          {CONTRACTOR_OFFER.ctaClaim} <ArrowRight className="h-4 w-4 ml-2" />
-        </Button>
-
-        <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1">
-          <Shield className="h-3 w-3" /> {CONTRACTOR_OFFER.noPaymentNote}
-        </p>
-
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Skeleton className="h-96 w-full max-w-lg rounded-2xl" />
     </div>
   );
 }
