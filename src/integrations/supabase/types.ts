@@ -17300,6 +17300,54 @@ export type Database = {
         }
         Relationships: []
       }
+      auth_role_intents: {
+        Row: {
+          account_type: string
+          affiliate_ref: string | null
+          consumed_at: string | null
+          consumed_by: string | null
+          created_at: string
+          email_hash: string
+          expires_at: string
+          id: string
+          metadata: Json
+          return_path: string | null
+          role: string
+          token_hash: string
+          updated_at: string
+        }
+        Insert: {
+          account_type?: string
+          affiliate_ref?: string | null
+          consumed_at?: string | null
+          consumed_by?: string | null
+          created_at?: string
+          email_hash: string
+          expires_at?: string
+          id?: string
+          metadata?: Json
+          return_path?: string | null
+          role: string
+          token_hash: string
+          updated_at?: string
+        }
+        Update: {
+          account_type?: string
+          affiliate_ref?: string | null
+          consumed_at?: string | null
+          consumed_by?: string | null
+          created_at?: string
+          email_hash?: string
+          expires_at?: string
+          id?: string
+          metadata?: Json
+          return_path?: string | null
+          role?: string
+          token_hash?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       authority_articles: {
         Row: {
           aeo_score: number | null
@@ -96382,6 +96430,7 @@ export type Database = {
         Args: { p_attribution_id: string; p_confirmed: boolean }
         Returns: Json
       }
+      consume_auth_role_intent: { Args: { _token: string }; Returns: Json }
       consume_founder_bcc_email: { Args: never; Returns: string }
       consume_founder_bcc_sms: { Args: never; Returns: string }
       consume_generation_credit: {
@@ -96393,6 +96442,18 @@ export type Database = {
         Returns: Json
       }
       contractor_plan_code: { Args: { _user_id: string }; Returns: string }
+      create_auth_role_intent: {
+        Args: {
+          _account_type?: string
+          _affiliate_ref?: string
+          _email: string
+          _metadata?: Json
+          _return_path?: string
+          _role: string
+          _token: string
+        }
+        Returns: Json
+      }
       crm_prospect_timeline: {
         Args: { _prospect_id: string }
         Returns: {
@@ -97041,6 +97102,7 @@ export type Database = {
         Args: { _actor_id?: string; _notes?: string; _prospect_id: string }
         Returns: undefined
       }
+      release_auth_role_intent: { Args: { _token: string }; Returns: Json }
       release_recruitment_lock: {
         Args: { p_lock_key: string; p_run_id: string }
         Returns: boolean
