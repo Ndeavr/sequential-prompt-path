@@ -8,7 +8,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, Wrench, Building2, Briefcase, Users, Landmark, Globe, Factory, Star, ChevronDown, ArrowRight } from "lucide-react";
 import UnproIcon from "@/components/brand/UnproIcon";
-import { saveRoleIntent } from "@/services/auth/roleIntent";
+import { readRoleIntent, saveRoleIntent } from "@/services/auth/roleIntent";
 
 interface RoleOption {
   key: string;
