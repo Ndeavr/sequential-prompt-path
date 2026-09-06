@@ -274,7 +274,6 @@ const SmartHeader = () => {
             onClose={() => setMobileOpen(false)}
             ctx={ctx}
             activeRole={activeRole}
-            logoTone={isHome ? "light" : "auto"}
           />
         )}
       </AnimatePresence>
