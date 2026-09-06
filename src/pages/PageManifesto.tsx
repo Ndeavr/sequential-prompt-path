@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { CONTRACTOR_ENTRY_PATH } from "@/config/contractorFunnel";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -206,7 +207,7 @@ export default function PageManifesto() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="rounded-2xl h-13 px-8 text-base">
-                <Link to="/entrepreneurs">
+                <Link to={CONTRACTOR_ENTRY_PATH}>
                   Je suis entrepreneur
                 </Link>
               </Button>

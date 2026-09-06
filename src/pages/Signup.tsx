@@ -14,7 +14,8 @@ import { Check, Home, Building, ArrowRight, ArrowLeft, Lock } from "lucide-react
 import OAuthButtons from "@/components/auth/OAuthButtons";
 import AuthDivider from "@/components/auth/AuthDivider";
 import PhoneOtpForm from "@/components/auth/PhoneOtpForm";
-import { consumeAuthIntent, getDefaultRedirectForRole } from "@/services/auth/authIntentService";
+import { consumeAuthIntent, getDefaultRedirectForRole, saveAuthIntent, peekAuthIntent } from "@/services/auth/authIntentService";
+import { saveRoleIntent } from "@/services/auth/roleIntent";
 import RoleCardSelector from "@/components/menu/RoleCardSelector";
 import { ROLE_CARDS } from "@/data/menuTaxonomy";
 import UnproIcon from "@/components/brand/UnproIcon";
@@ -41,10 +42,23 @@ const Signup = () => {
     }
   }, [isAuthenticated, isLoading, role, navigate]);
 
+  /**
+   * P0: persist the selected role BEFORE any auth redirect so a contractor
+   * intent can never silently become a homeowner (OAuth, phone OTP, refresh).
+   */
+  const persistRoleIntent = (propertyTypeValue?: string) => {
+    const returnPath = peekAuthIntent()?.returnPath;
+    saveRoleIntent(selectedRole, { propertyType: propertyTypeValue || undefined, returnPath });
+    if (selectedRole === "service_business" || selectedRole === "contractor") {
+      if (!returnPath) saveAuthIntent({ returnPath: "/join/profile", action: "contractor_activation", roleHint: "contractor" });
+    }
+  };
+
   const handleContinueFromStep1 = () => {
     if (NEEDS_PROPERTY_TYPE.includes(selectedRole)) {
       setStep(2);
     } else {
+      persistRoleIntent();
       setStep(3);
     }
   };
@@ -117,7 +131,7 @@ const Signup = () => {
                       );
                     })}
                   </div>
-                  <Button className="w-full h-11 text-sm font-bold rounded-xl gap-2" onClick={() => setStep(3)} disabled={!propertyType}>
+                  <Button className="w-full h-11 text-sm font-bold rounded-xl gap-2" onClick={() => { persistRoleIntent(propertyType); setStep(3); }} disabled={!propertyType}>
                     Continuer <ArrowRight className="h-4 w-4" />
                   </Button>
                   <div className="text-center">

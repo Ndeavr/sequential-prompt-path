@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import UnproIcon from "@/components/brand/UnproIcon";
 import { authDebug } from "@/services/auth/authDebugBus";
+import { saveRoleIntent } from "@/services/auth/roleIntent";
 
 export default function PageContractorJoinProfileGate() {
   const navigate = useNavigate();
@@ -42,7 +43,9 @@ export default function PageContractorJoinProfileGate() {
         if (!alive) return;
 
         if (!session?.user) {
-          try { sessionStorage.setItem("unpro_prelogin_role", "contractor"); } catch { /* noop */ }
+          saveRoleIntent("contractor", {
+            returnPath: `/join/profile${typeof window !== "undefined" ? window.location.search : ""}`,
+          });
           authDebug.set({ auth_step: "redirecting", redirect_target: "/login", session_found: false });
           navigate("/login", { replace: true, state: { from: "/join/profile" } });
           return;

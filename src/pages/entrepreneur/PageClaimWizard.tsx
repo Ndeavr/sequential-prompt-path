@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { CONTRACTOR_OFFER } from "@/lib/copy/contractorOffer";
 
 type JobsBand = 5 | 10 | 25 | 50;
 type TicketBand = 2 | 5 | 10 | 25; // k$ midpoint
@@ -279,7 +280,7 @@ export default function PageClaimWizard() {
               <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 space-y-4">
                 <div className="flex items-center gap-2 text-amber-300">
                   <Sparkles className="w-5 h-5" />
-                  <span className="font-semibold">Offre d'entrée — 350 $, paiement unique</span>
+                  <span className="font-semibold">{CONTRACTOR_OFFER.headline} {CONTRACTOR_OFFER.subheadline}</span>
                 </div>
                 <ul className="space-y-2 text-sm text-white/85">
                   <li className="flex items-start gap-2"><Check className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" /> Profil vérifié</li>
@@ -310,7 +311,7 @@ export default function PageClaimWizard() {
                   {submitting ? (
                     <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Redirection…</>
                   ) : (
-                    <>Activer mon profil — 350 $ <ArrowRight className="w-5 h-5 ml-2" /></>
+                    <>{CONTRACTOR_OFFER.ctaPrimary} <ArrowRight className="w-5 h-5 ml-2" /></>
                   )}
                 </Button>
 

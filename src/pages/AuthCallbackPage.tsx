@@ -9,6 +9,7 @@ import { consumeAuthIntent, getDefaultRedirectForRole } from "@/services/auth/au
 import { motion } from "framer-motion";
 import UnproIcon from "@/components/brand/UnproIcon";
 import { authDebug } from "@/services/auth/authDebugBus";
+import { applyRoleIntent, readRoleIntent } from "@/services/auth/roleIntent";
 
 type CallbackState = "processing" | "creating_profile" | "redirecting" | "error";
 
@@ -43,27 +44,13 @@ export default function AuthCallbackPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const ROLE_MAP: Record<string, string> = {
-    homeowner: "homeowner", owner: "homeowner",
-    contractor: "contractor", professional: "contractor",
-    condo_manager: "condo_manager", property_manager: "condo_manager",
-    partner: "homeowner", municipality: "homeowner",
-    public_org: "homeowner", enterprise: "homeowner", ambassador: "homeowner",
-  };
-
-  function readPreloginRole(): string | null {
-    try {
-      const raw = sessionStorage.getItem("unpro_prelogin_role");
-      if (raw && ROLE_MAP[raw]) return ROLE_MAP[raw];
-    } catch { /* noop */ }
-    return null;
-  }
-
   async function handleCallback() {
     // Read intent FIRST (before any awaits) so it survives storage races
     // when sessionStorage gets cleared by Supabase auth handshake.
     const intent = consumeAuthIntent();
-    const preloginRole = readPreloginRole();
+    const roleIntent = readRoleIntent();
+    const preloginRole = roleIntent?.role ?? null;
+
 
     authDebug.set({
       auth_step: "callback_processing",
@@ -145,35 +132,21 @@ export default function AuthCallbackPage() {
       let roleList = (roles ?? []).map((r) => r.role as string);
       authDebug.set({ auth_step: "roles_resolved", roles: roleList });
 
-      // Apply pre-login role choice if any (and we don't already have it)
-      if (preloginRole && !roleList.includes(preloginRole)) {
-        console.log("[AuthCallback] applying prelogin role", preloginRole);
+      // Apply pre-login role choice if any (idempotent, never downgrades)
+      if (roleIntent) {
         authDebug.set({ auth_step: "applying_prelogin_role" });
-        const { error: roleErr } = await supabase
-          .from("user_roles")
-          .upsert(
-            { user_id: user.id, role: preloginRole as any },
-            { onConflict: "user_id,role" }
-          );
+        const { role: applied, error: roleErr } = await applyRoleIntent(
+          { id: user.id, email: user.email },
+          roleIntent,
+        );
         if (roleErr) {
-          console.error("[AuthCallback] role upsert failed", roleErr);
-          authDebug.error(roleErr, "applying_prelogin_role");
-        } else {
-          roleList = [...roleList, preloginRole];
+          authDebug.error(new Error(roleErr), "applying_prelogin_role");
+        } else if (applied && !roleList.includes(applied)) {
+          roleList = [...roleList, applied];
           authDebug.set({ roles: roleList });
-          if (preloginRole === "contractor") {
-            try {
-              await (supabase.from("contractors") as any).upsert(
-                { user_id: user.id, email: user.email || "" },
-                { onConflict: "user_id" }
-              );
-            } catch (e) {
-              console.warn("[AuthCallback] contractor stub non-fatal error", e);
-            }
-          }
         }
-        try { sessionStorage.removeItem("unpro_prelogin_role"); } catch { /* noop */ }
       }
+
 
       setState("redirecting");
 

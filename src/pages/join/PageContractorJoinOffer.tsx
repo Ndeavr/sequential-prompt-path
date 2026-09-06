@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CONTRACTOR_OFFER } from "@/lib/copy/contractorOffer";
+import { buildContractorEntryUrl, CONTRACTOR_ACTIVATION_PATH } from "@/config/contractorFunnel";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CheckCircle, MapPin, Star, Shield, Clock, ArrowRight } from "lucide-react";
@@ -109,35 +111,28 @@ export default function PageContractorJoinOffer() {
           </CardContent>
         </Card>
 
-        {/* Offer details */}
+        {/* Activation — aucun paiement requis */}
         <Card className="bg-card/80 backdrop-blur border-primary/30 border-2">
-          <CardContent className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Plan recommandé</p>
-                <p className="text-lg font-bold capitalize">{offer.plan_code || "Pro"}</p>
-              </div>
-              <div className="text-right">
-                {offer.founder_discount_percent > 0 && (
-                  <Badge className="bg-green-500 mb-1">-{offer.founder_discount_percent}% fondateur</Badge>
-                )}
-                <p className="text-2xl font-bold">${((offer.recurring_amount || offer.price_amount || 0) / 100).toFixed(0)}<span className="text-sm text-muted-foreground">/mois</span></p>
-              </div>
-            </div>
-            {offer.setup_fee_amount > 0 && (
-              <p className="text-xs text-muted-foreground">+ Frais d'activation: ${(offer.setup_fee_amount / 100).toFixed(0)}</p>
-            )}
+          <CardContent className="p-4 space-y-2">
+            <p className="text-base font-semibold">{CONTRACTOR_OFFER.headline}</p>
+            <p className="text-sm text-muted-foreground">{CONTRACTOR_OFFER.subheadline}</p>
+            <p className="text-xs text-muted-foreground">{CONTRACTOR_OFFER.planNote}</p>
           </CardContent>
         </Card>
 
-        {/* CTA */}
-        <Button size="lg" className="w-full" onClick={() => navigate(`/join/${token}/checkout`)}>
-          Activer mes rendez-vous <ArrowRight className="h-4 w-4 ml-2" />
+        {/* CTA — activation gratuite, jamais de paiement avant le profil */}
+        <Button
+          size="lg"
+          className="w-full"
+          onClick={() => navigate(buildContractorEntryUrl({ token }, CONTRACTOR_ACTIVATION_PATH))}
+        >
+          {CONTRACTOR_OFFER.ctaClaim} <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
 
         <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1">
-          <Shield className="h-3 w-3" /> Paiement sécurisé • Annulation flexible
+          <Shield className="h-3 w-3" /> {CONTRACTOR_OFFER.noPaymentNote}
         </p>
+
       </div>
     </div>
   );

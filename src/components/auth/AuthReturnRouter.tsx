@@ -13,36 +13,13 @@ import { consumeAuthIntent, getDefaultRedirectForRole } from "@/services/auth/au
 import { closeAuthOverlay } from "@/hooks/useAuthOverlay";
 import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
 import { authDebug } from "@/services/auth/authDebugBus";
+import { applyRoleIntent, readRoleIntent } from "@/services/auth/roleIntent";
 
 const AUTH_SURFACES = /^\/(login|signup|role|start|auth\/callback)\/?$/;
 
 function isAuthSurface(pathname: string): boolean {
   // Home ("/" and "/index") is a real destination — never auto-redirect from it.
   return AUTH_SURFACES.test(pathname);
-}
-
-const VALID_PRELOGIN_ROLES = new Set([
-  "homeowner",
-  "contractor",
-  "condo_manager",
-  "professional",
-  "partner",
-  "municipality",
-  "public_org",
-  "enterprise",
-  "ambassador",
-]);
-
-function readPreloginRole(): string | null {
-  try {
-    const raw = sessionStorage.getItem("unpro_prelogin_role");
-    if (raw && VALID_PRELOGIN_ROLES.has(raw)) return raw;
-  } catch { /* noop */ }
-  return null;
-}
-
-function clearPreloginRole() {
-  try { sessionStorage.removeItem("unpro_prelogin_role"); } catch { /* noop */ }
 }
 
 async function upsertProfile(user: { id: string; email?: string; phone?: string; user_metadata?: Record<string, any> }) {
@@ -77,62 +54,6 @@ async function upsertProfile(user: { id: string; email?: string; phone?: string;
     );
   } catch {
     // Non-critical
-  }
-}
-
-/**
- * Apply a pre-login role selection to user_roles, and create dependent stubs.
- * Maps marketing-friendly keys onto the canonical app_role enum.
- * Returns the canonical role applied (or null on failure).
- */
-async function applyPreloginRole(user: { id: string; email?: string }, preloginRole: string): Promise<string | null> {
-  // Map fuzzy labels to canonical app_role values used in user_roles.role
-  const ROLE_MAP: Record<string, string> = {
-    homeowner: "homeowner",
-    owner: "homeowner",
-    contractor: "contractor",
-    professional: "contractor",
-    condo_manager: "condo_manager",
-    property_manager: "condo_manager",
-    partner: "homeowner",
-    municipality: "homeowner",
-    public_org: "homeowner",
-    enterprise: "homeowner",
-    ambassador: "homeowner",
-  };
-  const canonical = ROLE_MAP[preloginRole] ?? preloginRole;
-
-  try {
-    const { error } = await supabase
-      .from("user_roles")
-      .upsert(
-        { user_id: user.id, role: canonical as any },
-        { onConflict: "user_id,role" }
-      );
-    if (error) {
-      console.error("[AuthReturnRouter] role upsert failed", error);
-      return null;
-    }
-
-    // For contractors, ensure a contractor row exists so the onboarding flow has data
-    if (canonical === "contractor") {
-      try {
-        await (supabase.from("contractors") as any).upsert(
-          {
-            user_id: user.id,
-            email: user.email || "",
-          },
-          { onConflict: "user_id" }
-        );
-      } catch (e) {
-        console.warn("[AuthReturnRouter] contractor stub upsert non-fatal error", e);
-      }
-    }
-
-    return canonical;
-  } catch (e) {
-    console.error("[AuthReturnRouter] applyPreloginRole exception", e);
-    return null;
   }
 }
 
@@ -177,7 +98,7 @@ export default function AuthReturnRouter() {
 
       const intent = consumeAuthIntent();
       const here = location.pathname;
-      const preloginRole = readPreloginRole();
+      const roleIntent = readRoleIntent();
 
       // 1) Resolve current roles
       const { data: roles, error: rolesErr } = await supabase
@@ -191,10 +112,12 @@ export default function AuthReturnRouter() {
 
       let roleList = (roles ?? []).map((r) => r.role as string);
 
-      // 2) If user pre-selected a role and doesn't have it yet, apply it now
-      if (preloginRole) {
-        const applied = await applyPreloginRole(session.user, preloginRole);
-        clearPreloginRole();
+      // 2) If user pre-selected a role, apply it now (idempotent)
+      if (roleIntent) {
+        const { role: applied } = await applyRoleIntent(
+          { id: session.user.id, email: session.user.email },
+          roleIntent,
+        );
         if (applied && !roleList.includes(applied)) {
           roleList = [...roleList, applied];
         }

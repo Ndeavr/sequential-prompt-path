@@ -12,6 +12,7 @@ import {
   CheckCircle2, MapPin, Star, ArrowRight, Shield, Sparkles,
 } from "lucide-react";
 import UnproIcon from "@/components/brand/UnproIcon";
+import { CONTRACTOR_ENTRY_PATH } from "@/config/contractorFunnel";
 
 /* ─── Session guard: only animate once ─── */
 const SESSION_KEY = "unpro_reveal_seen";
@@ -277,7 +278,7 @@ export default function HomepageRevealFlow() {
               {[
                 { label: "Passeport Maison", to: "/dashboard" },
                 { label: "Passeport Condo", to: "/condos" },
-                { label: "Je suis entrepreneur", to: "/signature" },
+                { label: "Je suis entrepreneur", to: CONTRACTOR_ENTRY_PATH },
               ].map((item) => (
                 <Link
                   key={item.label}

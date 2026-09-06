@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, ShieldCheck, Sparkles } from "lucide-react";
+import { CONTRACTOR_OFFER } from "@/lib/copy/contractorOffer";
 
 export default function PageActivationSprint() {
   const { slug } = useParams<{ slug: string }>();
@@ -109,7 +110,7 @@ export default function PageActivationSprint() {
 
         <p className="text-white/80 text-lg leading-relaxed mb-8">
           UNPRO aide les propriétaires à trouver le bon entrepreneur grâce à l'IA.
-          Les entrepreneurs sélectionnés peuvent activer leur profil IA avec l'offre d'entrée de <span className="font-semibold text-white">350 $</span> — paiement unique.
+          Les entrepreneurs sélectionnés activent gratuitement leur profil IA. <span className="font-semibold text-white">{CONTRACTOR_OFFER.headline}</span> {CONTRACTOR_OFFER.subheadline}
         </p>
 
         <div className="rounded-2xl bg-white/[0.04] backdrop-blur-xl border border-white/10 p-5 mb-8">
@@ -134,7 +135,7 @@ export default function PageActivationSprint() {
           disabled={busy}
           className="w-full h-14 text-base font-semibold rounded-2xl bg-white text-[#050816] hover:bg-white/90"
         >
-          {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : "Activer — 350 $"}
+          {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : CONTRACTOR_OFFER.ctaPrimary}
         </Button>
 
         {err && <div className="mt-3 text-sm text-red-400">{err}</div>}
