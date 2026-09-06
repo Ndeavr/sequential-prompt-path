@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { Loader2, ArrowRight, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { detectInputKind } from "@/config/contractorOnboarding";
+import { CONTRACTOR_OFFER } from "@/lib/copy/contractorOffer";
 
 export default function PageContractorJoinLive() {
   const [value, setValue] = useState("");
@@ -42,7 +43,7 @@ export default function PageContractorJoinLive() {
         <div className="w-full max-w-md">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70 mb-5">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>Offre d'entrée — 350 $, paiement unique</span>
+            <span>{CONTRACTOR_OFFER.headline} {CONTRACTOR_OFFER.subheadline}</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">
             Activez votre profil UNPRO en moins de 2 minutes.

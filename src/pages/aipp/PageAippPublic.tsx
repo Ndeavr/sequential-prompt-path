@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Sparkles, TrendingUp, Award, MapPin, Phone, Globe } from "lucide-react";
+import { CONTRACTOR_OFFER } from "@/lib/copy/contractorOffer";
 
 export default function PageAippPublic() {
   const { slug } = useParams();
@@ -114,7 +115,7 @@ export default function PageAippPublic() {
         {/* Entry offer close */}
         <Card className="border-2 border-primary/40 bg-gradient-to-br from-primary/5 to-transparent">
           <CardContent className="p-8 text-center space-y-4">
-            <h2 className="text-3xl font-bold">Activez votre profil — 350 $, paiement unique</h2>
+            <h2 className="text-3xl font-bold">{CONTRACTOR_OFFER.headline} {CONTRACTOR_OFFER.subheadline}</h2>
             {slotsRemaining !== null && slotsRemaining > 0 && (
               <p className="text-sm font-semibold text-primary">
                 Places disponibles à {c.city}: {slotsRemaining} restante{slotsRemaining > 1 ? "s" : ""}
@@ -130,7 +131,7 @@ export default function PageAippPublic() {
             </ul>
             <Link to={`/entrepreneurs/audit-ia?q=${encodeURIComponent(c.company_name)}`}>
               <Button size="lg" className="mt-4" disabled={slotsRemaining === 0}>
-                {slotsRemaining === 0 ? "Complet" : "Activer mon profil — 350 $"}
+                {slotsRemaining === 0 ? "Complet" : CONTRACTOR_OFFER.ctaPrimary}
               </Button>
             </Link>
             <p className="text-xs text-muted-foreground">

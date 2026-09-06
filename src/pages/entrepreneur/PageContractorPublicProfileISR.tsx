@@ -15,6 +15,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import ModalProfileCompletionGate from "@/components/intent-funnel/ModalProfileCompletionGate";
+import { CONTRACTOR_OFFER } from "@/lib/copy/contractorOffer";
 
 const SLUG = "isolation-solution-royal";
 
@@ -680,7 +681,7 @@ function AdminCockpit({
                 href="/entrepreneurs/audit-ia"
                 className="block text-center rounded-[18px] bg-amber-300 px-5 py-3 text-sm font-semibold text-[#050816] hover:-translate-y-0.5 transition-all"
               >
-                Obtenir l'audit IA — activation 350$ (paiement unique)
+                {CONTRACTOR_OFFER.ctaPrimary}
               </a>
             </>
           )}
