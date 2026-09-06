@@ -165,11 +165,12 @@ export default function ContractorPublicExperience({ profileData, compact = fals
 
       <div className="space-y-4 px-4 py-5 sm:px-6">
         <section aria-labelledby="compatibility-title">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={openCompatibility}
             disabled={!!compatibility}
-            className="group w-full rounded-xl border border-primary/30 bg-primary/10 p-4 text-left transition-transform duration-300 enabled:hover:-translate-y-0.5 disabled:cursor-default"
+            className="group h-auto w-full justify-start whitespace-normal rounded-xl border border-primary/30 bg-primary/10 p-4 text-left transition-transform duration-300 enabled:hover:-translate-y-0.5 enabled:hover:bg-primary/10 disabled:cursor-default disabled:opacity-100"
           >
             <div className="flex items-center gap-4">
               <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-4 border-primary/30 bg-card shadow-glow">
@@ -183,7 +184,7 @@ export default function ContractorPublicExperience({ profileData, compact = fals
                 {!compatibility && <p className="mt-2 text-xs text-primary-tint">Clara complétera seulement les renseignements manquants.</p>}
               </div>
             </div>
-          </button>
+          </Button>
         </section>
 
         <section ref={(node) => { sectionRefs.current.services = node; }} className="scroll-mt-32 rounded-xl border border-border bg-card p-4" aria-labelledby="services-title">

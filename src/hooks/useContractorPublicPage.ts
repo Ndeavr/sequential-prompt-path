@@ -4,7 +4,23 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json, Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
+
+type PublicProfilePayload = {
+  contractor: Tables<"contractors">;
+  ai_profile?: Tables<"contractor_ai_profiles"> | null;
+  services?: Tables<"contractor_services">[];
+  service_areas?: Tables<"contractor_service_areas">[];
+  media?: Tables<"contractor_media">[];
+  credentials?: Tables<"contractor_credentials">[];
+  public_page?: Tables<"contractor_public_pages"> | null;
+  problem_links?: Array<Tables<"contractor_problem_links"> & { problem?: Tables<"home_problems"> }>;
+  comparables?: Array<Tables<"contractor_comparables"> & Partial<Tables<"contractors">>>;
+};
+
+const isPublicProfilePayload = (value: Json): value is Json & PublicProfilePayload =>
+  typeof value === "object" && value !== null && !Array.isArray(value) && "contractor" in value;
 
 export const useContractorFullProfile = (slugOrId: string | undefined) => {
   return useQuery({
@@ -17,7 +33,7 @@ export const useContractorFullProfile = (slugOrId: string | undefined) => {
         _slug: slugOrId,
       });
 
-      if (rpcData) return rpcData as any;
+      if (rpcData && isPublicProfilePayload(rpcData)) return rpcData;
 
       // Fallback: direct query by ID
       const { data: contractor, error } = await supabase
@@ -41,16 +57,16 @@ export const useContractorFullProfile = (slugOrId: string | undefined) => {
         ]);
 
       // Fetch comparable names
-      const compIds = (comparables.data ?? []).map((c: any) => c.comparable_contractor_id);
-      let compDetails: any[] = [];
+      const compIds = (comparables.data ?? []).map((c) => c.comparable_contractor_id);
+      let compDetails: Pick<Tables<"contractors">, "id" | "business_name" | "slug" | "specialty" | "city" | "aipp_score" | "rating" | "review_count" | "logo_url">[] = [];
       if (compIds.length > 0) {
         const { data: cd } = await supabase.from("contractors").select("id, business_name, slug, specialty, city, aipp_score, rating, review_count, logo_url").in("id", compIds);
         compDetails = cd ?? [];
       }
 
       // Fetch problem names
-      const problemIds = (problemLinks.data ?? []).map((p: any) => p.problem_id);
-      let problemDetails: any[] = [];
+      const problemIds = (problemLinks.data ?? []).map((p) => p.problem_id);
+      let problemDetails: Pick<Tables<"home_problems">, "id" | "name_fr" | "slug" | "icon_name">[] = [];
       if (problemIds.length > 0) {
         const { data: pd } = await supabase.from("home_problems").select("id, name_fr, slug, icon_name").in("id", problemIds);
         problemDetails = pd ?? [];
@@ -64,13 +80,13 @@ export const useContractorFullProfile = (slugOrId: string | undefined) => {
         media: media.data ?? [],
         credentials: credentials.data ?? [],
         public_page: publicPage.data,
-        problem_links: (problemLinks.data ?? []).map((pl: any) => ({
+        problem_links: (problemLinks.data ?? []).map((pl) => ({
           ...pl,
-          problem: problemDetails.find((p: any) => p.id === pl.problem_id),
+          problem: problemDetails.find((p) => p.id === pl.problem_id),
         })),
-        comparables: (comparables.data ?? []).map((c: any) => ({
+        comparables: (comparables.data ?? []).map((c) => ({
           ...c,
-          ...compDetails.find((cd: any) => cd.id === c.comparable_contractor_id),
+          ...compDetails.find((cd) => cd.id === c.comparable_contractor_id),
         })),
       };
     },

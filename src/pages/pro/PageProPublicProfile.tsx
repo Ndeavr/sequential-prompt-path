@@ -51,8 +51,8 @@ export default function PageProPublicProfile() {
 
         <div className="relative mx-auto w-full max-w-[430px] lg:rotate-[3deg] lg:transition-transform lg:duration-500 lg:hover:rotate-0">
           <div className="absolute -inset-8 -z-10 rounded-[4rem] bg-primary/15 blur-3xl" />
-          <div className="rounded-[2.8rem] border-[9px] border-[#182031] bg-[#182031] p-1.5 shadow-[0_45px_90px_-30px_rgba(0,0,0,0.8),0_12px_35px_-15px_hsl(var(--primary)/0.45)]">
-            <div className="mx-auto mb-1 h-5 w-24 rounded-full bg-[#070b13]" aria-hidden="true" />
+          <div className="rounded-[2.8rem] border-[9px] border-foreground/20 bg-foreground/20 p-1.5 shadow-[0_45px_90px_-30px_hsl(var(--foreground)/0.8),0_12px_35px_-15px_hsl(var(--primary)/0.45)]">
+            <div className="mx-auto mb-1 h-5 w-24 rounded-full bg-background" aria-hidden="true" />
             <div className="h-[73vh] min-h-[620px] overflow-y-auto rounded-[2rem] bg-background [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <ContractorPublicExperience profileData={data} compact />
             </div>

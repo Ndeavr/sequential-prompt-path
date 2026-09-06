@@ -6,7 +6,7 @@
 - [x] Activer Aperçu, Services, Territoire, Réalisations, Vérifications et Avis; conserver uniquement « Planifier un rendez-vous » comme bouton public.
 - [x] Afficher le score de compatibilité réel du propriétaire/projet actif ou « — % » avec ouverture contextuelle de Clara.
 - [x] Séparer Avis UNPRO et Avis Google avec provenance explicite et aucune valeur inventée.
-- [ ] Relier Modifier → formulaire prérempli → Enregistrer → aperçu avec confirmation, puis valider mobile/tablette/ordinateur.
+- [x] Relier Modifier → formulaire prérempli → Enregistrer → aperçu avec confirmation, puis valider mobile/tablette/ordinateur.
 
 ## P0 — 6 régressions Project Monitoring (2026-09-08) — TERMINÉ, non publié
 

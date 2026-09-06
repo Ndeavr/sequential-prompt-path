@@ -13,6 +13,7 @@ import { useContractorProfile, useUpsertContractorProfile } from "@/hooks/useCon
 import { toast } from "sonner";
 import { RbqStatusBadge } from "@/features/compliance/RbqStatusBadge";
 import { getRbqCompliance, type RbqStatus } from "@/lib/compliance/rbqStatus";
+import type { Tables } from "@/integrations/supabase/types";
 
 const ProProfile = () => {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ const ProProfile = () => {
 
   useEffect(() => {
     if (profile) {
-      const p = profile as any;
+      const p: Tables<"contractors"> = profile;
       setForm({
         business_name: p.business_name || "",
         specialty: p.specialty || "",
@@ -63,7 +64,7 @@ const ProProfile = () => {
       // "verified" and "expired" are admin/system controlled.
       const submitStatus: RbqStatus =
         form.rbq_compliance_status === "verified" || form.rbq_compliance_status === "expired"
-          ? (profile as any)?.rbq_compliance_status || "in_progress"
+          ? profile?.rbq_compliance_status || "in_progress"
           : form.rbq_compliance_status;
       const savedProfile = await upsert.mutateAsync({
         ...form,
@@ -81,7 +82,7 @@ const ProProfile = () => {
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  const currentDbStatus = (profile as any)?.rbq_compliance_status as RbqStatus | undefined;
+  const currentDbStatus = profile?.rbq_compliance_status as RbqStatus | undefined;
   const statusLocked = currentDbStatus === "verified" || currentDbStatus === "expired";
 
   return (
