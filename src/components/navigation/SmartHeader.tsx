@@ -71,9 +71,17 @@ const SmartHeader = () => {
 
   return (
     <>
-      <header className="glass-nav sticky top-0 z-[60] pointer-events-auto">
-        <div className="mx-auto max-w-7xl px-1 sm:px-4 lg:px-6">
-          <div className="flex items-center justify-between h-10 sm:h-12 lg:h-14">
+      <header
+        className="glass-nav sticky top-0 z-[60] pointer-events-auto"
+        style={{
+          paddingTop: "max(env(safe-area-inset-top), 0px)",
+          paddingLeft: "env(safe-area-inset-left)",
+          paddingRight: "env(safe-area-inset-right)",
+        }}
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-4 lg:px-6">
+          <div className="flex items-center justify-between h-12 py-1 sm:h-14 lg:h-14">
+
             {/* Back button */}
             {!isHome && (
               <Button
