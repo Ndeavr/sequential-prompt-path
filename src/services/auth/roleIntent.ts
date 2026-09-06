@@ -7,10 +7,8 @@
  * phone OTP, magic link) in both sessionStorage and localStorage so it survives
  * a new tab, a refresh, or the Supabase auth handshake clearing session storage.
  *
- * After auth it is applied idempotently to:
- *  - `user_roles.role` (strict `app_role` enum: homeowner | contractor | admin | partner | affiliate)
- *  - `profiles.account_type` (free-text, mirrors the canonical role)
- *  - a `contractors` stub row for contractor intents
+ * After auth it is applied idempotently by the existing `matching-profile`
+ * server function. Privileged roles are never accepted from browser intent.
  *
  * Legacy key `unpro_prelogin_role` is kept as the storage key for backward
  * compatibility with pages that already write it.
@@ -66,6 +64,16 @@ export interface RoleIntentMeta {
   accountType: string;
   propertyType?: string;
   returnPath?: string;
+  token?: string;
+  prospectId?: string;
+  leadId?: string;
+  affiliateRef?: string;
+  campaignId?: string;
+  onboardingStep?: string;
+  businessName?: string;
+  city?: string;
+  trade?: string;
+  attribution?: Record<string, string>;
   timestamp: number;
 }
 
@@ -96,7 +104,7 @@ function clearBoth(key: string) {
 /** Persist the selected role BEFORE any auth redirect. */
 export function saveRoleIntent(
   rawRole: string,
-  extra: { propertyType?: string; returnPath?: string } = {},
+  extra: Omit<Partial<RoleIntentMeta>, "rawRole" | "role" | "accountType" | "timestamp"> = {},
 ): RoleIntentMeta | null {
   const role = toCanonicalRole(rawRole);
   if (!role) return null;
@@ -106,6 +114,16 @@ export function saveRoleIntent(
     accountType: toAccountType(rawRole),
     propertyType: extra.propertyType,
     returnPath: extra.returnPath,
+    token: extra.token,
+    prospectId: extra.prospectId,
+    leadId: extra.leadId,
+    affiliateRef: extra.affiliateRef,
+    campaignId: extra.campaignId,
+    onboardingStep: extra.onboardingStep,
+    businessName: extra.businessName,
+    city: extra.city,
+    trade: extra.trade,
+    attribution: extra.attribution,
     timestamp: Date.now(),
   };
   // Legacy key holds the raw role so existing readers keep working.
@@ -152,43 +170,46 @@ export async function applyRoleIntent(
   const intent = meta ?? readRoleIntent();
   if (!intent) return { role: null, applied: false };
 
-  const { error: roleErr } = await supabase
-    .from("user_roles")
-    .upsert({ user_id: user.id, role: intent.role as never }, { onConflict: "user_id,role" });
-
-  if (roleErr) {
-    console.error("[roleIntent] user_roles upsert failed", roleErr);
-    return { role: intent.role, applied: false, error: roleErr.message };
-  }
-
-  try {
-    await supabase
-      .from("profiles")
-      .upsert(
-        {
-          user_id: user.id,
-          account_type: intent.accountType,
-        } as never,
-        { onConflict: "user_id", ignoreDuplicates: false },
-      );
-  } catch (e) {
-    console.warn("[roleIntent] profile account_type upsert non-fatal", e);
-  }
-
   if (intent.role === "contractor") {
-    try {
-      await supabase
-        .from("contractors")
-        .upsert({ user_id: user.id, email: user.email || "" } as never, { onConflict: "user_id" });
-      void logFunnelEvent({
-        event_type: "contractor_account_created",
-        step: "role_intent",
-        email: user.email ?? null,
-        metadata: { return_path: intent.returnPath ?? null },
-      });
-    } catch (e) {
-      console.warn("[roleIntent] contractor stub non-fatal", e);
+    const { data, error } = await supabase.functions.invoke("matching-profile", {
+      body: {
+        action: "activate_account",
+        activation_token: intent.token ?? null,
+        context: {
+          prospect_id: intent.prospectId ?? null,
+          lead_id: intent.leadId ?? null,
+          affiliate_ref: intent.affiliateRef ?? null,
+          campaign_id: intent.campaignId ?? null,
+          onboarding_step: intent.onboardingStep ?? null,
+          business_name: intent.businessName ?? null,
+          city: intent.city ?? null,
+          trade: intent.trade ?? null,
+          utm: intent.attribution ?? {},
+        },
+      },
+    });
+    if (error || !(data as { ok?: boolean } | null)?.ok) {
+      const message = error?.message || (data as { error?: string; reason?: string } | null)?.error ||
+        (data as { reason?: string } | null)?.reason || "contractor_activation_failed";
+      console.error("[roleIntent] secure contractor activation failed", message);
+      return { role: intent.role, applied: false, error: message };
     }
+    const result = data as { contractor_id?: string; business_name?: string };
+    await logFunnelEvent({
+      event_type: "contractor_profile_created",
+      step: "role_intent",
+      contractor_id: result.contractor_id ?? null,
+      email: user.email ?? null,
+      metadata: { return_path: intent.returnPath ?? null, business_name: result.business_name ?? null },
+    });
+  } else if (intent.role === "homeowner") {
+    const { error } = await supabase.from("profiles").upsert({
+      user_id: user.id,
+      account_type: intent.accountType,
+    } as never, { onConflict: "user_id", ignoreDuplicates: false });
+    if (error) return { role: intent.role, applied: false, error: error.message };
+  } else {
+    return { role: intent.role, applied: false, error: "role_requires_server_approval" };
   }
 
 
