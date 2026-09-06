@@ -16,5 +16,7 @@ export default function PageAffiliateAliasRedirect() {
   if (!slug) return <Navigate to="/affilies" replace />;
 
   const target = `/${slug.toLowerCase()}${location.search}${location.hash}`;
-  return <Navigate to={target} replace />;
+  // `affiliateAlias` indique à la route canonique que l'intention était
+  // explicitement affiliée : un slug inconnu doit dire « introuvable ».
+  return <Navigate to={target} replace state={{ affiliateAlias: true }} />;
 }
