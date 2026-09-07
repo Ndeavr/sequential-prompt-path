@@ -196,7 +196,7 @@ async function ensureActivationLink(
 async function sendEmailViaResend(
   url: string,
   serviceKey: string,
-  args: { to: string; businessName: string; link: string; prospectId: string },
+  args: { to: string; businessName: string; link: string; prospectId: string; freeYear?: FreeYearContext | null },
 ): Promise<{ ok: boolean; message_id?: string; resend_id?: string; error?: string }> {
   try {
     const r = await fetch(`${url}/functions/v1/outreach-resend-send`, {
@@ -204,12 +204,15 @@ async function sendEmailViaResend(
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
       body: JSON.stringify({
         to: args.to,
-        subject: EMAIL_SUBJECT(args.businessName),
-        html: EMAIL_HTML(args.businessName, args.link),
+        subject: EMAIL_SUBJECT(args.businessName, args.freeYear),
+        html: EMAIL_HTML(args.businessName, args.link, args.freeYear),
         cta_url: args.link,
-        template_name: "acquisition_onboarding_v1",
+        template_name: args.freeYear ? "local_service_free_year_v1" : "acquisition_onboarding_v1",
         message_id: `acq-${args.prospectId}-${Date.now()}`,
-        tags: { prospect_id: args.prospectId, template: "acquisition_onboarding_v1" },
+        tags: {
+          prospect_id: args.prospectId,
+          template: args.freeYear ? "local_service_free_year_v1" : "acquisition_onboarding_v1",
+        },
       }),
     });
     const body = await r.json().catch(() => ({}));
@@ -600,6 +603,7 @@ Deno.serve(async (req) => {
           businessName: p.business_name,
           link,
           prospectId: p.id,
+          freeYear,
         });
         if (emailRes.ok) {
           channelUsed = "email";
