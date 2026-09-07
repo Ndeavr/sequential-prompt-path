@@ -5,6 +5,7 @@
  */
 import { Link } from "react-router-dom";
 import { ArrowRight, Mic } from "lucide-react";
+import { BRAND } from "@/config/branding";
 
 const BODY_LINES = [
   "Elle conserve son historique.",
@@ -40,6 +41,14 @@ export default function SectionMemoireMaison() {
       />
 
       <div className="relative mx-auto max-w-3xl px-6 py-24 md:py-32 text-center">
+        <img
+          src={BRAND.logoIconPassport}
+          alt="Passeport Maison UNPRO"
+          width={72}
+          height={72}
+          className="mx-auto mb-8 h-16 w-16 md:h-[72px] md:w-[72px] object-contain"
+          draggable={false}
+        />
         <h2 className="text-4xl md:text-6xl font-semibold tracking-[-0.03em] text-foreground leading-[1.05]">
           Votre maison se souvient.
         </h2>
