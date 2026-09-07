@@ -365,9 +365,9 @@ export default function VerifyLandingPage() {
               <Lock className="w-4 h-4 text-muted-foreground/50" />
               <span className="text-xs font-semibold text-muted-foreground/50 uppercase tracking-wider">Engagement UnPRO</span>
             </div>
-            <p className="text-xs text-muted-foreground/60 max-w-md mx-auto leading-relaxed">
-              UnPRO n'invente jamais les données manquantes. En cas d'ambiguïté,
-              nous demandons plus de preuves plutôt que de deviner.
+            <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
+              Chaque information affichée provient de sources publiques
+              identifiées. En cas d'ambiguïté, nous demandons plus de preuves.
               Ces résultats sont estimatifs et ne constituent pas une certification légale.
             </p>
           </div>

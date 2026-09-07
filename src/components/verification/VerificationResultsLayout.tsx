@@ -193,10 +193,10 @@ export default function VerificationResultsLayout({ output, onUploadEvidence, lo
 
       {/* 10. Estimative disclaimer */}
       <div className="rounded-xl border border-border/30 bg-muted/20 p-3 text-center">
-        <p className="text-[11px] text-muted-foreground/60 leading-relaxed max-w-md mx-auto">
+        <p className="text-[11px] text-muted-foreground leading-relaxed max-w-md mx-auto">
           Ces scores sont estimatifs, basés sur les données publiques détectées au moment de l'analyse.
           Ils ne constituent pas une certification légale ni une garantie de fiabilité.
-          UnPRO n'invente jamais les données manquantes.
+          Chaque information affichée provient de sources publiques identifiées.
         </p>
       </div>
     </motion.div>
