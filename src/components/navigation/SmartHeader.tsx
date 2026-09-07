@@ -105,7 +105,6 @@ const SmartHeader = () => {
             <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0" style={{ minWidth: "fit-content" }}>
               <UnproLogo
                 unsized
-                variant={isHome ? "rubber" : "primary"}
                 tone={isHome ? "light" : "auto"}
                 className="hidden min-[360px]:block h-[29px] sm:h-[31px] md:h-[38px] w-auto max-w-[128px] sm:max-w-none min-h-0 transition-transform duration-300 group-hover:-translate-y-0.5"
               />
