@@ -159,7 +159,7 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
               ? `Nous vous envoyons un code à 6 chiffres au ${maskedContact}. Confirmez le numéro ci-dessous.`
               : "Nous vous envoyons un code à 6 chiffres par texto. Aucun mot de passe."}
           </p>
-          <PhoneOtpForm className="mt-5" onSuccess={() => void claim()} />
+          <PhoneOtpForm className="mt-5" attribution={attribution} onSuccess={() => void claim()} />
         </>
       ) : (
         <>
