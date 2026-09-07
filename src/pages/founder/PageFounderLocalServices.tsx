@@ -70,6 +70,7 @@ export default function PageFounderLocalServices() {
   const [otherService, setOtherService] = useState("");
   const [city, setCity] = useState("");
   const [eligibility, setEligibility] = useState<Eligibility>({ state: "idle" });
+  const [showBusinessForm, setShowBusinessForm] = useState(false);
 
   const [businessName, setBusinessName] = useState("");
   const [contactName, setContactName] = useState("");
@@ -131,12 +132,14 @@ export default function PageFounderLocalServices() {
     setCategorySlug(slug);
     if (slug !== OTHER_SLUG) setOtherService("");
     setResult(null);
+    setShowBusinessForm(false);
     void checkEligibility(slug, city);
   };
 
   const onCity = (value: string) => {
     setCity(value);
     setResult(null);
+    setShowBusinessForm(false);
     void checkEligibility(categorySlug, value);
   };
 
@@ -188,7 +191,7 @@ export default function PageFounderLocalServices() {
     !submitting;
 
   return (
-    <MainLayout>
+    <MainLayout hideMemorySection>
       <Helmet>
         <title>Membre fondateur UNPRO — Services résidentiels</title>
         <meta
@@ -340,8 +343,26 @@ export default function PageFounderLocalServices() {
                   </p>
                 )}
 
-                {/* Step 3: business info (only once eligible) */}
-                {eligibility.state === "eligible" && (
+                {/* Step 3: continue only once eligible */}
+                {eligibility.state === "eligible" && !showBusinessForm && (
+                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
+                    <button
+                      onClick={() => setShowBusinessForm(true)}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-[15px] font-semibold text-primary-foreground shadow-md shadow-primary/25 transition-transform hover:-translate-y-0.5"
+                    >
+                      Continuer
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                    {eligibility.cityRemaining !== null && eligibility.cityRemaining <= 3 && (
+                      <p className="mt-3 text-center text-[13px] font-medium text-primary">
+                        Il ne reste que {eligibility.cityRemaining} place{eligibility.cityRemaining > 1 ? "s" : ""} de membre fondateur.
+                      </p>
+                    )}
+                  </motion.div>
+                )}
+
+                {/* Step 4: business info (only once continued) */}
+                {eligibility.state === "eligible" && showBusinessForm && (
                   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-6 space-y-4">
                     <div>
                       <label className="block text-[13px] font-semibold text-foreground">Nom de l'entreprise</label>

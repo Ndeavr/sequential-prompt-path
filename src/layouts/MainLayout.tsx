@@ -32,9 +32,10 @@ function DeferredJourneyTracker() {
 
 interface MainLayoutProps {
   children: ReactNode;
+  hideMemorySection?: boolean;
 }
 
-const MainLayout = ({ children }: MainLayoutProps) => {
+const MainLayout = ({ children, hideMemorySection }: MainLayoutProps) => {
   const { pathname } = useLocation();
   const { lang } = useLanguage();
 
@@ -64,7 +65,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       <PageShell variant="marketing" dockSafe className="flex-1 relative z-0">{children}</PageShell>
 
       {showSEOGrid && <FooterSEOGrid />}
-      <SectionMemoireMaison />
+      {!hideMemorySection && <SectionMemoireMaison />}
       <SiteFooterPremium />
       {/* Global dock-safe spacer — guarantees footer + last block clear
           the fixed BottomDock on mobile even if body:has() is unsupported. */}
