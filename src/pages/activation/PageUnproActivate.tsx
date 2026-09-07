@@ -245,24 +245,40 @@ export default function PageUnproActivate() {
               </div>
             )}
 
-            {/* ---- AU-DESSUS DE LA LIGNE DE FLOTTAISON : la valeur gratuite d'abord.
-                 On ne demande jamais d'argent avant d'avoir montré ce qu'UNPRO
-                 sait déjà de l'entreprise (données réelles uniquement). */}
+            {/* ---- MOBILE-FIRST : titre, résumé compact, CTA UNIQUE.
+                 Tout le reste (score, avis, faits) est une PREUVE, placée
+                 sous le CTA. Aucune donnée inventée. */}
             <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur">
               <div className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-400/12 px-2.5 py-1 text-[10px] uppercase tracking-wider text-emerald-200">
                 <Building2 className="h-3 w-3" /> Profil déjà préparé par UNPRO
               </div>
 
-              {profile ? (
-                <CompanyIdentityHeader profile={profile} />
-              ) : (
-                <h1 className="text-3xl font-semibold leading-tight text-white">{company}</h1>
-              )}
+              <h1 className="text-[27px] font-semibold leading-[1.15] tracking-[-0.03em] text-white sm:text-4xl">
+                Activez le profil de <span className="text-sky-300">{company}</span>
+              </h1>
 
-              <p className="mt-4 text-[15px] leading-relaxed text-white/85">
-                Curieux de savoir si votre entreprise est recommandée par l'IA&nbsp;? Voici gratuitement
-                le profil et le score que nous avons déjà constitués pour {company}.
-              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {[
+                  profile?.trade ?? prospect.category,
+                  region ?? profile?.city ?? prospect.city,
+                  sourceLabel,
+                ]
+                  .filter(Boolean)
+                  .map((chip) => (
+                    <span
+                      key={String(chip)}
+                      className="rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 text-[12px] text-white/80"
+                    >
+                      {chip}
+                    </span>
+                  ))}
+              </div>
+
+              {offer?.label && (
+                <p className="mt-4 rounded-2xl border border-emerald-300/25 bg-emerald-400/10 p-3.5 text-[13.5px] leading-relaxed text-emerald-100">
+                  {offer.label}
+                </p>
+              )}
 
               {profile?.website_host && (
                 <a
@@ -277,7 +293,20 @@ export default function PageUnproActivate() {
               )}
             </div>
 
-            {/* Le score gratuit : la preuve avant la demande. */}
+            {/* CTA UNIQUE — l'activation se termine ici, sans quitter la page. */}
+            {token && (
+              <div ref={offerRef}>
+                <ActivationClaimPanel
+                  token={token}
+                  prospectId={prospect.id ?? null}
+                  company={company}
+                  maskedContact={contact?.masked ?? null}
+                  preview={preview}
+                />
+              </div>
+            )}
+
+            {/* ---- PREUVES (sous le CTA) : le score gratuit et les faits réels. */}
             {profile && <ReadinessMeter profile={profile} onCorrect={handleCorrect} tone="activation" />}
             {profile && <ReviewSignalCard profile={profile} />}
             {profile && <FactGrid facts={profile.facts} />}
@@ -288,6 +317,7 @@ export default function PageUnproActivate() {
                 quelques secondes.
               </div>
             )}
+
 
             {/* ------------------------------- ENSUITE seulement : l'offre + le CTA */}
             <div ref={offerRef} className="rounded-3xl border border-white/10 bg-white/[0.05] p-6 backdrop-blur">
