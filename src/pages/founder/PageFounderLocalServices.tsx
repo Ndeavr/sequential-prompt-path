@@ -19,6 +19,7 @@ import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, BadgeCheck, Building2, MapPin, Sparkles } from "lucide-react";
 
+import founderVideo from "@/assets/founder-video.mp4.asset.json";
 import MainLayout from "@/layouts/MainLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPhoneDisplay, formatPhoneFinal } from "@/utils/formatPhone";
@@ -216,6 +217,15 @@ export default function PageFounderLocalServices() {
               Soyez parmi les 10 premiers membres UNPRO de votre ville et profitez de{" "}
               <span className="text-primary">12 mois gratuitement</span>.
             </h1>
+            <video
+              src={founderVideo.url}
+              autoPlay
+              muted
+              loop
+              playsInline
+              controls
+              className="mx-auto mt-6 w-full max-w-xl rounded-2xl shadow-lg"
+            />
             <p className="mx-auto mt-5 max-w-xl text-[16px] leading-relaxed text-muted-foreground">
               Vous offrez des services de nettoyage, d'entretien, lavage de vitres ou
               un autre service à domicile&nbsp;? UNPRO aide votre
