@@ -1,0 +1,1 @@
+revoke execute on function public.set_local_service_category() from anon, authenticated, public;
