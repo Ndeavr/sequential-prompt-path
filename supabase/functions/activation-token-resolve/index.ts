@@ -302,8 +302,67 @@ Deno.serve(async (req) => {
     const okCount = readinessChecks.filter((c) => c.ok).length;
     const readinessScore = Math.round((okCount / readinessChecks.length) * 100);
 
+    // ------------------------------------------------- claim state + contact
+    // Une invitation déjà utilisée doit afficher un état approprié, jamais un
+    // second parcours d'activation.
+    let claimed = false;
+    try {
+      const { data: claim } = await supabase
+        .from("contractor_prospect_claims")
+        .select("id, claimed_at")
+        .eq("prospect_id", prospect.id)
+        .maybeSingle();
+      claimed = Boolean(claim);
+    } catch { /* non-blocking */ }
+
+    // Coordonnée déjà connue — jamais renvoyée en clair, seulement masquée.
+    const phoneE164 = (prospect.phone_e164 ?? "").trim() || null;
+    const emailAddr = (prospect.email ?? "").trim() || null;
+    const maskPhone = (p: string) => `••• ••• ${p.slice(-4)}`;
+    const maskEmail = (e: string) => {
+      const [u, d] = e.split("@");
+      if (!d) return "•••";
+      return `${u.slice(0, 2)}${"•".repeat(Math.max(1, u.length - 2))}@${d}`;
+    };
+    const contact = {
+      channel: phoneE164 ? "phone" : emailAddr ? "email" : null,
+      masked: phoneE164 ? maskPhone(phoneE164) : emailAddr ? maskEmail(emailAddr) : null,
+      // Derniers chiffres seulement : suffisant pour préremplir sans exposer.
+      phone_last4: phoneE164 ? phoneE164.slice(-4) : null,
+      has_phone: Boolean(phoneE164),
+      has_email: Boolean(emailAddr),
+    };
+
+    // Offre rattachée à l'invitation — affichée UNIQUEMENT si enregistrée.
+    let offer: { free_appointments: number; label: string } | null = null;
+    try {
+      if (display) {
+        const { data: offers } = await supabase
+          .from("affiliate_free_appointment_offers")
+          .select("free_appointments, status, expires_at, city")
+          .ilike("company_name", nameFilter)
+          .in("status", ["offered", "accepted", "granted"])
+          .limit(3);
+        const live = (offers ?? []).filter((o) => {
+          const notExpired = !o.expires_at || new Date(o.expires_at as string).getTime() > Date.now();
+          const cityOk = !prospect.city || !o.city || String(o.city).toLowerCase() === prospect.city.toLowerCase();
+          return notExpired && cityOk && Number(o.free_appointments ?? 0) > 0;
+        });
+        if (live.length === 1) {
+          const n = Number(live[0].free_appointments);
+          offer = {
+            free_appointments: n,
+            label: `Vos ${n} premiers rendez-vous qualifiés sont gratuits. Ensuite, vous décidez.`,
+          };
+        }
+      }
+    } catch { /* non-blocking */ }
+
+    const sourceStatus = (prospect.verification_status ?? "").toString() || null;
+
     const landingVariant = bucket(prospect.id, ["profile_first", "value_first"]);
     const profileVariant = bucket(prospect.id + "p", ["standard"]);
+
 
     // Persist the variant assignment (idempotent) so the Conversion Lab can compare.
     if (!preview) {
@@ -386,14 +445,21 @@ Deno.serve(async (req) => {
       first_click: !resolved.clicked_at,
       landing_variant: landingVariant,
       profile_variant: profileVariant,
+      claimed,
+      contact,
+      offer,
+      source_status: sourceStatus,
+      region,
       prospect: {
         id: prospect.id,
         business_name: display,
         city: prospect.city ?? null,
+        region: region ?? null,
         category: trade,
         email: prospect.email ?? null,
         website_url: prospect.website_url ?? null,
       },
+
       profile: {
         display_name: display,
         legal_name: legal,
