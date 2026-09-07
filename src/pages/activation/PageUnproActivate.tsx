@@ -10,22 +10,17 @@
  * (Vérifié / Déclaré / Déduit) et les sections vides ne sont pas rendues.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Loader2, ShieldCheck, ArrowRight, Check, Globe, Building2 } from "lucide-react";
+import { Loader2, ArrowRight, Globe, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import CompanyIdentityHeader from "@/features/activationProfile/components/CompanyIdentityHeader";
 import FactGrid from "@/features/activationProfile/components/FactGrid";
 import ReviewSignalCard from "@/features/activationProfile/components/ReviewSignalCard";
 import ReadinessMeter from "@/features/activationProfile/components/ReadinessMeter";
+import ActivationClaimPanel from "@/features/activationProfile/components/ActivationClaimPanel";
 import { useActivationTracking } from "@/features/activationProfile/useActivationTracking";
 import type { ActivationProfile, ResolvedProspect } from "@/features/activationProfile/types";
-import { CONTRACTOR_OFFER } from "@/lib/copy/contractorOffer";
-import { buildContractorEntryUrl, CONTRACTOR_ACTIVATION_PATH } from "@/config/contractorFunnel";
-import { readAttribution } from "@/config/contractorFunnel";
-import { saveRoleIntent } from "@/services/auth/roleIntent";
-import { saveAuthIntent } from "@/services/auth/authIntentService";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 
 const BENEFITS = [
@@ -34,6 +29,11 @@ const BENEFITS = [
   "Rendez-vous exclusifs, jamais partagés avec 3 concurrents",
   "Aucun renouvellement automatique",
 ];
+
+interface ResolvedContact {
+  masked: string | null;
+  channel: string | null;
+}
 
 export default function PageUnproActivate() {
   const { token } = useParams<{ token: string }>();
@@ -46,13 +46,15 @@ export default function PageUnproActivate() {
   const [state, setState] = useState<"loading" | "ready" | "invalid" | "error">("loading");
   const [prospect, setProspect] = useState<ResolvedProspect | null>(null);
   const [profile, setProfile] = useState<ActivationProfile | null>(null);
-  const navigate = useNavigate();
+  const [contact, setContact] = useState<ResolvedContact | null>(null);
+  const [offer, setOffer] = useState<{ label: string } | null>(null);
+  const [region, setRegion] = useState<string | null>(null);
+  const [sourceLabel, setSourceLabel] = useState<string | null>(null);
   const [reason, setReason] = useState<string | null>(null);
   const [correctionSent, setCorrectionSent] = useState(false);
-  // Le CTA collant n'apparaît qu'une fois la valeur gratuite consultée.
-  const [showStickyCta, setShowStickyCta] = useState(false);
   const offerRef = useRef<HTMLDivElement | null>(null);
   const engagedRef = useRef(false);
+
 
 
   const track = useActivationTracking(token, preview);
@@ -86,13 +88,34 @@ export default function PageUnproActivate() {
         }
         setProspect(data.prospect as ResolvedProspect);
         setProfile((data.profile as ActivationProfile) ?? null);
+        setContact((data.contact as ResolvedContact) ?? null);
+        setOffer((data.offer as { label: string } | null) ?? null);
+        setRegion((data.region as string | null) ?? null);
+        setSourceLabel(
+          data.source_status === "verified"
+            ? "Source publique vérifiée"
+            : data.source_status
+              ? "Source à confirmer"
+              : null,
+        );
         setState("ready");
+        const prospectId = (data.prospect?.id as string | undefined) ?? null;
         void logFunnelEvent({
-          event_type: "activation_page_viewed",
-          step: "company_value",
-          metadata: { prospect_id: data.prospect?.id ?? null },
+          event_type: "activation_link_opened",
+          step: "activation",
+          prospect_id: prospectId,
+          token,
           is_test: preview,
         });
+        void logFunnelEvent({
+          event_type: "activation_page_rendered",
+          step: "activation",
+          prospect_id: prospectId,
+          token,
+          metadata: { claimed: Boolean(data.claimed) },
+          is_test: preview,
+        });
+
       } catch (e) {
         if (!cancelled) {
           console.error("[ACTIVATION_RESOLVE_THREW]", e);
@@ -116,8 +139,6 @@ export default function PageUnproActivate() {
     };
     const onScroll = () => {
       if (window.scrollY > 120) markEngaged();
-      const top = offerRef.current?.getBoundingClientRect().top;
-      setShowStickyCta(typeof top === "number" && top < window.innerHeight * 0.9);
     };
     const timer = window.setTimeout(markEngaged, 6000);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -132,54 +153,8 @@ export default function PageUnproActivate() {
     setCorrectionSent(true);
   }, [track, profile]);
 
-  /**
-   * Preserve the outreach token while moving into the canonical value-first flow.
-   */
-  async function handleActivate(placement: string) {
-    if (!prospect) return;
-    track("profile_continue_clicked", { placement });
-    handleCustomize();
-  }
-
-  /** Action secondaire : calculer une garantie personnalisée (jeton conservé). */
-  function handleCustomize() {
-    const attribution = readAttribution();
-    const params = new URLSearchParams(attribution);
-    if (token) params.set("t", token);
-    const trade = profile?.trade ?? prospect?.category ?? "";
-    const city = profile?.city ?? prospect?.city ?? "";
-    if (trade) params.set("trade", trade);
-    if (city) params.set("city", city);
-    if (prospect?.id) params.set("prospect_id", prospect.id);
-    if (company) params.set("entreprise", company);
-    if (trade) params.set("metier", trade);
-    if (city) params.set("ville", city);
-    params.set("step", "profile");
-    const returnPath = `${CONTRACTOR_ACTIVATION_PATH}?${params.toString()}`;
-    saveRoleIntent("contractor", {
-      returnPath,
-      token,
-      prospectId: prospect?.id,
-      affiliateRef: attribution.aff ?? attribution.affiliate ?? attribution.ref,
-      campaignId: attribution.campaign_id ?? attribution.campaign ?? attribution.utm_campaign,
-      onboardingStep: "profile",
-      businessName: company,
-      city,
-      trade,
-      attribution,
-    });
-    saveAuthIntent({ returnPath, action: "contractor_activation", roleHint: "contractor", metadata: attribution });
-    void logFunnelEvent({
-      event_type: "activation_cta_clicked",
-      step: "profile_activation",
-      metadata: { prospect_id: prospect?.id ?? null },
-      is_test: preview,
-    });
-    navigate(buildContractorEntryUrl(Object.fromEntries(params), CONTRACTOR_ACTIVATION_PATH));
-  }
-
-
   const company = profile?.display_name ?? prospect?.business_name?.trim() ?? "votre entreprise";
+
   const canceled =
     typeof window !== "undefined" && new URLSearchParams(window.location.search).get("canceled") === "1";
 
@@ -245,24 +220,40 @@ export default function PageUnproActivate() {
               </div>
             )}
 
-            {/* ---- AU-DESSUS DE LA LIGNE DE FLOTTAISON : la valeur gratuite d'abord.
-                 On ne demande jamais d'argent avant d'avoir montré ce qu'UNPRO
-                 sait déjà de l'entreprise (données réelles uniquement). */}
+            {/* ---- MOBILE-FIRST : titre, résumé compact, CTA UNIQUE.
+                 Tout le reste (score, avis, faits) est une PREUVE, placée
+                 sous le CTA. Aucune donnée inventée. */}
             <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur">
               <div className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-400/12 px-2.5 py-1 text-[10px] uppercase tracking-wider text-emerald-200">
                 <Building2 className="h-3 w-3" /> Profil déjà préparé par UNPRO
               </div>
 
-              {profile ? (
-                <CompanyIdentityHeader profile={profile} />
-              ) : (
-                <h1 className="text-3xl font-semibold leading-tight text-white">{company}</h1>
-              )}
+              <h1 className="text-[27px] font-semibold leading-[1.15] tracking-[-0.03em] text-white sm:text-4xl">
+                Activez le profil de <span className="text-sky-300">{company}</span>
+              </h1>
 
-              <p className="mt-4 text-[15px] leading-relaxed text-white/85">
-                Curieux de savoir si votre entreprise est recommandée par l'IA&nbsp;? Voici gratuitement
-                le profil et le score que nous avons déjà constitués pour {company}.
-              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {[
+                  profile?.trade ?? prospect.category,
+                  region ?? profile?.city ?? prospect.city,
+                  sourceLabel,
+                ]
+                  .filter(Boolean)
+                  .map((chip) => (
+                    <span
+                      key={String(chip)}
+                      className="rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 text-[12px] text-white/80"
+                    >
+                      {chip}
+                    </span>
+                  ))}
+              </div>
+
+              {offer?.label && (
+                <p className="mt-4 rounded-2xl border border-emerald-300/25 bg-emerald-400/10 p-3.5 text-[13.5px] leading-relaxed text-emerald-100">
+                  {offer.label}
+                </p>
+              )}
 
               {profile?.website_host && (
                 <a
@@ -277,7 +268,20 @@ export default function PageUnproActivate() {
               )}
             </div>
 
-            {/* Le score gratuit : la preuve avant la demande. */}
+            {/* CTA UNIQUE — l'activation se termine ici, sans quitter la page. */}
+            {token && (
+              <div ref={offerRef}>
+                <ActivationClaimPanel
+                  token={token}
+                  prospectId={prospect.id ?? null}
+                  company={company}
+                  maskedContact={contact?.masked ?? null}
+                  preview={preview}
+                />
+              </div>
+            )}
+
+            {/* ---- PREUVES (sous le CTA) : le score gratuit et les faits réels. */}
             {profile && <ReadinessMeter profile={profile} onCorrect={handleCorrect} tone="activation" />}
             {profile && <ReviewSignalCard profile={profile} />}
             {profile && <FactGrid facts={profile.facts} />}
@@ -289,66 +293,16 @@ export default function PageUnproActivate() {
               </div>
             )}
 
-            {/* ------------------------------- ENSUITE seulement : l'offre + le CTA */}
-            <div ref={offerRef} className="rounded-3xl border border-white/10 bg-white/[0.05] p-6 backdrop-blur">
-              <p className="text-[15px] leading-relaxed text-white/85">
-                Vérifiez les informations de votre profil, puis indiquez vos objectifs pour recevoir votre plan personnalisé.
-              </p>
-
-              <ul className="mt-4 space-y-2">
-                {["Profil à vérifier et compléter", "Objectifs et capacité pris en compte", "Devis mensuel calculé côté serveur"].map((b) => (
-                  <li key={b} className="flex items-start gap-2 text-[14px] leading-snug text-white/85">
-                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-400/20">
-                      <Check className="h-2.5 w-2.5 text-emerald-300" />
-                    </span>
-                    {b}
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-3 text-[12.5px] leading-relaxed text-white/55">Aucun paiement avant l'affichage de votre devis.</p>
-
-              <Button
-                onClick={() => handleActivate("offer")}
-                className="mt-5 h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#050816] hover:bg-white/90"
-              >
-                <>{CONTRACTOR_OFFER.ctaClaim} <ArrowRight className="ml-1 h-4 w-4" /></>
-              </Button>
-
-              <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[11px] text-white/50">
-                <ShieldCheck className="h-3 w-3" />
-                Analyse et vérification gratuites avant le devis.
-              </p>
-
-              <ul className="mt-4 space-y-1.5">
-                {BENEFITS.map((b) => (
-                  <li key={b} className="text-[12.5px] leading-snug text-white/60">• {b}</li>
-                ))}
-              </ul>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleCustomize}
-              className="mx-auto block pb-2 text-center text-xs text-white/50 underline underline-offset-4 hover:text-white/75"
-            >
-              {CONTRACTOR_OFFER.ctaPrimary}
-            </button>
+            {/* Aucun CTA secondaire : une seule action possible sur cette page. */}
+            <ul className="space-y-1.5 pb-2">
+              {BENEFITS.map((b) => (
+                <li key={b} className="text-[12.5px] leading-snug text-white/60">• {b}</li>
+              ))}
+            </ul>
           </div>
         )}
       </div>
 
-      {/* CTA collant mobile : n'apparaît qu'après la valeur gratuite (score + profil). */}
-      {state === "ready" && prospect && showStickyCta && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#050816]/95 px-5 py-3 backdrop-blur sm:hidden">
-          <Button
-            onClick={() => handleActivate("sticky_mobile")}
-            className="h-13 w-full rounded-2xl bg-white py-3.5 text-base font-semibold text-[#050816] hover:bg-white/90"
-          >
-            {CONTRACTOR_OFFER.ctaClaim}
-          </Button>
-
-        </div>
-      )}
 
     </div>
   );

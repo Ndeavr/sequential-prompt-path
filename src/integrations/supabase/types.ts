@@ -38215,6 +38215,45 @@ export type Database = {
           },
         ]
       }
+      contractor_prospect_claims: {
+        Row: {
+          channel: string | null
+          claimed_at: string
+          contractor_id: string | null
+          created_at: string
+          id: string
+          prospect_id: string
+          status: string
+          token_hash: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel?: string | null
+          claimed_at?: string
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          prospect_id: string
+          status?: string
+          token_hash?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string | null
+          claimed_at?: string
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          prospect_id?: string
+          status?: string
+          token_hash?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       contractor_prospect_contacts: {
         Row: {
           bounce_status: string | null
@@ -93566,6 +93605,15 @@ export type Database = {
         }
         Relationships: []
       }
+      v_activation_errors: {
+        Row: {
+          error_code: string | null
+          failed_step: string | null
+          last_seen_toronto: string | null
+          occurrences: number | null
+        }
+        Relationships: []
+      }
       v_activation_funnel: {
         Row: {
           checkouts_opened: number | null
@@ -93577,6 +93625,15 @@ export type Database = {
           sms_delivered: number | null
           sms_sent: number | null
           sms_undelivered: number | null
+        }
+        Relationships: []
+      }
+      v_activation_step_funnel: {
+        Row: {
+          events: number | null
+          last_seen_toronto: string | null
+          step: string | null
+          unique_visitors: number | null
         }
         Relationships: []
       }

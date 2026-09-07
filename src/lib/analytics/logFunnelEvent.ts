@@ -52,9 +52,19 @@ export type FunnelEventType =
   | "auth_completed"
   | "contractor_account_created"
   | "offer_eligible"
+  | "activation_link_opened"
   | "activation_page_viewed"
+  | "activation_page_rendered"
   | "activation_cta_clicked"
+  | "otp_requested"
+  | "account_created"
+  | "profile_claimed"
+  | "onboarding_started"
+  | "onboarding_completed"
+  | "profile_activated"
+  | "activation_error"
   | "contractor_profile_created"
+
   | "onboarding_resumed"
   | "free_offer_accepted"
   | "plan_requested"
@@ -79,9 +89,16 @@ export interface LogFunnelEventInput {
   current_path?: string | null;
   step?: string | null;
   metadata?: Record<string, unknown>;
+  /**
+   * Attribution explicite : indispensable quand le jeton vit dans le CHEMIN
+   * (`/unpro/activate/:token`) et non dans les paramètres d'URL.
+   */
+  prospect_id?: string | null;
+  token?: string | null;
   /** Marque explicitement l'événement comme QA/test (exclu des vues de production). */
   is_test?: boolean;
 }
+
 
 const ATTRIBUTION_KEY = "unpro_funnel_attribution";
 
@@ -160,8 +177,9 @@ export async function logFunnelEvent(input: LogFunnelEventInput): Promise<void> 
     const attribution = getFunnelAttribution();
 
     await supabase.from("contractor_funnel_events").insert({
-      prospect_id: attribution.prospect_id ?? attribution.prospect ?? null,
-      token: attribution.token ?? attribution.t ?? null,
+      prospect_id: input.prospect_id ?? attribution.prospect_id ?? attribution.prospect ?? null,
+      token: input.token ?? attribution.token ?? attribution.t ?? null,
+
       affiliate_code: attribution.aff ?? attribution.affiliate ?? attribution.ref ?? null,
       utm_source: attribution.utm_source ?? null,
       utm_medium: attribution.utm_medium ?? null,
