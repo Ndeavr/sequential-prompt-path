@@ -93605,6 +93605,15 @@ export type Database = {
         }
         Relationships: []
       }
+      v_activation_errors: {
+        Row: {
+          error_code: string | null
+          failed_step: string | null
+          last_seen_toronto: string | null
+          occurrences: number | null
+        }
+        Relationships: []
+      }
       v_activation_funnel: {
         Row: {
           checkouts_opened: number | null
@@ -93616,6 +93625,15 @@ export type Database = {
           sms_delivered: number | null
           sms_sent: number | null
           sms_undelivered: number | null
+        }
+        Relationships: []
+      }
+      v_activation_step_funnel: {
+        Row: {
+          events: number | null
+          last_seen_toronto: string | null
+          step: string | null
+          unique_visitors: number | null
         }
         Relationships: []
       }
