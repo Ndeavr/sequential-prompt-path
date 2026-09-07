@@ -38215,6 +38215,45 @@ export type Database = {
           },
         ]
       }
+      contractor_prospect_claims: {
+        Row: {
+          channel: string | null
+          claimed_at: string
+          contractor_id: string | null
+          created_at: string
+          id: string
+          prospect_id: string
+          status: string
+          token_hash: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel?: string | null
+          claimed_at?: string
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          prospect_id: string
+          status?: string
+          token_hash?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string | null
+          claimed_at?: string
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          prospect_id?: string
+          status?: string
+          token_hash?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       contractor_prospect_contacts: {
         Row: {
           bounce_status: string | null
