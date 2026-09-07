@@ -199,8 +199,16 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       }
 
       trackAuthEvent("sms_success");
-      void logFunnelEvent({ event_type: "otp_verified", step: "phone_otp" });
-      void logFunnelEvent({ event_type: "auth_completed", step: "phone_otp", metadata: { method: "phone_otp" } });
+      void logFunnelEvent({ event_type: "otp_verified", step: "phone_otp", ...attr });
+      if (data.isNewUser) {
+        void logFunnelEvent({
+          event_type: "account_created",
+          step: "phone_otp",
+          metadata: { method: "phone_otp" },
+          ...attr,
+        });
+      }
+      void logFunnelEvent({ event_type: "auth_completed", step: "phone_otp", metadata: { method: "phone_otp" }, ...attr });
       authDebug.set({ auth_step: "otp_verified" });
       setVerified(true);
       try { sessionStorage.removeItem(OTP_STATE_KEY); } catch { /* noop */ }
