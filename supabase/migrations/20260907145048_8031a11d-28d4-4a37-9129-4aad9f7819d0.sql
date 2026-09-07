@@ -1,0 +1,2 @@
+GRANT EXECUTE ON FUNCTION public.check_founder_eligibility(text, text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.founder_public_signup(text, text, text, text, text, text, jsonb) TO anon, authenticated;

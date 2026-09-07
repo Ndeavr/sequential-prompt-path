@@ -1,8 +1,11 @@
 /**
  * PageFounderLocalServices — /fondateurs
  *
- * Founder offer for LOCAL SERVICES and PROFESSIONALS (not renovation
- * contractors, who stay on the Audit IA → paid appointment model).
+ * Founder offer for RESIDENTIAL LOCAL SERVICES only (cleaning, maintenance,
+ * pest control, exterior care…). Renovation contractors stay on the Audit IA
+ * → paid appointment model. Real-estate professionals are intentionally NOT
+ * offered here: their rows stay in `founder_eligible_categories` for history
+ * but are filtered out of this funnel.
  *
  * Offer: first 12 months = 0 $, then 350 $/year. Public copy says only
  * « 10 premiers membres par ville » — internal city × category allocation
@@ -20,6 +23,35 @@ import MainLayout from "@/layouts/MainLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPhoneDisplay, formatPhoneFinal } from "@/utils/formatPhone";
 
+const OTHER_SLUG = "autre-service-residentiel";
+
+/** Logical display order for the residential service list. */
+const RESIDENTIAL_ORDER = [
+  "entretien-menager",
+  "grand-menage",
+  "nettoyage-apres-construction",
+  "nettoyage-tapis",
+  "nettoyage-mobilier",
+  "nettoyage-matelas",
+  "nettoyage-planchers",
+  "lavage-de-vitres",
+  "lavage-pression",
+  "nettoyage-gouttieres",
+  "nettoyage-conduits",
+  "ramonage-cheminee",
+  "gestion-parasitaire",
+  "entretien-gazon",
+  "entretien-paysager",
+  "deneigement",
+  "entretien-piscine-spa",
+  "abris-temporaires",
+  "homme-a-tout-faire",
+  "demenagement",
+  "organisation-rangement",
+  "entretien-preventif-domicile",
+  OTHER_SLUG,
+];
+
 interface FounderCategory {
   slug: string;
   name_fr: string;
@@ -35,6 +67,7 @@ type Eligibility =
 export default function PageFounderLocalServices() {
   const [sp] = useSearchParams();
   const [categorySlug, setCategorySlug] = useState("");
+  const [otherService, setOtherService] = useState("");
   const [city, setCity] = useState("");
   const [eligibility, setEligibility] = useState<Eligibility>({ state: "idle" });
 
@@ -62,10 +95,14 @@ export default function PageFounderLocalServices() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const grouped = useMemo(() => {
-    const services = (categories ?? []).filter((c) => c.group_type === "local_service");
-    const pros = (categories ?? []).filter((c) => c.group_type === "professional");
-    return { services, pros };
+  /** Residential-only funnel: real-estate professionals are never offered here. */
+  const services = useMemo(() => {
+    const list = (categories ?? []).filter((c) => c.group_type === "local_service");
+    const rank = (slug: string) => {
+      const i = RESIDENTIAL_ORDER.indexOf(slug);
+      return i === -1 ? RESIDENTIAL_ORDER.length : i;
+    };
+    return [...list].sort((a, b) => rank(a.slug) - rank(b.slug) || a.name_fr.localeCompare(b.name_fr, "fr"));
   }, [categories]);
 
   const checkEligibility = async (slug: string, cityValue: string) => {
@@ -92,6 +129,7 @@ export default function PageFounderLocalServices() {
 
   const onCategory = (slug: string) => {
     setCategorySlug(slug);
+    if (slug !== OTHER_SLUG) setOtherService("");
     setResult(null);
     void checkEligibility(slug, city);
   };
@@ -111,6 +149,7 @@ export default function PageFounderLocalServices() {
       utm_campaign: sp.get("utm_campaign"),
       ref: sp.get("ref"),
       prospect_id: sp.get("p"),
+      service_details: categorySlug === OTHER_SLUG ? otherService.trim() || null : null,
     };
     const { data, error } = await supabase.rpc("founder_public_signup", {
       p_business_name: businessName,
@@ -143,6 +182,7 @@ export default function PageFounderLocalServices() {
 
   const canSubmit =
     eligibility.state === "eligible" &&
+    (categorySlug !== OTHER_SLUG || otherService.trim().length >= 2) &&
     businessName.trim().length >= 2 &&
     email.includes("@") &&
     !submitting;
@@ -150,10 +190,10 @@ export default function PageFounderLocalServices() {
   return (
     <MainLayout>
       <Helmet>
-        <title>Membre fondateur UNPRO — Services locaux et professionnels</title>
+        <title>Membre fondateur UNPRO — Services résidentiels</title>
         <meta
           name="description"
-          content="Professionnels et services locaux : devenez membre fondateur UNPRO. Les 10 premiers membres de chaque ville profitent de 12 mois gratuitement. Ensuite 350 $/an."
+          content="Nettoyage, entretien, gestion parasitaire et autres services à domicile : devenez membre fondateur UNPRO. Les 10 premiers membres de chaque ville profitent de 12 mois gratuitement. Ensuite 350 $/an."
         />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href="https://unpro.ca/fondateurs" />
@@ -174,9 +214,10 @@ export default function PageFounderLocalServices() {
               <span className="text-primary">12 mois gratuitement</span>.
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-[16px] leading-relaxed text-muted-foreground">
-              Professionnel de l'immobilier ou entreprise de service local ?
-              UNPRO vous aide à être trouvé et recommandé aux propriétaires, au
-              bon moment, dans votre ville.
+              Vous offrez un service de nettoyage, d'entretien, de gestion
+              parasitaire ou un autre service à domicile&nbsp;? UNPRO aide votre
+              entreprise à être trouvée et recommandée aux propriétaires, au bon
+              moment, dans votre ville.
             </p>
             <p className="mx-auto mt-3 max-w-xl text-[14px] leading-relaxed text-muted-foreground">
               Valeur de 350 $ : votre première année est offerte. Par la suite,
@@ -191,7 +232,7 @@ export default function PageFounderLocalServices() {
         </section>
 
         {/* Signup */}
-        <section className="mx-auto w-full max-w-2xl px-5 pb-20">
+        <section className="mx-auto w-full max-w-2xl px-5 pb-28 md:pb-20">
           <div className="rounded-[28px] border border-border bg-card p-6 shadow-lg shadow-primary/5 md:p-10">
             {result?.kind === "success" ? (
               <div className="text-center">
@@ -221,34 +262,49 @@ export default function PageFounderLocalServices() {
                   Réserver ma place gratuitement
                 </h2>
                 <p className="mt-2 text-[14px] text-muted-foreground">
-                  Deux questions d'abord : votre domaine et votre ville.
+                  Deux questions d'abord : votre service et votre ville.
                 </p>
 
                 {/* Step 1: category */}
-                <label className="mt-6 block text-[13px] font-semibold text-foreground">
-                  Votre domaine
+                <label
+                  htmlFor="founder-service"
+                  className="mt-6 block text-[13px] font-semibold text-foreground"
+                >
+                  Votre service
                 </label>
                 <select
+                  id="founder-service"
                   value={categorySlug}
                   onChange={(e) => onCategory(e.target.value)}
                   className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-[15px] text-foreground"
                 >
                   <option value="">Choisir…</option>
-                  <optgroup label="Services locaux">
-                    {grouped.services.map((c) => (
-                      <option key={c.slug} value={c.slug}>
-                        {c.name_fr}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Professionnels">
-                    {grouped.pros.map((c) => (
+                  <optgroup label="Services résidentiels">
+                    {services.map((c) => (
                       <option key={c.slug} value={c.slug}>
                         {c.name_fr}
                       </option>
                     ))}
                   </optgroup>
                 </select>
+
+                {categorySlug === OTHER_SLUG && (
+                  <div className="mt-3">
+                    <label
+                      htmlFor="founder-other-service"
+                      className="block text-[13px] font-semibold text-foreground"
+                    >
+                      Précisez votre service
+                    </label>
+                    <input
+                      id="founder-other-service"
+                      value={otherService}
+                      onChange={(e) => setOtherService(e.target.value)}
+                      placeholder="Ex. : nettoyage de panneaux solaires"
+                      className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
+                    />
+                  </div>
+                )}
 
                 {/* Step 2: city */}
                 <label className="mt-5 block text-[13px] font-semibold text-foreground">

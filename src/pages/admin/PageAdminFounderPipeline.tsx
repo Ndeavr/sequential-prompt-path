@@ -95,7 +95,7 @@ export default function PageAdminFounderPipeline() {
         <div>
           <h1 className="text-xl font-semibold text-foreground">Pipeline Fondateurs</h1>
           <p className="text-sm text-muted-foreground">
-            Services locaux & professionnels — 12 mois gratuits, puis 350 $/an.
+            Services résidentiels — 12 mois gratuits, puis 350 $/an.
           </p>
         </div>
       </div>

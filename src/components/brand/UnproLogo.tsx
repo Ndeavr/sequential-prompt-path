@@ -8,8 +8,9 @@
  * Never recolored, filtered, stretched or cropped — original proportions only.
  * Fallback chain: official asset → blue disc mark → clean "UNPRO" text.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BRAND } from "@/config/branding";
+import { resolveTheme, subscribeTheme, type ResolvedTheme } from "@/lib/theme/themeStore";
 
 type UnproLogoProps = {
   size?: number;
@@ -38,6 +39,11 @@ export default function UnproLogo({
   className = "",
 }: UnproLogoProps) {
   const [failed, setFailed] = useState(false);
+  // Single rendered lockup: two <img> with dark:/light: variants could both
+  // stay visible when a responsive display class is passed via className.
+  const [resolved, setResolved] = useState<ResolvedTheme>(() => resolveTheme());
+
+  useEffect(() => subscribeTheme((_m, next) => setResolved(next)), []);
 
   const height = showWordmark ? Math.round(size / WORDMARK_RATIO) : size;
 
@@ -69,45 +75,27 @@ export default function UnproLogo({
     : { width: size, height: showWordmark ? height : size };
   const base = `object-contain ${className}`;
 
-  if (tone !== "auto") {
-    const src = tone === "light" ? lightSrc : tone === "blue" && showWordmark ? BRAND.logoWordmarkWhite : darkSrc;
-    return (
-      <img
-        src={src}
-        alt="UNPRO"
-        width={size}
-        height={showWordmark ? height : size}
-        onError={() => setFailed(true)}
-        className={base}
-        style={style}
-        draggable={false}
-      />
-    );
-  }
+  const src =
+    tone === "light"
+      ? lightSrc
+      : tone === "blue" && showWordmark
+        ? BRAND.logoWordmarkWhite
+        : tone === "dark"
+          ? darkSrc
+          : resolved === "dark"
+            ? darkSrc
+            : lightSrc;
 
   return (
-    <>
-      <img
-        src={lightSrc}
-        alt="UNPRO"
-        width={size}
-        height={showWordmark ? height : size}
-        onError={() => setFailed(true)}
-        className={`${base} dark:hidden`}
-        style={style}
-        draggable={false}
-      />
-      <img
-        src={darkSrc}
-        alt=""
-        aria-hidden="true"
-        width={size}
-        height={showWordmark ? height : size}
-        onError={() => setFailed(true)}
-        className={`${base} hidden dark:block`}
-        style={style}
-        draggable={false}
-      />
-    </>
+    <img
+      src={src}
+      alt="UNPRO"
+      width={size}
+      height={showWordmark ? height : size}
+      onError={() => setFailed(true)}
+      className={base}
+      style={style}
+      draggable={false}
+    />
   );
 }
