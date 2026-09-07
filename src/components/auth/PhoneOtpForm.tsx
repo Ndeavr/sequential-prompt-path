@@ -46,7 +46,8 @@ function toE164(phone: string): string {
   return `+${digits}`;
 }
 
-export default function PhoneOtpForm({ onSuccess, loading: externalLoading, className = "" }: PhoneOtpFormProps) {
+export default function PhoneOtpForm({ onSuccess, loading: externalLoading, className = "", attribution }: PhoneOtpFormProps) {
+  const attr = attribution ?? {};
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState(["", "", "", "", "", ""]);
