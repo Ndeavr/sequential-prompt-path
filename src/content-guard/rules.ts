@@ -76,6 +76,8 @@ export const WHITELISTED_PATHS: string[] = [
   "src/components/brand/BrandPronunciation.tsx",
   "src/pages/PageAICrawlerLanding.tsx",
   "src/content-guard/",
+  "src/features/alex/voice/alexCorePrompt.ts",
+  "src/features/alex/services/alexConversationEngine.ts",
   "src/pages/admin/",
   "scripts/content-audit",
   "index.html",

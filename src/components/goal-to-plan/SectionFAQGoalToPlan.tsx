@@ -8,7 +8,7 @@ const FAQ = [
   { q: "Pourquoi ma ville influence-t-elle le résultat ?", a: "Certaines villes ont une demande plus forte et des marges différentes. Le système ajuste les projections selon les données locales." },
   { q: "Pourquoi mon secteur influence-t-il le plan ?", a: "Chaque domaine a une valeur moyenne de contrat, un taux de fermeture et un niveau de demande différent." },
   { q: "Puis-je avoir l'exclusivité ?", a: "Oui, avec les plans Élite et Signature, l'exclusivité territoriale est possible selon la disponibilité." },
-  { q: "Est-ce que je peux faire le calcul sans représentant ?", a: "Absolument. Cette page est conçue pour ça. Vous entrez vos chiffres, le système calcule tout." },
+  { q: "Est-ce que je peux faire le calcul sans représentant ?", a: "Absolument. Cette page est conçue pour ça. Vous entrez vos chiffres et vous obtenez votre résultat immédiatement." },
   { q: "Est-ce que mon score pré-UNPRO change la projection ?", a: "Oui. Un score plus bas signifie plus de potentiel d'amélioration, donc des projections plus optimistes." },
   { q: "Est-ce que moins de soumissions peut vraiment donner plus de contrats ?", a: "Oui. Des rendez-vous mieux ciblés = meilleur taux de fermeture = plus de contrats avec moins de bruit." },
 ];
