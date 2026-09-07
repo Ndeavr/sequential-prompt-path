@@ -10,22 +10,17 @@
  * (Vérifié / Déclaré / Déduit) et les sections vides ne sont pas rendues.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Loader2, ShieldCheck, ArrowRight, Check, Globe, Building2 } from "lucide-react";
+import { Loader2, ArrowRight, Globe, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import CompanyIdentityHeader from "@/features/activationProfile/components/CompanyIdentityHeader";
 import FactGrid from "@/features/activationProfile/components/FactGrid";
 import ReviewSignalCard from "@/features/activationProfile/components/ReviewSignalCard";
 import ReadinessMeter from "@/features/activationProfile/components/ReadinessMeter";
+import ActivationClaimPanel from "@/features/activationProfile/components/ActivationClaimPanel";
 import { useActivationTracking } from "@/features/activationProfile/useActivationTracking";
 import type { ActivationProfile, ResolvedProspect } from "@/features/activationProfile/types";
-import { CONTRACTOR_OFFER } from "@/lib/copy/contractorOffer";
-import { buildContractorEntryUrl, CONTRACTOR_ACTIVATION_PATH } from "@/config/contractorFunnel";
-import { readAttribution } from "@/config/contractorFunnel";
-import { saveRoleIntent } from "@/services/auth/roleIntent";
-import { saveAuthIntent } from "@/services/auth/authIntentService";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 
 const BENEFITS = [
@@ -34,6 +29,11 @@ const BENEFITS = [
   "Rendez-vous exclusifs, jamais partagés avec 3 concurrents",
   "Aucun renouvellement automatique",
 ];
+
+interface ResolvedContact {
+  masked: string | null;
+  channel: string | null;
+}
 
 export default function PageUnproActivate() {
   const { token } = useParams<{ token: string }>();
@@ -46,13 +46,15 @@ export default function PageUnproActivate() {
   const [state, setState] = useState<"loading" | "ready" | "invalid" | "error">("loading");
   const [prospect, setProspect] = useState<ResolvedProspect | null>(null);
   const [profile, setProfile] = useState<ActivationProfile | null>(null);
-  const navigate = useNavigate();
+  const [contact, setContact] = useState<ResolvedContact | null>(null);
+  const [offer, setOffer] = useState<{ label: string } | null>(null);
+  const [region, setRegion] = useState<string | null>(null);
+  const [sourceLabel, setSourceLabel] = useState<string | null>(null);
   const [reason, setReason] = useState<string | null>(null);
   const [correctionSent, setCorrectionSent] = useState(false);
-  // Le CTA collant n'apparaît qu'une fois la valeur gratuite consultée.
-  const [showStickyCta, setShowStickyCta] = useState(false);
   const offerRef = useRef<HTMLDivElement | null>(null);
   const engagedRef = useRef(false);
+
 
 
   const track = useActivationTracking(token, preview);
