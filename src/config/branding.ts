@@ -12,6 +12,7 @@ import wordmarkBlueFilledAsset from "@/assets/brand/unpro-wordmark-blue-filled.a
 import wordmarkCreamAsset from "@/assets/brand/unpro-wordmark-cream.asset.json";
 import wordmarkNavyBlueAsset from "@/assets/brand/unpro-wordmark-navy-blue.asset.json";
 import wordmarkNavyFilledAsset from "@/assets/brand/unpro-wordmark-navy-filled.asset.json";
+import wordmarkRubber3dAsset from "@/assets/brand/unpro-wordmark-rubber-3d.asset.json";
 import iconBlueAsset from "@/assets/brand/unpro-icon-blue.asset.json";
 
 const absolute = (path: string) => `https://unpro.ca${path}`;
@@ -38,6 +39,8 @@ export const BRAND = {
   logoWordmarkNavyBlue: assetUrl(wordmarkNavyBlueAsset.url),
   /** Navy filled lockup — approved alternate. */
   logoWordmarkNavyFilled: assetUrl(wordmarkNavyFilledAsset.url),
+  /** 3D rubber lockup — light surfaces only (homepage hero/header accent). */
+  logoWordmarkRubber3d: assetUrl(wordmarkRubber3dAsset.url),
   /** Official house/chat icon — compact and square contexts only. */
   logoIconBlue: assetUrl(iconBlueAsset.url),
   logoIconWhite: assetUrl(iconBlueAsset.url),

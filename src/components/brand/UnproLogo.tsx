@@ -5,6 +5,10 @@
  * surfaces, the white lockup on dark surfaces. `tone` forces a surface
  * when a block is dark inside a light theme (or the reverse).
  *
+ * The `rubber` variant uses the 3D embossed lockup and is reserved for
+ * light backgrounds (homepage header accent). On dark/blue surfaces it
+ * falls back to the standard white lockup so it remains visible.
+ *
  * Never recolored, filtered, stretched or cropped — original proportions only.
  * Fallback chain: official asset → blue disc mark → clean "UNPRO" text.
  */
@@ -13,7 +17,7 @@ import { BRAND } from "@/config/branding";
 
 type UnproLogoProps = {
   size?: number;
-  /** Historical variants preserved for API compatibility. */
+  /** Historical variants preserved for API compatibility. `rubber` = 3D lockup. */
   variant?: "primary" | "blue" | "mono" | "mono-invert" | "rubber";
   /** Kept for API compatibility; the lockup is a static image. */
   animated?: boolean;
@@ -31,6 +35,7 @@ const WORDMARK_RATIO = BRAND.wordmarkRatio;
 
 export default function UnproLogo({
   size = 320,
+  variant = "primary",
   showWordmark = true,
   markShape = "round",
   tone = "auto",
@@ -53,13 +58,19 @@ export default function UnproLogo({
     );
   }
 
+  const isRubber = variant === "rubber";
+
   const lightSrc = showWordmark
-    ? BRAND.logo
+    ? isRubber
+      ? BRAND.logoWordmarkRubber3d
+      : BRAND.logo
     : markShape === "bare"
       ? BRAND.logoIconBlue
       : BRAND.logoRound;
   const darkSrc = showWordmark
-    ? BRAND.logoWordmarkOnDark
+    ? isRubber
+      ? BRAND.logoWordmarkOnDark
+      : BRAND.logoWordmarkOnDark
     : markShape === "bare"
       ? BRAND.logoIconWhite
       : BRAND.logoRound;
