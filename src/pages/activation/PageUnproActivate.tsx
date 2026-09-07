@@ -139,8 +139,6 @@ export default function PageUnproActivate() {
     };
     const onScroll = () => {
       if (window.scrollY > 120) markEngaged();
-      const top = offerRef.current?.getBoundingClientRect().top;
-      setShowStickyCta(typeof top === "number" && top < window.innerHeight * 0.9);
     };
     const timer = window.setTimeout(markEngaged, 6000);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -155,54 +153,8 @@ export default function PageUnproActivate() {
     setCorrectionSent(true);
   }, [track, profile]);
 
-  /**
-   * Preserve the outreach token while moving into the canonical value-first flow.
-   */
-  async function handleActivate(placement: string) {
-    if (!prospect) return;
-    track("profile_continue_clicked", { placement });
-    handleCustomize();
-  }
-
-  /** Action secondaire : calculer une garantie personnalisée (jeton conservé). */
-  function handleCustomize() {
-    const attribution = readAttribution();
-    const params = new URLSearchParams(attribution);
-    if (token) params.set("t", token);
-    const trade = profile?.trade ?? prospect?.category ?? "";
-    const city = profile?.city ?? prospect?.city ?? "";
-    if (trade) params.set("trade", trade);
-    if (city) params.set("city", city);
-    if (prospect?.id) params.set("prospect_id", prospect.id);
-    if (company) params.set("entreprise", company);
-    if (trade) params.set("metier", trade);
-    if (city) params.set("ville", city);
-    params.set("step", "profile");
-    const returnPath = `${CONTRACTOR_ACTIVATION_PATH}?${params.toString()}`;
-    saveRoleIntent("contractor", {
-      returnPath,
-      token,
-      prospectId: prospect?.id,
-      affiliateRef: attribution.aff ?? attribution.affiliate ?? attribution.ref,
-      campaignId: attribution.campaign_id ?? attribution.campaign ?? attribution.utm_campaign,
-      onboardingStep: "profile",
-      businessName: company,
-      city,
-      trade,
-      attribution,
-    });
-    saveAuthIntent({ returnPath, action: "contractor_activation", roleHint: "contractor", metadata: attribution });
-    void logFunnelEvent({
-      event_type: "activation_cta_clicked",
-      step: "profile_activation",
-      metadata: { prospect_id: prospect?.id ?? null },
-      is_test: preview,
-    });
-    navigate(buildContractorEntryUrl(Object.fromEntries(params), CONTRACTOR_ACTIVATION_PATH));
-  }
-
-
   const company = profile?.display_name ?? prospect?.business_name?.trim() ?? "votre entreprise";
+
   const canceled =
     typeof window !== "undefined" && new URLSearchParams(window.location.search).get("canceled") === "1";
 
