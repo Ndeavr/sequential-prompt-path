@@ -177,8 +177,9 @@ export async function logFunnelEvent(input: LogFunnelEventInput): Promise<void> 
     const attribution = getFunnelAttribution();
 
     await supabase.from("contractor_funnel_events").insert({
-      prospect_id: attribution.prospect_id ?? attribution.prospect ?? null,
-      token: attribution.token ?? attribution.t ?? null,
+      prospect_id: input.prospect_id ?? attribution.prospect_id ?? attribution.prospect ?? null,
+      token: input.token ?? attribution.token ?? attribution.t ?? null,
+
       affiliate_code: attribution.aff ?? attribution.affiliate ?? attribution.ref ?? null,
       utm_source: attribution.utm_source ?? null,
       utm_medium: attribution.utm_medium ?? null,
