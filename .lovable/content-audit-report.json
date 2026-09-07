@@ -1,0 +1,2499 @@
+{
+  "ranAt": "2026-09-07T14:41:11.380Z",
+  "filesScanned": 2874,
+  "violations": [
+    {
+      "file": "src/pages/Home.tsx",
+      "line": 52,
+      "column": 43,
+      "snippet": "<title>UNPRO | Votre plateforme d'intelligence résidentielle propulsée par l'IA</title>",
+      "pattern": "intelligence résidentielle",
+      "severity": "block",
+      "category": "jargon",
+      "description": "Legacy category — use Passeport Maison"
+    },
+    {
+      "file": "src/pages/Home.tsx",
+      "line": 57,
+      "column": 71,
+      "snippet": "<meta property=\"og:title\" content=\"UNPRO | Votre plateforme d'intelligence résidentielle propulsée par l'IA\" />",
+      "pattern": "intelligence résidentielle",
+      "severity": "block",
+      "category": "jargon",
+      "description": "Legacy category — use Passeport Maison"
+    },
+    {
+      "file": "src/pages/PageHomeCopilot.tsx",
+      "line": 41,
+      "column": 43,
+      "snippet": "<title>UNPRO | Votre plateforme d'intelligence résidentielle propulsée par l'IA</title>",
+      "pattern": "intelligence résidentielle",
+      "severity": "block",
+      "category": "jargon",
+      "description": "Legacy category — use Passeport Maison"
+    },
+    {
+      "file": "src/pages/PageHomeCopilot.tsx",
+      "line": 46,
+      "column": 71,
+      "snippet": "<meta property=\"og:title\" content=\"UNPRO | Votre plateforme d'intelligence résidentielle propulsée par l'IA\" />",
+      "pattern": "intelligence résidentielle",
+      "severity": "block",
+      "category": "jargon",
+      "description": "Legacy category — use Passeport Maison"
+    },
+    {
+      "file": "src/pages/PageIntelligenceHub.tsx",
+      "line": 4,
+      "column": 4,
+      "snippet": "* AEO/SEO goldmine — internal links to existing /probleme/* clusters.",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/acquisition/LandingContractorAIActivation.tsx",
+      "line": 45,
+      "column": 32,
+      "snippet": "{ text: \"Aucune présence AEO\", status: \"bad\" as const },",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/ai/PageAiEntity.tsx",
+      "line": 120,
+      "column": 13,
+      "snippet": "? { geo: { \"@type\": \"GeoCoordinates\", latitude: entity.lat, longitude: entity.lng } }",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/aipp/PageAiIndexedProfile.tsx",
+      "line": 4,
+      "column": 31,
+      "snippet": "* Warm Neutral theme for SEO/AEO public surface.",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/aipp/PageAippGeo.tsx",
+      "line": 29,
+      "column": 55,
+      "snippet": "<link rel=\"canonical\" href={`https://unpro.ca/geo/${page.slug}`} />",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/aipp/PageContractorAippProfile.tsx",
+      "line": 118,
+      "column": 11,
+      "snippet": "{/* Geo pages */}",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/aipp/PageContractorAippProfile.tsx",
+      "line": 124,
+      "column": 40,
+      "snippet": "<Link key={g.slug} to={`/geo/${g.slug}`} className=\"rounded-2xl bg-white/[0.03] border border-white/10 p-4 hover:border-cyan-400/40 transition\">",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 419,
+      "column": 51,
+      "snippet": "UNPRO est une plateforme québécoise d'intelligence résidentielle. Son rôle n'est pas de",
+      "pattern": "intelligence résidentielle",
+      "severity": "block",
+      "category": "jargon",
+      "description": "Legacy category — use Passeport Maison"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 5,
+      "column": 16,
+      "snippet": "* SEO + AEO + GEO : Article + BreadcrumbList + FAQPage JSON-LD, bloc réponse extractible, HTML sémantique.",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 42,
+      "column": 66,
+      "snippet": "\"Entrepreneurs du Québec : découvrez comment le SEO, l'AEO, le GEO et les données structurées peuvent aider votre entreprise à être comprise et recommandée par l'IA en 2026.\";",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 49,
+      "column": 18,
+      "snippet": "{ id: \"seo-aeo-geo\", label: \"SEO, AEO et GEO : trois logiques différentes\" },",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 49,
+      "column": 44,
+      "snippet": "{ id: \"seo-aeo-geo\", label: \"SEO, AEO et GEO : trois logiques différentes\" },",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 87,
+      "column": 13,
+      "snippet": "title: \"GEO — Generative Engine Optimization\",",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 121,
+      "column": 67,
+      "snippet": "question: \"Quelle est la différence entre le SEO, l'AEO et le GEO?\",",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 123,
+      "column": 142,
+      "snippet": "\"Le SEO vise à être trouvable dans une liste de liens. L'AEO vise à être repris dans une réponse formulée par un moteur de réponse. Le GEO vise à être compris et cité par des systè",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 343,
+      "column": 29,
+      "snippet": "{/* 2 — SEO / AEO / GEO */}",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 344,
+      "column": 30,
+      "snippet": "<section id=\"seo-aeo-geo\" className=\"max-w-3xl mx-auto px-4 py-8 space-y-4 scroll-mt-20\">",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 346,
+      "column": 25,
+      "snippet": "SEO, AEO et GEO : trois logiques différentes",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 362,
+      "column": 97,
+      "snippet": "Le SEO reste la fondation : un site clair et rapide demeure utile. Mais l'AEO et le GEO",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 5,
+      "column": 10,
+      "snippet": "* SEO + AEO + GEO : Article + BreadcrumbList + FAQPage JSON-LD, bloc réponse extractible, HTML sémantique.",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 42,
+      "column": 58,
+      "snippet": "\"Entrepreneurs du Québec : découvrez comment le SEO, l'AEO, le GEO et les données structurées peuvent aider votre entreprise à être comprise et recommandée par l'IA en 2026.\";",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 49,
+      "column": 14,
+      "snippet": "{ id: \"seo-aeo-geo\", label: \"SEO, AEO et GEO : trois logiques différentes\" },",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 49,
+      "column": 37,
+      "snippet": "{ id: \"seo-aeo-geo\", label: \"SEO, AEO et GEO : trois logiques différentes\" },",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 80,
+      "column": 13,
+      "snippet": "title: \"AEO — Answer Engine Optimization\",",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 121,
+      "column": 57,
+      "snippet": "question: \"Quelle est la différence entre le SEO, l'AEO et le GEO?\",",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 123,
+      "column": 64,
+      "snippet": "\"Le SEO vise à être trouvable dans une liste de liens. L'AEO vise à être repris dans une réponse formulée par un moteur de réponse. Le GEO vise à être compris et cité par des systè",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 292,
+      "column": 28,
+      "snippet": "{/* BLOC RÉPONSE — AEO */}",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 343,
+      "column": 23,
+      "snippet": "{/* 2 — SEO / AEO / GEO */}",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 344,
+      "column": 26,
+      "snippet": "<section id=\"seo-aeo-geo\" className=\"max-w-3xl mx-auto px-4 py-8 space-y-4 scroll-mt-20\">",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 346,
+      "column": 18,
+      "snippet": "SEO, AEO et GEO : trois logiques différentes",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageApparaitreRechercheIA2026.tsx",
+      "line": 362,
+      "column": 87,
+      "snippet": "Le SEO reste la fondation : un site clair et rapide demeure utile. Mais l'AEO et le GEO",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageArticlesRecentCompressedFeed.tsx",
+      "line": 21,
+      "column": 18,
+      "snippet": "\"SEO, AEO, GEO et données structurées : ce qu'un entrepreneur québécois doit faire pour être compris et recommandé par les systèmes intelligents.\",",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageArticlesRecentCompressedFeed.tsx",
+      "line": 21,
+      "column": 13,
+      "snippet": "\"SEO, AEO, GEO et données structurées : ce qu'un entrepreneur québécois doit faire pour être compris et recommandé par les systèmes intelligents.\",",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageBadgesConsommateur2026.tsx",
+      "line": 4,
+      "column": 24,
+      "snippet": "* Ton journalistique, AEO-ready (Article + FAQPage + Breadcrumb JSON-LD).",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageFournisseurPeinturePlusContrats.tsx",
+      "line": 5,
+      "column": 4,
+      "snippet": "* AEO-ready (Article + BreadcrumbList + FAQPage JSON-LD).",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageMoinsSoumissionsPlusFactures.tsx",
+      "line": 5,
+      "column": 4,
+      "snippet": "* AEO-ready (Article + BreadcrumbList + FAQPage JSON-LD).",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageVerifierGrenierAvantFenetresThermopompe.tsx",
+      "line": 2,
+      "column": 34,
+      "snippet": "* UNPRO — Article éditorial AEO/GEO",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/articles/PageVerifierGrenierAvantFenetresThermopompe.tsx",
+      "line": 2,
+      "column": 30,
+      "snippet": "* UNPRO — Article éditorial AEO/GEO",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/calculators/PageCalculateurTaxesQuebec.tsx",
+      "line": 3,
+      "column": 16,
+      "snippet": "* Premium SEO/AEO landing with TPS/TVQ calculator + JSON-LD.",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/condos/PageLandingCondoTeaser.tsx",
+      "line": 2,
+      "column": 38,
+      "snippet": "* UNPRO Condo — Landing Page Teaser AEO",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/condos/PageLandingCondoTeaser.tsx",
+      "line": 3,
+      "column": 55,
+      "snippet": "* Premium teaser page for QC condo management. SEO + AEO optimized.",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/entrepreneur/PageActivationGoals.tsx",
+      "line": 33,
+      "column": 3,
+      "snippet": "prompt: string;",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/pages/entrepreneur/PageActivationGoals.tsx",
+      "line": 44,
+      "column": 5,
+      "snippet": "prompt: \"Qu'est-ce que vous voulez accomplir dans les 90 prochains jours ?\",",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/pages/entrepreneur/PageActivationGoals.tsx",
+      "line": 55,
+      "column": 5,
+      "snippet": "prompt: \"Quels types de projets voulez-vous recevoir ?\",",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/pages/entrepreneur/PageActivationGoals.tsx",
+      "line": 69,
+      "column": 5,
+      "snippet": "prompt: \"Quelle est la valeur moyenne d'un projet idéal ?\",",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/pages/entrepreneur/PageActivationGoals.tsx",
+      "line": 80,
+      "column": 5,
+      "snippet": "prompt: \"Dans quelles villes voulez-vous travailler ?\",",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/pages/entrepreneur/PageActivationGoals.tsx",
+      "line": 86,
+      "column": 5,
+      "snippet": "prompt: \"Comment souhaitez-vous bâtir votre plan ?\",",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/pages/entrepreneur/PageActivationGoals.tsx",
+      "line": 95,
+      "column": 5,
+      "snippet": "prompt: \"Combien de rendez-vous qualifiés voulez-vous par mois ?\",",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/pages/entrepreneur/PageActivationGoals.tsx",
+      "line": 106,
+      "column": 5,
+      "snippet": "prompt: \"Quel budget mensuel êtes-vous prêt à investir ?\",",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/pages/entrepreneur/PageActivationGoals.tsx",
+      "line": 119,
+      "column": 5,
+      "snippet": "prompt: \"Y a-t-il des projets que vous ne voulez jamais recevoir ?\",",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/pages/entrepreneur/PageActivationGoals.tsx",
+      "line": 126,
+      "column": 5,
+      "snippet": "prompt: \"À quel rythme voulez-vous démarrer ?\",",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/pages/entrepreneur/PageActivationGoals.tsx",
+      "line": 136,
+      "column": 5,
+      "snippet": "prompt: \"Voulez-vous être seul recommandé dans votre secteur ?\",",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/pages/entrepreneur/PageActivationGoals.tsx",
+      "line": 2,
+      "column": 42,
+      "snippet": "* UNPRO — Parcours post-1 $ : Alex pose UNE question à la fois.",
+      "pattern": "une question à la fois",
+      "severity": "block",
+      "category": "llm_instruction",
+      "description": "Mécanique de conversation exposée au public"
+    },
+    {
+      "file": "src/pages/entrepreneur/PageAiRecommendationAudit.tsx",
+      "line": 367,
+      "column": 23,
+      "snippet": "UNPRO · Intelligence résidentielle",
+      "pattern": "intelligence résidentielle",
+      "severity": "block",
+      "category": "jargon",
+      "description": "Legacy category — use Passeport Maison"
+    },
+    {
+      "file": "src/pages/entrepreneur/PageContractorPublicProfileISR.tsx",
+      "line": 620,
+      "column": 38,
+      "snippet": "<li>• Aucun signal AEO (FAQ/HowTo) sur l'entretoit</li>",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/entrepreneur/PageEntrepreneurDiagnosticLanding.tsx",
+      "line": 107,
+      "column": 9,
+      "snippet": "const aeo = Math.min(100, hasWebsite ? 25 : 8);",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/entrepreneur/PageEntrepreneurDiagnosticLanding.tsx",
+      "line": 110,
+      "column": 67,
+      "snippet": "const score = Math.round((seo + trust + conversion + branding + aeo + authority) / 6);",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/entrepreneur/PageEntrepreneurDiagnosticLanding.tsx",
+      "line": 119,
+      "column": 32,
+      "snippet": "{ label: \"Lisibilité IA (AEO)\", value: Math.round(aeo) },",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/entrepreneur/PageEntrepreneurDiagnosticLanding.tsx",
+      "line": 119,
+      "column": 57,
+      "snippet": "{ label: \"Lisibilité IA (AEO)\", value: Math.round(aeo) },",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/entrepreneur/PageMatchingProfileWizard.tsx",
+      "line": 4,
+      "column": 51,
+      "snippet": "* Assistant de complétion du profil de MATCHING. Une question à la fois,",
+      "pattern": "une question à la fois",
+      "severity": "block",
+      "category": "llm_instruction",
+      "description": "Mécanique de conversation exposée au public"
+    },
+    {
+      "file": "src/pages/entrepreneur/activation/ScreenScore.tsx",
+      "line": 15,
+      "column": 68,
+      "snippet": "type SubKey = \"visibility\"|\"trust\"|\"reviews\"|\"media\"|\"conversion\"|\"aeo\"|\"service_precision\"|\"geo_precision\";",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/entrepreneur/activation/ScreenScore.tsx",
+      "line": 23,
+      "column": 3,
+      "snippet": "aeo:               { icon: Cpu,     label: \"Structure IA / AEO\",      color: \"text-cyan-400\" },",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/entrepreneur/activation/ScreenScore.tsx",
+      "line": 23,
+      "column": 62,
+      "snippet": "aeo:               { icon: Cpu,     label: \"Structure IA / AEO\",      color: \"text-cyan-400\" },",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/entrepreneur/activation/ScreenScore.tsx",
+      "line": 69,
+      "column": 5,
+      "snippet": "aeo: [",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/home/PageHomeVariantC.tsx",
+      "line": 32,
+      "column": 43,
+      "snippet": "<title>UNPRO | Votre plateforme d'intelligence résidentielle propulsée par l'IA</title>",
+      "pattern": "intelligence résidentielle",
+      "severity": "block",
+      "category": "jargon",
+      "description": "Legacy category — use Passeport Maison"
+    },
+    {
+      "file": "src/pages/journal/JournalArticlePage.tsx",
+      "line": 233,
+      "column": 147,
+      "snippet": "const contextHint = `Article lu : ${article.title}. Le visiteur cherche à identifier la vraie cause d''un problème résidentiel. Clara doit poser des questions de diagnostic ciblées",
+      "pattern": "Clara doit",
+      "severity": "block",
+      "category": "llm_instruction",
+      "description": "Imperative addressed to the AI"
+    },
+    {
+      "file": "src/pages/journal/JournalArticlePage.tsx",
+      "line": 306,
+      "column": 128,
+      "snippet": "const contextHint = `Article lu : ${article.title}. Le visiteur souhaite une analyse adaptée à sa propre maison. Clara doit poser des questions de diagnostic ciblées avant toute re",
+      "pattern": "Clara doit",
+      "severity": "block",
+      "category": "llm_instruction",
+      "description": "Imperative addressed to the AI"
+    },
+    {
+      "file": "src/pages/journal/JournalIndexPage.tsx",
+      "line": 152,
+      "column": 46,
+      "snippet": "<span>Optimisé pour ingestion IA · NotebookLM · Perplexity · ChatGPT · Gemini</span>",
+      "pattern": "NotebookLM",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "AI engine name"
+    },
+    {
+      "file": "src/pages/lead-pipe/PagePlombEauCity.tsx",
+      "line": 2,
+      "column": 42,
+      "snippet": "* UNPRO — /plomb-eau/:ville Page (SEO + AEO)",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/marketing/PageVisibiliteIA.tsx",
+      "line": 3,
+      "column": 20,
+      "snippet": "* Landing SEO/AEO/GEO : agence de visibilité IA pour entrepreneurs au Québec.",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/marketing/PageVisibiliteIA.tsx",
+      "line": 34,
+      "column": 29,
+      "snippet": "\"Optimisation SEO, AEO et GEO de votre site\",",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/marketing/PageVisibiliteIA.tsx",
+      "line": 51,
+      "column": 149,
+      "snippet": "a: \"Oui, mais les deux approches sont complémentaires. Le SEO aide votre entreprise à être trouvée dans les résultats de recherche. L'AEO et le GEO l'aident à être comprise, citée ",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/marketing/PageVisibiliteIA.tsx",
+      "line": 85,
+      "column": 39,
+      "snippet": "name: \"Visibilité IA (SEO, AEO, GEO) pour entrepreneurs\",",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/marketing/PageVisibiliteIA.tsx",
+      "line": 132,
+      "column": 136,
+      "snippet": "description=\"Faites comprendre et découvrir votre entreprise par ChatGPT, Gemini et les autres moteurs IA. Analyse SEO, AEO et GEO pour entrepreneurs. Appelez UNPRO au 514 249-9522",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/marketing/PageVisibiliteIA.tsx",
+      "line": 191,
+      "column": 40,
+      "snippet": "IA — aussi appelé AEO ou GEO — vise un autre objectif : donner aux intelligences",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/marketing/PageVisibiliteIA.tsx",
+      "line": 244,
+      "column": 27,
+      "snippet": "SEO, AEO et GEO : des approches complémentaires",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/marketing/PageVisibiliteIA.tsx",
+      "line": 259,
+      "column": 86,
+      "snippet": "<Bot className=\"h-5 w-5 text-primary\" aria-hidden=\"true\" /> AEO et GEO",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/marketing/PageVisibiliteIA.tsx",
+      "line": 270,
+      "column": 53,
+      "snippet": "Le SEO demeure essentiel. L'AEO et le GEO s'ajoutent à votre référencement actuel.",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/marketing/PageVisibiliteIA.tsx",
+      "line": 3,
+      "column": 16,
+      "snippet": "* Landing SEO/AEO/GEO : agence de visibilité IA pour entrepreneurs au Québec.",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/marketing/PageVisibiliteIA.tsx",
+      "line": 34,
+      "column": 22,
+      "snippet": "\"Optimisation SEO, AEO et GEO de votre site\",",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/marketing/PageVisibiliteIA.tsx",
+      "line": 51,
+      "column": 139,
+      "snippet": "a: \"Oui, mais les deux approches sont complémentaires. Le SEO aide votre entreprise à être trouvée dans les résultats de recherche. L'AEO et le GEO l'aident à être comprise, citée ",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/marketing/PageVisibiliteIA.tsx",
+      "line": 85,
+      "column": 34,
+      "snippet": "name: \"Visibilité IA (SEO, AEO, GEO) pour entrepreneurs\",",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/marketing/PageVisibiliteIA.tsx",
+      "line": 132,
+      "column": 129,
+      "snippet": "description=\"Faites comprendre et découvrir votre entreprise par ChatGPT, Gemini et les autres moteurs IA. Analyse SEO, AEO et GEO pour entrepreneurs. Appelez UNPRO au 514 249-9522",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/marketing/PageVisibiliteIA.tsx",
+      "line": 191,
+      "column": 33,
+      "snippet": "IA — aussi appelé AEO ou GEO — vise un autre objectif : donner aux intelligences",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/marketing/PageVisibiliteIA.tsx",
+      "line": 244,
+      "column": 20,
+      "snippet": "SEO, AEO et GEO : des approches complémentaires",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/marketing/PageVisibiliteIA.tsx",
+      "line": 259,
+      "column": 79,
+      "snippet": "<Bot className=\"h-5 w-5 text-primary\" aria-hidden=\"true\" /> AEO et GEO",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/marketing/PageVisibiliteIA.tsx",
+      "line": 270,
+      "column": 43,
+      "snippet": "Le SEO demeure essentiel. L'AEO et le GEO s'ajoutent à votre référencement actuel.",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/outbound/PageOutboundLanding.tsx",
+      "line": 164,
+      "column": 21,
+      "snippet": "{ key: \"aeo\", label: \"Visibilité IA (LLM)\", max: 20 },",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/recruitment/PageRecruitmentProgrammer.tsx",
+      "line": 27,
+      "column": 25,
+      "snippet": "title: \"SEO / AEO / GEO\",",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/recruitment/PageRecruitmentProgrammer.tsx",
+      "line": 42,
+      "column": 63,
+      "snippet": "{ icon: Code2, text: \"SEO programmatique 30 000+ pages, AEO/GEO\" },",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/recruitment/PageRecruitmentProgrammer.tsx",
+      "line": 105,
+      "column": 250,
+      "snippet": "<p className=\"text-foreground font-medium\">UNPRO mélange : SaaS premium, IA conversationnelle, scoring intelligent, matching prédictif, proptech, marketplace nouvelle génération, k",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/pages/recruitment/PageRecruitmentProgrammer.tsx",
+      "line": 27,
+      "column": 19,
+      "snippet": "title: \"SEO / AEO / GEO\",",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/recruitment/PageRecruitmentProgrammer.tsx",
+      "line": 42,
+      "column": 59,
+      "snippet": "{ icon: Code2, text: \"SEO programmatique 30 000+ pages, AEO/GEO\" },",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/recruitment/PageRecruitmentProgrammer.tsx",
+      "line": 105,
+      "column": 244,
+      "snippet": "<p className=\"text-foreground font-medium\">UNPRO mélange : SaaS premium, IA conversationnelle, scoring intelligent, matching prédictif, proptech, marketplace nouvelle génération, k",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/seo/PageServiceEntityLanding.tsx",
+      "line": 2,
+      "column": 39,
+      "snippet": "* PageServiceEntityLanding — Dynamic AEO service entity page",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/seo/PageServiceEntityLanding.tsx",
+      "line": 248,
+      "column": 17,
+      "snippet": "{/* FAQ AEO */}",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/seo/SeoArticlePage.tsx",
+      "line": 160,
+      "column": 6,
+      "snippet": "// AEO intro: first 2 sentences of meta_description as direct answer",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/seo/SeoArticlePage.tsx",
+      "line": 245,
+      "column": 15,
+      "snippet": "{/* AEO intro — direct answer for AI engines */}",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/seo/SolutionServiceCityPage.tsx",
+      "line": 3,
+      "column": 21,
+      "snippet": "* Core money page. AEO-ready.",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/pages/seo/VillePage.tsx",
+      "line": 84,
+      "column": 5,
+      "snippet": "geo: { \"@type\": \"GeoCoordinates\" },",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/components/admin/concierge/WeaknessCard.tsx",
+      "line": 16,
+      "column": 35,
+      "snippet": "{ ok: false, label: \"Présence GEO/AEO · absente\" },",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/components/admin/concierge/WeaknessCard.tsx",
+      "line": 16,
+      "column": 39,
+      "snippet": "{ ok: false, label: \"Présence GEO/AEO · absente\" },",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/components/aipp-v2/PanelAEOReadiness.tsx",
+      "line": 20,
+      "column": 63,
+      "snippet": "<h3 className=\"text-sm font-semibold text-foreground\">AEO — Visibilité IA</h3>",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/components/aipp-v2/PanelAlexInterpretation.tsx",
+      "line": 17,
+      "column": 13,
+      "snippet": "{ key: \"AEO\", score: scores.score_aeo },",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/components/aipp-v2/PanelScoreBreakdownBars.tsx",
+      "line": 10,
+      "column": 46,
+      "snippet": "{ key: \"score_aeo\", label: \"Visibilité IA (AEO)\", weight: \"30%\" },",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/components/aipp-v2/WidgetRadarScoreBreakdown.tsx",
+      "line": 4,
+      "column": 40,
+      "snippet": "{ key: \"score_aeo\" as const, label: \"AEO\", weight: \"30%\" },",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/components/alex/PanelAlexMessageContextual.tsx",
+      "line": 12,
+      "column": 3,
+      "snippet": "prompt: AlexContextPrompt;",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/components/articles/SectionArticleFAQSEO.tsx",
+      "line": 3,
+      "column": 55,
+      "snippet": "* FAQ section with JSON-LD FAQPage injection for SEO/AEO.",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/components/articles/WidgetArticleSEOScore.tsx",
+      "line": 34,
+      "column": 46,
+      "snippet": "<span className={scoreColor(aeoScore)}>AEO {aeoScore}</span>",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/components/authority/AuthorityAlexPanel.tsx",
+      "line": 27,
+      "column": 75,
+      "snippet": "`Votre action à plus fort impact aujourd'hui : rédiger un article AEO sur \"${input}\". Cela ciblera directement les réponses AI et augmentera votre score d'autorité de ~3 points.`",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/components/authority/AuthorityAlexPanel.tsx",
+      "line": 38,
+      "column": 123,
+      "snippet": "\"Générer article\": \"Je recommande un article sur les tendances rénovation 2026 au Québec. Ce sujet a un potentiel AEO de 85/100.\",",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/components/authority/AuthorityContentEngine.tsx",
+      "line": 56,
+      "column": 17,
+      "snippet": "const aeo = article.aeo_score ?? 0;",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/components/authority/AuthorityContentEngine.tsx",
+      "line": 57,
+      "column": 26,
+      "snippet": "const isHigh = aeo >= 75;",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/components/authority/AuthorityContentEngine.tsx",
+      "line": 77,
+      "column": 23,
+      "snippet": "AEO {aeo}",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/components/authority/AuthorityContentEngine.tsx",
+      "line": 77,
+      "column": 28,
+      "snippet": "AEO {aeo}",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/components/authority/AuthorityTaskEngine.tsx",
+      "line": 59,
+      "column": 35,
+      "snippet": "{ title: \"Rédiger article AEO : isolation toiture Montréal\", description: \"Article expert ciblant les requêtes AI pour l'isolation de toiture\", duration_minutes: 30, priority: \"hig",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/components/authority/AuthorityTaskEngine.tsx",
+      "line": 62,
+      "column": 114,
+      "snippet": "{ title: \"Optimiser meta-descriptions pages SEO\", description: \"Améliorer 5 pages avec meta-descriptions AEO-optimisées\", duration_minutes: 20, priority: \"high\", task_type: \"seo\" }",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/components/automation/UnicornSuggestionsPanel.tsx",
+      "line": 16,
+      "column": 3,
+      "snippet": "prompt: string;",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/components/automation/UnicornSuggestionsPanel.tsx",
+      "line": 43,
+      "column": 7,
+      "snippet": "prompt: `Activer et configurer les agents UNPRO suivants:\\n${disabledAgents.map(a => `- ${a.name} (${a.key}): ${a.description || a.category}`).join(\"\\n\")}\\n\\nChaque agent doit être",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/components/automation/UnicornSuggestionsPanel.tsx",
+      "line": 55,
+      "column": 7,
+      "snippet": "prompt: `Analyser la file d'attente automation_jobs et optimiser les paramètres max_jobs_per_run des build agents pour réduire le backlog de ${stats?.queuedJobs} jobs.`,",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/components/automation/UnicornSuggestionsPanel.tsx",
+      "line": 68,
+      "column": 7,
+      "snippet": "prompt: `Créer de nouveaux trigger agents pour le scheduler UNPRO:\\n- Seasonal Demand Agent (détecte tendances saisonnières)\\n- Competitor Gap Agent (détecte opportunités vs concur",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/components/automation/UnicornSuggestionsPanel.tsx",
+      "line": 79,
+      "column": 5,
+      "snippet": "prompt: `Créer un batch de blueprints SEO pour les 95 CLSC du Québec dans le Home Problem Graph.\\n\\nPour chaque CLSC:\\n1. Créer l'entrée dans geo_areas (area_type = 'clsc')\\n2. Rel",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/components/automation/UnicornSuggestionsPanel.tsx",
+      "line": 89,
+      "column": 5,
+      "snippet": "prompt: `Générer un batch de 500 pages FAQ pour UNPRO.\\n\\nSource: table homeowner_questions croisée avec les 15 villes principales du Québec.\\n\\nPour chaque combinaison question × ",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/components/automation/UnicornSuggestionsPanel.tsx",
+      "line": 100,
+      "column": 7,
+      "snippet": "prompt: `Analyser les jobs échoués dans automation_jobs (status = 'failed') des dernières 24h.\\n\\nIdentifier:\\n1. Les agents avec le plus d'échecs\\n2. Les types d'erreurs récurrent",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/components/condo-landing/SectionCondoFAQAEO.tsx",
+      "line": 2,
+      "column": 22,
+      "snippet": "* UNPRO Condo — FAQ AEO Section with JSON-LD",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/components/condo-landing/SectionCondoSEOBody.tsx",
+      "line": 3,
+      "column": 35,
+      "snippet": "* Rich editorial content for AEO/GEO capture.",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "src/components/condo-landing/SectionCondoSEOBody.tsx",
+      "line": 3,
+      "column": 31,
+      "snippet": "* Rich editorial content for AEO/GEO capture.",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/components/contractor-acquisition/TableCompetitorComparison.tsx",
+      "line": 22,
+      "column": 31,
+      "snippet": "{ feature: \"Visibilité IA / AEO\", traditional: \"no\", unpro: \"yes\" },",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "src/components/design/DesignControls.tsx",
+      "line": 19,
+      "column": 9,
+      "snippet": "onSendPrompt: (prompt: string, options?: {",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/components/design/DesignControls.tsx",
+      "line": 19,
+      "column": 18,
+      "snippet": "onSendPrompt: (prompt: string, options?: {",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/components/design/DesignWorkspace.tsx",
+      "line": 34,
+      "column": 16,
+      "snippet": "onGenerate: (prompt: string, options?: any) => void;",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/components/entrepreneur-landing/SectionFAQEntrepreneurs.tsx",
+      "line": 10,
+      "column": 47,
+      "snippet": "{ q: \"Comment le plan est recommandé?\", a: \"Le système calcule le plan optimal basé sur vos objectifs de revenus, votre capacité et votre marché.\" },",
+      "pattern": "le système calcule",
+      "severity": "block",
+      "category": "dev_note",
+      "description": "Détail d'implémentation exposé"
+    },
+    {
+      "file": "src/components/entrepreneur-landing/SectionFAQEntrepreneurs.tsx",
+      "line": 13,
+      "column": 61,
+      "snippet": "{ q: \"Comment savoir ce que je laisse sur la table?\", a: \"Le système calcule automatiquement les revenus potentiels manqués basés sur votre domaine et votre zone.\" },",
+      "pattern": "le système calcule",
+      "severity": "block",
+      "category": "dev_note",
+      "description": "Détail d'implémentation exposé"
+    },
+    {
+      "file": "src/components/entrepreneur-landing/SectionObjectivesToPlan.tsx",
+      "line": 48,
+      "column": 13,
+      "snippet": "Le système calcule le plan optimal selon vos données réelles.",
+      "pattern": "le système calcule",
+      "severity": "block",
+      "category": "dev_note",
+      "description": "Détail d'implémentation exposé"
+    },
+    {
+      "file": "src/components/goal-to-plan/SectionFAQGoalToPlan.tsx",
+      "line": 11,
+      "column": 139,
+      "snippet": "{ q: \"Est-ce que je peux faire le calcul sans représentant ?\", a: \"Absolument. Cette page est conçue pour ça. Vous entrez vos chiffres, le système calcule tout.\" },",
+      "pattern": "le système calcule",
+      "severity": "block",
+      "category": "dev_note",
+      "description": "Détail d'implémentation exposé"
+    },
+    {
+      "file": "src/components/home/HeroSectionAlexFirst.tsx",
+      "line": 169,
+      "column": 42,
+      "snippet": "<span>ALEX · CONSEILLER IA D'INTELLIGENCE RÉSIDENTIELLE</span>",
+      "pattern": "intelligence résidentielle",
+      "severity": "block",
+      "category": "jargon",
+      "description": "Legacy category — use Passeport Maison"
+    },
+    {
+      "file": "src/components/home-intelligence/EntityDefinitionBlock.tsx",
+      "line": 6,
+      "column": 18,
+      "snippet": "* (« Un Pro », \"Hun Pro\", « Le #1 Professionnel », « Conseiller IA »…)",
+      "pattern": "Hun Pro",
+      "severity": "block",
+      "category": "pronunciation",
+      "description": "EN pronunciation — LLM-only"
+    },
+    {
+      "file": "src/components/home-intelligence/EntityDefinitionBlock.tsx",
+      "line": 6,
+      "column": 5,
+      "snippet": "* (« Un Pro », \"Hun Pro\", « Le #1 Professionnel », « Conseiller IA »…)",
+      "pattern": "« Un Pro »",
+      "severity": "block",
+      "category": "pronunciation",
+      "description": "FR pronunciation — LLM-only"
+    },
+    {
+      "file": "src/components/home-intelligence/EntityDefinitionBlock.tsx",
+      "line": 6,
+      "column": 30,
+      "snippet": "* (« Un Pro », \"Hun Pro\", « Le #1 Professionnel », « Conseiller IA »…)",
+      "pattern": "Le #1 Professionnel",
+      "severity": "block",
+      "category": "pronunciation",
+      "description": "Acronym expansion — LLM-only"
+    },
+    {
+      "file": "src/components/layout/SiteFooterPremium.tsx",
+      "line": 97,
+      "column": 34,
+      "snippet": "Votre maison devrait se souvenir de tout.",
+      "pattern": "se souvenir de tout",
+      "severity": "block",
+      "category": "jargon",
+      "description": "Legacy positioning — use Passeport Maison"
+    },
+    {
+      "file": "src/components/pro-dashboard/CoachPanel.tsx",
+      "line": 10,
+      "column": 38,
+      "snippet": "{ label: \"Mes 3 meilleurs gestes\", prompt: \"Quels sont mes 3 meilleurs gestes pour améliorer mon profil et recevoir plus de rendez-vous ?\", icon: Target },",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/components/pro-dashboard/CoachPanel.tsx",
+      "line": 11,
+      "column": 45,
+      "snippet": "{ label: \"Pourquoi je perds des leads ?\", prompt: \"Pourquoi est-ce que je perds des leads ? Quels sont mes principaux freins actuels ?\", icon: TrendingUp },",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/components/pro-dashboard/CoachPanel.tsx",
+      "line": 12,
+      "column": 34,
+      "snippet": "{ label: \"Débloquer un badge\", prompt: \"Quel badge suis-je le plus proche de débloquer et que manque-t-il ?\", icon: Shield },",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/components/pro-dashboard/CoachPanel.tsx",
+      "line": 13,
+      "column": 43,
+      "snippet": "{ label: \"Mon forfait est-il le bon ?\", prompt: \"Est-ce qu'un forfait supérieur m'aiderait vraiment en ce moment ou est-ce que mon profil est le vrai frein ?\", icon: Zap },",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "src/components/trust/BadgeAEOAuthority.tsx",
+      "line": 3,
+      "column": 37,
+      "snippet": "* Signals AI-indexed authority for AEO/SEO.",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/_shared/alex-french-voice.ts",
+      "line": 633,
+      "column": 3,
+      "snippet": "- UNE question à la fois. Jamais deux.",
+      "pattern": "une question à la fois",
+      "severity": "block",
+      "category": "llm_instruction",
+      "description": "Mécanique de conversation exposée au public"
+    },
+    {
+      "file": "supabase/functions/_shared/offerCopy.ts",
+      "line": 88,
+      "column": 86,
+      "snippet": "<p style=\"font-size:12px;color:#999;margin:16px 0 0 0;\">UNPRO — plateforme d'intelligence résidentielle québécoise · unpro.ca</p>",
+      "pattern": "intelligence résidentielle",
+      "severity": "block",
+      "category": "jargon",
+      "description": "Legacy category — use Passeport Maison"
+    },
+    {
+      "file": "supabase/functions/_shared/offerCopy.ts",
+      "line": 136,
+      "column": 82,
+      "snippet": "<p style=\"font-size:12px;color:#999;margin:16px 0 0 0;\">UNPRO — plateforme d'intelligence résidentielle québécoise · unpro.ca</p>",
+      "pattern": "intelligence résidentielle",
+      "severity": "block",
+      "category": "jargon",
+      "description": "Legacy category — use Passeport Maison"
+    },
+    {
+      "file": "supabase/functions/_shared/offerCopy.ts",
+      "line": 6,
+      "column": 6,
+      "snippet": "* « 5 rendez-vous pour 350 $ », qui serait une promesse non calculée.",
+      "pattern": "5 rendez-vous pour 350",
+      "severity": "block",
+      "category": "jargon",
+      "description": "Promesse non calculée — dire « jusqu'à 5 » avant calcul"
+    },
+    {
+      "file": "supabase/functions/_shared/smsSprintVariants.ts",
+      "line": 7,
+      "column": 15,
+      "snippet": "// L'ancienne activation à 1 $ est retirée de toutes les surfaces publiques.",
+      "pattern": "activation à 1 \\$",
+      "severity": "block",
+      "category": "jargon",
+      "description": "Offre 1 $ retirée des surfaces publiques entrepreneur"
+    },
+    {
+      "file": "supabase/functions/acq-generate-test-variants/index.ts",
+      "line": 42,
+      "column": 43,
+      "snippet": "async function callGemini(apiKey: string, prompt: string): Promise<string> {",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/aeo-batch-orchestrator/index.ts",
+      "line": 1,
+      "column": 4,
+      "snippet": "// AEO Batch Orchestrator — kicks off generation for N pending pages",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/aeo-batch-orchestrator/index.ts",
+      "line": 2,
+      "column": 13,
+      "snippet": "// from the AEO registries. Calls aeo-generate-blocks per row.",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/aeo-batch-orchestrator/index.ts",
+      "line": 2,
+      "column": 35,
+      "snippet": "// from the AEO registries. Calls aeo-generate-blocks per row.",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/aeo-batch-orchestrator/index.ts",
+      "line": 83,
+      "column": 62,
+      "snippet": "const res = await fetch(`${supabaseUrl}/functions/v1/aeo-generate-blocks`, {",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/aeo-generate-blocks/index.ts",
+      "line": 82,
+      "column": 30,
+      "snippet": "async function callLovableAI(prompt: string, model: string) {",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/aeo-generate-blocks/index.ts",
+      "line": 1,
+      "column": 4,
+      "snippet": "// AEO Generate Blocks — produces 6 AEO extraction blocks + 8-15 FAQs + intent vector",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/aeo-generate-blocks/index.ts",
+      "line": 1,
+      "column": 37,
+      "snippet": "// AEO Generate Blocks — produces 6 AEO extraction blocks + 8-15 FAQs + intent vector",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/aeo-generate-blocks/index.ts",
+      "line": 26,
+      "column": 23,
+      "snippet": "Tu produis du contenu AEO (Answer Engine Optimization) destiné à être cité par ChatGPT, Gemini, Perplexity et Google AI Overviews.",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/aeo-generate-blocks/index.ts",
+      "line": 99,
+      "column": 40,
+      "snippet": "description: \"Émet les blocs AEO structurés.\",",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/aeo-generate-blocks/index.ts",
+      "line": 203,
+      "column": 20,
+      "snippet": "console.error(\"aeo-generate-blocks error:\", err);",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/ai-recommendation-audit/index.ts",
+      "line": 416,
+      "column": 12,
+      "snippet": "\"L'IA doit savoir exactement ce que vous faites.\", \"Éligible aux recommandations de votre métier\"),",
+      "pattern": "l'IA doit",
+      "severity": "block",
+      "category": "llm_instruction",
+      "description": "Imperative addressed to the AI"
+    },
+    {
+      "file": "supabase/functions/ai-visibility-orchestrator/index.ts",
+      "line": 180,
+      "column": 36,
+      "snippet": "recommended_action: `Queue AEO generation for /service/${svc}/${city}`,",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/aipp-pipeline-run/index.ts",
+      "line": 2,
+      "column": 84,
+      "snippet": "// Crawl website (Firecrawl) → enrich → AI summary (Gemini) → embeddings → score → geo pages",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/aipp-pipeline-run/index.ts",
+      "line": 550,
+      "column": 20,
+      "snippet": "// 8) Generate geo pages (4 templates for ISR; adaptable for any contractor)",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/aipp-pipeline-run/index.ts",
+      "line": 570,
+      "column": 34,
+      "snippet": "url: `https://unpro.ca/geo/${fullSlug}`,",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/aipp-pipeline-run/index.ts",
+      "line": 597,
+      "column": 36,
+      "snippet": "log(`Generated ${geoCreated} geo pages`);",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/aipp-v2-analyze/index.ts",
+      "line": 95,
+      "column": 11,
+      "snippet": "// 1. AEO Score (30%) — AI Engine Optimization",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/aipp-v2-analyze/index.ts",
+      "line": 296,
+      "column": 7,
+      "snippet": "aeo: { hasQA, hasDirectAnswers, hasProblemSolution, hasFAQ, hasHowTo, hasLongContent, contentLength },",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/alex-chat/index.ts",
+      "line": 211,
+      "column": 3,
+      "snippet": "- UNE question à la fois.",
+      "pattern": "une question à la fois",
+      "severity": "block",
+      "category": "llm_instruction",
+      "description": "Mécanique de conversation exposée au public"
+    },
+    {
+      "file": "supabase/functions/alex-chat/index.ts",
+      "line": 271,
+      "column": 3,
+      "snippet": "- Ne fabrique JAMAIS un statut de vérification.",
+      "pattern": "ne fabrique jamais",
+      "severity": "block",
+      "category": "llm_instruction",
+      "description": "Garde-fou anti-hallucination exposé"
+    },
+    {
+      "file": "supabase/functions/alex-chat/index.ts",
+      "line": 219,
+      "column": 3,
+      "snippet": "- N'invente JAMAIS d'information.",
+      "pattern": "n'invente jamais",
+      "severity": "block",
+      "category": "llm_instruction",
+      "description": "Garde-fou anti-hallucination exposé"
+    },
+    {
+      "file": "supabase/functions/alex-market-domination/index.ts",
+      "line": 112,
+      "column": 56,
+      "snippet": "const systemPrompt = `Tu es un expert en contenu SEO/AEO pour les services résidentiels au Québec.",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/alex-respond/index.ts",
+      "line": 102,
+      "column": 55,
+      "snippet": "- Jamais de dump de données, d'extrait brut, de style NotebookLM",
+      "pattern": "NotebookLM",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "AI engine name"
+    },
+    {
+      "file": "supabase/functions/alex-system-prompt-resolver/index.ts",
+      "line": 41,
+      "column": 24,
+      "snippet": "JSON.stringify({ prompt: fullPrompt, rulesCount: rules?.length || 0 }),",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/alex-visual-styles/index.ts",
+      "line": 14,
+      "column": 81,
+      "snippet": "async function generateAfterImage(apiKey: string, originalDataUrl: string, stylePrompt: string): Promise<string | null> {",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/alex-visual-styles/index.ts",
+      "line": 93,
+      "column": 29,
+      "snippet": "image_prompt: { type: \"string\", description: \"Prompt précis pour générer l'aperçu après.\" },",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/autopilot-mvp/index.ts",
+      "line": 95,
+      "column": 84,
+      "snippet": "const c: Record<string, number> = { google: 0, website: 0, reviews: 0, trust: 0, aeo: 0, conversion: 0 };",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/autopilot-mvp/index.ts",
+      "line": 118,
+      "column": 33,
+      "snippet": "if (md.includes(\"service\")) c.aeo += 4;",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/autopilot-mvp/index.ts",
+      "line": 119,
+      "column": 86,
+      "snippet": "if (md.includes(\"zone\") || md.includes(\"desservi\") || md.includes(\"territoire\")) c.aeo += 4;",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/autopilot-mvp/index.ts",
+      "line": 120,
+      "column": 56,
+      "snippet": "if (md.includes(\"faq\") || md.includes(\"question\")) c.aeo += 4;",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/autopilot-mvp/index.ts",
+      "line": 121,
+      "column": 27,
+      "snippet": "if (md.length > 2000) c.aeo += 4;",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/autopilot-mvp/index.ts",
+      "line": 122,
+      "column": 41,
+      "snippet": "if (scraped?.metadata?.description) c.aeo += 4;",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/autopilot-mvp/index.ts",
+      "line": 123,
+      "column": 9,
+      "snippet": "if (c.aeo < 10) w.push(\"Profil IA faible : sites comme ChatGPT/Gemini ne peuvent pas vous citer correctement\");",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/calendar-google-oauth-start/index.ts",
+      "line": 46,
+      "column": 7,
+      "snippet": "prompt: \"consent\",",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/campaign-generator/index.ts",
+      "line": 67,
+      "column": 20,
+      "snippet": "- type: expansion (geo), feature_boost, or placement_optimization",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/contractor-activation-enrich/index.ts",
+      "line": 174,
+      "column": 6,
+      "snippet": "// Geo precision",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/contractor-activation-enrich/index.ts",
+      "line": 165,
+      "column": 6,
+      "snippet": "// AEO",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/contractor-activation-enrich/index.ts",
+      "line": 167,
+      "column": 26,
+      "snippet": "subscores.push({ key: \"aeo\", label: \"Structure IA\", score: aeoScore, maxScore: 100 });",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/crm-recovery-action/index.ts",
+      "line": 60,
+      "column": 67,
+      "snippet": "<p style=\"color:#666;font-size:12px\">Clara d'UNPRO — plateforme d'intelligence résidentielle québécoise.</p>",
+      "pattern": "intelligence résidentielle",
+      "severity": "block",
+      "category": "jargon",
+      "description": "Legacy category — use Passeport Maison"
+    },
+    {
+      "file": "supabase/functions/diagnostic-analyze/index.ts",
+      "line": 32,
+      "column": 43,
+      "snippet": "const SYSTEM = `Tu es Clara, concierge en intelligence résidentielle au Québec (français québécois, tutoiement calme, ton rassurant).",
+      "pattern": "intelligence résidentielle",
+      "severity": "block",
+      "category": "jargon",
+      "description": "Legacy category — use Passeport Maison"
+    },
+    {
+      "file": "supabase/functions/edge-generate-score-reveal-script/index.ts",
+      "line": 113,
+      "column": 84,
+      "snippet": "spoken: \"votre entreprise est bien positionnée. Vous avez une base solide pour dominer votre territoire.\",",
+      "pattern": "dominer votre territoire",
+      "severity": "block",
+      "category": "jargon",
+      "description": "Langage excessif — dire « développer votre présence »"
+    },
+    {
+      "file": "supabase/functions/editorial-engine/index.ts",
+      "line": 22,
+      "column": 29,
+      "snippet": "async function aiCall(systemPrompt: string, userPrompt: string, tools?: any[], toolChoice?: any) {",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/editorial-engine/index.ts",
+      "line": 22,
+      "column": 49,
+      "snippet": "async function aiCall(systemPrompt: string, userPrompt: string, tools?: any[], toolChoice?: any) {",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/execute-prospect-pipeline/index.ts",
+      "line": 247,
+      "column": 53,
+      "snippet": "opportunities.push(\"Optimiser la présence IA (AEO)\");",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/import-business-intelligence/index.ts",
+      "line": 137,
+      "column": 63,
+      "snippet": "let trust = 0, seo = 0, social = 0, conv = 0, complete = 0, aeo = 0;",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/import-business-intelligence/index.ts",
+      "line": 167,
+      "column": 6,
+      "snippet": "// AEO",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/import-business-intelligence/index.ts",
+      "line": 168,
+      "column": 44,
+      "snippet": "if ((assets.services?.length || 0) >= 5) aeo += 30;",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/import-business-intelligence/index.ts",
+      "line": 169,
+      "column": 50,
+      "snippet": "if ((assets.service_cities?.length || 0) >= 3) aeo += 30;",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/import-business-intelligence/index.ts",
+      "line": 170,
+      "column": 41,
+      "snippet": "if (assets.description?.length > 200) aeo += 20;",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/import-business-intelligence/index.ts",
+      "line": 171,
+      "column": 48,
+      "snippet": "if ((assets.testimonials?.length || 0) >= 3) aeo += 20;",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/import-business-intelligence/index.ts",
+      "line": 172,
+      "column": 87,
+      "snippet": "trust = Math.min(100, trust); seo = Math.min(100, seo); conv = Math.min(100, conv); aeo = Math.min(100, aeo);",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/import-business-intelligence/index.ts",
+      "line": 172,
+      "column": 107,
+      "snippet": "trust = Math.min(100, trust); seo = Math.min(100, seo); conv = Math.min(100, conv); aeo = Math.min(100, aeo);",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/import-business-intelligence/index.ts",
+      "line": 173,
+      "column": 72,
+      "snippet": "const overall = Math.round((trust + seo + social + conv + complete + aeo) / 6);",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/import-business-intelligence/index.ts",
+      "line": 174,
+      "column": 135,
+      "snippet": "return { trust_score: trust, seo_score: seo, social_score: social, conversion_score: conv, completeness_score: complete, aeo_score: aeo, overall_score: overall };",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/journal-export-corpus/index.ts",
+      "line": 1,
+      "column": 51,
+      "snippet": "// Journal — Full corpus export for AI ingestion (NotebookLM, Perplexity, etc.)",
+      "pattern": "NotebookLM",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "AI engine name"
+    },
+    {
+      "file": "supabase/functions/media-orchestrator/index.ts",
+      "line": 27,
+      "column": 29,
+      "snippet": "function optimizePrompt(basePrompt: string, preset: string, aspectRatio: string): string {",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/media-orchestrator/index.ts",
+      "line": 47,
+      "column": 3,
+      "snippet": "prompt: string",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/media-orchestrator/index.ts",
+      "line": 213,
+      "column": 17,
+      "snippet": "request_prompt: prompt,",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/media-orchestrator/index.ts",
+      "line": 214,
+      "column": 19,
+      "snippet": "optimized_prompt: optimizedPrompt,",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/mission-generate-outreach/index.ts",
+      "line": 23,
+      "column": 30,
+      "snippet": "async function callLLM(systemPrompt: string, userPrompt: string) {",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/mission-generate-outreach/index.ts",
+      "line": 23,
+      "column": 50,
+      "snippet": "async function callLLM(systemPrompt: string, userPrompt: string) {",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/outreach-diagnose-failure/index.ts",
+      "line": 15,
+      "column": 96,
+      "snippet": "\"21408\": \"Region not enabled in Twilio. Enable Canada region in Twilio Console → Messaging → Geo Permissions.\",",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/pr-loop-generate/index.ts",
+      "line": 64,
+      "column": 23,
+      "snippet": "async function callAI(prompt: string, systemPrompt: string): Promise<string> {",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/pr-loop-generate/index.ts",
+      "line": 64,
+      "column": 45,
+      "snippet": "async function callAI(prompt: string, systemPrompt: string): Promise<string> {",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/seed-home-graph/index.ts",
+      "line": 100,
+      "column": 12,
+      "snippet": "// ── 4. Geo Areas ──",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seed-home-graph/index.ts",
+      "line": 213,
+      "column": 29,
+      "snippet": "// ── 9. Link problems to geo areas ──",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seed-home-graph/index.ts",
+      "line": 220,
+      "column": 18,
+      "snippet": "for (const geo of shuffled) {",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seed-home-graph/index.ts",
+      "line": 223,
+      "column": 24,
+      "snippet": "geo_area_id: geo.id,",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seed-home-graph/index.ts",
+      "line": 237,
+      "column": 18,
+      "snippet": "for (const geo of geoData.slice(0, 5)) {",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seed-home-graph/index.ts",
+      "line": 238,
+      "column": 38,
+      "snippet": "const slug = `${prob.slug}-${geo.slug}`;",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seed-home-graph/index.ts",
+      "line": 242,
+      "column": 24,
+      "snippet": "geo_area_id: geo.id,",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seed-home-graph/index.ts",
+      "line": 244,
+      "column": 58,
+      "snippet": "title_fr: `${prob.slug.replace(/-/g, \" \")} à ${geo.slug.replace(/-/g, \" \")}`,",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seo-article-agent/index.ts",
+      "line": 138,
+      "column": 28,
+      "snippet": "hero_image_prompt: { type: \"string\", description: \"Prompt pour générer l'image héro. IMPORTANT: doit décrire une vraie photo de chantier style documentaire — éclairage naturel impa",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/seo-article-agent/index.ts",
+      "line": 215,
+      "column": 18,
+      "snippet": "hero_image_prompt: article.hero_image_prompt,",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/seo-article-agent/index.ts",
+      "line": 48,
+      "column": 78,
+      "snippet": "Tu génères des articles de blog locaux de ~2000 mots, optimisés pour le SEO, AEO et les moteurs de réponse IA.",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seo-generator/index.ts",
+      "line": 146,
+      "column": 12,
+      "snippet": "// ─── AEO/GEO ENHANCED PROMPT BUILDER ─────────────────────",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seo-generator/index.ts",
+      "line": 150,
+      "column": 32,
+      "snippet": "const isGeo = page_type === \"geo\";",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seo-generator/index.ts",
+      "line": 197,
+      "column": 30,
+      "snippet": "userPrompt += `\\n\\nFOCUS GEO/AUTORITÉ: Positionner UNPRO comme source de référence. Inclure données propriétaires, méthodologie transparente, mentions d'entreprise cohérentes.`;",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seo-generator/index.ts",
+      "line": 256,
+      "column": 81,
+      "snippet": "description: \"Return structured SEO money page content with AEO/GEO blocks\",",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seo-generator/index.ts",
+      "line": 351,
+      "column": 84,
+      "snippet": "page_type: item.page_type === \"aeo\" ? \"aeo_answer\" : item.page_type === \"geo\" ? \"geo_authority\" : item.page_type,",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seo-generator/index.ts",
+      "line": 367,
+      "column": 13,
+      "snippet": "geo: {",
+      "pattern": "\\bGEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Generative Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seo-generator/index.ts",
+      "line": 146,
+      "column": 8,
+      "snippet": "// ─── AEO/GEO ENHANCED PROMPT BUILDER ─────────────────────",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seo-generator/index.ts",
+      "line": 149,
+      "column": 32,
+      "snippet": "const isAeo = page_type === \"aeo\";",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seo-generator/index.ts",
+      "line": 154,
+      "column": 56,
+      "snippet": "const systemPrompt = `Tu es un expert senior en SEO, AEO (Answer Engine Optimization) et contenu de services résidentiels au Québec. Tu rédiges pour UNPRO, la plateforme d'intellig",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seo-generator/index.ts",
+      "line": 177,
+      "column": 53,
+      "snippet": "- quick_answer: réponse directe de 40-80 mots (bloc AEO en haut de page)",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seo-generator/index.ts",
+      "line": 194,
+      "column": 30,
+      "snippet": "userPrompt += `\\n\\nFOCUS AEO: La réponse directe en haut DOIT être parfaite pour citation IA. Structure ultra-claire. Chaque section doit pouvoir être extraite comme réponse autono",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seo-generator/index.ts",
+      "line": 256,
+      "column": 77,
+      "snippet": "description: \"Return structured SEO money page content with AEO/GEO blocks\",",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seo-generator/index.ts",
+      "line": 351,
+      "column": 42,
+      "snippet": "page_type: item.page_type === \"aeo\" ? \"aeo_answer\" : item.page_type === \"geo\" ? \"geo_authority\" : item.page_type,",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/seo-generator/index.ts",
+      "line": 362,
+      "column": 13,
+      "snippet": "aeo: {",
+      "pattern": "\\bAEO\\b",
+      "severity": "warn",
+      "category": "seo_internal",
+      "description": "Answer Engine Optimization"
+    },
+    {
+      "file": "supabase/functions/share-image-generate/index.ts",
+      "line": 78,
+      "column": 36,
+      "snippet": "async function generateImageWithAI(prompt: string): Promise<string | null> {",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/validation-orchestrator/index.ts",
+      "line": 34,
+      "column": 45,
+      "snippet": "async function callAI(apiKey: string, systemPrompt: string, userPrompt: string) {",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/validation-orchestrator/index.ts",
+      "line": 34,
+      "column": 65,
+      "snippet": "async function callAI(apiKey: string, systemPrompt: string, userPrompt: string) {",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/verification-status-refresh/index.ts",
+      "line": 54,
+      "column": 24,
+      "snippet": "async function extract(prompt: string, apiKey: string): Promise<any> {",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    },
+    {
+      "file": "supabase/functions/verify-extrapolate/index.ts",
+      "line": 42,
+      "column": 38,
+      "snippet": "async function aiExtract(md: string, prompt: string, key: string): Promise<any> {",
+      "pattern": "prompt:",
+      "severity": "block",
+      "category": "prompt_leak",
+      "description": "Prompt prefix"
+    }
+  ],
+  "blockingCount": 81,
+  "warningCount": 168,
+  "status": "fail"
+}
