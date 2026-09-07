@@ -1,0 +1,1 @@
+ALTER FUNCTION public.trg_normalize_contractor_lead() SET search_path TO public, extensions;
