@@ -8,6 +8,7 @@ import { sendSms } from "./twilioSend.ts";
 import { normalizePhone } from "./normalizePhone.ts";
 import { wrapAllUrls, validateOutreachMessage, withReplyFooter, withSmsReplyLine } from "./ctaTracker.ts";
 import { recordEmailEvent, recordSmsEvent } from "./outreachEvents.ts";
+import { logServerFunnelEvent, type ServerFunnelEventType } from "./funnelEvents.ts";
 import { checkAutopilotGate } from "./autopilotGate.ts";
 import { buildDemandIntro } from "./demandInjector.ts";
 import { sanitizeTags } from "./resendTags.ts";
@@ -254,6 +255,7 @@ export async function sendOutreach(input: DispatchInput): Promise<DispatchResult
         contractor_id: input.contractor_id,
         provider: "twilio",
         provider_event_id: res.twilio_sid ?? undefined,
+        phone: phoneNorm.normalized,
         metadata: {
           channel: "sms",
           status: res.status,
@@ -283,6 +285,7 @@ export async function sendOutreach(input: DispatchInput): Promise<DispatchResult
           contractor_id: input.contractor_id,
           provider: "resend",
           provider_event_id: r.id,
+          email: input.email,
           metadata: {
             channel: "email",
             template_key: input.template_key,
@@ -351,6 +354,7 @@ export async function sendOutreach(input: DispatchInput): Promise<DispatchResult
       contractor_id: input.contractor_id,
       provider: "resend",
       provider_event_id: r.id,
+      email: input.email,
       metadata: {
         channel: "email",
         template_key: input.template_key,
