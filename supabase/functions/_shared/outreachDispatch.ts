@@ -64,6 +64,8 @@ async function logEvent(
     contractor_id?: string;
     provider?: string;
     provider_event_id?: string;
+    phone?: string | null;
+    email?: string | null;
     metadata?: Record<string, unknown>;
   },
 ) {
@@ -79,7 +81,36 @@ async function logEvent(
       occurred_at: new Date().toISOString(),
     });
   } catch (_) { /* swallow */ }
+
+  // Canonical funnel mirror — this is what makes "sent / failed" measurable.
+  const meta = (args.metadata ?? {}) as Record<string, unknown>;
+  const type: ServerFunnelEventType = args.event_type === "sent"
+    ? (args.channel === "sms" ? "sms_sent" : "email_sent")
+    : args.event_type === "delivered"
+      ? (args.channel === "sms" ? "sms_delivered" : "email_delivered")
+      : (args.channel === "sms" ? "sms_failed" : "email_failed");
+
+  await logServerFunnelEvent({
+    event_type: type,
+    channel: args.channel,
+    provider: (args.provider as "twilio" | "resend" | undefined) ?? null,
+    provider_message_id: args.provider_event_id ?? null,
+    prospect_id: args.lead_id ?? null,
+    contractor_id: args.contractor_id ?? null,
+    phone: args.phone ?? null,
+    email: args.email ?? null,
+    template_key: (meta.template_key as string) ?? null,
+    campaign: (meta.campaign_id as string) ?? null,
+    failure_reason: args.event_type === "failed"
+      ? String(
+          meta.failure_class ?? meta.sms_block_reason ?? meta.reason ??
+          meta.error_message ?? "unknown",
+        )
+      : null,
+    metadata: meta,
+  });
 }
+
 
 async function sendEmailViaResend(
   to: string,
