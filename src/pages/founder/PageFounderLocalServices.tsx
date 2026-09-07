@@ -132,12 +132,14 @@ export default function PageFounderLocalServices() {
     setCategorySlug(slug);
     if (slug !== OTHER_SLUG) setOtherService("");
     setResult(null);
+    setShowBusinessForm(false);
     void checkEligibility(slug, city);
   };
 
   const onCity = (value: string) => {
     setCity(value);
     setResult(null);
+    setShowBusinessForm(false);
     void checkEligibility(categorySlug, value);
   };
 
