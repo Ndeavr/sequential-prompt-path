@@ -32,9 +32,10 @@ function DeferredJourneyTracker() {
 
 interface MainLayoutProps {
   children: ReactNode;
+  hideMemorySection?: boolean;
 }
 
-const MainLayout = ({ children }: MainLayoutProps) => {
+const MainLayout = ({ children, hideMemorySection }: MainLayoutProps) => {
   const { pathname } = useLocation();
   const { lang } = useLanguage();
 

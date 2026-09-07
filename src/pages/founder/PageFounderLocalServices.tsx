@@ -70,6 +70,7 @@ export default function PageFounderLocalServices() {
   const [otherService, setOtherService] = useState("");
   const [city, setCity] = useState("");
   const [eligibility, setEligibility] = useState<Eligibility>({ state: "idle" });
+  const [showBusinessForm, setShowBusinessForm] = useState(false);
 
   const [businessName, setBusinessName] = useState("");
   const [contactName, setContactName] = useState("");
