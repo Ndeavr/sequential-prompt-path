@@ -20,6 +20,12 @@ interface PhoneOtpFormProps {
   onSuccess?: () => void;
   loading?: boolean;
   className?: string;
+  /**
+   * Attribution du parcours en cours (prospect, jeton, aperçu).
+   * Sans elle, une vérification entrepreneur est indiscernable d'une
+   * vérification propriétaire dans le suivi du tunnel.
+   */
+  attribution?: { prospect_id?: string | null; token?: string | null; is_test?: boolean };
 }
 
 const MAX_ATTEMPTS = 5;
