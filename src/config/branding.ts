@@ -12,6 +12,7 @@ import wordmarkBlueFilledAsset from "@/assets/brand/unpro-wordmark-blue-filled.a
 import wordmarkCreamAsset from "@/assets/brand/unpro-wordmark-cream.asset.json";
 import wordmarkNavyBlueAsset from "@/assets/brand/unpro-wordmark-navy-blue.asset.json";
 import wordmarkNavyFilledAsset from "@/assets/brand/unpro-wordmark-navy-filled.asset.json";
+import wordmarkRubber3dAsset from "@/assets/brand/unpro-wordmark-rubber-3d.asset.json";
 import iconBlueAsset from "@/assets/brand/unpro-icon-blue.asset.json";
 
 const absolute = (path: string) => `https://unpro.ca${path}`;
