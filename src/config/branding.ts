@@ -9,6 +9,7 @@ import wordmarkBlueAsset from "@/assets/brand/unpro-wordmark-blue.asset.json";
 import wordmarkNavyAsset from "@/assets/brand/unpro-wordmark-navy.asset.json";
 import wordmarkWhiteBlueWhiteAsset from "@/assets/brand/unpro-wordmark-white-blue-white.asset.json";
 import wordmarkBlueFilledAsset from "@/assets/brand/unpro-wordmark-blue-filled.asset.json";
+import wordmarkHomeLightAsset from "@/assets/brand/unpro-wordmark-home-light.asset.json";
 import wordmarkCreamAsset from "@/assets/brand/unpro-wordmark-cream.asset.json";
 import wordmarkNavyBlueAsset from "@/assets/brand/unpro-wordmark-navy-blue.asset.json";
 import wordmarkNavyFilledAsset from "@/assets/brand/unpro-wordmark-navy-filled.asset.json";
@@ -32,6 +33,8 @@ export const BRAND = {
   logoWordmarkWhiteBlueWhite: assetUrl(wordmarkWhiteBlueWhiteAsset.url),
   /** Blue filled symbol and blue wordmark — approved alternate. */
   logoWordmarkBlueFilled: assetUrl(wordmarkBlueFilledAsset.url),
+  /** Official home light lockup — top-of-page hero and header on light surfaces. */
+  logoHomeLight: assetUrl(wordmarkHomeLightAsset.url),
   /** Cream lockup — approved warm-dark alternate. */
   logoWordmarkCream: assetUrl(wordmarkCreamAsset.url),
   /** Navy symbol with blue fill — approved alternate. */

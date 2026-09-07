@@ -54,7 +54,7 @@ export default function UnproLogo({
   }
 
   const lightSrc = showWordmark
-    ? BRAND.logo
+    ? BRAND.logoHomeLight
     : markShape === "bare"
       ? BRAND.logoIconBlue
       : BRAND.logoRound;
