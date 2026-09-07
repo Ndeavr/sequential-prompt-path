@@ -39,6 +39,8 @@ export const BRAND = {
   logoWordmarkNavyBlue: assetUrl(wordmarkNavyBlueAsset.url),
   /** Navy filled lockup — approved alternate. */
   logoWordmarkNavyFilled: assetUrl(wordmarkNavyFilledAsset.url),
+  /** 3D rubber lockup — light surfaces only (homepage hero/header accent). */
+  logoWordmarkRubber3d: assetUrl(wordmarkRubber3dAsset.url),
   /** Official house/chat icon — compact and square contexts only. */
   logoIconBlue: assetUrl(iconBlueAsset.url),
   logoIconWhite: assetUrl(iconBlueAsset.url),
