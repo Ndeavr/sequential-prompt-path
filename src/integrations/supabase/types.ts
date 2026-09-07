@@ -32312,21 +32312,28 @@ export type Database = {
       contractor_funnel_events: {
         Row: {
           affiliate_code: string | null
+          channel: string | null
           contractor_id: string | null
           created_at: string
           current_path: string | null
+          dedupe_key: string | null
           device: string | null
           email: string | null
+          environment: string | null
           event_source: string | null
           event_type: string
+          failure_reason: string | null
           id: string
           is_test: boolean
           metadata: Json | null
           phone: string | null
           prospect_id: string | null
+          provider: string | null
+          provider_message_id: string | null
           session_id: string | null
           source: string | null
           step: string | null
+          template_version: string | null
           token: string | null
           user_id: string | null
           utm_campaign: string | null
@@ -32335,21 +32342,28 @@ export type Database = {
         }
         Insert: {
           affiliate_code?: string | null
+          channel?: string | null
           contractor_id?: string | null
           created_at?: string
           current_path?: string | null
+          dedupe_key?: string | null
           device?: string | null
           email?: string | null
+          environment?: string | null
           event_source?: string | null
           event_type: string
+          failure_reason?: string | null
           id?: string
           is_test?: boolean
           metadata?: Json | null
           phone?: string | null
           prospect_id?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
           session_id?: string | null
           source?: string | null
           step?: string | null
+          template_version?: string | null
           token?: string | null
           user_id?: string | null
           utm_campaign?: string | null
@@ -32358,21 +32372,28 @@ export type Database = {
         }
         Update: {
           affiliate_code?: string | null
+          channel?: string | null
           contractor_id?: string | null
           created_at?: string
           current_path?: string | null
+          dedupe_key?: string | null
           device?: string | null
           email?: string | null
+          environment?: string | null
           event_source?: string | null
           event_type?: string
+          failure_reason?: string | null
           id?: string
           is_test?: boolean
           metadata?: Json | null
           phone?: string | null
           prospect_id?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
           session_id?: string | null
           source?: string | null
           step?: string | null
+          template_version?: string | null
           token?: string | null
           user_id?: string | null
           utm_campaign?: string | null
@@ -94367,6 +94388,16 @@ export type Database = {
             | Database["public"]["Enums"]["verification_status"]
             | null
           years_experience: number | null
+        }
+        Relationships: []
+      }
+      v_contractor_funnel_baseline: {
+        Row: {
+          channel: string | null
+          event_type: string | null
+          events: number | null
+          last_at: string | null
+          subjects: number | null
         }
         Relationships: []
       }
