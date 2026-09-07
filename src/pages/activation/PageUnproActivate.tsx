@@ -88,13 +88,34 @@ export default function PageUnproActivate() {
         }
         setProspect(data.prospect as ResolvedProspect);
         setProfile((data.profile as ActivationProfile) ?? null);
+        setContact((data.contact as ResolvedContact) ?? null);
+        setOffer((data.offer as { label: string } | null) ?? null);
+        setRegion((data.region as string | null) ?? null);
+        setSourceLabel(
+          data.source_status === "verified"
+            ? "Source publique vérifiée"
+            : data.source_status
+              ? "Source à confirmer"
+              : null,
+        );
         setState("ready");
+        const prospectId = (data.prospect?.id as string | undefined) ?? null;
         void logFunnelEvent({
-          event_type: "activation_page_viewed",
-          step: "company_value",
-          metadata: { prospect_id: data.prospect?.id ?? null },
+          event_type: "activation_link_opened",
+          step: "activation",
+          prospect_id: prospectId,
+          token,
           is_test: preview,
         });
+        void logFunnelEvent({
+          event_type: "activation_page_rendered",
+          step: "activation",
+          prospect_id: prospectId,
+          token,
+          metadata: { claimed: Boolean(data.claimed) },
+          is_test: preview,
+        });
+
       } catch (e) {
         if (!cancelled) {
           console.error("[ACTIVATION_RESOLVE_THREW]", e);
