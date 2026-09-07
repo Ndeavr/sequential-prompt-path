@@ -27,7 +27,7 @@ export const LOCAL_SERVICE_CATEGORIES: LocalServiceCategory[] = [
   { slug: "abris-temporaires", name_fr: "Installation et retrait d'abris temporaires", keywords: ["abri tempo", "abris tempo", "tempo", "abri d auto", "abri auto", "abri temporaire", "abris temporaires"] },
   { slug: "nettoyage-tapis", name_fr: "Nettoyage de tapis et carpettes", keywords: ["nettoyage de tapis", "tapis", "carpette", "carpettes", "shampooing tapis"] },
   { slug: "nettoyage-mobilier", name_fr: "Nettoyage de mobilier et tissus d'ameublement", keywords: ["mobilier", "meubles rembourres", "tissus d ameublement", "sofa", "divan"] },
-  { slug: "nettoyage-conduits", name_fr: "Nettoyage de conduits d'air et de sécheuse", keywords: ["conduits", "conduit d air", "conduits d air", "ventilation", "secheuse", "echangeur d air"] },
+  { slug: "nettoyage-conduits", name_fr: "Nettoyage de conduits d'air et de sécheuse", keywords: ["conduits", "conduit d air", "conduits d air", "secheuse", "echangeur d air"] },
   { slug: "entretien-menager", name_fr: "Entretien ménager", keywords: ["entretien menager", "menage", "femme de menage", "nettoyage residentiel", "service de menage"] },
   { slug: "grand-menage", name_fr: "Grand ménage", keywords: ["grand menage", "menage en profondeur", "grand nettoyage"] },
   { slug: "gestion-parasitaire", name_fr: "Gestion parasitaire / extermination", keywords: ["extermination", "exterminateur", "gestion parasitaire", "parasites", "punaises", "fourmis", "souris"] },
