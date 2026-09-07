@@ -40,7 +40,7 @@ export default function SectionMemoireMaison() {
         }}
       />
 
-      <div className="relative mx-auto max-w-3xl px-6 py-24 md:py-32 text-center">
+      <div className="relative mx-auto max-w-3xl px-6 pt-24 pb-[calc(6rem+env(safe-area-inset-bottom))] md:py-32 text-center">
         <img
           src={BRAND.logoIconPassport}
           alt="Passeport Maison UNPRO"
@@ -49,7 +49,7 @@ export default function SectionMemoireMaison() {
           className="mx-auto mb-8 h-16 w-16 md:h-[72px] md:w-[72px] object-contain"
           draggable={false}
         />
-        <h2 className="text-4xl md:text-6xl font-semibold tracking-[-0.03em] text-foreground leading-[1.05]">
+        <h2 className="text-4xl md:text-6xl font-semibold tracking-[-0.03em] leading-[1.05]" style={{ color: "#F8FAFC" }}>
           Votre maison se souvient.
         </h2>
 
@@ -57,14 +57,18 @@ export default function SectionMemoireMaison() {
           {BODY_LINES.map((line) => (
             <p
               key={line}
-              className="text-lg md:text-xl text-foreground/85 leading-relaxed"
+              className="text-lg md:text-xl leading-relaxed"
+              style={{ color: "#CBD5E1" }}
             >
               {line}
             </p>
           ))}
         </div>
 
-        <p className="mt-10 md:mt-12 mx-auto max-w-xl text-sm md:text-base text-muted-foreground leading-relaxed">
+        <p
+          className="mt-10 md:mt-12 mx-auto max-w-xl text-sm md:text-base leading-relaxed"
+          style={{ color: "#94A3B8" }}
+        >
           UNPRO aide les propriétaires québécois à conserver l'information
           importante de leur propriété afin de prendre des décisions plus
           éclairées, plus rapides et plus rentables.
@@ -73,14 +77,14 @@ export default function SectionMemoireMaison() {
         <div className="mt-10 md:mt-12 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
           <Link
             to="/dashboard/properties/new"
-            className="inline-flex items-center justify-center gap-2 h-14 px-8 rounded-2xl bg-primary text-primary-foreground text-base font-semibold tracking-tight shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.6)] hover:-translate-y-[2px] transition-transform duration-[420ms] [transition-timing-function:cubic-bezier(.22,1,.36,1)]"
+            className="inline-flex items-center justify-center gap-2 h-14 px-8 rounded-2xl bg-primary text-white text-base font-semibold tracking-tight shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.6)] hover:-translate-y-[2px] transition-transform duration-[420ms] [transition-timing-function:cubic-bezier(.22,1,.36,1)]"
           >
             Créer mon Passeport Maison
             <ArrowRight className="w-4 h-4" />
           </Link>
           <Link
             to="/alex"
-            className="inline-flex items-center justify-center gap-2 h-14 px-8 rounded-2xl border border-foreground/15 text-foreground text-base font-medium bg-foreground/[0.03] hover:bg-foreground/[0.06] hover:-translate-y-[2px] transition-all duration-[420ms] [transition-timing-function:cubic-bezier(.22,1,.36,1)]"
+            className="inline-flex items-center justify-center gap-2 h-14 px-8 rounded-2xl border border-white/20 text-white text-base font-medium bg-white/[0.06] hover:bg-white/[0.12] hover:-translate-y-[2px] transition-all duration-[420ms] [transition-timing-function:cubic-bezier(.22,1,.36,1)]"
           >
             <Mic className="w-4 h-4" />
             Parler à Clara
