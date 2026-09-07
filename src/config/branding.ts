@@ -14,6 +14,7 @@ import wordmarkCreamAsset from "@/assets/brand/unpro-wordmark-cream.asset.json";
 import wordmarkNavyBlueAsset from "@/assets/brand/unpro-wordmark-navy-blue.asset.json";
 import wordmarkNavyFilledAsset from "@/assets/brand/unpro-wordmark-navy-filled.asset.json";
 import iconBlueAsset from "@/assets/brand/unpro-icon-blue.asset.json";
+import iconPassportAsset from "@/assets/brand/unpro-icon-passport.asset.json";
 
 const absolute = (path: string) => `https://unpro.ca${path}`;
 const assetUrl = (path: string) => absolute(path);
@@ -43,6 +44,8 @@ export const BRAND = {
   logoWordmarkNavyFilled: assetUrl(wordmarkNavyFilledAsset.url),
   /** Official house/chat icon — compact and square contexts only. */
   logoIconBlue: assetUrl(iconBlueAsset.url),
+  /** Official house + fleur-de-lys mark — Passeport Maison sections. */
+  logoIconPassport: assetUrl(iconPassportAsset.url),
   logoIconWhite: assetUrl(iconBlueAsset.url),
   logoRound: assetUrl(iconBlueAsset.url),
   logoSquare: assetUrl(iconBlueAsset.url),
