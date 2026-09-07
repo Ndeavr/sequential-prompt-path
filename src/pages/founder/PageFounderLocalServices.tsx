@@ -214,15 +214,15 @@ export default function PageFounderLocalServices() {
               <span className="text-primary">12 mois gratuitement</span>.
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-[16px] leading-relaxed text-muted-foreground">
-              Vous offrez un service de nettoyage, d'entretien, de gestion
-              parasitaire ou un autre service à domicile&nbsp;? UNPRO aide votre
+              Vous offrez des services de nettoyage, d'entretien, lavage de vitres ou
+              un autre service à domicile&nbsp;? UNPRO aide votre
               entreprise à être trouvée et recommandée aux propriétaires, au bon
               moment, dans votre ville.
             </p>
             <p className="mx-auto mt-3 max-w-xl text-[14px] leading-relaxed text-muted-foreground">
-              Valeur de 350 $ : votre première année est offerte. Par la suite,
-              vous choisissez si vous souhaitez continuer à 350 $/an. Aucun
-              renouvellement sans votre consentement.
+              Valeur de 350 $ : votre première année est offerte.
+              <br />
+              Aucun engagement requis.
             </p>
             <p className="mx-auto mt-2 text-[13px] text-muted-foreground">
               Offre de lancement réservée aux premiers membres admissibles de
