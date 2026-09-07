@@ -14,6 +14,7 @@ import {
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
+import { UNPRO_EMAIL_LOGO_HEIGHT, UNPRO_EMAIL_LOGO_URL, UNPRO_EMAIL_LOGO_WIDTH } from './brand-assets.ts'
 
 interface EmailChangeEmailProps {
   siteName: string
@@ -22,15 +23,13 @@ interface EmailChangeEmailProps {
   confirmationUrl: string
 }
 
-const LOGO_URL = 'https://clmaqdnphbndvmmqvpff.supabase.co/storage/v1/object/public/email-assets/unpro-logo.png'
-
 export const EmailChangeEmail = ({ siteName, email, newEmail, confirmationUrl }: EmailChangeEmailProps) => (
   <Html lang="fr" dir="ltr">
     <Head />
     <Preview>Confirmez votre changement de courriel pour {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={LOGO_URL} alt="UNPRO" width="48" height="48" style={logo} />
+        <Img src={UNPRO_EMAIL_LOGO_URL} alt="UNPRO" width={UNPRO_EMAIL_LOGO_WIDTH} height={UNPRO_EMAIL_LOGO_HEIGHT} style={logo} />
         <Heading style={h1}>Confirmer le changement de courriel</Heading>
         <Text style={text}>
           Vous avez demandé à changer votre adresse courriel pour {siteName} de{' '}

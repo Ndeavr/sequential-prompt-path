@@ -1,8 +1,8 @@
 /**
  * UNPRO — Primary logo (official horizontal lockup).
  *
- * Contrast is handled automatically: the navy-text lockup is used on light
- * surfaces, the white-text lockup on dark surfaces. `tone` forces a surface
+ * Contrast is handled automatically: the blue lockup is used on light
+ * surfaces, the white lockup on dark surfaces. `tone` forces a surface
  * when a block is dark inside a light theme (or the reverse).
  *
  * Never recolored, filtered, stretched or cropped — original proportions only.
@@ -21,7 +21,7 @@ type UnproLogoProps = {
   /** Mark shape when the wordmark is hidden. */
   markShape?: "round" | "square" | "bare";
   /** Surface the logo sits on. `auto` follows the app theme. */
-  tone?: "auto" | "light" | "dark";
+  tone?: "auto" | "light" | "dark" | "blue";
   /** Skip inline width/height so CSS classes control the size. */
   unsized?: boolean;
   className?: string;
@@ -46,7 +46,7 @@ export default function UnproLogo({
     return (
       <span
         className={`inline-flex items-center font-semibold tracking-[-0.04em] text-current ${className}`}
-        style={{ fontSize: Math.max(12, Math.round(height * 0.72)), lineHeight: 1 }}
+        style={unsized ? { lineHeight: 1 } : { fontSize: Math.max(12, Math.round(height * 0.72)), lineHeight: 1 }}
       >
         UNPRO
       </span>
@@ -70,9 +70,10 @@ export default function UnproLogo({
   const base = `object-contain ${className}`;
 
   if (tone !== "auto") {
+    const src = tone === "light" ? lightSrc : tone === "blue" && showWordmark ? BRAND.logoWordmarkWhite : darkSrc;
     return (
       <img
-        src={tone === "dark" ? darkSrc : lightSrc}
+        src={src}
         alt="UNPRO"
         width={size}
         height={showWordmark ? height : size}

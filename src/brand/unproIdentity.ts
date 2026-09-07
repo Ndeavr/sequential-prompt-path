@@ -8,6 +8,7 @@
  * UNPRO is an AI-powered Homeowner Intelligence Platform with 6 pillars.
  * Contractor matching is ONE pillar, not the headline.
  */
+import { BRAND } from "@/config/branding";
 
 export const UNPRO_IDENTITY = {
   name: "UNPRO",
@@ -40,7 +41,7 @@ export const UNPRO_IDENTITY = {
     "UNPRO aide les propriétaires à entretenir, planifier, scorer, protéger et améliorer leur propriété grâce au Passeport Maison, à la maintenance prédictive, à l'intelligence de rénovation et au jumelage d'entrepreneur par compatibilité.",
   slogan: "Find Your Pro.",
   domain: "https://unpro.ca",
-  logo: "https://unpro.ca/assets/brand/unpro-wordmark-blue-navy.png",
+  logo: BRAND.logoAbsolute,
 
   pillars: [
     {

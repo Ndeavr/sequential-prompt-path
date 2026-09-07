@@ -647,7 +647,7 @@ export default function PageHomeUnicorn() {
     name: "UNPRO",
     alternateName: ["UNPRO Quebec", "UNPRO Home Intelligence", "Clara Home Assistant"],
     url: "https://unpro.ca",
-    logo: "https://unpro.ca/assets/brand/unpro-wordmark-blue-navy.png",
+    logo: BRAND.logoAbsolute,
     description:
       "AI-powered home passport platform helping homeowners identify property issues, understand risks, analyze renovation projects, and connect with verified professionals.",
     category: "Home Intelligence Platform",

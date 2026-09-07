@@ -1,39 +1,55 @@
 /**
  * UNPRO — Single source of truth for the official brand marks.
  * All UI must reference BRAND.* — never import per-variant assets directly.
- *
- * Official set (2026-09), served from `public/assets/brand/`:
- *  - Horizontal lockups (icon + wordmark), ratio 2048 x 661
- *  - Icon-only marks (transparent), blue or white
- *  - White icon inside a blue disc: app icon / avatar / splash / square
- *
- * Never recolor, filter, stretch or crop these files.
+ * Never recolor, filter, stretch, crop or compose these files.
  */
-const BASE = "/assets/brand";
+import wordmarkWhiteAsset from "@/assets/brand/unpro-wordmark-white.asset.json";
+import wordmarkBlueWhiteAsset from "@/assets/brand/unpro-wordmark-blue-white.asset.json";
+import wordmarkBlueAsset from "@/assets/brand/unpro-wordmark-blue.asset.json";
+import wordmarkNavyAsset from "@/assets/brand/unpro-wordmark-navy.asset.json";
+import wordmarkWhiteBlueWhiteAsset from "@/assets/brand/unpro-wordmark-white-blue-white.asset.json";
+import wordmarkBlueFilledAsset from "@/assets/brand/unpro-wordmark-blue-filled.asset.json";
+import wordmarkCreamAsset from "@/assets/brand/unpro-wordmark-cream.asset.json";
+import wordmarkNavyBlueAsset from "@/assets/brand/unpro-wordmark-navy-blue.asset.json";
+import wordmarkNavyFilledAsset from "@/assets/brand/unpro-wordmark-navy-filled.asset.json";
+import iconBlueAsset from "@/assets/brand/unpro-icon-blue.asset.json";
+
+const absolute = (path: string) => `https://unpro.ca${path}`;
+const assetUrl = (path: string) => absolute(path);
 
 export const BRAND = {
-  /** Default horizontal lockup (blue icon + navy wordmark) — light surfaces. */
-  logo: `${BASE}/unpro-wordmark-blue-navy.png`,
-  /** Horizontal lockup, fully blue — white / very light surfaces. */
-  logoWordmarkBlue: `${BASE}/unpro-wordmark-blue-blue.png`,
-  /** Horizontal lockup, blue icon + white wordmark — dark / blue surfaces. */
-  logoWordmarkOnDark: `${BASE}/unpro-wordmark-blue-white.png`,
-  /** Horizontal lockup, fully white — very dark surfaces. */
-  logoWordmarkWhite: `${BASE}/unpro-wordmark-white.png`,
-  /** Icon only, blue — light surfaces. */
-  logoIconBlue: `${BASE}/unpro-icon-blue.png`,
-  /** Icon only, white — dark surfaces. */
-  logoIconWhite: `${BASE}/unpro-icon-white.png`,
-  /** White icon in a blue disc — app icon, avatar, splash, square contexts. */
-  logoRound: `${BASE}/unpro-icon-white-on-blue.png`,
-  /** Square/app contexts use the same blue disc mark. */
-  logoSquare: `${BASE}/unpro-icon-white-on-blue.png`,
+  /** Default blue lockup — white and light surfaces. */
+  logo: assetUrl(wordmarkBlueAsset.url),
+  /** Full blue lockup — white and very light surfaces. */
+  logoWordmarkBlue: assetUrl(wordmarkBlueAsset.url),
+  /** Blue symbol with white wordmark — dark and UNPRO-blue surfaces. */
+  logoWordmarkOnDark: assetUrl(wordmarkBlueWhiteAsset.url),
+  /** Fully white lockup — black, photographic and very dark surfaces. */
+  logoWordmarkWhite: assetUrl(wordmarkWhiteAsset.url),
+  /** Navy lockup — white and very light editorial surfaces. */
+  logoWordmarkNavy: assetUrl(wordmarkNavyAsset.url),
+  /** Blue symbol with white fill — approved alternate. */
+  logoWordmarkWhiteBlueWhite: assetUrl(wordmarkWhiteBlueWhiteAsset.url),
+  /** Blue filled symbol and blue wordmark — approved alternate. */
+  logoWordmarkBlueFilled: assetUrl(wordmarkBlueFilledAsset.url),
+  /** Cream lockup — approved warm-dark alternate. */
+  logoWordmarkCream: assetUrl(wordmarkCreamAsset.url),
+  /** Navy symbol with blue fill — approved alternate. */
+  logoWordmarkNavyBlue: assetUrl(wordmarkNavyBlueAsset.url),
+  /** Navy filled lockup — approved alternate. */
+  logoWordmarkNavyFilled: assetUrl(wordmarkNavyFilledAsset.url),
+  /** Official house/chat icon — compact and square contexts only. */
+  logoIconBlue: assetUrl(iconBlueAsset.url),
+  logoIconWhite: assetUrl(iconBlueAsset.url),
+  logoRound: assetUrl(iconBlueAsset.url),
+  logoSquare: assetUrl(iconBlueAsset.url),
   /** Kept for API compatibility. */
-  logoAsset: `${BASE}/unpro-wordmark-blue-navy.png`,
-  logoStatic: `${BASE}/unpro-wordmark-blue-navy.png`,
+  logoAsset: assetUrl(wordmarkBlueAsset.url),
+  logoStatic: assetUrl(wordmarkBlueAsset.url),
   /** Absolute URL for schema.org / crawlers. */
-  logoAbsolute: `https://unpro.ca${BASE}/unpro-wordmark-blue-navy.png`,
-  /** Intrinsic wordmark dimensions (2048 x 661). */
-  wordmarkRatio: 2048 / 661,
+  logoAbsolute: absolute(wordmarkBlueAsset.url),
+  logoEmailAbsolute: absolute(wordmarkBlueAsset.url),
+  /** Intrinsic dimensions of every supplied wordmark canvas (1920 x 501). */
+  wordmarkRatio: 1920 / 501,
   name: "UNPRO",
 } as const;

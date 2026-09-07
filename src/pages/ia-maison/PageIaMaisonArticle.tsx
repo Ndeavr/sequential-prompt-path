@@ -10,6 +10,7 @@ import { Helmet } from "react-helmet-async";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { getArticleBySlug, getSiblings } from "@/data/iaMaisonCluster";
 import EntityDefinitionBlock from "@/components/home-intelligence/EntityDefinitionBlock";
+import { BRAND } from "@/config/branding";
 
 const BASE = "https://unpro.ca";
 
@@ -41,7 +42,7 @@ export default function PageIaMaisonArticle({ slug: slugProp }: Props) {
       "@type": "Organization",
       name: "UNPRO",
       url: BASE,
-      logo: { "@type": "ImageObject", url: `${BASE}/assets/brand/unpro-wordmark-blue-navy.png` },
+      logo: { "@type": "ImageObject", url: BRAND.logoAbsolute },
     },
   };
   const faqSchema = {
