@@ -13,13 +13,12 @@ import {
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
+import { UNPRO_EMAIL_LOGO_HEIGHT, UNPRO_EMAIL_LOGO_URL, UNPRO_EMAIL_LOGO_WIDTH } from './brand-assets.ts'
 
 interface RecoveryEmailProps {
   siteName: string
   confirmationUrl: string
 }
-
-const LOGO_URL = 'https://clmaqdnphbndvmmqvpff.supabase.co/storage/v1/object/public/email-assets/unpro-logo.png'
 
 export const RecoveryEmail = ({ siteName, confirmationUrl }: RecoveryEmailProps) => (
   <Html lang="fr" dir="ltr">
@@ -27,7 +26,7 @@ export const RecoveryEmail = ({ siteName, confirmationUrl }: RecoveryEmailProps)
     <Preview>Réinitialisez votre mot de passe pour {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={LOGO_URL} alt="UNPRO" width="48" height="48" style={logo} />
+        <Img src={UNPRO_EMAIL_LOGO_URL} alt="UNPRO" width={UNPRO_EMAIL_LOGO_WIDTH} height={UNPRO_EMAIL_LOGO_HEIGHT} style={logo} />
         <Heading style={h1}>Réinitialiser votre mot de passe</Heading>
         <Text style={text}>
           Nous avons reçu une demande de réinitialisation de mot de passe pour {siteName}. Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe.

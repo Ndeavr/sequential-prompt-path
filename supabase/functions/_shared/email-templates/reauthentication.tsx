@@ -12,12 +12,11 @@ import {
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
+import { UNPRO_EMAIL_LOGO_HEIGHT, UNPRO_EMAIL_LOGO_URL, UNPRO_EMAIL_LOGO_WIDTH } from './brand-assets.ts'
 
 interface ReauthenticationEmailProps {
   token: string
 }
-
-const LOGO_URL = 'https://clmaqdnphbndvmmqvpff.supabase.co/storage/v1/object/public/email-assets/unpro-logo.png'
 
 export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => (
   <Html lang="fr" dir="ltr">
@@ -25,7 +24,7 @@ export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => 
     <Preview>Votre code de vérification</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={LOGO_URL} alt="UNPRO" width="48" height="48" style={logo} />
+        <Img src={UNPRO_EMAIL_LOGO_URL} alt="UNPRO" width={UNPRO_EMAIL_LOGO_WIDTH} height={UNPRO_EMAIL_LOGO_HEIGHT} style={logo} />
         <Heading style={h1}>Confirmer votre identité</Heading>
         <Text style={text}>Utilisez le code ci-dessous pour confirmer votre identité :</Text>
         <Text style={codeStyle}>{token}</Text>

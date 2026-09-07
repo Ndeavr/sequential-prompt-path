@@ -27,7 +27,7 @@ export function AuditProHeader({ onAuditClick }: { onAuditClick: () => void }) {
     >
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <Link to="/entrepreneurs/audit-ia" className="flex shrink-0 items-center gap-2.5" aria-label="UNPRO — Audit IA">
-          <img src={BRAND.logo} alt="UNPRO" className="h-7 w-auto" width={1133} height={286} />
+          <img src={BRAND.logoWordmarkOnDark} alt="UNPRO" className="h-7 w-auto" width={1920} height={501} />
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex" aria-label="Navigation entrepreneur">

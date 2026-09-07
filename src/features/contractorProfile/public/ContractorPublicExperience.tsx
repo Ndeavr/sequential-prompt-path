@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import UnproLogo from "@/components/brand/UnproLogo";
 import ProfessionalVerificationsCard from "@/components/compliance/ProfessionalVerificationsCard";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -119,13 +118,6 @@ export default function ContractorPublicExperience({ profileData, compact = fals
 
   return (
     <article className={`alex-immersive min-h-full bg-background text-foreground ${compact ? "text-[13px]" : ""}`}>
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border/70 bg-background/90 px-4 backdrop-blur-xl">
-        <UnproLogo size={112} tone="dark" className="h-6 w-auto" />
-        <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary-tint">
-          Profil public UNPRO
-        </Badge>
-      </header>
-
       <section ref={(node) => { sectionRefs.current.overview = node; }} className="scroll-mt-28">
         <div className={`relative overflow-hidden ${compact ? "h-56" : "h-[310px] sm:h-[380px]"}`}>
           {cover ? (

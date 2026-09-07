@@ -2,8 +2,7 @@
  * UNPRO — Icon-only official mark.
  * Used for avatars, auth surfaces, app/square contexts and narrow navigation.
  *
- * `shape="round" | "square"` → white mark inside the blue disc (app icon).
- * `shape="bare"` → transparent mark, blue on light surfaces, white on dark.
+ * Every compact shape uses the untouched official house/chat icon.
  * Fallback: official mark → "UNPRO" text. Never a generated initial badge.
  */
 import { useState } from "react";
@@ -14,7 +13,7 @@ type UnproIconProps = {
   /** Historical variants preserved for API compatibility. */
   variant?: "primary" | "mono" | "blue" | "rubber";
   shape?: "round" | "square" | "bare";
-  /** Surface the mark sits on. `auto` follows the app theme. */
+  /** Kept for API compatibility; the official icon is valid on both themes. */
   tone?: "auto" | "light" | "dark";
   /** Skip inline width/height so CSS classes control the size. */
   unsized?: boolean;
@@ -59,44 +58,16 @@ export default function UnproIcon({
     );
   }
 
-  if (tone !== "auto") {
-    return (
-      <img
-        src={tone === "dark" ? BRAND.logoIconWhite : BRAND.logoIconBlue}
-        alt="UNPRO"
-        width={size}
-        height={size}
-        onError={() => setFailed(true)}
-        className={base}
-        style={style}
-        draggable={false}
-      />
-    );
-  }
-
   return (
-    <>
-      <img
-        src={BRAND.logoIconBlue}
-        alt="UNPRO"
-        width={size}
-        height={size}
-        onError={() => setFailed(true)}
-        className={`${base} dark:hidden`}
-        style={style}
-        draggable={false}
-      />
-      <img
-        src={BRAND.logoIconWhite}
-        alt=""
-        aria-hidden="true"
-        width={size}
-        height={size}
-        onError={() => setFailed(true)}
-        className={`${base} hidden dark:block`}
-        style={style}
-        draggable={false}
-      />
-    </>
+    <img
+      src={BRAND.logoIconBlue}
+      alt="UNPRO"
+      width={size}
+      height={size}
+      onError={() => setFailed(true)}
+      className={base}
+      style={style}
+      draggable={false}
+    />
   );
 }
