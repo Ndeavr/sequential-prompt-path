@@ -318,67 +318,16 @@ export default function PageUnproActivate() {
               </div>
             )}
 
-
-            {/* ------------------------------- ENSUITE seulement : l'offre + le CTA */}
-            <div ref={offerRef} className="rounded-3xl border border-white/10 bg-white/[0.05] p-6 backdrop-blur">
-              <p className="text-[15px] leading-relaxed text-white/85">
-                Vérifiez les informations de votre profil, puis indiquez vos objectifs pour recevoir votre plan personnalisé.
-              </p>
-
-              <ul className="mt-4 space-y-2">
-                {["Profil à vérifier et compléter", "Objectifs et capacité pris en compte", "Devis mensuel calculé côté serveur"].map((b) => (
-                  <li key={b} className="flex items-start gap-2 text-[14px] leading-snug text-white/85">
-                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-400/20">
-                      <Check className="h-2.5 w-2.5 text-emerald-300" />
-                    </span>
-                    {b}
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-3 text-[12.5px] leading-relaxed text-white/55">Aucun paiement avant l'affichage de votre devis.</p>
-
-              <Button
-                onClick={() => handleActivate("offer")}
-                className="mt-5 h-14 w-full rounded-2xl bg-white text-base font-semibold text-[#050816] hover:bg-white/90"
-              >
-                <>{CONTRACTOR_OFFER.ctaClaim} <ArrowRight className="ml-1 h-4 w-4" /></>
-              </Button>
-
-              <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[11px] text-white/50">
-                <ShieldCheck className="h-3 w-3" />
-                Analyse et vérification gratuites avant le devis.
-              </p>
-
-              <ul className="mt-4 space-y-1.5">
-                {BENEFITS.map((b) => (
-                  <li key={b} className="text-[12.5px] leading-snug text-white/60">• {b}</li>
-                ))}
-              </ul>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleCustomize}
-              className="mx-auto block pb-2 text-center text-xs text-white/50 underline underline-offset-4 hover:text-white/75"
-            >
-              {CONTRACTOR_OFFER.ctaPrimary}
-            </button>
+            {/* Aucun CTA secondaire : une seule action possible sur cette page. */}
+            <ul className="space-y-1.5 pb-2">
+              {BENEFITS.map((b) => (
+                <li key={b} className="text-[12.5px] leading-snug text-white/60">• {b}</li>
+              ))}
+            </ul>
           </div>
         )}
       </div>
 
-      {/* CTA collant mobile : n'apparaît qu'après la valeur gratuite (score + profil). */}
-      {state === "ready" && prospect && showStickyCta && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#050816]/95 px-5 py-3 backdrop-blur sm:hidden">
-          <Button
-            onClick={() => handleActivate("sticky_mobile")}
-            className="h-13 w-full rounded-2xl bg-white py-3.5 text-base font-semibold text-[#050816] hover:bg-white/90"
-          >
-            {CONTRACTOR_OFFER.ctaClaim}
-          </Button>
-
-        </div>
-      )}
 
     </div>
   );
