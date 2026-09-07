@@ -80,6 +80,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
   const callOtp = async (fnName: "send-otp" | "verify-otp", body: Record<string, string>): Promise<{
     error?: string;
     fallback?: boolean;
+    isNewUser?: boolean;
     code?: string;
     session?: { access_token: string; refresh_token: string };
   }> => {
@@ -91,6 +92,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
     return (data ?? {}) as {
       error?: string;
       fallback?: boolean;
+      isNewUser?: boolean;
       code?: string;
       session?: { access_token: string; refresh_token: string };
     };
