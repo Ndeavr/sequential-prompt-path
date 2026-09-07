@@ -71,7 +71,7 @@ export const subNavConfig: Record<string, NavItem[]> = {
   // Contractor sections
   "/pro/profile": [
     { to: "/pro/profile", label: "Vue d'ensemble", labelEn: "Overview", icon: "User" },
-    { to: "/pro/aipp-score", label: "Score AIPP", icon: "Star" },
+    { to: "/pro/aipp-score", label: "Score de visibilité IA", labelEn: "AI visibility score", icon: "Star" },
     { to: "/pro/reviews", label: "Avis", labelEn: "Reviews", icon: "MessageSquare" },
     { to: "/pro/documents", label: "Certifications", labelEn: "Certifications", icon: "Shield" },
   ],
@@ -94,7 +94,7 @@ export const subNavConfig: Record<string, NavItem[]> = {
   "/entrepreneurs": [
     { to: "/entrepreneurs", label: "Aperçu", labelEn: "Overview", icon: "Briefcase" },
     { to: "/entrepreneurs/creer-mon-profil", label: "Créer mon profil", labelEn: "Create My Profile", icon: "UserPlus" },
-    { to: "/entrepreneurs/score-aipp", label: "Score AIPP", icon: "Star" },
+    { to: "/entrepreneurs/score-aipp", label: "Score de visibilité IA", labelEn: "AI visibility score", icon: "Star" },
     { to: "/entrepreneurs/plans", label: "Plans", icon: "CreditCard" },
   ],
   "/condo": [
@@ -125,7 +125,7 @@ export function getProfileActions(ctx: NavigationContext): NavItem[] {
   if (role === "contractor" && ctx.contractor) {
     items.push(
       { to: "/pro/profile", label: "Mon profil entreprise", labelEn: "My Business Profile", icon: "User" },
-      { to: "/pro/aipp-score", label: "Mon score AIPP", labelEn: "My AIPP Score", icon: "Star" },
+      { to: "/pro/aipp-score", label: "Mon score de visibilité IA", labelEn: "My AI visibility score", icon: "Star" },
       { to: "/pro/leads", label: "Mes rendez-vous garantis", labelEn: "My Guaranteed Appointments", icon: "CalendarCheck" },
       { to: "/pro/appointments", label: "Mes rendez-vous", labelEn: "My Appointments", icon: "CalendarDays" },
       { to: "/pro/reviews", label: "Mes avis", labelEn: "My Reviews", icon: "MessageSquare" },
@@ -178,7 +178,7 @@ export function getStateActions(ctx: NavigationContext): NavItem[] {
       items.push({ to: "/pro/leads", label: `${co.unreadLeadsCount} nouveaux rendez-vous`, labelEn: `${co.unreadLeadsCount} New Appointments`, icon: "CalendarCheck", badge: co.unreadLeadsCount, badgeVariant: "new", priority: 90 });
     }
     if (co.aippScore != null && co.aippScore < 50) {
-      items.push({ to: "/pro/aipp-score", label: "Améliorer mon score AIPP", labelEn: "Improve My AIPP Score", icon: "Star", badge: "Score faible", badgeVariant: "warning", priority: 70 });
+      items.push({ to: "/pro/aipp-score", label: "Améliorer mon score de visibilité IA", labelEn: "Improve my AI visibility score", icon: "Star", badge: "Score faible", badgeVariant: "warning", priority: 70 });
     }
   }
 
@@ -239,7 +239,7 @@ export const quickActionsByRole: Record<UserRole | "guest", NavItem[]> = {
     { to: "/compare-quotes", label: "Comparer soumissions", labelEn: "Compare quotes", icon: "Scale" },
   ],
   contractor: [
-    { to: "/pro/aipp-score", label: "Mon score AIPP", labelEn: "My AIPP Score", icon: "Star" },
+    { to: "/pro/aipp-score", label: "Mon score de visibilité IA", labelEn: "My AI visibility score", icon: "Star" },
     { to: "/entrepreneurs/creer-mon-profil", label: "Importer profil", labelEn: "Import profile", icon: "UserPlus" },
   ],
   partner: [
@@ -328,7 +328,7 @@ export function getDrawerItems(ctx: NavigationContext): NavItem[] {
   if (role === "contractor") {
     return [
       { to: "/pro/profile", label: "Mon profil entreprise", labelEn: "My Business Profile", icon: "User" },
-      { to: "/pro/aipp-score", label: "Mon score AIPP", icon: "Star" },
+      { to: "/pro/aipp-score", label: "Mon score de visibilité IA", labelEn: "My AI visibility score", icon: "Star" },
       { to: "/pro/leads", label: "Mes rendez-vous garantis", labelEn: "My Guaranteed Appointments", icon: "CalendarCheck" },
       { to: "/pro/appointments", label: "Mes rendez-vous", labelEn: "My Appointments", icon: "CalendarDays" },
       { to: "/pro/reviews", label: "Mes avis", labelEn: "My Reviews", icon: "MessageSquare" },
@@ -359,7 +359,7 @@ export function getDrawerItems(ctx: NavigationContext): NavItem[] {
     { to: "/compare-quotes", label: "Analyser des soumissions", labelEn: "Analyze Quotes", icon: "Scale" },
     { to: "/alex", label: "Parler à Clara", labelEn: "Talk to Clara", icon: "Sparkles" },
     { to: "/score-maison", label: "Score Maison", labelEn: "Home Score", icon: "BarChart3" },
-    { to: "/aipp-score", label: "Score AIPP", icon: "Star" },
+    { to: "/aipp-score", label: "Score de visibilité IA", labelEn: "AI visibility score", icon: "Star" },
     { to: "/pricing", label: "Tarifs", labelEn: "Pricing", icon: "CreditCard" },
   ];
 }
@@ -419,7 +419,7 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
         titleEn: "Contractors",
         items: [
           { to: "/entrepreneurs", label: "Créer mon profil", labelEn: "Create My Profile", icon: "UserPlus" },
-          { to: "/aipp-score", label: "Score AIPP", icon: "Star" },
+          { to: "/aipp-score", label: "Score de visibilité IA", labelEn: "AI visibility score", icon: "Star" },
           { to: "/pricing", label: "Plans", icon: "CreditCard" },
         ],
       },
@@ -453,7 +453,7 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
         titleEn: "My Business",
         items: [
           { to: "/pro/profile", label: "Mon profil", labelEn: "My Profile", icon: "User" },
-          { to: "/pro/aipp-score", label: "Score AIPP", icon: "Star" },
+          { to: "/pro/aipp-score", label: "Score de visibilité IA", labelEn: "AI visibility score", icon: "Star" },
           { to: "/pro/leads", label: "Rendez-vous garantis", labelEn: "Guaranteed Appointments", icon: "CalendarCheck" },
           { to: "/pro/billing", label: "Plans", icon: "CreditCard" },
           { to: "/pro/reviews", label: "Avis", labelEn: "Reviews", icon: "MessageSquare" },

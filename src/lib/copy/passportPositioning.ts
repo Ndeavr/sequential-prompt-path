@@ -147,7 +147,7 @@ export const PASSPORT_PERIODS = [
       "Composantes vieillissantes",
     ],
     note:
-      "Chaque suggestion affiche sa source et son niveau de certitude. UNPRO ne prétend jamais connaître une durée de vie ou un problème sans données suffisantes.",
+      "Chaque suggestion indique sa source et son niveau de certitude pour vous aider à décider en connaissance de cause.",
   },
   {
     key: "proof",

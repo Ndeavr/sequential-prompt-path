@@ -236,7 +236,7 @@ export default function PageEntrepreneurDiagnosticLanding() {
         <title>Plus de contrats. Moins de soumissions. — UNPRO</title>
         <meta
           name="description"
-          content="UNPRO analyse votre visibilité, votre réputation et votre potentiel de croissance. Obtenez votre score AIPP, votre projection de revenus et le plan recommandé en moins de 3 minutes."
+          content="Obtenez votre score de visibilité IA, votre projection de revenus et votre recommandation en moins de 3 minutes."
         />
       </Helmet>
 

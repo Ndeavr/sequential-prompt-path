@@ -58,6 +58,7 @@ export const FALLBACK_RULES: ContentRule[] = [
   { pattern: "une question à la fois", matchType: "plain", severity: "block", category: "llm_instruction", description: "Mécanique de conversation exposée au public" },
   { pattern: "ne fabrique jamais", matchType: "plain", severity: "block", category: "llm_instruction", description: "Garde-fou anti-hallucination exposé" },
   { pattern: "n'invente jamais", matchType: "plain", severity: "block", category: "llm_instruction", description: "Garde-fou anti-hallucination exposé" },
+  { pattern: "ne prétend jamais", matchType: "plain", severity: "block", category: "llm_instruction", description: "Garde-fou anti-hallucination exposé" },
   { pattern: "aucun chiffre inventé", matchType: "plain", severity: "block", category: "llm_instruction", description: "Garde-fou anti-hallucination exposé" },
   { pattern: "calculé côté serveur", matchType: "plain", severity: "block", category: "dev_note", description: "Détail d'implémentation exposé" },
   { pattern: "le système calcule", matchType: "plain", severity: "block", category: "dev_note", description: "Détail d'implémentation exposé" },
