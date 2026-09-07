@@ -3,6 +3,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { logAcquisitionEvent } from "../_shared/acquisitionEvents.ts";
+import { logServerFunnelEvent } from "../_shared/funnelEvents.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -62,6 +63,18 @@ serve(async (req) => {
         referer: req.headers.get("referer"),
         campaign: link.campaign,
       },
+    });
+
+    // Canonical contractor funnel — the click stage was previously unmeasured.
+    await logServerFunnelEvent({
+      event_type: (link.channel || "").toLowerCase() === "sms" ? "sms_clicked" : "email_clicked",
+      channel: ((link.channel as string) || "web").toLowerCase() === "sms" ? "sms" : "email",
+      provider: "app",
+      provider_message_id: trackingId,
+      prospect_id: link.prospect_id ?? null,
+      contractor_id: link.contractor_id ?? null,
+      campaign: (link.campaign as string) ?? null,
+      metadata: { destination: link.destination_url, referer: req.headers.get("referer") },
     });
 
     await supa.from("click_events").insert({

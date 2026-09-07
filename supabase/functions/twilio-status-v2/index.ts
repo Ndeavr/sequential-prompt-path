@@ -2,6 +2,7 @@
 // Configure Twilio Messaging Service "Status callback URL" to this function.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { logServerFunnelEvent } from "../_shared/funnelEvents.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -107,6 +108,18 @@ Deno.serve(async (req) => {
           },
         });
       } catch (e) { console.error("[twilio-status-v2] funnel rpc failed", e); }
+
+      // Canonical contractor funnel — delivery is only real when Twilio confirms it.
+      if (kind === "delivered" || kind === "failed") {
+        await logServerFunnelEvent({
+          event_type: kind === "delivered" ? "sms_delivered" : "sms_failed",
+          channel: "sms",
+          provider: "twilio",
+          provider_message_id: sid,
+          failure_reason: kind === "failed" ? (errorCode ?? errorMessage ?? mapped) : null,
+          metadata: { twilio_status: mapped, error_code: errorCode, error_message: errorMessage },
+        });
+      }
     }
 
 

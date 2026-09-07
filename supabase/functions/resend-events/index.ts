@@ -3,6 +3,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { logAcquisitionEvent, AcqEventType } from "../_shared/acquisitionEvents.ts";
 import { recordEmailEvent, EmailEventKind } from "../_shared/outreachEvents.ts";
+import { logServerFunnelEvent } from "../_shared/funnelEvents.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -75,6 +76,32 @@ serve(async (req) => {
       });
     }
 
+
+    // Canonical contractor funnel — provider-confirmed states only.
+    {
+      const funnelMap: Record<string, "email_delivered" | "email_failed" | "email_clicked"> = {
+        "email.delivered": "email_delivered",
+        "email.clicked": "email_clicked",
+        "email.bounced": "email_failed",
+        "email.failed": "email_failed",
+        "email.complained": "email_failed",
+      };
+      const ft = funnelMap[type];
+      if (ft) {
+        await logServerFunnelEvent({
+          event_type: ft,
+          channel: "email",
+          provider: "resend",
+          provider_message_id: emailId || null,
+          contractor_id: contractor_id,
+          prospect_id: prospect_id,
+          email: Array.isArray(data?.to) ? data.to[0] : (data?.to ?? null),
+          campaign: tags?.campaign ?? null,
+          failure_reason: ft === "email_failed" ? type : null,
+          metadata: { resend_type: type, bounce: data?.bounce },
+        });
+      }
+    }
 
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
   } catch (err) {
