@@ -485,7 +485,7 @@ export default function PageAiRecommendationAudit() {
                 {error && <p className="mt-3 text-[13px] text-destructive">{error}</p>}
 
                 <p className="mt-4 text-[12.5px] leading-relaxed text-muted-foreground">
-                  UNPRO n'invente jamais un avis, une licence RBQ, une assurance ni un rendez-vous.
+                  Des profils clairs. Des informations vérifiables. Un rendez-vous avec une seule entreprise.
                 </p>
               </div>
             </section>
@@ -797,10 +797,10 @@ function AuditReport({
           Soyez le professionnel que l'IA peut recommander.
         </h2>
         <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">
-          Vérifiez votre profil, précisez vos objectifs et recevez ensuite un plan personnalisé calculé pour votre entreprise.
+          Vérifiez votre profil, précisez vos objectifs et recevez ensuite l'offre la mieux adaptée à votre entreprise.
         </p>
         <ul className="mt-3 space-y-1.5">
-          {["Profil vérifié et complété", "Objectifs et capacité analysés", "Devis mensuel calculé côté serveur"].map((b) => (
+          {["Profil vérifié et complété", "Objectifs et capacité analysés", "Offre adaptée à votre marché"].map((b) => (
             <li key={b} className="flex items-start gap-2 text-[13px] text-foreground/85">
               <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" aria-hidden />
               <span>{b}</span>
@@ -808,7 +808,7 @@ function AuditReport({
           ))}
         </ul>
         <p className="mt-3 text-center text-[12px] text-muted-foreground">
-          Aucun paiement avant l'affichage de votre devis personnalisé.
+          Aucun paiement avant l'affichage de votre offre personnalisée.
         </p>
       </section>
 

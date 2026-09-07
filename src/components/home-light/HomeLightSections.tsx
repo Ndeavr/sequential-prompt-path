@@ -140,13 +140,10 @@ export function SectionTwoPaths() {
               Membre fondateur
             </span>
           </div>
-          <h3 className="mt-5 text-xl font-semibold text-foreground">Services locaux &amp; professionnels</h3>
+          <h3 className="mt-5 text-xl font-semibold text-foreground">Votre première année offerte</h3>
           <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
-            Courtiers, notaires, inspecteurs, évaluateurs, arpenteurs, entretien
-            ménager, lavage de vitres, gazon, conduits… Devenez membre fondateur
-            UNPRO : les 10 premiers membres de chaque ville profitent de 12 mois
-            gratuitement. Ensuite, un montant calculé selon votre territoire et
-            vos objectifs.
+            Réservez l'une des 10 places de membre fondateur de votre ville et
+            profitez de 12 mois de visibilité UNPRO, une valeur de 350 $.
           </p>
 
           <Link
@@ -166,7 +163,7 @@ const STEPS = [
   {
     icon: MessageSquare,
     title: "Décrivez votre situation",
-    body: "Clara pose une question à la fois pour cerner le problème, le risque et l'urgence — jamais un long formulaire.",
+    body: "Clara comprend le problème, le risque et l'urgence à partir de vos mots — jamais un long formulaire.",
   },
   {
     icon: Camera,

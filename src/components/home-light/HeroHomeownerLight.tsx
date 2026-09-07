@@ -41,9 +41,9 @@ export default function HeroHomeownerLight() {
           transition={{ duration: 0.45, delay: 0.1 }}
           className="mx-auto mt-5 max-w-2xl text-[16.5px] leading-relaxed text-muted-foreground md:text-lg"
         >
-          Décrivez vos travaux à Clara, une question à la fois. L'IA comprend
-          votre projet et vous oriente vers l'entrepreneur qui correspond
-          réellement à vos besoins.
+          Décrivez simplement votre projet à Clara. Elle comprend vos besoins
+          et vous oriente vers l'entrepreneur le plus compatible — pour le
+          projet, le budget, les disponibilités et le facteur humain.
         </motion.p>
 
         <ClaraConversationBox />

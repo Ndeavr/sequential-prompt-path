@@ -37,7 +37,7 @@ export function generateRevealScript(score: number, businessName?: string): Reve
     },
     {
       key: "pre_reveal",
-      spokenText: "Je vais maintenant vous dévoiler votre score AIPP.",
+      spokenText: "Je vais maintenant vous dévoiler votre score de visibilité IA.",
       displayText: "Dévoilement du score…",
       delayMs: 2500,
       triggerType: "auto",
@@ -45,7 +45,7 @@ export function generateRevealScript(score: number, businessName?: string): Reve
     {
       key: "reveal",
       spokenText: `Votre score actuel est de ${score} sur 100.`,
-      displayText: `Score AIPP : ${score}/100`,
+      displayText: `Score de visibilité IA : ${score}/100`,
       delayMs: 3000,
       triggerType: "reveal",
     },
@@ -68,7 +68,7 @@ export function generateRevealScript(score: number, businessName?: string): Reve
 
 function getSpokenInterpretation(score: number): string {
   if (score >= 80)
-    return "votre entreprise est bien positionnée. Vous avez une base solide pour dominer votre territoire et capter davantage de rendez-vous qualifiés.";
+    return "votre entreprise est bien positionnée. Vous avez une base solide pour développer votre présence dans votre territoire et capter davantage de rendez-vous qualifiés.";
   if (score >= 60)
     return "vous avez une bonne base, mais quelques ajustements stratégiques peuvent significativement améliorer votre visibilité et votre taux de conversion.";
   if (score >= 40)

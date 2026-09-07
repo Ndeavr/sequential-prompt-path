@@ -174,14 +174,14 @@ export default function PageFounderLocalServices() {
               <span className="text-primary">12 mois gratuitement</span>.
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-[16px] leading-relaxed text-muted-foreground">
-              Courtiers, notaires, inspecteurs, évaluateurs, arpenteurs, entretien
-              ménager, lavage de vitres, gazon, conduits et autres services
-              locaux : UNPRO vous recommande aux propriétaires au bon moment.
+              Professionnel de l'immobilier ou entreprise de service local ?
+              UNPRO vous aide à être trouvé et recommandé aux propriétaires, au
+              bon moment, dans votre ville.
             </p>
             <p className="mx-auto mt-3 max-w-xl text-[14px] leading-relaxed text-muted-foreground">
-              Valeur de 350 $/an, offerte pour le lancement. Ensuite 350 $/an,
-              avec votre consentement avant tout renouvellement payant. Aucun
-              frais par mise en relation pendant votre membership.
+              Valeur de 350 $ : votre première année est offerte. Par la suite,
+              vous choisissez si vous souhaitez continuer à 350 $/an. Aucun
+              renouvellement sans votre consentement.
             </p>
             <p className="mx-auto mt-2 text-[13px] text-muted-foreground">
               Offre de lancement réservée aux premiers membres admissibles de

@@ -21,7 +21,7 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 type Msg = { id: string; role: "user" | "assistant"; text: string };
 
 const GREETING =
-  "Bonjour. Que souhaitez-vous comprendre au sujet de votre propriété aujourd'hui ?";
+  "Bonjour. Que puis-je faire pour votre propriété aujourd'hui ?";
 
 const SUGGESTIONS = [
   "J'ai une infiltration d'eau",

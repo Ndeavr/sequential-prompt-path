@@ -13,10 +13,10 @@ function getInterpretation(score: number) {
   if (score >= 80) return {
     icon: Shield,
     headline: "Positionnement fort",
-    summary: "Votre entreprise est bien structurée et lisible par l'IA. Vous avez une base solide pour dominer votre territoire et capter davantage de rendez-vous.",
+    summary: "Votre entreprise est bien structurée et lisible par l'IA. Vous avez une base solide pour développer votre présence dans votre territoire et capter davantage de rendez-vous.",
     color: "text-primary",
     bgColor: "bg-primary/10 border-primary/20",
-    nextAction: "Consolider et dominer votre marché",
+    nextAction: "Consolider et développer votre présence",
   };
   if (score >= 60) return {
     icon: TrendingUp,

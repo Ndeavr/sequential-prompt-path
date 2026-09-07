@@ -61,7 +61,7 @@ const AUDIT_VALUE = [
   },
   {
     Icon: Brain,
-    title: "Vos forces et vos lacunes",
+    title: "Vos forces et les informations à compléter",
     body: "Les informations qui vous rendent crédible et celles qui manquent encore pour être considéré.",
   },
   {
@@ -76,7 +76,7 @@ function AuditValueSection() {
     <SectionShell
       eyebrow="Ce que révèle l'audit"
       title="Voyez votre entreprise exactement comme l'IA la comprend"
-      intro="L'audit est gratuit et basé uniquement sur des informations réelles. Aucun avis, aucune licence, aucun chiffre inventé."
+      intro="L'audit rassemble les informations publiques associées à votre entreprise et vous montre ce que l'IA comprend déjà, ce qui manque et quoi améliorer pour être mieux recommandé."
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {AUDIT_VALUE.map(({ Icon, title, body }) => (
@@ -122,7 +122,7 @@ function WhatYouGetSection() {
       </ol>
       <p className="mt-5 inline-flex items-start gap-2 rounded-2xl border border-primary/30 bg-secondary/60 px-4 py-3 text-[13px] font-semibold text-foreground">
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
-        UNPRO ne fabrique jamais un avis, une licence, une vérification ou un rendez-vous.
+        Des profils clairs. Des informations vérifiables. Un rendez-vous avec une seule entreprise.
       </p>
     </SectionShell>
   );
@@ -134,23 +134,23 @@ function OfferSection() {
     <SectionShell
       id="forfaits"
       eyebrow="Votre plan de croissance"
-      title="Un plan calculé pour votre entreprise"
-      intro="Complétez votre profil et vos objectifs. UNPRO calcule ensuite un devis mensuel personnalisé selon votre métier, votre territoire, votre capacité et la demande disponible."
+      title="Une offre adaptée à votre entreprise"
+      intro="Après l'analyse de votre profil et de vos objectifs, UNPRO vous présente l'offre la mieux adaptée à votre métier, votre territoire, votre capacité et la demande disponible."
     >
       <div className="mx-auto w-full max-w-xl rounded-[24px] border border-primary/40 bg-card p-6 shadow-md sm:p-7">
         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
-          Analyse gratuite avant tout prix
+          Audit gratuit, sans engagement
         </p>
         <h3 className="mt-2 text-[24px] font-bold leading-tight tracking-tight text-foreground">
-          Voyez d'abord la valeur, puis votre devis
+          Découvrez votre potentiel avant de choisir un plan
         </h3>
 
         <ul className="mt-5 space-y-2">
           {[
-            "Analyse IA gratuite de votre présence actuelle",
-            "Profil à vérifier et compléter",
-            "Objectifs et capacité pris en compte",
-            "Prix calculé côté serveur et révélé avec votre plan",
+            "Analyse gratuite de votre visibilité dans l'IA",
+            "Profil actuel à confirmer",
+            "Vos objectifs de croissance pris en compte",
+            "Recommandation et offre adaptées à votre marché",
           ].map((b) => (
             <li key={b} className="flex items-start gap-2.5 text-[13.5px] leading-relaxed text-foreground/85">
               <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
@@ -163,12 +163,12 @@ function OfferSection() {
           to="/entrepreneurs/profil"
           className="gold-btn mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-4 text-[15px] font-bold transition-transform hover:-translate-y-0.5"
         >
-          Commencer mon analyse gratuite
+          Faire mon audit IA gratuit
           <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
         </Link>
 
         <p className="mt-4 text-[12px] leading-relaxed text-muted-foreground">
-          Aucun forfait fixe n'est imposé. Le plan dépend de vos réponses et de la capacité réelle de votre marché.
+          Vous voyez d'abord l'analyse et la recommandation. Vous décidez ensuite si vous souhaitez continuer.
         </p>
       </div>
     </SectionShell>
@@ -191,7 +191,7 @@ const FAQ = [
   },
   {
     q: "Quand est-ce que je vois le prix ?",
-    a: "Après l'analyse gratuite, la vérification du profil et vos objectifs. Le devis mensuel est calculé pour votre entreprise, puis affiché avant tout paiement.",
+    a: "Après l'analyse gratuite, la vérification du profil et vos objectifs. L'offre adaptée à votre entreprise vous est présentée avant tout paiement.",
   },
 ] as const;
 
