@@ -57187,6 +57187,32 @@ export type Database = {
           },
         ]
       }
+      local_service_category_keywords: {
+        Row: {
+          category_slug: string
+          created_at: string
+          keyword: string
+        }
+        Insert: {
+          category_slug: string
+          created_at?: string
+          keyword: string
+        }
+        Update: {
+          category_slug?: string
+          created_at?: string
+          keyword?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "local_service_category_keywords_category_slug_fkey"
+            columns: ["category_slug"]
+            isOneToOne: false
+            referencedRelation: "founder_eligible_categories"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       login_interstitial_content: {
         Row: {
           benefits_json: Json | null
@@ -97209,6 +97235,10 @@ export type Database = {
         Returns: string
       }
       nightly_log_retention: { Args: never; Returns: undefined }
+      normalize_local_service_category: {
+        Args: { p_label: string }
+        Returns: string
+      }
       outbound_resolve_landing: {
         Args: { p_slug: string; p_token: string }
         Returns: Json
