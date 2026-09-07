@@ -110,7 +110,7 @@ Deno.serve(async (req: Request) => {
 function getInterpretation(score: number) {
   if (score >= 80) return {
     headline: "Positionnement fort",
-    spoken: "votre entreprise est bien positionnée. Vous avez une base solide pour dominer votre territoire.",
+    spoken: "votre entreprise est bien positionnée. Vous avez une base solide pour développer votre présence dans votre territoire.",
     display: "Base solide — opportunité de domination et captation avancée.",
     next_best_action: "Consolider et dominer votre marché",
     level: "dominant",
