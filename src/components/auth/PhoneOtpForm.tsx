@@ -20,6 +20,12 @@ interface PhoneOtpFormProps {
   onSuccess?: () => void;
   loading?: boolean;
   className?: string;
+  /**
+   * Attribution du parcours en cours (prospect, jeton, aperçu).
+   * Sans elle, une vérification entrepreneur est indiscernable d'une
+   * vérification propriétaire dans le suivi du tunnel.
+   */
+  attribution?: { prospect_id?: string | null; token?: string | null; is_test?: boolean };
 }
 
 const MAX_ATTEMPTS = 5;
@@ -40,7 +46,8 @@ function toE164(phone: string): string {
   return `+${digits}`;
 }
 
-export default function PhoneOtpForm({ onSuccess, loading: externalLoading, className = "" }: PhoneOtpFormProps) {
+export default function PhoneOtpForm({ onSuccess, loading: externalLoading, className = "", attribution }: PhoneOtpFormProps) {
+  const attr = attribution ?? {};
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState(["", "", "", "", "", ""]);
@@ -73,6 +80,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
   const callOtp = async (fnName: "send-otp" | "verify-otp", body: Record<string, string>): Promise<{
     error?: string;
     fallback?: boolean;
+    isNewUser?: boolean;
     code?: string;
     session?: { access_token: string; refresh_token: string };
   }> => {
@@ -84,6 +92,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
     return (data ?? {}) as {
       error?: string;
       fallback?: boolean;
+      isNewUser?: boolean;
       code?: string;
       session?: { access_token: string; refresh_token: string };
     };
@@ -192,8 +201,16 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       }
 
       trackAuthEvent("sms_success");
-      void logFunnelEvent({ event_type: "otp_verified", step: "phone_otp" });
-      void logFunnelEvent({ event_type: "auth_completed", step: "phone_otp", metadata: { method: "phone_otp" } });
+      void logFunnelEvent({ event_type: "otp_verified", step: "phone_otp", ...attr });
+      if (data.isNewUser) {
+        void logFunnelEvent({
+          event_type: "account_created",
+          step: "phone_otp",
+          metadata: { method: "phone_otp" },
+          ...attr,
+        });
+      }
+      void logFunnelEvent({ event_type: "auth_completed", step: "phone_otp", metadata: { method: "phone_otp" }, ...attr });
       authDebug.set({ auth_step: "otp_verified" });
       setVerified(true);
       try { sessionStorage.removeItem(OTP_STATE_KEY); } catch { /* noop */ }
