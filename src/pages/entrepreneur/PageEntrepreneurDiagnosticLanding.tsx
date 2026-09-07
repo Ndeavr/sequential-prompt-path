@@ -336,8 +336,8 @@ function Hero() {
       </h1>
       <p className="text-[15px] sm:text-[17px] text-white/72 max-w-2xl mx-auto leading-relaxed">
         UNPRO analyse votre visibilité, votre réputation et votre capacité actuelle. En moins
-        de 3 minutes, obtenez votre score AIPP, votre potentiel de rendez-vous et le plan
-        recommandé pour dominer votre territoire.
+        de 3 minutes, obtenez votre score de visibilité IA, votre potentiel de rendez-vous et
+        la recommandation pour développer votre présence dans votre territoire.
       </p>
     </header>
   );
@@ -346,7 +346,7 @@ function Hero() {
 const ALEX_STEP_SCRIPT: Record<0 | 1 | 2, string> = {
   0: "Bonjour. Je suis Clara d'UNPRO. Pour commencer, donnez-moi le nom de votre entreprise, votre site web et votre téléphone. Je m'occupe du reste.",
   1: "Parfait. Maintenant, ajustez les curseurs : projets par mois, valeur moyenne d'un contrat, taux de fermeture. Sautez ce que vous voulez.",
-  2: "Voici votre score AIPP, votre potentiel de revenus, et le plan recommandé pour dominer votre territoire.",
+  2: "Voici votre score de visibilité IA, votre potentiel de revenus, et la recommandation pour développer votre présence dans votre territoire.",
 };
 
 function AlexNarrator({

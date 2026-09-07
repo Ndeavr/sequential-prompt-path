@@ -60,7 +60,7 @@ const HOMEOWNER_DESCRIPTOR: AlexModeDescriptor = {
   // contractor-matching one. Only recommend a contractor AFTER the situation
   // (problem + risk + urgency) is understood — see mem://ai/alex/concierge-v2-logic.
   greetingFr:
-    "Bonjour. Que souhaitez-vous comprendre au sujet de votre propriété aujourd'hui ?",
+    "Bonjour. Que puis-je faire pour votre propriété aujourd'hui ?",
   allowHomeownerFallback: true,
   allowOnboardingRestart: true,
 };
