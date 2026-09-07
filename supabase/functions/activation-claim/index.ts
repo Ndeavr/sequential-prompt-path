@@ -9,6 +9,7 @@
 //  - un utilisateur qui rouvre son propre lien retrouve son profil, sans doublon ;
 //  - l'activation est enregistrée immédiatement, l'enrichissement vient après.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { normalizeServiceCategory } from "../_shared/localServiceCategories.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -224,7 +225,45 @@ Deno.serve(async (req) => {
         .eq("id", prospect.id);
     } catch (_e) { /* non bloquant */ }
 
+    // ───────────── Offre « 1 an gratuit » — services résidentiels locaux ─────
+    // Attribution atomique et idempotente (verrou consultatif + place réservée
+    // côté base). Un double clic ne consomme jamais deux places, et l'échec de
+    // l'offre ne casse jamais l'activation du profil.
+    let freeYear: Record<string, unknown> | null = null;
+    try {
+      const catSlug = normalizeServiceCategory(prospect.category);
+      if (catSlug && prospect.city) {
+        const { data: granted, error: grantErr } = await admin.rpc("claim_local_service_free_year", {
+          p_city: prospect.city,
+          p_category_slug: catSlug,
+          p_business_name: (prospect.business_name ?? prospect.legal_name ?? "").trim(),
+          p_prospect_id: prospect.id,
+          p_contractor_id: contractorId,
+          p_user_id: user.id,
+          p_email: prospect.email ?? user.email ?? null,
+          p_phone: prospect.phone_e164 ?? null,
+          p_source: "activation_link",
+        });
+        if (grantErr) {
+          console.error("[activation-claim] free_year_failed", grantErr.message);
+        } else if (granted) {
+          freeYear = granted as Record<string, unknown>;
+        }
+      }
+    } catch (e) {
+      console.error("[activation-claim] free_year_exception", String(e));
+    }
+
     const ids = { prospect_id: prospect.id, contractor_id: contractorId, user_id: user.id, token_hash: tokenHash };
+    if (freeYear?.ok === true) {
+      await logEvent("free_offer_accepted", {
+        offer_code: freeYear.offer_code ?? "free_year_local_service",
+        slot_number: freeYear.slot_number ?? null,
+        already: Boolean(freeYear.already_claimed),
+        city: freeYear.city ?? null,
+        category_slug: freeYear.category_slug ?? null,
+      }, ids);
+    }
     if (created) await logEvent("contractor_profile_created", { source: "activation_link" }, ids);
     await logEvent("profile_claimed", { already: Boolean(existingClaim) }, ids);
     await logEvent("profile_activated", { already: Boolean(existingClaim) }, ids);
@@ -233,6 +272,7 @@ Deno.serve(async (req) => {
       ok: true,
       contractor_id: contractorId,
       already_claimed: Boolean(existingClaim),
+      free_year: freeYear,
       business_name: prospect.business_name ?? prospect.legal_name ?? null,
     });
   } catch (e) {

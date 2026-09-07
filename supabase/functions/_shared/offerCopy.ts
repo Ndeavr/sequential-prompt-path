@@ -137,3 +137,59 @@ export function founderEmailHtml(businessName: string, link: string): string {
   </td></tr></table>
 </body></html>`;
 }
+
+
+// ─── Offre « 1 an gratuit » — entreprises de services résidentiels locaux ───
+// Aucune rareté n'est écrite sans capacité réelle : `remaining` provient
+// toujours de `public.local_service_offer_status` (calcul serveur).
+
+export interface FreeYearContext {
+  businessName: string;
+  city: string;
+  categoryName: string;
+  link: string;
+  remaining: number;
+  cap: number;
+  firstName?: string | null;
+}
+
+/** SMS premier contact — valeur d'abord, rareté seulement si vérifiée. */
+export function localServiceFreeYearSms(ctx: FreeYearContext): string {
+  const who = (ctx.firstName || ctx.businessName || "votre entreprise").trim().slice(0, 40);
+  const scarcity = ctx.remaining > 0
+    ? `L'inscription est gratuite pendant 1 an pour les ${ctx.cap} premières entreprises de la catégorie dans la ville (${ctx.remaining} place${ctx.remaining > 1 ? "s" : ""} restante${ctx.remaining > 1 ? "s" : ""}).`
+    : "Votre fiche est prête et vous pouvez la réclamer gratuitement.";
+  return (
+    `Bonjour ${who}, UNPRO ouvre ${ctx.categoryName.toLowerCase()} à ${ctx.city}. ` +
+    `${scarcity} Nous avons préparé votre fiche. Vérifiez-la et réclamez-la ici :`
+  );
+}
+
+export function localServiceFreeYearEmailSubject(ctx: FreeYearContext): string {
+  return `${ctx.businessName} — ${ctx.categoryName} à ${ctx.city} : votre fiche UNPRO est prête`;
+}
+
+export function localServiceFreeYearEmailHtml(ctx: FreeYearContext): string {
+  const safe = (v: string) => v.replace(/[<>&"]/g, "");
+  const scarcity = ctx.remaining > 0
+    ? `L'inscription est gratuite pendant 1 an pour les ${ctx.cap} premières entreprises de la catégorie dans la ville. Il reste ${ctx.remaining} place${ctx.remaining > 1 ? "s" : ""}.`
+    : "Vous pouvez réclamer gratuitement votre fiche et être inscrit à la prochaine ouverture de places.";
+  return `<!doctype html>
+<html lang="fr"><body style="margin:0;padding:0;background:#f7f7f8;font-family:-apple-system,Segoe UI,Roboto,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px;">
+    <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;padding:32px;">
+      <tr><td>
+        <p style="font-size:13px;color:#666;margin:0 0 8px 0;">UNPRO · ${safe(ctx.categoryName)} — ${safe(ctx.city)}</p>
+        <h1 style="font-size:22px;line-height:1.3;margin:0 0 16px 0;color:#111;">Bonjour ${safe(ctx.firstName || ctx.businessName)},</h1>
+        <p style="font-size:15px;line-height:1.6;margin:0 0 16px 0;color:#333;">UNPRO ouvre actuellement ${safe(ctx.categoryName.toLowerCase())} à ${safe(ctx.city)}. ${scarcity}</p>
+        <p style="font-size:15px;line-height:1.6;margin:0 0 24px 0;color:#333;">Nous avons préparé la fiche de <strong>${safe(ctx.businessName)}</strong> à partir de sources publiques. Vous pouvez la vérifier, la corriger et la réclamer gratuitement.</p>
+        <p style="margin:0 0 24px 0;">
+          <a href="${ctx.link}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:14px 22px;border-radius:12px;font-weight:600;font-size:16px;">Réclamer gratuitement ma fiche</a>
+        </p>
+        <p style="font-size:12px;line-height:1.5;color:#999;margin:0;">Aucun paiement, aucun renouvellement automatique. Répondez STOP pour ne plus recevoir nos messages.</p>
+      </td></tr>
+    </table>
+    <p style="font-size:12px;color:#999;margin:16px 0 0 0;">UNPRO — plateforme d'intelligence résidentielle québécoise · unpro.ca</p>
+  </td></tr></table>
+</body></html>`;
+}

@@ -65,6 +65,17 @@ export type FunnelEventType =
   | "activation_error"
   | "contractor_profile_created"
 
+  // Parcours « 1 an gratuit » — entreprises de services résidentiels locaux
+  | "prospect_qualified"
+  | "outreach_sent"
+  | "outreach_delivered"
+  | "landing_viewed"
+  | "claim_cta_clicked"
+  | "profile_enrichment_started"
+  | "profile_enrichment_completed"
+  | "calendar_connected"
+  | "recommendation_ready"
+
   | "onboarding_resumed"
   | "free_offer_accepted"
   | "plan_requested"

@@ -1171,6 +1171,13 @@ export type Database = {
             foreignKeyName: "acquisition_dead_queue_alerts_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_local_service_acquisition"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_dead_queue_alerts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_manual_contact_queue"
             referencedColumns: ["prospect_id"]
           },
@@ -1597,6 +1604,13 @@ export type Database = {
             foreignKeyName: "acquisition_manual_import_rows_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_local_service_acquisition"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_manual_import_rows_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_manual_contact_queue"
             referencedColumns: ["prospect_id"]
           },
@@ -1742,6 +1756,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_pipeline_events_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_local_service_acquisition"
             referencedColumns: ["prospect_id"]
           },
           {
@@ -1925,6 +1946,13 @@ export type Database = {
             foreignKeyName: "acquisition_queue_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_local_service_acquisition"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_queue_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_manual_contact_queue"
             referencedColumns: ["prospect_id"]
           },
@@ -2040,6 +2068,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "acquisition_repair_log_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_local_service_acquisition"
             referencedColumns: ["prospect_id"]
           },
           {
@@ -7420,6 +7455,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "ai_recommendation_audits_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_local_service_acquisition"
             referencedColumns: ["prospect_id"]
           },
           {
@@ -30513,6 +30555,13 @@ export type Database = {
             foreignKeyName: "contractor_dedupe_log_kept_prospect_id_fkey"
             columns: ["kept_prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_local_service_acquisition"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "contractor_dedupe_log_kept_prospect_id_fkey"
+            columns: ["kept_prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_manual_contact_queue"
             referencedColumns: ["prospect_id"]
           },
@@ -44373,6 +44422,13 @@ export type Database = {
             foreignKeyName: "crm_contact_outcomes_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_local_service_acquisition"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "crm_contact_outcomes_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_manual_contact_queue"
             referencedColumns: ["prospect_id"]
           },
@@ -44487,6 +44543,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "crm_manual_assignments_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_local_service_acquisition"
             referencedColumns: ["prospect_id"]
           },
           {
@@ -51501,18 +51564,22 @@ export type Database = {
           category_slug: string
           city: string
           contact_name: string | null
+          contractor_id: string | null
           created_at: string
-          email: string
+          email: string | null
           founder_end: string | null
           founder_start: string | null
           id: string
+          offer_code: string
           phone: string | null
           prospect_id: string | null
           renewal_cadence: string
           renewal_price_cents: number
+          slot_number: number | null
           source: string
           status: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           attribution?: Json
@@ -51520,18 +51587,22 @@ export type Database = {
           category_slug: string
           city: string
           contact_name?: string | null
+          contractor_id?: string | null
           created_at?: string
-          email: string
+          email?: string | null
           founder_end?: string | null
           founder_start?: string | null
           id?: string
+          offer_code?: string
           phone?: string | null
           prospect_id?: string | null
           renewal_cadence?: string
           renewal_price_cents?: number
+          slot_number?: number | null
           source?: string
           status?: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           attribution?: Json
@@ -51539,18 +51610,22 @@ export type Database = {
           category_slug?: string
           city?: string
           contact_name?: string | null
+          contractor_id?: string | null
           created_at?: string
-          email?: string
+          email?: string | null
           founder_end?: string | null
           founder_start?: string | null
           id?: string
+          offer_code?: string
           phone?: string | null
           prospect_id?: string | null
           renewal_cadence?: string
           renewal_price_cents?: number
+          slot_number?: number | null
           source?: string
           status?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -57112,6 +57187,32 @@ export type Database = {
           },
         ]
       }
+      local_service_category_keywords: {
+        Row: {
+          category_slug: string
+          created_at: string
+          keyword: string
+        }
+        Insert: {
+          category_slug: string
+          created_at?: string
+          keyword: string
+        }
+        Update: {
+          category_slug?: string
+          created_at?: string
+          keyword?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "local_service_category_keywords_category_slug_fkey"
+            columns: ["category_slug"]
+            isOneToOne: false
+            referencedRelation: "founder_eligible_categories"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       login_interstitial_content: {
         Row: {
           benefits_json: Json | null
@@ -59982,6 +60083,13 @@ export type Database = {
             foreignKeyName: "official_site_crawl_runs_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_local_service_acquisition"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "official_site_crawl_runs_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_manual_contact_queue"
             referencedColumns: ["prospect_id"]
           },
@@ -60097,6 +60205,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "official_site_enrichment_evidence_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_local_service_acquisition"
             referencedColumns: ["prospect_id"]
           },
           {
@@ -80601,6 +80716,13 @@ export type Database = {
             foreignKeyName: "scout_captures_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
+            referencedRelation: "v_local_service_acquisition"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "scout_captures_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
             referencedRelation: "v_manual_contact_queue"
             referencedColumns: ["prospect_id"]
           },
@@ -91285,6 +91407,7 @@ export type Database = {
           last_attempt_at: string | null
           last_enriched_at: string | null
           legal_name: string | null
+          offer_code: string | null
           outreach_clicked_at: string | null
           outreach_delivered_at: string | null
           outreach_failure_reason: string | null
@@ -91305,6 +91428,8 @@ export type Database = {
           rejection_reason_text: string | null
           retry_count: number
           service_areas: string[] | null
+          service_category_slug: string | null
+          service_category_source: string | null
           sms_eligibility_confidence: string | null
           sms_eligibility_tier: string | null
           sms_eligible: boolean
@@ -91350,6 +91475,7 @@ export type Database = {
           last_attempt_at?: string | null
           last_enriched_at?: string | null
           legal_name?: string | null
+          offer_code?: string | null
           outreach_clicked_at?: string | null
           outreach_delivered_at?: string | null
           outreach_failure_reason?: string | null
@@ -91370,6 +91496,8 @@ export type Database = {
           rejection_reason_text?: string | null
           retry_count?: number
           service_areas?: string[] | null
+          service_category_slug?: string | null
+          service_category_source?: string | null
           sms_eligibility_confidence?: string | null
           sms_eligibility_tier?: string | null
           sms_eligible?: boolean
@@ -91415,6 +91543,7 @@ export type Database = {
           last_attempt_at?: string | null
           last_enriched_at?: string | null
           legal_name?: string | null
+          offer_code?: string | null
           outreach_clicked_at?: string | null
           outreach_delivered_at?: string | null
           outreach_failure_reason?: string | null
@@ -91435,6 +91564,8 @@ export type Database = {
           rejection_reason_text?: string | null
           retry_count?: number
           service_areas?: string[] | null
+          service_category_slug?: string | null
+          service_category_source?: string | null
           sms_eligibility_confidence?: string | null
           sms_eligibility_tier?: string | null
           sms_eligible?: boolean
@@ -91542,6 +91673,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "v_crm_prospects"
+            referencedColumns: ["prospect_id"]
+          },
+          {
+            foreignKeyName: "verified_prospect_tokens_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "v_local_service_acquisition"
             referencedColumns: ["prospect_id"]
           },
           {
@@ -95092,6 +95230,38 @@ export type Database = {
         }
         Relationships: []
       }
+      v_local_service_acquisition: {
+        Row: {
+          activation_status: string | null
+          business_name: string | null
+          city: string | null
+          claim_id: string | null
+          claimed_at: string | null
+          contractor_id: string | null
+          email_eligible: boolean | null
+          founder_end: string | null
+          founder_start: string | null
+          has_logo: boolean | null
+          has_service_areas: boolean | null
+          membership_id: string | null
+          membership_status: string | null
+          offer_code: string | null
+          onboarding_status: string | null
+          outreach_clicked_at: string | null
+          outreach_delivered_at: string | null
+          outreach_sent_at: string | null
+          outreach_status: string | null
+          prospect_id: string | null
+          provenance: string | null
+          region: string | null
+          service_category_slug: string | null
+          service_category_source: string | null
+          slot_number: number | null
+          sms_eligible: boolean | null
+          verification_status: string | null
+        }
+        Relationships: []
+      }
       v_manual_contact_queue: {
         Row: {
           activated_this_week: boolean | null
@@ -96479,6 +96649,22 @@ export type Database = {
           slot_number: number
         }[]
       }
+      claim_local_service_free_year: {
+        Args: {
+          p_attribution?: Json
+          p_business_name: string
+          p_category_slug: string
+          p_city: string
+          p_contact_name?: string
+          p_contractor_id?: string
+          p_email?: string
+          p_phone?: string
+          p_prospect_id?: string
+          p_source?: string
+          p_user_id?: string
+        }
+        Returns: Json
+      }
       claim_outreach_target: {
         Args: { p_id: string; p_token: string }
         Returns: undefined
@@ -96910,6 +97096,10 @@ export type Database = {
         Args: { _at?: string; _channel: string }
         Returns: boolean
       }
+      local_service_offer_status: {
+        Args: { p_category_slug: string; p_city: string }
+        Returns: Json
+      }
       log_compliance_event: {
         Args: {
           _action: string
@@ -97045,6 +97235,10 @@ export type Database = {
         Returns: string
       }
       nightly_log_retention: { Args: never; Returns: undefined }
+      normalize_local_service_category: {
+        Args: { p_label: string }
+        Returns: string
+      }
       outbound_resolve_landing: {
         Args: { p_slug: string; p_token: string }
         Returns: Json

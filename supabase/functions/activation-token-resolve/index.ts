@@ -9,6 +9,7 @@
 // landing_engaged, checkout_cta_clicked, correction_requested) into the real
 // engagement store via public.record_engagement_event.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { normalizeServiceCategory } from "../_shared/localServiceCategories.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -358,7 +359,47 @@ Deno.serve(async (req) => {
       }
     } catch { /* non-blocking */ }
 
+    // ── Offre « 1 an gratuit » (entreprises de services résidentiels) ────────
+    // Affichée UNIQUEMENT si la ville est reconnue, la catégorie normalisée et
+    // la capacité réellement calculée côté serveur. Sinon : rien, jamais de
+    // rareté inventée.
+    let freeYear: {
+      city: string;
+      category_slug: string;
+      category_name: string | null;
+      eligible: boolean;
+      remaining: number;
+      cap: number;
+      claimed: number;
+      reason: string | null;
+    } | null = null;
+    try {
+      const catSlug = normalizeServiceCategory(prospect.category);
+      if (catSlug && prospect.city) {
+        const { data: status } = await supabase.rpc("local_service_offer_status", {
+          p_city: prospect.city,
+          p_category_slug: catSlug,
+        });
+        const s = status as Record<string, unknown> | null;
+        if (s && s.verified === true) {
+          freeYear = {
+            city: String(s.city ?? prospect.city),
+            category_slug: catSlug,
+            category_name: (s.category_name as string | null) ?? null,
+            eligible: s.eligible === true,
+            remaining: Number(s.remaining ?? 0),
+            cap: Number(s.cap ?? 0),
+            claimed: Number(s.claimed ?? 0),
+            reason: (s.reason as string | null) ?? null,
+          };
+        }
+      }
+    } catch (e) {
+      console.error("[activation-token-resolve] free_year_status_failed", String(e));
+    }
+
     const sourceStatus = (prospect.verification_status ?? "").toString() || null;
+
 
     const landingVariant = bucket(prospect.id, ["profile_first", "value_first"]);
     const profileVariant = bucket(prospect.id + "p", ["standard"]);
@@ -448,6 +489,7 @@ Deno.serve(async (req) => {
       claimed,
       contact,
       offer,
+      free_year: freeYear,
       source_status: sourceStatus,
       region,
       prospect: {

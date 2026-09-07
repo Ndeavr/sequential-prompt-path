@@ -71,6 +71,32 @@ export default function PageAdminFounderPipeline() {
     );
   }, [rows, cityFilter, categoryFilter, statusFilter]);
 
+  /**
+   * Acquisition « 1 an gratuit » — vue serveur v_local_service_acquisition :
+   * provenance, admissibilité de contact, envoi, clic, réclamation, place
+   * obtenue et complétude du profil. Aucune donnée n'est recalculée ici.
+   */
+  const { data: acquisition } = useQuery({
+    queryKey: ["admin-local-service-acquisition"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("v_local_service_acquisition" as any)
+        .select("*")
+        .order("outreach_sent_at", { ascending: false, nullsFirst: false })
+        .limit(500);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const acquisitionFiltered = useMemo(() => {
+    return (acquisition ?? []).filter(
+      (r) =>
+        (!cityFilter || r.city?.toLowerCase().includes(cityFilter.toLowerCase())) &&
+        (!categoryFilter || r.service_category_slug === categoryFilter),
+    );
+  }, [acquisition, cityFilter, categoryFilter]);
+
   const capacityByCity = useMemo(() => {
     const map = new Map<string, number>();
     (rows ?? []).forEach((r) => {
@@ -151,6 +177,81 @@ export default function PageAdminFounderPipeline() {
             </option>
           ))}
         </select>
+      </div>
+
+      {/* Acquisition « 1 an gratuit » — prospects réels, du contact à l'activation */}
+      <div className="rounded-2xl border border-border">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-4">
+          <h2 className="text-sm font-semibold text-foreground">
+            Acquisition services résidentiels — 1 an gratuit
+          </h2>
+          <span className="text-[12px] text-muted-foreground">
+            {acquisitionFiltered.length} prospect(s) · prochain contact = première ligne sans envoi
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-secondary/50 text-left text-[12px] uppercase tracking-wide text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3">Entreprise</th>
+                <th className="px-4 py-3">Ville</th>
+                <th className="px-4 py-3">Catégorie</th>
+                <th className="px-4 py-3">Provenance</th>
+                <th className="px-4 py-3">Contact permis</th>
+                <th className="px-4 py-3">Envoi</th>
+                <th className="px-4 py-3">Landing</th>
+                <th className="px-4 py-3">Réclamé</th>
+                <th className="px-4 py-3">Place</th>
+                <th className="px-4 py-3">Profil</th>
+              </tr>
+            </thead>
+            <tbody>
+              {acquisitionFiltered.length === 0 && (
+                <tr>
+                  <td colSpan={10} className="px-4 py-6 text-center text-muted-foreground">
+                    Aucun prospect de services résidentiels ne correspond aux filtres.
+                  </td>
+                </tr>
+              )}
+              {acquisitionFiltered.map((r) => (
+                <tr key={r.prospect_id} className="border-t border-border">
+                  <td className="px-4 py-3 font-medium text-foreground">{r.business_name}</td>
+                  <td className="px-4 py-3 text-foreground">{r.city ?? "—"}</td>
+                  <td className="px-4 py-3 text-foreground">
+                    {catName.get(r.service_category_slug) ?? r.service_category_slug ?? "En attente"}
+                    <span className="ml-1 text-[11px] text-muted-foreground">({r.service_category_source ?? "—"})</span>
+                  </td>
+                  <td className="px-4 py-3 text-[12px] text-muted-foreground">{r.provenance ?? "—"}</td>
+                  <td className="px-4 py-3 text-[12px] text-muted-foreground">
+                    {[r.sms_eligible ? "SMS" : null, r.email_eligible ? "Courriel" : null].filter(Boolean).join(" · ") || "Aucun"}
+                  </td>
+                  <td className="px-4 py-3 text-[12px] text-muted-foreground">
+                    {r.outreach_sent_at ? new Date(r.outreach_sent_at).toLocaleDateString("fr-CA") : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-[12px] text-muted-foreground">
+                    {r.outreach_clicked_at ? "Vue" : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-[12px] text-muted-foreground">
+                    {r.claimed_at ? new Date(r.claimed_at).toLocaleDateString("fr-CA") : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-[12px] text-foreground">
+                    {r.slot_number ? `${r.slot_number}/${CITY_CAP}` : "—"}
+                    {r.founder_end && (
+                      <div className="text-[11px] text-muted-foreground">
+                        jusqu'au {new Date(r.founder_end).toLocaleDateString("fr-CA")}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-[12px] text-muted-foreground">
+                    {[r.onboarding_status ?? "—", r.has_service_areas ? "territoire" : null, r.has_logo ? "logo" : null]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Table */}
