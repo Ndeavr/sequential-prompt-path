@@ -30,6 +30,17 @@ const BENEFITS = [
   "Aucun renouvellement automatique",
 ];
 
+export interface FreeYearOffer {
+  city: string;
+  category_slug: string;
+  category_name: string | null;
+  eligible: boolean;
+  remaining: number;
+  cap: number;
+  claimed: number;
+  reason: string | null;
+}
+
 interface ResolvedContact {
   masked: string | null;
   channel: string | null;
@@ -48,6 +59,8 @@ export default function PageUnproActivate() {
   const [profile, setProfile] = useState<ActivationProfile | null>(null);
   const [contact, setContact] = useState<ResolvedContact | null>(null);
   const [offer, setOffer] = useState<{ label: string } | null>(null);
+  // Offre « 1 an gratuit » — jamais affichée sans capacité calculée en base.
+  const [freeYear, setFreeYear] = useState<FreeYearOffer | null>(null);
   const [region, setRegion] = useState<string | null>(null);
   const [sourceLabel, setSourceLabel] = useState<string | null>(null);
   const [reason, setReason] = useState<string | null>(null);
@@ -90,6 +103,7 @@ export default function PageUnproActivate() {
         setProfile((data.profile as ActivationProfile) ?? null);
         setContact((data.contact as ResolvedContact) ?? null);
         setOffer((data.offer as { label: string } | null) ?? null);
+        setFreeYear((data.free_year as FreeYearOffer | null) ?? null);
         setRegion((data.region as string | null) ?? null);
         setSourceLabel(
           data.source_status === "verified"
@@ -249,6 +263,24 @@ export default function PageUnproActivate() {
                   ))}
               </div>
 
+              {freeYear && (
+                <p className="mt-4 rounded-2xl border border-emerald-300/25 bg-emerald-400/10 p-3.5 text-[13.5px] leading-relaxed text-emerald-100">
+                  {freeYear.eligible ? (
+                    <>
+                      UNPRO ouvre {(freeYear.category_name ?? "votre catégorie").toLowerCase()} à {freeYear.city}.
+                      {" "}Il reste {freeYear.remaining} place{freeYear.remaining > 1 ? "s" : ""} sur {freeYear.cap} :
+                      votre première année est gratuite.
+                    </>
+                  ) : (
+                    <>
+                      Les {freeYear.cap} places gratuites pour {(freeYear.category_name ?? "votre catégorie").toLowerCase()} à
+                      {" "}{freeYear.city} sont prises. Vous pouvez tout de même activer votre profil et être inscrit
+                      sur la liste d'attente de la prochaine ouverture.
+                    </>
+                  )}
+                </p>
+              )}
+
               {offer?.label && (
                 <p className="mt-4 rounded-2xl border border-emerald-300/25 bg-emerald-400/10 p-3.5 text-[13.5px] leading-relaxed text-emerald-100">
                   {offer.label}
@@ -276,6 +308,7 @@ export default function PageUnproActivate() {
                   prospectId={prospect.id ?? null}
                   company={company}
                   maskedContact={contact?.masked ?? null}
+                  freeYear={freeYear}
                   preview={preview}
                 />
               </div>

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import PhoneOtpForm from "@/components/auth/PhoneOtpForm";
 import { supabase } from "@/integrations/supabase/client";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
+import type { FreeYearOffer } from "@/pages/activation/PageUnproActivate";
 
 type Phase = "idle" | "verify" | "claiming" | "done" | "failed";
 
@@ -33,13 +34,16 @@ interface Props {
   company: string;
   maskedContact?: string | null;
   preview?: boolean;
+  /** Capacité réelle calculée en base ; jamais de rareté affichée sans elle. */
+  freeYear?: FreeYearOffer | null;
 }
 
-export default function ActivationClaimPanel({ token, prospectId, company, maskedContact, preview }: Props) {
+export default function ActivationClaimPanel({ token, prospectId, company, maskedContact, preview, freeYear }: Props) {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
   const [alreadyClaimed, setAlreadyClaimed] = useState(false);
+  const [grantedYear, setGrantedYear] = useState<{ slot_number?: number; founder_end?: string } | null>(null);
 
   const attribution = { prospect_id: prospectId, token, is_test: preview };
 
@@ -63,6 +67,8 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
         return;
       }
       setAlreadyClaimed(Boolean(data.already_claimed));
+      const fy = (data as { free_year?: { ok?: boolean; slot_number?: number; founder_end?: string } | null }).free_year;
+      setGrantedYear(fy?.ok ? { slot_number: fy.slot_number, founder_end: fy.founder_end } : null);
       setPhase("done");
       void logFunnelEvent({
         event_type: "profile_claimed",
@@ -88,6 +94,12 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
   const start = useCallback(async () => {
     setError(null);
     void logFunnelEvent({ event_type: "activation_cta_clicked", step: "activate", ...attribution });
+    void logFunnelEvent({
+      event_type: "claim_cta_clicked",
+      step: "activate",
+      metadata: { free_year_eligible: Boolean(freeYear?.eligible) },
+      ...attribution,
+    });
     const { data } = await supabase.auth.getSession();
     if (data.session) {
       void claim();
@@ -111,6 +123,16 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
         <h2 className="text-xl font-semibold text-white">
           {alreadyClaimed ? `Le profil de ${company} est déjà activé` : `Le profil de ${company} est activé`}
         </h2>
+        {grantedYear && (
+          <p className="mt-3 rounded-2xl border border-emerald-300/25 bg-emerald-400/[0.12] p-3 text-[13.5px] leading-relaxed text-emerald-100">
+            Votre première année est gratuite
+            {grantedYear.slot_number ? ` (place ${grantedYear.slot_number})` : ""}
+            {grantedYear.founder_end
+              ? `, jusqu'au ${new Date(grantedYear.founder_end).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}`
+              : ""}
+            . Aucun paiement, aucun renouvellement automatique.
+          </p>
+        )}
         <p className="mt-2 text-[14px] leading-relaxed text-white/75">
           Complétez maintenant votre profil pour recevoir des rendez-vous exclusifs dans votre territoire.
         </p>
@@ -149,7 +171,7 @@ export default function ActivationClaimPanel({ token, prospectId, company, maske
             {phase === "claiming" ? (
               <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Activation en cours…</>
             ) : (
-              <>Activer mon profil gratuitement <ArrowRight className="ml-1 h-4 w-4" /></>
+              <>{freeYear?.eligible ? "Réclamer gratuitement ma fiche" : "Activer mon profil gratuitement"} <ArrowRight className="ml-1 h-4 w-4" /></>
             )}
           </Button>
           <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[11px] text-white/50">
