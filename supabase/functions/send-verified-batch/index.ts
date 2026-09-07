@@ -22,6 +22,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { buildOutreachUrl, smsWithLink } from "../_shared/outreachLink.ts";
 import { logPipelineEvent, REASON } from "../_shared/acquisitionPipeline.ts";
 import { firstTouchScoreSms, emailSubject, emailHtml } from "../_shared/offerCopy.ts";
+import { logServerFunnelEvent } from "../_shared/funnelEvents.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -593,6 +594,17 @@ Deno.serve(async (req) => {
           source: p.source, stage: "contacted",
           metadata: { sid: smsSid, channel: "sms", token },
         });
+        await logServerFunnelEvent({
+          event_type: "sms_sent",
+          channel: "sms",
+          provider: "twilio",
+          provider_message_id: smsSid,
+          template_key: FIRST_TOUCH_CAMPAIGN,
+          campaign: campaignId,
+          prospect_id: p.id,
+          phone: String(p.phone_e164),
+          metadata: { token, city: p.city, category: p.category },
+        });
         results.push({ id: p.id, sid: smsSid, to: p.phone_e164, status: "sent", channel_used: "sms" });
       } else if (channelUsed === "email") {
         await supabase.from("verified_contractor_prospects").update({
@@ -620,6 +632,17 @@ Deno.serve(async (req) => {
             twilio_error_code: twilioErrorCode,
             sms_attempted: smsAttempted,
           },
+        });
+        await logServerFunnelEvent({
+          event_type: "email_sent",
+          channel: "email",
+          provider: "resend",
+          provider_message_id: resendId,
+          template_key: FIRST_TOUCH_CAMPAIGN,
+          campaign: campaignId,
+          prospect_id: p.id,
+          email: p.email ?? null,
+          metadata: { token, fallback_reason: fallbackReason, sms_attempted: smsAttempted },
         });
         results.push({
           id: p.id, to: p.email, status: "sent", channel_used: "email",
@@ -653,6 +676,23 @@ Deno.serve(async (req) => {
           reason_text: finalErr.slice(0, 300),
           metadata: {
             sms_attempted: smsAttempted,
+            twilio_error_code: twilioErrorCode,
+            email_attempted: shouldTryEmail,
+            email_error: emailError,
+            fallback_reason: fallbackReason,
+          },
+        });
+        await logServerFunnelEvent({
+          event_type: smsAttempted ? "sms_failed" : "outreach_blocked",
+          channel: smsAttempted ? "sms" : null,
+          provider: smsAttempted ? "twilio" : null,
+          template_key: FIRST_TOUCH_CAMPAIGN,
+          campaign: campaignId,
+          prospect_id: p.id,
+          phone: p.phone_e164 ? String(p.phone_e164) : null,
+          email: p.email ?? null,
+          failure_reason: finalErr.slice(0, 300),
+          metadata: {
             twilio_error_code: twilioErrorCode,
             email_attempted: shouldTryEmail,
             email_error: emailError,

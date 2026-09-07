@@ -3,7 +3,7 @@
  * Google OAuth + SMS Code (primary) · Magic Link (secondary)
  * Post-login routing centralized via useAuthReturn (AuthReturnManager).
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuthReturn } from "@/hooks/useAuthReturn";
 import AuthCardUnpro from "@/components/auth/AuthCardUnpro";
@@ -11,6 +11,7 @@ import OAuthButtons from "@/components/auth/OAuthButtons";
 import PhoneOtpForm from "@/components/auth/PhoneOtpForm";
 import LoginMagicLinkForm from "@/components/auth/LoginMagicLinkForm";
 import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
+import { readRoleIntent } from "@/services/auth/roleIntent";
 import { Smartphone, Mail, Lock, CheckCircle2, ArrowRight, AlertTriangle } from "lucide-react";
 
 export default function LoginPageUnpro() {
@@ -20,8 +21,20 @@ export default function LoginPageUnpro() {
   const authError = searchParams.get("auth_error");
   const authErrorDescription = searchParams.get("auth_error_description");
 
+  // A contractor arriving from an activation / onboarding link must never read
+  // homeowner copy on the sign-in screen.
+  const intent = useMemo(() => readRoleIntent(), []);
+  const isContractor = intent?.role === "contractor";
+  const business = isContractor ? (intent?.businessName ?? "").trim() : "";
+  const title = isContractor
+    ? (business ? `Activez le profil de ${business}` : "Activez votre profil d'entrepreneur")
+    : "Trouvez le bon pro. Plus vite.";
+  const subtitle = isContractor
+    ? "Une vérification rapide, puis vous reprenez où vous étiez."
+    : "Connexion rapide et sécurisée";
+
   return (
-    <AuthCardUnpro title="Trouvez le bon pro. Plus vite." subtitle="Connexion rapide et sécurisée">
+    <AuthCardUnpro title={title} subtitle={subtitle}>
       {authError && !redirected && (
         <div
           role="alert"
