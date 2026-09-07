@@ -21,7 +21,16 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { buildOutreachUrl, smsWithLink } from "../_shared/outreachLink.ts";
 import { logPipelineEvent, REASON } from "../_shared/acquisitionPipeline.ts";
-import { firstTouchScoreSms, emailSubject, emailHtml } from "../_shared/offerCopy.ts";
+import {
+  firstTouchScoreSms,
+  emailSubject,
+  emailHtml,
+  localServiceFreeYearSms,
+  localServiceFreeYearEmailSubject,
+  localServiceFreeYearEmailHtml,
+  type FreeYearContext,
+} from "../_shared/offerCopy.ts";
+import { categoryName } from "../_shared/localServiceCategories.ts";
 import { logServerFunnelEvent } from "../_shared/funnelEvents.ts";
 
 const corsHeaders = {
@@ -70,9 +79,46 @@ const safeFirstTouchBody = (biz: string, personalized: string | null, auditLink:
   return smsWithLink(firstTouchScoreSms(biz), link);
 };
 
-const EMAIL_SUBJECT = (biz: string) => emailSubject(biz);
+const EMAIL_SUBJECT = (biz: string, freeYear?: FreeYearContext | null) =>
+  freeYear ? localServiceFreeYearEmailSubject(freeYear) : emailSubject(biz);
 
-const EMAIL_HTML = (biz: string, link: string) => emailHtml(biz, link);
+const EMAIL_HTML = (biz: string, link: string, freeYear?: FreeYearContext | null) =>
+  freeYear ? localServiceFreeYearEmailHtml({ ...freeYear, link }) : emailHtml(biz, link);
+
+/**
+ * Resolves the "1 year free" context for a local service business.
+ * Returns null unless the city + normalized category are a real, server-computed
+ * eligible pair — scarcity is never displayed from client-side assumptions.
+ */
+async function resolveFreeYear(
+  supabase: ReturnType<typeof createClient>,
+  p: { business_name: string; city: string | null; service_category_slug?: string | null },
+  link: string,
+): Promise<FreeYearContext | null> {
+  const slug = p.service_category_slug?.trim();
+  const city = p.city?.trim();
+  if (!slug || !city) return null;
+  try {
+    const { data, error } = await supabase.rpc("local_service_offer_status", {
+      p_city: city,
+      p_category_slug: slug,
+    });
+    if (error || !data) return null;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row || row.eligible !== true) return null;
+    return {
+      businessName: p.business_name,
+      firstName: null,
+      city,
+      categoryName: categoryName(slug) ?? slug,
+      cap: Number(row.cap ?? 0),
+      remaining: Number(row.remaining ?? 0),
+      link,
+    };
+  } catch (_) {
+    return null;
+  }
+}
 
 // Twilio error codes for which SMS should NOT be retried and email fallback is preferred.
 const FALLBACK_ELIGIBLE_TWILIO_CODES = new Set<number>([
@@ -234,7 +280,7 @@ Deno.serve(async (req) => {
     // email on file (email-only fallback path).
     let query = supabase
       .from("verified_contractor_prospects")
-      .select("id, business_name, phone_e164, phone_validation_status, phone_line_type, sms_eligibility_tier, sms_eligibility_confidence, data_quality_score, website_url, google_business_url, google_place_id, phone_source_url, city, category, source, email, outreach_status, verification_status, retry_count, email_eligible, email_eligibility_reason, email_sent_at, source_urls")
+      .select("id, business_name, phone_e164, phone_validation_status, phone_line_type, sms_eligibility_tier, sms_eligibility_confidence, data_quality_score, service_category_slug, website_url, google_business_url, google_place_id, phone_source_url, city, category, source, email, outreach_status, verification_status, retry_count, email_eligible, email_eligibility_reason, email_sent_at, source_urls")
       .eq("verification_status", "verified")
       .gte("data_quality_score", 80)
       // CASL provenance gate: a standalone website is NOT required, but a
@@ -442,7 +488,12 @@ Deno.serve(async (req) => {
       // SMS lands on the personalized Audit IA (score-first), email on the
       // canonical activation golden path.
       const auditLink = link.replace("/unpro/activate/", "/unpro/audit/");
-      const smsBody = safeFirstTouchBody(p.business_name, personalized, auditLink);
+      // Local service businesses on an open city+category get the "1 year free"
+      // approach instead of the canonical $350 golden path.
+      const freeYear = await resolveFreeYear(supabase, p, buildOutreachUrl(link, { campaign: FIRST_TOUCH_CAMPAIGN }));
+      const smsBody = freeYear
+        ? smsWithLink(localServiceFreeYearSms(freeYear), buildOutreachUrl(link, { campaign: FIRST_TOUCH_CAMPAIGN }))
+        : safeFirstTouchBody(p.business_name, personalized, auditLink);
       // Canonical selection event — proves the agent chose this prospect.
       if (attribution) {
         try {
