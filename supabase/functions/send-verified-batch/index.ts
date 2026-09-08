@@ -455,12 +455,29 @@ Deno.serve(async (req) => {
       }, 200, requestId);
     }
 
+    // ---- P0 fail-closed outreach gate ------------------------------------
+    // No provider (Twilio / Resend) may be invoked while OUTREACH_ENABLED is
+    // false, missing or unreadable. Every candidate is returned as a truthful
+    // skip so the caller advances its queue instead of recycling the batch.
+    const gate = await assertOutreachEnabled(supabase as any);
+    if (!gate.allowed) {
+      return jsonResponse({
+        ok: true,
+        dry_run: false,
+        blocked: true,
+        reason: gate.reason,
+        sent: 0,
+        processed: eligible.length,
+        results: eligible.map((p: any) => ({ id: p.id, status: "skipped", skipped: gate.reason })),
+      }, 200, requestId);
+    }
 
     const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
     const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
     const TWILIO_FROM = Deno.env.get("TWILIO_PHONE_NUMBER") || Deno.env.get("TWILIO_FROM_NUMBER");
     // Twilio creds are only strictly required if any prospect goes down the SMS path.
     const hasTwilio = !!(TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN && TWILIO_FROM);
+
 
     const origin = req.headers.get("origin") || "https://unpro.ca";
     const results: Array<Record<string, unknown>> = [];
