@@ -1313,8 +1313,31 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Fresh Twilio Lookup required
+      // Fresh Twilio Lookup required — blocked when outreach is disabled.
       counts.lookup_required += 1;
+      if (!outreachGate.allowed) {
+        (counts as any).gate_blocked += 1;
+        const due = nextActionAt(1);
+        await supabase.from("acquisition_queue").upsert(
+          {
+            prospect_id: promoted.id,
+            state: "blocked",
+            next_action_at: due,
+            last_error: outreachGate.reason,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "prospect_id", ignoreDuplicates: false },
+        );
+        await emitEvent(supabase, ctx, {
+          prospect_id: promoted.id,
+          business_name: promoted.business_name,
+          stage: "blocked",
+          reason_code: outreachGate.reason,
+          metadata: { lookup_performed: false, next_action_at: due },
+        });
+        perProspect.push({ id: promoted.id, business_name: promoted.business_name, outcome: "blocked", reason: outreachGate.reason });
+        continue;
+      }
       const lookup = await callTwilioLookup(url, serviceKey, promoted.phone_e164);
       counts.twilio_lookups_executed += 1;
 
