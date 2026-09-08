@@ -32,6 +32,7 @@ import {
 } from "../_shared/offerCopy.ts";
 import { categoryName } from "../_shared/localServiceCategories.ts";
 import { logServerFunnelEvent } from "../_shared/funnelEvents.ts";
+import { assertOutreachEnabled } from "../_shared/outreachGate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
