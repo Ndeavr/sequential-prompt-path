@@ -87,6 +87,46 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
 
   // Send-window gate (skipped for transactional, OTP, founder bypass).
   const messageClass = classifyMessage(input.message_type);
+
+  // P0 fail-closed kill switch — prospection/follow-up may never reach a
+  // provider while OUTREACH_ENABLED is false, missing or unreadable.
+  // Transactional traffic (OTP, admin test, founder alert) is unaffected.
+  if (!isTransactionalMessageType(input.message_type)) {
+    const gate = await assertOutreachEnabled(supabase as any);
+    if (!gate.allowed) {
+      const body_hash_gate = await hashBody(input.body);
+      const { data: gated } = await supabase
+        .from("sms_events_v2")
+        .insert({
+          lead_id: input.lead_id ?? null,
+          contractor_id: input.contractor_id ?? null,
+          campaign_id: input.campaign_id ?? null,
+          template_key: input.template_key ?? null,
+          message_type: input.message_type,
+          raw_phone: input.to,
+          normalized_phone: input.to,
+          from_number: TWILIO_FROM_NUMBER || null,
+          message_preview: input.body.slice(0, 160),
+          body_hash: body_hash_gate,
+          attempt_number: input.attempt_number ?? 1,
+          status: "blocked_outreach_disabled",
+          error_code: gate.reason,
+          error_message: "Envoi bloqué : interrupteur global de prospection désactivé.",
+          status_callback_url: STATUS_CALLBACK_URL,
+          metadata: { ...(input.metadata ?? {}), outreach_gate: gate },
+        })
+        .select("id")
+        .maybeSingle();
+      return {
+        event_id: gated?.id ?? "",
+        status: "blocked_outreach_disabled",
+        twilio_sid: null,
+        error_code: gate.reason,
+        error_message: "Envoi bloqué : interrupteur global de prospection désactivé.",
+      };
+    }
+  }
+
   const founderBypass = await isFounderModeActive();
   const windowCheck = await assertSendAllowed({
     channel: "sms",
