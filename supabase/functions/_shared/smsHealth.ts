@@ -25,11 +25,25 @@ export async function getSmsHealth(): Promise<SmsHealth> {
 }
 
 export async function assertSmsHealthy(): Promise<{ ok: true } | { ok: false; reason: string; health: SmsHealth }> {
+  const credentialsPresent = !!(
+    (Deno.env.get("TWILIO_ACCOUNT_SID") && Deno.env.get("TWILIO_AUTH_TOKEN")) ||
+    (Deno.env.get("LOVABLE_API_KEY") && Deno.env.get("TWILIO_API_KEY"))
+  );
+  if (!credentialsPresent) {
+    return {
+      ok: false,
+      reason: "Identifiants SMS absents.",
+      health: { status: "ERROR", last_callback_at: null, last_test_success_at: null, delivery_rate_24h: null },
+    };
+  }
   const health = await getSmsHealth();
-  if (health.status === "HEALTHY") return { ok: true };
+  // Idle system: no recent send / stale callback is a WARNING, never a hard
+  // block — otherwise an idle system could never become healthy again.
+  // Hard block only on a real provider/credential failure (ERROR).
+  if (health.status === "HEALTHY" || health.status === "WARNING") return { ok: true };
   return {
     ok: false,
-    reason: "Outbound bloqué. Aucun test SMS valide dans les dernières 24 heures.",
+    reason: "Échec réel du fournisseur SMS. Envoi bloqué.",
     health,
   };
 }
