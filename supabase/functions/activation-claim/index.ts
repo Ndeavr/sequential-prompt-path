@@ -141,6 +141,16 @@ Deno.serve(async (req) => {
       );
     } catch (_e) { /* rôle déjà présent */ }
 
+    // Un compte arrivé par lien d'activation ne doit jamais rester
+    // « propriétaire ». Idempotent : rejouable sans effet de bord.
+    try {
+      await admin
+        .from("profiles")
+        .update({ account_type: "contractor", onboarding_status: "in_progress" })
+        .eq("user_id", user.id);
+    } catch (_e) { /* profil optionnel */ }
+
+
     // ------------------------------------------------------- profil entrepreneur
     let contractorId = existingClaim?.contractor_id ?? null;
     let created = false;
