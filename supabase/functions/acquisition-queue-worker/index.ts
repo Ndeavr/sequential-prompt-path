@@ -22,6 +22,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { CATEGORY_SYNONYMS, normalizeCategoryInput } from "../_shared/acquisitionPipeline.ts";
 import { PENDING_CATEGORY, resolveIdentity } from "../_shared/sparseLead.ts";
+import { assertOutreachEnabled } from "../_shared/outreachGate.ts";
+import {
+  hasPublicProvenance,
+  isVerificationFresh,
+  nextActionAt,
+  VERIFICATION_TTL_MS,
+} from "../_shared/verificationFreshness.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -830,11 +837,10 @@ async function promoteProspect(
 // Verification-reuse gate — do NOT re-spend Twilio Lookup on valid records.
 // ---------------------------------------------------------------------------
 function verificationIsFresh(p: PromotedProspect): boolean {
-  if (p.verification_status !== "verified") return false;
-  if (!p.phone_line_type || !["mobile", "landline", "voip"].includes(p.phone_line_type)) return false;
-  if (!p.verified_at) return false;
-  const age = Date.now() - new Date(p.verified_at).getTime();
-  return age < VERIFICATION_FRESHNESS_MS;
+  // Canonical rule (shared): a concrete line type is NOT required. A valid
+  // cached tier-C record with phone_line_type="unknown" (Canada LTI
+  // unavailable) is reused instead of paying for a new Lookup.
+  return isVerificationFresh(p as any, Date.now(), VERIFICATION_FRESHNESS_MS);
 }
 
 // ---------------------------------------------------------------------------
@@ -1047,6 +1053,11 @@ Deno.serve(async (req) => {
     };
     const preparedIds: string[] = [];
     const perProspect: any[] = [];
+    // P0 fail-closed gate — read once per run. Blocks every provider call
+    // (Twilio Lookup included) when OUTREACH_ENABLED is false/unreadable.
+    const outreachGate = await assertOutreachEnabled(supabase as any);
+    (counts as any).provenance_blocked = 0;
+    (counts as any).gate_blocked = 0;
 
     // ------------------------------------------------------------------
     // DRY RUN — inspect only, no writes, no billable calls
@@ -1224,6 +1235,47 @@ Deno.serve(async (req) => {
           metadata: {},
         });
         perProspect.push({ id: promoted.id, business_name: promoted.business_name, outcome: "excluded_history", reason: hist.reason_code });
+        continue;
+      }
+
+      // ---- Public provenance / CASL evidence BEFORE any paid Lookup --------
+      if (!hasPublicProvenance(promoted as any)) {
+        (counts as any).provenance_blocked += 1;
+        const due = nextActionAt(1);
+        await supabase
+          .from("verified_contractor_prospects")
+          .update({
+            verification_status: "needs_enrichment",
+            sms_eligible: false,
+            rejection_reason_code: "missing_public_provenance",
+            rejection_reason_text: "Aucune preuve publique (site, Google, source du numéro, registre).",
+            last_action_at: new Date().toISOString(),
+          })
+          .eq("id", promoted.id);
+        await supabase.from("acquisition_queue").upsert(
+          {
+            prospect_id: promoted.id,
+            state: "needs_enrichment",
+            next_action_at: due,
+            last_error: "missing_public_provenance",
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "prospect_id", ignoreDuplicates: false },
+        );
+        await emitEvent(supabase, ctx, {
+          prospect_id: promoted.id,
+          business_name: promoted.business_name,
+          city: promoted.city,
+          category: promoted.category,
+          source: promoted.source,
+          stage: "needs_enrichment",
+          reason_code: "missing_public_provenance",
+          metadata: { next_action_at: due, lookup_performed: false },
+        });
+        perProspect.push({
+          id: promoted.id, business_name: promoted.business_name,
+          outcome: "needs_enrichment", reason: "missing_public_provenance",
+        });
         continue;
       }
 
