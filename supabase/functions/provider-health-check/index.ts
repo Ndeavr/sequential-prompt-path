@@ -2,6 +2,7 @@
 // Lovable AI. Records PASS/FAIL rows in provider_health_checks and returns
 // the latest per (provider, check_name).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { classifyResendProbe } from "../_shared/providerHealthSemantics.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
