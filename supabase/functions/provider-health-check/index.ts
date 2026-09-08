@@ -143,6 +143,7 @@ async function checkResend(): Promise<CheckOutcome> {
     const { data } = await sb
       .from("email_send_log")
       .select("created_at")
+      .eq("status", "sent")
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -152,6 +153,7 @@ async function checkResend(): Promise<CheckOutcome> {
   const verdict = classifyResendProbe({
     keyPresent: true,
     httpStatus: p.http_status,
+    responseBody: p.parsed ?? null,
     lastSuccessfulSendAt: lastSendAt,
   });
 
