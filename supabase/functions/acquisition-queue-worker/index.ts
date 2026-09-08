@@ -22,6 +22,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { CATEGORY_SYNONYMS, normalizeCategoryInput } from "../_shared/acquisitionPipeline.ts";
 import { PENDING_CATEGORY, resolveIdentity } from "../_shared/sparseLead.ts";
+import { assertOutreachEnabled } from "../_shared/outreachGate.ts";
+import {
+  hasPublicProvenance,
+  isVerificationFresh,
+  nextActionAt,
+  VERIFICATION_TTL_MS,
+} from "../_shared/verificationFreshness.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -830,11 +837,10 @@ async function promoteProspect(
 // Verification-reuse gate — do NOT re-spend Twilio Lookup on valid records.
 // ---------------------------------------------------------------------------
 function verificationIsFresh(p: PromotedProspect): boolean {
-  if (p.verification_status !== "verified") return false;
-  if (!p.phone_line_type || !["mobile", "landline", "voip"].includes(p.phone_line_type)) return false;
-  if (!p.verified_at) return false;
-  const age = Date.now() - new Date(p.verified_at).getTime();
-  return age < VERIFICATION_FRESHNESS_MS;
+  // Canonical rule (shared): a concrete line type is NOT required. A valid
+  // cached tier-C record with phone_line_type="unknown" (Canada LTI
+  // unavailable) is reused instead of paying for a new Lookup.
+  return isVerificationFresh(p as any, Date.now(), VERIFICATION_FRESHNESS_MS);
 }
 
 // ---------------------------------------------------------------------------
@@ -1047,6 +1053,11 @@ Deno.serve(async (req) => {
     };
     const preparedIds: string[] = [];
     const perProspect: any[] = [];
+    // P0 fail-closed gate — read once per run. Blocks every provider call
+    // (Twilio Lookup included) when OUTREACH_ENABLED is false/unreadable.
+    const outreachGate = await assertOutreachEnabled(supabase as any);
+    (counts as any).provenance_blocked = 0;
+    (counts as any).gate_blocked = 0;
 
     // ------------------------------------------------------------------
     // DRY RUN — inspect only, no writes, no billable calls
@@ -1227,6 +1238,47 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      // ---- Public provenance / CASL evidence BEFORE any paid Lookup --------
+      if (!hasPublicProvenance(promoted as any)) {
+        (counts as any).provenance_blocked += 1;
+        const due = nextActionAt(1);
+        await supabase
+          .from("verified_contractor_prospects")
+          .update({
+            verification_status: "needs_enrichment",
+            sms_eligible: false,
+            rejection_reason_code: "missing_public_provenance",
+            rejection_reason_text: "Aucune preuve publique (site, Google, source du numéro, registre).",
+            last_action_at: new Date().toISOString(),
+          })
+          .eq("id", promoted.id);
+        await supabase.from("acquisition_queue").upsert(
+          {
+            prospect_id: promoted.id,
+            state: "needs_enrichment",
+            next_action_at: due,
+            last_error: "missing_public_provenance",
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "prospect_id", ignoreDuplicates: false },
+        );
+        await emitEvent(supabase, ctx, {
+          prospect_id: promoted.id,
+          business_name: promoted.business_name,
+          city: promoted.city,
+          category: promoted.category,
+          source: promoted.source,
+          stage: "needs_enrichment",
+          reason_code: "missing_public_provenance",
+          metadata: { next_action_at: due, lookup_performed: false },
+        });
+        perProspect.push({
+          id: promoted.id, business_name: promoted.business_name,
+          outcome: "needs_enrichment", reason: "missing_public_provenance",
+        });
+        continue;
+      }
+
       // Verification reuse gate
       if (verificationIsFresh(promoted)) {
         counts.verification_reused += 1;
@@ -1261,8 +1313,31 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Fresh Twilio Lookup required
+      // Fresh Twilio Lookup required — blocked when outreach is disabled.
       counts.lookup_required += 1;
+      if (!outreachGate.allowed) {
+        (counts as any).gate_blocked += 1;
+        const due = nextActionAt(1);
+        await supabase.from("acquisition_queue").upsert(
+          {
+            prospect_id: promoted.id,
+            state: "blocked",
+            next_action_at: due,
+            last_error: outreachGate.reason,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "prospect_id", ignoreDuplicates: false },
+        );
+        await emitEvent(supabase, ctx, {
+          prospect_id: promoted.id,
+          business_name: promoted.business_name,
+          stage: "blocked",
+          reason_code: outreachGate.reason,
+          metadata: { lookup_performed: false, next_action_at: due },
+        });
+        perProspect.push({ id: promoted.id, business_name: promoted.business_name, outcome: "blocked", reason: outreachGate.reason });
+        continue;
+      }
       const lookup = await callTwilioLookup(url, serviceKey, promoted.phone_e164);
       counts.twilio_lookups_executed += 1;
 
@@ -1377,8 +1452,23 @@ Deno.serve(async (req) => {
     // Auto-send — scoped to prospect_ids prepared in THIS run only
     // ------------------------------------------------------------------
     let smsResult: any = null;
+    const sendTally = { sent: 0, failed: 0, skipped: 0, processed: 0 };
     if (prepareOnly && preparedIds.length > 0) {
       smsResult = { skipped: true, reason: "prepare_only", prepared: preparedIds.length };
+    } else if (!outreachGate.allowed && preparedIds.length > 0) {
+      // Fail-closed: never call a provider, but ALWAYS advance the queue so the
+      // same batch is not reselected every 15 minutes.
+      const due = nextActionAt(1);
+      for (const pid of preparedIds) {
+        await supabase.from("acquisition_queue").upsert(
+          { prospect_id: pid, state: "blocked", next_action_at: due, last_error: outreachGate.reason, updated_at: new Date().toISOString() },
+          { onConflict: "prospect_id", ignoreDuplicates: false },
+        );
+        await emitEvent(supabase, ctx, { prospect_id: pid, stage: "blocked", reason_code: outreachGate.reason, metadata: { next_action_at: due } });
+      }
+      sendTally.skipped = preparedIds.length;
+      sendTally.processed = preparedIds.length;
+      smsResult = { skipped: true, reason: outreachGate.reason, blocked: preparedIds.length };
     } else if (preparedIds.length > 0) {
 
       for (const pid of preparedIds) {
@@ -1391,49 +1481,84 @@ Deno.serve(async (req) => {
       });
       smsResult = await r.json().catch(() => ({}));
 
-      if (smsResult?.results) {
-        for (const rr of smsResult.results) {
-          if (rr.status === "sent") {
-            await supabase
-              .from("acquisition_queue")
-              .update({ state: "contacted", attempt_count: 1, updated_at: new Date().toISOString() })
-              .eq("prospect_id", rr.id);
-            await emitEvent(supabase, ctx, {
-              prospect_id: rr.id,
-              stage: "sms_sent",
-              metadata: { sid: rr.sid ?? null, to_masked: rr.to ? String(rr.to).replace(/(\+\d{4})\d+(\d{2})/, "$1***$2") : null },
-            });
-          } else if (rr.status === "failed") {
-            await supabase
-              .from("acquisition_queue")
-              .update({ state: "failed", last_error: String(rr.error ?? "").slice(0, 500), updated_at: new Date().toISOString() })
-              .eq("prospect_id", rr.id);
-            await emitEvent(supabase, ctx, {
-              prospect_id: rr.id,
-              stage: "failed",
-              reason_code: "sms_send_failed",
-              reason_text: String(rr.error ?? "").slice(0, 300),
-              metadata: {},
-            });
-          } else if (rr.skipped || rr.skipped_by_gate) {
-            await emitEvent(supabase, ctx, {
-              prospect_id: rr.id,
-              stage: "excluded_history",
-              reason_code: String(rr.skipped ?? rr.skipped_by_gate ?? "gate_blocked"),
-              metadata: {},
-            });
-          }
+      const seen = new Set<string>();
+      const resultRows: any[] = Array.isArray(smsResult?.results) ? smsResult.results : [];
+      for (const rr of resultRows) {
+        if (rr.id) seen.add(String(rr.id));
+        if (rr.status === "sent") {
+          sendTally.sent += 1;
+          await supabase
+            .from("acquisition_queue")
+            .update({ state: "contacted", attempt_count: 1, next_action_at: null, last_error: null, updated_at: new Date().toISOString() })
+            .eq("prospect_id", rr.id);
+          await emitEvent(supabase, ctx, {
+            prospect_id: rr.id,
+            stage: "sms_sent",
+            metadata: { sid: rr.sid ?? null, to_masked: rr.to ? String(rr.to).replace(/(\+\d{4})\d+(\d{2})/, "$1***$2") : null },
+          });
+        } else if (rr.status === "failed") {
+          sendTally.failed += 1;
+          await supabase
+            .from("acquisition_queue")
+            .update({
+              state: "failed",
+              last_error: String(rr.error ?? "").slice(0, 500),
+              next_action_at: nextActionAt(2),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("prospect_id", rr.id);
+          await emitEvent(supabase, ctx, {
+            prospect_id: rr.id,
+            stage: "failed",
+            reason_code: "sms_send_failed",
+            reason_text: String(rr.error ?? "").slice(0, 300),
+            metadata: {},
+          });
+        } else {
+          // EVERY other outcome (duplicate, no channel, cooldown, gate, health
+          // block, unknown) is a truthful skip that MUST advance the queue.
+          sendTally.skipped += 1;
+          const reason = String(rr.skipped ?? rr.skipped_by_gate ?? rr.reason ?? rr.status ?? "skipped_unknown");
+          const due = nextActionAt(2);
+          await supabase.from("acquisition_queue").upsert(
+            { prospect_id: rr.id, state: "skipped", next_action_at: due, last_error: reason.slice(0, 500), updated_at: new Date().toISOString() },
+            { onConflict: "prospect_id", ignoreDuplicates: false },
+          );
+          await emitEvent(supabase, ctx, {
+            prospect_id: rr.id, stage: "skipped", reason_code: reason.slice(0, 100),
+            metadata: { next_action_at: due },
+          });
         }
       }
+      // Prospects the sender never reported on are still advanced — silence is
+      // never counted as success.
+      for (const pid of preparedIds) {
+        if (seen.has(pid)) continue;
+        sendTally.skipped += 1;
+        const due = nextActionAt(2);
+        await supabase.from("acquisition_queue").upsert(
+          { prospect_id: pid, state: "skipped", next_action_at: due, last_error: "no_result_returned", updated_at: new Date().toISOString() },
+          { onConflict: "prospect_id", ignoreDuplicates: false },
+        );
+        await emitEvent(supabase, ctx, { prospect_id: pid, stage: "skipped", reason_code: "no_result_returned", metadata: { next_action_at: due } });
+      }
+      sendTally.processed = sendTally.sent + sendTally.failed + sendTally.skipped;
     }
+
+    // Anomaly signal: work was processed but nothing was actually sent.
+    const silentAnomaly = sendTally.processed > 0 && sendTally.sent === 0;
 
     // Worker cycle summary
     await emitEvent(supabase, ctx, {
       stage: "worker_cycle",
+      reason_code: silentAnomaly ? "processed_without_send" : null,
       metadata: {
         counts,
         prepared_count: preparedIds.length,
-        sms_result_summary: smsResult ? { sent: smsResult.sent ?? 0, processed: smsResult.processed ?? 0 } : null,
+        outreach_gate: outreachGate,
+        send_tally: sendTally,
+        anomaly_processed_without_send: silentAnomaly,
+        sms_result_summary: smsResult ? { sent: sendTally.sent, processed: sendTally.processed } : null,
         repair,
       },
     });
@@ -1445,6 +1570,9 @@ Deno.serve(async (req) => {
       city: ctx.city,
       category: ctx.category,
       counts,
+      outreach_gate: outreachGate,
+      send_tally: sendTally,
+      anomaly_processed_without_send: silentAnomaly,
       prepared_prospect_ids: preparedIds,
       prospects: perProspect,
       sms_result: smsResult,

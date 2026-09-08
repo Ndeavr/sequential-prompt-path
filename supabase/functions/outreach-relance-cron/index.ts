@@ -2,6 +2,7 @@
 // Selects prospects needing a follow-up SMS and dispatches via Twilio.
 // Honors: cap 3 relances/prospect, dry_run flag, per-relance new landing token.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { assertOutreachEnabled } from "../_shared/outreachGate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,6 +55,11 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
+
+  // P0 fail-closed outreach gate — no provider call while OUTREACH_ENABLED is off.
+  const __gate = await assertOutreachEnabled(supabase as any);
+  if (!__gate.allowed) return new Response(JSON.stringify({ ok: true, blocked: true, reason: __gate.reason, sent: 0, processed: 0 }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
 
   let dryRun = true;
   let limit = 100;

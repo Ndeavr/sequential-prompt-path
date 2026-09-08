@@ -2,6 +2,7 @@
 // Lovable AI. Records PASS/FAIL rows in provider_health_checks and returns
 // the latest per (provider, check_name).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { classifyResendProbe } from "../_shared/providerHealthSemantics.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -133,16 +134,48 @@ async function checkResend(): Promise<CheckOutcome> {
     headerNames = ["Authorization", "X-Connection-Api-Key"];
   }
   const p = await probeFetch(url, { headers }, headerNames);
+
+  // Last real successful send is the only trustworthy evidence of sender
+  // readiness for a send-only (restricted) key: introspection is denied.
+  let lastSendAt: string | null = null;
+  try {
+    const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data } = await sb
+      .from("email_send_log")
+      .select("created_at")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    lastSendAt = (data as { created_at?: string } | null)?.created_at ?? null;
+  } catch (_) { /* health probe must never throw */ }
+
+  const verdict = classifyResendProbe({
+    keyPresent: true,
+    httpStatus: p.http_status,
+    lastSuccessfulSendAt: lastSendAt,
+  });
+
   return {
     provider: "resend",
     check_name: "auth",
-    status: p.ok ? "pass" : "fail",
+    // A restricted send-only key denied introspection is NOT an auth failure.
+    status: verdict.hard_block ? "fail" : (verdict.level === "green" ? "pass" : "skipped"),
     http_status: p.http_status,
     latency_ms: p.ms,
-    error_body: p.ok ? undefined : p.parsed,
-    metadata: { mode: isDirect ? "direct" : "gateway", key_prefix: key.slice(0, 4), debug: p.debug },
+    error_body: verdict.hard_block ? p.parsed : undefined,
+    metadata: {
+      mode: isDirect ? "direct" : "gateway",
+      key_prefix: key.slice(0, 4),
+      health_level: verdict.level,
+      health_code: verdict.code,
+      introspection_available: verdict.introspection_available,
+      last_successful_send_at: lastSendAt,
+      message: verdict.message,
+      debug: p.debug,
+    },
   };
 }
+
 
 async function checkStripe(): Promise<CheckOutcome> {
   const sk = Deno.env.get("STRIPE_SECRET_KEY");

@@ -58,6 +58,7 @@ async function consumeQuota(db: SupabaseClient, channel: Channel, scope: string,
 }
 
 import { sendSms as sharedSendSms } from "../_shared/twilioSend.ts";
+import { assertOutreachEnabled } from "../_shared/outreachGate.ts";
 
 async function sendTwilioSms(to: string, body: string, ctx?: { lead_id?: string }): Promise<{ ok: boolean; status: number; sid?: string; code?: string | number; message?: string; raw: unknown }> {
   const res = await sharedSendSms({
@@ -101,6 +102,10 @@ async function sendResendEmail(to: string, subject: string, html: string): Promi
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  // P0 fail-closed outreach gate — no provider call while OUTREACH_ENABLED is off.
+  const __gsb = adminClient();
+  const __gate = await assertOutreachEnabled(__gsb as any);
+  if (!__gate.allowed) return new Response(JSON.stringify({ ok: true, blocked: true, reason: __gate.reason, sent: 0, processed: 0 }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   const __health = await assertSmsHealthy();
   if (!__health.ok) return new Response(JSON.stringify({ ok: false, blocked: true, reason: __health.reason, health: __health.health }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   const body = await req.json().catch(() => ({}));
