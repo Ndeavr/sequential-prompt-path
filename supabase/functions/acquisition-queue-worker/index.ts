@@ -1452,8 +1452,23 @@ Deno.serve(async (req) => {
     // Auto-send — scoped to prospect_ids prepared in THIS run only
     // ------------------------------------------------------------------
     let smsResult: any = null;
+    const sendTally = { sent: 0, failed: 0, skipped: 0, processed: 0 };
     if (prepareOnly && preparedIds.length > 0) {
       smsResult = { skipped: true, reason: "prepare_only", prepared: preparedIds.length };
+    } else if (!outreachGate.allowed && preparedIds.length > 0) {
+      // Fail-closed: never call a provider, but ALWAYS advance the queue so the
+      // same batch is not reselected every 15 minutes.
+      const due = nextActionAt(1);
+      for (const pid of preparedIds) {
+        await supabase.from("acquisition_queue").upsert(
+          { prospect_id: pid, state: "blocked", next_action_at: due, last_error: outreachGate.reason, updated_at: new Date().toISOString() },
+          { onConflict: "prospect_id", ignoreDuplicates: false },
+        );
+        await emitEvent(supabase, ctx, { prospect_id: pid, stage: "blocked", reason_code: outreachGate.reason, metadata: { next_action_at: due } });
+      }
+      sendTally.skipped = preparedIds.length;
+      sendTally.processed = preparedIds.length;
+      smsResult = { skipped: true, reason: outreachGate.reason, blocked: preparedIds.length };
     } else if (preparedIds.length > 0) {
 
       for (const pid of preparedIds) {
@@ -1466,49 +1481,84 @@ Deno.serve(async (req) => {
       });
       smsResult = await r.json().catch(() => ({}));
 
-      if (smsResult?.results) {
-        for (const rr of smsResult.results) {
-          if (rr.status === "sent") {
-            await supabase
-              .from("acquisition_queue")
-              .update({ state: "contacted", attempt_count: 1, updated_at: new Date().toISOString() })
-              .eq("prospect_id", rr.id);
-            await emitEvent(supabase, ctx, {
-              prospect_id: rr.id,
-              stage: "sms_sent",
-              metadata: { sid: rr.sid ?? null, to_masked: rr.to ? String(rr.to).replace(/(\+\d{4})\d+(\d{2})/, "$1***$2") : null },
-            });
-          } else if (rr.status === "failed") {
-            await supabase
-              .from("acquisition_queue")
-              .update({ state: "failed", last_error: String(rr.error ?? "").slice(0, 500), updated_at: new Date().toISOString() })
-              .eq("prospect_id", rr.id);
-            await emitEvent(supabase, ctx, {
-              prospect_id: rr.id,
-              stage: "failed",
-              reason_code: "sms_send_failed",
-              reason_text: String(rr.error ?? "").slice(0, 300),
-              metadata: {},
-            });
-          } else if (rr.skipped || rr.skipped_by_gate) {
-            await emitEvent(supabase, ctx, {
-              prospect_id: rr.id,
-              stage: "excluded_history",
-              reason_code: String(rr.skipped ?? rr.skipped_by_gate ?? "gate_blocked"),
-              metadata: {},
-            });
-          }
+      const seen = new Set<string>();
+      const resultRows: any[] = Array.isArray(smsResult?.results) ? smsResult.results : [];
+      for (const rr of resultRows) {
+        if (rr.id) seen.add(String(rr.id));
+        if (rr.status === "sent") {
+          sendTally.sent += 1;
+          await supabase
+            .from("acquisition_queue")
+            .update({ state: "contacted", attempt_count: 1, next_action_at: null, last_error: null, updated_at: new Date().toISOString() })
+            .eq("prospect_id", rr.id);
+          await emitEvent(supabase, ctx, {
+            prospect_id: rr.id,
+            stage: "sms_sent",
+            metadata: { sid: rr.sid ?? null, to_masked: rr.to ? String(rr.to).replace(/(\+\d{4})\d+(\d{2})/, "$1***$2") : null },
+          });
+        } else if (rr.status === "failed") {
+          sendTally.failed += 1;
+          await supabase
+            .from("acquisition_queue")
+            .update({
+              state: "failed",
+              last_error: String(rr.error ?? "").slice(0, 500),
+              next_action_at: nextActionAt(2),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("prospect_id", rr.id);
+          await emitEvent(supabase, ctx, {
+            prospect_id: rr.id,
+            stage: "failed",
+            reason_code: "sms_send_failed",
+            reason_text: String(rr.error ?? "").slice(0, 300),
+            metadata: {},
+          });
+        } else {
+          // EVERY other outcome (duplicate, no channel, cooldown, gate, health
+          // block, unknown) is a truthful skip that MUST advance the queue.
+          sendTally.skipped += 1;
+          const reason = String(rr.skipped ?? rr.skipped_by_gate ?? rr.reason ?? rr.status ?? "skipped_unknown");
+          const due = nextActionAt(2);
+          await supabase.from("acquisition_queue").upsert(
+            { prospect_id: rr.id, state: "skipped", next_action_at: due, last_error: reason.slice(0, 500), updated_at: new Date().toISOString() },
+            { onConflict: "prospect_id", ignoreDuplicates: false },
+          );
+          await emitEvent(supabase, ctx, {
+            prospect_id: rr.id, stage: "skipped", reason_code: reason.slice(0, 100),
+            metadata: { next_action_at: due },
+          });
         }
       }
+      // Prospects the sender never reported on are still advanced — silence is
+      // never counted as success.
+      for (const pid of preparedIds) {
+        if (seen.has(pid)) continue;
+        sendTally.skipped += 1;
+        const due = nextActionAt(2);
+        await supabase.from("acquisition_queue").upsert(
+          { prospect_id: pid, state: "skipped", next_action_at: due, last_error: "no_result_returned", updated_at: new Date().toISOString() },
+          { onConflict: "prospect_id", ignoreDuplicates: false },
+        );
+        await emitEvent(supabase, ctx, { prospect_id: pid, stage: "skipped", reason_code: "no_result_returned", metadata: { next_action_at: due } });
+      }
+      sendTally.processed = sendTally.sent + sendTally.failed + sendTally.skipped;
     }
+
+    // Anomaly signal: work was processed but nothing was actually sent.
+    const silentAnomaly = sendTally.processed > 0 && sendTally.sent === 0;
 
     // Worker cycle summary
     await emitEvent(supabase, ctx, {
       stage: "worker_cycle",
+      reason_code: silentAnomaly ? "processed_without_send" : null,
       metadata: {
         counts,
         prepared_count: preparedIds.length,
-        sms_result_summary: smsResult ? { sent: smsResult.sent ?? 0, processed: smsResult.processed ?? 0 } : null,
+        outreach_gate: outreachGate,
+        send_tally: sendTally,
+        anomaly_processed_without_send: silentAnomaly,
+        sms_result_summary: smsResult ? { sent: sendTally.sent, processed: sendTally.processed } : null,
         repair,
       },
     });
@@ -1520,6 +1570,9 @@ Deno.serve(async (req) => {
       city: ctx.city,
       category: ctx.category,
       counts,
+      outreach_gate: outreachGate,
+      send_tally: sendTally,
+      anomaly_processed_without_send: silentAnomaly,
       prepared_prospect_ids: preparedIds,
       prospects: perProspect,
       sms_result: smsResult,
