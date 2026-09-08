@@ -4,6 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { validateBeforeSend } from "./smsGuard.ts";
 import { assertSendAllowed, isFounderModeActive, type MessageClass } from "./sendWindow.ts";
+import { assertOutreachEnabled, isTransactionalMessageType } from "./outreachGate.ts";
 
 // Map sendSms message_type to the central send-window MessageClass.
 function classifyMessage(type: string): MessageClass {
