@@ -2,7 +2,9 @@
 //
 // Single source of truth for "may this process contact a real prospect?".
 // Every sender AND every paid verification (Twilio Lookup) path must call
-// `assertOutreachEnabled()` BEFORE invoking any provider.
+// `assertOutreachEnabled()` BEFORE queue insertion, before any status mutation
+// to sent/activation_sent, before checkout creation and before any provider
+// invocation.
 //
 // Fail-closed contract: if the flag is missing, unreadable, or the query
 // throws, sending stays BLOCKED. There is no permissive fallback.
@@ -45,9 +47,38 @@ export async function assertOutreachEnabled(sb: MinimalClient): Promise<Outreach
 }
 
 /**
- * Transactional message classes that must NEVER be blocked by the prospection
- * kill switch (OTP, admin tests, founder system alerts).
+ * NARROW exemption list — P0 audit requirement.
+ *
+ * Only traffic that a real, currently-present end user initiated for their own
+ * account is exempt from the prospection kill switch:
+ *   - `otp`           : one-time code the user just requested
+ *   - `auth`          : sign-in / password / security notification
+ *   - `transactional` : receipt, booking confirmation, real customer notice
+ *
+ * Explicitly NOT exempt (they are commercial or autonomous traffic):
+ *   test, founder, onboarding, reengagement, recruitment, campaign, outreach,
+ *   curiosity, relance, activation, other.
  */
+const TRANSACTIONAL_MESSAGE_TYPES = ["otp", "auth", "transactional"] as const;
+
 export function isTransactionalMessageType(type: string): boolean {
-  return ["otp", "test", "founder", "auth", "transactional"].includes(String(type ?? "").toLowerCase());
+  return (TRANSACTIONAL_MESSAGE_TYPES as readonly string[]).includes(
+    String(type ?? "").trim().toLowerCase(),
+  );
+}
+
+/**
+ * Admin diagnostic sends require their OWN explicit flag plus an allowlisted
+ * destination. With the current P0 posture that flag is absent, so this always
+ * returns false and every diagnostic send stays blocked.
+ */
+export const ADMIN_DIAGNOSTIC_FLAG_KEY = "ADMIN_DIAGNOSTIC_SEND_ENABLED";
+
+export function isAllowlistedDiagnostic(
+  destination: string,
+  flagValue: unknown,
+  allowlist: readonly string[],
+): boolean {
+  if (flagValue !== true) return false;
+  return allowlist.includes(String(destination ?? "").trim());
 }

@@ -280,10 +280,16 @@ async function filterAlreadyContacted(
     // non-fatal — downstream checkHistoricalExclusion remains the hard guard
   }
 
-  const fresh = pool.filter((c) => !contacted.has(c.phone_e164));
-  // Never return an empty batch just because the pool was fully contacted:
-  // downstream still enforces the hard exclusion, so fall back to the raw pool.
-  const selected = (fresh.length > 0 ? fresh : pool).slice(0, take);
+  // P0: NO fallback to the already-contacted pool. An empty batch is the
+  // truthful answer; reprocessing contacted destinations was the recycling bug.
+  const seenPhones = new Set<string>();
+  const fresh = pool.filter((c) => {
+    if (contacted.has(c.phone_e164)) return false;
+    if (seenPhones.has(c.phone_e164)) return false; // dedupe inside the batch
+    seenPhones.add(c.phone_e164);
+    return true;
+  });
+  const selected = fresh.slice(0, take);
   return await backfillCaslEvidence(supabase, selected);
 }
 
@@ -677,9 +683,10 @@ async function promoteProspect(
   if (existing?.id) {
     // Heal stale/backfilled rows: if the tier or line_type is missing we MUST
     // force a fresh Twilio Lookup, so downgrade verification_status here.
-    const stale = !existing.phone_line_type
-      || !["mobile", "landline", "voip"].includes(existing.phone_line_type)
-      || !existing.sms_eligibility_tier
+    // P0: a concrete line type is NEVER required. A valid tier-C record with
+    // phone_line_type="unknown" (Canada LTI unavailable) is a real verification
+    // and must never be downgraded — that was the infinite re-Lookup loop.
+    const stale = !existing.sms_eligibility_tier
       || !["A", "B", "C", "D"].includes(existing.sms_eligibility_tier);
 
     const patch: Record<string, unknown> = { updated_at: now };
@@ -906,7 +913,7 @@ async function callTwilioLookup(url: string, serviceKey: string, phone: string):
     const r = await fetch(`${url}/functions/v1/twilio-lookup-phone`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
-      body: JSON.stringify({ phone, force: true }),
+      body: JSON.stringify({ phone }),
     });
     const body = await r.json().catch(() => ({}));
     if (!r.ok || body?.error) {
