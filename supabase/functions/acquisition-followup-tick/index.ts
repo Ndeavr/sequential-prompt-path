@@ -4,6 +4,7 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { reportOutcome, FailureCode, BlockReason } from "../_shared/reliability.ts";
+import { assertOutreachEnabled } from "../_shared/outreachGate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -80,6 +81,11 @@ async function sendEmail(to: string, subject: string, html: string, text: string
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   const sb = admin();
+
+  // P0 fail-closed outreach gate — no provider call while OUTREACH_ENABLED is off.
+  const __gate = await assertOutreachEnabled(sb as any);
+  if (!__gate.allowed) return new Response(JSON.stringify({ ok: true, blocked: true, reason: __gate.reason, sent: 0, processed: 0 }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
 
   const nowIso = new Date().toISOString();
   const { data: due } = await sb

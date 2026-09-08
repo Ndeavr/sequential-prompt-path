@@ -10,6 +10,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { reportOutcome, BlockReason } from "../_shared/reliability.ts";
 import { sendSms as sendSmsCanonical } from "../_shared/twilioSend.ts";
+import { assertOutreachEnabled } from "../_shared/outreachGate.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -28,6 +29,10 @@ async function sendTwilioSms(to: string, body: string, contractor_id?: string): 
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  // P0 fail-closed outreach gate — no provider call while OUTREACH_ENABLED is off.
+  const __gsb = createClient(SUPABASE_URL, SERVICE_KEY);
+  const __gate = await assertOutreachEnabled(__gsb as any);
+  if (!__gate.allowed) return new Response(JSON.stringify({ ok: true, blocked: true, reason: __gate.reason, sent: 0, processed: 0 }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   const __health = await assertSmsHealthy();
   if (!__health.ok) return new Response(JSON.stringify({ ok: false, blocked: true, reason: __health.reason, health: __health.health }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   const sb = createClient(SUPABASE_URL, SERVICE_KEY);
