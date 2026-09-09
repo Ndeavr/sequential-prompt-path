@@ -1,16 +1,12 @@
 # Roadmap UNPRO
 
-## En cours (P0)
-- [ ] Vérifier si les agents d'acquisition prospectent réellement aujourd'hui (preuve d'exécution, pas de code présent).
-- [ ] Panneau admin « Prospection aujourd'hui » (données production seulement) : découverts, qualifiés, contacts tentés, SMS/emails envoyés-livrés-échoués, réponses, clics, inscriptions gratuites démarrées, OTP, activations, X/10, dernier cycle réussi, prochaine exécution, blocages.
-- [ ] Section ÉTAT DES AGENTS pour chaque agent réellement présent (dernier run, dernier succès, volumétrie, prochain run, dernière erreur, état).
-- [ ] Verdict en haut : LES AGENTS PROSPECTENT / PROSPECTION BLOQUÉE / AUCUNE PROSPECTION CONFIRMÉE + cause + action corrective.
-- [ ] Actions réelles : lancer un cycle, diagnostiquer, réessayer les échecs admissibles (respect CASL/doublons).
-- [ ] Diagnostic de conversion étape par étape et plus gros goulot du jour.
-- [ ] Journal d'audit par exécution d'agent.
-- [ ] Réparer/activer cron, edge functions et file si la prospection est arrêtée.
-- [ ] Mobile-first, sans débordement horizontal, X/10 visible en haut.
+## Fait (P0 acquisition)
+- [x] Cause trouvée : les entreprises importées directement n'étaient jamais sélectionnées par l'agent (sélection limitée aux tables de scraping). Corrigé : sélection pilotée par la file, échéance seulement.
+- [x] Envois réels vérifiés : 8 entreprises « débarras » contactées, 6 livraisons confirmées.
+- [x] Panneau « Prospection aujourd'hui » (données réelles), état des agents, verdict, actions Lancer un cycle / Diagnostiquer, journal des cycles — dans Admin → Acquisition, lisible sur mobile.
 
 ## À faire ensuite
-- [ ] Thème sombre par défaut sur l'accueil (logo actuel conservé tel quel).
+- [ ] Poursuivre jusqu'à 10 activations gratuites (cycle automatique aux 15 minutes).
+- [ ] Élargir la découverte de nouvelles entreprises admissibles (bloquée par le coupe-circuit Google).
+- [ ] Thème sombre par défaut sur l'accueil (logo actuel conservé).
 - [ ] Animation de l'en-tête fixe au défilement.
