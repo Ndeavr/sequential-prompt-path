@@ -75,6 +75,8 @@ export type FunnelEventType =
   | "profile_enrichment_completed"
   | "calendar_connected"
   | "recommendation_ready"
+  | "free_year_entitlement_created"
+  | "free_year_unavailable"
 
   | "onboarding_resumed"
   | "free_offer_accepted"

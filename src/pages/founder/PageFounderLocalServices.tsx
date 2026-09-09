@@ -12,7 +12,7 @@
  * is enforced server-side and never exposed. Availability numbers shown
  * come from real activated memberships only.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
@@ -91,6 +91,8 @@ export default function PageFounderLocalServices() {
   const [otpNotice, setOtpNotice] = useState<string | null>(null);
   const [otpError, setOtpError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
+  /** Empêche une double activation sur double-clic ou reprise simultanée. */
+  const activatingRef = useRef(false);
 
   const { data: categories } = useQuery({
     queryKey: ["founder-eligible-categories"],
@@ -158,25 +160,50 @@ export default function PageFounderLocalServices() {
     switch (reason) {
       case "duplicate_signup":
         return "Cette entreprise est déjà inscrite pour cette ville et cette catégorie.";
+      case "city_category_full":
       case "city_full":
       case "not_eligible":
-        return "Cette ville a déjà atteint sa capacité de membres fondateurs pour le moment.";
+        return "Les 10 places gratuites sont déjà prises pour ce service dans cette ville. Vous pouvez tout de même créer votre fiche, sans l'année offerte.";
       case "category_not_eligible":
         return "Cette catégorie n'est pas admissible à l'offre de lancement.";
+      case "missing_city_or_category":
+      case "invalid_input":
+        return "Une information est manquante ou invalide. Vérifiez les champs.";
+      case "not_authenticated":
+        return "Votre session a expiré. Demandez un nouveau code pour continuer.";
       case "verified_contact_mismatch":
         return "Le courriel vérifié ne correspond pas à celui de la demande. Utilisez le même courriel.";
       case "signup_claimed_by_other":
+      case "prospect_claimed_by_other":
         return "Cette demande a déjà été confirmée avec un autre compte.";
+      case "signup_not_claimable":
+        return "Cette demande n'est plus au stade de la confirmation. Écrivez-nous et nous la débloquons.";
       case "signup_not_found":
         return "Cette demande n'a pas été retrouvée. Recommencez l'inscription.";
       default:
-        return "Une information est manquante ou invalide. Vérifiez les champs.";
+        return "L'activation n'a pas pu être complétée. Réessayez : rien n'a été perdu.";
     }
   };
+
+  /** Attribution conservée pour survivre à l'OTP, au lien courriel et au refresh. */
+  const attributionRef = () => ({
+    utm_source: sp.get("utm_source"),
+    utm_medium: sp.get("utm_medium"),
+    utm_campaign: sp.get("utm_campaign"),
+    ref: sp.get("ref"),
+    prospect_id: sp.get("p") ?? sp.get("prospect"),
+    token: sp.get("t") ?? sp.get("token"),
+  });
 
   /** Envoie le code de vérification au courriel de la demande. */
   const sendVerificationCode = async (targetEmail: string) => {
     setOtpError(null);
+    void logFunnelEvent({
+      event_type: "otp_requested",
+      email: targetEmail,
+      step: "founder_free_signup",
+      metadata: { channel: "email" },
+    });
     const { error } = await supabase.auth.signInWithOtp({
       email: targetEmail,
       options: {
@@ -186,6 +213,12 @@ export default function PageFounderLocalServices() {
     });
     if (error) {
       setOtpError("L'envoi du code a échoué. Réessayez dans un instant.");
+      void logFunnelEvent({
+        event_type: "activation_error",
+        email: targetEmail,
+        step: "otp_send_failed",
+        metadata: { failure_step: "otp_send", failure_code: error.name || "otp_send_failed" },
+      });
       return false;
     }
     setOtpNotice(`Code envoyé à ${targetEmail}.`);
@@ -193,48 +226,88 @@ export default function PageFounderLocalServices() {
     return true;
   };
 
-  /** Activation gratuite canonique — seule voie d'activation, après vérification. */
+  /**
+   * Activation gratuite canonique — seule voie d'activation, après vérification.
+   * L'écran de succès n'apparaît QUE si le serveur confirme `activated`.
+   */
   const activate = async (membershipId: string, contactEmail: string) => {
-    const { data, error } = await supabase.rpc("claim_pending_free_service_signup", {
-      p_membership_id: membershipId,
-    } as any);
-    const payload = data as any;
-    if (error || !payload?.ok || !payload?.activated) {
-      setOtpError(reasonMessage(payload?.reason));
-      return false;
-    }
+    if (activatingRef.current) return false;
+    activatingRef.current = true;
     try {
-      localStorage.removeItem(PENDING_KEY);
-    } catch { /* noop */ }
-    void logFunnelEvent({
-      event_type: "profile_activated",
-      email: contactEmail,
-      contractor_id: payload.contractor_id ?? null,
-      step: "founder_free_activation",
-      metadata: { membership_id: membershipId, free_offer: true },
-    });
-    setResult({ kind: "success", founderEnd: payload.founder_end ?? null });
-    return true;
+      const { data, error } = await supabase.rpc("claim_pending_free_service_signup", {
+        p_membership_id: membershipId,
+      } as any);
+      const payload = data as any;
+      if (error || !payload?.ok || !payload?.activated) {
+        const code = payload?.reason ?? error?.message ?? "claim_failed";
+        setOtpError(reasonMessage(payload?.reason));
+        void logFunnelEvent({
+          event_type: "activation_error",
+          email: contactEmail,
+          step: "free_service_claim",
+          metadata: { failure_step: "claim", failure_code: code, membership_id: membershipId },
+        });
+        return false;
+      }
+      try {
+        localStorage.removeItem(PENDING_KEY);
+      } catch { /* noop */ }
+
+      const common = {
+        email: contactEmail,
+        contractor_id: payload.contractor_id ?? null,
+        prospect_id: payload.prospect_id ?? null,
+        metadata: {
+          membership_id: membershipId,
+          claim_id: payload.claim_id ?? null,
+          onboarding_session_id: payload.onboarding_session_id ?? null,
+          free_offer: true,
+        },
+      };
+      void logFunnelEvent({ ...common, event_type: "profile_claimed", step: "free_service_claim" });
+      void logFunnelEvent({
+        ...common,
+        event_type: "free_year_entitlement_created",
+        step: "free_service_entitlement",
+        metadata: { ...common.metadata, founder_end: payload.founder_end ?? null },
+      });
+      void logFunnelEvent({ ...common, event_type: "profile_activated", step: "free_service_activation" });
+      void logFunnelEvent({ ...common, event_type: "onboarding_resumed", step: "free_service_onboarding" });
+
+      setResult({ kind: "success", founderEnd: payload.founder_end ?? null });
+      return true;
+    } finally {
+      activatingRef.current = false;
+    }
   };
 
   const submit = async () => {
+    if (submitting) return;
     setSubmitting(true);
     setResult(null);
     setOtpError(null);
     setOtpNotice(null);
     const contactEmail = email.trim().toLowerCase();
     const attribution = {
-      utm_source: sp.get("utm_source"),
-      utm_medium: sp.get("utm_medium"),
-      utm_campaign: sp.get("utm_campaign"),
-      ref: sp.get("ref"),
-      prospect_id: sp.get("p"),
+      ...attributionRef(),
+      city,
+      category_slug: categorySlug,
       service_details: categorySlug === OTHER_SLUG ? otherService.trim() || null : null,
     };
+    void logFunnelEvent({
+      event_type: "claim_cta_clicked",
+      email: contactEmail,
+      step: "founder_free_signup",
+      prospect_id: attribution.prospect_id,
+      token: attribution.token,
+      metadata: { city, category: categorySlug },
+    });
     void logFunnelEvent({
       event_type: "registration_started",
       email: contactEmail,
       step: "founder_free_signup",
+      prospect_id: attribution.prospect_id,
+      token: attribution.token,
       metadata: { city, category: categorySlug },
     });
     const { data, error } = await supabase.rpc("founder_public_signup", {
@@ -251,6 +324,21 @@ export default function PageFounderLocalServices() {
     // Activation immédiate possible seulement si le visiteur était déjà vérifié.
     if (!error && payload?.ok && payload?.activated) {
       setSubmitting(false);
+      void logFunnelEvent({
+        event_type: "free_year_entitlement_created",
+        email: contactEmail,
+        contractor_id: payload.contractor_id ?? null,
+        prospect_id: payload.prospect_id ?? null,
+        step: "free_service_entitlement",
+        metadata: { founder_end: payload.founder_end ?? null, already_verified: true },
+      });
+      void logFunnelEvent({
+        event_type: "profile_activated",
+        email: contactEmail,
+        contractor_id: payload.contractor_id ?? null,
+        prospect_id: payload.prospect_id ?? null,
+        step: "free_service_activation",
+      });
       setResult({ kind: "success", founderEnd: payload.founder_end ?? null });
       return;
     }
@@ -260,9 +348,19 @@ export default function PageFounderLocalServices() {
       try {
         localStorage.setItem(
           PENDING_KEY,
-          JSON.stringify({ membershipId: payload.membership_id, email: contactEmail }),
+          JSON.stringify({
+            membershipId: payload.membership_id,
+            email: contactEmail,
+            attribution,
+          }),
         );
       } catch { /* noop */ }
+      void logFunnelEvent({
+        event_type: "auth_started",
+        email: contactEmail,
+        step: "founder_free_signup",
+        metadata: { method: "email_otp", membership_id: payload.membership_id },
+      });
       await sendVerificationCode(contactEmail);
       setSubmitting(false);
       setResult({ kind: "pending", membershipId: payload.membership_id, email: contactEmail });
@@ -270,11 +368,28 @@ export default function PageFounderLocalServices() {
     }
 
     setSubmitting(false);
+    const reason = payload?.reason ?? error?.message ?? "signup_failed";
+    if (reason === "city_category_full" || reason === "city_full" || reason === "not_eligible") {
+      void logFunnelEvent({
+        event_type: "free_year_unavailable",
+        email: contactEmail,
+        step: "founder_free_signup",
+        metadata: { city, category: categorySlug, reason },
+      });
+    } else {
+      void logFunnelEvent({
+        event_type: "activation_error",
+        email: contactEmail,
+        step: "founder_free_signup",
+        metadata: { failure_step: "signup", failure_code: reason },
+      });
+    }
     setResult({ kind: "error", message: reasonMessage(payload?.reason) });
   };
 
   /** Vérification du code reçu par courriel, puis activation. */
   const verifyAndActivate = async (membershipId: string, contactEmail: string) => {
+    if (verifying) return;
     setVerifying(true);
     setOtpError(null);
     const { error } = await supabase.auth.verifyOtp({
@@ -285,9 +400,16 @@ export default function PageFounderLocalServices() {
     if (error) {
       setVerifying(false);
       setOtpError("Code invalide ou expiré. Demandez un nouveau code.");
+      void logFunnelEvent({
+        event_type: "activation_error",
+        email: contactEmail,
+        step: "otp_verify_failed",
+        metadata: { failure_step: "otp_verify", failure_code: "otp_invalid_or_expired" },
+      });
       return;
     }
     void logFunnelEvent({ event_type: "otp_verified", email: contactEmail, step: "founder_free_signup" });
+    void logFunnelEvent({ event_type: "auth_completed", email: contactEmail, step: "founder_free_signup" });
     await activate(membershipId, contactEmail);
     setVerifying(false);
   };
@@ -305,6 +427,13 @@ export default function PageFounderLocalServices() {
       if (!pending?.membershipId || !pending.email) return;
       const { data } = await supabase.auth.getSession();
       if (!data.session || cancelled) return;
+      void logFunnelEvent({
+        event_type: "auth_completed",
+        email: pending.email,
+        step: "founder_free_signup",
+        metadata: { method: "email_link" },
+      });
+      setResult({ kind: "pending", membershipId: pending.membershipId, email: pending.email });
       await activate(pending.membershipId, pending.email);
     })();
     return () => { cancelled = true; };
@@ -543,7 +672,7 @@ export default function PageFounderLocalServices() {
                   <p className="mt-3 text-[13px] text-muted-foreground">
                     {eligibility.reason === "category_not_eligible"
                       ? "Cette catégorie n'est pas admissible à l'offre fondateur. Entrepreneurs en rénovation : passez par l'Audit IA."
-                      : "Cette ville a déjà atteint sa capacité de membres fondateurs pour le moment. Revenez bientôt."}
+                      : "Les 10 places gratuites sont déjà prises pour ce service dans cette ville. Vous pouvez tout de même créer votre fiche, sans l'année offerte."}
                   </p>
                 )}
 
@@ -551,10 +680,17 @@ export default function PageFounderLocalServices() {
                 {eligibility.state === "eligible" && !showBusinessForm && (
                   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
                     <button
-                      onClick={() => setShowBusinessForm(true)}
+                      onClick={() => {
+                        void logFunnelEvent({
+                          event_type: "claim_cta_clicked",
+                          step: "founder_free_eligibility",
+                          metadata: { city, category: categorySlug },
+                        });
+                        setShowBusinessForm(true);
+                      }}
                       className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-[15px] font-semibold text-primary-foreground shadow-md shadow-primary/25 transition-transform hover:-translate-y-0.5"
                     >
-                      Continuer
+                      Activer gratuitement mon profil
                       <ArrowRight className="h-4 w-4" />
                     </button>
                     {eligibility.cityRemaining !== null && eligibility.cityRemaining <= 3 && (
