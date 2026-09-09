@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
     const serviceCategorySlug = normalizeServiceCategory(category ?? null);
     const phoneE164 = normalizePhone(phone);
     const websiteUrl = normalizeWebsite(website);
-    const score = qualityScore({ website: !!websiteUrl, phone: !!phoneE164, email: !!email, city: !!city, category: !!category });
+    const score = qualityScore({ website: !!websiteUrl || !!sourceUrl, phone: !!phoneE164, email: !!email, city: !!city, category: !!category });
 
     const rowBase = { batch_id: batchId, row_number: i + 1, company, contact, phone, email, website, city, category };
     if (!company) {
@@ -148,9 +148,15 @@ Deno.serve(async (req) => {
       outreach_status: "none",
     };
 
-    const existing = phoneE164
-      ? await supabase.from("verified_contractor_prospects").select("id").eq("phone_e164", phoneE164).maybeSingle()
-      : { data: null } as any;
+    // Déduplication : téléphone E.164 d'abord, puis courriel (une entreprise
+    // déjà connue n'est jamais dupliquée par un import manuel).
+    let existing: any = { data: null };
+    if (phoneE164) {
+      existing = await supabase.from("verified_contractor_prospects").select("id").eq("phone_e164", phoneE164).maybeSingle();
+    }
+    if (!existing.data?.id && email) {
+      existing = await supabase.from("verified_contractor_prospects").select("id").eq("email", email.toLowerCase()).maybeSingle();
+    }
     const write = existing.data?.id
       ? await supabase.from("verified_contractor_prospects").update(prospectPayload).eq("id", existing.data.id).select("id,business_name,city,category,source,verification_status").single()
       : await supabase.from("verified_contractor_prospects").insert(prospectPayload).select("id,business_name,city,category,source,verification_status").single();
