@@ -55,9 +55,10 @@ export const adminSections: AdminSection[] = [
     shortLabel: "Dashboard",
     icon: LayoutDashboard,
     to: "/admin",
-    match: ["/admin/mission-control", "/admin/alerts", "/admin/operations", "/admin/ai-revenue-proof", "/admin/command-center"],
+    match: ["/admin/command", "/admin/mission-control", "/admin/alerts", "/admin/operations", "/admin/ai-revenue-proof", "/admin/command-center"],
     tabs: [
       { to: "/admin", label: "Vue d'ensemble", icon: LayoutDashboard },
+      { to: "/admin/command", label: "Command fondateur", icon: ShieldCheck },
       { to: "/admin/mission-control", label: "Mission Control", icon: Compass },
       { to: "/admin/command-center", label: "Command Center", icon: Radio },
       { to: "/admin/ai-revenue-proof", label: "Preuve revenu IA", icon: HandCoins },

@@ -3,3 +3,4 @@
 - [Email Eligible Fallback](mem://features/email-eligible-fallback) — Carrier-dead SMS prospects enter compliant email wave via `email_eligible` flag; monotonic status preserved, suppression + 7d cooldown gates enforced at send time
 - [SMS Score-First Touch](mem://features/sms-score-first-touch) — First-touch SMS = curiosity → free AI score on /unpro/audit/:token; no pricing; CASL provenance gate blocks untouched pool (no public source URLs)
 - [Founder Local Services Offer](mem://features/founder-local-services-offer) — /fondateurs 12 mois gratuits, 10/ville public, allocation interne ville×catégorie, 350$/an avec consentement, RPC check_founder_eligibility/founder_public_signup
+- [Autonomy Operating Model](mem://features/autonomy-operating-model) — Founder = approvals + calls only; autonomyPolicy fail-closed, autonomy-loop cron 277, founder-approval-execute, founder-call-queue cron 278, /admin/command cockpit, agent activation approval trigger

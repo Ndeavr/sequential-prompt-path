@@ -253,3 +253,10 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = true
   [functions.affiliate-audit-track]
     verify_jwt = false
+
+  [functions.autonomy-loop]
+    verify_jwt = false
+  [functions.founder-approval-execute]
+    verify_jwt = true
+  [functions.founder-call-queue]
+    verify_jwt = true
