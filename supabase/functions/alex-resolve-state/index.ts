@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
         .from("contractors")
         .select(`
           id,
-          company_name,
+          business_name,
           aipp_score,
           city,
           primary_trade,
@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
 
       const contractor = {
         id: top.id,
-        companyName: top.company_name || "Professionnel UNPRO",
+        companyName: top.business_name || "Professionnel UNPRO",
         aippScore: score,
         tier,
         reason: reasons.join(". ") + ".",

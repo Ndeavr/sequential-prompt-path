@@ -21,7 +21,7 @@ interface LeadRow {
 
 interface ContractorCandidate {
   id: string;
-  company_name: string;
+  business_name: string;
   city: string | null;
   service_areas: string[];
   specialties: string[];
@@ -160,7 +160,7 @@ export async function matchLead(leadId: string): Promise<ScoredMatch[]> {
     // 2a. Fetch contractor candidates
     const { data: contractors } = await supabase
       .from("contractors")
-      .select("id, company_name, city, service_areas, specialties, sub_specialties, languages, min_job_value, max_job_value, years_experience");
+      .select("id, business_name, city, service_areas, specialties, sub_specialties, languages, min_job_value, max_job_value, years_experience");
 
     if (contractors) {
       scored = (contractors as unknown as ContractorCandidate[])

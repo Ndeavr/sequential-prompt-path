@@ -63,9 +63,12 @@ describe("outreach kill switch (fail-closed)", () => {
     expect(evaluateOutreachFlag(1).allowed).toBe(false);
   });
 
-  it("never blocks transactional traffic (OTP / test / founder alerts)", () => {
+  it("only user-initiated transactional traffic is exempt (test / founder are NOT)", () => {
     expect(isTransactionalMessageType("otp")).toBe(true);
-    expect(isTransactionalMessageType("test")).toBe(true);
+    expect(isTransactionalMessageType("auth")).toBe(true);
+    expect(isTransactionalMessageType("transactional")).toBe(true);
+    expect(isTransactionalMessageType("test")).toBe(false);
+    expect(isTransactionalMessageType("founder")).toBe(false);
     expect(isTransactionalMessageType("outreach")).toBe(false);
     expect(isTransactionalMessageType("reengagement")).toBe(false);
   });
@@ -76,6 +79,7 @@ describe("verification cache reuse", () => {
 
   it("reuses a valid tier-C record with unknown line type (Canada LTI unavailable)", () => {
     expect(isVerificationFresh({
+      phone_e164: "+15145550123",
       verification_status: "verified",
       phone_line_type: "unknown",
       sms_eligibility_tier: "C",
@@ -85,14 +89,24 @@ describe("verification cache reuse", () => {
 
   it("reuses a concrete mobile verification", () => {
     expect(isVerificationFresh({
+      phone_e164: "+15145550123",
       verification_status: "verified", phone_line_type: "mobile",
       sms_eligibility_tier: "A", verified_at: recent,
     })).toBe(true);
   });
 
+  it("never reuses a record without a normalized E.164 number", () => {
+    expect(isVerificationFresh({
+      phone_e164: "514-555-0123",
+      verification_status: "verified", phone_line_type: "mobile",
+      sms_eligibility_tier: "A", verified_at: recent,
+    })).toBe(false);
+  });
+
   it("does not reuse an expired verification", () => {
     const old = new Date(Date.now() - VERIFICATION_TTL_MS - 1000).toISOString();
     expect(isVerificationFresh({
+      phone_e164: "+15145550123",
       verification_status: "verified", phone_line_type: "mobile",
       sms_eligibility_tier: "A", verified_at: old,
     })).toBe(false);
@@ -100,6 +114,7 @@ describe("verification cache reuse", () => {
 
   it("does not reuse an unverified record", () => {
     expect(isVerificationFresh({
+      phone_e164: "+15145550123",
       verification_status: "needs_enrichment", phone_line_type: "unknown",
       sms_eligibility_tier: null, verified_at: recent,
     })).toBe(false);
@@ -109,6 +124,7 @@ describe("verification cache reuse", () => {
     expect(VERIFICATION_TTL_MS).toBeGreaterThanOrEqual(30 * 24 * 3600_000);
   });
 });
+
 
 describe("public provenance gate (before any paid Lookup)", () => {
   it("rejects a candidate with no public evidence", () => {
@@ -133,20 +149,48 @@ describe("public provenance gate (before any paid Lookup)", () => {
 });
 
 describe("provider health semantics", () => {
-  it("send-only Resend key denied introspection is not red", () => {
-    const v = classifyResendProbe({ keyPresent: true, httpStatus: 403 });
+  const RESTRICTED_BODY = { name: "restricted_api_key", message: "This API key is restricted to only send emails" };
+
+  it("explicitly restricted send-only key denied introspection is not red", () => {
+    const v = classifyResendProbe({ keyPresent: true, httpStatus: 403, responseBody: RESTRICTED_BODY });
     expect(v.hard_block).toBe(false);
     expect(v.level).not.toBe("red");
     expect(v.introspection_available).toBe(false);
     expect(v.code).toBe("SENDING_CAPABLE_RESTRICTED_KEY");
   });
 
-  it("a recent real send proves sender readiness", () => {
+  it("an unexplained 401/403 stays a hard credential failure", () => {
+    for (const status of [401, 403]) {
+      const v = classifyResendProbe({
+        keyPresent: true, httpStatus: status,
+        lastSuccessfulSendAt: new Date(Date.now() - 3600_000).toISOString(),
+      });
+      expect(v.level).toBe("red");
+      expect(v.code).toBe("INVALID_AUTH");
+      expect(v.hard_block).toBe(true);
+    }
+  });
+
+  it("a malformed body never unlocks the restricted classification", () => {
+    const v = classifyResendProbe({ keyPresent: true, httpStatus: 401, responseBody: "<html>nope</html>" });
+    expect(v.code).toBe("INVALID_AUTH");
+  });
+
+  it("a recent real send proves sender readiness on a restricted key", () => {
     const v = classifyResendProbe({
-      keyPresent: true, httpStatus: 401,
+      keyPresent: true, httpStatus: 401, responseBody: RESTRICTED_BODY,
       lastSuccessfulSendAt: new Date(Date.now() - 3600_000).toISOString(),
     });
     expect(v.level).toBe("green");
+  });
+
+  it("a restricted key with only an old send stays yellow", () => {
+    const v = classifyResendProbe({
+      keyPresent: true, httpStatus: 401, responseBody: RESTRICTED_BODY,
+      lastSuccessfulSendAt: new Date(Date.now() - 60 * 24 * 3600_000).toISOString(),
+    });
+    expect(v.level).toBe("yellow");
+    expect(v.hard_block).toBe(false);
   });
 
   it("missing credentials remain a hard block", () => {
@@ -165,11 +209,12 @@ describe("provider health semantics", () => {
   });
 
   it("email health verdicts never carry SMS state (channel-specific)", () => {
-    const email = classifyResendProbe({ keyPresent: true, httpStatus: 403 });
+    const email = classifyResendProbe({ keyPresent: true, httpStatus: 403, responseBody: RESTRICTED_BODY });
     const sms = classifySmsChannel({ credentialsPresent: true, lastProviderErrorCode: "20003" });
     expect(email.hard_block).toBe(false);
     expect(sms.hard_block).toBe(true);
   });
+
 
   it("flags consecutive processed>0 / sent=0 cycles as an anomaly", () => {
     expect(detectSilentProcessingAnomaly([{ processed: 25, sent: 0 }, { processed: 25, sent: 0 }]).anomaly).toBe(true);

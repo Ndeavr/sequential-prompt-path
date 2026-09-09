@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     let contractorId = target.contractor_id;
     if (!contractorId) {
       const { data: matches } = await supabase.from("contractors").select("id")
-        .or(`company_name.ilike.%${target.business_name}%${target.city ? `,city.eq.${target.city}` : ""}`)
+        .or(`business_name.ilike.%${target.business_name}%${target.city ? `,city.eq.${target.city}` : ""}`)
         .limit(1);
       if (matches && matches.length > 0) contractorId = matches[0].id;
     }

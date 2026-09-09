@@ -43,10 +43,10 @@ function digitsOnly(v: string | null | undefined): string {
 async function resolveProspectId(contractorId: string): Promise<string | null> {
   const { data: contractor } = await supabase
     .from("contractors")
-    .select("id, company_name, phone")
+    .select("id, business_name, phone")
     .eq("id", contractorId)
     .maybeSingle();
-  const c = contractor as { company_name?: string; phone?: string } | null;
+  const c = contractor as { business_name?: string; phone?: string } | null;
   if (!c) return null;
 
   const phone = digitsOnly(c.phone);
@@ -60,11 +60,11 @@ async function resolveProspectId(contractorId: string): Promise<string | null> {
     if (hit?.id) return hit.id;
   }
 
-  if (c.company_name) {
+  if (c.business_name) {
     const { data } = await supabase
       .from("contractors_prospects")
       .select("id")
-      .ilike("business_name", c.company_name.trim())
+      .ilike("business_name", c.business_name.trim())
       .limit(1);
     const hit = (data ?? [])[0] as { id?: string } | undefined;
     if (hit?.id) return hit.id;
