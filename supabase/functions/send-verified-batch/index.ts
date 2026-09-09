@@ -33,7 +33,28 @@ import {
 import { categoryName } from "../_shared/localServiceCategories.ts";
 import { logServerFunnelEvent } from "../_shared/funnelEvents.ts";
 import { assertOutreachEnabled } from "../_shared/outreachGate.ts";
-import { freeCampaignStatus } from "../_shared/freeCampaign.ts";
+
+/**
+ * Campagne « 12 mois gratuits » — arrêt automatique à 10 activations réelles.
+ * Une activation = une ligne founder_memberships réellement activée.
+ * Fail-closed : compteur illisible → campagne arrêtée.
+ * (Logique dupliquée volontairement ici : miroir testé de
+ *  supabase/functions/_shared/freeCampaign.ts.)
+ */
+const FREE_CAMPAIGN_TARGET = 10;
+async function freeCampaignStatus(sb: any) {
+  try {
+    const { count, error } = await sb
+      .from("founder_memberships")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["founder_activated", "first_referral", "renewal_due", "renewed"]);
+    if (error) return { activated: 0, target: FREE_CAMPAIGN_TARGET, reached: true, unreadable: true };
+    const activated = Number(count ?? 0);
+    return { activated, target: FREE_CAMPAIGN_TARGET, reached: activated >= FREE_CAMPAIGN_TARGET, unreadable: false };
+  } catch {
+    return { activated: 0, target: FREE_CAMPAIGN_TARGET, reached: true, unreadable: true };
+  }
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
