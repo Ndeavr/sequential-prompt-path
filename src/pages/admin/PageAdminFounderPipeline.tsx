@@ -97,6 +97,42 @@ export default function PageAdminFounderPipeline() {
     );
   }, [acquisition, cityFilter, categoryFilter]);
 
+  /**
+   * Abandons par étape — offre gratuite. Comptage réel des événements
+   * canoniques déjà journalisés, aucune estimation.
+   */
+  const FREE_STEPS: { event: string; label: string }[] = [
+    { event: "landing_viewed", label: "Page vue" },
+    { event: "registration_started", label: "Inscription débutée" },
+    { event: "otp_sent", label: "Code envoyé" },
+    { event: "otp_verified", label: "Courriel confirmé" },
+    { event: "profile_activated", label: "Membership activé" },
+  ];
+
+  const { data: freeFunnel } = useQuery({
+    queryKey: ["admin-founder-free-funnel"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contractor_funnel_events" as any)
+        .select("event_type, step")
+        .in("step", ["founder_free_landing", "founder_free_signup", "founder_free_activation"])
+        .limit(5000);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const freeFunnelCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    (freeFunnel ?? []).forEach((e) => counts.set(e.event_type, (counts.get(e.event_type) ?? 0) + 1));
+    return FREE_STEPS.map((s, i) => {
+      const value = counts.get(s.event) ?? 0;
+      const prev = i === 0 ? value : counts.get(FREE_STEPS[i - 1].event) ?? 0;
+      return { ...s, value, lost: Math.max(prev - value, 0) };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [freeFunnel]);
+
   const capacityByCity = useMemo(() => {
     const map = new Map<string, number>();
     (rows ?? []).forEach((r) => {
