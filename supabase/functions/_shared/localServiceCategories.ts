@@ -42,6 +42,7 @@ export const LOCAL_SERVICE_CATEGORIES: LocalServiceCategory[] = [
   { slug: "demenagement", name_fr: "Déménagement", keywords: ["demenagement", "demenageur", "transport de meubles"] },
   { slug: "organisation-rangement", name_fr: "Organisation et rangement", keywords: ["organisation et rangement", "desencombrement"] },
   { slug: "entretien-preventif-domicile", name_fr: "Maintenance / services à la maison", keywords: ["entretien preventif", "maintenance residentielle", "services a la maison"] },
+  { slug: "debarras-ramassage", name_fr: "Débarras et ramassage d'encombrants", keywords: ["debarras", "ramassage d encombrants", "ramassage encombrants", "enlevement d encombrants", "encombrants", "junk removal", "ramassage de debris", "enlevement de debris", "vidange de maison", "collecte de gros rebuts", "gros rebuts"] },
   { slug: "autre-service-residentiel", name_fr: "Autre service résidentiel", keywords: [] },
 ];
 
