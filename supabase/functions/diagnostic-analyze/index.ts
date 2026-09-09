@@ -211,7 +211,7 @@ Deno.serve(async (req) => {
     try {
       let q = supa
         .from("contractors")
-        .select("id,slug,company_name,city,rating,is_published,is_discoverable")
+        .select("id,slug,business_name,city,rating,is_published,is_discoverable")
         .eq("is_published", true)
         .eq("is_discoverable", true)
         .limit(3);
@@ -220,7 +220,7 @@ Deno.serve(async (req) => {
       recommended_contractors = (data ?? []).map((r: any) => ({
         id: r.id,
         slug: r.slug ?? null,
-        name: r.company_name ?? "Entrepreneur",
+        name: r.business_name ?? "Entrepreneur",
         city: r.city ?? null,
         rating: r.rating ?? null,
       }));

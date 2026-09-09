@@ -29,6 +29,17 @@ describe("normalisation des catégories de services résidentiels", () => {
     expect(normalizeServiceCategory(null)).toBeNull();
   });
 
+  it("n'admet jamais un métier de rénovation à l'offre gratuite", () => {
+    expect(normalizeServiceCategory("portes-fenetres")).toBeNull();
+    expect(normalizeServiceCategory("Installation de portes et fenêtres")).toBeNull();
+    expect(normalizeServiceCategory("ceramique")).toBeNull();
+    expect(normalizeServiceCategory("Pose de planchers et céramique")).toBeNull();
+    expect(normalizeServiceCategory("installation de piscine creusée")).toBeNull();
+    expect(normalizeServiceCategory("toiture")).toBeNull();
+    expect(normalizeServiceCategory("entrepreneur général en rénovation")).toBeNull();
+  });
+
+
   it("expose un libellé français pour chaque slug", () => {
     for (const cat of LOCAL_SERVICE_CATEGORIES) {
       expect(categoryName(cat.slug)).toBe(cat.name_fr);
