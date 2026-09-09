@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, RefreshCw, PlayCircle, Activity, AlertTriangle, CheckCircle2, XCircle, MinusCircle } from "lucide-react";
 import { SPARSE_BADGE_HINT, SPARSE_BADGE_LABEL, isSparseProspect, pendingFields } from "@/lib/sparseLead";
+import ProspectionTodayPanel from "./ProspectionTodayPanel";
 
 type HealthRow = { service_name: string; status: string; required_for: string[]; error_message: string | null; last_checked_at: string | null };
 type RunRow = { id: string; run_type: string; status: string; started_at: string; completed_at: string | null; succeeded_count: number; failed_count: number; blocked_count: number; error_summary: string | null };
@@ -71,18 +72,21 @@ export default function PageAdminAcquisition() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-6 space-y-6">
+    <div className="min-h-screen bg-background text-foreground p-4 sm:p-6 space-y-6 overflow-x-hidden">
       <header className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Acquisition Cockpit</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Acquisition Cockpit</h1>
           <p className="text-sm text-muted-foreground">Pipeline scrape → enrichissement → AIPP → outreach → paiement → activation</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={refresh} disabled={loading}><RefreshCw className="size-4 mr-2" />Rafraîchir</Button>
           <Button variant="outline" onClick={runHealthCheck} disabled={!!running}>{running === "health" ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Activity className="size-4 mr-2" />}Health check</Button>
           <Button onClick={runFullTest} disabled={!!running}>{running === "full_test" ? <Loader2 className="size-4 mr-2 animate-spin" /> : <PlayCircle className="size-4 mr-2" />}Run Full Pipeline Test</Button>
         </div>
       </header>
+
+      <ProspectionTodayPanel />
+
 
       {/* Header cards */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3">

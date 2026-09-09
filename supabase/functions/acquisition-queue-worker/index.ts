@@ -1071,6 +1071,7 @@ Deno.serve(async (req) => {
     const outreachGate = await assertOutreachEnabled(supabase as any);
     (counts as any).provenance_blocked = 0;
     (counts as any).gate_blocked = 0;
+    (counts as any).queue_due_prepared = 0;
 
     // ------------------------------------------------------------------
     // DRY RUN — inspect only, no writes, no billable calls
@@ -1176,9 +1177,55 @@ Deno.serve(async (req) => {
     }
 
     // ------------------------------------------------------------------
+    // Queue-driven selection (due-only, no recycling)
+    // Prospects imported straight into verified_contractor_prospects never
+    // appear in the scrape source tables, so fair selection alone can never
+    // reach them. Their acquisition_queue row is the canonical signal.
+    // ------------------------------------------------------------------
+    if (ctx.mode !== "deterministic") {
+      const remaining = Math.max(0, ctx.limit - preparedIds.length);
+      if (remaining > 0) {
+        // Start from the prospects that are actually sendable, then confirm the
+        // queue row is due. Starting from the queue would only surface the
+        // oldest (already unsendable) rows and starve fresh imports.
+        let q = supabase
+          .from("verified_contractor_prospects")
+          .select("id,sms_eligibility_tier,sms_eligible,email,city,category,created_at")
+          .eq("verification_status", "verified")
+          .eq("outreach_status", "none")
+          .order("created_at", { ascending: false })
+          .limit(remaining * 5);
+        if (ctx.city) q = q.ilike("city", `${ctx.city}%`);
+        const { data: sendable } = await q;
+        const candidateIds = (sendable ?? [])
+          .filter((p: any) => {
+            const smsOk = ["A", "B", "C"].includes(p.sms_eligibility_tier ?? "") && p.sms_eligible === true;
+            return smsOk || !!p.email;
+          })
+          .map((p: any) => String(p.id))
+          .filter((id: string) => !preparedIds.includes(id));
+        if (candidateIds.length > 0) {
+          const { data: dueRows } = await supabase
+            .from("acquisition_queue")
+            .select("prospect_id,state,next_action_at")
+            .in("prospect_id", candidateIds)
+            .in("state", ["ready_sms", "ready_email"])
+            .lte("next_action_at", new Date().toISOString());
+          for (const r of dueRows ?? []) {
+            if (preparedIds.length >= ctx.limit) break;
+            const pid = String(r.prospect_id);
+            if (preparedIds.includes(pid)) continue;
+            preparedIds.push(pid);
+            (counts as any).queue_due_prepared += 1;
+          }
+        }
+      }
+    }
+
+    // ------------------------------------------------------------------
     // LIVE run — promote → historical check → verify (reuse or Lookup) → send
     // ------------------------------------------------------------------
-    if (candidates.length === 0) {
+    if (candidates.length === 0 && preparedIds.length === 0) {
       await emitEvent(supabase, ctx, {
         stage: "worker_cycle",
         reason_code: "fair_selection_empty",
