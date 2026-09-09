@@ -162,6 +162,26 @@ export default function PageAdminFounderPipeline() {
         </div>
       </div>
 
+      {/* Abandons par étape — offre gratuite */}
+      <div className="rounded-2xl border border-border bg-card p-5">
+        <h2 className="text-sm font-semibold text-foreground">
+          Offre gratuite — où les entreprises abandonnent
+        </h2>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          {freeFunnelCounts.map((s) => (
+            <div key={s.event} className="rounded-xl bg-secondary/50 px-4 py-3">
+              <div className="text-[12px] text-muted-foreground">{s.label}</div>
+              <div className="mt-1 text-xl font-semibold text-foreground">{s.value}</div>
+              {s.lost > 0 && (
+                <div className="mt-1 text-[12px] font-medium text-destructive">
+                  −{s.lost} à cette étape
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Real capacity used per city */}
       <div className="rounded-2xl border border-border bg-card p-5">
         <h2 className="text-sm font-semibold text-foreground">Capacité réelle utilisée (10 membres / ville)</h2>
