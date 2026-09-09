@@ -162,16 +162,16 @@ export function localServiceFreeYearSms(ctx: FreeYearContext): string {
   const who = (ctx.firstName || ctx.businessName || "votre entreprise").trim().slice(0, 40);
   const service = (ctx.categoryName || "").trim().toLowerCase();
   const found = service && ctx.city
-    ? `J'ai trouvé ${who} à ${ctx.city} pour ${service}.`
+    ? `J'ai trouvé votre service de ${service} à ${ctx.city}.`
     : ctx.city
     ? `J'ai trouvé ${who} à ${ctx.city}.`
     : `J'ai trouvé ${who}.`;
   const scarcity = ctx.remaining > 0
-    ? `UNPRO offre 12 mois gratuits aux ${ctx.cap} premières entreprises de services admissibles de la ville (${ctx.remaining} place${ctx.remaining > 1 ? "s" : ""} restante${ctx.remaining > 1 ? "s" : ""})`
-    : "UNPRO offre 12 mois gratuits aux premières entreprises de services admissibles de la ville";
+    ? `Nous offrons 12 mois gratuits aux ${ctx.cap} premières entreprises de services admissibles de la ville (${ctx.remaining} place${ctx.remaining > 1 ? "s" : ""} restante${ctx.remaining > 1 ? "s" : ""})`
+    : "Nous offrons 12 mois gratuits aux premières entreprises de services admissibles de la ville";
   return (
-    `Bonjour ${who} 👋 ${found} ${scarcity}, pour être trouvée par des propriétaires près de chez vous. ` +
-    `Aucun paiement ni carte requis. Activer :`
+    `Bonjour ${who} 👋 ${found} UNPRO aide les propriétaires à trouver et réserver des services locaux au bon moment. ` +
+    `${scarcity} — aucune carte de crédit. Activer :`
   );
 }
 
