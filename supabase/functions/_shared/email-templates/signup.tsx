@@ -69,3 +69,4 @@ const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#0f172a', ma
 const text = { fontSize: '15px', color: '#6b7280', lineHeight: '1.6', margin: '0 0 20px' }
 const button = { backgroundColor: 'hsl(222, 100%, 61%)', color: '#ffffff', fontSize: '15px', fontWeight: '600' as const, borderRadius: '12px', padding: '14px 28px', textDecoration: 'none' }
 const footer = { fontSize: '12px', color: '#9ca3af', margin: '30px 0 0' }
+const code = { fontSize: '30px', fontWeight: 'bold' as const, letterSpacing: '6px', color: '#0f172a', margin: '8px 0 4px' }
