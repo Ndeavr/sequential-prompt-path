@@ -321,6 +321,31 @@ export default function PageAdminFounderPipeline() {
         </p>
       </div>
 
+      {/* Segment débarras / ramassage d'encombrants */}
+      <div className="rounded-2xl border border-border bg-card p-5">
+        <h2 className="text-sm font-semibold text-foreground">
+          Segment débarras / ramassage d'encombrants
+        </h2>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+          {[
+            { label: "Trouvés", value: junkSegment?.found ?? 0 },
+            { label: "Admissibles", value: junkSegment?.eligible ?? 0 },
+            { label: "Contactés", value: junkSegment?.contacted ?? 0 },
+            { label: "Livrés", value: junkSegment?.delivered ?? 0 },
+            { label: "Cliqués", value: junkSegment?.clicked ?? 0 },
+            { label: "Inscriptions", value: junkSegment?.started ?? 0 },
+            { label: "Activés", value: junkSegment?.activated ?? 0 },
+          ].map((s) => (
+            <div key={s.label} className="rounded-xl bg-secondary/50 px-3 py-2.5">
+              <div className="text-[12px] text-muted-foreground">{s.label}</div>
+              <div className="mt-1 text-xl font-semibold text-foreground">{s.value}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+
+
       {/* Abandons par étape — offre gratuite */}
       <div className="rounded-2xl border border-border bg-card p-5">
         <h2 className="text-sm font-semibold text-foreground">
