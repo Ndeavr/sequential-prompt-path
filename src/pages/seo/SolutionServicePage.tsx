@@ -47,6 +47,41 @@ export default function SolutionServicePage() {
           </p>
         </section>
 
+        <section className="space-y-3">
+          <h2 className="text-xl font-bold text-foreground">Pourquoi c'est important</h2>
+          <p className="text-muted-foreground leading-relaxed">{svc.whyItMatters}</p>
+        </section>
+
+        {svc.pricingFactors.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-xl font-bold text-foreground">Ce qui influence le prix et le devis</h2>
+            <ul className="list-disc pl-5 space-y-1.5 text-muted-foreground">
+              {svc.pricingFactors.map((f) => <li key={f}>{f}</li>)}
+            </ul>
+          </section>
+        )}
+
+        {svc.whenToAct.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-xl font-bold text-foreground">Quand faire appel à un professionnel</h2>
+            <ul className="list-disc pl-5 space-y-1.5 text-muted-foreground">
+              {svc.whenToAct.map((w) => <li key={w}>{w}</li>)}
+            </ul>
+          </section>
+        )}
+
+        <section className="space-y-3">
+          <h2 className="text-xl font-bold text-foreground">Comment UNPRO recommande un prestataire</h2>
+          <p className="text-muted-foreground leading-relaxed">
+            Clara clarifie d'abord votre situation : la nature et le volume des travaux, l'accès aux lieux
+            (étages, escaliers, stationnement), la date souhaitée, le budget visé et votre façon de communiquer.
+            UNPRO recommande ensuite le prestataire le plus compatible avec votre projet selon les informations
+            disponibles — jamais le plus proche ni le moins cher par défaut.
+          </p>
+        </section>
+
+        {relatedFaqs.length > 0 && <SeoFaqSection faqs={relatedFaqs} />}
+
         <section>
           <h2 className="text-xl font-bold text-foreground mb-4">Choisir une ville</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -60,6 +95,20 @@ export default function SolutionServicePage() {
             ))}
           </div>
         </section>
+
+        {svc.relatedServices.length > 0 && (
+          <section>
+            <h2 className="text-xl font-bold text-foreground mb-3">Services liés</h2>
+            <div className="flex flex-wrap gap-2">
+              {svc.relatedServices.map((rs) => (
+                <Link key={rs} to={`/solution/${rs}`}
+                      className="px-3 py-1.5 rounded-full border border-border text-sm text-foreground hover:border-primary hover:bg-primary/5 transition">
+                  {rs.replace(/-/g, " ")}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </article>
     </MainLayout>
   );
