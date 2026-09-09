@@ -12,7 +12,7 @@
  * is enforced server-side and never exposed. Availability numbers shown
  * come from real activated memberships only.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
@@ -91,6 +91,8 @@ export default function PageFounderLocalServices() {
   const [otpNotice, setOtpNotice] = useState<string | null>(null);
   const [otpError, setOtpError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
+  /** Empêche une double activation sur double-clic ou reprise simultanée. */
+  const activatingRef = useRef(false);
 
   const { data: categories } = useQuery({
     queryKey: ["founder-eligible-categories"],
