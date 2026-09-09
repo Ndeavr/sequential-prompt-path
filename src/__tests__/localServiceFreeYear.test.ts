@@ -23,6 +23,20 @@ describe("normalisation des catégories de services résidentiels", () => {
     expect(normalizeServiceCategory("tonte de pelouse")).toBe("entretien-gazon");
   });
 
+  it("reconnaît le débarras en français et en anglais", () => {
+    for (const label of [
+      "Débarras et ramassage d'encombrants",
+      "Ramassage d'objets volumineux",
+      "Vidage de garage",
+      "Nettoyage après déménagement",
+      "Junk Removal Montréal",
+      "Junk hauling & bulky item removal",
+      "Estate cleanout services",
+    ]) {
+      expect(normalizeServiceCategory(label)).toBe("debarras-ramassage");
+    }
+  });
+
   it("n'invente jamais de catégorie", () => {
     expect(normalizeServiceCategory("plomberie d'urgence")).toBeNull();
     expect(normalizeServiceCategory("")).toBeNull();
