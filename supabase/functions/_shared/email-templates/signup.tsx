@@ -46,6 +46,12 @@ export const SignupEmail = ({
         <Button style={button} href={confirmationUrl}>
           Vérifier mon courriel
         </Button>
+        {token ? (
+          <>
+            <Text style={text}>Ou entrez ce code sur la page&nbsp;:</Text>
+            <Text style={code}>{token}</Text>
+          </>
+        ) : null}
         <Text style={footer}>
           Si vous n'avez pas créé de compte, vous pouvez ignorer ce courriel.
         </Text>
