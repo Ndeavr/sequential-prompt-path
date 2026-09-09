@@ -33,6 +33,7 @@ import {
 import { categoryName } from "../_shared/localServiceCategories.ts";
 import { logServerFunnelEvent } from "../_shared/funnelEvents.ts";
 import { assertOutreachEnabled } from "../_shared/outreachGate.ts";
+import { freeCampaignStatus } from "../_shared/freeCampaign.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -244,6 +245,9 @@ Deno.serve(async (req) => {
     // Opt-in email-only wave: used for prospects whose SMS channel is proven
     // dead (landline 30006 / A2P 30034). Never sends SMS in this mode.
     const forceEmail = String(body.channel ?? "").toLowerCase() === "email";
+    // Campagne gratuite : n'envoyer QU'aux entreprises réellement admissibles
+    // à l'offre 12 mois gratuits (aucun repli sur l'offre payante).
+    const freeOnly = body.free_only === true || String(body.offer ?? "") === "free_year";
     // Optional geographic / trade scoping used by recruitment-orchestrator.
     // `region` is the official registry region (Novoclimat/RBQ), `city` the
     // municipality when the official record carries one.
@@ -473,6 +477,25 @@ Deno.serve(async (req) => {
       }, 200, requestId);
     }
 
+    // ---- Arrêt automatique de la campagne gratuite ------------------------
+    // 10 activations réelles = fin de l'acquisition gratuite. Fail-closed :
+    // un compteur illisible arrête aussi la campagne.
+    const campaign = await freeCampaignStatus(supabase as any);
+    if (campaign.reached) {
+      return jsonResponse({
+        ok: true,
+        dry_run: false,
+        blocked: true,
+        reason: campaign.unreadable ? "free_campaign_counter_unreadable" : "free_campaign_target_reached",
+        free_campaign: campaign,
+        sent: 0,
+        processed: eligible.length,
+        results: eligible.map((p: any) => ({ id: p.id, status: "skipped", skipped: "free_campaign_target_reached" })),
+      }, 200, requestId);
+    }
+
+
+
     const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
     const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
     const TWILIO_FROM = Deno.env.get("TWILIO_PHONE_NUMBER") || Deno.env.get("TWILIO_FROM_NUMBER");
@@ -512,6 +535,16 @@ Deno.serve(async (req) => {
       // Local service businesses on an open city+category get the "1 year free"
       // approach instead of the canonical $350 golden path.
       const freeYear = await resolveFreeYear(supabase, p, buildOutreachUrl(link, { campaign: FIRST_TOUCH_CAMPAIGN }));
+      if (freeOnly && !freeYear) {
+        results.push({
+          id: p.id,
+          business_name: p.business_name,
+          status: "skipped",
+          skipped: "not_free_year_eligible",
+          channel_used: null,
+        });
+        continue;
+      }
       const smsBody = freeYear
         ? smsWithLink(localServiceFreeYearSms(freeYear), buildOutreachUrl(link, { campaign: FIRST_TOUCH_CAMPAIGN }))
         : safeFirstTouchBody(p.business_name, personalized, auditLink);

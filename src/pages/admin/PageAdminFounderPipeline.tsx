@@ -133,15 +133,78 @@ export default function PageAdminFounderPipeline() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [freeFunnel]);
 
+  /**
+   * Cible campagne : 10 activations gratuites réelles.
+   * Seules les lignes founder_memberships réellement activées comptent.
+   */
+  const ACTIVATED_STATUSES = ["founder_activated", "first_referral", "renewal_due", "renewed"];
+  const activatedCount = useMemo(
+    () => (rows ?? []).filter((r) => ACTIVATED_STATUSES.includes(r.status)).length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rows],
+  );
+  const startedCount = useMemo(
+    () => (rows ?? []).filter((r) => ["founder_signup_started", "founder_landing_viewed"].includes(r.status)).length,
+    [rows],
+  );
+  const pendingConfirmation = useMemo(
+    () => (rows ?? []).filter((r) => r.status === "founder_signup_started").length,
+    [rows],
+  );
+
+  /** Livraison réelle par canal (30 derniers jours), aucune estimation. */
+  const { data: delivery } = useQuery({
+    queryKey: ["admin-founder-delivery"],
+    queryFn: async () => {
+      const since = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+      const { data, error } = await supabase
+        .from("outreach_delivery_logs" as any)
+        .select("channel, status, created_at")
+        .gte("created_at", since)
+        .limit(5000);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const deliveryStats = useMemo(() => {
+    const base = { sms: { sent: 0, delivered: 0, failed: 0 }, email: { sent: 0, delivered: 0, failed: 0 } };
+    (delivery ?? []).forEach((d) => {
+      const ch = d.channel === "sms" ? "sms" : d.channel === "email" ? "email" : null;
+      if (!ch) return;
+      if (["sent", "queued", "accepted", "delivered"].includes(d.status)) base[ch].sent += 1;
+      if (d.status === "delivered") base[ch].delivered += 1;
+      if (["failed", "undelivered", "bounced"].includes(d.status)) base[ch].failed += 1;
+    });
+    return base;
+  }, [delivery]);
+
+  /** Blocage courant réel — drapeau serveur, jamais supposé. */
+  const { data: outreachFlag } = useQuery({
+    queryKey: ["admin-outreach-flag"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("system_flags" as any)
+        .select("value")
+        .eq("key", "OUTREACH_ENABLED")
+        .maybeSingle();
+      return (data as any)?.value ?? null;
+    },
+  });
+
+  const outreachOn = String(outreachFlag ?? "").toLowerCase() === "true";
+
   const capacityByCity = useMemo(() => {
     const map = new Map<string, number>();
     (rows ?? []).forEach((r) => {
-      if (["founder_activated", "first_referral", "renewal_due", "renewed"].includes(r.status)) {
+      if (ACTIVATED_STATUSES.includes(r.status)) {
         map.set(r.city, (map.get(r.city) ?? 0) + 1);
       }
     });
     return [...map.entries()].sort((a, b) => b[1] - a[1]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows]);
+
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
@@ -160,6 +223,55 @@ export default function PageAdminFounderPipeline() {
             Services résidentiels — 12 mois gratuits, puis 350 $/an.
           </p>
         </div>
+      </div>
+
+      {/* CIBLE 10 — campagne acquisition gratuite */}
+      <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <div className="text-[12px] uppercase tracking-wide text-muted-foreground">Cible campagne</div>
+            <div className="mt-1 text-3xl font-semibold text-foreground">
+              {activatedCount}/10 <span className="text-base font-normal text-muted-foreground">activations réelles</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-xl bg-card px-4 py-2.5">
+              <div className="text-[12px] text-muted-foreground">Inscriptions débutées</div>
+              <div className="text-lg font-semibold text-foreground">{startedCount}</div>
+            </div>
+            <div className="rounded-xl bg-card px-4 py-2.5">
+              <div className="text-[12px] text-muted-foreground">Confirmation en attente</div>
+              <div className="text-lg font-semibold text-foreground">{pendingConfirmation}</div>
+            </div>
+            <div className="rounded-xl bg-card px-4 py-2.5">
+              <div className="text-[12px] text-muted-foreground">SMS envoyés / livrés</div>
+              <div className="text-lg font-semibold text-foreground">
+                {deliveryStats.sms.sent}/{deliveryStats.sms.delivered}
+              </div>
+            </div>
+            <div className="rounded-xl bg-card px-4 py-2.5">
+              <div className="text-[12px] text-muted-foreground">Courriels envoyés / livrés</div>
+              <div className="text-lg font-semibold text-foreground">
+                {deliveryStats.email.sent}/{deliveryStats.email.delivered}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-secondary">
+          <div
+            className="h-full rounded-full bg-primary transition-all"
+            style={{ width: `${Math.min(activatedCount / 10, 1) * 100}%` }}
+          />
+        </div>
+        <p className="mt-3 text-sm">
+          {activatedCount >= 10 ? (
+            <span className="font-medium text-primary">Cible atteinte — l'acquisition gratuite s'arrête automatiquement.</span>
+          ) : outreachOn ? (
+            <span className="text-muted-foreground">Prospection active. Blocage courant : aucun.</span>
+          ) : (
+            <span className="font-medium text-destructive">Blocage courant : prospection désactivée (OUTREACH_ENABLED = false).</span>
+          )}
+        </p>
       </div>
 
       {/* Abandons par étape — offre gratuite */}
