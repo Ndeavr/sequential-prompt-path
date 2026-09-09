@@ -12,19 +12,22 @@
  * is enforced server-side and never exposed. Availability numbers shown
  * come from real activated memberships only.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, BadgeCheck, Building2, MapPin, Sparkles } from "lucide-react";
+import { ArrowRight, BadgeCheck, Building2, MailCheck, MapPin, Sparkles } from "lucide-react";
 
 import founderVideo from "@/assets/founder-video.mp4.asset.json";
 import MainLayout from "@/layouts/MainLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPhoneDisplay, formatPhoneFinal } from "@/utils/formatPhone";
+import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 
 const OTHER_SLUG = "autre-service-residentiel";
+/** Reprise après clic sur le lien de vérification reçu par courriel. */
+const PENDING_KEY = "unpro_founder_pending_signup";
 
 /** Logical display order for the residential service list. */
 const RESIDENTIAL_ORDER = [
@@ -79,8 +82,15 @@ export default function PageFounderLocalServices() {
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<
-    { kind: "success"; founderEnd: string } | { kind: "error"; message: string } | null
+    | { kind: "success"; founderEnd: string | null }
+    | { kind: "pending"; membershipId: string; email: string }
+    | { kind: "error"; message: string }
+    | null
   >(null);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpNotice, setOtpNotice] = useState<string | null>(null);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
 
   const { data: categories } = useQuery({
     queryKey: ["founder-eligible-categories"],
@@ -144,9 +154,75 @@ export default function PageFounderLocalServices() {
     void checkEligibility(categorySlug, value);
   };
 
+  const reasonMessage = (reason?: string) => {
+    switch (reason) {
+      case "duplicate_signup":
+        return "Cette entreprise est déjà inscrite pour cette ville et cette catégorie.";
+      case "city_full":
+      case "not_eligible":
+        return "Cette ville a déjà atteint sa capacité de membres fondateurs pour le moment.";
+      case "category_not_eligible":
+        return "Cette catégorie n'est pas admissible à l'offre de lancement.";
+      case "verified_contact_mismatch":
+        return "Le courriel vérifié ne correspond pas à celui de la demande. Utilisez le même courriel.";
+      case "signup_claimed_by_other":
+        return "Cette demande a déjà été confirmée avec un autre compte.";
+      case "signup_not_found":
+        return "Cette demande n'a pas été retrouvée. Recommencez l'inscription.";
+      default:
+        return "Une information est manquante ou invalide. Vérifiez les champs.";
+    }
+  };
+
+  /** Envoie le code de vérification au courriel de la demande. */
+  const sendVerificationCode = async (targetEmail: string) => {
+    setOtpError(null);
+    const { error } = await supabase.auth.signInWithOtp({
+      email: targetEmail,
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: `${window.location.origin}/fondateurs`,
+      },
+    });
+    if (error) {
+      setOtpError("L'envoi du code a échoué. Réessayez dans un instant.");
+      return false;
+    }
+    setOtpNotice(`Code envoyé à ${targetEmail}.`);
+    void logFunnelEvent({ event_type: "otp_sent", email: targetEmail, step: "founder_free_signup" });
+    return true;
+  };
+
+  /** Activation gratuite canonique — seule voie d'activation, après vérification. */
+  const activate = async (membershipId: string, contactEmail: string) => {
+    const { data, error } = await supabase.rpc("claim_pending_free_service_signup", {
+      p_membership_id: membershipId,
+    } as any);
+    const payload = data as any;
+    if (error || !payload?.ok || !payload?.activated) {
+      setOtpError(reasonMessage(payload?.reason));
+      return false;
+    }
+    try {
+      localStorage.removeItem(PENDING_KEY);
+    } catch { /* noop */ }
+    void logFunnelEvent({
+      event_type: "profile_activated",
+      email: contactEmail,
+      contractor_id: payload.contractor_id ?? null,
+      step: "founder_free_activation",
+      metadata: { membership_id: membershipId, free_offer: true },
+    });
+    setResult({ kind: "success", founderEnd: payload.founder_end ?? null });
+    return true;
+  };
+
   const submit = async () => {
     setSubmitting(true);
     setResult(null);
+    setOtpError(null);
+    setOtpNotice(null);
+    const contactEmail = email.trim().toLowerCase();
     const attribution = {
       utm_source: sp.get("utm_source"),
       utm_medium: sp.get("utm_medium"),
@@ -155,34 +231,85 @@ export default function PageFounderLocalServices() {
       prospect_id: sp.get("p"),
       service_details: categorySlug === OTHER_SLUG ? otherService.trim() || null : null,
     };
+    void logFunnelEvent({
+      event_type: "registration_started",
+      email: contactEmail,
+      step: "founder_free_signup",
+      metadata: { city, category: categorySlug },
+    });
     const { data, error } = await supabase.rpc("founder_public_signup", {
       p_business_name: businessName,
       p_contact_name: contactName,
-      p_email: email,
+      p_email: contactEmail,
       p_phone: phone,
       p_city: city,
       p_category_slug: categorySlug,
       p_attribution: attribution,
     } as any);
-    setSubmitting(false);
     const payload = data as any;
-    if (error || !payload?.ok) {
-      const reason = payload?.reason;
-      setResult({
-        kind: "error",
-        message:
-          reason === "duplicate_signup"
-            ? "Cette entreprise est déjà inscrite pour cette ville et cette catégorie."
-            : reason === "city_full" || reason === "not_eligible"
-              ? "Cette ville a déjà atteint sa capacité de membres fondateurs pour le moment."
-              : reason === "category_not_eligible"
-                ? "Cette catégorie n'est pas admissible à l'offre de lancement."
-                : "Une information est manquante ou invalide. Vérifiez les champs.",
-      });
+
+    // Activation immédiate possible seulement si le visiteur était déjà vérifié.
+    if (!error && payload?.ok && payload?.activated) {
+      setSubmitting(false);
+      setResult({ kind: "success", founderEnd: payload.founder_end ?? null });
       return;
     }
-    setResult({ kind: "success", founderEnd: payload.founder_end });
+
+    // Place réservée, en attente de vérification du courriel.
+    if (!error && payload?.membership_id && payload?.requires_verification) {
+      try {
+        localStorage.setItem(
+          PENDING_KEY,
+          JSON.stringify({ membershipId: payload.membership_id, email: contactEmail }),
+        );
+      } catch { /* noop */ }
+      await sendVerificationCode(contactEmail);
+      setSubmitting(false);
+      setResult({ kind: "pending", membershipId: payload.membership_id, email: contactEmail });
+      return;
+    }
+
+    setSubmitting(false);
+    setResult({ kind: "error", message: reasonMessage(payload?.reason) });
   };
+
+  /** Vérification du code reçu par courriel, puis activation. */
+  const verifyAndActivate = async (membershipId: string, contactEmail: string) => {
+    setVerifying(true);
+    setOtpError(null);
+    const { error } = await supabase.auth.verifyOtp({
+      email: contactEmail,
+      token: otpCode.trim(),
+      type: "email",
+    });
+    if (error) {
+      setVerifying(false);
+      setOtpError("Code invalide ou expiré. Demandez un nouveau code.");
+      return;
+    }
+    void logFunnelEvent({ event_type: "otp_verified", email: contactEmail, step: "founder_free_signup" });
+    await activate(membershipId, contactEmail);
+    setVerifying(false);
+  };
+
+  /** Reprise automatique si l'entreprise a cliqué le lien du courriel. */
+  useEffect(() => {
+    let cancelled = false;
+    void logFunnelEvent({ event_type: "landing_viewed", step: "founder_free_landing" });
+    void (async () => {
+      let pending: { membershipId?: string; email?: string } | null = null;
+      try {
+        const raw = localStorage.getItem(PENDING_KEY);
+        pending = raw ? JSON.parse(raw) : null;
+      } catch { /* noop */ }
+      if (!pending?.membershipId || !pending.email) return;
+      const { data } = await supabase.auth.getSession();
+      if (!data.session || cancelled) return;
+      await activate(pending.membershipId, pending.email);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const canSubmit =
     eligibility.state === "eligible" &&
@@ -256,17 +383,84 @@ export default function PageFounderLocalServices() {
                   Bienvenue, membre fondateur.
                 </h2>
                 <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-                  Votre membership est actif gratuitement jusqu'au{" "}
-                  <strong className="text-foreground">
-                    {new Date(result.founderEnd).toLocaleDateString("fr-CA", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </strong>
+                  Votre membership est actif gratuitement
+                  {result.founderEnd ? (
+                    <>
+                      {" jusqu'au "}
+                      <strong className="text-foreground">
+                        {new Date(result.founderEnd).toLocaleDateString("fr-CA", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </strong>
+                    </>
+                  ) : (
+                    " pour les 12 prochains mois"
+                  )}
                   . Aucun paiement n'a été demandé. Avant tout renouvellement à
                   350 $/an, vous recevrez un avis clair et votre consentement
                   sera requis.
+                </p>
+                <a
+                  href="/entrepreneur/profil"
+                  className="mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-[15px] font-semibold text-primary-foreground shadow-md shadow-primary/25"
+                >
+                  Compléter mon profil public
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+              </div>
+            ) : result?.kind === "pending" ? (
+              <div className="text-center">
+                <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <MailCheck className="h-7 w-7" />
+                </span>
+                <h2 className="mt-5 text-2xl font-semibold text-foreground">
+                  Demande reçue — votre place est réservée.
+                </h2>
+                <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
+                  Une dernière étape : confirmez votre courriel. Nous avons
+                  envoyé un code à{" "}
+                  <strong className="text-foreground">{result.email}</strong>.
+                  Entrez-le ci-dessous pour activer vos 12 mois gratuits. Aucun
+                  paiement n'est demandé.
+                </p>
+
+                <input
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  placeholder="Code à 6 chiffres"
+                  className="mx-auto mt-6 w-full max-w-xs rounded-2xl border border-border bg-background px-4 py-3 text-center text-[18px] tracking-[0.3em] text-foreground outline-none placeholder:tracking-normal placeholder:text-muted-foreground"
+                />
+
+                {otpNotice && !otpError && (
+                  <p className="mt-3 text-[13px] text-muted-foreground">{otpNotice}</p>
+                )}
+                {otpError && (
+                  <p className="mt-3 text-[13px] font-medium text-destructive">{otpError}</p>
+                )}
+
+                <button
+                  onClick={() => void verifyAndActivate(result.membershipId, result.email)}
+                  disabled={verifying || otpCode.trim().length < 6}
+                  className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-[15px] font-semibold text-primary-foreground shadow-md shadow-primary/25 transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {verifying ? "Vérification en cours…" : "Confirmer et activer"}
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+
+                <button
+                  onClick={() => void sendVerificationCode(result.email)}
+                  className="mt-3 text-[13px] font-medium text-primary underline-offset-2 hover:underline"
+                >
+                  Renvoyer le code
+                </button>
+
+                <p className="mt-4 text-[12.5px] leading-relaxed text-muted-foreground">
+                  Vous pouvez aussi cliquer le lien reçu par courriel : votre
+                  place s'activera automatiquement à votre retour ici.
                 </p>
               </div>
             ) : (
@@ -438,7 +632,7 @@ export default function PageFounderLocalServices() {
                       disabled={!canSubmit}
                       className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-[15px] font-semibold text-primary-foreground shadow-md shadow-primary/25 transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {submitting ? "Activation en cours…" : "Réserver ma place gratuitement"}
+                      {submitting ? "Envoi du code de confirmation…" : "Réserver ma place gratuitement"}
                       <ArrowRight className="h-4 w-4" />
                     </button>
                   </motion.div>
