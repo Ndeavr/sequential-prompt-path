@@ -97,6 +97,42 @@ export default function PageAdminFounderPipeline() {
     );
   }, [acquisition, cityFilter, categoryFilter]);
 
+  /**
+   * Abandons par étape — offre gratuite. Comptage réel des événements
+   * canoniques déjà journalisés, aucune estimation.
+   */
+  const FREE_STEPS: { event: string; label: string }[] = [
+    { event: "landing_viewed", label: "Page vue" },
+    { event: "registration_started", label: "Inscription débutée" },
+    { event: "otp_sent", label: "Code envoyé" },
+    { event: "otp_verified", label: "Courriel confirmé" },
+    { event: "profile_activated", label: "Membership activé" },
+  ];
+
+  const { data: freeFunnel } = useQuery({
+    queryKey: ["admin-founder-free-funnel"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contractor_funnel_events" as any)
+        .select("event_type, step")
+        .in("step", ["founder_free_landing", "founder_free_signup", "founder_free_activation"])
+        .limit(5000);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const freeFunnelCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    (freeFunnel ?? []).forEach((e) => counts.set(e.event_type, (counts.get(e.event_type) ?? 0) + 1));
+    return FREE_STEPS.map((s, i) => {
+      const value = counts.get(s.event) ?? 0;
+      const prev = i === 0 ? value : counts.get(FREE_STEPS[i - 1].event) ?? 0;
+      return { ...s, value, lost: Math.max(prev - value, 0) };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [freeFunnel]);
+
   const capacityByCity = useMemo(() => {
     const map = new Map<string, number>();
     (rows ?? []).forEach((r) => {
@@ -123,6 +159,26 @@ export default function PageAdminFounderPipeline() {
           <p className="text-sm text-muted-foreground">
             Services résidentiels — 12 mois gratuits, puis 350 $/an.
           </p>
+        </div>
+      </div>
+
+      {/* Abandons par étape — offre gratuite */}
+      <div className="rounded-2xl border border-border bg-card p-5">
+        <h2 className="text-sm font-semibold text-foreground">
+          Offre gratuite — où les entreprises abandonnent
+        </h2>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          {freeFunnelCounts.map((s) => (
+            <div key={s.event} className="rounded-xl bg-secondary/50 px-4 py-3">
+              <div className="text-[12px] text-muted-foreground">{s.label}</div>
+              <div className="mt-1 text-xl font-semibold text-foreground">{s.value}</div>
+              {s.lost > 0 && (
+                <div className="mt-1 text-[12px] font-medium text-destructive">
+                  −{s.lost} à cette étape
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 

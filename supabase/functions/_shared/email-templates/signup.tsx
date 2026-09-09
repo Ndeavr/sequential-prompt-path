@@ -20,6 +20,7 @@ interface SignupEmailProps {
   siteUrl: string
   recipient: string
   confirmationUrl: string
+  token?: string
 }
 
 export const SignupEmail = ({
@@ -27,6 +28,7 @@ export const SignupEmail = ({
   siteUrl,
   recipient,
   confirmationUrl,
+  token,
 }: SignupEmailProps) => (
   <Html lang="fr" dir="ltr">
     <Head />
@@ -44,6 +46,12 @@ export const SignupEmail = ({
         <Button style={button} href={confirmationUrl}>
           Vérifier mon courriel
         </Button>
+        {token ? (
+          <>
+            <Text style={text}>Ou entrez ce code sur la page&nbsp;:</Text>
+            <Text style={code}>{token}</Text>
+          </>
+        ) : null}
         <Text style={footer}>
           Si vous n'avez pas créé de compte, vous pouvez ignorer ce courriel.
         </Text>
@@ -61,3 +69,4 @@ const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#0f172a', ma
 const text = { fontSize: '15px', color: '#6b7280', lineHeight: '1.6', margin: '0 0 20px' }
 const button = { backgroundColor: 'hsl(222, 100%, 61%)', color: '#ffffff', fontSize: '15px', fontWeight: '600' as const, borderRadius: '12px', padding: '14px 28px', textDecoration: 'none' }
 const footer = { fontSize: '12px', color: '#9ca3af', margin: '30px 0 0' }
+const code = { fontSize: '30px', fontWeight: 'bold' as const, letterSpacing: '6px', color: '#0f172a', margin: '8px 0 4px' }

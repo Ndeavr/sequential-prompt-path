@@ -18,9 +18,10 @@ import { UNPRO_EMAIL_LOGO_HEIGHT, UNPRO_EMAIL_LOGO_URL, UNPRO_EMAIL_LOGO_WIDTH }
 interface MagicLinkEmailProps {
   siteName: string
   confirmationUrl: string
+  token?: string
 }
 
-export const MagicLinkEmail = ({ siteName, confirmationUrl }: MagicLinkEmailProps) => (
+export const MagicLinkEmail = ({ siteName, confirmationUrl, token }: MagicLinkEmailProps) => (
   <Html lang="fr" dir="ltr">
     <Head />
     <Preview>Votre lien de connexion pour {siteName}</Preview>
@@ -32,6 +33,12 @@ export const MagicLinkEmail = ({ siteName, confirmationUrl }: MagicLinkEmailProp
           Cliquez sur le bouton ci-dessous pour vous connecter à {siteName}. Ce lien expirera sous peu.
         </Text>
         <Button style={button} href={confirmationUrl}>Se connecter</Button>
+        {token ? (
+          <>
+            <Text style={text}>Ou entrez ce code sur la page&nbsp;:</Text>
+            <Text style={code}>{token}</Text>
+          </>
+        ) : null}
         <Text style={footer}>
           Si vous n'avez pas demandé ce lien, vous pouvez ignorer ce courriel.
         </Text>
@@ -49,3 +56,4 @@ const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#0f172a', ma
 const text = { fontSize: '15px', color: '#6b7280', lineHeight: '1.6', margin: '0 0 20px' }
 const button = { backgroundColor: 'hsl(222, 100%, 61%)', color: '#ffffff', fontSize: '15px', fontWeight: '600' as const, borderRadius: '12px', padding: '14px 28px', textDecoration: 'none' }
 const footer = { fontSize: '12px', color: '#9ca3af', margin: '30px 0 0' }
+const code = { fontSize: '30px', fontWeight: 'bold' as const, letterSpacing: '6px', color: '#0f172a', margin: '8px 0 4px' }
