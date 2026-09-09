@@ -27,4 +27,5 @@ export const INTELLIGENCE_HUB_CATEGORIES: IntelligenceCategory[] = [
   { label: "Amiante",                slug: "amiante",                href: "/probleme/amiante",                blurb: "Détection, retrait sécuritaire, conformité." },
   { label: "Gestion de copropriété", slug: "gestion-copropriete",    href: "/condo",                           blurb: "Loi 16, fonds de prévoyance, entretien préventif." },
   { label: "Inspection préachat",    slug: "inspection-preachat",    href: "/probleme/inspection-preachat",    blurb: "Vérifier la santé d'une propriété avant l'achat." },
+  { label: "Débarras / Junk removal", slug: "debarras-junk-removal", href: "/solution/debarras-junk-removal", blurb: "Encombrants, vidage de garage ou de logement, nettoyage après déménagement." },
 ];

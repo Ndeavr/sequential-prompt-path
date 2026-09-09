@@ -16,6 +16,7 @@ const SUGGESTED_SERVICES = [
   "Fenêtres & Portes", "Fondation", "Drainage", "Peinture", "Rénovation générale",
   "Menuiserie", "Maçonnerie", "Plancher", "Béton", "Ébénisterie",
   "Revêtement extérieur", "Aménagement paysager", "Excavation",
+  "Débarras / Junk removal",
 ];
 
 interface Props {
