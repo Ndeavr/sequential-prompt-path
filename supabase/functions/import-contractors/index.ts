@@ -125,7 +125,9 @@ Deno.serve(async (req) => {
       phone_primary: phoneE164 ?? phone,
       phone_e164: phoneE164,
       phone_line_type: "unknown",
-      phone_validation_status: phoneE164 ? "unknown" : "missing",
+      // Aucun Lookup fournisseur n'est appelé à l'import : le statut reste
+      // « unverified » jusqu'à la vérification du numéro par le worker.
+      phone_validation_status: "unverified",
       sms_eligible: !!phoneE164,
       email: email?.toLowerCase() ?? null,
       city,
