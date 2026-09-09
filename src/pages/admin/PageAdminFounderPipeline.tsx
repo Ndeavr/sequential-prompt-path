@@ -194,6 +194,53 @@ export default function PageAdminFounderPipeline() {
 
   const outreachOn = String(outreachFlag ?? "").toLowerCase() === "true";
 
+  /**
+   * Segment « débarras / ramassage d'encombrants » — suivi séparé.
+   * Chiffres réels uniquement : prospects trouvés, admissibles à l'envoi,
+   * contactés, cliqués, inscrits, activés.
+   */
+  const JUNK_SLUG = "debarras-ramassage";
+  const { data: junkSegment } = useQuery({
+    queryKey: ["admin-founder-junk-segment"],
+    queryFn: async () => {
+      const { data: prospects } = await supabase
+        .from("verified_contractor_prospects" as any)
+        .select(
+          "id, verification_status, data_quality_score, outreach_status, phone_source_url, website_url, google_business_url, google_place_id, email",
+        )
+        .eq("service_category_slug", JUNK_SLUG)
+        .limit(1000);
+      const list = (prospects ?? []) as any[];
+      const eligible = list.filter(
+        (p) =>
+          p.verification_status === "verified" &&
+          (p.data_quality_score ?? 0) >= 80 &&
+          (p.phone_source_url || p.website_url || p.google_business_url || p.google_place_id),
+      );
+      const byStatus = (s: string[]) => list.filter((p) => s.includes(p.outreach_status ?? "none")).length;
+      const { count: activated } = await supabase
+        .from("founder_memberships" as any)
+        .select("id", { count: "exact", head: true })
+        .eq("category_slug", JUNK_SLUG)
+        .in("status", ACTIVATED_STATUSES);
+      const { count: started } = await supabase
+        .from("founder_memberships" as any)
+        .select("id", { count: "exact", head: true })
+        .eq("category_slug", JUNK_SLUG)
+        .eq("status", "founder_signup_started");
+      return {
+        found: list.length,
+        eligible: eligible.length,
+        contacted: byStatus(["sent", "delivered", "clicked", "registered", "payment_started", "paid", "activated"]),
+        delivered: byStatus(["delivered", "clicked", "registered", "payment_started", "paid", "activated"]),
+        clicked: byStatus(["clicked", "registered", "payment_started", "paid", "activated"]),
+        started: Number(started ?? 0),
+        activated: Number(activated ?? 0),
+      };
+    },
+  });
+
+
   const capacityByCity = useMemo(() => {
     const map = new Map<string, number>();
     (rows ?? []).forEach((r) => {
@@ -273,6 +320,31 @@ export default function PageAdminFounderPipeline() {
           )}
         </p>
       </div>
+
+      {/* Segment débarras / ramassage d'encombrants */}
+      <div className="rounded-2xl border border-border bg-card p-5">
+        <h2 className="text-sm font-semibold text-foreground">
+          Segment débarras / ramassage d'encombrants
+        </h2>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+          {[
+            { label: "Trouvés", value: junkSegment?.found ?? 0 },
+            { label: "Admissibles", value: junkSegment?.eligible ?? 0 },
+            { label: "Contactés", value: junkSegment?.contacted ?? 0 },
+            { label: "Livrés", value: junkSegment?.delivered ?? 0 },
+            { label: "Cliqués", value: junkSegment?.clicked ?? 0 },
+            { label: "Inscriptions", value: junkSegment?.started ?? 0 },
+            { label: "Activés", value: junkSegment?.activated ?? 0 },
+          ].map((s) => (
+            <div key={s.label} className="rounded-xl bg-secondary/50 px-3 py-2.5">
+              <div className="text-[12px] text-muted-foreground">{s.label}</div>
+              <div className="mt-1 text-xl font-semibold text-foreground">{s.value}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+
 
       {/* Abandons par étape — offre gratuite */}
       <div className="rounded-2xl border border-border bg-card p-5">
