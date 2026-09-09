@@ -153,17 +153,28 @@ export interface FreeYearContext {
   firstName?: string | null;
 }
 
-/** SMS premier contact — valeur d'abord, rareté seulement si vérifiée. */
+/**
+ * SMS premier contact — offre 12 mois gratuits.
+ * Personnalisation uniquement à partir de faits vérifiés (entreprise, service,
+ * ville). Aucune rareté chiffrée sans capacité calculée en base.
+ */
 export function localServiceFreeYearSms(ctx: FreeYearContext): string {
   const who = (ctx.firstName || ctx.businessName || "votre entreprise").trim().slice(0, 40);
+  const service = (ctx.categoryName || "").trim().toLowerCase();
+  const found = service && ctx.city
+    ? `J'ai trouvé ${who} à ${ctx.city} pour ${service}.`
+    : ctx.city
+    ? `J'ai trouvé ${who} à ${ctx.city}.`
+    : `J'ai trouvé ${who}.`;
   const scarcity = ctx.remaining > 0
-    ? `L'inscription est gratuite pendant 1 an pour les ${ctx.cap} premières entreprises de la catégorie dans la ville (${ctx.remaining} place${ctx.remaining > 1 ? "s" : ""} restante${ctx.remaining > 1 ? "s" : ""}).`
-    : "Votre fiche est prête et vous pouvez la réclamer gratuitement.";
+    ? `UNPRO offre 12 mois gratuits aux ${ctx.cap} premières entreprises de services admissibles de la ville (${ctx.remaining} place${ctx.remaining > 1 ? "s" : ""} restante${ctx.remaining > 1 ? "s" : ""})`
+    : "UNPRO offre 12 mois gratuits aux premières entreprises de services admissibles de la ville";
   return (
-    `Bonjour ${who}, UNPRO ouvre ${ctx.categoryName.toLowerCase()} à ${ctx.city}. ` +
-    `${scarcity} Nous avons préparé votre fiche. Vérifiez-la et réclamez-la ici :`
+    `Bonjour ${who} 👋 ${found} ${scarcity}, pour être trouvée par des propriétaires près de chez vous. ` +
+    `Aucun paiement ni carte requis. Activer :`
   );
 }
+
 
 export function localServiceFreeYearEmailSubject(ctx: FreeYearContext): string {
   return `${ctx.businessName} — ${ctx.categoryName} à ${ctx.city} : votre fiche UNPRO est prête`;

@@ -970,6 +970,12 @@ Deno.serve(async (req) => {
     // verification, tier assignment, queue enqueue) but STOP before any send.
     // Used to bring a batch to "ready" state without contacting anyone.
     const prepareOnly = body.prepare_only === true || body?.campaign?.prepare_only === true;
+    // free_only : campagne « 12 mois gratuits » — seuls les prospects réellement
+    // admissibles reçoivent un message (aucun repli sur l'offre payante).
+    const freeOnly = body.free_only === true || body?.campaign?.free_only === true
+      || String(body.offer ?? body?.campaign?.offer ?? "") === "free_year";
+
+
 
     const url = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -1484,7 +1490,7 @@ Deno.serve(async (req) => {
       const r = await fetch(`${url}/functions/v1/send-verified-batch`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
-        body: JSON.stringify({ dry_run: false, limit: preparedIds.length, prospect_ids: preparedIds, run_id: ctx.run_id }),
+        body: JSON.stringify({ dry_run: false, limit: preparedIds.length, prospect_ids: preparedIds, run_id: ctx.run_id, free_only: freeOnly }),
       });
       smsResult = await r.json().catch(() => ({}));
 
