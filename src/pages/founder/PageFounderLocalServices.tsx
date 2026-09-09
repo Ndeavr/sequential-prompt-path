@@ -672,7 +672,7 @@ export default function PageFounderLocalServices() {
                   <p className="mt-3 text-[13px] text-muted-foreground">
                     {eligibility.reason === "category_not_eligible"
                       ? "Cette catégorie n'est pas admissible à l'offre fondateur. Entrepreneurs en rénovation : passez par l'Audit IA."
-                      : "Cette ville a déjà atteint sa capacité de membres fondateurs pour le moment. Revenez bientôt."}
+                      : "Les 10 places gratuites sont déjà prises pour ce service dans cette ville. Vous pouvez tout de même créer votre fiche, sans l'année offerte."}
                   </p>
                 )}
 
@@ -680,10 +680,17 @@ export default function PageFounderLocalServices() {
                 {eligibility.state === "eligible" && !showBusinessForm && (
                   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
                     <button
-                      onClick={() => setShowBusinessForm(true)}
+                      onClick={() => {
+                        void logFunnelEvent({
+                          event_type: "claim_cta_clicked",
+                          step: "founder_free_eligibility",
+                          metadata: { city, category: categorySlug },
+                        });
+                        setShowBusinessForm(true);
+                      }}
                       className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-[15px] font-semibold text-primary-foreground shadow-md shadow-primary/25 transition-transform hover:-translate-y-0.5"
                     >
-                      Continuer
+                      Activer gratuitement mon profil
                       <ArrowRight className="h-4 w-4" />
                     </button>
                     {eligibility.cityRemaining !== null && eligibility.cityRemaining <= 3 && (
