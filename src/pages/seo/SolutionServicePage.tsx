@@ -29,6 +29,8 @@ export default function SolutionServicePage() {
     { name: svc.name, url: canonical },
   ];
 
+  const relatedFaqs = getFaqsByTopics([svc.slug, svc.contractorType], 5);
+
   return (
     <MainLayout>
       <SeoHead title={title} description={description} canonical={canonical} />
