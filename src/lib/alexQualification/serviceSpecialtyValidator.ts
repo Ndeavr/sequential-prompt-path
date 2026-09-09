@@ -21,6 +21,11 @@ const CATEGORY_ALIASES: Record<string, string[]> = {
   windows: ["windows", "fenetres", "fenêtres"],
   kitchen_reno: ["kitchen", "cuisine", "renovation", "rénovation"],
   landscaping: ["landscaping", "paysagement", "paysagiste"],
+  junk_removal: [
+    "junk removal", "junk hauling", "junk", "cleanout", "bulky item removal",
+    "debarras", "debarrasseur", "ramassage", "encombrants", "objets volumineux",
+    "vidage", "gros rebuts", "debarras-ramassage",
+  ],
 };
 
 function normalize(s: string | null | undefined): string {
