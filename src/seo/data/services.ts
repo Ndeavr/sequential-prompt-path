@@ -355,6 +355,31 @@ export const SEO_SERVICES: SeoService[] = [
     relatedProblems: ["moisissure-grenier", "barrage-glace", "condensation-entretoit", "perte-chaleur"],
     relatedServices: ["isolation-entretoit", "ventilation-entretoit", "couvreur", "inspection-batiment"],
   },
+  {
+    slug: "debarras-junk-removal",
+    name: "Débarras / Junk removal",
+    shortDescription: "Le débarras (junk removal) consiste à faire enlever et transporter des objets volumineux, du mobilier ou le contenu complet d'une pièce, d'un garage ou d'un logement.",
+    whyItMatters: "Un débarras planifié évite les blessures liées au transport d'objets lourds, libère rapidement un espace avant une vente, un déménagement ou une succession, et permet d'acheminer les matières vers les bonnes filières. Les règles de collecte, de tri et de dons varient d'une municipalité et d'un prestataire à l'autre : validez toujours ce qui est accepté avant l'intervention.",
+    pricingFactors: [
+      "Volume estimé (fraction de camion, verges cubes)",
+      "Photos ou vidéo des lieux pour un devis fiable",
+      "Accès au bâtiment, étages, escaliers et ascenseur",
+      "Distance de portage et stationnement disponible",
+      "Main-d'œuvre et temps de chargement requis",
+      "Nature des matières (mobilier, électroménagers, matières refusées)",
+    ],
+    whenToAct: [
+      "Vidage d'un garage, d'un sous-sol ou d'un logement",
+      "Nettoyage après un déménagement",
+      "Règlement d'une succession",
+      "Objets volumineux non acceptés à la collecte municipale",
+      "Encombrement qui nuit à l'entretien ou à la sécurité de la propriété",
+    ],
+    costEstimate: { low: 150, high: 900, unit: "intervention" },
+    contractorType: "debarras",
+    relatedProblems: [],
+    relatedServices: ["demenagement", "nettoyage-apres-sinistre", "entretien-menager", "sous-sol"],
+  },
 ];
 
 export const getServiceBySlug = (slug: string): SeoService | undefined =>
