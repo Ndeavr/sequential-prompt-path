@@ -92,8 +92,25 @@ Deno.serve(async (req) => {
         _activation_token: token || null,
         _context: context,
       });
-      if (error) return json({ ok: false, error: error.message }, 400);
+      // Structured diagnostic: server reason surfaces, never PII / token / secret.
+      if (error) {
+        console.error("[matching-profile] activate_account rpc_failed", {
+          code: error.code ?? null,
+          message: error.message ?? null,
+          has_token: !!token,
+        });
+        return json(
+          { ok: false, error: "activation_failed", stage: "rpc", code: error.code ?? null, detail: error.message ?? null },
+          400,
+        );
+      }
+      if (!data || (data as Record<string, unknown>).ok !== true) {
+        const reason = (data as Record<string, unknown> | null)?.reason ?? "activation_failed";
+        console.error("[matching-profile] activate_account rejected", { reason, has_token: !!token });
+        return json({ ok: false, error: String(reason), stage: "activation" }, 400);
+      }
       return json(data);
+
     }
 
     const session_key = String(body.session_key ?? "").trim();
