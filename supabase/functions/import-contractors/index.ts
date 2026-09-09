@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { z } from "https://esm.sh/zod@3.25.76";
+import { normalizeServiceCategory } from "../_shared/localServiceCategories.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,6 +11,12 @@ const FUNCTION_NAME = "import-contractors";
 const BodySchema = z.object({
   rows: z.array(z.record(z.any())).min(1).max(500),
   auto_send: z.boolean().default(true),
+  /** Segment d'acquisition (ex. "debarras-ramassage") — traçabilité uniquement. */
+  segment: z.string().max(80).optional(),
+  /** Provenance publique par défaut, surchargeable ligne par ligne. */
+  source_name: z.string().max(80).optional(),
+  source_type: z.string().max(80).optional(),
+  source_publisher: z.string().max(120).optional(),
 });
 
 function jsonResponse(body: Record<string, unknown>, status = 200) {
@@ -58,7 +65,10 @@ Deno.serve(async (req) => {
   if (!parsed.success) return jsonResponse({ ok: false, message: "Invalid import payload", errors: parsed.error.flatten().fieldErrors }, 400);
 
   const supabase = createClient(url, serviceKey, { auth: { persistSession: false } });
-  const { rows, auto_send } = parsed.data;
+  const { rows, auto_send, segment } = parsed.data;
+  const defaultSourceName = parsed.data.source_name ?? "manual";
+  const defaultSourceType = parsed.data.source_type ?? null;
+  const defaultSourcePublisher = parsed.data.source_publisher ?? null;
   const batchInsert = await supabase.from("acquisition_manual_import_batches").insert({
     status: "running",
     source: "manual",
@@ -83,6 +93,15 @@ Deno.serve(async (req) => {
     const website = get(raw, ["website", "site", "site web", "website_url"]);
     const city = get(raw, ["city", "ville"]);
     const category = get(raw, ["category", "catégorie", "trade", "service"]);
+    // Provenance publique EXACTE de la donnée de contact. Jamais inventée :
+    // sans URL publique documentée, la fiche reste non contactable.
+    const sourceUrl = get(raw, ["source_url", "provenance_url", "url_source"]);
+    const sourceType = get(raw, ["source_type"]) ?? defaultSourceType;
+    const sourcePublisher = get(raw, ["source_publisher"]) ?? defaultSourcePublisher;
+    const region = get(raw, ["region", "région"]);
+    // Catégorie canonique du segment « services résidentiels » : requise pour
+    // que l'offre 12 mois gratuits puisse être résolue côté serveur.
+    const serviceCategorySlug = normalizeServiceCategory(category ?? null);
     const phoneE164 = normalizePhone(phone);
     const websiteUrl = normalizeWebsite(website);
     const score = qualityScore({ website: !!websiteUrl, phone: !!phoneE164, email: !!email, city: !!city, category: !!category });
@@ -100,6 +119,9 @@ Deno.serve(async (req) => {
       legal_name: company,
       category,
       website_url: websiteUrl,
+      phone_source_url: sourceUrl,
+      service_category_slug: serviceCategorySlug,
+      region,
       phone_primary: phoneE164 ?? phone,
       phone_e164: phoneE164,
       phone_line_type: "unknown",
@@ -107,11 +129,20 @@ Deno.serve(async (req) => {
       sms_eligible: !!phoneE164,
       email: email?.toLowerCase() ?? null,
       city,
-      verification_status: score >= 70 && !!phoneE164 ? "verified" : "needs_enrichment",
+      // Fail-closed : une fiche sans provenance publique documentée n'est
+      // jamais marquée "verified" et ne peut donc pas être contactée.
+      verification_status: score >= 70 && !!phoneE164 && !!sourceUrl ? "verified" : "needs_enrichment",
       data_quality_score: score,
-      source: "manual",
-      source_urls: { manual_import_batch: batchId, contact },
-      verified_at: score >= 70 && !!phoneE164 ? new Date().toISOString() : null,
+      source: defaultSourceName,
+      source_urls: {
+        manual_import_batch: batchId,
+        contact,
+        segment: segment ?? null,
+        public_source_url: sourceUrl,
+        public_source_type: sourceType,
+        public_source_publisher: sourcePublisher,
+      },
+      verified_at: score >= 70 && !!phoneE164 && !!sourceUrl ? new Date().toISOString() : null,
       last_enriched_at: new Date().toISOString(),
       last_action_at: new Date().toISOString(),
       outreach_status: "none",
