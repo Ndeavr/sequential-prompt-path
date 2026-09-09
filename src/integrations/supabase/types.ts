@@ -6223,6 +6223,78 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_learning_outcomes: {
+        Row: {
+          activations: number
+          appointments: number
+          attempts: number
+          channel: string | null
+          city: string | null
+          clicked: number
+          computed_at: string
+          conversions: number
+          created_at: string
+          data_class: string
+          delivered: number
+          id: string
+          revenue_cents: number
+          service_category: string | null
+          signups: number
+          source: string | null
+          tactic_key: string
+          updated_at: string
+          variant: string | null
+          window_end: string | null
+          window_start: string | null
+        }
+        Insert: {
+          activations?: number
+          appointments?: number
+          attempts?: number
+          channel?: string | null
+          city?: string | null
+          clicked?: number
+          computed_at?: string
+          conversions?: number
+          created_at?: string
+          data_class?: string
+          delivered?: number
+          id?: string
+          revenue_cents?: number
+          service_category?: string | null
+          signups?: number
+          source?: string | null
+          tactic_key: string
+          updated_at?: string
+          variant?: string | null
+          window_end?: string | null
+          window_start?: string | null
+        }
+        Update: {
+          activations?: number
+          appointments?: number
+          attempts?: number
+          channel?: string | null
+          city?: string | null
+          clicked?: number
+          computed_at?: string
+          conversions?: number
+          created_at?: string
+          data_class?: string
+          delivered?: number
+          id?: string
+          revenue_cents?: number
+          service_category?: string | null
+          signups?: number
+          source?: string | null
+          tactic_key?: string
+          updated_at?: string
+          variant?: string | null
+          window_end?: string | null
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       agent_logs: {
         Row: {
           agent_name: string
@@ -52941,6 +53013,147 @@ export type Database = {
         }
         Relationships: []
       }
+      founder_approvals: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          evidence: Json
+          executed_at: string | null
+          execution_result: Json | null
+          expected_impact: string | null
+          id: string
+          kind: string
+          proposed_by_agent: string | null
+          proposed_change: Json
+          reason: string | null
+          risk_level: string
+          rollback_plan: string | null
+          status: string
+          target_key: string | null
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          evidence?: Json
+          executed_at?: string | null
+          execution_result?: Json | null
+          expected_impact?: string | null
+          id?: string
+          kind: string
+          proposed_by_agent?: string | null
+          proposed_change?: Json
+          reason?: string | null
+          risk_level?: string
+          rollback_plan?: string | null
+          status?: string
+          target_key?: string | null
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          evidence?: Json
+          executed_at?: string | null
+          execution_result?: Json | null
+          expected_impact?: string | null
+          id?: string
+          kind?: string
+          proposed_by_agent?: string | null
+          proposed_change?: Json
+          reason?: string | null
+          risk_level?: string
+          rollback_plan?: string | null
+          status?: string
+          target_key?: string | null
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      founder_call_tasks: {
+        Row: {
+          affiliate_id: string | null
+          business_name: string | null
+          called_at: string | null
+          city: string | null
+          contact_name: string | null
+          context: Json
+          contractor_id: string | null
+          created_at: string
+          email: string | null
+          id: string
+          next_action: string | null
+          objective: string | null
+          outcome_note: string | null
+          phone: string | null
+          priority_score: number
+          reason: string | null
+          service_category: string | null
+          source_record_id: string | null
+          source_table: string | null
+          status: string
+          suggested_script: string | null
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id?: string | null
+          business_name?: string | null
+          called_at?: string | null
+          city?: string | null
+          contact_name?: string | null
+          context?: Json
+          contractor_id?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          next_action?: string | null
+          objective?: string | null
+          outcome_note?: string | null
+          phone?: string | null
+          priority_score?: number
+          reason?: string | null
+          service_category?: string | null
+          source_record_id?: string | null
+          source_table?: string | null
+          status?: string
+          suggested_script?: string | null
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string | null
+          business_name?: string | null
+          called_at?: string | null
+          city?: string | null
+          contact_name?: string | null
+          context?: Json
+          contractor_id?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          next_action?: string | null
+          objective?: string | null
+          outcome_note?: string | null
+          phone?: string | null
+          priority_score?: number
+          reason?: string | null
+          service_category?: string | null
+          source_record_id?: string | null
+          source_table?: string | null
+          status?: string
+          suggested_script?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       founder_eligible_categories: {
         Row: {
           created_at: string
@@ -98687,6 +98900,69 @@ export type Database = {
           overall_score: number | null
           pipeline_scores: Json | null
           status: string | null
+        }
+        Relationships: []
+      }
+      v_tactic_performance: {
+        Row: {
+          activation_rate: number | null
+          activations: number | null
+          attempts: number | null
+          channel: string | null
+          city: string | null
+          click_rate: number | null
+          clicked: number | null
+          computed_at: string | null
+          conversions: number | null
+          data_class: string | null
+          delivered: number | null
+          delivered_rate: number | null
+          revenue_cents: number | null
+          service_category: string | null
+          signups: number | null
+          source: string | null
+          tactic_key: string | null
+          variant: string | null
+        }
+        Insert: {
+          activation_rate?: never
+          activations?: number | null
+          attempts?: number | null
+          channel?: string | null
+          city?: string | null
+          click_rate?: never
+          clicked?: number | null
+          computed_at?: string | null
+          conversions?: number | null
+          data_class?: string | null
+          delivered?: number | null
+          delivered_rate?: never
+          revenue_cents?: number | null
+          service_category?: string | null
+          signups?: number | null
+          source?: string | null
+          tactic_key?: string | null
+          variant?: string | null
+        }
+        Update: {
+          activation_rate?: never
+          activations?: number | null
+          attempts?: number | null
+          channel?: string | null
+          city?: string | null
+          click_rate?: never
+          clicked?: number | null
+          computed_at?: string | null
+          conversions?: number | null
+          data_class?: string | null
+          delivered?: number | null
+          delivered_rate?: never
+          revenue_cents?: number | null
+          service_category?: string | null
+          signups?: number | null
+          source?: string | null
+          tactic_key?: string | null
+          variant?: string | null
         }
         Relationships: []
       }

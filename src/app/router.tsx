@@ -731,6 +731,7 @@ const AdminMedia = lazyWithRetry(() => import("@/pages/admin/AdminMedia"));
 const AdminValidation = lazyWithRetry(() => import("@/pages/admin/AdminValidation"));
 const AdminAnswerEngine = lazyWithRetry(() => import("@/pages/admin/AdminAnswerEngine"));
 const AdminOperationsHub = lazyWithRetry(() => import("@/pages/admin/AdminOperationsHub"));
+const PageAdminFounderCommand = lazyWithRetry(() => import("@/pages/admin/PageAdminFounderCommand"));
 const AdminVerificationRuns = lazyWithRetry(() => import("@/pages/admin/AdminVerificationRuns"));
 const AdminVerificationRunDetail = lazyWithRetry(() => import("@/pages/admin/AdminVerificationRunDetail"));
 const AdminAlerts = lazyWithRetry(() => import("@/pages/admin/AdminAlerts"));
@@ -1568,6 +1569,7 @@ export const AppRouter = () => (
         <Route path="/admin/validation" element={<AdminProtectedRoute><AdminValidation /></AdminProtectedRoute>} />
         <Route path="/admin/answer-engine" element={<AdminProtectedRoute><AdminAnswerEngine /></AdminProtectedRoute>} />
         <Route path="/admin/operations" element={<AdminProtectedRoute><AdminOperationsHub /></AdminProtectedRoute>} />
+        <Route path="/admin/command" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminFounderCommand /></Suspense></AdminProtectedRoute>} />
         <Route path="/admin/waiting-homeowners" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageAdminWaitingHomeowners /></Suspense></AdminProtectedRoute>} />
         <Route path="/pro/demande/:city/:category" element={<Suspense fallback={<LazyFallback />}><PageContractorDemandLanding /></Suspense>} />
         <Route path="/admin/founder-verification" element={<AdminProtectedRoute><Suspense fallback={<LazyFallback />}><PageFounderVerification /></Suspense></AdminProtectedRoute>} />

@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.enforce_agent_activation_approval() FROM PUBLIC, anon, authenticated;
