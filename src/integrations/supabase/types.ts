@@ -1197,6 +1197,75 @@ export type Database = {
           },
         ]
       }
+      acquisition_discovery_runs: {
+        Row: {
+          blocked_reason: string | null
+          bridged_verified: number
+          cache_hits: number
+          circuit_state: string | null
+          created_at: string
+          enriched: number
+          errors: Json
+          external_calls: number
+          finished_at: string | null
+          found: number
+          id: string
+          inserted: number
+          pairs: Json
+          queued: number
+          searches_executed: number
+          searches_planned: number
+          started_at: string
+          status: string
+          trigger_source: string | null
+          updated_at: string
+        }
+        Insert: {
+          blocked_reason?: string | null
+          bridged_verified?: number
+          cache_hits?: number
+          circuit_state?: string | null
+          created_at?: string
+          enriched?: number
+          errors?: Json
+          external_calls?: number
+          finished_at?: string | null
+          found?: number
+          id?: string
+          inserted?: number
+          pairs?: Json
+          queued?: number
+          searches_executed?: number
+          searches_planned?: number
+          started_at?: string
+          status?: string
+          trigger_source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          blocked_reason?: string | null
+          bridged_verified?: number
+          cache_hits?: number
+          circuit_state?: string | null
+          created_at?: string
+          enriched?: number
+          errors?: Json
+          external_calls?: number
+          finished_at?: string | null
+          found?: number
+          id?: string
+          inserted?: number
+          pairs?: Json
+          queued?: number
+          searches_executed?: number
+          searches_planned?: number
+          started_at?: string
+          status?: string
+          trigger_source?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       acquisition_events: {
         Row: {
           channel: string
