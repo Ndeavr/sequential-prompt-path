@@ -29,6 +29,7 @@ import {
   nextActionAt,
   VERIFICATION_TTL_MS,
 } from "../_shared/verificationFreshness.ts";
+import { normalizeServiceCategory } from "../_shared/localServiceCategories.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
