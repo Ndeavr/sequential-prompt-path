@@ -29,6 +29,7 @@ import {
   nextActionAt,
   VERIFICATION_TTL_MS,
 } from "../_shared/verificationFreshness.ts";
+import { normalizeServiceCategory } from "../_shared/localServiceCategories.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1045,9 +1046,47 @@ Deno.serve(async (req) => {
     // Fair-queue selection
     // ------------------------------------------------------------------
     const take = ctx.mode === "autonomous" ? FAIR_SELECT_BATCH : ctx.limit;
-    const candidates = ctx.mode === "deterministic"
+    const rawCandidates = ctx.mode === "deterministic"
       ? await selectDeterministicCandidates(supabase, ctx, take)
       : await selectFairCandidates(supabase, ctx, take);
+
+    // ------------------------------------------------------------------
+    // Campagne « 12 mois gratuits » : filtre DUR et précoce sur le catalogue
+    // serveur `public.founder_eligible_categories`. Les fiches construction /
+    // rénovation / toiture / plomberie / isolation / CVC ne peuvent jamais
+    // saturer le lot ni déclencher un Lookup Twilio. Fail-closed : catalogue
+    // illisible → aucun candidat gratuit.
+    // ------------------------------------------------------------------
+    let candidates = rawCandidates;
+    const freeExcluded: Array<{ business_name: string; category: string | null; reason: string }> = [];
+    if (freeOnly) {
+      const { data: activeCats, error: catErr } = await supabase
+        .from("founder_eligible_categories")
+        .select("slug")
+        .eq("is_active", true);
+      if (catErr || !activeCats || activeCats.length === 0) {
+        return new Response(JSON.stringify({
+          ok: true, dry_run: dryRun, blocked: true,
+          reason: "free_category_catalog_unreadable",
+          run_id: ctx.run_id, processed: 0, sent: 0,
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const activeSlugs = new Set(activeCats.map((c: any) => String(c.slug)));
+      candidates = rawCandidates.filter((lead: any) => {
+        const slug = normalizeServiceCategory(lead.category);
+        if (!slug || !activeSlugs.has(slug)) {
+          freeExcluded.push({
+            business_name: lead.business_name,
+            category: lead.category ?? null,
+            reason: slug ? `not_free_service_campaign:${slug}` : "no_normalized_service_category",
+          });
+          return false;
+        }
+        return true;
+      });
+    }
+
+
 
     const counts = {
       matched: candidates.length,
@@ -1171,6 +1210,9 @@ Deno.serve(async (req) => {
         city: ctx.city,
         category: ctx.category,
         limit: ctx.limit,
+        free_only: freeOnly,
+        free_excluded_count: freeExcluded.length,
+        free_excluded_sample: freeExcluded.slice(0, 10),
         counts,
         prospects: perProspect,
       });

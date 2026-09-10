@@ -85,7 +85,17 @@ Deno.serve(async (req) => {
   if (SID && TOKEN) {
     const p = await probe(`https://api.twilio.com/2010-04-01/Accounts/${SID}.json`, { sid: SID, token: TOKEN });
     accountValid = p.ok;
-    result.account = p;
+    // NEVER expose the raw account payload: it contains `auth_token`.
+    result.account = {
+      status: p.status,
+      ok: p.ok,
+      twilio_code: p.twilio_code ?? null,
+      twilio_message: p.twilio_message ?? null,
+      latency_ms: p.latency_ms,
+      account_status: p._json?.status ?? null,
+      account_type: p._json?.type ?? null,
+      error: p.error,
+    };
   } else {
     result.account = { skipped: true, reason: "missing SID or TOKEN" };
   }
