@@ -27,6 +27,7 @@ import {
   shouldOverride,
   type TrustState,
 } from "../_shared/officialSiteCrawler.ts";
+import { sanitizeEmail } from "../_shared/emailHygiene.ts";
 
 const FN = "enrich-official-website";
 
@@ -248,9 +249,15 @@ Deno.serve(async (req) => {
         pupd.phone_primary = phones[0].normalized;
         pupd.phone_source_url = phones[0].source_url;
       }
-      if (emails.length > 0) {
-        pupd.email = emails[0].normalized;
-        pupd.email_source_url = emails[0].source_url;
+      // Hygiène : on ne persiste qu'une adresse réellement plausible, avec sa
+      // provenance exacte. Une valeur malformée est ignorée, jamais corrigée
+      // par invention.
+      const cleanEmail = emails
+        .map((e) => ({ value: sanitizeEmail(e.normalized), source_url: e.source_url }))
+        .find((e) => !!e.value);
+      if (cleanEmail?.value) {
+        pupd.email = cleanEmail.value;
+        pupd.email_source_url = cleanEmail.source_url;
       }
       if (rbqs.length > 0 && !prospect.rbq_number) {
         pupd.rbq_number = rbqs[0].normalized;
