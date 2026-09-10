@@ -99721,6 +99721,7 @@ export type Database = {
           status: string
         }[]
       }
+      get_my_free_service_entitlement: { Args: never; Returns: Json }
       get_outreach_target: {
         Args: { p_slug?: string; p_token?: string }
         Returns: {
