@@ -31,6 +31,7 @@ import {
   type FreeYearContext,
 } from "../_shared/offerCopy.ts";
 import { categoryName } from "../_shared/localServiceCategories.ts";
+import { sanitizeEmail } from "../_shared/emailHygiene.ts";
 import { logServerFunnelEvent } from "../_shared/funnelEvents.ts";
 import { assertOutreachEnabled } from "../_shared/outreachGate.ts";
 
@@ -305,6 +306,26 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(url, serviceKey);
 
+    // ---------------------------------------------------------------
+    // Campagne gratuite : catalogue serveur des catégories réellement
+    // admissibles, lu AVANT la sélection pour que les vieilles fiches
+    // construction/rénovation ne saturent jamais le lot. Fail-closed.
+    // ---------------------------------------------------------------
+    let freeSlugs: string[] | null = null;
+    if (freeOnly) {
+      const { data: activeCats, error: catErr } = await supabase
+        .from("founder_eligible_categories")
+        .select("slug")
+        .eq("is_active", true);
+      if (catErr || !activeCats || activeCats.length === 0) {
+        return jsonResponse({
+          ok: true, dry_run: dryRun, blocked: true,
+          reason: "free_category_catalog_unreadable", sent: 0, processed: 0, results: [],
+        }, 200, requestId);
+      }
+      freeSlugs = activeCats.map((c: any) => String(c.slug));
+    }
+
     // Broadened filter: SMS-eligible tiers (A/B/C) OR tier D / no-tier with an
     // email on file (email-only fallback path).
     let query = supabase
@@ -338,6 +359,7 @@ Deno.serve(async (req) => {
         .eq("outreach_status", "none")
         .or("sms_eligibility_tier.in.(A,B,C),and(sms_eligibility_tier.eq.D,email.not.is.null),and(sms_eligibility_tier.is.null,email.not.is.null)");
     }
+    if (freeSlugs) query = query.in("service_category_slug", freeSlugs);
     if (prospectIds) query = query.in("id", prospectIds);
     if (filterCity) query = query.ilike("city", `${filterCity}%`);
     if (filterRegion) query = query.ilike("region", filterRegion);
@@ -399,7 +421,60 @@ Deno.serve(async (req) => {
       }
     }
 
-    const eligible = pool ?? [];
+    let eligible = pool ?? [];
+
+    // ---------------------------------------------------------------
+    // Campagne gratuite : filtre DUR et précoce.
+    // Seules les entreprises dont le slug de service est réellement actif dans
+    // `public.founder_eligible_categories` peuvent recevoir l'offre 12 mois.
+    // Les vieilles fiches construction/rénovation (slug NULL, toiture,
+    // plomberie, isolation…) sont écartées AVANT toute création de lien ou
+    // appel fournisseur, avec une raison auditable. Fail-closed : catalogue
+    // illisible → aucun envoi gratuit.
+    // ---------------------------------------------------------------
+    const freeExclusions: Array<Record<string, unknown>> = [];
+    if (freeOnly && freeSlugs) {
+      const activeSlugs = new Set(freeSlugs);
+      const kept: any[] = [];
+      for (const p of eligible) {
+        const slug = (p.service_category_slug ?? "").trim();
+        const reason = !slug
+          ? "no_normalized_service_category"
+          : !activeSlugs.has(slug)
+            ? `category_not_free_eligible:${slug}`
+            : null;
+        if (reason) {
+          freeExclusions.push({ id: p.id, business_name: p.business_name, city: p.city, category: p.category, status: "skipped", skipped: reason });
+          if (!dryRun) {
+            await logPipelineEvent({
+              prospect_id: p.id,
+              business_name: p.business_name,
+              city: p.city,
+              category: p.category,
+              source: p.source,
+              stage: "quarantined",
+              reason_code: "not_free_service_campaign",
+              reason_text: reason,
+              metadata: { service_category_slug: p.service_category_slug ?? null, campaign: "free_year" },
+            });
+          }
+          continue;
+        }
+        kept.push(p);
+      }
+      eligible = kept;
+    }
+
+    // Hygiène courriel : une adresse malformée (`%20…`, mailto:, boîte
+    // technique) n'est jamais envoyée telle quelle. On corrige la valeur en
+    // mémoire et on écarte ce qui reste invalide.
+    for (const p of eligible as any[]) {
+      if (p.email) {
+        const clean = sanitizeEmail(p.email);
+        p.email_sanitized_from = clean && clean !== p.email ? p.email : null;
+        p.email = clean;
+      }
+    }
 
     // ---------------------------------------------------------------
     // Cross-automation duplicate guard.
@@ -476,7 +551,8 @@ Deno.serve(async (req) => {
         ok: true, dry_run: true, eligible_count: eligible.length - dupCount,
         duplicate_skipped_count: dupCount,
         eligible: previews,
-        skipped: missingResults,
+        skipped: [...missingResults, ...freeExclusions],
+        free_excluded_count: freeExclusions.length,
         message: eligible.length > 0 ? `${eligible.length - dupCount} prospect(s) prêt(s)` : "Aucun prospect éligible",
       }, 200, requestId);
     }
@@ -859,7 +935,7 @@ Deno.serve(async (req) => {
 
 
 
-    const allResults = [...results, ...missingResults];
+    const allResults = [...results, ...missingResults, ...freeExclusions];
     const sent = allResults.filter((r) => r.status === "sent").length;
     const sentSms = allResults.filter((r) => r.status === "sent" && r.channel_used === "sms").length;
     const sentEmail = allResults.filter((r) => r.status === "sent" && r.channel_used === "email").length;
