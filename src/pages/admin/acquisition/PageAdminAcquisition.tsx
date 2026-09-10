@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, RefreshCw, PlayCircle, Activity, AlertTriangle, CheckCircle2, XCircle, MinusCircle } from "lucide-react";
 import { SPARSE_BADGE_HINT, SPARSE_BADGE_LABEL, isSparseProspect, pendingFields } from "@/lib/sparseLead";
 import ProspectionTodayPanel from "./ProspectionTodayPanel";
+import DiscoveryPanel from "./DiscoveryPanel";
 
 type HealthRow = { service_name: string; status: string; required_for: string[]; error_message: string | null; last_checked_at: string | null };
 type RunRow = { id: string; run_type: string; status: string; started_at: string; completed_at: string | null; succeeded_count: number; failed_count: number; blocked_count: number; error_summary: string | null };
@@ -86,6 +87,7 @@ export default function PageAdminAcquisition() {
       </header>
 
       <ProspectionTodayPanel />
+      <DiscoveryPanel />
 
 
       {/* Header cards */}
