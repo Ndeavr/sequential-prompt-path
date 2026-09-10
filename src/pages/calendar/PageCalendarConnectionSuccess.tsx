@@ -14,6 +14,10 @@ export default function PageCalendarConnectionSuccess() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const provider = params.get("provider") ?? "google";
+  const role = params.get("role") === "contractor" || params.get("role") === "professional"
+    ? params.get("role") as "contractor" | "professional"
+    : "homeowner";
+  const surface = params.get("surface") ?? "callback_success";
   const { primary, refresh } = useCalendarConnections();
   const { track } = useCalendarConversionTracking();
 
@@ -21,7 +25,7 @@ export default function PageCalendarConnectionSuccess() {
 
   useEffect(() => {
     refresh();
-    track({ surface: "callback_success", event_type: "calendar_connected", provider });
+    track({ surface, role_context: role, event_type: "calendar_connected", provider });
     const t = setTimeout(() => {
       navigate(returnTo || "/dashboard");
     }, 3000);
@@ -46,10 +50,10 @@ export default function PageCalendarConnectionSuccess() {
             </p>
           </div>
 
-          <WidgetCalendarAvailabilityPreview role="homeowner" />
+          <WidgetCalendarAvailabilityPreview role={role} />
 
           <div className="flex gap-2">
-            <Button onClick={() => navigate("/dashboard")} className="flex-1 rounded-full">Mon tableau de bord</Button>
+            <Button onClick={() => navigate(returnTo || (role === "contractor" ? "/entrepreneur/dashboard" : "/dashboard"))} className="flex-1 rounded-full">Mon tableau de bord</Button>
             <Button variant="outline" onClick={() => navigate("/account")} className="flex-1 rounded-full">Mon compte</Button>
           </div>
         </div>

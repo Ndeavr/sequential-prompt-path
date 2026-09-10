@@ -81,8 +81,12 @@ export default function PageMatchingProfileWizard() {
   const [done, setDone] = useState(false);
   const [chipDraft, setChipDraft] = useState("");
   const [founderEntitlement, setFounderEntitlement] = useState<FreeServiceEntitlement | null>(null);
+  const [entitlementCheckFailed, setEntitlementCheckFailed] = useState(false);
+  const [activationRouting, setActivationRouting] = useState(false);
+  const [activationError, setActivationError] = useState<string | null>(null);
   const startedLogged = useRef(false);
   const hasFreeYear = isActiveFreeServiceEntitlement(founderEntitlement);
+  const cameFromFounderSignup = sp.get("source") === "founder_free";
 
   const context = useMemo(
     () => ({
@@ -104,20 +108,17 @@ export default function PageMatchingProfileWizard() {
     [sessionKey],
   );
 
-  // Reprise : on recharge la progression réelle avant d'afficher quoi que ce soit.
+  // Reprise : le profil et le droit gratuit sont chargés séparément. Une panne
+  // temporaire du RPC d'adhésion ne doit jamais faire perdre les réponses.
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    void (async () => {
       try {
-        const [profileRequest, entitlement] = await Promise.all([
-          supabase.functions.invoke("matching-profile", {
-            body: { action: "get", session_key: sessionKey },
-          }),
-          getMyFreeServiceEntitlement(),
-        ]);
+        const profileRequest = await supabase.functions.invoke("matching-profile", {
+          body: { action: "get", session_key: sessionKey },
+        });
         if (cancelled) return;
 
-        setFounderEntitlement(entitlement);
         const response = profileRequest.data as MatchingProfileResponse | null;
         const profile = response?.profile;
         if (profileRequest.error || response?.error) {
@@ -132,13 +133,23 @@ export default function PageMatchingProfileWizard() {
           setIndex(firstUnanswered === -1 ? questions.length - 1 : firstUnanswered);
         }
       } catch {
-        setLoadError(
-          "Impossible de vérifier votre activation UNPRO. Réessayez avant de poursuivre.",
-        );
+        if (!cancelled) setLoadError("Impossible de reprendre le profil. Réessayez.");
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
+
+    void (async () => {
+      try {
+        const entitlement = await getMyFreeServiceEntitlement();
+        if (cancelled) return;
+        setFounderEntitlement(entitlement);
+        setEntitlementCheckFailed(false);
+      } catch {
+        if (!cancelled) setEntitlementCheckFailed(true);
+      }
+    })();
+
     return () => {
       cancelled = true;
     };
@@ -207,21 +218,49 @@ export default function PageMatchingProfileWizard() {
     }
   }
 
-  function goToNextActivation() {
-    if (hasFreeYear) {
+  async function goToNextActivation() {
+    if (activationRouting) return;
+    setActivationRouting(true);
+    setActivationError(null);
+
+    let verifiedEntitlement: FreeServiceEntitlement | null = null;
+    try {
+      verifiedEntitlement = await getMyFreeServiceEntitlement();
+      setFounderEntitlement(verifiedEntitlement);
+      setEntitlementCheckFailed(false);
+    } catch {
+      setEntitlementCheckFailed(true);
+      if (cameFromFounderSignup || hasFreeYear) {
+        setActivationError(
+          "Votre adhésion gratuite n'a pas pu être vérifiée. Réessayez : nous ne vous redirigerons pas vers un forfait payant par erreur.",
+        );
+        setActivationRouting(false);
+        return;
+      }
+    }
+
+    if (isActiveFreeServiceEntitlement(verifiedEntitlement)) {
       void logFunnelEvent({
         event_type: "onboarding_resumed",
         event_source: "app",
-        contractor_id: founderEntitlement?.contractor_id,
+        contractor_id: verifiedEntitlement?.contractor_id,
         current_path: "/entrepreneurs/profil",
         step: "calendar_setup_offered",
         metadata: {
-          membership_id: founderEntitlement?.membership_id,
-          founder_end: founderEntitlement?.founder_end,
+          membership_id: verifiedEntitlement?.membership_id,
+          founder_end: verifiedEntitlement?.founder_end,
           free_offer: true,
         },
       });
-      navigate(postMatchingProfileDestination(founderEntitlement));
+      navigate(postMatchingProfileDestination(verifiedEntitlement));
+      return;
+    }
+
+    if (cameFromFounderSignup) {
+      setActivationError(
+        "Aucune adhésion gratuite active n'a été confirmée pour ce compte. Revenez à l'inscription ou contactez-nous avant de choisir un forfait.",
+      );
+      setActivationRouting(false);
       return;
     }
 
@@ -304,6 +343,12 @@ export default function PageMatchingProfileWizard() {
           </section>
         )}
 
+        {entitlementCheckFailed && cameFromFounderSignup && (
+          <section className="mb-5 rounded-2xl border border-amber-500/35 bg-amber-500/5 p-4 text-[13px] text-muted-foreground">
+            La vérification de votre adhésion sera relancée avant l'étape suivante. Votre profil peut être complété normalement.
+          </section>
+        )}
+
         {loadError ? (
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
             <p className="font-semibold text-destructive">Votre progression n’a pas été perdue.</p>
@@ -342,19 +387,41 @@ export default function PageMatchingProfileWizard() {
             <HowItWorksBlock lang={fr ? "fr" : "en"} />
 
             <Button
-              onClick={goToNextActivation}
+              onClick={() => void goToNextActivation()}
+              disabled={activationRouting}
               size="lg"
               className="gold-btn h-14 w-full rounded-2xl border-0 text-[15px] font-bold hover:text-primary-foreground"
             >
-              {hasFreeYear
-                ? fr
-                  ? "Connecter mon agenda inclus"
-                  : "Connect my included calendar"
-                : fr
-                  ? "Voir mon activation UNPRO"
-                  : "See my UNPRO activation"}
-              <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+              {activationRouting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                  {fr ? "Vérification…" : "Checking…"}
+                </>
+              ) : (
+                <>
+                  {hasFreeYear
+                    ? fr
+                      ? "Connecter mon agenda inclus"
+                      : "Connect my included calendar"
+                    : fr
+                      ? "Voir mon activation UNPRO"
+                      : "See my UNPRO activation"}
+                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+                </>
+              )}
             </Button>
+            {activationError && (
+              <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-[13px]">
+                <p className="font-medium text-destructive">{activationError}</p>
+                <button
+                  type="button"
+                  onClick={() => void goToNextActivation()}
+                  className="mt-2 font-semibold text-primary underline-offset-2 hover:underline"
+                >
+                  Réessayer la vérification
+                </button>
+              </div>
+            )}
           </div>
         ) : q ? (
           <QuestionCard

@@ -79,7 +79,33 @@ type Eligibility =
   | { state: "idle" }
   | { state: "checking" }
   | { state: "eligible"; cityRemaining: number | null }
-  | { state: "ineligible"; reason: string };
+  | { state: "ineligible"; reason: string }
+  | { state: "error" };
+
+interface FounderEligibilityPayload {
+  eligible?: boolean;
+  city_remaining?: number | null;
+  reason?: string;
+}
+
+interface FounderActivationPayload {
+  ok?: boolean;
+  activated?: boolean;
+  reason?: string;
+  membership_id?: string;
+  contractor_id?: string;
+  prospect_id?: string;
+  claim_id?: string;
+  onboarding_session_id?: string;
+  founder_end?: string;
+  requires_verification?: boolean;
+}
+
+function objectPayload<T extends object>(value: unknown): Partial<T> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Partial<T>)
+    : {};
+}
 
 export default function PageFounderLocalServices() {
   const [sp] = useSearchParams();
@@ -106,22 +132,34 @@ export default function PageFounderLocalServices() {
   const [verifying, setVerifying] = useState(false);
   const [entitlementChecking, setEntitlementChecking] = useState(true);
   const [entitlementError, setEntitlementError] = useState<string | null>(null);
+  const [eligibilityRetry, setEligibilityRetry] = useState(0);
   /** Empêche une double activation sur double-clic ou reprise simultanée. */
   const activatingRef = useRef(false);
+  /** Ignore toute réponse d'admissibilité arrivée après une requête plus récente. */
+  const eligibilityRequestRef = useRef(0);
 
   const profileHref = useMemo(() => founderProfileDestination(sp), [sp]);
 
-  const { data: categories } = useQuery({
+  const {
+    data: categories,
+    isError: categoriesError,
+    isLoading: categoriesLoading,
+    refetch: refetchCategories,
+  } = useQuery({
     queryKey: ["founder-eligible-categories"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("founder_eligible_categories" as any)
+        .from("founder_eligible_categories")
         .select("slug, name_fr, group_type")
         .eq("is_active", true)
         .order("group_type")
         .order("name_fr");
       if (error) throw error;
-      return (data ?? []) as unknown as FounderCategory[];
+      return (data ?? []).flatMap((row) =>
+        row.group_type === "local_service" || row.group_type === "professional"
+          ? [{ ...row, group_type: row.group_type } satisfies FounderCategory]
+          : [],
+      );
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -136,41 +174,49 @@ export default function PageFounderLocalServices() {
     return [...list].sort((a, b) => rank(a.slug) - rank(b.slug) || a.name_fr.localeCompare(b.name_fr, "fr"));
   }, [categories]);
 
-  const checkEligibility = async (slug: string, cityValue: string) => {
-    if (!slug || cityValue.trim().length < 2) {
+  useEffect(() => {
+    const requestId = ++eligibilityRequestRef.current;
+    const normalizedCity = city.trim();
+    if (!categorySlug || normalizedCity.length < 2) {
       setEligibility({ state: "idle" });
-      return;
+      return undefined;
     }
+
     setEligibility({ state: "checking" });
-    const { data, error } = await supabase.rpc("check_founder_eligibility", {
-      p_city: cityValue.trim(),
-      p_category_slug: slug,
-    } as any);
-    if (error) {
-      setEligibility({ state: "idle" });
-      return;
-    }
-    const payload = data as any;
-    if (payload?.eligible) {
-      setEligibility({ state: "eligible", cityRemaining: payload.city_remaining ?? null });
-    } else {
-      setEligibility({ state: "ineligible", reason: payload?.reason ?? "not_eligible" });
-    }
-  };
+    const timeoutId = window.setTimeout(() => {
+      void (async () => {
+        const { data, error } = await supabase.rpc("check_founder_eligibility", {
+          p_city: normalizedCity,
+          p_category_slug: categorySlug,
+        });
+        if (requestId !== eligibilityRequestRef.current) return;
+        if (error) {
+          setEligibility({ state: "error" });
+          return;
+        }
+        const payload = objectPayload<FounderEligibilityPayload>(data);
+        if (payload.eligible) {
+          setEligibility({ state: "eligible", cityRemaining: payload.city_remaining ?? null });
+        } else {
+          setEligibility({ state: "ineligible", reason: payload.reason ?? "not_eligible" });
+        }
+      })();
+    }, 350);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [categorySlug, city, eligibilityRetry]);
 
   const onCategory = (slug: string) => {
     setCategorySlug(slug);
     if (slug !== OTHER_SLUG) setOtherService("");
     setResult(null);
     setShowBusinessForm(false);
-    void checkEligibility(slug, city);
   };
 
   const onCity = (value: string) => {
     setCity(value);
     setResult(null);
     setShowBusinessForm(false);
-    void checkEligibility(categorySlug, value);
   };
 
   const reasonMessage = (reason?: string) => {
@@ -253,8 +299,8 @@ export default function PageFounderLocalServices() {
     try {
       const { data, error } = await supabase.rpc("claim_pending_free_service_signup", {
         p_membership_id: membershipId,
-      } as any);
-      const payload = data as any;
+      });
+      const payload = objectPayload<FounderActivationPayload>(data);
       if (error || !payload?.ok || !payload?.activated) {
         const code = payload?.reason ?? error?.message ?? "claim_failed";
         setOtpError(reasonMessage(payload?.reason));
@@ -331,12 +377,12 @@ export default function PageFounderLocalServices() {
       p_business_name: businessName,
       p_contact_name: contactName,
       p_email: contactEmail,
-      p_phone: phone,
+      p_phone: formatPhoneFinal(phone),
       p_city: city,
       p_category_slug: categorySlug,
       p_attribution: attribution,
-    } as any);
-    const payload = data as any;
+    });
+    const payload = objectPayload<FounderActivationPayload>(data);
 
     // Activation immédiate possible seulement si le visiteur était déjà vérifié.
     if (!error && payload?.ok && payload?.activated) {
@@ -638,9 +684,12 @@ export default function PageFounderLocalServices() {
 
                 <input
                   value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   inputMode="numeric"
                   autoComplete="one-time-code"
+                  maxLength={6}
+                  pattern="[0-9]{6}"
+                  aria-label="Code de confirmation à 6 chiffres"
                   placeholder="Code à 6 chiffres"
                   className="mx-auto mt-6 w-full max-w-xs rounded-2xl border border-border bg-background px-4 py-3 text-center text-[18px] tracking-[0.3em] text-foreground outline-none placeholder:tracking-normal placeholder:text-muted-foreground"
                 />
@@ -654,7 +703,7 @@ export default function PageFounderLocalServices() {
 
                 <button
                   onClick={() => void verifyAndActivate(result.membershipId, result.email)}
-                  disabled={verifying || otpCode.trim().length < 6}
+                  disabled={verifying || otpCode.length !== 6}
                   className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-[15px] font-semibold text-primary-foreground shadow-md shadow-primary/25 transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {verifying ? "Vérification en cours…" : "Confirmer et activer"}
@@ -693,9 +742,12 @@ export default function PageFounderLocalServices() {
                   id="founder-service"
                   value={categorySlug}
                   onChange={(e) => onCategory(e.target.value)}
+                  disabled={categoriesLoading || categoriesError}
                   className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-[15px] text-foreground"
                 >
-                  <option value="">Choisir…</option>
+                  <option value="">
+                    {categoriesLoading ? "Chargement des services…" : "Choisir…"}
+                  </option>
                   <optgroup label="Services résidentiels">
                     {services.map((c) => (
                       <option key={c.slug} value={c.slug}>
@@ -704,6 +756,21 @@ export default function PageFounderLocalServices() {
                     ))}
                   </optgroup>
                 </select>
+
+                {categoriesError && (
+                  <div className="mt-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-[13px]">
+                    <p className="text-muted-foreground">
+                      La liste des services n'a pas pu être chargée.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => void refetchCategories()}
+                      className="mt-2 font-semibold text-primary underline-offset-2 hover:underline"
+                    >
+                      Réessayer
+                    </button>
+                  </div>
+                )}
 
                 {categorySlug === OTHER_SLUG && (
                   <div className="mt-3">
@@ -755,6 +822,20 @@ export default function PageFounderLocalServices() {
                       ? "Cette catégorie n'est pas admissible à l'offre fondateur. Entrepreneurs en rénovation : passez par l'Audit IA."
                       : "Les 10 places gratuites sont déjà prises pour ce service dans cette ville. Vous pouvez tout de même créer votre fiche, sans l'année offerte."}
                   </p>
+                )}
+                {eligibility.state === "error" && (
+                  <div className="mt-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-[13px]">
+                    <p className="text-muted-foreground">
+                      L'admissibilité n'a pas pu être vérifiée. Votre saisie est conservée.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setEligibilityRetry((value) => value + 1)}
+                      className="mt-2 font-semibold text-primary underline-offset-2 hover:underline"
+                    >
+                      Réessayer
+                    </button>
+                  </div>
                 )}
 
                 {/* Step 3: continue only once eligible */}

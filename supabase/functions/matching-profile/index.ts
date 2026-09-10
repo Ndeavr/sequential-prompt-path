@@ -135,33 +135,50 @@ Deno.serve(async (req) => {
       business_name: string | null;
       city: string | null;
       specialty: string | null;
+      onboarding_status: string | null;
     } | null = null;
     if (authenticatedUserId) {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("contractors")
-        .select("id, business_name, city, specialty")
+        .select("id, business_name, city, specialty, onboarding_status")
         .eq("user_id", authenticatedUserId)
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle();
+      if (error) return json({ ok: false, error: "contractor_lookup_failed" }, 500);
       ownedContractor = data ?? null;
     }
 
-    const { data: existingBySession } = await supabase
+    const { data: existingBySession, error: sessionLookupError } = await supabase
       .from("contractor_matching_profiles")
       .select("*")
       .eq("session_key", session_key)
       .maybeSingle();
+    if (sessionLookupError) return json({ ok: false, error: "profile_lookup_failed" }, 500);
 
     let existing = existingBySession;
+    let effectiveSessionKey = session_key;
+    // A localStorage key can survive a sign-out on a shared browser. Never let
+    // that stale key expose or overwrite another contractor's matching profile.
+    if (
+      existingBySession?.contractor_id &&
+      ownedContractor &&
+      existingBySession.contractor_id !== ownedContractor.id
+    ) {
+      existing = null;
+      // Deterministic account-scoped fallback avoids colliding with the stale
+      // unique key while remaining stable on every subsequent request.
+      effectiveSessionKey = `${session_key}:${ownedContractor.id}`;
+    }
     if (!existing && ownedContractor) {
-      const { data: existingByContractor } = await supabase
+      const { data: existingByContractor, error: contractorProfileError } = await supabase
         .from("contractor_matching_profiles")
         .select("*")
         .eq("contractor_id", ownedContractor.id)
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle();
+      if (contractorProfileError) return json({ ok: false, error: "profile_lookup_failed" }, 500);
       existing = existingByContractor;
     }
 
@@ -191,7 +208,7 @@ Deno.serve(async (req) => {
     const state = computeState(answers);
 
     const row: Record<string, unknown> = {
-      session_key: existing?.session_key ?? session_key,
+      session_key: existing?.session_key ?? effectiveSessionKey,
       answers,
       missing_matching_fields: state.missing,
       profile_completion: state.profile_completion,
@@ -238,6 +255,43 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (error) return json({ ok: false, error: error.message }, 500);
+
+    // Completion of this canonical wizard must also advance the account-level
+    // onboarding state used by the free-entitlement RPC. Never downgrade an
+    // already fully completed contractor.
+    if (
+      action === "complete" &&
+      authenticatedUserId &&
+      ownedContractor &&
+      !["profile_completed", "completed"].includes(ownedContractor.onboarding_status ?? "")
+    ) {
+      const { error: contractorUpdateError } = await supabase
+        .from("contractors")
+        .update({ onboarding_status: "profile_completed" })
+        .eq("id", ownedContractor.id)
+        .eq("user_id", authenticatedUserId);
+      if (contractorUpdateError) {
+        console.error("[matching-profile] contractor onboarding sync failed", {
+          contractor_id: ownedContractor.id,
+          code: contractorUpdateError.code ?? null,
+        });
+        return json({ ok: false, error: "onboarding_sync_failed" }, 500);
+      }
+
+      const { error: profileUpdateError } = await supabase
+        .from("profiles")
+        .update({ onboarding_status: "profile_completed" })
+        .eq("user_id", authenticatedUserId)
+        .eq("onboarding_completed", false);
+      if (profileUpdateError) {
+        console.error("[matching-profile] profile onboarding sync failed", {
+          contractor_id: ownedContractor.id,
+          code: profileUpdateError.code ?? null,
+        });
+        return json({ ok: false, error: "onboarding_sync_failed" }, 500);
+      }
+    }
+
     return json({ ok: true, profile: saved });
   } catch (e) {
     return json({ ok: false, error: e instanceof Error ? e.message : "unexpected" }, 500);

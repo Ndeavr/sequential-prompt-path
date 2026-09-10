@@ -16,6 +16,7 @@ interface Props {
   surface?: string;
   lang?: "fr" | "en";
   showAppleCTA?: boolean;
+  returnTo?: string;
 }
 
 export default function CardCalendarConnectionRole({
@@ -23,6 +24,7 @@ export default function CardCalendarConnectionRole({
   surface = "dashboard",
   lang = "fr",
   showAppleCTA = true,
+  returnTo,
 }: Props) {
   const prompt = useCalendarPrompt(role, surface, lang);
   const { primary, isConnected } = useCalendarConnections();
@@ -60,6 +62,7 @@ export default function CardCalendarConnectionRole({
           <ButtonConnectGoogleCalendar
             surface={surface}
             role={role}
+            returnTo={returnTo}
             label={prompt?.primary_cta ?? "Connecter Google Calendar"}
             className="w-full"
           />

@@ -10,9 +10,13 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "lint:critical": "eslint src/lib/founderEntitlement.ts src/pages/founder/PageFounderLocalServices.tsx src/pages/entrepreneur/PageMatchingProfileWizard.tsx src/hooks/useCalendarConnection.ts src/components/calendar/CardCalendarConnectionRole.tsx src/components/calendar/ButtonConnectGoogleCalendar.tsx src/components/calendar/ButtonSubscribeAppleCalendar.tsx src/pages/calendar/PageCalendarConnectionHub.tsx src/pages/calendar/PageCalendarConnectionSuccess.tsx src/pages/calendar/PageCalendarConnectionFailure.tsx src/__tests__/founderEntitlementContinuity.test.ts src/__tests__/freeFounderJourneyHardening.test.ts",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:critical": "vitest run src/__tests__/founderEntitlementContinuity.test.ts src/__tests__/freeFounderJourneyHardening.test.ts",
     "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "ci:critical": "npm test && npm run typecheck && npm run lint:critical && vite build",
     "content-audit": "tsx scripts/content-audit.ts"
   },
   "dependencies": {

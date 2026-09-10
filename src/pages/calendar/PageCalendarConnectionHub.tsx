@@ -16,9 +16,20 @@ export default function PageCalendarConnectionHub() {
   const navigate = useNavigate();
   const { role: authRole, isAuthenticated } = useAuth();
   const queryRole = params.get("role");
-  const role = (queryRole as "homeowner" | "contractor" | "professional") ??
-               (authRole === "contractor" ? "contractor" : "homeowner");
-  const surface = params.get("surface") ?? "hub";
+  const role: "homeowner" | "contractor" | "professional" =
+    queryRole === "contractor" || queryRole === "professional" || queryRole === "homeowner"
+      ? queryRole
+      : authRole === "contractor"
+        ? "contractor"
+        : "homeowner";
+  const rawSurface = params.get("surface") ?? "hub";
+  const surface = /^[a-z0-9_-]{1,64}$/i.test(rawSurface) ? rawSurface : "hub";
+  const successParams = new URLSearchParams({
+    role,
+    surface,
+    return_to: role === "contractor" ? "/entrepreneur/dashboard" : "/dashboard",
+  });
+  const oauthReturnTo = `/calendar/connect/success?${successParams.toString()}`;
   const { isConnected } = useCalendarConnections();
 
   return (
@@ -54,7 +65,7 @@ export default function PageCalendarConnectionHub() {
             </div>
           ) : (
             <div className="space-y-6">
-              <CardCalendarConnectionRole role={role} surface={surface} />
+              <CardCalendarConnectionRole role={role} surface={surface} returnTo={oauthReturnTo} />
               {isConnected && <WidgetCalendarAvailabilityPreview role={role} />}
             </div>
           )}

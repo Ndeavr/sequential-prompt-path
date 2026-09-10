@@ -21,18 +21,23 @@ export default function ButtonSubscribeAppleCalendar({ surface, role, className,
 
   const handleClick = async () => {
     setBusy(true);
-    await track({ surface, role_context: role, provider: "apple", event_type: "connect_clicked" });
-    await track({ surface, role_context: role, provider: "apple", event_type: "apple_subscribe_clicked" });
-    const result = await subscribe();
-    setBusy(false);
-    if (result?.webcal_url) {
-      // Try to open in Apple Calendar
-      window.location.href = result.webcal_url;
-      toast.success("Abonnement Apple Calendar créé", {
-        description: "Vos rendez-vous UNPRO apparaîtront dans Apple Calendar.",
+    try {
+      await track({ surface, role_context: role, provider: "apple", event_type: "connect_clicked" });
+      await track({ surface, role_context: role, provider: "apple", event_type: "apple_subscribe_clicked" });
+      const result = await subscribe();
+      setBusy(false);
+      if (result?.webcal_url) {
+        // Try to open in Apple Calendar
+        window.location.href = result.webcal_url;
+        toast.success("Abonnement Apple Calendar créé", {
+          description: "Vos rendez-vous UNPRO apparaîtront dans Apple Calendar.",
+        });
+      }
+    } catch {
+      setBusy(false);
+      toast.error("Impossible de créer l'abonnement", {
+        description: "Réessayez dans un instant. Votre profil reste actif.",
       });
-    } else {
-      toast.error("Impossible de créer l'abonnement");
     }
   };
 

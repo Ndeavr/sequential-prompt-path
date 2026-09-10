@@ -4,6 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useStartGoogleOAuth, useCalendarConversionTracking } from "@/hooks/useCalendarConnection";
 
 interface Props {
@@ -21,9 +22,17 @@ export default function ButtonConnectGoogleCalendar({ surface, role, returnTo, c
 
   const handleClick = async () => {
     setBusy(true);
-    await track({ surface, role_context: role, provider: "google", event_type: "connect_clicked" });
-    await track({ surface, role_context: role, provider: "google", event_type: "oauth_started" });
-    await startGoogle(returnTo);
+    try {
+      await track({ surface, role_context: role, provider: "google", event_type: "connect_clicked" });
+      await track({ surface, role_context: role, provider: "google", event_type: "oauth_started" });
+      const started = await startGoogle(returnTo);
+      if (!started) setBusy(false);
+    } catch {
+      setBusy(false);
+      toast.error("Impossible de démarrer la connexion Google", {
+        description: "Réessayez dans un instant. Votre profil reste actif.",
+      });
+    }
   };
 
   return (

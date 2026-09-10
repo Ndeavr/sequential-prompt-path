@@ -86,15 +86,19 @@ export function useStartGoogleOAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       window.location.href = "/role";
-      return;
+      return false;
     }
     const url = new URL(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calendar-google-oauth-start`);
     if (returnTo) url.searchParams.set("return_to", returnTo);
     const res = await fetch(url.toString(), {
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
-    const body = await res.json();
-    if (body?.auth_url) window.location.href = body.auth_url;
+    const body = await res.json().catch(() => ({})) as { auth_url?: string; error?: string };
+    if (!res.ok || !body.auth_url) {
+      throw new Error(body.error || "calendar_oauth_start_failed");
+    }
+    window.location.assign(body.auth_url);
+    return true;
   }, []);
   return { startGoogle };
 }
@@ -116,7 +120,16 @@ export function useSubscribeAppleCalendar() {
         },
       },
     );
-    return await res.json() as { webcal_url: string; https_url: string; ics_token: string };
+    const body = await res.json().catch(() => ({})) as Partial<{
+      webcal_url: string;
+      https_url: string;
+      ics_token: string;
+      error: string;
+    }>;
+    if (!res.ok || !body.webcal_url || !body.https_url || !body.ics_token) {
+      throw new Error(body.error || "calendar_apple_subscription_failed");
+    }
+    return body as { webcal_url: string; https_url: string; ics_token: string };
   }, []);
   return { subscribe };
 }

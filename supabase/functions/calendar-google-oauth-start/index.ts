@@ -2,6 +2,7 @@
 // Builds the Google OAuth consent URL with state token tied to the user.
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
+import { createCalendarOAuthState } from "../_shared/calendarOAuthState.ts";
 
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 
@@ -20,23 +21,24 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsErr } = await (supabase.auth as any).getClaims(token);
-    if (claimsErr || !claimsData?.claims) return json({ error: "Unauthorized" }, 401);
-    const userId = claimsData.claims.sub;
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !user) return json({ error: "Unauthorized" }, 401);
 
     const clientId = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
     if (!clientId) return json({ error: "GOOGLE_OAUTH_CLIENT_ID not configured" }, 500);
+    const stateSecret =
+      Deno.env.get("CALENDAR_OAUTH_STATE_SECRET") || Deno.env.get("GOOGLE_OAUTH_CLIENT_SECRET");
+    if (!stateSecret) return json({ error: "Calendar OAuth state secret not configured" }, 500);
 
     const projectRef = Deno.env.get("SUPABASE_URL")!.match(/https:\/\/([^.]+)/)?.[1];
     const redirectUri = `https://${projectRef}.supabase.co/functions/v1/calendar-google-oauth-callback`;
 
     const url = new URL(req.url);
-    const returnTo = url.searchParams.get("return_to") || "/calendar/connect/success";
-
-    // State = base64(user_id|return_to|nonce)
-    const nonce = crypto.randomUUID();
-    const stateRaw = `${userId}|${returnTo}|${nonce}`;
-    const state = btoa(stateRaw);
+    const state = await createCalendarOAuthState(
+      user.id,
+      url.searchParams.get("return_to"),
+      stateSecret,
+    );
 
     const params = new URLSearchParams({
       client_id: clientId,
