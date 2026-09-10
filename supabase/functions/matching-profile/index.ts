@@ -127,11 +127,43 @@ Deno.serve(async (req) => {
       authenticatedUserId = user?.id ?? null;
     }
 
-    const { data: existing } = await supabase
+    // An authenticated contractor's profile follows the account, not a single
+    // browser's localStorage key. The contractor id is always resolved here;
+    // it is never accepted from the request body.
+    let ownedContractor: {
+      id: string;
+      business_name: string | null;
+      city: string | null;
+      specialty: string | null;
+    } | null = null;
+    if (authenticatedUserId) {
+      const { data } = await supabase
+        .from("contractors")
+        .select("id, business_name, city, specialty")
+        .eq("user_id", authenticatedUserId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      ownedContractor = data ?? null;
+    }
+
+    const { data: existingBySession } = await supabase
       .from("contractor_matching_profiles")
       .select("*")
       .eq("session_key", session_key)
       .maybeSingle();
+
+    let existing = existingBySession;
+    if (!existing && ownedContractor) {
+      const { data: existingByContractor } = await supabase
+        .from("contractor_matching_profiles")
+        .select("*")
+        .eq("contractor_id", ownedContractor.id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      existing = existingByContractor;
+    }
 
     if (action === "get") {
       if (existing?.contractor_id) {
@@ -159,7 +191,7 @@ Deno.serve(async (req) => {
     const state = computeState(answers);
 
     const row: Record<string, unknown> = {
-      session_key,
+      session_key: existing?.session_key ?? session_key,
       answers,
       missing_matching_fields: state.missing,
       profile_completion: state.profile_completion,
@@ -188,6 +220,15 @@ Deno.serve(async (req) => {
     }
     if (body.utm && typeof body.utm === "object") {
       row.utm = { ...((existing?.utm as Record<string, unknown>) ?? {}), ...body.utm };
+    }
+
+    if (ownedContractor) {
+      row.contractor_id = ownedContractor.id;
+      if (!existing?.business_name && !body.business_name) {
+        row.business_name = ownedContractor.business_name;
+      }
+      if (!existing?.city && !body.city) row.city = ownedContractor.city;
+      if (!existing?.trade && !body.trade) row.trade = ownedContractor.specialty;
     }
 
     const { data: saved, error } = await supabase

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import FloatingAlexGuide from "@/components/alex/FloatingAlexGuide";
 import { lazy, Suspense } from "react";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
@@ -184,6 +184,12 @@ const LazyFallback = () => (
     <div className="animate-pulse text-muted-foreground text-sm">Chargement…</div>
   </div>
 );
+
+/** Preserve attribution while repairing old links that used a legacy path. */
+const LegacyRedirect = ({ to }: { to: string }) => {
+  const { search, hash } = useLocation();
+  return <Navigate to={`${to}${search}${hash}`} replace />;
+};
 
 // ─── Lazy loaded pages ───
 const PlaceholderPage = lazyWithRetry(() => import("@/pages/PlaceholderPage"));
@@ -2003,7 +2009,7 @@ export const AppRouter = () => (
           {/* Legacy paths — sourced from routeRegistry so new redirects have
               one home instead of scattering <Navigate> calls. */}
           {Object.entries(LEGACY_REDIRECTS).map(([from, to]) => (
-            <Route key={from} path={from} element={<Navigate to={to} replace />} />
+            <Route key={from} path={from} element={<LegacyRedirect to={to} />} />
           ))}
 
           {/* Canonical conversion routes */}

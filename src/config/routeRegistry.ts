@@ -19,6 +19,7 @@ export const LEGACY_REDIRECTS: Record<string, string> = {
   "/homeowner": "/",
   "/contractor": "/entrepreneurs",
   "/professional": "/entrepreneurs",
+  "/entrepreneur/profil": "/entrepreneurs/profil",
 };
 
 // Any unknown path matching this pattern gets bounced to `/` by the fallback

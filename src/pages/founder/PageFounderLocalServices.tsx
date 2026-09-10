@@ -15,15 +15,28 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, BadgeCheck, Building2, MailCheck, MapPin, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  BadgeCheck,
+  Building2,
+  Loader2,
+  MailCheck,
+  MapPin,
+  Sparkles,
+} from "lucide-react";
 
 import founderVideo from "@/assets/founder-video.mp4.asset.json";
 import MainLayout from "@/layouts/MainLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPhoneDisplay, formatPhoneFinal } from "@/utils/formatPhone";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
+import {
+  founderProfileDestination,
+  getMyFreeServiceEntitlement,
+  isActiveFreeServiceEntitlement,
+} from "@/lib/founderEntitlement";
 
 const OTHER_SLUG = "autre-service-residentiel";
 /** Reprise après clic sur le lien de vérification reçu par courriel. */
@@ -91,8 +104,12 @@ export default function PageFounderLocalServices() {
   const [otpNotice, setOtpNotice] = useState<string | null>(null);
   const [otpError, setOtpError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
+  const [entitlementChecking, setEntitlementChecking] = useState(true);
+  const [entitlementError, setEntitlementError] = useState<string | null>(null);
   /** Empêche une double activation sur double-clic ou reprise simultanée. */
   const activatingRef = useRef(false);
+
+  const profileHref = useMemo(() => founderProfileDestination(sp), [sp]);
 
   const { data: categories } = useQuery({
     queryKey: ["founder-eligible-categories"],
@@ -414,7 +431,11 @@ export default function PageFounderLocalServices() {
     setVerifying(false);
   };
 
-  /** Reprise automatique si l'entreprise a cliqué le lien du courriel. */
+  /**
+   * Reprise automatique après vérification et reconnaissance d'une adhésion
+   * déjà activée. La base reste la source de vérité : aucun paramètre d'URL
+   * ne peut fabriquer l'accès gratuit.
+   */
   useEffect(() => {
     let cancelled = false;
     void logFunnelEvent({ event_type: "landing_viewed", step: "founder_free_landing" });
@@ -424,17 +445,57 @@ export default function PageFounderLocalServices() {
         const raw = localStorage.getItem(PENDING_KEY);
         pending = raw ? JSON.parse(raw) : null;
       } catch { /* noop */ }
-      if (!pending?.membershipId || !pending.email) return;
-      const { data } = await supabase.auth.getSession();
-      if (!data.session || cancelled) return;
-      void logFunnelEvent({
-        event_type: "auth_completed",
-        email: pending.email,
-        step: "founder_free_signup",
-        metadata: { method: "email_link" },
-      });
-      setResult({ kind: "pending", membershipId: pending.membershipId, email: pending.email });
-      await activate(pending.membershipId, pending.email);
+
+      const pendingSignup =
+        pending?.membershipId && pending.email
+          ? { membershipId: pending.membershipId, email: pending.email }
+          : null;
+      if (pendingSignup && !cancelled) {
+        setResult({ kind: "pending", ...pendingSignup });
+      }
+
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session || cancelled) return;
+
+        try {
+          const entitlement = await getMyFreeServiceEntitlement();
+          if (cancelled) return;
+          if (isActiveFreeServiceEntitlement(entitlement)) {
+            try { localStorage.removeItem(PENDING_KEY); } catch { /* noop */ }
+            setResult({ kind: "success", founderEnd: entitlement.founder_end });
+            void logFunnelEvent({
+              event_type: "free_offer_accepted",
+              contractor_id: entitlement.contractor_id,
+              step: "founder_entitlement_recognized",
+              metadata: {
+                membership_id: entitlement.membership_id,
+                founder_end: entitlement.founder_end,
+                source: "server_verified_resume",
+              },
+            });
+            return;
+          }
+        } catch {
+          if (!pendingSignup) {
+            setEntitlementError(
+              "Nous n'avons pas pu vérifier votre inscription gratuite. Réessayez dans un instant.",
+            );
+            return;
+          }
+        }
+
+        if (!pendingSignup || cancelled) return;
+        void logFunnelEvent({
+          event_type: "auth_completed",
+          email: pendingSignup.email,
+          step: "founder_free_signup",
+          metadata: { method: "email_link" },
+        });
+        await activate(pendingSignup.membershipId, pendingSignup.email);
+      } finally {
+        if (!cancelled) setEntitlementChecking(false);
+      }
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -503,7 +564,26 @@ export default function PageFounderLocalServices() {
         {/* Signup */}
         <section className="mx-auto w-full max-w-2xl px-5 pb-28 md:pb-20">
           <div className="rounded-[28px] border border-border bg-card p-6 shadow-lg shadow-primary/5 md:p-10">
-            {result?.kind === "success" ? (
+            {entitlementChecking ? (
+              <div className="flex items-center justify-center gap-2 py-8 text-[14px] text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                Vérification de votre inscription…
+              </div>
+            ) : entitlementError ? (
+              <div className="text-center">
+                <h2 className="text-xl font-semibold text-foreground">
+                  Vérification temporairement impossible
+                </h2>
+                <p className="mt-3 text-[14px] text-muted-foreground">{entitlementError}</p>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="mt-5 rounded-2xl bg-primary px-6 py-3 text-[14px] font-semibold text-primary-foreground"
+                >
+                  Réessayer
+                </button>
+              </div>
+            ) : result?.kind === "success" ? (
               <div className="text-center">
                 <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <BadgeCheck className="h-7 w-7" />
@@ -512,7 +592,7 @@ export default function PageFounderLocalServices() {
                   Bienvenue, membre fondateur.
                 </h2>
                 <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-                  Votre membership est actif gratuitement
+                  Votre adhésion gratuite est active
                   {result.founderEnd ? (
                     <>
                       {" jusqu'au "}
@@ -527,17 +607,18 @@ export default function PageFounderLocalServices() {
                   ) : (
                     " pour les 12 prochains mois"
                   )}
-                  . Aucun paiement n'a été demandé. Avant tout renouvellement à
-                  350 $/an, vous recevrez un avis clair et votre consentement
-                  sera requis.
+                  . <strong className="text-foreground">0 $ aujourd'hui, aucune carte requise.</strong>{" "}
+                  Un agenda est inclus pour recevoir et gérer vos demandes. Avant
+                  tout renouvellement à 350 $/an, vous recevrez un avis clair et
+                  votre consentement sera requis.
                 </p>
-                <a
-                  href="/entrepreneur/profil"
+                <Link
+                  to={profileHref}
                   className="mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-[15px] font-semibold text-primary-foreground shadow-md shadow-primary/25"
                 >
                   Compléter mon profil public
                   <ArrowRight className="h-4 w-4" />
-                </a>
+                </Link>
               </div>
             ) : result?.kind === "pending" ? (
               <div className="text-center">

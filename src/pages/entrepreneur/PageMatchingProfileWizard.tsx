@@ -3,8 +3,9 @@
  *
  * Assistant de complétion du profil de MATCHING. Une question à la fois,
  * sauvegarde progressive à chaque réponse, reprise automatique (jamais de
- * redémarrage), puis transition vers les forfaits — le prix n'apparaît
- * qu'après l'activation et la démonstration de valeur.
+ * redémarrage), puis transition vers l'étape d'activation appropriée. Les
+ * membres fondateurs gratuits passent à l'agenda inclus; les autres parcours
+ * conservent la transition vers les forfaits.
  *
  * Attribution : audit, audit_token, jeton d'activation (?t=), ref affilié et
  * UTM sont conservés sur la ligne serveur ET dans l'URL vers les forfaits.
@@ -20,6 +21,12 @@ import { useLanguage } from "@/components/ui/LanguageToggle";
 import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { AuditProHeader } from "@/components/audit-ia/AuditProHeader";
 import { HowItWorksBlock } from "@/components/audit-ia/HowItWorksBlock";
+import {
+  type FreeServiceEntitlement,
+  getMyFreeServiceEntitlement,
+  isActiveFreeServiceEntitlement,
+  postMatchingProfileDestination,
+} from "@/lib/founderEntitlement";
 import {
   completionOf,
   questionsForTrade,
@@ -73,7 +80,9 @@ export default function PageMatchingProfileWizard() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [chipDraft, setChipDraft] = useState("");
+  const [founderEntitlement, setFounderEntitlement] = useState<FreeServiceEntitlement | null>(null);
   const startedLogged = useRef(false);
+  const hasFreeYear = isActiveFreeServiceEntitlement(founderEntitlement);
 
   const context = useMemo(
     () => ({
@@ -99,22 +108,36 @@ export default function PageMatchingProfileWizard() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data, error } = await supabase.functions.invoke("matching-profile", {
-        body: { action: "get", session_key: sessionKey },
-      });
-      if (cancelled) return;
-      const response = data as MatchingProfileResponse | null;
-      const profile = response?.profile;
-      if (error || response?.error) {
-        setLoadError(response?.error || error?.message || "Impossible de reprendre le profil.");
+      try {
+        const [profileRequest, entitlement] = await Promise.all([
+          supabase.functions.invoke("matching-profile", {
+            body: { action: "get", session_key: sessionKey },
+          }),
+          getMyFreeServiceEntitlement(),
+        ]);
+        if (cancelled) return;
+
+        setFounderEntitlement(entitlement);
+        const response = profileRequest.data as MatchingProfileResponse | null;
+        const profile = response?.profile;
+        if (profileRequest.error || response?.error) {
+          setLoadError(
+            response?.error || profileRequest.error?.message || "Impossible de reprendre le profil.",
+          );
+        }
+        if (profile?.answers) {
+          setAnswers(profile.answers as Answers);
+          if (profile.status === "completed") setDone(true);
+          const firstUnanswered = questions.findIndex((q) => !isFilled(profile.answers[q.key]));
+          setIndex(firstUnanswered === -1 ? questions.length - 1 : firstUnanswered);
+        }
+      } catch {
+        setLoadError(
+          "Impossible de vérifier votre activation UNPRO. Réessayez avant de poursuivre.",
+        );
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      if (profile?.answers) {
-        setAnswers(profile.answers as Answers);
-        if (profile.status === "completed") setDone(true);
-        const firstUnanswered = questions.findIndex((q) => !isFilled(profile.answers[q.key]));
-        setIndex(firstUnanswered === -1 ? questions.length - 1 : firstUnanswered);
-      }
-      setLoading(false);
     })();
     return () => {
       cancelled = true;
@@ -184,7 +207,24 @@ export default function PageMatchingProfileWizard() {
     }
   }
 
-  function goToPlans() {
+  function goToNextActivation() {
+    if (hasFreeYear) {
+      void logFunnelEvent({
+        event_type: "onboarding_resumed",
+        event_source: "app",
+        contractor_id: founderEntitlement?.contractor_id,
+        current_path: "/entrepreneurs/profil",
+        step: "calendar_setup_offered",
+        metadata: {
+          membership_id: founderEntitlement?.membership_id,
+          founder_end: founderEntitlement?.founder_end,
+          free_offer: true,
+        },
+      });
+      navigate(postMatchingProfileDestination(founderEntitlement));
+      return;
+    }
+
     void logFunnelEvent({
       event_type: "plans_viewed",
       event_source: "app",
@@ -237,6 +277,33 @@ export default function PageMatchingProfileWizard() {
           )}
         </div>
 
+        {hasFreeYear && (
+          <section className="mb-5 rounded-2xl border border-success/40 bg-[hsl(152_69%_31%/0.06)] p-4">
+            <div className="flex items-start gap-3">
+              <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-success" aria-hidden />
+              <div>
+                <p className="text-[14px] font-bold text-foreground">
+                  {fr ? "Inscription gratuite active" : "Free membership active"}
+                </p>
+                <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+                  {fr
+                    ? "0 $ aujourd'hui · aucune carte requise · 1 agenda inclus"
+                    : "$0 today · no card required · 1 calendar included"}
+                  {founderEntitlement?.founder_end
+                    ? ` · ${fr ? "jusqu'au" : "until"} ${new Date(
+                        founderEntitlement.founder_end,
+                      ).toLocaleDateString(fr ? "fr-CA" : "en-CA", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}`
+                    : ""}
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+
         {loadError ? (
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
             <p className="font-semibold text-destructive">Votre progression n’a pas été perdue.</p>
@@ -275,11 +342,17 @@ export default function PageMatchingProfileWizard() {
             <HowItWorksBlock lang={fr ? "fr" : "en"} />
 
             <Button
-              onClick={goToPlans}
+              onClick={goToNextActivation}
               size="lg"
               className="gold-btn h-14 w-full rounded-2xl border-0 text-[15px] font-bold hover:text-primary-foreground"
             >
-              {fr ? "Voir mon activation UNPRO" : "See my UNPRO activation"}
+              {hasFreeYear
+                ? fr
+                  ? "Connecter mon agenda inclus"
+                  : "Connect my included calendar"
+                : fr
+                  ? "Voir mon activation UNPRO"
+                  : "See my UNPRO activation"}
               <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
             </Button>
           </div>
