@@ -1210,6 +1210,9 @@ Deno.serve(async (req) => {
         city: ctx.city,
         category: ctx.category,
         limit: ctx.limit,
+        free_only: freeOnly,
+        free_excluded_count: freeExcluded.length,
+        free_excluded_sample: freeExcluded.slice(0, 10),
         counts,
         prospects: perProspect,
       });
