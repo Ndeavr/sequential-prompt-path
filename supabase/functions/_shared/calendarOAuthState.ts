@@ -96,7 +96,7 @@ export async function verifyCalendarOAuthState(
     const valid = await crypto.subtle.verify(
       "HMAC",
       await hmacKey(secret),
-      fromBase64Url(encodedSignature),
+      fromBase64Url(encodedSignature).slice() as unknown as BufferSource,
       encoder.encode(encodedPayload),
     );
     if (!valid) return null;
