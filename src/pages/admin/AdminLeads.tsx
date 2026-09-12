@@ -2,14 +2,23 @@ import AdminLayout from "@/layouts/AdminLayout";
 import { PageHeader, LoadingState, EmptyState, StatCard } from "@/components/shared";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useAdminLeads, useAdminLeadStats } from "@/hooks/useLeads";
+import {
+  useAdminLeads,
+  useAdminLeadStats,
+  useHomeownerLeads,
+  HOMEOWNER_LEAD_SOURCE_LABELS,
+  type HomeownerLeadSource,
+} from "@/hooks/useLeads";
 import { CalendarCheck, Zap, BarChart3, CalendarDays } from "lucide-react";
+import { useState } from "react";
 
 const levelLabel = (score: number) => score >= 60 ? "Élevé" : score >= 35 ? "Moyen" : "Faible";
 
 const AdminLeads = () => {
   const { data: leads, isLoading } = useAdminLeads();
   const { data: stats } = useAdminLeadStats();
+  const [ownerSource, setOwnerSource] = useState<HomeownerLeadSource>("all");
+  const { data: ownerLeads, isLoading: ownerLoading } = useHomeownerLeads(ownerSource);
 
   return (
     <AdminLayout>
@@ -59,6 +68,67 @@ const AdminLeads = () => {
           </Table>
         </div>
       )}
+
+      {/* Demandes propriétaires — filtrables par provenance */}
+      <section className="mt-10">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-medium">Demandes propriétaires</h2>
+          <div className="flex items-center gap-2">
+            <label htmlFor="owner-source" className="text-sm text-muted-foreground">Provenance</label>
+            <select
+              id="owner-source"
+              value={ownerSource}
+              onChange={(e) => setOwnerSource(e.target.value as HomeownerLeadSource)}
+              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+            >
+              {(Object.keys(HOMEOWNER_LEAD_SOURCE_LABELS) as HomeownerLeadSource[]).map((s) => (
+                <option key={s} value={s}>{HOMEOWNER_LEAD_SOURCE_LABELS[s]}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {ownerLoading ? <LoadingState /> : !ownerLeads?.length ? (
+          <EmptyState message="Aucune demande propriétaire pour cette provenance." />
+        ) : (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Provenance</TableHead>
+                  <TableHead>Catégorie</TableHead>
+                  <TableHead>Ville</TableHead>
+                  <TableHead>Budget estimé</TableHead>
+                  <TableHead>Compatibilité</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {ownerLeads.map((l) => (
+                  <TableRow key={l.id}>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs">
+                        {HOMEOWNER_LEAD_SOURCE_LABELS[l.source as HomeownerLeadSource] ?? l.source}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{l.project_category || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{l.city || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {l.budget_min != null && l.budget_max != null
+                        ? `${Math.round(Number(l.budget_min)).toLocaleString("fr-CA")} $ – ${Math.round(Number(l.budget_max)).toLocaleString("fr-CA")} $`
+                        : "—"}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{l.matching_status || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {new Date(l.created_at).toLocaleDateString("fr-CA")}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </section>
     </AdminLayout>
   );
 };
