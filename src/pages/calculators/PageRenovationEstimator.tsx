@@ -206,6 +206,18 @@ export default function PageRenovationEstimator() {
     topRef.current?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
   }, [reduceMotion]);
 
+  /** Le focus suit l'étape affichée : navigation clavier et lecteurs d'écran. */
+  const stepHeadingId =
+    step === 1 ? "etape-projet" : step === 2 ? "etape-details" : "etape-estimation";
+  useEffect(() => {
+    const el = document.getElementById(stepHeadingId);
+    if (!el) return;
+    el.setAttribute("tabindex", "-1");
+    el.focus({ preventScroll: true });
+  }, [stepHeadingId]);
+
+
+
   const selectCategory = (c: RenoCategory) => {
     setCategory(c);
     setSizeSqft(CATEGORIES[c].sizeDefault);
