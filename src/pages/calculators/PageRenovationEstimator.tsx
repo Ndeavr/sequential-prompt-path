@@ -560,18 +560,23 @@ export default function PageRenovationEstimator() {
                 <legend className="mb-2 text-sm font-medium">Niveau de finition</legend>
                 <div className="grid grid-cols-3 gap-2">
                   {(Object.keys(SCOPE_LABELS) as ScopeLevel[]).map((s) => (
-                    <button
+                    <motion.button
                       key={s}
                       type="button"
+                      {...press}
                       onClick={() => setScope(s)}
                       aria-pressed={scope === s}
+                      data-testid={`scope-${s}`}
                       className={`min-h-[3rem] rounded-xl border px-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                        scope === s ? "border-primary bg-primary/5 font-medium" : "border-border bg-card"
+                        scope === s
+                          ? "border-primary bg-primary/5 font-medium shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
+                          : "border-border bg-card"
                       }`}
                     >
                       {SCOPE_LABELS[s]}
-                    </button>
+                    </motion.button>
                   ))}
+
                 </div>
               </fieldset>
 
