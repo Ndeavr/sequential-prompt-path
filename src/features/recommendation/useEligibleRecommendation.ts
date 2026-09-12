@@ -24,6 +24,15 @@ export interface EligibleRecommendation {
   reason: string | null;
 }
 
+/** États de réponse qui invalident définitivement une recommandation. */
+export const REFUSED_RESPONSE_STATES = new Set([
+  "declined",
+  "rejected",
+  "expired",
+  "cancelled",
+  "canceled",
+]);
+
 export function isEligibleContractor(pro: Record<string, unknown>): boolean {
   const rbqValid =
     typeof pro.rbq_number === "string" &&
