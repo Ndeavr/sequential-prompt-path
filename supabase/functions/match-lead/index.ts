@@ -39,6 +39,7 @@ export {
   servesCityGate,
   BAD_LICENCE_STATES,
   REFUSED_RESPONSE_STATES,
+  assertQueryOk,
 } from "./gates.ts";
 import {
   canonicalCategorySlug,
@@ -47,6 +48,7 @@ import {
   servesCityGate,
   BAD_LICENCE_STATES,
   REFUSED_RESPONSE_STATES,
+  assertQueryOk,
 } from "./gates.ts";
 
 
@@ -277,7 +279,7 @@ Deno.serve(async (req) => {
     // ── Contractor path (real schema) ──────────────────────────────────
     // 1. Bassin strictement admissible : aucun entrepreneur en attente,
     //    licence RBQ vérifiée, active et non expirée.
-    const { data: poolRaw } = await supabase
+    const poolRes = await supabase
       .from("contractors")
       .select(
         "id, business_name, city, aipp_score, rating, review_count, years_experience, verification_status, languages_spoken, rbq_number, rbq_compliance_status, rbq_verified_at, rbq_expiry_date",
@@ -289,15 +291,17 @@ Deno.serve(async (req) => {
       .eq("rbq_compliance_status", "verified")
       .not("rbq_number", "is", null)
       .not("rbq_verified_at", "is", null);
+    const poolRaw = assertQueryOk<any[]>("contractors_pool_read", poolRes);
 
     let contractors = (poolRaw ?? []).filter((c: any) => rbqGatePasses(c));
 
     // Preuve plus forte : une licence explicitement invalide exclut le pro.
     if (contractors.length > 0) {
-      const { data: licences } = await supabase
+      const licencesRes = await supabase
         .from("contractor_licenses")
         .select("contractor_id, status, expiry_date")
         .in("contractor_id", contractors.map((c: any) => c.id));
+      const licences = assertQueryOk<any[]>("contractor_licenses_read", licencesRes);
       const blocked = new Set<string>();
       for (const l of (licences ?? []) as any[]) {
         const status = String(l.status ?? "").toLowerCase();
@@ -309,7 +313,7 @@ Deno.serve(async (req) => {
 
     const contractorIds = contractors.map((c: any) => c.id);
     if (contractorIds.length === 0) {
-      await supabase
+      const { error: emptyPoolErr } = await supabase
         .from("leads")
         .update({
           status: "no_match",
@@ -318,6 +322,7 @@ Deno.serve(async (req) => {
           assigned_contractor_id: null,
         })
         .eq("id", leadId);
+      if (emptyPoolErr) throw new Error(`lead_update_failed: ${emptyPoolErr.message}`);
       return new Response(
         JSON.stringify({ ok: true, matches_count: 0, matches: [], reason: "no_eligible_pool" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -328,7 +333,8 @@ Deno.serve(async (req) => {
     const canonicalCategory = canonicalCategorySlug(typedLead.project_category);
 
     // 2. Load service areas + category assignments + compatibility rules in parallel.
-    const [{ data: areas }, { data: cats }, { data: catRow }, { data: compatRules }] = await Promise.all([
+    //    Toute erreur est propagée : jamais de repli silencieux sur un tableau vide.
+    const [areasRes, catsRes, catRowRes, compatRulesRes] = await Promise.all([
       supabase
         .from("contractor_service_areas")
         .select("contractor_id, city_name")
@@ -343,7 +349,7 @@ Deno.serve(async (req) => {
             .select("id, slug")
             .eq("slug", canonicalCategory)
             .maybeSingle()
-        : Promise.resolve({ data: null } as any),
+        : Promise.resolve({ data: null, error: null } as any),
 
       supabase
         .from("contractor_matching_rules")
@@ -351,6 +357,12 @@ Deno.serve(async (req) => {
         .in("contractor_id", contractorIds)
         .eq("is_active", true),
     ]);
+
+    const areas = assertQueryOk<any[]>("contractor_service_areas_read", areasRes);
+    const cats = assertQueryOk<any[]>("contractor_categories_read", catsRes);
+    const catRow = assertQueryOk<any>("service_category_read", catRowRes);
+    const compatRules = assertQueryOk<any[]>("contractor_matching_rules_read", compatRulesRes);
+
 
     // Profil de compatibilité → règles appliquées au classement.
     // Les règles `inferred` n'excluent JAMAIS : elles modulent seulement le score.

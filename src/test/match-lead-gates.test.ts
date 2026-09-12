@@ -8,6 +8,7 @@
 import { describe, expect, it } from "vitest";
 import {
   REFUSED_RESPONSE_STATES,
+  assertQueryOk,
   canonicalCategorySlug,
   rbqGatePasses,
   servesCityGate,
@@ -82,5 +83,32 @@ describe("rejeu idempotent", () => {
     }
     expect(REFUSED_RESPONSE_STATES.has("pending")).toBe(false);
     expect(REFUSED_RESPONSE_STATES.has("accepted")).toBe(false);
+  });
+});
+
+describe("propagation stricte des erreurs Supabase", () => {
+  it("lève une erreur descriptive quand la requête échoue", () => {
+    expect(() =>
+      assertQueryOk("contractors_pool_read", { data: null, error: { message: "boom" } }),
+    ).toThrow("contractors_pool_read_failed: boom");
+  });
+
+  it("lève une erreur quand aucune réponse n'est retournée", () => {
+    expect(() => assertQueryOk("contractor_licenses_read", null)).toThrow(
+      "contractor_licenses_read_failed: no_response",
+    );
+  });
+
+  it("ne transforme jamais une erreur en tableau vide", () => {
+    expect(() =>
+      assertQueryOk("contractor_service_areas_read", { data: [], error: { message: "timeout" } }),
+    ).toThrow(/contractor_service_areas_read_failed/);
+  });
+
+  it("retourne les données lorsque la requête réussit", () => {
+    expect(assertQueryOk("contractor_categories_read", { data: [{ id: "a" }], error: null })).toEqual([
+      { id: "a" },
+    ]);
+    expect(assertQueryOk("service_category_read", { data: null, error: null })).toBeNull();
   });
 });

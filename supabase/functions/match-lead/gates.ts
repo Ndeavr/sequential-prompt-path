@@ -79,3 +79,17 @@ export function rbqGatePasses(c: {
   if (c.rbq_expiry_date && new Date(c.rbq_expiry_date).getTime() <= now) return false;
   return true;
 }
+
+/**
+ * Propagation stricte des erreurs Supabase : aucune requête critique ne peut
+ * dégénérer silencieusement en résultat vide. Retourne les données lorsque la
+ * requête a réussi, lève une erreur descriptive sinon.
+ */
+export function assertQueryOk<T>(
+  label: string,
+  res: { data?: T | null; error?: { message?: string } | null } | null | undefined,
+): T | null {
+  if (!res) throw new Error(`${label}_failed: no_response`);
+  if (res.error) throw new Error(`${label}_failed: ${res.error.message ?? "unknown_error"}`);
+  return (res.data ?? null) as T | null;
+}
