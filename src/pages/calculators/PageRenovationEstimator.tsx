@@ -191,12 +191,14 @@ export default function PageRenovationEstimator() {
 
   const goToDetails = () => {
     if (!category) return;
+    setDir(1);
     setStep(2);
     goTop();
   };
 
   const goToResult = () => {
     if (!category || !estimate) return;
+    setDir(1);
     setStep(3);
     goTop();
     void logFunnelEvent({
