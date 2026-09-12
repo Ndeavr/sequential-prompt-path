@@ -500,8 +500,8 @@ Deno.serve(async (req) => {
         }
         return { ...base, score: Math.max(0, Math.min(score, 100)), reasons };
       })
-      // require at least city OR category to qualify
-      .filter((m) => m.score >= 25)
+      // catégorie canonique + territoire déjà exigés : score résiduel requis
+      .filter((m) => m.score >= 50)
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
 
