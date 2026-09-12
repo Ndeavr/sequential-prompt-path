@@ -1,6 +1,7 @@
 /**
  * PageProjectCreatedSuccess — success screen after project creation.
- * Displays demand context and routes user to next canonical step.
+ * Carries the canonical project/lead context to the next step so the
+ * recommendation step can read the real persisted match.
  */
 import { useSearchParams, Link } from "react-router-dom";
 import PageShell from "@/layouts/PageShell";
@@ -9,7 +10,20 @@ import PrimaryCTA from "@/components/cta/PrimaryCTA";
 export default function PageProjectCreatedSuccess() {
   const [params] = useSearchParams();
   const projectId = params.get("id") ?? "";
+  const leadId = params.get("lead") ?? "";
   const hasMatches = params.get("matches") === "1";
+
+  const contextQuery = [
+    projectId ? `project=${encodeURIComponent(projectId)}` : "",
+    leadId ? `lead=${encodeURIComponent(leadId)}` : "",
+  ]
+    .filter(Boolean)
+    .join("&");
+
+  const recommendationHref = `/recommendations${contextQuery ? `?${contextQuery}` : ""}`;
+  const waitingHref = projectId
+    ? `/dashboard/projects/${encodeURIComponent(projectId)}/waiting`
+    : "/dashboard";
 
   return (
     <PageShell id="project-created" variant="app" cta={false}>
@@ -40,11 +54,19 @@ export default function PageProjectCreatedSuccess() {
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             {hasMatches ? (
-              <PrimaryCTA cta="book" size="lg" label="Voir mes recommandations" />
+              <Link
+                to={recommendationHref}
+                data-cta-canonical="book"
+                data-testid="cta-recommendations"
+                className="inline-flex h-14 items-center justify-center rounded-[18px] bg-white px-8 font-medium text-black transition-all hover:-translate-y-[2px]"
+              >
+                Voir ma recommandation
+              </Link>
             ) : (
               <Link
-                to={`/waiting${projectId ? `?project=${projectId}` : ""}`}
+                to={waitingHref}
                 data-cta-canonical="book"
+                data-testid="cta-waiting"
                 className="inline-flex h-14 items-center justify-center rounded-[18px] bg-white px-8 font-medium text-black transition-all hover:-translate-y-[2px]"
               >
                 Suivre ma demande

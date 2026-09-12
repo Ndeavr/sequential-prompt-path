@@ -269,7 +269,9 @@ export default function PageRenovationEstimator() {
       });
       clearProgress();
       navigate(
-        `/project-created?id=${encodeURIComponent(result.projectId)}${result.hasMatches ? "&matches=1" : ""}`,
+        `/project-created?id=${encodeURIComponent(result.projectId)}` +
+          (result.leadId ? `&lead=${encodeURIComponent(result.leadId)}` : "") +
+          (result.hasMatches ? "&matches=1" : ""),
       );
     } catch (e) {
       const msg = e instanceof Error ? e.message : "save_failed";
