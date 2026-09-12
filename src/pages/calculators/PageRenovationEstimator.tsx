@@ -670,7 +670,7 @@ export default function PageRenovationEstimator() {
               </div>
 
               <div className="flex gap-3">
-                <Button variant="outline" className="h-12 flex-1" onClick={() => { setStep(1); goTop(); }}>
+                <Button variant="outline" className="h-12 flex-1" onClick={() => { setDir(-1); setStep(1); goTop(); }}>
                   <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
                   Retour
                 </Button>
@@ -882,7 +882,7 @@ export default function PageRenovationEstimator() {
                 </div>
               )}
 
-              <Button variant="ghost" className="h-12 w-full" onClick={() => { setStep(2); goTop(); }}>
+              <Button variant="ghost" className="h-12 w-full" onClick={() => { setDir(-1); setStep(2); goTop(); }}>
                 <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
                 Modifier mes détails
               </Button>
