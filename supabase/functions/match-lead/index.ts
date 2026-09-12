@@ -254,6 +254,7 @@ Deno.serve(async (req) => {
 
     // ── Broker path (unchanged legacy) ─────────────────────────────────
     if (typedLead.lead_type === "broker") {
+      await resetPendingMatches();
       const { data: brokers } = await supabase
         .from("broker_profiles")
         .select("id, city, service_areas, specialties, languages, years_experience");
