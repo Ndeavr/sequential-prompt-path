@@ -807,7 +807,7 @@ export default function PageRenovationEstimator() {
                     asChild
                     onClick={() =>
                       void logFunnelEvent({
-                        event_type: "estimator_clara_clicked" as never,
+                        event_type: "estimator_clara_clicked",
                         step: "estimator",
                         metadata: { category },
                       })
