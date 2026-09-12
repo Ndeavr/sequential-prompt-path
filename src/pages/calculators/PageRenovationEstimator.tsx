@@ -667,12 +667,13 @@ export default function PageRenovationEstimator() {
 
               <p className="flex items-start gap-2 rounded-xl bg-muted p-4 text-xs text-muted-foreground">
                 <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                Cette fourchette est indicative et repose sur des références de marché
-                {estimate.benchmark.verifiedComponents > 0
-                  ? " et sur des composantes mesurées dans nos données"
-                  : ""}
-                . Seule une visite permet d'obtenir un prix ferme.
+                Cette fourchette est indicative : elle repose sur des références de
+                marché inférées (version {estimate.benchmark.version}, en vigueur le{" "}
+                {estimate.benchmark.effectiveDate}). Certaines lignes peuvent afficher
+                une provenance vérifiée; l'estimation globale demeure inférée. Seule
+                une visite permet d'obtenir un prix ferme.
               </p>
+
 
               {!saveOpen ? (
                 <div className="space-y-3">
