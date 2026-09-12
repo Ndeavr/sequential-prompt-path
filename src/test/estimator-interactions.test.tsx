@@ -9,6 +9,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { HelmetProvider } from "react-helmet-async";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/hooks/useAuth", () => ({
@@ -43,11 +44,13 @@ import PageRenovationEstimator from "@/pages/calculators/PageRenovationEstimator
 function renderPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <QueryClientProvider client={qc}>
+    <HelmetProvider>
+      <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={["/calculateur-renovation"]}>
         <PageRenovationEstimator />
       </MemoryRouter>
-    </QueryClientProvider>,
+      </QueryClientProvider>
+    </HelmetProvider>,
   );
 }
 
