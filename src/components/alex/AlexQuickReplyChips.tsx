@@ -27,6 +27,7 @@ function getChipsForStep(step: AlexStep): Chip[] {
         { label: "⚡ Électricité", value: "Je cherche un électricien." },
         { label: "🏗️ Rénovation complète", value: "Je planifie une rénovation complète." },
         { label: "🚚 Déménagement", value: "Je cherche une compagnie de déménagement." },
+        { label: "💰 Estimer mes rénovations", value: "Je veux estimer le coût de mes rénovations." },
       ];
     case "thinking":
     case "predicting":
