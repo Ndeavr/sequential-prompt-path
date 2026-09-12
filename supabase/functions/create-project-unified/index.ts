@@ -217,8 +217,19 @@ Deno.serve(async (req) => {
         "invalid_idempotency_key",
         "lead_creation_failed",
         "profile_unavailable",
+        "property_limit_reached",
       ].find((k) => code.includes(k));
       console.error("[create-project-unified] rpc", code);
+      if (known === "property_limit_reached") {
+        return json(
+          {
+            error: "property_limit_reached",
+            message:
+              "Votre compte est limité à une propriété. Choisissez l'adresse déjà enregistrée ou mettez votre compte à niveau pour ajouter cette adresse.",
+          },
+          409,
+        );
+      }
       return json({ error: known ?? "conversion_failed" }, known ? 400 : 500);
     }
 

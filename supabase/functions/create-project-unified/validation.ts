@@ -25,10 +25,9 @@ export const ALLOWED_PROPERTY_TYPES = new Set(["maison", "condo", "plex", "autre
 export const ALLOWED_URGENCY = new Set(["urgent", "normal", "flexible"]);
 export const ALLOWED_SCOPE = new Set(["essentiel", "standard", "haut_de_gamme"]);
 export const ALLOWED_AGE = new Set([
-  "avant_1960",
-  "1960_1990",
-  "1990_2010",
-  "apres_2010",
+  "recent",
+  "1980_2005",
+  "avant_1980",
   "inconnu",
 ]);
 export const KNOWN_ESTIMATOR_VERSIONS = new Set(["reno-bench-2026.09"]);
