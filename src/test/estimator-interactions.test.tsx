@@ -60,6 +60,7 @@ function renderPage() {
 beforeEach(() => {
   window.sessionStorage.clear();
   window.localStorage.clear();
+  vi.stubGlobal("scrollTo", () => undefined);
   vi.stubGlobal(
     "ResizeObserver",
     class {
