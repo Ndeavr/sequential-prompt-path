@@ -390,22 +390,52 @@ Deno.serve(async (req) => {
     }
 
     // 5. Moteur de compatibilité canonique (jamais un second matcher).
-    if (!result.reused) {
-      try {
-        await fetch(`${supabaseUrl}/functions/v1/match-lead`, {
-          method: "POST",
-          headers: { Authorization: auth, "Content-Type": "application/json" },
-          body: JSON.stringify({ leadId }),
-        });
-      } catch (e) {
-        console.warn("[create-project-unified] match-lead", String(e));
+    // Un rejeu recalcule toujours l'état réel du jumelage.
+    let matchingError = false;
+    try {
+      const res = await fetch(`${supabaseUrl}/functions/v1/match-lead`, {
+        method: "POST",
+        headers: { Authorization: auth, "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId }),
+      });
+      if (!res.ok) {
+        matchingError = true;
+        console.error("[create-project-unified] match-lead http", res.status);
+      } else {
+        const out = (await res.json().catch(() => null)) as { ok?: boolean } | null;
+        if (!out?.ok) matchingError = true;
       }
+    } catch (e) {
+      matchingError = true;
+      console.warn("[create-project-unified] match-lead", String(e));
+    }
+
+    if (matchingError) {
+      // Aucune réussite annoncée : la demande reste honnêtement en attente.
+      await supabase
+        .from("leads")
+        .update({ matching_status: "pending" })
+        .eq("id", leadId)
+        .in("matching_status", ["pending", "empty"]);
+      return json({
+        projectId,
+        leadId,
+        hasMatches: false,
+        reused: result.reused,
+        matchingStatus: "pending",
+      });
     }
 
     // 6. État réellement persisté + garde d'admissibilité stricte.
     const hasMatches = await hasEligibleRecommendation(supabase, leadId);
 
-    return json({ projectId, leadId, hasMatches, reused: result.reused });
+    return json({
+      projectId,
+      leadId,
+      hasMatches,
+      reused: result.reused,
+      matchingStatus: hasMatches ? "matched" : "empty",
+    });
   } catch (e) {
     console.error("[create-project-unified]", e instanceof Error ? e.message : String(e));
     return json({ error: "unexpected_error" }, 500);
