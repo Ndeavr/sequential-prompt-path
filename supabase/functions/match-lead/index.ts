@@ -306,28 +306,55 @@ Deno.serve(async (req) => {
     }
 
     // ── Contractor path (real schema) ──────────────────────────────────
-    // 1. Pull recommendation-eligible contractors only.
-    const { data: contractors } = await supabase
+    // 1. Bassin strictement admissible : aucun entrepreneur en attente,
+    //    licence RBQ vérifiée, active et non expirée.
+    const { data: poolRaw } = await supabase
       .from("contractors")
       .select(
-        "id, business_name, city, aipp_score, rating, review_count, years_experience, verification_status, languages_spoken",
+        "id, business_name, city, aipp_score, rating, review_count, years_experience, verification_status, languages_spoken, rbq_number, rbq_compliance_status, rbq_verified_at, rbq_expiry_date",
       )
       .eq("account_status", "active")
       .eq("booking_enabled", true)
       .eq("is_accepting_appointments", true)
-      .in("verification_status", ["verified", "pending"]);
+      .eq("verification_status", "verified")
+      .eq("rbq_compliance_status", "verified")
+      .not("rbq_number", "is", null)
+      .not("rbq_verified_at", "is", null);
 
-    const contractorIds = (contractors ?? []).map((c: any) => c.id);
+    let contractors = (poolRaw ?? []).filter((c: any) => rbqGatePasses(c));
+
+    // Preuve plus forte : une licence explicitement invalide exclut le pro.
+    if (contractors.length > 0) {
+      const { data: licences } = await supabase
+        .from("contractor_licenses")
+        .select("contractor_id, status, expiry_date")
+        .in("contractor_id", contractors.map((c: any) => c.id));
+      const blocked = new Set<string>();
+      for (const l of (licences ?? []) as any[]) {
+        const status = String(l.status ?? "").toLowerCase();
+        const expired = l.expiry_date && new Date(l.expiry_date).getTime() <= Date.now();
+        if (BAD_LICENCE_STATES.has(status) || expired) blocked.add(String(l.contractor_id));
+      }
+      contractors = contractors.filter((c: any) => !blocked.has(String(c.id)));
+    }
+
+    const contractorIds = contractors.map((c: any) => c.id);
     if (contractorIds.length === 0) {
       await supabase
         .from("leads")
-        .update({ status: "no_match", matching_status: "empty" })
+        .update({
+          status: "no_match",
+          matching_status: "empty",
+          assigned_match_id: null,
+          assigned_contractor_id: null,
+        })
         .eq("id", leadId);
       return new Response(
         JSON.stringify({ ok: true, matches_count: 0, matches: [], reason: "no_eligible_pool" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
 
     // 2. Load service areas + category assignments + compatibility rules in parallel.
     const [{ data: areas }, { data: cats }, { data: catRow }, { data: compatRules }] = await Promise.all([
