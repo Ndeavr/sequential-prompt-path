@@ -296,16 +296,38 @@ Deno.serve(async (req) => {
         ? body.longitude
         : null;
 
+    let firstName = text(body.first_name, 80);
+    let estimatorInputs: Record<string, unknown> | null = null;
+    let estimatePayload: Record<string, unknown> | null = null;
+
+    if (source === "renovation_calculator") {
+      firstName = validFirstName(body.first_name);
+      if (!firstName) return json({ error: "invalid_first_name" }, 400);
+
+      const inputs = validateEstimatorInputs(category as string, body.inputs);
+      if (!inputs.ok) return json({ error: inputs.error }, 400);
+      estimatorInputs = inputs.value;
+
+      const est = validateEstimatePayload(body.estimate);
+      if (!est.ok) return json({ error: est.error }, 400);
+      estimatePayload = est.value;
+    }
+
     const payload = {
-      first_name: text(body.first_name, 80),
+      first_name: firstName,
       email: text(body.email, 160),
       consent_marketing: body.consent_marketing === true,
-      estimate: body.estimate ?? null,
-      inputs: body.inputs ?? null,
+      estimate: estimatePayload,
+      inputs: estimatorInputs,
       attribution: body.attribution ?? null,
       postal_code: postalCode,
       property_type: propertyTypeRaw,
+      // Sous-catégorie d'interface réellement choisie, conservée telle quelle ;
+      // l'admissibilité au jumelage utilise la catégorie canonique.
+      ui_category: category,
+      matching_category: source === "renovation_calculator" ? CANONICAL_MATCHING_CATEGORY : category,
     };
+
 
     // 3. Conversion atomique (une seule transaction côté base).
     const { data: rpc, error: rpcError } = await supabase.rpc("create_estimator_project", {
