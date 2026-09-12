@@ -343,9 +343,25 @@ export default function PageRenovationEstimator() {
     ],
   };
 
+  /** Glissement directionnel : avance vers la gauche, retour vers la droite. */
   const fade = reduceMotion
     ? {}
-    : { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -8 } };
+    : {
+        initial: { opacity: 0, x: dir * 24 },
+        animate: { opacity: 1, x: 0 },
+        exit: { opacity: 0, x: dir * -24 },
+        transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] as const },
+      };
+
+  /** Retour tactile sobre, jamais bloquant pour la saisie. */
+  const press = reduceMotion ? {} : { whileTap: { scale: 0.97 } };
+  const selectedMark = reduceMotion
+    ? { initial: false as const }
+    : {
+        initial: { scale: 0.6, opacity: 0 },
+        animate: { scale: 1, opacity: 1 },
+        transition: { type: "spring" as const, stiffness: 520, damping: 24 },
+      };
 
   return (
     <MainLayout>
@@ -363,11 +379,14 @@ export default function PageRenovationEstimator() {
       <div ref={topRef} className="mx-auto w-full max-w-3xl px-4 pb-16 pt-8 sm:pt-12">
         <header className="mb-8 text-center">
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Calculateur de rénovation{cityName ? ` — ${cityName}` : ""}
+            Combien coûteront vos rénovations{cityName ? ` à ${cityName}` : ""}?
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-base text-muted-foreground">
-            Obtenez une fourchette de coûts indicative en moins d'une minute. Aucune inscription
-            pour voir votre estimation.
+            Trois étapes : votre projet, vos dimensions, votre fourchette de coûts.
+            Vous voyez l'estimation complète avant de donner quoi que ce soit.
+          </p>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
+            Estimation indicative, basée sur des références de marché québécoises.
           </p>
         </header>
 
@@ -381,7 +400,7 @@ export default function PageRenovationEstimator() {
               <li key={label} className="flex items-center gap-2">
                 <span
                   aria-current={active ? "step" : undefined}
-                  className={`flex h-8 min-w-[2rem] items-center justify-center rounded-full px-3 ${
+                  className={`flex h-8 min-w-[2rem] items-center justify-center rounded-full transition-colors px-3 ${
                     active || done
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-muted-foreground"
@@ -390,11 +409,22 @@ export default function PageRenovationEstimator() {
                   {n}
                 </span>
                 <span className={active ? "text-foreground" : "text-muted-foreground"}>{label}</span>
-                {n < 3 ? <span className="h-px w-4 bg-border" aria-hidden /> : null}
+                {n < 3 ? (
+                  <span className="relative h-px w-6 overflow-hidden bg-border" aria-hidden>
+                    <motion.span
+                      className="absolute inset-y-0 left-0 bg-primary"
+                      initial={false}
+                      animate={{ width: done ? "100%" : "0%" }}
+                      transition={reduceMotion ? { duration: 0 } : { duration: 0.4, ease: "easeOut" }}
+                      data-testid={`progress-connector-${n}`}
+                    />
+                  </span>
+                ) : null}
               </li>
             );
           })}
         </ol>
+
 
         <AnimatePresence mode="wait">
           {/* ÉTAPE 1 — PROJET */}
