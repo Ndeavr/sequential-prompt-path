@@ -7,14 +7,14 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Helmet } from "react-helmet-async";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { CalendarDays, Clock, Tag, ArrowRight, ChevronDown, MapPin, Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
 import EnrichedFaqAnswer from "@/components/grants/EnrichedFaqAnswer";
 import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import LikeShareButtons from "@/components/shared/LikeShareButtons";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
-import BlockArticleParagraphReadable from "@/components/articles/BlockArticleParagraphReadable";
+import ArticleContentWithVisuals from "@/components/blog/ArticleContentWithVisuals";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { RefreshCw } from "lucide-react";
 
@@ -22,6 +22,7 @@ export default function BlogArticlePage() {
   const { slug } = useParams<{ slug: string }>();
   const { openAlex } = useAlexVoice();
   useEngagementTracking();
+  const reduceMotion = useReducedMotion();
 
   const { data: article, isLoading, isError, refetch } = useQuery({
     queryKey: ["blog-article", slug],
@@ -71,6 +72,7 @@ export default function BlogArticlePage() {
     author: { "@type": "Organization", name: "UNPRO" },
     publisher: { "@type": "Organization", name: "UNPRO", logo: { "@type": "ImageObject", url: "https://unpro.ca/logo.png" } },
     mainEntityOfPage: { "@type": "WebPage", "@id": `https://unpro.ca/blog/${article.slug}` },
+    ...(Array.isArray(article.schema_json?.citation) ? { citation: article.schema_json.citation } : {}),
   } : null;
 
   const faqJsonLd = article?.faq_json?.length ? {
@@ -124,12 +126,20 @@ export default function BlogArticlePage() {
   }
 
   const faqs = article.faq_json || [];
-  const internalLinks = article.internal_linking_json || [];
+  const internalLinks = (Array.isArray(article.internal_linking_json) ? article.internal_linking_json : [])
+    .map((link: any) => ({
+      href: link?.target_url ?? link?.url,
+      label: link?.anchor_text ?? link?.label,
+    }))
+    .filter((link: { href?: unknown; label?: unknown }) =>
+      typeof link.href === "string" && link.href.trim().length > 0
+      && typeof link.label === "string" && link.label.trim().length > 0,
+    );
 
   return (
-    <div className="alex-immersive min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       <Helmet>
-        <title>{article.seo_title || article.title} | UNPRO</title>
+        <title>{article.seo_title || `${article.title} | UNPRO`}</title>
         <meta name="description" content={article.meta_description || ""} />
         <link rel="canonical" href={`https://unpro.ca/blog/${article.slug}`} />
         <meta property="og:title" content={article.title} />
@@ -153,7 +163,7 @@ export default function BlogArticlePage() {
         </nav>
 
         {/* Header */}
-        <motion.header initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+        <motion.header initial={reduceMotion ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             {article.category && <span className="flex items-center gap-1"><Tag className="h-3.5 w-3.5" />{article.category}</span>}
             {article.city && <><span>•</span><span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{article.city}</span></>}
@@ -177,7 +187,7 @@ export default function BlogArticlePage() {
         {article.featured_image_url && (
           <img
             src={article.featured_image_url}
-            alt={`${article.category} ${article.city || "québec"} entrepreneur vérifié`}
+            alt={`${article.title} — illustration de l’article`}
             className="w-full rounded-xl object-cover max-h-96"
             loading="lazy"
           />
@@ -185,16 +195,16 @@ export default function BlogArticlePage() {
 
         {/* Content */}
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={reduceMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.15 }}
         >
-          <BlockArticleParagraphReadable html={article.content_html || ""} />
+          <ArticleContentWithVisuals html={article.content_html || ""} slug={article.slug} />
         </motion.div>
 
         {/* FAQ Section */}
         {faqs.length > 0 && (
-          <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="space-y-4">
+          <motion.section initial={reduceMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="space-y-4">
             <h2 className="text-2xl font-bold text-foreground">Questions fréquentes</h2>
             <div className="space-y-2">
               {faqs.map((faq: any, i: number) => (
@@ -206,16 +216,16 @@ export default function BlogArticlePage() {
 
         {/* Internal Links */}
         {internalLinks.length > 0 && (
-          <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="space-y-4">
+          <motion.section initial={reduceMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="space-y-4">
             <h2 className="text-xl font-semibold text-foreground">À lire aussi</h2>
             <div className="flex flex-wrap gap-2">
               {internalLinks.map((link: any, i: number) => (
                 <Link
                   key={i}
-                  to={link.target_url}
+                  to={link.href}
                   className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-muted text-sm text-muted-foreground hover:bg-accent hover:text-primary transition"
                 >
-                  {link.anchor_text} <ArrowRight className="h-3 w-3" />
+                  {link.label} <ArrowRight className="h-3 w-3" />
                 </Link>
               ))}
             </div>
@@ -224,7 +234,7 @@ export default function BlogArticlePage() {
 
         {/* Related Articles */}
         {related && related.length > 0 && (
-          <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+          <motion.section initial={reduceMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
             <h2 className="text-xl font-semibold text-foreground mb-4">Articles connexes</h2>
             <div className="grid sm:grid-cols-3 gap-4">
               {related.map((r: any) => (
@@ -239,7 +249,7 @@ export default function BlogArticlePage() {
 
         {/* CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={reduceMotion ? false : { opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
           className="rounded-xl bg-primary/5 border border-primary/20 p-6 text-center space-y-3"
@@ -269,13 +279,20 @@ export default function BlogArticlePage() {
 
 function FaqItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false);
+  const answerId = `faq-${question.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   return (
     <div className="border border-border rounded-lg">
-      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-4 text-left">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={answerId}
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between p-4 text-left"
+      >
         <span className="font-medium text-foreground text-sm">{question}</span>
         <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
-      {open && <div className="px-4 pb-4"><EnrichedFaqAnswer text={answer} /></div>}
+      {open && <div id={answerId} className="px-4 pb-4"><EnrichedFaqAnswer text={answer} /></div>}
     </div>
   );
 }

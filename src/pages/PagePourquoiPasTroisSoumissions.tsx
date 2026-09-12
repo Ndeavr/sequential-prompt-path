@@ -8,6 +8,7 @@ import MainLayout from "@/layouts/MainLayout";
 import InternalLinksTrust from "@/components/trust/InternalLinksTrust";
 
 const URL = "https://unpro.ca/pourquoi-pas-trois-soumissions";
+const ANALYSIS_URL = "/blog/les-3-soumissions-cest-termine-ia-prend-le-relais";
 
 const articleSchema = {
   "@context": "https://schema.org",
@@ -69,6 +70,13 @@ export default function PagePourquoiPasTroisSoumissions() {
             Trouver le bon entrepreneur n'est pas un concours. C'est un problème
             de confiance, de compatibilité et d'intelligence.
           </p>
+
+          <Link
+            to={ANALYSIS_URL}
+            className="mb-10 inline-flex items-center rounded-full border border-primary/30 bg-primary/5 px-5 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            Lire l’analyse complète&nbsp;: de 1980 à la recommandation IA
+          </Link>
 
           <div className="space-y-6">
             {POINTS.map((pt, i) => (

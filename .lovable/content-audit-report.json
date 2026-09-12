@@ -1,6 +1,6 @@
 {
-  "ranAt": "2026-09-07T14:41:11.380Z",
-  "filesScanned": 2874,
+  "ranAt": "2026-09-12T23:03:36.077Z",
+  "filesScanned": 2896,
   "violations": [
     {
       "file": "src/pages/Home.tsx",
@@ -1383,16 +1383,6 @@
       "description": "Détail d'implémentation exposé"
     },
     {
-      "file": "src/components/goal-to-plan/SectionFAQGoalToPlan.tsx",
-      "line": 11,
-      "column": 139,
-      "snippet": "{ q: \"Est-ce que je peux faire le calcul sans représentant ?\", a: \"Absolument. Cette page est conçue pour ça. Vous entrez vos chiffres, le système calcule tout.\" },",
-      "pattern": "le système calcule",
-      "severity": "block",
-      "category": "dev_note",
-      "description": "Détail d'implémentation exposé"
-    },
-    {
       "file": "src/components/home/HeroSectionAlexFirst.tsx",
       "line": 169,
       "column": 42,
@@ -1515,6 +1505,16 @@
     {
       "file": "supabase/functions/_shared/offerCopy.ts",
       "line": 136,
+      "column": 82,
+      "snippet": "<p style=\"font-size:12px;color:#999;margin:16px 0 0 0;\">UNPRO — plateforme d'intelligence résidentielle québécoise · unpro.ca</p>",
+      "pattern": "intelligence résidentielle",
+      "severity": "block",
+      "category": "jargon",
+      "description": "Legacy category — use Passeport Maison"
+    },
+    {
+      "file": "supabase/functions/_shared/offerCopy.ts",
+      "line": 203,
       "column": 82,
       "snippet": "<p style=\"font-size:12px;color:#999;margin:16px 0 0 0;\">UNPRO — plateforme d'intelligence résidentielle québécoise · unpro.ca</p>",
       "pattern": "intelligence résidentielle",
@@ -1884,7 +1884,7 @@
     },
     {
       "file": "supabase/functions/calendar-google-oauth-start/index.ts",
-      "line": 46,
+      "line": 48,
       "column": 7,
       "snippet": "prompt: \"consent\",",
       "pattern": "prompt:",
@@ -1951,16 +1951,6 @@
       "severity": "block",
       "category": "jargon",
       "description": "Legacy category — use Passeport Maison"
-    },
-    {
-      "file": "supabase/functions/edge-generate-score-reveal-script/index.ts",
-      "line": 113,
-      "column": 84,
-      "snippet": "spoken: \"votre entreprise est bien positionnée. Vous avez une base solide pour dominer votre territoire.\",",
-      "pattern": "dominer votre territoire",
-      "severity": "block",
-      "category": "jargon",
-      "description": "Langage excessif — dire « développer votre présence »"
     },
     {
       "file": "supabase/functions/editorial-engine/index.ts",
@@ -2493,7 +2483,7 @@
       "description": "Prompt prefix"
     }
   ],
-  "blockingCount": 81,
+  "blockingCount": 80,
   "warningCount": 168,
   "status": "fail"
 }
