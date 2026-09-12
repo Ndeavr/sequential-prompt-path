@@ -3,16 +3,15 @@
  * propriétaire (Clara voix, Clara clavardage, formulaire, calculateurs).
  *
  * Garanties :
- *  - session vérifiée obligatoire (projects.user_id est NOT NULL) ;
- *  - idempotence stricte par `idempotency_key` : jamais deux projets pour la
- *    même estimation (double clic, rafraîchissement, renvoi de code) ;
- *  - propriété réutilisée ou créée une seule fois ;
- *  - un seul lead propriétaire par projet, jamais diffusé à plusieurs
- *    entrepreneurs ;
- *  - les étapes secondaires (contexte, signal de demande, profil) ne bloquent
- *    jamais la création du projet.
+ *  - session vérifiée obligatoire ;
+ *  - conversion atomique : propriété + projet + demande + clé d'idempotence
+ *    écrites dans UNE seule transaction (RPC create_estimator_project) ;
+ *  - deux requêtes simultanées retournent le même projet et la même demande ;
+ *  - adresse vérifiée obligatoire : aucune « adresse à confirmer » ;
+ *  - la demande (lead) est autoritaire : aucun projet orphelin ;
+ *  - la compatibilité provient du moteur canonique `match-lead`, jamais d'un
+ *    entrepreneur fictif.
  */
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
@@ -21,6 +20,30 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+const ALLOWED_SOURCES = new Set([
+  "renovation_calculator",
+  "painting_calculator",
+  "alex_voice",
+  "alex_chat",
+  "manual",
+  "upload",
+]);
+
+const ALLOWED_CATEGORIES = new Set([
+  "cuisine",
+  "salle_de_bain",
+  "sous_sol",
+  "garage",
+  "aire_de_vie",
+  "renovation_complete",
+]);
+
+const ALLOWED_PROPERTY_TYPES = new Set(["maison", "condo", "plex", "autre"]);
+const ALLOWED_URGENCY = new Set(["urgent", "normal", "flexible"]);
+
+const MAX_BUDGET = 100_000_000;
+const MAX_PAYLOAD_BYTES = 64_000;
 
 interface Body {
   description?: string;
@@ -32,7 +55,6 @@ interface Body {
   latitude?: number | null;
   longitude?: number | null;
   property_type?: string | null;
-  photos?: string[];
   source?: string;
   idempotency_key?: string;
   first_name?: string | null;
@@ -54,8 +76,27 @@ function json(payload: unknown, status = 200) {
   });
 }
 
-function positive(n: unknown): number | null {
-  return typeof n === "number" && Number.isFinite(n) && n >= 0 ? Math.round(n) : null;
+function text(v: unknown, max: number): string | null {
+  if (typeof v !== "string") return null;
+  const t = v.trim();
+  if (!t) return null;
+  return t.slice(0, max);
+}
+
+function money(v: unknown): number | null {
+  if (typeof v !== "number" || !Number.isFinite(v) || v < 0 || v > MAX_BUDGET) return null;
+  return Math.round(v);
+}
+
+/** Normalisation d'adresse alignée sur `src/lib/addressNormalizer.ts`. */
+export function normalizeAddressServer(input: string): string {
+  return input
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[.,]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 Deno.serve(async (req) => {
@@ -64,200 +105,225 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
+      supabaseUrl,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
-    const body = (await req.json().catch(() => ({}))) as Body;
-    const source = (body.source ?? "manual").slice(0, 60);
-    const categoryLabel = (body.category_label ?? body.category ?? "Projet").slice(0, 120);
-    const description = (body.description ?? "").trim().slice(0, 4000);
+    const raw = await req.text();
+    if (raw.length > MAX_PAYLOAD_BYTES) return json({ error: "payload_too_large" }, 413);
+    let body: Body;
+    try {
+      body = JSON.parse(raw || "{}") as Body;
+    } catch {
+      return json({ error: "invalid_json" }, 400);
+    }
 
-    // Session vérifiée obligatoire.
+    // 1. Session vérifiée obligatoire.
     const auth = req.headers.get("Authorization");
-    if (!auth) return json({ error: "auth_required" }, 401);
+    if (!auth?.startsWith("Bearer ")) return json({ error: "auth_required" }, 401);
     const { data: userData } = await supabase.auth.getUser(auth.replace("Bearer ", ""));
     const userId = userData.user?.id ?? null;
     if (!userId) return json({ error: "auth_required" }, 401);
 
-    const idempotencyKey = (body.idempotency_key ?? "").trim().slice(0, 120);
+    // 2. Validation stricte (allowlists et bornes numériques).
+    const source = text(body.source, 60) ?? "manual";
+    if (!ALLOWED_SOURCES.has(source)) return json({ error: "invalid_source" }, 400);
 
-    // 0. Rejeu idempotent — aucune écriture supplémentaire.
-    if (idempotencyKey) {
-      const { data: existing } = await supabase
-        .from("project_intake_keys")
-        .select("project_id, lead_id")
-        .eq("user_id", userId)
-        .eq("idempotency_key", idempotencyKey)
-        .maybeSingle();
-      if (existing) {
-        const row = existing as { project_id: string; lead_id: string | null };
-        return json({
-          projectId: row.project_id,
-          leadId: row.lead_id,
-          hasMatches: false,
-          reused: true,
-        });
-      }
+    const category = text(body.category, 60);
+    if (source === "renovation_calculator" && (!category || !ALLOWED_CATEGORIES.has(category))) {
+      return json({ error: "invalid_category" }, 400);
     }
 
-    // 1. Propriété : réutiliser la plus récente, sinon en créer une seule.
-    let propertyId: string | null = null;
-    const { data: existingProperty } = await supabase
-      .from("properties")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("is_active", true)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (existingProperty) {
-      propertyId = (existingProperty as { id: string }).id;
-    } else {
-      const { data: createdProperty, error: propertyError } = await supabase
-        .from("properties")
-        .insert({
-          user_id: userId,
-          address: body.address ?? body.city ?? "Adresse à confirmer",
-          full_address: body.address ?? null,
-          city: body.city ?? null,
-          province: "QC",
-          country: "CA",
-          postal_code: body.postal_code ?? null,
-          property_type: body.property_type ?? null,
-          latitude: body.latitude ?? null,
-          longitude: body.longitude ?? null,
-        } as never)
-        .select("id")
-        .single();
-      if (propertyError || !createdProperty) {
-        return json({ error: propertyError?.message ?? "property_insert_failed" }, 500);
-      }
-      propertyId = (createdProperty as { id: string }).id;
+    const idempotencyKey = text(body.idempotency_key, 120);
+    if (!idempotencyKey || idempotencyKey.length < 8) {
+      return json({ error: "invalid_idempotency_key" }, 400);
     }
 
-    // 2. AUTORITAIRE : le projet.
-    const budgetMin = positive(body.budget_min);
-    const budgetMax = positive(body.budget_max);
-    const { data: project, error: projectError } = await supabase
-      .from("projects")
-      .insert({
-        user_id: userId,
-        property_id: propertyId,
-        title: categoryLabel,
-        description: description || categoryLabel,
-        subcategory: body.category ?? null,
-        status: "open",
-        urgency: body.urgency ?? "normal",
-        budget_min: budgetMin,
-        budget_max: budgetMax,
-        photo_urls: Array.isArray(body.photos) ? body.photos.slice(0, 12) : [],
-        matching_status: "pending",
-      } as never)
-      .select("id")
-      .single();
+    const address = text(body.address, 300);
+    if (!address) return json({ error: "verified_address_required" }, 400);
+    const normalizedAddress = normalizeAddressServer(address);
+    if (!normalizedAddress) return json({ error: "verified_address_required" }, 400);
 
-    if (projectError || !project) {
-      return json({ error: projectError?.message ?? "project_insert_failed" }, 500);
-    }
-    const projectId = (project as { id: string }).id;
+    const city = text(body.city, 120);
+    const postalCode = text(body.postal_code, 12);
 
-    // 3. Lead propriétaire unique (exclusif, jamais diffusé).
-    let leadId: string | null = null;
-    try {
-      const { data: lead } = await supabase
-        .from("leads")
-        .insert({
-          owner_profile_id: userId,
-          property_id: propertyId,
-          lead_type: "contractor",
-          city: body.city ?? null,
-          intent: "renovation",
-          project_category: body.category ?? null,
-          budget_min: budgetMin,
-          budget_max: budgetMax,
-          urgency: body.urgency ?? "normal",
-          language: "fr",
-          status: "new",
-          matching_status: "pending",
-          payload: {
-            source,
-            source_page: body.source_page ?? null,
-            project_id: projectId,
-            idempotency_key: idempotencyKey || null,
-            first_name: body.first_name ?? null,
-            email: body.email ?? null,
-            consent_marketing: !!body.consent_marketing,
-            estimate: body.estimate ?? null,
-            inputs: body.inputs ?? null,
-            attribution: body.attribution ?? null,
-          },
-        } as never)
-        .select("id")
-        .single();
-      leadId = (lead as { id: string } | null)?.id ?? null;
-    } catch (e) {
-      console.warn("[create-project-unified] lead insert failed", e);
+    const propertyTypeRaw = text(body.property_type, 40);
+    if (propertyTypeRaw && !ALLOWED_PROPERTY_TYPES.has(propertyTypeRaw)) {
+      return json({ error: "invalid_property_type" }, 400);
     }
 
-    // 4. Clé d'idempotence (après succès du projet).
-    if (idempotencyKey) {
+    const urgency = text(body.urgency, 20) ?? "normal";
+    if (!ALLOWED_URGENCY.has(urgency)) return json({ error: "invalid_urgency" }, 400);
+
+    const budgetMin = money(body.budget_min);
+    const budgetMax = money(body.budget_max);
+    if (budgetMin === null || budgetMax === null || budgetMax < budgetMin) {
+      return json({ error: "invalid_budget_range" }, 400);
+    }
+
+    const lat =
+      typeof body.latitude === "number" && Number.isFinite(body.latitude) &&
+        Math.abs(body.latitude) <= 90
+        ? body.latitude
+        : null;
+    const lng =
+      typeof body.longitude === "number" && Number.isFinite(body.longitude) &&
+        Math.abs(body.longitude) <= 180
+        ? body.longitude
+        : null;
+
+    const payload = {
+      first_name: text(body.first_name, 80),
+      email: text(body.email, 160),
+      consent_marketing: body.consent_marketing === true,
+      estimate: body.estimate ?? null,
+      inputs: body.inputs ?? null,
+      attribution: body.attribution ?? null,
+      postal_code: postalCode,
+      property_type: propertyTypeRaw,
+    };
+
+    // 3. Conversion atomique (une seule transaction côté base).
+    const { data: rpc, error: rpcError } = await supabase.rpc("create_estimator_project", {
+      p_user_id: userId,
+      p_idempotency_key: idempotencyKey,
+      p_category: category,
+      p_category_label: text(body.category_label, 120) ?? category ?? "Projet",
+      p_description: text(body.description, 4000),
+      p_source: source,
+      p_source_page: text(body.source_page, 300),
+      p_address: address,
+      p_normalized_address: normalizedAddress,
+      p_city: city,
+      p_postal_code: postalCode,
+      p_latitude: lat,
+      p_longitude: lng,
+      p_property_type: propertyTypeRaw,
+      p_budget_min: budgetMin,
+      p_budget_max: budgetMax,
+      p_urgency: urgency,
+      p_payload: payload,
+    });
+
+    if (rpcError || !rpc) {
+      const code = String(rpcError?.message ?? "conversion_failed");
+      const known = [
+        "verified_address_required",
+        "invalid_budget_range",
+        "invalid_idempotency_key",
+        "lead_creation_failed",
+        "profile_unavailable",
+      ].find((k) => code.includes(k));
+      console.error("[create-project-unified] rpc", code);
+      return json({ error: known ?? "conversion_failed" }, known ? 400 : 500);
+    }
+
+    const result = rpc as { project_id: string; lead_id: string; reused: boolean };
+    const projectId = result.project_id;
+    const leadId = result.lead_id;
+
+    // 4. Signal de demande (meilleur effort, idempotent sur project_id).
+    if (city && category) {
       try {
-        await supabase.from("project_intake_keys").insert({
-          idempotency_key: idempotencyKey,
-          user_id: userId,
-          project_id: projectId,
-          lead_id: leadId,
-          source,
-        } as never);
+        await supabase.functions.invoke("demand-signal-create", {
+          body: {
+            project_id: projectId,
+            homeowner_id: userId,
+            city,
+            category,
+            postal_code: postalCode,
+            estimated_project_value: budgetMax,
+            estimated_ltv: budgetMax,
+            urgency_score: urgency === "urgent" ? 9 : urgency === "flexible" ? 3 : 5,
+            metadata: { source },
+          },
+        });
       } catch (e) {
-        console.warn("[create-project-unified] intake key insert failed", e);
+        console.warn("[create-project-unified] demand signal", String(e));
       }
     }
 
-    // 5. Meilleur effort : contexte de projet et profil propriétaire.
-    try {
-      await supabase.from("project_context_snapshots").insert({
-        project_id: projectId,
-        user_id: userId,
-        property_id: propertyId,
-        project_type: body.category ?? null,
-        subcategory: body.category ?? null,
-        declared_budget_min: budgetMin,
-        declared_budget_max: budgetMax,
-        constraints: { estimate: body.estimate ?? null, inputs: body.inputs ?? null, source },
-      } as never);
-    } catch (e) {
-      console.warn("[create-project-unified] context snapshot failed", e);
+    // 5. Moteur de compatibilité canonique (jamais un second matcher).
+    if (!result.reused) {
+      try {
+        await fetch(`${supabaseUrl}/functions/v1/match-lead`, {
+          method: "POST",
+          headers: { Authorization: auth, "Content-Type": "application/json" },
+          body: JSON.stringify({ leadId }),
+        });
+      } catch (e) {
+        console.warn("[create-project-unified] match-lead", String(e));
+      }
     }
 
-    try {
-      await supabase.from("profiles").upsert(
-        { user_id: userId, role: "homeowner" } as never,
-        { onConflict: "user_id" },
-      );
-    } catch (e) {
-      console.warn("[create-project-unified] profile upsert failed", e);
-    }
+    // 6. État réellement persisté + garde d'admissibilité stricte.
+    const hasMatches = await hasEligibleRecommendation(supabase, leadId);
 
-    // 6. Meilleur effort : présence d'une compatibilité déjà calculée.
-    let hasMatches = false;
-    try {
-      const { count } = await supabase
-        .from("project_matches")
-        .select("id", { count: "exact", head: true })
-        .eq("project_id", projectId);
-      hasMatches = (count ?? 0) > 0;
-    } catch {
-      hasMatches = false;
-    }
-
-    return json({ projectId, leadId, hasMatches, reused: false });
+    return json({ projectId, leadId, hasMatches, reused: result.reused });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    console.error("[create-project-unified]", msg);
-    return json({ error: msg }, 500);
+    console.error("[create-project-unified]", e instanceof Error ? e.message : String(e));
+    return json({ error: "unexpected_error" }, 500);
   }
 });
+
+/**
+ * Une recommandation n'existe que si un entrepreneur réel, actif et
+ * admissible, avec licence RBQ vérifiée et valide, est assigné.
+ */
+async function hasEligibleRecommendation(
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
+  leadId: string,
+): Promise<boolean> {
+  try {
+    const { data: lead } = await supabase
+      .from("leads")
+      .select("assigned_contractor_id, matching_status")
+      .eq("id", leadId)
+      .maybeSingle();
+
+    const contractorId = lead?.assigned_contractor_id ?? null;
+    if (!contractorId || lead?.matching_status !== "matched") return false;
+
+    const { data: pro } = await supabase
+      .from("contractors")
+      .select(
+        "id, account_status, verification_status, is_accepting_appointments, booking_enabled, rbq_number, rbq_compliance_status, rbq_verified_at, rbq_expiry_date",
+      )
+      .eq("id", contractorId)
+      .maybeSingle();
+
+    if (!pro) return false;
+    const rbqValid =
+      !!pro.rbq_number &&
+      pro.rbq_compliance_status === "valid" &&
+      !!pro.rbq_verified_at &&
+      (!pro.rbq_expiry_date || new Date(pro.rbq_expiry_date).getTime() > Date.now());
+
+    const eligible =
+      pro.account_status === "active" &&
+      pro.verification_status === "verified" &&
+      pro.booking_enabled === true &&
+      pro.is_accepting_appointments === true &&
+      rbqValid;
+
+    if (!eligible) {
+      // Retour honnête au parcours « aucune correspondance ».
+      await supabase
+        .from("leads")
+        .update({
+          status: "no_match",
+          matching_status: "empty",
+          assigned_contractor_id: null,
+          assigned_match_id: null,
+        })
+        .eq("id", leadId);
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
