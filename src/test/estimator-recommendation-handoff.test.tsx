@@ -35,9 +35,13 @@ const state: {
 vi.mock("@/integrations/supabase/client", () => {
   const chain = (table: string) => {
     const builder: Record<string, unknown> = {};
+    const filters: Record<string, unknown> = {};
     const self = () => builder as never;
     builder.select = self;
-    builder.eq = self;
+    builder.eq = (col: string, val: unknown) => {
+      filters[col] = val;
+      return builder as never;
+    };
     builder.order = self;
     builder.limit = () =>
       table === "matches"
@@ -49,6 +53,15 @@ vi.mock("@/integrations/supabase/client", () => {
           data: state.leadOwned ? { id: LEAD } : null,
           error: null,
         });
+      }
+      if (table === "matches") {
+        const row =
+          state.matches.find((m) =>
+            Object.entries(filters).every(([k, v]) =>
+              k === "lead_id" ? true : (m as Record<string, unknown>)[k] === v,
+            ),
+          ) ?? null;
+        return Promise.resolve({ data: row, error: null });
       }
       if (table === "contractors") {
         return Promise.resolve({ data: state.contractor, error: null });
@@ -116,7 +129,7 @@ describe("relais projet → recommandation", () => {
   });
 
   it("transporte projet et demande quand un jumelage admissible existe", async () => {
-    state.matches = [{ contractor_id: PRO, reasons: ["Spécialiste"], status: "pending", score: 88 }];
+    state.matches = [{ contractor_id: PRO, reasons: ["Spécialiste"], status: "primary", response_status: "pending", score: 88 }];
     state.contractor = eligiblePro();
     renderAt(`/project-created?id=${PROJECT}&lead=${LEAD}`);
     await waitFor(() => expect(screen.getByTestId("cta-recommendations")).toBeTruthy());
@@ -138,7 +151,7 @@ describe("relais projet → recommandation", () => {
 
   it("refuse la recommandation si la demande n'appartient pas au propriétaire", async () => {
     state.leadOwned = false;
-    state.matches = [{ contractor_id: PRO, reasons: [], status: "pending", score: 90 }];
+    state.matches = [{ contractor_id: PRO, reasons: [], status: "primary", response_status: "pending", score: 90 }];
     state.contractor = eligiblePro();
     renderAt(`/recommendations?project=${PROJECT}&lead=${LEAD}`);
     await waitFor(() => expect(screen.getByTestId("recommendation-empty")).toBeTruthy());
@@ -154,7 +167,7 @@ describe("relais projet → recommandation", () => {
     ["slug manquant", { slug: "" }],
     ["nom d'entreprise vide", { business_name: "   " }],
   ])("refuse la réservation : %s", async (_label, overrides) => {
-    state.matches = [{ contractor_id: PRO, reasons: [], status: "pending", score: 95 }];
+    state.matches = [{ contractor_id: PRO, reasons: [], status: "primary", response_status: "pending", score: 95 }];
     state.contractor = eligiblePro(overrides);
     renderAt(`/recommendations?project=${PROJECT}&lead=${LEAD}`);
     await waitFor(() => expect(screen.getByTestId("recommendation-empty")).toBeTruthy());
@@ -162,7 +175,7 @@ describe("relais projet → recommandation", () => {
   });
 
   it("réserve via /book/:slug et n'expose jamais le score interne", async () => {
-    state.matches = [{ contractor_id: PRO, reasons: ["Disponible à Laval"], status: "pending", score: 93 }];
+    state.matches = [{ contractor_id: PRO, reasons: ["Disponible à Laval"], status: "primary", response_status: "pending", score: 93 }];
     state.contractor = eligiblePro();
     renderAt(`/recommendations?project=${PROJECT}&lead=${LEAD}`);
     await waitFor(() => expect(screen.getByTestId("recommendation-result")).toBeTruthy());
@@ -173,4 +186,27 @@ describe("relais projet → recommandation", () => {
     expect(panel.textContent).not.toMatch(/93/);
     expect(panel.textContent).not.toMatch(/score/i);
   });
+
+  it("refuse une suggestion : seule la recommandation principale compte", async () => {
+    state.matches = [
+      { contractor_id: PRO, reasons: [], status: "suggested", response_status: "pending", score: 99 },
+    ];
+    state.contractor = eligiblePro();
+    renderAt(`/recommendations?project=${PROJECT}&lead=${LEAD}`);
+    await waitFor(() => expect(screen.getByTestId("recommendation-empty")).toBeTruthy());
+    expect(screen.queryByTestId("cta-book")).toBeNull();
+  });
+
+  it.each(["declined", "rejected", "expired", "cancelled"])(
+    "refuse un jumelage principal en état %s",
+    async (responseStatus) => {
+      state.matches = [
+        { contractor_id: PRO, reasons: [], status: "primary", response_status: responseStatus },
+      ];
+      state.contractor = eligiblePro();
+      renderAt(`/recommendations?project=${PROJECT}&lead=${LEAD}`);
+      await waitFor(() => expect(screen.getByTestId("recommendation-empty")).toBeTruthy());
+      expect(screen.queryByTestId("cta-book")).toBeNull();
+    },
+  );
 });

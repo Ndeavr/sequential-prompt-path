@@ -75,6 +75,28 @@ const BAD_LICENCE_STATES = new Set([
   "invalid",
 ]);
 
+/** Réponses qui invalident définitivement un jumelage existant. */
+export const REFUSED_RESPONSE_STATES = new Set([
+  "declined",
+  "rejected",
+  "expired",
+  "cancelled",
+  "canceled",
+]);
+
+/** Territoire : seule une zone de service explicite qualifie l'entrepreneur. */
+export function servesCityGate(
+  areaCities: Iterable<string>,
+  leadCity: string | null | undefined,
+): boolean {
+  const target = normCity(leadCity);
+  if (!target) return false;
+  for (const c of areaCities) {
+    if (normCity(c) === target) return true;
+  }
+  return false;
+}
+
 export function rbqGatePasses(c: {
   rbq_number?: string | null;
   rbq_compliance_status?: string | null;
@@ -234,19 +256,27 @@ Deno.serve(async (req) => {
 
     const typedLead = lead as unknown as LeadRow;
 
-    /** Le rejeu ne doit jamais empiler des jumelages : on retire les rangées en attente. */
-    const resetPendingMatches = async () => {
-      await supabase
+    /**
+     * Le rejeu ne doit jamais empiler des jumelages : on retire uniquement
+     * les rangées recalculables (en attente). Un jumelage réellement accepté
+     * ou répondu n'est jamais détruit.
+     */
+    const resetPendingMatches = async (exceptId?: string | null) => {
+      let q = supabase
         .from("matches")
         .delete()
         .eq("lead_id", leadId)
         .eq("response_status", "pending");
+      if (exceptId) q = q.neq("id", exceptId);
+      const { error } = await q;
+      if (error) throw new Error(`matches_cleanup_failed: ${error.message}`);
     };
-    await resetPendingMatches();
+
 
 
     // ── Broker path (unchanged legacy) ─────────────────────────────────
     if (typedLead.lead_type === "broker") {
+      await resetPendingMatches();
       const { data: brokers } = await supabase
         .from("broker_profiles")
         .select("id, city, service_areas, specialties, languages, years_experience");
@@ -454,9 +484,9 @@ Deno.serve(async (req) => {
     const scored = (contractors ?? [])
       .map((c: any) => {
         const areaSet = areasByContractor.get(c.id) ?? new Set<string>();
-        const servesCity =
-          !!leadCitySlug &&
-          (areaSet.has(leadCitySlug) || normCity(c.city) === leadCitySlug);
+        // Territoire : une rangée `contractor_service_areas` explicite est
+        // obligatoire. La ville inscrite au profil ne qualifie jamais seule.
+        const servesCity = servesCityGate(areaSet, typedLead.city);
         const catSet = catsByContractor.get(c.id) ?? new Set<string>();
         const matchesCategory = !!wantedCat && catSet.has(wantedCat);
         // Admissibilité dure : catégorie canonique assignée ET territoire desservi.
@@ -505,6 +535,58 @@ Deno.serve(async (req) => {
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
 
+    const eligibleIds = new Set(scored.map((m) => String(m.id)));
+
+    // ── Rejeu idempotent ───────────────────────────────────────────────
+    // Un jumelage principal réel encore admissible n'est jamais recréé :
+    // son identifiant reste stable et aucune rangée n'est empilée.
+    const { data: existing, error: existingErr } = await supabase
+      .from("matches")
+      .select("id, contractor_id, status, response_status")
+      .eq("lead_id", leadId);
+    if (existingErr) throw new Error(`matches_read_failed: ${existingErr.message}`);
+
+    const rows = (existing ?? []) as any[];
+    const keeper =
+      rows.find(
+        (m) =>
+          m.status === "primary" &&
+          m.contractor_id &&
+          (m.response_status !== "pending" || eligibleIds.has(String(m.contractor_id))) &&
+          !REFUSED_RESPONSE_STATES.has(String(m.response_status ?? "").toLowerCase()),
+      ) ?? null;
+
+    if (keeper) {
+      // On nettoie seulement les suggestions recalculables autour du principal.
+      await resetPendingMatches(String(keeper.id));
+      const { error: leadErr2 } = await supabase
+        .from("leads")
+        .update({
+          status: "matched",
+          matching_status: "matched",
+          assigned_match_id: keeper.id,
+          assigned_contractor_id: keeper.contractor_id,
+          last_matched_at: new Date().toISOString(),
+        })
+        .eq("id", leadId);
+      if (leadErr2) throw new Error(`lead_update_failed: ${leadErr2.message}`);
+
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          reused: true,
+          matches_count: 1,
+          primary_match_id: keeper.id,
+          eligible_pool: contractorIds.length,
+          target_city: typedLead.city,
+          target_category: targetCategorySlug,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    await resetPendingMatches();
+
     if (scored.length > 0) {
       const matchRows = scored.map((m, i) => ({
         lead_id: leadId,
@@ -518,15 +600,16 @@ Deno.serve(async (req) => {
         response_status: "pending",
       }));
 
-      const { data: insertedMatches } = await supabase
+      const { data: insertedMatches, error: insertErr } = await supabase
         .from("matches")
         .insert(matchRows)
         .select("id, rank_position");
+      if (insertErr) throw new Error(`matches_insert_failed: ${insertErr.message}`);
 
       const primaryMatchId =
         insertedMatches?.find((m: any) => m.rank_position === 1)?.id ?? null;
 
-      await supabase
+      const { error: leadErr3 } = await supabase
         .from("leads")
         .update({
           status: "matched",
@@ -536,12 +619,20 @@ Deno.serve(async (req) => {
           last_matched_at: new Date().toISOString(),
         })
         .eq("id", leadId);
+      if (leadErr3) throw new Error(`lead_update_failed: ${leadErr3.message}`);
     } else {
-      await supabase
+      const { error: leadErr4 } = await supabase
         .from("leads")
-        .update({ status: "no_match", matching_status: "empty" })
+        .update({
+          status: "no_match",
+          matching_status: "empty",
+          assigned_match_id: null,
+          assigned_contractor_id: null,
+        })
         .eq("id", leadId);
+      if (leadErr4) throw new Error(`lead_update_failed: ${leadErr4.message}`);
     }
+
 
     return new Response(
       JSON.stringify({
