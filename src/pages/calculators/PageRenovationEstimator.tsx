@@ -104,6 +104,8 @@ export default function PageRenovationEstimator() {
   const [address, setAddress] = useState<VerifiedAddress>(emptyAddress());
   const [benchmarks, setBenchmarks] = useState<BenchmarkRow[]>([]);
   const [videos, setVideos] = useState<ApprovedProjectVideo[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [dir, setDir] = useState<1 | -1>(1);
   const [idempotencyKey, setIdempotencyKey] = useState<string>(() => newIdempotencyKey());
 
   const [saveOpen, setSaveOpen] = useState(false);
