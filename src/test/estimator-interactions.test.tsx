@@ -131,6 +131,9 @@ describe("Calculateur de rénovation — interactions", () => {
     fireEvent.click(await screen.findByRole("button", { name: /Voir mon estimation/i }));
 
     await screen.findByTestId("estimate-total");
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Sauvegarder et trouver mon entrepreneur/i }),
+    );
     expect(await screen.findByTestId("otp-gated")).toBeInTheDocument();
     expect(screen.queryByTestId("phone-otp-form")).toBeNull();
     expect(screen.queryByLabelText(/code/i)).toBeNull();
