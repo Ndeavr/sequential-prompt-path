@@ -66,13 +66,19 @@ describe("renovation estimator engine", () => {
     expect(r.likely).toBeNull();
   });
 
-  it("utilise une composante mesurée et la marque Déclaré", () => {
+  it("utilise une composante réellement mesurée et la marque Vérifié", () => {
     const r = computeRenovationEstimate(
       { ...base, addons: ["deplacement_plomberie"] },
-      [{ component: "Plomberie", avg_cost_per_unit: 22, unit_type: "sqft", sample_count: 7, last_updated_from_actuals: null }],
+      [{
+        component: "Plomberie",
+        avg_cost_per_unit: 22,
+        unit_type: "sqft",
+        sample_count: 7,
+        last_updated_from_actuals: new Date().toISOString(),
+      }],
     );
     const line = r.lines.find((l) => l.id === "deplacement_plomberie");
-    expect(line?.provenance).toBe("Déclaré");
+    expect(line?.provenance).toBe("Vérifié");
     expect(r.benchmark.verifiedComponents).toBe(1);
   });
 
