@@ -448,10 +448,8 @@ Deno.serve(async (req) => {
     });
 
     const leadCitySlug = normCity(typedLead.city);
-    const targetCategorySlug = (catRow as any)?.data?.slug ?? typedLead.project_category ?? null;
-    // NOTE: supabase-js may not unwrap `.maybeSingle()` into `.data.data`; handle both shapes.
-    const wantedCat =
-      (catRow as any)?.slug ?? (catRow as any)?.data?.slug ?? typedLead.project_category ?? null;
+    const targetCategorySlug = (catRow as any)?.slug ?? (catRow as any)?.data?.slug ?? canonicalCategory;
+    const wantedCat = targetCategorySlug;
 
     const scored = (contractors ?? [])
       .map((c: any) => {
@@ -461,7 +459,12 @@ Deno.serve(async (req) => {
           (areaSet.has(leadCitySlug) || normCity(c.city) === leadCitySlug);
         const catSet = catsByContractor.get(c.id) ?? new Set<string>();
         const matchesCategory = !!wantedCat && catSet.has(wantedCat);
+        // Admissibilité dure : catégorie canonique assignée ET territoire desservi.
+        if (!matchesCategory || !servesCity) {
+          return { id: c.id, business_name: c.business_name, plan: null, score: 0, reasons: [] };
+        }
         const base = scoreContractor(c as ContractorRow, servesCity, matchesCategory, typedLead);
+
 
         // ── Profil de compatibilité ───────────────────────────────────
         const compat = rulesByContractor.get(c.id);
