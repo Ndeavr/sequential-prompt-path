@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local Codex handoff state (may contain private operational context)
+.codex-private/

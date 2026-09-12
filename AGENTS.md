@@ -5,11 +5,11 @@ These instructions apply to the entire repository.
 ## Start every task with the durable context
 
 1. Read [docs/UNPRO_CONTEXT.md](docs/UNPRO_CONTEXT.md).
-2. If the task touches Supabase, data, Auth, Storage, cron jobs, secrets, deployment, or restoration, also read [docs/MIGRATION_STATUS.md](docs/MIGRATION_STATUS.md).
+2. If the task touches Supabase, data, Auth, Storage, cron jobs, secrets, deployment, or restoration, read [docs/MIGRATION_STATUS.md](docs/MIGRATION_STATUS.md), then read `.codex-private/MIGRATION_STATUS.md` if that local untracked file exists.
 3. Consult [docs/architecture.md](docs/architecture.md) and the linked architecture documents before changing a core model or domain boundary.
 4. Inspect the current branch, working tree, and relevant recent changes. Preserve concurrent Lovable and user edits.
 
-The user's current instruction and verified live state override these documents. If either context file is stale, update it as part of the same change.
+The user's current instruction and verified live state override these documents. Keep public documentation free of sensitive operational details; store those only in `.codex-private/`, which must remain untracked.
 
 ## Communication and autonomy
 
@@ -68,10 +68,10 @@ Treat every Supabase project as live infrastructure.
 - Do not print, commit, or preserve plaintext secrets, signed access tokens, API keys, credentials, or personal data in logs.
 - Do not read or display `.env` values unless the specific task requires one named value and the user authorized that access.
 - A sanitized restoration copy may preserve Auth password hashes when explicitly approved, but must remove plaintext credentials and other operational secrets.
-- After a migration milestone, update [docs/MIGRATION_STATUS.md](docs/MIGRATION_STATUS.md) with evidence, counts, checks, and the next safe action—never secrets.
+- After a migration milestone, update the local `.codex-private/MIGRATION_STATUS.md` with sanitized evidence, counts, checks, and the next safe action. Keep the public migration document generic and never include secrets.
 
 ## Source-of-truth discipline
 
 - Treat [docs/UNPRO_CONTEXT.md](docs/UNPRO_CONTEXT.md) as durable product context, not as proof of current runtime state.
-- Treat [docs/MIGRATION_STATUS.md](docs/MIGRATION_STATUS.md) as a handoff log whose claims must be revalidated before remote writes.
+- Treat [docs/MIGRATION_STATUS.md](docs/MIGRATION_STATUS.md) as the public safety contract. Treat a local `.codex-private/MIGRATION_STATUS.md`, when present, as an unverified handoff log that must be revalidated before remote writes.
 - Prefer verified code, database metadata, provider delivery receipts, deployment status, and test output over historical chat claims.
