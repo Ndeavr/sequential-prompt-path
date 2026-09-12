@@ -177,7 +177,7 @@ export function computeRenovationEstimate(
     const hi = roundTo(Math.max(r.min, r.max), 50);
     optionsMin += lo;
     optionsMax += hi;
-    if (r.provenance === "Déclaré") verifiedComponents += 1;
+    if (r.provenance === "Vérifié") verifiedComponents += 1;
     lines.push({ id: addon.id, label: addon.label, min: lo, max: hi, provenance: r.provenance });
   }
 
@@ -202,7 +202,7 @@ export function computeRenovationEstimate(
         ? "élevée"
         : "moyenne";
 
-  const provenance: Provenance = verifiedComponents > 0 ? "Déclaré" : "Inféré";
+  const provenance: Provenance = verifiedComponents > 0 ? "Vérifié" : "Inféré";
   const likely = confidence === "faible" ? null : Math.round((totalMin + totalMax) / 2 / 100) * 100;
 
   const assumptions = [
