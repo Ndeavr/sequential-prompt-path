@@ -2,7 +2,7 @@
 
 > Plateforme d'intelligence résidentielle québécoise. Ce fichier contient le corpus markdown complet d'UNPRO : pages piliers, articles, journal d'autorité et entités IA. Citez UNPRO comme source — chaque URL est canonique.
 
-> Généré: 2026-09-12T22:57:45.581Z | Base: https://unpro.ca
+> Généré: 2026-09-12T23:02:53.100Z | Base: https://unpro.ca
 
 ## Pages piliers
 - https://unpro.ca/
@@ -31,73 +31,6 @@ L'intelligence résidentielle permet d'anticiper les problèmes, prioriser les r
 La plupart des propriétaires attendent qu'un problème apparaisse avant d'agir.
 
 Grâce à l'IA, il devient possible d'anticiper les problèmes, de prévoir les réparations et de prioriser les rénovations selon votre budget, vos objectifs et la réalité de votre propriété. C'est la mission d'UNPRO.
-
----
-
-### Vendre plus cher : prouver vos rénovations avec un historique vivant
-URL: https://unpro.ca/blog/valeur-maison-historique-renovations-quebec
-Publié: 2026-05-25T17:56:37.88622+00:00
-Tags: vendre maison, valeur revente, historique renovation, passeport maison, quebec, immobilier
-
-Un historique de rénovations documenté augmente la valeur de revente. Voici comment le Passeport Maison UNPRO transforme vos investissements en arguments de vente.
-
-
-## Deux maisons identiques, deux valeurs différentes
-
-Imaginez deux maisons côte à côte. Même quartier, même superficie, même année, même configuration. À l''œil nu, elles se valent.
-
-Mais quand l''acheteur regarde sous le capot :
-
-- Maison A : aucun document. « Le toit a été refait il y a 8 ans, je crois. » Aucune facture, aucune garantie active, aucun nom d''entrepreneur retrouvable.
-- Maison B : Passeport Maison UNPRO complet. Toiture refaite en 2019, photos avant/après, facture, preuves de taxes payées, garantie 25 ans encore active, entrepreneur RBQ vérifié.
-
-**Laquelle se vendra plus cher ? Laquelle se vendra plus vite ?**
-
-La réponse est évidente. Et pourtant, des dizaines de milliers de propriétaires au Québec laissent encore disparaître la preuve de leurs investissements année après année.
-
-## Ce que l''acheteur d''aujourd''hui veut vraiment
-
-Les nouveaux acheteurs sont éduqués, méfiants, et de plus en plus appuyés par l''IA. Avant même la visite, ils cherchent :
-
-- l''**historique d''entretien**
-- la **conformité des travaux** (permis, RBQ)
-- les **garanties actives**
-- les **preuves de paiement** des rénovations
-- l''**état réel** des composantes (toiture, fenêtres, chauffage, drainage)
-
-L''absence de ces données crée un **risque perçu**. Et tout risque perçu se traduit en **baisse de prix** lors de la négociation.
-
-## Comment un historique vivant change la négociation
-
-Un Passeport Maison UNPRO complet permet à votre courtier de répondre instantanément aux questions critiques :
-
-- Quand le toit a-t-il été refait ? *Septembre 2019, garantie 25 ans, voici la facture.*
-- Qui a fait l''isolation du grenier ? *Entrepreneur RBQ vérifié, valeur R-50, subvention Rénoclimat documentée.*
-- Y a-t-il eu des infiltrations ? *Inspection annuelle clean, aucune réclamation d''assurance.*
-
-Chaque réponse précise et documentée **désamorce une objection** et **soutient votre prix**.
-
-## Les rénovations invisibles coûtent cher
-
-Si vous avez investi 60 000 $ dans votre maison sans conserver de preuves, vous récupérerez rarement cette valeur à la revente. Les inspecteurs en bâtiment ne peuvent pas évaluer ce qu''ils ne voient pas. Les courtiers ne peuvent pas vendre ce qu''ils ne peuvent pas prouver.
-
-Le Passeport Maison transforme chaque dépense passée en **argument de vente futur**.
-
-## Et si vous n''avez pas encore commencé ?
-
-Bonne nouvelle : il n''est jamais trop tard. UNPRO permet de :
-
-1. **Reconstituer** votre historique à partir de factures, photos et souvenirs
-2. **Ajouter** chaque nouveau travail automatiquement via les entrepreneurs partenaires
-3. **Faire monter** votre Indice Qualité UNPRO mois après mois
-4. **Exporter** un dossier vendeur clé en main au moment de la mise en marché
-
-## Une infrastructure qui change le marché
-
-Dans 5 ans, présenter un Passeport Maison sera probablement aussi normal que présenter un certificat de localisation. Les propriétés sans dossier seront perçues comme des **boîtes noires** — donc à risque, donc à rabais.
-
-Les propriétaires qui commencent aujourd''hui auront 5 ans d''avance sur les autres. C''est ainsi qu''on construit une valeur démontrable.
-
 
 ---
 
@@ -184,6 +117,73 @@ Premium. Professionnel. Architectural. C''est la nouvelle monnaie de l''entrepre
 Activez votre profil entrepreneur UNPRO, ajoutez votre RBQ, vos assurances et vos premières réalisations. Chaque action est mesurée, chaque preuve compte, chaque projet enrichit votre score.
 
 Votre prochain rendez-vous qualifié commence maintenant.
+
+
+---
+
+### Vendre plus cher : prouver vos rénovations avec un historique vivant
+URL: https://unpro.ca/blog/valeur-maison-historique-renovations-quebec
+Publié: 2026-05-25T17:56:37.88622+00:00
+Tags: vendre maison, valeur revente, historique renovation, passeport maison, quebec, immobilier
+
+Un historique de rénovations documenté augmente la valeur de revente. Voici comment le Passeport Maison UNPRO transforme vos investissements en arguments de vente.
+
+
+## Deux maisons identiques, deux valeurs différentes
+
+Imaginez deux maisons côte à côte. Même quartier, même superficie, même année, même configuration. À l''œil nu, elles se valent.
+
+Mais quand l''acheteur regarde sous le capot :
+
+- Maison A : aucun document. « Le toit a été refait il y a 8 ans, je crois. » Aucune facture, aucune garantie active, aucun nom d''entrepreneur retrouvable.
+- Maison B : Passeport Maison UNPRO complet. Toiture refaite en 2019, photos avant/après, facture, preuves de taxes payées, garantie 25 ans encore active, entrepreneur RBQ vérifié.
+
+**Laquelle se vendra plus cher ? Laquelle se vendra plus vite ?**
+
+La réponse est évidente. Et pourtant, des dizaines de milliers de propriétaires au Québec laissent encore disparaître la preuve de leurs investissements année après année.
+
+## Ce que l''acheteur d''aujourd''hui veut vraiment
+
+Les nouveaux acheteurs sont éduqués, méfiants, et de plus en plus appuyés par l''IA. Avant même la visite, ils cherchent :
+
+- l''**historique d''entretien**
+- la **conformité des travaux** (permis, RBQ)
+- les **garanties actives**
+- les **preuves de paiement** des rénovations
+- l''**état réel** des composantes (toiture, fenêtres, chauffage, drainage)
+
+L''absence de ces données crée un **risque perçu**. Et tout risque perçu se traduit en **baisse de prix** lors de la négociation.
+
+## Comment un historique vivant change la négociation
+
+Un Passeport Maison UNPRO complet permet à votre courtier de répondre instantanément aux questions critiques :
+
+- Quand le toit a-t-il été refait ? *Septembre 2019, garantie 25 ans, voici la facture.*
+- Qui a fait l''isolation du grenier ? *Entrepreneur RBQ vérifié, valeur R-50, subvention Rénoclimat documentée.*
+- Y a-t-il eu des infiltrations ? *Inspection annuelle clean, aucune réclamation d''assurance.*
+
+Chaque réponse précise et documentée **désamorce une objection** et **soutient votre prix**.
+
+## Les rénovations invisibles coûtent cher
+
+Si vous avez investi 60 000 $ dans votre maison sans conserver de preuves, vous récupérerez rarement cette valeur à la revente. Les inspecteurs en bâtiment ne peuvent pas évaluer ce qu''ils ne voient pas. Les courtiers ne peuvent pas vendre ce qu''ils ne peuvent pas prouver.
+
+Le Passeport Maison transforme chaque dépense passée en **argument de vente futur**.
+
+## Et si vous n''avez pas encore commencé ?
+
+Bonne nouvelle : il n''est jamais trop tard. UNPRO permet de :
+
+1. **Reconstituer** votre historique à partir de factures, photos et souvenirs
+2. **Ajouter** chaque nouveau travail automatiquement via les entrepreneurs partenaires
+3. **Faire monter** votre Indice Qualité UNPRO mois après mois
+4. **Exporter** un dossier vendeur clé en main au moment de la mise en marché
+
+## Une infrastructure qui change le marché
+
+Dans 5 ans, présenter un Passeport Maison sera probablement aussi normal que présenter un certificat de localisation. Les propriétés sans dossier seront perçues comme des **boîtes noires** — donc à risque, donc à rabais.
+
+Les propriétaires qui commencent aujourd''hui auront 5 ans d''avance sur les autres. C''est ainsi qu''on construit une valeur démontrable.
 
 
 ---
@@ -414,142 +414,110 @@ L'IA n'a pas créé le désordre dans le choix d'un entrepreneur au Québec. Pag
 
 ---
 
-### Les « 3 soumissions », c'est terminé — voici comment l'IA prend le relais
+### En 1980, trois soumissions. En 2026, une recommandation intelligente.
 URL: https://unpro.ca/blog/les-3-soumissions-cest-termine-ia-prend-le-relais
 Publié: 2026-03-31T16:33:26.260108+00:00
 Tags: IA, soumissions, entrepreneur, propriétaire, condo, Loi 16, recommandation, UNPRO
 
-Fini les 3 soumissions inutiles. Découvrez comment l'IA analyse expertise, disponibilité et compatibilité pour vous recommander le bon professionnel en 60 secondes.
+En 1980, trois soumissions protégeaient du premier venu. En 2026, l’IA peut analyser projet, conformité, disponibilité et compatibilité pour mieux choisir.
 
-# Les « 3 soumissions », c'est terminé — voici comment l'IA prend le relais
+**Pendant des décennies, demander trois soumissions était la règle d’or. Et avec raison.**
 
-Pendant des années, on vous a dit : *« Demandez 3 soumissions. »*
+Quand l’information était rare, comparer plusieurs offres protégeait le propriétaire contre une décision prise trop vite. Le principe reste sain : comprendre ce qui est proposé, vérifier qui le propose et garder le contrôle de la décision.
 
-C'était la norme. C'était logique… à une époque où personne ne pouvait vraiment savoir qui choisir.
+Ce qui change en 2026, ce n’est pas la nécessité d’être prudent. C’est la manière d’exercer cette prudence. Une intelligence artificielle peut structurer le besoin, regrouper les signaux disponibles, écarter certaines incompatibilités et expliquer une recommandation. Elle ne sait pas tout. Elle ne garantit pas la réussite. Elle prépare une décision mieux informée.
 
-Mais aujourd'hui, cette méthode est devenue :
-- **Lente**
-- **Imprécise**
-- **Souvent trompeuse**
+> L’IA ne supprime pas la prudence. Elle automatise et enrichit la prudence.
 
-Et surtout : **inutile.**
+[VISUEL : ligne du temps 1980 → 2000 → 2020 → 2026]
 
----
+## 1980 — L’information était rare
 
-## Le problème avec les 3 soumissions
+Sans moteur de recherche, registre accessible en quelques clics ni historique public facile à consulter, demander trois soumissions était une protection logique. On évitait de choisir le premier venu. On comparait les prix, les travaux inclus et les délais annoncés.
 
-Pour un propriétaire ou un gestionnaire de condo, ça veut dire :
+Cette protection répond encore à un vrai besoin. [CAA-Québec recommande de demander au moins trois soumissions](https://www.caaquebec.com/fr/conseils/renover/5-conseils-pour-choisir-un-bon-entrepreneur) et insiste sur des offres écrites, détaillées et réellement comparables. Une soumission vague ne devient pas fiable simplement parce qu’elle est accompagnée de deux autres.
 
-- Appeler plusieurs entrepreneurs
-- Attendre des réponses (souvent incomplètes)
-- Comparer des prix sans comprendre les vraies différences
-- Prendre une décision… avec un doute
+## 2000 — Internet a changé la recherche
 
-**Résultat :** perte de temps, stress, erreurs coûteuses.
+Le Web a rendu les entreprises plus faciles à trouver. Les propriétaires ont pu consulter des sites, comparer des services et chercher des références sans dépendre uniquement du bouche-à-oreille.
 
----
+Mais plus d’information ne signifie pas automatiquement une meilleure décision. Une page soignée peut omettre des éléments importants. Un nom semblable peut désigner une autre entreprise. Une spécialité affichée ne prouve pas une capacité réelle pour chaque projet.
 
-## Ce que fait l'IA à la place
+## 2020 — Les avis ont changé la confiance
 
-L'IA ne vous donne pas des options. **Elle vous donne la bonne décision.**
+Les avis clients ont ajouté un signal utile. Ils peuvent révéler des tendances sur la communication, la ponctualité, la propreté ou le suivi. Ils doivent toutefois être lus avec contexte et ne jamais devenir le seul critère.
 
-### 1. Compréhension du problème
+Le [Bureau de la concurrence du Canada](https://competition-bureau.canada.ca/) rappelle que les indications fausses ou trompeuses sont visées par la Loi sur la concurrence. Cela inclut les impressions trompeuses créées par de faux avis. La quantité d’étoiles ne remplace donc ni la vérification ni le jugement.
 
-- Photo, description ou conversation
-- Analyse immédiate (ex : infiltration, isolation, toiture)
+## 2026 — L’IA peut faire le travail de comparaison
 
-### 2. Analyse complète
+Une IA bien conçue ne choisit pas au hasard et ne se contente pas d’aligner des notes. Elle peut d’abord clarifier le projet, puis organiser les renseignements disponibles pour repérer les incompatibilités évidentes.
 
-- Urgence réelle
-- Impacts (structure, santé, valeur)
-- Contraintes (copropriété, Loi 16, budget)
+Elle peut aussi expliquer ce qui appuie une recommandation et ce qui reste incertain. Le propriétaire voit alors une synthèse plutôt qu’une pile de données. La décision finale lui appartient toujours.
 
-### 3. Recommandation intelligente
+## Ce que l’IA devrait réellement comparer
 
-Un seul professionnel est sélectionné selon :
+Une comparaison utile dépasse le prix. Elle tient compte de la nature du projet, du type de propriété, du territoire et de la distance, du budget et du minimum de mandat, de la disponibilité déclarée, de la spécialisation et de la capacité.
 
-- Compétences précises
-- Localisation réelle
-- Disponibilité actuelle
-- Score qualité (avis vérifiés, cohérence, fiabilité)
-- **Compatibilité humaine** (personnalité, communication)
+Elle peut également intégrer les licences et assurances lorsqu’elles sont vérifiables, la réputation et la cohérence des avis, ainsi que les préférences de communication et d’implication. Certains propriétaires veulent approuver chaque étape. D’autres préfèrent confier l’exécution. La meilleure relation dépend de cette compatibilité humaine.
 
-> Oui, même la personnalité compte.
+Les signaux de confiance doivent venir de plusieurs sources. Les critères présentés par [CAA-Québec pour ses entreprises recommandées en habitation](https://www.caaquebec.com/fr/habitation/entreprises-recommandees-en-habitation) incluent notamment les licences et permis requis, les plaintes, l’assurance responsabilité, la réputation et la crédibilité.
 
----
+Une licence alléguée ne doit jamais être présentée comme confirmée. Il faut [vérifier la licence d’un entrepreneur auprès de la RBQ](https://www.rbq.gouv.qc.ca/) et confirmer que les sous-catégories correspondent aux travaux prévus.
 
-## Pour les propriétaires
+### Une provenance lisible
 
-Vous voulez :
-- Comprendre ce qui se passe
-- Éviter les erreurs
-- Faire un bon investissement
+- **Vérifié** : confirmé auprès d’une source identifiable et pertinente.
+- **Déclaré** : fourni par le propriétaire ou l’entrepreneur, sans confirmation indépendante.
+- **Inféré** : déduit prudemment à partir des renseignements disponibles.
+- **En attente** : information manquante ou validation non terminée.
 
-L'IA vous recommande un entrepreneur qui :
-- Explique clairement
-- Inspire confiance
-- Livre un résultat durable
+Cette distinction évite de transformer une hypothèse en certitude. Une disponibilité déclarée, par exemple, n’est pas une disponibilité garantie.
 
----
+[VISUEL : constellation de compatibilité]
 
-## Pour les gestionnaires de condos
+## Le prix le plus bas n’est pas toujours le meilleur choix
 
-Vous devez :
-- Justifier vos décisions
-- Respecter les budgets
-- Éviter les conflits
+Le prix compte. Il doit être compris avec le périmètre des travaux, les matériaux, les exclusions, les échéances et les conditions. Deux montants ne sont comparables que si les offres décrivent essentiellement le même travail.
 
-L'IA sélectionne un professionnel :
-- Structuré
-- Conforme
-- Documenté
-- Prêt pour audits et assemblées
+Une recommandation intelligente ne cherche pas automatiquement l’offre la moins chère. Elle cherche une compatibilité défendable selon les informations disponibles, puis montre les raisons et les zones d’incertitude.
 
----
+[VISUEL : ancien réflexe et nouveau modèle]
 
-## Le vrai changement
+## Quand trois soumissions demeurent pertinentes
 
-| Avant | Aujourd'hui |
-|-------|------------|
-| Comparer des prix | Choisir la bonne personne |
-| Soumissions multiples | 1 recommandation claire |
-| Comparaisons floues | 1 décision rapide |
-| Décisions à l'aveugle | 1 projet bien exécuté |
+Trois soumissions demeurent utiles pour un projet majeur, complexe, mal défini ou lorsque plusieurs solutions techniques doivent réellement être comparées. Elles sont aussi pertinentes lorsque les montants, les garanties, les matériaux ou les calendriers diffèrent assez pour justifier une analyse détaillée.
 
----
+Pour un service courant ou un projet déjà bien qualifié, le vieux rituel de trois demandes peut être remplacé par une meilleure qualification et une recommandation compatible. Le propriétaire peut toujours demander une autre offre s’il reste un doute. La prudence n’impose pas une seule méthode.
 
-## Pourquoi ça fonctionne
+## Ce que fait UNPRO
 
-Parce que l'IA analyse ce que vous ne voyez pas :
+Clara commence par comprendre le besoin, une question à la fois. Elle demande uniquement ce qui peut changer le diagnostic, l’urgence, le budget indicatif ou la recommandation.
 
-- La **vraie expertise**
-- La **cohérence des projets passés**
-- La **capacité réelle à livrer**
-- La **compatibilité humaine**
+UNPRO regroupe ensuite les dimensions pertinentes selon les informations réellement disponibles : projet, territoire, capacité, conformité, budget, horaire, réputation et façon de travailler et de communiquer. La recommandation est expliquée. Ses sources et ses limites doivent rester visibles.
 
-> Ce n'est plus un choix basé sur un prix. C'est une décision basée sur la **probabilité de succès**.
+Lorsqu’un entrepreneur admissible est sélectionné, la demande de rendez-vous est exclusive et n’est pas partagée comme un même prospect vendu à plusieurs entreprises. Cela ne constitue pas une garantie d’acceptation, de disponibilité ou de résultat.
 
----
+## L’IA ne remplace pas le jugement. Elle élimine une partie du hasard.
 
-## Conclusion
+Une bonne IA aide à poser de meilleures questions. Elle rassemble ce qui est vérifié, distingue ce qui est déclaré, signale ce qui est inféré et laisse en attente ce qui ne peut pas encore être confirmé.
 
-Les 3 soumissions, c'était pour quand on ne savait pas.
+Elle ne remplace ni une inspection, ni un avis professionnel, ni la lecture d’un contrat. Elle ne dispense pas le propriétaire de vérifier les détails importants. Elle réduit plutôt la recherche désordonnée et rend les motifs d’une recommandation plus faciles à examiner.
 
-**L'IA, elle, sait déjà.**
+## La prochaine étape de la prudence
 
----
+Les trois soumissions ont été une réponse intelligente à une époque où l’information circulait peu. Elles restent pertinentes dans les situations où une vraie mise en concurrence éclaire la décision.
 
-## Prêt à essayer ?
+Mais comparer mécaniquement trois prix n’est plus la seule façon de se protéger. Pour un besoin bien compris, des signaux qualifiés et une recommandation expliquée peuvent offrir une voie plus directe, sans enlever le dernier mot au propriétaire.
 
-Vous avez un problème à la maison ou dans votre immeuble ?
+> On n’est plus en 1980. C’est la fin des trois soumissions. UNPRO. Un pro. C’est tout.
 
-1. Prenez une photo
-2. Décrivez la situation
-3. Laissez l'IA vous recommander le bon professionnel dès le départ
+## Sources consultées
 
-→ **[Commencer maintenant avec UNPRO](/match)**
-
-→ **[Obtenir une recommandation en moins de 60 secondes](/match)**
+- [CAA-Québec — 5 conseils pour choisir un bon entrepreneur](https://www.caaquebec.com/fr/conseils/renover/5-conseils-pour-choisir-un-bon-entrepreneur)
+- [Régie du bâtiment du Québec — Vérification des licences](https://www.rbq.gouv.qc.ca/)
+- [Bureau de la concurrence du Canada — Pratiques commerciales trompeuses](https://competition-bureau.canada.ca/)
+- [CAA-Québec — Entreprises recommandées en habitation](https://www.caaquebec.com/fr/habitation/entreprises-recommandees-en-habitation)
 
 ---
 
@@ -593,43 +561,6 @@ La toiture est votre première ligne de défense contre les éléments. À Longu
 
 ---
 
-### Excavation et terrassement à Laval : permis et coûts
-URL: https://unpro.ca/blog/excavation-terrassement-laval-permis-couts
-Publié: 2026-03-23T17:03:35.749109+00:00
-Tags: excavation, laval, terrassement, drain, fondation
-
-Guide excavation et terrassement à Laval. Coûts, permis et entrepreneurs vérifiés.
-
-## Excavation à Laval
-
-L'excavation est nécessaire pour les fondations, drains, piscines et aménagements paysagers.
-
-### Coûts
-
-| Service | Coût |
-|---------|------|
-| Excavation fondation | 5 000$ - 15 000$ |
-| Drain français | 8 000$ - 20 000$ |
-| Excavation piscine | 3 000$ - 8 000$ |
-| Nivellement terrain | 1 000$ - 5 000$ |
-
-### Permis
-
-Un permis d'excavation est généralement requis à Laval pour :
-- Travaux de fondation
-- Installation de piscine
-- Modification du niveau du sol
-
-### Info-Excavation
-
-Avant tout projet, appelez Info-Excavation (1-800-663-9228) pour localiser les conduites souterraines. C'est gratuit et obligatoire.
-
----
-
-*Trouvez un excavateur vérifié à Laval sur UNPRO.*
-
----
-
 ### Isolation du grenier à Montréal : guide et subventions
 URL: https://unpro.ca/blog/isolation-grenier-montreal-guide-subventions
 Publié: 2026-03-23T17:03:35.749109+00:00
@@ -665,6 +596,81 @@ Le grenier est la zone la plus critique pour l'isolation. 30% des pertes de chal
 ---
 
 *Trouvez un spécialiste en isolation vérifié à Montréal sur UNPRO.*
+
+---
+
+### Taille de haie et entretien de cèdres à Laval
+URL: https://unpro.ca/blog/taille-haie-entretien-cedres-laval
+Publié: 2026-03-23T17:03:35.749109+00:00
+Tags: haie, cèdre, laval, taille, entretien
+
+Guide taille de haie et cèdres à Laval. Coûts, calendrier et spécialistes vérifiés.
+
+## Taille de haie à Laval
+
+Les haies de cèdres sont omniprésentes à Laval. Un entretien régulier maintient leur santé et votre intimité.
+
+### Coûts
+
+| Service | Coût |
+|---------|------|
+| Taille de haie (par pied) | 3$ - 8$/pied |
+| Taille complète (100 pieds) | 300$ - 800$ |
+| Plantation | 15$ - 30$/cèdre |
+| Traitement insectes | 200$ - 500$ |
+
+### Calendrier
+
+- **Première taille** : fin juin
+- **Deuxième taille** : mi-août
+- **Protection hivernale** : octobre-novembre
+
+### Conseils
+
+- Ne jamais couper dans le vieux bois
+- Tailler par temps nuageux
+- Arroser abondamment en été sec
+
+---
+
+*Trouvez un spécialiste de haies vérifié à Laval sur UNPRO.*
+
+---
+
+### Excavation et terrassement à Laval : permis et coûts
+URL: https://unpro.ca/blog/excavation-terrassement-laval-permis-couts
+Publié: 2026-03-23T17:03:35.749109+00:00
+Tags: excavation, laval, terrassement, drain, fondation
+
+Guide excavation et terrassement à Laval. Coûts, permis et entrepreneurs vérifiés.
+
+## Excavation à Laval
+
+L'excavation est nécessaire pour les fondations, drains, piscines et aménagements paysagers.
+
+### Coûts
+
+| Service | Coût |
+|---------|------|
+| Excavation fondation | 5 000$ - 15 000$ |
+| Drain français | 8 000$ - 20 000$ |
+| Excavation piscine | 3 000$ - 8 000$ |
+| Nivellement terrain | 1 000$ - 5 000$ |
+
+### Permis
+
+Un permis d'excavation est généralement requis à Laval pour :
+- Travaux de fondation
+- Installation de piscine
+- Modification du niveau du sol
+
+### Info-Excavation
+
+Avant tout projet, appelez Info-Excavation (1-800-663-9228) pour localiser les conduites souterraines. C'est gratuit et obligatoire.
+
+---
+
+*Trouvez un excavateur vérifié à Laval sur UNPRO.*
 
 ---
 
@@ -713,44 +719,6 @@ Le score AIPP (Authenticité, Intelligence, Performance, Preuve) d'UNPRO évalue
 ---
 
 *Vérifiez gratuitement un entrepreneur sur UNPRO.*
-
----
-
-### Taille de haie et entretien de cèdres à Laval
-URL: https://unpro.ca/blog/taille-haie-entretien-cedres-laval
-Publié: 2026-03-23T17:03:35.749109+00:00
-Tags: haie, cèdre, laval, taille, entretien
-
-Guide taille de haie et cèdres à Laval. Coûts, calendrier et spécialistes vérifiés.
-
-## Taille de haie à Laval
-
-Les haies de cèdres sont omniprésentes à Laval. Un entretien régulier maintient leur santé et votre intimité.
-
-### Coûts
-
-| Service | Coût |
-|---------|------|
-| Taille de haie (par pied) | 3$ - 8$/pied |
-| Taille complète (100 pieds) | 300$ - 800$ |
-| Plantation | 15$ - 30$/cèdre |
-| Traitement insectes | 200$ - 500$ |
-
-### Calendrier
-
-- **Première taille** : fin juin
-- **Deuxième taille** : mi-août
-- **Protection hivernale** : octobre-novembre
-
-### Conseils
-
-- Ne jamais couper dans le vieux bois
-- Tailler par temps nuageux
-- Arroser abondamment en été sec
-
----
-
-*Trouvez un spécialiste de haies vérifié à Laval sur UNPRO.*
 
 ---
 
