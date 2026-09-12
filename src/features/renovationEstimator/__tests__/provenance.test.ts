@@ -42,8 +42,7 @@ describe("provenance des références de marché", () => {
       propertyKind: "maison",
       age: "1980_2005",
       citySlug: null,
-      benchmarks: [],
-    });
+    }, []);
     expect(est.provenance).toBe("Inféré");
     expect(est.benchmark.verifiedComponents).toBe(0);
   });
