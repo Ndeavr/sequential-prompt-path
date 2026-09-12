@@ -688,9 +688,11 @@ export default function PageRenovationEstimator() {
                 <h2 id="etape-estimation" className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
                   Estimation indicative — {def.label}
                 </h2>
-                <p className="mt-3 text-3xl font-semibold sm:text-4xl">
-                  {formatCad(estimate.totalMin)} – {formatCad(estimate.totalMax)}
+                <p className="mt-3 text-3xl font-semibold sm:text-4xl" data-testid="estimate-total">
+                  <CountUpAmount value={estimate.totalMin} reduceMotion={!!reduceMotion} /> –{" "}
+                  <CountUpAmount value={estimate.totalMax} reduceMotion={!!reduceMotion} />
                 </p>
+
                 <p className="mt-2 text-sm text-muted-foreground">
                   Taxes incluses dans ce total · {formatCad(estimate.taxesMin)} – {formatCad(estimate.taxesMax)} de TPS et TVQ
                 </p>
