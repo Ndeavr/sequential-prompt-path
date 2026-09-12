@@ -95,12 +95,14 @@ describe("Calculateur de rénovation — interactions", () => {
     cuisine.focus();
     expect(document.activeElement).toBe(cuisine);
     fireEvent.click(cuisine);
+    fireEvent.click(await screen.findByRole("button", { name: /Continuer — dimensions/i }));
     await waitFor(() => expect(screen.getByTestId("scope-standard")).toBeInTheDocument());
   });
 
   it("affiche l'estimation complète avant toute demande d'identité", async () => {
     renderPage();
     fireEvent.click(await screen.findByTestId("category-cuisine"));
+    fireEvent.click(await screen.findByRole("button", { name: /Continuer — dimensions/i }));
     fireEvent.click(await screen.findByTestId("scope-standard"));
     const next = await screen.findByRole("button", { name: /Voir mon estimation/i });
     fireEvent.click(next);
