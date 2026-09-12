@@ -35,9 +35,13 @@ const state: {
 vi.mock("@/integrations/supabase/client", () => {
   const chain = (table: string) => {
     const builder: Record<string, unknown> = {};
+    const filters: Record<string, unknown> = {};
     const self = () => builder as never;
     builder.select = self;
-    builder.eq = self;
+    builder.eq = (col: string, val: unknown) => {
+      filters[col] = val;
+      return builder as never;
+    };
     builder.order = self;
     builder.limit = () =>
       table === "matches"
@@ -51,7 +55,13 @@ vi.mock("@/integrations/supabase/client", () => {
         });
       }
       if (table === "matches") {
-        return Promise.resolve({ data: state.matches[0] ?? null, error: null });
+        const row =
+          state.matches.find((m) =>
+            Object.entries(filters).every(([k, v]) =>
+              k === "lead_id" ? true : (m as Record<string, unknown>)[k] === v,
+            ),
+          ) ?? null;
+        return Promise.resolve({ data: row, error: null });
       }
       if (table === "contractors") {
         return Promise.resolve({ data: state.contractor, error: null });
