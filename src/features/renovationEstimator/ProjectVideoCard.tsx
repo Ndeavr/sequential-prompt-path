@@ -68,11 +68,18 @@ export default function ProjectVideoCard({ video, onStarted, onCompleted }: Prop
   const activate = () => {
     const el = videoRef.current;
     if (!el) return;
+    // Si la source n'était pas encore chargée, on la pose immédiatement dans le
+    // même geste pour que play() reste synchrone.
+    if (!el.getAttribute("src")) {
+      el.setAttribute("src", video.url);
+      setNear(true);
+    }
     el.muted = false;
     setStarted(true);
     const p = el.play();
     if (p && typeof p.catch === "function") p.catch(() => undefined);
   };
+
 
   return (
     <motion.div
