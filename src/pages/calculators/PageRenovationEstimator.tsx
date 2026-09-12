@@ -211,6 +211,9 @@ export default function PageRenovationEstimator() {
     });
   };
 
+  /** Conversion permise seulement avec prénom et adresse vérifiée Google. */
+  const canSave = isVerified(address) && firstName.trim().length >= 2;
+
   const startSave = () => {
     setSaveOpen(true);
     setSaveError(null);
