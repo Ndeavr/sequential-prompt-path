@@ -610,13 +610,22 @@ export default function PageRenovationEstimator() {
                       onClick={() => setScope(s)}
                       aria-pressed={scope === s}
                       data-testid={`scope-${s}`}
-                      className={`min-h-[3rem] rounded-xl border px-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                      className={`relative min-h-[3rem] rounded-xl border px-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                         scope === s
                           ? "border-primary bg-primary/5 font-medium shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                           : "border-border bg-card"
                       }`}
                     >
                       {SCOPE_LABELS[s]}
+                      {scope === s && (
+                        <motion.span
+                          {...selectedMark}
+                          className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground"
+                          data-testid={`scope-selected-${s}`}
+                        >
+                          <Check className="h-2.5 w-2.5" aria-hidden />
+                        </motion.span>
+                      )}
                     </motion.button>
                   ))}
 
@@ -632,7 +641,7 @@ export default function PageRenovationEstimator() {
                       <li key={a.id}>
                         <motion.label
                           {...press}
-                          className={`flex min-h-[3rem] cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors ${
+                          className={`relative flex min-h-[3rem] cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors ${
                             on
                               ? "border-primary bg-primary/5 shadow-[0_0_0_3px_hsl(var(--primary)/0.10)]"
                               : "border-border bg-card"
@@ -647,6 +656,15 @@ export default function PageRenovationEstimator() {
                           <span className="text-xs text-muted-foreground">
                             {formatCad(a.min)} – {formatCad(a.max)}
                           </span>
+                          {on && (
+                            <motion.span
+                              {...selectedMark}
+                              className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground"
+                              data-testid={`addon-selected-${a.id}`}
+                            >
+                              <Check className="h-2.5 w-2.5" aria-hidden />
+                            </motion.span>
+                          )}
                         </motion.label>
                       </li>
                     );
@@ -665,13 +683,22 @@ export default function PageRenovationEstimator() {
                       onClick={() => setPropertyKind(p)}
                       aria-pressed={propertyKind === p}
                       data-testid={`property-${p}`}
-                      className={`min-h-[3rem] rounded-xl border px-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                      className={`relative min-h-[3rem] rounded-xl border px-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                         propertyKind === p
                           ? "border-primary bg-primary/5 font-medium shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                           : "border-border bg-card"
                       }`}
                     >
                       {PROPERTY_LABELS[p]}
+                      {propertyKind === p && (
+                        <motion.span
+                          {...selectedMark}
+                          className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground"
+                          data-testid={`property-selected-${p}`}
+                        >
+                          <Check className="h-2.5 w-2.5" aria-hidden />
+                        </motion.span>
+                      )}
                     </motion.button>
                   ))}
                 </div>
@@ -689,17 +716,27 @@ export default function PageRenovationEstimator() {
                         onClick={() => setAge(a)}
                         aria-pressed={age === a}
                         data-testid={`age-${a}`}
-                        className={`min-h-[3rem] rounded-xl border px-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                        className={`relative min-h-[3rem] rounded-xl border px-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                           age === a
                             ? "border-primary bg-primary/5 font-medium shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                             : "border-border bg-card"
                         }`}
                       >
                         {AGE_LABELS[a]}
+                        {age === a && (
+                          <motion.span
+                            {...selectedMark}
+                            className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground"
+                            data-testid={`age-selected-${a}`}
+                          >
+                            <Check className="h-2.5 w-2.5" aria-hidden />
+                          </motion.span>
+                        )}
                       </motion.button>
                     ))}
                   </div>
                 </fieldset>
+
               )}
 
 
