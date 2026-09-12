@@ -155,8 +155,11 @@ export default function PageRenovationEstimator() {
       step: "estimator",
       metadata: { city: citySlug ?? null },
     });
-    void fetchBenchmarks().then(setBenchmarks);
-    void fetchApprovedProjectVideos().then(setVideos);
+    setDataLoading(true);
+    void Promise.allSettled([
+      fetchBenchmarks().then(setBenchmarks),
+      fetchApprovedProjectVideos().then(setVideos),
+    ]).finally(() => setDataLoading(false));
     void supabase.auth.getUser().then(({ data }) => setAuthed(!!data.user));
   }, [citySlug]);
 
