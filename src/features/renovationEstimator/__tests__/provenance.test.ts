@@ -3,8 +3,8 @@
  * « Vérifié » exige une vraie mise à jour issue de projets mesurés.
  */
 import { describe, it, expect } from "vitest";
-import { isMeasuredBenchmark, computeEstimate, type BenchmarkRow } from "../engine";
-import { CITY_FACTORS } from "../catalog";
+import { isMeasuredBenchmark, computeRenovationEstimate, type BenchmarkRow } from "../engine";
+import { CITY_FACTOR } from "../catalog";
 
 const base = (over: Partial<BenchmarkRow> = {}): BenchmarkRow => ({
   component: "cuisine_armoires",
@@ -34,13 +34,13 @@ describe("provenance des références de marché", () => {
   });
 
   it("sans référence mesurée, l'estimation reste Inféré", () => {
-    const est = computeEstimate({
+    const est = computeRenovationEstimate({
       category: "cuisine",
       sizeSqft: 150,
       scope: "standard",
       addons: [],
       propertyKind: "maison",
-      age: "1980_2000",
+      age: "1980_2005",
       citySlug: null,
       benchmarks: [],
     });
@@ -51,7 +51,7 @@ describe("provenance des références de marché", () => {
 
 describe("clés de ville", () => {
   it("utilise le slug canonique de Trois-Rivières", () => {
-    expect(CITY_FACTORS["trois-rivieres"]).toBeGreaterThan(0);
-    expect((CITY_FACTORS as Record<string, number>).trois_rivieres).toBeUndefined();
+    expect(CITY_FACTOR["trois-rivieres"]).toBeGreaterThan(0);
+    expect((CITY_FACTOR as Record<string, number>).trois_rivieres).toBeUndefined();
   });
 });
