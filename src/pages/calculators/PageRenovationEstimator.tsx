@@ -699,17 +699,33 @@ export default function PageRenovationEstimator() {
 
                   <div className="mb-4 grid gap-3">
                     <div>
-                      <Label htmlFor="prenom">Prénom (facultatif)</Label>
+                      <Label htmlFor="prenom">Prénom</Label>
                       <Input
                         id="prenom"
                         className="mt-1 h-12"
                         value={firstName}
+                        required
+                        aria-required="true"
                         autoComplete="given-name"
                         onChange={(e) => setFirstName(e.target.value)}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="courriel">Courriel (facultatif, pour recevoir le rapport)</Label>
+                      <AddressVerifiedInput
+                        value={address}
+                        onChange={setAddress}
+                        label="Adresse du projet (obligatoire)"
+                        showUnitField={false}
+                      />
+                      {!isVerified(address) && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Sélectionnez votre adresse dans la liste proposée pour qu'elle soit
+                          confirmée.
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <Label htmlFor="courriel">Courriel (facultatif)</Label>
                       <Input
                         id="courriel"
                         type="email"
@@ -724,17 +740,28 @@ export default function PageRenovationEstimator() {
                       <Checkbox
                         checked={consent}
                         onCheckedChange={(v) => setConsent(v === true)}
-                        aria-label="Consentement aux communications"
+                        aria-label="Consentement aux conseils et offres"
                       />
                       <span>
-                        J'accepte de recevoir des communications d'UNPRO liées à mon projet. Ce
-                        consentement est distinct de la sauvegarde de mon estimation.
+                        J'accepte de recevoir des conseils et offres d'UNPRO. Facultatif : les
+                        messages nécessaires au suivi de mon projet sont envoyés séparément.
                       </span>
                     </label>
                   </div>
 
+                  {!canSave && (
+                    <p className="mb-3 text-xs text-muted-foreground">
+                      Votre prénom et une adresse confirmée sont nécessaires pour enregistrer le
+                      projet.
+                    </p>
+                  )}
+
                   {authed ? (
-                    <Button className="h-12 w-full" onClick={() => void persist()} disabled={saving}>
+                    <Button
+                      className="h-12 w-full"
+                      onClick={() => void persist()}
+                      disabled={saving || !canSave}
+                    >
                       {saving ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
@@ -745,7 +772,13 @@ export default function PageRenovationEstimator() {
                       )}
                     </Button>
                   ) : (
-                    <PhoneOtpForm onSuccess={onOtpSuccess} loading={saving} />
+                    <div aria-disabled={!canSave} className={canSave ? "" : "pointer-events-none opacity-50"}>
+                      <PhoneOtpForm
+                        onSuccess={onOtpSuccess}
+                        loading={saving}
+                        attribution={getFunnelAttribution() as Record<string, unknown>}
+                      />
+                    </div>
                   )}
 
                   {saveError && (
