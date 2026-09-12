@@ -75,6 +75,28 @@ const BAD_LICENCE_STATES = new Set([
   "invalid",
 ]);
 
+/** Réponses qui invalident définitivement un jumelage existant. */
+export const REFUSED_RESPONSE_STATES = new Set([
+  "declined",
+  "rejected",
+  "expired",
+  "cancelled",
+  "canceled",
+]);
+
+/** Territoire : seule une zone de service explicite qualifie l'entrepreneur. */
+export function servesCityGate(
+  areaCities: Iterable<string>,
+  leadCity: string | null | undefined,
+): boolean {
+  const target = normCity(leadCity);
+  if (!target) return false;
+  for (const c of areaCities) {
+    if (normCity(c) === target) return true;
+  }
+  return false;
+}
+
 export function rbqGatePasses(c: {
   rbq_number?: string | null;
   rbq_compliance_status?: string | null;
