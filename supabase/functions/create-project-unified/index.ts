@@ -22,7 +22,6 @@ const corsHeaders = {
 };
 
 import {
-  ALLOWED_AGE as _ALLOWED_AGE,
   ALLOWED_CATEGORIES,
   ALLOWED_PROPERTY_TYPES,
   ALLOWED_SOURCES,
