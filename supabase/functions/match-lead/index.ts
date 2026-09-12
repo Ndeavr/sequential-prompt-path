@@ -513,6 +513,58 @@ Deno.serve(async (req) => {
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
 
+    const eligibleIds = new Set(scored.map((m) => String(m.id)));
+
+    // ── Rejeu idempotent ───────────────────────────────────────────────
+    // Un jumelage principal réel encore admissible n'est jamais recréé :
+    // son identifiant reste stable et aucune rangée n'est empilée.
+    const { data: existing, error: existingErr } = await supabase
+      .from("matches")
+      .select("id, contractor_id, status, response_status")
+      .eq("lead_id", leadId);
+    if (existingErr) throw new Error(`matches_read_failed: ${existingErr.message}`);
+
+    const rows = (existing ?? []) as any[];
+    const keeper =
+      rows.find(
+        (m) =>
+          m.status === "primary" &&
+          m.contractor_id &&
+          (m.response_status !== "pending" || eligibleIds.has(String(m.contractor_id))) &&
+          !REFUSED_RESPONSE_STATES.has(String(m.response_status ?? "").toLowerCase()),
+      ) ?? null;
+
+    if (keeper) {
+      // On nettoie seulement les suggestions recalculables autour du principal.
+      await resetPendingMatches(String(keeper.id));
+      const { error: leadErr2 } = await supabase
+        .from("leads")
+        .update({
+          status: "matched",
+          matching_status: "matched",
+          assigned_match_id: keeper.id,
+          assigned_contractor_id: keeper.contractor_id,
+          last_matched_at: new Date().toISOString(),
+        })
+        .eq("id", leadId);
+      if (leadErr2) throw new Error(`lead_update_failed: ${leadErr2.message}`);
+
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          reused: true,
+          matches_count: 1,
+          primary_match_id: keeper.id,
+          eligible_pool: contractorIds.length,
+          target_city: typedLead.city,
+          target_category: targetCategorySlug,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    await resetPendingMatches();
+
     if (scored.length > 0) {
       const matchRows = scored.map((m, i) => ({
         lead_id: leadId,
@@ -526,15 +578,16 @@ Deno.serve(async (req) => {
         response_status: "pending",
       }));
 
-      const { data: insertedMatches } = await supabase
+      const { data: insertedMatches, error: insertErr } = await supabase
         .from("matches")
         .insert(matchRows)
         .select("id, rank_position");
+      if (insertErr) throw new Error(`matches_insert_failed: ${insertErr.message}`);
 
       const primaryMatchId =
         insertedMatches?.find((m: any) => m.rank_position === 1)?.id ?? null;
 
-      await supabase
+      const { error: leadErr3 } = await supabase
         .from("leads")
         .update({
           status: "matched",
@@ -544,12 +597,20 @@ Deno.serve(async (req) => {
           last_matched_at: new Date().toISOString(),
         })
         .eq("id", leadId);
+      if (leadErr3) throw new Error(`lead_update_failed: ${leadErr3.message}`);
     } else {
-      await supabase
+      const { error: leadErr4 } = await supabase
         .from("leads")
-        .update({ status: "no_match", matching_status: "empty" })
+        .update({
+          status: "no_match",
+          matching_status: "empty",
+          assigned_match_id: null,
+          assigned_contractor_id: null,
+        })
         .eq("id", leadId);
+      if (leadErr4) throw new Error(`lead_update_failed: ${leadErr4.message}`);
     }
+
 
     return new Response(
       JSON.stringify({
