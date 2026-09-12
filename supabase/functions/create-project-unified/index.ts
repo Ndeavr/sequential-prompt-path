@@ -128,6 +128,88 @@ function money(v: unknown): number | null {
   return Math.round(v);
 }
 
+/** Prénom réel exigé côté serveur (2 à 80 caractères sensés). */
+export function validFirstName(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const t = v.trim().replace(/\s+/g, " ");
+  if (t.length < 2 || t.length > 80) return null;
+  if (!/^[\p{L}][\p{L}\p{M}'’\-. ]*$/u.test(t)) return null;
+  return t;
+}
+
+/**
+ * Les entrées du calculateur sont validées puis réécrites : aucun objet
+ * arbitraire n'est persisté tel quel.
+ */
+export function validateEstimatorInputs(
+  category: string,
+  raw: unknown,
+): { ok: true; value: Record<string, unknown> } | { ok: false; error: string } {
+  if (raw === null || raw === undefined) return { ok: true, value: {} };
+  if (typeof raw !== "object" || Array.isArray(raw)) return { ok: false, error: "invalid_inputs" };
+  const o = raw as Record<string, unknown>;
+
+  const bounds = CATEGORY_SIZE_BOUNDS[category];
+  if (!bounds) return { ok: false, error: "invalid_category" };
+  const size = o.sizeSqft;
+  if (typeof size !== "number" || !Number.isFinite(size) || size < bounds[0] || size > bounds[1]) {
+    return { ok: false, error: "invalid_size" };
+  }
+
+  const scope = typeof o.scope === "string" ? o.scope : "";
+  if (!ALLOWED_SCOPE.has(scope)) return { ok: false, error: "invalid_scope" };
+
+  const age = typeof o.age === "string" ? o.age : "inconnu";
+  if (!ALLOWED_AGE.has(age)) return { ok: false, error: "invalid_age" };
+
+  const kind = typeof o.propertyKind === "string" ? o.propertyKind : "maison";
+  if (!ALLOWED_PROPERTY_TYPES.has(kind)) return { ok: false, error: "invalid_property_type" };
+
+  const allowed = CATEGORY_ADDONS[category];
+  const addonsRaw = Array.isArray(o.addons) ? o.addons : [];
+  if (addonsRaw.length > 20) return { ok: false, error: "invalid_addons" };
+  const addons: string[] = [];
+  for (const a of addonsRaw) {
+    if (typeof a !== "string" || !allowed.has(a)) return { ok: false, error: "invalid_addons" };
+    if (!addons.includes(a)) addons.push(a);
+  }
+
+  return {
+    ok: true,
+    value: { category, sizeSqft: Math.round(size), scope, age, propertyKind: kind, addons },
+  };
+}
+
+/** L'estimation persistée est réduite à des champs numériques connus. */
+export function validateEstimatePayload(
+  raw: unknown,
+): { ok: true; value: Record<string, unknown> | null } | { ok: false; error: string } {
+  if (raw === null || raw === undefined) return { ok: true, value: null };
+  if (typeof raw !== "object" || Array.isArray(raw)) return { ok: false, error: "invalid_estimate" };
+  const o = raw as Record<string, unknown>;
+  const version = (o.benchmark as Record<string, unknown> | undefined)?.version;
+  if (typeof version !== "string" || !KNOWN_ESTIMATOR_VERSIONS.has(version)) {
+    return { ok: false, error: "invalid_estimator_version" };
+  }
+  const num = (k: string) => (typeof o[k] === "number" && Number.isFinite(o[k] as number) ? (o[k] as number) : null);
+  return {
+    ok: true,
+    value: {
+      version,
+      totalMin: num("totalMin"),
+      totalMax: num("totalMax"),
+      subtotalMin: num("subtotalMin"),
+      subtotalMax: num("subtotalMax"),
+      taxesMin: num("taxesMin"),
+      taxesMax: num("taxesMax"),
+      likely: num("likely"),
+      confidence: typeof o.confidence === "string" ? o.confidence.slice(0, 20) : null,
+      provenance: typeof o.provenance === "string" ? o.provenance.slice(0, 20) : null,
+    },
+  };
+}
+
+
 /** Normalisation d'adresse alignée sur `src/lib/addressNormalizer.ts`. */
 export function normalizeAddressServer(input: string): string {
   return input
