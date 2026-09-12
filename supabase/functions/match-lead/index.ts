@@ -486,7 +486,7 @@ Deno.serve(async (req) => {
         const areaSet = areasByContractor.get(c.id) ?? new Set<string>();
         // Territoire : une rangée `contractor_service_areas` explicite est
         // obligatoire. La ville inscrite au profil ne qualifie jamais seule.
-        const servesCity = !!leadCitySlug && areaSet.has(leadCitySlug);
+        const servesCity = servesCityGate(areaSet, typedLead.city);
         const catSet = catsByContractor.get(c.id) ?? new Set<string>();
         const matchesCategory = !!wantedCat && catSet.has(wantedCat);
         // Admissibilité dure : catégorie canonique assignée ET territoire desservi.
