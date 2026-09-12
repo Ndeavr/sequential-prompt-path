@@ -223,22 +223,28 @@ export default function PageRenovationEstimator() {
 
   const persist = useCallback(async () => {
     if (savingRef.current || !category || !estimate || !def) return;
+    const verified = isVerified(address) ? address : null;
+    if (!verified || firstName.trim().length < 2) {
+      setSaveError(
+        "Indiquez votre prénom et confirmez l'adresse du projet pour enregistrer votre estimation.",
+      );
+      return;
+    }
     savingRef.current = true;
     setSaving(true);
     setSaveError(null);
     try {
-      const verified = isVerified(address) ? address : null;
       const result = await saveEstimateProject({
         idempotency_key: idempotencyKey,
-        first_name: firstName.trim() || null,
+        first_name: firstName.trim(),
         email: email.trim() || null,
         category,
         category_label: def.label,
-        city: verified?.city ?? cityName ?? null,
-        postal_code: verified?.postalCode ?? null,
-        address: verified?.fullAddress ?? null,
-        latitude: verified?.latitude ?? null,
-        longitude: verified?.longitude ?? null,
+        city: verified.city ?? cityName ?? null,
+        postal_code: verified.postalCode ?? null,
+        address: verified.fullAddress,
+        latitude: verified.latitude ?? null,
+        longitude: verified.longitude ?? null,
         property_type: propertyKind,
         budget_min: estimate.totalMin,
         budget_max: estimate.totalMax,
@@ -568,7 +574,7 @@ export default function PageRenovationEstimator() {
                 <AddressVerifiedInput
                   value={address}
                   onChange={setAddress}
-                  label="Adresse du projet (facultatif à cette étape)"
+                  label="Adresse du projet"
                   showUnitField={false}
                 />
               </div>
@@ -773,11 +779,7 @@ export default function PageRenovationEstimator() {
                     </Button>
                   ) : (
                     <div aria-disabled={!canSave} className={canSave ? "" : "pointer-events-none opacity-50"}>
-                      <PhoneOtpForm
-                        onSuccess={onOtpSuccess}
-                        loading={saving}
-                        attribution={getFunnelAttribution() as Record<string, unknown>}
-                      />
+                      <PhoneOtpForm onSuccess={onOtpSuccess} loading={saving} />
                     </div>
                   )}
 
