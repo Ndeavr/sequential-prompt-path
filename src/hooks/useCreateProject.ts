@@ -40,9 +40,9 @@ export function useCreateProject() {
       if (fnError) throw fnError;
       const result = data as CreateProjectResult;
       navigate(
-        `/project-created?id=${encodeURIComponent(result.projectId)}${
-          result.hasMatches ? "&matches=1" : ""
-        }`,
+        `/project-created?id=${encodeURIComponent(result.projectId)}` +
+          (result.leadId ? `&lead=${encodeURIComponent(result.leadId)}` : "") +
+          (result.hasMatches ? "&matches=1" : ""),
       );
       return result;
     } catch (e) {
