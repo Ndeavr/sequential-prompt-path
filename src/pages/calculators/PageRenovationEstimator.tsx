@@ -19,6 +19,7 @@ import {
   ChefHat,
   Home,
   Info,
+  Check,
   Loader2,
   Sofa,
   Warehouse,
