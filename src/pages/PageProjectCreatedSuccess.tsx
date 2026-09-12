@@ -1,17 +1,29 @@
 /**
- * PageProjectCreatedSuccess — success screen after project creation.
- * Carries the canonical project/lead context to the next step so the
- * recommendation step can read the real persisted match.
+ * PageProjectCreatedSuccess — écran de confirmation après création du projet.
+ *
+ * L'URL n'est jamais une autorité : l'état réel du jumelage est résolu à
+ * partir de la demande du propriétaire authentifié. Un paramètre falsifié
+ * (`?matches=1`) ne peut donc pas faire apparaître de recommandation.
  */
 import { useSearchParams, Link } from "react-router-dom";
 import PageShell from "@/layouts/PageShell";
 import PrimaryCTA from "@/components/cta/PrimaryCTA";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  UUID_RE,
+  useEligibleRecommendation,
+} from "@/features/recommendation/useEligibleRecommendation";
 
 export default function PageProjectCreatedSuccess() {
   const [params] = useSearchParams();
-  const projectId = params.get("id") ?? "";
-  const leadId = params.get("lead") ?? "";
-  const hasMatches = params.get("matches") === "1";
+  const { user } = useAuth();
+  const rawProject = params.get("id") ?? "";
+  const rawLead = params.get("lead") ?? "";
+  const projectId = UUID_RE.test(rawProject) ? rawProject : "";
+  const leadId = UUID_RE.test(rawLead) ? rawLead : "";
+
+  const { data, isLoading } = useEligibleRecommendation(user?.id, leadId, projectId);
+  const hasRecommendation = !!data;
 
   const contextQuery = [
     projectId ? `project=${encodeURIComponent(projectId)}` : "",
@@ -53,10 +65,13 @@ export default function PageProjectCreatedSuccess() {
           </dl>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            {hasMatches ? (
+            {isLoading ? (
+              <p className="text-white/60" data-testid="handoff-loading">
+                Analyse en cours…
+              </p>
+            ) : hasRecommendation ? (
               <Link
                 to={recommendationHref}
-                data-cta-canonical="book"
                 data-testid="cta-recommendations"
                 className="inline-flex h-14 items-center justify-center rounded-[18px] bg-white px-8 font-medium text-black transition-all hover:-translate-y-[2px]"
               >
@@ -65,7 +80,6 @@ export default function PageProjectCreatedSuccess() {
             ) : (
               <Link
                 to={waitingHref}
-                data-cta-canonical="book"
                 data-testid="cta-waiting"
                 className="inline-flex h-14 items-center justify-center rounded-[18px] bg-white px-8 font-medium text-black transition-all hover:-translate-y-[2px]"
               >
