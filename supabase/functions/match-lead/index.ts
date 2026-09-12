@@ -234,15 +234,22 @@ Deno.serve(async (req) => {
 
     const typedLead = lead as unknown as LeadRow;
 
-    /** Le rejeu ne doit jamais empiler des jumelages : on retire les rangées en attente. */
-    const resetPendingMatches = async () => {
-      await supabase
+    /**
+     * Le rejeu ne doit jamais empiler des jumelages : on retire uniquement
+     * les rangées recalculables (en attente). Un jumelage réellement accepté
+     * ou répondu n'est jamais détruit.
+     */
+    const resetPendingMatches = async (exceptId?: string | null) => {
+      let q = supabase
         .from("matches")
         .delete()
         .eq("lead_id", leadId)
         .eq("response_status", "pending");
+      if (exceptId) q = q.neq("id", exceptId);
+      const { error } = await q;
+      if (error) throw new Error(`matches_cleanup_failed: ${error.message}`);
     };
-    await resetPendingMatches();
+
 
 
     // ── Broker path (unchanged legacy) ─────────────────────────────────
