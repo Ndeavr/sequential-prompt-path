@@ -297,8 +297,9 @@ async function hasEligibleRecommendation(
 
     if (!pro) return false;
     const rbqValid =
-      !!pro.rbq_number &&
-      pro.rbq_compliance_status === "valid" &&
+      typeof pro.rbq_number === "string" &&
+      pro.rbq_number.trim().length > 0 &&
+      pro.rbq_compliance_status === "verified" &&
       !!pro.rbq_verified_at &&
       (!pro.rbq_expiry_date || new Date(pro.rbq_expiry_date).getTime() > Date.now());
 
