@@ -137,7 +137,7 @@ export default function BlogArticlePage() {
     );
 
   return (
-    <div className="alex-immersive min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       <Helmet>
         <title>{article.seo_title || `${article.title} | UNPRO`}</title>
         <meta name="description" content={article.meta_description || ""} />
