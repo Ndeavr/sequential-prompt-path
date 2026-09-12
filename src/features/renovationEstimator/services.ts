@@ -64,7 +64,8 @@ export interface SaveEstimatePayload {
   category_label: string;
   city?: string | null;
   postal_code?: string | null;
-  address?: string | null;
+  /** Adresse vérifiée par Google Places — obligatoire pour la conversion. */
+  address: string;
   latitude?: number | null;
   longitude?: number | null;
   property_type?: string | null;

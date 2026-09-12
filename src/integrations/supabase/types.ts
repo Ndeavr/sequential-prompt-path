@@ -99541,6 +99541,29 @@ export type Database = {
         }
         Returns: Json
       }
+      create_estimator_project: {
+        Args: {
+          p_address: string
+          p_budget_max: number
+          p_budget_min: number
+          p_category: string
+          p_category_label: string
+          p_city: string
+          p_description: string
+          p_idempotency_key: string
+          p_latitude: number
+          p_longitude: number
+          p_normalized_address: string
+          p_payload: Json
+          p_postal_code: string
+          p_property_type: string
+          p_source: string
+          p_source_page: string
+          p_urgency: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       crm_prospect_timeline: {
         Args: { _prospect_id: string }
         Returns: {

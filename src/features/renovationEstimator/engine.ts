@@ -98,10 +98,26 @@ export function cityFactorFor(citySlug?: string | null): number {
   return CITY_FACTOR[key] ?? DEFAULT_CITY_FACTOR;
 }
 
+/** Fraîcheur maximale acceptée pour une composante réellement mesurée. */
+export const BENCHMARK_MAX_AGE_MONTHS = 24;
+
 /**
- * Une composante réelle remplace la fourchette de référence lorsque
- * l'échantillon est suffisant (≥ 5 projets mesurés).
+ * Une composante n'est « Vérifié » que si elle provient réellement de projets
+ * mesurés : échantillon suffisant ET date de mise à jour issue des données
+ * réelles, encore récente. Sinon la référence de marché reste « Inféré ».
+ * « Déclaré » est réservé aux faits fournis par le propriétaire.
  */
+export function isMeasuredBenchmark(row: BenchmarkRow | undefined, now = new Date()): boolean {
+  if (!row) return false;
+  if ((row.sample_count ?? 0) < 5) return false;
+  if (!Number.isFinite(row.avg_cost_per_unit) || row.avg_cost_per_unit <= 0) return false;
+  if (!row.last_updated_from_actuals) return false;
+  const t = Date.parse(row.last_updated_from_actuals);
+  if (!Number.isFinite(t)) return false;
+  const months = (now.getTime() - t) / (1000 * 60 * 60 * 24 * 30.44);
+  return months >= 0 && months <= BENCHMARK_MAX_AGE_MONTHS;
+}
+
 function addonRange(
   addonMin: number,
   addonMax: number,
@@ -111,16 +127,16 @@ function addonRange(
 ): { min: number; max: number; provenance: Provenance } {
   if (!component) return { min: addonMin, max: addonMax, provenance: "Inféré" };
   const row = benchmarks.get(component);
-  if (!row || (row.sample_count ?? 0) < 5 || !Number.isFinite(row.avg_cost_per_unit)) {
+  if (!isMeasuredBenchmark(row)) {
     return { min: addonMin, max: addonMax, provenance: "Inféré" };
   }
-  const unit = row.unit_type === "sqft" ? Math.max(sizeSqft, 1) : 1;
-  const mid = safeNumber(row.avg_cost_per_unit) * unit;
+  const unit = row!.unit_type === "sqft" ? Math.max(sizeSqft, 1) : 1;
+  const mid = safeNumber(row!.avg_cost_per_unit) * unit;
   if (mid <= 0) return { min: addonMin, max: addonMax, provenance: "Inféré" };
   return {
     min: Math.round(mid * 0.85),
     max: Math.round(mid * 1.25),
-    provenance: "Déclaré",
+    provenance: "Vérifié",
   };
 }
 
@@ -161,7 +177,7 @@ export function computeRenovationEstimate(
     const hi = roundTo(Math.max(r.min, r.max), 50);
     optionsMin += lo;
     optionsMax += hi;
-    if (r.provenance === "Déclaré") verifiedComponents += 1;
+    if (r.provenance === "Vérifié") verifiedComponents += 1;
     lines.push({ id: addon.id, label: addon.label, min: lo, max: hi, provenance: r.provenance });
   }
 
@@ -186,7 +202,7 @@ export function computeRenovationEstimate(
         ? "élevée"
         : "moyenne";
 
-  const provenance: Provenance = verifiedComponents > 0 ? "Déclaré" : "Inféré";
+  const provenance: Provenance = verifiedComponents > 0 ? "Vérifié" : "Inféré";
   const likely = confidence === "faible" ? null : Math.round((totalMin + totalMax) / 2 / 100) * 100;
 
   const assumptions = [

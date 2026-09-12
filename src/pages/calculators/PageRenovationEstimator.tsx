@@ -211,6 +211,9 @@ export default function PageRenovationEstimator() {
     });
   };
 
+  /** Conversion permise seulement avec prénom et adresse vérifiée Google. */
+  const canSave = isVerified(address) && firstName.trim().length >= 2;
+
   const startSave = () => {
     setSaveOpen(true);
     setSaveError(null);
@@ -223,22 +226,28 @@ export default function PageRenovationEstimator() {
 
   const persist = useCallback(async () => {
     if (savingRef.current || !category || !estimate || !def) return;
+    const verified = isVerified(address) ? address : null;
+    if (!verified || firstName.trim().length < 2) {
+      setSaveError(
+        "Indiquez votre prénom et confirmez l'adresse du projet pour enregistrer votre estimation.",
+      );
+      return;
+    }
     savingRef.current = true;
     setSaving(true);
     setSaveError(null);
     try {
-      const verified = isVerified(address) ? address : null;
       const result = await saveEstimateProject({
         idempotency_key: idempotencyKey,
-        first_name: firstName.trim() || null,
+        first_name: firstName.trim(),
         email: email.trim() || null,
         category,
         category_label: def.label,
-        city: verified?.city ?? cityName ?? null,
-        postal_code: verified?.postalCode ?? null,
-        address: verified?.fullAddress ?? null,
-        latitude: verified?.latitude ?? null,
-        longitude: verified?.longitude ?? null,
+        city: verified.city ?? cityName ?? null,
+        postal_code: verified.postalCode ?? null,
+        address: verified.fullAddress,
+        latitude: verified.latitude ?? null,
+        longitude: verified.longitude ?? null,
         property_type: propertyKind,
         budget_min: estimate.totalMin,
         budget_max: estimate.totalMax,
@@ -568,7 +577,7 @@ export default function PageRenovationEstimator() {
                 <AddressVerifiedInput
                   value={address}
                   onChange={setAddress}
-                  label="Adresse du projet (facultatif à cette étape)"
+                  label="Adresse du projet"
                   showUnitField={false}
                 />
               </div>
@@ -676,7 +685,11 @@ export default function PageRenovationEstimator() {
                     className="h-12 w-full"
                     asChild
                     onClick={() =>
-                      void logFunnelEvent({ event_type: "booking_clicked", step: "estimator" })
+                      void logFunnelEvent({
+                        event_type: "estimator_clara_clicked" as never,
+                        step: "estimator",
+                        metadata: { category },
+                      })
                     }
                   >
                     <Link to="/alex">Affiner avec Clara</Link>
@@ -695,17 +708,33 @@ export default function PageRenovationEstimator() {
 
                   <div className="mb-4 grid gap-3">
                     <div>
-                      <Label htmlFor="prenom">Prénom (facultatif)</Label>
+                      <Label htmlFor="prenom">Prénom</Label>
                       <Input
                         id="prenom"
                         className="mt-1 h-12"
                         value={firstName}
+                        required
+                        aria-required="true"
                         autoComplete="given-name"
                         onChange={(e) => setFirstName(e.target.value)}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="courriel">Courriel (facultatif, pour recevoir le rapport)</Label>
+                      <AddressVerifiedInput
+                        value={address}
+                        onChange={setAddress}
+                        label="Adresse du projet (obligatoire)"
+                        showUnitField={false}
+                      />
+                      {!isVerified(address) && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Sélectionnez votre adresse dans la liste proposée pour qu'elle soit
+                          confirmée.
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <Label htmlFor="courriel">Courriel (facultatif)</Label>
                       <Input
                         id="courriel"
                         type="email"
@@ -720,17 +749,28 @@ export default function PageRenovationEstimator() {
                       <Checkbox
                         checked={consent}
                         onCheckedChange={(v) => setConsent(v === true)}
-                        aria-label="Consentement aux communications"
+                        aria-label="Consentement aux conseils et offres"
                       />
                       <span>
-                        J'accepte de recevoir des communications d'UNPRO liées à mon projet. Ce
-                        consentement est distinct de la sauvegarde de mon estimation.
+                        J'accepte de recevoir des conseils et offres d'UNPRO. Facultatif : les
+                        messages nécessaires au suivi de mon projet sont envoyés séparément.
                       </span>
                     </label>
                   </div>
 
+                  {!canSave && (
+                    <p className="mb-3 text-xs text-muted-foreground">
+                      Votre prénom et une adresse confirmée sont nécessaires pour enregistrer le
+                      projet.
+                    </p>
+                  )}
+
                   {authed ? (
-                    <Button className="h-12 w-full" onClick={() => void persist()} disabled={saving}>
+                    <Button
+                      className="h-12 w-full"
+                      onClick={() => void persist()}
+                      disabled={saving || !canSave}
+                    >
                       {saving ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
@@ -741,7 +781,9 @@ export default function PageRenovationEstimator() {
                       )}
                     </Button>
                   ) : (
-                    <PhoneOtpForm onSuccess={onOtpSuccess} loading={saving} />
+                    <div aria-disabled={!canSave} className={canSave ? "" : "pointer-events-none opacity-50"}>
+                      <PhoneOtpForm onSuccess={onOtpSuccess} loading={saving} />
+                    </div>
                   )}
 
                   {saveError && (
