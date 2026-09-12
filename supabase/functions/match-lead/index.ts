@@ -179,6 +179,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    const callerId = String((claimsData.claims as any).sub ?? "");
+    if (!callerId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { leadId } = await req.json();
     if (!leadId) {
       return new Response(JSON.stringify({ error: "leadId is required" }), {
@@ -205,7 +213,37 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Autorisation : le demandeur doit posséder la demande, ou être admin.
+    const ownerId = (lead as any).owner_profile_id ?? null;
+    let authorized = !!ownerId && String(ownerId) === callerId;
+    if (!authorized) {
+      const { data: adminRole } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", callerId)
+        .eq("role", "admin")
+        .maybeSingle();
+      authorized = !!adminRole;
+    }
+    if (!authorized) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const typedLead = lead as unknown as LeadRow;
+
+    /** Le rejeu ne doit jamais empiler des jumelages : on retire les rangées en attente. */
+    const resetPendingMatches = async () => {
+      await supabase
+        .from("matches")
+        .delete()
+        .eq("lead_id", leadId)
+        .eq("response_status", "pending");
+    };
+    await resetPendingMatches();
+
 
     // ── Broker path (unchanged legacy) ─────────────────────────────────
     if (typedLead.lead_type === "broker") {
