@@ -61,6 +61,14 @@ beforeEach(() => {
   window.sessionStorage.clear();
   window.localStorage.clear();
   vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+  vi.stubGlobal(
     "matchMedia",
     (q: string) =>
       ({
