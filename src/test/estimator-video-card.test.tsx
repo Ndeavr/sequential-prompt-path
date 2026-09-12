@@ -2,13 +2,19 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import ProjectVideoCard from "@/features/renovationEstimator/ProjectVideoCard";
 
-const video = {
+const video: {
+  id: string;
+  url: string;
+  title: string;
+  poster: string | null;
+  description: string | null;
+} = {
   id: "v1",
   url: "https://cdn.example.com/reno.mp4",
   title: "Rénovation de cuisine",
   poster: null,
   description: null,
-} as never;
+};
 
 let observed: Array<(entries: { isIntersecting: boolean }[]) => void> = [];
 
@@ -34,7 +40,7 @@ afterEach(() => {
 
 describe("ProjectVideoCard", () => {
   it("ne lit jamais automatiquement et reste muet avant le clic", () => {
-    render(<ProjectVideoCard video={video} />);
+    render(<ProjectVideoCard video={video as never} />);
     const el = screen.getByTestId("project-video") as HTMLVideoElement;
     expect(el.autoplay).toBe(false);
     expect(el.muted).toBe(true);
@@ -50,7 +56,7 @@ describe("ProjectVideoCard", () => {
       value: play,
     });
     const onStarted = vi.fn();
-    render(<ProjectVideoCard video={video} onStarted={onStarted} />);
+    render(<ProjectVideoCard video={video as never} onStarted={onStarted} />);
     const button = screen.getByTestId("project-video-play");
     fireEvent.click(button);
     expect(play).toHaveBeenCalledTimes(1);
@@ -69,7 +75,7 @@ describe("ProjectVideoCard", () => {
       configurable: true,
       value: pause,
     });
-    render(<ProjectVideoCard video={video} />);
+    render(<ProjectVideoCard video={video as never} />);
     // Second observateur = pause hors écran.
     observed[1]?.([{ isIntersecting: false }]);
     expect(pause).toHaveBeenCalled();
@@ -77,7 +83,7 @@ describe("ProjectVideoCard", () => {
 
   it("signale la fin réelle de la vidéo", () => {
     const onCompleted = vi.fn();
-    render(<ProjectVideoCard video={video} onCompleted={onCompleted} />);
+    render(<ProjectVideoCard video={video as never} onCompleted={onCompleted} />);
     fireEvent.ended(screen.getByTestId("project-video"));
     expect(onCompleted).toHaveBeenCalledWith("v1");
   });
@@ -88,7 +94,7 @@ describe("ProjectVideoCard", () => {
       configurable: true,
       value: play,
     });
-    render(<ProjectVideoCard video={video} />);
+    render(<ProjectVideoCard video={video as never} />);
     const button = screen.getByLabelText(/Lire la vidéo/i);
     fireEvent.keyDown(button, { key: "Enter" });
     expect(play).toHaveBeenCalled();
