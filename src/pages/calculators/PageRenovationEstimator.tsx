@@ -901,10 +901,13 @@ export default function PageRenovationEstimator() {
                         "Sauvegarder mon projet"
                       )}
                     </Button>
+                  ) : canSave ? (
+                    <PhoneOtpForm onSuccess={onOtpSuccess} loading={saving} />
                   ) : (
-                    <div aria-disabled={!canSave} className={canSave ? "" : "pointer-events-none opacity-50"}>
-                      <PhoneOtpForm onSuccess={onOtpSuccess} loading={saving} />
-                    </div>
+                    <p className="text-sm text-muted-foreground" data-testid="otp-gated">
+                      La vérification par code s'affichera dès que votre prénom et votre adresse
+                      confirmée seront renseignés.
+                    </p>
                   )}
 
                   {saveError && (
