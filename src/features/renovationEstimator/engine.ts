@@ -202,7 +202,12 @@ export function computeRenovationEstimate(
         ? "élevée"
         : "moyenne";
 
-  const provenance: Provenance = verifiedComponents > 0 ? "Vérifié" : "Inféré";
+  /**
+   * Vérité de provenance : la base et les autres inducteurs de coût demeurent
+   * inférés. Une option mesurée ne rend jamais l'estimation globale « Vérifié ».
+   * La provenance « Vérifié » reste visible ligne par ligne.
+   */
+  const provenance: Provenance = "Inféré";
   const likely = confidence === "faible" ? null : Math.round((totalMin + totalMax) / 2 / 100) * 100;
 
   const assumptions = [
