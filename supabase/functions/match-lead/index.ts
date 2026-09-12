@@ -462,9 +462,9 @@ Deno.serve(async (req) => {
     const scored = (contractors ?? [])
       .map((c: any) => {
         const areaSet = areasByContractor.get(c.id) ?? new Set<string>();
-        const servesCity =
-          !!leadCitySlug &&
-          (areaSet.has(leadCitySlug) || normCity(c.city) === leadCitySlug);
+        // Territoire : une rangée `contractor_service_areas` explicite est
+        // obligatoire. La ville inscrite au profil ne qualifie jamais seule.
+        const servesCity = !!leadCitySlug && areaSet.has(leadCitySlug);
         const catSet = catsByContractor.get(c.id) ?? new Set<string>();
         const matchesCategory = !!wantedCat && catSet.has(wantedCat);
         // Admissibilité dure : catégorie canonique assignée ET territoire desservi.
