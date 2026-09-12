@@ -10,3 +10,4 @@
 - [ ] Élargir la découverte de nouvelles entreprises admissibles (bloquée par le coupe-circuit Google).
 - [ ] Thème sombre par défaut sur l'accueil (logo actuel conservé).
 - [ ] Animation de l'en-tête fixe au défilement.
+- [ ] Mettre à jour l'article canonique « Les 3 soumissions, c'est terminé » avec sources, visuels éditoriaux, SEO et validation de production.
