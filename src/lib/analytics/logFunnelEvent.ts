@@ -84,6 +84,7 @@ export type FunnelEventType =
   | "estimator_details_completed"
   | "estimator_result_viewed"
   | "estimator_save_started"
+  | "estimator_clara_clicked"
   | "otp_completed"
   | "project_created"
   | "matching_started"
