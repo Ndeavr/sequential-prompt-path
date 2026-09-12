@@ -1,35 +1,38 @@
-# Thème sombre par défaut et en-tête fixe animé
+# Manifeste canonique sur les trois soumissions
 
-## Constat vérifié
+## Résultat
 
-- Le réglage global choisit déjà le thème sombre pour les nouveaux visiteurs, mais `/` et `/index` appliquent encore une apparence claire dédiée qui contourne ce choix.
-- L’en-tête principal est déjà fixe en haut, mais il reste visuellement statique pendant le défilement.
-- Le logo officiel actuellement affiché provient du composant UNPRO existant; il sera conservé exactement, sans nouvel asset ni nouvelle variante.
+Mettre à jour l’article de production existant, sans nouvelle route ni doublon SEO, avec une argumentation prudente, quatre sources officielles et des visuels éditoriaux accessibles.
 
 ## Implémentation
 
-1. **Rendre le sombre réellement prioritaire**
-   - Retirer l’exception claire imposée à l’accueil afin que `/` et `/index` suivent le thème global sombre par défaut.
-   - Conserver les choix explicites déjà enregistrés par les utilisateurs et le sélecteur clair/sombre existant.
-   - Adapter la couleur du navigateur et les surfaces de l’accueil aux jetons sombres existants, sans dupliquer le système de thème.
+1. **Article de production**
+   - Réécrire les contenus HTML et Markdown selon la progression 1980 → 2000 → 2020 → 2026.
+   - Retirer tous les chiffres, garanties et états de vérification non prouvés.
+   - Conserver l’identifiant, le slug, l’URL canonique et la date de publication.
+   - Mettre à jour les métadonnées, les cinq FAQ, les liens internes canoniques, le nombre réel de mots et le temps de lecture calculé.
 
-2. **Animer l’en-tête fixe**
-   - Conserver la même rangée, le même logo et les mêmes actions : notifications, code QR et menu.
-   - Ajouter un état de défilement discret : hauteur légèrement réduite, fond sombre plus opaque, flou renforcé, bordure et ombre plus nettes.
-   - Utiliser l’animation cinématique existante, sans saut de mise en page, avec prise en charge de `prefers-reduced-motion`.
-   - Maintenir les zones tactiles actuelles et la lisibilité sur mobile.
+2. **Rendu dédié et réutilisable**
+   - Ajouter trois composants code-native rendus uniquement pour ce slug : ligne du temps, constellation de compatibilité et comparaison des modèles.
+   - Insérer chaque visuel exactement après la section demandée, avec légendes, libellés accessibles, thème clair/sombre et mouvement réduit.
+   - Normaliser les deux formats de liens internes, corriger l’alt de l’image et enrichir le schéma Article avec les citations officielles.
 
-3. **Cohérence des deux en-têtes existants**
-   - Appliquer le même comportement à l’en-tête partagé et à l’en-tête local de l’accueil s’il demeure actif, afin d’éviter une différence entre `/index`, `/proprietaires` et les autres pages.
-   - Garder le logo officiel actuel à l’identique dans chaque état.
+3. **Page liée**
+   - Ajouter sur `/pourquoi-pas-trois-soumissions` un lien clair vers l’analyse canonique, sans dupliquer le manifeste.
+
+## Détails techniques
+
+- Garder le contenu principal dans `public.blog_articles`; utiliser des marqueurs contrôlés pour placer les composants React sans stocker de classes de présentation en base.
+- Filtrer proprement tout lien interne invalide.
+- Ne créer aucune table et ne modifier aucune autre route.
 
 ## Vérification
 
-- Vérifier sur mobile 384 × 714 et sur ordinateur : chargement initial sombre, en-tête visible en haut, transition au défilement, retour en haut et ouverture du menu.
-- Vérifier l’absence de chevauchement avec le contenu et le menu inférieur.
-- Exécuter les tests ciblés, la suite existante et confirmer une compilation propre.
+- Ajouter des tests ciblés du rendu, des marqueurs, des liens mixtes, de l’alt et des données structurées.
+- Exécuter les tests pertinents, le contrôle TypeScript et la compilation.
+- Inspecter le rendu à 390 px et sur ordinateur, en clair et sombre, puis vérifier les liens, FAQ, CTA Clara et l’absence d’Alex.
+- Relire la ligne de production après mise à jour et confirmer le titre, le statut, le slug, le nombre de mots et la date de modification.
 
 ## Limites
 
-- Aucun changement de contenu, navigation, données, acquisition, paiement ou automatisation.
-- Aucun remplacement ou retraitement du logo UNPRO.
+- Aucun nouvel article, aucune nouvelle route, aucune publication du site et aucune modification du chantier de vérification des entrepreneurs.
