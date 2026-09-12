@@ -438,22 +438,36 @@ export default function PageRenovationEstimator() {
                   const Icon = CATEGORY_ICONS[c];
                   const selected = category === c;
                   return (
-                    <button
+                    <motion.button
                       key={c}
                       type="button"
+                      {...press}
                       onClick={() => selectCategory(c)}
                       aria-pressed={selected}
-                      className={`flex min-h-[7rem] flex-col items-start gap-2 rounded-2xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                        selected ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/40"
+                      data-testid={`category-${c}`}
+                      className={`relative flex min-h-[7rem] flex-col items-start gap-2 rounded-2xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                        selected
+                          ? "border-primary bg-primary/5 shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
+                          : "border-border bg-card hover:border-primary/40"
                       }`}
                     >
                       <Icon className="h-6 w-6 text-primary" aria-hidden />
                       <span className="font-medium">{CATEGORIES[c].label}</span>
                       <span className="text-xs text-muted-foreground">{CATEGORIES[c].tagline}</span>
-                    </button>
+                      {selected && (
+                        <motion.span
+                          {...selectedMark}
+                          className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground"
+                          data-testid={`category-selected-${c}`}
+                        >
+                          <Check className="h-3.5 w-3.5" aria-hidden />
+                        </motion.span>
+                      )}
+                    </motion.button>
                   );
                 })}
               </div>
+
 
               <Button
                 className="mt-6 h-12 w-full"
