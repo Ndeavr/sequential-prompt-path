@@ -78,45 +78,46 @@ export async function fetchEligibleRecommendation(
     if (!lead?.id) return null;
   }
 
-  // 2. Jumelages réellement persistés pour cette demande.
-  const { data: matches, error } = await supabase
+  // 2. Jumelage principal réellement persisté pour cette demande.
+  //    Aucun tri par score, aucun repli sur une suggestion.
+  const { data: match, error } = await supabase
     .from("matches")
-    .select("contractor_id, reasons, status, score")
+    .select("contractor_id, reasons, status, response_status")
     .eq("lead_id", resolvedLeadId)
-    .order("score", { ascending: false })
-    .limit(5);
-  if (error || !matches?.length) return null;
+    .eq("status", "primary")
+    .maybeSingle();
+  if (error || !match?.contractor_id) return null;
 
-  for (const match of matches) {
-    if (!match.contractor_id) continue;
-    if (match.status === "rejected" || match.status === "expired") continue;
+  const responseStatus = String(
+    (match as { response_status?: unknown }).response_status ?? "",
+  ).toLowerCase();
+  if (REFUSED_RESPONSE_STATES.has(responseStatus)) return null;
 
-    const { data: pro } = await supabase
-      .from("contractors")
-      .select(
-        "id, slug, business_name, city, account_status, verification_status, is_accepting_appointments, booking_enabled, rbq_number, rbq_compliance_status, rbq_verified_at, rbq_expiry_date",
-      )
-      .eq("id", match.contractor_id)
-      .maybeSingle();
-    if (!pro || !isEligibleContractor(pro as unknown as Record<string, unknown>)) continue;
+  const { data: pro } = await supabase
+    .from("contractors")
+    .select(
+      "id, slug, business_name, city, account_status, verification_status, is_accepting_appointments, booking_enabled, rbq_number, rbq_compliance_status, rbq_verified_at, rbq_expiry_date",
+    )
+    .eq("id", match.contractor_id)
+    .maybeSingle();
+  if (!pro || !isEligibleContractor(pro as unknown as Record<string, unknown>)) return null;
 
-    const reasons = match.reasons as unknown;
-    const reason = Array.isArray(reasons)
-      ? String(reasons[0] ?? "") || null
-      : typeof reasons === "string"
-        ? reasons
-        : null;
+  const reasons = match.reasons as unknown;
+  const reason = Array.isArray(reasons)
+    ? String(reasons[0] ?? "") || null
+    : typeof reasons === "string"
+      ? reasons
+      : null;
 
-    return {
-      contractorId: String(pro.id),
-      slug: String(pro.slug),
-      name: String(pro.business_name),
-      city: (pro.city as string) ?? null,
-      reason,
-    };
-  }
-  return null;
+  return {
+    contractorId: String(pro.id),
+    slug: String(pro.slug),
+    name: String(pro.business_name),
+    city: (pro.city as string) ?? null,
+    reason,
+  };
 }
+
 
 export function useEligibleRecommendation(
   userId: string | undefined,
