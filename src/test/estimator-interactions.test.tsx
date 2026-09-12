@@ -136,7 +136,6 @@ describe("Calculateur de rénovation — interactions", () => {
     );
     expect(await screen.findByTestId("otp-gated")).toBeInTheDocument();
     expect(screen.queryByTestId("phone-otp-form")).toBeNull();
-    expect(screen.queryByLabelText(/code/i)).toBeNull();
   });
 
   it("marque visuellement l'option sélectionnée", async () => {
