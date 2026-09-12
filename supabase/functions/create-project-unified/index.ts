@@ -41,9 +41,49 @@ const ALLOWED_CATEGORIES = new Set([
 
 const ALLOWED_PROPERTY_TYPES = new Set(["maison", "condo", "plex", "autre"]);
 const ALLOWED_URGENCY = new Set(["urgent", "normal", "flexible"]);
+const ALLOWED_SCOPE = new Set(["essentiel", "standard", "haut_de_gamme"]);
+const ALLOWED_AGE = new Set(["avant_1960", "1960_1990", "1990_2010", "apres_2010", "inconnu"]);
+const KNOWN_ESTIMATOR_VERSIONS = new Set(["reno-bench-2026.09"]);
+
+/** Bornes réelles du catalogue (superficie min/max par catégorie). */
+const CATEGORY_SIZE_BOUNDS: Record<string, [number, number]> = {
+  cuisine: [60, 600],
+  salle_de_bain: [30, 250],
+  sous_sol: [200, 2000],
+  garage: [150, 1200],
+  aire_de_vie: [100, 1500],
+  renovation_complete: [400, 5000],
+};
+
+/** Options réellement offertes par catégorie — aucune autre valeur acceptée. */
+const CATEGORY_ADDONS: Record<string, Set<string>> = {
+  cuisine: new Set([
+    "armoires_sur_mesure", "comptoir_quartz", "electromenagers", "ilot", "dosseret",
+    "plancher", "deplacement_plomberie",
+  ]),
+  salle_de_bain: new Set([
+    "douche_ceramique", "bain_autoportant", "vanite", "plancher_chauffant",
+    "ventilation", "deplacement_plomberie_sdb",
+  ]),
+  sous_sol: new Set([
+    "isolation", "cloisons", "plafond", "plancher_ss", "salle_bain_ss", "fenetre_egress",
+  ]),
+  garage: new Set([
+    "isolation_garage", "gypse_garage", "electricite_garage", "epoxy", "porte_garage",
+  ]),
+  aire_de_vie: new Set(["plancher_av", "eclairage", "menuiserie", "foyer", "murs_plafonds"]),
+  renovation_complete: new Set([
+    "structure", "cuisine_incluse", "sdb_incluse", "electricite_complete",
+    "plomberie_complete", "fenetres", "planchers_complets", "cvac",
+  ]),
+};
+
+/** Toutes les sous-catégories d'interface se rattachent à cette catégorie canonique. */
+const CANONICAL_MATCHING_CATEGORY = "renovation-generale";
 
 const MAX_BUDGET = 100_000_000;
 const MAX_PAYLOAD_BYTES = 64_000;
+
 
 interface Body {
   description?: string;
@@ -87,6 +127,88 @@ function money(v: unknown): number | null {
   if (typeof v !== "number" || !Number.isFinite(v) || v < 0 || v > MAX_BUDGET) return null;
   return Math.round(v);
 }
+
+/** Prénom réel exigé côté serveur (2 à 80 caractères sensés). */
+export function validFirstName(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const t = v.trim().replace(/\s+/g, " ");
+  if (t.length < 2 || t.length > 80) return null;
+  if (!/^[\p{L}][\p{L}\p{M}'’\-. ]*$/u.test(t)) return null;
+  return t;
+}
+
+/**
+ * Les entrées du calculateur sont validées puis réécrites : aucun objet
+ * arbitraire n'est persisté tel quel.
+ */
+export function validateEstimatorInputs(
+  category: string,
+  raw: unknown,
+): { ok: true; value: Record<string, unknown> } | { ok: false; error: string } {
+  if (raw === null || raw === undefined) return { ok: true, value: {} };
+  if (typeof raw !== "object" || Array.isArray(raw)) return { ok: false, error: "invalid_inputs" };
+  const o = raw as Record<string, unknown>;
+
+  const bounds = CATEGORY_SIZE_BOUNDS[category];
+  if (!bounds) return { ok: false, error: "invalid_category" };
+  const size = o.sizeSqft;
+  if (typeof size !== "number" || !Number.isFinite(size) || size < bounds[0] || size > bounds[1]) {
+    return { ok: false, error: "invalid_size" };
+  }
+
+  const scope = typeof o.scope === "string" ? o.scope : "";
+  if (!ALLOWED_SCOPE.has(scope)) return { ok: false, error: "invalid_scope" };
+
+  const age = typeof o.age === "string" ? o.age : "inconnu";
+  if (!ALLOWED_AGE.has(age)) return { ok: false, error: "invalid_age" };
+
+  const kind = typeof o.propertyKind === "string" ? o.propertyKind : "maison";
+  if (!ALLOWED_PROPERTY_TYPES.has(kind)) return { ok: false, error: "invalid_property_type" };
+
+  const allowed = CATEGORY_ADDONS[category];
+  const addonsRaw = Array.isArray(o.addons) ? o.addons : [];
+  if (addonsRaw.length > 20) return { ok: false, error: "invalid_addons" };
+  const addons: string[] = [];
+  for (const a of addonsRaw) {
+    if (typeof a !== "string" || !allowed.has(a)) return { ok: false, error: "invalid_addons" };
+    if (!addons.includes(a)) addons.push(a);
+  }
+
+  return {
+    ok: true,
+    value: { category, sizeSqft: Math.round(size), scope, age, propertyKind: kind, addons },
+  };
+}
+
+/** L'estimation persistée est réduite à des champs numériques connus. */
+export function validateEstimatePayload(
+  raw: unknown,
+): { ok: true; value: Record<string, unknown> | null } | { ok: false; error: string } {
+  if (raw === null || raw === undefined) return { ok: true, value: null };
+  if (typeof raw !== "object" || Array.isArray(raw)) return { ok: false, error: "invalid_estimate" };
+  const o = raw as Record<string, unknown>;
+  const version = (o.benchmark as Record<string, unknown> | undefined)?.version;
+  if (typeof version !== "string" || !KNOWN_ESTIMATOR_VERSIONS.has(version)) {
+    return { ok: false, error: "invalid_estimator_version" };
+  }
+  const num = (k: string) => (typeof o[k] === "number" && Number.isFinite(o[k] as number) ? (o[k] as number) : null);
+  return {
+    ok: true,
+    value: {
+      version,
+      totalMin: num("totalMin"),
+      totalMax: num("totalMax"),
+      subtotalMin: num("subtotalMin"),
+      subtotalMax: num("subtotalMax"),
+      taxesMin: num("taxesMin"),
+      taxesMax: num("taxesMax"),
+      likely: num("likely"),
+      confidence: typeof o.confidence === "string" ? o.confidence.slice(0, 20) : null,
+      provenance: typeof o.provenance === "string" ? o.provenance.slice(0, 20) : null,
+    },
+  };
+}
+
 
 /** Normalisation d'adresse alignée sur `src/lib/addressNormalizer.ts`. */
 export function normalizeAddressServer(input: string): string {
@@ -174,16 +296,38 @@ Deno.serve(async (req) => {
         ? body.longitude
         : null;
 
+    let firstName = text(body.first_name, 80);
+    let estimatorInputs: Record<string, unknown> | null = null;
+    let estimatePayload: Record<string, unknown> | null = null;
+
+    if (source === "renovation_calculator") {
+      firstName = validFirstName(body.first_name);
+      if (!firstName) return json({ error: "invalid_first_name" }, 400);
+
+      const inputs = validateEstimatorInputs(category as string, body.inputs);
+      if (!inputs.ok) return json({ error: inputs.error }, 400);
+      estimatorInputs = inputs.value;
+
+      const est = validateEstimatePayload(body.estimate);
+      if (!est.ok) return json({ error: est.error }, 400);
+      estimatePayload = est.value;
+    }
+
     const payload = {
-      first_name: text(body.first_name, 80),
+      first_name: firstName,
       email: text(body.email, 160),
       consent_marketing: body.consent_marketing === true,
-      estimate: body.estimate ?? null,
-      inputs: body.inputs ?? null,
+      estimate: estimatePayload,
+      inputs: estimatorInputs,
       attribution: body.attribution ?? null,
       postal_code: postalCode,
       property_type: propertyTypeRaw,
+      // Sous-catégorie d'interface réellement choisie, conservée telle quelle ;
+      // l'admissibilité au jumelage utilise la catégorie canonique.
+      ui_category: category,
+      matching_category: source === "renovation_calculator" ? CANONICAL_MATCHING_CATEGORY : category,
     };
+
 
     // 3. Conversion atomique (une seule transaction côté base).
     const { data: rpc, error: rpcError } = await supabase.rpc("create_estimator_project", {
@@ -246,22 +390,52 @@ Deno.serve(async (req) => {
     }
 
     // 5. Moteur de compatibilité canonique (jamais un second matcher).
-    if (!result.reused) {
-      try {
-        await fetch(`${supabaseUrl}/functions/v1/match-lead`, {
-          method: "POST",
-          headers: { Authorization: auth, "Content-Type": "application/json" },
-          body: JSON.stringify({ leadId }),
-        });
-      } catch (e) {
-        console.warn("[create-project-unified] match-lead", String(e));
+    // Un rejeu recalcule toujours l'état réel du jumelage.
+    let matchingError = false;
+    try {
+      const res = await fetch(`${supabaseUrl}/functions/v1/match-lead`, {
+        method: "POST",
+        headers: { Authorization: auth, "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId }),
+      });
+      if (!res.ok) {
+        matchingError = true;
+        console.error("[create-project-unified] match-lead http", res.status);
+      } else {
+        const out = (await res.json().catch(() => null)) as { ok?: boolean } | null;
+        if (!out?.ok) matchingError = true;
       }
+    } catch (e) {
+      matchingError = true;
+      console.warn("[create-project-unified] match-lead", String(e));
+    }
+
+    if (matchingError) {
+      // Aucune réussite annoncée : la demande reste honnêtement en attente.
+      await supabase
+        .from("leads")
+        .update({ matching_status: "pending" })
+        .eq("id", leadId)
+        .in("matching_status", ["pending", "empty"]);
+      return json({
+        projectId,
+        leadId,
+        hasMatches: false,
+        reused: result.reused,
+        matchingStatus: "pending",
+      });
     }
 
     // 6. État réellement persisté + garde d'admissibilité stricte.
     const hasMatches = await hasEligibleRecommendation(supabase, leadId);
 
-    return json({ projectId, leadId, hasMatches, reused: result.reused });
+    return json({
+      projectId,
+      leadId,
+      hasMatches,
+      reused: result.reused,
+      matchingStatus: hasMatches ? "matched" : "empty",
+    });
   } catch (e) {
     console.error("[create-project-unified]", e instanceof Error ? e.message : String(e));
     return json({ error: "unexpected_error" }, 500);
@@ -297,8 +471,9 @@ async function hasEligibleRecommendation(
 
     if (!pro) return false;
     const rbqValid =
-      !!pro.rbq_number &&
-      pro.rbq_compliance_status === "valid" &&
+      typeof pro.rbq_number === "string" &&
+      pro.rbq_number.trim().length > 0 &&
+      pro.rbq_compliance_status === "verified" &&
       !!pro.rbq_verified_at &&
       (!pro.rbq_expiry_date || new Date(pro.rbq_expiry_date).getTime() > Date.now());
 

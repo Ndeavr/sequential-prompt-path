@@ -19,6 +19,7 @@ import {
   ChefHat,
   Home,
   Info,
+  Check,
   Loader2,
   Sofa,
   Warehouse,
@@ -86,6 +87,36 @@ function prettyCity(slug?: string | null): string | null {
     .join("-");
 }
 
+/**
+ * Montant animé une seule fois à l'affichage du résultat. Le texte final est
+ * rendu immédiatement lorsque le mouvement est réduit.
+ */
+function CountUpAmount({ value, reduceMotion }: { value: number; reduceMotion: boolean }) {
+  const [shown, setShown] = useState(reduceMotion ? value : 0);
+  const doneRef = useRef(false);
+
+  useEffect(() => {
+    if (reduceMotion || doneRef.current) {
+      setShown(value);
+      return;
+    }
+    doneRef.current = true;
+    const start = performance.now();
+    const duration = 700;
+    let raf = 0;
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setShown(Math.round(value * eased));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value, reduceMotion]);
+
+  return <span>{formatCad(shown)}</span>;
+}
+
 export default function PageRenovationEstimator() {
   const { city: cityParam } = useParams<{ city?: string }>();
   const navigate = useNavigate();
@@ -104,6 +135,8 @@ export default function PageRenovationEstimator() {
   const [address, setAddress] = useState<VerifiedAddress>(emptyAddress());
   const [benchmarks, setBenchmarks] = useState<BenchmarkRow[]>([]);
   const [videos, setVideos] = useState<ApprovedProjectVideo[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [dir, setDir] = useState<1 | -1>(1);
   const [idempotencyKey, setIdempotencyKey] = useState<string>(() => newIdempotencyKey());
 
   const [saveOpen, setSaveOpen] = useState(false);
@@ -153,8 +186,11 @@ export default function PageRenovationEstimator() {
       step: "estimator",
       metadata: { city: citySlug ?? null },
     });
-    void fetchBenchmarks().then(setBenchmarks);
-    void fetchApprovedProjectVideos().then(setVideos);
+    setDataLoading(true);
+    void Promise.allSettled([
+      fetchBenchmarks().then(setBenchmarks),
+      fetchApprovedProjectVideos().then(setVideos),
+    ]).finally(() => setDataLoading(false));
     void supabase.auth.getUser().then(({ data }) => setAuthed(!!data.user));
   }, [citySlug]);
 
@@ -186,12 +222,14 @@ export default function PageRenovationEstimator() {
 
   const goToDetails = () => {
     if (!category) return;
+    setDir(1);
     setStep(2);
     goTop();
   };
 
   const goToResult = () => {
     if (!category || !estimate) return;
+    setDir(1);
     setStep(3);
     goTop();
     void logFunnelEvent({
@@ -336,9 +374,25 @@ export default function PageRenovationEstimator() {
     ],
   };
 
+  /** Glissement directionnel : avance vers la gauche, retour vers la droite. */
   const fade = reduceMotion
     ? {}
-    : { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -8 } };
+    : {
+        initial: { opacity: 0, x: dir * 24 },
+        animate: { opacity: 1, x: 0 },
+        exit: { opacity: 0, x: dir * -24 },
+        transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] as const },
+      };
+
+  /** Retour tactile sobre, jamais bloquant pour la saisie. */
+  const press = reduceMotion ? {} : { whileTap: { scale: 0.97 } };
+  const selectedMark = reduceMotion
+    ? { initial: false as const }
+    : {
+        initial: { scale: 0.6, opacity: 0 },
+        animate: { scale: 1, opacity: 1 },
+        transition: { type: "spring" as const, stiffness: 520, damping: 24 },
+      };
 
   return (
     <MainLayout>
@@ -356,11 +410,14 @@ export default function PageRenovationEstimator() {
       <div ref={topRef} className="mx-auto w-full max-w-3xl px-4 pb-16 pt-8 sm:pt-12">
         <header className="mb-8 text-center">
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Calculateur de rénovation{cityName ? ` — ${cityName}` : ""}
+            Combien coûteront vos rénovations{cityName ? ` à ${cityName}` : ""}?
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-base text-muted-foreground">
-            Obtenez une fourchette de coûts indicative en moins d'une minute. Aucune inscription
-            pour voir votre estimation.
+            Trois étapes : votre projet, vos dimensions, votre fourchette de coûts.
+            Vous voyez l'estimation complète avant de donner quoi que ce soit.
+          </p>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
+            Estimation indicative, basée sur des références de marché québécoises.
           </p>
         </header>
 
@@ -374,7 +431,7 @@ export default function PageRenovationEstimator() {
               <li key={label} className="flex items-center gap-2">
                 <span
                   aria-current={active ? "step" : undefined}
-                  className={`flex h-8 min-w-[2rem] items-center justify-center rounded-full px-3 ${
+                  className={`flex h-8 min-w-[2rem] items-center justify-center rounded-full transition-colors px-3 ${
                     active || done
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-muted-foreground"
@@ -383,11 +440,22 @@ export default function PageRenovationEstimator() {
                   {n}
                 </span>
                 <span className={active ? "text-foreground" : "text-muted-foreground"}>{label}</span>
-                {n < 3 ? <span className="h-px w-4 bg-border" aria-hidden /> : null}
+                {n < 3 ? (
+                  <span className="relative h-px w-6 overflow-hidden bg-border" aria-hidden>
+                    <motion.span
+                      className="absolute inset-y-0 left-0 bg-primary"
+                      initial={false}
+                      animate={{ width: done ? "100%" : "0%" }}
+                      transition={reduceMotion ? { duration: 0 } : { duration: 0.4, ease: "easeOut" }}
+                      data-testid={`progress-connector-${n}`}
+                    />
+                  </span>
+                ) : null}
               </li>
             );
           })}
         </ol>
+
 
         <AnimatePresence mode="wait">
           {/* ÉTAPE 1 — PROJET */}
@@ -401,22 +469,36 @@ export default function PageRenovationEstimator() {
                   const Icon = CATEGORY_ICONS[c];
                   const selected = category === c;
                   return (
-                    <button
+                    <motion.button
                       key={c}
                       type="button"
+                      {...press}
                       onClick={() => selectCategory(c)}
                       aria-pressed={selected}
-                      className={`flex min-h-[7rem] flex-col items-start gap-2 rounded-2xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                        selected ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/40"
+                      data-testid={`category-${c}`}
+                      className={`relative flex min-h-[7rem] flex-col items-start gap-2 rounded-2xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                        selected
+                          ? "border-primary bg-primary/5 shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
+                          : "border-border bg-card hover:border-primary/40"
                       }`}
                     >
                       <Icon className="h-6 w-6 text-primary" aria-hidden />
                       <span className="font-medium">{CATEGORIES[c].label}</span>
                       <span className="text-xs text-muted-foreground">{CATEGORIES[c].tagline}</span>
-                    </button>
+                      {selected && (
+                        <motion.span
+                          {...selectedMark}
+                          className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground"
+                          data-testid={`category-selected-${c}`}
+                        >
+                          <Check className="h-3.5 w-3.5" aria-hidden />
+                        </motion.span>
+                      )}
+                    </motion.button>
                   );
                 })}
               </div>
+
 
               <Button
                 className="mt-6 h-12 w-full"
@@ -427,7 +509,17 @@ export default function PageRenovationEstimator() {
                 <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
               </Button>
 
-              {videos.length > 0 && (
+              {dataLoading && (
+                <div className="mt-10 space-y-3" aria-hidden data-testid="estimator-skeleton">
+                  <div className="h-5 w-40 animate-pulse rounded bg-muted" />
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="h-40 animate-pulse rounded-2xl bg-muted" />
+                    <div className="h-40 animate-pulse rounded-2xl bg-muted" />
+                  </div>
+                </div>
+              )}
+
+              {!dataLoading && videos.length > 0 && (
                 <section className="mt-10" aria-label="Projets réalisés">
                   <h2 className="mb-3 text-lg font-medium">Projets réalisés</h2>
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -499,39 +591,54 @@ export default function PageRenovationEstimator() {
                 <legend className="mb-2 text-sm font-medium">Niveau de finition</legend>
                 <div className="grid grid-cols-3 gap-2">
                   {(Object.keys(SCOPE_LABELS) as ScopeLevel[]).map((s) => (
-                    <button
+                    <motion.button
                       key={s}
                       type="button"
+                      {...press}
                       onClick={() => setScope(s)}
                       aria-pressed={scope === s}
+                      data-testid={`scope-${s}`}
                       className={`min-h-[3rem] rounded-xl border px-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                        scope === s ? "border-primary bg-primary/5 font-medium" : "border-border bg-card"
+                        scope === s
+                          ? "border-primary bg-primary/5 font-medium shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
+                          : "border-border bg-card"
                       }`}
                     >
                       {SCOPE_LABELS[s]}
-                    </button>
+                    </motion.button>
                   ))}
+
                 </div>
               </fieldset>
 
               <fieldset>
                 <legend className="mb-2 text-sm font-medium">Options à inclure</legend>
                 <ul className="space-y-2">
-                  {def.addons.map((a) => (
-                    <li key={a.id}>
-                      <label className="flex min-h-[3rem] cursor-pointer items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
-                        <Checkbox
-                          checked={addons.includes(a.id)}
-                          onCheckedChange={() => toggleAddon(a.id)}
-                          aria-label={a.label}
-                        />
-                        <span className="flex-1 text-sm">{a.label}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {formatCad(a.min)} – {formatCad(a.max)}
-                        </span>
-                      </label>
-                    </li>
-                  ))}
+                  {def.addons.map((a) => {
+                    const on = addons.includes(a.id);
+                    return (
+                      <li key={a.id}>
+                        <motion.label
+                          {...press}
+                          className={`flex min-h-[3rem] cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors ${
+                            on
+                              ? "border-primary bg-primary/5 shadow-[0_0_0_3px_hsl(var(--primary)/0.10)]"
+                              : "border-border bg-card"
+                          }`}
+                        >
+                          <Checkbox
+                            checked={on}
+                            onCheckedChange={() => toggleAddon(a.id)}
+                            aria-label={a.label}
+                          />
+                          <span className="flex-1 text-sm">{a.label}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatCad(a.min)} – {formatCad(a.max)}
+                          </span>
+                        </motion.label>
+                      </li>
+                    );
+                  })}
                 </ul>
               </fieldset>
 
@@ -539,17 +646,21 @@ export default function PageRenovationEstimator() {
                 <legend className="mb-2 text-sm font-medium">Type de propriété</legend>
                 <div className="grid grid-cols-4 gap-2">
                   {(Object.keys(PROPERTY_LABELS) as PropertyKind[]).map((p) => (
-                    <button
+                    <motion.button
                       key={p}
                       type="button"
+                      {...press}
                       onClick={() => setPropertyKind(p)}
                       aria-pressed={propertyKind === p}
+                      data-testid={`property-${p}`}
                       className={`min-h-[3rem] rounded-xl border px-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                        propertyKind === p ? "border-primary bg-primary/5 font-medium" : "border-border bg-card"
+                        propertyKind === p
+                          ? "border-primary bg-primary/5 font-medium shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
+                          : "border-border bg-card"
                       }`}
                     >
                       {PROPERTY_LABELS[p]}
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
               </fieldset>
@@ -559,21 +670,26 @@ export default function PageRenovationEstimator() {
                   <legend className="mb-2 text-sm font-medium">Année de construction</legend>
                   <div className="grid grid-cols-2 gap-2">
                     {(Object.keys(AGE_LABELS) as BuildingAge[]).map((a) => (
-                      <button
+                      <motion.button
                         key={a}
                         type="button"
+                        {...press}
                         onClick={() => setAge(a)}
                         aria-pressed={age === a}
+                        data-testid={`age-${a}`}
                         className={`min-h-[3rem] rounded-xl border px-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                          age === a ? "border-primary bg-primary/5 font-medium" : "border-border bg-card"
+                          age === a
+                            ? "border-primary bg-primary/5 font-medium shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
+                            : "border-border bg-card"
                         }`}
                       >
                         {AGE_LABELS[a]}
-                      </button>
+                      </motion.button>
                     ))}
                   </div>
                 </fieldset>
               )}
+
 
               <div>
                 <AddressVerifiedInput
@@ -585,7 +701,7 @@ export default function PageRenovationEstimator() {
               </div>
 
               <div className="flex gap-3">
-                <Button variant="outline" className="h-12 flex-1" onClick={() => { setStep(1); goTop(); }}>
+                <Button variant="outline" className="h-12 flex-1" onClick={() => { setDir(-1); setStep(1); goTop(); }}>
                   <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
                   Retour
                 </Button>
@@ -603,9 +719,11 @@ export default function PageRenovationEstimator() {
                 <h2 id="etape-estimation" className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
                   Estimation indicative — {def.label}
                 </h2>
-                <p className="mt-3 text-3xl font-semibold sm:text-4xl">
-                  {formatCad(estimate.totalMin)} – {formatCad(estimate.totalMax)}
+                <p className="mt-3 text-3xl font-semibold sm:text-4xl" data-testid="estimate-total">
+                  <CountUpAmount value={estimate.totalMin} reduceMotion={!!reduceMotion} /> –{" "}
+                  <CountUpAmount value={estimate.totalMax} reduceMotion={!!reduceMotion} />
                 </p>
+
                 <p className="mt-2 text-sm text-muted-foreground">
                   Taxes incluses dans ce total · {formatCad(estimate.taxesMin)} – {formatCad(estimate.taxesMax)} de TPS et TVQ
                 </p>
@@ -667,12 +785,13 @@ export default function PageRenovationEstimator() {
 
               <p className="flex items-start gap-2 rounded-xl bg-muted p-4 text-xs text-muted-foreground">
                 <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                Cette fourchette est indicative et repose sur des références de marché
-                {estimate.benchmark.verifiedComponents > 0
-                  ? " et sur des composantes mesurées dans nos données"
-                  : ""}
-                . Seule une visite permet d'obtenir un prix ferme.
+                Cette fourchette est indicative : elle repose sur des références de
+                marché inférées (version {estimate.benchmark.version}, en vigueur le{" "}
+                {estimate.benchmark.effectiveDate}). Certaines lignes peuvent afficher
+                une provenance vérifiée; l'estimation globale demeure inférée. Seule
+                une visite permet d'obtenir un prix ferme.
               </p>
+
 
               {!saveOpen ? (
                 <div className="space-y-3">
@@ -796,7 +915,7 @@ export default function PageRenovationEstimator() {
                 </div>
               )}
 
-              <Button variant="ghost" className="h-12 w-full" onClick={() => { setStep(2); goTop(); }}>
+              <Button variant="ghost" className="h-12 w-full" onClick={() => { setDir(-1); setStep(2); goTop(); }}>
                 <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
                 Modifier mes détails
               </Button>

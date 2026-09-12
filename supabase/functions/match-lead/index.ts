@@ -42,6 +42,53 @@ function normCity(s: string | null | undefined): string {
     .trim();
 }
 
+/**
+ * Les sous-catégories d'interface du calculateur ne sont pas des catégories
+ * de service canoniques. Elles se rattachent toutes à `renovation-generale`
+ * pour l'admissibilité, la sélection d'interface restant conservée telle
+ * quelle dans le projet, la demande et l'administration.
+ */
+const UI_SUBCATEGORY_TO_CANONICAL: Record<string, string> = {
+  cuisine: "renovation-generale",
+  salle_de_bain: "renovation-generale",
+  sous_sol: "renovation-generale",
+  garage: "renovation-generale",
+  aire_de_vie: "renovation-generale",
+  renovation_complete: "renovation-generale",
+};
+
+export function canonicalCategorySlug(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const key = String(raw).trim();
+  if (!key) return null;
+  return UI_SUBCATEGORY_TO_CANONICAL[key] ?? key;
+}
+
+/** Licences explicitement invalides : exclusion dure. */
+const BAD_LICENCE_STATES = new Set([
+  "expired",
+  "suspended",
+  "revoked",
+  "not_found",
+  "unverified",
+  "rejected",
+  "invalid",
+]);
+
+export function rbqGatePasses(c: {
+  rbq_number?: string | null;
+  rbq_compliance_status?: string | null;
+  rbq_verified_at?: string | null;
+  rbq_expiry_date?: string | null;
+}, now = Date.now()): boolean {
+  if (!c.rbq_number || String(c.rbq_number).trim() === "") return false;
+  if (c.rbq_compliance_status !== "verified") return false;
+  if (!c.rbq_verified_at) return false;
+  if (c.rbq_expiry_date && new Date(c.rbq_expiry_date).getTime() <= now) return false;
+  return true;
+}
+
+
 function scoreContractor(
   c: ContractorRow,
   servesCity: boolean,
@@ -132,6 +179,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    const callerId = String((claimsData.claims as any).sub ?? "");
+    if (!callerId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { leadId } = await req.json();
     if (!leadId) {
       return new Response(JSON.stringify({ error: "leadId is required" }), {
@@ -158,7 +213,37 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Autorisation : le demandeur doit posséder la demande, ou être admin.
+    const ownerId = (lead as any).owner_profile_id ?? null;
+    let authorized = !!ownerId && String(ownerId) === callerId;
+    if (!authorized) {
+      const { data: adminRole } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", callerId)
+        .eq("role", "admin")
+        .maybeSingle();
+      authorized = !!adminRole;
+    }
+    if (!authorized) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const typedLead = lead as unknown as LeadRow;
+
+    /** Le rejeu ne doit jamais empiler des jumelages : on retire les rangées en attente. */
+    const resetPendingMatches = async () => {
+      await supabase
+        .from("matches")
+        .delete()
+        .eq("lead_id", leadId)
+        .eq("response_status", "pending");
+    };
+    await resetPendingMatches();
+
 
     // ── Broker path (unchanged legacy) ─────────────────────────────────
     if (typedLead.lead_type === "broker") {
@@ -221,28 +306,57 @@ Deno.serve(async (req) => {
     }
 
     // ── Contractor path (real schema) ──────────────────────────────────
-    // 1. Pull recommendation-eligible contractors only.
-    const { data: contractors } = await supabase
+    // 1. Bassin strictement admissible : aucun entrepreneur en attente,
+    //    licence RBQ vérifiée, active et non expirée.
+    const { data: poolRaw } = await supabase
       .from("contractors")
       .select(
-        "id, business_name, city, aipp_score, rating, review_count, years_experience, verification_status, languages_spoken",
+        "id, business_name, city, aipp_score, rating, review_count, years_experience, verification_status, languages_spoken, rbq_number, rbq_compliance_status, rbq_verified_at, rbq_expiry_date",
       )
       .eq("account_status", "active")
       .eq("booking_enabled", true)
       .eq("is_accepting_appointments", true)
-      .in("verification_status", ["verified", "pending"]);
+      .eq("verification_status", "verified")
+      .eq("rbq_compliance_status", "verified")
+      .not("rbq_number", "is", null)
+      .not("rbq_verified_at", "is", null);
 
-    const contractorIds = (contractors ?? []).map((c: any) => c.id);
+    let contractors = (poolRaw ?? []).filter((c: any) => rbqGatePasses(c));
+
+    // Preuve plus forte : une licence explicitement invalide exclut le pro.
+    if (contractors.length > 0) {
+      const { data: licences } = await supabase
+        .from("contractor_licenses")
+        .select("contractor_id, status, expiry_date")
+        .in("contractor_id", contractors.map((c: any) => c.id));
+      const blocked = new Set<string>();
+      for (const l of (licences ?? []) as any[]) {
+        const status = String(l.status ?? "").toLowerCase();
+        const expired = l.expiry_date && new Date(l.expiry_date).getTime() <= Date.now();
+        if (BAD_LICENCE_STATES.has(status) || expired) blocked.add(String(l.contractor_id));
+      }
+      contractors = contractors.filter((c: any) => !blocked.has(String(c.id)));
+    }
+
+    const contractorIds = contractors.map((c: any) => c.id);
     if (contractorIds.length === 0) {
       await supabase
         .from("leads")
-        .update({ status: "no_match", matching_status: "empty" })
+        .update({
+          status: "no_match",
+          matching_status: "empty",
+          assigned_match_id: null,
+          assigned_contractor_id: null,
+        })
         .eq("id", leadId);
       return new Response(
         JSON.stringify({ ok: true, matches_count: 0, matches: [], reason: "no_eligible_pool" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
+    // Catégorie canonique réellement utilisée pour l'admissibilité.
+    const canonicalCategory = canonicalCategorySlug(typedLead.project_category);
 
     // 2. Load service areas + category assignments + compatibility rules in parallel.
     const [{ data: areas }, { data: cats }, { data: catRow }, { data: compatRules }] = await Promise.all([
@@ -254,13 +368,14 @@ Deno.serve(async (req) => {
         .from("contractor_category_assignments")
         .select("contractor_id, category_id, service_categories!inner(slug)")
         .in("contractor_id", contractorIds),
-      typedLead.project_category
+      canonicalCategory
         ? supabase
             .from("service_categories")
             .select("id, slug")
-            .eq("slug", typedLead.project_category)
+            .eq("slug", canonicalCategory)
             .maybeSingle()
         : Promise.resolve({ data: null } as any),
+
       supabase
         .from("contractor_matching_rules")
         .select("contractor_id, rule_type, rule_key, payload, source, confirmed_by_contractor")
@@ -333,10 +448,8 @@ Deno.serve(async (req) => {
     });
 
     const leadCitySlug = normCity(typedLead.city);
-    const targetCategorySlug = (catRow as any)?.data?.slug ?? typedLead.project_category ?? null;
-    // NOTE: supabase-js may not unwrap `.maybeSingle()` into `.data.data`; handle both shapes.
-    const wantedCat =
-      (catRow as any)?.slug ?? (catRow as any)?.data?.slug ?? typedLead.project_category ?? null;
+    const targetCategorySlug = (catRow as any)?.slug ?? (catRow as any)?.data?.slug ?? canonicalCategory;
+    const wantedCat = targetCategorySlug;
 
     const scored = (contractors ?? [])
       .map((c: any) => {
@@ -346,7 +459,12 @@ Deno.serve(async (req) => {
           (areaSet.has(leadCitySlug) || normCity(c.city) === leadCitySlug);
         const catSet = catsByContractor.get(c.id) ?? new Set<string>();
         const matchesCategory = !!wantedCat && catSet.has(wantedCat);
+        // Admissibilité dure : catégorie canonique assignée ET territoire desservi.
+        if (!matchesCategory || !servesCity) {
+          return { id: c.id, business_name: c.business_name, plan: null, score: 0, reasons: [] };
+        }
         const base = scoreContractor(c as ContractorRow, servesCity, matchesCategory, typedLead);
+
 
         // ── Profil de compatibilité ───────────────────────────────────
         const compat = rulesByContractor.get(c.id);
@@ -382,8 +500,8 @@ Deno.serve(async (req) => {
         }
         return { ...base, score: Math.max(0, Math.min(score, 100)), reasons };
       })
-      // require at least city OR category to qualify
-      .filter((m) => m.score >= 25)
+      // catégorie canonique + territoire déjà exigés : score résiduel requis
+      .filter((m) => m.score >= 50)
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
 
