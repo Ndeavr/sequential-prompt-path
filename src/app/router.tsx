@@ -175,6 +175,7 @@ const PageGoogleProjectUsageAudit = lazyWithRetry(() => import("@/pages/admin/Pa
 const PageCalculateurTaxesQuebec = lazyWithRetry(() => import("@/pages/calculators/PageCalculateurTaxesQuebec"));
 const PageIsRoyalCalculateurTaxes = lazyWithRetry(() => import("@/pages/calculators/PageIsRoyalCalculateurTaxes"));
 const PaintingCalculatorPage = lazyWithRetry(() => import("@/pages/painting/PaintingCalculatorPage"));
+const PageRenovationEstimator = lazyWithRetry(() => import("@/pages/calculators/PageRenovationEstimator"));
 const PageAIGrowthDiagnostic = lazyWithRetry(() => import("@/pages/diagnostic/PageAIGrowthDiagnostic"));
 const PageDiagnostic = lazyWithRetry(() => import("@/pages/diagnostic/PageDiagnostic"));
 
@@ -1018,6 +1019,8 @@ export const AppRouter = () => (
         <Route path="/isroyal/calculateur-taxes" element={<Suspense fallback={<LazyFallback />}><PageIsRoyalCalculateurTaxes /></Suspense>} />
         <Route path="/peinture/calculateur" element={<Suspense fallback={<LazyFallback />}><PaintingCalculatorPage /></Suspense>} />
         <Route path="/:city/peinture/calculateur" element={<Suspense fallback={<LazyFallback />}><PaintingCalculatorPage /></Suspense>} />
+        <Route path="/calculateur-renovation" element={<Suspense fallback={<LazyFallback />}><PageRenovationEstimator /></Suspense>} />
+        <Route path="/:city/calculateur-renovation" element={<Suspense fallback={<LazyFallback />}><PageRenovationEstimator /></Suspense>} />
         <Route path="/diagnostic-ia" element={<Suspense fallback={<LazyFallback />}><PageAIGrowthDiagnostic /></Suspense>} />
         <Route path="/diagnostic" element={<Suspense fallback={<LazyFallback />}><PageDiagnostic /></Suspense>} />
         <Route path="/go" element={<PageAdLandingAipp />} />

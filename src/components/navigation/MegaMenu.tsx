@@ -54,6 +54,7 @@ const megaMenus: Record<string, MegaMenuConfig> = {
           { to: "/alex?intent=diagnostic", label: "Diagnostic IA", labelEn: "AI Diagnosis", icon: Sparkles, badge: "IA" },
           { to: "/problemes", label: "Causes possibles", labelEn: "Possible Causes", icon: HelpCircle },
           { to: "/outils-ia", label: "Estimation des coûts", labelEn: "Cost Estimate", icon: DollarSign },
+          { to: "/calculateur-renovation", label: "Estimer mes rénovations", labelEn: "Estimate My Renovations", icon: DollarSign, description: "Fourchette de coûts en moins d'une minute", descriptionEn: "Cost range in under a minute" },
           { to: "/alex", label: "Conseils Clara", labelEn: "Clara Advice", icon: Sparkles },
         ],
       },

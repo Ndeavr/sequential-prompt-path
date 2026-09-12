@@ -78,6 +78,19 @@ export type FunnelEventType =
   | "free_year_entitlement_created"
   | "free_year_unavailable"
 
+  // Calculateur de rénovation (propriétaires) — /calculateur-renovation
+  | "estimator_view"
+  | "estimator_category_selected"
+  | "estimator_details_completed"
+  | "estimator_result_viewed"
+  | "estimator_save_started"
+  | "otp_completed"
+  | "project_created"
+  | "matching_started"
+  | "booking_clicked"
+  | "video_started"
+  | "video_completed"
+
   | "onboarding_resumed"
   | "free_offer_accepted"
   | "plan_requested"
