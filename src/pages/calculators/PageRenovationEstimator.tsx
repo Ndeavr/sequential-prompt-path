@@ -478,7 +478,17 @@ export default function PageRenovationEstimator() {
                 <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
               </Button>
 
-              {videos.length > 0 && (
+              {dataLoading && (
+                <div className="mt-10 space-y-3" aria-hidden data-testid="estimator-skeleton">
+                  <div className="h-5 w-40 animate-pulse rounded bg-muted" />
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="h-40 animate-pulse rounded-2xl bg-muted" />
+                    <div className="h-40 animate-pulse rounded-2xl bg-muted" />
+                  </div>
+                </div>
+              )}
+
+              {!dataLoading && videos.length > 0 && (
                 <section className="mt-10" aria-label="Projets réalisés">
                   <h2 className="mb-3 text-lg font-medium">Projets réalisés</h2>
                   <div className="grid gap-4 sm:grid-cols-2">
