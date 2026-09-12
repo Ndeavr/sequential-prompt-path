@@ -41,9 +41,49 @@ const ALLOWED_CATEGORIES = new Set([
 
 const ALLOWED_PROPERTY_TYPES = new Set(["maison", "condo", "plex", "autre"]);
 const ALLOWED_URGENCY = new Set(["urgent", "normal", "flexible"]);
+const ALLOWED_SCOPE = new Set(["essentiel", "standard", "haut_de_gamme"]);
+const ALLOWED_AGE = new Set(["avant_1960", "1960_1990", "1990_2010", "apres_2010", "inconnu"]);
+const KNOWN_ESTIMATOR_VERSIONS = new Set(["reno-bench-2026.09"]);
+
+/** Bornes réelles du catalogue (superficie min/max par catégorie). */
+const CATEGORY_SIZE_BOUNDS: Record<string, [number, number]> = {
+  cuisine: [60, 600],
+  salle_de_bain: [30, 250],
+  sous_sol: [200, 2000],
+  garage: [150, 1200],
+  aire_de_vie: [100, 1500],
+  renovation_complete: [400, 5000],
+};
+
+/** Options réellement offertes par catégorie — aucune autre valeur acceptée. */
+const CATEGORY_ADDONS: Record<string, Set<string>> = {
+  cuisine: new Set([
+    "armoires_sur_mesure", "comptoir_quartz", "electromenagers", "ilot", "dosseret",
+    "plancher", "deplacement_plomberie",
+  ]),
+  salle_de_bain: new Set([
+    "douche_ceramique", "bain_autoportant", "vanite", "plancher_chauffant",
+    "ventilation", "deplacement_plomberie_sdb",
+  ]),
+  sous_sol: new Set([
+    "isolation", "cloisons", "plafond", "plancher_ss", "salle_bain_ss", "fenetre_egress",
+  ]),
+  garage: new Set([
+    "isolation_garage", "gypse_garage", "electricite_garage", "epoxy", "porte_garage",
+  ]),
+  aire_de_vie: new Set(["plancher_av", "eclairage", "menuiserie", "foyer", "murs_plafonds"]),
+  renovation_complete: new Set([
+    "structure", "cuisine_incluse", "sdb_incluse", "electricite_complete",
+    "plomberie_complete", "fenetres", "planchers_complets", "cvac",
+  ]),
+};
+
+/** Toutes les sous-catégories d'interface se rattachent à cette catégorie canonique. */
+const CANONICAL_MATCHING_CATEGORY = "renovation-generale";
 
 const MAX_BUDGET = 100_000_000;
 const MAX_PAYLOAD_BYTES = 64_000;
+
 
 interface Body {
   description?: string;
