@@ -355,6 +355,8 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Catégorie canonique réellement utilisée pour l'admissibilité.
+    const canonicalCategory = canonicalCategorySlug(typedLead.project_category);
 
     // 2. Load service areas + category assignments + compatibility rules in parallel.
     const [{ data: areas }, { data: cats }, { data: catRow }, { data: compatRules }] = await Promise.all([
@@ -366,13 +368,14 @@ Deno.serve(async (req) => {
         .from("contractor_category_assignments")
         .select("contractor_id, category_id, service_categories!inner(slug)")
         .in("contractor_id", contractorIds),
-      typedLead.project_category
+      canonicalCategory
         ? supabase
             .from("service_categories")
             .select("id, slug")
-            .eq("slug", typedLead.project_category)
+            .eq("slug", canonicalCategory)
             .maybeSingle()
         : Promise.resolve({ data: null } as any),
+
       supabase
         .from("contractor_matching_rules")
         .select("contractor_id, rule_type, rule_key, payload, source, confirmed_by_contractor")
