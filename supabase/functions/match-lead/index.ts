@@ -39,6 +39,7 @@ export {
   servesCityGate,
   BAD_LICENCE_STATES,
   REFUSED_RESPONSE_STATES,
+  assertQueryOk,
 } from "./gates.ts";
 import {
   canonicalCategorySlug,
@@ -47,6 +48,7 @@ import {
   servesCityGate,
   BAD_LICENCE_STATES,
   REFUSED_RESPONSE_STATES,
+  assertQueryOk,
 } from "./gates.ts";
 
 
