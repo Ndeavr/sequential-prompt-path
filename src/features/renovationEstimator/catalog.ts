@@ -99,7 +99,7 @@ export const CITY_FACTOR: Record<string, number> = {
   gatineau: 0.96,
   quebec: 0.95,
   sherbrooke: 0.93,
-  trois_rivieres: 0.92,
+  "trois-rivieres": 0.92,
 };
 export const DEFAULT_CITY_FACTOR = 0.97;
 
