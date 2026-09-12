@@ -10,7 +10,7 @@ import {
 const baseInputs = {
   sizeSqft: 150,
   scope: "standard",
-  age: "1990_2010",
+  age: "1980_2005",
   propertyKind: "maison",
   addons: ["ilot"],
 };
