@@ -86,6 +86,36 @@ function prettyCity(slug?: string | null): string | null {
     .join("-");
 }
 
+/**
+ * Montant animé une seule fois à l'affichage du résultat. Le texte final est
+ * rendu immédiatement lorsque le mouvement est réduit.
+ */
+function CountUpAmount({ value, reduceMotion }: { value: number; reduceMotion: boolean }) {
+  const [shown, setShown] = useState(reduceMotion ? value : 0);
+  const doneRef = useRef(false);
+
+  useEffect(() => {
+    if (reduceMotion || doneRef.current) {
+      setShown(value);
+      return;
+    }
+    doneRef.current = true;
+    const start = performance.now();
+    const duration = 700;
+    let raf = 0;
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setShown(Math.round(value * eased));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value, reduceMotion]);
+
+  return <span>{formatCad(shown)}</span>;
+}
+
 export default function PageRenovationEstimator() {
   const { city: cityParam } = useParams<{ city?: string }>();
   const navigate = useNavigate();
