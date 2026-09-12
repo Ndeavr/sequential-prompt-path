@@ -665,7 +665,10 @@ export default function PageRenovationEstimator() {
 
               {!saveOpen ? (
                 <div className="space-y-3">
-                  <Button className="h-14 w-full text-base" onClick={startSave}>
+                  <Button
+                    className="h-auto min-h-[3.5rem] w-full whitespace-normal px-4 py-3 text-center text-base leading-snug"
+                    onClick={startSave}
+                  >
                     Sauvegarder et trouver mon entrepreneur compatible
                   </Button>
                   <Button
