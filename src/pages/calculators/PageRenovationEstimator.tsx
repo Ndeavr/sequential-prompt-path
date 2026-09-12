@@ -676,7 +676,11 @@ export default function PageRenovationEstimator() {
                     className="h-12 w-full"
                     asChild
                     onClick={() =>
-                      void logFunnelEvent({ event_type: "booking_clicked", step: "estimator" })
+                      void logFunnelEvent({
+                        event_type: "estimator_clara_clicked" as never,
+                        step: "estimator",
+                        metadata: { category },
+                      })
                     }
                   >
                     <Link to="/alex">Affiner avec Clara</Link>
