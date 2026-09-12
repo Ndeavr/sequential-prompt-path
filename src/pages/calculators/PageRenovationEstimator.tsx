@@ -583,21 +583,31 @@ export default function PageRenovationEstimator() {
               <fieldset>
                 <legend className="mb-2 text-sm font-medium">Options à inclure</legend>
                 <ul className="space-y-2">
-                  {def.addons.map((a) => (
-                    <li key={a.id}>
-                      <label className="flex min-h-[3rem] cursor-pointer items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
-                        <Checkbox
-                          checked={addons.includes(a.id)}
-                          onCheckedChange={() => toggleAddon(a.id)}
-                          aria-label={a.label}
-                        />
-                        <span className="flex-1 text-sm">{a.label}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {formatCad(a.min)} – {formatCad(a.max)}
-                        </span>
-                      </label>
-                    </li>
-                  ))}
+                  {def.addons.map((a) => {
+                    const on = addons.includes(a.id);
+                    return (
+                      <li key={a.id}>
+                        <motion.label
+                          {...press}
+                          className={`flex min-h-[3rem] cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors ${
+                            on
+                              ? "border-primary bg-primary/5 shadow-[0_0_0_3px_hsl(var(--primary)/0.10)]"
+                              : "border-border bg-card"
+                          }`}
+                        >
+                          <Checkbox
+                            checked={on}
+                            onCheckedChange={() => toggleAddon(a.id)}
+                            aria-label={a.label}
+                          />
+                          <span className="flex-1 text-sm">{a.label}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatCad(a.min)} – {formatCad(a.max)}
+                          </span>
+                        </motion.label>
+                      </li>
+                    );
+                  })}
                 </ul>
               </fieldset>
 
@@ -605,17 +615,21 @@ export default function PageRenovationEstimator() {
                 <legend className="mb-2 text-sm font-medium">Type de propriété</legend>
                 <div className="grid grid-cols-4 gap-2">
                   {(Object.keys(PROPERTY_LABELS) as PropertyKind[]).map((p) => (
-                    <button
+                    <motion.button
                       key={p}
                       type="button"
+                      {...press}
                       onClick={() => setPropertyKind(p)}
                       aria-pressed={propertyKind === p}
+                      data-testid={`property-${p}`}
                       className={`min-h-[3rem] rounded-xl border px-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                        propertyKind === p ? "border-primary bg-primary/5 font-medium" : "border-border bg-card"
+                        propertyKind === p
+                          ? "border-primary bg-primary/5 font-medium shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
+                          : "border-border bg-card"
                       }`}
                     >
                       {PROPERTY_LABELS[p]}
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
               </fieldset>
@@ -625,21 +639,26 @@ export default function PageRenovationEstimator() {
                   <legend className="mb-2 text-sm font-medium">Année de construction</legend>
                   <div className="grid grid-cols-2 gap-2">
                     {(Object.keys(AGE_LABELS) as BuildingAge[]).map((a) => (
-                      <button
+                      <motion.button
                         key={a}
                         type="button"
+                        {...press}
                         onClick={() => setAge(a)}
                         aria-pressed={age === a}
+                        data-testid={`age-${a}`}
                         className={`min-h-[3rem] rounded-xl border px-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                          age === a ? "border-primary bg-primary/5 font-medium" : "border-border bg-card"
+                          age === a
+                            ? "border-primary bg-primary/5 font-medium shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
+                            : "border-border bg-card"
                         }`}
                       >
                         {AGE_LABELS[a]}
-                      </button>
+                      </motion.button>
                     ))}
                   </div>
                 </fieldset>
               )}
+
 
               <div>
                 <AddressVerifiedInput
