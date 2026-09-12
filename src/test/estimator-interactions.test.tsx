@@ -122,4 +122,28 @@ describe("Calculateur de rénovation — interactions", () => {
     // Aucune capture d'identité avant le résultat.
     expect(within(total).queryByRole("textbox")).toBeNull();
   });
+
+  it("n'affiche aucun champ de code avant le prénom et l'adresse confirmée", async () => {
+    renderPage();
+    fireEvent.click(await screen.findByTestId("category-cuisine"));
+    fireEvent.click(await screen.findByRole("button", { name: /Continuer — dimensions/i }));
+    fireEvent.click(await screen.findByTestId("scope-standard"));
+    fireEvent.click(await screen.findByRole("button", { name: /Voir mon estimation/i }));
+
+    await screen.findByTestId("estimate-total");
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Sauvegarder et trouver mon entrepreneur/i }),
+    );
+    expect(await screen.findByTestId("otp-gated")).toBeInTheDocument();
+    expect(screen.queryByTestId("phone-otp-form")).toBeNull();
+  });
+
+  it("marque visuellement l'option sélectionnée", async () => {
+    renderPage();
+    fireEvent.click(await screen.findByTestId("category-cuisine"));
+    fireEvent.click(await screen.findByRole("button", { name: /Continuer — dimensions/i }));
+    const standard = await screen.findByTestId("scope-standard");
+    fireEvent.click(standard);
+    await waitFor(() => expect(standard.getAttribute("aria-pressed")).toBe("true"));
+  });
 });

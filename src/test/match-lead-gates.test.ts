@@ -11,7 +11,7 @@ import {
   canonicalCategorySlug,
   rbqGatePasses,
   servesCityGate,
-} from "../../supabase/functions/match-lead/index.ts";
+} from "../../supabase/functions/match-lead/gates";
 
 describe("territoire", () => {
   it("accepte une zone de service explicite, accents ignorés", () => {
