@@ -33,7 +33,10 @@ vi.mock("@/integrations/supabase/client", () => {
   return {
     supabase: {
       from: () => builder,
-      auth: { getSession: async () => ({ data: { session: null } }) },
+      auth: {
+        getSession: async () => ({ data: { session: null } }),
+        getUser: async () => ({ data: { user: null } }),
+      },
       functions: { invoke: vi.fn() },
     },
   };
