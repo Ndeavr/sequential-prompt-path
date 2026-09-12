@@ -20,6 +20,7 @@ export interface CreateProjectInput {
 
 export interface CreateProjectResult {
   projectId: string;
+  leadId?: string | null;
   hasMatches: boolean;
 }
 
