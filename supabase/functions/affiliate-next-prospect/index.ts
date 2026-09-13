@@ -98,12 +98,25 @@ Deno.serve(async (req) => {
     const { data: leads, error } = await sb
       .from("contractor_leads")
       .select(
-        "id, company_name, business_name, first_name, last_name, full_name, role_title, city, category_primary, trade, phone_e164, phone, email, website_url, contact_status, next_follow_up_at, last_contacted_at, priority_score, do_not_contact, unsubscribed_at, archived_at, sms_eligible, consent_to_contact, assigned_affiliate_id, created_by_affiliate_id"
+        "id, company_name, business_name, first_name, last_name, full_name, role_title, city, category_primary, trade, phone_e164, phone, email, website_url, contact_status, next_follow_up_at, last_contacted_at, priority_score, fit_score, profile_status, onboarding_started_at, payment_started_at, paid_at, profile_active_at, do_not_contact, unsubscribed_at, archived_at, sms_eligible, consent_to_contact, assigned_affiliate_id, created_by_affiliate_id"
       )
       .or(`assigned_affiliate_id.eq.${affiliate.id},created_by_affiliate_id.eq.${affiliate.id}`)
       .is("archived_at", null)
       .limit(400);
     if (error) return json({ error: error.message }, 500);
+
+    // Onboardings routés pour reprise (faits réels uniquement)
+    const { data: recoveryEvents, error: recErr } = await sb
+      .from("affiliate_lead_events")
+      .select("lead_id, payload, created_at")
+      .eq("affiliate_id", affiliate.id)
+      .eq("event_type", "onboarding_recovery_routed");
+    if (recErr) return json({ error: recErr.message }, 500);
+    const recoveryMap = new Map<string, { routed_at: string; payload: Record<string, unknown> }>();
+    for (const e of (recoveryEvents ?? []) as Array<{ lead_id: string; payload: Record<string, unknown>; created_at: string }>) {
+      recoveryMap.set(String(e.lead_id), { routed_at: e.created_at, payload: e.payload ?? {} });
+    }
+
 
     const { data: locks } = await sb
       .from("affiliate_prospect_locks")
