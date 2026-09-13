@@ -210,6 +210,20 @@ Deno.serve(async (req) => {
       if (contractorProfileError) return json({ ok: false, error: "profile_lookup_failed" }, 500);
       existing = existingByContractor;
     }
+    // A validated audit keeps the SAME draft across devices / new browsers:
+    // the wizard resumes exactly where the contractor left it.
+    if (!existing && auditContext) {
+      const { data: existingByAudit, error: auditProfileError } = await supabase
+        .from("contractor_matching_profiles")
+        .select("*")
+        .eq("audit_id", auditContext.audit_id)
+        .is("contractor_id", null)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (auditProfileError) return json({ ok: false, error: "profile_lookup_failed" }, 500);
+      existing = existingByAudit;
+    }
 
     if (action === "get") {
       if (existing?.contractor_id) {
@@ -218,7 +232,13 @@ Deno.serve(async (req) => {
           .eq("id", existing.contractor_id).eq("user_id", authenticatedUserId).maybeSingle();
         if (!owned) return json({ ok: false, error: "profile_access_denied" }, 403);
       }
-      return json({ ok: true, profile: existing ?? null });
+      return json({
+        ok: true,
+        profile: existing ?? null,
+        audit: auditContext,
+        audit_valid: Boolean(auditContext),
+        current_step: Number(existing?.current_step ?? 0),
+      });
     }
 
     if (action !== "save" && action !== "complete") return json({ ok: false, error: "unknown action" }, 400);
