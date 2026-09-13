@@ -225,16 +225,19 @@ Deno.serve(async (req) => {
       }
     }
     // --- Apprentissage : cohorte CRM (résultats réels d'assignations de reprise)
+    // Fenêtre filtrée à la source; une seule ligne comptée par prospect.
     const crmAssignments = (ok(
       await admin
         .from("crm_manual_assignments")
-        .select("prospect_id, affiliate_id, status, last_outcome, attempts")
-        .eq("queue", "onboarding_recovery"),
+        .select("prospect_id, affiliate_id, status, last_outcome, attempts, assigned_at")
+        .eq("queue", "onboarding_recovery")
+        .gte("assigned_at", learningWindowStart)
+        .order("assigned_at", { ascending: false }),
       "lecture assignations de reprise",
-    ) ?? []) as Array<{ prospect_id: string; affiliate_id: string | null; status: string | null; last_outcome: string | null; attempts: number | null }>;
+    ) ?? []) as Array<{ prospect_id: string; affiliate_id: string | null; status: string | null; last_outcome: string | null; attempts: number | null; assigned_at: string | null }>;
 
     if (crmAssignments.length > 0) {
-      const pids = crmAssignments.map((a) => a.prospect_id);
+      const pids = Array.from(new Set(crmAssignments.map((a) => a.prospect_id)));
       const prospects = (ok(
         await admin
           .from("verified_contractor_prospects")
@@ -244,8 +247,16 @@ Deno.serve(async (req) => {
       ) ?? []) as Array<{ id: string; city: string | null; category: string | null }>;
       const byProspect = new Map(prospects.map((p) => [p.id, p]));
 
+      const countedProspects = new Set<string>();
       for (const a of crmAssignments) {
         if (!a.affiliate_id) continue;
+        if (countedProspects.has(a.prospect_id)) continue;
+        // N'apprendre que d'un résultat réellement observé : jamais de la
+        // simple existence d'une assignation, jamais d'une simulation.
+        const observed = (a.attempts ?? 0) > 0 || !!a.last_outcome;
+        if (!observed) continue;
+        countedProspects.add(a.prospect_id);
+
         const p = byProspect.get(a.prospect_id);
         const category = normalizeCategory(p?.category ?? null, cfg) || null;
         const city = normalizeCity(p?.city ?? null, cfg).normalized || null;
