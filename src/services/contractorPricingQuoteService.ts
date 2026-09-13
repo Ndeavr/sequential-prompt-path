@@ -74,9 +74,16 @@ export async function computePricingQuote(
     { body: input },
   );
   if (error) throw new Error(error.message);
-  if ((data as any)?.error) throw new Error((data as any).error);
-  return (data as any).quote as PricingQuote;
+  const payload = data as any;
+  if (payload?.error) throw new Error(payload.error);
+  // Le serveur renvoie `quote_id` à la racine; certains appels historiques
+  // renvoyaient un objet `quote`. On accepte les deux, sans jamais inventer d'id.
+  const quote: PricingQuote | null = payload?.quote
+    ?? (payload?.quote_id ? ({ ...payload, id: payload.quote_id } as PricingQuote) : null);
+  if (!quote?.id) throw new Error("Votre plan a été calculé mais son identifiant est introuvable. Réessayez.");
+  return quote;
 }
+
 
 export async function fetchPricingQuote(id: string): Promise<PricingQuote | null> {
   const { data, error } = await supabase
