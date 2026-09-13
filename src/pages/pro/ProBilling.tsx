@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import ContractorLayout from "@/layouts/ContractorLayout";
 import { PageHeader, LoadingState } from "@/components/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,20 +8,26 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   useContractorSubscription,
-  useCreateCheckoutSession,
   useCreateBillingPortal,
 } from "@/hooks/useSubscription";
 import {
   usePlanCatalog,
   formatPlanPrice,
-  getStripePriceId,
   getYearlySavingsPercent,
   getMonthlyEquivalent,
   type BillingInterval,
   type CatalogPlan,
 } from "@/hooks/usePlanCatalog";
+import {
+  useContractorPlanEligibility,
+  startContractorPlanCheckout,
+  PERSONALIZED_PLAN_HEADING,
+  PERSONALIZED_PLAN_CTA,
+  PERSONALIZED_PLAN_ROUTE,
+} from "@/lib/billing/contractorPlanEligibility";
 import { toast } from "sonner";
-import { Check, CreditCard, ExternalLink } from "lucide-react";
+import { Check, CreditCard, ExternalLink, Sparkles } from "lucide-react";
+
 
 const statusLabels: Record<string, string> = {
   active: "Actif",
@@ -179,10 +185,11 @@ const PlanCard = ({
 
 const ProBilling = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { data: subscription, isLoading } = useContractorSubscription();
-  const checkout = useCreateCheckoutSession();
   const portal = useCreateBillingPortal();
   const [interval, setInterval] = useState<BillingInterval>("month");
+  const [checkoutPending, setCheckoutPending] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("success") === "true") {
@@ -194,6 +201,8 @@ const ProBilling = () => {
   }, [searchParams]);
 
   const { data: allPlans } = usePlanCatalog();
+  const { eligibility, isLoading: eligibilityLoading } =
+    useContractorPlanEligibility(interval);
   const currentPlan = subscription ? (allPlans ?? []).find(p => p.code === subscription.plan_id) : null;
   const isActive =
     subscription && ["active", "trialing"].includes(subscription.status);
@@ -210,25 +219,40 @@ const ProBilling = () => {
     if (!yearlyAvailable) setInterval("month");
   }, [yearlyAvailable]);
 
+  /** Seuls les plans réellement activables sont affichés. */
+  const selectablePlans: CatalogPlan[] =
+    eligibility?.mode === "standard"
+      ? (allPlans ?? []).filter((p) => p.code === eligibility.allowedPlanCode)
+      : [];
+
+  const goPersonalize = () => navigate(PERSONALIZED_PLAN_ROUTE);
+
   const handleSubscribe = async (plan: CatalogPlan) => {
+    if (eligibility?.mode !== "standard" || plan.code !== eligibility.allowedPlanCode) {
+      goPersonalize();
+      return;
+    }
+    setCheckoutPending(true);
     try {
       // Le serveur reste l'autorité sur le montant ; on n'envoie qu'un
       // intervalle réellement facturable pour ce plan.
       const effectiveInterval: BillingInterval =
         interval === "year" && plan.supportsYearly ? "year" : "month";
-      const priceId = getStripePriceId(plan, effectiveInterval);
-      const result = await checkout.mutateAsync({
-        priceId,
-        planId: plan.code,
+      const { url } = await startContractorPlanCheckout({
+        planCode: plan.code,
         billingInterval: effectiveInterval,
+        quoteId: eligibility.quoteId,
+        successUrl: `${window.location.origin}/pro/facturation?success=true`,
+        cancelUrl: `${window.location.origin}/pro/facturation?canceled=true`,
       });
-      if (result.url) {
-        window.location.href = result.url;
-      }
+      window.location.href = url;
     } catch (e: any) {
-      toast.error(e.message || "Erreur lors de la création du paiement.");
+      toast.error(e?.message || "Le paiement n'a pas pu démarrer.");
+    } finally {
+      setCheckoutPending(false);
     }
   };
+
 
 
   const handlePortal = async () => {
@@ -309,28 +333,60 @@ const ProBilling = () => {
 
       <Separator className="my-6" />
 
-      {/* Interval toggle */}
-      <h2 className="text-lg font-semibold mb-4 text-center">
-        {isActive ? "Changer de plan" : "Choisir un plan"}
-      </h2>
+      {eligibilityLoading ? (
+        <LoadingState />
+      ) : eligibility?.mode === "standard" ? (
+        <>
+          <h2 className="text-lg font-semibold mb-4 text-center">
+            {isActive ? "Changer de plan" : "Choisir un plan"}
+          </h2>
 
-      {yearlyAvailable && <BillingToggle interval={interval} onChange={setInterval} />}
+          {yearlyAvailable && <BillingToggle interval={interval} onChange={setInterval} />}
 
-      {/* Plan cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {(allPlans ?? []).map((plan) => (
-          <PlanCard
-            key={plan.code}
-            plan={plan}
-            interval={interval}
-            isCurrent={isActive === true && currentPlan?.code === plan.code}
-            isActive={!!isActive}
-            onSubscribe={() => handleSubscribe(plan)}
-            onPortal={handlePortal}
-            isLoading={checkout.isPending || portal.isPending}
-          />
-        ))}
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {selectablePlans.map((plan) => (
+              <PlanCard
+                key={plan.code}
+                plan={plan}
+                interval={interval}
+                isCurrent={isActive === true && currentPlan?.code === plan.code}
+                isActive={!!isActive}
+                onSubscribe={() => handleSubscribe(plan)}
+                onPortal={handlePortal}
+                isLoading={checkoutPending || portal.isPending}
+              />
+            ))}
+          </div>
+
+          <div className="mt-6 text-center">
+            <Button variant="outline" onClick={goPersonalize} className="gap-2">
+              <Sparkles className="h-4 w-4" />
+              {PERSONALIZED_PLAN_CTA}
+            </Button>
+          </div>
+        </>
+      ) : (
+        <Card className="max-w-2xl mx-auto">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-start gap-2">
+              <Sparkles className="h-5 w-5 text-primary shrink-0 mt-1" />
+              {PERSONALIZED_PLAN_HEADING}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Votre plan est établi à partir de votre métier, de votre territoire,
+              de votre capacité et de vos objectifs de rendez-vous. Quelques
+              questions suffisent pour obtenir votre recommandation.
+            </p>
+            <Button onClick={goPersonalize} className="w-full sm:w-auto gap-2">
+              <Sparkles className="h-4 w-4" />
+              {PERSONALIZED_PLAN_CTA}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
     </ContractorLayout>
   );
 };
