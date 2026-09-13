@@ -7,7 +7,7 @@
  * démonstration. Sans audit valide, l'entrepreneur cherche son entreprise
  * réelle (Google via `business-lookup`) avant toute autre question.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
