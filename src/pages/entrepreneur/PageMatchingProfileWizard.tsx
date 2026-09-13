@@ -238,7 +238,8 @@ export default function PageMatchingProfileWizard() {
       metadata: { completion: completionOf(next) },
     });
     const isLast = index >= questions.length - 1;
-    const saved = await save(next, isLast);
+    // L'étape est enregistrée avec la réponse : reprise exacte au rechargement.
+    const saved = await save(next, isLast, isLast ? index : index + 1);
     if (!saved) return;
     if (isLast) {
       setDone(true);
