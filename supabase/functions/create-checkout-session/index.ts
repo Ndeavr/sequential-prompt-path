@@ -125,14 +125,20 @@ Deno.serve(async (req) => {
     }
 
 
-    // The current contractor checkout always requires a persisted personalized
-    // quote. Historical one-time campaigns use isolated, campaign-token routes.
+    // A contractor subscription always resolves against a persisted personalized
+    // quote. This is a NORMAL state, never an error shown to the contractor: the
+    // UI routes to the personalized growth-plan journey instead.
     if (!quoteId) {
       return new Response(
-        JSON.stringify({ error: "Un devis personnalisé valide est requis.", code: "quote_required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({
+          error: "Plan personnalisé requis avant l'activation.",
+          code: "personalized_quote_required",
+          next_path: "/entrepreneur/devis-personnalise",
+        }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
 
     // Canonical source of truth: public.plans (legacy codes resolved server-side)
     const { data: canonical } = await serviceClient.rpc("canonical_plan_code", { _code: planId });
