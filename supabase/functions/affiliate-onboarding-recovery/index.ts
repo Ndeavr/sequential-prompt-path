@@ -199,7 +199,12 @@ Deno.serve(async (req) => {
         "lecture événements aval",
       ) ?? []) as Array<{ lead_id: string; affiliate_id: string; event_type: string }>;
 
-      for (const e of events) {
+      // Un seul décompte par dossier routé (dédoublonnage des résultats terminaux).
+      const countedLeads = new Set<string>();
+      for (const e of learningEvents) {
+        if (countedLeads.has(e.lead_id)) continue;
+        countedLeads.add(e.lead_id);
+
         const l = byLead.get(e.lead_id) as Record<string, unknown> | undefined;
         const category = normalizeCategory(String(l?.category_primary ?? l?.trade ?? "") || null, cfg) || null;
         const city = normalizeCity(String(l?.city ?? "") || null, cfg).normalized || null;
