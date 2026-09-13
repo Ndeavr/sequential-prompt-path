@@ -47,7 +47,7 @@ export function MyManualQueue() {
   if (rows.length === 0)
     return (
       <p className="text-sm text-muted-foreground rounded-2xl border border-border/40 bg-card p-5">
-        Aucun prospect assigné pour le moment. Vous recevrez un courriel dès qu'un prospect vous sera attribué.
+        Aucun prospect assigné pour le moment. Cette liste se remplit dès qu'un dossier vous est attribué.
       </p>
     );
 

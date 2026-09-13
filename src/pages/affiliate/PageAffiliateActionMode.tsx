@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { MyManualQueue } from "@/features/affiliate/warRoom/MyManualQueue";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -479,6 +480,19 @@ export default function PageAffiliateActionMode() {
             </div>
           </div>
         </StepCard>
+
+        {/* Reprises d'onboarding assignées — file manuelle réelle */}
+        <section aria-labelledby="recovery-queue-title" className="space-y-3">
+          <div>
+            <h2 id="recovery-queue-title" className="text-sm font-semibold text-foreground">
+              Reprises assignées
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Inscriptions commencées puis laissées en plan, qui vous ont été attribuées. Aucun message n'a été envoyé en votre nom.
+            </p>
+          </div>
+          <MyManualQueue />
+        </section>
       </main>
 
       {/* CTA fixe */}
