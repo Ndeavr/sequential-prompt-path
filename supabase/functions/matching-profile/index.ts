@@ -357,7 +357,26 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json({ ok: true, profile: saved });
+    // Real completion of the audit → profile chain, recorded on the audit
+    // itself. Best effort: it must never fail the contractor's save.
+    if (action === "complete" && auditContext) {
+      const { error: auditEventError } = await supabase.from("ai_recommendation_audit_events").insert({
+        audit_id: auditContext.audit_id,
+        event_type: "profile_completed",
+        metadata: { profile_completion: state.profile_completion, recommendation_eligible: state.recommendation_eligible },
+      });
+      if (auditEventError) {
+        console.error("[matching-profile] audit event failed", { code: auditEventError.code ?? null });
+      }
+    }
+
+    return json({
+      ok: true,
+      profile: saved,
+      audit: auditContext,
+      audit_valid: Boolean(auditContext),
+      current_step: Number(saved?.current_step ?? 0),
+    });
   } catch (e) {
     return json({ ok: false, error: e instanceof Error ? e.message : "unexpected" }, 500);
   }
