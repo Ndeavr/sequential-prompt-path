@@ -101,8 +101,39 @@ Deno.serve(async (req) => {
     ) as { is_active: boolean; config_json: unknown } | null;
 
     if (!rule) return json({ error: "rule_missing", rule_key: RECOVERY_RULE_KEY }, 409);
-    if (!rule.is_active) return json({ disabled: true, rule_key: RECOVERY_RULE_KEY, routed: 0, candidates: 0 });
     const cfg = mergeConfig(rule.config_json);
+    if (!rule.is_active) {
+      // Même forme de schéma qu'une exécution normale : l'UI ne doit jamais
+      // déréférencer un champ absent quand la règle est en pause.
+      return json({
+        ok: true,
+        disabled: true,
+        rule_key: RECOVERY_RULE_KEY,
+        dry_run: dryRun,
+        rule_version: cfg.version,
+        config: {
+          inactivity_hours: cfg.inactivity_hours,
+          fit_score_min: cfg.fit_score_min,
+          priority_score_min: cfg.priority_score_min,
+          crm_eligible_stages: cfg.crm_eligible_stages,
+          crm_future_stages: cfg.crm_future_stages,
+        },
+        learning: {
+          applied: false,
+          sample: 0,
+          terminal_outcomes: 0,
+          min_sample: cfg.learning.min_sample,
+          max_boost: cfg.learning.max_boost,
+        },
+        totals: {
+          inspected: 0, routed: 0, unassigned: 0, skipped: 0,
+          crm_inspected: 0, crm_routed: 0, crm_unassigned: 0, crm_skipped: 0, crm_future_eligible: 0,
+        },
+        results: [],
+        crm_results: [],
+      });
+    }
+
 
     const now = Date.now();
 
