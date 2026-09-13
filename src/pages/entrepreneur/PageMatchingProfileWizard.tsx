@@ -48,9 +48,20 @@ function getSessionKey(): string {
 }
 
 type Answers = Record<string, unknown>;
+/** Company identity resolved server-side from the validated audit. */
+type AuditContext = {
+  audit_id: string;
+  business_name: string | null;
+  city: string | null;
+  trade: string | null;
+  readiness_score: number | null;
+};
 type MatchingProfileResponse = {
   error?: string;
-  profile?: { answers?: Answers; status?: string } & Record<string, unknown>;
+  audit?: AuditContext | null;
+  audit_valid?: boolean;
+  current_step?: number;
+  profile?: { answers?: Answers; status?: string; current_step?: number } & Record<string, unknown>;
 };
 
 export default function PageMatchingProfileWizard() {
