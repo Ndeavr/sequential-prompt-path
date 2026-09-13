@@ -140,7 +140,7 @@ export function computeContactPermissions(input: ContactPermissionInput): Contac
     can_sms: smsReason === null,
     can_email: emailReason === null,
     research_only: call !== null && smsReason !== null && emailReason !== null,
-    phone_unverified: call === null && !phoneVerified,
+    phone_unverified: !phoneVerified,
     reasons: { call, sms: smsReason, email: emailReason },
   };
 }
