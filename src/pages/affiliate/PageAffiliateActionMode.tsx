@@ -536,12 +536,13 @@ export default function PageAffiliateActionMode() {
             disabled={loading}
             onClick={() => {
               if (!prospect) { void loadNext(); return; }
-              if (!called && phone) { void onCall(); return; }
+              // Échec fermé : jamais d'appel si la permission n'est pas accordée.
+              if (!called && canCall) { void onCall(); return; }
               void loadNext(prospect.id);
             }}
           >
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : !prospect ? <Search className="h-5 w-5" /> : !called && phone ? <Phone className="h-5 w-5" /> : <SkipForward className="h-5 w-5" />}
-            {!prospect ? "TROUVER UN PROSPECT" : !called && phone ? "📞 CONTACTER LE PROCHAIN PROSPECT" : "PROSPECT SUIVANT"}
+            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : !prospect ? <Search className="h-5 w-5" /> : !called && canCall ? <Phone className="h-5 w-5" /> : <SkipForward className="h-5 w-5" />}
+            {!prospect ? "TROUVER UN PROSPECT" : !called && canCall ? "📞 CONTACTER LE PROCHAIN PROSPECT" : "PROSPECT SUIVANT"}
           </Button>
         </div>
       </div>
