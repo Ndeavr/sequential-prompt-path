@@ -473,8 +473,10 @@ Deno.serve(async (req) => {
             if (insErr) throw new Error(`assign_failed: ${insErr.message}`);
 
             // Notification d'assignation (chemin courriel sortant existant).
-            // Le routage interne automatique passe `suppress_notification`.
-            if (affiliateId && payloadExtra.suppress_notification !== true) {
+            // `suppress_notification` n'est honoré que pour un appel interne
+            // vérifié (service role). Une charge utile admin ne suffit pas.
+            const suppressNotification = isServiceRole && payloadExtra.suppress_notification === true;
+            if (affiliateId && !suppressNotification) {
               const { data: aff } = await sb
                 .from("affiliates")
                 .select("email, name")
