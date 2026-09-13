@@ -185,10 +185,11 @@ const PlanCard = ({
 
 const ProBilling = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { data: subscription, isLoading } = useContractorSubscription();
-  const checkout = useCreateCheckoutSession();
   const portal = useCreateBillingPortal();
   const [interval, setInterval] = useState<BillingInterval>("month");
+  const [checkoutPending, setCheckoutPending] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("success") === "true") {
@@ -200,6 +201,8 @@ const ProBilling = () => {
   }, [searchParams]);
 
   const { data: allPlans } = usePlanCatalog();
+  const { eligibility, isLoading: eligibilityLoading } =
+    useContractorPlanEligibility(interval);
   const currentPlan = subscription ? (allPlans ?? []).find(p => p.code === subscription.plan_id) : null;
   const isActive =
     subscription && ["active", "trialing"].includes(subscription.status);
@@ -216,25 +219,40 @@ const ProBilling = () => {
     if (!yearlyAvailable) setInterval("month");
   }, [yearlyAvailable]);
 
+  /** Seuls les plans réellement activables sont affichés. */
+  const selectablePlans: CatalogPlan[] =
+    eligibility?.mode === "standard"
+      ? (allPlans ?? []).filter((p) => p.code === eligibility.allowedPlanCode)
+      : [];
+
+  const goPersonalize = () => navigate(PERSONALIZED_PLAN_ROUTE);
+
   const handleSubscribe = async (plan: CatalogPlan) => {
+    if (eligibility?.mode !== "standard" || plan.code !== eligibility.allowedPlanCode) {
+      goPersonalize();
+      return;
+    }
+    setCheckoutPending(true);
     try {
       // Le serveur reste l'autorité sur le montant ; on n'envoie qu'un
       // intervalle réellement facturable pour ce plan.
       const effectiveInterval: BillingInterval =
         interval === "year" && plan.supportsYearly ? "year" : "month";
-      const priceId = getStripePriceId(plan, effectiveInterval);
-      const result = await checkout.mutateAsync({
-        priceId,
-        planId: plan.code,
+      const { url } = await startContractorPlanCheckout({
+        planCode: plan.code,
         billingInterval: effectiveInterval,
+        quoteId: eligibility.quoteId,
+        successUrl: `${window.location.origin}/pro/facturation?success=true`,
+        cancelUrl: `${window.location.origin}/pro/facturation?canceled=true`,
       });
-      if (result.url) {
-        window.location.href = result.url;
-      }
+      window.location.href = url;
     } catch (e: any) {
-      toast.error(e.message || "Erreur lors de la création du paiement.");
+      toast.error(e?.message || "Le paiement n'a pas pu démarrer.");
+    } finally {
+      setCheckoutPending(false);
     }
   };
+
 
 
   const handlePortal = async () => {
