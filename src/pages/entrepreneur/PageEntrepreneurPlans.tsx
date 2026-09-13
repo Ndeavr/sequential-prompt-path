@@ -6,6 +6,12 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  PERSONALIZED_PLAN_HEADING,
+  PERSONALIZED_PLAN_CTA,
+  PERSONALIZED_PLAN_ROUTE,
+} from "@/lib/billing/contractorPlanEligibility";
+
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, X, ArrowRight, Star, Sparkles, TrendingDown } from "lucide-react";
 
