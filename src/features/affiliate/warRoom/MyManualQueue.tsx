@@ -107,6 +107,14 @@ export function MyManualQueue({ queue }: { queue?: "onboarding_recovery" | "manu
               contact_locked: r.contact_locked === true,
               opted_out: r.opted_out === true,
             }}
+            // Politique explicite : les reprises d'onboarding restent verrouillées.
+            policy={{
+              contact_locked: r.queue === "onboarding_recovery" || r.contact_locked === true || r.opted_out === true,
+              can_call: r.queue !== "onboarding_recovery" && r.contact_locked !== true && r.opted_out !== true,
+              can_sms: r.queue !== "onboarding_recovery" && r.contact_locked !== true && r.opted_out !== true,
+              can_email: r.queue !== "onboarding_recovery" && r.contact_locked !== true && r.opted_out !== true,
+              blocked_reason: r.blocked_reason,
+            }}
             onDone={load}
           />
         </div>
