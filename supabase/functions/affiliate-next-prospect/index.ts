@@ -174,6 +174,19 @@ Deno.serve(async (req) => {
     return json({
       prospect: pick,
       audit: audit ?? null,
+      recovery: recovery
+        ? {
+            routed_at: recovery.routed_at,
+            rule_version: recovery.payload.rule_version ?? null,
+            inactivity_hours: recovery.payload.inactivity_hours ?? null,
+            match_reasons: recovery.payload.match_reasons ?? [],
+            interesting_reasons: recovery.payload.interesting_reasons ?? [],
+            onboarding_started_at: pick.onboarding_started_at ?? null,
+            profile_status: pick.profile_status ?? null,
+            fit_score: pick.fit_score ?? null,
+            priority_score: pick.priority_score ?? null,
+          }
+        : null,
       affiliate: {
         id: affiliate.id,
         first_name: affiliate.first_name ?? (affiliate.name ? String(affiliate.name).split(" ")[0] : null),
@@ -181,6 +194,7 @@ Deno.serve(async (req) => {
       },
       remaining: eligible.length,
     });
+
   } catch (e) {
     return json({ error: String(e) }, 500);
   }
