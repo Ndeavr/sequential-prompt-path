@@ -24,6 +24,23 @@ export interface ActionProspect {
   website_url: string | null;
   contact_status: string | null;
   next_follow_up_at: string | null;
+  fit_score?: number | null;
+  priority_score?: number | null;
+  profile_status?: string | null;
+  onboarding_started_at?: string | null;
+}
+
+/** Faits réels d'un onboarding incomplet routé pour reprise. */
+export interface ActionRecovery {
+  routed_at: string;
+  rule_version: string | null;
+  inactivity_hours: number | null;
+  match_reasons: string[];
+  interesting_reasons: string[];
+  onboarding_started_at: string | null;
+  profile_status: string | null;
+  fit_score: number | null;
+  priority_score: number | null;
 }
 
 export interface ActionAudit {
@@ -41,10 +58,12 @@ export interface ActionAudit {
 export type NextProspectResult = {
   prospect: ActionProspect | null;
   audit: ActionAudit | null;
+  recovery?: ActionRecovery | null;
   remaining?: number;
   reason?: string;
   total_assigned?: number;
 };
+
 
 export function useNextProspect() {
   const [loading, setLoading] = useState(false);
