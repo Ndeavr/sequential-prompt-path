@@ -86,6 +86,7 @@ export default function PageAffiliateActionMode() {
 
   const [prospect, setProspect] = useState<ActionProspect | null>(null);
   const [audit, setAudit] = useState<ActionAudit | null>(null);
+  const [recovery, setRecovery] = useState<ActionRecovery | null>(null);
   const [remaining, setRemaining] = useState<number>(0);
   const [emptyReason, setEmptyReason] = useState<string | null>(null);
   const [called, setCalled] = useState(false);
@@ -101,6 +102,7 @@ export default function PageAffiliateActionMode() {
       if (!res) return;
       setProspect(res.prospect);
       setAudit(res.audit ?? null);
+      setRecovery(res.recovery ?? null);
       setRemaining(res.remaining ?? 0);
       setEmptyReason(res.prospect ? null : res.reason ?? "no_eligible_prospect");
       setCalled(false);
@@ -108,6 +110,7 @@ export default function PageAffiliateActionMode() {
     },
     [next]
   );
+
 
   useEffect(() => {
     if (affiliate?.id) void loadNext();
