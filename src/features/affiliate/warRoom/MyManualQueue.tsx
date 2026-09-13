@@ -29,7 +29,7 @@ type Row = {
   opted_out: boolean | null;
 };
 
-export function MyManualQueue() {
+export function MyManualQueue({ queue }: { queue?: "onboarding_recovery" | "manual_contact" } = {}) {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,10 +39,12 @@ export function MyManualQueue() {
     if (err) setError(err.message);
     else {
       setError(null);
-      setRows((data ?? []) as Row[]);
+      const all = (data ?? []) as Row[];
+      // Filtrage strict : une file donnée n'affiche jamais les dossiers d'une autre.
+      setRows(queue ? all.filter((r) => r.queue === queue) : all);
     }
     setLoading(false);
-  }, []);
+  }, [queue]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -51,9 +53,12 @@ export function MyManualQueue() {
   if (rows.length === 0)
     return (
       <p className="text-sm text-muted-foreground rounded-2xl border border-border/40 bg-card p-5">
-        Aucun prospect assigné pour le moment. Cette liste se remplit dès qu'un dossier vous est attribué.
+        {queue === "onboarding_recovery"
+          ? "Aucune reprise d'onboarding ne vous est assignée pour le moment."
+          : "Aucun prospect assigné pour le moment. Cette liste se remplit dès qu'un dossier vous est attribué."}
       </p>
     );
+
 
   return (
     <div className="grid gap-3 md:grid-cols-2">
