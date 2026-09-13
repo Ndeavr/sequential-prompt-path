@@ -515,18 +515,19 @@ Deno.serve(async (req) => {
       const windowStart = new Date(now - 90 * 86400000).toISOString();
       const windowEnd = new Date(now).toISOString();
       for (const r of Object.values(dimRollups)) {
-        const q = admin
+        // La clé de dimension inclut la ville : sans elle, une ville écrase
+        // l'autre pour le même affilié et la même catégorie.
+        let q = admin
           .from("agent_learning_outcomes")
           .select("id")
           .eq("tactic_key", RECOVERY_TACTIC_KEY)
           .eq("channel", "internal_routing")
           .eq("variant", r.affiliate_id)
           .eq("source", "affiliate-onboarding-recovery");
-        const existing = ok(
-          await (r.service_category ? q.eq("service_category", r.service_category) : q.is("service_category", null))
-            .limit(1),
-          "lecture agent_learning_outcomes",
-        ) as Array<{ id: string }> | null;
+        q = r.service_category ? q.eq("service_category", r.service_category) : q.is("service_category", null);
+        q = r.city ? q.eq("city", r.city) : q.is("city", null);
+        const existing = ok(await q.limit(1), "lecture agent_learning_outcomes") as Array<{ id: string }> | null;
+
         const row = {
           tactic_key: RECOVERY_TACTIC_KEY,
           channel: "internal_routing",
