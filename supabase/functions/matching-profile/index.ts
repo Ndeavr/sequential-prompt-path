@@ -293,6 +293,17 @@ Deno.serve(async (req) => {
       row.utm = { ...((existing?.utm as Record<string, unknown>) ?? {}), ...body.utm };
     }
 
+    // The validated audit wins over anything the client sent: the company the
+    // contractor just saw analysed is the company being completed.
+    if (auditContext) {
+      row.audit_id = auditContext.audit_id;
+      if (auditContext.business_name) row.business_name = auditContext.business_name;
+      if (auditContext.city) row.city = auditContext.city;
+      if (auditContext.trade) row.trade = auditContext.trade;
+      if (auditContext.contractor_id) row.audit_contractor_id = auditContext.contractor_id;
+      if (!existing?.prospect_id && auditContext.prospect_id) row.prospect_id = auditContext.prospect_id;
+    }
+
     if (ownedContractor) {
       row.contractor_id = ownedContractor.id;
       if (!existing?.business_name && !body.business_name) {
