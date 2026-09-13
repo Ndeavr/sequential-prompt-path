@@ -100,6 +100,8 @@ export default function PageAffiliateActionMode() {
 
   const loadNext = useCallback(
     async (excludeId?: string | null) => {
+      // Échec fermé : aucune permission tant que la réponse n'est pas revenue.
+      setPermissions(null);
       const res = await next(excludeId ?? null);
       if (!res) return;
       setProspect(res.prospect);
@@ -113,6 +115,16 @@ export default function PageAffiliateActionMode() {
     },
     [next]
   );
+
+  // Permissions absentes = refusées (jamais permissives par défaut).
+  const canCall = permissions?.can_call === true;
+  const canSms = permissions?.can_sms === true;
+  const canEmail = permissions?.can_email === true;
+  const callBlockedReason =
+    permissions === null
+      ? "Vérification de conformité en cours — appel indisponible."
+      : permissions.reasons.call ?? "Appel non autorisé pour ce dossier.";
+
 
 
   useEffect(() => {
