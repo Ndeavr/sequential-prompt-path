@@ -175,10 +175,14 @@ Deno.serve(async (req) => {
     }
 
     // --- Apprentissage borné à partir des résultats réels observés
-    const routedLeadIdList = events.map((e) => e.lead_id);
+    // Fenêtre de 90 jours appliquée À LA SOURCE (et non seulement annoncée).
+    const learningWindowStart = new Date(now - 90 * 86400000).toISOString();
+    const learningEvents = events.filter((e) => e.created_at >= learningWindowStart);
+    const routedLeadIdList = Array.from(new Set(learningEvents.map((e) => e.lead_id)));
     const rollups: Record<string, LearningRollup> = {};
     const dimRollups: Record<string, LearningRollup & { affiliate_id: string; service_category: string | null; city: string | null }> = {};
     if (routedLeadIdList.length > 0) {
+
       const routedLeads = (ok(
         await admin
           .from("contractor_leads")
