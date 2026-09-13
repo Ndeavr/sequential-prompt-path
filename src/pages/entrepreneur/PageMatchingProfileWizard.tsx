@@ -75,9 +75,10 @@ export default function PageMatchingProfileWizard() {
   const fr = !(explicitEn && lang === "en");
 
   const sessionKey = useMemo(getSessionKey, []);
-  const businessName = sp.get("entreprise");
-  const city = sp.get("ville");
-  const trade = sp.get("metier");
+  // L'URL ne sert que de repli d'affichage : l'identité réelle vient du serveur.
+  const urlBusinessName = sp.get("entreprise");
+  const urlCity = sp.get("ville");
+  const urlTrade = sp.get("metier");
   const auditId = sp.get("audit");
   const auditToken = sp.get("audit_token");
   const activationToken = sp.get("t");
