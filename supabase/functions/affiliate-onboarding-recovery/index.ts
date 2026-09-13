@@ -184,6 +184,45 @@ Deno.serve(async (req) => {
         if (l?.paid_at) { r.conversions += 1; d.conversions += 1; }
       }
     }
+    // --- Apprentissage : cohorte CRM (résultats réels d'assignations de reprise)
+    const crmAssignments = (ok(
+      await admin
+        .from("crm_manual_assignments")
+        .select("prospect_id, affiliate_id, status, last_outcome, attempts")
+        .eq("queue", "onboarding_recovery"),
+      "lecture assignations de reprise",
+    ) ?? []) as Array<{ prospect_id: string; affiliate_id: string | null; status: string | null; last_outcome: string | null; attempts: number | null }>;
+
+    if (crmAssignments.length > 0) {
+      const pids = crmAssignments.map((a) => a.prospect_id);
+      const prospects = (ok(
+        await admin
+          .from("verified_contractor_prospects")
+          .select("id, city, category, paid_at")
+          .in("id", pids),
+        "lecture prospects assignés",
+      ) ?? []) as Array<{ id: string; city: string | null; category: string | null; paid_at: string | null }>;
+      const byProspect = new Map(prospects.map((p) => [p.id, p]));
+
+      for (const a of crmAssignments) {
+        if (!a.affiliate_id) continue;
+        const p = byProspect.get(a.prospect_id);
+        const category = normalizeCategory(p?.category ?? null, cfg) || null;
+        const city = normalizeCity(p?.city ?? null, cfg).normalized || null;
+        const dimKey = `${a.affiliate_id}|${category ?? ""}|${city ?? ""}`;
+        const r = (rollups[a.affiliate_id] ??= { attempts: 0, delivered: 0, clicked: 0, signups: 0, activations: 0, conversions: 0 });
+        const d = (dimRollups[dimKey] ??= {
+          attempts: 0, delivered: 0, clicked: 0, signups: 0, activations: 0, conversions: 0,
+          affiliate_id: a.affiliate_id, service_category: category, city,
+        });
+        r.attempts += 1; d.attempts += 1;
+        if ((a.attempts ?? 0) > 0) { r.clicked += 1; d.clicked += 1; }
+        if (a.last_outcome === "interested") { r.signups += 1; d.signups += 1; }
+        if (a.last_outcome === "activated") { r.activations += 1; d.activations += 1; }
+        if (p?.paid_at) { r.conversions += 1; d.conversions += 1; }
+      }
+    }
+
     const learning = computeLearnedBoosts(rollups, cfg);
 
     // =====================================================================
@@ -282,7 +321,7 @@ Deno.serve(async (req) => {
     const crmQueue = (ok(
       await admin
         .from("v_manual_contact_queue")
-        .select("prospect_id, business_name, city, category, current_stage, priority_score, phone_e164, email, opted_out, assignment_id, affiliate_id")
+        .select("prospect_id, business_name, city, category, current_stage, priority_score, phone_e164, email, opted_out, assignment_id, affiliate_id, owner_user_id, assignment_status, last_activity_at, hours_since_last_activity, phone_validation_status")
         .limit(cfg.max_candidates),
       "lecture v_manual_contact_queue",
     ) ?? []) as CrmQueueRow[];
@@ -293,10 +332,10 @@ Deno.serve(async (req) => {
       ? ((ok(
           await admin
             .from("contractor_leads")
-            .select("id, source_prospect_id, do_not_contact, unsubscribed_at")
+            .select("id, source_prospect_id, do_not_contact, unsubscribed_at, compliance_review_required, compliance_review_reason")
             .in("source_prospect_id", crmIds),
           "lecture pont contractor_leads",
-        ) ?? []) as Array<{ id: string; source_prospect_id: string; do_not_contact: boolean | null; unsubscribed_at: string | null }>)
+        ) ?? []) as Array<{ id: string; source_prospect_id: string; do_not_contact: boolean | null; unsubscribed_at: string | null; compliance_review_required: boolean | null; compliance_review_reason: string | null }>)
       : [];
     const bridgeByProspect = new Map(bridged.map((b) => [b.source_prospect_id, b]));
     const eligibility = bridged.length
@@ -326,7 +365,11 @@ Deno.serve(async (req) => {
 
     const scored = crmQueue
       .map((row) => ({ row, evaluation: evaluateCrmCandidate(row, cfg) }))
-      .sort((a, b) => crmRoutingScore(b.row, cfg) - crmRoutingScore(a.row, cfg));
+      .sort((a, b) =>
+        (crmRoutingScore(b.row, cfg) - crmRoutingScore(a.row, cfg)) ||
+        (Number(b.row.hours_since_last_activity ?? 0) - Number(a.row.hours_since_last_activity ?? 0)) ||
+        a.row.prospect_id.localeCompare(b.row.prospect_id),
+      );
 
     for (const { row, evaluation } of scored) {
       const stage = String(row.current_stage ?? "");
@@ -338,6 +381,9 @@ Deno.serve(async (req) => {
         has_email: !!row.email,
         do_not_contact: row.opted_out === true || bridge?.do_not_contact === true,
         unsubscribed: !!bridge?.unsubscribed_at,
+        phone_validation_status: row.phone_validation_status ?? null,
+        compliance_review_required: bridge?.compliance_review_required ?? null,
+        compliance_review_reason: bridge?.compliance_review_reason ?? null,
       });
 
       if (priorKeys.has(key)) {
@@ -363,6 +409,7 @@ Deno.serve(async (req) => {
         city: row.city,
         current_stage: stage,
         priority_score: row.priority_score,
+        hours_since_last_activity: row.hours_since_last_activity ?? null,
         interesting_reasons: evaluation.interesting_reasons,
         evidence: evaluation.evidence,
         match_reasons: match.reasons,
@@ -382,57 +429,42 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // L'index unique partiel (prospect_id WHERE status IN assigned/in_progress)
-      // garantit qu'une seule assignation vivante peut exister.
-      const insert = await admin
-        .from("crm_manual_assignments")
-        .insert({
-          prospect_id: row.prospect_id,
-          affiliate_id: match.affiliate_id,
-          queue: "onboarding_recovery",
-          status: "assigned",
-          priority: Math.round(crmRoutingScore(row, cfg)),
-          next_action: perms.can_call ? "Appeler" : "Vérifier la conformité avant tout contact",
-          due_at: new Date(now + 24 * 3600 * 1000).toISOString(),
-        })
-        .select("id")
-        .maybeSingle();
-
-      if (insert.error) {
-        const dup = /duplicate key|unique/i.test(insert.error.message);
-        if (!dup) throw new Error(`assignation crm_manual_assignments: ${insert.error.message}`);
-        crmSkipped += 1;
-        crmResults.push({ ...base, status: "skipped", skip_reasons: ["assignment_exists"] });
-        continue;
-      }
-
-      ok(
-        await admin.from("crm_action_log").insert({
-          prospect_id: row.prospect_id,
-          action: "auto_recovery_assigned",
-          source: CRM_SOURCE,
-          reason: crmActionReason(stage),
-          result: "assigned",
-          status: "done",
-          idempotency_key: key,
-          payload: {
+      // Assignation + journal d'audit en un seul appel verrouillé (RPC).
+      const rpcCrm = ok(
+        await admin.rpc("route_crm_recovery_assignment", {
+          p_prospect_id: row.prospect_id,
+          p_affiliate_id: match.affiliate_id,
+          p_priority: Math.round(crmRoutingScore(row, cfg)),
+          p_next_action: perms.can_call ? "Appeler" : "Vérifier la conformité avant tout contact",
+          p_due_at: new Date(now + 24 * 3600 * 1000).toISOString(),
+          p_idempotency_key: key,
+          p_reason: crmActionReason(stage),
+          p_payload: {
             rule_version: cfg.version,
             affiliate_id: match.affiliate_id,
             match_reasons: match.reasons,
             interesting_reasons: evaluation.interesting_reasons,
             evidence: evaluation.evidence,
             contact_permissions: perms,
+            hours_since_last_activity: row.hours_since_last_activity ?? null,
             notification_sent: false,
             actor,
           },
-        }).select("id"),
-        "journalisation crm_action_log",
-      );
+        }),
+        "routage CRM atomique",
+      ) as { status: string; assignment_id?: string } | null;
+
+      const crmStatus = rpcCrm?.status ?? "unknown";
+      if (crmStatus !== "routed") {
+        crmSkipped += 1;
+        crmResults.push({ ...base, status: "skipped", skip_reasons: [crmStatus] });
+        continue;
+      }
 
       priorKeys.add(key);
       workload[match.affiliate_id] = (workload[match.affiliate_id] ?? 0) + 1;
       crmRouted += 1;
-      crmResults.push({ ...base, status: "routed", assignment_id: insert.data?.id ?? null });
+      crmResults.push({ ...base, status: "routed", assignment_id: rpcCrm?.assignment_id ?? null });
     }
 
     // --- Rollup d'apprentissage (résultats réels uniquement, dimensionné)

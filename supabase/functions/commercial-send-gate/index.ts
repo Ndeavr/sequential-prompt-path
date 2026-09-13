@@ -218,7 +218,7 @@ serve(async (req) => {
   const pass = blocked.length === 0;
 
   // Persist audit record — always, whether pass or fail.
-  await sb.from("acquisition_events").insert({
+  const { data: auditRow } = await sb.from("acquisition_events").insert({
     channel: input.destination_type === "phone_sms" ? "sms" : "email",
     event_type: pass ? "gate_pass" : "gate_block",
     provider: "unpro",
@@ -233,12 +233,14 @@ serve(async (req) => {
       evidence_id: evidence?.id ?? null,
     },
     occurred_at: new Date().toISOString(),
-  });
+  }).select("id").maybeSingle();
 
   return jsonResponse({
     pass,
     blocked_reasons: blocked,
     decisions,
+    // Identifiant d'audit persistant de la décision (acquisition_events).
+    gate_audit_id: auditRow?.id ?? null,
     evidence_id: evidence?.id ?? null,
     lead_id: input.contractor_lead_id,
     destination_normalized: normalizedDest,

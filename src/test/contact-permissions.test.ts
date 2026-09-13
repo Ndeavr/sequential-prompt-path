@@ -1,6 +1,8 @@
 /**
  * Permissions de contact — échec fermé.
- * Aucun envoi commercial sans preuve LCAP valide par destination.
+ * Aucun envoi commercial sans preuve LCAP valide par destination,
+ * et aucun canal (appel compris) en cas de retrait, suppression ou
+ * révision de conformité ouverte.
  */
 import { describe, it, expect } from "vitest";
 import {
@@ -21,25 +23,34 @@ const elig = (o: Partial<SendEligibilityRow> = {}): SendEligibilityRow => ({
 
 describe("computeContactPermissions", () => {
   it("autorise les deux canaux avec une preuve valide", () => {
-    const p = computeContactPermissions({ eligibility: elig(), has_phone: true, has_email: true });
+    const p = computeContactPermissions({
+      eligibility: elig(),
+      has_phone: true,
+      has_email: true,
+      phone_validation_status: "valid_mobile",
+    });
     expect(p).toMatchObject({ can_call: true, can_sms: true, can_email: true, research_only: false });
+    expect(p.phone_unverified).toBe(false);
   });
 
-  it("bloque tout envoi sans dossier de conformité relié", () => {
+  it("bloque tout envoi électronique sans dossier de conformité relié", () => {
     const p = computeContactPermissions({ eligibility: null, has_phone: true, has_email: true });
     expect(p.can_sms).toBe(false);
     expect(p.can_email).toBe(false);
-    expect(p.research_only).toBe(true);
-    expect(p.can_call).toBe(true); // appel manuel non bloqué par la LCAP
+    expect(p.can_call).toBe(true); // appel manuel non visé par la LCAP
+    expect(p.research_only).toBe(false);
+    expect(p.phone_unverified).toBe(true); // numéro non encore validé
   });
 
-  it("bloque quand la révision de conformité est requise", () => {
+  it("bloque tous les canaux, appel compris, quand une révision de conformité est requise", () => {
     const p = computeContactPermissions({
       eligibility: elig({ compliance_review_required: true, compliance_review_reason: "numéro non vérifié" }),
       has_phone: true,
       has_email: true,
     });
     expect(p.can_sms).toBe(false);
+    expect(p.can_call).toBe(false);
+    expect(p.research_only).toBe(true);
     expect(p.reasons.sms).toContain("numéro non vérifié");
   });
 
@@ -61,6 +72,28 @@ describe("computeContactPermissions", () => {
       has_email: true,
     });
     expect(p.can_email).toBe(false);
+  });
+
+  it("bloque l'appel quand le numéro est supprimé", () => {
+    const p = computeContactPermissions({
+      eligibility: elig({ phone_suppressed: true }),
+      has_phone: true,
+      has_email: false,
+    });
+    expect(p.can_call).toBe(false);
+    expect(p.can_sms).toBe(false);
+  });
+
+  it("bloque l'appel quand le numéro est déclaré invalide", () => {
+    const p = computeContactPermissions({
+      eligibility: elig(),
+      has_phone: true,
+      has_email: false,
+      phone_validation_status: "invalid",
+    });
+    expect(p.can_call).toBe(false);
+    expect(p.can_sms).toBe(false);
+    expect(p.research_only).toBe(true);
   });
 
   it("bloque tous les canaux, appel compris, en cas de retrait", () => {

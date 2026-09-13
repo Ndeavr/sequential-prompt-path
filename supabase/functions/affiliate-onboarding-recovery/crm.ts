@@ -24,6 +24,11 @@ export interface CrmQueueRow {
   opted_out: boolean | null;
   assignment_id: string | null;
   affiliate_id: string | null;
+  owner_user_id?: string | null;
+  assignment_status?: string | null;
+  last_activity_at?: string | null;
+  hours_since_last_activity?: number | null;
+  phone_validation_status?: string | null;
 }
 
 export interface CrmEvaluation {
@@ -48,7 +53,7 @@ export function evaluateCrmCandidate(
   const skip: string[] = [];
   const stage = String(row.current_stage ?? "");
 
-  if (row.assignment_id || row.affiliate_id) skip.push("already_assigned");
+  if (row.assignment_id || row.affiliate_id || row.owner_user_id) skip.push("already_assigned");
   if (row.opted_out === true) skip.push("opted_out");
   if (!(row.phone_e164 || row.email)) skip.push("no_contact_method");
   if (opts.alreadyRoutedProspectIds?.has(row.prospect_id)) skip.push("already_routed");
@@ -78,6 +83,7 @@ export function evaluateCrmCandidate(
       category_normalized: normalizeCategory(row.category, cfg),
       has_phone: !!row.phone_e164,
       has_email: !!row.email,
+      hours_since_last_activity: row.hours_since_last_activity ?? null,
       rule_version: cfg.version,
     },
   };

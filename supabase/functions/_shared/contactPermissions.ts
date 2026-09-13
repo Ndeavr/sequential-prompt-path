@@ -2,12 +2,18 @@
  * UNPRO — Permissions de contact au niveau destination (logique pure).
  *
  * Source de vérité : `v_commercial_send_eligibility` (preuve CASL par
- * destination) + marqueurs de conformité du lead. La simple présence d'un
- * numéro ou d'un courriel n'autorise JAMAIS un envoi commercial.
+ * destination) + marqueurs de conformité et de validation du dossier.
+ * La simple présence d'un numéro ou d'un courriel n'autorise JAMAIS un envoi
+ * commercial.
  *
- * L'appel téléphonique manuel composé par l'opérateur n'est pas un message
- * électronique commercial au sens de la LCAP : il reste permis tant que le
- * prospect n'est pas en retrait (do_not_contact / désabonné / supprimé).
+ * Portée des canaux :
+ *  - SMS / courriel commercial : preuve LCAP valide exigée pour la destination
+ *    exacte, échec fermé.
+ *  - Appel manuel composé par l'opérateur : permis tant qu'il n'y a ni retrait
+ *    (do_not_contact / désabonnement), ni suppression du numéro, ni révision de
+ *    conformité ouverte, ni numéro déclaré invalide.
+ *
+ * `research_only` = AUCUN canal permis (ni appel, ni SMS, ni courriel).
  */
 
 export interface SendEligibilityRow {
@@ -20,6 +26,24 @@ export interface SendEligibilityRow {
   email_suppressed: boolean | null;
 }
 
+/** Statuts de validation téléphonique qui interdisent explicitement l'appel. */
+export const INVALID_PHONE_STATUSES = [
+  "invalid",
+  "invalid_number",
+  "disconnected",
+  "unreachable",
+  "landline_invalid",
+] as const;
+
+/** Statuts de validation téléphonique positifs (numéro confirmé joignable). */
+export const VERIFIED_PHONE_STATUSES = [
+  "valid_mobile",
+  "valid_sms_capable_voip",
+  "valid_voip",
+  "valid_landline",
+  "valid",
+] as const;
+
 export interface ContactPermissionInput {
   /** Ligne d'éligibilité canonique, ou null si le prospect n'est pas relié à un contractor_lead. */
   eligibility: SendEligibilityRow | null;
@@ -27,14 +51,21 @@ export interface ContactPermissionInput {
   has_email: boolean;
   do_not_contact?: boolean | null;
   unsubscribed?: boolean | null;
+  /** Statut de validation du numéro (verified_contractor_prospects / contractor_leads). */
+  phone_validation_status?: string | null;
+  /** Révision de conformité ouverte au niveau du dossier lui-même. */
+  compliance_review_required?: boolean | null;
+  compliance_review_reason?: string | null;
 }
 
 export interface ContactPermissions {
   can_call: boolean;
   can_sms: boolean;
   can_email: boolean;
-  /** Vrai dès qu'aucun canal électronique commercial n'est autorisé. */
+  /** Vrai seulement si AUCUN canal n'est permis (recherche / profil uniquement). */
   research_only: boolean;
+  /** Vrai quand l'appel est permis mais que le numéro n'est pas encore vérifié. */
+  phone_unverified: boolean;
   reasons: {
     call: string | null;
     sms: string | null;
@@ -43,36 +74,49 @@ export interface ContactPermissions {
 }
 
 const R = {
-  no_phone: "Aucun numéro de téléphone vérifié.",
+  no_phone: "Aucun numéro de téléphone au dossier.",
   no_email: "Aucune adresse courriel.",
   opted_out: "Cette entreprise a demandé à ne pas être contactée.",
   unsubscribed: "Cette entreprise s'est désabonnée.",
   not_linked: "Aucun dossier de conformité relié : envoi impossible tant que la preuve LCAP n'est pas rattachée.",
-  compliance: "Révision de conformité requise avant tout envoi.",
+  compliance: "Révision de conformité requise avant tout contact.",
   no_evidence: "Aucune preuve LCAP valide pour cette destination.",
   suppressed: "Destination dans l'index de suppression.",
+  invalid_phone: "Numéro déclaré invalide à la validation.",
 };
 
 /** Calcule les permissions réelles. Échec fermé par défaut. */
 export function computeContactPermissions(input: ContactPermissionInput): ContactPermissions {
   const optedOut = input.do_not_contact === true;
   const unsub = input.unsubscribed === true;
+  const e = input.eligibility;
+  const phoneStatus = String(input.phone_validation_status ?? "").toLowerCase();
+  const phoneInvalid = (INVALID_PHONE_STATUSES as readonly string[]).includes(phoneStatus);
+  const phoneVerified = (VERIFIED_PHONE_STATUSES as readonly string[]).includes(phoneStatus);
 
+  const complianceOpen =
+    input.compliance_review_required === true || e?.compliance_review_required === true;
+  const complianceReason = input.compliance_review_reason ?? e?.compliance_review_reason ?? null;
+  const complianceText = complianceReason ? `${R.compliance} (${complianceReason})` : R.compliance;
+
+  // ── Appel manuel ───────────────────────────────────────────────────
   let call: string | null = null;
   if (!input.has_phone) call = R.no_phone;
   else if (optedOut) call = R.opted_out;
   else if (unsub) call = R.unsubscribed;
+  else if (complianceOpen) call = complianceText;
+  else if (e?.phone_suppressed === true) call = R.suppressed;
+  else if (phoneInvalid) call = R.invalid_phone;
 
+  // ── Canaux électroniques commerciaux ───────────────────────────────
   const electronic = (kind: "sms" | "email"): string | null => {
     const has = kind === "sms" ? input.has_phone : input.has_email;
     if (!has) return kind === "sms" ? R.no_phone : R.no_email;
     if (optedOut) return R.opted_out;
     if (unsub) return R.unsubscribed;
-    const e = input.eligibility;
+    if (complianceOpen) return complianceText;
+    if (kind === "sms" && phoneInvalid) return R.invalid_phone;
     if (!e) return R.not_linked;
-    if (e.compliance_review_required === true) {
-      return e.compliance_review_reason ? `${R.compliance} (${e.compliance_review_reason})` : R.compliance;
-    }
     const suppressed = kind === "sms" ? e.phone_suppressed : e.email_suppressed;
     if (suppressed === true) return R.suppressed;
     const count = Number((kind === "sms" ? e.valid_phone_evidence_count : e.valid_email_evidence_count) ?? 0);
@@ -87,7 +131,8 @@ export function computeContactPermissions(input: ContactPermissionInput): Contac
     can_call: call === null,
     can_sms: smsReason === null,
     can_email: emailReason === null,
-    research_only: smsReason !== null && emailReason !== null,
+    research_only: call !== null && smsReason !== null && emailReason !== null,
+    phone_unverified: call === null && !phoneVerified,
     reasons: { call, sms: smsReason, email: emailReason },
   };
 }
