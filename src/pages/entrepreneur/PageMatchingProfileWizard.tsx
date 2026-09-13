@@ -353,6 +353,44 @@ export default function PageMatchingProfileWizard() {
           )}
         </div>
 
+        {/* Continuité de l'audit : l'entreprise analysée reste affichée. */}
+        {audit && (
+          <section className="mb-5 rounded-2xl border border-border bg-card p-4">
+            <div className="flex items-start gap-3">
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
+              <div className="min-w-0">
+                <p className="text-[13.5px] font-bold text-foreground">
+                  {fr ? "Nous continuons avec" : "Continuing with"}{" "}
+                  {audit.business_name ?? (fr ? "votre entreprise" : "your business")}
+                </p>
+                <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+                  {[audit.city, audit.trade].filter(Boolean).join(" · ")}
+                  {typeof audit.readiness_score === "number"
+                    ? `${audit.city || audit.trade ? " · " : ""}${
+                        fr ? "Score de votre audit" : "Your audit score"
+                      } : ${audit.readiness_score}/100`
+                    : ""}
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {!loading && !audit && !businessName && !cameFromFounderSignup && (
+          <section className="mb-5 rounded-2xl border border-border bg-card p-4 text-[13px] text-muted-foreground">
+            {fr
+              ? "Aucun audit n'est rattaché à cette session. Vos réponses sont conservées, et vous pouvez lancer votre audit gratuit pour rattacher votre entreprise."
+              : "No audit is linked to this session. Your answers are kept, and you can run your free audit to link your business."}
+            <button
+              type="button"
+              onClick={() => navigate("/entrepreneurs/audit-ia")}
+              className="ml-1 font-semibold text-primary underline-offset-2 hover:underline"
+            >
+              {fr ? "Lancer mon audit gratuit" : "Run my free audit"}
+            </button>
+          </section>
+        )}
+
         {hasFreeYear && (
           <section className="mb-5 rounded-2xl border border-success/40 bg-[hsl(152_69%_31%/0.06)] p-4">
             <div className="flex items-start gap-3">
