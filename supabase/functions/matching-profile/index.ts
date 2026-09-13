@@ -116,6 +116,35 @@ Deno.serve(async (req) => {
     const session_key = String(body.session_key ?? "").trim();
     if (!session_key || session_key.length < 8) return json({ ok: false, error: "session_key required" }, 400);
 
+    // ---------------------------------------------------------------- AUDIT
+    // The audit is the authoritative source of the company identity shown in
+    // the wizard. Query-string values are never trusted: the audit row is
+    // re-read server-side and validated against its session token.
+    const auditIdInput = typeof body.audit_id === "string" ? body.audit_id.trim() : "";
+    const auditTokenInput = typeof body.audit_token === "string" ? body.audit_token.trim() : "";
+    let auditRow: Record<string, unknown> | null = null;
+    if (auditIdInput && auditTokenInput) {
+      const { data, error } = await supabase
+        .from("ai_recommendation_audits")
+        .select("id, session_token, business_name, city, trade, contractor_id, prospect_id, readiness_score, baseline")
+        .eq("id", auditIdInput)
+        .maybeSingle();
+      if (error) return json({ ok: false, error: "audit_lookup_failed" }, 500);
+      if (data && data.session_token === auditTokenInput) auditRow = data as Record<string, unknown>;
+    }
+    const auditContext = auditRow
+      ? {
+          audit_id: String(auditRow.id),
+          business_name: (auditRow.business_name as string | null) ?? null,
+          city: (auditRow.city as string | null) ?? null,
+          trade: (auditRow.trade as string | null) ?? null,
+          contractor_id: (auditRow.contractor_id as string | null) ?? null,
+          prospect_id: (auditRow.prospect_id as string | null) ?? null,
+          readiness_score: (auditRow.readiness_score as number | null) ?? null,
+          facts: ((auditRow.baseline as Record<string, unknown> | null)?.facts as unknown[]) ?? [],
+        }
+      : null;
+
     let authenticatedUserId: string | null = null;
     if (authHeader.startsWith("Bearer ")) {
       const anon = createClient(
