@@ -239,8 +239,23 @@ export function matchAffiliate(
   workload: Record<string, number>,
   learnedBoost: Record<string, number> = {},
 ): MatchResult {
-  const leadCity = normalizeCity(lead.city, cfg);
-  const leadCategory = normalizeCategory(lead.category_primary ?? lead.trade, cfg);
+  return matchAffiliateFor(lead.city, lead.category_primary ?? lead.trade, cfg, affiliates, workload, learnedBoost);
+}
+
+/**
+ * Appariement générique ville/catégorie, partagé par la cohorte
+ * `contractor_leads` et la cohorte CRM vérifiée.
+ */
+export function matchAffiliateFor(
+  cityRaw: string | null | undefined,
+  categoryRaw: string | null | undefined,
+  cfg: RecoveryConfig,
+  affiliates: AffiliateRow[],
+  workload: Record<string, number>,
+  learnedBoost: Record<string, number> = {},
+): MatchResult {
+  const leadCity = normalizeCity(cityRaw, cfg);
+  const leadCategory = normalizeCategory(categoryRaw, cfg);
   const rejected: MatchResult["rejected"] = [];
   const eligible: Array<{ a: AffiliateRow; reasons: string[]; load: number; boost: number }> = [];
 
