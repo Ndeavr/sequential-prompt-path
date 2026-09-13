@@ -108,9 +108,9 @@ export default function PageMatchingProfileWizard() {
   const context = useMemo(
     () => ({
       session_key: sessionKey,
-      business_name: businessName,
-      city,
-      trade,
+      business_name: urlBusinessName,
+      city: urlCity,
+      trade: urlTrade,
       audit_id: auditId,
       audit_token: auditToken,
       activation_token: activationToken,
