@@ -236,6 +236,14 @@ function QueueCard({
         <ManualContactPanel
           compact
           target={row}
+          // Politique explicite de l'appelant de confiance (surface CRM complète).
+          policy={{
+            contact_locked: row.contact_locked === true || row.opted_out === true,
+            can_call: row.contact_locked !== true && row.opted_out !== true,
+            can_sms: row.contact_locked !== true && row.opted_out !== true,
+            can_email: row.contact_locked !== true && row.opted_out !== true,
+            blocked_reason: row.blocked_reason ?? null,
+          }}
           canLogOutcome={!row.is_unassigned}
           onDone={onRefresh}
         />
