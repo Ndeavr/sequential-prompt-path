@@ -198,10 +198,10 @@ Deno.serve(async (req) => {
       const prospects = (ok(
         await admin
           .from("verified_contractor_prospects")
-          .select("id, city, category, paid_at")
+          .select("id, city, category")
           .in("id", pids),
         "lecture prospects assignés",
-      ) ?? []) as Array<{ id: string; city: string | null; category: string | null; paid_at: string | null }>;
+      ) ?? []) as Array<{ id: string; city: string | null; category: string | null }>;
       const byProspect = new Map(prospects.map((p) => [p.id, p]));
 
       for (const a of crmAssignments) {
@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
         if ((a.attempts ?? 0) > 0) { r.clicked += 1; d.clicked += 1; }
         if (a.last_outcome === "interested") { r.signups += 1; d.signups += 1; }
         if (a.last_outcome === "activated") { r.activations += 1; d.activations += 1; }
-        if (p?.paid_at) { r.conversions += 1; d.conversions += 1; }
+        if (a.last_outcome === "paid") { r.conversions += 1; d.conversions += 1; }
       }
     }
 
