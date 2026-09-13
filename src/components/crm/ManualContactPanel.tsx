@@ -32,13 +32,27 @@ export type ManualContactTarget = {
   blocked_reason?: string | null;
 };
 
+/**
+ * Politique de contact explicite fournie par l'appelant de confiance.
+ * Absente = tout est verrouillé (échec fermé).
+ */
+export type ManualContactPolicy = {
+  contact_locked: boolean;
+  can_call?: boolean;
+  can_sms?: boolean;
+  can_email?: boolean;
+  blocked_reason?: string | null;
+};
+
 export default function ManualContactPanel({
   target,
+  policy,
   canLogOutcome = true,
   onDone,
   compact = false,
 }: {
   target: ManualContactTarget;
+  policy?: ManualContactPolicy;
   canLogOutcome?: boolean;
   onDone?: () => void;
   compact?: boolean;
@@ -53,7 +67,20 @@ export default function ManualContactPanel({
     new Date(Date.now() + 24 * 3600 * 1000).toISOString().slice(0, 16),
   );
 
+  // Verrou de conformité : politique absente = verrouillé.
+  const locked =
+    !policy ||
+    policy.contact_locked === true ||
+    target.contact_locked === true ||
+    target.opted_out === true;
+  const allowed = (kind: "call" | "sms" | "email"): boolean => {
+    if (locked || !policy) return false;
+    const flag = kind === "call" ? policy.can_call : kind === "sms" ? policy.can_sms : policy.can_email;
+    return flag !== false;
+  };
+
   const terminal = TERMINAL_OUTCOMES.has(outcome);
+
 
   async function openChannel(kind: "call" | "sms" | "email") {
     const href = contactHref(kind, target);
