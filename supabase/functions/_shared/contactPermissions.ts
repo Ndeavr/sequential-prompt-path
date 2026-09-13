@@ -104,7 +104,9 @@ export function computeContactPermissions(input: ContactPermissionInput): Contac
   const complianceReason = input.compliance_review_reason ?? e?.compliance_review_reason ?? null;
   const complianceText = complianceReason ? `${R.compliance} (${complianceReason})` : R.compliance;
 
-  // ── Appel manuel ───────────────────────────────────────────────────
+  // ── Appel manuel (ÉCHEC FERMÉ) ─────────────────────────────────────
+  // Un appel n'est permis qu'avec un statut de validation POSITIF explicite.
+  // null / unverified / pending / lookup_failed / inconnu → interdit.
   let call: string | null = null;
   if (!input.has_phone) call = R.no_phone;
   else if (optedOut) call = R.opted_out;
@@ -112,6 +114,7 @@ export function computeContactPermissions(input: ContactPermissionInput): Contac
   else if (complianceOpen) call = complianceText;
   else if (e?.phone_suppressed === true) call = R.suppressed;
   else if (phoneInvalid) call = R.invalid_phone;
+  else if (!phoneVerified) call = R.phone_not_validated;
 
   // ── Canaux électroniques commerciaux ───────────────────────────────
   const electronic = (kind: "sms" | "email"): string | null => {
