@@ -233,6 +233,11 @@ export default function PageAffiliateActionMode() {
 
   async function onOfferFree() {
     if (!prospect || !affiliate || offering) return;
+    // L'offre suppose un contact personnel réel : bloquée si l'appel est bloqué.
+    if (!canCall) {
+      toast.error("Offre indisponible", { description: callBlockedReason });
+      return;
+    }
     setOffering(true);
     try {
       const res = await offerFreeAppointments({
