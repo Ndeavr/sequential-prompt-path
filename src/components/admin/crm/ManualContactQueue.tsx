@@ -237,11 +237,12 @@ function QueueCard({
           compact
           target={row}
           // Politique explicite de l'appelant de confiance (surface CRM complète).
+          // L'appel n'est jamais autorisé sans validation positive côté file.
           policy={{
-            contact_locked: row.contact_locked === true || row.opted_out === true,
-            can_call: row.contact_locked !== true && row.opted_out !== true,
-            can_sms: row.contact_locked !== true && row.opted_out !== true,
-            can_email: row.contact_locked !== true && row.opted_out !== true,
+            contact_locked: row.opted_out === true,
+            can_call: false,
+            can_sms: row.opted_out !== true && row.can_sms === true,
+            can_email: row.opted_out !== true && row.can_email === true,
             blocked_reason: row.blocked_reason ?? null,
           }}
           canLogOutcome={!row.is_unassigned}

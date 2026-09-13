@@ -76,7 +76,8 @@ export default function ManualContactPanel({
   const allowed = (kind: "call" | "sms" | "email"): boolean => {
     if (locked || !policy) return false;
     const flag = kind === "call" ? policy.can_call : kind === "sms" ? policy.can_sms : policy.can_email;
-    return flag !== false;
+    // Échec fermé : seul un drapeau explicitement vrai autorise le canal.
+    return flag === true;
   };
 
   const terminal = TERMINAL_OUTCOMES.has(outcome);
