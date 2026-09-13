@@ -132,7 +132,14 @@ export default function PageMatchingProfileWizard() {
     void (async () => {
       try {
         const profileRequest = await supabase.functions.invoke("matching-profile", {
-          body: { action: "get", session_key: sessionKey },
+          body: {
+            action: "get",
+            session_key: sessionKey,
+            // L'audit est revalidé côté serveur : l'entreprise affichée ici est
+            // celle qui vient d'être analysée, jamais une valeur de l'URL.
+            audit_id: auditId,
+            audit_token: auditToken,
+          },
         });
         if (cancelled) return;
 
@@ -143,11 +150,18 @@ export default function PageMatchingProfileWizard() {
             response?.error || profileRequest.error?.message || "Impossible de reprendre le profil.",
           );
         }
+        const resolvedAudit = response?.audit ?? null;
+        if (resolvedAudit) setAudit(resolvedAudit);
         if (profile?.answers) {
           setAnswers(profile.answers as Answers);
           if (profile.status === "completed") setDone(true);
-          const firstUnanswered = questions.findIndex((q) => !isFilled(profile.answers[q.key]));
-          setIndex(firstUnanswered === -1 ? questions.length - 1 : firstUnanswered);
+          // Reprise exacte : l'étape enregistrée prime, sans jamais dépasser la
+          // première question réellement sans réponse.
+          const list = questionsForTrade(resolvedAudit?.trade ?? urlTrade);
+          const firstUnanswered = list.findIndex((q) => !isFilled(profile.answers![q.key]));
+          const fallback = firstUnanswered === -1 ? list.length - 1 : firstUnanswered;
+          const savedStep = Number(response?.current_step ?? profile.current_step ?? 0);
+          setIndex(Math.min(Math.max(savedStep, 0), fallback));
         }
       } catch {
         if (!cancelled) setLoadError("Impossible de reprendre le profil. Réessayez.");
