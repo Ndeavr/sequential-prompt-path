@@ -37,13 +37,14 @@ export const INVALID_PHONE_STATUSES = [
   "landline_invalid",
 ] as const;
 
-/** Statuts de validation téléphonique positifs (numéro confirmé joignable). */
+/**
+ * Statuts de validation téléphonique POSITIFS.
+ * Liste volontairement restreinte aux seules valeurs positives réellement
+ * observées en production. Aucun statut permissif ajouté « au cas où ».
+ */
 export const VERIFIED_PHONE_STATUSES = [
   "valid_mobile",
   "valid_sms_capable_voip",
-  "valid_voip",
-  "valid_landline",
-  "valid",
 ] as const;
 
 export interface ContactPermissionInput {
