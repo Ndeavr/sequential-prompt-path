@@ -25,6 +25,7 @@ const row = (o: Partial<CrmQueueRow> = {}): CrmQueueRow => ({
   opted_out: false,
   assignment_id: null,
   affiliate_id: null,
+  hours_since_last_activity: 48,
   ...o,
 });
 
