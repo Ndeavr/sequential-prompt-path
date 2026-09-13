@@ -5,6 +5,7 @@
  * Clara is presented as a large inline conversation box — never a voice popup.
  */
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 import ClaraConversationBox from "@/components/home-light/ClaraConversationBox";
 import heroImage from "@/assets/home-hero-homeowner.jpg";
@@ -31,7 +32,14 @@ export default function HeroHomeownerLight() {
           transition={{ duration: 0.5 }}
           className="text-[clamp(2.1rem,6.4vw,3.8rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-foreground"
         >
-          Fini les 3 soumissions.
+          Fini les{" "}
+          <Link
+            to="/blog/les-3-soumissions-cest-termine-ia-prend-le-relais"
+            aria-label="3 soumissions : lire pourquoi UNPRO fait autrement"
+            className="inline-block cursor-pointer rounded-sm underline decoration-transparent decoration-2 underline-offset-4 transition-colors duration-200 hover:bg-primary/10 hover:text-primary hover:decoration-primary focus-visible:bg-primary/10 focus-visible:text-primary focus-visible:decoration-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 motion-reduce:transition-none"
+          >
+            3 soumissions.
+          </Link>
           <span className="block text-primary">Un pro. C'est tout.</span>
         </motion.h1>
 
