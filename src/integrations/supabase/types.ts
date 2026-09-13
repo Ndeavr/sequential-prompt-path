@@ -36132,6 +36132,7 @@ export type Database = {
           affiliate_ref: string | null
           ai_profile_readiness: number
           answers: Json
+          audit_contractor_id: string | null
           audit_id: string | null
           audit_token: string | null
           business_name: string | null
@@ -36140,6 +36141,7 @@ export type Database = {
           completed_at: string | null
           contractor_id: string | null
           created_at: string
+          current_step: number
           id: string
           missing_matching_fields: Json
           profile_completion: number
@@ -36157,6 +36159,7 @@ export type Database = {
           affiliate_ref?: string | null
           ai_profile_readiness?: number
           answers?: Json
+          audit_contractor_id?: string | null
           audit_id?: string | null
           audit_token?: string | null
           business_name?: string | null
@@ -36165,6 +36168,7 @@ export type Database = {
           completed_at?: string | null
           contractor_id?: string | null
           created_at?: string
+          current_step?: number
           id?: string
           missing_matching_fields?: Json
           profile_completion?: number
@@ -36182,6 +36186,7 @@ export type Database = {
           affiliate_ref?: string | null
           ai_profile_readiness?: number
           answers?: Json
+          audit_contractor_id?: string | null
           audit_id?: string | null
           audit_token?: string | null
           business_name?: string | null
@@ -36190,6 +36195,7 @@ export type Database = {
           completed_at?: string | null
           contractor_id?: string | null
           created_at?: string
+          current_step?: number
           id?: string
           missing_matching_fields?: Json
           profile_completion?: number
