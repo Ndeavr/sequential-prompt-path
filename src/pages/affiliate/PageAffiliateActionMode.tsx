@@ -382,19 +382,19 @@ export default function PageAffiliateActionMode() {
           {prospect ? (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
-                <Button onClick={() => onSend("sms")} disabled={!phone || sending !== null || permissions?.can_sms === false} className="h-14 gap-2 rounded-2xl text-base font-semibold">
+                <Button onClick={() => onSend("sms")} disabled={!canSms || sending !== null} className="h-14 gap-2 rounded-2xl text-base font-semibold">
                   {sending === "sms" ? <Loader2 className="h-5 w-5 animate-spin" /> : <MessageSquare className="h-5 w-5" />}Texto
                 </Button>
-                <Button onClick={() => onSend("email")} disabled={!prospect.email || sending !== null || permissions?.can_email === false} variant="secondary" className="h-14 gap-2 rounded-2xl text-base font-semibold">
+                <Button onClick={() => onSend("email")} disabled={!canEmail || sending !== null} variant="secondary" className="h-14 gap-2 rounded-2xl text-base font-semibold">
                   {sending === "email" ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}Courriel
                 </Button>
               </div>
-              {permissions?.research_only && (
+              {!canSms && !canEmail && (
                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
                   <p className="text-xs font-semibold text-foreground">Envoi bloqué — recherche seulement</p>
                   <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
-                    {permissions.reasons.sms && <li>Texto : {permissions.reasons.sms}</li>}
-                    {permissions.reasons.email && <li>Courriel : {permissions.reasons.email}</li>}
+                    <li>Texto : {permissions?.reasons.sms ?? "Vérification de conformité en cours."}</li>
+                    <li>Courriel : {permissions?.reasons.email ?? "Vérification de conformité en cours."}</li>
                   </ul>
                 </div>
               )}
