@@ -56763,6 +56763,27 @@ export type Database = {
         }
         Relationships: []
       }
+      internal_job_tokens: {
+        Row: {
+          created_at: string
+          job_key: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          job_key: string
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          job_key?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       job_status_logs: {
         Row: {
           actor: string
