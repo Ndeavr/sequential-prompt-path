@@ -47,10 +47,19 @@ Deno.serve(async (req) => {
   // --- Autorisation : appel système (service role) ou administrateur authentifié
   const authHeader = req.headers.get("Authorization") ?? "";
   const token = authHeader.replace("Bearer ", "").trim();
-  const internalToken = Deno.env.get("ONBOARDING_RECOVERY_TOKEN") ?? "";
-  const providedInternal = req.headers.get("x-internal-token") ?? "";
+  const providedInternal = (req.headers.get("x-internal-token") ?? "").trim();
   let actor = "system";
-  if (!(token === SERVICE_KEY || (internalToken && providedInternal === internalToken))) {
+  let internalOk = token === SERVICE_KEY;
+  if (!internalOk && providedInternal) {
+    const { data: jobToken } = await admin
+      .from("internal_job_tokens")
+      .select("token")
+      .eq("job_key", "affiliate_onboarding_recovery")
+      .maybeSingle();
+    internalOk = !!jobToken?.token && jobToken.token === providedInternal;
+    if (internalOk) actor = "cron";
+  }
+  if (!internalOk) {
     const { data: userData } = await admin.auth.getUser(token);
     const uid = userData?.user?.id;
     if (!uid) return json({ error: "unauthorized" }, 401);
@@ -58,6 +67,7 @@ Deno.serve(async (req) => {
     if (!roles || roles.length === 0) return json({ error: "forbidden" }, 403);
     actor = uid;
   }
+
 
 
   let body: Record<string, unknown> = {};
