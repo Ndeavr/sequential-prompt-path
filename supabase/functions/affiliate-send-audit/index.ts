@@ -42,10 +42,13 @@ Deno.serve(async (req) => {
 
     const { data: affiliate } = await sb
       .from("affiliates")
-      .select("id, first_name, name, referral_code")
+      .select("id, first_name, name, referral_code, status")
       .eq("user_id", user.id)
       .maybeSingle();
     if (!affiliate) return json({ error: "not_an_affiliate" }, 403);
+    if (String(affiliate.status ?? "") !== "active") {
+      return json({ error: "affiliate_not_active" }, 403);
+    }
 
     const body = await req.json().catch(() => ({}));
     const leadId = String(body.lead_id ?? "");
@@ -61,9 +64,13 @@ Deno.serve(async (req) => {
       .eq("id", leadId)
       .maybeSingle();
     if (!lead) return json({ error: "lead_not_found" }, 404);
-    if (lead.assigned_affiliate_id !== affiliate.id && lead.created_by_affiliate_id !== affiliate.id) {
-      return json({ error: "forbidden" }, 403);
-    }
+    // Propriété stricte : l'assignation prime; le créateur n'est un repli que
+    // tant que le dossier n'est assigné à personne.
+    const owns = lead.assigned_affiliate_id
+      ? lead.assigned_affiliate_id === affiliate.id
+      : lead.created_by_affiliate_id === affiliate.id;
+    if (!owns) return json({ error: "forbidden" }, 403);
+
     if (lead.do_not_contact || lead.unsubscribed_at) {
       return json({ error: "opted_out", message: "Cette entreprise a demandé à ne pas être contactée." }, 409);
     }
