@@ -86,6 +86,8 @@ const R = {
   no_evidence: "Aucune preuve LCAP valide pour cette destination.",
   suppressed: "Destination dans l'index de suppression.",
   invalid_phone: "Numéro déclaré invalide à la validation.",
+  phone_not_validated:
+    "Numéro non validé positivement : aucun appel tant que la validation n'a pas confirmé le numéro.",
 };
 
 /** Calcule les permissions réelles. Échec fermé par défaut. */
