@@ -23,7 +23,7 @@ import AddProspectSheet from "@/features/affiliate/actionMode/AddProspectSheet";
 import {
   useNextProspect, sendAuditInvite, recordCallOutcome, logCallStarted,
   offerFreeAppointments, useDayStats, useRefreshStats,
-  type ActionProspect, type ActionAudit, type FreeAppointmentOffer,
+  type ActionProspect, type ActionAudit, type ActionRecovery, type FreeAppointmentOffer,
 } from "@/features/affiliate/actionMode/useActionMode";
 import { formatPhoneDisplay } from "@/features/affiliate/lib/phoneUtils";
 
@@ -86,6 +86,7 @@ export default function PageAffiliateActionMode() {
 
   const [prospect, setProspect] = useState<ActionProspect | null>(null);
   const [audit, setAudit] = useState<ActionAudit | null>(null);
+  const [recovery, setRecovery] = useState<ActionRecovery | null>(null);
   const [remaining, setRemaining] = useState<number>(0);
   const [emptyReason, setEmptyReason] = useState<string | null>(null);
   const [called, setCalled] = useState(false);
@@ -101,6 +102,7 @@ export default function PageAffiliateActionMode() {
       if (!res) return;
       setProspect(res.prospect);
       setAudit(res.audit ?? null);
+      setRecovery(res.recovery ?? null);
       setRemaining(res.remaining ?? 0);
       setEmptyReason(res.prospect ? null : res.reason ?? "no_eligible_prospect");
       setCalled(false);
@@ -108,6 +110,7 @@ export default function PageAffiliateActionMode() {
     },
     [next]
   );
+
 
   useEffect(() => {
     if (affiliate?.id) void loadNext();
@@ -265,6 +268,27 @@ export default function PageAffiliateActionMode() {
             <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Sélection en cours…</div>
           ) : prospect ? (
             <div className="space-y-3">
+              {recovery ? (
+                <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
+                  <Badge variant="outline" className="border-primary/40 bg-primary/10 text-primary">
+                    Onboarding à reprendre
+                  </Badge>
+                  <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                    {recovery.onboarding_started_at && (
+                      <li>Inscription commencée le {new Date(recovery.onboarding_started_at).toLocaleDateString("fr-CA")}</li>
+                    )}
+                    {typeof recovery.inactivity_hours === "number" && (
+                      <li>Aucune activité depuis {Math.round(recovery.inactivity_hours)} h</li>
+                    )}
+                    <li>Profil : {recovery.profile_status ?? "incomplet"}</li>
+                    {typeof recovery.fit_score === "number" && <li>Score de correspondance : {recovery.fit_score}</li>}
+                    {recovery.match_reasons.length > 0 && <li>Raison du routage : {recovery.match_reasons.join(" · ")}</li>}
+                  </ul>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Ce contact n'a pas demandé d'appel. Vous décidez si et quand le joindre.
+                  </p>
+                </div>
+              ) : null}
               <div className="rounded-2xl bg-muted/40 p-4">
                 <p className="text-lg font-bold leading-tight text-foreground">{name}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -272,6 +296,7 @@ export default function PageAffiliateActionMode() {
                 </p>
                 {phone ? <p className="mt-2 text-base font-semibold text-foreground">{formatPhoneDisplay(phone)}</p> : <p className="mt-2 text-sm text-amber-600">Aucun numéro — courriel seulement</p>}
               </div>
+
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">{remaining} prospect{remaining > 1 ? "s" : ""} en attente</span>
                 <div className="flex gap-2">
