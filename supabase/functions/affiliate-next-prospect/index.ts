@@ -5,6 +5,7 @@
 // assignées à cette affiliée (ou créées par elle).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { computeContactPermissions, type SendEligibilityRow } from "../_shared/contactPermissions.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -162,6 +163,21 @@ Deno.serve(async (req) => {
         { onConflict: "lead_id" }
       );
 
+    // Permissions de contact réelles (preuve LCAP par destination, échec fermé)
+    const { data: eligRow, error: eligErr } = await sb
+      .from("v_commercial_send_eligibility")
+      .select("contractor_lead_id, compliance_review_required, compliance_review_reason, valid_phone_evidence_count, valid_email_evidence_count, phone_suppressed, email_suppressed")
+      .eq("contractor_lead_id", pick.id)
+      .maybeSingle();
+    if (eligErr) return json({ error: `send_gate_failed: ${eligErr.message}` }, 500);
+    const permissions = computeContactPermissions({
+      eligibility: (eligRow ?? null) as SendEligibilityRow | null,
+      has_phone: !!(pick.phone_e164 || pick.phone),
+      has_email: !!pick.email,
+      do_not_contact: pick.do_not_contact,
+      unsubscribed: !!pick.unsubscribed_at,
+    });
+
     // Suivi d'évaluation déjà envoyée pour ce prospect (source unique = audits)
     const { data: audit } = await sb
       .from("ai_recommendation_audits")
@@ -174,6 +190,7 @@ Deno.serve(async (req) => {
     return json({
       prospect: pick,
       audit: audit ?? null,
+      permissions,
       recovery: recovery
         ? {
             routed_at: recovery.routed_at,
