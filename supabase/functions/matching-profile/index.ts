@@ -266,6 +266,11 @@ Deno.serve(async (req) => {
       status: action === "complete" ? "completed" : "in_progress",
     };
     if (action === "complete") row.completed_at = new Date().toISOString();
+    // Exact resume point. Monotonic: a stale client can never rewind progress.
+    const requestedStep = Number.isFinite(Number(body.current_step)) ? Number(body.current_step) : null;
+    if (requestedStep !== null) {
+      row.current_step = Math.max(0, Math.max(Number(existing?.current_step ?? 0), Math.trunc(requestedStep)));
+    }
 
     // Context / attribution — only ever set, never blanked by a later save.
     for (const k of [
