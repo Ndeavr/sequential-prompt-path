@@ -146,3 +146,25 @@ describe("matchAffiliateFor — cohorte CRM", () => {
     expect(m.affiliate_id).toBe("a2");
   });
 });
+
+describe("porte dure d'inactivité (cohorte CRM)", () => {
+  it("refuse une activité trop récente (23,99 h)", () => {
+    const e = evaluateCrmCandidate(row({ hours_since_last_activity: 23.99 }), cfg);
+    expect(e.eligible).toBe(false);
+    expect(e.skip_reasons).toContain("inactivity_too_recent");
+  });
+
+  it("accepte exactement le seuil configuré (24 h)", () => {
+    expect(evaluateCrmCandidate(row({ hours_since_last_activity: 24 }), cfg).eligible).toBe(true);
+  });
+
+  it("accepte au-delà du seuil (72 h)", () => {
+    expect(evaluateCrmCandidate(row({ hours_since_last_activity: 72 }), cfg).eligible).toBe(true);
+  });
+
+  it("refuse une inactivité inconnue (null)", () => {
+    const e = evaluateCrmCandidate(row({ hours_since_last_activity: null }), cfg);
+    expect(e.eligible).toBe(false);
+    expect(e.skip_reasons).toContain("inactivity_unknown");
+  });
+});
