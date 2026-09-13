@@ -67,7 +67,7 @@ export interface ContactPermissions {
   can_email: boolean;
   /** Vrai seulement si AUCUN canal n'est permis (recherche / profil uniquement). */
   research_only: boolean;
-  /** Vrai quand l'appel est permis mais que le numéro n'est pas encore vérifié. */
+  /** Vrai quand le numéro n'a PAS été validé positivement (appel interdit). */
   phone_unverified: boolean;
   reasons: {
     call: string | null;
