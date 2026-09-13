@@ -172,6 +172,8 @@ export function evaluateCandidate(
   if (lead.compliance_review_required === true) skip.push("compliance_review_required");
   if (!(lead.phone_e164 || lead.phone || lead.email)) skip.push("no_contact_method");
   if (lead.assigned_affiliate_id) skip.push("already_owned");
+  // Un dossier créé par une affiliée lui appartient déjà : jamais réattribué.
+  if (lead.created_by_affiliate_id) skip.push("owned_by_creator");
   if (opts.alreadyRoutedLeadIds?.has(lead.id)) skip.push("already_routed");
 
   const lastActivityIso =

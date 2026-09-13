@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
     const { data: leads, error } = await sb
       .from("contractor_leads")
       .select(
-        "id, company_name, business_name, first_name, last_name, full_name, role_title, city, category_primary, trade, phone_e164, phone, email, website_url, contact_status, next_follow_up_at, last_contacted_at, priority_score, fit_score, profile_status, onboarding_started_at, payment_started_at, paid_at, profile_active_at, do_not_contact, unsubscribed_at, archived_at, sms_eligible, consent_to_contact, assigned_affiliate_id, created_by_affiliate_id"
+        "id, company_name, business_name, first_name, last_name, full_name, role_title, city, category_primary, trade, phone_e164, phone, email, website_url, contact_status, next_follow_up_at, last_contacted_at, priority_score, fit_score, profile_status, onboarding_started_at, payment_started_at, paid_at, profile_active_at, do_not_contact, unsubscribed_at, archived_at, sms_eligible, consent_to_contact, phone_validation_status, compliance_review_required, compliance_review_reason, assigned_affiliate_id, created_by_affiliate_id"
       )
       .or(`assigned_affiliate_id.eq.${affiliate.id},created_by_affiliate_id.eq.${affiliate.id}`)
       .is("archived_at", null)
@@ -133,6 +133,8 @@ Deno.serve(async (req) => {
       if (excludeId && String(l.id) === excludeId) return false;
       if (l.do_not_contact) return false;
       if (l.unsubscribed_at) return false;
+      // Révision de conformité ouverte : aucun contact, le dossier sort de la file.
+      if (l.compliance_review_required === true) return false;
       if (DEAD_STATUSES.has(String(l.contact_status ?? ""))) return false;
       if (lockedByOthers.has(String(l.id))) return false;
       const followUp = l.next_follow_up_at ? new Date(String(l.next_follow_up_at)).getTime() : null;
@@ -176,6 +178,9 @@ Deno.serve(async (req) => {
       has_email: !!pick.email,
       do_not_contact: pick.do_not_contact,
       unsubscribed: !!pick.unsubscribed_at,
+      phone_validation_status: (pick.phone_validation_status as string | null) ?? null,
+      compliance_review_required: (pick.compliance_review_required as unknown as boolean | null) ?? null,
+      compliance_review_reason: (pick.compliance_review_reason as string | null) ?? null,
     });
 
     // Suivi d'évaluation déjà envoyée pour ce prospect (source unique = audits)

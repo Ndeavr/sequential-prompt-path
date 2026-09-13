@@ -10,6 +10,7 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { computeContactPermissions, type SendEligibilityRow } from "../_shared/contactPermissions.ts";
+import { callCommercialSendGate, gateBlockMessage, type GateDecision } from "../_shared/commercialSendGate.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -189,6 +190,10 @@ Deno.serve(async (req) => {
       if (!owned) throw new Error("forbidden_not_assigned");
     }
 
+    /** Décisions de la porte canonique conservées pour l'audit. */
+    const gateAudits = new Map<string, GateDecision>();
+
+
     /**
      * Porte LCAP canonique par destination. Échec fermé : sans dossier de
      * conformité relié ou sans preuve valide, aucun envoi commercial.
@@ -196,7 +201,7 @@ Deno.serve(async (req) => {
     async function assertCommercialSendAllowed(pid: string, kind: "sms" | "email", p: any): Promise<void> {
       const { data: bridge, error: bErr } = await sb
         .from("contractor_leads")
-        .select("id, do_not_contact, unsubscribed_at")
+        .select("id, do_not_contact, unsubscribed_at, phone_validation_status, compliance_review_required, compliance_review_reason")
         .eq("source_prospect_id", pid)
         .maybeSingle();
       if (bErr) throw new Error(`send_gate_failed: ${bErr.message}`);
@@ -218,9 +223,24 @@ Deno.serve(async (req) => {
         has_email: !!p?.email,
         do_not_contact: bridge?.do_not_contact === true,
         unsubscribed: !!bridge?.unsubscribed_at,
+        phone_validation_status: p?.phone_validation_status ?? bridge?.phone_validation_status ?? null,
+        compliance_review_required: bridge?.compliance_review_required ?? null,
+        compliance_review_reason: bridge?.compliance_review_reason ?? null,
       });
       const allowed = kind === "sms" ? perms.can_sms : perms.can_email;
       if (!allowed) throw new Error(`send_blocked: ${perms.reasons[kind] ?? "non autorisé"}`);
+
+      // Porte canonique : la décision d'envoi appartient à commercial-send-gate.
+      if (!bridge?.id) throw new Error("send_blocked: aucun dossier de conformité relié (porte canonique inaccessible)");
+      const destination = kind === "sms" ? String(p?.phone_e164 ?? "") : String(p?.email ?? "");
+      const decision = await callCommercialSendGate({
+        contractor_lead_id: bridge.id,
+        destination_type: kind === "sms" ? "phone_sms" : "email",
+        destination,
+        sender_name: "UNPRO",
+      });
+      gateAudits.set(`${pid}:${kind}`, decision);
+      if (!decision.pass) throw new Error(`send_blocked: ${gateBlockMessage(decision)}`);
     }
 
     const day = new Date().toISOString().slice(0, 10);
@@ -234,7 +254,7 @@ Deno.serve(async (req) => {
       try {
         const { data: p } = await sb
           .from("verified_contractor_prospects")
-          .select("id, business_name, city, category, email, phone_e164, outreach_status")
+          .select("id, business_name, city, category, email, phone_e164, phone_validation_status, outreach_status")
           .eq("id", pid)
           .maybeSingle();
         if (!p) throw new Error("prospect_not_found");
@@ -622,7 +642,12 @@ Deno.serve(async (req) => {
         reason,
         status,
         result: result.slice(0, 1000),
-        payload: { dry_run: dryRun, ...payloadExtra },
+        payload: {
+          dry_run: dryRun,
+          ...payloadExtra,
+          // Décision de la porte canonique conservée avec l'envoi (audit LCAP).
+          send_gate: gateAudits.get(`${pid}:sms`) ?? gateAudits.get(`${pid}:email`) ?? null,
+        },
         actor_id: actorId,
         idempotency_key: logKey,
       });

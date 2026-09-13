@@ -27,6 +27,9 @@ export type ManualContactTarget = {
   email: string | null;
   activation_token: string | null;
   opted_out?: boolean;
+  /** Contact verrouillé : conformité non vérifiée ou retrait de consentement. */
+  contact_locked?: boolean;
+  blocked_reason?: string | null;
 };
 
 export default function ManualContactPanel({
@@ -108,21 +111,23 @@ export default function ManualContactPanel({
     }
   }
 
-  const link = activationHref(target.activation_token);
+  // Verrou de conformité : aucun canal de contact tant que la preuve n'est pas vérifiée.
+  const locked = target.contact_locked === true || target.opted_out === true;
+  const link = locked ? null : activationHref(target.activation_token);
   const size = compact ? "h-8 text-[11px]" : "h-9 text-xs";
 
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-1.5">
-        <Button size="sm" variant="outline" className={size} disabled={!target.phone_e164}
+        <Button size="sm" variant="outline" className={size} disabled={locked || !target.phone_e164}
           onClick={() => openChannel("call")}>
           <Phone className="h-3.5 w-3.5 mr-1" /> Appeler
         </Button>
-        <Button size="sm" variant="outline" className={size} disabled={!target.phone_e164 || target.opted_out}
+        <Button size="sm" variant="outline" className={size} disabled={locked || !target.phone_e164}
           onClick={() => openChannel("sms")}>
           <MessageSquare className="h-3.5 w-3.5 mr-1" /> SMS
         </Button>
-        <Button size="sm" variant="outline" className={size} disabled={!target.email || target.opted_out}
+        <Button size="sm" variant="outline" className={size} disabled={locked || !target.email}
           onClick={() => openChannel("email")}>
           <Mail className="h-3.5 w-3.5 mr-1" /> Courriel
         </Button>
@@ -130,7 +135,7 @@ export default function ManualContactPanel({
           onClick={() => window.open(profileHref(target.prospect_id), "_blank")}>
           <ExternalLink className="h-3.5 w-3.5 mr-1" /> Profil
         </Button>
-        <Button size="sm" className={size} disabled={busy !== null || target.opted_out}
+        <Button size="sm" className={size} disabled={locked || busy !== null}
           onClick={() => sendLink(target.email ? "email" : "sms")}>
           {busy ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Link2 className="h-3.5 w-3.5 mr-1" />}
           Lien d'activation
@@ -151,7 +156,13 @@ export default function ManualContactPanel({
           {link}
         </button>
       )}
-      {target.opted_out && <Badge variant="destructive" className="text-[9px]">Désabonné — envois bloqués</Badge>}
+      {target.opted_out ? (
+        <Badge variant="destructive" className="text-[9px]">Désabonné — envois bloqués</Badge>
+      ) : locked ? (
+        <Badge variant="outline" className="text-[9px] border-amber-500/40 text-amber-600">
+          {target.blocked_reason ?? "Vérification de conformité requise avant tout contact"}
+        </Badge>
+      ) : null}
 
       <Dialog open={outcomeOpen} onOpenChange={setOutcomeOpen}>
         <DialogContent className="max-w-md">

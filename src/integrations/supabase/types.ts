@@ -100004,6 +100004,7 @@ export type Database = {
           business_name: string
           category: string
           city: string
+          contact_locked: boolean
           current_stage: string
           due_at: string
           email: string
@@ -100016,6 +100017,7 @@ export type Database = {
           phone_e164: string
           priority_score: number
           prospect_id: string
+          queue: string
           website_url: string
         }[]
       }
@@ -100274,6 +100276,19 @@ export type Database = {
       }
       resolve_proposal_link: { Args: { _token: string }; Returns: Json }
       resolve_qr_token: { Args: { _token: string }; Returns: Json }
+      route_crm_recovery_assignment: {
+        Args: {
+          p_affiliate_id: string
+          p_due_at?: string
+          p_idempotency_key?: string
+          p_next_action?: string
+          p_payload?: Json
+          p_priority?: number
+          p_prospect_id: string
+          p_reason?: string
+        }
+        Returns: Json
+      }
       route_onboarding_recovery: {
         Args: { p_affiliate_id: string; p_lead_id: string; p_payload?: Json }
         Returns: Json

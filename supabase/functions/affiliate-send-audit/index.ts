@@ -7,6 +7,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { sendSms } from "../_shared/twilioSend.ts";
 import { computeContactPermissions, type SendEligibilityRow } from "../_shared/contactPermissions.ts";
+import { callCommercialSendGate, gateBlockMessage } from "../_shared/commercialSendGate.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -55,7 +56,7 @@ Deno.serve(async (req) => {
     const { data: lead } = await sb
       .from("contractor_leads")
       .select(
-        "id, company_name, business_name, first_name, full_name, city, category_primary, trade, phone_e164, phone, email, do_not_contact, unsubscribed_at, sms_eligible, assigned_affiliate_id, created_by_affiliate_id"
+        "id, company_name, business_name, first_name, full_name, city, category_primary, trade, phone_e164, phone, email, do_not_contact, unsubscribed_at, sms_eligible, phone_validation_status, compliance_review_required, compliance_review_reason, assigned_affiliate_id, created_by_affiliate_id"
       )
       .eq("id", leadId)
       .maybeSingle();
@@ -80,6 +81,9 @@ Deno.serve(async (req) => {
       has_email: !!lead.email,
       do_not_contact: lead.do_not_contact,
       unsubscribed: !!lead.unsubscribed_at,
+      phone_validation_status: (lead as Record<string, unknown>).phone_validation_status as string | null,
+      compliance_review_required: (lead as Record<string, unknown>).compliance_review_required as boolean | null,
+      compliance_review_reason: (lead as Record<string, unknown>).compliance_review_reason as string | null,
     });
     if (channel === "sms" ? !perms.can_sms : !perms.can_email) {
       return json({
@@ -88,6 +92,24 @@ Deno.serve(async (req) => {
         research_only: perms.research_only,
       }, 409);
     }
+
+    // ── Porte canonique commercial-send-gate (décision d'envoi finale) ──
+    const destination = channel === "sms" ? String(lead.phone_e164 || lead.phone || "") : String(lead.email ?? "");
+    const gate = await callCommercialSendGate({
+      contractor_lead_id: leadId,
+      destination_type: channel === "sms" ? "phone_sms" : "email",
+      destination,
+      sender_name: "UNPRO",
+    });
+    if (!gate.pass) {
+      return json({
+        error: "send_not_permitted",
+        message: gateBlockMessage(gate),
+        blocked_reasons: gate.blocked_reasons,
+        gate_audit_id: gate.gate_audit_id,
+      }, 409);
+    }
+
 
     // ── Plafond quotidien affilié (file d'attente, jamais de contournement) ──
     const startOfDay = new Date();
@@ -224,7 +246,15 @@ Deno.serve(async (req) => {
       lead_id: leadId,
       event_type: channel === "sms" ? "unpro_sms_dispatched" : "email_sent",
       channel,
-      payload: { audit_id: audit!.id, link, reminder: isReminder, delivery_status: deliveryStatus },
+      payload: {
+        audit_id: audit!.id,
+        link,
+        reminder: isReminder,
+        delivery_status: deliveryStatus,
+        // Preuve de passage par la porte canonique (audit LCAP).
+        gate_audit_id: gate.gate_audit_id,
+        gate_evidence_id: gate.evidence_id,
+      },
     });
 
     await sb.from("affiliate_funnel_events").insert({

@@ -23,6 +23,10 @@ type Row = {
   last_outcome: string | null;
   activation_token: string | null;
   is_overdue: boolean | null;
+  queue: string | null;
+  contact_locked: boolean | null;
+  blocked_reason: string | null;
+  opted_out: boolean | null;
 };
 
 export function MyManualQueue() {
@@ -84,7 +88,22 @@ export function MyManualQueue() {
             </p>
           )}
 
-          <ManualContactPanel compact target={r} onDone={load} />
+          {r.queue === "onboarding_recovery" && (
+            <p className="text-[11px] text-amber-600">
+              Onboarding à reprendre. Aucun message n'a été envoyé en votre nom. Le contact ouvre
+              seulement après vérification de la conformité.
+            </p>
+          )}
+
+          <ManualContactPanel
+            compact
+            target={{
+              ...r,
+              contact_locked: r.contact_locked === true,
+              opted_out: r.opted_out === true,
+            }}
+            onDone={load}
+          />
         </div>
       ))}
     </div>
