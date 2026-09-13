@@ -1,11 +1,17 @@
 /**
  * UNPRO — affiliate-onboarding-recovery
- * Routage interne d'onboardings incomplets prometteurs vers le Mode Action affilié.
- * N'envoie JAMAIS de SMS, courriel, push ou appel. Écrit uniquement :
- *   - contractor_leads.assigned_affiliate_id
- *   - affiliate_lead_events (onboarding_recovery_routed)
- *   - agent_learning_outcomes (rollup borné)
- * dry_run=true par défaut.
+ *
+ * Routage INTERNE d'onboardings incomplets prometteurs vers les files
+ * affiliées existantes. N'envoie JAMAIS de SMS, courriel, push ou appel et ne
+ * déclenche aucune notification.
+ *
+ * Deux cohortes réelles, aucune table de prospects supplémentaire :
+ *   A. `contractor_leads`  → Mode Action (`assigned_affiliate_id`) via le RPC
+ *      atomique `route_onboarding_recovery`.
+ *   B. prospects vérifiés du CRM (`v_manual_contact_queue`) → file manuelle
+ *      `crm_manual_assignments` (+ `crm_action_log` idempotent).
+ *
+ * dry_run = true par défaut.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import {
@@ -15,6 +21,7 @@ import {
   mergeConfig,
   evaluateCandidate,
   matchAffiliate,
+  matchAffiliateFor,
   computeLearnedBoosts,
   normalizeCity,
   normalizeCategory,
@@ -22,6 +29,18 @@ import {
   type AffiliateRow,
   type LearningRollup,
 } from "./logic.ts";
+import {
+  CRM_SOURCE,
+  crmActionReason,
+  crmIdempotencyKey,
+  crmRoutingScore,
+  evaluateCrmCandidate,
+  type CrmQueueRow,
+} from "./crm.ts";
+import {
+  computeContactPermissions,
+  type SendEligibilityRow,
+} from "../_shared/contactPermissions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,7 +63,7 @@ Deno.serve(async (req) => {
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-  // --- Autorisation : appel système (service role) ou administrateur authentifié
+  // --- Autorisation : appel système (service role), jeton de tâche, ou admin authentifié
   const authHeader = req.headers.get("Authorization") ?? "";
   const token = authHeader.replace("Bearer ", "").trim();
   const providedInternal = (req.headers.get("x-internal-token") ?? "").trim();
@@ -68,13 +87,11 @@ Deno.serve(async (req) => {
     actor = uid;
   }
 
-
-
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch { /* GET/cron */ }
   const url = new URL(req.url);
-  const dryRun = (body.dry_run ?? url.searchParams.get("dry_run")) !== false &&
-    String(body.dry_run ?? url.searchParams.get("dry_run") ?? "true") !== "false";
+  const rawDry = body.dry_run ?? url.searchParams.get("dry_run");
+  const dryRun = rawDry !== false && String(rawDry ?? "true") !== "false";
 
   try {
     // --- Configuration (jamais codée en dur)
@@ -89,21 +106,15 @@ Deno.serve(async (req) => {
 
     const now = Date.now();
 
-    // --- Leads onboarding démarré, non complété, non payé
-    const leads = (ok(
+    // --- Affiliés (partagés par les deux cohortes)
+    const affiliates = (ok(
       await admin
-        .from("contractor_leads")
-        .select(
-          "id, company_name, business_name, city, category_primary, trade, fit_score, priority_score, priority_level, profile_status, onboarding_started_at, payment_started_at, paid_at, profile_active_at, updated_at, archived_at, do_not_contact, unsubscribed_at, compliance_review_required, assigned_affiliate_id, created_by_affiliate_id, phone_e164, phone, email",
-        )
-        .not("onboarding_started_at", "is", null)
-        .is("paid_at", null)
-        .is("profile_active_at", null)
-        .limit(cfg.max_candidates),
-      "lecture contractor_leads",
-    ) ?? []) as LeadRow[];
+        .from("affiliates")
+        .select("id, first_name, last_name, name, status, suspended_at, archived_at, primary_city, territories, allowed_categories, daily_quota"),
+      "lecture affiliates",
+    ) ?? []) as AffiliateRow[];
 
-    // --- Événements de reprise déjà enregistrés (idempotence)
+    // --- Événements de reprise déjà enregistrés (idempotence + charge)
     const events = (ok(
       await admin
         .from("affiliate_lead_events")
@@ -113,15 +124,6 @@ Deno.serve(async (req) => {
     ) ?? []) as Array<{ lead_id: string; affiliate_id: string; created_at: string }>;
     const routedLeadIds = new Set(events.map((e) => e.lead_id));
 
-    // --- Affiliés
-    const affiliates = (ok(
-      await admin
-        .from("affiliates")
-        .select("id, first_name, last_name, name, status, suspended_at, archived_at, primary_city, territories, allowed_categories, daily_quota"),
-      "lecture affiliates",
-    ) ?? []) as AffiliateRow[];
-
-    // --- Charge du jour : routages de reprise effectués aujourd'hui
     const startOfDay = new Date(); startOfDay.setUTCHours(0, 0, 0, 0);
     const workload: Record<string, number> = {};
     for (const e of events) {
@@ -129,15 +131,27 @@ Deno.serve(async (req) => {
         workload[e.affiliate_id] = (workload[e.affiliate_id] ?? 0) + 1;
       }
     }
+    // Les assignations manuelles du jour comptent dans la même charge affiliée.
+    const todayAssignments = (ok(
+      await admin
+        .from("crm_manual_assignments")
+        .select("affiliate_id, assigned_at, status")
+        .gte("assigned_at", startOfDay.toISOString()),
+      "lecture charge crm_manual_assignments",
+    ) ?? []) as Array<{ affiliate_id: string | null }>;
+    for (const a of todayAssignments) {
+      if (a.affiliate_id) workload[a.affiliate_id] = (workload[a.affiliate_id] ?? 0) + 1;
+    }
 
     // --- Apprentissage borné à partir des résultats réels observés
     const routedLeadIdList = events.map((e) => e.lead_id);
     const rollups: Record<string, LearningRollup> = {};
+    const dimRollups: Record<string, LearningRollup & { affiliate_id: string; service_category: string | null; city: string | null }> = {};
     if (routedLeadIdList.length > 0) {
       const routedLeads = (ok(
         await admin
           .from("contractor_leads")
-          .select("id, assigned_affiliate_id, profile_status, profile_active_at, paid_at, contact_status, last_contacted_at")
+          .select("id, assigned_affiliate_id, profile_status, profile_active_at, paid_at, contact_status, city, category_primary, trade")
           .in("id", routedLeadIdList),
         "lecture leads routés",
       ) ?? []) as Array<Record<string, unknown>>;
@@ -151,20 +165,43 @@ Deno.serve(async (req) => {
       ) ?? []) as Array<{ lead_id: string; affiliate_id: string; event_type: string }>;
 
       for (const e of events) {
-        const r = (rollups[e.affiliate_id] ??= { attempts: 0, delivered: 0, clicked: 0, signups: 0, activations: 0, conversions: 0 });
-        r.attempts += 1;
-        const ds = downstream.filter((d) => d.lead_id === e.lead_id);
-        if (ds.some((d) => d.event_type === "prospect_viewed" || d.event_type === "personal_sms_opened")) r.delivered += 1;
-        if (ds.some((d) => d.event_type === "call_initiated")) r.clicked += 1;
         const l = byLead.get(e.lead_id) as Record<string, unknown> | undefined;
-        if (l?.profile_status === "complete") r.signups += 1;
-        if (l?.profile_active_at) r.activations += 1;
-        if (l?.paid_at) r.conversions += 1;
+        const category = normalizeCategory(String(l?.category_primary ?? l?.trade ?? "") || null, cfg) || null;
+        const city = normalizeCity(String(l?.city ?? "") || null, cfg).normalized || null;
+        const dimKey = `${e.affiliate_id}|${category ?? ""}|${city ?? ""}`;
+
+        const r = (rollups[e.affiliate_id] ??= { attempts: 0, delivered: 0, clicked: 0, signups: 0, activations: 0, conversions: 0 });
+        const d = (dimRollups[dimKey] ??= {
+          attempts: 0, delivered: 0, clicked: 0, signups: 0, activations: 0, conversions: 0,
+          affiliate_id: e.affiliate_id, service_category: category, city,
+        });
+        r.attempts += 1; d.attempts += 1;
+        const ds = downstream.filter((x) => x.lead_id === e.lead_id);
+        if (ds.some((x) => x.event_type === "prospect_viewed" || x.event_type === "personal_sms_opened")) { r.delivered += 1; d.delivered += 1; }
+        if (ds.some((x) => x.event_type === "call_initiated")) { r.clicked += 1; d.clicked += 1; }
+        if (l?.profile_status === "complete") { r.signups += 1; d.signups += 1; }
+        if (l?.profile_active_at) { r.activations += 1; d.activations += 1; }
+        if (l?.paid_at) { r.conversions += 1; d.conversions += 1; }
       }
     }
     const learning = computeLearnedBoosts(rollups, cfg);
 
-    // --- Évaluation + appariement
+    // =====================================================================
+    // COHORTE A — contractor_leads → Mode Action
+    // =====================================================================
+    const leads = (ok(
+      await admin
+        .from("contractor_leads")
+        .select(
+          "id, company_name, business_name, city, category_primary, trade, fit_score, priority_score, priority_level, profile_status, onboarding_started_at, payment_started_at, paid_at, profile_active_at, updated_at, archived_at, do_not_contact, unsubscribed_at, compliance_review_required, assigned_affiliate_id, created_by_affiliate_id, phone_e164, phone, email",
+        )
+        .not("onboarding_started_at", "is", null)
+        .is("paid_at", null)
+        .is("profile_active_at", null)
+        .limit(cfg.max_candidates),
+      "lecture contractor_leads",
+    ) ?? []) as LeadRow[];
+
     const results: Array<Record<string, unknown>> = [];
     let routed = 0, unassigned = 0, skipped = 0;
 
@@ -173,6 +210,7 @@ Deno.serve(async (req) => {
       if (!evaluation.eligible) {
         skipped += 1;
         results.push({
+          cohort: "contractor_leads",
           lead_id: lead.id, company_name: lead.company_name, status: "skipped",
           skip_reasons: evaluation.skip_reasons, inactivity_hours: evaluation.inactivity_hours,
         });
@@ -180,6 +218,7 @@ Deno.serve(async (req) => {
       }
       const match = matchAffiliate(lead, cfg, affiliates, workload, learning.boosts);
       const base = {
+        cohort: "contractor_leads",
         lead_id: lead.id,
         company_name: lead.company_name ?? lead.business_name,
         city: lead.city,
@@ -199,36 +238,17 @@ Deno.serve(async (req) => {
         results.push({ ...base, status: "unassigned_admin_review" });
         continue;
       }
-
       if (dryRun) {
         results.push({ ...base, status: "would_route" });
         continue;
       }
 
-      // Écriture conditionnelle : préserve toute propriété existante.
-      const updated = ok(
-        await admin
-          .from("contractor_leads")
-          .update({ assigned_affiliate_id: match.affiliate_id, updated_at: new Date().toISOString() })
-          .eq("id", lead.id)
-          .is("assigned_affiliate_id", null)
-          .select("id"),
-        "assignation lead",
-      ) as Array<{ id: string }> | null;
-
-      if (!updated || updated.length === 0) {
-        skipped += 1;
-        results.push({ ...base, status: "skipped", skip_reasons: ["ownership_changed"] });
-        continue;
-      }
-
-      ok(
-        await admin.from("affiliate_lead_events").insert({
-          affiliate_id: match.affiliate_id,
-          lead_id: lead.id,
-          event_type: RECOVERY_EVENT_TYPE,
-          channel: "internal_routing",
-          payload: {
+      // Assignation + journalisation atomiques (verrou de ligne côté base).
+      const rpc = ok(
+        await admin.rpc("route_onboarding_recovery", {
+          p_lead_id: lead.id,
+          p_affiliate_id: match.affiliate_id,
+          p_payload: {
             rule_version: cfg.version,
             inactivity_hours: evaluation.inactivity_hours,
             evidence: evaluation.evidence,
@@ -236,11 +256,19 @@ Deno.serve(async (req) => {
             match_reasons: match.reasons,
             previous_assigned_affiliate_id: null,
             learning_applied: learning.applied,
+            channel: "internal_routing",
             actor,
           },
-        }).select("id"),
-        "journalisation événement de reprise",
-      );
+        }),
+        "routage atomique",
+      ) as { status: string; affiliate_id?: string } | null;
+
+      const status = rpc?.status ?? "unknown";
+      if (status !== "routed") {
+        skipped += 1;
+        results.push({ ...base, status: "skipped", skip_reasons: [status] });
+        continue;
+      }
 
       workload[match.affiliate_id] = (workload[match.affiliate_id] ?? 0) + 1;
       routedLeadIds.add(lead.id);
@@ -248,24 +276,188 @@ Deno.serve(async (req) => {
       results.push({ ...base, status: "routed" });
     }
 
-    // --- Rollup d'apprentissage (résultats réels uniquement)
-    if (!dryRun && Object.keys(rollups).length > 0) {
+    // =====================================================================
+    // COHORTE B — prospects vérifiés du CRM → file manuelle affiliée
+    // =====================================================================
+    const crmQueue = (ok(
+      await admin
+        .from("v_manual_contact_queue")
+        .select("prospect_id, business_name, city, category, current_stage, priority_score, phone_e164, email, opted_out, assignment_id, affiliate_id")
+        .limit(cfg.max_candidates),
+      "lecture v_manual_contact_queue",
+    ) ?? []) as CrmQueueRow[];
+
+    const crmIds = crmQueue.map((r) => r.prospect_id);
+    // Ponts existants vers contractor_leads (preuve LCAP canonique).
+    const bridged = crmIds.length
+      ? ((ok(
+          await admin
+            .from("contractor_leads")
+            .select("id, source_prospect_id, do_not_contact, unsubscribed_at")
+            .in("source_prospect_id", crmIds),
+          "lecture pont contractor_leads",
+        ) ?? []) as Array<{ id: string; source_prospect_id: string; do_not_contact: boolean | null; unsubscribed_at: string | null }>)
+      : [];
+    const bridgeByProspect = new Map(bridged.map((b) => [b.source_prospect_id, b]));
+    const eligibility = bridged.length
+      ? ((ok(
+          await admin
+            .from("v_commercial_send_eligibility")
+            .select("contractor_lead_id, compliance_review_required, compliance_review_reason, valid_phone_evidence_count, valid_email_evidence_count, phone_suppressed, email_suppressed")
+            .in("contractor_lead_id", bridged.map((b) => b.id)),
+          "lecture v_commercial_send_eligibility",
+        ) ?? []) as SendEligibilityRow[])
+      : [];
+    const eligByLead = new Map(eligibility.map((e) => [e.contractor_lead_id, e]));
+
+    // Idempotence : reprises déjà journalisées pour cette version de règle.
+    const priorActions = (ok(
+      await admin
+        .from("crm_action_log")
+        .select("prospect_id, idempotency_key")
+        .eq("source", CRM_SOURCE)
+        .like("idempotency_key", "auto_recovery:%"),
+      "lecture crm_action_log",
+    ) ?? []) as Array<{ prospect_id: string | null; idempotency_key: string | null }>;
+    const priorKeys = new Set(priorActions.map((a) => a.idempotency_key ?? ""));
+
+    const crmResults: Array<Record<string, unknown>> = [];
+    let crmRouted = 0, crmUnassigned = 0, crmSkipped = 0, crmFuture = 0;
+
+    const scored = crmQueue
+      .map((row) => ({ row, evaluation: evaluateCrmCandidate(row, cfg) }))
+      .sort((a, b) => crmRoutingScore(b.row, cfg) - crmRoutingScore(a.row, cfg));
+
+    for (const { row, evaluation } of scored) {
+      const stage = String(row.current_stage ?? "");
+      const key = crmIdempotencyKey(row.prospect_id, stage, cfg.version);
+      const bridge = bridgeByProspect.get(row.prospect_id) ?? null;
+      const perms = computeContactPermissions({
+        eligibility: bridge ? eligByLead.get(bridge.id) ?? null : null,
+        has_phone: !!row.phone_e164,
+        has_email: !!row.email,
+        do_not_contact: row.opted_out === true || bridge?.do_not_contact === true,
+        unsubscribed: !!bridge?.unsubscribed_at,
+      });
+
+      if (priorKeys.has(key)) {
+        crmSkipped += 1;
+        crmResults.push({ cohort: CRM_SOURCE, prospect_id: row.prospect_id, business_name: row.business_name, status: "skipped", skip_reasons: ["already_routed"] });
+        continue;
+      }
+      if (!evaluation.eligible) {
+        if (evaluation.future_eligible) crmFuture += 1; else crmSkipped += 1;
+        crmResults.push({
+          cohort: CRM_SOURCE, prospect_id: row.prospect_id, business_name: row.business_name,
+          status: evaluation.future_eligible ? "future_eligible" : "skipped",
+          skip_reasons: evaluation.skip_reasons, current_stage: stage,
+        });
+        continue;
+      }
+
+      const match = matchAffiliateFor(row.city, row.category, cfg, affiliates, workload, learning.boosts);
+      const base = {
+        cohort: CRM_SOURCE,
+        prospect_id: row.prospect_id,
+        business_name: row.business_name,
+        city: row.city,
+        current_stage: stage,
+        priority_score: row.priority_score,
+        interesting_reasons: evaluation.interesting_reasons,
+        evidence: evaluation.evidence,
+        match_reasons: match.reasons,
+        rejected_affiliates: match.rejected,
+        proposed_affiliate_id: match.affiliate_id,
+        proposed_affiliate: match.affiliate_label,
+        contact_permissions: perms,
+      };
+
+      if (!match.affiliate_id) {
+        crmUnassigned += 1;
+        crmResults.push({ ...base, status: "unassigned_admin_review" });
+        continue;
+      }
+      if (dryRun) {
+        crmResults.push({ ...base, status: "would_route" });
+        continue;
+      }
+
+      // L'index unique partiel (prospect_id WHERE status IN assigned/in_progress)
+      // garantit qu'une seule assignation vivante peut exister.
+      const insert = await admin
+        .from("crm_manual_assignments")
+        .insert({
+          prospect_id: row.prospect_id,
+          affiliate_id: match.affiliate_id,
+          queue: "onboarding_recovery",
+          status: "assigned",
+          priority: Math.round(crmRoutingScore(row, cfg)),
+          next_action: perms.can_call ? "Appeler" : "Vérifier la conformité avant tout contact",
+          due_at: new Date(now + 24 * 3600 * 1000).toISOString(),
+        })
+        .select("id")
+        .maybeSingle();
+
+      if (insert.error) {
+        const dup = /duplicate key|unique/i.test(insert.error.message);
+        if (!dup) throw new Error(`assignation crm_manual_assignments: ${insert.error.message}`);
+        crmSkipped += 1;
+        crmResults.push({ ...base, status: "skipped", skip_reasons: ["assignment_exists"] });
+        continue;
+      }
+
+      ok(
+        await admin.from("crm_action_log").insert({
+          prospect_id: row.prospect_id,
+          action: "auto_recovery_assigned",
+          source: CRM_SOURCE,
+          reason: crmActionReason(stage),
+          result: "assigned",
+          status: "done",
+          idempotency_key: key,
+          payload: {
+            rule_version: cfg.version,
+            affiliate_id: match.affiliate_id,
+            match_reasons: match.reasons,
+            interesting_reasons: evaluation.interesting_reasons,
+            evidence: evaluation.evidence,
+            contact_permissions: perms,
+            notification_sent: false,
+            actor,
+          },
+        }).select("id"),
+        "journalisation crm_action_log",
+      );
+
+      priorKeys.add(key);
+      workload[match.affiliate_id] = (workload[match.affiliate_id] ?? 0) + 1;
+      crmRouted += 1;
+      crmResults.push({ ...base, status: "routed", assignment_id: insert.data?.id ?? null });
+    }
+
+    // --- Rollup d'apprentissage (résultats réels uniquement, dimensionné)
+    if (!dryRun && Object.keys(dimRollups).length > 0) {
       const windowStart = new Date(now - 90 * 86400000).toISOString();
       const windowEnd = new Date(now).toISOString();
-      for (const [affiliateId, r] of Object.entries(rollups)) {
+      for (const r of Object.values(dimRollups)) {
+        const q = admin
+          .from("agent_learning_outcomes")
+          .select("id")
+          .eq("tactic_key", RECOVERY_TACTIC_KEY)
+          .eq("channel", "internal_routing")
+          .eq("variant", r.affiliate_id)
+          .eq("source", "affiliate-onboarding-recovery");
         const existing = ok(
-          await admin
-            .from("agent_learning_outcomes")
-            .select("id")
-            .eq("tactic_key", RECOVERY_TACTIC_KEY)
-            .eq("variant", affiliateId)
+          await (r.service_category ? q.eq("service_category", r.service_category) : q.is("service_category", null))
             .limit(1),
           "lecture agent_learning_outcomes",
         ) as Array<{ id: string }> | null;
         const row = {
           tactic_key: RECOVERY_TACTIC_KEY,
           channel: "internal_routing",
-          variant: affiliateId,
+          variant: r.affiliate_id,
+          service_category: r.service_category,
+          city: r.city,
           source: "affiliate-onboarding-recovery",
           data_class: "verified",
           attempts: r.attempts,
@@ -294,6 +486,8 @@ Deno.serve(async (req) => {
         inactivity_hours: cfg.inactivity_hours,
         fit_score_min: cfg.fit_score_min,
         priority_score_min: cfg.priority_score_min,
+        crm_eligible_stages: cfg.crm_eligible_stages,
+        crm_future_stages: cfg.crm_future_stages,
       },
       learning: {
         applied: learning.applied,
@@ -302,8 +496,19 @@ Deno.serve(async (req) => {
         min_sample: cfg.learning.min_sample,
         max_boost: cfg.learning.max_boost,
       },
-      totals: { inspected: leads.length, routed, unassigned, skipped },
+      totals: {
+        inspected: leads.length,
+        routed,
+        unassigned,
+        skipped,
+        crm_inspected: crmQueue.length,
+        crm_routed: crmRouted,
+        crm_unassigned: crmUnassigned,
+        crm_skipped: crmSkipped,
+        crm_future_eligible: crmFuture,
+      },
       results,
+      crm_results: crmResults,
     });
   } catch (e) {
     return json({ ok: false, error: e instanceof Error ? e.message : "unknown_error" }, 500);

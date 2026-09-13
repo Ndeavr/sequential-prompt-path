@@ -100274,6 +100274,10 @@ export type Database = {
       }
       resolve_proposal_link: { Args: { _token: string }; Returns: Json }
       resolve_qr_token: { Args: { _token: string }; Returns: Json }
+      route_onboarding_recovery: {
+        Args: { p_affiliate_id: string; p_lead_id: string; p_payload?: Json }
+        Returns: Json
+      }
       rpc_acquisition_intelligence_summary: { Args: never; Returns: Json }
       rpc_get_cluster_fill_ratio: {
         Args: { p_category_slug?: string; p_cluster_id: string }

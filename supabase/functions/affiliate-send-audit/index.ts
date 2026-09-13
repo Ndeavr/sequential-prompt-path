@@ -6,6 +6,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { sendSms } from "../_shared/twilioSend.ts";
+import { computeContactPermissions, type SendEligibilityRow } from "../_shared/contactPermissions.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -64,6 +65,28 @@ Deno.serve(async (req) => {
     }
     if (lead.do_not_contact || lead.unsubscribed_at) {
       return json({ error: "opted_out", message: "Cette entreprise a demandé à ne pas être contactée." }, 409);
+    }
+
+    // ── Porte LCAP canonique par destination (échec fermé) ──────────────
+    const { data: eligRow, error: eligErr } = await sb
+      .from("v_commercial_send_eligibility")
+      .select("contractor_lead_id, compliance_review_required, compliance_review_reason, valid_phone_evidence_count, valid_email_evidence_count, phone_suppressed, email_suppressed")
+      .eq("contractor_lead_id", leadId)
+      .maybeSingle();
+    if (eligErr) return json({ error: "send_gate_failed", message: eligErr.message }, 500);
+    const perms = computeContactPermissions({
+      eligibility: (eligRow ?? null) as SendEligibilityRow | null,
+      has_phone: !!(lead.phone_e164 || lead.phone),
+      has_email: !!lead.email,
+      do_not_contact: lead.do_not_contact,
+      unsubscribed: !!lead.unsubscribed_at,
+    });
+    if (channel === "sms" ? !perms.can_sms : !perms.can_email) {
+      return json({
+        error: "send_not_permitted",
+        message: perms.reasons[channel] ?? "Envoi non autorisé pour cette destination.",
+        research_only: perms.research_only,
+      }, 409);
     }
 
     // ── Plafond quotidien affilié (file d'attente, jamais de contournement) ──

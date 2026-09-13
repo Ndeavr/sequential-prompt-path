@@ -55,10 +55,20 @@ export interface ActionAudit {
   status?: string | null;
 }
 
+/** Permissions réelles calculées côté serveur (preuve LCAP par destination). */
+export interface ContactPermissions {
+  can_call: boolean;
+  can_sms: boolean;
+  can_email: boolean;
+  research_only: boolean;
+  reasons: { call: string | null; sms: string | null; email: string | null };
+}
+
 export type NextProspectResult = {
   prospect: ActionProspect | null;
   audit: ActionAudit | null;
   recovery?: ActionRecovery | null;
+  permissions?: ContactPermissions | null;
   remaining?: number;
   reason?: string;
   total_assigned?: number;

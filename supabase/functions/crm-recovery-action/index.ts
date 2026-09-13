@@ -9,6 +9,7 @@
  */
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { computeContactPermissions, type SendEligibilityRow } from "../_shared/contactPermissions.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -44,6 +45,26 @@ const ACTIONS = new Set([
 ]);
 
 const TERMINAL_OUTCOMES = new Set(["activated", "not_interested", "invalid_contact"]);
+
+/** Actions permises à un affilié, uniquement sur un dossier qui lui est assigné. */
+const AFFILIATE_ACTIONS = new Set([
+  "manual_contact_logged",
+  "log_outcome",
+  "note",
+  "add_note",
+  "schedule_followup",
+  "send_activation_link",
+]);
+
+/** Canal électronique commercial → exige une preuve LCAP valide par destination. */
+const COMMERCIAL_CHANNEL: Record<string, "sms" | "email"> = {
+  retry_sms: "sms",
+  second_sms: "sms",
+  payment_sms: "sms",
+  send_email: "email",
+  onboarding_email: "email",
+  payment_email: "email",
+};
 
 
 function randToken() {
@@ -119,13 +140,87 @@ Deno.serve(async (req) => {
     if (!ACTIONS.has(action)) return json({ error: "unknown_action", action }, 400);
     if (prospectIds.length === 0) return json({ error: "missing_prospect_ids" }, 400);
 
-    // Actor (audit) — best effort from the caller's JWT.
+    // ─── Autorisation (échec fermé) ─────────────────────────────────────
+    // Service role = appel interne. Sinon : JWT obligatoire, puis rôle admin
+    // ou affilié propriétaire du dossier. Aucun accès anonyme.
     let actorId: string | null = null;
     const authHeader = req.headers.get("Authorization");
+    const bearer = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
     const sb = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
-    if (authHeader?.startsWith("Bearer ")) {
-      const { data } = await sb.auth.getUser(authHeader.slice(7));
-      actorId = data?.user?.id ?? null;
+
+    const isServiceRole = bearer.length > 0 && bearer === SERVICE_KEY;
+    let isAdmin = false;
+    let actorAffiliateIds: string[] = [];
+
+    if (!isServiceRole) {
+      if (!bearer) return json({ error: "unauthorized" }, 401);
+      const { data: userData } = await sb.auth.getUser(bearer);
+      actorId = userData?.user?.id ?? null;
+      if (!actorId) return json({ error: "unauthorized" }, 401);
+
+      const { data: roles, error: roleErr } = await sb
+        .from("user_roles").select("role").eq("user_id", actorId).eq("role", "admin");
+      if (roleErr) return json({ error: "authorization_check_failed", detail: roleErr.message }, 500);
+      isAdmin = (roles ?? []).length > 0;
+
+      if (!isAdmin) {
+        const { data: affs, error: affErr } = await sb
+          .from("affiliates").select("id, status").eq("user_id", actorId);
+        if (affErr) return json({ error: "authorization_check_failed", detail: affErr.message }, 500);
+        actorAffiliateIds = (affs ?? []).filter((a: any) => a.status === "active").map((a: any) => String(a.id));
+        if (actorAffiliateIds.length === 0) return json({ error: "forbidden" }, 403);
+        if (!AFFILIATE_ACTIONS.has(action)) return json({ error: "forbidden_action", action }, 403);
+      }
+    }
+
+    /** Un affilié ne peut agir que sur un dossier vivant qui lui appartient. */
+    async function assertProspectAccess(pid: string): Promise<void> {
+      if (isServiceRole || isAdmin) return;
+      const { data, error } = await sb
+        .from("crm_manual_assignments")
+        .select("id, affiliate_id, owner_user_id")
+        .eq("prospect_id", pid)
+        .in("status", ["assigned", "in_progress"]);
+      if (error) throw new Error(`authorization_check_failed: ${error.message}`);
+      const owned = (data ?? []).some(
+        (a: any) => (a.affiliate_id && actorAffiliateIds.includes(String(a.affiliate_id))) ||
+                    (a.owner_user_id && String(a.owner_user_id) === actorId),
+      );
+      if (!owned) throw new Error("forbidden_not_assigned");
+    }
+
+    /**
+     * Porte LCAP canonique par destination. Échec fermé : sans dossier de
+     * conformité relié ou sans preuve valide, aucun envoi commercial.
+     */
+    async function assertCommercialSendAllowed(pid: string, kind: "sms" | "email", p: any): Promise<void> {
+      const { data: bridge, error: bErr } = await sb
+        .from("contractor_leads")
+        .select("id, do_not_contact, unsubscribed_at")
+        .eq("source_prospect_id", pid)
+        .maybeSingle();
+      if (bErr) throw new Error(`send_gate_failed: ${bErr.message}`);
+
+      let elig: SendEligibilityRow | null = null;
+      if (bridge?.id) {
+        const { data: e, error: eErr } = await sb
+          .from("v_commercial_send_eligibility")
+          .select("contractor_lead_id, compliance_review_required, compliance_review_reason, valid_phone_evidence_count, valid_email_evidence_count, phone_suppressed, email_suppressed")
+          .eq("contractor_lead_id", bridge.id)
+          .maybeSingle();
+        if (eErr) throw new Error(`send_gate_failed: ${eErr.message}`);
+        elig = (e ?? null) as SendEligibilityRow | null;
+      }
+
+      const perms = computeContactPermissions({
+        eligibility: elig,
+        has_phone: !!p?.phone_e164,
+        has_email: !!p?.email,
+        do_not_contact: bridge?.do_not_contact === true,
+        unsubscribed: !!bridge?.unsubscribed_at,
+      });
+      const allowed = kind === "sms" ? perms.can_sms : perms.can_email;
+      if (!allowed) throw new Error(`send_blocked: ${perms.reasons[kind] ?? "non autorisé"}`);
     }
 
     const day = new Date().toISOString().slice(0, 10);
@@ -143,6 +238,15 @@ Deno.serve(async (req) => {
           .eq("id", pid)
           .maybeSingle();
         if (!p) throw new Error("prospect_not_found");
+
+        await assertProspectAccess(pid);
+
+        // Porte LCAP canonique avant tout message électronique commercial.
+        const commercialKind = COMMERCIAL_CHANNEL[action];
+        if (commercialKind) await assertCommercialSendAllowed(pid, commercialKind, p);
+        if (action === "send_activation_link") {
+          await assertCommercialSendAllowed(pid, String(payloadExtra.channel ?? "sms") === "email" ? "email" : "sms", p);
+        }
 
         // Opt-out / STOP guard for every outbound action.
         const outbound = ["retry_sms", "second_sms", "send_email", "onboarding_email", "payment_email", "payment_sms", "send_activation_link"];
@@ -349,7 +453,8 @@ Deno.serve(async (req) => {
             if (insErr) throw new Error(`assign_failed: ${insErr.message}`);
 
             // Notification d'assignation (chemin courriel sortant existant).
-            if (affiliateId) {
+            // Le routage interne automatique passe `suppress_notification`.
+            if (affiliateId && payloadExtra.suppress_notification !== true) {
               const { data: aff } = await sb
                 .from("affiliates")
                 .select("email, name")

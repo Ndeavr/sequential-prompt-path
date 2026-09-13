@@ -21,6 +21,10 @@ export interface RecoveryConfig {
   /** Normalisation géographique documentée et déterministe (arrondissement → ville). */
   city_normalization: Record<string, string>;
   category_aliases: Record<string, string>;
+  /** Étapes CRM vérifiées routables automatiquement en v1. */
+  crm_eligible_stages: string[];
+  /** Étapes observées mais volontairement non routées (visibles en simulation). */
+  crm_future_stages: string[];
 }
 
 /** Arrondissements de Montréal — normalisation géographique documentée. */
@@ -53,6 +57,8 @@ export const DEFAULT_RECOVERY_CONFIG: RecoveryConfig = {
   priority_score_min: 70,
   max_candidates: 200,
   learning: { min_sample: 30, min_terminal: 10, max_boost: 10 },
+  crm_eligible_stages: ["checkout_opened", "otp_verified", "registered"],
+  crm_future_stages: ["landing_viewed", "clicked", "invited", "not_started"],
   city_normalization: Object.fromEntries(MONTREAL_BOROUGHS.map((b) => [b, "montreal"])),
   category_aliases: {
     toiture: "toiture",
@@ -233,8 +239,23 @@ export function matchAffiliate(
   workload: Record<string, number>,
   learnedBoost: Record<string, number> = {},
 ): MatchResult {
-  const leadCity = normalizeCity(lead.city, cfg);
-  const leadCategory = normalizeCategory(lead.category_primary ?? lead.trade, cfg);
+  return matchAffiliateFor(lead.city, lead.category_primary ?? lead.trade, cfg, affiliates, workload, learnedBoost);
+}
+
+/**
+ * Appariement générique ville/catégorie, partagé par la cohorte
+ * `contractor_leads` et la cohorte CRM vérifiée.
+ */
+export function matchAffiliateFor(
+  cityRaw: string | null | undefined,
+  categoryRaw: string | null | undefined,
+  cfg: RecoveryConfig,
+  affiliates: AffiliateRow[],
+  workload: Record<string, number>,
+  learnedBoost: Record<string, number> = {},
+): MatchResult {
+  const leadCity = normalizeCity(cityRaw, cfg);
+  const leadCategory = normalizeCategory(categoryRaw, cfg);
   const rejected: MatchResult["rejected"] = [];
   const eligible: Array<{ a: AffiliateRow; reasons: string[]; load: number; boost: number }> = [];
 
