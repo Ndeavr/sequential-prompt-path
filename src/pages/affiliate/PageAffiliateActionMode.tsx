@@ -187,6 +187,17 @@ export default function PageAffiliateActionMode() {
 
   async function onSend(channel: "sms" | "email") {
     if (!prospect) return;
+    // Garde d'échec fermé dans le gestionnaire, pas seulement sur le bouton.
+    const allowed = channel === "sms" ? canSms : canEmail;
+    if (!allowed) {
+      toast.error("Envoi bloqué", {
+        description:
+          permissions === null
+            ? "Vérification de conformité en cours."
+            : permissions.reasons[channel] ?? "Envoi non autorisé pour cette destination.",
+      });
+      return;
+    }
     setSending(channel);
     try {
       const res = await sendAuditInvite(prospect.id, channel, sent);
