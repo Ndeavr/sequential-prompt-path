@@ -154,6 +154,10 @@ export default function PageAffiliateAssignment() {
           </div>
         </header>
 
+        <OnboardingRecoveryPanel />
+
+
+
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Action groupée</CardTitle>
