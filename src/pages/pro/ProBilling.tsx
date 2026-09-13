@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import ContractorLayout from "@/layouts/ContractorLayout";
 import { PageHeader, LoadingState } from "@/components/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,20 +8,26 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   useContractorSubscription,
-  useCreateCheckoutSession,
   useCreateBillingPortal,
 } from "@/hooks/useSubscription";
 import {
   usePlanCatalog,
   formatPlanPrice,
-  getStripePriceId,
   getYearlySavingsPercent,
   getMonthlyEquivalent,
   type BillingInterval,
   type CatalogPlan,
 } from "@/hooks/usePlanCatalog";
+import {
+  useContractorPlanEligibility,
+  startContractorPlanCheckout,
+  PERSONALIZED_PLAN_HEADING,
+  PERSONALIZED_PLAN_CTA,
+  PERSONALIZED_PLAN_ROUTE,
+} from "@/lib/billing/contractorPlanEligibility";
 import { toast } from "sonner";
-import { Check, CreditCard, ExternalLink } from "lucide-react";
+import { Check, CreditCard, ExternalLink, Sparkles } from "lucide-react";
+
 
 const statusLabels: Record<string, string> = {
   active: "Actif",
