@@ -9,12 +9,14 @@
  * Portée des canaux :
  *  - SMS / courriel commercial : preuve LCAP valide exigée pour la destination
  *    exacte, échec fermé.
- *  - Appel manuel composé par l'opérateur : permis tant qu'il n'y a ni retrait
- *    (do_not_contact / désabonnement), ni suppression du numéro, ni révision de
- *    conformité ouverte, ni numéro déclaré invalide.
+ *  - Appel manuel composé par l'opérateur : ÉCHEC FERMÉ également. L'appel n'est
+ *    permis que si le numéro a été validé positivement (statuts positifs
+ *    réellement observés en base : `valid_mobile`, `valid_sms_capable_voip`) et
+ *    qu'aucun retrait, suppression, révision de conformité ou risque n'est ouvert.
  *
  * `research_only` = AUCUN canal permis (ni appel, ni SMS, ni courriel).
  */
+
 
 export interface SendEligibilityRow {
   contractor_lead_id: string;
