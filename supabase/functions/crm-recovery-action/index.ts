@@ -192,6 +192,8 @@ Deno.serve(async (req) => {
 
     /** Décisions de la porte canonique conservées pour l'audit. */
     const gateAudits = new Map<string, GateDecision>();
+    /** Dossiers dont l'écriture d'audit a échoué : jamais un succès propre. */
+    const auditFailures: string[] = [];
 
 
     /**
