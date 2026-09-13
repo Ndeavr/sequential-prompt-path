@@ -23,10 +23,13 @@ const DEAD_STATUSES = new Set(["not_interested", "subscribed", "trial_1dollar", 
 
 type Lead = Record<string, string | number | null>;
 
-function score(lead: Lead, nowMs: number): number {
+function score(lead: Lead, nowMs: number, isRecovery = false): number {
   let s = 0;
   const followUp = lead.next_follow_up_at ? new Date(String(lead.next_follow_up_at)).getTime() : null;
   if (followUp && followUp <= nowMs) s += 1000; // suivi dû = priorité absolue
+  // Onboarding à reprendre : passe devant les prospects froids jamais touchés,
+  // sans jamais devancer un suivi dû.
+  if (isRecovery) s += 500;
   const hasPhone = !!lead.phone_e164;
   const hasName = !!(lead.first_name || lead.full_name);
   const hasEmail = !!lead.email;
@@ -38,6 +41,7 @@ function score(lead: Lead, nowMs: number): number {
   s += Math.min(Number(lead.priority_score ?? 0), 100);
   return s;
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
