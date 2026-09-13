@@ -84,6 +84,11 @@ export default function PageMatchingProfileWizard() {
   const activationToken = sp.get("t");
   const affiliateRef = sp.get("ref");
 
+  const [audit, setAudit] = useState<AuditContext | null>(null);
+  const businessName = audit?.business_name ?? urlBusinessName;
+  const city = audit?.city ?? urlCity;
+  const trade = audit?.trade ?? urlTrade;
+
   const questions = useMemo(() => questionsForTrade(trade), [trade]);
   const [answers, setAnswers] = useState<Answers>({});
   const [index, setIndex] = useState(0);
