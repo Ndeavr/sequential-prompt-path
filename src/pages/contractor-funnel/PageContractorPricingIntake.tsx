@@ -1,13 +1,19 @@
 /**
- * UNPRO — Pricing Intake (Alex-style conversational)
+ * UNPRO — Pricing Intake (Clara-style conversational)
  * Route: /entrepreneur/devis-personnalise
- * Mobile-first cinematic. Collects the 17 fields in ~7 steps, then computes the quote.
+ *
+ * L'identité de l'entreprise vient TOUJOURS du serveur (audit revalidé via la
+ * fonction `matching-profile`), jamais de l'URL et jamais d'un exemple de
+ * démonstration. Sans audit valide, l'entrepreneur cherche son entreprise
+ * réelle (Google via `business-lookup`) avant toute autre question.
  */
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Loader2, Sparkles } from "lucide-react";
+import { ArrowRight, Loader2, Sparkles, ShieldCheck, Search } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import BusinessNameSearch, { type BusinessSearchResult } from "@/components/contractor/BusinessNameSearch";
 import {
   computePricingQuote,
   type PricingIntakeInput,
@@ -23,6 +29,15 @@ type Step = {
     set: (patch: Partial<PricingIntakeInput>) => void,
   ) => React.ReactNode;
   isValid: (d: Partial<PricingIntakeInput>) => boolean;
+};
+
+/** Identité d'entreprise résolue côté serveur à partir de l'audit validé. */
+type AuditContext = {
+  audit_id: string;
+  business_name: string | null;
+  city: string | null;
+  trade: string | null;
+  readiness_score: number | null;
 };
 
 const TRADES = [
@@ -44,75 +59,248 @@ const SEASONS = [
   { v: "all", l: "Toute l'année" },
 ];
 
+const SESSION_STORAGE_KEY = "unpro_matching_session_key";
+
+function getSessionKey(): string {
+  try {
+    const existing = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (existing && existing.length >= 8) return existing;
+    const key = `mp_${crypto.randomUUID()}`;
+    localStorage.setItem(SESSION_STORAGE_KEY, key);
+    return key;
+  } catch {
+    return `mp_${Math.random().toString(36).slice(2)}${Date.now()}`;
+  }
+}
+
+const BASE_DEFAULTS: Partial<PricingIntakeInput> = {
+  seasonal_priority: "all",
+  wants_exclusivity: false,
+  desired_growth_level: "growth",
+  service_radius_km: 50,
+  close_rate_estimate: 0.4,
+  current_ai_visibility_score: 30,
+};
+
 export default function PageContractorPricingIntake() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [step, setStep] = useState(0);
-  const [data, setData] = useState<Partial<PricingIntakeInput>>({
-    seasonal_priority: "all",
-    wants_exclusivity: false,
-    desired_growth_level: "growth",
-    service_radius_km: 50,
-    close_rate_estimate: 0.4,
-    current_ai_visibility_score: 30,
-  });
-  const [submitting, setSubmitting] = useState(false);
+  const auditId = searchParams.get("audit");
+  const auditToken = searchParams.get("audit_token");
+  const sessionKey = useMemo(getSessionKey, []);
+  const draftKey = `unpro_pricing_intake_draft:${auditId ?? sessionKey}`;
 
-  const set = (patch: Partial<PricingIntakeInput>) =>
-    setData((d) => ({ ...d, ...patch }));
+  const [booting, setBooting] = useState<boolean>(Boolean(auditId && auditToken));
+  const [audit, setAudit] = useState<AuditContext | null>(null);
+  const [step, setStep] = useState(0);
+  const [data, setData] = useState<Partial<PricingIntakeInput>>(BASE_DEFAULTS);
+  const [submitting, setSubmitting] = useState(false);
+  const [detected, setDetected] = useState<{ trade: boolean; city: boolean }>({ trade: false, city: false });
+  const [businessConfirmed, setBusinessConfirmed] = useState(false);
+  const [manualEntry, setManualEntry] = useState(false);
+  const [searchState, setSearchState] = useState({ loading: false, count: 0, searched: false });
+  const [hydrated, setHydrated] = useState(false);
+
+  const set = useCallback(
+    (patch: Partial<PricingIntakeInput>) => setData((d) => ({ ...d, ...patch })),
+    [],
+  );
+
+  /* ---------- Brouillon local (reprise après rafraîchissement) ---------- */
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as {
+          data?: Partial<PricingIntakeInput>;
+          step?: number;
+          businessConfirmed?: boolean;
+          manualEntry?: boolean;
+          detected?: { trade: boolean; city: boolean };
+        };
+        if (parsed.data) setData({ ...BASE_DEFAULTS, ...parsed.data });
+        if (typeof parsed.step === "number") setStep(Math.max(0, parsed.step));
+        if (parsed.businessConfirmed) setBusinessConfirmed(true);
+        if (parsed.manualEntry) setManualEntry(true);
+        if (parsed.detected) setDetected(parsed.detected);
+      }
+    } catch {
+      /* brouillon illisible : on repart proprement, sans fausse donnée */
+    } finally {
+      // `hydrated` est un state (pas un ref) pour que la sauvegarde ci-dessous
+      // ne s'exécute qu'après le rendu portant les valeurs restaurées.
+      setHydrated(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem(
+        draftKey,
+        JSON.stringify({ data, step, businessConfirmed, manualEntry, detected }),
+      );
+    } catch {
+      /* stockage indisponible : le parcours reste utilisable */
+    }
+  }, [hydrated, draftKey, data, step, businessConfirmed, manualEntry, detected]);
+
+
+  /* ---------- Audit revalidé côté serveur avant tout rendu ---------- */
+  useEffect(() => {
+    if (!auditId || !auditToken) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { data: res } = await supabase.functions.invoke("matching-profile", {
+          body: { action: "get", session_key: sessionKey, audit_id: auditId, audit_token: auditToken },
+        });
+        if (cancelled) return;
+        const resolved = (res as { audit?: AuditContext | null } | null)?.audit ?? null;
+        if (resolved) {
+          setAudit(resolved);
+          setData((d) => ({
+            ...d,
+            company_name: resolved.business_name ?? d.company_name,
+            trade_primary: resolved.trade ?? d.trade_primary,
+            city: resolved.city ?? d.city,
+          }));
+          setBusinessConfirmed(true);
+        }
+      } catch {
+        /* audit non résolu : parcours neutre, jamais une entreprise inventée */
+      } finally {
+        if (!cancelled) setBooting(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [auditId, auditToken, sessionKey]);
+
+  const auditValid = Boolean(audit?.business_name);
+  const detectedCity = audit?.city ?? data.city ?? null;
+
+  const onBusinessSelected = useCallback((r: BusinessSearchResult) => {
+    setData((d) => ({
+      ...d,
+      company_name: r.business_name,
+      city: r.city || d.city,
+      trade_primary: r.primary_category || d.trade_primary,
+      website_url: r.website || d.website_url,
+    }));
+    setDetected({ trade: Boolean(r.primary_category), city: Boolean(r.city) });
+    setBusinessConfirmed(true);
+    setManualEntry(false);
+  }, []);
+
+  /* ---------- Étapes ---------- */
+  const identityStep: Step = {
+    key: "identity",
+    question: "Commençons. Quelle est votre entreprise?",
+    hint: "Tapez les premières lettres : nous cherchons votre entreprise réelle.",
+    isValid: (d) => Boolean(businessConfirmed && d.company_name && d.trade_primary && d.city),
+    render: (d, set) => (
+      <div className="space-y-3">
+        <BusinessNameSearch
+          tone="dark"
+          source="unpro"
+
+          label="Nom de l'entreprise"
+          placeholder="Tapez le nom de votre entreprise"
+          value={d.company_name ?? ""}
+          minChars={2}
+          debounceMs={300}
+          onChange={(v) => {
+            set({ company_name: v });
+            setBusinessConfirmed(false);
+          }}
+          onBusinessSelected={onBusinessSelected}
+          onSearchState={setSearchState}
+        />
+
+        {!businessConfirmed && !manualEntry && (
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/70">
+            {searchState.loading ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Recherche en cours…
+              </span>
+            ) : searchState.searched && searchState.count === 0 ? (
+              <div className="space-y-2">
+                <p>Aucune entreprise trouvée pour cette recherche.</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setManualEntry(true);
+                    setBusinessConfirmed(true);
+                  }}
+                  className="w-full rounded-xl border border-amber-400/40 bg-amber-500/10 py-2.5 text-sm font-medium text-amber-200"
+                >
+                  Continuer avec une entreprise non trouvée
+                </button>
+              </div>
+            ) : (
+              <span className="flex items-center gap-2">
+                <Search className="w-3.5 h-3.5" /> Sélectionnez votre entreprise dans la liste pour continuer.
+              </span>
+            )}
+          </div>
+        )}
+
+        {(businessConfirmed || manualEntry) && (
+          <>
+            <SelectInput
+              label={`Métier principal${detected.trade ? " · Détecté — à confirmer" : ""}`}
+              value={d.trade_primary ?? ""}
+              onChange={(v) => set({ trade_primary: v })}
+              options={tradeOptions(d.trade_primary)}
+            />
+            <TextInput
+              label={`Ville desservie${detected.city ? " · Détecté — à confirmer" : ""}`}
+              value={d.city ?? ""}
+              onChange={(v) => set({ city: v })}
+            />
+          </>
+        )}
+      </div>
+    ),
+  };
+
+  const scopeStep: Step = {
+    key: "scope",
+    question: auditValid && detectedCity
+      ? `${detectedCity} détecté — confirmez vos territoires desservis.`
+      : "Jusqu'où vous déplacez-vous?",
+    hint: "Rayon de service et second métier (optionnel).",
+    isValid: () => true,
+    render: (d, set) => (
+      <div className="space-y-3">
+        <TextInput
+          label="Ville principale desservie"
+          value={d.city ?? ""}
+          onChange={(v) => set({ city: v })}
+        />
+        <NumberInput
+          label="Rayon de service (km)"
+          value={d.service_radius_km ?? 50}
+          onChange={(v) => set({ service_radius_km: v })}
+          min={5}
+          max={300}
+        />
+        <SelectInput
+          label="Métier secondaire (optionnel)"
+          value={d.trade_secondary ?? ""}
+          onChange={(v) => set({ trade_secondary: v || null })}
+          options={["", ...TRADES]}
+        />
+      </div>
+    ),
+  };
 
   const steps: Step[] = [
-    {
-      key: "identity",
-      question: "Commençons. Quelle est votre entreprise?",
-      hint: "Nom, métier principal, ville.",
-      isValid: (d) => !!(d.company_name && d.trade_primary && d.city),
-      render: (d, set) => (
-        <div className="space-y-3">
-          <TextInput
-            label="Nom de l'entreprise"
-            value={d.company_name ?? ""}
-            onChange={(v) => set({ company_name: v })}
-            placeholder="Plomberie Tremblay inc."
-          />
-          <SelectInput
-            label="Métier principal"
-            value={d.trade_primary ?? ""}
-            onChange={(v) => set({ trade_primary: v })}
-            options={TRADES}
-          />
-          <TextInput
-            label="Ville desservie"
-            value={d.city ?? ""}
-            onChange={(v) => set({ city: v })}
-            placeholder="Québec"
-          />
-        </div>
-      ),
-    },
-    {
-      key: "scope",
-      question: "Jusqu'où vous déplacez-vous?",
-      hint: "Rayon de service et second métier (optionnel).",
-      isValid: () => true,
-      render: (d, set) => (
-        <div className="space-y-3">
-          <NumberInput
-            label="Rayon de service (km)"
-            value={d.service_radius_km ?? 50}
-            onChange={(v) => set({ service_radius_km: v })}
-            min={5}
-            max={300}
-          />
-          <SelectInput
-            label="Métier secondaire (optionnel)"
-            value={d.trade_secondary ?? ""}
-            onChange={(v) => set({ trade_secondary: v || null })}
-            options={["", ...TRADES]}
-          />
-        </div>
-      ),
-    },
+    ...(auditValid ? [] : [identityStep]),
+    scopeStep,
     {
       key: "objectives",
       question: "Quels sont vos objectifs mensuels?",
@@ -245,14 +433,16 @@ export default function PageContractorPricingIntake() {
     },
   ];
 
-  const current = steps[step];
   const total = steps.length;
-  const isLast = step === total - 1;
+  const safeStep = Math.min(step, total - 1);
+  const current = steps[safeStep];
+  const isLast = safeStep === total - 1;
 
   const submit = async () => {
     setSubmitting(true);
     try {
       const quote = await computePricingQuote(data as PricingIntakeInput);
+      try { localStorage.removeItem(draftKey); } catch { /* ignore */ }
       const carry = new URLSearchParams();
       for (const key of ["promo", "ref", "offer", "audit", "audit_token", "t"]) {
         const value = searchParams.get(key);
@@ -271,8 +461,19 @@ export default function PageContractorPricingIntake() {
       return;
     }
     if (isLast) submit();
-    else setStep((s) => s + 1);
+    else setStep(safeStep + 1);
   };
+
+  if (booting) {
+    return (
+      <div className="min-h-screen bg-[#050816] text-white flex items-center justify-center">
+        <Helmet><title>Votre plan personnalisé · UNPRO</title></Helmet>
+        <div className="flex items-center gap-3 text-white/70">
+          <Loader2 className="w-5 h-5 animate-spin" /> Nous récupérons votre analyse…
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#050816] text-white relative overflow-hidden pb-32">
@@ -286,6 +487,34 @@ export default function PageContractorPricingIntake() {
       </div>
 
       <div className="relative max-w-xl mx-auto px-5 pt-10">
+        {/* Entreprise réellement analysée — résolue côté serveur */}
+        {auditValid ? (
+          <div
+            data-testid="audit-identity-banner"
+            className="mb-6 rounded-2xl border border-amber-400/30 bg-amber-500/[0.08] px-4 py-3"
+          >
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-amber-300/90">
+              <ShieldCheck className="w-3.5 h-3.5" /> Entreprise analysée
+            </div>
+            <p className="mt-1 text-sm font-semibold text-white">{audit?.business_name}</p>
+            <p className="text-xs text-white/60">
+              {[audit?.city, audit?.trade].filter(Boolean).join(" · ")}
+              {typeof audit?.readiness_score === "number" ? ` · Score ${audit.readiness_score}/100` : ""}
+            </p>
+          </div>
+        ) : (
+          <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+            <p className="text-sm text-white/80">Aucune analyse rattachée à ce parcours.</p>
+            <button
+              type="button"
+              onClick={() => navigate("/entrepreneurs/audit-ia")}
+              className="mt-2 text-sm font-medium text-amber-300 underline underline-offset-4"
+            >
+              Commencer un audit gratuit
+            </button>
+          </div>
+        )}
+
         {/* Progress */}
         <div className="mb-8">
           <div className="flex items-center gap-1.5">
@@ -293,13 +522,13 @@ export default function PageContractorPricingIntake() {
               <div
                 key={i}
                 className={`h-1 flex-1 rounded-full transition-colors ${
-                  i <= step ? "bg-amber-400" : "bg-white/10"
+                  i <= safeStep ? "bg-amber-400" : "bg-white/10"
                 }`}
               />
             ))}
           </div>
           <p className="text-xs text-white/50 mt-3 tracking-wider uppercase">
-            Étape {step + 1} sur {total}
+            Étape {safeStep + 1} sur {total}
           </p>
         </div>
 
@@ -332,9 +561,9 @@ export default function PageContractorPricingIntake() {
       {/* Sticky CTA */}
       <div className="fixed bottom-0 inset-x-0 bg-gradient-to-t from-[#050816] via-[#050816]/95 to-transparent pt-6 pb-5 px-5">
         <div className="max-w-xl mx-auto flex gap-2">
-          {step > 0 && (
+          {safeStep > 0 && (
             <button
-              onClick={() => setStep((s) => s - 1)}
+              onClick={() => setStep(safeStep - 1)}
               className="h-14 px-5 rounded-[18px] bg-white/[0.06] border border-white/10 text-sm"
               disabled={submitting}
             >
@@ -343,7 +572,7 @@ export default function PageContractorPricingIntake() {
           )}
           <button
             onClick={next}
-            disabled={submitting}
+            disabled={submitting || !current.isValid(data)}
             className="flex-1 h-14 rounded-[18px] bg-amber-500 text-black font-semibold flex items-center justify-center gap-2 disabled:opacity-60 shadow-[0_10px_30px_-10px_rgba(251,191,36,0.6)]"
           >
             {submitting ? (
@@ -360,6 +589,14 @@ export default function PageContractorPricingIntake() {
     </div>
   );
 }
+
+/** Liste des métiers incluant celui détecté s'il ne fait pas partie du catalogue. */
+function tradeOptions(current?: string | null): string[] {
+  const base = ["", ...TRADES];
+  if (current && !base.includes(current)) return ["", current, ...TRADES];
+  return base;
+}
+
 
 /* ---------- Inputs ---------- */
 
