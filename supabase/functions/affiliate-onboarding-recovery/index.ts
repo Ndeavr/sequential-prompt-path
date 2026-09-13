@@ -417,7 +417,9 @@ Deno.serve(async (req) => {
       await admin
         .from("crm_action_log")
         .select("prospect_id, idempotency_key")
-        .eq("source", CRM_SOURCE)
+        // Le RPC journalise désormais `automation`; l'ancienne valeur reste
+        // prise en compte pour préserver l'idempotence des routages passés.
+        .in("source", ["automation", CRM_SOURCE])
         .like("idempotency_key", "auto_recovery:%"),
       "lecture crm_action_log",
     ) ?? []) as Array<{ prospect_id: string | null; idempotency_key: string | null }>;
