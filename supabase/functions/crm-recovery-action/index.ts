@@ -654,21 +654,31 @@ Deno.serve(async (req) => {
         idempotency_key: logKey,
       });
       if (logErr) {
-        // The audit write must never silently disappear.
+        // The audit write must never silently disappear. An unaudited send is
+        // never reported as a clean success (no second provider call is made).
         console.error(`[crm-recovery-action] audit log insert failed (${action}/${pid}):`, logErr.message);
+        auditFailures.push(pid);
+        for (const r of results) {
+          if (r.prospect_id === pid && r.status === "success") {
+            (r as Record<string, unknown>).status = "audit_failed";
+            (r as Record<string, unknown>).result = `${result} | audit_log_failed: ${logErr.message}`;
+          }
+        }
       }
     }
 
     return json({
-      ok: true,
+      ok: auditFailures.length === 0,
       action,
       dry_run: dryRun,
       total: results.length,
       succeeded: results.filter((r) => r.status === "success").length,
       failed: results.filter((r) => r.status === "failed").length,
       skipped: results.filter((r) => r.status === "skipped").length,
+      audit_failed: auditFailures.length,
       results,
-    });
+    }, auditFailures.length > 0 ? 500 : 200);
+
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
