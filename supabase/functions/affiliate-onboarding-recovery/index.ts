@@ -278,7 +278,11 @@ Deno.serve(async (req) => {
 
     // =====================================================================
     // COHORTE A — contractor_leads → Mode Action
+    // Toutes les portes sûres sont poussées en base AVANT toute limite, avec
+    // un ordre déterministe : une ligne récente ne peut plus masquer un
+    // dossier éligible plus ancien à fort potentiel.
     // =====================================================================
+    const inactivityCutoff = new Date(now - cfg.inactivity_hours * 3600 * 1000).toISOString();
     const leads = (ok(
       await admin
         .from("contractor_leads")
@@ -288,9 +292,20 @@ Deno.serve(async (req) => {
         .not("onboarding_started_at", "is", null)
         .is("paid_at", null)
         .is("profile_active_at", null)
+        .is("archived_at", null)
+        .is("unsubscribed_at", null)
+        // Booléens nullables : `false` ET `null` restent valides, seul `true` exclut.
+        .or("do_not_contact.is.null,do_not_contact.eq.false")
+        .or("compliance_review_required.is.null,compliance_review_required.eq.false")
+        .lte("updated_at", inactivityCutoff)
+        .order("priority_score", { ascending: false, nullsFirst: false })
+        .order("fit_score", { ascending: false, nullsFirst: false })
+        .order("updated_at", { ascending: true, nullsFirst: false })
+        .order("id", { ascending: true })
         .limit(cfg.max_candidates),
       "lecture contractor_leads",
     ) ?? []) as LeadRow[];
+
 
     const results: Array<Record<string, unknown>> = [];
     let routed = 0, unassigned = 0, skipped = 0;
