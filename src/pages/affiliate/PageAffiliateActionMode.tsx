@@ -361,11 +361,11 @@ export default function PageAffiliateActionMode() {
                   <Copy className="h-3.5 w-3.5" />Copier le script
                 </Button>
               </div>
-              <Button onClick={onCall} disabled={!phone || permissions?.can_call === false} className="h-14 w-full gap-2 rounded-2xl text-base font-semibold">
+              <Button onClick={onCall} disabled={!canCall} className="h-14 w-full gap-2 rounded-2xl text-base font-semibold">
                 <Phone className="h-5 w-5" />Appeler maintenant
               </Button>
-              {permissions?.can_call === false && permissions.reasons.call && (
-                <p className="text-xs text-muted-foreground">{permissions.reasons.call}</p>
+              {!canCall && (
+                <p className="text-xs text-amber-600" data-testid="call-blocked-reason">{callBlockedReason}</p>
               )}
               <div className="grid grid-cols-2 gap-2">
                 <Button variant="secondary" className="h-12 rounded-xl" onClick={() => onOutcome("send_audit")}>Intéressé</Button>
