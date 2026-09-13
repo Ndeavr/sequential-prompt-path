@@ -121,17 +121,41 @@ Deno.serve(async (req) => {
     }
 
     // ── next ──────────────────────────────────────────────────────────
-    const { data: rawLeads, error } = await sb
-      .from("contractor_leads")
-      .select(
-        "id, company_name, business_name, first_name, last_name, full_name, role_title, city, category_primary, trade, phone_e164, phone, email, website_url, contact_status, next_follow_up_at, last_contacted_at, priority_score, fit_score, profile_status, onboarding_started_at, payment_started_at, paid_at, profile_active_at, do_not_contact, unsubscribed_at, archived_at, sms_eligible, consent_to_contact, phone_validation_status, compliance_review_required, compliance_review_reason, assigned_affiliate_id, created_by_affiliate_id"
-      )
-      .or(`assigned_affiliate_id.eq.${affiliate.id},created_by_affiliate_id.eq.${affiliate.id}`)
-      .is("archived_at", null)
-      .limit(400);
-    if (error) return json({ error: error.message }, 500);
-    // Filtre de propriété stricte côté serveur (le OR SQL reste permissif).
-    const leads = (rawLeads ?? []).filter((l) => ownsLead(l as any));
+    // Deux requêtes déterministes plutôt qu'un OR permissif tronqué :
+    //  (a) dossiers explicitement assignés à cet affilié ;
+    //  (b) dossiers créés par lui ET encore non assignés.
+    const LEAD_COLUMNS =
+      "id, company_name, business_name, first_name, last_name, full_name, role_title, city, category_primary, trade, phone_e164, phone, email, website_url, contact_status, next_follow_up_at, last_contacted_at, priority_score, fit_score, profile_status, onboarding_started_at, payment_started_at, paid_at, profile_active_at, do_not_contact, unsubscribed_at, archived_at, sms_eligible, consent_to_contact, phone_validation_status, compliance_review_required, compliance_review_reason, assigned_affiliate_id, created_by_affiliate_id";
+
+    const ordered = <T extends { order: (c: string, o?: Record<string, unknown>) => T }>(q: T): T =>
+      q
+        .order("priority_score", { ascending: false, nullsFirst: false })
+        .order("fit_score", { ascending: false, nullsFirst: false })
+        .order("updated_at", { ascending: true, nullsFirst: false })
+        .order("id", { ascending: true });
+
+    const { data: assignedLeads, error: assignedErr } = await ordered(
+      sb.from("contractor_leads").select(LEAD_COLUMNS)
+        .eq("assigned_affiliate_id", affiliate.id)
+        .is("archived_at", null) as never,
+    ).limit(400);
+    if (assignedErr) return json({ error: assignedErr.message }, 500);
+
+    const { data: createdLeads, error: createdErr } = await ordered(
+      sb.from("contractor_leads").select(LEAD_COLUMNS)
+        .is("assigned_affiliate_id", null)
+        .eq("created_by_affiliate_id", affiliate.id)
+        .is("archived_at", null) as never,
+    ).limit(400);
+    if (createdErr) return json({ error: createdErr.message }, 500);
+
+    // Fusion sans doublon, propriété stricte revérifiée côté serveur.
+    const mergedById = new Map<string, Record<string, unknown>>();
+    for (const l of [...(assignedLeads ?? []), ...(createdLeads ?? [])] as Array<Record<string, unknown>>) {
+      mergedById.set(String(l.id), l);
+    }
+    const leads = Array.from(mergedById.values()).filter((l) => ownsLead(l as never));
+
 
 
     // Onboardings routés pour reprise (faits réels uniquement)
