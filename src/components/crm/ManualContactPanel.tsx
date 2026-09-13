@@ -158,23 +158,21 @@ export default function ManualContactPanel({
     }
   }
 
-  // Verrou de conformité : aucun canal de contact tant que la preuve n'est pas vérifiée.
-  const locked = target.contact_locked === true || target.opted_out === true;
   const link = locked ? null : activationHref(target.activation_token);
   const size = compact ? "h-8 text-[11px]" : "h-9 text-xs";
 
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-1.5">
-        <Button size="sm" variant="outline" className={size} disabled={locked || !target.phone_e164}
+        <Button size="sm" variant="outline" className={size} disabled={!allowed("call") || !target.phone_e164}
           onClick={() => openChannel("call")}>
           <Phone className="h-3.5 w-3.5 mr-1" /> Appeler
         </Button>
-        <Button size="sm" variant="outline" className={size} disabled={locked || !target.phone_e164}
+        <Button size="sm" variant="outline" className={size} disabled={!allowed("sms") || !target.phone_e164}
           onClick={() => openChannel("sms")}>
           <MessageSquare className="h-3.5 w-3.5 mr-1" /> SMS
         </Button>
-        <Button size="sm" variant="outline" className={size} disabled={locked || !target.email}
+        <Button size="sm" variant="outline" className={size} disabled={!allowed("email") || !target.email}
           onClick={() => openChannel("email")}>
           <Mail className="h-3.5 w-3.5 mr-1" /> Courriel
         </Button>
