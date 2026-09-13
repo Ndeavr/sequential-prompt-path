@@ -445,7 +445,7 @@ export default function PageAffiliateActionMode() {
                 ) : (
                   <Button
                     onClick={onOfferFree}
-                    disabled={offering}
+                    disabled={offering || !canCall}
                     className="mt-3 h-12 w-full gap-2 rounded-2xl bg-amber-500 text-black hover:bg-amber-500/90"
                   >
                     {offering ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gift className="h-4 w-4" />}
