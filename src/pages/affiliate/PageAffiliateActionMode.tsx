@@ -23,7 +23,7 @@ import AddProspectSheet from "@/features/affiliate/actionMode/AddProspectSheet";
 import {
   useNextProspect, sendAuditInvite, recordCallOutcome, logCallStarted,
   offerFreeAppointments, useDayStats, useRefreshStats,
-  type ActionProspect, type ActionAudit, type ActionRecovery, type FreeAppointmentOffer,
+  type ActionProspect, type ActionAudit, type ActionRecovery, type ContactPermissions, type FreeAppointmentOffer,
 } from "@/features/affiliate/actionMode/useActionMode";
 import { formatPhoneDisplay } from "@/features/affiliate/lib/phoneUtils";
 
@@ -87,6 +87,7 @@ export default function PageAffiliateActionMode() {
   const [prospect, setProspect] = useState<ActionProspect | null>(null);
   const [audit, setAudit] = useState<ActionAudit | null>(null);
   const [recovery, setRecovery] = useState<ActionRecovery | null>(null);
+  const [permissions, setPermissions] = useState<ContactPermissions | null>(null);
   const [remaining, setRemaining] = useState<number>(0);
   const [emptyReason, setEmptyReason] = useState<string | null>(null);
   const [called, setCalled] = useState(false);
@@ -103,6 +104,7 @@ export default function PageAffiliateActionMode() {
       setProspect(res.prospect);
       setAudit(res.audit ?? null);
       setRecovery(res.recovery ?? null);
+      setPermissions(res.permissions ?? null);
       setRemaining(res.remaining ?? 0);
       setEmptyReason(res.prospect ? null : res.reason ?? "no_eligible_prospect");
       setCalled(false);
@@ -325,9 +327,12 @@ export default function PageAffiliateActionMode() {
                   <Copy className="h-3.5 w-3.5" />Copier le script
                 </Button>
               </div>
-              <Button onClick={onCall} disabled={!phone} className="h-14 w-full gap-2 rounded-2xl text-base font-semibold">
+              <Button onClick={onCall} disabled={!phone || permissions?.can_call === false} className="h-14 w-full gap-2 rounded-2xl text-base font-semibold">
                 <Phone className="h-5 w-5" />Appeler maintenant
               </Button>
+              {permissions?.can_call === false && permissions.reasons.call && (
+                <p className="text-xs text-muted-foreground">{permissions.reasons.call}</p>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 <Button variant="secondary" className="h-12 rounded-xl" onClick={() => onOutcome("send_audit")}>Intéressé</Button>
                 <Button variant="outline" className="h-12 rounded-xl" onClick={() => onOutcome("callback")}>À rappeler</Button>
@@ -343,13 +348,22 @@ export default function PageAffiliateActionMode() {
           {prospect ? (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
-                <Button onClick={() => onSend("sms")} disabled={!phone || sending !== null} className="h-14 gap-2 rounded-2xl text-base font-semibold">
+                <Button onClick={() => onSend("sms")} disabled={!phone || sending !== null || permissions?.can_sms === false} className="h-14 gap-2 rounded-2xl text-base font-semibold">
                   {sending === "sms" ? <Loader2 className="h-5 w-5 animate-spin" /> : <MessageSquare className="h-5 w-5" />}Texto
                 </Button>
-                <Button onClick={() => onSend("email")} disabled={!prospect.email || sending !== null} variant="secondary" className="h-14 gap-2 rounded-2xl text-base font-semibold">
+                <Button onClick={() => onSend("email")} disabled={!prospect.email || sending !== null || permissions?.can_email === false} variant="secondary" className="h-14 gap-2 rounded-2xl text-base font-semibold">
                   {sending === "email" ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}Courriel
                 </Button>
               </div>
+              {permissions?.research_only && (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
+                  <p className="text-xs font-semibold text-foreground">Envoi bloqué — recherche seulement</p>
+                  <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                    {permissions.reasons.sms && <li>Texto : {permissions.reasons.sms}</li>}
+                    {permissions.reasons.email && <li>Courriel : {permissions.reasons.email}</li>}
+                  </ul>
+                </div>
+              )}
               {sent ? (
                 <p className="text-sm text-muted-foreground">
                   Envoyée {audit?.channel === "email" ? "par courriel" : "par texto"} · <button className="underline" onClick={() => onSend((audit?.channel === "email" ? "email" : "sms") as "sms" | "email")}>renvoyer un rappel</button>
