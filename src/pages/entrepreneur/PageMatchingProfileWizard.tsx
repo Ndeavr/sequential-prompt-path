@@ -201,10 +201,15 @@ export default function PageMatchingProfileWizard() {
   }, []);
 
   const save = useCallback(
-    async (next: Answers, complete = false) => {
+    async (next: Answers, complete = false, nextStep?: number) => {
       setSaving(true);
       const { data, error } = await supabase.functions.invoke("matching-profile", {
-        body: { ...context, action: complete ? "complete" : "save", answers: next },
+        body: {
+          ...context,
+          action: complete ? "complete" : "save",
+          answers: next,
+          current_step: nextStep,
+        },
       });
       setSaving(false);
       const response = data as MatchingProfileResponse | null;
