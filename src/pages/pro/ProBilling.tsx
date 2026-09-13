@@ -333,28 +333,60 @@ const ProBilling = () => {
 
       <Separator className="my-6" />
 
-      {/* Interval toggle */}
-      <h2 className="text-lg font-semibold mb-4 text-center">
-        {isActive ? "Changer de plan" : "Choisir un plan"}
-      </h2>
+      {eligibilityLoading ? (
+        <LoadingState />
+      ) : eligibility?.mode === "standard" ? (
+        <>
+          <h2 className="text-lg font-semibold mb-4 text-center">
+            {isActive ? "Changer de plan" : "Choisir un plan"}
+          </h2>
 
-      {yearlyAvailable && <BillingToggle interval={interval} onChange={setInterval} />}
+          {yearlyAvailable && <BillingToggle interval={interval} onChange={setInterval} />}
 
-      {/* Plan cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {(allPlans ?? []).map((plan) => (
-          <PlanCard
-            key={plan.code}
-            plan={plan}
-            interval={interval}
-            isCurrent={isActive === true && currentPlan?.code === plan.code}
-            isActive={!!isActive}
-            onSubscribe={() => handleSubscribe(plan)}
-            onPortal={handlePortal}
-            isLoading={checkout.isPending || portal.isPending}
-          />
-        ))}
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {selectablePlans.map((plan) => (
+              <PlanCard
+                key={plan.code}
+                plan={plan}
+                interval={interval}
+                isCurrent={isActive === true && currentPlan?.code === plan.code}
+                isActive={!!isActive}
+                onSubscribe={() => handleSubscribe(plan)}
+                onPortal={handlePortal}
+                isLoading={checkoutPending || portal.isPending}
+              />
+            ))}
+          </div>
+
+          <div className="mt-6 text-center">
+            <Button variant="outline" onClick={goPersonalize} className="gap-2">
+              <Sparkles className="h-4 w-4" />
+              {PERSONALIZED_PLAN_CTA}
+            </Button>
+          </div>
+        </>
+      ) : (
+        <Card className="max-w-2xl mx-auto">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-start gap-2">
+              <Sparkles className="h-5 w-5 text-primary shrink-0 mt-1" />
+              {PERSONALIZED_PLAN_HEADING}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Votre plan est établi à partir de votre métier, de votre territoire,
+              de votre capacité et de vos objectifs de rendez-vous. Quelques
+              questions suffisent pour obtenir votre recommandation.
+            </p>
+            <Button onClick={goPersonalize} className="w-full sm:w-auto gap-2">
+              <Sparkles className="h-4 w-4" />
+              {PERSONALIZED_PLAN_CTA}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
     </ContractorLayout>
   );
 };
