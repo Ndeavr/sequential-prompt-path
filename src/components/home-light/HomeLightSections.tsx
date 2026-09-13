@@ -74,7 +74,7 @@ export function SectionTwoPaths() {
           <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary text-secondary-foreground">
             <Home className="h-5 w-5" />
           </div>
-          <h3 className="mt-5 text-xl font-semibold text-foreground">Vous êtes propriétaire ?</h3>
+          <h3 className="mt-5 text-xl font-semibold text-foreground">Vous êtes propriétaire ou gestionnaire ?</h3>
           <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
             Comprenez votre problème, documentez votre propriété et laissez Clara
             vous orienter vers le bon professionnel — sans courir après les
@@ -140,10 +140,10 @@ export function SectionTwoPaths() {
               Membre fondateur
             </span>
           </div>
-          <h3 className="mt-5 text-xl font-semibold text-foreground">Votre première année offerte</h3>
+           <h3 className="mt-5 text-xl font-semibold text-foreground">Vous offrez des services aux propriétaires ?</h3>
           <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
-            Réservez l'une des 10 places de membre fondateur de votre ville et
-            profitez de 12 mois de visibilité UNPRO, une valeur de 350 $.
+             Réservez l'une des 10 places membre fondateur de votre ville et
+             profitez de 12 mois de visibilité UNPRO sans frais, une valeur de 350 $.
           </p>
 
           <Link
