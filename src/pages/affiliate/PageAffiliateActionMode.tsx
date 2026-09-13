@@ -156,9 +156,13 @@ export default function PageAffiliateActionMode() {
 
   async function onCall() {
     if (!prospect || !affiliate) return;
+    // Garde d'échec fermé DANS le gestionnaire : ni journal, ni tel:, ni offre.
+    if (!canCall) {
+      toast.error("Appel bloqué", { description: callBlockedReason });
+      return;
+    }
     if (!phone) {
-      toast.error("Aucun numéro", { description: "Envoyez l'évaluation par courriel." });
-      setCalled(true);
+      toast.error("Aucun numéro", { description: "Ce dossier n'a pas de numéro utilisable." });
       return;
     }
     await logCallStarted(affiliate.id, prospect.id);
@@ -166,6 +170,7 @@ export default function PageAffiliateActionMode() {
     refreshStats();
     window.location.href = `tel:${phone}`;
   }
+
 
   async function onOutcome(outcome: "send_audit" | "callback" | "no_answer" | "not_interested") {
     if (!prospect || !affiliate) return;
