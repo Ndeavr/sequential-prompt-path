@@ -135,8 +135,10 @@ export default function OnboardingRecoveryPanel() {
       const payload = res as RecoveryResponse;
       if (payload?.error) throw new Error(payload.error);
       setData(payload);
-      if (payload.disabled) toast.info("Règle désactivée dans optimization_rules.");
-      else toast.success(dryRun ? "Simulation terminée" : `Routage terminé — ${payload.totals.routed} assigné(s)`);
+      const totalRouted = (payload?.totals?.routed ?? 0) + (payload?.totals?.crm_routed ?? 0);
+      if (payload.disabled) toast.info("Règle en pause : aucune assignation effectuée.");
+      else toast.success(dryRun ? "Simulation terminée" : `Routage terminé — ${totalRouted} assigné(s)`);
+
     } catch (e) {
       const message = e instanceof Error ? e.message : "Erreur inconnue";
       setError(message);
