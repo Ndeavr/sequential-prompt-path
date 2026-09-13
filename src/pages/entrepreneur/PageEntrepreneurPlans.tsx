@@ -159,7 +159,18 @@ export default function PageEntrepreneurPlans() {
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Investissez dans votre visibilité. Recevez des rendez-vous qualifiés, pas des leads froids.
             </p>
+            <p className="mt-6 text-base font-medium text-foreground">
+              {PERSONALIZED_PLAN_HEADING}
+            </p>
+            <Button
+              className="mt-4 gap-2 rounded-xl"
+              onClick={() => navigate(PERSONALIZED_PLAN_ROUTE)}
+            >
+              <Sparkles className="h-4 w-4" />
+              {PERSONALIZED_PLAN_CTA}
+            </Button>
           </motion.div>
+
 
           {/* Plans grid - horizontal scroll on mobile */}
           <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory lg:grid lg:grid-cols-5 lg:overflow-visible">
