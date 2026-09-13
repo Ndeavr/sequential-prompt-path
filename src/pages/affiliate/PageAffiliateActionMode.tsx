@@ -23,7 +23,7 @@ import AddProspectSheet from "@/features/affiliate/actionMode/AddProspectSheet";
 import {
   useNextProspect, sendAuditInvite, recordCallOutcome, logCallStarted,
   offerFreeAppointments, useDayStats, useRefreshStats,
-  type ActionProspect, type ActionAudit, type FreeAppointmentOffer,
+  type ActionProspect, type ActionAudit, type ActionRecovery, type FreeAppointmentOffer,
 } from "@/features/affiliate/actionMode/useActionMode";
 import { formatPhoneDisplay } from "@/features/affiliate/lib/phoneUtils";
 
