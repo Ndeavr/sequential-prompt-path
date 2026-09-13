@@ -26,11 +26,7 @@ const target = {
 describe("ManualContactPanel — drapeau de canal manquant", () => {
   it("refuse un canal dont le drapeau est absent (undefined)", () => {
     render(
-      <ManualContactPanel
-        target={target}
-        policy={{ contact_locked: false }}
-        onRefresh={() => {}}
-      />,
+      <ManualContactPanel target={target} policy={{ contact_locked: false }} />,
     );
     for (const label of ["Appeler", "SMS", "Courriel"]) {
       const btn = screen.queryByRole("button", { name: new RegExp(label, "i") });
