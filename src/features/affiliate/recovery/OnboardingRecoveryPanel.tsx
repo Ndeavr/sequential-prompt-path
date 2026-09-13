@@ -13,11 +13,22 @@ import { toast } from "sonner";
 import { Loader2, RefreshCw, PlayCircle } from "lucide-react";
 
 interface RecoveryResult {
-  lead_id: string;
+  lead_id?: string;
+  prospect_id?: string;
+  cohort?: string;
+  business_name?: string | null;
+  current_stage?: string | null;
+  contact_permissions?: {
+    can_call: boolean;
+    can_sms: boolean;
+    can_email: boolean;
+    research_only: boolean;
+    reasons: { call: string | null; sms: string | null; email: string | null };
+  } | null;
   company_name?: string | null;
   city?: string | null;
   category?: string | null;
-  status: "routed" | "would_route" | "unassigned_admin_review" | "skipped";
+  status: "routed" | "would_route" | "unassigned_admin_review" | "skipped" | "future_eligible";
   inactivity_hours?: number | null;
   interesting_reasons?: string[];
   match_reasons?: string[];
@@ -31,10 +42,21 @@ interface RecoveryResponse {
   dry_run: boolean;
   rule_version: string;
   disabled?: boolean;
-  config: { inactivity_hours: number; fit_score_min: number; priority_score_min: number };
+  config: {
+    inactivity_hours: number;
+    fit_score_min: number;
+    priority_score_min: number;
+    crm_eligible_stages?: string[];
+    crm_future_stages?: string[];
+  };
   learning: { applied: boolean; sample: number; terminal_outcomes: number; min_sample: number; max_boost: number };
-  totals: { inspected: number; routed: number; unassigned: number; skipped: number };
+  totals: {
+    inspected: number; routed: number; unassigned: number; skipped: number;
+    crm_inspected?: number; crm_routed?: number; crm_unassigned?: number;
+    crm_skipped?: number; crm_future_eligible?: number;
+  };
   results: RecoveryResult[];
+  crm_results?: RecoveryResult[];
   error?: string;
 }
 
@@ -43,7 +65,59 @@ const STATUS_LABEL: Record<RecoveryResult["status"], { label: string; tone: stri
   would_route: { label: "Serait routé", tone: "bg-primary/10 text-primary border-primary/30" },
   unassigned_admin_review: { label: "Non assigné — revue admin", tone: "bg-amber-500/10 text-amber-600 border-amber-500/30" },
   skipped: { label: "Écarté", tone: "bg-muted text-muted-foreground border-border/40" },
+  future_eligible: { label: "Étape non routée en v1", tone: "bg-sky-500/10 text-sky-600 border-sky-500/30" },
 };
+
+function renderList(rows: RecoveryResult[], title: string) {
+  const visible = rows.filter((r) => r.status !== "skipped");
+  if (visible.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
+      <ul className="space-y-2">
+        {visible.map((r) => {
+          const s = STATUS_LABEL[r.status];
+          return (
+            <li key={r.lead_id ?? r.prospect_id} className="rounded-xl border border-border/40 p-3">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground">{r.company_name ?? r.business_name ?? "Sans nom"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {[r.category, r.city, r.current_stage].filter(Boolean).join(" · ")}
+                    {typeof r.inactivity_hours === "number" ? ` · inactif ${Math.round(r.inactivity_hours)} h` : ""}
+                  </p>
+                </div>
+                <Badge variant="outline" className={s.tone}>{s.label}</Badge>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Affilié : {r.proposed_affiliate ?? "aucun appariement défendable"}
+              </p>
+              {r.interesting_reasons?.length ? (
+                <p className="text-xs text-muted-foreground">Motif : {r.interesting_reasons.join(" · ")}</p>
+              ) : null}
+              {r.match_reasons?.length ? (
+                <p className="text-xs text-muted-foreground">Appariement : {r.match_reasons.join(" · ")}</p>
+              ) : null}
+              {r.skip_reasons?.length ? (
+                <p className="text-xs text-muted-foreground">Non routé : {r.skip_reasons.join(", ")}</p>
+              ) : null}
+              {r.contact_permissions?.research_only ? (
+                <p className="text-xs text-amber-600">
+                  Recherche seulement — aucun envoi permis ({r.contact_permissions.reasons.sms ?? r.contact_permissions.reasons.email})
+                </p>
+              ) : null}
+              {r.status === "unassigned_admin_review" && r.rejected_affiliates?.length ? (
+                <p className="text-xs text-muted-foreground">
+                  Rejets : {r.rejected_affiliates.map((x) => x.reason).join(", ")}
+                </p>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
 
 export default function OnboardingRecoveryPanel() {
   const [data, setData] = useState<RecoveryResponse | null>(null);
@@ -110,43 +184,24 @@ export default function OnboardingRecoveryPanel() {
               <Badge variant="outline">Routés {data.totals.routed}</Badge>
               <Badge variant="outline">Non assignés {data.totals.unassigned}</Badge>
               <Badge variant="outline">Écartés {data.totals.skipped}</Badge>
+              {typeof data.totals.crm_inspected === "number" && (
+                <>
+                  <Badge variant="outline">CRM inspectés {data.totals.crm_inspected}</Badge>
+                  <Badge variant="outline">CRM routés {data.totals.crm_routed ?? 0}</Badge>
+                  <Badge variant="outline">CRM non assignés {data.totals.crm_unassigned ?? 0}</Badge>
+                  <Badge variant="outline">CRM étapes non routées {data.totals.crm_future_eligible ?? 0}</Badge>
+                </>
+              )}
             </div>
-            <ul className="space-y-2">
-              {data.results
-                .filter((r) => r.status !== "skipped")
-                .map((r) => {
-                  const s = STATUS_LABEL[r.status];
-                  return (
-                    <li key={r.lead_id} className="rounded-xl border border-border/40 p-3">
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="font-semibold text-foreground">{r.company_name ?? "Sans nom"}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {[r.category, r.city].filter(Boolean).join(" · ")}
-                            {typeof r.inactivity_hours === "number" ? ` · inactif ${Math.round(r.inactivity_hours)} h` : ""}
-                          </p>
-                        </div>
-                        <Badge variant="outline" className={s.tone}>{s.label}</Badge>
-                      </div>
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        Affilié : {r.proposed_affiliate ?? "aucun appariement défendable"}
-                      </p>
-                      {r.interesting_reasons?.length ? (
-                        <p className="text-xs text-muted-foreground">Motif : {r.interesting_reasons.join(" · ")}</p>
-                      ) : null}
-                      {r.match_reasons?.length ? (
-                        <p className="text-xs text-muted-foreground">Appariement : {r.match_reasons.join(" · ")}</p>
-                      ) : null}
-                      {r.status === "unassigned_admin_review" && r.rejected_affiliates?.length ? (
-                        <p className="text-xs text-muted-foreground">
-                          Rejets : {r.rejected_affiliates.map((x) => x.reason).join(", ")}
-                        </p>
-                      ) : null}
-                    </li>
-                  );
-                })}
-            </ul>
-            {data.results.filter((r) => r.status !== "skipped").length === 0 && (
+            {data.config.crm_eligible_stages?.length ? (
+              <p className="text-xs text-muted-foreground">
+                Étapes CRM routées : {data.config.crm_eligible_stages.join(", ")} · observées sans routage :{" "}
+                {(data.config.crm_future_stages ?? []).join(", ") || "aucune"}
+              </p>
+            ) : null}
+            {renderList(data.results, "Inscriptions incomplètes (Mode Action)")}
+            {renderList(data.crm_results ?? [], "Prospects vérifiés du CRM (file manuelle)")}
+            {[...data.results, ...(data.crm_results ?? [])].filter((r) => r.status !== "skipped").length === 0 && (
               <p className="text-sm text-muted-foreground">Aucun onboarding incomplet éligible en ce moment.</p>
             )}
           </>
