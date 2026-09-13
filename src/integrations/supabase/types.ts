@@ -100004,6 +100004,7 @@ export type Database = {
           business_name: string
           category: string
           city: string
+          contact_locked: boolean
           current_stage: string
           due_at: string
           email: string
@@ -100016,6 +100017,7 @@ export type Database = {
           phone_e164: string
           priority_score: number
           prospect_id: string
+          queue: string
           website_url: string
         }[]
       }
