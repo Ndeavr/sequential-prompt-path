@@ -83,6 +83,16 @@ export default function ManualContactPanel({
 
 
   async function openChannel(kind: "call" | "sms" | "email") {
+    // Garde d'échec fermé dans le gestionnaire, pas seulement sur le bouton.
+    if (!allowed(kind)) {
+      toast.error("Contact bloqué", {
+        description:
+          policy?.blocked_reason ??
+          target.blocked_reason ??
+          "Vérification de conformité requise avant tout contact.",
+      });
+      return;
+    }
     const href = contactHref(kind, target);
     if (!href) return toast.error("Coordonnée manquante");
     window.location.href = href;
@@ -95,7 +105,17 @@ export default function ManualContactPanel({
   }
 
   async function sendLink(channel: "sms" | "email") {
+    if (!allowed(channel)) {
+      toast.error("Envoi bloqué", {
+        description:
+          policy?.blocked_reason ??
+          target.blocked_reason ??
+          "Vérification de conformité requise avant tout envoi.",
+      });
+      return;
+    }
     setBusy(channel);
+
     try {
       const r = await queueActions.sendActivationLink([target.prospect_id], channel);
       if (r.failed > 0) toast.error("Envoi refusé", { description: r.results?.[0]?.result });
