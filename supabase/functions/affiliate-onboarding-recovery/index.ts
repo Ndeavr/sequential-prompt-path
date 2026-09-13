@@ -498,7 +498,10 @@ Deno.serve(async (req) => {
           p_prospect_id: row.prospect_id,
           p_affiliate_id: match.affiliate_id,
           p_priority: Math.round(crmRoutingScore(row, cfg)),
-          p_next_action: perms.can_call ? "Appeler" : "Vérifier la conformité avant tout contact",
+          // La base réapplique l'invariant : recherche seulement ⇒ action sûre.
+          p_next_action: perms.research_only || !perms.can_call
+            ? "Vérifier la conformité avant tout contact"
+            : "Appeler",
           p_due_at: new Date(now + 24 * 3600 * 1000).toISOString(),
           p_idempotency_key: key,
           p_reason: crmActionReason(stage),
