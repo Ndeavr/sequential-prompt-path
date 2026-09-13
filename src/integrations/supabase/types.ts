@@ -36132,6 +36132,7 @@ export type Database = {
           affiliate_ref: string | null
           ai_profile_readiness: number
           answers: Json
+          audit_contractor_id: string | null
           audit_id: string | null
           audit_token: string | null
           business_name: string | null
@@ -36140,6 +36141,7 @@ export type Database = {
           completed_at: string | null
           contractor_id: string | null
           created_at: string
+          current_step: number
           id: string
           missing_matching_fields: Json
           profile_completion: number
@@ -36157,6 +36159,7 @@ export type Database = {
           affiliate_ref?: string | null
           ai_profile_readiness?: number
           answers?: Json
+          audit_contractor_id?: string | null
           audit_id?: string | null
           audit_token?: string | null
           business_name?: string | null
@@ -36165,6 +36168,7 @@ export type Database = {
           completed_at?: string | null
           contractor_id?: string | null
           created_at?: string
+          current_step?: number
           id?: string
           missing_matching_fields?: Json
           profile_completion?: number
@@ -36182,6 +36186,7 @@ export type Database = {
           affiliate_ref?: string | null
           ai_profile_readiness?: number
           answers?: Json
+          audit_contractor_id?: string | null
           audit_id?: string | null
           audit_token?: string | null
           business_name?: string | null
@@ -36190,6 +36195,7 @@ export type Database = {
           completed_at?: string | null
           contractor_id?: string | null
           created_at?: string
+          current_step?: number
           id?: string
           missing_matching_fields?: Json
           profile_completion?: number
@@ -100317,6 +100323,10 @@ export type Database = {
         Returns: Json
       }
       rpc_pipeline_retry_run: { Args: { p_run_id: string }; Returns: Json }
+      save_booking_configuration: {
+        Args: { p_availability: Json; p_contractor_id: string; p_types: Json }
+        Returns: Json
+      }
       search_rag_chunks_text: {
         Args: {
           filter_namespaces?: string[]

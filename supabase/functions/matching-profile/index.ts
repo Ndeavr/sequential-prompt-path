@@ -116,6 +116,35 @@ Deno.serve(async (req) => {
     const session_key = String(body.session_key ?? "").trim();
     if (!session_key || session_key.length < 8) return json({ ok: false, error: "session_key required" }, 400);
 
+    // ---------------------------------------------------------------- AUDIT
+    // The audit is the authoritative source of the company identity shown in
+    // the wizard. Query-string values are never trusted: the audit row is
+    // re-read server-side and validated against its session token.
+    const auditIdInput = typeof body.audit_id === "string" ? body.audit_id.trim() : "";
+    const auditTokenInput = typeof body.audit_token === "string" ? body.audit_token.trim() : "";
+    let auditRow: Record<string, unknown> | null = null;
+    if (auditIdInput && auditTokenInput) {
+      const { data, error } = await supabase
+        .from("ai_recommendation_audits")
+        .select("id, session_token, business_name, city, trade, contractor_id, prospect_id, readiness_score, baseline")
+        .eq("id", auditIdInput)
+        .maybeSingle();
+      if (error) return json({ ok: false, error: "audit_lookup_failed" }, 500);
+      if (data && data.session_token === auditTokenInput) auditRow = data as Record<string, unknown>;
+    }
+    const auditContext = auditRow
+      ? {
+          audit_id: String(auditRow.id),
+          business_name: (auditRow.business_name as string | null) ?? null,
+          city: (auditRow.city as string | null) ?? null,
+          trade: (auditRow.trade as string | null) ?? null,
+          contractor_id: (auditRow.contractor_id as string | null) ?? null,
+          prospect_id: (auditRow.prospect_id as string | null) ?? null,
+          readiness_score: (auditRow.readiness_score as number | null) ?? null,
+          facts: ((auditRow.baseline as Record<string, unknown> | null)?.facts as unknown[]) ?? [],
+        }
+      : null;
+
     let authenticatedUserId: string | null = null;
     if (authHeader.startsWith("Bearer ")) {
       const anon = createClient(
@@ -181,6 +210,20 @@ Deno.serve(async (req) => {
       if (contractorProfileError) return json({ ok: false, error: "profile_lookup_failed" }, 500);
       existing = existingByContractor;
     }
+    // A validated audit keeps the SAME draft across devices / new browsers:
+    // the wizard resumes exactly where the contractor left it.
+    if (!existing && auditContext) {
+      const { data: existingByAudit, error: auditProfileError } = await supabase
+        .from("contractor_matching_profiles")
+        .select("*")
+        .eq("audit_id", auditContext.audit_id)
+        .is("contractor_id", null)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (auditProfileError) return json({ ok: false, error: "profile_lookup_failed" }, 500);
+      existing = existingByAudit;
+    }
 
     if (action === "get") {
       if (existing?.contractor_id) {
@@ -189,7 +232,13 @@ Deno.serve(async (req) => {
           .eq("id", existing.contractor_id).eq("user_id", authenticatedUserId).maybeSingle();
         if (!owned) return json({ ok: false, error: "profile_access_denied" }, 403);
       }
-      return json({ ok: true, profile: existing ?? null });
+      return json({
+        ok: true,
+        profile: existing ?? null,
+        audit: auditContext,
+        audit_valid: Boolean(auditContext),
+        current_step: Number(existing?.current_step ?? 0),
+      });
     }
 
     if (action !== "save" && action !== "complete") return json({ ok: false, error: "unknown action" }, 400);
@@ -217,6 +266,11 @@ Deno.serve(async (req) => {
       status: action === "complete" ? "completed" : "in_progress",
     };
     if (action === "complete") row.completed_at = new Date().toISOString();
+    // Exact resume point. Monotonic: a stale client can never rewind progress.
+    const requestedStep = Number.isFinite(Number(body.current_step)) ? Number(body.current_step) : null;
+    if (requestedStep !== null) {
+      row.current_step = Math.max(0, Math.max(Number(existing?.current_step ?? 0), Math.trunc(requestedStep)));
+    }
 
     // Context / attribution — only ever set, never blanked by a later save.
     for (const k of [
@@ -237,6 +291,17 @@ Deno.serve(async (req) => {
     }
     if (body.utm && typeof body.utm === "object") {
       row.utm = { ...((existing?.utm as Record<string, unknown>) ?? {}), ...body.utm };
+    }
+
+    // The validated audit wins over anything the client sent: the company the
+    // contractor just saw analysed is the company being completed.
+    if (auditContext) {
+      row.audit_id = auditContext.audit_id;
+      if (auditContext.business_name) row.business_name = auditContext.business_name;
+      if (auditContext.city) row.city = auditContext.city;
+      if (auditContext.trade) row.trade = auditContext.trade;
+      if (auditContext.contractor_id) row.audit_contractor_id = auditContext.contractor_id;
+      if (!existing?.prospect_id && auditContext.prospect_id) row.prospect_id = auditContext.prospect_id;
     }
 
     if (ownedContractor) {
@@ -292,7 +357,26 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json({ ok: true, profile: saved });
+    // Real completion of the audit → profile chain, recorded on the audit
+    // itself. Best effort: it must never fail the contractor's save.
+    if (action === "complete" && auditContext) {
+      const { error: auditEventError } = await supabase.from("ai_recommendation_audit_events").insert({
+        audit_id: auditContext.audit_id,
+        event_type: "profile_completed",
+        metadata: { profile_completion: state.profile_completion, recommendation_eligible: state.recommendation_eligible },
+      });
+      if (auditEventError) {
+        console.error("[matching-profile] audit event failed", { code: auditEventError.code ?? null });
+      }
+    }
+
+    return json({
+      ok: true,
+      profile: saved,
+      audit: auditContext,
+      audit_valid: Boolean(auditContext),
+      current_step: Number(saved?.current_step ?? 0),
+    });
   } catch (e) {
     return json({ ok: false, error: e instanceof Error ? e.message : "unexpected" }, 500);
   }

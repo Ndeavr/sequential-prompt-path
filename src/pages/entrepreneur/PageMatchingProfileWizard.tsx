@@ -48,9 +48,20 @@ function getSessionKey(): string {
 }
 
 type Answers = Record<string, unknown>;
+/** Company identity resolved server-side from the validated audit. */
+type AuditContext = {
+  audit_id: string;
+  business_name: string | null;
+  city: string | null;
+  trade: string | null;
+  readiness_score: number | null;
+};
 type MatchingProfileResponse = {
   error?: string;
-  profile?: { answers?: Answers; status?: string } & Record<string, unknown>;
+  audit?: AuditContext | null;
+  audit_valid?: boolean;
+  current_step?: number;
+  profile?: { answers?: Answers; status?: string; current_step?: number } & Record<string, unknown>;
 };
 
 export default function PageMatchingProfileWizard() {
@@ -64,13 +75,19 @@ export default function PageMatchingProfileWizard() {
   const fr = !(explicitEn && lang === "en");
 
   const sessionKey = useMemo(getSessionKey, []);
-  const businessName = sp.get("entreprise");
-  const city = sp.get("ville");
-  const trade = sp.get("metier");
+  // L'URL ne sert que de repli d'affichage : l'identité réelle vient du serveur.
+  const urlBusinessName = sp.get("entreprise");
+  const urlCity = sp.get("ville");
+  const urlTrade = sp.get("metier");
   const auditId = sp.get("audit");
   const auditToken = sp.get("audit_token");
   const activationToken = sp.get("t");
   const affiliateRef = sp.get("ref");
+
+  const [audit, setAudit] = useState<AuditContext | null>(null);
+  const businessName = audit?.business_name ?? urlBusinessName;
+  const city = audit?.city ?? urlCity;
+  const trade = audit?.trade ?? urlTrade;
 
   const questions = useMemo(() => questionsForTrade(trade), [trade]);
   const [answers, setAnswers] = useState<Answers>({});
@@ -91,9 +108,9 @@ export default function PageMatchingProfileWizard() {
   const context = useMemo(
     () => ({
       session_key: sessionKey,
-      business_name: businessName,
-      city,
-      trade,
+      business_name: urlBusinessName,
+      city: urlCity,
+      trade: urlTrade,
       audit_id: auditId,
       audit_token: auditToken,
       activation_token: activationToken,
@@ -115,7 +132,14 @@ export default function PageMatchingProfileWizard() {
     void (async () => {
       try {
         const profileRequest = await supabase.functions.invoke("matching-profile", {
-          body: { action: "get", session_key: sessionKey },
+          body: {
+            action: "get",
+            session_key: sessionKey,
+            // L'audit est revalidé côté serveur : l'entreprise affichée ici est
+            // celle qui vient d'être analysée, jamais une valeur de l'URL.
+            audit_id: auditId,
+            audit_token: auditToken,
+          },
         });
         if (cancelled) return;
 
@@ -126,11 +150,18 @@ export default function PageMatchingProfileWizard() {
             response?.error || profileRequest.error?.message || "Impossible de reprendre le profil.",
           );
         }
+        const resolvedAudit = response?.audit ?? null;
+        if (resolvedAudit) setAudit(resolvedAudit);
         if (profile?.answers) {
           setAnswers(profile.answers as Answers);
           if (profile.status === "completed") setDone(true);
-          const firstUnanswered = questions.findIndex((q) => !isFilled(profile.answers[q.key]));
-          setIndex(firstUnanswered === -1 ? questions.length - 1 : firstUnanswered);
+          // Reprise exacte : l'étape enregistrée prime, sans jamais dépasser la
+          // première question réellement sans réponse.
+          const list = questionsForTrade(resolvedAudit?.trade ?? urlTrade);
+          const firstUnanswered = list.findIndex((q) => !isFilled(profile.answers![q.key]));
+          const fallback = firstUnanswered === -1 ? list.length - 1 : firstUnanswered;
+          const savedStep = Number(response?.current_step ?? profile.current_step ?? 0);
+          setIndex(Math.min(Math.max(savedStep, 0), fallback));
         }
       } catch {
         if (!cancelled) setLoadError("Impossible de reprendre le profil. Réessayez.");
@@ -170,10 +201,15 @@ export default function PageMatchingProfileWizard() {
   }, []);
 
   const save = useCallback(
-    async (next: Answers, complete = false) => {
+    async (next: Answers, complete = false, nextStep?: number) => {
       setSaving(true);
       const { data, error } = await supabase.functions.invoke("matching-profile", {
-        body: { ...context, action: complete ? "complete" : "save", answers: next },
+        body: {
+          ...context,
+          action: complete ? "complete" : "save",
+          answers: next,
+          current_step: nextStep,
+        },
       });
       setSaving(false);
       const response = data as MatchingProfileResponse | null;
@@ -202,7 +238,8 @@ export default function PageMatchingProfileWizard() {
       metadata: { completion: completionOf(next) },
     });
     const isLast = index >= questions.length - 1;
-    const saved = await save(next, isLast);
+    // L'étape est enregistrée avec la réponse : reprise exacte au rechargement.
+    const saved = await save(next, isLast, isLast ? index : index + 1);
     if (!saved) return;
     if (isLast) {
       setDone(true);
@@ -315,6 +352,44 @@ export default function PageMatchingProfileWizard() {
             </p>
           )}
         </div>
+
+        {/* Continuité de l'audit : l'entreprise analysée reste affichée. */}
+        {audit && (
+          <section className="mb-5 rounded-2xl border border-border bg-card p-4">
+            <div className="flex items-start gap-3">
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
+              <div className="min-w-0">
+                <p className="text-[13.5px] font-bold text-foreground">
+                  {fr ? "Nous continuons avec" : "Continuing with"}{" "}
+                  {audit.business_name ?? (fr ? "votre entreprise" : "your business")}
+                </p>
+                <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+                  {[audit.city, audit.trade].filter(Boolean).join(" · ")}
+                  {typeof audit.readiness_score === "number"
+                    ? `${audit.city || audit.trade ? " · " : ""}${
+                        fr ? "Score de votre audit" : "Your audit score"
+                      } : ${audit.readiness_score}/100`
+                    : ""}
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {!loading && !audit && !businessName && !cameFromFounderSignup && (
+          <section className="mb-5 rounded-2xl border border-border bg-card p-4 text-[13px] text-muted-foreground">
+            {fr
+              ? "Aucun audit n'est rattaché à cette session. Vos réponses sont conservées, et vous pouvez lancer votre audit gratuit pour rattacher votre entreprise."
+              : "No audit is linked to this session. Your answers are kept, and you can run your free audit to link your business."}
+            <button
+              type="button"
+              onClick={() => navigate("/entrepreneurs/audit-ia")}
+              className="ml-1 font-semibold text-primary underline-offset-2 hover:underline"
+            >
+              {fr ? "Lancer mon audit gratuit" : "Run my free audit"}
+            </button>
+          </section>
+        )}
 
         {hasFreeYear && (
           <section className="mb-5 rounded-2xl border border-success/40 bg-[hsl(152_69%_31%/0.06)] p-4">
