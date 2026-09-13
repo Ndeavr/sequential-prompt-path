@@ -143,8 +143,13 @@ Deno.serve(async (req) => {
       return json({ prospect: null, reason: "no_eligible_prospect", total_assigned: (leads ?? []).length });
     }
 
-    eligible.sort((a, b) => score(b, nowMs) - score(a, nowMs));
+    eligible.sort(
+      (a, b) =>
+        score(b, nowMs, recoveryMap.has(String(b.id))) - score(a, nowMs, recoveryMap.has(String(a.id)))
+    );
     const pick = eligible[0];
+    const recovery = recoveryMap.get(String(pick.id)) ?? null;
+
 
     await sb
       .from("affiliate_prospect_locks")
