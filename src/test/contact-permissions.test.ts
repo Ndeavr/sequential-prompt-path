@@ -33,14 +33,65 @@ describe("computeContactPermissions", () => {
     expect(p.phone_unverified).toBe(false);
   });
 
+  it("autorise l'appel avec l'autre statut positif observé en base", () => {
+    const p = computeContactPermissions({
+      eligibility: elig(),
+      has_phone: true,
+      has_email: false,
+      phone_validation_status: "valid_sms_capable_voip",
+    });
+    expect(p.can_call).toBe(true);
+    expect(p.phone_unverified).toBe(false);
+  });
+
   it("bloque tout envoi électronique sans dossier de conformité relié", () => {
     const p = computeContactPermissions({ eligibility: null, has_phone: true, has_email: true });
     expect(p.can_sms).toBe(false);
     expect(p.can_email).toBe(false);
-    expect(p.can_call).toBe(true); // appel manuel non visé par la LCAP
-    expect(p.research_only).toBe(false);
-    expect(p.phone_unverified).toBe(true); // numéro non encore validé
+    // Échec fermé : sans validation positive du numéro, aucun appel non plus.
+    expect(p.can_call).toBe(false);
+    expect(p.research_only).toBe(true);
+    expect(p.phone_unverified).toBe(true);
   });
+
+  it.each(["unverified", "pending_validation", "lookup_failed", "outside_quebec", ""])(
+    "bloque l'appel pour le statut non positif « %s »",
+    (status) => {
+      const p = computeContactPermissions({
+        eligibility: elig(),
+        has_phone: true,
+        has_email: false,
+        phone_validation_status: status,
+      });
+      expect(p.can_call).toBe(false);
+      expect(p.reasons.call).toContain("non validé positivement");
+    },
+  );
+
+  it("bloque l'appel quand le statut est null", () => {
+    const p = computeContactPermissions({
+      eligibility: elig(),
+      has_phone: true,
+      has_email: false,
+      phone_validation_status: null,
+    });
+    expect(p.can_call).toBe(false);
+    // SMS conserve sa propre porte LCAP : preuve valide présente ici.
+    expect(p.can_sms).toBe(true);
+    expect(p.research_only).toBe(false);
+  });
+
+  it("research_only seulement quand les trois canaux sont refusés", () => {
+    const p = computeContactPermissions({
+      eligibility: null,
+      has_phone: true,
+      has_email: true,
+      phone_validation_status: null,
+    });
+    expect([p.can_call, p.can_sms, p.can_email]).toEqual([false, false, false]);
+    expect(p.research_only).toBe(true);
+  });
+
 
   it("bloque tous les canaux, appel compris, quand une révision de conformité est requise", () => {
     const p = computeContactPermissions({

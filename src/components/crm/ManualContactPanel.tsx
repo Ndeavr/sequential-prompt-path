@@ -32,13 +32,27 @@ export type ManualContactTarget = {
   blocked_reason?: string | null;
 };
 
+/**
+ * Politique de contact explicite fournie par l'appelant de confiance.
+ * Absente = tout est verrouillé (échec fermé).
+ */
+export type ManualContactPolicy = {
+  contact_locked: boolean;
+  can_call?: boolean;
+  can_sms?: boolean;
+  can_email?: boolean;
+  blocked_reason?: string | null;
+};
+
 export default function ManualContactPanel({
   target,
+  policy,
   canLogOutcome = true,
   onDone,
   compact = false,
 }: {
   target: ManualContactTarget;
+  policy?: ManualContactPolicy;
   canLogOutcome?: boolean;
   onDone?: () => void;
   compact?: boolean;
@@ -53,9 +67,32 @@ export default function ManualContactPanel({
     new Date(Date.now() + 24 * 3600 * 1000).toISOString().slice(0, 16),
   );
 
+  // Verrou de conformité : politique absente = verrouillé.
+  const locked =
+    !policy ||
+    policy.contact_locked === true ||
+    target.contact_locked === true ||
+    target.opted_out === true;
+  const allowed = (kind: "call" | "sms" | "email"): boolean => {
+    if (locked || !policy) return false;
+    const flag = kind === "call" ? policy.can_call : kind === "sms" ? policy.can_sms : policy.can_email;
+    return flag !== false;
+  };
+
   const terminal = TERMINAL_OUTCOMES.has(outcome);
 
+
   async function openChannel(kind: "call" | "sms" | "email") {
+    // Garde d'échec fermé dans le gestionnaire, pas seulement sur le bouton.
+    if (!allowed(kind)) {
+      toast.error("Contact bloqué", {
+        description:
+          policy?.blocked_reason ??
+          target.blocked_reason ??
+          "Vérification de conformité requise avant tout contact.",
+      });
+      return;
+    }
     const href = contactHref(kind, target);
     if (!href) return toast.error("Coordonnée manquante");
     window.location.href = href;
@@ -68,7 +105,17 @@ export default function ManualContactPanel({
   }
 
   async function sendLink(channel: "sms" | "email") {
+    if (!allowed(channel)) {
+      toast.error("Envoi bloqué", {
+        description:
+          policy?.blocked_reason ??
+          target.blocked_reason ??
+          "Vérification de conformité requise avant tout envoi.",
+      });
+      return;
+    }
     setBusy(channel);
+
     try {
       const r = await queueActions.sendActivationLink([target.prospect_id], channel);
       if (r.failed > 0) toast.error("Envoi refusé", { description: r.results?.[0]?.result });
@@ -111,23 +158,21 @@ export default function ManualContactPanel({
     }
   }
 
-  // Verrou de conformité : aucun canal de contact tant que la preuve n'est pas vérifiée.
-  const locked = target.contact_locked === true || target.opted_out === true;
   const link = locked ? null : activationHref(target.activation_token);
   const size = compact ? "h-8 text-[11px]" : "h-9 text-xs";
 
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-1.5">
-        <Button size="sm" variant="outline" className={size} disabled={locked || !target.phone_e164}
+        <Button size="sm" variant="outline" className={size} disabled={!allowed("call") || !target.phone_e164}
           onClick={() => openChannel("call")}>
           <Phone className="h-3.5 w-3.5 mr-1" /> Appeler
         </Button>
-        <Button size="sm" variant="outline" className={size} disabled={locked || !target.phone_e164}
+        <Button size="sm" variant="outline" className={size} disabled={!allowed("sms") || !target.phone_e164}
           onClick={() => openChannel("sms")}>
           <MessageSquare className="h-3.5 w-3.5 mr-1" /> SMS
         </Button>
-        <Button size="sm" variant="outline" className={size} disabled={locked || !target.email}
+        <Button size="sm" variant="outline" className={size} disabled={!allowed("email") || !target.email}
           onClick={() => openChannel("email")}>
           <Mail className="h-3.5 w-3.5 mr-1" /> Courriel
         </Button>

@@ -100,6 +100,8 @@ export default function PageAffiliateActionMode() {
 
   const loadNext = useCallback(
     async (excludeId?: string | null) => {
+      // Échec fermé : aucune permission tant que la réponse n'est pas revenue.
+      setPermissions(null);
       const res = await next(excludeId ?? null);
       if (!res) return;
       setProspect(res.prospect);
@@ -113,6 +115,16 @@ export default function PageAffiliateActionMode() {
     },
     [next]
   );
+
+  // Permissions absentes = refusées (jamais permissives par défaut).
+  const canCall = permissions?.can_call === true;
+  const canSms = permissions?.can_sms === true;
+  const canEmail = permissions?.can_email === true;
+  const callBlockedReason =
+    permissions === null
+      ? "Vérification de conformité en cours — appel indisponible."
+      : permissions.reasons.call ?? "Appel non autorisé pour ce dossier.";
+
 
 
   useEffect(() => {
@@ -144,9 +156,13 @@ export default function PageAffiliateActionMode() {
 
   async function onCall() {
     if (!prospect || !affiliate) return;
+    // Garde d'échec fermé DANS le gestionnaire : ni journal, ni tel:, ni offre.
+    if (!canCall) {
+      toast.error("Appel bloqué", { description: callBlockedReason });
+      return;
+    }
     if (!phone) {
-      toast.error("Aucun numéro", { description: "Envoyez l'évaluation par courriel." });
-      setCalled(true);
+      toast.error("Aucun numéro", { description: "Ce dossier n'a pas de numéro utilisable." });
       return;
     }
     await logCallStarted(affiliate.id, prospect.id);
@@ -154,6 +170,7 @@ export default function PageAffiliateActionMode() {
     refreshStats();
     window.location.href = `tel:${phone}`;
   }
+
 
   async function onOutcome(outcome: "send_audit" | "callback" | "no_answer" | "not_interested") {
     if (!prospect || !affiliate) return;
@@ -170,6 +187,17 @@ export default function PageAffiliateActionMode() {
 
   async function onSend(channel: "sms" | "email") {
     if (!prospect) return;
+    // Garde d'échec fermé dans le gestionnaire, pas seulement sur le bouton.
+    const allowed = channel === "sms" ? canSms : canEmail;
+    if (!allowed) {
+      toast.error("Envoi bloqué", {
+        description:
+          permissions === null
+            ? "Vérification de conformité en cours."
+            : permissions.reasons[channel] ?? "Envoi non autorisé pour cette destination.",
+      });
+      return;
+    }
     setSending(channel);
     try {
       const res = await sendAuditInvite(prospect.id, channel, sent);
@@ -205,6 +233,11 @@ export default function PageAffiliateActionMode() {
 
   async function onOfferFree() {
     if (!prospect || !affiliate || offering) return;
+    // L'offre suppose un contact personnel réel : bloquée si l'appel est bloqué.
+    if (!canCall) {
+      toast.error("Offre indisponible", { description: callBlockedReason });
+      return;
+    }
     setOffering(true);
     try {
       const res = await offerFreeAppointments({
@@ -328,11 +361,11 @@ export default function PageAffiliateActionMode() {
                   <Copy className="h-3.5 w-3.5" />Copier le script
                 </Button>
               </div>
-              <Button onClick={onCall} disabled={!phone || permissions?.can_call === false} className="h-14 w-full gap-2 rounded-2xl text-base font-semibold">
+              <Button onClick={onCall} disabled={!canCall} className="h-14 w-full gap-2 rounded-2xl text-base font-semibold">
                 <Phone className="h-5 w-5" />Appeler maintenant
               </Button>
-              {permissions?.can_call === false && permissions.reasons.call && (
-                <p className="text-xs text-muted-foreground">{permissions.reasons.call}</p>
+              {!canCall && (
+                <p className="text-xs text-amber-600" data-testid="call-blocked-reason">{callBlockedReason}</p>
               )}
               <div className="grid grid-cols-2 gap-2">
                 <Button variant="secondary" className="h-12 rounded-xl" onClick={() => onOutcome("send_audit")}>Intéressé</Button>
@@ -349,19 +382,19 @@ export default function PageAffiliateActionMode() {
           {prospect ? (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
-                <Button onClick={() => onSend("sms")} disabled={!phone || sending !== null || permissions?.can_sms === false} className="h-14 gap-2 rounded-2xl text-base font-semibold">
+                <Button onClick={() => onSend("sms")} disabled={!canSms || sending !== null} className="h-14 gap-2 rounded-2xl text-base font-semibold">
                   {sending === "sms" ? <Loader2 className="h-5 w-5 animate-spin" /> : <MessageSquare className="h-5 w-5" />}Texto
                 </Button>
-                <Button onClick={() => onSend("email")} disabled={!prospect.email || sending !== null || permissions?.can_email === false} variant="secondary" className="h-14 gap-2 rounded-2xl text-base font-semibold">
+                <Button onClick={() => onSend("email")} disabled={!canEmail || sending !== null} variant="secondary" className="h-14 gap-2 rounded-2xl text-base font-semibold">
                   {sending === "email" ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}Courriel
                 </Button>
               </div>
-              {permissions?.research_only && (
+              {!canSms && !canEmail && (
                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
                   <p className="text-xs font-semibold text-foreground">Envoi bloqué — recherche seulement</p>
                   <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
-                    {permissions.reasons.sms && <li>Texto : {permissions.reasons.sms}</li>}
-                    {permissions.reasons.email && <li>Courriel : {permissions.reasons.email}</li>}
+                    <li>Texto : {permissions?.reasons.sms ?? "Vérification de conformité en cours."}</li>
+                    <li>Courriel : {permissions?.reasons.email ?? "Vérification de conformité en cours."}</li>
                   </ul>
                 </div>
               )}
@@ -412,7 +445,7 @@ export default function PageAffiliateActionMode() {
                 ) : (
                   <Button
                     onClick={onOfferFree}
-                    disabled={offering}
+                    disabled={offering || !canCall}
                     className="mt-3 h-12 w-full gap-2 rounded-2xl bg-amber-500 text-black hover:bg-amber-500/90"
                   >
                     {offering ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gift className="h-4 w-4" />}
@@ -491,7 +524,7 @@ export default function PageAffiliateActionMode() {
               Inscriptions commencées puis laissées en plan, qui vous ont été attribuées. Aucun message n'a été envoyé en votre nom.
             </p>
           </div>
-          <MyManualQueue />
+          <MyManualQueue queue="onboarding_recovery" />
         </section>
       </main>
 
@@ -503,12 +536,13 @@ export default function PageAffiliateActionMode() {
             disabled={loading}
             onClick={() => {
               if (!prospect) { void loadNext(); return; }
-              if (!called && phone) { void onCall(); return; }
+              // Échec fermé : jamais d'appel si la permission n'est pas accordée.
+              if (!called && canCall) { void onCall(); return; }
               void loadNext(prospect.id);
             }}
           >
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : !prospect ? <Search className="h-5 w-5" /> : !called && phone ? <Phone className="h-5 w-5" /> : <SkipForward className="h-5 w-5" />}
-            {!prospect ? "TROUVER UN PROSPECT" : !called && phone ? "📞 CONTACTER LE PROCHAIN PROSPECT" : "PROSPECT SUIVANT"}
+            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : !prospect ? <Search className="h-5 w-5" /> : !called && canCall ? <Phone className="h-5 w-5" /> : <SkipForward className="h-5 w-5" />}
+            {!prospect ? "TROUVER UN PROSPECT" : !called && canCall ? "📞 CONTACTER LE PROCHAIN PROSPECT" : "PROSPECT SUIVANT"}
           </Button>
         </div>
       </div>

@@ -101,8 +101,39 @@ Deno.serve(async (req) => {
     ) as { is_active: boolean; config_json: unknown } | null;
 
     if (!rule) return json({ error: "rule_missing", rule_key: RECOVERY_RULE_KEY }, 409);
-    if (!rule.is_active) return json({ disabled: true, rule_key: RECOVERY_RULE_KEY, routed: 0, candidates: 0 });
     const cfg = mergeConfig(rule.config_json);
+    if (!rule.is_active) {
+      // Même forme de schéma qu'une exécution normale : l'UI ne doit jamais
+      // déréférencer un champ absent quand la règle est en pause.
+      return json({
+        ok: true,
+        disabled: true,
+        rule_key: RECOVERY_RULE_KEY,
+        dry_run: dryRun,
+        rule_version: cfg.version,
+        config: {
+          inactivity_hours: cfg.inactivity_hours,
+          fit_score_min: cfg.fit_score_min,
+          priority_score_min: cfg.priority_score_min,
+          crm_eligible_stages: cfg.crm_eligible_stages,
+          crm_future_stages: cfg.crm_future_stages,
+        },
+        learning: {
+          applied: false,
+          sample: 0,
+          terminal_outcomes: 0,
+          min_sample: cfg.learning.min_sample,
+          max_boost: cfg.learning.max_boost,
+        },
+        totals: {
+          inspected: 0, routed: 0, unassigned: 0, skipped: 0,
+          crm_inspected: 0, crm_routed: 0, crm_unassigned: 0, crm_skipped: 0, crm_future_eligible: 0,
+        },
+        results: [],
+        crm_results: [],
+      });
+    }
+
 
     const now = Date.now();
 
@@ -144,10 +175,14 @@ Deno.serve(async (req) => {
     }
 
     // --- Apprentissage borné à partir des résultats réels observés
-    const routedLeadIdList = events.map((e) => e.lead_id);
+    // Fenêtre de 90 jours appliquée À LA SOURCE (et non seulement annoncée).
+    const learningWindowStart = new Date(now - 90 * 86400000).toISOString();
+    const learningEvents = events.filter((e) => e.created_at >= learningWindowStart);
+    const routedLeadIdList = Array.from(new Set(learningEvents.map((e) => e.lead_id)));
     const rollups: Record<string, LearningRollup> = {};
     const dimRollups: Record<string, LearningRollup & { affiliate_id: string; service_category: string | null; city: string | null }> = {};
     if (routedLeadIdList.length > 0) {
+
       const routedLeads = (ok(
         await admin
           .from("contractor_leads")
@@ -164,7 +199,12 @@ Deno.serve(async (req) => {
         "lecture événements aval",
       ) ?? []) as Array<{ lead_id: string; affiliate_id: string; event_type: string }>;
 
-      for (const e of events) {
+      // Un seul décompte par dossier routé (dédoublonnage des résultats terminaux).
+      const countedLeads = new Set<string>();
+      for (const e of learningEvents) {
+        if (countedLeads.has(e.lead_id)) continue;
+        countedLeads.add(e.lead_id);
+
         const l = byLead.get(e.lead_id) as Record<string, unknown> | undefined;
         const category = normalizeCategory(String(l?.category_primary ?? l?.trade ?? "") || null, cfg) || null;
         const city = normalizeCity(String(l?.city ?? "") || null, cfg).normalized || null;
@@ -185,16 +225,19 @@ Deno.serve(async (req) => {
       }
     }
     // --- Apprentissage : cohorte CRM (résultats réels d'assignations de reprise)
+    // Fenêtre filtrée à la source; une seule ligne comptée par prospect.
     const crmAssignments = (ok(
       await admin
         .from("crm_manual_assignments")
-        .select("prospect_id, affiliate_id, status, last_outcome, attempts")
-        .eq("queue", "onboarding_recovery"),
+        .select("prospect_id, affiliate_id, status, last_outcome, attempts, assigned_at")
+        .eq("queue", "onboarding_recovery")
+        .gte("assigned_at", learningWindowStart)
+        .order("assigned_at", { ascending: false }),
       "lecture assignations de reprise",
-    ) ?? []) as Array<{ prospect_id: string; affiliate_id: string | null; status: string | null; last_outcome: string | null; attempts: number | null }>;
+    ) ?? []) as Array<{ prospect_id: string; affiliate_id: string | null; status: string | null; last_outcome: string | null; attempts: number | null; assigned_at: string | null }>;
 
     if (crmAssignments.length > 0) {
-      const pids = crmAssignments.map((a) => a.prospect_id);
+      const pids = Array.from(new Set(crmAssignments.map((a) => a.prospect_id)));
       const prospects = (ok(
         await admin
           .from("verified_contractor_prospects")
@@ -204,8 +247,16 @@ Deno.serve(async (req) => {
       ) ?? []) as Array<{ id: string; city: string | null; category: string | null }>;
       const byProspect = new Map(prospects.map((p) => [p.id, p]));
 
+      const countedProspects = new Set<string>();
       for (const a of crmAssignments) {
         if (!a.affiliate_id) continue;
+        if (countedProspects.has(a.prospect_id)) continue;
+        // N'apprendre que d'un résultat réellement observé : jamais de la
+        // simple existence d'une assignation, jamais d'une simulation.
+        const observed = (a.attempts ?? 0) > 0 || !!a.last_outcome;
+        if (!observed) continue;
+        countedProspects.add(a.prospect_id);
+
         const p = byProspect.get(a.prospect_id);
         const category = normalizeCategory(p?.category ?? null, cfg) || null;
         const city = normalizeCity(p?.city ?? null, cfg).normalized || null;
@@ -318,13 +369,25 @@ Deno.serve(async (req) => {
     // =====================================================================
     // COHORTE B — prospects vérifiés du CRM → file manuelle affiliée
     // =====================================================================
+    // Filtrer et ORDONNER de façon déterministe AVANT de limiter : sinon la
+    // cohorte pertinente (ex. checkout_opened) peut être écartée par l'ordre
+    // physique des lignes.
+    const crmStages = Array.from(new Set([...cfg.crm_eligible_stages, ...cfg.crm_future_stages]));
     const crmQueue = (ok(
       await admin
         .from("v_manual_contact_queue")
         .select("prospect_id, business_name, city, category, current_stage, priority_score, phone_e164, email, opted_out, assignment_id, affiliate_id, owner_user_id, assignment_status, last_activity_at, hours_since_last_activity, phone_validation_status")
+        .is("assignment_id", null)
+        .is("affiliate_id", null)
+        .in("current_stage", crmStages)
+        .gte("hours_since_last_activity", cfg.inactivity_hours)
+        .order("priority_score", { ascending: false, nullsFirst: false })
+        .order("hours_since_last_activity", { ascending: false, nullsFirst: false })
+        .order("prospect_id", { ascending: true })
         .limit(cfg.max_candidates),
       "lecture v_manual_contact_queue",
     ) ?? []) as CrmQueueRow[];
+
 
     const crmIds = crmQueue.map((r) => r.prospect_id);
     // Ponts existants vers contractor_leads (preuve LCAP canonique).
@@ -354,7 +417,9 @@ Deno.serve(async (req) => {
       await admin
         .from("crm_action_log")
         .select("prospect_id, idempotency_key")
-        .eq("source", CRM_SOURCE)
+        // Le RPC journalise désormais `automation`; l'ancienne valeur reste
+        // prise en compte pour préserver l'idempotence des routages passés.
+        .in("source", ["automation", CRM_SOURCE])
         .like("idempotency_key", "auto_recovery:%"),
       "lecture crm_action_log",
     ) ?? []) as Array<{ prospect_id: string | null; idempotency_key: string | null }>;
@@ -435,7 +500,10 @@ Deno.serve(async (req) => {
           p_prospect_id: row.prospect_id,
           p_affiliate_id: match.affiliate_id,
           p_priority: Math.round(crmRoutingScore(row, cfg)),
-          p_next_action: perms.can_call ? "Appeler" : "Vérifier la conformité avant tout contact",
+          // La base réapplique l'invariant : recherche seulement ⇒ action sûre.
+          p_next_action: perms.research_only || !perms.can_call
+            ? "Vérifier la conformité avant tout contact"
+            : "Appeler",
           p_due_at: new Date(now + 24 * 3600 * 1000).toISOString(),
           p_idempotency_key: key,
           p_reason: crmActionReason(stage),
@@ -472,18 +540,19 @@ Deno.serve(async (req) => {
       const windowStart = new Date(now - 90 * 86400000).toISOString();
       const windowEnd = new Date(now).toISOString();
       for (const r of Object.values(dimRollups)) {
-        const q = admin
+        // La clé de dimension inclut la ville : sans elle, une ville écrase
+        // l'autre pour le même affilié et la même catégorie.
+        let q = admin
           .from("agent_learning_outcomes")
           .select("id")
           .eq("tactic_key", RECOVERY_TACTIC_KEY)
           .eq("channel", "internal_routing")
           .eq("variant", r.affiliate_id)
           .eq("source", "affiliate-onboarding-recovery");
-        const existing = ok(
-          await (r.service_category ? q.eq("service_category", r.service_category) : q.is("service_category", null))
-            .limit(1),
-          "lecture agent_learning_outcomes",
-        ) as Array<{ id: string }> | null;
+        q = r.service_category ? q.eq("service_category", r.service_category) : q.is("service_category", null);
+        q = r.city ? q.eq("city", r.city) : q.is("city", null);
+        const existing = ok(await q.limit(1), "lecture agent_learning_outcomes") as Array<{ id: string }> | null;
+
         const row = {
           tactic_key: RECOVERY_TACTIC_KEY,
           channel: "internal_routing",

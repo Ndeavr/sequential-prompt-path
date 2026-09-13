@@ -58,6 +58,16 @@ export function evaluateCrmCandidate(
   if (!(row.phone_e164 || row.email)) skip.push("no_contact_method");
   if (opts.alreadyRoutedProspectIds?.has(row.prospect_id)) skip.push("already_routed");
 
+  // Porte dure d'inactivité : valeur finie ET >= fenêtre configurée.
+  // null / non finie / trop récente = bloqué, avec motif explicite.
+  const hours = Number(row.hours_since_last_activity);
+  if (row.hours_since_last_activity === null || row.hours_since_last_activity === undefined || !Number.isFinite(hours)) {
+    skip.push("inactivity_unknown");
+  } else if (hours < cfg.inactivity_hours) {
+    skip.push("inactivity_too_recent");
+  }
+
+
   const eligibleStage = cfg.crm_eligible_stages.includes(stage);
   const futureStage = cfg.crm_future_stages.includes(stage);
   if (!eligibleStage) skip.push(futureStage ? "stage_future_eligible" : "stage_not_eligible");

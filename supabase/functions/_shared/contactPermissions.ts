@@ -9,12 +9,14 @@
  * Portée des canaux :
  *  - SMS / courriel commercial : preuve LCAP valide exigée pour la destination
  *    exacte, échec fermé.
- *  - Appel manuel composé par l'opérateur : permis tant qu'il n'y a ni retrait
- *    (do_not_contact / désabonnement), ni suppression du numéro, ni révision de
- *    conformité ouverte, ni numéro déclaré invalide.
+ *  - Appel manuel composé par l'opérateur : ÉCHEC FERMÉ également. L'appel n'est
+ *    permis que si le numéro a été validé positivement (statuts positifs
+ *    réellement observés en base : `valid_mobile`, `valid_sms_capable_voip`) et
+ *    qu'aucun retrait, suppression, révision de conformité ou risque n'est ouvert.
  *
  * `research_only` = AUCUN canal permis (ni appel, ni SMS, ni courriel).
  */
+
 
 export interface SendEligibilityRow {
   contractor_lead_id: string;
@@ -35,13 +37,14 @@ export const INVALID_PHONE_STATUSES = [
   "landline_invalid",
 ] as const;
 
-/** Statuts de validation téléphonique positifs (numéro confirmé joignable). */
+/**
+ * Statuts de validation téléphonique POSITIFS.
+ * Liste volontairement restreinte aux seules valeurs positives réellement
+ * observées en production. Aucun statut permissif ajouté « au cas où ».
+ */
 export const VERIFIED_PHONE_STATUSES = [
   "valid_mobile",
   "valid_sms_capable_voip",
-  "valid_voip",
-  "valid_landline",
-  "valid",
 ] as const;
 
 export interface ContactPermissionInput {
@@ -64,7 +67,7 @@ export interface ContactPermissions {
   can_email: boolean;
   /** Vrai seulement si AUCUN canal n'est permis (recherche / profil uniquement). */
   research_only: boolean;
-  /** Vrai quand l'appel est permis mais que le numéro n'est pas encore vérifié. */
+  /** Vrai quand le numéro n'a PAS été validé positivement (appel interdit). */
   phone_unverified: boolean;
   reasons: {
     call: string | null;
@@ -83,6 +86,8 @@ const R = {
   no_evidence: "Aucune preuve LCAP valide pour cette destination.",
   suppressed: "Destination dans l'index de suppression.",
   invalid_phone: "Numéro déclaré invalide à la validation.",
+  phone_not_validated:
+    "Numéro non validé positivement : aucun appel tant que la validation n'a pas confirmé le numéro.",
 };
 
 /** Calcule les permissions réelles. Échec fermé par défaut. */
@@ -99,7 +104,9 @@ export function computeContactPermissions(input: ContactPermissionInput): Contac
   const complianceReason = input.compliance_review_reason ?? e?.compliance_review_reason ?? null;
   const complianceText = complianceReason ? `${R.compliance} (${complianceReason})` : R.compliance;
 
-  // ── Appel manuel ───────────────────────────────────────────────────
+  // ── Appel manuel (ÉCHEC FERMÉ) ─────────────────────────────────────
+  // Un appel n'est permis qu'avec un statut de validation POSITIF explicite.
+  // null / unverified / pending / lookup_failed / inconnu → interdit.
   let call: string | null = null;
   if (!input.has_phone) call = R.no_phone;
   else if (optedOut) call = R.opted_out;
@@ -107,6 +114,7 @@ export function computeContactPermissions(input: ContactPermissionInput): Contac
   else if (complianceOpen) call = complianceText;
   else if (e?.phone_suppressed === true) call = R.suppressed;
   else if (phoneInvalid) call = R.invalid_phone;
+  else if (!phoneVerified) call = R.phone_not_validated;
 
   // ── Canaux électroniques commerciaux ───────────────────────────────
   const electronic = (kind: "sms" | "email"): string | null => {
@@ -132,7 +140,7 @@ export function computeContactPermissions(input: ContactPermissionInput): Contac
     can_sms: smsReason === null,
     can_email: emailReason === null,
     research_only: call !== null && smsReason !== null && emailReason !== null,
-    phone_unverified: call === null && !phoneVerified,
+    phone_unverified: !phoneVerified,
     reasons: { call, sms: smsReason, email: emailReason },
   };
 }

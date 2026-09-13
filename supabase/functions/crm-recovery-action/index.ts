@@ -192,6 +192,8 @@ Deno.serve(async (req) => {
 
     /** Décisions de la porte canonique conservées pour l'audit. */
     const gateAudits = new Map<string, GateDecision>();
+    /** Dossiers dont l'écriture d'audit a échoué : jamais un succès propre. */
+    const auditFailures: string[] = [];
 
 
     /**
@@ -473,8 +475,10 @@ Deno.serve(async (req) => {
             if (insErr) throw new Error(`assign_failed: ${insErr.message}`);
 
             // Notification d'assignation (chemin courriel sortant existant).
-            // Le routage interne automatique passe `suppress_notification`.
-            if (affiliateId && payloadExtra.suppress_notification !== true) {
+            // `suppress_notification` n'est honoré que pour un appel interne
+            // vérifié (service role). Une charge utile admin ne suffit pas.
+            const suppressNotification = isServiceRole && payloadExtra.suppress_notification === true;
+            if (affiliateId && !suppressNotification) {
               const { data: aff } = await sb
                 .from("affiliates")
                 .select("email, name")
@@ -652,21 +656,31 @@ Deno.serve(async (req) => {
         idempotency_key: logKey,
       });
       if (logErr) {
-        // The audit write must never silently disappear.
+        // The audit write must never silently disappear. An unaudited send is
+        // never reported as a clean success (no second provider call is made).
         console.error(`[crm-recovery-action] audit log insert failed (${action}/${pid}):`, logErr.message);
+        auditFailures.push(pid);
+        for (const r of results) {
+          if (r.prospect_id === pid && r.status === "success") {
+            (r as Record<string, unknown>).status = "audit_failed";
+            (r as Record<string, unknown>).result = `${result} | audit_log_failed: ${logErr.message}`;
+          }
+        }
       }
     }
 
     return json({
-      ok: true,
+      ok: auditFailures.length === 0,
       action,
       dry_run: dryRun,
       total: results.length,
       succeeded: results.filter((r) => r.status === "success").length,
       failed: results.filter((r) => r.status === "failed").length,
       skipped: results.filter((r) => r.status === "skipped").length,
+      audit_failed: auditFailures.length,
       results,
-    });
+    }, auditFailures.length > 0 ? 500 : 200);
+
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }

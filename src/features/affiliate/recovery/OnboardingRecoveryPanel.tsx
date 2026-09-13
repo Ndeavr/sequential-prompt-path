@@ -135,8 +135,10 @@ export default function OnboardingRecoveryPanel() {
       const payload = res as RecoveryResponse;
       if (payload?.error) throw new Error(payload.error);
       setData(payload);
-      if (payload.disabled) toast.info("Règle désactivée dans optimization_rules.");
-      else toast.success(dryRun ? "Simulation terminée" : `Routage terminé — ${payload.totals.routed} assigné(s)`);
+      const totalRouted = (payload?.totals?.routed ?? 0) + (payload?.totals?.crm_routed ?? 0);
+      if (payload.disabled) toast.info("Règle en pause : aucune assignation effectuée.");
+      else toast.success(dryRun ? "Simulation terminée" : `Routage terminé — ${totalRouted} assigné(s)`);
+
     } catch (e) {
       const message = e instanceof Error ? e.message : "Erreur inconnue";
       setError(message);
@@ -168,17 +170,23 @@ export default function OnboardingRecoveryPanel() {
             Lancez une simulation pour voir les inscriptions commencées puis abandonnées, et l'affilié proposé.
           </p>
         )}
-        {data && (
+        {data?.disabled && (
+          <p className="text-sm text-muted-foreground">
+            Règle en pause : aucune reprise n'est routée tant qu'elle n'est pas réactivée.
+          </p>
+        )}
+        {data?.totals && data?.config && (
           <>
             <p className="text-xs text-muted-foreground">
               Règle {data.rule_version} · inactivité ≥ {data.config.inactivity_hours} h · fit ≥ {data.config.fit_score_min} ·
               priorité ≥ {data.config.priority_score_min} · {data.dry_run ? "simulation" : "exécution réelle"}
             </p>
             <p className="text-xs text-muted-foreground">
-              {data.learning.applied
+              {data.learning?.applied
                 ? `Ordonnancement ajusté par les résultats observés (échantillon ${data.learning.sample}, plafond ±${data.learning.max_boost}).`
-                : `Ordonnancement déterministe v1 : échantillon réel ${data.learning.sample}/${data.learning.min_sample}, pas encore d'ajustement appris.`}
+                : `Ordonnancement déterministe v1 : échantillon réel ${data.learning?.sample ?? 0}/${data.learning?.min_sample ?? 0}, pas encore d'ajustement appris.`}
             </p>
+
             <div className="flex flex-wrap gap-2 text-xs">
               <Badge variant="outline">Inspectés {data.totals.inspected}</Badge>
               <Badge variant="outline">Routés {data.totals.routed}</Badge>

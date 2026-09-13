@@ -62,15 +62,39 @@ Deno.serve(async (req) => {
       .eq("user_id", user.id)
       .maybeSingle();
     if (!affiliate) return json({ error: "not_an_affiliate" }, 403);
+    // Seul un affilié ACTIF peut voir ou agir sur un dossier.
+    if (String(affiliate.status ?? "") !== "active") {
+      return json({ error: "affiliate_not_active" }, 403);
+    }
 
     const body = await req.json().catch(() => ({}));
     const action = String(body.action ?? "next");
     const nowIso = new Date().toISOString();
 
+    /**
+     * Propriété stricte : si `assigned_affiliate_id` est non nul, seul cet
+     * affilié agit. `created_by_affiliate_id` n'est un repli que tant que le
+     * dossier n'est assigné à personne.
+     */
+    const ownsLead = (l: { assigned_affiliate_id?: string | null; created_by_affiliate_id?: string | null }) =>
+      l.assigned_affiliate_id
+        ? l.assigned_affiliate_id === affiliate.id
+        : l.created_by_affiliate_id === affiliate.id;
+
     // ── release / skip ────────────────────────────────────────────────
     if (action === "release" || action === "skip") {
       const leadId = body.lead_id ? String(body.lead_id) : null;
       if (leadId) {
+        // Vérifier la propriété AVANT toute mutation : un lead_id arbitraire
+        // ne doit jamais être modifiable.
+        const { data: lead, error: leadErr } = await sb
+          .from("contractor_leads")
+          .select("id, assigned_affiliate_id, created_by_affiliate_id")
+          .eq("id", leadId)
+          .maybeSingle();
+        if (leadErr) return json({ error: leadErr.message }, 500);
+        if (!lead || !ownsLead(lead)) return json({ error: "not_your_lead" }, 403);
+
         await sb.from("affiliate_prospect_locks").delete().eq("lead_id", leadId).eq("affiliate_id", affiliate.id);
         if (action === "skip") {
           const reason = String(body.reason ?? "autre");
@@ -89,14 +113,15 @@ Deno.serve(async (req) => {
             const d = new Date(Date.now() + 7 * 86400000).toISOString();
             patch.next_follow_up_at = d;
           }
-          await sb.from("contractor_leads").update(patch).eq("id", leadId);
+          const { error: upErr } = await sb.from("contractor_leads").update(patch).eq("id", leadId);
+          if (upErr) return json({ error: upErr.message }, 500);
         }
       }
       if (action === "release") return json({ ok: true });
     }
 
     // ── next ──────────────────────────────────────────────────────────
-    const { data: leads, error } = await sb
+    const { data: rawLeads, error } = await sb
       .from("contractor_leads")
       .select(
         "id, company_name, business_name, first_name, last_name, full_name, role_title, city, category_primary, trade, phone_e164, phone, email, website_url, contact_status, next_follow_up_at, last_contacted_at, priority_score, fit_score, profile_status, onboarding_started_at, payment_started_at, paid_at, profile_active_at, do_not_contact, unsubscribed_at, archived_at, sms_eligible, consent_to_contact, phone_validation_status, compliance_review_required, compliance_review_reason, assigned_affiliate_id, created_by_affiliate_id"
@@ -105,6 +130,9 @@ Deno.serve(async (req) => {
       .is("archived_at", null)
       .limit(400);
     if (error) return json({ error: error.message }, 500);
+    // Filtre de propriété stricte côté serveur (le OR SQL reste permissif).
+    const leads = (rawLeads ?? []).filter((l) => ownsLead(l as any));
+
 
     // Onboardings routés pour reprise (faits réels uniquement)
     const { data: recoveryEvents, error: recErr } = await sb
