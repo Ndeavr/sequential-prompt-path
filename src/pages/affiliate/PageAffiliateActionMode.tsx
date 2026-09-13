@@ -524,7 +524,7 @@ export default function PageAffiliateActionMode() {
               Inscriptions commencées puis laissées en plan, qui vous ont été attribuées. Aucun message n'a été envoyé en votre nom.
             </p>
           </div>
-          <MyManualQueue />
+          <MyManualQueue queue="onboarding_recovery" />
         </section>
       </main>
 
