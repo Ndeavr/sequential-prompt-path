@@ -349,13 +349,25 @@ Deno.serve(async (req) => {
     // =====================================================================
     // COHORTE B — prospects vérifiés du CRM → file manuelle affiliée
     // =====================================================================
+    // Filtrer et ORDONNER de façon déterministe AVANT de limiter : sinon la
+    // cohorte pertinente (ex. checkout_opened) peut être écartée par l'ordre
+    // physique des lignes.
+    const crmStages = Array.from(new Set([...cfg.crm_eligible_stages, ...cfg.crm_future_stages]));
     const crmQueue = (ok(
       await admin
         .from("v_manual_contact_queue")
         .select("prospect_id, business_name, city, category, current_stage, priority_score, phone_e164, email, opted_out, assignment_id, affiliate_id, owner_user_id, assignment_status, last_activity_at, hours_since_last_activity, phone_validation_status")
+        .is("assignment_id", null)
+        .is("affiliate_id", null)
+        .in("current_stage", crmStages)
+        .gte("hours_since_last_activity", cfg.inactivity_hours)
+        .order("priority_score", { ascending: false, nullsFirst: false })
+        .order("hours_since_last_activity", { ascending: false, nullsFirst: false })
+        .order("prospect_id", { ascending: true })
         .limit(cfg.max_candidates),
       "lecture v_manual_contact_queue",
     ) ?? []) as CrmQueueRow[];
+
 
     const crmIds = crmQueue.map((r) => r.prospect_id);
     // Ponts existants vers contractor_leads (preuve LCAP canonique).
