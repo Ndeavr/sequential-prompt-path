@@ -21,6 +21,10 @@ export interface RecoveryConfig {
   /** Normalisation géographique documentée et déterministe (arrondissement → ville). */
   city_normalization: Record<string, string>;
   category_aliases: Record<string, string>;
+  /** Étapes CRM vérifiées routables automatiquement en v1. */
+  crm_eligible_stages: string[];
+  /** Étapes observées mais volontairement non routées (visibles en simulation). */
+  crm_future_stages: string[];
 }
 
 /** Arrondissements de Montréal — normalisation géographique documentée. */
@@ -53,6 +57,8 @@ export const DEFAULT_RECOVERY_CONFIG: RecoveryConfig = {
   priority_score_min: 70,
   max_candidates: 200,
   learning: { min_sample: 30, min_terminal: 10, max_boost: 10 },
+  crm_eligible_stages: ["checkout_opened", "otp_verified", "registered"],
+  crm_future_stages: ["landing_viewed", "clicked", "invited", "not_started"],
   city_normalization: Object.fromEntries(MONTREAL_BOROUGHS.map((b) => [b, "montreal"])),
   category_aliases: {
     toiture: "toiture",
