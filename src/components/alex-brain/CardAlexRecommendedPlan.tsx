@@ -8,7 +8,7 @@
 import { motion } from "framer-motion";
 import { Zap, Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CONTRACTOR_PLANS, type ContractorPlanSlug } from "@/config/pricing";
+import { PUBLIC_CONTRACTOR_PLANS, type ContractorPlanSlug } from "@/config/pricing";
 
 interface Props {
   /** Optional override list. Defaults to canonical CONTRACTOR_PLANS (top 3). */
@@ -25,7 +25,7 @@ export default function CardAlexRecommendedPlan({
 }: Props) {
   // Show the most relevant tier (skip "recrue" — too entry-level for Alex's
   // recommendation surface) up to `visibleCount`.
-  const plans = CONTRACTOR_PLANS.filter((p) => p.slug !== "recrue").slice(0, visibleCount);
+  const plans = PUBLIC_CONTRACTOR_PLANS.filter((p) => !p.free).slice(0, visibleCount);
 
   return (
     <motion.div

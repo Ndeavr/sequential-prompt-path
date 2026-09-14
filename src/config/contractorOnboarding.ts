@@ -52,11 +52,11 @@ export interface ContractorObjectiveChip {
 
 /** Objective chips — one tap maps directly to a plan recommendation. */
 export const CONTRACTOR_OBJECTIVES: readonly ContractorObjectiveChip[] = Object.freeze([
-  { key: "more_calls",     label: "Plus d'appels",       recommendedPlan: "pro" },
-  { key: "more_quotes",    label: "Plus de soumissions", recommendedPlan: "premium" },
-  { key: "fill_schedule",  label: "Remplir mon agenda",  recommendedPlan: "premium" },
-  { key: "premium_jobs",   label: "Jobs rentables",      recommendedPlan: "premium" },
-  { key: "dominate_city",  label: "Dominer ma ville",    recommendedPlan: "domination" },
+  { key: "more_calls",     label: "Plus d'appels",       recommendedPlan: "depart" },
+  { key: "more_quotes",    label: "Plus de soumissions", recommendedPlan: "croissance_v2" },
+  { key: "fill_schedule",  label: "Remplir mon agenda",  recommendedPlan: "pro_v2" },
+  { key: "premium_jobs",   label: "Jobs rentables",      recommendedPlan: "pro_v2" },
+  { key: "dominate_city",  label: "Dominer ma ville",    recommendedPlan: "elite_v2" },
 ]);
 
 /**

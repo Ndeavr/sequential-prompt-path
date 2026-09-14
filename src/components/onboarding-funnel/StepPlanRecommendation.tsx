@@ -24,13 +24,13 @@ interface Props {
   isProcessing: boolean;
 }
 
-import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
+import { PUBLIC_CONTRACTOR_PLANS, getContractorPlan } from "@/config/contractorPlans";
 
-const PLAN_ICON_MAP: Record<string, any> = { recrue: Zap, pro: Zap, premium: Star, elite: Crown, signature: Crown };
-const PLAN_COLOR_MAP: Record<string, string> = { recrue: "text-muted-foreground", pro: "text-blue-400", premium: "text-secondary", elite: "text-yellow-400", signature: "text-rose-400" };
+const PLAN_ICON_MAP: Record<string, any> = { recrue: Zap, depart: Zap, croissance_v2: Star, pro_v2: Crown, elite_v2: Crown };
+const PLAN_COLOR_MAP: Record<string, string> = { recrue: "text-muted-foreground", depart: "text-blue-400", croissance_v2: "text-secondary", pro_v2: "text-yellow-400", elite_v2: "text-rose-400" };
 
 const PLAN_DEFS: Record<string, { icon: any; color: string; price: string; features: string[] }> = Object.fromEntries(
-  CONTRACTOR_PLANS.map((p) => [
+  PUBLIC_CONTRACTOR_PLANS.map((p) => [
     p.slug,
     {
       icon: PLAN_ICON_MAP[p.slug] || Zap,
@@ -43,23 +43,23 @@ const PLAN_DEFS: Record<string, { icon: any; color: string; price: string; featu
 
 function computePlanMatch(objectives: ObjectivesData | null, city: string): PlanMatch {
   if (!objectives) {
-    return { recommended_plan: "pro", monthly_rdv_needed: 8, projected_monthly_revenue: 10000, projected_monthly_profit: 2000, exclusivity_possible: false, territory_status: "available", reasoning: "Plan de base recommandé." };
+    return { recommended_plan: "depart", monthly_rdv_needed: 8, projected_monthly_revenue: 10000, projected_monthly_profit: 2000, exclusivity_possible: false, territory_status: "available", reasoning: "Plan de base recommandé." };
   }
 
   const monthlyRdv = objectives.appointments_capacity_weekly * 4;
   const target = objectives.revenue_target_monthly;
 
-  let plan = "pro";
-  if (target >= 50000 || objectives.preferred_project_size === "xlarge") plan = "signature";
-  else if (target >= 30000 || objectives.preferred_project_size === "large") plan = "elite";
-  else if (target >= 15000) plan = "premium";
+  let plan = "depart";
+  if (target >= 50000 || objectives.preferred_project_size === "xlarge") plan = "elite_v2";
+  else if (target >= 30000 || objectives.preferred_project_size === "large") plan = "pro_v2";
+  else if (target >= 15000) plan = "croissance_v2";
 
   return {
     recommended_plan: plan,
     monthly_rdv_needed: Math.max(4, Math.round(monthlyRdv * 0.6)),
     projected_monthly_revenue: target,
     projected_monthly_profit: Math.round(target * 0.22),
-    exclusivity_possible: plan === "signature" || plan === "elite",
+    exclusivity_possible: plan === "elite_v2" || plan === "pro_v2",
     territory_status: "available",
     reasoning: `Basé sur votre objectif de ${target.toLocaleString("fr-CA")}$/mois et votre capacité de ${monthlyRdv} rendez-vous/mois.`,
   };
@@ -67,7 +67,8 @@ function computePlanMatch(objectives: ObjectivesData | null, city: string): Plan
 
 export default function StepPlanRecommendation({ objectives, businessName, city, activity, onSelectPlan, isProcessing }: Props) {
   const match = computePlanMatch(objectives, city);
-  const planDef = PLAN_DEFS[match.recommended_plan] || PLAN_DEFS.pro;
+  const planDef = PLAN_DEFS[match.recommended_plan] || PLAN_DEFS.depart;
+  const planName = getContractorPlan(match.recommended_plan)?.name ?? match.recommended_plan;
   const PlanIcon = planDef.icon;
 
   const fmt = (n: number) => n.toLocaleString("fr-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 });
@@ -94,7 +95,7 @@ export default function StepPlanRecommendation({ objectives, businessName, city,
             <PlanIcon className={`w-6 h-6 ${planDef.color}`} />
           </div>
           <div>
-            <p className="text-lg font-bold text-foreground capitalize">{match.recommended_plan}</p>
+            <p className="text-lg font-bold text-foreground">{planName}</p>
             <p className="text-sm text-muted-foreground">{planDef.price}/mois</p>
           </div>
         </div>
@@ -156,7 +157,7 @@ export default function StepPlanRecommendation({ objectives, businessName, city,
         disabled={isProcessing}
         className="w-full h-14 rounded-2xl bg-primary text-primary-foreground font-bold text-base shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
       >
-        {isProcessing ? "Préparation..." : `Activer ${match.recommended_plan}`}
+        {isProcessing ? "Préparation..." : `Activer ${planName}`}
         {!isProcessing && <ArrowRight className="w-5 h-5" />}
       </motion.button>
     </div>

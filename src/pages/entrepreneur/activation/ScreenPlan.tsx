@@ -14,10 +14,10 @@ import { useActivationFunnel } from "@/hooks/useActivationFunnel";
 import { useHesitationRescue } from "@/hooks/useHesitationRescue";
 import { useFounderSlots } from "@/hooks/useFounderSlots";
 import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
-import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
+import { PUBLIC_CONTRACTOR_PLANS } from "@/config/contractorPlans";
 import FounderOfferCard from "@/features/founderMode/FounderOfferCard";
 
-const PLANS = CONTRACTOR_PLANS.map((p) => ({
+const PLANS = PUBLIC_CONTRACTOR_PLANS.map((p) => ({
   code: p.slug,
   name: p.name,
   price_monthly: p.monthlyPrice,
@@ -31,7 +31,7 @@ const PLANS = CONTRACTOR_PLANS.map((p) => ({
 export default function ScreenPlan() {
   const navigate = useNavigate();
   const { state, updateFunnel } = useActivationFunnel();
-  const [selectedPlan, setSelectedPlan] = useState(state.selected_plan || "premium");
+  const [selectedPlan, setSelectedPlan] = useState(state.selected_plan || "pro_v2");
   const [showWhy, setShowWhy] = useState(false);
   const founder = useFounderSlots();
   useHesitationRescue({ screenKey: "plan" });

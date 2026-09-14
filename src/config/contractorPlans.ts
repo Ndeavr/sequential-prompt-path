@@ -1,28 +1,37 @@
 /**
- * UNPRO — Contractor Plans: Single Source of Truth (v2026.08-growth)
+ * UNPRO — Contractor Plans: Single Source of Truth (v2026.09-canonical)
  *
- * Canonical catalog (monthly, CAD):
- *   Présence 49 · Local 79 · Croissance 149 · Pro 299 · Premium 599 · Domination 1499
+ * PUBLIC CATALOG (CAD, taxes en sus, facturées au paiement) :
+ *   Recrue 0 (gratuit, jamais de paiement)
+ *   Départ 149 / 1 430 an
+ *   Croissance 299 / 2 870 an
+ *   Pro 599 / 5 750 an
+ *   Élite 999 / 9 590 an
  *
- * Prices mirror public.plans (audience = 'contractor'). Use `useContractorPlans()`
- * when live DB values are required; this file is the static fallback + type source.
- * Legacy slugs (recrue, elite, signature) remain resolvable through LEGACY_PLAN_ALIAS.
+ * Le prix annuel = 20 % de rabais sur 12 mois, arrondi au dollar inférieur.
+ * Aucune autre règle de rabais (15 %, 16,7 %, ×10 mois) n'est permise.
+ *
+ * Présence et Signature sont RETIRÉS de l'offre publique : conservés ici et en
+ * base pour les abonnés existants, jamais souscriptibles.
+ *
+ * Prices mirror public.plans (audience = 'contractor'). Use `usePlanCatalog()`
+ * when live DB values are required; this file is the static fallback + copy source.
  */
 
 export type ContractorPlanSlug =
-  | "presence"
+  | "recrue"
   | "depart"
   | "croissance_v2"
   | "pro_v2"
   | "elite_v2"
+  // retired / superseded slugs kept resolvable for existing subscribers & older flows
+  | "presence"
   | "signature_v2"
-  // superseded slugs kept resolvable for older flows
   | "local"
   | "croissance"
   | "pro"
   | "premium"
   | "domination"
-  | "recrue"
   | "elite"
   | "signature";
 
@@ -32,6 +41,8 @@ export interface ContractorPlan {
   slug: ContractorPlanSlug;
   name: string;
   monthlyPrice: number; // dollars CAD
+  /** Annual total in dollars CAD (0 for the free plan). */
+  yearlyPrice: number;
   subtitle: string;
   description: string;
   cta: string;
@@ -39,6 +50,10 @@ export interface ContractorPlan {
   eyebrow?: string;
   appointmentsIncluded: number;
   features: string[];
+  /** Free plan: activation immediate, never goes through checkout. */
+  free?: boolean;
+  /** Retired from the public catalog — existing subscribers keep it. */
+  retired?: boolean;
 }
 
 export interface FounderOffer {
@@ -53,6 +68,11 @@ export interface FounderOffer {
   cta: string;
 }
 
+/** THE ONLY annual rule: 20 % off 12 months, floored to the dollar. */
+export const YEARLY_DISCOUNT_RATE = 0.2;
+export const computeYearlyPrice = (monthlyDollars: number): number =>
+  Math.floor(monthlyDollars * 12 * (1 - YEARLY_DISCOUNT_RATE));
+
 /** @deprecated Historical campaign compatibility only. Never use as a default entry path. */
 export const ENTRY_OFFER = {
   priceDollars: 350,
@@ -65,15 +85,32 @@ export const ENTRY_OFFER = {
 /** @deprecated Legacy name kept for import compatibility — use ENTRY_OFFER. */
 export const TRIAL_OFFER = ENTRY_OFFER;
 
-/**
- * Marketing copy for the ACTIVE catalog in `public.plans` (audience = 'contractor').
- * Prices mirror the DB rows exactly — the DB stays the source of truth.
- */
-export const CONTRACTOR_PLANS: ContractorPlan[] = [
+/** The 5 plans offered publicly today. */
+export const PUBLIC_CONTRACTOR_PLANS: ContractorPlan[] = [
+  {
+    slug: "recrue",
+    name: "Recrue",
+    monthlyPrice: 0,
+    yearlyPrice: 0,
+    free: true,
+    subtitle: "Votre entreprise existe dans UNPRO",
+    description:
+      "Activation gratuite : votre profil vérifié devient visible dans l'intelligence UNPRO.",
+    cta: "Activer gratuitement",
+    featured: false,
+    appointmentsIncluded: 0,
+    features: [
+      "Profil UNPRO vérifié",
+      "Présence dans les réponses IA",
+      "Score de visibilité visible",
+      "Aucun paiement requis",
+    ],
+  },
   {
     slug: "depart",
     name: "Départ",
     monthlyPrice: 149,
+    yearlyPrice: 1430,
     subtitle: "Votre premier rendez-vous chaque mois",
     description:
       "Un rendez-vous exclusif garanti par mois, jamais partagé avec un autre entrepreneur.",
@@ -91,6 +128,7 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     slug: "croissance_v2",
     name: "Croissance",
     monthlyPrice: 299,
+    yearlyPrice: 2870,
     subtitle: "Un flux régulier de projets",
     description:
       "Trois rendez-vous exclusifs garantis par mois et des statistiques pour piloter votre croissance.",
@@ -101,13 +139,14 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
       "3 rendez-vous exclusifs garantis par mois",
       "Demandes qualifiées par Clara",
       "Statistiques de performance",
-      "Optimisation continue du profil (AIPP)",
+      "Optimisation continue du profil",
     ],
   },
   {
     slug: "pro_v2",
     name: "Pro",
     monthlyPrice: 599,
+    yearlyPrice: 5750,
     subtitle: "Votre agenda se remplit",
     eyebrow: "Plan le plus populaire",
     description:
@@ -127,6 +166,7 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     slug: "elite_v2",
     name: "Élite",
     monthlyPrice: 999,
+    yearlyPrice: 9590,
     subtitle: "Volume élevé, agenda optimisé",
     description:
       "Douze rendez-vous exclusifs garantis par mois avec optimisation des routes et des distances.",
@@ -141,134 +181,143 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
       "Support prioritaire",
     ],
   },
-  {
-    slug: "signature_v2",
-    name: "Signature",
-    monthlyPrice: 1499,
-    subtitle: "Vous contrôlez votre marché",
-    description:
-      "Capacité sur mesure et exclusivité territoriale, orchestrées par l'intelligence UNPRO.",
-    cta: "Parler à UNPRO",
-    featured: false,
-    appointmentsIncluded: 0,
-    features: [
-      "Capacité de rendez-vous sur mesure",
-      "Exclusivité de territoire",
-      "Regroupement intelligent par secteur",
-      "Priorisation des projets à haute valeur",
-      "Visibilité IA maximale (AIPP MAX)",
-    ],
-  },
+];
+
+/**
+ * Retired plans. Kept resolvable so existing subscribers keep a correct label
+ * and price. NEVER rendered in a public grid, NEVER subscribable.
+ */
+export const RETIRED_CONTRACTOR_PLANS: ContractorPlan[] = [
   {
     slug: "presence",
     name: "Présence",
     monthlyPrice: 49,
-    subtitle: "Vous existez dans l'écosystème",
-    description:
-      "Votre entreprise devient visible et vérifiable dans l'intelligence UNPRO.",
-    cta: "Activer Présence",
+    yearlyPrice: 490,
+    retired: true,
+    subtitle: "Forfait retiré de l'offre",
+    description: "Forfait historique conservé pour les abonnés existants.",
+    cta: "Choisir un forfait actuel",
     featured: false,
     appointmentsIncluded: 0,
-    features: [
-      "Profil UNPRO vérifié",
-      "Présence dans les réponses IA",
-      "Réception de demandes de base",
-    ],
+    features: ["Profil UNPRO vérifié", "Présence dans les réponses IA"],
+  },
+  {
+    slug: "signature_v2",
+    name: "Signature",
+    monthlyPrice: 1499,
+    yearlyPrice: 14390,
+    retired: true,
+    subtitle: "Forfait retiré de l'offre",
+    description: "Forfait historique conservé pour les abonnés existants.",
+    cta: "Choisir un forfait actuel",
+    featured: false,
+    appointmentsIncluded: 0,
+    features: ["Capacité sur mesure", "Exclusivité de territoire"],
   },
   {
     slug: "local",
     name: "Local",
     monthlyPrice: 79,
-    subtitle: "Vos premiers rendez-vous",
-    description:
-      "Visibilité locale prioritaire dans votre ville et vos premiers rendez-vous confirmés.",
-    cta: "Activer Local",
+    yearlyPrice: 758,
+    retired: true,
+    subtitle: "Forfait retiré de l'offre",
+    description: "Forfait historique conservé pour les abonnés existants.",
+    cta: "Choisir un forfait actuel",
     featured: false,
     appointmentsIncluded: 2,
-    features: [
-      "2 rendez-vous inclus",
-      "Priorité locale dans votre ville",
-      "Profil optimisé (AIPP)",
-    ],
+    features: ["2 rendez-vous inclus"],
   },
   {
     slug: "croissance",
     name: "Croissance",
     monthlyPrice: 149,
-    subtitle: "Quelques projets de plus chaque mois",
-    description:
-      "Un flux régulier de rendez-vous qualifiés et des statistiques pour piloter votre croissance.",
-    cta: "Activer Croissance",
+    yearlyPrice: 1430,
+    retired: true,
+    subtitle: "Forfait retiré de l'offre",
+    description: "Forfait historique conservé pour les abonnés existants.",
+    cta: "Choisir un forfait actuel",
     featured: false,
     appointmentsIncluded: 5,
-    features: [
-      "5 rendez-vous inclus",
-      "Demandes qualifiées",
-      "Statistiques avancées",
-      "Optimisation AIPP continue",
-    ],
+    features: ["5 rendez-vous inclus"],
   },
   {
     slug: "pro",
     name: "Pro",
     monthlyPrice: 299,
-    subtitle: "Votre agenda se remplit",
-    eyebrow: "Plan le plus populaire",
-    description:
-      "Rendez-vous confirmés directement à l'agenda, priorité de répartition dans votre secteur.",
-    cta: "Activer Pro",
-    featured: true,
+    yearlyPrice: 2870,
+    retired: true,
+    subtitle: "Forfait retiré de l'offre",
+    description: "Forfait historique conservé pour les abonnés existants.",
+    cta: "Choisir un forfait actuel",
+    featured: false,
     appointmentsIncluded: 12,
-    features: [
-      "12 rendez-vous inclus",
-      "Rendez-vous directs à l'agenda",
-      "Synchronisation calendrier",
-      "Priorité de répartition",
-      "Notifications instantanées",
-    ],
+    features: ["12 rendez-vous inclus"],
   },
   {
     slug: "premium",
     name: "Premium",
     monthlyPrice: 599,
-    subtitle: "Volume élevé, agenda optimisé",
-    description:
-      "Optimisation des routes, des distances et des buffers pour protéger chaque journée.",
-    cta: "Activer Premium",
+    yearlyPrice: 5750,
+    retired: true,
+    subtitle: "Forfait retiré de l'offre",
+    description: "Forfait historique conservé pour les abonnés existants.",
+    cta: "Choisir un forfait actuel",
     featured: false,
     appointmentsIncluded: 25,
-    features: [
-      "25 rendez-vous inclus",
-      "Tout Pro",
-      "Optimisation des routes et distances",
-      "Buffers automatiques",
-      "Support prioritaire",
-    ],
+    features: ["25 rendez-vous inclus"],
   },
   {
     slug: "domination",
     name: "Domination",
     monthlyPrice: 1499,
-    subtitle: "Vous contrôlez votre marché",
-    description:
-      "Exclusivité de territoire et orchestration IA complète de votre agenda et de votre visibilité.",
-    cta: "Activer Domination",
+    yearlyPrice: 14390,
+    retired: true,
+    subtitle: "Forfait retiré de l'offre",
+    description: "Forfait historique conservé pour les abonnés existants.",
+    cta: "Choisir un forfait actuel",
     featured: false,
     appointmentsIncluded: 60,
-    features: [
-      "60 rendez-vous inclus",
-      "Tout Premium",
-      "Exclusivité de territoire",
-      "Regroupement intelligent par secteur",
-      "Priorisation des projets à haute valeur",
-      "Visibilité IA maximale (AIPP MAX)",
-    ],
+    features: ["60 rendez-vous inclus"],
   },
 ];
 
-/** Legacy slug → canonical slug. Keeps older flows working after the refactor. */
+/** Every known plan (public first). Use PUBLIC_CONTRACTOR_PLANS to render a grid. */
+export const CONTRACTOR_PLANS: ContractorPlan[] = [
+  ...PUBLIC_CONTRACTOR_PLANS,
+  ...RETIRED_CONTRACTOR_PLANS,
+];
+
+/** Free entry plan — activated instantly, never sent to checkout. */
+export const FREE_PLAN_SLUG: ContractorPlanSlug = "recrue";
+
+/** The only plans a NEW subscription can be created for. */
+export const SUBSCRIBABLE_PLAN_SLUGS: readonly ContractorPlanSlug[] = Object.freeze([
+  "depart",
+  "croissance_v2",
+  "pro_v2",
+  "elite_v2",
+]);
+
+/** Retired plan codes — no new subscription may ever be created for these. */
+export const RETIRED_PLAN_SLUGS: readonly ContractorPlanSlug[] = Object.freeze(
+  RETIRED_CONTRACTOR_PLANS.map((p) => p.slug),
+);
+
+export const isFreePlanSlug = (slug: string | null | undefined): boolean =>
+  (slug ?? "").toLowerCase() === FREE_PLAN_SLUG;
+
+export const isRetiredPlanSlug = (slug: string | null | undefined): boolean =>
+  !!slug && (RETIRED_PLAN_SLUGS as readonly string[]).includes(slug.toLowerCase());
+
+export const isSubscribablePlanSlug = (slug: string | null | undefined): boolean =>
+  !!slug && (SUBSCRIBABLE_PLAN_SLUGS as readonly string[]).includes(slug.toLowerCase());
+
+/**
+ * Legacy slug → currently offered slug.
+ * NOTE: retired plans (presence / signature_v2) are intentionally NOT aliased —
+ * an existing subscriber must keep seeing their real plan name and price.
+ */
 export const LEGACY_PLAN_ALIAS: Record<string, ContractorPlanSlug> = {
-  recrue: "presence",
   local: "depart",
   croissance: "croissance_v2",
   pro: "pro_v2",
@@ -309,6 +358,8 @@ export const FOUNDER_OFFERS: FounderOffer[] = [
 
 /** Lookup a contractor plan by slug (legacy slugs resolve to their replacement). */
 export function getContractorPlan(slug: string): ContractorPlan | undefined {
+  const direct = CONTRACTOR_PLANS.find((p) => p.slug === slug);
+  if (direct) return direct;
   const canonical = resolvePlanSlug(slug);
   return CONTRACTOR_PLANS.find((p) => p.slug === canonical);
 }
@@ -321,15 +372,16 @@ export function getRecommendedPlanSlug(): ContractorPlanSlug {
 /**
  * Price lookup map for calculators.
  * DERIVED from CONTRACTOR_PLANS + LEGACY_PLAN_ALIAS so a legacy slug can never
- * report a different price than the canonical plan it resolves to.
+ * report a different price than the plan it resolves to.
  */
 export const PLAN_PRICE_MAP: Record<ContractorPlanSlug, number> = Object.freeze(
   Object.fromEntries([
-    ...CONTRACTOR_PLANS.map((p) => [p.slug, p.monthlyPrice]),
+    // Alias entries first so a slug that also exists as a real row keeps its own price.
     ...Object.entries(LEGACY_PLAN_ALIAS).map(([legacy, canonical]) => [
       legacy,
       CONTRACTOR_PLANS.find((p) => p.slug === canonical)?.monthlyPrice ?? 0,
     ]),
+    ...CONTRACTOR_PLANS.map((p) => [p.slug, p.monthlyPrice]),
   ]),
 ) as Record<ContractorPlanSlug, number>;
 

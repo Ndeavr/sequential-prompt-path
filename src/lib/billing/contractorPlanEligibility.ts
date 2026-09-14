@@ -17,6 +17,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlanCatalog, type BillingInterval, type CatalogPlan } from "@/hooks/usePlanCatalog";
 import { useContractorSubscription } from "@/hooks/useSubscription";
+import { isRetiredPlanSlug } from "@/config/contractorPlans";
+
 
 export const PERSONALIZED_PLAN_HEADING =
   "Obtenez un plan de croissance personnalisé selon vos objectifs.";
@@ -45,12 +47,20 @@ export type ContractorPlanEligibility =
       reason: "valid_quote";
     }
   | {
+      /** Free entry plan: activation only, never sent to Stripe. */
+      mode: "free_activation";
+      allowedPlanCode: string;
+      quoteId: string;
+      reason: "free_plan";
+    }
+  | {
       mode: "custom_only";
       reason:
         | "no_quote"
         | "quote_expired"
         | "quote_not_selectable"
         | "plan_unavailable"
+        | "plan_retired"
         | "price_not_configured";
     };
 
@@ -78,8 +88,18 @@ export function resolvePlanEligibility(args: {
   const code = (quote.recommended_plan ?? "").trim();
   if (!code) return { mode: "custom_only", reason: "plan_unavailable" };
 
+  // A retired plan can never back a NEW subscription, even if a stale quote names it.
+  if (isRetiredPlanSlug(code)) {
+    return { mode: "custom_only", reason: "plan_retired" };
+  }
+
   const plan = plans.find((p) => p.code === code);
   if (!plan) return { mode: "custom_only", reason: "plan_unavailable" };
+
+  // Free entry plan: activation path, never a Stripe checkout.
+  if (plan.isFree) {
+    return { mode: "free_activation", allowedPlanCode: plan.code, quoteId: quote.id, reason: "free_plan" };
+  }
 
   // A personalized quote overrides the amount, but the plan must still exist as
   // an active, billable subscription plan in the catalog.
@@ -95,6 +115,7 @@ export function resolvePlanEligibility(args: {
 
   return { mode: "standard", allowedPlanCode: plan.code, quoteId: quote.id, reason: "valid_quote" };
 }
+
 
 /** Latest personalized quote owned by the signed-in contractor (RLS enforced). */
 export function useLatestPricingQuote() {

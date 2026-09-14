@@ -73,11 +73,12 @@ const BillingToggle = ({
     >
       Annuel
       <Badge variant="secondary" className="text-[10px] px-1.5 py-0 leading-4 bg-accent/20 text-accent-foreground">
-        −15 %
+        Payez 12 mois — économisez 20 %
       </Badge>
     </button>
   </div>
 );
+
 
 /* ── Plan Card ───────────────────────────────────────────── */
 

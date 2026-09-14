@@ -147,7 +147,7 @@ Deno.serve(async (req) => {
     const priceColumn = interval === "year" ? "stripe_yearly_price_id" : "stripe_monthly_price_id";
     const { data: planRow, error: planError } = await serviceClient
       .from("plans")
-      .select(`code, name, monthly_price, yearly_price, ${priceColumn}`)
+      .select(`code, name, monthly_price, yearly_price, legacy, billing_interval, ${priceColumn}`)
       .eq("code", resolvedPlanCode)
       .eq("active", true)
       .maybeSingle();
@@ -160,9 +160,38 @@ Deno.serve(async (req) => {
       });
     }
 
+    // A retired plan keeps serving its existing subscribers, but can never back
+    // a NEW subscription.
+    if ((planRow as any).legacy === true) {
+      return new Response(
+        JSON.stringify({
+          error: "Ce forfait n'est plus offert.",
+          code: "plan_retired",
+          next_path: "/entrepreneur/devis-personnalise",
+        }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // The free entry plan is an activation, never a Stripe checkout.
+    if (
+      (planRow as any).billing_interval === "free" ||
+      Number((planRow as any).monthly_price ?? 0) === 0
+    ) {
+      return new Response(
+        JSON.stringify({
+          error: "Ce forfait est gratuit : aucune facturation requise.",
+          code: "free_plan_activation",
+          next_path: "/entrepreneur/onboarding",
+        }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const resolvedPriceId = (planRow as any)[priceColumn];
     const planName = (planRow as any).name || (resolvedPlanCode.charAt(0).toUpperCase() + resolvedPlanCode.slice(1));
     const stripeProductId: string | null = null;
+
 
     // ── PERSONALIZED QUOTE OVERRIDE ──
     // When quoteId is present, the AI-recommended price becomes the single source of truth.
@@ -217,11 +246,25 @@ Deno.serve(async (req) => {
         );
       }
       // Quotes store CAD cents. Never re-scale.
+      // Annual = the quoted annual amount only (20 % off 12 months, computed by
+      // the pricing engine). No ×10 / −15 % / −16,7 % fallback is permitted.
       const monthlyCents = Math.round(Number(q.recommended_monthly_price));
-      personalizedPriceCents =
-        interval === "year"
-          ? Math.round(Number(q.annual_price_cents ?? 0)) || monthlyCents * 10
-          : monthlyCents;
+      if (interval === "year") {
+        const annualCents = Math.round(Number(q.annual_price_cents ?? 0));
+        if (!annualCents) {
+          return new Response(
+            JSON.stringify({
+              error: "La facturation annuelle n'est pas disponible pour ce forfait.",
+              code: "yearly_price_not_configured",
+            }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+        personalizedPriceCents = annualCents;
+      } else {
+        personalizedPriceCents = monthlyCents;
+      }
+
 
 
       // Closed-loop validation: client-displayed price must match server-computed quote price
