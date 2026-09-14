@@ -194,8 +194,23 @@ export default function PageRenovationEstimator() {
     void supabase.auth.getUser().then(({ data }) => setAuthed(!!data.user));
   }, [citySlug]);
 
+  /**
+   * Superficie validée AVANT tout calcul : on n'affiche jamais un prix que le
+   * serveur refusera d'enregistrer. Les réponses saisies sont conservées.
+   */
+  const sizeError = useMemo(() => {
+    if (!def) return null;
+    if (!Number.isFinite(effectiveSize) || effectiveSize <= 0) {
+      return `Indiquez une superficie en ${def.sizeUnit} (${def.sizeMin} à ${def.sizeMax}). · Enter an area in ${def.sizeUnit} (${def.sizeMin}–${def.sizeMax}).`;
+    }
+    if (effectiveSize < def.sizeMin || effectiveSize > def.sizeMax) {
+      return `Pour « ${def.label} », la superficie doit être entre ${def.sizeMin} et ${def.sizeMax} ${def.sizeUnit}. · For "${def.label}", the area must be between ${def.sizeMin} and ${def.sizeMax} ${def.sizeUnit}.`;
+    }
+    return null;
+  }, [def, effectiveSize]);
+
   const estimate = useMemo(() => {
-    if (!category) return null;
+    if (!category || sizeError) return null;
     return computeRenovationEstimate(
       { category, sizeSqft: effectiveSize, scope, addons, propertyKind, age, citySlug },
       benchmarks,
@@ -596,7 +611,14 @@ export default function PageRenovationEstimator() {
                     if (Number.isFinite(n)) setSizeSqft(n);
                   }}
                   aria-label={`${def.sizeLabel} en ${def.sizeUnit}`}
+                  aria-invalid={!!sizeError}
+                  aria-describedby={sizeError ? "size-error" : undefined}
                 />
+                {sizeError && (
+                  <p id="size-error" role="alert" className="mt-2 text-sm text-destructive">
+                    {sizeError}
+                  </p>
+                )}
               </div>
 
               <fieldset>
@@ -754,7 +776,7 @@ export default function PageRenovationEstimator() {
                   <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
                   Retour
                 </Button>
-                <Button className="h-12 flex-[2]" onClick={goToResult}>
+                <Button className="h-12 flex-[2]" onClick={goToResult} disabled={!!sizeError}>
                   Voir mon estimation
                 </Button>
               </div>

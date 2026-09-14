@@ -88,7 +88,19 @@ const R = {
   invalid_phone: "Numéro déclaré invalide à la validation.",
   phone_not_validated:
     "Numéro non validé positivement : aucun appel tant que la validation n'a pas confirmé le numéro.",
+  phone_pending: "Validation du numéro en attente : aucun appel avant confirmation.",
+  phone_lookup_failed:
+    "La validation du numéro a échoué chez le fournisseur : aucun appel avant une nouvelle validation.",
+  phone_outside_quebec: "Numéro hors Québec : appel non autorisé pour ce dossier.",
 };
+
+/** Raison exacte, par statut réel de validation, quand aucun appel n'est permis. */
+function notValidatedReason(status: string): string {
+  if (status === "pending_validation" || status === "pending") return R.phone_pending;
+  if (status === "lookup_failed") return R.phone_lookup_failed;
+  if (status === "outside_quebec") return R.phone_outside_quebec;
+  return R.phone_not_validated;
+}
 
 /** Calcule les permissions réelles. Échec fermé par défaut. */
 export function computeContactPermissions(input: ContactPermissionInput): ContactPermissions {
@@ -114,7 +126,7 @@ export function computeContactPermissions(input: ContactPermissionInput): Contac
   else if (complianceOpen) call = complianceText;
   else if (e?.phone_suppressed === true) call = R.suppressed;
   else if (phoneInvalid) call = R.invalid_phone;
-  else if (!phoneVerified) call = R.phone_not_validated;
+  else if (!phoneVerified) call = notValidatedReason(phoneStatus);
 
   // ── Canaux électroniques commerciaux ───────────────────────────────
   const electronic = (kind: "sms" | "email"): string | null => {
