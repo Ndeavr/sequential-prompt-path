@@ -1028,7 +1028,9 @@ Deno.serve(async (req) => {
       monthly_price_cents: finalPrice,
       annual_price_cents: annualPriceCents,
       annual_savings_cents: annualSavingsCents,
-      annual_months_charged: annualMonthsCharged,
+      annual_months_charged: 12,
+      annual_discount_rate: YEARLY_DISCOUNT_RATE,
+
       due_today_cents:
         (billingInterval === "year" ? annualPriceCents : finalPrice) + profileFeeCents,
       growth_amount_cents: growthAmountCents,
