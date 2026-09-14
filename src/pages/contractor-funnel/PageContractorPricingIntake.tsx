@@ -226,18 +226,26 @@ export default function PageContractorPricingIntake() {
               <span className="flex items-center gap-2">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" /> Recherche en cours…
               </span>
-            ) : searchState.searched && searchState.count === 0 ? (
+            ) : searchState.searched ? (
+              /* Dès qu'une recherche a eu lieu — avec OU sans résultats —
+                 l'entrepreneur dont l'entreprise n'est pas listée doit pouvoir
+                 continuer. La saisie reste déclarée, jamais vérifiée. */
               <div className="space-y-2">
-                <p>Aucune entreprise trouvée pour cette recherche.</p>
+                <p>
+                  {searchState.count === 0
+                    ? "Aucune entreprise trouvée pour cette recherche."
+                    : "Sélectionnez votre entreprise dans la liste."}
+                </p>
                 <button
                   type="button"
+                  data-testid="company-not-listed"
                   onClick={() => {
                     setManualEntry(true);
                     setBusinessConfirmed(true);
                   }}
                   className="w-full rounded-xl border border-amber-400/40 bg-amber-500/10 py-2.5 text-sm font-medium text-amber-200"
                 >
-                  Continuer avec une entreprise non trouvée
+                  Mon entreprise n'est pas listée
                 </button>
               </div>
             ) : (

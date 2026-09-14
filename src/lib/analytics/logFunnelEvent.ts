@@ -124,6 +124,30 @@ export interface LogFunnelEventInput {
   token?: string | null;
   /** Marque explicitement l'événement comme QA/test (exclu des vues de production). */
   is_test?: boolean;
+  /**
+   * Clé d'idempotence. L'index unique partiel
+   * `contractor_funnel_events_dedupe_key_uidx` garantit qu'un rejeu (webhook
+   * fournisseur, nouvelle tentative réseau) ne crée jamais un doublon.
+   */
+  dedupe_key?: string | null;
+}
+
+/** Écriture refusée conservée en mémoire pour un état de reprise explicite. */
+export interface FunnelEventFailure {
+  event_type: string;
+  message: string;
+  at: string;
+}
+
+const failures: FunnelEventFailure[] = [];
+
+/** Échecs d'écriture observés depuis le chargement de la page (jamais silencieux). */
+export function getFunnelEventFailures(): FunnelEventFailure[] {
+  return [...failures];
+}
+
+export function clearFunnelEventFailures(): void {
+  failures.length = 0;
 }
 
 
@@ -191,8 +215,17 @@ function getDevice(): string {
   }
 }
 
+/** Enregistre un échec d'écriture : jamais avalé en silence. */
+function recordFailure(event_type: string, message: string) {
+  failures.push({ event_type, message, at: new Date().toISOString() });
+  if (failures.length > 50) failures.shift();
+  // eslint-disable-next-line no-console
+  console.error("[logFunnelEvent] écriture refusée", event_type, message);
+}
+
 /**
- * Fire-and-forget. Never throws. Best-effort — analytics must not break UX.
+ * Fire-and-forget côté UX (ne lance jamais), mais TOUTE écriture refusée est
+ * enregistrée et exposée via `getFunnelEventFailures()`.
  */
 export async function logFunnelEvent(input: LogFunnelEventInput): Promise<void> {
   try {
@@ -203,7 +236,8 @@ export async function logFunnelEvent(input: LogFunnelEventInput): Promise<void> 
 
     const attribution = getFunnelAttribution();
 
-    await supabase.from("contractor_funnel_events").insert({
+    const { error } = await supabase.from("contractor_funnel_events").insert({
+      dedupe_key: input.dedupe_key ?? null,
       prospect_id: input.prospect_id ?? attribution.prospect_id ?? attribution.prospect ?? null,
       token: input.token ?? attribution.token ?? attribution.t ?? null,
 
@@ -225,7 +259,13 @@ export async function logFunnelEvent(input: LogFunnelEventInput): Promise<void> 
       source: input.event_source ?? "app",
       device: getDevice(),
     } as never);
+
+    if (error) {
+      // 23505 = rejeu idempotent d'un même `dedupe_key` : comportement voulu.
+      const duplicate = error.code === "23505";
+      if (!duplicate) recordFailure(input.event_type, `${error.code ?? "?"}: ${error.message}`);
+    }
   } catch (e) {
-    console.error("[logFunnelEvent]", e);
+    recordFailure(input.event_type, e instanceof Error ? e.message : String(e));
   }
 }

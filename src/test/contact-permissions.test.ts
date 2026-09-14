@@ -54,19 +54,23 @@ describe("computeContactPermissions", () => {
     expect(p.phone_unverified).toBe(true);
   });
 
-  it.each(["unverified", "pending_validation", "lookup_failed", "outside_quebec", ""])(
-    "bloque l'appel pour le statut non positif « %s »",
-    (status) => {
-      const p = computeContactPermissions({
-        eligibility: elig(),
-        has_phone: true,
-        has_email: false,
-        phone_validation_status: status,
-      });
-      expect(p.can_call).toBe(false);
-      expect(p.reasons.call).toContain("non validé positivement");
-    },
-  );
+  // Chaque statut non positif bloque l'appel ET expose la raison exacte.
+  it.each([
+    ["unverified", "non validé positivement"],
+    ["pending_validation", "en attente"],
+    ["lookup_failed", "a échoué"],
+    ["outside_quebec", "hors Québec"],
+    ["", "non validé positivement"],
+  ])("bloque l'appel pour le statut non positif « %s »", (status, expected) => {
+    const p = computeContactPermissions({
+      eligibility: elig(),
+      has_phone: true,
+      has_email: false,
+      phone_validation_status: status,
+    });
+    expect(p.can_call).toBe(false);
+    expect(p.reasons.call).toContain(expected);
+  });
 
   it("bloque l'appel quand le statut est null", () => {
     const p = computeContactPermissions({
