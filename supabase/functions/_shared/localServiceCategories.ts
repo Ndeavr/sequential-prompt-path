@@ -28,13 +28,13 @@ export const LOCAL_SERVICE_CATEGORIES: LocalServiceCategory[] = [
   { slug: "nettoyage-tapis", name_fr: "Nettoyage de tapis et carpettes", keywords: ["nettoyage de tapis", "nettoyage tapis", "carpette", "carpettes", "shampooing tapis"] },
   { slug: "nettoyage-mobilier", name_fr: "Nettoyage de mobilier et tissus d'ameublement", keywords: ["nettoyage de mobilier", "meubles rembourres", "tissus d ameublement", "nettoyage de sofa", "nettoyage de divan"] },
   { slug: "nettoyage-conduits", name_fr: "Nettoyage de conduits d'air et de sécheuse", keywords: ["nettoyage de conduits", "conduit d air", "conduits d air", "conduit de secheuse", "echangeur d air"] },
-  { slug: "entretien-menager", name_fr: "Entretien ménager", keywords: ["entretien menager", "menage", "femme de menage", "nettoyage residentiel", "service de menage"] },
+  { slug: "entretien-menager", name_fr: "Entretien ménager", keywords: ["entretien menager", "menage", "femme de menage", "nettoyage residentiel", "service de menage", "nettoyage de cuisine", "nettoyage de cuisines", "kitchen cleaning", "house cleaning", "cleaning service", "cleaning services"] },
   { slug: "grand-menage", name_fr: "Grand ménage", keywords: ["grand menage", "menage en profondeur", "grand nettoyage"] },
   { slug: "gestion-parasitaire", name_fr: "Gestion parasitaire / extermination", keywords: ["extermination", "exterminateur", "gestion parasitaire", "punaises", "controle des parasites"] },
   { slug: "entretien-gazon", name_fr: "Entretien de gazon", keywords: ["gazon", "pelouse", "tonte", "entretien de pelouse", "entretien de gazon"] },
   { slug: "entretien-paysager", name_fr: "Entretien paysager", keywords: ["paysagement", "paysagiste", "amenagement paysager", "entretien paysager", "taille de haie"] },
   { slug: "deneigement", name_fr: "Déneigement", keywords: ["deneigement", "deneiger", "souffleuse"] },
-  { slug: "nettoyage-planchers", name_fr: "Nettoyage de planchers, céramique et coulis", keywords: ["nettoyage de planchers", "nettoyage de plancher", "nettoyage de ceramique", "nettoyage de coulis"] },
+  { slug: "nettoyage-planchers", name_fr: "Nettoyage de planchers, céramique et coulis", keywords: ["nettoyage de planchers", "nettoyage de plancher", "nettoyage de ceramique", "nettoyage de coulis", "nettoyage de tuiles", "decapage de planchers", "floor cleaning", "tile cleaning", "tile and grout cleaning", "grout cleaning"] },
   { slug: "nettoyage-matelas", name_fr: "Nettoyage de matelas", keywords: ["nettoyage de matelas"] },
   { slug: "nettoyage-apres-construction", name_fr: "Nettoyage après construction ou rénovation", keywords: ["nettoyage apres construction", "nettoyage apres renovation", "nettoyage de chantier", "nettoyage fin de chantier"] },
   { slug: "ramonage-cheminee", name_fr: "Ramonage de cheminée", keywords: ["ramonage", "ramoneur"] },
@@ -42,7 +42,7 @@ export const LOCAL_SERVICE_CATEGORIES: LocalServiceCategory[] = [
   { slug: "demenagement", name_fr: "Déménagement", keywords: ["demenagement", "demenageur", "transport de meubles"] },
   { slug: "organisation-rangement", name_fr: "Organisation et rangement", keywords: ["organisation et rangement", "desencombrement"] },
   { slug: "entretien-preventif-domicile", name_fr: "Maintenance / services à la maison", keywords: ["entretien preventif", "maintenance residentielle", "services a la maison"] },
-  { slug: "debarras-ramassage", name_fr: "Débarras et ramassage d'encombrants", keywords: ["debarras", "debarrasseur", "ramassage d encombrants", "ramassage encombrants", "collecte d encombrants", "enlevement d encombrants", "encombrants", "objets volumineux", "ramassage d objets volumineux", "enlevement de meubles", "ramassage de meubles", "vidage de maison", "vidage de logement", "vidage de garage", "vidange de maison", "nettoyage apres demenagement", "collecte de gros rebuts", "gros rebuts", "junk removal", "junk hauling", "junk", "bulky item removal", "property cleanout", "garage cleanout", "basement cleanout", "estate cleanout", "cleanout"] },
+  { slug: "debarras-ramassage", name_fr: "Débarras et ramassage d'encombrants", keywords: ["debarras", "debarrasseur", "ramassage d encombrants", "ramassage encombrants", "collecte d encombrants", "enlevement d encombrants", "encombrants", "objets volumineux", "ramassage d objets volumineux", "enlevement de meubles", "ramassage de meubles", "vidage de maison", "vidage de logement", "vidage de garage", "vidange de maison", "vidage de sous sol", "vidange de sous sol", "nettoyage apres demenagement", "collecte de gros rebuts", "gros rebuts", "junk removal", "junk hauling", "junk", "bulky item removal", "property cleanout", "garage cleanout", "basement cleanout", "estate cleanout", "cleanout"] },
   { slug: "autre-service-residentiel", name_fr: "Autre service résidentiel", keywords: [] },
 ];
 
@@ -96,8 +96,11 @@ export function normalizeServiceCategory(raw: string | null | undefined): string
     if (normalizeLabel(cat.slug.replace(/-/g, " ")) === text) return cat.slug;
     if (normalizeLabel(cat.name_fr) === text) return cat.slug;
   }
-  // Métier de rénovation/construction : jamais reclassé en service local gratuit.
-  if (hasExcludedTrade(text)) return null;
+  // Ordre canonique : on determine D'ABORD la categorie de service reellement
+  // declaree. L'exclusion renovation/construction ne s'applique QU'ENSUITE, si
+  // aucune categorie de service local n'a ete reconnue. Sans cet ordre, des
+  // marqueurs comme « plancher », « cuisine » ou « sous sol » rejetaient a tort
+  // des entreprises de nettoyage parfaitement admissibles.
   let best: { slug: string; length: number } | null = null;
   for (const cat of LOCAL_SERVICE_CATEGORIES) {
     for (const kw of cat.keywords) {
@@ -106,7 +109,11 @@ export function normalizeServiceCategory(raw: string | null | undefined): string
       }
     }
   }
-  return best?.slug ?? null;
+  if (best) return best.slug;
+
+  // Aucune categorie de service local reconnue : metier de renovation exclu.
+  if (hasExcludedTrade(text)) return null;
+  return null;
 }
 
 export function categoryName(slug: string | null | undefined): string | null {
