@@ -1,83 +1,95 @@
-# Correctifs P0/P1 — conversion et observabilité UNPRO
+# Paiement → activation : fermer la chaîne et rendre tout échec visible
 
-Six régressions. Cinq causes racines sont déjà confirmées par lecture directe de la base et du code. Aucun nouveau système : réparation de l'existant.
+## Correction importante avant de commencer
 
----
+L'évidence fournie ne se vérifie pas telle quelle. Les deux identifiants d'entreprise portés par les paiements existent bel et bien dans `contractors` :
 
-## P0 — Journalisation des événements de prospection
+- `5bb574a5…` = Pros Rénovation (yturcotte@gmail.com), `activation_status: not_ready`
+- `72bc8179…` = compte de test E2E de juillet, `account_status: canceled`
 
-**Cause racine confirmée.** La table d'événements du tunnel (`contractor_funnel_events`) possède bien une politique d'écriture « tout le monde peut insérer », mais **aucun droit n'a jamais été accordé** aux rôles applicatifs. Vérifié : la requête des droits sur cette table renvoie zéro ligne pour les trois rôles. Résultat : chaque écriture est rejetée au niveau du moteur avant même d'atteindre la politique. Même constat pour les deux fonctions d'enregistrement SMS/courriel : seul le rôle serveur peut les exécuter, ce qui est correct, mais aucun droit de lecture n'existe pour l'affichage.
+Ce que montrent réellement les données en production (lecture seule) :
 
-Correctifs :
-- Migration accordant les droits manquants, alignés exactement sur les politiques déjà écrites (écriture des événements, lecture réservée à l'admin et au propriétaire).
-- Clé d'idempotence sur les événements provenant des fournisseurs (SMS, courriel, redirections) pour qu'un renvoi ou un rejeu ne crée jamais de doublon.
-- Fin du silence : une écriture refusée est enregistrée dans le mécanisme d'erreur existant et remonte un état de reprise, au lieu d'être avalée par le `catch` actuel.
-- Vérification par événements de test marqués comme tels, exclus des vues de production. Aucun envoi réel.
+- Le dernier `checkout.session.completed` reçu date du **13 juillet 2026** (parcours SMS). Aucun depuis.
+- Les 4 tentatives des 13–14 septembre pour Pros Rénovation se terminent toutes en `incomplete_expired` : **le paiement n'a jamais abouti**. Il n'y a donc pas de paiement réussi non réconcilié en septembre — il y a un parcours de paiement qui n'aboutit pas, et un système qui ne le dit nulle part.
+- 106 lignes `checkout_sessions` sont restées `pending`, aucune n'a jamais été clôturée.
+- `unpro_payment_activation_audit` : **0 ligne**. La branche « forfait entrepreneur » du webhook n'écrit jamais d'audit.
 
-## P0 — Recherche d'entreprise du devis personnalisé
+La première étape du travail est donc de prouver ou d'infirmer ce diagnostic sur les événements historiques, en lecture seule, avant toute écriture.
 
-**Cause racine confirmée.** Dans l'étape « Quelle est votre entreprise? », le bouton « Continuer avec une entreprise non trouvée » n'apparaît que lorsque la recherche renvoie exactement zéro résultat. Dès qu'un résultat approchant remonte, l'entrepreneur dont l'entreprise n'est pas listée se retrouve sans issue.
+## Défauts confirmés par lecture du code
 
-Correctifs :
-- L'option « Mon entreprise n'est pas listée » s'affiche dès qu'une recherche a été effectuée, avec ou sans résultats.
-- Le chemin manuel crée ou réutilise la fiche déclarée existante, sans jamais inventer de données, et conserve la distinction Vérifié / Déclaré / Inféré.
-- La recherche et la sélection existantes restent inchangées.
+1. **Sortie silencieuse.** Dans `stripe-webhook`, la branche forfait fait `if (!contractorId || !planId) break;` — métadonnée manquante ou introuvable = rien. Pas d'audit, pas de file, pas d'alerte.
+2. **Aucune vérification de paiement.** Cette même branche active l'entreprise sans vérifier `payment_status === "paid"`, contrairement à la branche pack d'entrée qui, elle, le fait.
+3. **Aucune trace durable.** Ni `unpro_payment_activation_audit` ni `contractor_activation_ledger` ne sont écrits dans la branche forfait.
+4. **Session locale fragile.** `checkout_sessions` est inséré *après* la création de la session Stripe (si l'insertion échoue, le paiement part sans trace locale), sans type de sujet, sans clé de corrélation, et la colonne `contractor_profile_id` contient en réalité un `contractors.id` (0 des 106 lignes correspond à un `contractor_profiles.id`).
+5. **Écritures mortes.** Le chemin « total zéro » met à jour `contractors.status` et `contractors.subscription_plan` : ces colonnes n'existent pas, l'erreur est ignorée, l'activation gratuite n'active donc rien.
+6. **Code de forfait non normalisé.** Les métadonnées récentes portent `plan_id: "pro"` alors que le catalogue canonique attend `pro_v2`.
 
-## P0 — Admissibilité à l'offre gratuite
+## Ce qui va être construit
 
-**Cause racine confirmée.** L'exclusion des métiers de rénovation est appliquée **sur le texte brut avant** toute reconnaissance de catégorie. Les marqueurs « plancher », « cuisine », « sous sol », « ceramique » font donc rejeter des entreprises de nettoyage parfaitement admissibles : « nettoyage de planchers et céramique », « nettoyage de cuisine », « basement cleanout » sont tous exclus à tort aujourd'hui.
+### 1. Un seul résolveur de sujet d'activation
 
-Correctif :
-- Inverser l'ordre : d'abord déterminer la catégorie réellement déclarée ou sélectionnée ; n'appliquer l'exclusion rénovation que si aucune catégorie de service local n'a été reconnue.
-- Tests de régression français et anglais sur les libellés ambigus ci-dessus, plus les métiers de rénovation qui doivent rester exclus.
-- La découverte de prospects appelle la même fonction unique (le miroir client et le module serveur restent identiques).
+Nouveau module partagé `supabase/functions/_shared/activationSubject.ts`, utilisé par la création de paiement **et** par le webhook. Il accepte les entrées d'identité déjà supportées (contractor_id, user_id, quote_id, prospect_id, jeton d'activation, courriel client Stripe), résout **une seule** fiche réelle, valide propriété et éligibilité, et renvoie soit `{ subject_id, subject_type }`, soit une erreur typée (`subject_not_found`, `subject_ambiguous`, `not_owner`, `ineligible`). Aucune devinette : plusieurs candidats = erreur, jamais un choix arbitraire.
 
-## P1 — Fiches publiques d'entrepreneurs
+`create-checkout-session` appelle ce résolveur **avant** de créer quoi que ce soit chez Stripe et refuse en 409 avec un message actionnable si la résolution échoue.
 
-**Cause racine confirmée.** La fonction `aipp_is_published` est utilisée par les politiques de lecture publique de neuf tables, mais son droit d'exécution n'a jamais été accordé aux visiteurs anonymes ni connectés (vérifié : exécution autorisée pour le rôle serveur uniquement). D'où l'erreur « permission denied for function ». Les tables elles-mêmes n'ont non plus aucun droit accordé.
+### 2. Session locale durable, écrite avant la redirection
 
-Correctifs :
-- Migration accordant l'exécution de la fonction et la lecture des tables strictement aux champs publics déjà prévus par les politiques : en-tête d'entreprise, services, localisations, médias approuvés, avis et sources publics, scores publics.
-- Aucun élargissement : brouillons, données de risque, contacts, facturation, notes et journaux d'audit restent inaccessibles.
-- La fonction garde son `search_path` verrouillé.
-- Vérification en visiteur anonyme sur une fiche réellement publiée, plus rendu robot.
+`checkout_sessions` gagne : `subject_id`, `subject_type`, `billing_interval`, `correlation_key`, `stripe_price_id`. La ligne est créée **avant** l'appel Stripe avec `checkout_status: "initiated"`, puis complétée avec l'identifiant de session Stripe. Si cette écriture échoue, aucun paiement n'est créé.
 
-## P1 — Affichage et paiement annuel
+### 3. Webhook idempotent et fermé sur le paiement
 
-Le catalogue de forfaits devient la seule référence pour l'affichage annuel.
+Sur `checkout.session.completed` / `async_payment_succeeded`, dans l'ordre :
 
-- Sans prix annuel valide et positif, l'option annuelle est masquée et aucune session de paiement annuelle ne peut être créée.
-- Avec prix annuel, le même montant calculé et la même devise s'affichent sur la page publique, la sélection, le paiement et la confirmation.
-- Un forfait payant ne peut jamais partir à zéro dollar ; seul le forfait gratuit explicite mène à l'activation sans paiement.
-- Mode test uniquement, aucune modification du mode réel.
+```text
+vérifier signature + non déjà traité
+  -> exiger payment_status = paid
+  -> retrouver la session locale par identifiant Stripe
+  -> résoudre le sujet canonique (résolveur unique)
+  -> contractor_subscriptions (upsert)
+  -> contractor_activation_ledger
+  -> unpro_payment_activation_audit (result = success)
+  -> activation de l'entreprise réelle
+```
 
-## P1 — Enregistrement du calculateur de rénovation
+Chaque étape est rejouable sans effet double (clé unique sur événement + action). Toute rupture s'arrête avant l'activation et bascule en file.
 
-- Valider la superficie saisie contre le type de rénovation choisi **avant** de calculer, pour ne jamais afficher un prix impossible à enregistrer.
-- Message au niveau du champ, en français et en anglais, indiquant la plage permise.
-- Les réponses déjà saisies sont conservées pendant la correction.
-- L'erreur technique exacte part vers la surveillance ; le propriétaire voit un message de reprise humain.
+### 4. File de réconciliation visible
 
-## P1 — Appels CRM et affiliés
+Pas de nouvelle table : `unpro_payment_activation_audit` sert déjà de journal et possède `result`, `error_code`, `error_message`. Une migration y ajoute `resolution_status`, `resolved_by`, `resolved_at`, `resolution_note` et une contrainte d'unicité `(stripe_event_id, action)`.
 
-**Cause racine confirmée, et ce n'est pas l'interface.** L'appel n'est permis qu'avec un statut de validation positif (`valid_mobile` ou `valid_sms_capable_voip`). Or en production, **aucun dossier ne porte un de ces statuts** : 153 `invalid_phone`, 78 `lookup_failed`, 61 `pending_validation`, 10 `outside_quebec`. Le bouton est donc désactivé partout parce que la validation téléphonique n'a jamais abouti, pas parce que la règle est trop stricte.
+Un paiement non résoluble est écrit avec `result: "reconciliation_required"`, la raison exacte et tous les identifiants (session, client, abonnement, courriel, métadonnées). **Aucune entreprise n'est devinée ni activée.**
 
-Correctifs :
-- Réparer la chaîne de validation pour que les 78 échecs de recherche et les 61 dossiers en attente soient réellement traités et reçoivent un statut définitif.
-- Afficher sur chaque dossier bloqué la raison exacte : numéro absent ou invalide, validation non aboutie, retrait demandé, restriction de consentement, ou indisponible.
-- Activer l'appel uniquement pour les dossiers valides, admissibles et conformes. Aucune règle de conformité assouplie, chaque appel reste audité.
-- Honnêtement : tant que la validation ne renvoie pas de statut positif pour au moins un dossier réel, je ne pourrai pas prouver un bouton d'appel actif ; je rapporterai alors le compte exact par statut plutôt que d'annoncer un succès.
+Ces lignes s'affichent sur la page admin existante `/admin/unpro-stripe-health` (section « Paiements à réconcilier »), avec un rattachement manuel : un admin choisit l'entreprise réelle, l'action est journalisée avec auteur, horodatage et motif.
 
----
+### 5. Commande de rattrapage historique
+
+Extension de la fonction existante `stripe-unpro-reconcile` (déjà réservée aux admins, déjà en mode simulation par défaut) : elle rejoue les événements historiques à travers le même résolveur, refuse d'écrire sans `confirm: true` explicite, et n'écrit jamais une entitlement ou une activation déjà présente.
+
+### 6. Journaux structurés
+
+Chaque transition et chaque échec produisent une ligne d'audit typée (`subject_resolved`, `subscription_written`, `activation_completed`, `reconciliation_required`) plus l'entrée `integration_audit_logs` déjà utilisée.
+
+## Ce qui ne change pas
+
+Mode réel Stripe, produits et tarifs existants, vérification de signature, protection anti-doublon d'événements. Aucun secret touché, aucune charge créée, aucun webhook rejoué, aucune publication.
+
+## Tests
+
+`src/test/payment-activation-reconciliation.test.ts` : entreprise valide, profil valide, conversion d'un prospect, UUID inconnu → file avec raison, webhook livré deux fois → une seule activation, rattachement manuel refusé sans rôle admin. Plus `npm test`, typecheck et build.
 
 ## Détails techniques
 
-- Migrations : droits sur `contractor_funnel_events` ; exécution de `public.aipp_is_published` pour `anon`/`authenticated` ; lecture des neuf tables `aipp_*` publiques ; index d'idempotence sur les événements fournisseurs. Aucune politique existante affaiblie.
-- Fichiers principaux : `src/lib/analytics/logFunnelEvent.ts`, `supabase/functions/_shared/outreachEvents.ts`, `supabase/functions/_shared/localServiceCategories.ts` + miroir `src/lib/localServices/categories.ts`, `src/pages/contractor-funnel/PageContractorPricingIntake.tsx`, `src/pages/calculators/PageRenovationEstimator.tsx`, `src/pages/affiliate/PageAffiliateActionMode.tsx`, `src/components/crm/ManualContactPanel.tsx`, catalogue de forfaits et écrans de paiement.
-- Tests ajoutés ou réparés pour chacune des six régressions, puis vérification des types, des tests et de la construction.
-- Aucune publication, aucun envoi SMS/courriel/appel réel, aucune clé ni configuration d'envoi de production modifiée.
+- Fichiers : `supabase/functions/_shared/activationSubject.ts` (nouveau), `supabase/functions/create-checkout-session/index.ts`, `supabase/functions/stripe-webhook/index.ts`, `supabase/functions/stripe-unpro-reconcile/index.ts`, `src/pages/admin/PageAdminUnproStripeHealth.tsx`, tests.
+- Migration : colonnes de résolution + index unique sur `unpro_payment_activation_audit` ; colonnes de sujet/corrélation sur `checkout_sessions` ; correction des écritures mortes du chemin gratuit. Aucune suppression, aucune donnée historique modifiée.
+- RLS : inchangée. Lecture admin déjà en place sur les deux tables ; écritures en service-role uniquement.
+- Déploiement séquentiel, une fonction à la fois : `create-checkout-session`, `stripe-webhook`, `stripe-unpro-reconcile`.
 
-## Limites assumées
+## Protocole du paiement réel de contrôle (après livraison)
 
-- Les parcours de paiement restent limités au mode test ; aucune preuve de paiement réel ne sera produite.
-- La preuve de bout en bout pour l'appel dépend d'au moins un numéro réellement validé (voir ci-dessus).
+1. Vérifier la file vide et l'horodatage du dernier événement reçu.
+2. Créer un code promotionnel à usage unique ramenant le montant au minimum autorisé, sur un forfait mensuel, pour un compte de contrôle identifié.
+3. Payer une fois, noter l'identifiant de session.
+4. Vérifier dans l'ordre : session locale clôturée, abonnement écrit, ledger, audit `success`, entreprise activée — une seule fois chacun.
+5. Rejouer le même événement depuis le tableau de bord Stripe et confirmer qu'aucune ligne n'est dupliquée.
+6. Annuler l'abonnement et rembourser la charge ; conserver les identifiants dans le rapport.
