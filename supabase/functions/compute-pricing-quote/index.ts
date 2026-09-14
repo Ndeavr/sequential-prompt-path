@@ -326,7 +326,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     const profileFeeCents = Math.max(0, Math.round(Number(growthCfg?.profile_fee_cents ?? 35000)));
-    const annualMonthsCharged = Math.max(1, Number(growthCfg?.annual_months_charged ?? 10));
+    // Annual pricing rule is canonical (20 % off 12 months); growth config no longer drives it.
     const entryPackTotalCents = Math.max(
       0,
       Math.round(Number(growthCfg?.entry_pack_total_cents ?? PACK_350_TOTAL_CENTS)),
