@@ -21,33 +21,33 @@ export interface GrowthPlan {
 
 const GROWTH_PLANS: GrowthPlan[] = [
   {
-    slug: "pro",
+    slug: "depart",
     label: "Activation locale",
-    opportunities: "≈ 5 opportunités qualifiées / mois",
+    opportunities: "1 rendez-vous exclusif garanti / mois",
     description: "Pour tester UNPRO et commencer à recevoir des projets qualifiés.",
     icon: Sparkles,
     accent: "from-sky-400 to-blue-500",
   },
   {
-    slug: "premium",
+    slug: "croissance_v2",
     label: "Croissance stable",
-    opportunities: "≈ 10 opportunités / mois",
+    opportunities: "3 rendez-vous exclusifs garantis / mois",
     description: "Le meilleur équilibre entre visibilité, capacité et croissance.",
     icon: TrendingUp,
     accent: "from-blue-500 to-indigo-600",
   },
   {
-    slug: "elite",
+    slug: "pro_v2",
     label: "Domination régionale",
-    opportunities: "≈ 25 opportunités / mois",
+    opportunities: "7 rendez-vous exclusifs garantis / mois",
     description: "Priorité IA et visibilité renforcée dans votre territoire.",
     icon: Crown,
     accent: "from-indigo-500 to-purple-600",
   },
   {
-    slug: "signature",
+    slug: "elite_v2",
     label: "Expansion maximale",
-    opportunities: "≈ 50 opportunités / mois",
+    opportunities: "12 rendez-vous exclusifs garantis / mois",
     description: "Pour entreprises structurées voulant maximiser leur croissance.",
     icon: Rocket,
     accent: "from-purple-600 to-fuchsia-600",
@@ -64,7 +64,7 @@ interface Props {
 export default function GrowthPlanCards({
   selected,
   onSelect,
-  recommendedSlug = "premium",
+  recommendedSlug = "pro_v2",
   title = "Quel rythme de croissance voulez-vous ?",
 }: Props) {
   return (

@@ -326,7 +326,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     const profileFeeCents = Math.max(0, Math.round(Number(growthCfg?.profile_fee_cents ?? 35000)));
-    const annualMonthsCharged = Math.max(1, Number(growthCfg?.annual_months_charged ?? 10));
+    // Annual pricing rule is canonical (20 % off 12 months); growth config no longer drives it.
     const entryPackTotalCents = Math.max(
       0,
       Math.round(Number(growthCfg?.entry_pack_total_cents ?? PACK_350_TOTAL_CENTS)),
@@ -964,8 +964,12 @@ Deno.serve(async (req) => {
     };
 
     // ---------- Growth calculator layer (annual, profile fee, entry pack) ----------
-    const annualPriceCents = Math.round(finalPrice * annualMonthsCharged);
+    // CANONICAL ANNUAL RULE: exactly 20 % off 12 months, floored to the dollar.
+    // No ×10 months, no 15 %, no configurable variant.
+    const YEARLY_DISCOUNT_RATE = 0.2;
+    const annualPriceCents = Math.floor((finalPrice * 12 * (1 - YEARLY_DISCOUNT_RATE)) / 100) * 100;
     const annualSavingsCents = Math.max(0, finalPrice * 12 - annualPriceCents);
+
     const competitionLevel =
       competitionFactor >= 1.12 ? "faible" : competitionFactor >= 0.98 ? "moyenne" : "forte";
     const billingInterval: "month" | "year" = body.billing_interval === "year" ? "year" : "month";
@@ -1024,7 +1028,9 @@ Deno.serve(async (req) => {
       monthly_price_cents: finalPrice,
       annual_price_cents: annualPriceCents,
       annual_savings_cents: annualSavingsCents,
-      annual_months_charged: annualMonthsCharged,
+      annual_months_charged: 12,
+      annual_discount_rate: YEARLY_DISCOUNT_RATE,
+
       due_today_cents:
         (billingInterval === "year" ? annualPriceCents : finalPrice) + profileFeeCents,
       growth_amount_cents: growthAmountCents,

@@ -10,7 +10,7 @@ const NOW = new Date("2026-01-15T12:00:00Z").getTime();
 const plan = (over: Partial<CatalogPlan> = {}): CatalogPlan =>
   ({
     id: "p1",
-    code: "croissance",
+    code: "croissance_v2",
     name: "Croissance",
     monthlyPrice: 14900,
     yearlyPrice: 149000,
@@ -38,7 +38,7 @@ const plan = (over: Partial<CatalogPlan> = {}): CatalogPlan =>
 const quote = (over: Partial<EligibilityQuote> = {}): EligibilityQuote => ({
   id: "q1",
   user_id: "u1",
-  recommended_plan: "croissance",
+  recommended_plan: "croissance_v2",
   pricing_status: "offered",
   pricing_mode: "goal",
   expires_at: "2026-02-01T00:00:00Z",
@@ -51,7 +51,7 @@ describe("resolvePlanEligibility", () => {
     const r = resolvePlanEligibility({ quote: quote(), plans: [plan()], interval: "month", now: NOW });
     expect(r).toEqual({
       mode: "standard",
-      allowedPlanCode: "croissance",
+      allowedPlanCode: "croissance_v2",
       quoteId: "q1",
       reason: "valid_quote",
     });

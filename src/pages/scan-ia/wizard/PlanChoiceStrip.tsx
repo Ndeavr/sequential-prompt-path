@@ -7,7 +7,7 @@ import { CONTRACTOR_PLANS, type ContractorPlanSlug } from "@/config/contractorPl
 import { fmtCADDollars } from "@/features/scanIA/planPricingBreakdown";
 import { Check, ArrowUp, ArrowDown } from "lucide-react";
 
-const ORDER: ContractorPlanSlug[] = ["recrue", "pro", "premium", "elite", "signature"];
+const ORDER: ContractorPlanSlug[] = ["recrue", "depart", "croissance_v2", "pro_v2", "elite_v2"];
 
 interface Props {
   recommended: ContractorPlanSlug;

@@ -1,5 +1,9 @@
 /**
- * /entrepreneurs/plans — Plan comparison page for contractors
+ * /entrepreneurs/plans — Public plan comparison for contractors.
+ *
+ * Prices come ONLY from the live catalog (`plans`, audience = contractor).
+ * No hard-coded grid, no derived discount: the annual amount is the catalog
+ * value, which is exactly 20 % off 12 months.
  */
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
@@ -11,9 +15,17 @@ import {
   PERSONALIZED_PLAN_CTA,
   PERSONALIZED_PLAN_ROUTE,
 } from "@/lib/billing/contractorPlanEligibility";
+import {
+  usePlanCatalog,
+  formatPlanPrice,
+  getYearlySavingsPercent,
+  getMonthlyEquivalent,
+  type BillingInterval,
+} from "@/hooks/usePlanCatalog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, X, ArrowRight, Star, Sparkles, TrendingDown } from "lucide-react";
+import { CheckCircle2, ArrowRight, Star, Sparkles, TrendingDown } from "lucide-react";
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
 
@@ -25,100 +37,11 @@ interface JoinDemo {
   revenue_gap?: { lost_revenue_min: number };
 }
 
-interface PlanDef {
-  name: string;
-  price: string;
-  period: string;
-  badge?: string;
-  highlight?: boolean;
-  features: { label: string; included: boolean }[];
-  cta: string;
-}
-
-const PLANS: PlanDef[] = [
-  {
-    name: "Recrue",
-    price: "0$",
-    period: "/mois",
-    features: [
-      { label: "Profil public de base", included: true },
-      { label: "Score AIPP visible", included: true },
-      { label: "1 territoire", included: true },
-      { label: "2 catégories", included: true },
-      { label: "Rendez-vous qualifiés", included: false },
-      { label: "Exclusivité territoriale", included: false },
-      { label: "Priorité de matching", included: false },
-    ],
-    cta: "Commencer gratuitement",
-  },
-  {
-    name: "Pro",
-    price: "49$",
-    period: "/mois",
-    features: [
-      { label: "Profil public optimisé", included: true },
-      { label: "Score AIPP visible", included: true },
-      { label: "3 territoires", included: true },
-      { label: "5 catégories", included: true },
-      { label: "Rendez-vous qualifiés", included: true },
-      { label: "Exclusivité territoriale", included: false },
-      { label: "Priorité de matching", included: false },
-    ],
-    cta: "Choisir Pro",
-  },
-  {
-    name: "Premium",
-    price: "99$",
-    period: "/mois",
-    badge: "Populaire",
-    highlight: true,
-    features: [
-      { label: "Profil public premium", included: true },
-      { label: "Score AIPP + coaching", included: true },
-      { label: "5 territoires", included: true },
-      { label: "10 catégories", included: true },
-      { label: "Rendez-vous qualifiés prioritaires", included: true },
-      { label: "Exclusivité territoriale", included: false },
-      { label: "Priorité de matching élevée", included: true },
-    ],
-    cta: "Choisir Premium",
-  },
-  {
-    name: "Élite",
-    price: "199$",
-    period: "/mois",
-    features: [
-      { label: "Profil public élite", included: true },
-      { label: "Score AIPP + analytics avancés", included: true },
-      { label: "7 territoires", included: true },
-      { label: "15 catégories", included: true },
-      { label: "Tous types de rendez-vous", included: true },
-      { label: "Exclusivité partielle", included: true },
-      { label: "Priorité maximale", included: true },
-    ],
-    cta: "Choisir Élite",
-  },
-  {
-    name: "Signature",
-    price: "399$",
-    period: "/mois",
-    badge: "Exclusif",
-    features: [
-      { label: "Profil public signature", included: true },
-      { label: "Score AIPP + stratégie dédiée", included: true },
-      { label: "10+ territoires", included: true },
-      { label: "20+ catégories", included: true },
-      { label: "Tous rendez-vous + urgences", included: true },
-      { label: "Exclusivité territoriale totale", included: true },
-      { label: "Matching prioritaire absolu", included: true },
-    ],
-    cta: "Choisir Signature",
-  },
-];
-
 export default function PageEntrepreneurPlans() {
   const navigate = useNavigate();
   const [joinDemo, setJoinDemo] = useState<JoinDemo | null>(null);
+  const [interval, setInterval] = useState<BillingInterval>("month");
+  const { data: plans, isLoading, isError } = usePlanCatalog();
 
   useEffect(() => {
     try {
@@ -127,11 +50,16 @@ export default function PageEntrepreneurPlans() {
     } catch { /* noop */ }
   }, []);
 
+  const yearlyAvailable = (plans ?? []).some((p) => p.supportsYearly);
+
   return (
     <>
       <Helmet>
-        <title>Plans et tarifs — UNPRO pour entrepreneurs</title>
-        <meta name="description" content="Choisissez votre plan UNPRO : Recrue (gratuit), Pro, Premium, Élite ou Signature. Rendez-vous qualifiés et visibilité protégée." />
+        <title>Forfaits entrepreneurs — UNPRO</title>
+        <meta
+          name="description"
+          content="Recrue gratuit, Départ, Croissance, Pro, Élite. Rendez-vous exclusifs garantis, jamais de leads partagés. Mensuel ou annuel avec 20 % de rabais."
+        />
       </Helmet>
 
       <div className="min-h-screen bg-background py-12 sm:py-20">
@@ -152,18 +80,18 @@ export default function PageEntrepreneurPlans() {
                   {joinDemo.revenue_gap && (
                     <> · Manque à gagner ~<span className="font-bold">{joinDemo.revenue_gap.lost_revenue_min.toLocaleString("fr-CA")} $/mois</span></>
                   )}
-                  . Plan recommandé surligné ci-dessous.
+                  .
                 </p>
               </div>
             </motion.div>
           )}
 
-          <motion.div variants={fadeUp} initial="hidden" animate="visible" className="text-center mb-12">
+          <motion.div variants={fadeUp} initial="hidden" animate="visible" className="text-center mb-10">
             <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground mb-4">
-              Plans et tarifs
+              Forfaits entrepreneurs
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Investissez dans votre visibilité. Recevez des rendez-vous qualifiés, pas des leads froids.
+              Des rendez-vous exclusifs, jamais de leads partagés.
             </p>
             <p className="mt-6 text-base font-medium text-foreground">
               {PERSONALIZED_PLAN_HEADING}
@@ -177,74 +105,122 @@ export default function PageEntrepreneurPlans() {
             </Button>
           </motion.div>
 
-
-          {/* Plans grid - horizontal scroll on mobile */}
-          <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory lg:grid lg:grid-cols-5 lg:overflow-visible">
-            {PLANS.map((plan, i) => (
-              <motion.div
-                key={plan.name}
-                variants={fadeUp}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.05, duration: 0.4 }}
-                className={`
-                  snap-start shrink-0 w-72 lg:w-auto rounded-2xl border p-6 flex flex-col
-                  ${plan.highlight
-                    ? "border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20"
-                    : "border-border bg-card"
-                  }
-                `}
+          {yearlyAvailable && (
+            <div className="flex items-center justify-center gap-1 rounded-full bg-muted p-1 w-fit mx-auto mb-8">
+              <button
+                onClick={() => setInterval("month")}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                  interval === "month" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground"
+                }`}
               >
-                <div className="flex items-center gap-2 mb-4">
-                  <h3 className="font-display text-xl font-bold text-foreground">{plan.name}</h3>
-                  {plan.badge && (
-                    <Badge variant={plan.highlight ? "default" : "secondary"} className="text-xs">
-                      {plan.badge === "Populaire" && <Star className="h-3 w-3 mr-1" />}
-                      {plan.badge === "Exclusif" && <Sparkles className="h-3 w-3 mr-1" />}
-                      {plan.badge}
-                    </Badge>
-                  )}
-                </div>
+                Mensuel
+              </button>
+              <button
+                onClick={() => setInterval("year")}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                  interval === "year" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground"
+                }`}
+              >
+                Payez 12 mois — économisez 20 %
+              </button>
+            </div>
+          )}
 
-                <div className="mb-6">
-                  <span className="font-display text-3xl font-bold text-foreground">{plan.price}</span>
-                  <span className="text-muted-foreground text-sm">{plan.period}</span>
-                </div>
+          {isLoading && (
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-80 rounded-2xl" />
+              ))}
+            </div>
+          )}
 
-                <ul className="space-y-3 flex-1 mb-6">
-                  {plan.features.map((f) => (
-                    <li key={f.label} className="flex items-start gap-2 text-sm">
-                      {f.included ? (
-                        <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                      ) : (
-                        <X className="h-4 w-4 text-muted-foreground/40 shrink-0 mt-0.5" />
+          {isError && (
+            <p className="text-center text-sm text-muted-foreground">
+              Les forfaits ne sont pas disponibles pour l'instant. Réessayez dans un moment.
+            </p>
+          )}
+
+          {!isLoading && !isError && (
+            <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory lg:grid lg:grid-cols-5 lg:overflow-visible">
+              {(plans ?? []).map((plan, i) => {
+                const showYearly = interval === "year" && plan.supportsYearly;
+                const price = showYearly ? plan.yearlyPrice : plan.monthlyPrice;
+                const savings = getYearlySavingsPercent(plan);
+                return (
+                  <motion.div
+                    key={plan.code}
+                    variants={fadeUp}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.05, duration: 0.4 }}
+                    className={`
+                      snap-start shrink-0 w-72 lg:w-auto rounded-2xl border p-6 flex flex-col
+                      ${plan.highlighted
+                        ? "border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20"
+                        : "border-border bg-card"
+                      }
+                    `}
+                  >
+                    <div className="flex items-center gap-2 mb-4">
+                      <h2 className="font-display text-xl font-bold text-foreground">{plan.name}</h2>
+                      {plan.highlighted && (
+                        <Badge variant="default" className="text-xs">
+                          <Star className="h-3 w-3 mr-1" />
+                          Populaire
+                        </Badge>
                       )}
-                      <span className={f.included ? "text-foreground" : "text-muted-foreground/60"}>
-                        {f.label}
+                    </div>
+
+                    <div className="mb-2">
+                      <span className="font-display text-3xl font-bold text-foreground">
+                        {plan.isFree ? "0 $" : formatPlanPrice(price)}
                       </span>
-                    </li>
-                  ))}
-                </ul>
+                      <span className="text-muted-foreground text-sm">
+                        {" "}/ {plan.isFree ? "mois" : showYearly ? "an" : "mois"}
+                      </span>
+                    </div>
+                    {showYearly && savings > 0 && (
+                      <p className="text-xs text-muted-foreground mb-4">
+                        Économisez {savings} % · équivalent à {getMonthlyEquivalent(plan)} / mois
+                      </p>
+                    )}
+                    {!showYearly && <div className="mb-4" />}
 
-                <Button
-                  variant={plan.highlight ? "default" : "outline"}
-                  className="w-full gap-2 rounded-xl"
-                  onClick={() => navigate(`/entrepreneur?plan=${plan.name.toLowerCase()}`)}
-                >
-                  {plan.cta}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </motion.div>
-            ))}
-          </div>
+                    <ul className="space-y-3 flex-1 mb-6">
+                      {plan.features.map((f) => (
+                        <li key={f} className="flex items-start gap-2 text-sm">
+                          <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                          <span className="text-foreground">{f}</span>
+                        </li>
+                      ))}
+                    </ul>
 
-          {/* FAQ */}
-          <div className="mt-20 max-w-3xl mx-auto text-center">
+                    <Button
+                      variant={plan.highlighted ? "default" : "outline"}
+                      className="w-full gap-2 rounded-xl"
+                      onClick={() =>
+                        plan.isFree
+                          ? navigate("/entrepreneur/onboarding")
+                          : navigate(`${PERSONALIZED_PLAN_ROUTE}?plan=${plan.code}&interval=${showYearly ? "year" : "month"}`)
+                      }
+                    >
+                      {plan.isFree ? "Activer gratuitement" : `Choisir ${plan.name}`}
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="mt-16 max-w-3xl mx-auto text-center">
             <p className="text-muted-foreground">
-              Tous les plans incluent le profil public, le score AIPP et l'accès à Clara.
+              Tous les forfaits incluent le profil vérifié et la présence dans les réponses IA.
               <br />
-              <span className="text-sm">Taxes en sus. Annulation possible en tout temps.</span>
+              <span className="text-sm">
+                Montants en CAD, taxes en sus selon votre adresse de facturation. Annulation en tout temps.
+              </span>
             </p>
           </div>
         </div>
@@ -252,3 +228,4 @@ export default function PageEntrepreneurPlans() {
     </>
   );
 }
+

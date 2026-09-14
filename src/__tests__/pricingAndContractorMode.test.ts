@@ -21,13 +21,12 @@ import { resolveAlexMode } from "@/config/alexModes";
 
 describe("pricing — single source of truth", () => {
   it("exposes the active DB catalog slugs first", () => {
-    expect(CANONICAL_PLAN_SLUGS.slice(0, 6)).toEqual([
+    expect(CANONICAL_PLAN_SLUGS).toEqual([
+      "recrue",
       "depart",
       "croissance_v2",
       "pro_v2",
       "elite_v2",
-      "signature_v2",
-      "presence",
     ]);
   });
 

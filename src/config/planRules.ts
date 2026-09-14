@@ -1,6 +1,7 @@
 /**
  * UNPRO — Plan Rules Configuration
- * Defines subscription plan tiers and feature access.
+ * Feature limits per canonical contractor plan.
+ * Prices NEVER live here — see src/config/contractorPlans.ts and public.plans.
  */
 
 export const planRules = {
@@ -12,36 +13,36 @@ export const planRules = {
     prioritySupport: false,
     appointmentsIncluded: 0,
   },
-  pro: {
+  depart: {
     maxProperties: 3,
     maxQuotesPerMonth: 10,
     aiAnalysis: false,
     detailedScores: true,
     prioritySupport: false,
-    appointmentsIncluded: 5,
+    appointmentsIncluded: 1,
   },
-  premium: {
+  croissance_v2: {
     maxProperties: 5,
     maxQuotesPerMonth: 25,
     aiAnalysis: true,
     detailedScores: true,
     prioritySupport: false,
-    appointmentsIncluded: 10,
+    appointmentsIncluded: 3,
   },
-  elite: {
+  pro_v2: {
     maxProperties: 10,
     maxQuotesPerMonth: -1,
     aiAnalysis: true,
     detailedScores: true,
     prioritySupport: true,
-    appointmentsIncluded: 25,
+    appointmentsIncluded: 7,
   },
-  signature: {
+  elite_v2: {
     maxProperties: -1,
     maxQuotesPerMonth: -1,
     aiAnalysis: true,
     detailedScores: true,
     prioritySupport: true,
-    appointmentsIncluded: 50,
+    appointmentsIncluded: 12,
   },
 };

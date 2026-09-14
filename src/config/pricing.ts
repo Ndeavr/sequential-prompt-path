@@ -15,6 +15,15 @@
 
 import {
   CONTRACTOR_PLANS,
+  PUBLIC_CONTRACTOR_PLANS,
+  SUBSCRIBABLE_PLAN_SLUGS,
+  RETIRED_PLAN_SLUGS,
+  FREE_PLAN_SLUG,
+  isFreePlanSlug,
+  isRetiredPlanSlug,
+  isSubscribablePlanSlug,
+  computeYearlyPrice,
+  YEARLY_DISCOUNT_RATE,
   FOUNDER_OFFERS,
   PLAN_PRICE_MAP,
   formatPrice,
@@ -28,6 +37,15 @@ import {
 // ─── Canonical exports (use these everywhere) ───
 export {
   CONTRACTOR_PLANS,
+  PUBLIC_CONTRACTOR_PLANS,
+  SUBSCRIBABLE_PLAN_SLUGS,
+  RETIRED_PLAN_SLUGS,
+  FREE_PLAN_SLUG,
+  isFreePlanSlug,
+  isRetiredPlanSlug,
+  isSubscribablePlanSlug,
+  computeYearlyPrice,
+  YEARLY_DISCOUNT_RATE,
   FOUNDER_OFFERS,
   PLAN_PRICE_MAP,
   formatPrice,
@@ -38,27 +56,28 @@ export type { ContractorPlan, ContractorPlanSlug, FounderOffer };
 
 /** The only valid plan slugs, derived from the canonical catalog. */
 export const CANONICAL_PLAN_SLUGS: readonly ContractorPlanSlug[] = Object.freeze(
-  CONTRACTOR_PLANS.map((p) => p.slug),
+  PUBLIC_CONTRACTOR_PLANS.map((p) => p.slug),
 );
 
-/** Display labels for canonical plans (use in menus, badges, admin). */
+/** Display labels (use in menus, badges, admin). */
 export const CANONICAL_PLAN_LABELS: Record<ContractorPlanSlug, string> = Object.freeze({
-  presence: "Présence",
+  recrue: "Recrue",
   depart: "Départ",
   croissance_v2: "Croissance",
   pro_v2: "Pro",
   elite_v2: "Élite",
+  // retired / superseded slugs (never shown in a public grid)
+  presence: "Présence",
   signature_v2: "Signature",
-  // superseded slugs (never shown in new UI)
-  local: "Départ",
+  local: "Local",
   croissance: "Croissance",
   pro: "Pro",
-  premium: "Élite",
-  domination: "Signature",
-  recrue: "Présence",
+  premium: "Premium",
+  domination: "Domination",
   elite: "Élite",
   signature: "Signature",
 });
+
 
 /**
  * Legacy plan names that MUST NEVER appear in UI, prompts, or DB writes.
