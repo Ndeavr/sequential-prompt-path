@@ -964,8 +964,12 @@ Deno.serve(async (req) => {
     };
 
     // ---------- Growth calculator layer (annual, profile fee, entry pack) ----------
-    const annualPriceCents = Math.round(finalPrice * annualMonthsCharged);
+    // CANONICAL ANNUAL RULE: exactly 20 % off 12 months, floored to the dollar.
+    // No ×10 months, no 15 %, no configurable variant.
+    const YEARLY_DISCOUNT_RATE = 0.2;
+    const annualPriceCents = Math.floor((finalPrice * 12 * (1 - YEARLY_DISCOUNT_RATE)) / 100) * 100;
     const annualSavingsCents = Math.max(0, finalPrice * 12 - annualPriceCents);
+
     const competitionLevel =
       competitionFactor >= 1.12 ? "faible" : competitionFactor >= 0.98 ? "moyenne" : "forte";
     const billingInterval: "month" | "year" = body.billing_interval === "year" ? "year" : "month";
