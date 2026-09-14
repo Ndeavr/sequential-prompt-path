@@ -37,6 +37,7 @@ import {
   getMyFreeServiceEntitlement,
   isActiveFreeServiceEntitlement,
 } from "@/lib/founderEntitlement";
+import { checkFounderEligibility } from "@/lib/founderEligibility";
 
 const OTHER_SLUG = "autre-service-residentiel";
 /** Reprise après clic sur le lien de vérification reçu par courriel. */
@@ -81,12 +82,6 @@ type Eligibility =
   | { state: "eligible"; cityRemaining: number | null }
   | { state: "ineligible"; reason: string }
   | { state: "error" };
-
-interface FounderEligibilityPayload {
-  eligible?: boolean;
-  city_remaining?: number | null;
-  reason?: string;
-}
 
 interface FounderActivationPayload {
   ok?: boolean;
@@ -185,20 +180,16 @@ export default function PageFounderLocalServices() {
     setEligibility({ state: "checking" });
     const timeoutId = window.setTimeout(() => {
       void (async () => {
-        const { data, error } = await supabase.rpc("check_founder_eligibility", {
-          p_city: normalizedCity,
-          p_category_slug: categorySlug,
-        });
-        if (requestId !== eligibilityRequestRef.current) return;
-        if (error) {
-          setEligibility({ state: "error" });
-          return;
-        }
-        const payload = objectPayload<FounderEligibilityPayload>(data);
-        if (payload.eligible) {
-          setEligibility({ state: "eligible", cityRemaining: payload.city_remaining ?? null });
-        } else {
-          setEligibility({ state: "ineligible", reason: payload.reason ?? "not_eligible" });
+        try {
+          const payload = await checkFounderEligibility(normalizedCity, categorySlug);
+          if (requestId !== eligibilityRequestRef.current) return;
+          if (payload.eligible) {
+            setEligibility({ state: "eligible", cityRemaining: payload.cityRemaining });
+          } else {
+            setEligibility({ state: "ineligible", reason: payload.reason ?? "not_eligible" });
+          }
+        } catch {
+          if (requestId === eligibilityRequestRef.current) setEligibility({ state: "error" });
         }
       })();
     }, 350);

@@ -1,21 +1,8 @@
-/**
- * Verrou de portée serveur — offre fondateur « Services résidentiels uniquement ».
- *
- * L'UI ne propose que les catégories `group_type = 'local_service'`. Ce test
- * démontre que l'API publique applique la MÊME règle : un appel RPC direct avec
- * un slug professionnel (courtier, notaire, inspecteur, évaluateur, arpenteur)
- * est refusé avec `category_not_eligible`, alors qu'un slug de service
- * résidentiel actif reste admissible.
- *
- * Lecture seule : `check_founder_eligibility` est STABLE, aucune inscription
- * n'est créée, aucun courriel/SMS/paiement n'est déclenché.
- */
-import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, expect, it, vi } from "vitest";
 
-const URL = process.env.VITE_SUPABASE_URL ?? "https://clmaqdnphbndvmmqvpff.supabase.co";
-const KEY =
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNsbWFxZG5waGJuZHZtbXF2cGZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTk1NTUsImV4cCI6MjA4ODczNTU1NX0.uqNcgZ8JDldQJ8uDEimstyES8RO8O2ybRJYTcI_KBOk";
+import { checkFounderEligibility, type FounderEligibilityTransport } from "@/lib/founderEligibility";
 
 const PROFESSIONAL_SLUGS = [
   "agent-courtier-immobilier",
@@ -26,32 +13,51 @@ const PROFESSIONAL_SLUGS = [
   "notaire",
 ];
 
-async function checkEligibility(city: string, slug: string) {
-  const res = await fetch(`${URL}/rest/v1/rpc/check_founder_eligibility`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", apikey: KEY, Authorization: `Bearer ${KEY}` },
-    body: JSON.stringify({ p_city: city, p_category_slug: slug }),
-  });
-  expect(res.status).toBe(200);
-  return (await res.json()) as { eligible: boolean; reason: string | null };
+const serverPolicyMigration = readFileSync(
+  resolve(process.cwd(), "supabase/migrations/20260907152209_6ec1f902-3780-43e9-a68b-66438b1bef4e.sql"),
+  "utf8",
+);
+
+function transportFor(data: unknown): FounderEligibilityTransport {
+  return vi.fn().mockResolvedValue({ data, error: null });
 }
 
 describe("verrou de portée serveur de l'offre fondateur", () => {
-  it("accepte un service résidentiel actif", async () => {
-    const out = await checkEligibility("Laval", "lavage-de-vitres");
-    expect(out.reason).not.toBe("category_not_eligible");
-    expect(out.eligible).toBe(true);
-  }, 20000);
+  it("keeps the residential-service guard in the canonical server policy", () => {
+    expect(serverPolicyMigration).toContain("public.check_founder_eligibility");
+    expect(serverPolicyMigration).toContain("AND group_type = 'local_service'");
+    expect(serverPolicyMigration).toContain("'category_not_eligible'");
+  });
 
-  it.each(PROFESSIONAL_SLUGS)("refuse le slug professionnel %s", async (slug) => {
-    const out = await checkEligibility("Laval", slug);
-    expect(out.eligible).toBe(false);
-    expect(out.reason).toBe("category_not_eligible");
-  }, 20000);
+  it("passes a positive server response through the client transport boundary", async () => {
+    const transport = transportFor({ eligible: true, reason: null, city_remaining: 6 });
 
-  it("refuse un slug inconnu", async () => {
-    const out = await checkEligibility("Laval", "slug-inexistant-zzz");
-    expect(out.eligible).toBe(false);
-    expect(out.reason).toBe("category_not_eligible");
-  }, 20000);
+    await expect(checkFounderEligibility("Laval", "lavage-de-vitres", transport)).resolves.toEqual({
+      eligible: true,
+      reason: null,
+      cityRemaining: 6,
+    });
+    expect(transport).toHaveBeenCalledWith({
+      p_city: "Laval",
+      p_category_slug: "lavage-de-vitres",
+    });
+  });
+
+  it.each(PROFESSIONAL_SLUGS)("does not turn a server rejection into eligibility for %s", async (slug) => {
+    await expect(
+      checkFounderEligibility(
+        "Laval",
+        slug,
+        transportFor({ eligible: false, reason: "category_not_eligible", city_remaining: null }),
+      ),
+    ).resolves.toEqual({ eligible: false, reason: "category_not_eligible", cityRemaining: null });
+  });
+
+  it("fails closed for a malformed server response", async () => {
+    await expect(checkFounderEligibility("Laval", "lavage-de-vitres", transportFor(null))).resolves.toEqual({
+      eligible: false,
+      reason: "invalid_response",
+      cityRemaining: null,
+    });
+  });
 });

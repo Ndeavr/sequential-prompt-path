@@ -10,7 +10,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "lint:critical": "eslint src/lib/founderEntitlement.ts src/pages/founder/PageFounderLocalServices.tsx src/pages/entrepreneur/PageMatchingProfileWizard.tsx src/hooks/useCalendarConnection.ts src/components/calendar/CardCalendarConnectionRole.tsx src/components/calendar/ButtonConnectGoogleCalendar.tsx src/components/calendar/ButtonSubscribeAppleCalendar.tsx src/pages/calendar/PageCalendarConnectionHub.tsx src/pages/calendar/PageCalendarConnectionSuccess.tsx src/pages/calendar/PageCalendarConnectionFailure.tsx src/__tests__/founderEntitlementContinuity.test.ts src/__tests__/freeFounderJourneyHardening.test.ts",
+    "lint:critical": "eslint src/lib/founderEntitlement.ts src/lib/founderEligibility.ts src/pages/founder/PageFounderLocalServices.tsx src/pages/entrepreneur/PageMatchingProfileWizard.tsx src/hooks/useCalendarConnection.ts src/components/calendar/CardCalendarConnectionRole.tsx src/components/calendar/ButtonConnectGoogleCalendar.tsx src/components/calendar/ButtonSubscribeAppleCalendar.tsx src/pages/calendar/PageCalendarConnectionHub.tsx src/pages/calendar/PageCalendarConnectionSuccess.tsx src/pages/calendar/PageCalendarConnectionFailure.tsx src/__tests__/founderEntitlementContinuity.test.ts src/__tests__/founderCategoryScopeLock.test.ts src/__tests__/founderCategoryScopeLock.integration.test.ts src/__tests__/freeFounderJourneyHardening.test.ts",
     "preview": "vite preview",
     "test": "vitest run",
     "test:critical": "vitest run src/__tests__/founderEntitlementContinuity.test.ts src/__tests__/freeFounderJourneyHardening.test.ts",
