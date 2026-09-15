@@ -3,28 +3,11 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useContractorHumanCallout } from "@/hooks/useContractorHumanCallout";
 import { CONTRACTOR_HUMAN_CALLOUT } from "@/config/contractorHumanCallout";
-import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 export default function ContractorHumanCalloutModal() {
-  const { isOpen, showClaraNudge, reason, dismiss, call, continueWithClara } = useContractorHumanCallout();
-  const { openAlex } = useAlexVoice();
-
-  const handleClara = () => {
-    continueWithClara();
-    openAlex("contractor_support", `L'entrepreneur semble bloqué à cette étape (${reason ?? "raison inconnue"}). Aide-le brièvement à continuer.`, "fullscreen", "contractor");
-  };
+  const { isOpen, dismiss, call } = useContractorHumanCallout();
 
   return (
-    <>
-    {showClaraNudge && !isOpen && (
-      <div className="fixed inset-x-4 bottom-5 z-[90] mx-auto max-w-sm rounded-2xl border border-border bg-background p-4 shadow-lg" role="status">
-        <p className="text-sm font-medium text-foreground">Besoin d'un coup de main avec cette étape?</p>
-        <div className="mt-3 flex gap-2">
-          <Button size="sm" onClick={handleClara}>Continuer avec Clara</Button>
-          <Button size="sm" variant="ghost" onClick={dismiss}>Pas maintenant</Button>
-        </div>
-      </div>
-    )}
     <Dialog open={isOpen} onOpenChange={(o) => !o && dismiss()}>
       <DialogContent
         className="alex-immersive max-w-md border-white/10 bg-[#0B1220]/95 backdrop-blur-2xl rounded-[28px] p-0 overflow-hidden [&>button]:hidden text-white"
@@ -61,7 +44,7 @@ export default function ContractorHumanCalloutModal() {
 
           <button
             type="button"
-            onClick={handleClara}
+            onClick={dismiss}
             className="mt-4 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             {CONTRACTOR_HUMAN_CALLOUT.secondaryCta}
@@ -73,6 +56,5 @@ export default function ContractorHumanCalloutModal() {
         </div>
       </DialogContent>
     </Dialog>
-    </>
   );
 }
