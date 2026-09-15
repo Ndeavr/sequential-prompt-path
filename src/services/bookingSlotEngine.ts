@@ -211,11 +211,12 @@ function isInLunchBlock(slotStart: Date, slotEnd: Date): boolean {
 // ─── Core Slot Engine ───
 
 export async function computeSmartSlots(input: SlotEngineInput): Promise<SlotEngineOutput> {
-  const [availability, blackouts, existingBookings, allTypes] = await Promise.all([
+  const [availability, blackouts, existingBookings, allTypes, externalBusy] = await Promise.all([
     fetchAvailability(input.contractorId),
     fetchBlackouts(input.contractorId, input.dateFrom, input.dateTo),
     fetchExistingBookings(input.contractorId, input.dateFrom, input.dateTo),
     fetchAppointmentTypes(input.contractorId),
+    fetchExternalBusy(input.contractorId, input.dateFrom, input.dateTo),
   ]);
 
   const appointmentType = allTypes.find((t) => t.id === input.appointmentTypeId);
