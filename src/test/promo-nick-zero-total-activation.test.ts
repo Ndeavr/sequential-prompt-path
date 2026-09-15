@@ -62,8 +62,12 @@ describe("zero-total activation (edge function)", () => {
   });
 
   it("never labels the activation as a test account", () => {
-    const zeroBranch = intentFn.slice(intentFn.indexOf("Zero-total activation"));
-    expect(zeroBranch.toLowerCase()).not.toMatch(/\b(test|demo|démo|trial|essai|sandbox)\b/);
+    const start = intentFn.indexOf("Zero-total activation");
+    const end = intentFn.indexOf("4. Get or create Stripe customer");
+    const zeroBranch = intentFn.slice(start, end).toLowerCase();
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+    expect(zeroBranch).not.toMatch(/\b(test|demo|démo|trial|essai|sandbox)\b/);
   });
 });
 
