@@ -174,6 +174,25 @@ export async function fetchExistingBookings(contractorId: string, from: Date, to
   return (data ?? []) as unknown as ExistingBooking[];
 }
 
+/**
+ * Real busy windows from the contractor's connected calendar.
+ * Only start/end times are returned — never event content.
+ */
+export async function fetchExternalBusy(
+  contractorId: string,
+  from: Date,
+  to: Date,
+): Promise<ExternalBusyWindow[]> {
+  const { data, error } = await supabase.rpc("contractor_busy_windows", {
+    p_contractor_id: contractorId,
+    p_from: from.toISOString(),
+    p_to: to.toISOString(),
+  });
+
+  if (error) throw error;
+  return (data ?? []) as unknown as ExternalBusyWindow[];
+}
+
 // ─── Lunch Block Helper ───
 
 function isInLunchBlock(slotStart: Date, slotEnd: Date): boolean {
