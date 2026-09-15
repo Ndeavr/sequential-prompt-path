@@ -576,7 +576,13 @@ export default function PageCheckoutNativeScrollable() {
     }
   }, [planCode, interval, couponCode, activating]);
 
+  // Pricing must reflect the currently applied coupon before any intent is created,
+  // otherwise a 100 % code could trigger an activation before the user confirms.
+  const pricingInSync =
+    !isLoading && !!pricing && (pricing.coupon?.code ?? null) === (couponCode ?? null);
+
   useEffect(() => {
+    if (!pricingInSync) return;
     // A fully covered plan never creates a Stripe payment intent.
     if (fullyCovered) {
       setClientSecret(null);
@@ -585,7 +591,7 @@ export default function PageCheckoutNativeScrollable() {
       return;
     }
     fetchIntent();
-  }, [fetchIntent, intentKey, fullyCovered]);
+  }, [fetchIntent, intentKey, fullyCovered, pricingInSync]);
 
   const handleIntervalChange = (iv: BillingInterval) => {
     setInterval(iv);
