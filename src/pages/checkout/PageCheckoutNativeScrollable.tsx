@@ -27,6 +27,7 @@ import { useCheckoutPricing, fmtCAD, fmtCADExact, type CheckoutPricing } from "@
 import { useValidateCoupon } from "@/hooks/useCoupons";
 import { cn } from "@/lib/utils";
 import type { BillingInterval } from "@/hooks/usePlanCatalog";
+import CardContractorCalendarSetup from "@/components/calendar/CardContractorCalendarSetup";
 
 const STRIPE_PK = "pk_live_Gw47doir5ZX9n9uM0nrBpKro";
 const stripePromise = STRIPE_PK.startsWith("pk_")

@@ -25,7 +25,14 @@ export default function PageCalendarConnectionSuccess() {
 
   useEffect(() => {
     refresh();
-    track({ surface, role_context: role, event_type: "calendar_connected", provider });
+    track({ surface, role_context: role, event_type: "contractor_calendar_connected", provider });
+
+    // Import the real busy periods immediately so availability is accurate
+    // from the very first booking attempt. A failure here never blocks.
+    void supabase.functions
+      .invoke("calendar-freebusy-sync", { body: { days: 45 } })
+      .catch(() => undefined);
+
     const t = setTimeout(() => {
       navigate(returnTo || "/dashboard");
     }, 3000);
