@@ -140,30 +140,173 @@ Deno.serve(async (req) => {
 
       redemptionId = promoResult.redemption_id;
 
-      // Zero-total activation
-      if (promoResult.discount_type === "percentage" && promoResult.discount_value >= 100) {
-        // Handle free activation (same as create-checkout-session)
-        await serviceClient.from("contractors").update({
-          status: "active",
-          subscription_plan: planCode,
-        }).eq("id", contractor.id);
+      // ── Zero-total activation (100 % promo, e.g. NICK) ──────────────────
+      // This is a REAL production contractor activation. Not a trial, not a
+      // test account. UNPRO simply covers 100 % of the plan price.
+      // Fully idempotent: replaying it never duplicates anything.
+      if (promoResult.discount_type === "percentage" && Number(promoResult.discount_value) >= 100) {
+        const normalizedPromo = String(promoCode).trim().toUpperCase();
+        const originalPrice = Number(
+          interval === "year"
+            ? (planRow as any).annual_price ?? 0
+            : (planRow as any).monthly_price ?? 0,
+        );
+        const nowIso = new Date().toISOString();
+        const periodEnd = new Date(
+          Date.now() + (interval === "year" ? 365 : 30) * 86400000,
+        ).toISOString();
 
-        await serviceClient.from("contractor_subscriptions").upsert({
-          contractor_id: contractor.id,
-          plan_id: planCode,
-          billing_interval: interval,
-          status: "active",
-          current_period_start: new Date().toISOString(),
-          current_period_end: new Date(Date.now() + (interval === "year" ? 365 : 30) * 86400000).toISOString(),
-        }, { onConflict: "contractor_id" });
+        // Real contractor columns only. `status` / `subscription_plan` do NOT
+        // exist on public.contractors — the previous write failed silently and
+        // reported a success that never happened.
+        const { error: activateErr } = await serviceClient
+          .from("contractors")
+          .update({
+            account_status: "active",
+            activation_status: "activated",
+            updated_at: nowIso,
+          })
+          .eq("id", contractor.id);
 
-        if (redemptionId) {
-          await serviceClient.from("promo_code_redemptions")
-            .update({ status: "consumed" })
-            .eq("id", redemptionId);
+        if (activateErr) {
+          console.error("[create-subscription-intent] zero-total activation failed", {
+            contractor_id: contractor.id,
+            plan: planCode,
+            error: activateErr.message,
+          });
+          return json(
+            {
+              error: "L'activation n'a pas pu être complétée. Aucun paiement n'a été créé.",
+              code: "zero_total_activation_failed",
+            },
+            500,
+          );
         }
 
-        return json({ activated: true, zero_total: true, message: "Plan activé gratuitement !" });
+        // Existing subscription for this contractor (idempotency subject)
+        const { data: priorSub } = await serviceClient
+          .from("contractor_subscriptions")
+          .select("id, plan_id, status")
+          .eq("contractor_id", contractor.id)
+          .maybeSingle();
+
+        const alreadyActive =
+          priorSub?.status === "active" && priorSub?.plan_id === planCode;
+
+        const { error: subErr } = await serviceClient
+          .from("contractor_subscriptions")
+          .upsert(
+            {
+              contractor_id: contractor.id,
+              plan_id: planCode,
+              billing_interval: interval,
+              status: "active",
+              payment_status: "paid",
+              payment_method: "promo_code",
+              amount_paid_cents: 0,
+              currency: "cad",
+              plan_source: "promo_code",
+              activation_source: `promo:${normalizedPromo}`,
+              activation_note: `Forfait couvert à 100 % par le code ${normalizedPromo}`,
+              auto_renew: true,
+              activated_by: userId,
+              current_period_start: priorSub ? undefined : nowIso,
+              current_period_end: periodEnd,
+              updated_at: nowIso,
+            },
+            { onConflict: "contractor_id" },
+          );
+
+        if (subErr) {
+          console.error("[create-subscription-intent] subscription write failed", {
+            contractor_id: contractor.id,
+            error: subErr.message,
+          });
+          return json(
+            {
+              error: "L'activation n'a pas pu être enregistrée. Réessayez dans un instant.",
+              code: "zero_total_subscription_failed",
+            },
+            500,
+          );
+        }
+
+        const auditMeta = {
+          contractor_id: contractor.id,
+          plan_code: planCode,
+          billing_interval: interval,
+          original_price_cents: originalPrice,
+          final_price_cents: 0,
+          promo_code: normalizedPromo,
+          discount_percent: 100,
+          activated_at: nowIso,
+          account_mode: "production",
+        };
+
+        // Durable trail — never labelled as a test activation.
+        const [{ error: ledgerErr }, { error: auditErr }, { error: eventErr }] =
+          await Promise.all([
+            serviceClient.from("contractor_activation_ledger").insert({
+              contractor_id: contractor.id,
+              action: "contractor_plan_activated_with_promo",
+              source: "create-subscription-intent",
+              actor_id: userId,
+              plan_id: planCode,
+              before_state: { subscription_status: priorSub?.status ?? null, plan_id: priorSub?.plan_id ?? null },
+              after_state: { subscription_status: "active", plan_id: planCode },
+              metadata: auditMeta,
+            }),
+            serviceClient.from("unpro_payment_activation_audit").insert({
+              contractor_id: contractor.id,
+              action: "contractor_plan_activated_with_promo",
+              previous_status: priorSub?.status ?? null,
+              new_status: "active",
+              amount_cents: 0,
+              currency: "cad",
+              source: "promo_code",
+              result: "activated",
+              metadata: auditMeta,
+            }),
+            serviceClient.from("contractor_activation_events").insert({
+              contractor_id: contractor.id,
+              event_type: "contractor_plan_activated_with_promo",
+              event_label: `Forfait ${planRow.name} activé avec le code ${normalizedPromo}`,
+              payload: auditMeta,
+            }),
+          ]);
+
+        if (ledgerErr || auditErr || eventErr) {
+          // The activation itself succeeded — surface the trail failure loudly
+          // instead of swallowing it, but do not fail the contractor.
+          console.error("[create-subscription-intent] activation trail incomplete", {
+            contractor_id: contractor.id,
+            ledger: ledgerErr?.message ?? null,
+            audit: auditErr?.message ?? null,
+            event: eventErr?.message ?? null,
+          });
+        }
+
+        if (redemptionId) {
+          const { error: redeemErr } = await serviceClient
+            .from("promo_code_redemptions")
+            .update({ status: "consumed" })
+            .eq("id", redemptionId);
+          if (redeemErr) {
+            console.error("[create-subscription-intent] redemption consume failed", redeemErr.message);
+          }
+        }
+
+        return json({
+          activated: true,
+          zero_total: true,
+          already_active: alreadyActive,
+          plan_code: planCode,
+          plan_name: planRow.name,
+          promo_code: normalizedPromo,
+          original_price_cents: originalPrice,
+          final_price_cents: 0,
+          message: `Votre forfait est entièrement offert grâce au code ${normalizedPromo}.`,
+        });
       }
     }
 
