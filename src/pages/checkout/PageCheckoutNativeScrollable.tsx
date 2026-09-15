@@ -701,8 +701,61 @@ export default function PageCheckoutNativeScrollable() {
         {/* 4. Trust Signals */}
         <PanelCheckoutTrustSignals />
 
-        {/* 5. Payment Section */}
-        {intentLoading && (
+        {/* 5. Fully covered plan — no card required */}
+        {fullyCovered && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-green-500/30 bg-green-500/5 p-5 space-y-4"
+          >
+            <div className="flex items-center gap-2 text-green-600 font-bold text-sm">
+              <Check className="w-4 h-4" />
+              Code {pricing.coupon?.code} appliqué
+            </div>
+
+            <div className="flex items-end justify-between">
+              <span className="text-sm text-muted-foreground">Montant dû aujourd'hui</span>
+              <span className="flex items-baseline gap-2">
+                <span className="text-sm line-through text-muted-foreground">
+                  {fmtCADExact(pricing.subtotal_before_discount)}
+                </span>
+                <span className="text-2xl font-black text-foreground">0 $</span>
+              </span>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Votre forfait est entièrement offert grâce au code {pricing.coupon?.code}.
+            </p>
+
+            <Button
+              className="w-full h-12 text-sm font-bold gap-2 rounded-xl"
+              disabled={activating}
+              onClick={activateCoveredPlan}
+            >
+              {activating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Activation en cours…
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4" />
+                  Activer mon forfait
+                </>
+              )}
+            </Button>
+
+            {intentError && (
+              <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 flex items-start gap-2.5">
+                <AlertTriangle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+                <p className="text-xs font-medium text-destructive">{intentError}</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* 6. Payment Section */}
+        {!fullyCovered && intentLoading && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
