@@ -262,3 +262,6 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = true
   [functions.founder-call-queue]
     verify_jwt = true
+
+  [functions.free-service-activate]
+    verify_jwt = true
