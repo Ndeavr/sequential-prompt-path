@@ -80,6 +80,12 @@ export type SlotBadge =
   | "reduced_travel"
   | "recommended_by_alex";
 
+/** A busy window imported from the contractor's connected calendar. */
+export interface ExternalBusyWindow {
+  starts_at: string;
+  ends_at: string;
+}
+
 export interface SlotEngineInput {
   contractorId: string;
   appointmentTypeId: string;
