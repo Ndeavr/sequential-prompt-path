@@ -9,6 +9,7 @@ import { CheckCircle2 } from "lucide-react";
 import { useEffect } from "react";
 import { useCalendarConnections, useCalendarConversionTracking } from "@/hooks/useCalendarConnection";
 import WidgetCalendarAvailabilityPreview from "@/components/calendar/WidgetCalendarAvailabilityPreview";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function PageCalendarConnectionSuccess() {
   const [params] = useSearchParams();
