@@ -1,13 +1,12 @@
 /**
  * UNPRO — Vidéo de présentation (audit IA).
  *
- * Réutilise l'asset vidéo déjà présent en production (/images/hero-bg.*)
- * avec son poster existant. Format volontairement compact : max 600 px sur
- * desktop, 100 % de la largeur sur mobile, ratio 16/9 conservé.
+ * Vidéo finale Audit IA, hébergée durablement sur le CDN UNPRO.
+ * Format compact : max 600 px sur desktop, 100 % sur mobile, ratio 16/9.
  */
+import auditVideoAsset from "@/assets/unpro-audit-ia-final-16x9.mp4.asset.json";
+
 const POSTER = "/images/hero-bg.webp";
-const SRC_WEBM = "/images/hero-bg.webm";
-const SRC_MP4 = "/images/hero-bg.mp4";
 
 export function AuditVideoBlock() {
   return (
@@ -24,12 +23,11 @@ export function AuditVideoBlock() {
               height={720}
               className="block aspect-video h-auto w-full"
             >
-              <source src={SRC_WEBM} type="video/webm" />
-              <source src={SRC_MP4} type="video/mp4" />
+              <source src={auditVideoAsset.url} type="video/mp4" />
             </video>
           </div>
           <p className="mt-3 px-1 text-[12.5px] leading-relaxed text-muted-foreground">
-            En 30 secondes : comment UNPRO structure votre entreprise pour qu'elle soit comprise,
+            En 20 secondes : comment UNPRO structure votre entreprise pour qu'elle soit comprise,
             vérifiée et considérée par les assistants IA.
           </p>
         </div>
