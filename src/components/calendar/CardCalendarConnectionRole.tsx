@@ -74,6 +74,9 @@ export default function CardCalendarConnectionRole({
               className="w-full"
             />
           )}
+          <p className="text-xs text-muted-foreground text-center pt-1">
+            Outlook / Microsoft 365 : bientôt disponible.
+          </p>
         </div>
       )}
 
