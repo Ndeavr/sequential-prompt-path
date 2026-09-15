@@ -99614,6 +99614,13 @@ export type Database = {
         Args: { _generation_type?: string; _user_id: string }
         Returns: Json
       }
+      contractor_busy_windows: {
+        Args: { p_contractor_id: string; p_from: string; p_to: string }
+        Returns: {
+          ends_at: string
+          starts_at: string
+        }[]
+      }
       contractor_feature_access: {
         Args: { _feature_key: string; _user_id: string }
         Returns: Json
