@@ -15,3 +15,5 @@
 - [ ] Thème sombre par défaut sur l'accueil (logo actuel conservé).
 - [ ] Animation de l'en-tête fixe au défilement.
 - [ ] Mettre à jour l'article canonique « Les 3 soumissions, c'est terminé » avec sources, visuels éditoriaux, SEO et validation de production.
+
+- [ ] Remplacer puis publier la vidéo finale Audit IA sur /entrepreneurs/audit-ia; vérifier lecture 16:9 et console.
