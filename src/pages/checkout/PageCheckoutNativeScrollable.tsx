@@ -218,7 +218,7 @@ function PanelCheckoutCouponInline({
           </div>
           {appliedCoupon && (
             <Badge className="bg-green-500/10 text-green-600 border-green-500/20 gap-1.5 py-1 px-3">
-              <Check className="w-3.5 h-3.5" /> Code appliqué
+              <Check className="w-3.5 h-3.5" /> Code {appliedCoupon} appliqué
             </Badge>
           )}
           {error && (
@@ -514,6 +514,15 @@ export default function PageCheckoutNativeScrollable() {
   const [intentError, setIntentError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  const [activating, setActivating] = useState(false);
+
+  /**
+   * Plan entirely covered by a promo code (e.g. NICK).
+   * No card is required — the contractor activates a real production plan at 0 $.
+   */
+  const fullyCovered =
+    !!pricing && !!pricing.coupon && pricing.discount_amount > 0 && pricing.total_due_today === 0;
+
   // Fetch subscription intent from backend
   const fetchIntent = useCallback(async () => {
     if (!planCode) return;
@@ -547,9 +556,42 @@ export default function PageCheckoutNativeScrollable() {
     }
   }, [planCode, interval, couponCode]);
 
+  /** Explicit activation for a fully covered plan — triggered by the CTA only. */
+  const activateCoveredPlan = useCallback(async () => {
+    if (!planCode || activating) return;
+    setActivating(true);
+    setIntentError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-subscription-intent", {
+        body: { planCode, billingInterval: interval, promoCode: couponCode || undefined },
+      });
+      if (error) throw new Error(error.message || "Activation impossible");
+      if (data?.error) throw new Error(data.error);
+      if (!data?.activated) throw new Error("L'activation n'a pas été confirmée. Réessayez.");
+      setSuccess(true);
+    } catch (err: any) {
+      setIntentError(err.message || "L'activation n'a pas pu être complétée.");
+    } finally {
+      setActivating(false);
+    }
+  }, [planCode, interval, couponCode, activating]);
+
+  // Pricing must reflect the currently applied coupon before any intent is created,
+  // otherwise a 100 % code could trigger an activation before the user confirms.
+  const pricingInSync =
+    !isLoading && !!pricing && (pricing.coupon?.code ?? null) === (couponCode ?? null);
+
   useEffect(() => {
+    if (!pricingInSync) return;
+    // A fully covered plan never creates a Stripe payment intent.
+    if (fullyCovered) {
+      setClientSecret(null);
+      setIntentLoading(false);
+      setIntentError(null);
+      return;
+    }
     fetchIntent();
-  }, [fetchIntent, intentKey]);
+  }, [fetchIntent, intentKey, fullyCovered, pricingInSync]);
 
   const handleIntervalChange = (iv: BillingInterval) => {
     setInterval(iv);
@@ -659,8 +701,61 @@ export default function PageCheckoutNativeScrollable() {
         {/* 4. Trust Signals */}
         <PanelCheckoutTrustSignals />
 
-        {/* 5. Payment Section */}
-        {intentLoading && (
+        {/* 5. Fully covered plan — no card required */}
+        {fullyCovered && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-green-500/30 bg-green-500/5 p-5 space-y-4"
+          >
+            <div className="flex items-center gap-2 text-green-600 font-bold text-sm">
+              <Check className="w-4 h-4" />
+              Code {pricing.coupon?.code} appliqué
+            </div>
+
+            <div className="flex items-end justify-between">
+              <span className="text-sm text-muted-foreground">Montant dû aujourd'hui</span>
+              <span className="flex items-baseline gap-2">
+                <span className="text-sm line-through text-muted-foreground">
+                  {fmtCADExact(pricing.subtotal_before_discount)}
+                </span>
+                <span className="text-2xl font-black text-foreground">0 $</span>
+              </span>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Votre forfait est entièrement offert grâce au code {pricing.coupon?.code}.
+            </p>
+
+            <Button
+              className="w-full h-12 text-sm font-bold gap-2 rounded-xl"
+              disabled={activating}
+              onClick={activateCoveredPlan}
+            >
+              {activating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Activation en cours…
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4" />
+                  Activer mon forfait
+                </>
+              )}
+            </Button>
+
+            {intentError && (
+              <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 flex items-start gap-2.5">
+                <AlertTriangle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+                <p className="text-xs font-medium text-destructive">{intentError}</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* 6. Payment Section */}
+        {!fullyCovered && intentLoading && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -673,7 +768,7 @@ export default function PageCheckoutNativeScrollable() {
           </motion.div>
         )}
 
-        {intentError && (
+        {!fullyCovered && intentError && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -692,7 +787,7 @@ export default function PageCheckoutNativeScrollable() {
           </motion.div>
         )}
 
-        {clientSecret && stripePromise && (
+        {!fullyCovered && clientSecret && stripePromise && (
           <Elements
             key={clientSecret}
             stripe={stripePromise}
