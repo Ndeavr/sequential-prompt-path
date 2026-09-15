@@ -92,6 +92,12 @@ export type FunnelEventType =
   | "booking_clicked"
   | "video_started"
   | "video_completed"
+  | "human_help_eligible"
+  | "human_help_shown"
+  | "human_help_dismissed"
+  | "human_help_call_clicked"
+  | "human_help_continue_clara"
+  | "human_help_trigger_reason"
 
   | "onboarding_resumed"
   | "free_offer_accepted"

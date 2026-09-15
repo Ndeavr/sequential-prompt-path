@@ -1,10 +1,11 @@
 export const CONTRACTOR_HUMAN_CALLOUT = {
   phoneDisplay: "(514) 249-9522",
   phoneTel: "+15142499522",
-  delayMs: 5000,
+  minDwellMs: 15000,
   storageKey: "unpro:contractor_human_popup_shown",
+  nudgeStorageKey: "unpro:contractor_human_nudge_shown",
   hours: "Lun–Ven · 8h–18h (HE)",
-  title: "Vous voulez être recommandé par l'IA?",
+  title: "Besoin d'aide pour continuer?",
   subtitle: "Parlez à un humain maintenant.",
   primaryCta: "Appeler",
   secondaryCta: "Continuer avec Clara",
