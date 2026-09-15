@@ -514,6 +514,15 @@ export default function PageCheckoutNativeScrollable() {
   const [intentError, setIntentError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  const [activating, setActivating] = useState(false);
+
+  /**
+   * Plan entirely covered by a promo code (e.g. NICK).
+   * No card is required — the contractor activates a real production plan at 0 $.
+   */
+  const fullyCovered =
+    !!pricing && !!pricing.coupon && pricing.discount_amount > 0 && pricing.total_due_today === 0;
+
   // Fetch subscription intent from backend
   const fetchIntent = useCallback(async () => {
     if (!planCode) return;
@@ -547,9 +556,36 @@ export default function PageCheckoutNativeScrollable() {
     }
   }, [planCode, interval, couponCode]);
 
+  /** Explicit activation for a fully covered plan — triggered by the CTA only. */
+  const activateCoveredPlan = useCallback(async () => {
+    if (!planCode || activating) return;
+    setActivating(true);
+    setIntentError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-subscription-intent", {
+        body: { planCode, billingInterval: interval, promoCode: couponCode || undefined },
+      });
+      if (error) throw new Error(error.message || "Activation impossible");
+      if (data?.error) throw new Error(data.error);
+      if (!data?.activated) throw new Error("L'activation n'a pas été confirmée. Réessayez.");
+      setSuccess(true);
+    } catch (err: any) {
+      setIntentError(err.message || "L'activation n'a pas pu être complétée.");
+    } finally {
+      setActivating(false);
+    }
+  }, [planCode, interval, couponCode, activating]);
+
   useEffect(() => {
+    // A fully covered plan never creates a Stripe payment intent.
+    if (fullyCovered) {
+      setClientSecret(null);
+      setIntentLoading(false);
+      setIntentError(null);
+      return;
+    }
     fetchIntent();
-  }, [fetchIntent, intentKey]);
+  }, [fetchIntent, intentKey, fullyCovered]);
 
   const handleIntervalChange = (iv: BillingInterval) => {
     setInterval(iv);
