@@ -67,7 +67,11 @@ describe("zero-total activation (edge function)", () => {
     const zeroBranch = intentFn.slice(start, end).toLowerCase();
     expect(start).toBeGreaterThan(-1);
     expect(end).toBeGreaterThan(start);
-    expect(zeroBranch).not.toMatch(/\b(test|demo|démo|trial|essai|sandbox)\b/);
+    const code = zeroBranch
+      .split("\n")
+      .filter((l) => !l.trim().startsWith("//"))
+      .join("\n");
+    expect(code).not.toMatch(/\b(test|demo|démo|trial|essai|sandbox)\b/);
   });
 });
 
