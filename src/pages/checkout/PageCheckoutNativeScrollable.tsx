@@ -218,7 +218,7 @@ function PanelCheckoutCouponInline({
           </div>
           {appliedCoupon && (
             <Badge className="bg-green-500/10 text-green-600 border-green-500/20 gap-1.5 py-1 px-3">
-              <Check className="w-3.5 h-3.5" /> Code appliqué
+              <Check className="w-3.5 h-3.5" /> Code {appliedCoupon} appliqué
             </Badge>
           )}
           {error && (
@@ -768,7 +768,7 @@ export default function PageCheckoutNativeScrollable() {
           </motion.div>
         )}
 
-        {intentError && (
+        {!fullyCovered && intentError && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -787,7 +787,7 @@ export default function PageCheckoutNativeScrollable() {
           </motion.div>
         )}
 
-        {clientSecret && stripePromise && (
+        {!fullyCovered && clientSecret && stripePromise && (
           <Elements
             key={clientSecret}
             stripe={stripePromise}
