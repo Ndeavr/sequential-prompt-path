@@ -35,7 +35,27 @@ async function hmacKey(secret: string): Promise<CryptoKey> {
 
 async function aesKey(secret: string): Promise<CryptoKey> {
   const digest = await crypto.subtle.digest("SHA-256", encoder.encode(secret));
-  return crypto.subtle.importKey("raw", digest, { name: "AES-GCM" }, false, ["encrypt"]);
+  return crypto.subtle.importKey("raw", digest, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+}
+
+/** Reverse of encryptCalendarToken. Returns null when the payload is unreadable. */
+export async function decryptCalendarToken(
+  stored: string | null | undefined,
+  secret: string,
+): Promise<string | null> {
+  if (!stored || !secret) return null;
+  const [version, encodedIv, encodedCipher] = stored.split(".");
+  if (version !== "v1" || !encodedIv || !encodedCipher) return null;
+  try {
+    const plaintext = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: fromBase64Url(encodedIv).slice() as unknown as BufferSource },
+      await aesKey(secret),
+      fromBase64Url(encodedCipher).slice() as unknown as BufferSource,
+    );
+    return decoder.decode(plaintext);
+  } catch {
+    return null;
+  }
 }
 
 /** Encrypt provider tokens before persistence. The random IV is stored with the ciphertext. */
