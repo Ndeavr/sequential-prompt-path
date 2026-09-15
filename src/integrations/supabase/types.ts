@@ -22326,6 +22326,56 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_busy_periods: {
+        Row: {
+          calendar_connection_id: string
+          created_at: string
+          ends_at: string
+          external_event_id: string | null
+          id: string
+          is_all_day: boolean
+          provider: string
+          starts_at: string
+          synced_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calendar_connection_id: string
+          created_at?: string
+          ends_at: string
+          external_event_id?: string | null
+          id?: string
+          is_all_day?: boolean
+          provider: string
+          starts_at: string
+          synced_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calendar_connection_id?: string
+          created_at?: string
+          ends_at?: string
+          external_event_id?: string | null
+          id?: string
+          is_all_day?: boolean
+          provider?: string
+          starts_at?: string
+          synced_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_busy_periods_calendar_connection_id_fkey"
+            columns: ["calendar_connection_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_connection_nudges: {
         Row: {
           accept_count: number
@@ -22425,6 +22475,7 @@ export type Database = {
           connection_status: string
           created_at: string
           expires_at: string | null
+          external_ics_url: string | null
           ics_token: string | null
           id: string
           is_primary: boolean
@@ -22444,6 +22495,7 @@ export type Database = {
           connection_status?: string
           created_at?: string
           expires_at?: string | null
+          external_ics_url?: string | null
           ics_token?: string | null
           id?: string
           is_primary?: boolean
@@ -22463,6 +22515,7 @@ export type Database = {
           connection_status?: string
           created_at?: string
           expires_at?: string | null
+          external_ics_url?: string | null
           ics_token?: string | null
           id?: string
           is_primary?: boolean
@@ -99543,6 +99596,16 @@ export type Database = {
       confirm_referral_attribution: {
         Args: { p_attribution_id: string; p_confirmed: boolean }
         Returns: Json
+      }
+      confirm_smart_booking_slot: {
+        Args: {
+          p_appointment_type_id: string
+          p_client?: Json
+          p_contractor_id: string
+          p_end: string
+          p_start: string
+        }
+        Returns: string
       }
       consume_auth_role_intent: { Args: { _token: string }; Returns: Json }
       consume_founder_bcc_email: { Args: never; Returns: string }
