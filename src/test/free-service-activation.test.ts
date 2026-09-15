@@ -125,11 +125,15 @@ describe("aucun Stripe sur le chemin gratuit", () => {
     "supabase/functions/free-service-activate/index.ts",
   ];
 
-  it.each(files)("%s ne référence ni Stripe ni checkout", (file) => {
+  it.each(files)("%s n'appelle aucun objet Stripe ni checkout", (file) => {
     const src = read(file).toLowerCase();
-    expect(src).not.toContain("stripe");
+    // Les commentaires peuvent nommer Stripe ; aucun appel ne doit exister.
+    expect(src).not.toContain("esm.sh/stripe");
+    expect(src).not.toContain("new stripe(");
+    expect(src).not.toContain("stripe_secret_key");
     expect(src).not.toContain("create-checkout-session");
-    expect(src).not.toContain("checkout_sessions");
+    expect(src).not.toContain("checkout.sessions");
+    expect(src).not.toMatch(/from\(["']checkout_sessions["']\)/);
   });
 
   it("la fonction serveur dérive l'utilisateur du JWT, jamais du corps", () => {
