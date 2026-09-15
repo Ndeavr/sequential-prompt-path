@@ -11,8 +11,10 @@ export type FounderEligibilityTransport = (input: {
   p_category_slug: string;
 }) => Promise<{ data: unknown; error: unknown | null }>;
 
-const productionTransport: FounderEligibilityTransport = (input) =>
-  supabase.rpc("check_founder_eligibility", input);
+const productionTransport: FounderEligibilityTransport = async (input) => {
+  const { data, error } = await supabase.rpc("check_founder_eligibility", input);
+  return { data, error };
+};
 
 function parseFounderEligibility(value: unknown): FounderEligibility {
   if (!value || typeof value !== "object" || Array.isArray(value)) {

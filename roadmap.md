@@ -5,6 +5,10 @@
 - [x] Envois réels vérifiés : 8 entreprises « débarras » contactées, 6 livraisons confirmées.
 - [x] Panneau « Prospection aujourd'hui » (données réelles), état des agents, verdict, actions Lancer un cycle / Diagnostiquer, journal des cycles — dans Admin → Acquisition, lisible sur mobile.
 
+## Fait (P0 activation gratuite)
+- [x] Activation gratuite atomique hors Stripe : le parcours après connexion exécute la transaction canonique unique (rôle, fiche, réclamation, année gratuite, accompagnement) et n'affiche « Votre profil UNPRO est actif » qu'après confirmation serveur.
+- [x] Chemin gratuit hérité réparé : plus d'écriture silencieuse sur des colonnes inexistantes.
+
 ## À faire ensuite
 - [ ] Poursuivre jusqu'à 10 activations gratuites (cycle automatique aux 15 minutes).
 - [ ] Élargir la découverte de nouvelles entreprises admissibles (bloquée par le coupe-circuit Google).

@@ -494,14 +494,32 @@ Deno.serve(async (req) => {
           .eq("id", redemptionId);
       }
 
-      // Activate contractor
-      await serviceClient
+      // Activate contractor — real columns only. `status` / `subscription_plan`
+      // do not exist on public.contractors: the previous write failed silently
+      // and never activated anything. Any error is now surfaced, never swallowed.
+      const { error: legacyActivateErr } = await serviceClient
         .from("contractors")
         .update({
-          status: "active",
-          subscription_plan: resolvedPlanCode,
+          account_status: "active",
+          activation_status: "activated",
+          updated_at: new Date().toISOString(),
         })
         .eq("id", contractor.id);
+
+      if (legacyActivateErr) {
+        console.error("[create-checkout-session] zero-total activation failed", {
+          contractor_id: contractor.id,
+          plan: resolvedPlanCode,
+          error: legacyActivateErr.message,
+        });
+        return new Response(
+          JSON.stringify({
+            error: "L'activation n'a pas pu être complétée. Aucun paiement n'a été créé.",
+            code: "zero_total_activation_failed",
+          }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
 
       // Create subscription record
       await serviceClient.from("contractor_subscriptions").upsert(
