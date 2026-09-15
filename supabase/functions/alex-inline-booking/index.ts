@@ -27,13 +27,25 @@ serve(async (req) => {
 
     switch (action) {
       case "get_slots": {
-        // Try real availability_slots first
-        const { data: realSlots } = await sb
+        // Real availability only. UNPRO never proposes an invented time slot.
+        const { data: realSlots, error: slotsError } = await sb
           .from("availability_slots")
           .select("*")
           .eq("contractor_id", contractor_id)
+          .eq("status", "available")
           .gte("start_time", new Date().toISOString())
+          .order("start_time", { ascending: true })
           .limit(5);
+
+        if (slotsError) {
+          console.error("availability_slots read failed", slotsError.message);
+          return respond({
+            slots: [],
+            source: "unavailable",
+            message:
+              "Je n'arrive pas à consulter les disponibilités en ce moment. Je peux faire rappeler l'entrepreneur.",
+          }, 200);
+        }
 
         if (realSlots && realSlots.length > 0) {
           return respond({
@@ -50,33 +62,12 @@ serve(async (req) => {
           });
         }
 
-        // Generate mock slots
-        const now = new Date();
-        const mockSlots = [];
-        for (let d = 1; d <= 5; d++) {
-          const date = new Date(now);
-          date.setDate(date.getDate() + d);
-          if (date.getDay() === 0) continue; // Skip Sunday
-          
-          const hours = d <= 2 ? [9, 14] : [10];
-          for (const h of hours) {
-            date.setHours(h, 0, 0, 0);
-            const end = new Date(date);
-            end.setHours(h + 1);
-            mockSlots.push({
-              id: `mock-slot-${d}-${h}`,
-              contractorId: contractor_id || "mock-c1",
-              start: date.toISOString(),
-              end: end.toISOString(),
-              label: formatSlotLabel(date.toISOString()),
-              type: "estimation",
-              status: "available",
-            });
-          }
-          if (mockSlots.length >= 5) break;
-        }
-
-        return respond({ slots: mockSlots.slice(0, 5), source: "mock" });
+        return respond({
+          slots: [],
+          source: "none",
+          message:
+            "Aucune disponibilité n'est publiée pour l'instant. Je peux transmettre votre demande et faire confirmer une heure.",
+        });
       }
 
       case "hold_slot": {

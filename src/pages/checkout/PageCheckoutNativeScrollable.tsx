@@ -27,6 +27,7 @@ import { useCheckoutPricing, fmtCAD, fmtCADExact, type CheckoutPricing } from "@
 import { useValidateCoupon } from "@/hooks/useCoupons";
 import { cn } from "@/lib/utils";
 import type { BillingInterval } from "@/hooks/usePlanCatalog";
+import CardContractorCalendarSetup from "@/components/calendar/CardContractorCalendarSetup";
 
 const STRIPE_PK = "pk_live_Gw47doir5ZX9n9uM0nrBpKro";
 const stripePromise = STRIPE_PK.startsWith("pk_")
@@ -653,8 +654,15 @@ export default function PageCheckoutNativeScrollable() {
               Votre plan {pricing.plan_name} est maintenant actif. Bienvenue !
             </p>
           </div>
-          <Button onClick={() => navigate("/pro/onboarding?checkout=success")} className="gap-2">
-            <Sparkles className="w-4 h-4" /> Commencer la configuration
+
+          <CardContractorCalendarSetup surface="checkout_success" returnTo="/entrepreneur/dashboard" />
+
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/pro/onboarding?checkout=success")}
+            className="gap-2"
+          >
+            <Sparkles className="w-4 h-4" /> Continuer la configuration
           </Button>
         </motion.div>
       </div>

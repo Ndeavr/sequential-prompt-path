@@ -80,6 +80,12 @@ export type SlotBadge =
   | "reduced_travel"
   | "recommended_by_alex";
 
+/** A busy window imported from the contractor's connected calendar. */
+export interface ExternalBusyWindow {
+  starts_at: string;
+  ends_at: string;
+}
+
 export interface SlotEngineInput {
   contractorId: string;
   appointmentTypeId: string;
@@ -168,6 +174,25 @@ export async function fetchExistingBookings(contractorId: string, from: Date, to
   return (data ?? []) as unknown as ExistingBooking[];
 }
 
+/**
+ * Real busy windows from the contractor's connected calendar.
+ * Only start/end times are returned — never event content.
+ */
+export async function fetchExternalBusy(
+  contractorId: string,
+  from: Date,
+  to: Date,
+): Promise<ExternalBusyWindow[]> {
+  const { data, error } = await supabase.rpc("contractor_busy_windows", {
+    p_contractor_id: contractorId,
+    p_from: from.toISOString(),
+    p_to: to.toISOString(),
+  });
+
+  if (error) throw error;
+  return (data ?? []) as unknown as ExternalBusyWindow[];
+}
+
 // ─── Lunch Block Helper ───
 
 function isInLunchBlock(slotStart: Date, slotEnd: Date): boolean {
@@ -186,11 +211,12 @@ function isInLunchBlock(slotStart: Date, slotEnd: Date): boolean {
 // ─── Core Slot Engine ───
 
 export async function computeSmartSlots(input: SlotEngineInput): Promise<SlotEngineOutput> {
-  const [availability, blackouts, existingBookings, allTypes] = await Promise.all([
+  const [availability, blackouts, existingBookings, allTypes, externalBusy] = await Promise.all([
     fetchAvailability(input.contractorId),
     fetchBlackouts(input.contractorId, input.dateFrom, input.dateTo),
     fetchExistingBookings(input.contractorId, input.dateFrom, input.dateTo),
     fetchAppointmentTypes(input.contractorId),
+    fetchExternalBusy(input.contractorId, input.dateFrom, input.dateTo),
   ]);
 
   const appointmentType = allTypes.find((t) => t.id === input.appointmentTypeId);
@@ -289,6 +315,18 @@ export async function computeSmartSlots(input: SlotEngineInput): Promise<SlotEng
       });
 
       if (conflicts) {
+        cursor.setMinutes(cursor.getMinutes() + roundingMin);
+        continue;
+      }
+
+      // Real busy periods from the connected calendar
+      const externallyBusy = externalBusy.some((w) => {
+        const wStart = new Date(w.starts_at);
+        const wEnd = new Date(w.ends_at);
+        return blockStart < wEnd && blockEnd > wStart;
+      });
+
+      if (externallyBusy) {
         cursor.setMinutes(cursor.getMinutes() + roundingMin);
         continue;
       }
