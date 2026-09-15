@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     // 1. Fetch plan from catalog (full row — UNPRO is the pricing brain)
     const { data: planRow, error: planError } = await serviceClient
       .from("plan_catalog")
-      .select("code, name, billing_mode, stripe_monthly_price_id, stripe_yearly_price_id, stripe_one_time_price_id")
+      .select("code, name, billing_mode, monthly_price, annual_price, stripe_monthly_price_id, stripe_yearly_price_id, stripe_one_time_price_id")
       .eq("code", planCode)
       .eq("active", true)
       .maybeSingle();
