@@ -653,8 +653,15 @@ export default function PageCheckoutNativeScrollable() {
               Votre plan {pricing.plan_name} est maintenant actif. Bienvenue !
             </p>
           </div>
-          <Button onClick={() => navigate("/pro/onboarding?checkout=success")} className="gap-2">
-            <Sparkles className="w-4 h-4" /> Commencer la configuration
+
+          <CardContractorCalendarSetup surface="checkout_success" returnTo="/entrepreneur/dashboard" />
+
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/pro/onboarding?checkout=success")}
+            className="gap-2"
+          >
+            <Sparkles className="w-4 h-4" /> Continuer la configuration
           </Button>
         </motion.div>
       </div>
