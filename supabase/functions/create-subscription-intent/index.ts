@@ -210,7 +210,7 @@ Deno.serve(async (req) => {
               activation_note: `Forfait couvert à 100 % par le code ${normalizedPromo}`,
               auto_renew: true,
               activated_by: userId,
-              current_period_start: priorSub ? undefined : nowIso,
+              current_period_start: nowIso,
               current_period_end: periodEnd,
               updated_at: nowIso,
             },
