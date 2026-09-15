@@ -319,6 +319,18 @@ export async function computeSmartSlots(input: SlotEngineInput): Promise<SlotEng
         continue;
       }
 
+      // Real busy periods from the connected calendar
+      const externallyBusy = externalBusy.some((w) => {
+        const wStart = new Date(w.starts_at);
+        const wEnd = new Date(w.ends_at);
+        return blockStart < wEnd && blockEnd > wStart;
+      });
+
+      if (externallyBusy) {
+        cursor.setMinutes(cursor.getMinutes() + roundingMin);
+        continue;
+      }
+
       const score = scoreSlot(slotStart, appointmentType, input, existingBookings);
       const badges = computeBadges(slotStart, score, input, existingBookings);
 
