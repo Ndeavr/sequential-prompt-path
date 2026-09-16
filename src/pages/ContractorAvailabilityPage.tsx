@@ -16,12 +16,12 @@ import {
   Search, Zap, Eye, Clock, ChevronRight,
 } from "lucide-react";
 import {
-import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 /* ─── Translations ─── */
 const FAQS = [
