@@ -432,7 +432,7 @@ const PageContractorImportWorkspace = lazyWithRetry(() => import("@/pages/contra
 const PageContractorAIPPBuilder = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorAIPPBuilder"));
 const PageContractorAssetsStudio = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorAssetsStudio"));
 const PageContractorFAQBuilder = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorFAQBuilder"));
-const PageContractorPlanRecommendation = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorPlanRecommendation"));
+const PageContractorPlanEntry = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorPlanEntry"));
 const PageContractorPersonalizedPlan = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorPersonalizedPlan"));
 const PageContractorPricingIntake = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorPricingIntake"));
 const PageAdminPricingIntelligence = lazyWithRetry(() => import("@/pages/admin/PageAdminPricingIntelligence"));
