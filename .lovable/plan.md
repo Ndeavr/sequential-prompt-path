@@ -1,48 +1,20 @@
-# Carte d'aide humaine — déclenchement intelligent
+# Audit IA — vidéo prioritaire et copie resserrée
 
-Aujourd'hui la carte « Vous voulez être recommandé par l'IA? » s'ouvre automatiquement 5 secondes après l'arrivée sur presque toute page entrepreneur, dès que l'utilisateur ne tape pas. C'est un pop-up, pas une aide.
+## Résultat
 
-Elle devient une aide de dernier recours : Clara d'abord, l'humain seulement quand une inscription ou une activation est réellement en train de se perdre.
+Placer la vidéo existante immédiatement sous l’explication principale, avec l’aperçu extrait de cette même vidéo et une lecture automatique silencieuse après 650 ms. Garder le formulaire, les résultats réels, les routes et tous les mécanismes existants inchangés.
 
-## Comportement visé
+## Changements
 
-1. **Délai minimum de 15 secondes.** Le temps écoulé ne déclenche jamais rien à lui seul — il rend seulement la carte admissible.
-2. **Il faut un vrai signal de blocage :**
-   - aucune progression réelle depuis 15 s ou plus;
-   - plusieurs erreurs de validation dans un même écran;
-   - clics répétés sur le même bouton sans que rien n'avance;
-   - aller-retour entre les deux mêmes étapes;
-   - abandon apparent d'une étape importante (champ ouvert puis laissé en plan);
-   - Clara a posé une question et rien ne se passe;
-   - échec réel de paiement, de profil, de calendrier ou d'activation qui empêche de continuer.
-3. **Clara aide en premier.** Une invitation légère apparaît d'abord : « Besoin d'un coup de main avec cette étape? » avec la possibilité de l'ignorer. La carte humaine n'arrive que si la personne reste bloquée ou échoue de nouveau après cette invitation.
-4. **Jamais pendant** que l'utilisateur écrit, parle avec Clara, attend un chargement ou une réponse, remplit normalement un formulaire, est dans la connexion du calendrier, est dans le paiement, vient de changer d'étape, ou consulte tranquillement son score IA ou son profil.
-5. **Fermeture facile, une seule fois par session.** Un X bien visible; une fois fermée elle ne revient pas, sauf si une erreur critique clairement différente survient plus tard.
+1. Déplacer l’unique `AuditVideoBlock` dans le haut de `/entrepreneurs/audit-ia`, avant les étapes et les cartes inférieures; retirer son rendu actuel plus bas pour éviter tout doublon.
+2. Conserver le MP4 durable actuel de 20,36 s, le format 16:9, les contrôles natifs, l’absence de boucle et l’image finale cliquable pour rejouer.
+3. Remplacer le déclenchement au défilement par une tentative unique 650 ms après le montage, en mode silencieux et `playsInline`; ignorer proprement un refus du navigateur.
+4. Extraire un nouvel aperçu propre entre 0,3 et 1,0 s du MP4 courant, vérifier visuellement le présentateur, l’héberger durablement et supprimer toute référence à l’ancienne image de maison.
+5. Resserrer la copie visible : conserver le H1 et le CTA, remplacer les deux paragraphes principaux par une seule proposition claire, aligner l’étape d’audit et la description SEO sur « environ 60 secondes », puis retirer les phrases inférieures qui répètent sans apporter d’information.
+6. Préserver la promesse « Des rendez-vous exclusifs, jamais des leads partagés. » et toutes les mentions de provenance, limites et absence de garantie.
 
-## La carte
+## Vérification
 
-- Titre : **Besoin d'aide pour continuer?**
-- Sous-titre : Parlez à un humain maintenant.
-- Bouton principal : **Appeler (514) 249-9522**
-- Bouton secondaire : **Continuer avec Clara** — ouvre réellement Clara au lieu de simplement fermer la carte.
-- Heures d'ouverture conservées.
-
-## Mesure
-
-Chaque étape est enregistrée avec la raison exacte du déclenchement, pour savoir plus tard où les entrepreneurs bloquent vraiment :
-
-`human_help_eligible`, `human_help_shown`, `human_help_dismissed`, `human_help_call_clicked`, `human_help_continue_clara`, et la raison (`human_help_trigger_reason`) portée par chacun.
-
-## Détails techniques
-
-- `src/lib/support/struggleSignals.ts` (nouveau) : petit détecteur sans dépendance qui compte les clics répétés sur une même cible, les erreurs de validation (`aria-invalid`, rôles d'alerte), les allers-retours de route, l'inactivité après une question de Clara, et expose `reportStuckSignal(reason, { critical })` pour que le paiement, l'activation, le profil et le calendrier signalent un échec bloquant. Chaque signal garde un libellé de raison stable.
-- `src/hooks/useContractorHumanCallout.ts` : réécrit autour de ce détecteur. Fenêtre minimale de 15 s, liste de suppression (saisie en cours, overlay Clara ouvert, requête en vol, routes `/checkout`, `/calendar`, `/oauth`, changement de route depuis moins de 5 s), machine à deux temps (invitation Clara → carte humaine), verrou de session sauf nouvelle raison critique distincte.
-- `src/config/contractorHumanCallout.ts` : nouveaux textes, `minDwellMs: 15000`, seuils de signaux, clés de session séparées pour l'invitation Clara et pour la carte.
-- Nouveau composant léger pour l'invitation Clara (bandeau bas, non modal) — la carte humaine reste le `Dialog` existant.
-- `ContractorHumanCalloutModal.tsx` : nouveaux libellés; « Continuer avec Clara » appelle `openAlex` via `AlexVoiceContext` avec le contexte de l'étape bloquée.
-- `src/lib/analytics/logFunnelEvent.ts` : ajout des six types d'événements, avec `metadata.trigger_reason`, la route et l'étape.
-- Tests : `src/test/human-help-card.test.ts` — pas d'affichage avant 15 s, pas d'affichage sans signal, suppression pendant saisie/checkout/calendrier, invitation Clara avant la carte, une seule apparition par session, réapparition sur erreur critique distincte, raison journalisée.
-
-## Ce que je ne touche pas
-
-Le parcours de paiement, l'activation NICK, le calendrier, le matching et l'enrichissement restent inchangés. Aucune donnée fabriquée, aucun envoi automatique.
+- Confirmer à 390 px et sur ordinateur : vidéo proche du haut, aucun grand espace, aperçu réel 1920×1080, tentative de lecture entre 500 et 800 ms, silencieux, `playsInline`, contrôles présents, aucune boucle et image finale préservée.
+- Confirmer une seule occurrence de `AuditVideoBlock` et aucune référence à l’ancien poster dans ce composant.
+- Exécuter les vérifications de types et de construction, puis publier uniquement cette version sur le projet existant.
