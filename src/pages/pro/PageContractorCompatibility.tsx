@@ -2,7 +2,7 @@
  * UNPRO — Profil de compatibilité (Excavation / Fondations / Drainage)
  * Parcours conversationnel, conditionnel, mobile-first, rattaché à une fiche entrepreneur existante.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,8 +18,6 @@ import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Check, Loader2, MapPin, Plus, Save, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  COMPAT_PREQUAL,
-  COMPAT_SERVICES,
   COMPAT_STEPS,
   PREQUAL_LEVEL_LABEL,
   STANCE_LABEL,
@@ -29,13 +27,15 @@ import {
   VOLUME_OPTIONS,
   citySlug,
   formatMoney,
-  visibleProjectQuestions,
   type PrequalLevel,
   type Stance,
   type TerritoryTier,
   type TriAnswer,
 } from "@/config/compatibilityExcavation";
+import { getCompatPack, packVisibleProjectQuestions } from "@/config/compatibilityPacks";
 import { useContractorCompatibility } from "@/hooks/useContractorCompatibility";
+import { useDetectedContractorServices } from "@/hooks/useDetectedContractorServices";
+import ServiceTriageBoard, { type ServiceEntries } from "@/components/contractor-compatibility/ServiceTriageBoard";
 
 const STANCES: Stance[] = ["priority", "accepted", "not_wanted"];
 const TRIS: TriAnswer[] = ["yes", "depends", "no"];
