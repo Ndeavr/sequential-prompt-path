@@ -9,7 +9,7 @@ Placer la vidéo existante immédiatement sous l’explication principale, avec 
 1. Déplacer l’unique `AuditVideoBlock` dans le haut de `/entrepreneurs/audit-ia`, avant les étapes et les cartes inférieures; retirer son rendu actuel plus bas pour éviter tout doublon.
 2. Conserver le MP4 durable actuel de 20,36 s, le format 16:9, les contrôles natifs, l’absence de boucle et l’image finale cliquable pour rejouer.
 3. Remplacer le déclenchement au défilement par une tentative unique 650 ms après le montage, en mode silencieux et `playsInline`; ignorer proprement un refus du navigateur.
-4. Extraire un nouvel aperçu propre entre 0,3 et 1,0 s du MP4 courant, vérifier visuellement le présentateur, l’héberger durablement et supprimer toute référence à l’ancienne image de maison.
+4. Utiliser l’aperçu durable 1920×1080 déjà extrait à 1,25 s du MP4 courant, montrant le présentateur centré. Ne conserver aucune référence à l’ancienne image de maison.
 5. Resserrer la copie visible : conserver le H1 et le CTA, remplacer les deux paragraphes principaux par une seule proposition claire, aligner l’étape d’audit et la description SEO sur « environ 60 secondes », puis retirer les phrases inférieures qui répètent sans apporter d’information.
 6. Préserver la promesse « Des rendez-vous exclusifs, jamais des leads partagés. » et toutes les mentions de provenance, limites et absence de garantie.
 
