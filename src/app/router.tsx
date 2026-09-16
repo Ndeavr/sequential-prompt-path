@@ -40,6 +40,7 @@ const PageContactedContractors = lazyWithRetry(() => import("@/pages/admin/PageC
 const PageContractorForensics = lazyWithRetry(() => import("@/pages/admin/PageContractorForensics"));
 const PageRevenueDebug = lazyWithRetry(() => import("@/pages/admin/PageRevenueDebug"));
 const PageOutreachCommandCenter = lazyWithRetry(() => import("@/pages/admin/PageOutreachCommandCenter"));
+const PageContractorInvitations = lazyWithRetry(() => import("@/pages/admin/PageContractorInvitations"));
 const PageAdminKijijiSource = lazyWithRetry(() => import("@/pages/admin/PageAdminKijijiSource"));
 const PageSystemHealth = lazyWithRetry(() => import("@/pages/admin/PageSystemHealth"));
 const PageEdgeFunctionHealth = lazyWithRetry(() => import("@/pages/admin/PageEdgeFunctionHealth"));
