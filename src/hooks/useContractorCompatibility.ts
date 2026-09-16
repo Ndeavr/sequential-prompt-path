@@ -24,7 +24,17 @@ export interface TerritoryPref {
 }
 
 export interface CompatibilityAnswers {
-  services: Record<string, { stance: Stance; min_project_cents?: number | null }>;
+  services: Record<
+    string,
+    {
+      stance: Stance;
+      min_project_cents?: number | null;
+      label?: string;
+      source?: "verified" | "google" | "website" | "declared";
+      order?: number;
+      pending_review?: boolean;
+    }
+  >;
   projects: Record<string, { answer: TriAnswer; condition_note?: string }>;
   money: {
     floor_project_cents?: number | null;

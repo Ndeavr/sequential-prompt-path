@@ -14,7 +14,17 @@ export type TerritoryTier = "priority" | "normal" | "large_only" | "blocked";
 export type PrequalLevel = "optional" | "important" | "required";
 
 export interface CompatAnswers {
-  services?: Record<string, { stance?: Stance; min_project_cents?: number | null }>;
+  services?: Record<
+    string,
+    {
+      stance?: Stance;
+      min_project_cents?: number | null;
+      label?: string;
+      source?: string;
+      order?: number;
+      pending_review?: boolean;
+    }
+  >;
   projects?: Record<string, { answer?: TriAnswer; condition_note?: string }>;
   money?: {
     floor_project_cents?: number | null;
