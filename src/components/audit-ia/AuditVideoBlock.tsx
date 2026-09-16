@@ -11,30 +11,28 @@ import auditVideoAsset from "@/assets/unpro-audit-ia-final-16x9.mp4.asset.json";
 import auditPosterAsset from "@/assets/unpro-audit-ia-poster.jpg.asset.json";
 import auditLastFrameAsset from "@/assets/unpro-audit-ia-last-frame.jpg.asset.json";
 
+/** Délai avant la tentative de lecture automatique silencieuse (ms). */
+const AUTOPLAY_DELAY_MS = 650;
+
 export function AuditVideoBlock() {
   const blockRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const autoplayAttemptedRef = useRef(false);
   const [ended, setEnded] = useState(false);
 
+  // Lecture automatique peu après l'affichage de la page. Toujours silencieuse
+  // et `playsInline` : c'est la seule forme acceptée par les navigateurs
+  // mobiles. Un refus du navigateur laisse simplement le lecteur prêt.
   useEffect(() => {
-    const block = blockRef.current;
-    const video = videoRef.current;
-    if (!block || !video || typeof IntersectionObserver === "undefined") return;
+    const timer = window.setTimeout(() => {
+      const video = videoRef.current;
+      if (!video || autoplayAttemptedRef.current) return;
+      autoplayAttemptedRef.current = true;
+      video.muted = true;
+      void video.play().catch(() => undefined);
+    }, AUTOPLAY_DELAY_MS);
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry?.isIntersecting || autoplayAttemptedRef.current) return;
-        autoplayAttemptedRef.current = true;
-        video.muted = true;
-        void video.play().catch(() => undefined);
-        observer.disconnect();
-      },
-      { threshold: 0.45 },
-    );
-
-    observer.observe(block);
-    return () => observer.disconnect();
+    return () => window.clearTimeout(timer);
   }, []);
 
   const handleEnded = useCallback(() => setEnded(true), []);
