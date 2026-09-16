@@ -37,7 +37,6 @@ import { useContractorCompatibility } from "@/hooks/useContractorCompatibility";
 import { useDetectedContractorServices } from "@/hooks/useDetectedContractorServices";
 import ServiceTriageBoard, { type ServiceEntries } from "@/components/contractor-compatibility/ServiceTriageBoard";
 
-const STANCES: Stance[] = ["priority", "accepted", "not_wanted"];
 const TRIS: TriAnswer[] = ["yes", "depends", "no"];
 const TIERS: TerritoryTier[] = ["priority", "normal", "large_only", "blocked"];
 const LEVELS: PrequalLevel[] = ["optional", "important", "required"];
@@ -247,7 +246,7 @@ export default function PageContractorCompatibility() {
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Avant un rendez-vous</p>
             <p className="mt-1.5 text-sm text-foreground">
               {Object.entries(answers.prequal).filter(([, l]) => l !== "optional")
-                .map(([c, l]) => `${COMPAT_PREQUAL.find((p) => p.criterion === c)?.label ?? c} (${PREQUAL_LEVEL_LABEL[l]})`)
+                .map(([c, l]) => `${pack.prequal.find((p) => p.criterion === c)?.label ?? c} (${PREQUAL_LEVEL_LABEL[l]})`)
                 .join(" · ") || "Aucune exigence particulière"}
             </p>
           </CardContent></Card>
@@ -523,7 +522,7 @@ export default function PageContractorCompatibility() {
           {/* ÉTAPE 6 — Préqualification */}
           {step === 6 && (
             <>
-              {COMPAT_PREQUAL.map((p) => (
+              {pack.prequal.map((p) => (
                 <Card key={p.criterion}><CardContent className="space-y-3 p-4">
                   <p className="text-sm font-medium text-foreground">{p.label}</p>
                   <ChoiceRow
