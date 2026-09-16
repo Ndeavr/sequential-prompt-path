@@ -260,6 +260,8 @@ Deno.serve(async (req) => {
       // Affiliate attribution (server-resolved, never trusted from the client).
       ref: affiliateRefCode,
       affiliate_id: affiliateRefId,
+      // "test" only when the caller explicitly asked for a Stripe test checkout.
+      stripe_env: stripeEnv,
     };
 
     let session;
