@@ -62,19 +62,19 @@ const MainLayout = ({ children, hideMemorySection }: MainLayoutProps) => {
 
 
       {showSmartHeader && <SmartHeader />}
-      <PageShell variant="marketing" dockSafe className="flex-1 relative z-0">{children}</PageShell>
+      <PageShell variant="marketing" dockSafe={!isLightHome} className="flex-1 relative z-0">{children}</PageShell>
 
       {showSEOGrid && <FooterSEOGrid />}
       {!hideMemorySection && <SectionMemoireMaison />}
-      <SiteFooterPremium />
+      {!isLightHome && <SiteFooterPremium />}
       {/* Global dock-safe spacer — guarantees footer + last block clear
           the fixed BottomDock on mobile even if body:has() is unsupported. */}
-      <BottomDockSafeArea />
+      {!isLightHome && <BottomDockSafeArea />}
 
       {/* All deferred — never blocks first paint */}
       <DeferredAfterInteractive>
         <Suspense fallback={null}>
-          <MobileBottomNav />
+          {!isLightHome && <MobileBottomNav />}
           {showAlex && (
             <div className="hidden md:block">
               <AlexCompanionOrb />

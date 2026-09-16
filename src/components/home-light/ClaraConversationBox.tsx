@@ -194,16 +194,16 @@ export default function ClaraConversationBox() {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.12 }}
-      className="home-clara-glass mx-auto mt-8 w-full max-w-3xl overflow-hidden rounded-[28px] border border-border text-left"
+      className="home-clara-glass mx-auto w-full overflow-hidden border border-border text-left"
       aria-label="Conversation avec Clara"
     >
-      <div className="flex items-center gap-4 border-b border-border px-5 py-4 sm:px-6">
-        <span className="home-clara-halo relative grid h-11 w-11 shrink-0 place-items-center rounded-full" aria-hidden="true">
-          <span className="h-3 w-3 rounded-full bg-primary" />
+      <div className="home-clara-intro flex items-center">
+        <span className="home-clara-halo relative grid shrink-0 place-items-center rounded-full" aria-hidden="true">
+          <span className="home-clara-halo-core rounded-full" />
         </span>
         <div>
-          <p className="text-base font-semibold text-foreground">{copy.hello}</p>
-          <p className="text-sm text-muted-foreground">{copy.question}</p>
+          <p className="home-clara-greeting font-bold text-foreground">{copy.hello}</p>
+          <p className="home-clara-question text-muted-foreground">{copy.question}</p>
         </div>
       </div>
 
@@ -224,7 +224,7 @@ export default function ClaraConversationBox() {
         </Conversation>
       )}
 
-      <div className="px-4 py-4 sm:px-5">
+      <div className="home-clara-composer">
         <PromptInput
           accept="image/*,.pdf,.doc,.docx"
           maxFiles={1}
@@ -237,12 +237,12 @@ export default function ClaraConversationBox() {
             aria-label={copy.placeholder}
             placeholder={copy.placeholder}
             disabled={busy}
-            className="min-h-14 px-4 text-base text-foreground placeholder:text-muted-foreground"
+            className="home-clara-textarea text-foreground placeholder:text-muted-foreground"
           />
-          <PromptInputFooter>
+          <PromptInputFooter className="home-clara-controls">
             <PromptInputTools>
               <AttachmentButton label={copy.attach} />
-              <PromptInputButton type="button" onClick={startVoice} tooltip={copy.voice} aria-label={copy.voice} className="h-11 w-11 rounded-full text-muted-foreground hover:text-foreground">
+              <PromptInputButton type="button" onClick={startVoice} tooltip={copy.voice} aria-label={copy.voice} className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground">
                 <Mic className="h-5 w-5" />
               </PromptInputButton>
             </PromptInputTools>
@@ -251,7 +251,7 @@ export default function ClaraConversationBox() {
               disabled={busy}
               aria-label={copy.send}
               data-cta-canonical="home_alex"
-              className="h-11 w-11 rounded-full bg-primary text-primary-foreground shadow-glow hover:bg-primary-strong"
+              className="home-clara-submit rounded-full bg-primary text-primary-foreground shadow-glow hover:bg-primary-strong"
             >
               <ArrowUp className="h-5 w-5" />
             </PromptInputSubmit>
@@ -270,7 +270,7 @@ function AttachmentButton({ label }: { label: string }) {
       onClick={attachments.openFileDialog}
       tooltip={label}
       aria-label={label}
-      className="h-11 w-11 rounded-full text-muted-foreground hover:text-foreground"
+      className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground"
     >
       <Paperclip className="h-5 w-5" />
     </PromptInputButton>
