@@ -299,24 +299,15 @@ export default function PageContractorCompatibility() {
           transition={{ duration: 0.25 }}
           className="mt-6 space-y-4"
         >
-          {/* ÉTAPE 1 — Services */}
-          {step === 1 && COMPAT_SERVICES.map((svc) => (
-            <Card key={svc.slug}>
-              <CardContent className="space-y-3 p-4">
-                <p className="text-sm font-medium text-foreground">{svc.label}</p>
-                <ChoiceRow
-                  options={STANCES.map((s) => ({ value: s, label: STANCE_LABEL[s] }))}
-                  value={answers.services[svc.slug]?.stance}
-                  onChange={(v) =>
-                    update((a) => ({
-                      ...a,
-                      services: { ...a.services, [svc.slug]: { ...a.services[svc.slug], stance: v as Stance } },
-                    }))
-                  }
-                />
-              </CardContent>
-            </Card>
-          ))}
+          {/* ÉTAPE 1 — Services (tri par glisser-déposer) */}
+          {step === 1 && (
+            <ServiceTriageBoard
+              value={answers.services as ServiceEntries}
+              catalog={pack.services}
+              loading={detecting}
+              onChange={(next) => update((a) => ({ ...a, services: next as typeof a.services }))}
+            />
+          )}
 
           {/* ÉTAPE 2 — Projets */}
           {step === 2 && (
