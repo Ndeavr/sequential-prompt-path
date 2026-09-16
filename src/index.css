@@ -251,60 +251,105 @@
     z-index: 0;
   }
 
-  /* ═══════════════════════════════════════════════
-     HOMEOWNER LIGHT SCOPE (`.home-light`) — white / light-blue surface,
-     royal-blue actions, navy typography. Used by the public homeowner-first
-     homepage. Opaque so it fully covers the global dark layer.
-     ═══════════════════════════════════════════════ */
+  /* Homepage concierge surface. */
   .home-light {
-    --background: 213 100% 98%;        /* #F5F9FF */
-    --foreground: 220 60% 12%;         /* navy */
-    --card: 0 0% 100%;
-    --card-foreground: 220 60% 12%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 60% 12%;
-    --primary: 224 76% 48%;            /* royal blue */
+    --background: 226 63% 5%;
+    --foreground: 215 45% 97%;
+    --card: 223 48% 10%;
+    --card-foreground: 215 45% 97%;
+    --popover: 223 48% 9%;
+    --popover-foreground: 215 45% 97%;
+    --primary: 216 100% 60%;
     --primary-foreground: 0 0% 100%;
-    --primary-strong: 224 76% 42%;
-    --primary-tint: 224 76% 36%;
-    --secondary: 213 96% 94%;          /* light blue surface */
-    --secondary-foreground: 224 76% 30%;
-    --secondary-strong: 213 96% 88%;
-    --secondary-tint: 224 60% 30%;
-
-    --muted: 213 60% 95%;
-    --muted-foreground: 220 20% 34%;
-    --accent: 205 90% 45%;
+    --primary-strong: 216 100% 52%;
+    --primary-tint: 216 100% 72%;
+    --secondary: 218 58% 16%;
+    --secondary-foreground: 213 100% 88%;
+    --secondary-strong: 218 58% 22%;
+    --secondary-tint: 213 100% 82%;
+    --muted: 220 35% 15%;
+    --muted-foreground: 216 22% 72%;
+    --accent: 190 88% 48%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 72% 44%;
+    --destructive: 0 72% 58%;
     --destructive-foreground: 0 0% 100%;
-    --success: 153 72% 30%;
-    --success-foreground: 0 0% 100%;
-    --warning: 32 90% 34%;
-    --warning-foreground: 0 0% 100%;
-    --border: 213 40% 88%;
-    --input: 213 40% 90%;
-    --ring: 224 76% 48%;
-    --sun: 45 96% 52%;                /* yellow — small accent only */
-    --sun-foreground: 220 60% 12%;
-    --navy-strip: 224 64% 14%;        /* announcement strip */
-
-    --text-primary: 220 60% 12%;
-    --text-body: 220 35% 20%;
-    --text-secondary: 220 22% 30%;
-    --text-muted: 220 16% 38%;
-    --text-disabled: 220 12% 52%;
-    --surface-primary: 0 0% 100%;
-    --surface-secondary: 213 96% 96%;
-
-    --glass-bg: hsl(0 0% 100% / 0.88);
-    --glass-border: hsl(224 40% 20% / 0.10);
-    --glass-highlight: linear-gradient(180deg, hsl(0 0% 100% / 0.95) 0%, transparent 45%);
+    --success: 153 65% 45%;
+    --success-foreground: 226 63% 5%;
+    --warning: 42 92% 56%;
+    --warning-foreground: 226 63% 5%;
+    --border: 215 70% 70% / 0.18;
+    --input: 215 70% 70% / 0.2;
+    --ring: 216 100% 64%;
+    --sun: 42 92% 56%;
+    --sun-foreground: 226 63% 5%;
+    --navy-strip: 226 63% 5%;
+    --text-primary: 215 45% 97%;
+    --text-body: 216 30% 88%;
+    --text-secondary: 216 22% 76%;
+    --text-muted: 216 18% 68%;
+    --text-disabled: 216 12% 54%;
+    --surface-primary: 223 48% 10%;
+    --surface-secondary: 220 35% 15%;
+    --glass-bg: hsl(221 56% 12% / 0.62);
+    --glass-border: hsl(215 100% 76% / 0.2);
+    --glass-highlight: linear-gradient(180deg, hsl(0 0% 100% / 0.09) 0%, transparent 42%);
+    --home-hero-veil: linear-gradient(90deg, hsl(226 63% 5% / 0.99) 0%, hsl(226 63% 5% / 0.88) 48%, hsl(226 63% 5% / 0.58) 100%);
+    --home-reflection: radial-gradient(65% 90% at 50% 100%, hsl(216 100% 60% / 0.18), transparent 70%);
+    --home-glass-shadow: 0 28px 80px -34px hsl(225 80% 2% / 0.96), inset 0 1px 0 hsl(0 0% 100% / 0.08);
 
     background: hsl(var(--background));
     color: hsl(var(--foreground));
     position: relative;
     z-index: 0;
+  }
+
+  .home-light .home-minimal-header {
+    background: hsl(var(--background) / 0.72);
+    border-bottom-color: hsl(var(--border));
+    box-shadow: 0 1px 0 hsl(var(--border));
+    backdrop-filter: blur(22px) saturate(145%);
+  }
+
+  .home-light .home-architecture { opacity: 0.3; filter: saturate(0.7) contrast(1.06); }
+  .home-light .home-architecture-veil { background: var(--home-hero-veil); }
+  .home-light .home-blueprint { opacity: 0.11; mix-blend-mode: screen; }
+  .home-light .home-reflection { background: var(--home-reflection); }
+  .home-light .home-clara-glass {
+    background: var(--glass-bg);
+    box-shadow: var(--home-glass-shadow);
+    backdrop-filter: blur(28px) saturate(145%);
+  }
+  .home-light .home-clara-prompt [data-slot="input-group"] {
+    background: hsl(var(--background) / 0.55);
+    border-color: hsl(var(--border));
+    border-radius: 18px;
+  }
+  .home-light .home-clara-halo {
+    background: radial-gradient(circle, hsl(var(--primary) / 0.5), hsl(var(--primary) / 0.08) 65%, transparent 70%);
+    box-shadow: 0 0 26px hsl(var(--primary) / 0.38), inset 0 0 14px hsl(var(--primary) / 0.24);
+    animation: home-halo-breathe 4.5s ease-in-out infinite;
+  }
+  .home-light .home-trust-glass {
+    background: hsl(var(--card) / 0.58);
+    box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.06);
+    backdrop-filter: blur(18px);
+  }
+  .home-light > section:not(.home-glossy-hero) { border-top: 1px solid hsl(var(--border)); }
+  .home-light .bg-card { background-color: hsl(var(--card) / 0.72); }
+  .home-light .bg-secondary\/60 { background-color: hsl(var(--secondary) / 0.44); }
+
+  @keyframes home-halo-breathe {
+    0%, 100% { opacity: 0.86; }
+    50% { opacity: 1; }
+  }
+
+  @media (max-width: 640px) {
+    .home-light .home-architecture { opacity: 0.2; object-position: 62% center; }
+    .home-light .home-blueprint { width: 100%; opacity: 0.08; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .home-light .home-clara-halo { animation: none; }
   }
 
 

@@ -10,7 +10,6 @@ import { Helmet } from "react-helmet-async";
 
 import MainLayout from "@/layouts/MainLayout";
 import { AlexProvider } from "@/features/alex";
-import AnnouncementStrip from "@/components/home-light/AnnouncementStrip";
 import HeroHomeownerLight from "@/components/home-light/HeroHomeownerLight";
 import {
   SectionTwoPaths,
@@ -63,13 +62,12 @@ export default function PageHomeLight() {
             content="L'IA comprend vos travaux et vous oriente vers le bon entrepreneur."
           />
           <meta name="twitter:image" content={DEFAULT_OG_IMAGE} />
-          <meta name="theme-color" content="#F5F9FF" />
+          <meta name="theme-color" content="#050816" />
           <link rel="canonical" href="https://unpro.ca/" />
           <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         </Helmet>
 
         <div className="home-light">
-          <AnnouncementStrip />
           <HeroHomeownerLight />
           <SectionTwoPaths />
           <SectionHowItWorks />
