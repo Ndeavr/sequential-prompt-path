@@ -148,8 +148,10 @@ export default function PageAiRecommendationAudit() {
   const [result, setResult] = useState<AuditResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
+  const [revealCount, setRevealCount] = useState(0);
   const debounce = useRef<number | null>(null);
   const auditCardRef = useRef<HTMLDivElement | null>(null);
+  const auditInputRef = useRef<HTMLInputElement | null>(null);
   const autoRunRef = useRef(false);
 
   const inviteToken = sp.get("t");
@@ -342,8 +344,14 @@ export default function PageAiRecommendationAudit() {
   }
 
   const scrollToAudit = useCallback(() => {
+    setRevealCount((c) => c + 1);
     auditCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+    window.setTimeout(() => {
+      if (!result && !auditing) {
+        auditInputRef.current?.focus({ preventScroll: true });
+      }
+    }, 650);
+  }, [result, auditing]);
 
   const currentStep = result ? 2 : 1;
 
