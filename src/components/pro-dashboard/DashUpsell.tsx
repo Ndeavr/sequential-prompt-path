@@ -69,9 +69,12 @@ export default function DashUpsell({ plan }: Props) {
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <Link to="/pricing" className="flex-1">
+        <Link
+          to={contractorPlanLink({ objective: cfg.objective, from: "dashboard_upsell" })}
+          className="flex-1"
+        >
           <Button size="sm" className="w-full bg-gradient-to-r from-primary to-secondary text-white border-0 rounded-xl h-9 text-xs font-bold hover:brightness-110 hover:shadow-[var(--shadow-glow)] transition-all gap-1.5">
-            <ArrowUpRight className="w-3 h-3" /> {cfg.cta}
+            <ArrowUpRight className="w-3 h-3" /> {CONTRACTOR_OBJECTIVE_CTA[cfg.objective]}
           </Button>
         </Link>
       </div>
