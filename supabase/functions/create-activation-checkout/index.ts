@@ -5,6 +5,7 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { OFFER } from "../_shared/offerCopy.ts";
+import { resolveStripeEnv, stripeKeyFor } from "../_shared/stripeEnv.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
