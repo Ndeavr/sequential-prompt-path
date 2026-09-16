@@ -84,6 +84,8 @@ interface Props {
   catalog: readonly { slug: string; label: string }[];
   onChange: (next: ServiceEntries) => void;
   loading?: boolean;
+  /** Sous-services liés au service principal saisi. Aucun classement automatique. */
+  suggestRelated?: (slug: string, label: string) => { slug: string; label: string }[];
 }
 
 function labelOf(slug: string, entry: ServiceEntry, catalog: Props["catalog"]): string {
