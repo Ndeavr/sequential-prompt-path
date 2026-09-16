@@ -62164,6 +62164,30 @@ export type Database = {
           },
         ]
       }
+      offer_category_keywords: {
+        Row: {
+          category_group: string
+          category_slug: string
+          created_at: string
+          id: string
+          keyword: string
+        }
+        Insert: {
+          category_group: string
+          category_slug: string
+          created_at?: string
+          id?: string
+          keyword: string
+        }
+        Update: {
+          category_group?: string
+          category_slug?: string
+          created_at?: string
+          id?: string
+          keyword?: string
+        }
+        Relationships: []
+      }
       official_site_crawl_runs: {
         Row: {
           canonical_domain: string
@@ -74221,6 +74245,33 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      project_trade_categories: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name_fr: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name_fr: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name_fr?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       project_types: {
         Row: {
@@ -99625,6 +99676,30 @@ export type Database = {
         Args: { _feature_key: string; _user_id: string }
         Returns: Json
       }
+      contractor_invitation_queue: {
+        Args: { p_city?: string; p_limit?: number }
+        Returns: {
+          attributed_user_id: string
+          attribution_type: string
+          block_reason: string
+          category_group: string
+          category_slug: string
+          city: string
+          city_remaining: number
+          company_name: string
+          contactable: boolean
+          email: string
+          first_name: string
+          last_event_at: string
+          lead_id: string
+          lifecycle_status: string
+          offer: string
+          offer_reason: string
+          onboarding_token: string
+          phone_e164: string
+          trade_label: string
+        }[]
+      }
       contractor_plan_code: { Args: { _user_id: string }; Returns: string }
       create_auth_role_intent: {
         Args: {
@@ -100176,6 +100251,11 @@ export type Database = {
         Args: { p_label: string }
         Returns: string
       }
+      normalize_offer_category_slug: {
+        Args: { p_label: string }
+        Returns: string
+      }
+      normalize_offer_text: { Args: { p_input: string }; Returns: string }
       outbound_resolve_landing: {
         Args: { p_slug: string; p_token: string }
         Returns: Json
@@ -100346,6 +100426,10 @@ export type Database = {
         Returns: Json
       }
       resolve_activation_link: { Args: { _token: string }; Returns: Json }
+      resolve_contractor_offer: {
+        Args: { p_category_slug: string; p_city: string }
+        Returns: Json
+      }
       resolve_curiosity_slug: {
         Args: { _slug: string; _token: string }
         Returns: Json

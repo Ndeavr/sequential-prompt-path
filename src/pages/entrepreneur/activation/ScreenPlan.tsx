@@ -16,6 +16,8 @@ import { useFounderSlots } from "@/hooks/useFounderSlots";
 import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 import { PUBLIC_CONTRACTOR_PLANS } from "@/config/contractorPlans";
 import FounderOfferCard from "@/features/founderMode/FounderOfferCard";
+import OfferDecisionCard from "@/components/offers/OfferDecisionCard";
+import { useContractorOffer } from "@/hooks/useContractorOffer";
 
 const PLANS = PUBLIC_CONTRACTOR_PLANS.map((p) => ({
   code: p.slug,
@@ -50,6 +52,37 @@ export default function ScreenPlan() {
     await updateFunnel({ selected_plan: "founder", billing_cycle: "monthly" });
     navigate("/entrepreneur/activer/paiement");
   };
+
+  // DÉCISION D'OFFRE — calculée par le serveur (ville + catégorie normalisée).
+  const decisionCity =
+    state.selected_zones?.[0] ||
+    (state.imported_data?.city as string | undefined) ||
+    null;
+  const decisionCategory =
+    state.selected_services?.[0] ||
+    (state.imported_data?.category as string | undefined) ||
+    (state.imported_data?.trade as string | undefined) ||
+    null;
+  const offer = useContractorOffer(decisionCity, decisionCategory);
+
+  if (offer.decision.offer !== "unknown" || offer.loading || offer.error) {
+    return (
+      <FunnelLayout currentStep="plan_recommendation" showProgress={false}>
+        <div className="max-w-lg mx-auto pb-28 sm:pb-0">
+          <OfferDecisionCard
+            decision={offer.decision}
+            city={decisionCity}
+            loading={offer.loading}
+            error={offer.error}
+            onRetry={offer.reload}
+            onAcceptFree={() => navigate("/join/profile")}
+            onAcceptExpress={handleActivateFounder}
+            onPrecise={() => navigate("/entrepreneur/activer/profil")}
+          />
+        </div>
+      </FunnelLayout>
+    );
+  }
 
   // FOUNDER PATH — show single card while slots remain
   if (!founder.loading && founder.remaining > 0) {

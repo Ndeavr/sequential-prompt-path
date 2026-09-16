@@ -1,8 +1,9 @@
 /**
  * UNPRO — Offre entrepreneur courante (SOURCE UNIQUE de la formulation publique).
  *
- * Offre approuvée : « Vos 3 premiers rendez-vous sont gratuits. Ensuite, vous
- * décidez quel plan choisir. » Limitée aux 10 premiers entrepreneurs par ville.
+ * L'offre réelle est décidée par le serveur (`resolve_contractor_offer`) :
+ * 12 mois gratuits (10 premières entreprises admissibles par ville),
+ * Activation Express 350 $, ou aucune offre. Jamais « 3 rendez-vous gratuits ».
  *
  * Règles strictes :
  *  - Aucun paiement, aucune carte avant l'activation du compte et du profil.
@@ -14,10 +15,9 @@
 
 export const CONTRACTOR_OFFER = {
   cityLimit: 10,
-  freeAppointments: 3,
 
-  headline: "Vos 3 premiers rendez-vous sont gratuits.",
-  subheadline: "Ensuite, vous décidez quel plan choisir.",
+  headline: "Activez votre profil d'entreprise sur UNPRO.",
+  subheadline: "L'offre applicable à votre entreprise est calculée après l'analyse.",
   supporting:
     "Rendez-vous exclusifs, jamais partagés. Aucune carte de crédit et aucun paiement avant l'activation de votre profil.",
 
