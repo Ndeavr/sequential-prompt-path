@@ -99652,6 +99652,30 @@ export type Database = {
         Args: { _feature_key: string; _user_id: string }
         Returns: Json
       }
+      contractor_invitation_queue: {
+        Args: { p_city?: string; p_limit?: number }
+        Returns: {
+          attributed_user_id: string
+          attribution_type: string
+          block_reason: string
+          category_group: string
+          category_slug: string
+          city: string
+          city_remaining: number
+          company_name: string
+          contactable: boolean
+          email: string
+          first_name: string
+          last_event_at: string
+          lead_id: string
+          lifecycle_status: string
+          offer: string
+          offer_reason: string
+          onboarding_token: string
+          phone_e164: string
+          trade_label: string
+        }[]
+      }
       contractor_plan_code: { Args: { _user_id: string }; Returns: string }
       create_auth_role_intent: {
         Args: {
