@@ -617,7 +617,11 @@ export default function PageContractorCompatibility() {
             <Save className="mr-1.5 h-4 w-4" /> Plus tard
           </Button>
           {step < TOTAL_COMPAT_STEPS ? (
-            <Button className="flex-1" onClick={() => void goToStep(step + 1)}>
+            <Button
+              className="flex-1"
+              disabled={step === 1 && !hasClassifiedService}
+              onClick={() => void goToStep(step + 1)}
+            >
               Continuer <ArrowRight className="ml-1.5 h-4 w-4" />
             </Button>
           ) : (
