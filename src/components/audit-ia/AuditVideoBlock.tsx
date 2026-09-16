@@ -47,7 +47,7 @@ export function AuditVideoBlock() {
   }, []);
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+    <section className="mx-auto w-full max-w-6xl px-4 pb-6 pt-2 sm:px-6 sm:pb-8 sm:pt-3">
       <div ref={blockRef} className="mx-auto w-full max-w-[600px]">
         <div className="rounded-[24px] border border-border bg-card p-3 shadow-sm sm:p-4">
           <div className="relative overflow-hidden rounded-2xl bg-muted">

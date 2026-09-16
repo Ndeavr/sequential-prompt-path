@@ -19,7 +19,7 @@ import {
   ScanSearch,
   ShieldCheck,
 } from "lucide-react";
-import { AuditVideoBlock } from "./AuditVideoBlock";
+
 
 /* --------------------------------------------------------------- helpers */
 function SectionShell({
@@ -240,7 +240,6 @@ export function OperationalSections({ onAuditClick }: { onAuditClick?: () => voi
   return (
     <div className="border-t border-border bg-[hsl(var(--surface-secondary))]">
       <AuditValueSection />
-      <AuditVideoBlock />
       <WhatYouGetSection />
       <OfferSection />
       <FaqSection />
