@@ -82,6 +82,7 @@ export default function PageContractorCompatibility() {
   const navigate = useNavigate();
   const {
     contractorId,
+    profile,
     answers,
     update,
     step,
@@ -96,9 +97,38 @@ export default function PageContractorCompatibility() {
   const [done, setDone] = useState(false);
   const [newCity, setNewCity] = useState("");
 
+  const pack = useMemo(() => getCompatPack((profile as any)?.trade_pack), [profile]);
+  const { data: detected, isLoading: detecting } = useDetectedContractorServices(contractorId);
+  const prefilled = useRef(false);
+
+  /** Préremplissage unique, uniquement à partir de services réellement détectés. */
+  useEffect(() => {
+    if (prefilled.current || isLoading || detecting) return;
+    if (!detected || detected.length === 0) return;
+    if (Object.keys(answers.services).length > 0) {
+      prefilled.current = true;
+      return;
+    }
+    prefilled.current = true;
+    const priority = detected.filter((d) => d.is_primary);
+    const accepted = detected.filter((d) => !d.is_primary);
+    const next: ServiceEntries = {};
+    (priority.length ? priority : []).forEach((d, i) => {
+      next[d.slug] = { stance: "priority", label: d.label, source: d.source, order: i };
+    });
+    (priority.length ? accepted : detected).forEach((d, i) => {
+      next[d.slug] = { stance: "accepted", label: d.label, source: d.source, order: i };
+    });
+    update((a) => ({ ...a, services: next as typeof a.services }));
+  }, [detected, detecting, isLoading, answers.services, update]);
+
   const projectQuestions = useMemo(
-    () => visibleProjectQuestions(Object.fromEntries(Object.entries(answers.services).map(([k, v]) => [k, v.stance]))),
-    [answers.services],
+    () =>
+      packVisibleProjectQuestions(
+        pack,
+        Object.fromEntries(Object.entries(answers.services).map(([k, v]) => [k, v.stance])),
+      ),
+    [pack, answers.services],
   );
 
   const groupedProjects = useMemo(() => {
