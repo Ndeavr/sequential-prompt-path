@@ -328,12 +328,20 @@ export default function PageContractorCompatibility() {
         >
           {/* ÉTAPE 1 — Services (tri par glisser-déposer) */}
           {step === 1 && (
-            <ServiceTriageBoard
-              value={answers.services as ServiceEntries}
-              catalog={pack.services}
-              loading={detecting}
-              onChange={(next) => update((a) => ({ ...a, services: next as typeof a.services }))}
-            />
+            <>
+              <ServiceTriageBoard
+                value={answers.services as ServiceEntries}
+                catalog={pack.services}
+                loading={detecting}
+                suggestRelated={suggestRelated}
+                onChange={(next) => update((a) => ({ ...a, services: next as typeof a.services }))}
+              />
+              {!detecting && !hasClassifiedService && (
+                <p className="text-xs text-muted-foreground">
+                  Placez au moins un service dans « Prioritaire » ou « Accepté » pour continuer.
+                </p>
+              )}
+            </>
           )}
 
           {/* ÉTAPE 2 — Projets */}
