@@ -168,7 +168,7 @@ function Column({
   );
 }
 
-export default function ServiceTriageBoard({ value, catalog, onChange, loading }: Props) {
+export default function ServiceTriageBoard({ value, catalog, onChange, loading, suggestRelated }: Props) {
   const [dragging, setDragging] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<TriageStance, string>>({
     unsorted: "",
