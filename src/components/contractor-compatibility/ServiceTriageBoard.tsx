@@ -169,6 +169,7 @@ function Column({
 export default function ServiceTriageBoard({ value, catalog, onChange, loading }: Props) {
   const [dragging, setDragging] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<TriageStance, string>>({
+    unsorted: "",
     priority: "",
     accepted: "",
     not_wanted: "",
@@ -182,7 +183,7 @@ export default function ServiceTriageBoard({ value, catalog, onChange, loading }
   );
 
   const columns = useMemo(() => {
-    const map: Record<TriageStance, string[]> = { priority: [], accepted: [], not_wanted: [] };
+    const map: Record<TriageStance, string[]> = { unsorted: [], priority: [], accepted: [], not_wanted: [] };
     Object.entries(value)
       .sort((a, b) => (a[1].order ?? 0) - (b[1].order ?? 0))
       .forEach(([slug, entry]) => map[entry.stance]?.push(slug));
