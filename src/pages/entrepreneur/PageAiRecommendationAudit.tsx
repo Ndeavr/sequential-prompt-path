@@ -148,8 +148,10 @@ export default function PageAiRecommendationAudit() {
   const [result, setResult] = useState<AuditResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
+  const [revealCount, setRevealCount] = useState(0);
   const debounce = useRef<number | null>(null);
   const auditCardRef = useRef<HTMLDivElement | null>(null);
+  const auditInputRef = useRef<HTMLInputElement | null>(null);
   const autoRunRef = useRef(false);
 
   const inviteToken = sp.get("t");
@@ -342,8 +344,14 @@ export default function PageAiRecommendationAudit() {
   }
 
   const scrollToAudit = useCallback(() => {
+    setRevealCount((c) => c + 1);
     auditCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+    window.setTimeout(() => {
+      if (!result && !auditing) {
+        auditInputRef.current?.focus({ preventScroll: true });
+      }
+    }, 650);
+  }, [result, auditing]);
 
   const currentStep = result ? 2 : 1;
 
@@ -420,14 +428,15 @@ export default function PageAiRecommendationAudit() {
                 </div>
               </div>
 
-              <div className="mt-5">
+              <div key={revealCount} className="audit-field-reveal mt-5">
                 <label htmlFor="audit-q" className="sr-only">
                   Nom de votre entreprise
                 </label>
-                <div className="relative">
+                <div className="audit-field-contour relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="audit-q"
+                    ref={auditInputRef}
                     value={query}
                     autoComplete="organization"
                     onChange={(e) => {
