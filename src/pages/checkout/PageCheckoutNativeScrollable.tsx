@@ -28,6 +28,7 @@ import { useValidateCoupon } from "@/hooks/useCoupons";
 import { cn } from "@/lib/utils";
 import type { BillingInterval } from "@/hooks/usePlanCatalog";
 import CardContractorCalendarSetup from "@/components/calendar/CardContractorCalendarSetup";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 const STRIPE_PK = "pk_live_Gw47doir5ZX9n9uM0nrBpKro";
 const stripePromise = STRIPE_PK.startsWith("pk_")
@@ -628,7 +629,7 @@ export default function PageCheckoutNativeScrollable() {
         <div className="text-center space-y-4">
           <p className="text-lg font-bold text-foreground">Plan introuvable</p>
           <p className="text-sm text-muted-foreground">Impossible de charger les informations de tarification.</p>
-          <Button onClick={() => navigate("/pricing?tab=entrepreneurs")}>
+          <Button onClick={() => navigate(contractorPlanLink({ from: "checkout_plan_missing" }))}>
             <ArrowLeft className="w-4 h-4 mr-2" /> Retour aux plans
           </Button>
         </div>

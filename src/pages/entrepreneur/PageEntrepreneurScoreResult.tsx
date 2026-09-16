@@ -5,6 +5,7 @@ import { ArrowRight, Eye, TrendingUp, AlertTriangle, CheckCircle2, Sparkles } fr
 import { Button } from "@/components/ui/button";
 import ScoreRing from "@/components/ui/score-ring";
 import { getActiveFlowSession, type FlowSession } from "@/services/flowStateService";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 const PageEntrepreneurScoreResult = () => {
   const navigate = useNavigate();
@@ -145,7 +146,7 @@ const PageEntrepreneurScoreResult = () => {
         {/* CTAs */}
         <div className="space-y-3">
           <Button
-            onClick={() => navigate("/entrepreneur/pricing")}
+            onClick={() => navigate(contractorPlanLink({ objective: "visibility", from: "score_result" }))}
             size="lg"
             className="w-full h-14 text-lg font-bold gap-2 rounded-xl"
           >
@@ -179,7 +180,7 @@ const PageEntrepreneurScoreResult = () => {
                   Je vois exactement ce qui bloque votre visibilité. En quelques minutes, je peux optimiser votre profil et vous connecter avec des clients qualifiés. On le fait ensemble ?
                 </p>
                 <div className="flex gap-2 mt-3">
-                  <Button size="sm" onClick={() => navigate("/entrepreneur/pricing")} className="gap-1 text-xs">
+                  <Button size="sm" onClick={() => navigate(contractorPlanLink({ objective: "visibility", from: "score_result" }))} className="gap-1 text-xs">
                     Oui, allons-y <ArrowRight className="w-3 h-3" />
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => setShowAlex(false)} className="text-xs">

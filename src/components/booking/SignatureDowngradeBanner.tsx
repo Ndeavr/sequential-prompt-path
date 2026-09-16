@@ -5,6 +5,7 @@
 import { AlertTriangle, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 export function SignatureDowngradeBanner() {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export function SignatureDowngradeBanner() {
       </div>
       <Button
         variant="outline"
-        onClick={() => navigate("/pricing")}
+        onClick={() => navigate(contractorPlanLink({ objective: "upgrade", from: "signature_downgrade" }))}
         className="gap-2 w-full sm:w-auto"
       >
         <Crown className="w-4 h-4" />

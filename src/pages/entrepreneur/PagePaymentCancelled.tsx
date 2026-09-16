@@ -5,6 +5,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { XCircle, ArrowRight, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 export default function PagePaymentCancelled() {
   const [searchParams] = useSearchParams();
@@ -48,7 +49,7 @@ export default function PagePaymentCancelled() {
           )}
           <Button
             variant="outline"
-            onClick={() => navigate("/entrepreneur/pricing-calculator")}
+            onClick={() => navigate(contractorPlanLink({ objective: "upgrade", from: "payment_cancelled" }))}
             className="w-full text-sm gap-2"
           >
             Refaire une simulation

@@ -134,7 +134,6 @@ const PageGoShortLink = lazyWithRetry(() => import("@/pages/PageGoShortLink"));
 const PageProspectActivationSuccess = lazyWithRetry(() => import("@/pages/PageProspectActivationSuccess"));
 
 // Voice Sales Plan Onboarding
-const PageContractorPlanOnboarding = lazyWithRetry(() => import("@/pages/voice-sales/PageContractorPlanOnboarding"));
 
 // Visual Search
 const ProVisualSearchPage = lazyWithRetry(() => import("@/pages/ProVisualSearchPage"));
@@ -325,7 +324,6 @@ const ContractorOnboardingPage = lazyWithRetry(() => import("@/pages/ContractorO
 const OnboardingFlow = lazyWithRetry(() => import("@/pages/OnboardingFlow"));
 const PricingPage = lazyWithRetry(() => import("@/pages/PricingPage"));
 const PricingHomeownersPage = lazyWithRetry(() => import("@/pages/PricingHomeownersPage"));
-const PricingContractorsPage = lazyWithRetry(() => import("@/pages/PricingContractorsPage"));
 const PageUpgradeHomeowner = lazyWithRetry(() => import("@/pages/upgrade/PageUpgradeHomeowner"));
 const PageHomeownerWelcome = lazyWithRetry(() => import("@/pages/proprietaire/PageHomeownerWelcome"));
 const PageVerificationReport = lazyWithRetry(() => import("@/pages/proprietaire/PageVerificationReport"));
@@ -432,7 +430,7 @@ const PageContractorImportWorkspace = lazyWithRetry(() => import("@/pages/contra
 const PageContractorAIPPBuilder = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorAIPPBuilder"));
 const PageContractorAssetsStudio = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorAssetsStudio"));
 const PageContractorFAQBuilder = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorFAQBuilder"));
-const PageContractorPlanRecommendation = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorPlanRecommendation"));
+const PageContractorPlanEntry = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorPlanEntry"));
 const PageContractorPersonalizedPlan = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorPersonalizedPlan"));
 const PageContractorPricingIntake = lazyWithRetry(() => import("@/pages/contractor-funnel/PageContractorPricingIntake"));
 const PageAdminPricingIntelligence = lazyWithRetry(() => import("@/pages/admin/PageAdminPricingIntelligence"));
@@ -673,11 +671,9 @@ const PageEntrepreneurLandingAIPP = lazyWithRetry(() => import("@/pages/entrepre
 const PageEntrepreneurDiagnosticLanding = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurDiagnosticLanding"));
 const PageEntrepreneursLanding = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneursLanding"));
 const PageEntrepreneurScoreResult = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurScoreResult"));
-const PageEntrepreneurPricing = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurPricing"));
 const PageEntrepreneurDashboardLite = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurDashboardLite"));
 const PageAIPPAnalysisLoading = lazyWithRetry(() => import("@/pages/entrepreneur/PageAIPPAnalysisLoading"));
 const PageEntrepreneurImportProcessing = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurImportProcessing"));
-const PagePricingCalculator = lazyWithRetry(() => import("@/pages/entrepreneur/PagePricingCalculator"));
 const PageGuaranteeCalculator = lazyWithRetry(() => import("@/pages/entrepreneur/PageGuaranteeCalculator"));
 const PageAiRecommendationAudit = lazyWithRetry(() => import("@/pages/entrepreneur/PageAiRecommendationAudit"));
 const PageMatchingProfileWizard = lazyWithRetry(() => import("@/pages/entrepreneur/PageMatchingProfileWizard"));
@@ -1076,15 +1072,15 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/plan-ia" element={<Suspense fallback={<LazyFallback />}><PageDynamicPlanGeneration /></Suspense>} />
         <Route path="/admin/dynamic-pricing" element={<Suspense fallback={<LazyFallback />}><PageAdminDynamicPricing /></Suspense>} />
         <Route path="/entrepreneur/onboarding-voice" element={<Suspense fallback={<LazyFallback />}><PageContractorVoiceFirstLanding /></Suspense>} />
-        <Route path="/entrepreneur/plan" element={<Suspense fallback={<LazyFallback />}><PageContractorPlanOnboarding /></Suspense>} />
         <Route path="/entrepreneur/onboarding" element={<PageContractorOnboardingStart />} />
         <Route path="/entrepreneur/import" element={<PageContractorImportWorkspace />} />
         <Route path="/entrepreneur/import/processing" element={<PageEntrepreneurImportProcessing />} />
         <Route path="/entrepreneur/aipp-builder" element={<PageContractorAIPPBuilder />} />
         <Route path="/entrepreneur/assets" element={<PageContractorAssetsStudio />} />
         <Route path="/entrepreneur/faq" element={<PageContractorFAQBuilder />} />
-        <Route path="/entrepreneur/plan" element={<PageContractorPlanRecommendation />} />
+        <Route path="/entrepreneur/plan" element={<LegacyRedirect to="/entrepreneur/plan-personnalise" />} />
         <Route path="/entrepreneur/checkout" element={<PageContractorCheckout />} />
+        <Route path="/entrepreneur/plan-personnalise" element={<Suspense fallback={<LazyFallback />}><PageContractorPlanEntry /></Suspense>} />
         <Route path="/entrepreneur/plan-personnalise/:quoteId" element={<Suspense fallback={<LazyFallback />}><PageContractorPersonalizedPlan /></Suspense>} />
         <Route path="/entrepreneur/devis-personnalise" element={<Suspense fallback={<LazyFallback />}><PageContractorPricingIntake /></Suspense>} />
         <Route path="/entrepreneur/activation" element={<PageContractorActivationSuccess />} />
@@ -1110,8 +1106,8 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/score" element={<PageEntrepreneurScoreResult />} />
         <Route path="/aipp/:token/results" element={<PageAIPPScoreReveal />} />
         <Route path="/aipp/local/results" element={<PageAIPPScoreReveal />} />
-        <Route path="/entrepreneur/pricing" element={<PageEntrepreneurPricing />} />
-        <Route path="/entrepreneur/pricing-calculator" element={<PagePricingCalculator />} />
+        <Route path="/entrepreneur/pricing" element={<LegacyRedirect to="/entrepreneur/plan-personnalise" />} />
+        <Route path="/entrepreneur/pricing-calculator" element={<LegacyRedirect to="/entrepreneur/plan-personnalise" />} />
         <Route path="/entrepreneur/garantie" element={<PageGuaranteeCalculator />} />
         <Route path="/entrepreneur/calculateur-forfait" element={<Navigate to="/entrepreneur/devis-personnalise" replace />} />
 
@@ -1186,7 +1182,7 @@ export const AppRouter = () => (
         <Route path="/activation/success" element={<Suspense fallback={<LazyFallback />}><PageOutreachActivationSuccess /></Suspense>} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/pricing/proprietaires" element={<PricingHomeownersPage />} />
-        <Route path="/pricing/entrepreneurs" element={<Navigate to="/entrepreneur/devis-personnalise" replace />} />
+        <Route path="/pricing/entrepreneurs" element={<LegacyRedirect to="/entrepreneur/plan-personnalise" />} />
         {/* Canonical upgrade surface (with feature + return context) */}
         <Route path="/upgrade" element={<PageUpgradeHomeowner />} />
         <Route path="/proprietaires/abonnement" element={<PageUpgradeHomeowner />} />
@@ -1194,7 +1190,7 @@ export const AppRouter = () => (
         {/* Legacy /tarifs links used across emails, checkout and SMS */}
         <Route path="/tarifs" element={<PricingHomeownersPage />} />
         <Route path="/tarifs/proprietaires" element={<PricingHomeownersPage />} />
-        <Route path="/tarifs/entrepreneurs" element={<Navigate to="/entrepreneur/devis-personnalise" replace />} />
+        <Route path="/tarifs/entrepreneurs" element={<LegacyRedirect to="/entrepreneur/plan-personnalise" />} />
         <Route path="/aipp-score" element={<AIPPScorePage />} />
         <Route path="/audit-aipp" element={<PageAuditAIPPv2 />} />
         <Route path="/audit-aipp/results/:auditId" element={<PageAuditResultsAIPPv2 />} />

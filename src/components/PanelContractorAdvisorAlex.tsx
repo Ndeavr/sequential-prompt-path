@@ -32,6 +32,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CONTRACTOR_PLANS, getContractorPlan, type ContractorPlanSlug } from "@/config/contractorPlans";
 import { runContractorEnrichment, getContractorCheckoutUrl } from "@/services/alexContractorOnboardingService";
 import { toast } from "sonner";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 type Objective = "more_calls" | "more_quotes" | "fill_schedule" | "dominate_city" | "premium_jobs";
 
@@ -388,7 +389,7 @@ export default function PanelContractorAdvisorAlex({
             <Button
               variant="outline"
               size="lg"
-              onClick={() => navigate("/entrepreneur/pricing")}
+              onClick={() => navigate(contractorPlanLink({ objective: "upgrade", from: "clara_advisor" }))}
             >
               Voir comparaison
             </Button>

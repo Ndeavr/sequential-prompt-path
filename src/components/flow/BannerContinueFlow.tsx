@@ -24,7 +24,7 @@ export default function BannerContinueFlow() {
     // Don't show on flow pages themselves
     if (location.pathname.startsWith("/entrepreneur/analysis") || 
         location.pathname === "/entrepreneur/score" ||
-        location.pathname === "/entrepreneur/pricing") {
+        location.pathname === "/entrepreneur/plan-personnalise") {
       return;
     }
 

@@ -26,7 +26,7 @@ export default function PagePlanResult() {
     if (stored) {
       setResult(JSON.parse(stored));
     } else if (!quoteId) {
-      navigate("/entrepreneur/pricing-calculator", { replace: true });
+      navigate("/entrepreneur/plan-personnalise", { replace: true });
     }
   }, [quoteId, navigate]);
 

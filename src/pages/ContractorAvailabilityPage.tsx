@@ -21,6 +21,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 /* ─── Translations ─── */
 const FAQS = [
@@ -592,8 +593,8 @@ export default function ContractorAvailabilityPage() {
                 </Link>
               </Button>
               <Button variant="outline" size="lg" className="gap-2 rounded-xl" asChild>
-                <Link to="/pricing">
-                  Voir les plans
+                <Link to={contractorPlanLink({ objective: "more_appointments", from: "contractor_availability" })}>
+                  Voir mon plan personnalisé
                   <ChevronRight className="h-4 w-4" />
                 </Link>
               </Button>
@@ -603,7 +604,7 @@ export default function ContractorAvailabilityPage() {
 
         {/* Internal links for SEO */}
         <nav className="max-w-3xl mx-auto px-4 pb-12 text-center space-x-4">
-          <Link to="/pricing" className="text-xs text-muted-foreground hover:text-primary transition-colors">Plans et tarifs</Link>
+          <Link to={contractorPlanLink({ from: "contractor_availability_footer" })} className="text-xs text-muted-foreground hover:text-primary transition-colors">Mon plan personnalisé</Link>
           <Link to="/contractor-onboarding" className="text-xs text-muted-foreground hover:text-primary transition-colors">Inscription entrepreneur</Link>
           <Link to="/verifier-entrepreneur" className="text-xs text-muted-foreground hover:text-primary transition-colors">Vérifier un entrepreneur</Link>
           <Link to="/entrepreneurs" className="text-xs text-muted-foreground hover:text-primary transition-colors">Professionnels</Link>

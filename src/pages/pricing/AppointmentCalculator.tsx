@@ -24,6 +24,7 @@ import {
   saveCalculatorSession, recommendPlan, estimateAppointments, estimateBudget,
 } from "@/services/calculatorSessionService";
 import { useJveTrades, useJveCities, useJveTradeSpecialties, useJobValueEstimate } from "@/hooks/useJobValueEngine";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 // ─── Constants ───
 
@@ -660,7 +661,7 @@ export default function AppointmentCalculator() {
                 <p className="text-sm text-muted-foreground">
                   Vos objectifs nécessitent un accompagnement personnalisé.
                 </p>
-                <Button size="lg" className="rounded-2xl h-13 px-8 shadow-glow" onClick={() => navigate("/pricing?plan=signature")}>
+                <Button size="lg" className="rounded-2xl h-13 px-8 shadow-glow" onClick={() => navigate(contractorPlanLink({ objective: "upgrade", from: "appointment_calculator" }))}>
                   Parler à l'équipe UNPRO <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>

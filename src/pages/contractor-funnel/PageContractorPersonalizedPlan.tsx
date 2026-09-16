@@ -25,6 +25,10 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
 import { trackFunnelStep, trackFunnelFailure } from "@/lib/analytics/funnelSteps";
+import {
+  CONTRACTOR_OBJECTIVE_CTA,
+  isContractorObjective,
+} from "@/lib/routing/contractorPlanRoute";
 import { toast } from "sonner";
 
 const PLAN_LABEL: Record<string, string> = {
@@ -66,6 +70,9 @@ export default function PageContractorPersonalizedPlan() {
   const promoCode = (searchParams.get("promo") ?? "").trim().toUpperCase() || null;
   const affiliateRef = (searchParams.get("ref") ?? "").trim().toUpperCase() || null;
   const offerId = (searchParams.get("offer") ?? "").trim() || null;
+  const rawObjective = searchParams.get("objective");
+  const objective = isContractorObjective(rawObjective) ? rawObjective : null;
+  const ctaOrigin = searchParams.get("from");
   const navigate = useNavigate();
   const [quote, setQuote] = useState<PricingQuote | null>(null);
   const [offerState, setOfferState] = useState<AffiliateOfferState | null>(null);
@@ -125,9 +132,11 @@ export default function PageContractorPersonalizedPlan() {
         plan_code: quote.recommended_plan,
         pricing_status: quote.pricing_status,
         monthly_price: quote.recommended_monthly_price,
+        objective,
+        from: ctaOrigin,
       },
     });
-  }, [quote]);
+  }, [quote, objective, ctaOrigin]);
 
   // Retour depuis Stripe : succès ou annulation, jamais deviné.
   const checkoutOutcome = searchParams.get("checkout");
@@ -179,6 +188,8 @@ export default function PageContractorPersonalizedPlan() {
           plan_code: quote.recommended_plan,
           stripe_session_id: payload?.sessionId ?? null,
           promo_code: promoCode,
+          objective,
+          from: ctaOrigin,
         },
       });
 
@@ -253,6 +264,22 @@ export default function PageContractorPersonalizedPlan() {
             <br />
             <span className="text-white/80">Votre plan recommandé.</span>
           </h1>
+          {objective && (
+            <p className="mt-3 inline-flex items-center rounded-full border border-white/15 bg-white/[0.04] px-3 py-1 text-xs text-white/75">
+              Objectif : {CONTRACTOR_OBJECTIVE_CTA[objective]}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              const carry = new URLSearchParams(searchParams);
+              const qs = carry.toString();
+              navigate(`/entrepreneur/devis-personnalise${qs ? `?${qs}` : ""}`);
+            }}
+            className="mt-3 block text-xs text-white/60 underline underline-offset-4 hover:text-white"
+          >
+            Modifier mes préférences avant de payer
+          </button>
         </motion.div>
 
         {/* Offre affilié — état EXACT vérifié en base. Aucune promesse non prouvée. */}

@@ -6,6 +6,7 @@ import { useAlexAutopilot } from "@/hooks/useAlexAutopilot";
 import AlexAutopilotBanner from "@/components/alex/AlexAutopilotBanner";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 interface AlexAutopilotProviderProps {
   hasScore?: boolean;
@@ -38,7 +39,7 @@ export default function AlexAutopilotProvider(props: AlexAutopilotProviderProps)
           navigate("/dashboard/appointments");
           break;
         case "show_plan_recommendation":
-          navigate("/pricing");
+          navigate(contractorPlanLink({ objective: "upgrade", from: "clara_autopilot" }));
           break;
         default:
           break;

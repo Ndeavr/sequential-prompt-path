@@ -16,6 +16,7 @@ import PanelAlexRealtimeAssist from "@/components/adaptive-home/PanelAlexRealtim
 import { CONTRACTOR_PAINS } from "@/components/adaptive-home/painData";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import type { IntentChip } from "@/components/intent-pages/ChipsQuickIntentSelector";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 const CONTRACTOR_CHIPS: IntentChip[] = [
   { id: "score", label: "Voir mon score", emoji: "📊" },
@@ -32,7 +33,7 @@ export default function HomeContractorAdaptive() {
 
   const handleCta = () => {
     engage();
-    navigate(selectedPain?.ctaHref ?? "/entrepreneur/plan");
+    navigate(selectedPain?.ctaHref ?? contractorPlanLink({ objective: "more_appointments", from: "contractor_home" }));
   };
 
   const handleChip = (chip: IntentChip) => {
@@ -56,7 +57,7 @@ export default function HomeContractorAdaptive() {
           subtitle="UNPRO ne vend pas des clics. UNPRO active des rendez-vous qualifiés."
           intentFeature="contractor"
           ctaPrimary={{ label: "Voir mon score AIPP", onClick: () => navigate("/aipp") }}
-          ctaSecondary={{ label: "Obtenir mes premiers rendez-vous", onClick: () => navigate("/entrepreneur/plan") }}
+          ctaSecondary={{ label: "Obtenir mes premiers rendez-vous", onClick: () => navigate(contractorPlanLink({ objective: "more_appointments", from: "contractor_home_secondary" })) }}
           counterPrimary={{ type: "dollars", label: "économisés en publicité" }}
           counterSecondary={{ type: "custom", label: "rendez-vous mieux qualifiés", customValue: 18924 }}
           graphStyle="dynamic"

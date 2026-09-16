@@ -6,6 +6,7 @@ import { Lock, Crown, Calendar, QrCode, MapPin, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import type { PlanCode } from "@/hooks/useContractorPlan";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 interface SignatureLockedOverlayProps {
   currentPlan: PlanCode;
@@ -59,7 +60,7 @@ export function SignatureLockedOverlay({
             Votre plan actuel : <span className="font-medium text-foreground">{planLabel}</span>
           </p>
         </div>
-        <Button onClick={() => navigate("/pricing")} className="gap-2">
+        <Button onClick={() => navigate(contractorPlanLink({ objective: "upgrade", from: "signature_locked" }))} className="gap-2">
           <Crown className="w-4 h-4" />
           Passer au plan Signature
         </Button>
@@ -111,7 +112,7 @@ export function SignatureLockedOverlay({
         <div className="space-y-3">
           <Button
             size="lg"
-            onClick={() => navigate("/pricing")}
+            onClick={() => navigate(contractorPlanLink({ objective: "upgrade", from: "signature_locked_cta" }))}
             className="w-full gap-2 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
           >
             <Crown className="w-4 h-4" />

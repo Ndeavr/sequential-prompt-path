@@ -15,6 +15,7 @@ import SectionFAQGoalToPlan from "@/components/goal-to-plan/SectionFAQGoalToPlan
 import SectionFinalCTAGoal from "@/components/goal-to-plan/SectionFinalCTAGoal";
 import StickyMobileGoalCTA from "@/components/goal-to-plan/StickyMobileGoalCTA";
 import { Helmet } from "react-helmet-async";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 export default function PageEntrepreneurGoalToPlanLanding() {
   const { inputs, updateInput, results } = useGoalToPlanEngine();
@@ -46,9 +47,9 @@ export default function PageEntrepreneurGoalToPlanLanding() {
   const activate = () => {
     trackCta("activate_plan", "cta");
     if (results) {
-      navigate(`/entrepreneur/pricing?recommended=${results.recommendedPlan}`);
+      navigate(contractorPlanLink({ objective: "more_appointments", from: "goal_to_plan", extra: { recommended: results.recommendedPlan } }));
     } else {
-      navigate("/entrepreneur/pricing");
+      navigate(contractorPlanLink({ objective: "more_appointments", from: "goal_to_plan" }));
     }
   };
 
