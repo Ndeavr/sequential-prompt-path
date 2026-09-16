@@ -221,6 +221,7 @@ export default function ServiceTriageBoard({ value, catalog, onChange, loading }
     if (!from || !to) return;
 
     const next: Record<TriageStance, string[]> = {
+      unsorted: [...columns.unsorted],
       priority: [...columns.priority],
       accepted: [...columns.accepted],
       not_wanted: [...columns.not_wanted],
@@ -249,7 +250,9 @@ export default function ServiceTriageBoard({ value, catalog, onChange, loading }
     setDrafts((d) => ({ ...d, [stance]: "" }));
     inputs.current[stance]?.focus();
     if (!slug || value[slug]) return;
-    onChange({
+
+    const wasEmpty = Object.keys(value).length === 0;
+    const next: ServiceEntries = {
       ...value,
       [slug]: {
         stance,
@@ -258,7 +261,18 @@ export default function ServiceTriageBoard({ value, catalog, onChange, loading }
         order: columns[stance].length,
         pending_review: !known,
       },
-    });
+    };
+
+    // Premier service saisi = service principal : on propose seulement les
+    // sous-services liés à ce métier, toujours « À classer », jamais classés d'office.
+    if (wasEmpty && suggestRelated) {
+      suggestRelated(slug, known?.label ?? raw)
+        .filter((s) => s.slug && s.slug !== slug && !next[s.slug])
+        .forEach((s, i) => {
+          next[s.slug] = { stance: "unsorted", label: s.label, source: "declared", order: i, pending_review: false };
+        });
+    }
+    onChange(next);
   }
 
   const total = Object.keys(value).length;
@@ -272,7 +286,7 @@ export default function ServiceTriageBoard({ value, catalog, onChange, loading }
       )}
       {!loading && total === 0 && (
         <p className="rounded-xl border border-dashed border-border bg-muted/30 p-3 text-sm text-muted-foreground">
-          Aucun service détecté pour votre entreprise. Ajoutez vos services ci-dessous.
+          {EMPTY_DETECTION_MESSAGE}
         </p>
       )}
 
