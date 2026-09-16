@@ -14,12 +14,13 @@ function setup(value: ServiceEntries = {}) {
 }
 
 describe("ServiceTriageBoard", () => {
-  it("affiche les trois colonnes et aucun bouton de statut répété", () => {
+  it("affiche les quatre colonnes et aucun bouton de statut répété", () => {
     setup();
     expect(screen.getByText("Prioritaire")).toBeInTheDocument();
     expect(screen.getByText("Accepté")).toBeInTheDocument();
     expect(screen.getByText("Non recherché")).toBeInTheDocument();
-    expect(screen.getAllByPlaceholderText("Ajouter un service…")).toHaveLength(3);
+    expect(screen.getByText("À classer")).toBeInTheDocument();
+    expect(screen.getAllByPlaceholderText("Ajouter un service…")).toHaveLength(4);
   });
 
   it("dit clairement qu'aucun service n'est détecté, sans en inventer", () => {
