@@ -264,6 +264,22 @@ export default function PageContractorPersonalizedPlan() {
             <br />
             <span className="text-white/80">Votre plan recommandé.</span>
           </h1>
+          {objective && (
+            <p className="mt-3 inline-flex items-center rounded-full border border-white/15 bg-white/[0.04] px-3 py-1 text-xs text-white/75">
+              Objectif : {CONTRACTOR_OBJECTIVE_CTA[objective]}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              const carry = new URLSearchParams(searchParams);
+              const qs = carry.toString();
+              navigate(`/entrepreneur/devis-personnalise${qs ? `?${qs}` : ""}`);
+            }}
+            className="mt-3 block text-xs text-white/60 underline underline-offset-4 hover:text-white"
+          >
+            Modifier mes préférences avant de payer
+          </button>
         </motion.div>
 
         {/* Offre affilié — état EXACT vérifié en base. Aucune promesse non prouvée. */}
