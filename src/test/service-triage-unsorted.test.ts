@@ -16,7 +16,7 @@ describe("service à classer", () => {
     expect(a.services.ventilation_comble.stance).toBe("unsorted");
   });
 
-  it("n'écrit aucune règle de matching pour un service à classer", () => {
+  it("n'écrit aucune règle de matching pour un service à classer", async () => {
     const answers = sanitizeAnswers({
       services: {
         isolation_soufflee: { stance: "unsorted", min_project_cents: 500000 },
@@ -24,8 +24,31 @@ describe("service à classer", () => {
         excavation: { stance: "not_wanted" },
       },
     });
-    const { rules } = materialize("c1", answers);
-    const keys = rules.map((r) => r.rule_key);
+
+    const captured: Record<string, unknown>[] = [];
+    const chain = () => {
+      const c: Record<string, unknown> = {};
+      ["upsert", "update", "eq", "delete", "insert", "select"].forEach((k) => {
+        c[k] = () => c;
+      });
+      (c as { then: unknown }).then = (res: (v: unknown) => unknown) => res({ data: null, error: null });
+      return c;
+    };
+    const supabase = {
+      from(table: string) {
+        const c = chain();
+        if (table === "contractor_matching_rules") {
+          c.upsert = (rows: Record<string, unknown>[]) => {
+            captured.push(...rows);
+            return c;
+          };
+        }
+        return c;
+      },
+    };
+
+    await materialize(supabase, "c1", answers, { finalize: true });
+    const keys = captured.map((r) => r.rule_key);
     expect(keys).not.toContain("service:isolation_soufflee");
     expect(keys).not.toContain("service_min:isolation_soufflee");
     expect(keys).toContain("service:scellage_air");
