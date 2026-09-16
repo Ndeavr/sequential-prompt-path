@@ -62164,6 +62164,30 @@ export type Database = {
           },
         ]
       }
+      offer_category_keywords: {
+        Row: {
+          category_group: string
+          category_slug: string
+          created_at: string
+          id: string
+          keyword: string
+        }
+        Insert: {
+          category_group: string
+          category_slug: string
+          created_at?: string
+          id?: string
+          keyword: string
+        }
+        Update: {
+          category_group?: string
+          category_slug?: string
+          created_at?: string
+          id?: string
+          keyword?: string
+        }
+        Relationships: []
+      }
       official_site_crawl_runs: {
         Row: {
           canonical_domain: string
@@ -100227,6 +100251,11 @@ export type Database = {
         Args: { p_label: string }
         Returns: string
       }
+      normalize_offer_category_slug: {
+        Args: { p_label: string }
+        Returns: string
+      }
+      normalize_offer_text: { Args: { p_input: string }; Returns: string }
       outbound_resolve_landing: {
         Args: { p_slug: string; p_token: string }
         Returns: Json
