@@ -73,7 +73,7 @@ export function AuditVideoBlock() {
             </video>
           </div>
           <p className="mt-3 px-1 text-[12.5px] leading-relaxed text-muted-foreground">
-            En 20 secondes : comment UNPRO structure votre entreprise pour qu'elle soit comprise,
+            Comment UNPRO structure votre entreprise pour qu'elle soit comprise,
             vérifiée et considérée par les assistants IA.
           </p>
         </div>
