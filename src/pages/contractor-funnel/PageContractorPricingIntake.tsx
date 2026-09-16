@@ -450,6 +450,11 @@ export default function PageContractorPricingIntake() {
     setSubmitting(true);
     try {
       const quote = await computePricingQuote(data as PricingIntakeInput);
+      void trackFunnelStep("quote_computed", {
+        subjectId: quote.id,
+        city: (data as { city?: string }).city ?? null,
+        metadata: { plan_code: quote.recommended_plan ?? null },
+      });
       try { localStorage.removeItem(draftKey); } catch { /* ignore */ }
       const carry = new URLSearchParams();
       for (const key of ["promo", "ref", "offer", "audit", "audit_token", "t"]) {
