@@ -44,6 +44,7 @@ Deno.serve(async (req) => {
   try {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+    const testWebhookSecret = Deno.env.get("STRIPE_TEST_WEBHOOK_SECRET");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not configured");
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
@@ -66,7 +67,15 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
+      // Live signature first; fall back to the Stripe test endpoint secret so
+      // test-mode events can be verified for real (never forged, never skipped).
+      try {
+        event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
+      } catch (liveErr) {
+        if (!testWebhookSecret) throw liveErr;
+        event = await stripe.webhooks.constructEventAsync(body, sig, testWebhookSecret);
+        if (event.livemode) throw liveErr;
+      }
     } else {
       event = JSON.parse(body) as Stripe.Event;
     }

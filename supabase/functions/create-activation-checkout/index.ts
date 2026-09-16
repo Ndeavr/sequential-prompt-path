@@ -5,6 +5,7 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { OFFER } from "../_shared/offerCopy.ts";
+import { resolveStripeEnv, stripeKeyFor } from "../_shared/stripeEnv.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,9 +25,10 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { slug, email, source, utm, landing_token, activation_token, plan_code, quote_id, ref } = (body ?? {}) as {
-      slug?: string; email?: string; source?: string; utm?: Record<string, string>; landing_token?: string; activation_token?: string; plan_code?: string; quote_id?: string; ref?: string;
+    const { slug, email, source, utm, landing_token, activation_token, plan_code, quote_id, ref, test_mode } = (body ?? {}) as {
+      slug?: string; email?: string; source?: string; utm?: Record<string, string>; landing_token?: string; activation_token?: string; plan_code?: string; quote_id?: string; ref?: string; test_mode?: boolean;
     };
+    const stripeEnv = resolveStripeEnv(test_mode);
 
     // ── AFFILIATE ATTRIBUTION ───────────────────────────────────────────────
     // ?ref=CODE carried from the affiliate audit link. Resolved server-side
@@ -173,8 +175,10 @@ Deno.serve(async (req) => {
     }
 
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) return json({ error: "stripe_not_configured", stage: "stripe_init" }, 500);
+    const stripeKey = stripeKeyFor(stripeEnv);
+    if (!stripeKey) {
+      return json({ error: stripeEnv === "test" ? "stripe_test_not_configured" : "stripe_not_configured", stage: "stripe_init" }, 500);
+    }
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
 
@@ -256,6 +260,8 @@ Deno.serve(async (req) => {
       // Affiliate attribution (server-resolved, never trusted from the client).
       ref: affiliateRefCode,
       affiliate_id: affiliateRefId,
+      // "test" only when the caller explicitly asked for a Stripe test checkout.
+      stripe_env: stripeEnv,
     };
 
     let session;
