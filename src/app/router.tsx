@@ -134,7 +134,6 @@ const PageGoShortLink = lazyWithRetry(() => import("@/pages/PageGoShortLink"));
 const PageProspectActivationSuccess = lazyWithRetry(() => import("@/pages/PageProspectActivationSuccess"));
 
 // Voice Sales Plan Onboarding
-const PageContractorPlanOnboarding = lazyWithRetry(() => import("@/pages/voice-sales/PageContractorPlanOnboarding"));
 
 // Visual Search
 const ProVisualSearchPage = lazyWithRetry(() => import("@/pages/ProVisualSearchPage"));
