@@ -362,7 +362,7 @@ export default function PageAiRecommendationAudit() {
 
       <main>
         {/* ------------------------------------------------------- Hero */}
-        <section className="mx-auto w-full max-w-6xl px-4 pb-8 pt-10 sm:px-6 sm:pt-14">
+        <section className="mx-auto w-full max-w-6xl px-4 pb-5 pt-8 sm:px-6 sm:pb-6 sm:pt-12">
           <div className="max-w-3xl">
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
               UNPRO · Intelligence résidentielle
@@ -392,6 +392,9 @@ export default function PageAiRecommendationAudit() {
 
           </div>
         </section>
+
+        {/* ---------------------------------- Vidéo — haut de page, unique */}
+        <AuditVideoBlock />
 
         {/* -------------------------------------------------- Journey */}
         <JourneySteps currentStep={currentStep} />
