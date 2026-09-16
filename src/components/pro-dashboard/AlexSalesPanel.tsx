@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAlexSales, type SalesAnalysis } from "@/hooks/useAlexSales";
+import { CONTRACTOR_PLAN_DEFAULT_CTA, contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 const PLAN_ICONS: Record<string, any> = {
   pro: Zap,

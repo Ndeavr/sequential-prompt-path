@@ -24,6 +24,7 @@ import {
   saveCalculatorSession, recommendPlan, estimateAppointments, estimateBudget,
 } from "@/services/calculatorSessionService";
 import { useJveTrades, useJveCities, useJveTradeSpecialties, useJobValueEstimate } from "@/hooks/useJobValueEngine";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 // ─── Constants ───
 

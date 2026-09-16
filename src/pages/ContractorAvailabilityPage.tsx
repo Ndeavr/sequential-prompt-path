@@ -16,6 +16,7 @@ import {
   Search, Zap, Eye, Clock, ChevronRight,
 } from "lucide-react";
 import {
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
   Accordion,
   AccordionContent,
   AccordionItem,

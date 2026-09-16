@@ -6,6 +6,7 @@ import { Lock, Crown, Calendar, QrCode, MapPin, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import type { PlanCode } from "@/hooks/useContractorPlan";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 interface SignatureLockedOverlayProps {
   currentPlan: PlanCode;

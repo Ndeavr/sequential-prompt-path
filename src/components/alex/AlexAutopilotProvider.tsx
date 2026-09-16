@@ -6,6 +6,7 @@ import { useAlexAutopilot } from "@/hooks/useAlexAutopilot";
 import AlexAutopilotBanner from "@/components/alex/AlexAutopilotBanner";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 interface AlexAutopilotProviderProps {
   hasScore?: boolean;

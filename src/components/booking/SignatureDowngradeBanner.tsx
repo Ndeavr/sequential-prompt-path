@@ -5,6 +5,7 @@
 import { AlertTriangle, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 export function SignatureDowngradeBanner() {
   const navigate = useNavigate();
