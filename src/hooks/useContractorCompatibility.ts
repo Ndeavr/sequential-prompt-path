@@ -27,7 +27,8 @@ export interface CompatibilityAnswers {
   services: Record<
     string,
     {
-      stance: Stance;
+      /** « unsorted » = À classer : aucun effet sur le matching tant que l'entrepreneur n'a pas tranché. */
+      stance: Stance | "unsorted";
       min_project_cents?: number | null;
       label?: string;
       source?: "verified" | "google" | "website" | "declared";

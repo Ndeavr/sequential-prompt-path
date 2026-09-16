@@ -2,7 +2,7 @@
  * UNPRO — Profil de compatibilité (Excavation / Fondations / Drainage)
  * Parcours conversationnel, conditionnel, mobile-first, rattaché à une fiche entrepreneur existante.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
@@ -31,9 +31,9 @@ import {
   type TerritoryTier,
   type TriAnswer,
 } from "@/config/compatibilityExcavation";
-import { getCompatPack, packVisibleProjectQuestions } from "@/config/compatibilityPacks";
+import { COMPAT_PACKS, getCompatPack, packVisibleProjectQuestions } from "@/config/compatibilityPacks";
 import { useContractorCompatibility } from "@/hooks/useContractorCompatibility";
-import { useDetectedContractorServices } from "@/hooks/useDetectedContractorServices";
+import { serviceSlug, useDetectedContractorServices } from "@/hooks/useDetectedContractorServices";
 import ServiceTriageBoard, { type ServiceEntries } from "@/components/contractor-compatibility/ServiceTriageBoard";
 
 const TRIS: TriAnswer[] = ["yes", "depends", "no"];
@@ -99,7 +99,11 @@ export default function PageContractorCompatibility() {
   const { data: detected, isLoading: detecting } = useDetectedContractorServices(contractorId);
   const prefilled = useRef(false);
 
-  /** Préremplissage unique, uniquement à partir de services réellement détectés. */
+  /**
+   * Préremplissage unique, uniquement à partir de services réellement détectés.
+   * Prioritaire seulement si le service est principal ET prouvé (Vérifié / Google).
+   * Tout le reste part « À classer ». Rien n'est inventé si la détection est vide.
+   */
   useEffect(() => {
     if (prefilled.current || isLoading || detecting) return;
     if (!detected || detected.length === 0) return;
@@ -108,25 +112,49 @@ export default function PageContractorCompatibility() {
       return;
     }
     prefilled.current = true;
-    const priority = detected.filter((d) => d.is_primary);
-    const accepted = detected.filter((d) => !d.is_primary);
     const next: ServiceEntries = {};
-    (priority.length ? priority : []).forEach((d, i) => {
+    const proven = detected.filter((d) => d.is_primary && (d.source === "verified" || d.source === "google"));
+    const rest = detected.filter((d) => !proven.includes(d));
+    proven.forEach((d, i) => {
       next[d.slug] = { stance: "priority", label: d.label, source: d.source, order: i };
     });
-    (priority.length ? accepted : detected).forEach((d, i) => {
-      next[d.slug] = { stance: "accepted", label: d.label, source: d.source, order: i };
+    rest.forEach((d, i) => {
+      next[d.slug] = { stance: "unsorted", label: d.label, source: d.source, order: i };
     });
     update((a) => ({ ...a, services: next as typeof a.services }));
   }, [detected, detecting, isLoading, answers.services, update]);
 
-  const projectQuestions = useMemo(
+  /** Sous-services du pack auquel appartient le service principal saisi. */
+  const suggestRelated = useCallback((slug: string, label: string) => {
+    const norm = (v: string) => serviceSlug(v);
+    const target = norm(label || slug);
+    const match = Object.values(COMPAT_PACKS).find((p) =>
+      p.services.some((s) => s.slug === slug || norm(s.label) === target),
+    );
+    if (!match) return [];
+    return match.services
+      .filter((s) => s.slug !== slug && norm(s.label) !== target)
+      .map((s) => ({ slug: s.slug, label: s.label }));
+  }, []);
+
+  const classifiedServices = useMemo(
     () =>
-      packVisibleProjectQuestions(
-        pack,
-        Object.fromEntries(Object.entries(answers.services).map(([k, v]) => [k, v.stance])),
+      Object.fromEntries(
+        Object.entries(answers.services)
+          .filter(([, v]) => v.stance !== "unsorted")
+          .map(([k, v]) => [k, v.stance as Stance]),
       ),
-    [pack, answers.services],
+    [answers.services],
+  );
+
+  const hasClassifiedService = useMemo(
+    () => Object.values(answers.services).some((v) => v.stance === "priority" || v.stance === "accepted"),
+    [answers.services],
+  );
+
+  const projectQuestions = useMemo(
+    () => packVisibleProjectQuestions(pack, classifiedServices),
+    [pack, classifiedServices],
   );
 
   const groupedProjects = useMemo(() => {
@@ -300,12 +328,20 @@ export default function PageContractorCompatibility() {
         >
           {/* ÉTAPE 1 — Services (tri par glisser-déposer) */}
           {step === 1 && (
-            <ServiceTriageBoard
-              value={answers.services as ServiceEntries}
-              catalog={pack.services}
-              loading={detecting}
-              onChange={(next) => update((a) => ({ ...a, services: next as typeof a.services }))}
-            />
+            <>
+              <ServiceTriageBoard
+                value={answers.services as ServiceEntries}
+                catalog={pack.services}
+                loading={detecting}
+                suggestRelated={suggestRelated}
+                onChange={(next) => update((a) => ({ ...a, services: next as typeof a.services }))}
+              />
+              {!detecting && !hasClassifiedService && (
+                <p className="text-xs text-muted-foreground">
+                  Placez au moins un service dans « Prioritaire » ou « Accepté » pour continuer.
+                </p>
+              )}
+            </>
           )}
 
           {/* ÉTAPE 2 — Projets */}
@@ -589,7 +625,11 @@ export default function PageContractorCompatibility() {
             <Save className="mr-1.5 h-4 w-4" /> Plus tard
           </Button>
           {step < TOTAL_COMPAT_STEPS ? (
-            <Button className="flex-1" onClick={() => void goToStep(step + 1)}>
+            <Button
+              className="flex-1"
+              disabled={step === 1 && !hasClassifiedService}
+              onClick={() => void goToStep(step + 1)}
+            >
               Continuer <ArrowRight className="ml-1.5 h-4 w-4" />
             </Button>
           ) : (

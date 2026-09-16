@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { serviceSlug, type ServiceSource } from "@/hooks/useDetectedContractorServices";
 
-export type TriageStance = "priority" | "accepted" | "not_wanted";
+export type TriageStance = "unsorted" | "priority" | "accepted" | "not_wanted";
 
 export interface ServiceEntry {
   stance: TriageStance;
@@ -42,7 +42,16 @@ export interface ServiceEntry {
 
 export type ServiceEntries = Record<string, ServiceEntry>;
 
+export const EMPTY_DETECTION_MESSAGE =
+  "Nous n'avons pas encore pu confirmer vos services. Ajoutez votre service principal pour commencer.";
+
 const COLUMNS: { stance: TriageStance; title: string; subtitle: string; tone: string }[] = [
+  {
+    stance: "unsorted",
+    title: "À classer",
+    subtitle: "Les services à confirmer : glissez-les dans la bonne colonne",
+    tone: "border-border",
+  },
   {
     stance: "priority",
     title: "Prioritaire",
@@ -75,6 +84,8 @@ interface Props {
   catalog: readonly { slug: string; label: string }[];
   onChange: (next: ServiceEntries) => void;
   loading?: boolean;
+  /** Sous-services liés au service principal saisi. Aucun classement automatique. */
+  suggestRelated?: (slug: string, label: string) => { slug: string; label: string }[];
 }
 
 function labelOf(slug: string, entry: ServiceEntry, catalog: Props["catalog"]): string {
@@ -157,9 +168,10 @@ function Column({
   );
 }
 
-export default function ServiceTriageBoard({ value, catalog, onChange, loading }: Props) {
+export default function ServiceTriageBoard({ value, catalog, onChange, loading, suggestRelated }: Props) {
   const [dragging, setDragging] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<TriageStance, string>>({
+    unsorted: "",
     priority: "",
     accepted: "",
     not_wanted: "",
@@ -173,7 +185,7 @@ export default function ServiceTriageBoard({ value, catalog, onChange, loading }
   );
 
   const columns = useMemo(() => {
-    const map: Record<TriageStance, string[]> = { priority: [], accepted: [], not_wanted: [] };
+    const map: Record<TriageStance, string[]> = { unsorted: [], priority: [], accepted: [], not_wanted: [] };
     Object.entries(value)
       .sort((a, b) => (a[1].order ?? 0) - (b[1].order ?? 0))
       .forEach(([slug, entry]) => map[entry.stance]?.push(slug));
@@ -211,6 +223,7 @@ export default function ServiceTriageBoard({ value, catalog, onChange, loading }
     if (!from || !to) return;
 
     const next: Record<TriageStance, string[]> = {
+      unsorted: [...columns.unsorted],
       priority: [...columns.priority],
       accepted: [...columns.accepted],
       not_wanted: [...columns.not_wanted],
@@ -239,7 +252,9 @@ export default function ServiceTriageBoard({ value, catalog, onChange, loading }
     setDrafts((d) => ({ ...d, [stance]: "" }));
     inputs.current[stance]?.focus();
     if (!slug || value[slug]) return;
-    onChange({
+
+    const wasEmpty = Object.keys(value).length === 0;
+    const next: ServiceEntries = {
       ...value,
       [slug]: {
         stance,
@@ -248,7 +263,18 @@ export default function ServiceTriageBoard({ value, catalog, onChange, loading }
         order: columns[stance].length,
         pending_review: !known,
       },
-    });
+    };
+
+    // Premier service saisi = service principal : on propose seulement les
+    // sous-services liés à ce métier, toujours « À classer », jamais classés d'office.
+    if (wasEmpty && suggestRelated) {
+      suggestRelated(slug, known?.label ?? raw)
+        .filter((s) => s.slug && s.slug !== slug && !next[s.slug])
+        .forEach((s, i) => {
+          next[s.slug] = { stance: "unsorted", label: s.label, source: "declared", order: i, pending_review: false };
+        });
+    }
+    onChange(next);
   }
 
   const total = Object.keys(value).length;
@@ -262,7 +288,7 @@ export default function ServiceTriageBoard({ value, catalog, onChange, loading }
       )}
       {!loading && total === 0 && (
         <p className="rounded-xl border border-dashed border-border bg-muted/30 p-3 text-sm text-muted-foreground">
-          Aucun service détecté pour votre entreprise. Ajoutez vos services ci-dessous.
+          {EMPTY_DETECTION_MESSAGE}
         </p>
       )}
 
