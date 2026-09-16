@@ -116,9 +116,13 @@ export function computeContactPermissions(input: ContactPermissionInput): Contac
   const complianceReason = input.compliance_review_reason ?? e?.compliance_review_reason ?? null;
   const complianceText = complianceReason ? `${R.compliance} (${complianceReason})` : R.compliance;
 
-  // ── Appel manuel (ÉCHEC FERMÉ) ─────────────────────────────────────
-  // Un appel n'est permis qu'avec un statut de validation POSITIF explicite.
-  // null / unverified / pending / lookup_failed / inconnu → interdit.
+  // ── Appel manuel composé par un opérateur humain ───────────────────
+  // L'appel est BLOQUÉ uniquement quand le numéro est absent, explicitement
+  // invalide, supprimé, sous retrait/désabonnement, hors Québec, ou lorsqu'une
+  // révision de conformité est ouverte. Un statut simplement inconnu
+  // (`unverified`, `pending_validation`, `lookup_failed`, null) n'est PAS un
+  // blocage : l'appel manuel n'est pas un envoi commercial électronique.
+  // SMS et courriel conservent leur porte LCAP stricte plus bas.
   let call: string | null = null;
   if (!input.has_phone) call = R.no_phone;
   else if (optedOut) call = R.opted_out;
@@ -126,7 +130,7 @@ export function computeContactPermissions(input: ContactPermissionInput): Contac
   else if (complianceOpen) call = complianceText;
   else if (e?.phone_suppressed === true) call = R.suppressed;
   else if (phoneInvalid) call = R.invalid_phone;
-  else if (!phoneVerified) call = notValidatedReason(phoneStatus);
+  else if (phoneStatus === "outside_quebec") call = notValidatedReason(phoneStatus);
 
   // ── Canaux électroniques commerciaux ───────────────────────────────
   const electronic = (kind: "sms" | "email"): string | null => {

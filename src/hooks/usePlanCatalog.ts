@@ -61,6 +61,7 @@ async function fetchPlanCatalog(): Promise<CatalogPlan[]> {
       const isFree = monthly === 0 || row.billing_interval === "free";
       // Annual = the catalog value only. No derived ×10 / 15 % / 16,7 % rule.
       const yearly = row.yearly_price && row.yearly_price > 0 ? row.yearly_price : 0;
+      const yearlyPriceId: string = row.stripe_yearly_price_id ?? "";
       return {
         id: row.id,
         code: row.code,
@@ -73,8 +74,10 @@ async function fetchPlanCatalog(): Promise<CatalogPlan[]> {
           : "subscription") as BillingMode,
         isFree,
         stripeMonthlyPriceId: row.stripe_monthly_price_id ?? "",
-        stripeYearlyPriceId: row.stripe_yearly_price_id ?? "",
-        supportsYearly: !isFree && yearly > 0,
+        stripeYearlyPriceId: yearlyPriceId,
+        // Un prix annuel ne s'affiche que s'il est réellement facturable :
+        // montant en catalogue ET tarif Stripe correspondant. Jamais 0 $/an.
+        supportsYearly: !isFree && yearly > 0 && yearlyPriceId.length > 0,
         tagline: row.tagline ?? copy?.subtitle ?? "",
         features: copy?.features ?? [],
         appointmentsIncluded: row.appointments_included ?? copy?.appointmentsIncluded ?? 0,

@@ -44,42 +44,49 @@ describe("computeContactPermissions", () => {
     expect(p.phone_unverified).toBe(false);
   });
 
-  it("bloque tout envoi électronique sans dossier de conformité relié", () => {
+  it("bloque tout envoi électronique sans dossier de conformité relié, mais laisse l'appel manuel", () => {
     const p = computeContactPermissions({ eligibility: null, has_phone: true, has_email: true });
     expect(p.can_sms).toBe(false);
     expect(p.can_email).toBe(false);
-    // Échec fermé : sans validation positive du numéro, aucun appel non plus.
-    expect(p.can_call).toBe(false);
-    expect(p.research_only).toBe(true);
+    // L'appel est composé par un humain : un numéro présent et non invalide suffit.
+    expect(p.can_call).toBe(true);
+    expect(p.research_only).toBe(false);
     expect(p.phone_unverified).toBe(true);
   });
 
-  // Chaque statut non positif bloque l'appel ET expose la raison exacte.
-  it.each([
-    ["unverified", "non validé positivement"],
-    ["pending_validation", "en attente"],
-    ["lookup_failed", "a échoué"],
-    ["outside_quebec", "hors Québec"],
-    ["", "non validé positivement"],
-  ])("bloque l'appel pour le statut non positif « %s »", (status, expected) => {
+  // Un statut simplement non validé n'invalide pas le numéro : l'appel reste permis.
+  it.each(["unverified", "pending_validation", "lookup_failed", ""])(
+    "autorise l'appel manuel pour le statut non bloquant « %s »",
+    (status) => {
+      const p = computeContactPermissions({
+        eligibility: elig(),
+        has_phone: true,
+        has_email: false,
+        phone_validation_status: status,
+      });
+      expect(p.can_call).toBe(true);
+    },
+  );
+
+  it("bloque l'appel hors Québec avec la raison exacte", () => {
     const p = computeContactPermissions({
       eligibility: elig(),
       has_phone: true,
       has_email: false,
-      phone_validation_status: status,
+      phone_validation_status: "outside_quebec",
     });
     expect(p.can_call).toBe(false);
-    expect(p.reasons.call).toContain(expected);
+    expect(p.reasons.call).toContain("hors Québec");
   });
 
-  it("bloque l'appel quand le statut est null", () => {
+  it("autorise l'appel quand le statut est null", () => {
     const p = computeContactPermissions({
       eligibility: elig(),
       has_phone: true,
       has_email: false,
       phone_validation_status: null,
     });
-    expect(p.can_call).toBe(false);
+    expect(p.can_call).toBe(true);
     // SMS conserve sa propre porte LCAP : preuve valide présente ici.
     expect(p.can_sms).toBe(true);
     expect(p.research_only).toBe(false);
@@ -88,7 +95,7 @@ describe("computeContactPermissions", () => {
   it("research_only seulement quand les trois canaux sont refusés", () => {
     const p = computeContactPermissions({
       eligibility: null,
-      has_phone: true,
+      has_phone: false,
       has_email: true,
       phone_validation_status: null,
     });
