@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { serviceSlug, type ServiceSource } from "@/hooks/useDetectedContractorServices";
 
-export type TriageStance = "priority" | "accepted" | "not_wanted";
+export type TriageStance = "unsorted" | "priority" | "accepted" | "not_wanted";
 
 export interface ServiceEntry {
   stance: TriageStance;
@@ -42,7 +42,16 @@ export interface ServiceEntry {
 
 export type ServiceEntries = Record<string, ServiceEntry>;
 
+export const EMPTY_DETECTION_MESSAGE =
+  "Nous n'avons pas encore pu confirmer vos services. Ajoutez votre service principal pour commencer.";
+
 const COLUMNS: { stance: TriageStance; title: string; subtitle: string; tone: string }[] = [
+  {
+    stance: "unsorted",
+    title: "À classer",
+    subtitle: "Les services à confirmer : glissez-les dans la bonne colonne",
+    tone: "border-border",
+  },
   {
     stance: "priority",
     title: "Prioritaire",
