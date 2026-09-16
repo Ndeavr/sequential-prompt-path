@@ -44,6 +44,7 @@ Deno.serve(async (req) => {
   try {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+    const testWebhookSecret = Deno.env.get("STRIPE_TEST_WEBHOOK_SECRET");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not configured");
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
