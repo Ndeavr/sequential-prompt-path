@@ -237,7 +237,11 @@ export default function PageContractorProfileInvite() {
     () =>
       packVisibleProjectQuestions(
         pack,
-        Object.fromEntries(Object.entries(answers.services).map(([k, v]) => [k, v.stance])),
+        Object.fromEntries(
+          Object.entries(answers.services)
+            .filter(([, v]) => v.stance !== "unsorted")
+            .map(([k, v]) => [k, v.stance as Stance]),
+        ),
       ),
     [pack, answers.services],
   );
