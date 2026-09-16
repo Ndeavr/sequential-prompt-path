@@ -8,7 +8,7 @@ export const compatCors = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-export type Stance = "priority" | "accepted" | "not_wanted";
+export type Stance = "priority" | "accepted" | "not_wanted" | "unsorted";
 export type TriAnswer = "yes" | "no" | "depends";
 export type TerritoryTier = "priority" | "normal" | "large_only" | "blocked";
 export type PrequalLevel = "optional" | "important" | "required";
@@ -52,7 +52,7 @@ export interface CompatAnswers {
   learning_opt_in?: boolean;
 }
 
-const STANCES: Stance[] = ["priority", "accepted", "not_wanted"];
+const STANCES: Stance[] = ["priority", "accepted", "not_wanted", "unsorted"];
 const TRI: TriAnswer[] = ["yes", "no", "depends"];
 const TIERS: TerritoryTier[] = ["priority", "normal", "large_only", "blocked"];
 const LEVELS: PrequalLevel[] = ["optional", "important", "required"];
@@ -106,7 +106,7 @@ export function sanitizeAnswers(raw: unknown): CompatAnswers {
   for (const [slug, v] of Object.entries(a.services ?? {})) {
     const key = str(slug, 80);
     if (!key) continue;
-    const stance = STANCES.includes(v?.stance as Stance) ? (v!.stance as Stance) : "accepted";
+    const stance = STANCES.includes(v?.stance as Stance) ? (v!.stance as Stance) : "unsorted";
     const rawSource = String(v?.source ?? "declared");
     const source = ["verified", "google", "website", "declared"].includes(rawSource) ? rawSource : "declared";
     const order = Number(v?.order);
@@ -310,7 +310,7 @@ export async function materialize(
     } else if (v.stance === "priority") {
       rules.push({ rule_type: "priority", rule_key: `service:${slug}`, payload: { service_slug: slug, boost: 15 } });
     }
-    if (v.min_project_cents) {
+    if (v.min_project_cents && v.stance !== "unsorted") {
       rules.push({
         rule_type: "soft_preference",
         rule_key: `service_min:${slug}`,
