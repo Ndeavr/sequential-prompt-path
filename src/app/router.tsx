@@ -675,7 +675,6 @@ const PageEntrepreneurScoreResult = lazyWithRetry(() => import("@/pages/entrepre
 const PageEntrepreneurDashboardLite = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurDashboardLite"));
 const PageAIPPAnalysisLoading = lazyWithRetry(() => import("@/pages/entrepreneur/PageAIPPAnalysisLoading"));
 const PageEntrepreneurImportProcessing = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurImportProcessing"));
-const PagePricingCalculator = lazyWithRetry(() => import("@/pages/entrepreneur/PagePricingCalculator"));
 const PageGuaranteeCalculator = lazyWithRetry(() => import("@/pages/entrepreneur/PageGuaranteeCalculator"));
 const PageAiRecommendationAudit = lazyWithRetry(() => import("@/pages/entrepreneur/PageAiRecommendationAudit"));
 const PageMatchingProfileWizard = lazyWithRetry(() => import("@/pages/entrepreneur/PageMatchingProfileWizard"));
