@@ -23706,6 +23706,9 @@ export type Database = {
           promo_code_type: string | null
           promo_redemption_id: string | null
           quote_id: string | null
+          reconciled_at: string | null
+          reconciliation_note: string | null
+          reconciliation_status: string
           selected_plan_code: string | null
           selected_plan_id: string | null
           selected_plan_name: string | null
@@ -23742,6 +23745,9 @@ export type Database = {
           promo_code_type?: string | null
           promo_redemption_id?: string | null
           quote_id?: string | null
+          reconciled_at?: string | null
+          reconciliation_note?: string | null
+          reconciliation_status?: string
           selected_plan_code?: string | null
           selected_plan_id?: string | null
           selected_plan_name?: string | null
@@ -23778,6 +23784,9 @@ export type Database = {
           promo_code_type?: string | null
           promo_redemption_id?: string | null
           quote_id?: string | null
+          reconciled_at?: string | null
+          reconciliation_note?: string | null
+          reconciliation_status?: string
           selected_plan_code?: string | null
           selected_plan_id?: string | null
           selected_plan_name?: string | null
@@ -33536,6 +33545,7 @@ export type Database = {
           event_type: string
           failure_reason: string | null
           id: string
+          internal_reason: string | null
           is_test: boolean
           metadata: Json | null
           phone: string | null
@@ -33566,6 +33576,7 @@ export type Database = {
           event_type: string
           failure_reason?: string | null
           id?: string
+          internal_reason?: string | null
           is_test?: boolean
           metadata?: Json | null
           phone?: string | null
@@ -33596,6 +33607,7 @@ export type Database = {
           event_type?: string
           failure_reason?: string | null
           id?: string
+          internal_reason?: string | null
           is_test?: boolean
           metadata?: Json | null
           phone?: string | null
@@ -53933,6 +53945,42 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      funnel_internal_actors: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          phone: string | null
+          reason: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          phone?: string | null
+          reason?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          phone?: string | null
+          reason?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       gated_unlock_events: {
         Row: {
@@ -97446,6 +97494,117 @@ export type Database = {
           users: number | null
         }
         Relationships: []
+      }
+      v_contractor_funnel_real: {
+        Row: {
+          affiliate_code: string | null
+          channel: string | null
+          contractor_id: string | null
+          created_at: string | null
+          current_path: string | null
+          dedupe_key: string | null
+          device: string | null
+          email: string | null
+          environment: string | null
+          event_source: string | null
+          event_type: string | null
+          failure_reason: string | null
+          id: string | null
+          internal_reason: string | null
+          is_test: boolean | null
+          metadata: Json | null
+          phone: string | null
+          prospect_id: string | null
+          provider: string | null
+          provider_message_id: string | null
+          session_id: string | null
+          source: string | null
+          step: string | null
+          template_version: string | null
+          token: string | null
+          user_id: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          affiliate_code?: string | null
+          channel?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          current_path?: string | null
+          dedupe_key?: string | null
+          device?: string | null
+          email?: string | null
+          environment?: string | null
+          event_source?: string | null
+          event_type?: string | null
+          failure_reason?: string | null
+          id?: string | null
+          internal_reason?: string | null
+          is_test?: boolean | null
+          metadata?: Json | null
+          phone?: string | null
+          prospect_id?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
+          session_id?: string | null
+          source?: string | null
+          step?: string | null
+          template_version?: string | null
+          token?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          affiliate_code?: string | null
+          channel?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          current_path?: string | null
+          dedupe_key?: string | null
+          device?: string | null
+          email?: string | null
+          environment?: string | null
+          event_source?: string | null
+          event_type?: string | null
+          failure_reason?: string | null
+          id?: string | null
+          internal_reason?: string | null
+          is_test?: boolean | null
+          metadata?: Json | null
+          phone?: string | null
+          prospect_id?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
+          session_id?: string | null
+          source?: string | null
+          step?: string | null
+          template_version?: string | null
+          token?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_funnel_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_aipp_public_view"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_funnel_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_contractors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       v_contractor_plan_state: {
         Row: {

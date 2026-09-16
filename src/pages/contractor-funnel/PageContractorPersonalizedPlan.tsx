@@ -24,6 +24,7 @@ import {
 } from "@/services/contractorPricingQuoteService";
 import { supabase } from "@/integrations/supabase/client";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
+import { trackFunnelStep, trackFunnelFailure } from "@/lib/analytics/funnelSteps";
 import { toast } from "sonner";
 
 const PLAN_LABEL: Record<string, string> = {
@@ -70,6 +71,7 @@ export default function PageContractorPersonalizedPlan() {
   const [offerState, setOfferState] = useState<AffiliateOfferState | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [breakdownOpen, setBreakdownOpen] = useState(false);
 
   // Aucune offre n'est affichée sans preuve serveur : un entrepreneur organique
@@ -112,9 +114,42 @@ export default function PageContractorPersonalizedPlan() {
   const waitlisted = quote?.pricing_status === "waitlisted";
   const planLabel = PLAN_LABEL[quote?.recommended_plan ?? ""] ?? "Pro";
 
+  // Étape « plan présenté » : écrite une seule fois par session et par devis.
+  useEffect(() => {
+    if (!quote) return;
+    void trackFunnelStep("plan_presented", {
+      subjectId: quote.id,
+      contractorId: quote.contractor_id ?? null,
+      city: quote.city ?? null,
+      metadata: {
+        plan_code: quote.recommended_plan,
+        pricing_status: quote.pricing_status,
+        monthly_price: quote.recommended_monthly_price,
+      },
+    });
+  }, [quote]);
+
+  // Retour depuis Stripe : succès ou annulation, jamais deviné.
+  const checkoutOutcome = searchParams.get("checkout");
+  useEffect(() => {
+    if (!quote || !checkoutOutcome) return;
+    if (checkoutOutcome === "success") {
+      void trackFunnelStep("payment_succeeded", {
+        subjectId: quote.id,
+        contractorId: quote.contractor_id ?? null,
+        metadata: { source: "stripe_return" },
+      });
+    } else if (checkoutOutcome === "canceled") {
+      void trackFunnelFailure("checkout_created", "checkout_canceled_by_user", {
+        subjectId: quote.id,
+      });
+    }
+  }, [quote, checkoutOutcome]);
+
   const handleActivate = async () => {
     if (!quote) return;
     setCheckoutLoading(true);
+    setCheckoutError(null);
     try {
       const { data, error } = await supabase.functions.invoke(
         "create-checkout-session",
@@ -132,15 +167,32 @@ export default function PageContractorPersonalizedPlan() {
         },
       );
       if (error) throw error;
-      const url = (data as { url?: string } | null)?.url;
-      if (!url) throw new Error("URL Stripe manquante.");
+      const payload = data as { url?: string; sessionId?: string; error?: string } | null;
+      if (payload?.error) throw new Error(payload.error);
+      const url = payload?.url;
+      if (!url) throw new Error("url_manquante");
+
+      await trackFunnelStep("checkout_created", {
+        subjectId: quote.id,
+        contractorId: quote.contractor_id ?? null,
+        metadata: {
+          plan_code: quote.recommended_plan,
+          stripe_session_id: payload?.sessionId ?? null,
+          promo_code: promoCode,
+        },
+      });
+
       redirectToCheckout(url);
       setTimeout(() => setCheckoutLoading(false), 2500);
-    } catch {
-      toast.error("Le paiement n'a pas pu démarrer. On réessaie dans un instant.");
+    } catch (e) {
+      const reason = e instanceof Error ? e.message : String(e);
+      void trackFunnelFailure("checkout_created", reason, { subjectId: quote.id });
+      setCheckoutError(
+        "Le paiement n'a pas pu démarrer. Réessayez, ou écrivez à Clara pour terminer avec un humain.",
+      );
+      toast.error("Le paiement n'a pas pu démarrer.");
       setCheckoutLoading(false);
     }
-
   };
 
   if (loading) {
@@ -392,6 +444,14 @@ export default function PageContractorPersonalizedPlan() {
 
       {/* Sticky footer CTA */}
       <div className="fixed bottom-0 inset-x-0 z-40 bg-gradient-to-t from-[#050816] via-[#050816]/95 to-transparent pt-6 pb-5 px-5">
+        {checkoutError && (
+          <div
+            role="alert"
+            className="max-w-2xl mx-auto mb-3 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100"
+          >
+            {checkoutError}
+          </div>
+        )}
         <div className="max-w-2xl mx-auto flex gap-2">
           {waitlisted ? (
             <button
