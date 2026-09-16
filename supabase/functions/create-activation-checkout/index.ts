@@ -25,9 +25,10 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { slug, email, source, utm, landing_token, activation_token, plan_code, quote_id, ref } = (body ?? {}) as {
-      slug?: string; email?: string; source?: string; utm?: Record<string, string>; landing_token?: string; activation_token?: string; plan_code?: string; quote_id?: string; ref?: string;
+    const { slug, email, source, utm, landing_token, activation_token, plan_code, quote_id, ref, test_mode } = (body ?? {}) as {
+      slug?: string; email?: string; source?: string; utm?: Record<string, string>; landing_token?: string; activation_token?: string; plan_code?: string; quote_id?: string; ref?: string; test_mode?: boolean;
     };
+    const stripeEnv = resolveStripeEnv(test_mode);
 
     // ── AFFILIATE ATTRIBUTION ───────────────────────────────────────────────
     // ?ref=CODE carried from the affiliate audit link. Resolved server-side
