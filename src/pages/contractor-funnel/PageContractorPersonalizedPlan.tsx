@@ -25,6 +25,10 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
 import { trackFunnelStep, trackFunnelFailure } from "@/lib/analytics/funnelSteps";
+import {
+  CONTRACTOR_OBJECTIVE_CTA,
+  isContractorObjective,
+} from "@/lib/routing/contractorPlanRoute";
 import { toast } from "sonner";
 
 const PLAN_LABEL: Record<string, string> = {
@@ -66,6 +70,9 @@ export default function PageContractorPersonalizedPlan() {
   const promoCode = (searchParams.get("promo") ?? "").trim().toUpperCase() || null;
   const affiliateRef = (searchParams.get("ref") ?? "").trim().toUpperCase() || null;
   const offerId = (searchParams.get("offer") ?? "").trim() || null;
+  const rawObjective = searchParams.get("objective");
+  const objective = isContractorObjective(rawObjective) ? rawObjective : null;
+  const ctaOrigin = searchParams.get("from");
   const navigate = useNavigate();
   const [quote, setQuote] = useState<PricingQuote | null>(null);
   const [offerState, setOfferState] = useState<AffiliateOfferState | null>(null);
@@ -125,9 +132,11 @@ export default function PageContractorPersonalizedPlan() {
         plan_code: quote.recommended_plan,
         pricing_status: quote.pricing_status,
         monthly_price: quote.recommended_monthly_price,
+        objective,
+        from: ctaOrigin,
       },
     });
-  }, [quote]);
+  }, [quote, objective, ctaOrigin]);
 
   // Retour depuis Stripe : succès ou annulation, jamais deviné.
   const checkoutOutcome = searchParams.get("checkout");
@@ -179,6 +188,8 @@ export default function PageContractorPersonalizedPlan() {
           plan_code: quote.recommended_plan,
           stripe_session_id: payload?.sessionId ?? null,
           promo_code: promoCode,
+          objective,
+          from: ctaOrigin,
         },
       });
 
