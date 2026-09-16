@@ -35,6 +35,7 @@ import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { AuditProHeader } from "@/components/audit-ia/AuditProHeader";
 import { JourneySteps } from "@/components/audit-ia/JourneySteps";
 import { OperationalSections } from "@/components/audit-ia/OperationalSections";
+import { AuditVideoBlock } from "@/components/audit-ia/AuditVideoBlock";
 import { HowItWorksBlock } from "@/components/audit-ia/HowItWorksBlock";
 
 type Provenance = "verified" | "declared" | "inferred" | "pending";
