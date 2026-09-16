@@ -74222,6 +74222,33 @@ export type Database = {
           },
         ]
       }
+      project_trade_categories: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name_fr: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name_fr: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name_fr?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       project_types: {
         Row: {
           avg_ticket: number
@@ -100346,6 +100373,10 @@ export type Database = {
         Returns: Json
       }
       resolve_activation_link: { Args: { _token: string }; Returns: Json }
+      resolve_contractor_offer: {
+        Args: { p_category_slug: string; p_city: string }
+        Returns: Json
+      }
       resolve_curiosity_slug: {
         Args: { _slug: string; _token: string }
         Returns: Json
