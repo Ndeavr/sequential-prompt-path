@@ -5,6 +5,11 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Sparkles, Crown, Star, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  CONTRACTOR_OBJECTIVE_CTA,
+  contractorPlanLink,
+  type ContractorObjective,
+} from "@/lib/routing/contractorPlanRoute";
 
 interface Props { plan: string; }
 
