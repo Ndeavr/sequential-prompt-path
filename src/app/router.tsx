@@ -1111,8 +1111,8 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/score" element={<PageEntrepreneurScoreResult />} />
         <Route path="/aipp/:token/results" element={<PageAIPPScoreReveal />} />
         <Route path="/aipp/local/results" element={<PageAIPPScoreReveal />} />
-        <Route path="/entrepreneur/pricing" element={<PageEntrepreneurPricing />} />
-        <Route path="/entrepreneur/pricing-calculator" element={<PagePricingCalculator />} />
+        <Route path="/entrepreneur/pricing" element={<LegacyRedirect to="/entrepreneur/plan-personnalise" />} />
+        <Route path="/entrepreneur/pricing-calculator" element={<LegacyRedirect to="/entrepreneur/plan-personnalise" />} />
         <Route path="/entrepreneur/garantie" element={<PageGuaranteeCalculator />} />
         <Route path="/entrepreneur/calculateur-forfait" element={<Navigate to="/entrepreneur/devis-personnalise" replace />} />
 
