@@ -95,7 +95,7 @@ export default function PageContractorCompatibility() {
   const [done, setDone] = useState(false);
   const [newCity, setNewCity] = useState("");
 
-  const pack = useMemo(() => getCompatPack((profile as any)?.trade_pack), [profile]);
+  const pack = useMemo(() => getCompatPack((profile as { trade_pack?: string | null } | null)?.trade_pack), [profile]);
   const { data: detected, isLoading: detecting } = useDetectedContractorServices(contractorId);
   const prefilled = useRef(false);
 

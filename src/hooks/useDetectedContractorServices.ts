@@ -84,8 +84,9 @@ export function useDetectedContractorServices(contractorId: string | null) {
 
       const out: DetectedService[] = [];
 
-      for (const row of services.data ?? []) {
-        const r = row as any;
+      type SvcRow = { service_name_fr?: string | null; data_source?: string | null; is_primary?: boolean | null; is_active?: boolean | null };
+      for (const row of (services.data ?? []) as SvcRow[]) {
+        const r = row;
         if (r.is_active === false || !r.service_name_fr) continue;
         out.push({
           slug: serviceSlug(r.service_name_fr),
@@ -95,8 +96,9 @@ export function useDetectedContractorServices(contractorId: string | null) {
         });
       }
 
-      for (const row of capabilities.data ?? []) {
-        const r = row as any;
+      type CapRow = { service_slug?: string | null; category_slug?: string | null; source?: string | null; is_active?: boolean | null };
+      for (const row of (capabilities.data ?? []) as CapRow[]) {
+        const r = row;
         const raw = r.service_slug || r.category_slug;
         if (r.is_active === false || !raw) continue;
         out.push({
@@ -112,8 +114,9 @@ export function useDetectedContractorServices(contractorId: string | null) {
           .from("aipp_profile_services")
           .select("service_name, sub_services, is_primary")
           .eq("profile_id", aippProfile.data.id);
-        for (const row of data ?? []) {
-          const r = row as any;
+        type AippRow = { service_name?: string | null; sub_services?: string[] | null; is_primary?: boolean | null };
+        for (const row of (data ?? []) as AippRow[]) {
+          const r = row;
           if (r.service_name) {
             out.push({
               slug: serviceSlug(r.service_name),
@@ -134,8 +137,9 @@ export function useDetectedContractorServices(contractorId: string | null) {
           .from("ai_entity_services")
           .select("label, slug, sort_order")
           .eq("entity_id", entity.data.id);
-        for (const row of data ?? []) {
-          const r = row as any;
+        type EntityRow = { label?: string | null; slug?: string | null; sort_order?: number | null };
+        for (const row of (data ?? []) as EntityRow[]) {
+          const r = row;
           if (!r.label) continue;
           out.push({
             slug: serviceSlug(r.slug || r.label),
