@@ -3,6 +3,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { logServerFunnelEvent } from "../_shared/funnelEvents.ts";
+import { recordSmsEvent } from "../_shared/outreachEvents.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -96,18 +97,13 @@ Deno.serve(async (req) => {
       const kind = mapped === "delivered" ? "delivered"
         : (mapped === "failed" || mapped === "undelivered") ? "failed"
         : "sent";
-      try {
-        await supabase.rpc("record_outreach_sms_event", {
-          p_sid: sid,
-          p_kind: kind,
-          p_payload: {
-            status: mapped,
-            error_code: errorCode,
-            error: errorMessage,
-            source: "twilio_status_v2",
-          },
-        });
-      } catch (e) { console.error("[twilio-status-v2] funnel rpc failed", e); }
+      // Aucun échec silencieux : l'événement est journalisé, sinon la panne est tracée.
+      await recordSmsEvent(sid, kind as "sent" | "delivered" | "failed", {
+        status: mapped,
+        error_code: errorCode,
+        error: errorMessage,
+        source: "twilio_status_v2",
+      });
 
       // Canonical contractor funnel — delivery is only real when Twilio confirms it.
       if (kind === "delivered" || kind === "failed") {

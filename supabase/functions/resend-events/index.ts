@@ -67,13 +67,19 @@ serve(async (req) => {
     };
     const kind = kindMap[type];
     if (emailId && kind) {
-      await recordEmailEvent(emailId, kind, {
-        recipient: Array.isArray(data?.to) ? data.to[0] : data?.to,
-        subject: data?.subject,
-        contractor_id: contractor_id ?? undefined,
-        campaign_id: tags?.campaign ?? null,
-        source: "resend_webhook",
-      });
+      // strict: un échec d'écriture doit remonter (Resend rejoue) au lieu d'être perdu.
+      await recordEmailEvent(
+        emailId,
+        kind,
+        {
+          recipient: Array.isArray(data?.to) ? data.to[0] : data?.to,
+          subject: data?.subject,
+          contractor_id: contractor_id ?? undefined,
+          campaign_id: tags?.campaign ?? null,
+          source: "resend_webhook",
+        },
+        { strict: true },
+      );
     }
 
 

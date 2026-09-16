@@ -201,7 +201,8 @@ export default function PageContractorPricingIntake() {
     key: "identity",
     question: "Commençons. Quelle est votre entreprise?",
     hint: "Tapez les premières lettres : nous cherchons votre entreprise réelle.",
-    isValid: (d) => Boolean(businessConfirmed && d.company_name && d.trade_primary && d.city),
+    isValid: (d) =>
+      Boolean((businessConfirmed || manualEntry) && d.company_name && d.trade_primary && d.city),
     render: (d, set) => (
       <div className="space-y-3">
         <BusinessNameSearch
@@ -221,40 +222,45 @@ export default function PageContractorPricingIntake() {
           onSearchState={setSearchState}
         />
 
-        {!businessConfirmed && !manualEntry && (
+        {!businessConfirmed && !manualEntry && (d.company_name ?? "").trim().length >= 2 && (
+          /* L'option « Mon entreprise n'est pas listée » est disponible dès que
+             deux caractères sont saisis — pendant la recherche, avec résultats
+             ou sans résultat. La saisie reste déclarée, jamais vérifiée, et ne
+             bloque jamais « Continuer ». */
           <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/70">
-            {searchState.loading ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Recherche en cours…
-              </span>
-            ) : searchState.searched ? (
-              /* Dès qu'une recherche a eu lieu — avec OU sans résultats —
-                 l'entrepreneur dont l'entreprise n'est pas listée doit pouvoir
-                 continuer. La saisie reste déclarée, jamais vérifiée. */
-              <div className="space-y-2">
-                <p>
-                  {searchState.count === 0
-                    ? "Aucune entreprise trouvée pour cette recherche."
-                    : "Sélectionnez votre entreprise dans la liste."}
-                </p>
-                <button
-                  type="button"
-                  data-testid="company-not-listed"
-                  onClick={() => {
-                    setManualEntry(true);
-                    setBusinessConfirmed(true);
-                  }}
-                  className="w-full rounded-xl border border-amber-400/40 bg-amber-500/10 py-2.5 text-sm font-medium text-amber-200"
-                >
-                  Mon entreprise n'est pas listée
-                </button>
-              </div>
-            ) : (
-              <span className="flex items-center gap-2">
-                <Search className="w-3.5 h-3.5" /> Sélectionnez votre entreprise dans la liste pour continuer.
-              </span>
-            )}
+            <div className="space-y-2">
+              <p className="flex items-center gap-2">
+                {searchState.loading ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Recherche en cours…
+                  </>
+                ) : searchState.searched && searchState.count === 0 ? (
+                  "Aucune entreprise trouvée pour cette recherche."
+                ) : (
+                  <>
+                    <Search className="w-3.5 h-3.5" /> Sélectionnez votre entreprise dans la liste.
+                  </>
+                )}
+              </p>
+              <button
+                type="button"
+                data-testid="company-not-listed"
+                onClick={() => {
+                  setManualEntry(true);
+                  setBusinessConfirmed(true);
+                }}
+                className="w-full rounded-xl border border-amber-400/40 bg-amber-500/10 py-2.5 text-sm font-medium text-amber-200"
+              >
+                Mon entreprise n'est pas listée
+              </button>
+            </div>
           </div>
+        )}
+
+        {manualEntry && !detected.trade && (
+          <p className="text-xs text-white/50">
+            Nom d'entreprise déclaré — non vérifié pour l'instant.
+          </p>
         )}
 
         {(businessConfirmed || manualEntry) && (

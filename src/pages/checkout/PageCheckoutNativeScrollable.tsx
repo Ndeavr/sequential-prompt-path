@@ -789,10 +789,39 @@ export default function PageCheckoutNativeScrollable() {
                 <p className="text-xs text-muted-foreground">{intentError}</p>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={() => setIntentKey((k) => k + 1)} className="gap-2">
-              <RefreshCw className="w-3.5 h-3.5" /> Recharger le paiement
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={() => setIntentKey((k) => k + 1)} className="gap-2">
+                <RefreshCw className="w-3.5 h-3.5" /> Recharger le paiement
+              </Button>
+              {couponCode && (
+                <Button variant="ghost" size="sm" onClick={handleCouponRemove} className="gap-2">
+                  <X className="w-3.5 h-3.5" /> Retirer le code {couponCode}
+                </Button>
+              )}
+            </div>
           </motion.div>
+        )}
+
+        {/* Filet de sécurité : aucun écran de paiement vide. */}
+        {!fullyCovered && !intentLoading && !intentError && !clientSecret && (
+          <div className="rounded-2xl border border-border/50 bg-card p-5 space-y-3">
+            <p className="text-sm font-medium text-foreground">Paiement non disponible pour l'instant</p>
+            <p className="text-xs text-muted-foreground">
+              {couponCode
+                ? `Le code ${couponCode} n'a pas pu être appliqué à ce forfait. Retirez-le ou réessayez.`
+                : "Le module de paiement n'a pas pu être chargé. Réessayez."}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={() => setIntentKey((k) => k + 1)} className="gap-2">
+                <RefreshCw className="w-3.5 h-3.5" /> Réessayer
+              </Button>
+              {couponCode && (
+                <Button variant="ghost" size="sm" onClick={handleCouponRemove} className="gap-2">
+                  <X className="w-3.5 h-3.5" /> Retirer le code
+                </Button>
+              )}
+            </div>
+          </div>
         )}
 
         {!fullyCovered && clientSecret && stripePromise && (

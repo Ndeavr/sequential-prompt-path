@@ -63,6 +63,7 @@ import {
   type ApprovedProjectVideo,
 } from "@/features/renovationEstimator/services";
 import ProjectVideoCard from "@/features/renovationEstimator/ProjectVideoCard";
+import { validateArea } from "@/features/renovationEstimator/areaValidation";
 import {
   clearProgress,
   loadProgress,
@@ -139,6 +140,7 @@ export default function PageRenovationEstimator() {
   const [dir, setDir] = useState<1 | -1>(1);
   const [idempotencyKey, setIdempotencyKey] = useState<string>(() => newIdempotencyKey());
 
+  const [sizeConfirmed, setSizeConfirmed] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
@@ -198,24 +200,28 @@ export default function PageRenovationEstimator() {
    * Superficie validée AVANT tout calcul : on n'affiche jamais un prix que le
    * serveur refusera d'enregistrer. Les réponses saisies sont conservées.
    */
-  const sizeError = useMemo(() => {
-    if (!def) return null;
-    if (!Number.isFinite(effectiveSize) || effectiveSize <= 0) {
-      return `Indiquez une superficie en ${def.sizeUnit} (${def.sizeMin} à ${def.sizeMax}). · Enter an area in ${def.sizeUnit} (${def.sizeMin}–${def.sizeMax}).`;
-    }
-    if (effectiveSize < def.sizeMin || effectiveSize > def.sizeMax) {
-      return `Pour « ${def.label} », la superficie doit être entre ${def.sizeMin} et ${def.sizeMax} ${def.sizeUnit}. · For "${def.label}", the area must be between ${def.sizeMin} and ${def.sizeMax} ${def.sizeUnit}.`;
-    }
-    return null;
-  }, [def, effectiveSize]);
+  const areaCheck = useMemo(
+    () => (def ? validateArea(def, effectiveSize) : null),
+    [def, effectiveSize],
+  );
+  /** Bloquant : valeur absente ou invraisemblable. */
+  const sizeError = areaCheck?.status === "error" ? areaCheck.message : null;
+  /** Hors plage mais réaliste : confirmation explicite exigée, jamais un rejet muet. */
+  const sizeNeedsConfirm = areaCheck?.status === "confirm" && !sizeConfirmed;
+  const sizeBlocked = Boolean(sizeError) || sizeNeedsConfirm;
 
   const estimate = useMemo(() => {
-    if (!category || sizeError) return null;
+    if (!category || sizeBlocked) return null;
     return computeRenovationEstimate(
       { category, sizeSqft: effectiveSize, scope, addons, propertyKind, age, citySlug },
       benchmarks,
     );
-  }, [category, effectiveSize, scope, addons, propertyKind, age, citySlug, benchmarks]);
+  }, [category, sizeBlocked, effectiveSize, scope, addons, propertyKind, age, citySlug, benchmarks]);
+
+  /** Toute nouvelle superficie doit être reconfirmée. */
+  useEffect(() => {
+    setSizeConfirmed(false);
+  }, [effectiveSize, category]);
 
   const goTop = useCallback(() => {
     topRef.current?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
@@ -612,12 +618,28 @@ export default function PageRenovationEstimator() {
                   }}
                   aria-label={`${def.sizeLabel} en ${def.sizeUnit}`}
                   aria-invalid={!!sizeError}
-                  aria-describedby={sizeError ? "size-error" : undefined}
+                  aria-describedby={areaCheck?.message ? "size-error" : undefined}
                 />
                 {sizeError && (
                   <p id="size-error" role="alert" className="mt-2 text-sm text-destructive">
                     {sizeError}
                   </p>
+                )}
+                {!sizeError && areaCheck?.status === "confirm" && (
+                  <div className="mt-2 space-y-2 rounded-xl border border-warning/40 bg-warning/10 p-3">
+                    <p id="size-error" role="status" className="text-sm">
+                      {areaCheck.message}
+                    </p>
+                    <label className="flex items-start gap-2 text-sm">
+                      <Checkbox
+                        checked={sizeConfirmed}
+                        onCheckedChange={(v) => setSizeConfirmed(v === true)}
+                        aria-label="Confirmer la superficie inhabituelle"
+                        data-testid="confirm-unusual-area"
+                      />
+                      <span>Je confirme cette superficie.</span>
+                    </label>
+                  </div>
                 )}
               </div>
 
@@ -776,7 +798,7 @@ export default function PageRenovationEstimator() {
                   <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
                   Retour
                 </Button>
-                <Button className="h-12 flex-[2]" onClick={goToResult} disabled={!!sizeError}>
+                <Button className="h-12 flex-[2]" onClick={goToResult} disabled={sizeBlocked}>
                   Voir mon estimation
                 </Button>
               </div>
