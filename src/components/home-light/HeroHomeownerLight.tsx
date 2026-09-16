@@ -55,7 +55,14 @@ export default function HeroHomeownerLight() {
           ) : (
             <span className="block">{copy.lineOne}</span>
           )}
-          <span className="mt-1 block text-primary">{copy.lineTwo}</span>
+          {lang === "fr" ? (
+            <span className="mt-1 block text-primary">
+              <span className="sm:hidden">Pas trois<br />soumissions.</span>
+              <span className="hidden sm:inline">{copy.lineTwo}</span>
+            </span>
+          ) : (
+            <span className="mt-1 block text-primary">{copy.lineTwo}</span>
+          )}
         </motion.h1>
 
         <motion.p
