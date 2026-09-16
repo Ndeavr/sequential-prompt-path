@@ -485,10 +485,6 @@ export default function PageAiRecommendationAudit() {
                 </Button>
 
                 {error && <p className="mt-3 text-[13px] text-destructive">{error}</p>}
-
-                <p className="mt-4 text-[12.5px] leading-relaxed text-muted-foreground">
-                  Des profils clairs. Des informations vérifiables. Un rendez-vous avec une seule entreprise.
-                </p>
               </div>
             </section>
           ) : (
