@@ -1976,6 +1976,7 @@ export const AppRouter = () => (
           <Route path="/admin/contractor/:id" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageContractorForensics /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/revenue-debug" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageRevenueDebug /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/outreach-command-center" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageOutreachCommandCenter /></Suspense></UniversalRouteGuard>} />
+          <Route path="/admin/invitations" element={<UniversalRouteGuard allowedRoles={["admin", "affiliate"]}><Suspense fallback={<LazyFallback />}><PageContractorInvitations /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/acquisition/sources/kijiji" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageAdminKijijiSource /></Suspense></UniversalRouteGuard>} />
           <Route path="/admin/system-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSystemHealth /></Suspense></UniversalRouteGuard>} />
 
