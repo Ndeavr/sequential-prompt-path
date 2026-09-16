@@ -24,7 +24,7 @@ export default function HeroHomeownerLight() {
       };
 
   return (
-    <section className="home-glossy-hero relative isolate min-h-[calc(100svh-3.5rem)] overflow-hidden">
+    <section className="home-glossy-hero relative isolate overflow-hidden">
       <img
         aria-hidden="true"
         src={sceneImage}
@@ -32,7 +32,7 @@ export default function HeroHomeownerLight() {
         width={1600}
         height={900}
         fetchPriority="high"
-        className="home-architecture pointer-events-none absolute inset-y-0 right-0 z-0 h-full w-full object-cover object-[68%_center]"
+        className="home-architecture pointer-events-none absolute inset-y-0 right-0 z-0 h-full w-full object-cover"
       />
       <div aria-hidden="true" className="home-architecture-veil pointer-events-none absolute inset-0 z-[1]" />
       <div aria-hidden="true" className="home-blueprint pointer-events-none absolute inset-y-0 left-0 z-[2] w-3/5 overflow-hidden">
@@ -40,22 +40,36 @@ export default function HeroHomeownerLight() {
       </div>
       <div aria-hidden="true" className="home-reflection pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-1/3" />
 
-      <div className="relative z-10 mx-auto flex min-h-[calc(100svh-3.5rem)] w-full max-w-6xl flex-col items-center px-5 pb-9 pt-10 text-center sm:px-8 md:justify-center md:pb-14 md:pt-14">
+      <div className="home-hero-content relative z-10 mx-auto flex w-full max-w-7xl flex-col items-center px-5 text-center sm:px-8">
         <motion.h1
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="max-w-5xl text-4xl font-semibold leading-[1.04] text-foreground sm:text-5xl md:text-6xl lg:text-7xl"
+          className="home-hero-title max-w-5xl font-bold text-foreground"
         >
-          <span className="block">{copy.lineOne}</span>
-          <span className="mt-1 block text-primary">{copy.lineTwo}</span>
+          {lang === "fr" ? (
+            <span className="block">
+              <span className="sm:hidden">Trouvez le bon<br />entrepreneur.</span>
+              <span className="hidden sm:inline">{copy.lineOne}</span>
+            </span>
+          ) : (
+            <span className="block">{copy.lineOne}</span>
+          )}
+          {lang === "fr" ? (
+            <span className="mt-1 block text-primary">
+              <span className="sm:hidden">Pas trois<br />soumissions.</span>
+              <span className="hidden sm:inline">{copy.lineTwo}</span>
+            </span>
+          ) : (
+            <span className="mt-1 block text-primary">{copy.lineTwo}</span>
+          )}
         </motion.h1>
 
         <motion.p
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.1 }}
-          className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg"
+          className="home-hero-subtitle mx-auto max-w-3xl text-muted-foreground"
         >
           {copy.subtitle}
         </motion.p>
@@ -66,7 +80,7 @@ export default function HeroHomeownerLight() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.3 }}
-          className="home-trust-glass mt-4 inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground"
+          className="home-trust-glass inline-flex items-center gap-2 rounded-full border border-border text-sm font-medium text-foreground"
         >
           <BadgeCheck className="h-4 w-4 text-primary" aria-hidden="true" />
           {copy.trust}

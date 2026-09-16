@@ -11,13 +11,6 @@ import { Helmet } from "react-helmet-async";
 import MainLayout from "@/layouts/MainLayout";
 import { AlexProvider } from "@/features/alex";
 import HeroHomeownerLight from "@/components/home-light/HeroHomeownerLight";
-import {
-  SectionTwoPaths,
-  SectionHowItWorks,
-  SectionTransparency,
-  SectionPasseport,
-  SectionFinalCta,
-} from "@/components/home-light/HomeLightSections";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import { DEFAULT_OG_IMAGE } from "@/seo/ogImage";
 
@@ -40,7 +33,7 @@ export default function PageHomeLight() {
 
   return (
     <AlexProvider>
-      <MainLayout>
+      <MainLayout hideMemorySection>
         <Helmet>
           <title>UNPRO | La fin des 3 soumissions</title>
           <meta
@@ -69,11 +62,7 @@ export default function PageHomeLight() {
 
         <div className="home-light">
           <HeroHomeownerLight />
-          <SectionTwoPaths />
-          <SectionHowItWorks />
-          <SectionTransparency />
-          <SectionPasseport />
-          <SectionFinalCta />
+          <div className="home-afterglow" aria-hidden="true" />
         </div>
       </MainLayout>
     </AlexProvider>

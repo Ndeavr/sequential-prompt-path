@@ -105,7 +105,7 @@ const SmartHeader = () => {
             <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0" style={{ minWidth: "fit-content" }}>
               <UnproLogo
                 unsized
-                 tone={isHome ? "dark" : "auto"}
+                 tone={isHome ? "light" : "auto"}
                 className="hidden min-[360px]:block h-[29px] sm:h-[31px] md:h-[38px] w-auto max-w-[128px] sm:max-w-none min-h-0 transition-transform duration-300 group-hover:-translate-y-0.5"
               />
               <UnproIcon
@@ -179,18 +179,21 @@ const SmartHeader = () => {
             <div className="flex shrink-0 items-center gap-0 sm:gap-1.5">
               {isHome ? (
                 <>
-                  <LanguageToggle lang={lang} onChange={setLang} />
+                  <div className="home-language-switch" role="radiogroup" aria-label="Language">
+                    <button type="button" role="radio" aria-checked={lang === "fr"} onClick={() => setLang("fr")} className={lang === "fr" ? "is-active" : ""}>FR</button>
+                    <button type="button" role="radio" aria-checked={lang === "en"} onClick={() => setLang("en")} className={lang === "en" ? "is-active" : ""}>EN</button>
+                  </div>
                   {ctx ? (
-                    <ProfileMenu />
+                    <div className="home-profile-control"><ProfileMenu /></div>
                   ) : (
-                    <Button asChild variant="ghost" size="icon" className="h-10 w-10 rounded-full text-foreground" aria-label={lang === "en" ? "Profile" : "Profil"}>
+                    <Button asChild variant="ghost" size="icon" className="home-header-icon rounded-full text-foreground" aria-label={lang === "en" ? "Profile" : "Profil"}>
                       <Link to="/role"><UserRound className="h-5 w-5" /></Link>
                     </Button>
                   )}
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-10 w-10 rounded-full text-foreground"
+                    className="home-header-icon rounded-none text-foreground"
                     onClick={() => setMobileOpen(!mobileOpen)}
                     aria-label="Menu"
                   >
