@@ -9,7 +9,7 @@ import { AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { headerNavByRole } from "@/config/navigationConfig";
-import { Menu, X, Bell, ChevronDown, QrCode, ArrowLeft } from "lucide-react";
+import { Menu, X, Bell, ChevronDown, QrCode, ArrowLeft, UserRound } from "lucide-react";
 import ProfileMenu from "./ProfileMenu";
 import AlexNavOrb from "./AlexNavOrb";
 import HeaderSearch from "./HeaderSearch";
@@ -72,7 +72,7 @@ const SmartHeader = () => {
   return (
     <>
       <header
-        className="glass-nav sticky top-0 z-[60] pointer-events-auto"
+        className={`glass-nav sticky top-0 z-[60] pointer-events-auto${isHome ? " home-minimal-header" : ""}`}
         style={{
           paddingTop: "max(env(safe-area-inset-top), 0px)",
           paddingLeft: "env(safe-area-inset-left)",
@@ -105,7 +105,7 @@ const SmartHeader = () => {
             <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0" style={{ minWidth: "fit-content" }}>
               <UnproLogo
                 unsized
-                tone={isHome ? "light" : "auto"}
+                 tone={isHome ? "dark" : "auto"}
                 className="hidden min-[360px]:block h-[29px] sm:h-[31px] md:h-[38px] w-auto max-w-[128px] sm:max-w-none min-h-0 transition-transform duration-300 group-hover:-translate-y-0.5"
               />
               <UnproIcon
@@ -118,7 +118,7 @@ const SmartHeader = () => {
 
 
             {/* Zone 2 — Desktop main nav */}
-            <nav className="hidden lg:flex items-center gap-0.5 ml-6" role="navigation" aria-label="Main">
+            <nav className={`${isHome ? "hidden" : "hidden lg:flex"} items-center gap-0.5 ml-6`} role="navigation" aria-label="Main">
               {isGuest ? (
                 guestMegaKeys.map((item) => (
                   <div
@@ -168,15 +168,37 @@ const SmartHeader = () => {
             </nav>
 
             {/* Zone 3 — Desktop contextual actions */}
-            <MenuQuickActionsContextual variant="header" />
+            {!isHome && <MenuQuickActionsContextual variant="header" />}
 
             {/* Search */}
-            <div className="flex-1 mx-4 hidden lg:block max-w-lg">
+            <div className={`${isHome ? "hidden" : "flex-1 mx-4 hidden lg:block"} max-w-lg`}>
               <HeaderSearch lang={lang} />
             </div>
 
             {/* Zone 4 — Right actions / User state */}
             <div className="flex shrink-0 items-center gap-0 sm:gap-1.5">
+              {isHome ? (
+                <>
+                  <LanguageToggle lang={lang} onChange={setLang} />
+                  {ctx ? (
+                    <ProfileMenu />
+                  ) : (
+                    <Button asChild variant="ghost" size="icon" className="h-10 w-10 rounded-full text-foreground" aria-label={lang === "en" ? "Profile" : "Profil"}>
+                      <Link to="/role"><UserRound className="h-5 w-5" /></Link>
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 rounded-full text-foreground"
+                    onClick={() => setMobileOpen(!mobileOpen)}
+                    aria-label="Menu"
+                  >
+                    {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                  </Button>
+                </>
+              ) : (
+                <>
               <div className="hidden lg:block">
                 <AlexNavOrb lang={lang} />
               </div>
@@ -255,13 +277,15 @@ const SmartHeader = () => {
               >
                 {mobileOpen ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
               </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
 
         {/* Mega Menu panels */}
         <AnimatePresence>
-          {isGuest && activeMega && (
+          {!isHome && isGuest && activeMega && (
             <MegaMenuPanel menuKey={activeMega} lang={lang} onClose={handleMegaLeave} />
           )}
         </AnimatePresence>

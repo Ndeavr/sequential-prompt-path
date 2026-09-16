@@ -1,81 +1,75 @@
-/**
- * HeroHomeownerLight — Homeowner-first hero on the light UNPRO surface.
- * White / light-blue background, navy typography, royal-blue actions.
- * Headline: « Fini les 3 soumissions. Un pro. C'est tout. »
- * Clara is presented as a large inline conversation box — never a voice popup.
- */
+/** Homeowner-first concierge hero. */
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { BadgeCheck } from "lucide-react";
 
 import ClaraConversationBox from "@/components/home-light/ClaraConversationBox";
-import heroImage from "@/assets/home-hero-homeowner.jpg";
+import BlueprintOverlay from "@/components/home-unicorn/BlueprintOverlay";
+import sceneImage from "@/assets/scenes/scene-1-exterior.jpg";
+import { useLanguage } from "@/components/ui/LanguageToggle";
 
 export default function HeroHomeownerLight() {
-
+  const { lang } = useLanguage();
+  const copy = lang === "fr"
+    ? {
+        lineOne: "Trouvez le bon entrepreneur.",
+        lineTwo: "Pas trois soumissions.",
+        subtitle: "Clara analyse votre projet et vous recommande le meilleur match.",
+        trust: "Rendez-vous exclusifs",
+      }
+    : {
+        lineOne: "Find the right contractor.",
+        lineTwo: "Not three quotes.",
+        subtitle: "Clara analyzes your project and recommends the best match.",
+        trust: "Exclusive appointments",
+      };
 
   return (
-    <section className="relative overflow-hidden">
-      {/* Soft light-blue atmosphere */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 z-0"
-        style={{
-          background:
-            "radial-gradient(900px 520px at 82% -12%, hsl(var(--primary) / 0.12), transparent 62%), radial-gradient(760px 460px at -8% 12%, hsl(205 92% 62% / 0.10), transparent 66%)",
-        }}
+    <section className="home-glossy-hero relative isolate min-h-[calc(100svh-3.5rem)] overflow-hidden">
+      <img
+        aria-hidden="true"
+        src={sceneImage}
+        alt=""
+        width={1600}
+        height={900}
+        fetchPriority="high"
+        className="home-architecture pointer-events-none absolute inset-y-0 right-0 z-0 h-full w-full object-cover object-[68%_center]"
       />
+      <div aria-hidden="true" className="home-architecture-veil pointer-events-none absolute inset-0 z-[1]" />
+      <div aria-hidden="true" className="home-blueprint pointer-events-none absolute inset-y-0 left-0 z-[2] w-3/5 overflow-hidden">
+        <BlueprintOverlay />
+      </div>
+      <div aria-hidden="true" className="home-reflection pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-1/3" />
 
-      <div className="relative z-10 mx-auto w-full max-w-5xl px-5 pt-12 pb-14 md:pt-20 md:pb-20 text-center">
+      <div className="relative z-10 mx-auto flex min-h-[calc(100svh-3.5rem)] w-full max-w-6xl flex-col items-center px-5 pb-9 pt-10 text-center sm:px-8 md:justify-center md:pb-14 md:pt-14">
         <motion.h1
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-[clamp(2.1rem,6.4vw,3.8rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-foreground"
+          className="max-w-5xl text-4xl font-semibold leading-[1.04] text-foreground sm:text-5xl md:text-6xl lg:text-7xl"
         >
-          Fini les{" "}
-          <Link
-            to="/blog/les-3-soumissions-cest-termine-ia-prend-le-relais"
-            aria-label="3 soumissions : lire pourquoi UNPRO fait autrement"
-            className="inline-block cursor-pointer rounded-sm underline decoration-transparent decoration-2 underline-offset-4 transition-colors duration-200 hover:bg-primary/10 hover:text-primary hover:decoration-primary focus-visible:bg-primary/10 focus-visible:text-primary focus-visible:decoration-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 motion-reduce:transition-none"
-          >
-            3 soumissions.
-          </Link>
-          <span className="block text-primary">Un pro. C'est tout.</span>
+          <span className="block">{copy.lineOne}</span>
+          <span className="mt-1 block text-primary">{copy.lineTwo}</span>
         </motion.h1>
 
         <motion.p
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.1 }}
-          className="mx-auto mt-5 max-w-2xl text-[16.5px] leading-relaxed text-muted-foreground md:text-lg"
+          className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg"
         >
-          Décrivez simplement votre projet à Clara. Elle comprend vos besoins
-          et vous oriente vers l'entrepreneur le plus compatible — pour le
-          projet, le budget, les disponibilités et le facteur humain.
+          {copy.subtitle}
         </motion.p>
 
         <ClaraConversationBox />
 
-        <p className="mt-4 text-[13px] text-muted-foreground">
-          Gratuit pour les propriétaires. Aucune obligation.
-        </p>
-
-
-        {/* Homeowner visual */}
         <motion.div
-          initial={{ opacity: 0, y: 18 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.3 }}
-          className="mx-auto mt-12 max-w-4xl overflow-hidden rounded-[28px] border border-border shadow-xl shadow-primary/10"
+          transition={{ duration: 0.45, delay: 0.3 }}
+          className="home-trust-glass mt-4 inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground"
         >
-          <img
-            src={heroImage}
-            alt="Propriétaires québécois devant leur maison, confiants après avoir trouvé le bon entrepreneur avec UNPRO"
-            width={1536}
-            height={1024}
-            className="h-auto w-full object-cover"
-            fetchPriority="high"
-          />
+          <BadgeCheck className="h-4 w-4 text-primary" aria-hidden="true" />
+          {copy.trust}
         </motion.div>
       </div>
     </section>
