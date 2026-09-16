@@ -428,11 +428,11 @@ export default function PageAiRecommendationAudit() {
                 </div>
               </div>
 
-              <div className="mt-5">
+              <div key={revealCount} className="audit-field-reveal mt-5">
                 <label htmlFor="audit-q" className="sr-only">
                   Nom de votre entreprise
                 </label>
-                <div className="relative">
+                <div className="audit-field-contour relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="audit-q"
