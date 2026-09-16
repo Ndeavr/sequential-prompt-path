@@ -3,22 +3,21 @@
  *
  * Vidéo finale Audit IA, hébergée durablement sur le CDN UNPRO.
  * Format compact : max 600 px sur desktop, 100 % sur mobile, ratio 16/9.
- * À la fin de la lecture, la dernière image reste affichée (overlay) au lieu
- * de revenir à la première image. La relecture reste possible.
+ * À la fin de la lecture, le lecteur reste sur la dernière image propre sans
+ * masquer les contrôles natifs. La relecture reste possible.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import auditVideoAsset from "@/assets/unpro-audit-ia-final-16x9.mp4.asset.json";
 import auditPosterAsset from "@/assets/unpro-audit-ia-poster.jpg.asset.json";
-import auditLastFrameAsset from "@/assets/unpro-audit-ia-last-frame.jpg.asset.json";
 
 /** Délai avant la tentative de lecture automatique silencieuse (ms). */
 const AUTOPLAY_DELAY_MS = 650;
+const END_FRAME_OFFSET_SECONDS = 0.05;
 
 export function AuditVideoBlock() {
   const blockRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const autoplayAttemptedRef = useRef(false);
-  const [ended, setEnded] = useState(false);
 
   // Lecture automatique peu après l'affichage de la page. Toujours silencieuse
   // et `playsInline` : c'est la seule forme acceptée par les navigateurs
@@ -35,15 +34,21 @@ export function AuditVideoBlock() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  const handleEnded = useCallback(() => setEnded(true), []);
-  const handlePlay = useCallback(() => setEnded(false), []);
+  const handleEnded = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || !Number.isFinite(video.duration)) return;
 
-  const handleReplay = useCallback(() => {
-    const el = videoRef.current;
-    setEnded(false);
-    if (!el) return;
-    el.currentTime = 0;
-    void el.play().catch(() => undefined);
+    video.pause();
+    video.currentTime = Math.max(0, video.duration - END_FRAME_OFFSET_SECONDS);
+  }, []);
+
+  const handlePlay = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || !Number.isFinite(video.duration)) return;
+
+    if (video.currentTime >= video.duration - END_FRAME_OFFSET_SECONDS * 1.5) {
+      video.currentTime = 0;
+    }
   }, []);
 
   return (
@@ -62,26 +67,10 @@ export function AuditVideoBlock() {
               height={1080}
               onEnded={handleEnded}
               onPlay={handlePlay}
-              onSeeking={handlePlay}
               className="block aspect-video h-auto w-full"
             >
               <source src={auditVideoAsset.url} type="video/mp4" />
             </video>
-            {ended ? (
-              <button
-                type="button"
-                onClick={handleReplay}
-                aria-label="Revoir la vidéo"
-                className="absolute inset-0 block h-full w-full"
-              >
-                <img
-                  src={auditLastFrameAsset.url}
-                  alt=""
-                  aria-hidden
-                  className="h-full w-full object-cover"
-                />
-              </button>
-            ) : null}
           </div>
           <p className="mt-3 px-1 text-[12.5px] leading-relaxed text-muted-foreground">
             En 20 secondes : comment UNPRO structure votre entreprise pour qu'elle soit comprise,
