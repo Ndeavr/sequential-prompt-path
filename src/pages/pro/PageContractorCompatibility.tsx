@@ -20,7 +20,6 @@ import { cn } from "@/lib/utils";
 import {
   COMPAT_STEPS,
   PREQUAL_LEVEL_LABEL,
-  STANCE_LABEL,
   TERRITORY_TIER_LABEL,
   TOTAL_COMPAT_STEPS,
   TRI_LABEL,
