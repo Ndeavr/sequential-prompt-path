@@ -13,10 +13,19 @@ import auditLastFrameAsset from "@/assets/unpro-audit-ia-last-frame.jpg.asset.js
 const POSTER = "/images/hero-bg.webp";
 
 export function AuditVideoBlock() {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const [ended, setEnded] = useState(false);
 
   const handleEnded = useCallback(() => setEnded(true), []);
   const handlePlay = useCallback(() => setEnded(false), []);
+
+  const handleReplay = useCallback(() => {
+    const el = videoRef.current;
+    setEnded(false);
+    if (!el) return;
+    el.currentTime = 0;
+    void el.play().catch(() => undefined);
+  }, []);
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
@@ -24,6 +33,7 @@ export function AuditVideoBlock() {
         <div className="rounded-[24px] border border-border bg-card p-3 shadow-sm sm:p-4">
           <div className="relative overflow-hidden rounded-2xl bg-muted">
             <video
+              ref={videoRef}
               controls
               playsInline
               preload="metadata"
@@ -38,12 +48,19 @@ export function AuditVideoBlock() {
               <source src={auditVideoAsset.url} type="video/mp4" />
             </video>
             {ended ? (
-              <img
-                src={auditLastFrameAsset.url}
-                alt=""
-                aria-hidden
-                className="pointer-events-none absolute inset-0 h-full w-full object-cover"
-              />
+              <button
+                type="button"
+                onClick={handleReplay}
+                aria-label="Revoir la vidéo"
+                className="absolute inset-0 block h-full w-full"
+              >
+                <img
+                  src={auditLastFrameAsset.url}
+                  alt=""
+                  aria-hidden
+                  className="h-full w-full object-cover"
+                />
+              </button>
             ) : null}
           </div>
           <p className="mt-3 px-1 text-[12.5px] leading-relaxed text-muted-foreground">
