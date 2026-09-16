@@ -672,7 +672,6 @@ const PageEntrepreneurLandingAIPP = lazyWithRetry(() => import("@/pages/entrepre
 const PageEntrepreneurDiagnosticLanding = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurDiagnosticLanding"));
 const PageEntrepreneursLanding = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneursLanding"));
 const PageEntrepreneurScoreResult = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurScoreResult"));
-const PageEntrepreneurPricing = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurPricing"));
 const PageEntrepreneurDashboardLite = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurDashboardLite"));
 const PageAIPPAnalysisLoading = lazyWithRetry(() => import("@/pages/entrepreneur/PageAIPPAnalysisLoading"));
 const PageEntrepreneurImportProcessing = lazyWithRetry(() => import("@/pages/entrepreneur/PageEntrepreneurImportProcessing"));
