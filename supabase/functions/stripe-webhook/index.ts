@@ -67,7 +67,15 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
+      // Live signature first; fall back to the Stripe test endpoint secret so
+      // test-mode events can be verified for real (never forged, never skipped).
+      try {
+        event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
+      } catch (liveErr) {
+        if (!testWebhookSecret) throw liveErr;
+        event = await stripe.webhooks.constructEventAsync(body, sig, testWebhookSecret);
+        if (event.livemode) throw liveErr;
+      }
     } else {
       event = JSON.parse(body) as Stripe.Event;
     }
