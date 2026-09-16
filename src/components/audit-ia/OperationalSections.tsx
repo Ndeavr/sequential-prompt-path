@@ -19,7 +19,7 @@ import {
   ScanSearch,
   ShieldCheck,
 } from "lucide-react";
-import { AuditVideoBlock } from "./AuditVideoBlock";
+
 
 /* --------------------------------------------------------------- helpers */
 function SectionShell({
@@ -76,7 +76,7 @@ function AuditValueSection() {
     <SectionShell
       eyebrow="Ce que révèle l'audit"
       title="Voyez votre entreprise exactement comme l'IA la comprend"
-      intro="L'audit rassemble les informations publiques associées à votre entreprise et vous montre ce que l'IA comprend déjà, ce qui manque et quoi améliorer pour être mieux recommandé."
+      intro="L'audit rassemble uniquement les informations publiques réellement associées à votre entreprise."
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {AUDIT_VALUE.map(({ Icon, title, body }) => (
@@ -240,7 +240,6 @@ export function OperationalSections({ onAuditClick }: { onAuditClick?: () => voi
   return (
     <div className="border-t border-border bg-[hsl(var(--surface-secondary))]">
       <AuditValueSection />
-      <AuditVideoBlock />
       <WhatYouGetSection />
       <OfferSection />
       <FaqSection />

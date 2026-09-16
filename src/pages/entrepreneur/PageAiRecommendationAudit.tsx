@@ -35,6 +35,7 @@ import { logFunnelEvent } from "@/lib/analytics/logFunnelEvent";
 import { AuditProHeader } from "@/components/audit-ia/AuditProHeader";
 import { JourneySteps } from "@/components/audit-ia/JourneySteps";
 import { OperationalSections } from "@/components/audit-ia/OperationalSections";
+import { AuditVideoBlock } from "@/components/audit-ia/AuditVideoBlock";
 import { HowItWorksBlock } from "@/components/audit-ia/HowItWorksBlock";
 
 type Provenance = "verified" | "declared" | "inferred" | "pending";
@@ -352,7 +353,7 @@ export default function PageAiRecommendationAudit() {
         <title>Audit IA gratuit — Découvrez comment l'IA voit votre entreprise | UNPRO</title>
         <meta
           name="description"
-          content="Audit IA gratuit en 30 secondes : voyez ce que l'IA comprend de votre entreprise au Québec et ce qui l'empêche encore de vous recommander. Données réelles, étiquetées Vérifié / Déclaré / Déduit / En attente."
+          content="Audit IA gratuit en environ 60 secondes : voyez ce que l'IA comprend de votre entreprise au Québec et ce qui l'empêche encore de vous recommander. Données réelles, étiquetées Vérifié / Déclaré / Déduit / En attente."
         />
         <link rel="canonical" href="https://unpro.ca/entrepreneurs/audit-ia" />
       </Helmet>
@@ -361,7 +362,7 @@ export default function PageAiRecommendationAudit() {
 
       <main>
         {/* ------------------------------------------------------- Hero */}
-        <section className="mx-auto w-full max-w-6xl px-4 pb-8 pt-10 sm:px-6 sm:pt-14">
+        <section className="mx-auto w-full max-w-6xl px-4 pb-5 pt-8 sm:px-6 sm:pb-6 sm:pt-12">
           <div className="max-w-3xl">
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
               UNPRO · Intelligence résidentielle
@@ -373,12 +374,10 @@ export default function PageAiRecommendationAudit() {
               Vos prochains clients demanderont à l'IA qui appeler. Est-ce qu'elle vous comprend&nbsp;?
             </h1>
             <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted-foreground sm:text-[16px]">
-              Vérifiez gratuitement ce que l'IA comprend de votre entreprise, complétez les informations
-              qui comptent et devenez admissible aux recommandations UNPRO.
+              Voyez ce que l'IA comprend de votre entreprise, ce qui manque et les actions prioritaires
+              pour devenir admissible aux recommandations UNPRO.
             </p>
-            <p className="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground">
-              Découvrez d'abord ce que l'IA comprend déjà de votre entreprise.
-            </p>
+
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <button
@@ -393,6 +392,9 @@ export default function PageAiRecommendationAudit() {
 
           </div>
         </section>
+
+        {/* ---------------------------------- Vidéo — haut de page, unique */}
+        <AuditVideoBlock />
 
         {/* -------------------------------------------------- Journey */}
         <JourneySteps currentStep={currentStep} />
@@ -410,7 +412,7 @@ export default function PageAiRecommendationAudit() {
                 </span>
                 <div>
                   <h2 id="audit-start-title" className="text-[19px] font-bold leading-tight text-foreground">
-                    Audit IA gratuit (30 secondes)
+                    Audit IA gratuit (environ 60 secondes)
                   </h2>
                   <p className="text-[12.5px] text-muted-foreground">
                     Aucune carte de crédit. Valeur immédiate, avant toute inscription.
@@ -483,10 +485,6 @@ export default function PageAiRecommendationAudit() {
                 </Button>
 
                 {error && <p className="mt-3 text-[13px] text-destructive">{error}</p>}
-
-                <p className="mt-4 text-[12.5px] leading-relaxed text-muted-foreground">
-                  Des profils clairs. Des informations vérifiables. Un rendez-vous avec une seule entreprise.
-                </p>
               </div>
             </section>
           ) : (

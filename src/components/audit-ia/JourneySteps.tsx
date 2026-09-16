@@ -6,7 +6,7 @@
 import { Check } from "lucide-react";
 
 export const JOURNEY_STEPS = [
-  { n: 1, label: "Audit IA gratuit", hint: "30 secondes · gratuit" },
+  { n: 1, label: "Audit IA gratuit", hint: "Environ 60 secondes · gratuit" },
   { n: 2, label: "Votre résultat", hint: "Ce qui limite vos recommandations" },
   { n: 3, label: "Votre profil", hint: "Vérifiez et complétez" },
   { n: 4, label: "Améliorez votre présence", hint: "Ce qui mérite votre attention" },
