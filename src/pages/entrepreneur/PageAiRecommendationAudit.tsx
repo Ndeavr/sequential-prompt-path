@@ -353,7 +353,7 @@ export default function PageAiRecommendationAudit() {
         <title>Audit IA gratuit — Découvrez comment l'IA voit votre entreprise | UNPRO</title>
         <meta
           name="description"
-          content="Audit IA gratuit en 30 secondes : voyez ce que l'IA comprend de votre entreprise au Québec et ce qui l'empêche encore de vous recommander. Données réelles, étiquetées Vérifié / Déclaré / Déduit / En attente."
+          content="Audit IA gratuit en environ 60 secondes : voyez ce que l'IA comprend de votre entreprise au Québec et ce qui l'empêche encore de vous recommander. Données réelles, étiquetées Vérifié / Déclaré / Déduit / En attente."
         />
         <link rel="canonical" href="https://unpro.ca/entrepreneurs/audit-ia" />
       </Helmet>
@@ -374,12 +374,10 @@ export default function PageAiRecommendationAudit() {
               Vos prochains clients demanderont à l'IA qui appeler. Est-ce qu'elle vous comprend&nbsp;?
             </h1>
             <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted-foreground sm:text-[16px]">
-              Vérifiez gratuitement ce que l'IA comprend de votre entreprise, complétez les informations
-              qui comptent et devenez admissible aux recommandations UNPRO.
+              Voyez ce que l'IA comprend de votre entreprise, ce qui manque et les actions prioritaires
+              pour devenir admissible aux recommandations UNPRO.
             </p>
-            <p className="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground">
-              Découvrez d'abord ce que l'IA comprend déjà de votre entreprise.
-            </p>
+
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <button
