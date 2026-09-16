@@ -107,7 +107,17 @@ export function sanitizeAnswers(raw: unknown): CompatAnswers {
     const key = str(slug, 80);
     if (!key) continue;
     const stance = STANCES.includes(v?.stance as Stance) ? (v!.stance as Stance) : "accepted";
-    out.services[key] = { stance, min_project_cents: cents(v?.min_project_cents) };
+    const rawSource = String(v?.source ?? "declared");
+    const source = ["verified", "google", "website", "declared"].includes(rawSource) ? rawSource : "declared";
+    const order = Number(v?.order);
+    out.services[key] = {
+      stance,
+      min_project_cents: cents(v?.min_project_cents),
+      label: str(v?.label, 120) ?? undefined,
+      source,
+      order: Number.isFinite(order) && order >= 0 && order < 500 ? Math.round(order) : 0,
+      pending_review: v?.pending_review === true,
+    };
   }
 
   out.projects = {};
