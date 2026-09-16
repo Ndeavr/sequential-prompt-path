@@ -227,9 +227,12 @@ export async function materialize(
   const svcRows = Object.entries(a.services ?? {}).map(([slug, v]) => ({
     contractor_id: contractorId,
     service_slug: slug,
+    service_label_fr: v.label ?? null,
     stance: v.stance,
     min_project_cents: v.min_project_cents ?? null,
-    source: "declared",
+    source: v.source ?? "declared",
+    sort_order: v.order ?? 0,
+    pending_review: v.pending_review === true,
     updated_at: now,
   }));
   if (svcRows.length) {
