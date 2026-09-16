@@ -1187,7 +1187,7 @@ export const AppRouter = () => (
         <Route path="/activation/success" element={<Suspense fallback={<LazyFallback />}><PageOutreachActivationSuccess /></Suspense>} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/pricing/proprietaires" element={<PricingHomeownersPage />} />
-        <Route path="/pricing/entrepreneurs" element={<Navigate to="/entrepreneur/devis-personnalise" replace />} />
+        <Route path="/pricing/entrepreneurs" element={<LegacyRedirect to="/entrepreneur/plan-personnalise" />} />
         {/* Canonical upgrade surface (with feature + return context) */}
         <Route path="/upgrade" element={<PageUpgradeHomeowner />} />
         <Route path="/proprietaires/abonnement" element={<PageUpgradeHomeowner />} />
