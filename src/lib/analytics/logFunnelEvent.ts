@@ -225,12 +225,52 @@ function recordFailure(event_type: string, message: string) {
 }
 
 /**
+ * Motif interne : trafic qui ne doit jamais compter comme demande réelle.
+ * Résolu côté serveur (compte admin, acteur interne enregistré) ou par la
+ * session QA explicite. Jamais deviné, jamais supprimé — seulement marqué.
+ */
+const internalCache = new Map<string, string | null>();
+
+export async function resolveInternalReason(
+  userId: string | null,
+): Promise<string | null> {
+  if (isQaSession()) return "qa_session";
+  if (!userId) return null;
+  if (internalCache.has(userId)) return internalCache.get(userId) ?? null;
+
+  let reason: string | null = null;
+  try {
+    const { data: isAdmin } = await supabase.rpc("has_role" as never, {
+      _user_id: userId,
+      _role: "admin",
+    } as never);
+    if (isAdmin === true) reason = "admin_account";
+
+    if (!reason) {
+      const { data } = await supabase
+        .from("funnel_internal_actors")
+        .select("reason")
+        .eq("user_id", userId)
+        .eq("is_active", true)
+        .maybeSingle();
+      const row = data as { reason?: string } | null;
+      if (row?.reason) reason = row.reason;
+    }
+  } catch {
+    reason = null;
+  }
+  internalCache.set(userId, reason);
+  return reason;
+}
+
+/**
  * Fire-and-forget côté UX (ne lance jamais), mais TOUTE écriture refusée est
  * enregistrée et exposée via `getFunnelEventFailures()`.
  */
 export async function logFunnelEvent(input: LogFunnelEventInput): Promise<void> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
+    const internalReason = await resolveInternalReason(user?.id ?? null);
     const currentPath =
       input.current_path ??
       (typeof window !== "undefined" ? window.location.pathname + window.location.search : null);
@@ -247,6 +287,7 @@ export async function logFunnelEvent(input: LogFunnelEventInput): Promise<void> 
       utm_medium: attribution.utm_medium ?? null,
       utm_campaign: attribution.utm_campaign ?? null,
       is_test: input.is_test ?? isQaSession(),
+      internal_reason: internalReason,
       session_id: getSessionId(),
       user_id: user?.id ?? null,
       contractor_id: input.contractor_id ?? null,
