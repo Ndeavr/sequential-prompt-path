@@ -24,7 +24,7 @@ describe("ServiceTriageBoard", () => {
 
   it("dit clairement qu'aucun service n'est détecté, sans en inventer", () => {
     setup();
-    expect(screen.getByText(/Aucun service détecté/)).toBeInTheDocument();
+    expect(screen.getByText(/Nous n'avons pas encore pu confirmer vos services/)).toBeInTheDocument();
   });
 
   it("ajoute un service connu dans la bonne colonne", () => {
