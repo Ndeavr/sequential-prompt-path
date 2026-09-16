@@ -1195,7 +1195,7 @@ export const AppRouter = () => (
         {/* Legacy /tarifs links used across emails, checkout and SMS */}
         <Route path="/tarifs" element={<PricingHomeownersPage />} />
         <Route path="/tarifs/proprietaires" element={<PricingHomeownersPage />} />
-        <Route path="/tarifs/entrepreneurs" element={<Navigate to="/entrepreneur/devis-personnalise" replace />} />
+        <Route path="/tarifs/entrepreneurs" element={<LegacyRedirect to="/entrepreneur/plan-personnalise" />} />
         <Route path="/aipp-score" element={<AIPPScorePage />} />
         <Route path="/audit-aipp" element={<PageAuditAIPPv2 />} />
         <Route path="/audit-aipp/results/:auditId" element={<PageAuditResultsAIPPv2 />} />
