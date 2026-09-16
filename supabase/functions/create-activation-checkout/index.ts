@@ -175,8 +175,10 @@ Deno.serve(async (req) => {
     }
 
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) return json({ error: "stripe_not_configured", stage: "stripe_init" }, 500);
+    const stripeKey = stripeKeyFor(stripeEnv);
+    if (!stripeKey) {
+      return json({ error: stripeEnv === "test" ? "stripe_test_not_configured" : "stripe_not_configured", stage: "stripe_init" }, 500);
+    }
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
 
