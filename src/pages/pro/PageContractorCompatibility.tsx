@@ -175,7 +175,8 @@ export default function PageContractorCompatibility() {
   if (done) {
     const priority = Object.entries(answers.services).filter(([, v]) => v.stance === "priority");
     const refused = Object.entries(answers.services).filter(([, v]) => v.stance === "not_wanted");
-    const label = (slug: string) => COMPAT_SERVICES.find((s) => s.slug === slug)?.label ?? slug;
+    const label = (slug: string) =>
+      answers.services[slug]?.label ?? pack.services.find((s) => s.slug === slug)?.label ?? slug;
     const qLabel = (k: string) =>
       projectQuestions.find((q) => `${q.dimension}:${q.key}` === k)?.label ?? k;
 
