@@ -24,7 +24,7 @@ const STEP_ROUTES: Record<FunnelStep, string> = {
   aipp_builder: "/entrepreneur/aipp-builder",
   assets_studio: "/entrepreneur/assets",
   faq_builder: "/entrepreneur/faq",
-  plan_recommendation: "/entrepreneur/plan",
+  plan_recommendation: "/entrepreneur/plan-personnalise",
   checkout: "/entrepreneur/checkout",
   activation: "/entrepreneur/activation",
 };

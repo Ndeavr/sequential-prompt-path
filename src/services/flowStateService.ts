@@ -31,8 +31,8 @@ export interface FlowSession {
 const STEP_ROUTES: Record<string, string> = {
   loading: "/entrepreneur/analysis/loading",
   analysis_ready: "/entrepreneur/score",
-  objectives_pending: "/entrepreneur/pricing",
-  plan_ready: "/entrepreneur/pricing",
+  objectives_pending: "/entrepreneur/plan-personnalise",
+  plan_ready: "/entrepreneur/plan-personnalise",
   completed: "/pro",
 };
 

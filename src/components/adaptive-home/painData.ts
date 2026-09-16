@@ -60,7 +60,7 @@ export const CONTRACTOR_PAINS: PainOption[] = [
     heroTitle: "Arrêtez de payer par clic. Recevez des rendez-vous.",
     heroSub: "UNPRO vous envoie des clients qualifiés. Pas des leads froids.",
     ctaLabel: "Activer mes rendez-vous",
-    ctaHref: "/entrepreneur/plan",
+    ctaHref: "/entrepreneur/plan-personnalise",
     benefits: ["Zéro coût par clic", "Rendez-vous confirmés uniquement", "ROI mesurable immédiatement"],
   },
   {
@@ -68,7 +68,7 @@ export const CONTRACTOR_PAINS: PainOption[] = [
     heroTitle: "Votre agenda devrait être plein. On s'en occupe.",
     heroSub: "Matching IA + rendez-vous garantis dans votre zone.",
     ctaLabel: "Remplir mon agenda",
-    ctaHref: "/entrepreneur/plan",
+    ctaHref: "/entrepreneur/plan-personnalise",
     benefits: ["Clients dans votre zone", "Matching par spécialité", "Volume prévisible"],
   },
   {
@@ -76,7 +76,7 @@ export const CONTRACTOR_PAINS: PainOption[] = [
     heroTitle: "Fini les leads poubelle. Uniquement des vrais projets.",
     heroSub: "Chaque demande est qualifiée par IA avant de vous être envoyée.",
     ctaLabel: "Voir la qualité UNPRO",
-    ctaHref: "/entrepreneur/plan",
+    ctaHref: "/entrepreneur/plan-personnalise",
     benefits: ["Pré-qualification IA", "Projet vérifié avant envoi", "Taux de fermeture 3x supérieur"],
   },
   {
@@ -92,7 +92,7 @@ export const CONTRACTOR_PAINS: PainOption[] = [
     heroTitle: "Les avis construisent la confiance. On vous aide.",
     heroSub: "Système automatisé de collecte d'avis vérifiés.",
     ctaLabel: "Booster mes avis",
-    ctaHref: "/entrepreneur/plan",
+    ctaHref: "/entrepreneur/plan-personnalise",
     benefits: ["Collecte automatique", "Avis vérifiés", "Badge de confiance UNPRO"],
   },
   {
@@ -100,7 +100,7 @@ export const CONTRACTOR_PAINS: PainOption[] = [
     heroTitle: "La compétition s'arrête quand vous êtes le recommandé.",
     heroSub: "UNPRO ne compare pas. UNPRO recommande. Vous.",
     ctaLabel: "Devenir le recommandé",
-    ctaHref: "/entrepreneur/plan",
+    ctaHref: "/entrepreneur/plan-personnalise",
     benefits: ["Pas de comparaison de prix", "Recommandation directe", "Exclusivité par zone"],
   },
 ];
@@ -162,7 +162,7 @@ export const PROFESSIONAL_PAINS: PainOption[] = [
     heroTitle: "Votre temps vaut plus que la prospection.",
     heroSub: "UNPRO prospecte pour vous. Vous, vous travaillez.",
     ctaLabel: "Déléguer ma prospection",
-    ctaHref: "/entrepreneur/plan",
+    ctaHref: "/entrepreneur/plan-personnalise",
     benefits: ["Zéro heure de prospection", "Rendez-vous dans votre agenda", "Focus sur votre métier"],
   },
   {
@@ -170,7 +170,7 @@ export const PROFESSIONAL_PAINS: PainOption[] = [
     heroTitle: "Vos prix sont justes. On les défend.",
     heroSub: "UNPRO éduque le client avant qu'il vous contacte.",
     ctaLabel: "Protéger mes marges",
-    ctaHref: "/entrepreneur/plan",
+    ctaHref: "/entrepreneur/plan-personnalise",
     benefits: ["Clients pré-éduqués", "Estimation IA partagée", "Moins de négociation"],
   },
   {

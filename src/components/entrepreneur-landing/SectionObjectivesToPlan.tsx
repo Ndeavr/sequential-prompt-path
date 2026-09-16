@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, X, Check, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 const calcPoints = [
   "Soumissions actuelles",
@@ -97,7 +98,7 @@ export default function SectionObjectivesToPlan({ onTrackCta }: Props) {
           <Button
             size="lg"
             className="gap-2 font-bold"
-            onClick={() => { onTrackCta("plan_preview", "objectives"); navigate("/entrepreneur/pricing"); }}
+            onClick={() => { onTrackCta("plan_preview", "objectives"); navigate(contractorPlanLink({ objective: "more_appointments", from: "objectives_section" })); }}
           >
             Voir mon plan recommandé
             <ArrowRight className="w-4 h-4" />

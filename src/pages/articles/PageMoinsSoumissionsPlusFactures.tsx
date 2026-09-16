@@ -64,7 +64,7 @@ const INTERNAL_LINKS = [
   { url: "/articles/comment-apparaitre-resultats-recherche-ia-2026-entrepreneur", anchor: "Comment apparaître dans les résultats de recherche par l'IA en 2026" },
   { url: "/entrepreneurs", anchor: "UNPRO pour les entrepreneurs" },
   { url: "/entrepreneur/garantie", anchor: "Rendez-vous garantis : comment ça fonctionne" },
-  { url: "/entrepreneur/pricing", anchor: "Tarification entrepreneur" },
+  { url: "/entrepreneur/plan-personnalise", anchor: "Plan personnalisé entrepreneur" },
   { url: "/articles/fournisseur-peinture-plus-contrats", anchor: "Comment un fournisseur de peinture a augmenté ses ventes avec UNPRO" },
   { url: "/pourquoi-pas-trois-soumissions", anchor: "Pourquoi la fin des 3 soumissions" },
   { url: "/comment-fonctionne-ia", anchor: "Comment fonctionne la recommandation IA" },

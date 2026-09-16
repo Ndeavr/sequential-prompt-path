@@ -21,6 +21,7 @@ import CardAIPPQuickWin from "@/components/score-reveal/CardAIPPQuickWin";
 import WidgetAIPPDimensionBarsAnimated from "@/components/score-reveal/WidgetAIPPDimensionBarsAnimated";
 import PanelAlexTranscriptLive from "@/components/score-reveal/PanelAlexTranscriptLive";
 import UnproLogo from "@/components/brand/UnproLogo";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 interface SessionData {
   id: string;
@@ -183,7 +184,7 @@ function ScoreRevealFlow({ session }: { session: SessionData }) {
             <Button
               size="lg"
               className="w-full rounded-xl"
-              onClick={() => navigate("/entrepreneur/pricing")}
+              onClick={() => navigate(contractorPlanLink({ objective: "visibility", from: "aipp_score_reveal" }))}
             >
               Voir le plan recommandé <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
