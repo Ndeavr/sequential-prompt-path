@@ -6,7 +6,7 @@
  * À la fin de la lecture, la dernière image reste affichée (overlay) au lieu
  * de revenir à la première image. La relecture reste possible.
  */
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import auditVideoAsset from "@/assets/unpro-audit-ia-final-16x9.mp4.asset.json";
 import auditLastFrameAsset from "@/assets/unpro-audit-ia-last-frame.jpg.asset.json";
 
