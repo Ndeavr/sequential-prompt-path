@@ -6,15 +6,36 @@
  * À la fin de la lecture, la dernière image reste affichée (overlay) au lieu
  * de revenir à la première image. La relecture reste possible.
  */
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import auditVideoAsset from "@/assets/unpro-audit-ia-final-16x9.mp4.asset.json";
+import auditPosterAsset from "@/assets/unpro-audit-ia-poster.jpg.asset.json";
 import auditLastFrameAsset from "@/assets/unpro-audit-ia-last-frame.jpg.asset.json";
 
-const POSTER = "/images/hero-bg.webp";
-
 export function AuditVideoBlock() {
+  const blockRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const autoplayAttemptedRef = useRef(false);
   const [ended, setEnded] = useState(false);
+
+  useEffect(() => {
+    const block = blockRef.current;
+    const video = videoRef.current;
+    if (!block || !video || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting || autoplayAttemptedRef.current) return;
+        autoplayAttemptedRef.current = true;
+        video.muted = true;
+        void video.play().catch(() => undefined);
+        observer.disconnect();
+      },
+      { threshold: 0.45 },
+    );
+
+    observer.observe(block);
+    return () => observer.disconnect();
+  }, []);
 
   const handleEnded = useCallback(() => setEnded(true), []);
   const handlePlay = useCallback(() => setEnded(false), []);
@@ -29,15 +50,16 @@ export function AuditVideoBlock() {
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <div className="mx-auto w-full max-w-[600px]">
+      <div ref={blockRef} className="mx-auto w-full max-w-[600px]">
         <div className="rounded-[24px] border border-border bg-card p-3 shadow-sm sm:p-4">
           <div className="relative overflow-hidden rounded-2xl bg-muted">
             <video
               ref={videoRef}
               controls
+              muted
               playsInline
               preload="metadata"
-              poster={POSTER}
+              poster={auditPosterAsset.url}
               width={1920}
               height={1080}
               onEnded={handleEnded}
