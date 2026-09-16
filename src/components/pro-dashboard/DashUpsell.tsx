@@ -8,33 +8,40 @@ import { Button } from "@/components/ui/button";
 
 interface Props { plan: string; }
 
-const UPSELL: Record<string, { icon: any; title: string; desc: string; cta: string; gradient: string }> = {
+/**
+ * Aucun prix n'est écrit ici : le montant réel vient du plan personnalisé,
+ * calculé à partir du profil de l'entrepreneur.
+ */
+const UPSELL: Record<
+  string,
+  { icon: any; title: string; desc: string; objective: ContractorObjective; gradient: string }
+> = {
   recrue: {
     icon: Zap,
-    title: "Passez Pro pour recevoir plus de rendez-vous",
-    desc: "Accédez aux projets L et augmentez votre visibilité dans votre territoire.",
-    cta: "Voir le plan Pro — 49 $/mois",
+    title: "Recevez plus de rendez-vous exclusifs",
+    desc: "Votre plan tient compte de vos services, de votre territoire et de votre capacité réelle.",
+    objective: "more_appointments",
     gradient: "from-primary/[0.06] to-secondary/[0.03]",
   },
   pro: {
     icon: Star,
-    title: "Passez Premium pour accéder aux projets XL",
-    desc: "Visibilité prioritaire, badge confiance, auto-acceptation et filtres projets.",
-    cta: "Voir le plan Premium — 99 $/mois",
+    title: "Élargissez votre territoire",
+    desc: "Couvrez plus de zones là où la demande est réellement présente.",
+    objective: "territory",
     gradient: "from-primary/[0.08] to-accent/[0.04]",
   },
   premium: {
     icon: Crown,
-    title: "Passez Élite pour projets XXL + analytics",
-    desc: "Placement prioritaire, statistiques de performance avancées et maximum de rendez-vous.",
-    cta: "Voir le plan Élite — 199 $/mois",
+    title: "Améliorez votre visibilité IA",
+    desc: "Renforcez les éléments qui font que votre entreprise est comprise et recommandée.",
+    objective: "visibility",
     gradient: "from-accent/[0.08] to-primary/[0.04]",
   },
   elite: {
     icon: Sparkles,
-    title: "Parlez à l'équipe Signature",
-    desc: "Priorité maximale, gestion de compte dédiée, visibilité exclusive dans votre marché.",
-    cta: "Contacter l'équipe — 399 $/mois",
+    title: "Ajustez votre plan à vos objectifs",
+    desc: "Priorité maximale, visibilité exclusive dans votre marché, selon votre capacité.",
+    objective: "upgrade",
     gradient: "from-primary/[0.10] to-secondary/[0.06]",
   },
 };
