@@ -1083,8 +1083,9 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/aipp-builder" element={<PageContractorAIPPBuilder />} />
         <Route path="/entrepreneur/assets" element={<PageContractorAssetsStudio />} />
         <Route path="/entrepreneur/faq" element={<PageContractorFAQBuilder />} />
-        <Route path="/entrepreneur/plan" element={<PageContractorPlanRecommendation />} />
+        <Route path="/entrepreneur/plan" element={<LegacyRedirect to="/entrepreneur/plan-personnalise" />} />
         <Route path="/entrepreneur/checkout" element={<PageContractorCheckout />} />
+        <Route path="/entrepreneur/plan-personnalise" element={<Suspense fallback={<LazyFallback />}><PageContractorPlanEntry /></Suspense>} />
         <Route path="/entrepreneur/plan-personnalise/:quoteId" element={<Suspense fallback={<LazyFallback />}><PageContractorPersonalizedPlan /></Suspense>} />
         <Route path="/entrepreneur/devis-personnalise" element={<Suspense fallback={<LazyFallback />}><PageContractorPricingIntake /></Suspense>} />
         <Route path="/entrepreneur/activation" element={<PageContractorActivationSuccess />} />
