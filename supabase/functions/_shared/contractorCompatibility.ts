@@ -14,7 +14,17 @@ export type TerritoryTier = "priority" | "normal" | "large_only" | "blocked";
 export type PrequalLevel = "optional" | "important" | "required";
 
 export interface CompatAnswers {
-  services?: Record<string, { stance?: Stance; min_project_cents?: number | null }>;
+  services?: Record<
+    string,
+    {
+      stance?: Stance;
+      min_project_cents?: number | null;
+      label?: string;
+      source?: string;
+      order?: number;
+      pending_review?: boolean;
+    }
+  >;
   projects?: Record<string, { answer?: TriAnswer; condition_note?: string }>;
   money?: {
     floor_project_cents?: number | null;
@@ -97,7 +107,17 @@ export function sanitizeAnswers(raw: unknown): CompatAnswers {
     const key = str(slug, 80);
     if (!key) continue;
     const stance = STANCES.includes(v?.stance as Stance) ? (v!.stance as Stance) : "accepted";
-    out.services[key] = { stance, min_project_cents: cents(v?.min_project_cents) };
+    const rawSource = String(v?.source ?? "declared");
+    const source = ["verified", "google", "website", "declared"].includes(rawSource) ? rawSource : "declared";
+    const order = Number(v?.order);
+    out.services[key] = {
+      stance,
+      min_project_cents: cents(v?.min_project_cents),
+      label: str(v?.label, 120) ?? undefined,
+      source,
+      order: Number.isFinite(order) && order >= 0 && order < 500 ? Math.round(order) : 0,
+      pending_review: v?.pending_review === true,
+    };
   }
 
   out.projects = {};
@@ -207,9 +227,12 @@ export async function materialize(
   const svcRows = Object.entries(a.services ?? {}).map(([slug, v]) => ({
     contractor_id: contractorId,
     service_slug: slug,
+    service_label_fr: v.label ?? null,
     stance: v.stance,
     min_project_cents: v.min_project_cents ?? null,
-    source: "declared",
+    source: v.source ?? "declared",
+    sort_order: v.order ?? 0,
+    pending_review: v.pending_review === true,
     updated_at: now,
   }));
   if (svcRows.length) {

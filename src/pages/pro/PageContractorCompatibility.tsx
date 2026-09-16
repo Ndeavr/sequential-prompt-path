@@ -2,7 +2,7 @@
  * UNPRO — Profil de compatibilité (Excavation / Fondations / Drainage)
  * Parcours conversationnel, conditionnel, mobile-first, rattaché à une fiche entrepreneur existante.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,26 +18,24 @@ import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Check, Loader2, MapPin, Plus, Save, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  COMPAT_PREQUAL,
-  COMPAT_SERVICES,
   COMPAT_STEPS,
   PREQUAL_LEVEL_LABEL,
-  STANCE_LABEL,
   TERRITORY_TIER_LABEL,
   TOTAL_COMPAT_STEPS,
   TRI_LABEL,
   VOLUME_OPTIONS,
   citySlug,
   formatMoney,
-  visibleProjectQuestions,
   type PrequalLevel,
   type Stance,
   type TerritoryTier,
   type TriAnswer,
 } from "@/config/compatibilityExcavation";
+import { getCompatPack, packVisibleProjectQuestions } from "@/config/compatibilityPacks";
 import { useContractorCompatibility } from "@/hooks/useContractorCompatibility";
+import { useDetectedContractorServices } from "@/hooks/useDetectedContractorServices";
+import ServiceTriageBoard, { type ServiceEntries } from "@/components/contractor-compatibility/ServiceTriageBoard";
 
-const STANCES: Stance[] = ["priority", "accepted", "not_wanted"];
 const TRIS: TriAnswer[] = ["yes", "depends", "no"];
 const TIERS: TerritoryTier[] = ["priority", "normal", "large_only", "blocked"];
 const LEVELS: PrequalLevel[] = ["optional", "important", "required"];
@@ -82,6 +80,7 @@ export default function PageContractorCompatibility() {
   const navigate = useNavigate();
   const {
     contractorId,
+    profile,
     answers,
     update,
     step,
@@ -96,9 +95,38 @@ export default function PageContractorCompatibility() {
   const [done, setDone] = useState(false);
   const [newCity, setNewCity] = useState("");
 
+  const pack = useMemo(() => getCompatPack((profile as { trade_pack?: string | null } | null)?.trade_pack), [profile]);
+  const { data: detected, isLoading: detecting } = useDetectedContractorServices(contractorId);
+  const prefilled = useRef(false);
+
+  /** Préremplissage unique, uniquement à partir de services réellement détectés. */
+  useEffect(() => {
+    if (prefilled.current || isLoading || detecting) return;
+    if (!detected || detected.length === 0) return;
+    if (Object.keys(answers.services).length > 0) {
+      prefilled.current = true;
+      return;
+    }
+    prefilled.current = true;
+    const priority = detected.filter((d) => d.is_primary);
+    const accepted = detected.filter((d) => !d.is_primary);
+    const next: ServiceEntries = {};
+    (priority.length ? priority : []).forEach((d, i) => {
+      next[d.slug] = { stance: "priority", label: d.label, source: d.source, order: i };
+    });
+    (priority.length ? accepted : detected).forEach((d, i) => {
+      next[d.slug] = { stance: "accepted", label: d.label, source: d.source, order: i };
+    });
+    update((a) => ({ ...a, services: next as typeof a.services }));
+  }, [detected, detecting, isLoading, answers.services, update]);
+
   const projectQuestions = useMemo(
-    () => visibleProjectQuestions(Object.fromEntries(Object.entries(answers.services).map(([k, v]) => [k, v.stance]))),
-    [answers.services],
+    () =>
+      packVisibleProjectQuestions(
+        pack,
+        Object.fromEntries(Object.entries(answers.services).map(([k, v]) => [k, v.stance])),
+      ),
+    [pack, answers.services],
   );
 
   const groupedProjects = useMemo(() => {
@@ -145,7 +173,8 @@ export default function PageContractorCompatibility() {
   if (done) {
     const priority = Object.entries(answers.services).filter(([, v]) => v.stance === "priority");
     const refused = Object.entries(answers.services).filter(([, v]) => v.stance === "not_wanted");
-    const label = (slug: string) => COMPAT_SERVICES.find((s) => s.slug === slug)?.label ?? slug;
+    const label = (slug: string) =>
+      answers.services[slug]?.label ?? pack.services.find((s) => s.slug === slug)?.label ?? slug;
     const qLabel = (k: string) =>
       projectQuestions.find((q) => `${q.dimension}:${q.key}` === k)?.label ?? k;
 
@@ -216,7 +245,7 @@ export default function PageContractorCompatibility() {
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Avant un rendez-vous</p>
             <p className="mt-1.5 text-sm text-foreground">
               {Object.entries(answers.prequal).filter(([, l]) => l !== "optional")
-                .map(([c, l]) => `${COMPAT_PREQUAL.find((p) => p.criterion === c)?.label ?? c} (${PREQUAL_LEVEL_LABEL[l]})`)
+                .map(([c, l]) => `${pack.prequal.find((p) => p.criterion === c)?.label ?? c} (${PREQUAL_LEVEL_LABEL[l]})`)
                 .join(" · ") || "Aucune exigence particulière"}
             </p>
           </CardContent></Card>
@@ -269,24 +298,15 @@ export default function PageContractorCompatibility() {
           transition={{ duration: 0.25 }}
           className="mt-6 space-y-4"
         >
-          {/* ÉTAPE 1 — Services */}
-          {step === 1 && COMPAT_SERVICES.map((svc) => (
-            <Card key={svc.slug}>
-              <CardContent className="space-y-3 p-4">
-                <p className="text-sm font-medium text-foreground">{svc.label}</p>
-                <ChoiceRow
-                  options={STANCES.map((s) => ({ value: s, label: STANCE_LABEL[s] }))}
-                  value={answers.services[svc.slug]?.stance}
-                  onChange={(v) =>
-                    update((a) => ({
-                      ...a,
-                      services: { ...a.services, [svc.slug]: { ...a.services[svc.slug], stance: v as Stance } },
-                    }))
-                  }
-                />
-              </CardContent>
-            </Card>
-          ))}
+          {/* ÉTAPE 1 — Services (tri par glisser-déposer) */}
+          {step === 1 && (
+            <ServiceTriageBoard
+              value={answers.services as ServiceEntries}
+              catalog={pack.services}
+              loading={detecting}
+              onChange={(next) => update((a) => ({ ...a, services: next as typeof a.services }))}
+            />
+          )}
 
           {/* ÉTAPE 2 — Projets */}
           {step === 2 && (
@@ -501,7 +521,7 @@ export default function PageContractorCompatibility() {
           {/* ÉTAPE 6 — Préqualification */}
           {step === 6 && (
             <>
-              {COMPAT_PREQUAL.map((p) => (
+              {pack.prequal.map((p) => (
                 <Card key={p.criterion}><CardContent className="space-y-3 p-4">
                   <p className="text-sm font-medium text-foreground">{p.label}</p>
                   <ChoiceRow

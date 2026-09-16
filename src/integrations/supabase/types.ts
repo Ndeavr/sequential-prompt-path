@@ -42905,8 +42905,10 @@ export type Database = {
           created_at: string
           id: string
           min_project_cents: number | null
+          pending_review: boolean
           service_label_fr: string | null
           service_slug: string
+          sort_order: number
           source: string
           stance: string
           updated_at: string
@@ -42916,8 +42918,10 @@ export type Database = {
           created_at?: string
           id?: string
           min_project_cents?: number | null
+          pending_review?: boolean
           service_label_fr?: string | null
           service_slug: string
+          sort_order?: number
           source?: string
           stance?: string
           updated_at?: string
@@ -42927,8 +42931,10 @@ export type Database = {
           created_at?: string
           id?: string
           min_project_cents?: number | null
+          pending_review?: boolean
           service_label_fr?: string | null
           service_slug?: string
+          sort_order?: number
           source?: string
           stance?: string
           updated_at?: string
