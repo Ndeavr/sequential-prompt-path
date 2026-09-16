@@ -28,7 +28,7 @@ describe("service à classer", () => {
     const captured: Record<string, unknown>[] = [];
     const chain = () => {
       const c: Record<string, unknown> = {};
-      ["upsert", "update", "eq", "delete", "insert", "select"].forEach((k) => {
+      ["upsert", "update", "eq", "delete", "insert", "select", "not", "in", "neq"].forEach((k) => {
         c[k] = () => c;
       });
       (c as { then: unknown }).then = (res: (v: unknown) => unknown) => res({ data: null, error: null });
