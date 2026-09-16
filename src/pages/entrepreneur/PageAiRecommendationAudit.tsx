@@ -412,7 +412,7 @@ export default function PageAiRecommendationAudit() {
                 </span>
                 <div>
                   <h2 id="audit-start-title" className="text-[19px] font-bold leading-tight text-foreground">
-                    Audit IA gratuit (30 secondes)
+                    Audit IA gratuit (environ 60 secondes)
                   </h2>
                   <p className="text-[12.5px] text-muted-foreground">
                     Aucune carte de crédit. Valeur immédiate, avant toute inscription.
