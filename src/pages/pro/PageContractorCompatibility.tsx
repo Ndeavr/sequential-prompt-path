@@ -2,7 +2,7 @@
  * UNPRO — Profil de compatibilité (Excavation / Fondations / Drainage)
  * Parcours conversationnel, conditionnel, mobile-first, rattaché à une fiche entrepreneur existante.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
@@ -31,9 +31,9 @@ import {
   type TerritoryTier,
   type TriAnswer,
 } from "@/config/compatibilityExcavation";
-import { getCompatPack, packVisibleProjectQuestions } from "@/config/compatibilityPacks";
+import { COMPAT_PACKS, getCompatPack, packVisibleProjectQuestions } from "@/config/compatibilityPacks";
 import { useContractorCompatibility } from "@/hooks/useContractorCompatibility";
-import { useDetectedContractorServices } from "@/hooks/useDetectedContractorServices";
+import { serviceSlug, useDetectedContractorServices } from "@/hooks/useDetectedContractorServices";
 import ServiceTriageBoard, { type ServiceEntries } from "@/components/contractor-compatibility/ServiceTriageBoard";
 
 const TRIS: TriAnswer[] = ["yes", "depends", "no"];
