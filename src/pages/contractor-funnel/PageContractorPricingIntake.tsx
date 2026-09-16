@@ -19,6 +19,7 @@ import {
   type PricingIntakeInput,
 } from "@/services/contractorPricingQuoteService";
 import { toast } from "sonner";
+import { trackFunnelStep } from "@/lib/analytics/funnelSteps";
 
 type Step = {
   key: string;
