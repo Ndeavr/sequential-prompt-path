@@ -628,7 +628,7 @@ export default function PageCheckoutNativeScrollable() {
         <div className="text-center space-y-4">
           <p className="text-lg font-bold text-foreground">Plan introuvable</p>
           <p className="text-sm text-muted-foreground">Impossible de charger les informations de tarification.</p>
-          <Button onClick={() => navigate("/pricing?tab=entrepreneurs")}>
+          <Button onClick={() => navigate(contractorPlanLink({ from: "checkout_plan_missing" }))}>
             <ArrowLeft className="w-4 h-4 mr-2" /> Retour aux plans
           </Button>
         </div>

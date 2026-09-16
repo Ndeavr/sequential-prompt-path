@@ -241,13 +241,13 @@ function PlanRecommendation({ analysis }: { analysis: SalesAnalysis }) {
         </div>
       )}
 
-      <Link to="/pricing">
+      <Link to={contractorPlanLink({ objective: "upgrade", from: "dashboard_alex_sales" })}>
         <Button
           size="sm"
           className="w-full bg-gradient-to-r from-primary to-accent text-white border-0 rounded-xl h-10 text-xs font-bold hover:brightness-110 hover:shadow-[var(--shadow-glow)] transition-all gap-1.5"
         >
           <ArrowUpRight className="w-3.5 h-3.5" />
-          Voir le plan {label.split("—")[0].trim()}
+          {CONTRACTOR_PLAN_DEFAULT_CTA}
         </Button>
       </Link>
     </motion.div>

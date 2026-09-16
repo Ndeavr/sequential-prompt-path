@@ -38,7 +38,7 @@ export default function AlexAutopilotProvider(props: AlexAutopilotProviderProps)
           navigate("/dashboard/appointments");
           break;
         case "show_plan_recommendation":
-          navigate("/pricing");
+          navigate(contractorPlanLink({ objective: "upgrade", from: "clara_autopilot" }));
           break;
         default:
           break;
