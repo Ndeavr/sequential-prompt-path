@@ -41,16 +41,9 @@ type AuditContext = {
   readiness_score: number | null;
 };
 
-const TRADES = [
-  "Plomberie",
-  "Électricité",
-  "Toiture",
-  "Rénovation",
-  "Peinture",
-  "CVAC",
-  "Aménagement paysager",
-  "Autre",
-];
+// Aucune liste de métiers codée en dur : la taxonomie canonique
+// (`service_categories`) est la seule source, via `useTradeTaxonomy`.
+
 
 const SEASONS = [
   { v: "spring", l: "Printemps" },
