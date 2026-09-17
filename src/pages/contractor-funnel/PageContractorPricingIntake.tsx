@@ -298,12 +298,15 @@ export default function PageContractorPricingIntake() {
           min={5}
           max={300}
         />
-        <SelectInput
+        <TradePickerSheet
           label="Métier secondaire (optionnel)"
-          value={d.trade_secondary ?? ""}
-          onChange={(v) => set({ trade_secondary: v || null })}
-          options={["", ...TRADES]}
+          placeholder="Aucun"
+          value={tradeSlugOf(d.trade_secondary)}
+          fallbackLabel={d.trade_secondary ?? null}
+          onChange={(trade) => set({ trade_secondary: trade.label })}
+          testId="trade-secondary-picker"
         />
+
       </div>
     ),
   };
