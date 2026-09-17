@@ -378,7 +378,7 @@ export default function PageContractorCompatibility() {
             <>
               <ServiceTriageBoard
                 value={answers.services as ServiceEntries}
-                catalog={pack.services}
+                catalog={serviceCatalog}
                 loading={detecting}
                 suggestRelated={suggestRelated}
                 onChange={(next) => update((a) => ({ ...a, services: next as typeof a.services }))}
