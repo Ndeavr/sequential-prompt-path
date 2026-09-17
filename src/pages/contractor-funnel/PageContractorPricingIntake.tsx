@@ -102,6 +102,14 @@ export default function PageContractorPricingIntake() {
     [],
   );
 
+  /** Métier canonique correspondant au libellé réellement détecté (jamais deviné au hasard). */
+  const { taxonomy } = useTradeTaxonomy();
+  const tradeSlugOf = useCallback(
+    (label?: string | null) => (label ? detectTrade(taxonomy, label)?.slug ?? null : null),
+    [taxonomy],
+  );
+
+
   /* ---------- Brouillon local (reprise après rafraîchissement) ---------- */
   useEffect(() => {
     try {
