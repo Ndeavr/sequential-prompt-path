@@ -258,12 +258,14 @@ export default function PageContractorPricingIntake() {
 
         {(businessConfirmed || manualEntry) && (
           <>
-            <SelectInput
+            <TradePickerSheet
               label={`Métier principal${detected.trade ? " · Détecté — à confirmer" : ""}`}
-              value={d.trade_primary ?? ""}
-              onChange={(v) => set({ trade_primary: v })}
-              options={tradeOptions(d.trade_primary)}
+              value={tradeSlugOf(d.trade_primary)}
+              fallbackLabel={d.trade_primary ?? null}
+              onChange={(trade) => set({ trade_primary: trade.label })}
+              testId="trade-primary-picker"
             />
+
             <TextInput
               label={`Ville desservie${detected.city ? " · Détecté — à confirmer" : ""}`}
               value={d.city ?? ""}
