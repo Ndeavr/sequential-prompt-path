@@ -34,6 +34,12 @@ import {
 import { COMPAT_PACKS, getCompatPack, packVisibleProjectQuestions } from "@/config/compatibilityPacks";
 import { useContractorCompatibility } from "@/hooks/useContractorCompatibility";
 import { serviceSlug, useDetectedContractorServices } from "@/hooks/useDetectedContractorServices";
+import {
+  detectTrade,
+  servicesForTrade,
+  useTradeTaxonomy,
+  normalizeTerm,
+} from "@/hooks/useTradeTaxonomy";
 import ServiceTriageBoard, { type ServiceEntries } from "@/components/contractor-compatibility/ServiceTriageBoard";
 
 const TRIS: TriAnswer[] = ["yes", "depends", "no"];
