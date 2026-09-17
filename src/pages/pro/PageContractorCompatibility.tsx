@@ -34,6 +34,12 @@ import {
 import { COMPAT_PACKS, getCompatPack, packVisibleProjectQuestions } from "@/config/compatibilityPacks";
 import { useContractorCompatibility } from "@/hooks/useContractorCompatibility";
 import { serviceSlug, useDetectedContractorServices } from "@/hooks/useDetectedContractorServices";
+import {
+  detectTrade,
+  servicesForTrade,
+  useTradeTaxonomy,
+  normalizeTerm,
+} from "@/hooks/useTradeTaxonomy";
 import ServiceTriageBoard, { type ServiceEntries } from "@/components/contractor-compatibility/ServiceTriageBoard";
 
 const TRIS: TriAnswer[] = ["yes", "depends", "no"];
@@ -97,6 +103,7 @@ export default function PageContractorCompatibility() {
 
   const pack = useMemo(() => getCompatPack((profile as { trade_pack?: string | null } | null)?.trade_pack), [profile]);
   const { data: detected, isLoading: detecting } = useDetectedContractorServices(contractorId);
+  const { taxonomy } = useTradeTaxonomy();
   const prefilled = useRef(false);
 
   /**
@@ -124,18 +131,58 @@ export default function PageContractorCompatibility() {
     update((a) => ({ ...a, services: next as typeof a.services }));
   }, [detected, detecting, isLoading, answers.services, update]);
 
-  /** Sous-services du pack auquel appartient le service principal saisi. */
-  const suggestRelated = useCallback((slug: string, label: string) => {
-    const norm = (v: string) => serviceSlug(v);
-    const target = norm(label || slug);
-    const match = Object.values(COMPAT_PACKS).find((p) =>
-      p.services.some((s) => s.slug === slug || norm(s.label) === target),
-    );
-    if (!match) return [];
-    return match.services
-      .filter((s) => s.slug !== slug && norm(s.label) !== target)
-      .map((s) => ({ slug: s.slug, label: s.label }));
-  }, []);
+  /**
+   * Sous-services connexes, toujours reliés au métier réel.
+   * 1. Taxonomie canonique du métier reconnu à partir du service saisi.
+   * 2. À défaut, pack métier existant.
+   * Jamais une liste générique d'autres métiers.
+   */
+  const suggestRelated = useCallback(
+    (slug: string, label: string) => {
+      const typed = label || slug;
+      const trade = detectTrade(taxonomy, typed);
+      if (trade) {
+        const kids = servicesForTrade(taxonomy, trade.slug);
+        const typedNorm = normalizeTerm(typed);
+        const out = kids
+          .filter((c) => c.slug !== slug && normalizeTerm(c.label) !== typedNorm)
+          .map((c) => ({ slug: c.slug, label: c.label }));
+        if (out.length > 0) return out;
+      }
+      const norm = (v: string) => serviceSlug(v);
+      const target = norm(typed);
+      const match = Object.values(COMPAT_PACKS).find((p) =>
+        p.services.some((s) => s.slug === slug || norm(s.label) === target),
+      );
+      if (!match) return [];
+      return match.services
+        .filter((s) => s.slug !== slug && norm(s.label) !== target)
+        .map((s) => ({ slug: s.slug, label: s.label }));
+    },
+    [taxonomy],
+  );
+
+  /**
+   * Catalogue de l'étape 1 : sous-services du métier réellement détecté,
+   * complétés par le pack métier. Aucun métier étranger n'est proposé.
+   */
+  const serviceCatalog = useMemo(() => {
+    const primaryLabel =
+      detected?.find((d) => d.is_primary)?.label ??
+      detected?.[0]?.label ??
+      (profile as { trade_pack?: string | null } | null)?.trade_pack ??
+      null;
+    const trade = detectTrade(taxonomy, primaryLabel);
+    const fromTaxonomy = trade
+      ? servicesForTrade(taxonomy, trade.slug).map((c) => ({ slug: c.slug, label: c.label }))
+      : [];
+    const merged = new Map<string, { slug: string; label: string }>();
+    for (const entry of [...fromTaxonomy, ...pack.services.map((s) => ({ slug: s.slug, label: s.label }))]) {
+      if (!merged.has(entry.slug)) merged.set(entry.slug, entry);
+    }
+    return Array.from(merged.values());
+  }, [taxonomy, detected, profile, pack]);
+
 
   const classifiedServices = useMemo(
     () =>
@@ -331,7 +378,7 @@ export default function PageContractorCompatibility() {
             <>
               <ServiceTriageBoard
                 value={answers.services as ServiceEntries}
-                catalog={pack.services}
+                catalog={serviceCatalog}
                 loading={detecting}
                 suggestRelated={suggestRelated}
                 onChange={(next) => update((a) => ({ ...a, services: next as typeof a.services }))}

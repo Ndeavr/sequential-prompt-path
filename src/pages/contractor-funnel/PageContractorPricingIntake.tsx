@@ -20,6 +20,8 @@ import {
 } from "@/services/contractorPricingQuoteService";
 import { toast } from "sonner";
 import { trackFunnelStep } from "@/lib/analytics/funnelSteps";
+import TradePickerSheet from "@/components/contractor/TradePickerSheet";
+import { detectTrade, useTradeTaxonomy } from "@/hooks/useTradeTaxonomy";
 
 type Step = {
   key: string;
@@ -41,16 +43,9 @@ type AuditContext = {
   readiness_score: number | null;
 };
 
-const TRADES = [
-  "Plomberie",
-  "Électricité",
-  "Toiture",
-  "Rénovation",
-  "Peinture",
-  "CVAC",
-  "Aménagement paysager",
-  "Autre",
-];
+// Aucune liste de métiers codée en dur : la taxonomie canonique
+// (`service_categories`) est la seule source, via `useTradeTaxonomy`.
+
 
 const SEASONS = [
   { v: "spring", l: "Printemps" },
@@ -106,6 +101,14 @@ export default function PageContractorPricingIntake() {
     (patch: Partial<PricingIntakeInput>) => setData((d) => ({ ...d, ...patch })),
     [],
   );
+
+  /** Métier canonique correspondant au libellé réellement détecté (jamais deviné au hasard). */
+  const { taxonomy } = useTradeTaxonomy();
+  const tradeSlugOf = useCallback(
+    (label?: string | null) => (label ? detectTrade(taxonomy, label)?.slug ?? null : null),
+    [taxonomy],
+  );
+
 
   /* ---------- Brouillon local (reprise après rafraîchissement) ---------- */
   useEffect(() => {
@@ -265,12 +268,14 @@ export default function PageContractorPricingIntake() {
 
         {(businessConfirmed || manualEntry) && (
           <>
-            <SelectInput
+            <TradePickerSheet
               label={`Métier principal${detected.trade ? " · Détecté — à confirmer" : ""}`}
-              value={d.trade_primary ?? ""}
-              onChange={(v) => set({ trade_primary: v })}
-              options={tradeOptions(d.trade_primary)}
+              value={tradeSlugOf(d.trade_primary)}
+              fallbackLabel={d.trade_primary ?? null}
+              onChange={(trade) => set({ trade_primary: trade.label })}
+              testId="trade-primary-picker"
             />
+
             <TextInput
               label={`Ville desservie${detected.city ? " · Détecté — à confirmer" : ""}`}
               value={d.city ?? ""}
@@ -303,12 +308,15 @@ export default function PageContractorPricingIntake() {
           min={5}
           max={300}
         />
-        <SelectInput
+        <TradePickerSheet
           label="Métier secondaire (optionnel)"
-          value={d.trade_secondary ?? ""}
-          onChange={(v) => set({ trade_secondary: v || null })}
-          options={["", ...TRADES]}
+          placeholder="Aucun"
+          value={tradeSlugOf(d.trade_secondary)}
+          fallbackLabel={d.trade_secondary ?? null}
+          onChange={(trade) => set({ trade_secondary: trade.label })}
+          testId="trade-secondary-picker"
         />
+
       </div>
     ),
   };
@@ -614,12 +622,8 @@ export default function PageContractorPricingIntake() {
   );
 }
 
-/** Liste des métiers incluant celui détecté s'il ne fait pas partie du catalogue. */
-function tradeOptions(current?: string | null): string[] {
-  const base = ["", ...TRADES];
-  if (current && !base.includes(current)) return ["", current, ...TRADES];
-  return base;
-}
+
+
 
 
 /* ---------- Inputs ---------- */
@@ -684,36 +688,8 @@ function NumberInput({
   );
 }
 
-function SelectInput({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: string[];
-}) {
-  return (
-    <label className="block">
-      <span className="text-xs uppercase tracking-wider text-white/50">
-        {label}
-      </span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="mt-1.5 w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400"
-      >
-        {options.map((o) => (
-          <option key={o} value={o} className="bg-[#0a1020]">
-            {o || "—"}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
+
+
 
 function ChoiceGroup({
   label,
