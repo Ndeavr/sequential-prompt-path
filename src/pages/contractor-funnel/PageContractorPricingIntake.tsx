@@ -612,12 +612,8 @@ export default function PageContractorPricingIntake() {
   );
 }
 
-/** Liste des métiers incluant celui détecté s'il ne fait pas partie du catalogue. */
-function tradeOptions(current?: string | null): string[] {
-  const base = ["", ...TRADES];
-  if (current && !base.includes(current)) return ["", current, ...TRADES];
-  return base;
-}
+
+
 
 
 /* ---------- Inputs ---------- */
