@@ -20,6 +20,8 @@ import {
 } from "@/services/contractorPricingQuoteService";
 import { toast } from "sonner";
 import { trackFunnelStep } from "@/lib/analytics/funnelSteps";
+import TradePickerSheet from "@/components/contractor/TradePickerSheet";
+import { detectTrade, useTradeTaxonomy } from "@/hooks/useTradeTaxonomy";
 
 type Step = {
   key: string;
