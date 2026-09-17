@@ -682,36 +682,8 @@ function NumberInput({
   );
 }
 
-function SelectInput({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: string[];
-}) {
-  return (
-    <label className="block">
-      <span className="text-xs uppercase tracking-wider text-white/50">
-        {label}
-      </span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="mt-1.5 w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400"
-      >
-        {options.map((o) => (
-          <option key={o} value={o} className="bg-[#0a1020]">
-            {o || "—"}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
+
+
 
 function ChoiceGroup({
   label,
