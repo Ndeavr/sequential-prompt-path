@@ -103,6 +103,7 @@ export default function PageContractorCompatibility() {
 
   const pack = useMemo(() => getCompatPack((profile as { trade_pack?: string | null } | null)?.trade_pack), [profile]);
   const { data: detected, isLoading: detecting } = useDetectedContractorServices(contractorId);
+  const { taxonomy } = useTradeTaxonomy();
   const prefilled = useRef(false);
 
   /**
