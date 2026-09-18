@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, CreditCard, Lock, Shield, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { rememberClaraReferences } from "@/services/clara/claraSession";
 import { useToast } from "@/hooks/use-toast";
 import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
 import { redirectToCheckout } from "@/lib/redirectToCheckout";
@@ -66,6 +67,11 @@ export default function PageOnboardingPayment() {
 
       if (error) throw error;
       if (data?.url) {
+        // ONE CLARA : la conversation conserve le devis et la session de paiement.
+        rememberClaraReferences({
+          pricing_quote_id: quoteId || undefined,
+          checkout_session_id: data?.sessionId ?? data?.session_id ?? undefined,
+        });
         redirectToCheckout(data.url);
       } else if (data?.activated) {
         navigate(`/entrepreneur/payment-success${quoteId ? `?quote_id=${quoteId}` : ""}`);

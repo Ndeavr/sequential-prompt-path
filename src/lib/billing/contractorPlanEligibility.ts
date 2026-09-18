@@ -15,6 +15,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { rememberClaraReferences } from "@/services/clara/claraSession";
 import { usePlanCatalog, type BillingInterval, type CatalogPlan } from "@/hooks/usePlanCatalog";
 import { useContractorSubscription } from "@/hooks/useSubscription";
 import { isRetiredPlanSlug } from "@/config/contractorPlans";
@@ -177,7 +178,13 @@ export async function startContractorPlanCheckout(args: {
     },
   });
   if (error) throw new Error(error.message || "Le paiement n'a pas pu démarrer.");
-  const url = (data as { url?: string } | null)?.url;
+  const payload = data as { url?: string; sessionId?: string; session_id?: string } | null;
+  const url = payload?.url;
   if (!url) throw new Error("Le paiement n'a pas pu démarrer.");
+  // ONE CLARA : même devis personnalisé et même session de paiement dans la conversation.
+  rememberClaraReferences({
+    pricing_quote_id: args.quoteId,
+    checkout_session_id: payload?.sessionId ?? payload?.session_id ?? undefined,
+  });
   return { url };
 }
