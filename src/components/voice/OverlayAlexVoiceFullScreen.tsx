@@ -416,6 +416,87 @@ export default function OverlayAlexVoiceFullScreen() {
     }
   }, [isSpeaking, isActive]);
 
+  // ─── PAUSE RÉELLE (silence technique) ───────────────────────────────────
+  const clearInactivityTimer = useCallback(() => {
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
+    }
+  }, []);
+
+  const pauseVoice = useCallback((reason: string) => {
+    const s = getStore();
+    if (!s.isOverlayOpen || s.machineState === "paused") return;
+    console.log("[ALEX VOICE] ⏸️ Pause réelle de la session vocale —", reason);
+
+    clearInactivityTimer();
+    if (firstAudioTimerRef.current) { clearTimeout(firstAudioTimerRef.current); firstAudioTimerRef.current = null; }
+    if (stabilizationTimerRef.current) { clearTimeout(stabilizationTimerRef.current); stabilizationTimerRef.current = null; }
+    if (slowTokenTimerRef.current) { clearTimeout(slowTokenTimerRef.current); slowTokenTimerRef.current = null; }
+    if (nudgeTimerRef.current) { clearTimeout(nudgeTimerRef.current); nudgeTimerRef.current = null; }
+    if (heartbeatRef.current) { clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
+
+    // Coupe réellement la voix, le micro et la session du fournisseur.
+    try { elevenlabsService.stop(); } catch {}
+    try { stop(); } catch {}
+    if (sessionIdRef.current) {
+      unlockRuntime();
+      sessionIdRef.current = "";
+    }
+
+    bootInitiatedRef.current = false;
+    hasConnectedRef.current = false;
+    firstAudioReceivedRef.current = false;
+    ttsFallbackInProgressRef.current = false;
+    setSlowToken(false);
+    setShowListeningHint(false);
+    setBootStep("init");
+    s.pauseVoiceSession(reason);
+  }, [clearInactivityTimer, stop]);
+
+  const armInactivity = useCallback((reason: string) => {
+    clearInactivityTimer();
+    const s = getStore();
+    if (!s.isOverlayOpen || s.machineState === "paused") return;
+    setShowListeningHint(false);
+    inactivityTimerRef.current = setTimeout(() => {
+      inactivityTimerRef.current = null;
+      if (!getStore().isOverlayOpen) return;
+      // Aucune parole : simple indication visuelle, Clara reste silencieuse.
+      setShowListeningHint(true);
+      inactivityTimerRef.current = setTimeout(() => {
+        inactivityTimerRef.current = null;
+        pauseVoiceRef.current(`inactivity:${reason}`);
+      }, Math.max(1_000, IDLE_PAUSE_MS - IDLE_HINT_MS));
+    }, IDLE_HINT_MS);
+  }, [clearInactivityTimer]);
+
+  armInactivityRef.current = armInactivity;
+  pauseVoiceRef.current = pauseVoice;
+
+  // Un seul minuteur d'inactivité : réarmé à chaque changement d'état.
+  useEffect(() => {
+    if (!store.isOverlayOpen) {
+      clearInactivityTimer();
+      return;
+    }
+    const st = store.machineState;
+    if (st === "listening" || st === "awaiting_user" || st === "session_ready") {
+      armInactivity(st);
+    } else {
+      clearInactivityTimer();
+      setShowListeningHint(false);
+    }
+  }, [store.machineState, store.isOverlayOpen, armInactivity, clearInactivityTimer]);
+
+  const handleResumeVoice = useCallback(() => {
+    const s = getStore();
+    if (s.machineState !== "paused") return;
+    setShowListeningHint(false);
+    s.resumeVoiceSession("user_resume");
+    setBootNonce((n) => n + 1);
+  }, []);
+
   // Keep refs up to date so the boot effect doesn't depend on start/buildGreeting identity
   startRef.current = start;
   buildGreetingRef.current = buildGreeting;
