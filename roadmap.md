@@ -1,16 +1,16 @@
 # Roadmap — ONE CLARA continuity
 
-## Étape 1 — Autorité conversationnelle (bloquant)
-- [ ] Choisir l'autorité canonique (alex_sessions vs alex_conversation_sessions) sur preuve
-- [ ] Prouver create → write → refresh → auth → resume → reopen → second device
-- [ ] Déclarer l'autre système comme pont de compatibilité temporaire (documenté)
+## Étape 1 — Autorité conversationnelle (bloquant) — FAIT
+- [x] Autorité canonique définitive : `public.alex_sessions` + `public.alex_messages`
+- [x] Preuve live : création → écriture (idempotente) → rafraîchissement → reprise → authentification → second appareil
+- [x] `alex_conversation_sessions` = pont de compatibilité temporaire uniquement
 
 ## Étape 2 — P0
-- [ ] P0-1 sessionId Clara persistant (plus de UUID régénéré à chaque montage)
-- [ ] P0-2 une seule mécanique de session (store + runtime + boîte d'accueil)
-- [ ] P0-3 restauration navigateur réelle (messages + identifiant + contrôle d'appartenance serveur)
-- [ ] P0-4 promotion après OTP/OAuth : conversation rattachée au compte
-- [ ] P0-5 contexte paiement entrepreneur strictement serveur (contractor_id + quote_id)
+- [x] P0-1 jeton de conversation persistant par navigateur
+- [x] P0-2 une seule mécanique de session pour la boîte Clara d'accueil
+- [x] P0-3 restauration réelle des messages + contrôle d'appartenance serveur
+- [x] P0-4 promotion après OTP/OAuth (montée globale dans les providers)
+- [x] P0-5 aucun prix annuel calculé côté client dans le paiement entrepreneur
 
 ## Étape 3 — P1
 - [ ] P1-6 conversation → projet (référence project_id/lead_id dans la conversation)
