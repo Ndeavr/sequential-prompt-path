@@ -2,19 +2,12 @@
 import { motion } from "framer-motion";
 
 import ClaraConversationBox from "@/components/home-light/ClaraConversationBox";
-import { useLanguage } from "@/components/ui/LanguageToggle";
 
 export default function HeroHomeownerLight() {
-  const { lang } = useLanguage();
-  const copy = lang === "fr"
-    ? {
-        title: "Montrez-moi. Parlez-moi. Je m’occupe du reste.",
-        subtitle: "Qu’est-ce que vous voulez réparer, vérifier ou améliorer?",
-      }
-    : {
-        title: "Pour le moment je fonctionne en français.",
-        subtitle: "Je termine mes cours d'anglais sous peu.",
-      };
+  const copy = {
+    title: "Montrez-moi. Parlez-moi. Je m’occupe du reste.",
+    subtitle: "Qu’est-ce que vous voulez réparer, vérifier ou améliorer?",
+  };
 
   return (
     <section className="home-glossy-hero relative isolate overflow-hidden">

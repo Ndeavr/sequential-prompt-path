@@ -81,7 +81,7 @@ export default function ClaraConversationBox() {
         camera: "Prendre une photo",
         voice: "Talk to Clara",
         send: "Send",
-        working: "Analyzing…",
+        working: "Analyse en cours…",
         fallback: "Pour le moment je fonctionne en français. Je termine mes cours d'anglais sous peu.",
       };
   const [messages, setMessages] = useState<Msg[]>([]);
