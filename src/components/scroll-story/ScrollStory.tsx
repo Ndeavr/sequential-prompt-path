@@ -125,6 +125,7 @@ export function ParallaxMedia({ children, className, distance = 32 }: ParallaxMe
 }
 
 interface ScrollTextRevealProps extends BaseProps {
+  children?: ReactNode;
   eyebrow?: string;
   title: string;
   body?: string;
@@ -148,7 +149,7 @@ export function ScrollTextReveal({ eyebrow, title, body, children, className, al
       <h2 className="text-balance font-display text-[clamp(2.6rem,7vw,6.8rem)] font-semibold leading-[0.94] text-foreground">
         {title}
       </h2>
-      {body && <p className="mt-6 max-w-2xl text-base leading-relaxed text-readable-secondary md:text-xl">{body}</p>}
+      {body && <p className="mt-6 max-w-2xl text-base leading-relaxed text-readable-soft md:text-xl">{body}</p>}
       {children}
     </motion.div>
   );
@@ -202,7 +203,7 @@ export function StackedCards({ items, className }: { items: StackedCardItem[]; c
         >
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-tint">{item.kicker}</p>
           <h3 className="mt-3 text-2xl font-semibold text-foreground md:text-4xl">{item.title}</h3>
-          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-readable-secondary md:text-base">{item.body}</p>
+          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-readable-soft md:text-base">{item.body}</p>
           {item.content && <div className="mt-6">{item.content}</div>}
         </motion.article>
       ))}

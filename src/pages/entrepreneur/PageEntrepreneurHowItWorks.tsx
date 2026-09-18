@@ -1,139 +1,64 @@
-/**
- * /entrepreneurs/comment-ca-marche — How UNPRO works for contractors
- */
 import { Helmet } from "react-helmet-async";
-import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { ArrowRight, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Search, Sparkles, MapPin, CalendarCheck, TrendingUp,
-  Shield, Star, ArrowRight, Mic,
-} from "lucide-react";
+import MainLayout from "@/layouts/MainLayout";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
+import {
+  EditorialScene,
+  RevealSection,
+  ScrollStory,
+  ScrollTextReveal,
+  StackedCards,
+} from "@/components/scroll-story/ScrollStory";
+import { ContractorIntelligenceVisual, PreparedProjectVisual } from "@/components/scroll-story/StoryVisuals";
+import ImmersiveFooterGrid from "@/components/scroll-story/ImmersiveFooterGrid";
 
-const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
-
-const DETAILED_STEPS = [
-  {
-    icon: Search,
-    title: "1. On trouve votre entreprise",
-    desc: "Dites le nom de votre entreprise à Clara ou entrez-le. On cherche automatiquement sur Google Business, votre site web et les registres publics pour pré-remplir votre profil.",
-  },
-  {
-    icon: Sparkles,
-    title: "2. L'IA construit votre profil",
-    desc: "Catégories, description, territoires — tout est pré-rempli intelligemment. Vous validez ou ajustez en quelques clics.",
-  },
-  {
-    icon: MapPin,
-    title: "3. Vous choisissez vos territoires",
-    desc: "Sélectionnez les villes et quartiers que vous desservez. UNPRO protège votre visibilité avec des places limitées par zone.",
-  },
-  {
-    icon: CalendarCheck,
-    title: "4. Vous recevez des rendez-vous",
-    desc: "Pas des leads froids partagés. Des propriétaires qualifiés, prêts à discuter, directement dans votre agenda.",
-  },
-  {
-    icon: TrendingUp,
-    title: "5. Votre présence grandit",
-    desc: "Profil public optimisé SEO, score AIPP transparent, avis vérifiés. Plus vous performez, plus vous êtes visible.",
-  },
-  {
-    icon: Shield,
-    title: "6. Confiance intégrée",
-    desc: "Vérification RBQ, assurances, certifications. Chaque signal de confiance renforce votre profil automatiquement.",
-  },
+const STEPS = [
+  { kicker: "01 · Comprendre", title: "Votre entreprise réelle", body: "Le nom, le site, les sources publiques et les informations existantes servent à préparer le profil. Vous confirmez ce qui vous appartient." },
+  { kicker: "02 · Structurer", title: "Vos services et spécialités", body: "Les services restent reliés à votre métier principal. Vous classez ce que vous priorisez, acceptez ou ne recherchez pas." },
+  { kicker: "03 · Délimiter", title: "Votre territoire et votre capacité", body: "Vous indiquez où vous travaillez, ce que vous recherchez et quand votre entreprise peut réellement accepter un projet." },
+  { kicker: "04 · Vérifier", title: "Votre conformité", body: "Les règles RBQ et les autres exigences applicables passent avant la visibilité ou la recommandation." },
+  { kicker: "05 · Compatibilité", title: "Un projet préparé", body: "UNPRO croise le besoin, le territoire, les services, les préférences et la disponibilité selon les informations disponibles." },
+  { kicker: "06 · Rendez-vous", title: "Une recommandation exclusive", body: "Lorsqu’un projet correspond, UNPRO recommande un entrepreneur compatible plutôt que de partager le même lead." },
 ];
 
 export default function PageEntrepreneurHowItWorks() {
   const navigate = useNavigate();
   const { openAlex } = useAlexVoice();
-
+  const planHref = contractorPlanLink({ objective: "more_appointments", from: "contractor_how_it_works" });
   return (
-    <>
+    <MainLayout hideMemorySection hideFooter>
       <Helmet>
         <title>Comment ça marche — UNPRO pour entrepreneurs</title>
-        <meta name="description" content="Découvrez comment UNPRO aide les entrepreneurs à recevoir des rendez-vous qualifiés grâce à l'IA, des profils vérifiés et une visibilité protégée." />
+        <meta name="description" content="Découvrez comment UNPRO comprend votre entreprise, structure votre profil et prépare des rendez-vous exclusifs compatibles." />
+        <link rel="canonical" href="https://unpro.ca/entrepreneurs/comment-ca-marche" />
       </Helmet>
-
-      <div className="min-h-screen bg-background">
-        <div className="mx-auto max-w-4xl px-4 py-20">
-          <motion.h1
-            variants={fadeUp} initial="hidden" animate="visible"
-            className="font-display text-4xl sm:text-5xl font-bold text-foreground text-center mb-4"
-          >
-            Comment ça marche
-          </motion.h1>
-          <motion.p
-            variants={fadeUp} initial="hidden" animate="visible" transition={{ delay: 0.1 }}
-            className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-16"
-          >
-            De l'inscription à votre premier rendez-vous, en moins de 5 minutes.
-          </motion.p>
-
-          <div className="space-y-8">
-            {DETAILED_STEPS.map((step, i) => (
-              <motion.div
-                key={step.title}
-                variants={fadeUp}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08, duration: 0.4 }}
-                className="flex gap-6 rounded-2xl border border-border bg-card p-6 sm:p-8"
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                  <step.icon className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-display text-xl font-semibold text-foreground mb-2">{step.title}</h3>
-                  <p className="text-muted-foreground">{step.desc}</p>
-                </div>
-              </motion.div>
-            ))}
+      <ScrollStory>
+        <EditorialScene>
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <ScrollTextReveal eyebrow="Pour entrepreneurs" title="De votre entreprise au bon rendez-vous." body="UNPRO ne vous transforme pas en fiche générique. Votre métier, vos services, votre territoire et vos objectifs structurent le parcours." />
+            <ContractorIntelligenceVisual />
           </div>
-
-          {/* Comparison */}
-          <div className="mt-20">
-            <h2 className="font-display text-2xl font-bold text-foreground text-center mb-8">
-              Pourquoi pas 3 soumissions?
-            </h2>
-            <div className="grid sm:grid-cols-2 gap-6">
-              <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-6">
-                <h3 className="font-semibold text-destructive mb-4">L'ancien modèle</h3>
-                <ul className="space-y-3 text-sm text-muted-foreground">
-                  <li className="flex gap-2">❌ Leads froids partagés avec 3-4 concurrents</li>
-                  <li className="flex gap-2">❌ Courses au plus bas prix</li>
-                  <li className="flex gap-2">❌ Visibilité payée au clic sans garantie</li>
-                  <li className="flex gap-2">❌ Aucune différenciation qualitative</li>
-                </ul>
-              </div>
-              <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6">
-                <h3 className="font-semibold text-primary mb-4">UNPRO</h3>
-                <ul className="space-y-3 text-sm text-muted-foreground">
-                  <li className="flex gap-2"><Star className="h-4 w-4 text-primary shrink-0 mt-0.5" /> Rendez-vous exclusifs, un seul entrepreneur recommandé</li>
-                  <li className="flex gap-2"><Star className="h-4 w-4 text-primary shrink-0 mt-0.5" /> Matching basé sur la compatibilité réelle</li>
-                  <li className="flex gap-2"><Star className="h-4 w-4 text-primary shrink-0 mt-0.5" /> Profil vérifié et scoré publiquement</li>
-                  <li className="flex gap-2"><Star className="h-4 w-4 text-primary shrink-0 mt-0.5" /> Revenus récurrents et prévisibles</li>
-                </ul>
-              </div>
+        </EditorialScene>
+        <RevealSection className="bg-muted/20"><StackedCards items={STEPS} /></RevealSection>
+        <RevealSection>
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <PreparedProjectVisual />
+            <ScrollTextReveal eyebrow="Pas trois soumissions" title="Un projet. Un entrepreneur compatible." body="La conformité agit comme filtre obligatoire. La compatibilité vient ensuite, avec une explication fondée sur les informations disponibles." />
+          </div>
+        </RevealSection>
+        <EditorialScene className="min-h-[70svh]">
+          <ScrollTextReveal align="center" title="Découvrez votre plan personnalisé." body="Clara peut comprendre votre entreprise avant de vous diriger vers la prochaine étape utile.">
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+              <Button size="lg" onClick={() => openAlex("contractor_onboarding", "Comprends mon entreprise.")} className="gap-2"><Mic className="h-4 w-4" /> Parler à Clara</Button>
+              <Button size="lg" variant="outline" onClick={() => navigate(planHref)} className="gap-2">Voir mon plan personnalisé <ArrowRight className="h-4 w-4" /></Button>
             </div>
-          </div>
-
-          {/* CTA */}
-          <div className="mt-16 text-center">
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" className="gap-2 px-8 py-6 rounded-xl" onClick={() => openAlex("contractor_onboarding")}>
-                <Mic className="h-5 w-5" /> Parler avec Clara
-              </Button>
-              <Button size="lg" variant="outline" className="gap-2 px-8 py-6 rounded-xl" onClick={() => navigate("/entrepreneur")}>
-                Commencer maintenant <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
+          </ScrollTextReveal>
+        </EditorialScene>
+        <ImmersiveFooterGrid />
+      </ScrollStory>
+    </MainLayout>
   );
 }

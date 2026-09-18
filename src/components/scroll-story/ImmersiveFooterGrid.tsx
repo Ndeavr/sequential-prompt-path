@@ -12,13 +12,13 @@ export default function ImmersiveFooterGrid() {
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-tint">Housing Intelligence Grid</p>
         <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border/70 bg-border/70 md:grid-cols-5">
           {signals.map((signal) => (
-            <div key={signal} className="min-h-24 bg-background/90 p-4 text-xs font-semibold tracking-[0.16em] text-readable-secondary md:min-h-36">
+            <div key={signal} className="min-h-24 bg-background/90 p-4 text-xs font-semibold tracking-[0.16em] text-readable-soft md:min-h-36">
               {signal}
             </div>
           ))}
         </div>
         <UnproLogo size={260} tone="dark" className="mt-16 h-auto w-full max-w-3xl" />
-        <div className="mt-10 flex flex-col gap-5 border-t border-border/70 pt-6 text-sm text-readable-secondary sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-10 flex flex-col gap-5 border-t border-border/70 pt-6 text-sm text-readable-soft sm:flex-row sm:items-center sm:justify-between">
           <span>UNPRO © 2026 · Québec, Canada</span>
           <nav className="flex flex-wrap gap-x-5 gap-y-3" aria-label="Liens légaux">
             <Link className="transition-colors hover:text-foreground" to="/confidentialite">Confidentialité</Link>
