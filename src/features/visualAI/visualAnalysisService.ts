@@ -4,6 +4,7 @@
  * and return findings + annotations + summary for inline rendering in Alex chat.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { peekClaraSessionToken, rememberClaraReferences } from "@/services/clara/claraSession";
 import type { Annotation, AnnotationSeverity } from "./AIAnnotationLayer";
 import type { VisualFinding } from "./VisualConversationPanel";
 
