@@ -44,8 +44,9 @@ export default function PageOnboardingPayment() {
       ? quote.recommended_monthly_price / 100
       : planObj?.monthlyPrice ?? 0;
 
-  const currentPrice = billingCycle === "monthly" ? monthlyPrice : Math.round(monthlyPrice * 12 * 0.85);
-  const savings = billingCycle === "yearly" ? Math.round(monthlyPrice * 12 - currentPrice) : 0;
+  // Aucun prix annuel calculé côté client : le montant réel est résolu par le
+  // serveur de paiement. On n'affiche que le tarif mensuel confirmé.
+  const currentPrice = monthlyPrice;
 
   const handleCheckout = async () => {
     setIsLoading(true);
@@ -103,7 +104,7 @@ export default function PageOnboardingPayment() {
         <CardContent className="p-4 space-y-3">
           <div className="flex justify-between items-center">
             <span className="font-semibold text-foreground">Plan {planName}</span>
-            <span className="text-xl font-black text-foreground">{currentPrice}$</span>
+            <span className="text-xl font-black text-foreground">{currentPrice}$ / mois</span>
           </div>
 
           {/* Billing Toggle */}
@@ -122,9 +123,15 @@ export default function PageOnboardingPayment() {
               }`}
               onClick={() => setBillingCycle("yearly")}
             >
-              Annuel {savings > 0 && <span className="text-emerald-400 ml-1">-{savings}$</span>}
+              Annuel
             </button>
           </div>
+
+          {billingCycle === "yearly" && (
+            <p className="text-[11px] text-muted-foreground">
+              Le montant annuel exact est confirmé à l'étape de paiement.
+            </p>
+          )}
 
           {/* Coupon */}
           <div className="flex gap-2">
@@ -149,7 +156,9 @@ export default function PageOnboardingPayment() {
         {isLoading ? (
           <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Redirection…</>
         ) : (
-          `Payer ${currentPrice}$ — Activer mon plan`
+          billingCycle === "monthly"
+            ? `Payer ${currentPrice}$ / mois — Activer mon plan`
+            : "Continuer vers le paiement annuel"
         )}
       </Button>
 

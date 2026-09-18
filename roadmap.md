@@ -1,20 +1,27 @@
-# Roadmap UNPRO
+# Roadmap — ONE CLARA continuity
 
-## Fait (P0 acquisition)
-- [x] Cause trouvée : les entreprises importées directement n'étaient jamais sélectionnées par l'agent (sélection limitée aux tables de scraping). Corrigé : sélection pilotée par la file, échéance seulement.
-- [x] Envois réels vérifiés : 8 entreprises « débarras » contactées, 6 livraisons confirmées.
-- [x] Panneau « Prospection aujourd'hui » (données réelles), état des agents, verdict, actions Lancer un cycle / Diagnostiquer, journal des cycles — dans Admin → Acquisition, lisible sur mobile.
+## Étape 1 — Autorité conversationnelle (bloquant)
+- [ ] Choisir l'autorité canonique (alex_sessions vs alex_conversation_sessions) sur preuve
+- [ ] Prouver create → write → refresh → auth → resume → reopen → second device
+- [ ] Déclarer l'autre système comme pont de compatibilité temporaire (documenté)
 
-## Fait (P0 activation gratuite)
-- [x] Activation gratuite atomique hors Stripe : le parcours après connexion exécute la transaction canonique unique (rôle, fiche, réclamation, année gratuite, accompagnement) et n'affiche « Votre profil UNPRO est actif » qu'après confirmation serveur.
-- [x] Chemin gratuit hérité réparé : plus d'écriture silencieuse sur des colonnes inexistantes.
+## Étape 2 — P0
+- [ ] P0-1 sessionId Clara persistant (plus de UUID régénéré à chaque montage)
+- [ ] P0-2 une seule mécanique de session (store + runtime + boîte d'accueil)
+- [ ] P0-3 restauration navigateur réelle (messages + identifiant + contrôle d'appartenance serveur)
+- [ ] P0-4 promotion après OTP/OAuth : conversation rattachée au compte
+- [ ] P0-5 contexte paiement entrepreneur strictement serveur (contractor_id + quote_id)
 
-## À faire ensuite
-- [x] Déployer le système éditorial au défilement sur les cinq pages secondaires prioritaires, sans modifier la home.
-- [ ] Poursuivre jusqu'à 10 activations gratuites (cycle automatique aux 15 minutes).
-- [ ] Élargir la découverte de nouvelles entreprises admissibles (bloquée par le coupe-circuit Google).
-- [ ] Thème sombre par défaut sur l'accueil (logo actuel conservé).
-- [ ] Animation de l'en-tête fixe au défilement.
-- [ ] Mettre à jour l'article canonique « Les 3 soumissions, c'est terminé » avec sources, visuels éditoriaux, SEO et validation de production.
+## Étape 3 — P1
+- [ ] P1-6 conversation → projet (référence project_id/lead_id dans la conversation)
+- [ ] P1-7 réclamation idempotente des analyses de soumissions et vérifications
+- [ ] P1-8 propriété active / Passeport rattaché
+- [ ] P1-9 jumelage → rendez-vous conserve project_id/lead_id
 
-- [x] Remplacer puis publier la vidéo finale Audit IA sur /entrepreneurs/audit-ia; vérifier lecture 16:9 et console.
+## Étape 4
+- [ ] Tests de régression + console + réseau + DB
+- [ ] ONE CLARA UI (une seule boîte extensible)
+- [ ] Nettoyage P2
+
+## Blocages nécessitant approbation
+- Migration destructive, ambiguïté de propriété des données, Stripe live, perte de données, schéma non réversible.

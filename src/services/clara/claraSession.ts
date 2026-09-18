@@ -1,0 +1,171 @@
+/**
+ * UNPRO — ONE CLARA : client de la continuité conversationnelle canonique.
+ *
+ * AUTORITÉ CANONIQUE : la session Clara serveur (`alex_sessions` + `alex_messages`),
+ * orchestrée par la fonction `clara-session`.
+ *
+ * Règles :
+ *  - un seul identifiant de conversation par navigateur, persistant;
+ *  - la conversation ne conserve que des RÉFÉRENCES métier, jamais des copies;
+ *  - la reprise multiappareil vient du serveur, jamais du stockage local;
+ *  - aucune donnée privée n'est placée dans l'URL.
+ */
+import { supabase } from "@/integrations/supabase/client";
+
+const TOKEN_KEY = "unpro_clara_session_token";
+
+export interface ClaraMessage {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+  type?: string;
+  created_at?: string;
+}
+
+export interface ClaraSessionState {
+  session_id: string;
+  session_token: string;
+  auth_state: string;
+  current_step: string;
+  language: string;
+  role: string | null;
+  last_intent: string | null;
+  project_type: string | null;
+  project_city: string | null;
+  recommended_contractor_id: string | null;
+  context: Record<string, unknown>;
+  messages: ClaraMessage[];
+  resumed: boolean;
+}
+
+/** Références métier admissibles. Aucune donnée métier n'est dupliquée ici. */
+export interface ClaraContextPatch {
+  active_property_id?: string | null;
+  active_project_id?: string | null;
+  active_lead_id?: string | null;
+  selected_match_id?: string | null;
+  selected_contractor_id?: string | null;
+  contractor_id?: string | null;
+  pricing_quote_id?: string | null;
+  checkout_session_id?: string | null;
+  current_intent?: string | null;
+  detected_role?: string | null;
+  current_route?: string | null;
+  quote_analysis_ids?: string[];
+  verification_run_ids?: string[];
+  visual_analysis_ids?: string[];
+}
+
+function safeGet(key: string): string | null {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSet(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    /* stockage indisponible : la reprise serveur prend le relais */
+  }
+}
+
+/** Jeton de conversation stable pour ce navigateur (créé une seule fois). */
+export function getClaraSessionToken(): string {
+  if (typeof window === "undefined") return "";
+  const existing = safeGet(TOKEN_KEY);
+  if (existing) return existing;
+  const fresh =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `clara_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  safeSet(TOKEN_KEY, fresh);
+  return fresh;
+}
+
+export function peekClaraSessionToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return safeGet(TOKEN_KEY);
+}
+
+function rememberToken(token: string | undefined | null) {
+  if (token) safeSet(TOKEN_KEY, token);
+}
+
+async function call<T>(action: string, payload: Record<string, unknown> = {}): Promise<T> {
+  const { data, error } = await supabase.functions.invoke("clara-session", {
+    body: { action, ...payload },
+  });
+  if (error) throw new Error(error.message || "clara_session_unavailable");
+  const result = data as T & { error?: string };
+  if (result && typeof result === "object" && "error" in result && result.error) {
+    throw new Error(String(result.error));
+  }
+  return result;
+}
+
+/**
+ * Crée ou reprend LA conversation : même onglet, après rafraîchissement,
+ * après réouverture, et sur un second appareil avec le même compte.
+ */
+export async function startOrResumeClaraSession(options: {
+  language?: string;
+  entrypoint?: string;
+} = {}): Promise<ClaraSessionState> {
+  const state = await call<ClaraSessionState>("start", {
+    session_token: peekClaraSessionToken() ?? getClaraSessionToken(),
+    language: options.language ?? "fr",
+    entrypoint: options.entrypoint ?? "clara_box",
+  });
+  rememberToken(state.session_token);
+  return state;
+}
+
+/** Journalise un message réel dans la conversation canonique (idempotent). */
+export async function appendClaraMessage(input: {
+  role: "user" | "assistant";
+  text: string;
+  messageType?: string;
+  clientMessageId?: string;
+}): Promise<void> {
+  const token = peekClaraSessionToken();
+  if (!token || !input.text.trim()) return;
+  await call("append", {
+    session_token: token,
+    role: input.role,
+    text: input.text,
+    message_type: input.messageType,
+    client_message_id: input.clientMessageId,
+  });
+}
+
+/** Enregistre des références métier dans la conversation. */
+export async function saveClaraContext(patch: ClaraContextPatch): Promise<void> {
+  const token = peekClaraSessionToken();
+  if (!token) return;
+  await call("context", { session_token: token, patch });
+}
+
+/**
+ * Rattache la conversation anonyme au compte après OTP/OAuth, puis réclame
+ * les artefacts anonymes référencés. Idempotent; refuse ce qui appartient
+ * déjà à un autre compte.
+ */
+export async function promoteClaraSession(): Promise<ClaraSessionState | null> {
+  const token = peekClaraSessionToken();
+  if (!token) return null;
+  const state = await call<ClaraSessionState>("promote", { session_token: token });
+  rememberToken(state.session_token);
+  return state;
+}
+
+/** Ajoute une référence d'artefact sans écraser les précédentes. */
+export async function rememberClaraArtifact(
+  kind: "quote_analysis_ids" | "verification_run_ids" | "visual_analysis_ids",
+  id: string,
+): Promise<void> {
+  if (!id) return;
+  await saveClaraContext({ [kind]: [id] } as ClaraContextPatch);
+}
