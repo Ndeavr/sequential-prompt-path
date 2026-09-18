@@ -145,6 +145,8 @@ export default function OverlayAlexVoiceFullScreen() {
   const playTtsFallbackGreeting = useCallback((reason: string) => {
     const s = getStore();
     if (!s.isOverlayOpen) return;
+    // En pause : jamais de parole de secours.
+    if (s.machineState === "paused") return;
     if (hasGreeted()) {
       // Greeting already delivered this tab session — no replay, no red banner.
       // Just settle into a calm listening state so the user can speak.
