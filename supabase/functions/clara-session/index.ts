@@ -267,6 +267,141 @@ Deno.serve(async (req) => {
     return !!userId && session.user_id === userId;
   }
 
+  /** Propriété admissible : appartient au compte, ou encore anonyme. */
+  function ownable(owner: string | null | undefined): boolean {
+    if (!owner) return true;
+    return !!userId && owner === userId;
+  }
+
+  async function row(table: string, columns: string, id: string) {
+    const { data } = await admin.from(table).select(columns).eq("id", id).maybeSingle();
+    return (data as Record<string, unknown> | null) ?? null;
+  }
+
+  /**
+   * Validation serveur obligatoire : un UUID valide mais étranger à la
+   * conversation ou au compte est refusé, jamais enregistré.
+   */
+  async function validateReferences(
+    patch: Record<string, unknown>,
+    context: Record<string, unknown>,
+    session: SessionRow,
+  ): Promise<{ accepted: Record<string, unknown>; refused: string[] }> {
+    const accepted: Record<string, unknown> = {};
+    const refused: string[] = [];
+    const resolve = (key: string) => (patch[key] as string) ?? (context[key] as string) ?? null;
+
+    for (const [key, value] of Object.entries(patch)) {
+      if (value === null || !(VALIDATED_KEYS as readonly string[]).includes(key)) {
+        if (!(CONTEXT_LIST_KEYS as readonly string[]).includes(key)) {
+          accepted[key] = value;
+          continue;
+        }
+      }
+      const id = value as string;
+
+      switch (key) {
+        case "active_project_id": {
+          const r = await row("projects", "id,user_id", id);
+          if (r && ownable(r.user_id as string | null)) accepted[key] = id;
+          else refused.push(key);
+          break;
+        }
+        case "active_lead_id": {
+          const r = await row("leads", "id,owner_profile_id,property_id", id);
+          if (r && ownable(r.owner_profile_id as string | null)) accepted[key] = id;
+          else refused.push(key);
+          break;
+        }
+        case "active_property_id": {
+          const r = await row("properties", "id,user_id", id);
+          if (r && ownable(r.user_id as string | null)) accepted[key] = id;
+          else refused.push(key);
+          break;
+        }
+        case "selected_match_id": {
+          const r = await row("matches", "id,lead_id,contractor_id", id);
+          const lead = resolve("active_lead_id");
+          if (r && lead && r.lead_id === lead) accepted[key] = id;
+          else refused.push(key);
+          break;
+        }
+        case "appointment_id": {
+          const r = await row("appointments", "id,lead_id,contractor_id,homeowner_user_id", id);
+          const lead = resolve("active_lead_id");
+          const okLead = !lead || r?.lead_id === lead;
+          const okOwner = ownable((r?.homeowner_user_id as string | null) ?? null);
+          if (r && okLead && okOwner) accepted[key] = id;
+          else refused.push(key);
+          break;
+        }
+        case "contractor_id": {
+          const r = await row("contractors", "id,user_id", id);
+          if (r && ownable(r.user_id as string | null)) accepted[key] = id;
+          else refused.push(key);
+          break;
+        }
+        case "selected_contractor_id": {
+          const r = await row("contractors", "id", id);
+          if (r) accepted[key] = id;
+          else refused.push(key);
+          break;
+        }
+        case "pricing_quote_id": {
+          const r = await row("contractor_pricing_quotes", "id,contractor_id,user_id", id);
+          const contractor = resolve("contractor_id");
+          const okContractor = !contractor || r?.contractor_id === contractor;
+          if (r && okContractor && ownable((r.user_id as string | null) ?? null)) accepted[key] = id;
+          else refused.push(key);
+          break;
+        }
+        case "quote_analysis_ids": {
+          const ids: string[] = [];
+          for (const one of value as string[]) {
+            const r = await row("quote_analyses", "id,user_id", one);
+            if (r && ownable(r.user_id as string | null)) ids.push(one);
+          }
+          if (ids.length !== (value as string[]).length) refused.push(key);
+          if (ids.length) accepted[key] = ids;
+          break;
+        }
+        case "verification_run_ids": {
+          const ids: string[] = [];
+          const visitor = resolve("visitor_id");
+          for (const one of value as string[]) {
+            const r = await row("contractor_verification_runs", "id,user_id,visitor_id", one);
+            if (!r) continue;
+            const mine = ownable(r.user_id as string | null);
+            const sameVisitor = !r.user_id && !!visitor && r.visitor_id === visitor;
+            if (mine || sameVisitor) ids.push(one);
+          }
+          if (ids.length !== (value as string[]).length) refused.push(key);
+          if (ids.length) accepted[key] = ids;
+          break;
+        }
+        case "visual_analysis_ids": {
+          const ids: string[] = [];
+          for (const one of value as string[]) {
+            const r = await row("visual_analyses", "id,user_id,session_id", one);
+            if (!r) continue;
+            const mine = ownable(r.user_id as string | null);
+            const sameSession =
+              !r.user_id &&
+              (r.session_id === session.session_token || r.session_id === session.id);
+            if (mine || sameSession) ids.push(one);
+          }
+          if (ids.length !== (value as string[]).length) refused.push(key);
+          if (ids.length) accepted[key] = ids;
+          break;
+        }
+        default:
+          accepted[key] = value;
+      }
+    }
+
+    return { accepted, refused };
+  }
+
   function serialize(session: SessionRow) {
     return {
       session_id: session.id,
