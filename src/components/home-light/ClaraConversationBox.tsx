@@ -336,6 +336,7 @@ export default function ClaraConversationBox() {
 
   return (
     <motion.section
+      ref={rootRef}
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.12 }}
@@ -343,19 +344,43 @@ export default function ClaraConversationBox() {
       aria-label="Conversation avec Clara"
     >
       <div className="home-clara-main home-clara-glass overflow-hidden border border-border">
-        <div className="home-clara-presence" aria-hidden="true"><span /><i /><i /></div>
+        <div
+          className={`home-clara-presence${busy ? " is-active" : ""}`}
+          data-state={busy ? "working" : "idle"}
+          aria-hidden="true"
+        >
+          <span /><i /><i />
+        </div>
       {messages.length > 0 && (
         <Conversation className="home-clara-conversation max-h-[38vh] min-h-28">
           <ConversationContent className="gap-3 px-5 py-4 sm:px-6">
             {messages.map((message) => (
               <Message from={message.role} key={message.id}>
-                <MessageContent className="leading-relaxed group-[.is-user]:bg-primary-strong group-[.is-user]:text-primary-foreground">
+                <MessageContent
+                  data-role={message.role}
+                  data-streaming={busy && message.role === "assistant" && message.id === messages[messages.length - 1]?.id ? "true" : "false"}
+                  className="home-clara-message home-clara-message leading-relaxed group-[.is-user]:bg-primary-strong group-[.is-user]:text-primary-foreground"
+                >
                   <MessageResponse>{message.text}</MessageResponse>
                 </MessageContent>
               </Message>
             ))}
-            {busy && <Shimmer className="text-sm text-muted-foreground">{copy.working}</Shimmer>}
-            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+            {quickReplies && !busy && (
+              <div className="home-clara-quick" role="group" aria-label="Réponses rapides">
+                {quickReplies.options.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => chooseQuickReply(option)}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            )}
+            {busy && <p className="home-clara-working" role="status">{copy.working}</p>}
+            {error && <p role="alert" className="home-clara-error">{error}</p>}
           </ConversationContent>
           <ConversationScrollButton />
         </Conversation>
