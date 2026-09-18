@@ -79,6 +79,8 @@ Aucune nouvelle table, migration, route métier, fonction serveur, donnée ficti
 
 ## 10. CONSTRAINTS
 
+- Si un moteur métier réel, une donnée admissible ou une disponibilité nécessaire est absente, Clara reste dans la conversation, affiche l’état réel et propose la prochaine action possible. Ne jamais simuler un résultat pour compléter l’UX.
+
 - Ne pas modifier l’architecture canonique sauf bug démontré.
 - Ne pas recréer de backend, session, conversation, authentification, paiement, matching ou calendrier.
 - Ne pas modifier Stripe live ni exécuter de charge réelle.
