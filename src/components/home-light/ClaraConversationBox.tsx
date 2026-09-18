@@ -61,6 +61,26 @@ function uid() {
   return Math.random().toString(36).slice(2, 10);
 }
 
+/**
+ * Clara décide elle-même quand une question a des réponses fermées : elle
+ * termine alors son message par un marqueur `[[CHOIX: A | B | C]]`.
+ * Le marqueur n'est jamais affiché ; il devient des boutons de réponse rapide.
+ */
+export const CHOICE_MARKER = /\[\[\s*CHOIX\s*:([^\]]*)\]\]/i;
+
+export function extractQuickReplies(raw: string): { text: string; options: string[] } {
+  const match = raw.match(CHOICE_MARKER);
+  if (!match) return { text: raw, options: [] };
+  const options = match[1]
+    .split("|")
+    .map((option) => option.trim())
+    .filter(Boolean)
+    .slice(0, 6);
+  return { text: raw.replace(CHOICE_MARKER, "").trim(), options };
+}
+
+type QuickReplies = { messageId: string; options: string[] };
+
 export default function ClaraConversationBox() {
   const { openAlex } = useAlexVoice();
   const { handleUpload } = useAlexConversation();
@@ -90,8 +110,18 @@ export default function ClaraConversationBox() {
   const [mode, setMode] = useState<ClaraSurfaceMode>("IDLE");
   const [quoteCount, setQuoteCount] = useState(0);
   const [contextStatus, setContextStatus] = useState<string | null>(null);
+  const [quickReplies, setQuickReplies] = useState<QuickReplies | null>(null);
   const hydrated = useRef(false);
   const cameraRef = useRef<HTMLInputElement>(null);
+  const rootRef = useRef<HTMLElement>(null);
+
+  const focusComposer = useCallback(() => {
+    const textarea = rootRef.current?.querySelector("textarea");
+    if (textarea instanceof HTMLTextAreaElement) {
+      textarea.disabled = false;
+      textarea.focus();
+    }
+  }, []);
   const hasInteracted = messages.length > 0 || mode !== "IDLE";
   const contextVisible = !["IDLE", "LISTENING", "ANALYZING"].includes(mode);
   const examples = useMemo(() => ["J’ai de l’eau ici.", "J’ai trois soumissions.", "Vérifie Construction ABC."], []);
