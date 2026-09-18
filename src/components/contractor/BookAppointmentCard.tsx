@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { rememberClaraReferences } from "@/services/clara/claraSession";
 import { toast } from "sonner";
 import { CalendarPlus, Loader2, CheckCircle2 } from "lucide-react";
 
@@ -63,6 +64,12 @@ export default function BookAppointmentCard({ matchId, responseStatus, projectCa
       if (error || !data?.ok) {
         throw new Error(error?.message || data?.error || "Erreur");
       }
+
+      // ONE CLARA : jumelage et rendez-vous restent liés à la même conversation.
+      rememberClaraReferences({
+        selected_match_id: matchId,
+        appointment_id: (data?.appointment?.id as string) ?? undefined,
+      });
 
       toast.success("Rendez-vous créé !");
       setBooked(true);
