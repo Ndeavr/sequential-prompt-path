@@ -3,6 +3,7 @@
  * Bridges Alex intake → compute-pricing-quote edge function → quote persistence.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { rememberClaraReferences } from "@/services/clara/claraSession";
 
 export interface PricingIntakeInput {
   trade_primary: string;
