@@ -452,14 +452,9 @@ export default function OverlayAlexVoiceFullScreen() {
       sessionIdRef.current = "";
     }
 
-    bootInitiatedRef.current = false;
-    hasConnectedRef.current = false;
-    firstAudioReceivedRef.current = false;
-    ttsFallbackInProgressRef.current = false;
     setSlowToken(false);
     setShowListeningHint(false);
     setBootStep("init");
-    s.pauseVoiceSession(reason);
   }, [clearInactivityTimer, stop]);
 
   const armInactivity = useCallback((reason: string) => {
