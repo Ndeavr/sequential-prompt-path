@@ -82,6 +82,11 @@ export async function computePricingQuote(
   const quote: PricingQuote | null = payload?.quote
     ?? (payload?.quote_id ? ({ ...payload, id: payload.quote_id } as PricingQuote) : null);
   if (!quote?.id) throw new Error("Votre plan a été calculé mais son identifiant est introuvable. Réessayez.");
+  // ONE CLARA : même entreprise et même devis personnalisé jusqu'au paiement.
+  rememberClaraReferences({
+    pricing_quote_id: quote.id,
+    contractor_id: quote.contractor_id ?? undefined,
+  });
   return quote;
 }
 
