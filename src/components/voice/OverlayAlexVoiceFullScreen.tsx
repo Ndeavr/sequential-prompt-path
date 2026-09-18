@@ -214,6 +214,7 @@ export default function OverlayAlexVoiceFullScreen() {
 
   const { start, stop, isActive, isConnecting, isSpeaking, conversation } = useLiveVoice({
     onFirstAudio: () => {
+      if (getStore().machineState === "paused") return;
       firstAudioReceivedRef.current = true;
       autoRetryCountRef.current = 0;
       markGreeted();
