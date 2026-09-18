@@ -43,7 +43,7 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 type Msg = { id: string; role: "user" | "assistant"; text: string };
 
 const QUOTE_PATTERN = /\b(soumission|soumissions|devis|comparer|comparaison)\b/i;
-const CONTRACTOR_PATTERN = /\b(vérifi|verification|entrepreneur|contracteur|plombier|peintre|couvreur|électricien|mon entreprise|je suis pro)\b/i;
+const CONTRACTOR_PATTERN = /\b(vérifi|verification|entrepreneur|contracteur|construction|plombier|peintre|couvreur|électricien|mon entreprise|je suis pro)\b/i;
 const APPOINTMENT_PATTERN = /\b(rendez-vous|réserver|disponibilit|horaire|quand)\b/i;
 const MATCH_PATTERN = /\b(jumelage|recommande|entrepreneur compatible|bon entrepreneur)\b/i;
 const PROJECT_PATTERN = /\b(réparer|rénover|moderniser|améliorer|cuisine|salle de bain|toit|toiture|fuite|eau|fissure|projet)\b/i;
