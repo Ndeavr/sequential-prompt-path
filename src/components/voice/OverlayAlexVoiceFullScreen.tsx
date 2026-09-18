@@ -52,6 +52,10 @@ const BOOT_TIMEOUT_MS = 12_000;
 const FIRST_AUDIO_TIMEOUT_MS = 12_000;
 const TOKEN_SLOW_THRESHOLD_MS = 1500; // Show "Connexion de Clara…" sooner
 const MAX_AUTO_RETRIES = 0; // Strictly event-driven — never silently retry.
+// Inactivité : un seul minuteur actif. Aucune parole de relance — Clara se tait,
+// l'orbe montre qu'elle écoute, puis la session vocale se met réellement en pause.
+const IDLE_HINT_MS = 9_000;
+const IDLE_PAUSE_MS = 20_000;
 
 // Helper to always get fresh state
 const getStore = () => useAlexVoiceLockedStore.getState();
