@@ -432,8 +432,16 @@
     display: block;
     width: 4px;
     border-radius: var(--radius-pill);
+    background: hsl(var(--primary) / 0.32);
+    box-shadow: none;
+    animation: none;
+    opacity: 0.55;
+  }
+  .home-light .home-clara-presence.is-active span,
+  .home-light .home-clara-presence.is-active i {
     background: hsl(var(--primary));
     box-shadow: 0 0 14px hsl(var(--primary) / 0.46);
+    opacity: 1;
     animation: clara-wave 2.4s ease-in-out infinite;
   }
   .home-light .home-clara-presence span { height: 16px; }
@@ -447,6 +455,47 @@
   .home-light .home-clara-conversation .is-user [class*="text-primary-foreground"] { color: hsl(var(--primary-foreground)); }
   .home-light .home-clara-conversation [class*="text-muted-foreground"] { color: hsl(220 14% 38%); }
   .home-light .home-clara-conversation [class*="text-destructive"] { color: hsl(var(--destructive)); }
+  /* Lisibilité absolue du message final : le texte assistant reste sombre sur le panneau clair. */
+  .home-light .home-clara-conversation .home-clara-message.home-clara-message,
+  .home-light .home-clara-conversation .home-clara-message.home-clara-message * {
+    color: hsl(222 49% 9%);
+    opacity: 1;
+    -webkit-text-fill-color: currentColor;
+  }
+  .home-light .home-clara-conversation .is-user .home-clara-message.home-clara-message,
+  .home-light .home-clara-conversation .is-user .home-clara-message.home-clara-message * {
+    color: hsl(var(--primary-foreground));
+  }
+  .home-light .home-clara-working {
+    font-size: 0.85rem;
+    color: hsl(220 14% 38%);
+    animation: clara-working-pulse 1.6s ease-in-out infinite;
+  }
+  .home-light .home-clara-error { font-size: 0.85rem; color: hsl(0 72% 42%); }
+  @keyframes clara-working-pulse {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 1; }
+  }
+  .home-light .home-clara-quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-top: 0.1rem;
+  }
+  .home-light .home-clara-quick button {
+    min-height: 44px;
+    padding: 0.55rem 1rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid hsl(var(--primary) / 0.45);
+    background: hsl(var(--primary) / 0.08);
+    color: hsl(222 49% 9%);
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: transform 180ms var(--ease-cinematic), background 180ms ease;
+  }
+  .home-light .home-clara-quick button:hover:not(:disabled) { transform: translateY(-2px); background: hsl(var(--primary) / 0.16); }
+  .home-light .home-clara-quick button:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
+  .home-light .home-clara-quick button:disabled { opacity: 0.5; }
   @keyframes clara-wave {
     0%, 100% { transform: scaleY(0.7); opacity: 0.72; }
     50% { transform: scaleY(1.2); opacity: 1; }
