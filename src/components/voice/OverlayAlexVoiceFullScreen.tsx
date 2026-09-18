@@ -1092,7 +1092,21 @@ export default function OverlayAlexVoiceFullScreen() {
 
           {/* Voice Orb — same AlexMorphingOrb used on the homepage */}
           <div className="flex flex-col items-center py-6">
-            <AlexMorphingOrb state={deriveOrbStateV2(state, isSpeaking)} size="lg" ariaLabel="Clara" />
+            {isPaused ? (
+              <button
+                type="button"
+                onClick={handleResumeVoice}
+                aria-label="Reprendre la session vocale"
+                className="flex flex-col items-center gap-3 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+              >
+                <span className="opacity-60">
+                  <AlexMorphingOrb state="idle" size="lg" ariaLabel="Clara en pause" />
+                </span>
+                <span className="text-sm text-foreground/80">En pause — toucher pour reprendre</span>
+              </button>
+            ) : (
+              <AlexMorphingOrb state={deriveOrbStateV2(state, isSpeaking)} size="lg" ariaLabel="Clara" />
+            )}
           </div>
 
           {/* Error banner */}
