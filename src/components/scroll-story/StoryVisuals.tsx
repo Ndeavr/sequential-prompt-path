@@ -67,7 +67,7 @@ export function PassportLayersVisual() {
       <div className="flex items-center gap-3 border-b border-border/70 pb-4"><Home className="h-5 w-5 text-primary" /><strong>Passeport Maison</strong></div>
       <div className="mt-6 space-y-3">
         {["Photos et documents", "Équipements", "Travaux et intervenants", "Entretien et observations"].map((label, index) => (
-          <div key={label} className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/25 p-4" style={{ marginLeft: `${index * 8}px` }}>
+          <div key={label} className={`flex items-center gap-3 rounded-lg border border-border/70 bg-muted/25 p-4 ${["", "ml-2", "ml-4", "ml-6"][index]}`}>
             <FileCheck2 className="h-5 w-5 text-primary" /><span className="text-sm">{label}</span><span className="ml-auto text-xs text-readable-soft">{index === 0 ? "Déclaré" : "À confirmer"}</span>
           </div>
         ))}

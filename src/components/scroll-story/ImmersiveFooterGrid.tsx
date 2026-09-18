@@ -9,7 +9,7 @@ export default function ImmersiveFooterGrid() {
       <div aria-hidden className="pointer-events-none absolute inset-0 opacity-60 [background-image:linear-gradient(to_right,hsl(var(--border)/0.45)_1px,transparent_1px)] [background-size:20%_100%]" />
       <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-3/4 bg-[linear-gradient(180deg,transparent,hsl(var(--primary)/0.09))]" />
       <div className="relative mx-auto max-w-7xl px-5 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-20 md:px-8 md:pb-20 md:pt-28">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-tint">Housing Intelligence Grid</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-tint">Grille d’intelligence résidentielle</p>
         <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border/70 bg-border/70 md:grid-cols-5">
           {signals.map((signal) => (
             <div key={signal} className="min-h-24 bg-background/90 p-4 text-xs font-semibold tracking-[0.16em] text-readable-soft md:min-h-36">
