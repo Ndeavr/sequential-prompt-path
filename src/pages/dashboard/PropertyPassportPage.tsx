@@ -22,6 +22,7 @@ import { submitClaim, getClaimStatusLabel } from "@/services/property/claimServi
 import { getStatusLabel } from "@/services/property/propertyService";
 import { calculateHomeScore, type HomeScoreInput, type HomeScoreOutput } from "@/services/homeScoreService";
 import { supabase } from "@/integrations/supabase/client";
+import { rememberClaraReferences } from "@/services/clara/claraSession";
 import { useToast } from "@/hooks/use-toast";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import {
