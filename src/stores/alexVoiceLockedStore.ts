@@ -22,6 +22,7 @@ export type LockedVoiceState =
   | "processing_response"
   | "speaking"
   | "awaiting_user"
+  | "paused"             // silence technique réel : transport vocal coupé, conversation Clara intacte
   | "error_recoverable"
   | "error_fatal"
   | "closing";
@@ -29,17 +30,18 @@ export type LockedVoiceState =
 // Allowed transitions map
 const ALLOWED_TRANSITIONS: Record<LockedVoiceState, LockedVoiceState[]> = {
   idle: ["requesting_permission", "opening_session"],
-  requesting_permission: ["opening_session", "error_fatal", "error_recoverable", "closing"],
-  opening_session: ["stabilizing", "error_recoverable", "error_fatal", "closing"],
-  stabilizing: ["session_ready", "speaking", "listening", "error_recoverable", "error_fatal"],
-  session_ready: ["listening", "speaking", "capturing_voice", "error_recoverable", "closing"],
-  listening: ["capturing_voice", "processing_stt", "speaking", "error_recoverable", "closing"],
-  capturing_voice: ["processing_stt", "listening", "speaking", "error_recoverable", "closing"],
-  processing_stt: ["processing_response", "listening", "speaking", "error_recoverable", "closing"],
-  processing_response: ["speaking", "listening", "error_recoverable", "closing"],
-  speaking: ["awaiting_user", "listening", "capturing_voice", "error_recoverable", "closing"],
-  awaiting_user: ["listening", "capturing_voice", "speaking", "error_recoverable", "closing"],
-  error_recoverable: ["listening", "opening_session", "stabilizing", "closing", "error_fatal"],
+  requesting_permission: ["opening_session", "error_fatal", "error_recoverable", "paused", "closing"],
+  opening_session: ["stabilizing", "error_recoverable", "error_fatal", "paused", "closing"],
+  stabilizing: ["session_ready", "speaking", "listening", "error_recoverable", "error_fatal", "paused"],
+  session_ready: ["listening", "speaking", "capturing_voice", "error_recoverable", "paused", "closing"],
+  listening: ["capturing_voice", "processing_stt", "speaking", "error_recoverable", "paused", "closing"],
+  capturing_voice: ["processing_stt", "listening", "speaking", "error_recoverable", "paused", "closing"],
+  processing_stt: ["processing_response", "listening", "speaking", "error_recoverable", "paused", "closing"],
+  processing_response: ["speaking", "listening", "error_recoverable", "paused", "closing"],
+  speaking: ["awaiting_user", "listening", "capturing_voice", "error_recoverable", "paused", "closing"],
+  awaiting_user: ["listening", "capturing_voice", "speaking", "error_recoverable", "paused", "closing"],
+  paused: ["requesting_permission", "opening_session", "closing", "idle"],
+  error_recoverable: ["listening", "opening_session", "stabilizing", "paused", "closing", "error_fatal"],
   error_fatal: ["closing", "idle"],
   closing: ["idle"],
 };
