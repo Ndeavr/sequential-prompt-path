@@ -47,7 +47,7 @@ function buildTaxonomy(rows: any[]): TradeTaxonomy {
     description: (r.description_fr ?? null) as string | null,
     parentId: (r.parent_id ?? null) as string | null,
     sortOrder: (r.sort_order ?? 0) as number,
-    keywords: ((r.ai_keywords ?? []) as string[]) ?? [],
+    keywords: ((r.ai_keywords ?? []) as string[]),
   }));
 
   const bySlug = new Map(nodes.map((n) => [n.slug, n]));
