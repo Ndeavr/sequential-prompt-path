@@ -56,7 +56,7 @@ export default function CommentCaMarchePage() {
         <RevealSection>
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <TrustFlowVisual />
-            <ScrollTextReveal eyebrow="Ordre obligatoire" title="La conformité avant la compatibilité." body="Une licence requise qui n’est pas verifiably active exclut l’entrepreneur. Les avis, la visibilité ou un forfait ne remplacent jamais ce contrôle." />
+            <ScrollTextReveal eyebrow="Ordre obligatoire" title="La conformité avant la compatibilité." body="Une licence requise qui n’est pas vérifiable comme active exclut l’entrepreneur. Les avis, la visibilité ou un forfait ne remplacent jamais ce contrôle." />
           </div>
         </RevealSection>
         <RevealSection className="bg-muted/20">

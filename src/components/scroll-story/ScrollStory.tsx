@@ -21,7 +21,7 @@ export function useStoryProgress() {
 }
 
 interface BaseProps {
-  children: ReactNode;
+  children?: ReactNode;
   className?: string;
   id?: string;
 }
@@ -125,7 +125,6 @@ export function ParallaxMedia({ children, className, distance = 32 }: ParallaxMe
 }
 
 interface ScrollTextRevealProps extends BaseProps {
-  children?: ReactNode;
   eyebrow?: string;
   title: string;
   body?: string;
