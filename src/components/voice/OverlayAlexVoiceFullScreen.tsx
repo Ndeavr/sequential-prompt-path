@@ -719,14 +719,15 @@ export default function OverlayAlexVoiceFullScreen() {
   useEffect(() => {
     if (!store.isOverlayOpen) {
       console.log("[ALEX VOICE] 🧹 Overlay closed — full destroy");
-      if (stabilizationTimerRef.current) clearTimeout(stabilizationTimerRef.current);
-      if (heartbeatRef.current) clearInterval(heartbeatRef.current);
-      if (firstAudioTimerRef.current) clearTimeout(firstAudioTimerRef.current);
-      if (slowTokenTimerRef.current) clearTimeout(slowTokenTimerRef.current);
-      elevenlabsService.stop();
-      if (isActive) {
-        stop();
-      }
+      if (stabilizationTimerRef.current) { clearTimeout(stabilizationTimerRef.current); stabilizationTimerRef.current = null; }
+      if (heartbeatRef.current) { clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
+      if (firstAudioTimerRef.current) { clearTimeout(firstAudioTimerRef.current); firstAudioTimerRef.current = null; }
+      if (slowTokenTimerRef.current) { clearTimeout(slowTokenTimerRef.current); slowTokenTimerRef.current = null; }
+      if (nudgeTimerRef.current) { clearTimeout(nudgeTimerRef.current); nudgeTimerRef.current = null; }
+      if (inactivityTimerRef.current) { clearTimeout(inactivityTimerRef.current); inactivityTimerRef.current = null; }
+      try { elevenlabsService.stop(); } catch {}
+      // Arrêt inconditionnel : micro, écoute et session fournisseur coupés.
+      try { stop(); } catch {}
       // Release single-session lock so next open boots clean
       if (sessionIdRef.current) {
         unlockRuntime();
@@ -739,6 +740,7 @@ export default function OverlayAlexVoiceFullScreen() {
       autoRetryCountRef.current = 0;
       setTranscripts([]);
       setSlowToken(false);
+      setShowListeningHint(false);
       entryIdRef.current = 0;
       lastAlexIdRef.current = null;
       setBootStep("init");
