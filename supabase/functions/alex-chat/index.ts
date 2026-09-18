@@ -500,7 +500,17 @@ Si audio flou : "Désolée, je n'ai pas bien compris. Pouvez-vous répéter ?"`;
 const TEXT_MODE_RULES = `
 
 MODE TEXTE :
-Réponds naturellement en paragraphes courts. Utilise des listes à puces quand pertinent. Garde tes réponses à 2-4 phrases max sauf si plus demandé. Termine par une suggestion d'action claire.`;
+Réponds naturellement en paragraphes courts. Utilise des listes à puces quand pertinent. Garde tes réponses à 2-4 phrases max sauf si plus demandé. Termine par une suggestion d'action claire.
+
+RÉPONSES RAPIDES :
+Quand ta question n'a qu'un nombre limité de réponses possibles (oui/non, matériau, type de propriété, niveau d'urgence, fourchette de budget, disponibilité, taille, catégorie, préférence fermée), termine ton message par une dernière ligne au format exact :
+[[CHOIX: Option A | Option B | Option C]]
+Règles :
+- entre 2 et 6 options, très courtes (1 à 3 mots)
+- ajoute « Je ne sais pas » ou « Autre » lorsque l'utilisateur peut légitimement ne pas savoir
+- n'écris jamais ce marqueur pour une question ouverte
+- n'explique jamais le marqueur et ne le mentionne pas dans le texte
+- une seule ligne [[CHOIX: ...]] par message, toujours en dernier`;
 
 // ===== FRUSTRATION PROMPT ADDON =====
 function getFrustrationPrompt(level: number): string {

@@ -61,6 +61,26 @@ function uid() {
   return Math.random().toString(36).slice(2, 10);
 }
 
+/**
+ * Clara décide elle-même quand une question a des réponses fermées : elle
+ * termine alors son message par un marqueur `[[CHOIX: A | B | C]]`.
+ * Le marqueur n'est jamais affiché ; il devient des boutons de réponse rapide.
+ */
+export const CHOICE_MARKER = /\[\[\s*CHOIX\s*:([^\]]*)\]\]/i;
+
+export function extractQuickReplies(raw: string): { text: string; options: string[] } {
+  const match = raw.match(CHOICE_MARKER);
+  if (!match) return { text: raw, options: [] };
+  const options = match[1]
+    .split("|")
+    .map((option) => option.trim())
+    .filter(Boolean)
+    .slice(0, 6);
+  return { text: raw.replace(CHOICE_MARKER, "").trim(), options };
+}
+
+type QuickReplies = { messageId: string; options: string[] };
+
 export default function ClaraConversationBox() {
   const { openAlex } = useAlexVoice();
   const { handleUpload } = useAlexConversation();
@@ -90,8 +110,18 @@ export default function ClaraConversationBox() {
   const [mode, setMode] = useState<ClaraSurfaceMode>("IDLE");
   const [quoteCount, setQuoteCount] = useState(0);
   const [contextStatus, setContextStatus] = useState<string | null>(null);
+  const [quickReplies, setQuickReplies] = useState<QuickReplies | null>(null);
   const hydrated = useRef(false);
   const cameraRef = useRef<HTMLInputElement>(null);
+  const rootRef = useRef<HTMLElement>(null);
+
+  const focusComposer = useCallback(() => {
+    const textarea = rootRef.current?.querySelector("textarea");
+    if (textarea instanceof HTMLTextAreaElement) {
+      textarea.disabled = false;
+      textarea.focus();
+    }
+  }, []);
   const hasInteracted = messages.length > 0 || mode !== "IDLE";
   const contextVisible = !["IDLE", "LISTENING", "ANALYZING"].includes(mode);
   const examples = useMemo(() => ["J’ai de l’eau ici.", "J’ai trois soumissions.", "Vérifie Construction ABC."], []);
@@ -128,6 +158,7 @@ export default function ClaraConversationBox() {
       if (!text || busy) return;
 
       setError(null);
+      setQuickReplies(null);
       const userMessageId = uid();
       const history = [...messages, { id: userMessageId, role: "user" as const, text }];
       setMessages(history);
@@ -182,7 +213,7 @@ export default function ClaraConversationBox() {
               const delta = json?.choices?.[0]?.delta?.content;
               if (typeof delta === "string") {
                 full += delta;
-                const shown = cleanAlexText(full);
+                const shown = cleanAlexText(extractQuickReplies(full).text);
                 setMessages((prev) =>
                   prev.map((m) =>
                     m.id === assistantId ? { ...m, text: shown } : m,
@@ -195,12 +226,14 @@ export default function ClaraConversationBox() {
           }
         }
 
-        const finalText = cleanAlexText(full);
+        const parsed = extractQuickReplies(full);
+        const finalText = cleanAlexText(parsed.text);
         const shownText =
           finalText || "Je continue ici avec vous. Décrivez-moi la situation en quelques mots.";
         setMessages((prev) =>
           prev.map((m) => (m.id === assistantId ? { ...m, text: shownText } : m)),
         );
+        setQuickReplies(parsed.options.length >= 2 ? { messageId: assistantId, options: parsed.options } : null);
         void appendClaraMessage({
           role: "assistant",
           text: shownText,
@@ -212,9 +245,23 @@ export default function ClaraConversationBox() {
       } finally {
         setBusy(false);
         setMode((current) => current === "ANALYZING" ? nextMode : current);
+        focusComposer();
       }
     },
-    [busy, copy.fallback, messages],
+    [busy, copy.fallback, focusComposer, messages],
+  );
+
+  const chooseQuickReply = useCallback(
+    (option: string) => {
+      if (busy) return;
+      setQuickReplies(null);
+      if (/^autre$/i.test(option)) {
+        focusComposer();
+        return;
+      }
+      void send(option);
+    },
+    [busy, focusComposer, send],
   );
 
   const submit = useCallback(async (message: PromptInputMessage) => {
@@ -289,6 +336,7 @@ export default function ClaraConversationBox() {
 
   return (
     <motion.section
+      ref={rootRef}
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.12 }}
@@ -296,19 +344,43 @@ export default function ClaraConversationBox() {
       aria-label="Conversation avec Clara"
     >
       <div className="home-clara-main home-clara-glass overflow-hidden border border-border">
-        <div className="home-clara-presence" aria-hidden="true"><span /><i /><i /></div>
+        <div
+          className={`home-clara-presence${busy ? " is-active" : ""}`}
+          data-state={busy ? "working" : "idle"}
+          aria-hidden="true"
+        >
+          <span /><i /><i />
+        </div>
       {messages.length > 0 && (
         <Conversation className="home-clara-conversation max-h-[38vh] min-h-28">
           <ConversationContent className="gap-3 px-5 py-4 sm:px-6">
             {messages.map((message) => (
               <Message from={message.role} key={message.id}>
-                <MessageContent className="leading-relaxed group-[.is-user]:bg-primary-strong group-[.is-user]:text-primary-foreground">
+                <MessageContent
+                  data-role={message.role}
+                  data-streaming={busy && message.role === "assistant" && message.id === messages[messages.length - 1]?.id ? "true" : "false"}
+                  className="home-clara-message home-clara-message leading-relaxed group-[.is-user]:bg-primary-strong group-[.is-user]:text-primary-foreground"
+                >
                   <MessageResponse>{message.text}</MessageResponse>
                 </MessageContent>
               </Message>
             ))}
-            {busy && <Shimmer className="text-sm text-muted-foreground">{copy.working}</Shimmer>}
-            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+            {quickReplies && !busy && (
+              <div className="home-clara-quick" role="group" aria-label="Réponses rapides">
+                {quickReplies.options.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => chooseQuickReply(option)}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            )}
+            {busy && <p className="home-clara-working" role="status">{copy.working}</p>}
+            {error && <p role="alert" className="home-clara-error">{error}</p>}
           </ConversationContent>
           <ConversationScrollButton />
         </Conversation>
