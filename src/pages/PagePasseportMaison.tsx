@@ -9,18 +9,21 @@ import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import SmartHeader from "@/components/navigation/SmartHeader";
-import SmartFooter from "@/components/navigation/SmartFooter";
-import {
-  SectionPassportHero,
-  SectionPassportPeriods,
-  SectionPassportResale,
-} from "@/components/passeport/SectionPassportStory";
-import SectionPasseportValueProps from "@/components/passeport/SectionPasseportValueProps";
 import {
   PASSPORT_META_TITLE,
   PASSPORT_META_DESCRIPTION,
   PASSPORT_HOME_TEASER,
 } from "@/lib/copy/passportPositioning";
+import { ArrowRight } from "lucide-react";
+import {
+  EditorialScene,
+  RevealSection,
+  ScrollStory,
+  ScrollTextReveal,
+  StackedCards,
+} from "@/components/scroll-story/ScrollStory";
+import { PassportLayersVisual } from "@/components/scroll-story/StoryVisuals";
+import ImmersiveFooterGrid from "@/components/scroll-story/ImmersiveFooterGrid";
 
 export default function PagePasseportMaison() {
   const canonical = "https://unpro.ca/proprietaires/passeport-maison";
@@ -40,43 +43,41 @@ export default function PagePasseportMaison() {
 
       <SmartHeader />
 
-      <main>
-        <SectionPassportHero />
-
-        {/* Ce que le Passeport garde en mémoire */}
-        <section className="border-t border-border/60">
-          <div className="container mx-auto px-4 py-14">
-            <h2 className="text-section text-foreground">{PASSPORT_HOME_TEASER.title}</h2>
-            <div className="mt-5 flex flex-wrap gap-2">
-              {PASSPORT_HOME_TEASER.items.map((item) => (
-                <span
-                  key={item}
-                  className="rounded-full border border-border bg-muted/40 px-3.5 py-1.5 text-sm text-foreground"
-                >
-                  {item}
-                </span>
-              ))}
+      <ScrollStory>
+        <main>
+          <EditorialScene>
+            <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+              <ScrollTextReveal eyebrow="Passeport Maison UNPRO" title="Votre maison a une histoire. Gardez-la vivante." body="Rassemblez les faits, photos, documents, équipements, travaux et observations qui permettent de mieux comprendre votre propriété au fil du temps.">
+                <Button asChild size="lg" className="mt-8 gap-2"><Link to="/property-graph">Découvrir mon Passeport Maison <ArrowRight className="h-4 w-4" /></Link></Button>
+              </ScrollTextReveal>
+              <PassportLayersVisual />
             </div>
-            <p className="mt-5 max-w-2xl text-body leading-relaxed text-muted-foreground">
-              {PASSPORT_HOME_TEASER.body}
-            </p>
-          </div>
-        </section>
+          </EditorialScene>
 
-        <SectionPassportPeriods />
-        <SectionPasseportValueProps />
-        <SectionPassportResale />
+          <RevealSection className="bg-muted/20">
+            <ScrollTextReveal title={PASSPORT_HOME_TEASER.title} body={PASSPORT_HOME_TEASER.body} />
+            <div className="mt-8 flex flex-wrap gap-2">
+              {PASSPORT_HOME_TEASER.items.map((item) => <span key={item} className="rounded-full border border-border bg-card px-4 py-2 text-sm text-foreground">{item}</span>)}
+            </div>
+          </RevealSection>
 
-        <section className="border-t border-border/60">
-          <div className="container mx-auto px-4 py-10 text-center">
-            <Button asChild variant="ghost" size="sm" className="text-xs text-muted-foreground">
-              <Link to="/property-graph">Voir le graphe de connaissances UNPRO</Link>
-            </Button>
-          </div>
-        </section>
-      </main>
+          <RevealSection>
+            <StackedCards items={[
+              { kicker: "Une propriété évolue", title: "Les travaux la transforment", body: "Les projets, documents et intervenants peuvent être ajoutés à l’histoire de la propriété avec leur provenance." },
+              { kicker: "Le temps passe", title: "L’entretien laisse des traces utiles", body: "Les observations et les actions documentées aident à préserver un contexte que la mémoire seule finit par perdre." },
+              { kicker: "Un projet arrive", title: "Le contexte accompagne la décision", body: "Les informations disponibles peuvent éclairer une discussion avec Clara ou un professionnel, sans transformer une donnée déclarée en fait vérifié." },
+              { kicker: "La maison change de mains", title: "Une histoire plus claire se transmet", body: "Le Passeport rassemble ce qui est connu, déclaré, inféré ou encore à confirmer au même endroit." },
+            ]} />
+          </RevealSection>
 
-      <SmartFooter />
+          <EditorialScene className="min-h-[70svh]">
+            <ScrollTextReveal align="center" eyebrow="Une mémoire structurée" title="Comprendre hier. Décider aujourd’hui. Préparer demain." body="Le Passeport Maison donne un fil conducteur aux informations de votre propriété.">
+              <Button asChild variant="outline" size="lg" className="mt-8"><Link to="/property-graph">Voir le graphe de connaissances UNPRO</Link></Button>
+            </ScrollTextReveal>
+          </EditorialScene>
+        </main>
+        <ImmersiveFooterGrid />
+      </ScrollStory>
     </div>
   );
 }

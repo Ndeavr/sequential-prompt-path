@@ -1,90 +1,82 @@
-/**
- * HomeContractorAdaptive — PageHomeContractor with Alex Orb + compact counter + dynamic graph.
- */
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
-import { useAdaptiveSession } from "@/hooks/useAdaptiveSession";
-import HeroSectionIntentWithAlexOrb from "@/components/intent-pages/HeroSectionIntentWithAlexOrb";
-import ChipsQuickIntentSelector from "@/components/intent-pages/ChipsQuickIntentSelector";
-import SectionProofIA from "@/components/intent-pages/SectionProofIA";
-import BlockProofInstant from "@/components/intent-pages/BlockProofInstant";
-import BarStickyCounterRealtime from "@/components/impact-counter/BarStickyCounterRealtime";
-import GridPainSelectionInteractive from "@/components/adaptive-home/GridPainSelectionInteractive";
-import PanelDynamicContentSwitch from "@/components/adaptive-home/PanelDynamicContentSwitch";
-import PanelAlexRealtimeAssist from "@/components/adaptive-home/PanelAlexRealtimeAssist";
-import { CONTRACTOR_PAINS } from "@/components/adaptive-home/painData";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
-import type { IntentChip } from "@/components/intent-pages/ChipsQuickIntentSelector";
 import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
-
-const CONTRACTOR_CHIPS: IntentChip[] = [
-  { id: "score", label: "Voir mon score", emoji: "📊" },
-  { id: "presence", label: "Vérifier ma présence IA", emoji: "🤖" },
-  { id: "revenue", label: "Simuler mes revenus", emoji: "💰" },
-  { id: "import", label: "Importer mon entreprise", emoji: "🏢" },
-  { id: "rdv", label: "Recevoir des rendez-vous", emoji: "📅" },
-];
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Sparkles } from "lucide-react";
+import {
+  EditorialScene,
+  RevealSection,
+  ScrollStory,
+  ScrollTextReveal,
+  SectionTransition,
+  StackedCards,
+  StickyMediaText,
+} from "@/components/scroll-story/ScrollStory";
+import ImmersiveFooterGrid from "@/components/scroll-story/ImmersiveFooterGrid";
+import {
+  ContractorIntelligenceVisual,
+  PreparedProjectVisual,
+  ServicePriorityVisual,
+} from "@/components/scroll-story/StoryVisuals";
 
 export default function HomeContractorAdaptive() {
   const navigate = useNavigate();
   const { openAlex } = useAlexVoice();
-  const { selectedPain, stage, selectPain, engage } = useAdaptiveSession("contractor");
-
-  const handleCta = () => {
-    engage();
-    navigate(selectedPain?.ctaHref ?? contractorPlanLink({ objective: "more_appointments", from: "contractor_home" }));
-  };
-
-  const handleChip = (chip: IntentChip) => {
-    if (chip.id === "score") return navigate("/aipp");
-    if (chip.id === "import") return navigate("/entrepreneur/onboarding-voice");
-    openAlex("contractor", chip.label);
-  };
+  const planHref = contractorPlanLink({ objective: "more_appointments", from: "contractor_story" });
 
   return (
-    <MainLayout>
+    <MainLayout hideMemorySection hideFooter>
       <Helmet>
-        <title>UNPRO — Entrepreneurs: recevez des rendez-vous garantis</title>
-        <meta name="description" content="Arrêtez de payer par clic. UNPRO vous envoie des rendez-vous qualifiés directement dans votre agenda." />
+        <title>UNPRO pour entrepreneurs — des rendez-vous compatibles et exclusifs</title>
+        <meta name="description" content="UNPRO comprend votre entreprise, prépare les projets et recommande un entrepreneur compatible pour un rendez-vous exclusif." />
       </Helmet>
+      <ScrollStory>
+        <EditorialScene>
+          <ScrollTextReveal
+            eyebrow="UNPRO pour entrepreneurs"
+            title="Vous n’avez pas besoin de plus de leads."
+            body="Vous avez besoin de projets qui correspondent réellement à votre métier, votre territoire, votre capacité et votre façon de travailler."
+          >
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <Button size="lg" onClick={() => navigate(planHref)} className="gap-2">Découvrez votre plan personnalisé <ArrowRight className="h-4 w-4" /></Button>
+              <Button size="lg" variant="outline" onClick={() => openAlex("contractor", "Analyse mon entreprise.")} className="gap-2"><Sparkles className="h-4 w-4" /> Parler à Clara</Button>
+            </div>
+          </ScrollTextReveal>
+        </EditorialScene>
 
-      <BarStickyCounterRealtime />
+        <SectionTransition>
+          <EditorialScene className="min-h-[72svh] md:min-h-[86dvh]">
+            <ScrollTextReveal title="Vous avez besoin des bons clients." body="UNPRO prépare le contexte avant de recommander. Le projet arrive avec les informations utiles, pas comme un nom revendu à plusieurs entreprises." />
+          </EditorialScene>
+        </SectionTransition>
 
-      <div className="flex flex-col min-h-screen">
-        <HeroSectionIntentWithAlexOrb
-          title="Fatigué de courir après des leads ? Remplissez votre agenda avec de vrais rendez-vous."
-          subtitle="UNPRO ne vend pas des clics. UNPRO active des rendez-vous qualifiés."
-          intentFeature="contractor"
-          ctaPrimary={{ label: "Voir mon score AIPP", onClick: () => navigate("/aipp") }}
-          ctaSecondary={{ label: "Obtenir mes premiers rendez-vous", onClick: () => navigate(contractorPlanLink({ objective: "more_appointments", from: "contractor_home_secondary" })) }}
-          counterPrimary={{ type: "dollars", label: "économisés en publicité" }}
-          counterSecondary={{ type: "custom", label: "rendez-vous mieux qualifiés", customValue: 18924 }}
-          graphStyle="dynamic"
-          graphBaseValue={150}
-        />
+        <RevealSection>
+          <StickyMediaText media={<ContractorIntelligenceVisual />}>
+            <ScrollTextReveal eyebrow="Clara comprend" title="Votre entreprise, avant de parler de forfait." body="Le métier, les services, le territoire, les projets recherchés et les signaux de confiance sont structurés à partir des informations réellement disponibles." />
+            <ServicePriorityVisual />
+          </StickyMediaText>
+        </RevealSection>
 
-        <ChipsQuickIntentSelector chips={CONTRACTOR_CHIPS} onSelect={handleChip} className="mt-2" />
+        <RevealSection className="bg-muted/20">
+          <StackedCards items={[
+            { kicker: "Clara comprend", title: "Le besoin du propriétaire", body: "Le problème, l’urgence, le budget, les contraintes et la manière de décider sont clarifiés avant la recommandation." },
+            { kicker: "UNPRO prépare", title: "Un projet exploitable", body: "Les éléments utiles sont rassemblés afin que l’entrepreneur sache pourquoi le rendez-vous correspond à son activité." },
+            { kicker: "UNPRO matche", title: "La compatibilité réelle", body: "Les règles de conformité passent d’abord, puis les services, le territoire, la capacité, la disponibilité et les préférences sont croisés." },
+            { kicker: "Rendez-vous", title: "Un échange exclusif", body: "UNPRO recommande un entrepreneur compatible. Le rendez-vous n’est jamais vendu simultanément à plusieurs entreprises." },
+          ]} />
+        </RevealSection>
 
-        <SectionProofIA contextText="Des rendez-vous réels, pas des leads partagés" className="mt-6" />
-
-        <BlockProofInstant
-          items={[
-            { stat: "12x", label: "ROI moyen" },
-            { stat: "85%", label: "Taux de fermeture" },
-            { stat: "0", label: "Lead partagé" },
-          ]}
-          className="mt-4"
-        />
-
-        <GridPainSelectionInteractive
-          pains={CONTRACTOR_PAINS}
-          selectedId={selectedPain?.id ?? null}
-          onSelect={selectPain}
-        />
-        <PanelDynamicContentSwitch selectedPain={selectedPain} />
-        <PanelAlexRealtimeAssist selectedPain={selectedPain} onTalk={handleCta} />
-      </div>
+        <EditorialScene>
+          <div className="grid items-center gap-10 lg:grid-cols-2">
+            <ScrollTextReveal eyebrow="Le résultat" title="Un rendez-vous exclusif. Jamais un lead partagé." body="Votre plan personnalisé part de votre réalité : services, territoire, capacité et objectif." />
+            <PreparedProjectVisual />
+          </div>
+          <div className="mt-10"><Button size="lg" onClick={() => navigate(planHref)} className="gap-2">Découvrez votre plan personnalisé <ArrowRight className="h-4 w-4" /></Button></div>
+        </EditorialScene>
+        <ImmersiveFooterGrid />
+      </ScrollStory>
     </MainLayout>
   );
 }
