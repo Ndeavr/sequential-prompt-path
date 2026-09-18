@@ -10,6 +10,7 @@ import HomeownerPlans from "./pricing/HomeownerPlans";
 import PricingHeroHomeowners from "./pricing/PricingHeroHomeowners";
 import PricingFaq from "./pricing/PricingFaq";
 import PricingCta from "./pricing/PricingCta";
+import { contractorPlanLink } from "@/lib/routing/contractorPlanRoute";
 
 export default function PricingHomeownersPage() {
   return (
