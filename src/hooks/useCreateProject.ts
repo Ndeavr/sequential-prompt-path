@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { rememberClaraReferences } from "@/services/clara/claraSession";
 
 export interface CreateProjectInput {
   description: string;
@@ -39,6 +40,11 @@ export function useCreateProject() {
       );
       if (fnError) throw fnError;
       const result = data as CreateProjectResult;
+      // ONE CLARA : la conversation garde la référence du projet et de la demande.
+      rememberClaraReferences({
+        active_project_id: result.projectId,
+        active_lead_id: result.leadId ?? undefined,
+      });
       navigate(
         `/project-created?id=${encodeURIComponent(result.projectId)}` +
           (result.leadId ? `&lead=${encodeURIComponent(result.leadId)}` : "") +
