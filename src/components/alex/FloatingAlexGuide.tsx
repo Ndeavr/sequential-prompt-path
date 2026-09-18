@@ -24,7 +24,7 @@ export default function FloatingAlexGuide() {
   const { message } = useAlexCheckoutNarration();
   const { openAlex } = useAlexVoice();
 
-  const hiddenByRoute = HIDDEN_PREFIXES.some((p) => location.pathname.startsWith(p));
+  const hiddenByRoute = location.pathname === "/" || location.pathname === "/index" || HIDDEN_PREFIXES.some((p) => location.pathname.startsWith(p));
   if (hiddenByRoute || !visible || stage === "idle") return null;
 
   const speaking = stage === "analyzing" || stage === "scoring" || stage === "recommending" || stage === "checkout" || stage === "payment_processing";

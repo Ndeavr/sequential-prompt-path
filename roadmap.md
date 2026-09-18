@@ -21,7 +21,7 @@
 
 ## Étape 4
 - [ ] Tests de régression + console + réseau + DB
-- [ ] ONE CLARA UI (une seule boîte extensible)
+- [x] ONE CLARA UI (une seule boîte extensible)
 - [ ] Nettoyage P2
 
 ## Blocages nécessitant approbation
