@@ -35,18 +35,28 @@ export async function analyzeImageVisually(
 ): Promise<VisualAnalysisResult> {
   const base64 = await fileToBase64(file);
 
+  // ONE CLARA : l'analyse anonyme reste rattachée à la conversation canonique.
+  const sessionId = ctx?.sessionId ?? peekClaraSessionToken() ?? null;
+
   const { data, error } = await supabase.functions.invoke("visual-analysis", {
     body: {
       image_base64: base64,
       mime_type: file.type || "image/jpeg",
       property_id: ctx?.propertyId ?? null,
-      session_id: ctx?.sessionId ?? null,
+      session_id: sessionId,
       user_message: ctx?.userMessage ?? "",
     },
   });
 
   if (error) throw new Error(error.message || "visual_analysis_failed");
   if (!data || data.error) throw new Error(data?.error || "visual_analysis_invalid");
+
+  if (data.analysis_id) {
+    rememberClaraReferences({
+      visual_analysis_ids: [data.analysis_id as string],
+      active_property_id: ctx?.propertyId ?? undefined,
+    });
+  }
 
   return {
     summary: String(data.summary ?? ""),
