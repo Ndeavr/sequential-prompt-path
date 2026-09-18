@@ -226,12 +226,14 @@ export default function ClaraConversationBox() {
           }
         }
 
-        const finalText = cleanAlexText(full);
+        const parsed = extractQuickReplies(full);
+        const finalText = cleanAlexText(parsed.text);
         const shownText =
           finalText || "Je continue ici avec vous. Décrivez-moi la situation en quelques mots.";
         setMessages((prev) =>
           prev.map((m) => (m.id === assistantId ? { ...m, text: shownText } : m)),
         );
+        setQuickReplies(parsed.options.length >= 2 ? { messageId: assistantId, options: parsed.options } : null);
         void appendClaraMessage({
           role: "assistant",
           text: shownText,
@@ -243,9 +245,23 @@ export default function ClaraConversationBox() {
       } finally {
         setBusy(false);
         setMode((current) => current === "ANALYZING" ? nextMode : current);
+        focusComposer();
       }
     },
-    [busy, copy.fallback, messages],
+    [busy, copy.fallback, focusComposer, messages],
+  );
+
+  const chooseQuickReply = useCallback(
+    (option: string) => {
+      if (busy) return;
+      setQuickReplies(null);
+      if (/^autre$/i.test(option)) {
+        focusComposer();
+        return;
+      }
+      void send(option);
+    },
+    [busy, focusComposer, send],
   );
 
   const submit = useCallback(async (message: PromptInputMessage) => {
