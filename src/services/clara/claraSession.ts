@@ -147,11 +147,20 @@ export async function appendClaraMessage(input: {
   });
 }
 
-/** Enregistre des références métier dans la conversation. */
+/**
+ * Enregistre des références métier dans la conversation.
+ * `client_ts` permet au serveur d'ignorer une écriture plus ancienne provenant
+ * d'un second appareil : aucun contexte récent n'est écrasé silencieusement.
+ */
 export async function saveClaraContext(patch: ClaraContextPatch): Promise<void> {
   const token = peekClaraSessionToken();
   if (!token) return;
-  await call("context", { session_token: token, patch });
+  await call("context", { session_token: token, patch, client_ts: Date.now() });
+}
+
+/** Version tolérante : la continuité ne doit jamais bloquer un parcours métier. */
+export function rememberClaraReferences(patch: ClaraContextPatch): void {
+  void saveClaraContext(patch).catch(() => {});
 }
 
 /**
