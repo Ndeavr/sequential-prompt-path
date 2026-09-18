@@ -327,6 +327,12 @@ export default function OverlayAlexVoiceFullScreen() {
     onDisconnect: () => {
       const s = getStore();
       console.warn("[VoiceOverlay] ElevenLabs disconnected. state:", s.machineState);
+      // Déconnexion provoquée par une pause ou une fermeture : aucun rattrapage.
+      if (s.machineState === "paused") {
+        hasConnectedRef.current = false;
+        firstAudioReceivedRef.current = false;
+        return;
+      }
       const wasConnected = hasConnectedRef.current;
       hasConnectedRef.current = false;
       firstAudioReceivedRef.current = false;
