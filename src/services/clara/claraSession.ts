@@ -38,16 +38,22 @@ export interface ClaraSessionState {
   resumed: boolean;
 }
 
-/** Références métier admissibles. Aucune donnée métier n'est dupliquée ici. */
+/**
+ * Références métier admissibles. Aucune donnée métier n'est dupliquée ici.
+ * Le serveur revalide l'appartenance de chaque identifiant avant de l'enregistrer :
+ * un identifiant valide mais étranger à la conversation est refusé.
+ */
 export interface ClaraContextPatch {
   active_property_id?: string | null;
   active_project_id?: string | null;
   active_lead_id?: string | null;
   selected_match_id?: string | null;
+  appointment_id?: string | null;
   selected_contractor_id?: string | null;
   contractor_id?: string | null;
   pricing_quote_id?: string | null;
   checkout_session_id?: string | null;
+  visitor_id?: string | null;
   current_intent?: string | null;
   detected_role?: string | null;
   current_route?: string | null;
