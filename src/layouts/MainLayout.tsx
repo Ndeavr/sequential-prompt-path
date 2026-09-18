@@ -33,9 +33,10 @@ function DeferredJourneyTracker() {
 interface MainLayoutProps {
   children: ReactNode;
   hideMemorySection?: boolean;
+  hideFooter?: boolean;
 }
 
-const MainLayout = ({ children, hideMemorySection }: MainLayoutProps) => {
+const MainLayout = ({ children, hideMemorySection, hideFooter }: MainLayoutProps) => {
   const { pathname } = useLocation();
   const { lang } = useLanguage();
 
@@ -66,7 +67,7 @@ const MainLayout = ({ children, hideMemorySection }: MainLayoutProps) => {
 
       {showSEOGrid && <FooterSEOGrid />}
       {!hideMemorySection && <SectionMemoireMaison />}
-      {!isLightHome && <SiteFooterPremium />}
+      {!isLightHome && !hideFooter && <SiteFooterPremium />}
       {/* Global dock-safe spacer — guarantees footer + last block clear
           the fixed BottomDock on mobile even if body:has() is unsupported. */}
       {!isLightHome && <BottomDockSafeArea />}

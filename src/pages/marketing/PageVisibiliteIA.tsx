@@ -14,6 +14,17 @@ import {
   Phone, Sparkles, MapPin, Wrench, Building2, ShieldCheck, Award, Layers,
   Search, Bot, ArrowRight,
 } from "lucide-react";
+import {
+  EditorialScene,
+  RevealSection,
+  ScrollStory,
+  ScrollTextReveal,
+  StackedCards,
+  StickyMediaText,
+  ViewportPanel,
+} from "@/components/scroll-story/ScrollStory";
+import { ContractorIntelligenceVisual } from "@/components/scroll-story/StoryVisuals";
+import ImmersiveFooterGrid from "@/components/scroll-story/ImmersiveFooterGrid";
 
 const CANONICAL = "https://unpro.ca/visibilite-ia-entrepreneurs";
 const PHONE_TEL = "tel:+15142499522";
@@ -126,7 +137,7 @@ export default function PageVisibiliteIA() {
   }, []);
 
   return (
-    <MainLayout>
+    <MainLayout hideMemorySection hideFooter>
       <SeoHead
         title="Agence de visibilité IA pour entrepreneurs au Québec | UNPRO"
         description="Faites comprendre et découvrir votre entreprise par ChatGPT, Gemini et les autres moteurs IA. Analyse SEO, AEO et GEO pour entrepreneurs. Appelez UNPRO au 514 249-9522."
@@ -134,17 +145,17 @@ export default function PageVisibiliteIA() {
       />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
 
-      <div className="landing-warm pb-28 md:pb-0">
+      <ScrollStory className="pb-28 md:pb-0">
         {/* HERO */}
-        <section className="px-5 pt-8 pb-8 sm:pt-14 md:pb-16">
-          <div className="mx-auto max-w-3xl text-center">
+        <EditorialScene>
+          <div className="mx-auto max-w-4xl text-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-primary">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
               Visibilité IA pour entrepreneurs
             </span>
 
-            <h1 className="mt-6 text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl md:text-5xl">
-              Soyez recommandé par l'IA, pas seulement trouvé sur Google
+            <h1 className="mt-6 text-balance font-display text-[clamp(2.7rem,7vw,6.6rem)] font-semibold leading-[0.95] text-foreground">
+              Est-ce que l’IA comprend votre entreprise?
             </h1>
 
             <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
@@ -178,11 +189,12 @@ export default function PageVisibiliteIA() {
               Analyse adaptée à vos services, votre territoire et vos objectifs de croissance.
             </p>
           </div>
-        </section>
+        </EditorialScene>
 
         {/* PROBLÈME */}
-        <section className="px-5 py-6 md:py-16">
-          <div className="mx-auto max-w-4xl">
+        <RevealSection>
+          <StickyMediaText media={<ContractorIntelligenceVisual />}>
+          <div>
             <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Le référencement traditionnel ne suffit plus
             </h2>
@@ -193,7 +205,7 @@ export default function PageVisibiliteIA() {
               qu'elles puissent considérer votre entreprise lorsqu'elles formulent une recommandation.
             </p>
 
-            <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
               {SIGNALS.map(({ icon: Icon, label }) => (
                 <li key={label} className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-4">
                   <Icon className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
@@ -207,11 +219,12 @@ export default function PageVisibiliteIA() {
               ignorer votre entreprise, même si vous faites un excellent travail.
             </p>
           </div>
-        </section>
+          </StickyMediaText>
+        </RevealSection>
 
         {/* SOLUTION */}
-        <section className="px-5 py-6 md:py-16">
-          <div className="mx-auto max-w-4xl">
+        <RevealSection className="bg-muted/20">
+          <div>
             <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               UNPRO bâtit votre présence pour l'ère de l'IA
             </h2>
@@ -221,24 +234,17 @@ export default function PageVisibiliteIA() {
               moteurs de recherche et des assistants IA.
             </p>
 
-            <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {SERVICES.map((s) => (
-                <li key={s} className="flex items-start gap-3 rounded-2xl border border-border bg-card px-4 py-4">
-                  <Bot className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
-                  <span className="text-sm text-foreground">{s}</span>
-                </li>
-              ))}
-            </ul>
+            <StackedCards className="mt-8" items={SERVICES.map((service, index) => ({ kicker: `Étape ${index + 1}`, title: service, body: index === 0 ? "UNPRO part des informations déjà présentes et identifie ce qui doit être clarifié." : "Chaque couche rend l’entreprise plus claire, cohérente et vérifiable pour les systèmes qui la consultent." }))} />
 
             <p className="mt-8 text-base font-medium text-foreground">
               L'objectif n'est plus seulement d'obtenir des clics. Il est de devenir une entreprise
               que l'IA peut comprendre, citer et potentiellement recommander.
             </p>
           </div>
-        </section>
+        </RevealSection>
 
         {/* COMPARAISON */}
-        <section className="px-5 py-6 md:py-16">
+        <RevealSection>
           <div className="mx-auto max-w-4xl">
             <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               SEO, AEO et GEO : des approches complémentaires
@@ -270,10 +276,10 @@ export default function PageVisibiliteIA() {
               Le SEO demeure essentiel. L'AEO et le GEO s'ajoutent à votre référencement actuel.
             </p>
           </div>
-        </section>
+        </RevealSection>
 
         {/* FORMULAIRE */}
-        <section id="analyse-ia" className="scroll-mt-24 px-5 py-6 md:py-16">
+        <RevealSection id="analyse-ia" className="scroll-mt-24">
           <div className="mx-auto max-w-2xl">
             <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Découvrez comment l'IA comprend votre entreprise
@@ -282,14 +288,14 @@ export default function PageVisibiliteIA() {
               Remplissez ce court formulaire. Un spécialiste UNPRO communiquera avec vous pour
               comprendre votre situation et identifier les priorités les plus importantes.
             </p>
-            <div className="mt-8">
+            <ViewportPanel className="mt-8">
               <AiVisibilityLeadForm />
-            </div>
+            </ViewportPanel>
           </div>
-        </section>
+        </RevealSection>
 
         {/* PLAN PERSONNALISÉ */}
-        <section className="px-5 py-6 md:py-16">
+        <RevealSection className="bg-muted/20">
           <div className="mx-auto max-w-4xl">
             <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Une stratégie adaptée à votre entreprise
@@ -311,10 +317,10 @@ export default function PageVisibiliteIA() {
               artificielle ont besoin.
             </p>
           </div>
-        </section>
+        </RevealSection>
 
         {/* FAQ */}
-        <section className="px-5 py-6 md:py-16">
+        <RevealSection>
           <div className="mx-auto max-w-3xl">
             <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Questions fréquentes
@@ -332,10 +338,10 @@ export default function PageVisibiliteIA() {
               ))}
             </Accordion>
           </div>
-        </section>
+        </RevealSection>
 
         {/* CTA FINAL */}
-        <section className="px-5 py-6 md:py-16">
+        <RevealSection>
           <div className="mx-auto max-w-3xl rounded-3xl border border-border bg-card p-8 text-center sm:p-12">
             <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Préparez votre entreprise avant que vos concurrents le fassent
@@ -365,8 +371,9 @@ export default function PageVisibiliteIA() {
               </a>
             </div>
           </div>
-        </section>
-      </div>
+        </RevealSection>
+        <ImmersiveFooterGrid />
+      </ScrollStory>
 
       {/* CTA fixe mobile — porté dans document.body pour échapper aux conteneurs clippés */}
       {createPortal(
