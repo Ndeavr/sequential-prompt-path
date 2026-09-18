@@ -299,6 +299,29 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
     }
   },
 
+  pauseVoiceSession: (reason: string) => {
+    const state = get();
+    if (state.machineState === "paused") return;
+    const prev = state.machineState;
+    set({
+      machineState: "paused",
+      errorMessage: null,
+      errorType: null,
+      stabilizationEnd: null,
+      heartbeatFailures: 0,
+    });
+    if (state.sessionId) logTransition(state.sessionId, prev, "paused", reason);
+  },
+
+  resumeVoiceSession: (reason: string) => {
+    const state = get();
+    if (state.machineState !== "paused") return;
+    set({ machineState: "requesting_permission", errorMessage: null, errorType: null });
+    if (state.sessionId) logTransition(state.sessionId, "paused", "requesting_permission", reason);
+  },
+
+
+
   transitionTo: (newState: LockedVoiceState, reason?: string) => {
     const state = get();
     const current = state.machineState;
