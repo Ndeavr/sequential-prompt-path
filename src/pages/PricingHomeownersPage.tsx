@@ -31,11 +31,12 @@ export default function PricingHomeownersPage() {
         <PricingHeroHomeowners />
         <HomeownerPlans />
 
-        {/* Cross-link entrepreneurs */}
+        {/* Cross-link entrepreneurs — parcours entrepreneur, jamais un plan maison */}
         <section className="px-5 py-8">
           <div className="max-w-3xl mx-auto">
             <Link
-              to="/pricing/entrepreneurs"
+              to={contractorPlanLink({ objective: "more_appointments", from: "homeowner_pricing" })}
+              data-testid="homeowner-pricing-contractor-card"
               className="group flex items-center justify-between gap-4 p-5 rounded-2xl border border-border/40 bg-card hover:border-primary/40 transition-all"
             >
               <div className="flex items-center gap-3 min-w-0">
@@ -44,10 +45,10 @@ export default function PricingHomeownersPage() {
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-foreground text-sm">
-                    Vous êtes entrepreneur ?
+                    Découvrez votre plan personnalisé
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Découvrez les plans pour recevoir des rendez-vous qualifiés
+                    Selon votre métier, vos services, votre territoire et votre capacité.
                   </p>
                 </div>
               </div>
@@ -55,6 +56,7 @@ export default function PricingHomeownersPage() {
             </Link>
           </div>
         </section>
+
 
         <PricingFaq />
         <PricingCta />
