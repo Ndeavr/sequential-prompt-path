@@ -9,8 +9,8 @@ const header = readFileSync("src/components/navigation/SmartHeader.tsx", "utf8")
 
 describe("glossy homepage contract", () => {
   it("renders the approved ONE CLARA promise", () => {
-    expect(hero).toContain("Montrez-moi. Parlez-moi. Je m’occupe du reste.");
-    expect(hero).toContain("Qu’est-ce que vous voulez réparer, vérifier ou améliorer?");
+    expect(hero).toContain("Montrez-moi.");
+    expect(hero).toContain("Qu’est-ce que vous voulez entreprendre, réparer, ou améliorer?");
     expect(hero).not.toContain("Pas trois soumissions.");
     expect(hero).not.toContain("Rendez-vous exclusifs");
   });
@@ -21,7 +21,7 @@ describe("glossy homepage contract", () => {
     expect(clara).toContain("openAlex(\"home_hero\"");
     expect(clara).toContain("PromptInput");
     expect(clara).toContain("Ajouter une photo ou un document");
-    expect(clara).toContain("Demandez quelque chose à Clara…");
+    expect(clara).toContain("Bonjour ! Que puis-je-faire pour vous?");
     expect(clara).toContain("Prendre une photo");
     expect(clara).toContain("runQuoteAnalysis");
     expect(clara).toContain("ClaraContextPanel");
