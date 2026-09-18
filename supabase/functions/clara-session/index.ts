@@ -30,14 +30,34 @@ const CONTEXT_KEYS = [
   "active_project_id",
   "active_lead_id",
   "selected_match_id",
+  "appointment_id",
   "selected_contractor_id",
   "contractor_id",
   "pricing_quote_id",
   "checkout_session_id",
+  "visitor_id",
   "current_intent",
   "detected_role",
   "current_route",
 ] as const;
+
+/** Références métier vérifiées en base avant enregistrement. */
+const VALIDATED_KEYS = [
+  "active_property_id",
+  "active_project_id",
+  "active_lead_id",
+  "selected_match_id",
+  "appointment_id",
+  "selected_contractor_id",
+  "contractor_id",
+  "pricing_quote_id",
+] as const;
+
+/** Champs libres non métier (aucune donnée privée). */
+const FREE_TEXT_KEYS = ["current_intent", "detected_role", "current_route", "visitor_id"] as const;
+
+/** Horodatage par clé scalaire : empêche un appareil en retard d'écraser un contexte plus récent. */
+const REF_TS_KEY = "__ref_ts";
 
 /** Références multiples (listes d'identifiants d'artefacts anonymes). */
 const CONTEXT_LIST_KEYS = [
