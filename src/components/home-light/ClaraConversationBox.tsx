@@ -67,7 +67,7 @@ export default function ClaraConversationBox() {
   const { lang } = useLanguage();
   const copy = lang === "fr"
     ? {
-        placeholder: "Demandez quelque chose à Clara…",
+        placeholder: "Bonjour ! Que puis-je-faire pour vous?",
         attach: "Ajouter une photo ou un document",
         camera: "Prendre une photo",
         voice: "Parler à Clara",
@@ -76,7 +76,7 @@ export default function ClaraConversationBox() {
         fallback: "Je continue ici avec vous. Reformulez en une phrase.",
       }
     : {
-        placeholder: "Demandez quelque chose à Clara…",
+        placeholder: "Bonjour ! Que puis-je-faire pour vous?",
         attach: "Ajouter une photo ou un document",
         camera: "Prendre une photo",
         voice: "Talk to Clara",
