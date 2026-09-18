@@ -511,11 +511,22 @@ Deno.serve(async (req) => {
 
     // ── context : fusion de références uniquement ──
     if (action === "context") {
-      const patch = sanitizeContextPatch(body.patch);
+      const currentContext = (session.context_json ?? {}) as Record<string, unknown>;
+      const { patch, rejected } = sanitizeContextPatch(body.patch);
       if (Object.keys(patch).length === 0) {
-        return json({ ok: true, context: session.context_json ?? {}, changed: false });
+        return json({ ok: true, context: currentContext, changed: false, rejected });
       }
-      const merged = mergeContext((session.context_json ?? {}) as Record<string, unknown>, patch);
+
+      // Une clé autorisée ne suffit pas : l'appartenance est vérifiée en base.
+      const { accepted, refused } = await validateReferences(patch, currentContext, session);
+      const allRejected = [...new Set([...rejected, ...refused])];
+      if (Object.keys(accepted).length === 0) {
+        return json({ ok: true, context: currentContext, changed: false, rejected: allRejected });
+      }
+
+      const clientTs = typeof body.client_ts === "number" ? body.client_ts : Date.now();
+      const { context: merged, stale } = mergeContext(currentContext, accepted, clientTs);
+
       const { data: updated, error } = await admin
         .from("alex_sessions")
         .update({ context_json: merged, updated_at: new Date().toISOString() })
@@ -523,7 +534,13 @@ Deno.serve(async (req) => {
         .select(SESSION_COLUMNS)
         .maybeSingle();
       if (error || !updated) return json({ error: "context_update_failed" }, 500);
-      return json({ ok: true, context: (updated as SessionRow).context_json ?? {}, changed: true });
+      return json({
+        ok: true,
+        context: (updated as SessionRow).context_json ?? {},
+        changed: true,
+        rejected: allRejected,
+        stale,
+      });
     }
 
     // ── promote : rattachement au compte + réclamation idempotente ──
