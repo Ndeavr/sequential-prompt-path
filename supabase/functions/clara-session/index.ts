@@ -565,29 +565,76 @@ Deno.serve(async (req) => {
       }
 
       const context = (current.context_json ?? {}) as Record<string, unknown>;
-      const claimed: Record<string, string[]> = { quote_analyses: [], refused: [] };
+      const claimed: Record<string, string[]> = {
+        quote_analyses: [],
+        verification_runs: [],
+        visual_analyses: [],
+        refused: [],
+      };
 
-      const quoteIds = Array.isArray(context.quote_analysis_ids)
-        ? (context.quote_analysis_ids as string[]).filter((id) => UUID_RE.test(id)).slice(0, MAX_LIST)
-        : [];
+      const listOf = (key: string): string[] =>
+        Array.isArray(context[key])
+          ? Array.from(
+              new Set((context[key] as string[]).filter((id) => UUID_RE.test(id))),
+            ).slice(0, MAX_LIST)
+          : [];
 
-      for (const id of quoteIds) {
-        const { data: row } = await admin
-          .from("quote_analyses")
-          .select("id,user_id")
-          .eq("id", id)
-          .maybeSingle();
-        if (!row) continue;
-        if (row.user_id && row.user_id !== userId) {
-          // Appartenance ambiguë : refus explicite, jamais d'écrasement.
-          claimed.refused.push(id);
-          continue;
+      const visitorId = typeof context.visitor_id === "string" ? context.visitor_id : null;
+
+      /**
+       * Réclamation : un identifiant présent dans le contexte ne suffit jamais.
+       * L'artefact doit déjà appartenir au compte, ou être anonyme ET rattaché
+       * à cette même conversation (jeton de session / visiteur).
+       */
+      async function claim(
+        table: string,
+        bucket: string,
+        ids: string[],
+        anonymousProof: (row: Record<string, unknown>) => boolean,
+        columns: string,
+      ) {
+        for (const id of ids) {
+          const { data: found } = await admin
+            .from(table)
+            .select(columns)
+            .eq("id", id)
+            .maybeSingle();
+          const r = found as Record<string, unknown> | null;
+          if (!r) continue;
+          const owner = r.user_id as string | null;
+          if (owner && owner !== userId) {
+            // Appartenance ambiguë : refus explicite, jamais d'écrasement.
+            claimed.refused.push(id);
+            continue;
+          }
+          if (!owner) {
+            if (!anonymousProof(r)) {
+              claimed.refused.push(id);
+              continue;
+            }
+            await admin.from(table).update({ user_id: userId }).eq("id", id).is("user_id", null);
+          }
+          claimed[bucket].push(id);
         }
-        if (!row.user_id) {
-          await admin.from("quote_analyses").update({ user_id: userId }).eq("id", id).is("user_id", null);
-        }
-        claimed.quote_analyses.push(id);
       }
+
+      await claim("quote_analyses", "quote_analyses", listOf("quote_analysis_ids"), () => true, "id,user_id");
+
+      await claim(
+        "contractor_verification_runs",
+        "verification_runs",
+        listOf("verification_run_ids"),
+        (r) => !!visitorId && r.visitor_id === visitorId,
+        "id,user_id,visitor_id",
+      );
+
+      await claim(
+        "visual_analyses",
+        "visual_analyses",
+        listOf("visual_analysis_ids"),
+        (r) => r.session_id === current.session_token || r.session_id === current.id,
+        "id,user_id,session_id",
+      );
 
       return json({
         ...serialize(current),
