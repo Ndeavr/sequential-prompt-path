@@ -1,9 +1,5 @@
 /**
- * PageHomeLight — UNPRO homeowner-first homepage (light premium surface).
- *
- * White / light-blue background, navy typography, royal-blue actions.
- * Alex is integrated as the primary entry point; both the homeowner and the
- * entrepreneur paths are visible above the fold area.
+ * PageHomeLight — ONE CLARA conversation-first homepage.
  */
 import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
@@ -35,24 +31,24 @@ export default function PageHomeLight() {
     <AlexProvider>
       <MainLayout hideMemorySection>
         <Helmet>
-          <title>UNPRO | La fin des 3 soumissions</title>
+          <title>UNPRO | Clara, votre intelligence résidentielle</title>
           <meta
             name="description"
-            content="Décrivez vos travaux à Clara. UNPRO comprend votre projet grâce à l'IA et vous oriente vers l'entrepreneur qui correspond à vos besoins, sans courir après 3 soumissions."
+            content="Montrez ou décrivez votre besoin à Clara. Elle vous aide à comprendre, vérifier ou améliorer votre propriété."
           />
-          <meta property="og:title" content="UNPRO — La fin des 3 soumissions" />
+          <meta property="og:title" content="UNPRO — Parlez à Clara" />
           <meta
             property="og:description"
-            content="L'IA comprend vos travaux et vous oriente vers le bon entrepreneur."
+            content="Montrez ou décrivez votre besoin à Clara, l’intelligence résidentielle UNPRO."
           />
           <meta property="og:type" content="website" />
           <meta property="og:url" content="https://unpro.ca/" />
           <meta property="og:image" content={DEFAULT_OG_IMAGE} />
           <meta name="twitter:card" content="summary_large_image" />
-          <meta name="twitter:title" content="UNPRO — La fin des 3 soumissions" />
+          <meta name="twitter:title" content="UNPRO — Parlez à Clara" />
           <meta
             name="twitter:description"
-            content="L'IA comprend vos travaux et vous oriente vers le bon entrepreneur."
+            content="Montrez ou décrivez votre besoin à Clara, l’intelligence résidentielle UNPRO."
           />
           <meta name="twitter:image" content={DEFAULT_OG_IMAGE} />
           <meta name="theme-color" content="#050816" />

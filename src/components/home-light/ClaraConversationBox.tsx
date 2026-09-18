@@ -5,9 +5,9 @@
  * écrit dans la session Clara canonique, ce qui rend la conversation persistante
  * après rafraîchissement, réouverture, authentification et changement d'appareil.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
-import { ArrowUp, Mic, Paperclip } from "lucide-react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowUp, Camera, Mic, Plus } from "lucide-react";
 
 import { cleanAlexText } from "@/utils/sanitizeAlexText";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
@@ -16,6 +16,7 @@ import { useAlexConversation } from "@/features/alex/hooks/useAlexConversation";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import {
   appendClaraMessage,
+  rememberClaraReferences,
   startOrResumeClaraSession,
 } from "@/services/clara/claraSession";
 import { useLanguage } from "@/components/ui/LanguageToggle";
@@ -33,10 +34,28 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 
+const ClaraContextPanel = lazy(() => import("@/components/home-light/ClaraContextPanel"));
+import type { ClaraSurfaceMode } from "@/components/home-light/ClaraContextPanel";
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
 type Msg = { id: string; role: "user" | "assistant"; text: string };
+
+const QUOTE_PATTERN = /\b(soumission|soumissions|devis|comparer|comparaison)\b/i;
+const CONTRACTOR_PATTERN = /\b(vérifi|verification|entrepreneur|contracteur|plombier|peintre|couvreur|électricien|mon entreprise|je suis pro)\b/i;
+const APPOINTMENT_PATTERN = /\b(rendez-vous|réserver|disponibilit|horaire|quand)\b/i;
+const MATCH_PATTERN = /\b(jumelage|recommande|entrepreneur compatible|bon entrepreneur)\b/i;
+const PROJECT_PATTERN = /\b(réparer|rénover|moderniser|améliorer|cuisine|salle de bain|toit|toiture|fuite|eau|fissure|projet)\b/i;
+
+function detectSurfaceMode(text: string): ClaraSurfaceMode {
+  if (QUOTE_PATTERN.test(text)) return "QUOTE";
+  if (CONTRACTOR_PATTERN.test(text)) return "CONTRACTOR";
+  if (APPOINTMENT_PATTERN.test(text)) return "APPOINTMENT";
+  if (MATCH_PATTERN.test(text)) return "MATCH";
+  if (PROJECT_PATTERN.test(text)) return "PROJECT";
+  return "IDLE";
+}
 
 function uid() {
   return Math.random().toString(36).slice(2, 10);
@@ -48,31 +67,34 @@ export default function ClaraConversationBox() {
   const { lang } = useLanguage();
   const copy = lang === "fr"
     ? {
-        hello: "Bonjour, je suis Clara.",
-        question: "Quel projet voulez-vous réaliser ?",
-        placeholder: "Décrivez votre projet…",
-        attach: "Joindre un document",
+        placeholder: "Demandez quelque chose à Clara…",
+        attach: "Ajouter une photo ou un document",
+        camera: "Prendre une photo",
         voice: "Parler à Clara",
         send: "Envoyer",
         working: "Analyse en cours…",
         fallback: "Je continue ici avec vous. Reformulez en une phrase.",
       }
     : {
-        hello: "Hello, I'm Clara.",
-        question: "What project would you like to complete?",
-        placeholder: "Describe your project…",
-        attach: "Attach a document",
+        placeholder: "Demandez quelque chose à Clara…",
+        attach: "Ajouter une photo ou un document",
+        camera: "Prendre une photo",
         voice: "Talk to Clara",
         send: "Send",
         working: "Analyzing…",
         fallback: "Pour le moment je fonctionne en français. Je termine mes cours d'anglais sous peu.",
       };
-  const [messages, setMessages] = useState<Msg[]>([
-    { id: "greeting", role: "assistant", text: copy.question },
-  ]);
+  const [messages, setMessages] = useState<Msg[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<ClaraSurfaceMode>("IDLE");
+  const [quoteCount, setQuoteCount] = useState(0);
+  const [contextStatus, setContextStatus] = useState<string | null>(null);
   const hydrated = useRef(false);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const hasInteracted = messages.length > 0 || mode !== "IDLE";
+  const contextVisible = !["IDLE", "LISTENING", "ANALYZING"].includes(mode);
+  const examples = useMemo(() => ["J’ai de l’eau ici.", "J’ai trois soumissions.", "Vérifie Construction ABC."], []);
 
   // Reprise de LA conversation : rafraîchissement, retour, réouverture,
   // et même compte sur un autre appareil.
@@ -83,11 +105,14 @@ export default function ClaraConversationBox() {
     (async () => {
       try {
         const state = await startOrResumeClaraSession({ language: lang, entrypoint: "home_clara_box" });
-        if (cancelled || state.messages.length === 0) return;
-        setMessages((previous) => [
-          previous[0],
-          ...state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text })),
-        ]);
+        if (cancelled) return;
+        const restored = state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text }));
+        setMessages(restored);
+        const latestUser = [...restored].reverse().find((message) => message.role === "user");
+        const restoredMode = typeof state.context.current_intent === "string"
+          ? state.context.current_intent.toUpperCase() as ClaraSurfaceMode
+          : latestUser ? detectSurfaceMode(latestUser.text) : "IDLE";
+        setMode(restoredMode);
       } catch {
         // Conversation locale utilisable malgré tout : aucune erreur technique affichée.
       }
@@ -106,6 +131,9 @@ export default function ClaraConversationBox() {
       const userMessageId = uid();
       const history = [...messages, { id: userMessageId, role: "user" as const, text }];
       setMessages(history);
+      const nextMode = detectSurfaceMode(text);
+      setMode(nextMode === "IDLE" ? "ANALYZING" : nextMode);
+      rememberClaraReferences({ current_intent: nextMode, detected_role: nextMode === "CONTRACTOR" ? "CONTRACTOR" : undefined });
       setBusy(true);
       trackCopilotEvent("message_sent", { surface: "home_clara_box" });
       void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId }).catch(() => {});
@@ -121,9 +149,8 @@ export default function ClaraConversationBox() {
           },
           body: JSON.stringify({
             messages: history
-              .filter((m) => m.id !== "greeting")
               .map((m) => ({ role: m.role, content: m.text })),
-            context: { surface: "home_clara_box" },
+            context: { surface: "home_clara_box", mode: nextMode },
           }),
         });
 
@@ -184,6 +211,7 @@ export default function ClaraConversationBox() {
         setError(copy.fallback);
       } finally {
         setBusy(false);
+        setMode((current) => current === "ANALYZING" ? nextMode : current);
       }
     },
     [busy, copy.fallback, messages],
@@ -194,14 +222,30 @@ export default function ClaraConversationBox() {
     if (message.files.length > 0) {
       setError(null);
       setBusy(true);
+      setMode("ANALYZING");
       try {
+        const files: File[] = [];
         for (const attachment of message.files) {
           const response = await fetch(attachment.url);
           const blob = await response.blob();
           const file = new File([blob], attachment.filename || "document", {
             type: attachment.mediaType || blob.type,
           });
-          await handleUpload(file, message.text || undefined);
+          files.push(file);
+        }
+        const quoteMode = mode === "QUOTE" || files.length > 1 || files.some((file) => /pdf/i.test(file.type));
+        if (quoteMode) {
+          setMode("QUOTE");
+          setQuoteCount(files.length);
+          const { runQuoteAnalysis } = await import("@/features/quoteAnalyzer/services/quoteAnalysisClient");
+          const analysis = await runQuoteAnalysis(files.slice(0, 3));
+          setContextStatus(analysis.payload.recommendation || "Analyse terminée. Clara peut maintenant vous expliquer les écarts importants.");
+        } else {
+          const file = files[0];
+          if (file) {
+            setMode(file.type.startsWith("image/") ? "PHOTO" : "DOCUMENT");
+            await handleUpload(file, message.text || undefined);
+          }
         }
         const uploadId = uid();
         const uploadText = message.text || (lang === "fr" ? "Document joint" : "Attached document");
@@ -215,20 +259,32 @@ export default function ClaraConversationBox() {
           messageType: "attachment",
           clientMessageId: uploadId,
         }).catch(() => {});
-        openAlex("home_hero", "user_uploaded_file");
       } catch {
         setError(copy.fallback);
+        setContextStatus("Je ne peux pas confirmer ce résultat maintenant. Vous pouvez ajouter un autre fichier ou me décrire la situation.");
       } finally {
         setBusy(false);
       }
       return;
     }
     await send(message.text);
-  }, [busy, copy.fallback, handleUpload, lang, openAlex, send]);
+  }, [busy, copy.fallback, handleUpload, lang, mode, send]);
 
   const startVoice = () => {
     useAlexStore.getState().markUserEngaged();
+    setMode("LISTENING");
     openAlex("home_hero", "user_tapped_orb");
+  };
+
+  const submitCameraFile = async (file: File | undefined) => {
+    if (!file) return;
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+    await submit({ text: "", files: [{ type: "file", filename: file.name, mediaType: file.type, url: dataUrl }] });
   };
 
   return (
@@ -236,25 +292,17 @@ export default function ClaraConversationBox() {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.12 }}
-      className="home-clara-glass mx-auto w-full overflow-hidden border border-border text-left"
+      className={`home-clara-shell mx-auto w-full text-left${contextVisible ? " has-context" : ""}`}
       aria-label="Conversation avec Clara"
     >
-      <div className="home-clara-intro flex items-center">
-        <span className="home-clara-halo relative grid shrink-0 place-items-center rounded-full" aria-hidden="true">
-          <span className="home-clara-halo-core rounded-full" />
-        </span>
-        <div>
-          <p className="home-clara-greeting font-bold text-foreground">{copy.hello}</p>
-          <p className="home-clara-question text-muted-foreground">{copy.question}</p>
-        </div>
-      </div>
-
-      {messages.length > 1 && (
-        <Conversation className="max-h-[28vh] min-h-28">
+      <div className="home-clara-main home-clara-glass overflow-hidden border border-border">
+        <div className="home-clara-presence" aria-hidden="true"><span /><i /><i /></div>
+      {messages.length > 0 && (
+        <Conversation className="home-clara-conversation max-h-[38vh] min-h-28">
           <ConversationContent className="gap-3 px-5 py-4 sm:px-6">
-            {messages.slice(1).map((message) => (
+            {messages.map((message) => (
               <Message from={message.role} key={message.id}>
-                <MessageContent className="leading-relaxed group-[.is-user]:bg-primary group-[.is-user]:text-primary-foreground">
+                <MessageContent className="leading-relaxed group-[.is-user]:bg-primary-strong group-[.is-user]:text-primary-foreground">
                   <MessageResponse>{message.text}</MessageResponse>
                 </MessageContent>
               </Message>
@@ -267,9 +315,11 @@ export default function ClaraConversationBox() {
       )}
 
       <div className="home-clara-composer">
+        <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" aria-label={copy.camera} onChange={(event) => { void submitCameraFile(event.currentTarget.files?.[0]); event.currentTarget.value = ""; }} />
         <PromptInput
           accept="image/*,.pdf,.doc,.docx"
-          maxFiles={1}
+          multiple={mode === "QUOTE"}
+          maxFiles={mode === "QUOTE" ? 3 : 1}
           maxFileSize={10 * 1024 * 1024}
           onSubmit={submit}
           onError={() => setError(copy.fallback)}
@@ -284,6 +334,9 @@ export default function ClaraConversationBox() {
           <PromptInputFooter className="home-clara-controls">
             <PromptInputTools>
               <AttachmentButton label={copy.attach} />
+              <PromptInputButton type="button" onClick={() => cameraRef.current?.click()} tooltip={copy.camera} aria-label={copy.camera} className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground">
+                <Camera className="h-5 w-5" />
+              </PromptInputButton>
               <PromptInputButton type="button" onClick={startVoice} tooltip={copy.voice} aria-label={copy.voice} className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground">
                 <Mic className="h-5 w-5" />
               </PromptInputButton>
@@ -300,6 +353,21 @@ export default function ClaraConversationBox() {
           </PromptInputFooter>
         </PromptInput>
       </div>
+      {!hasInteracted && (
+        <div className="home-clara-examples" aria-label="Exemples">
+          {examples.map((example) => <button key={example} type="button" onClick={() => void send(example)}>{example}</button>)}
+        </div>
+      )}
+      </div>
+      <AnimatePresence initial={false}>
+        {contextVisible && (
+          <motion.div className="home-context-slot" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
+            <Suspense fallback={<div className="home-clara-context"><Shimmer>Préparation…</Shimmer></div>}>
+              <ClaraContextPanel mode={mode} quoteCount={quoteCount} statusText={contextStatus} />
+            </Suspense>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.section>
   );
 }
@@ -314,7 +382,7 @@ function AttachmentButton({ label }: { label: string }) {
       aria-label={label}
       className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground"
     >
-      <Paperclip className="h-5 w-5" />
+      <Plus className="h-5 w-5" />
     </PromptInputButton>
   );
 }
