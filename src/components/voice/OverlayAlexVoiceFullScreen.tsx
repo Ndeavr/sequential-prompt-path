@@ -70,6 +70,7 @@ function deriveMode(feature: string | undefined): "homeowner" | "contractor" | "
 
 function deriveOrbStateV2(state: LockedVoiceState, isSpeaking: boolean): AlexOrbStateV2 {
   if (state === "error_recoverable" || state === "error_fatal") return "error";
+  if (state === "paused") return "idle";
   if (isSpeaking || state === "speaking") return "speaking";
   if (state === "processing_stt" || state === "processing_response" ||
       state === "stabilizing" || state === "opening_session" || state === "requesting_permission") return "thinking";
