@@ -364,6 +364,7 @@ export default function OverlayAlexVoiceFullScreen() {
     },
     onError: (error) => {
       console.error("[VoiceOverlay] Error:", error);
+      if (getStore().machineState === "paused") return;
       if (firstAudioTimerRef.current) {
         clearTimeout(firstAudioTimerRef.current);
         firstAudioTimerRef.current = null;
@@ -708,6 +709,8 @@ export default function OverlayAlexVoiceFullScreen() {
     const tick = () => {
       // Battery saver: skip heartbeat work when tab not visible
       if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      // En pause : aucun battement, aucune erreur de connexion.
+      if (getStore().machineState === "paused") return;
       const timeSinceBoot = Date.now() - bootTimeRef.current;
       if (timeSinceBoot < 15000) return;
 
