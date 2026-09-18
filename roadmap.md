@@ -10,6 +10,7 @@
 - [x] Chemin gratuit hérité réparé : plus d'écriture silencieuse sur des colonnes inexistantes.
 
 ## À faire ensuite
+- [ ] Déployer le système éditorial au défilement sur les cinq pages secondaires prioritaires, sans modifier la home.
 - [ ] Poursuivre jusqu'à 10 activations gratuites (cycle automatique aux 15 minutes).
 - [ ] Élargir la découverte de nouvelles entreprises admissibles (bloquée par le coupe-circuit Google).
 - [ ] Thème sombre par défaut sur l'accueil (logo actuel conservé).
