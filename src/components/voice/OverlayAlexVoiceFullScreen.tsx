@@ -102,6 +102,12 @@ export default function OverlayAlexVoiceFullScreen() {
   const buildGreetingRef = useRef<typeof buildGreeting>(null as any);
   const transcriptsRef = useRef<typeof transcripts>([]);
   const claraBriefRef = useRef<ClaraVoiceBrief | null>(null);
+  // ─── Cycle de vie : un seul minuteur d'inactivité, pause réelle, reprise ───
+  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showListeningHint, setShowListeningHint] = useState(false);
+  const [bootNonce, setBootNonce] = useState(0);
+  const armInactivityRef = useRef<(reason: string) => void>(() => {});
+  const pauseVoiceRef = useRef<(reason: string) => void>(() => {});
 
   transcriptsRef.current = transcripts;
   const openChatFallback = useAlexChatFallbackStore((s) => s.open);
