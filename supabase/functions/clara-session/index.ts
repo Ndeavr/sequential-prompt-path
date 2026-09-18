@@ -30,14 +30,34 @@ const CONTEXT_KEYS = [
   "active_project_id",
   "active_lead_id",
   "selected_match_id",
+  "appointment_id",
   "selected_contractor_id",
   "contractor_id",
   "pricing_quote_id",
   "checkout_session_id",
+  "visitor_id",
   "current_intent",
   "detected_role",
   "current_route",
 ] as const;
+
+/** Références métier vérifiées en base avant enregistrement. */
+const VALIDATED_KEYS = [
+  "active_property_id",
+  "active_project_id",
+  "active_lead_id",
+  "selected_match_id",
+  "appointment_id",
+  "selected_contractor_id",
+  "contractor_id",
+  "pricing_quote_id",
+] as const;
+
+/** Champs libres non métier (aucune donnée privée). */
+const FREE_TEXT_KEYS = ["current_intent", "detected_role", "current_route", "visitor_id"] as const;
+
+/** Horodatage par clé scalaire : empêche un appareil en retard d'écraser un contexte plus récent. */
+const REF_TS_KEY = "__ref_ts";
 
 /** Références multiples (listes d'identifiants d'artefacts anonymes). */
 const CONTEXT_LIST_KEYS = [
@@ -65,9 +85,17 @@ function str(value: unknown, max: number): string | null {
   return trimmed.slice(0, max);
 }
 
-function sanitizeContextPatch(raw: unknown): Record<string, unknown> {
+/**
+ * Filtrage de forme uniquement. La validation d'appartenance est faite ensuite
+ * en base (`validateReferences`) : une clé autorisée ne suffit jamais.
+ */
+function sanitizeContextPatch(raw: unknown): {
+  patch: Record<string, unknown>;
+  rejected: string[];
+} {
   const patch: Record<string, unknown> = {};
-  if (!raw || typeof raw !== "object") return patch;
+  const rejected: string[] = [];
+  if (!raw || typeof raw !== "object") return { patch, rejected };
   const input = raw as Record<string, unknown>;
 
   for (const key of CONTEXT_KEYS) {
@@ -78,41 +106,74 @@ function sanitizeContextPatch(raw: unknown): Record<string, unknown> {
       continue;
     }
     const text = str(value, 200);
-    if (text) patch[key] = text;
+    if (!text) {
+      rejected.push(key);
+      continue;
+    }
+    if ((VALIDATED_KEYS as readonly string[]).includes(key) && !UUID_RE.test(text)) {
+      rejected.push(key);
+      continue;
+    }
+    if (key === "checkout_session_id" && !/^cs_[A-Za-z0-9_]{8,}$/.test(text)) {
+      rejected.push(key);
+      continue;
+    }
+    if ((FREE_TEXT_KEYS as readonly string[]).includes(key) && !/^[\w\-./:? ]{1,200}$/.test(text)) {
+      rejected.push(key);
+      continue;
+    }
+    patch[key] = text;
   }
 
   for (const key of CONTEXT_LIST_KEYS) {
     if (!(key in input)) continue;
     const value = input[key];
-    if (!Array.isArray(value)) continue;
-    const ids = value
-      .filter((v): v is string => typeof v === "string" && UUID_RE.test(v))
-      .slice(0, MAX_LIST);
-    patch[key] = ids;
+    if (!Array.isArray(value)) {
+      rejected.push(key);
+      continue;
+    }
+    const valid = value.filter((v): v is string => typeof v === "string" && UUID_RE.test(v));
+    if (valid.length !== value.length) rejected.push(key);
+    patch[key] = Array.from(new Set(valid)).slice(0, MAX_LIST);
   }
 
-  return patch;
+  return { patch, rejected };
 }
 
 function mergeContext(
   current: Record<string, unknown>,
   patch: Record<string, unknown>,
-): Record<string, unknown> {
+  clientTs: number,
+): { context: Record<string, unknown>; stale: string[] } {
   const next: Record<string, unknown> = { ...current };
+  const stamps: Record<string, number> = {
+    ...((current[REF_TS_KEY] as Record<string, number>) ?? {}),
+  };
+  const stale: string[] = [];
+
   for (const [key, value] of Object.entries(patch)) {
     if ((CONTEXT_LIST_KEYS as readonly string[]).includes(key)) {
+      // Union déduplicquée : l'ordre d'arrivée des appareils n'a aucune importance.
       const existing = Array.isArray(next[key]) ? (next[key] as string[]) : [];
-      const merged = Array.from(new Set([...existing, ...(value as string[])])).slice(0, MAX_LIST);
-      next[key] = merged;
+      next[key] = Array.from(new Set([...existing, ...(value as string[])])).slice(0, MAX_LIST);
       continue;
     }
+    // Écriture concurrente : un appareil en retard n'écrase pas un contexte plus récent.
+    const previous = stamps[key];
+    if (typeof previous === "number" && previous > clientTs) {
+      stale.push(key);
+      continue;
+    }
+    stamps[key] = clientTs;
     if (value === null) {
       delete next[key];
       continue;
     }
     next[key] = value;
   }
-  return next;
+
+  next[REF_TS_KEY] = stamps;
+  return { context: next, stale };
 }
 
 type SessionRow = {
@@ -204,6 +265,141 @@ Deno.serve(async (req) => {
   function ownedByCaller(session: SessionRow): boolean {
     if (!session.user_id) return true;
     return !!userId && session.user_id === userId;
+  }
+
+  /** Propriété admissible : appartient au compte, ou encore anonyme. */
+  function ownable(owner: string | null | undefined): boolean {
+    if (!owner) return true;
+    return !!userId && owner === userId;
+  }
+
+  async function row(table: string, columns: string, id: string) {
+    const { data } = await admin.from(table).select(columns).eq("id", id).maybeSingle();
+    return (data as Record<string, unknown> | null) ?? null;
+  }
+
+  /**
+   * Validation serveur obligatoire : un UUID valide mais étranger à la
+   * conversation ou au compte est refusé, jamais enregistré.
+   */
+  async function validateReferences(
+    patch: Record<string, unknown>,
+    context: Record<string, unknown>,
+    session: SessionRow,
+  ): Promise<{ accepted: Record<string, unknown>; refused: string[] }> {
+    const accepted: Record<string, unknown> = {};
+    const refused: string[] = [];
+    const resolve = (key: string) => (patch[key] as string) ?? (context[key] as string) ?? null;
+
+    for (const [key, value] of Object.entries(patch)) {
+      if (value === null || !(VALIDATED_KEYS as readonly string[]).includes(key)) {
+        if (!(CONTEXT_LIST_KEYS as readonly string[]).includes(key)) {
+          accepted[key] = value;
+          continue;
+        }
+      }
+      const id = value as string;
+
+      switch (key) {
+        case "active_project_id": {
+          const r = await row("projects", "id,user_id", id);
+          if (r && ownable(r.user_id as string | null)) accepted[key] = id;
+          else refused.push(key);
+          break;
+        }
+        case "active_lead_id": {
+          const r = await row("leads", "id,owner_profile_id,property_id", id);
+          if (r && ownable(r.owner_profile_id as string | null)) accepted[key] = id;
+          else refused.push(key);
+          break;
+        }
+        case "active_property_id": {
+          const r = await row("properties", "id,user_id", id);
+          if (r && ownable(r.user_id as string | null)) accepted[key] = id;
+          else refused.push(key);
+          break;
+        }
+        case "selected_match_id": {
+          const r = await row("matches", "id,lead_id,contractor_id", id);
+          const lead = resolve("active_lead_id");
+          if (r && lead && r.lead_id === lead) accepted[key] = id;
+          else refused.push(key);
+          break;
+        }
+        case "appointment_id": {
+          const r = await row("appointments", "id,lead_id,contractor_id,homeowner_user_id", id);
+          const lead = resolve("active_lead_id");
+          const okLead = !lead || r?.lead_id === lead;
+          const okOwner = ownable((r?.homeowner_user_id as string | null) ?? null);
+          if (r && okLead && okOwner) accepted[key] = id;
+          else refused.push(key);
+          break;
+        }
+        case "contractor_id": {
+          const r = await row("contractors", "id,user_id", id);
+          if (r && ownable(r.user_id as string | null)) accepted[key] = id;
+          else refused.push(key);
+          break;
+        }
+        case "selected_contractor_id": {
+          const r = await row("contractors", "id", id);
+          if (r) accepted[key] = id;
+          else refused.push(key);
+          break;
+        }
+        case "pricing_quote_id": {
+          const r = await row("contractor_pricing_quotes", "id,contractor_id,user_id", id);
+          const contractor = resolve("contractor_id");
+          const okContractor = !contractor || r?.contractor_id === contractor;
+          if (r && okContractor && ownable((r.user_id as string | null) ?? null)) accepted[key] = id;
+          else refused.push(key);
+          break;
+        }
+        case "quote_analysis_ids": {
+          const ids: string[] = [];
+          for (const one of value as string[]) {
+            const r = await row("quote_analyses", "id,user_id", one);
+            if (r && ownable(r.user_id as string | null)) ids.push(one);
+          }
+          if (ids.length !== (value as string[]).length) refused.push(key);
+          if (ids.length) accepted[key] = ids;
+          break;
+        }
+        case "verification_run_ids": {
+          const ids: string[] = [];
+          const visitor = resolve("visitor_id");
+          for (const one of value as string[]) {
+            const r = await row("contractor_verification_runs", "id,user_id,visitor_id", one);
+            if (!r) continue;
+            const mine = ownable(r.user_id as string | null);
+            const sameVisitor = !r.user_id && !!visitor && r.visitor_id === visitor;
+            if (mine || sameVisitor) ids.push(one);
+          }
+          if (ids.length !== (value as string[]).length) refused.push(key);
+          if (ids.length) accepted[key] = ids;
+          break;
+        }
+        case "visual_analysis_ids": {
+          const ids: string[] = [];
+          for (const one of value as string[]) {
+            const r = await row("visual_analyses", "id,user_id,session_id", one);
+            if (!r) continue;
+            const mine = ownable(r.user_id as string | null);
+            const sameSession =
+              !r.user_id &&
+              (r.session_id === session.session_token || r.session_id === session.id);
+            if (mine || sameSession) ids.push(one);
+          }
+          if (ids.length !== (value as string[]).length) refused.push(key);
+          if (ids.length) accepted[key] = ids;
+          break;
+        }
+        default:
+          accepted[key] = value;
+      }
+    }
+
+    return { accepted, refused };
   }
 
   function serialize(session: SessionRow) {
@@ -315,11 +511,22 @@ Deno.serve(async (req) => {
 
     // ── context : fusion de références uniquement ──
     if (action === "context") {
-      const patch = sanitizeContextPatch(body.patch);
+      const currentContext = (session.context_json ?? {}) as Record<string, unknown>;
+      const { patch, rejected } = sanitizeContextPatch(body.patch);
       if (Object.keys(patch).length === 0) {
-        return json({ ok: true, context: session.context_json ?? {}, changed: false });
+        return json({ ok: true, context: currentContext, changed: false, rejected });
       }
-      const merged = mergeContext((session.context_json ?? {}) as Record<string, unknown>, patch);
+
+      // Une clé autorisée ne suffit pas : l'appartenance est vérifiée en base.
+      const { accepted, refused } = await validateReferences(patch, currentContext, session);
+      const allRejected = [...new Set([...rejected, ...refused])];
+      if (Object.keys(accepted).length === 0) {
+        return json({ ok: true, context: currentContext, changed: false, rejected: allRejected });
+      }
+
+      const clientTs = typeof body.client_ts === "number" ? body.client_ts : Date.now();
+      const { context: merged, stale } = mergeContext(currentContext, accepted, clientTs);
+
       const { data: updated, error } = await admin
         .from("alex_sessions")
         .update({ context_json: merged, updated_at: new Date().toISOString() })
@@ -327,7 +534,13 @@ Deno.serve(async (req) => {
         .select(SESSION_COLUMNS)
         .maybeSingle();
       if (error || !updated) return json({ error: "context_update_failed" }, 500);
-      return json({ ok: true, context: (updated as SessionRow).context_json ?? {}, changed: true });
+      return json({
+        ok: true,
+        context: (updated as SessionRow).context_json ?? {},
+        changed: true,
+        rejected: allRejected,
+        stale,
+      });
     }
 
     // ── promote : rattachement au compte + réclamation idempotente ──
@@ -352,29 +565,76 @@ Deno.serve(async (req) => {
       }
 
       const context = (current.context_json ?? {}) as Record<string, unknown>;
-      const claimed: Record<string, string[]> = { quote_analyses: [], refused: [] };
+      const claimed: Record<string, string[]> = {
+        quote_analyses: [],
+        verification_runs: [],
+        visual_analyses: [],
+        refused: [],
+      };
 
-      const quoteIds = Array.isArray(context.quote_analysis_ids)
-        ? (context.quote_analysis_ids as string[]).filter((id) => UUID_RE.test(id)).slice(0, MAX_LIST)
-        : [];
+      const listOf = (key: string): string[] =>
+        Array.isArray(context[key])
+          ? Array.from(
+              new Set((context[key] as string[]).filter((id) => UUID_RE.test(id))),
+            ).slice(0, MAX_LIST)
+          : [];
 
-      for (const id of quoteIds) {
-        const { data: row } = await admin
-          .from("quote_analyses")
-          .select("id,user_id")
-          .eq("id", id)
-          .maybeSingle();
-        if (!row) continue;
-        if (row.user_id && row.user_id !== userId) {
-          // Appartenance ambiguë : refus explicite, jamais d'écrasement.
-          claimed.refused.push(id);
-          continue;
+      const visitorId = typeof context.visitor_id === "string" ? context.visitor_id : null;
+
+      /**
+       * Réclamation : un identifiant présent dans le contexte ne suffit jamais.
+       * L'artefact doit déjà appartenir au compte, ou être anonyme ET rattaché
+       * à cette même conversation (jeton de session / visiteur).
+       */
+      async function claim(
+        table: string,
+        bucket: string,
+        ids: string[],
+        anonymousProof: (row: Record<string, unknown>) => boolean,
+        columns: string,
+      ) {
+        for (const id of ids) {
+          const { data: found } = await admin
+            .from(table)
+            .select(columns)
+            .eq("id", id)
+            .maybeSingle();
+          const r = found as Record<string, unknown> | null;
+          if (!r) continue;
+          const owner = r.user_id as string | null;
+          if (owner && owner !== userId) {
+            // Appartenance ambiguë : refus explicite, jamais d'écrasement.
+            claimed.refused.push(id);
+            continue;
+          }
+          if (!owner) {
+            if (!anonymousProof(r)) {
+              claimed.refused.push(id);
+              continue;
+            }
+            await admin.from(table).update({ user_id: userId }).eq("id", id).is("user_id", null);
+          }
+          claimed[bucket].push(id);
         }
-        if (!row.user_id) {
-          await admin.from("quote_analyses").update({ user_id: userId }).eq("id", id).is("user_id", null);
-        }
-        claimed.quote_analyses.push(id);
       }
+
+      await claim("quote_analyses", "quote_analyses", listOf("quote_analysis_ids"), () => true, "id,user_id");
+
+      await claim(
+        "contractor_verification_runs",
+        "verification_runs",
+        listOf("verification_run_ids"),
+        (r) => !!visitorId && r.visitor_id === visitorId,
+        "id,user_id,visitor_id",
+      );
+
+      await claim(
+        "visual_analyses",
+        "visual_analyses",
+        listOf("visual_analysis_ids"),
+        (r) => r.session_id === current.session_token || r.session_id === current.id,
+        "id,user_id,session_id",
+      );
 
       return json({
         ...serialize(current),

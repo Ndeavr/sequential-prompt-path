@@ -12,11 +12,12 @@
 - [x] P0-4 promotion après OTP/OAuth (montée globale dans les providers)
 - [x] P0-5 aucun prix annuel calculé côté client dans le paiement entrepreneur
 
-## Étape 3 — P1
-- [ ] P1-6 conversation → projet (référence project_id/lead_id dans la conversation)
-- [ ] P1-7 réclamation idempotente des analyses de soumissions et vérifications
-- [ ] P1-8 propriété active / Passeport rattaché
-- [ ] P1-9 jumelage → rendez-vous conserve project_id/lead_id
+## Étape 3 — P1 — FAIT
+- [x] P1-6 conversation → projet (référence project_id/lead_id dans la conversation)
+- [x] P1-7 réclamation idempotente des analyses de soumissions et vérifications (visitor_id conservé)
+- [x] P1-8 propriété active / Passeport rattaché (refus serveur si autre compte)
+- [x] P1-9 jumelage → rendez-vous conserve project_id/lead_id/match_id/appointment_id
+- [x] P1-10 entrepreneur → devis personnalisé → Stripe (contractor_id + pricing_quote_id + checkout_session_id)
 
 ## Étape 4
 - [ ] Tests de régression + console + réseau + DB

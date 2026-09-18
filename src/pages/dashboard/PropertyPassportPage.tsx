@@ -4,6 +4,7 @@
  * 1. Property Identity  2. System Inventory  3. Renovation History
  * 4. Maintenance Log  5. Document Vault  6. Home Score
  */
+import { useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/layouts/DashboardLayout";
@@ -21,6 +22,7 @@ import { submitClaim, getClaimStatusLabel } from "@/services/property/claimServi
 import { getStatusLabel } from "@/services/property/propertyService";
 import { calculateHomeScore, type HomeScoreInput, type HomeScoreOutput } from "@/services/homeScoreService";
 import { supabase } from "@/integrations/supabase/client";
+import { rememberClaraReferences } from "@/services/clara/claraSession";
 import { useToast } from "@/hooks/use-toast";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import {
@@ -47,6 +49,13 @@ export default function PropertyPassportPage() {
   const qc = useQueryClient();
 
   const { data: property, isLoading: propLoading } = useProperty(id);
+
+  // ONE CLARA : la conversation retrouve la même propriété après connexion,
+  // rafraîchissement ou changement d'appareil. Le serveur refuse toute propriété
+  // appartenant à un autre compte.
+  useEffect(() => {
+    if (property?.id) rememberClaraReferences({ active_property_id: property.id });
+  }, [property?.id]);
 
   // Seed tasks on first load
   const { data: seeded } = useQuery({

@@ -7,6 +7,8 @@
  */
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getVisitorId } from "@/features/verifierEntrepreneur/visitorId";
+import { rememberClaraReferences } from "@/services/clara/claraSession";
 import type { VerificationApiResponse, VerificationFormInput, EvidenceType } from "@/types/verification";
 
 interface VerifyPayload {
@@ -44,6 +46,7 @@ function buildInput(form: VerificationFormInput): Record<string, string | undefi
 
 async function callVerify(payload: VerifyPayload): Promise<VerificationApiResponse> {
   const fields = buildInput(payload.form);
+  const visitorId = payload.visitor_id || getVisitorId();
 
   const body: Record<string, unknown> = {
     ...fields,
@@ -51,7 +54,7 @@ async function callVerify(payload: VerifyPayload): Promise<VerificationApiRespon
     image_base64: payload.image_base64,
     image_type: payload.image_type,
     verification_run_id: payload.verification_run_id,
-    visitor_id: payload.visitor_id,
+    visitor_id: visitorId,
   };
 
   const { data, error } = await supabase.functions.invoke("verify-contractor", {
@@ -61,7 +64,17 @@ async function callVerify(payload: VerifyPayload): Promise<VerificationApiRespon
   if (error) throw new Error(error.message || "Erreur de vérification");
   if (!data?.success) throw new Error(data?.error || "Résultat inattendu du moteur de vérification.");
 
-  return data as VerificationApiResponse;
+  const result = data as VerificationApiResponse;
+  // ONE CLARA : la vérification reste rattachée à la conversation, avec sa preuve
+  // d'appartenance anonyme (visiteur) pour la réclamation après connexion.
+  if (result.verification_run_id) {
+    rememberClaraReferences({
+      verification_run_ids: [result.verification_run_id],
+      visitor_id: visitorId || undefined,
+    });
+  }
+
+  return result;
 }
 
 export function useVerifyContractor() {

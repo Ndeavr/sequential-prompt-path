@@ -10,13 +10,16 @@
  *    sinon aucune réservation n'est possible ;
  *  - aucun score interne n'est exposé.
  */
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { rememberClaraReferences } from "@/services/clara/claraSession";
 
 export const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface EligibleRecommendation {
+  matchId: string;
   contractorId: string;
   slug: string;
   name: string;
@@ -91,7 +94,7 @@ export async function fetchEligibleRecommendation(
   //    Aucun tri par score, aucun repli sur une suggestion.
   const { data: match, error } = await supabase
     .from("matches")
-    .select("contractor_id, reasons, status, response_status")
+    .select("id, contractor_id, reasons, status, response_status")
     .eq("lead_id", resolvedLeadId)
     .eq("status", "primary")
     .maybeSingle();
@@ -119,6 +122,7 @@ export async function fetchEligibleRecommendation(
       : null;
 
   return {
+    matchId: String(match.id),
     contractorId: String(pro.id),
     slug: String(pro.slug),
     name: String(pro.business_name),
@@ -142,6 +146,20 @@ export function useEligibleRecommendation(
     enabled: !!userId && hasContext,
     queryFn: () => fetchEligibleRecommendation(userId!, leadId, projectId),
   });
+
+  // ONE CLARA : le jumelage réellement persisté reste rattaché au projet et à
+  // la demande dans la conversation. Aucune recommandation inventée.
+  const matchId = query.data?.matchId;
+  const contractorId = query.data?.contractorId;
+  useEffect(() => {
+    if (!matchId) return;
+    rememberClaraReferences({
+      active_project_id: projectId || undefined,
+      active_lead_id: leadId || undefined,
+      selected_match_id: matchId,
+      selected_contractor_id: contractorId,
+    });
+  }, [matchId, contractorId, projectId, leadId]);
 
   return { ...query, leadId, projectId, hasContext };
 }
