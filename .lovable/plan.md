@@ -25,8 +25,13 @@ Une seule conversation. La voix devient un canal d'entrée/sortie de la conversa
 
 ### 3. Synchronisation bidirectionnelle
 - Chaque transcription utilisateur et chaque réponse de Clara en voix est écrite dans la conversation canonique via l'écriture idempotente existante (identifiant de message déterministe → aucun doublon si la connexion se rétablit ou si l'écran se relance).
-- À la fermeture de l'overlay, la boîte texte recharge l'état serveur : la transcription et la réponse apparaissent dans le fil, à la bonne place, même `conversation_id`, même étape.
-- Texte → voix → texte → voix, autant de fois que voulu, sans perte.
+- Le chat est le journal visible permanent : chaque parole de l'utilisateur devient un message utilisateur normal, horodaté, et chaque réponse vocale de Clara devient le même message assistant, avec exactement le texte prononcé. Aucun historique vocal séparé ou caché.
+- Les messages apparaissent dans le chat pendant la session vocale, pas seulement à la fermeture; à la fermeture, l'état serveur est simplement rechargé.
+- Transcription incertaine : elle est affichée telle quelle et reste corrigeable par l'utilisateur, qui peut réécrire sa réponse dans le chat.
+- Interruption de Clara pendant qu'elle parle : le texte déjà finalisé reste dans le chat, sans doublon; fermeture en pleine réponse : même comportement.
+- Aucun message en double après reconnexion, rafraîchissement ou changement d'appareil (écriture idempotente par identifiant de message déterministe).
+- Texte → voix → texte → voix, autant de fois que voulu : un seul fil continu, chronologique, sans trou et sans doublon.
+
 
 ### 4. Réponses rapides et voix équivalentes
 - Les options affichées (Bois | Béton | Fibre de verre | Je ne sais pas) restent valides pendant la voix : toucher l'option ou la dire produit le même message utilisateur dans la même conversation et la même suite de flux.
