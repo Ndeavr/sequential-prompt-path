@@ -688,7 +688,7 @@ export default function OverlayAlexVoiceFullScreen() {
         slowTokenTimerRef.current = null;
       }
     };
-  }, [store.isOverlayOpen]);
+  }, [store.isOverlayOpen, bootNonce]);
 
   // ─── HEARTBEAT (paused when tab hidden — battery saver) ───
   useEffect(() => {
