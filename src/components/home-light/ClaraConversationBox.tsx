@@ -1,5 +1,11 @@
-/** Clara inline conversation, backed by the existing text, voice and upload flows. */
-import { useCallback, useState } from "react";
+/**
+ * Clara inline conversation, backed by the existing text, voice and upload flows.
+ *
+ * ONE CLARA : cette boîte n'a plus d'état conversationnel parallèle. Elle lit et
+ * écrit dans la session Clara canonique, ce qui rend la conversation persistante
+ * après rafraîchissement, réouverture, authentification et changement d'appareil.
+ */
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowUp, Mic, Paperclip } from "lucide-react";
 
@@ -8,6 +14,10 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { useAlexStore } from "@/features/alex/state/alexStore";
 import { useAlexConversation } from "@/features/alex/hooks/useAlexConversation";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
+import {
+  appendClaraMessage,
+  startOrResumeClaraSession,
+} from "@/services/clara/claraSession";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
@@ -62,6 +72,30 @@ export default function ClaraConversationBox() {
   ]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hydrated = useRef(false);
+
+  // Reprise de LA conversation : rafraîchissement, retour, réouverture,
+  // et même compte sur un autre appareil.
+  useEffect(() => {
+    if (hydrated.current) return;
+    hydrated.current = true;
+    let cancelled = false;
+    (async () => {
+      try {
+        const state = await startOrResumeClaraSession({ language: lang, entrypoint: "home_clara_box" });
+        if (cancelled || state.messages.length === 0) return;
+        setMessages((previous) => [
+          previous[0],
+          ...state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text })),
+        ]);
+      } catch {
+        // Conversation locale utilisable malgré tout : aucune erreur technique affichée.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [lang]);
 
   const send = useCallback(
     async (raw: string) => {
@@ -69,10 +103,12 @@ export default function ClaraConversationBox() {
       if (!text || busy) return;
 
       setError(null);
-      const history = [...messages, { id: uid(), role: "user" as const, text }];
+      const userMessageId = uid();
+      const history = [...messages, { id: userMessageId, role: "user" as const, text }];
       setMessages(history);
       setBusy(true);
       trackCopilotEvent("message_sent", { surface: "home_clara_box" });
+      void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId }).catch(() => {});
 
       const assistantId = uid();
       try {
@@ -133,18 +169,16 @@ export default function ClaraConversationBox() {
         }
 
         const finalText = cleanAlexText(full);
+        const shownText =
+          finalText || "Je continue ici avec vous. Décrivez-moi la situation en quelques mots.";
         setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantId
-              ? {
-                  ...m,
-                  text:
-                    finalText ||
-                    "Je continue ici avec vous. Décrivez-moi la situation en quelques mots.",
-                }
-              : m,
-          ),
+          prev.map((m) => (m.id === assistantId ? { ...m, text: shownText } : m)),
         );
+        void appendClaraMessage({
+          role: "assistant",
+          text: shownText,
+          clientMessageId: assistantId,
+        }).catch(() => {});
       } catch {
         setMessages((prev) => prev.filter((m) => m.id !== assistantId));
         setError(copy.fallback);
@@ -169,10 +203,18 @@ export default function ClaraConversationBox() {
           });
           await handleUpload(file, message.text || undefined);
         }
+        const uploadId = uid();
+        const uploadText = message.text || (lang === "fr" ? "Document joint" : "Attached document");
         setMessages((previous) => [
           ...previous,
-          { id: uid(), role: "user", text: message.text || (lang === "fr" ? "Document joint" : "Attached document") },
+          { id: uploadId, role: "user", text: uploadText },
         ]);
+        void appendClaraMessage({
+          role: "user",
+          text: uploadText,
+          messageType: "attachment",
+          clientMessageId: uploadId,
+        }).catch(() => {});
         openAlex("home_hero", "user_uploaded_file");
       } catch {
         setError(copy.fallback);

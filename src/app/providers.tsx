@@ -13,6 +13,7 @@ import { ActiveRoleProvider } from "@/contexts/ActiveRoleContext";
 import { LanguageProvider } from "@/components/ui/LanguageToggle";
 import OverlayHydrationGuard from "@/components/system/OverlayHydrationGuard";
 import DeferredAfterInteractive from "@/components/system/DeferredAfterInteractive";
+import ClaraContinuityMount from "@/hooks/useClaraContinuity";
 import type { ReactNode } from "react";
 
 // Defer heavy voice/chat overlays — they only need to mount after the user
@@ -47,6 +48,8 @@ export const Providers = ({ children }: ProvidersProps) => (
                 <Toaster />
                 <Sonner />
                 {children}
+                {/* ONE CLARA : rattache la conversation au compte après connexion. */}
+                <ClaraContinuityMount />
                 <OverlayHydrationGuard />
                 {/* Each overlay deferred independently to spread network/CPU cost */}
                 <DeferredAfterInteractive timeoutMs={2500}>

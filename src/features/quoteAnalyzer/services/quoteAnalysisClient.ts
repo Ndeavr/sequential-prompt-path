@@ -2,6 +2,7 @@
  * quoteAnalysisClient — Convert files, call edge function, persist + retrieve analyses.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { rememberClaraArtifact } from "@/services/clara/claraSession";
 import { parseDailyLimit, type DailyLimitPayload } from "@/lib/copy/usagePolicy";
 
 /** Garde-fou d'utilisation raisonnable atteint : on invite l'utilisateur à revenir demain. */
@@ -43,7 +44,20 @@ export interface QuoteAnalysisRow {
   created_at: string;
 }
 
+/**
+ * ONE CLARA : l'identifiant d'analyse doit survivre à la fermeture de l'onglet
+ * pour rester réclamable après OTP/OAuth. Il est donc conservé dans le stockage
+ * persistant du navigateur, et référencé dans la conversation canonique.
+ */
 const SS_KEY = "unpro.quote_analysis_id";
+
+function readStore(): Storage | null {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -88,16 +102,19 @@ export async function runQuoteAnalysis(files: File[]): Promise<{ analysis_id: st
   if (!data?.analysis_id) throw new Error(data?.error || "Réponse invalide");
 
   try {
-    sessionStorage.setItem(SS_KEY, data.analysis_id);
+    readStore()?.setItem(SS_KEY, data.analysis_id);
   } catch {
     /* ignore */
   }
+  // Référence conservée dans la conversation canonique pour la réclamation
+  // idempotente après authentification. Jamais une copie de l'analyse.
+  void rememberClaraArtifact("quote_analysis_ids", data.analysis_id).catch(() => {});
   return data;
 }
 
 export function getStoredAnalysisId(): string | null {
   try {
-    return sessionStorage.getItem(SS_KEY);
+    return readStore()?.getItem(SS_KEY) ?? sessionStorage.getItem(SS_KEY);
   } catch {
     return null;
   }
@@ -105,6 +122,7 @@ export function getStoredAnalysisId(): string | null {
 
 export function clearStoredAnalysisId() {
   try {
+    readStore()?.removeItem(SS_KEY);
     sessionStorage.removeItem(SS_KEY);
   } catch {
     /* ignore */
