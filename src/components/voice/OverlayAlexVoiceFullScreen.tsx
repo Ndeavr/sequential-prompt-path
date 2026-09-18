@@ -276,7 +276,9 @@ export default function OverlayAlexVoiceFullScreen() {
     onUserTranscript: (text) => {
       const s = getStore();
       if (!s.isOverlayOpen || !text || text.trim().length < 2) return;
+      if (s.machineState === "paused") return;
       lastAlexIdRef.current = null;
+      armInactivityRef.current("user_speech");
       
       const current = s.machineState;
       if (["listening", "awaiting_user", "session_ready"].includes(current)) {
