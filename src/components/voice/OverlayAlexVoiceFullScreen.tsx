@@ -429,6 +429,14 @@ export default function OverlayAlexVoiceFullScreen() {
     if (!s.isOverlayOpen || s.machineState === "paused") return;
     console.log("[ALEX VOICE] ⏸️ Pause réelle de la session vocale —", reason);
 
+    // L'état `paused` est posé AVANT toute coupure : aucun callback de
+    // déconnexion ne peut relancer une parole ou une salutation de secours.
+    s.pauseVoiceSession(reason);
+    hasConnectedRef.current = false;
+    firstAudioReceivedRef.current = false;
+    ttsFallbackInProgressRef.current = false;
+    bootInitiatedRef.current = false;
+
     clearInactivityTimer();
     if (firstAudioTimerRef.current) { clearTimeout(firstAudioTimerRef.current); firstAudioTimerRef.current = null; }
     if (stabilizationTimerRef.current) { clearTimeout(stabilizationTimerRef.current); stabilizationTimerRef.current = null; }
