@@ -158,6 +158,7 @@ export default function ClaraConversationBox() {
       if (!text || busy) return;
 
       setError(null);
+      setQuickReplies(null);
       const userMessageId = uid();
       const history = [...messages, { id: userMessageId, role: "user" as const, text }];
       setMessages(history);
@@ -212,7 +213,7 @@ export default function ClaraConversationBox() {
               const delta = json?.choices?.[0]?.delta?.content;
               if (typeof delta === "string") {
                 full += delta;
-                const shown = cleanAlexText(full);
+                const shown = cleanAlexText(extractQuickReplies(full).text);
                 setMessages((prev) =>
                   prev.map((m) =>
                     m.id === assistantId ? { ...m, text: shown } : m,
