@@ -108,6 +108,10 @@ interface AlexVoiceLockedState {
   openVoiceSession: (feature?: string, openReason?: string, contextHint?: string, displayMode?: "fullscreen" | "floating", intent?: import("@/services/alexOpeningTemplates").AlexIntent | null) => void;
   setDisplayMode: (mode: "fullscreen" | "floating") => void;
   closeVoiceSession: (closeReason: string) => void;
+  /** Met la voix en pause : la conversation Clara continue, le transport vocal est coupé par l'appelant. */
+  pauseVoiceSession: (reason: string) => void;
+  /** Reprend la voix sur la même conversation Clara canonique. */
+  resumeVoiceSession: (reason: string) => void;
   transitionTo: (newState: LockedVoiceState, reason?: string) => boolean;
   setError: (type: string, message: string, recoverable: boolean) => void;
   clearError: () => void;
