@@ -85,9 +85,17 @@ function str(value: unknown, max: number): string | null {
   return trimmed.slice(0, max);
 }
 
-function sanitizeContextPatch(raw: unknown): Record<string, unknown> {
+/**
+ * Filtrage de forme uniquement. La validation d'appartenance est faite ensuite
+ * en base (`validateReferences`) : une clé autorisée ne suffit jamais.
+ */
+function sanitizeContextPatch(raw: unknown): {
+  patch: Record<string, unknown>;
+  rejected: string[];
+} {
   const patch: Record<string, unknown> = {};
-  if (!raw || typeof raw !== "object") return patch;
+  const rejected: string[] = [];
+  if (!raw || typeof raw !== "object") return { patch, rejected };
   const input = raw as Record<string, unknown>;
 
   for (const key of CONTEXT_KEYS) {
@@ -98,41 +106,74 @@ function sanitizeContextPatch(raw: unknown): Record<string, unknown> {
       continue;
     }
     const text = str(value, 200);
-    if (text) patch[key] = text;
+    if (!text) {
+      rejected.push(key);
+      continue;
+    }
+    if ((VALIDATED_KEYS as readonly string[]).includes(key) && !UUID_RE.test(text)) {
+      rejected.push(key);
+      continue;
+    }
+    if (key === "checkout_session_id" && !/^cs_[A-Za-z0-9_]{8,}$/.test(text)) {
+      rejected.push(key);
+      continue;
+    }
+    if ((FREE_TEXT_KEYS as readonly string[]).includes(key) && !/^[\w\-./:? ]{1,200}$/.test(text)) {
+      rejected.push(key);
+      continue;
+    }
+    patch[key] = text;
   }
 
   for (const key of CONTEXT_LIST_KEYS) {
     if (!(key in input)) continue;
     const value = input[key];
-    if (!Array.isArray(value)) continue;
-    const ids = value
-      .filter((v): v is string => typeof v === "string" && UUID_RE.test(v))
-      .slice(0, MAX_LIST);
-    patch[key] = ids;
+    if (!Array.isArray(value)) {
+      rejected.push(key);
+      continue;
+    }
+    const valid = value.filter((v): v is string => typeof v === "string" && UUID_RE.test(v));
+    if (valid.length !== value.length) rejected.push(key);
+    patch[key] = Array.from(new Set(valid)).slice(0, MAX_LIST);
   }
 
-  return patch;
+  return { patch, rejected };
 }
 
 function mergeContext(
   current: Record<string, unknown>,
   patch: Record<string, unknown>,
-): Record<string, unknown> {
+  clientTs: number,
+): { context: Record<string, unknown>; stale: string[] } {
   const next: Record<string, unknown> = { ...current };
+  const stamps: Record<string, number> = {
+    ...((current[REF_TS_KEY] as Record<string, number>) ?? {}),
+  };
+  const stale: string[] = [];
+
   for (const [key, value] of Object.entries(patch)) {
     if ((CONTEXT_LIST_KEYS as readonly string[]).includes(key)) {
+      // Union déduplicquée : l'ordre d'arrivée des appareils n'a aucune importance.
       const existing = Array.isArray(next[key]) ? (next[key] as string[]) : [];
-      const merged = Array.from(new Set([...existing, ...(value as string[])])).slice(0, MAX_LIST);
-      next[key] = merged;
+      next[key] = Array.from(new Set([...existing, ...(value as string[])])).slice(0, MAX_LIST);
       continue;
     }
+    // Écriture concurrente : un appareil en retard n'écrase pas un contexte plus récent.
+    const previous = stamps[key];
+    if (typeof previous === "number" && previous > clientTs) {
+      stale.push(key);
+      continue;
+    }
+    stamps[key] = clientTs;
     if (value === null) {
       delete next[key];
       continue;
     }
     next[key] = value;
   }
-  return next;
+
+  next[REF_TS_KEY] = stamps;
+  return { context: next, stale };
 }
 
 type SessionRow = {
