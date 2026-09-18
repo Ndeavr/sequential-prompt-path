@@ -532,7 +532,6 @@
   .home-light .home-quote-progress span { height: 5px; border-radius: var(--radius-pill); background: hsl(var(--muted)); }
   .home-light .home-quote-progress span.is-filled { background: hsl(var(--primary)); }
   .home-light .home-quote-progress small { color: hsl(var(--muted-foreground)); font-size: 0.7rem; }
-  }
   .home-light .home-afterglow {
     height: clamp(32px, 6vw, 78px);
     background: linear-gradient(180deg, hsl(226 63% 5%), hsl(225 66% 3%));
