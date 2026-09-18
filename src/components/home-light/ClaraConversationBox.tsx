@@ -19,6 +19,11 @@ import {
   rememberClaraReferences,
   startOrResumeClaraSession,
 } from "@/services/clara/claraSession";
+import {
+  CLARA_VOICE_CLOSED_EVENT,
+  CLARA_VOICE_MESSAGE_EVENT,
+} from "@/services/clara/claraVoiceBridge";
+
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
@@ -131,11 +136,10 @@ export default function ClaraConversationBox() {
   useEffect(() => {
     if (hydrated.current) return;
     hydrated.current = true;
-    let cancelled = false;
     (async () => {
       try {
         const state = await startOrResumeClaraSession({ language: lang, entrypoint: "home_clara_box" });
-        if (cancelled) return;
+
         const restored = state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text }));
         setMessages(restored);
         const latestUser = [...restored].reverse().find((message) => message.role === "user");
@@ -147,10 +151,46 @@ export default function ClaraConversationBox() {
         // Conversation locale utilisable malgré tout : aucune erreur technique affichée.
       }
     })();
+  }, [lang]);
+
+
+  // ONE CLARA — la voix n'a pas d'historique séparé : chaque parole apparaît
+  // ici en direct, puis l'état serveur fait autorité à la fermeture.
+  useEffect(() => {
+    const onVoiceMessage = (event: Event) => {
+      const detail = (event as CustomEvent).detail as { id: string; role: "user" | "assistant"; text: string };
+      if (!detail?.text) return;
+      setMessages((previous) =>
+        previous.some((m) => m.id === detail.id)
+          ? previous
+          : [...previous, { id: detail.id, role: detail.role, text: detail.text }],
+      );
+      if (detail.role === "user") {
+        setQuickReplies(null);
+        const nextMode = detectSurfaceMode(detail.text);
+        if (nextMode !== "IDLE") setMode(nextMode);
+      }
+    };
+
+    const onVoiceClosed = () => {
+      void (async () => {
+        try {
+          const state = await startOrResumeClaraSession({ language: lang, entrypoint: "home_clara_box" });
+          setMessages(state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text })));
+        } catch {
+          // Les messages déjà visibles restent affichés.
+        }
+      })();
+    };
+
+    window.addEventListener(CLARA_VOICE_MESSAGE_EVENT, onVoiceMessage);
+    window.addEventListener(CLARA_VOICE_CLOSED_EVENT, onVoiceClosed);
     return () => {
-      cancelled = true;
+      window.removeEventListener(CLARA_VOICE_MESSAGE_EVENT, onVoiceMessage);
+      window.removeEventListener(CLARA_VOICE_CLOSED_EVENT, onVoiceClosed);
     };
   }, [lang]);
+
 
   const send = useCallback(
     async (raw: string) => {

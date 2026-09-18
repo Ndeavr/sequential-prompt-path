@@ -33,6 +33,16 @@ import {
 import { elevenlabsService } from "@/features/alex/services/elevenlabsService";
 import { hasGreeted, markGreeted, markVoiceStarted } from "@/lib/alexSessionState";
 import { buildAlexOpening } from "@/services/alexOpeningTemplates";
+import {
+  beginClaraVoiceRun,
+  buildVoiceFirstMessage,
+  buildVoiceResumeContext,
+  loadClaraVoiceBrief,
+  notifyClaraVoiceClosed,
+  recordClaraVoiceTurn,
+  type ClaraVoiceBrief,
+} from "@/services/clara/claraVoiceBridge";
+
 
 
 // ChatGPT-Voice style: keep one realtime session alive; only fallback after a true connect failure.
@@ -87,6 +97,8 @@ export default function OverlayAlexVoiceFullScreen() {
   const startRef = useRef<typeof start>(null as any);
   const buildGreetingRef = useRef<typeof buildGreeting>(null as any);
   const transcriptsRef = useRef<typeof transcripts>([]);
+  const claraBriefRef = useRef<ClaraVoiceBrief | null>(null);
+
   transcriptsRef.current = transcripts;
   const openChatFallback = useAlexChatFallbackStore((s) => s.open);
 
@@ -235,6 +247,9 @@ export default function OverlayAlexVoiceFullScreen() {
       }
 
       s.addTranscript("alex", text);
+      // ONE CLARA : la réponse parlée devient le même message dans le chat.
+      recordClaraVoiceTurn("assistant", text);
+
 
       setTranscripts(prev => {
         const last = prev.length > 0 && prev[prev.length - 1].role === "alex" ? prev[prev.length - 1] : null;
@@ -257,6 +272,9 @@ export default function OverlayAlexVoiceFullScreen() {
       }
 
       s.addTranscript("user", text);
+      // ONE CLARA : la parole devient un message utilisateur normal du chat.
+      recordClaraVoiceTurn("user", text);
+
       setTranscripts(prev => [
         ...prev,
         { role: "user" as const, text, id: `user-${++entryIdRef.current}` },
@@ -274,7 +292,9 @@ export default function OverlayAlexVoiceFullScreen() {
       // Safety nudge: if the agent has no configured first message, force it to greet.
       // Only on the FIRST session boot — never replay a greeting on reopen.
       if (nudgeTimerRef.current) clearTimeout(nudgeTimerRef.current);
-      if (!hasGreeted()) {
+      // Jamais de relance d'ouverture quand une conversation Clara est déjà en cours.
+      if (!hasGreeted() && !claraBriefRef.current?.has_conversation) {
+
         nudgeTimerRef.current = setTimeout(() => {
           if (firstAudioReceivedRef.current || !getStore().isOverlayOpen) return;
           try {
@@ -419,14 +439,12 @@ export default function OverlayAlexVoiceFullScreen() {
     autoRetryCountRef.current = 0;
     setSlowToken(false);
 
-    // Instant perception: show Alex greeting bubble immediately on the FIRST
-    // session boot only. Reopens stay silent — no replayed introduction.
-    const shouldGreet = !hasGreeted();
-    if (shouldGreet && transcriptsRef.current.length === 0) {
-      const greetingId = `alex-preview-${++entryIdRef.current}`;
-      setTranscripts([{ role: "alex", text: buildGreetingRef.current(), id: greetingId }]);
-      lastAlexIdRef.current = null; // ensure next real transcript creates a new bubble
-    }
+    // ONE CLARA : la salutation n'existe que si aucune conversation Clara n'est
+    // en cours. La reprise réelle est décidée dans `boot()` après lecture de
+    // l'état canonique; ici on n'affiche rien par anticipation.
+    beginClaraVoiceRun();
+    claraBriefRef.current = null;
+
 
     let bootTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
@@ -490,11 +508,41 @@ export default function OverlayAlexVoiceFullScreen() {
           }
         }, TOKEN_SLOW_THRESHOLD_MS);
 
-        // Connect ElevenLabs — greet only on the FIRST session boot.
+        // ONE CLARA — reprise de la conversation canonique avant toute parole.
         setBootStep("connecting");
+        const brief = await loadClaraVoiceBrief();
+        claraBriefRef.current = brief;
+        const resumeContext = buildVoiceResumeContext(brief);
+        const continuation = buildVoiceFirstMessage(brief);
+        const hasConversation = Boolean(brief?.has_conversation);
+        const shouldGreet = !hasConversation && !hasGreeted();
+
+        if (hasConversation && brief?.pending_question) {
+          // La question est déjà affichée à l'écran : l'orbe écoute, sans la répéter.
+          const questionId = `alex-preview-${++entryIdRef.current}`;
+          setTranscripts([{ role: "alex", text: brief.pending_question, id: questionId }]);
+          lastAlexIdRef.current = null;
+        } else if (shouldGreet && transcriptsRef.current.length === 0) {
+          const greetingId = `alex-preview-${++entryIdRef.current}`;
+          setTranscripts([{ role: "alex", text: buildGreetingRef.current(), id: greetingId }]);
+          lastAlexIdRef.current = null;
+        }
+
         const greeting = shouldGreet ? buildGreetingRef.current() : "";
-        console.log("[ALEX VOICE] Starting session, greeting:", greeting || "(silent — already greeted)");
-        await startRef.current({ initialGreeting: greeting, mode: deriveMode(getStore().feature), firstName });
+        const firstMessage = hasConversation ? continuation : shouldGreet ? null : "";
+        console.log("[ALEX VOICE] Starting session", {
+          hasConversation,
+          pendingQuestion: Boolean(brief?.pending_question),
+          firstMessage,
+        });
+        await startRef.current({
+          initialGreeting: greeting,
+          mode: deriveMode(getStore().feature),
+          firstName,
+          resumeContext,
+          firstMessage,
+        });
+
 
         // After await: check session still owns the runtime + overlay open
         if (!getStore().isOverlayOpen) return;
@@ -633,10 +681,25 @@ export default function OverlayAlexVoiceFullScreen() {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [transcripts]);
 
+  // ONE CLARA : à la fermeture de la voix, le chat recharge l'état serveur —
+  // la transcription et la réponse restent visibles, sans doublon.
+  const wasOverlayOpenRef = useRef(false);
+  useEffect(() => {
+    if (store.isOverlayOpen) {
+      wasOverlayOpenRef.current = true;
+      return;
+    }
+    if (wasOverlayOpenRef.current) {
+      wasOverlayOpenRef.current = false;
+      notifyClaraVoiceClosed();
+    }
+  }, [store.isOverlayOpen]);
+
   // ─── HANDLERS ───
   const handleClose = useCallback(() => {
     getStore().closeVoiceSession("user_explicit_close");
   }, []);
+
 
   // ─── HARD RESET RETRY — fully destroys old session ───
   const handleRetry = useCallback(async () => {

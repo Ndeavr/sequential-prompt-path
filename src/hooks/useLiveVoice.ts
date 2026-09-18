@@ -36,7 +36,18 @@ interface StartOptions {
   isReturning?: boolean;
   /** Surface mode — drives voice tuning + first message + persona addendum. */
   mode?: import("@/config/alexVoiceConfig").AlexVoiceMode;
+  /**
+   * ONE CLARA — état de la conversation canonique déjà en cours. Envoyé comme
+   * mise à jour contextuelle dès la connexion : la voix poursuit le même fil.
+   */
+  resumeContext?: string | null;
+  /**
+   * Premier message imposé. Chaîne vide = la voix reste silencieuse et écoute
+   * (une question est déjà affichée à l'écran).
+   */
+  firstMessage?: string | null;
 }
+
 
 // V7: French-only default greeting — never English for opening
 function getDefaultGreeting(): string {
@@ -119,6 +130,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const activeLanguageRef = useRef<AlexLanguage>("fr-CA");
   const connectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lockedVoiceIdRef = useRef<string | null>(null);
+  const pendingResumeContextRef = useRef<string | null>(null);
+
   const bootInProgressRef = useRef(false);
   const ownedMicStreamRef = useRef<MediaStream | null>(null);
   const inputDeviceIdRef = useRef<string | undefined>(undefined);
@@ -212,8 +225,16 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       connectedAtRef.current = Date.now();
       setIsActive(true);
       setIsConnecting(false);
+      // ONE CLARA : la conversation canonique déjà en cours est injectée avant
+      // toute prise de parole, sans déclencher de réponse.
+      const resume = pendingResumeContextRef.current;
+      if (resume) {
+        pendingResumeContextRef.current = null;
+        sendAgentContext(resume, "[ElevenLabs] ✅ Contexte de conversation canonique poussé");
+      }
       callbacksRef.current?.onConnect?.();
     },
+
     onStatusChange: ({ status }: any) => {
       alexVoiceService.markWsConnected(status === "connected");
     },
@@ -392,6 +413,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     }
 
     bootInProgressRef.current = true;
+    pendingResumeContextRef.current = options?.resumeContext ?? null;
+
     intentionallyStopped.current = false;
     hasDeliveredFirstAudioRef.current = false;
     connectedAtRef.current = 0;
@@ -560,15 +583,22 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         lockedVoiceIdRef.current = resolvedVoiceId;
 
         const firstName = options?.firstName?.trim() || null;
-        const personalizedFirstMessage = firstName
+        const defaultFirstMessage = firstName
           ? `Bonjour ${firstName}. Je vous écoute.`
           : `Bonjour. Je vous écoute.`;
+        // ONE CLARA : une conversation déjà en cours n'est jamais recommencée.
+        // Chaîne vide = la voix reste silencieuse et écoute.
+        const personalizedFirstMessage =
+          options?.firstMessage === undefined || options?.firstMessage === null
+            ? defaultFirstMessage
+            : options.firstMessage;
 
         const overrides = {
           agent: {
             firstMessage: personalizedFirstMessage,
             language: "fr",
           },
+
           tts: {
             voiceId: resolvedVoiceId,
           },

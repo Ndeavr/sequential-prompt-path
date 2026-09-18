@@ -509,6 +509,42 @@ Deno.serve(async (req) => {
       return json({ ok: true, message_id: inserted.id, deduplicated: false });
     }
 
+    // ── brief : état compact pour rouvrir un autre canal (voix) sans repartir à zéro ──
+    // Aucune nouvelle session, aucune copie métier : uniquement l'état courant,
+    // les derniers tours utiles et la question réellement en attente.
+    if (action === "brief") {
+      const all = await loadMessages(session.id);
+      const recent = all.slice(-6);
+      const lastAssistant = [...all].reverse().find((m) => m.role === "assistant") ?? null;
+      const lastIndex = lastAssistant ? all.lastIndexOf(lastAssistant) : -1;
+      const answeredAfter = lastIndex >= 0 && all.slice(lastIndex + 1).some((m) => m.role === "user");
+      const pendingQuestion =
+        lastAssistant && !answeredAfter && /\?\s*$/.test(lastAssistant.text.trim())
+          ? lastAssistant.text.trim()
+          : null;
+
+      const context = (session.context_json ?? {}) as Record<string, unknown>;
+      const refs: Record<string, unknown> = {};
+      for (const key of CONTEXT_KEYS) {
+        if (context[key]) refs[key] = context[key];
+      }
+
+      return json({
+        session_id: session.id,
+        has_conversation: all.length > 0,
+        current_step: session.current_step,
+        last_intent: session.last_intent,
+        project_type: session.project_type,
+        project_city: session.project_city,
+        language: session.language,
+        role: session.resolved_role,
+        pending_question: pendingQuestion,
+        recent,
+        refs,
+      });
+    }
+
+
     // ── context : fusion de références uniquement ──
     if (action === "context") {
       const currentContext = (session.context_json ?? {}) as Record<string, unknown>;

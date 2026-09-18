@@ -112,6 +112,10 @@ async function call<T>(action: string, payload: Record<string, unknown> = {}): P
   return result;
 }
 
+/** La session canonique n'est démarrée qu'une fois par onglet, même si plusieurs
+ *  surfaces (chat, voix) la demandent en même temps. */
+let sessionReady: Promise<ClaraSessionState> | null = null;
+
 /**
  * Crée ou reprend LA conversation : même onglet, après rafraîchissement,
  * après réouverture, et sur un second appareil avec le même compte.
@@ -120,13 +124,27 @@ export async function startOrResumeClaraSession(options: {
   language?: string;
   entrypoint?: string;
 } = {}): Promise<ClaraSessionState> {
-  const state = await call<ClaraSessionState>("start", {
+  const promise = call<ClaraSessionState>("start", {
     session_token: peekClaraSessionToken() ?? getClaraSessionToken(),
     language: options.language ?? "fr",
     entrypoint: options.entrypoint ?? "clara_box",
+  }).then((state) => {
+    rememberToken(state.session_token);
+    return state;
   });
-  rememberToken(state.session_token);
-  return state;
+  sessionReady = promise.catch(() => {
+    sessionReady = null;
+    throw new Error("clara_session_unavailable");
+  });
+  return promise;
+}
+
+/** Garantit qu'une session existe côté serveur avant toute écriture. */
+export async function ensureClaraSession(): Promise<void> {
+  if (!sessionReady) {
+    sessionReady = startOrResumeClaraSession();
+  }
+  await sessionReady.catch(() => undefined);
 }
 
 /** Journalise un message réel dans la conversation canonique (idempotent). */
@@ -136,8 +154,11 @@ export async function appendClaraMessage(input: {
   messageType?: string;
   clientMessageId?: string;
 }): Promise<void> {
+  if (!input.text.trim()) return;
+  // Un message réel n'est jamais perdu parce que la session n'était pas encore prête.
+  await ensureClaraSession();
   const token = peekClaraSessionToken();
-  if (!token || !input.text.trim()) return;
+  if (!token) return;
   await call("append", {
     session_token: token,
     role: input.role,
@@ -146,6 +167,7 @@ export async function appendClaraMessage(input: {
     client_message_id: input.clientMessageId,
   });
 }
+
 
 /**
  * Enregistre des références métier dans la conversation.
