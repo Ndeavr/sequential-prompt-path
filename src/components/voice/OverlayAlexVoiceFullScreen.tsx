@@ -246,6 +246,8 @@ export default function OverlayAlexVoiceFullScreen() {
     onTranscript: (text) => {
       const s = getStore();
       if (!s.isOverlayOpen) return;
+      // En pause : aucun événement audio ne peut modifier la conversation.
+      if (s.machineState === "paused") return;
       
       // Transition to speaking if we're in any "waiting" state
       const current = s.machineState;
