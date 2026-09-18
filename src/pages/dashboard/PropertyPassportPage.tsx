@@ -4,6 +4,7 @@
  * 1. Property Identity  2. System Inventory  3. Renovation History
  * 4. Maintenance Log  5. Document Vault  6. Home Score
  */
+import { useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/layouts/DashboardLayout";
