@@ -6,7 +6,7 @@
  * après rafraîchissement, réouverture, authentification et changement d'appareil.
  */
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowUp, Camera, Mic, Plus } from "lucide-react";
 
 import { cleanAlexText } from "@/utils/sanitizeAlexText";
@@ -359,15 +359,13 @@ export default function ClaraConversationBox() {
         </div>
       )}
       </div>
-      <AnimatePresence initial={false}>
-        {contextVisible && (
-          <motion.div className="home-context-slot" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
-            <Suspense fallback={<div className="home-clara-context"><Shimmer>Préparation…</Shimmer></div>}>
-              <ClaraContextPanel mode={mode} quoteCount={quoteCount} statusText={contextStatus} />
-            </Suspense>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {contextVisible && (
+        <motion.div className="home-context-slot" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }}>
+          <Suspense fallback={<div className="home-clara-context"><Shimmer>Préparation…</Shimmer></div>}>
+            <ClaraContextPanel mode={mode} quoteCount={quoteCount} statusText={contextStatus} />
+          </Suspense>
+        </motion.div>
+      )}
     </motion.section>
   );
 }
