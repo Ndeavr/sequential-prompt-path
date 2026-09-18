@@ -91,6 +91,8 @@ Aucune nouvelle table, migration, route métier, fonction serveur, donnée ficti
 
 ## 11. SUCCESS
 
+- Le premier rendu de `/` reste léger; l’analyse de soumissions, la vision, le matching, l’onboarding et le calendrier sont chargés uniquement lorsqu’ils deviennent nécessaires.
+- Aucun des 9 problèmes déjà corrigés dans l’audit Clara ne réapparaît.
 - Une seule boîte Clara visible et fonctionnelle sur `/`.
 - Aucun ancien panneau Clara concurrent ne s’ouvre depuis la home.
 - Le même contexte reprend après refresh, retour/avance, OTP/OAuth, réouverture et second appareil.
