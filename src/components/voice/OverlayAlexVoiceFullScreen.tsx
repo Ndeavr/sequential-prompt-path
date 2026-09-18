@@ -883,25 +883,28 @@ export default function OverlayAlexVoiceFullScreen() {
 
   const state = store.machineState;
   const isError = state === "error_recoverable" || state === "error_fatal";
+  const isPaused = state === "paused";
   const isStabilizing = state === "stabilizing" || state === "opening_session" || state === "requesting_permission";
   const isSessionActive = ["session_ready", "listening", "capturing_voice", "processing_stt", "processing_response", "speaking", "awaiting_user"].includes(state);
   const isRecoveringNow = recovery.isRecovering;
 
   // Calm, single-line state caption — never echo error copy in the panel header.
   const calmCaption =
-    isStabilizing ? "Clara démarre…"
+    isPaused ? "En pause — toucher pour reprendre"
+    : isStabilizing ? "Clara démarre…"
     : state === "speaking" ? "Clara répond…"
     : state === "processing_stt" || state === "processing_response" ? "Clara réfléchit…"
     : state === "capturing_voice" ? "Clara écoute…"
-    : state === "listening" || state === "awaiting_user" || state === "session_ready" ? "Clara écoute…"
+    : state === "listening" || state === "awaiting_user" || state === "session_ready" ? (showListeningHint ? "Je vous écoute." : "Clara écoute…")
     : "Clara est là.";
 
   const statusText =
-    isRecoveringNow ? recovery.phaseLabel
+    isPaused ? "En pause — toucher pour reprendre"
+    : isRecoveringNow ? recovery.phaseLabel
     : isError ? "Clara est là."
     : slowToken && isStabilizing ? "Connexion de Clara…"
     : isStabilizing ? getBootStepLabel(bootStep)
-    : state === "listening" || state === "awaiting_user" ? "Clara écoute…"
+    : state === "listening" || state === "awaiting_user" ? (showListeningHint ? "Je vous écoute." : "Clara écoute…")
     : state === "capturing_voice" ? "Vous parlez…"
     : state === "processing_stt" || state === "processing_response" ? "Réflexion…"
     : state === "speaking" ? "Clara parle…"
