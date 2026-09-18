@@ -7,6 +7,8 @@
  */
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getVisitorId } from "@/features/verifierEntrepreneur/visitorId";
+import { rememberClaraReferences } from "@/services/clara/claraSession";
 import type { VerificationApiResponse, VerificationFormInput, EvidenceType } from "@/types/verification";
 
 interface VerifyPayload {
