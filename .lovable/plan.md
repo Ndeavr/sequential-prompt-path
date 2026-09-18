@@ -98,6 +98,7 @@ Aucune nouvelle table, migration, route métier, fonction serveur, donnée ficti
 
 ## 12. TASKS
 
+0. Avant toute modification, inspecter l’implémentation actuelle de `/`, `ClaraConversationBox`, `clara-session`, `alex_sessions`, `alex_messages`, les raccords P1 et les 9 issues déjà corrigées. Ne modifier que ce qui est nécessaire à l’unification visuelle et préserver tous les correctifs existants.
 1. Consolider la home et retirer uniquement ses éléments initiaux non conformes.
 2. Refactorer la boîte existante en machine de présentation unique, sans nouveau stockage conversationnel.
 3. Brancher les modes contextuels sur les moteurs et références P1 existants.
