@@ -49,6 +49,13 @@ export default function PropertyPassportPage() {
 
   const { data: property, isLoading: propLoading } = useProperty(id);
 
+  // ONE CLARA : la conversation retrouve la même propriété après connexion,
+  // rafraîchissement ou changement d'appareil. Le serveur refuse toute propriété
+  // appartenant à un autre compte.
+  useEffect(() => {
+    if (property?.id) rememberClaraReferences({ active_property_id: property.id });
+  }, [property?.id]);
+
   // Seed tasks on first load
   const { data: seeded } = useQuery({
     queryKey: ["seed-tasks", id],
