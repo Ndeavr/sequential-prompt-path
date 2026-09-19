@@ -8,7 +8,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowUp, Camera, FileText, Image as ImageIcon, Mic, Plus, RotateCcw, Video, X } from "lucide-react";
+import { ArrowUp, Camera, FileText, Image as ImageIcon, Mic, Plus, RotateCcw, SquarePen, Video, X } from "lucide-react";
 
 import { cleanAlexText } from "@/utils/sanitizeAlexText";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
@@ -18,6 +18,7 @@ import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import {
   appendClaraMessage,
   rememberClaraReferences,
+  startNewClaraSession,
   startOrResumeClaraSession,
 } from "@/services/clara/claraSession";
 import {
@@ -104,10 +105,11 @@ export function extractQuickReplies(raw: string): { text: string; options: strin
 type QuickReplies = { messageId: string; options: string[] };
 
 export default function ClaraConversationBox() {
-  const { openAlex } = useAlexVoice();
+  const { openAlex, closeAlex } = useAlexVoice();
   const { handleUpload } = useAlexConversation();
   const { lang } = useLanguage();
   const navigate = useNavigate();
+
   const copy = lang === "fr"
     ? {
         placeholder: "Bonjour ! Que puis-je-faire pour vous?",
@@ -118,6 +120,11 @@ export default function ClaraConversationBox() {
         send: "Envoyer",
         working: "Analyse en cours…",
         fallback: "Je continue ici avec vous. Reformulez en une phrase.",
+        reset: "Nouvelle conversation",
+        resetConfirm: "Commencer une nouvelle conversation ?",
+        resetYes: "Commencer",
+        resetNo: "Annuler",
+
       }
     : {
         placeholder: "Bonjour ! Que puis-je-faire pour vous?",
@@ -128,7 +135,12 @@ export default function ClaraConversationBox() {
         send: "Send",
         working: "Analyse en cours…",
         fallback: "Pour le moment je fonctionne en français. Je termine mes cours d'anglais sous peu.",
+        reset: "New conversation",
+        resetConfirm: "Start a new conversation?",
+        resetYes: "Start",
+        resetNo: "Cancel",
       };
+
   const [messages, setMessages] = useState<Msg[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -136,6 +148,8 @@ export default function ClaraConversationBox() {
   const [quoteCount, setQuoteCount] = useState(0);
   const [contextStatus, setContextStatus] = useState<string | null>(null);
   const [quickReplies, setQuickReplies] = useState<QuickReplies | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
+
   const hydrated = useRef(false);
   const cameraRef = useRef<HTMLInputElement>(null);
   const videoCameraRef = useRef<HTMLInputElement>(null);
@@ -150,7 +164,9 @@ export default function ClaraConversationBox() {
   const enqueueMedia = useClaraMediaQueue((state) => state.enqueue);
   const removeMedia = useClaraMediaQueue((state) => state.remove);
   const retryMedia = useClaraMediaQueue((state) => state.retry);
+  const clearMedia = useClaraMediaQueue((state) => state.clear);
   const announcedMedia = useRef<Set<string>>(new Set());
+
 
   const focusComposer = useCallback(() => {
     const textarea = rootRef.current?.querySelector("textarea");
@@ -160,6 +176,46 @@ export default function ClaraConversationBox() {
     }
   }, []);
   const hasInteracted = messages.length > 0 || mode !== "IDLE";
+
+  /**
+   * Nouvelle conversation : une VRAIE session canonique est créée côté serveur
+   * (nouvel identifiant), l'état local est vidé et l'accueil revient.
+   * Le compte, le profil, la maison et les préférences ne sont jamais touchés.
+   */
+  const startFreshConversation = useCallback(async () => {
+    setConfirmReset(false);
+    // La voix est un canal de la même conversation : on la coupe proprement avant.
+    try {
+      closeAlex();
+    } catch {
+      /* aucune session vocale active */
+    }
+    clearMedia();
+    announcedMedia.current = new Set();
+    workflowRef.current = null;
+    setMessages([]);
+    setQuickReplies(null);
+    setError(null);
+    setQuoteCount(0);
+    setContextStatus(null);
+    setMode("IDLE");
+    try {
+      await startNewClaraSession({ language: lang, entrypoint: "home_clara_box" });
+    } catch {
+      // La conversation reste utilisable : la session sera recréée à la première écriture.
+    }
+    focusComposer();
+  }, [clearMedia, closeAlex, focusComposer, lang]);
+
+  const handleResetClick = useCallback(() => {
+    // Conversation vide : aucune confirmation inutile.
+    if (messages.length === 0 && mediaItems.length === 0) {
+      void startFreshConversation();
+      return;
+    }
+    setConfirmReset((previous) => !previous);
+  }, [mediaItems.length, messages.length, startFreshConversation]);
+
   // La salutation d'accueil n'est permise qu'AVANT toute interaction : texte,
   // voix ou média. Une fois la conversation démarrée, elle ne revient jamais,
   // même après un remontage du composant.
@@ -498,7 +554,28 @@ export default function ClaraConversationBox() {
       className={`home-clara-shell mx-auto w-full text-left${contextVisible ? " has-context" : ""}`}
       aria-label="Conversation avec Clara"
     >
-      <div className="home-clara-main home-clara-glass overflow-hidden border border-border">
+      <div className="home-clara-main home-clara-glass relative overflow-hidden border border-border">
+        <button
+          type="button"
+          onClick={handleResetClick}
+          className="home-clara-reset"
+          title={copy.reset}
+          aria-label={copy.reset}
+          aria-expanded={confirmReset}
+        >
+          <SquarePen className="h-4 w-4" aria-hidden="true" />
+        </button>
+        {confirmReset && (
+          <div className="home-clara-reset-confirm" role="dialog" aria-label={copy.reset}>
+            <p>{copy.resetConfirm}</p>
+            <div>
+              <button type="button" onClick={() => setConfirmReset(false)}>{copy.resetNo}</button>
+              <button type="button" data-variant="primary" onClick={() => void startFreshConversation()}>
+                {copy.resetYes}
+              </button>
+            </div>
+          </div>
+        )}
         <div
           className={`home-clara-presence${busy ? " is-active" : ""}`}
           data-state={busy ? "working" : "idle"}

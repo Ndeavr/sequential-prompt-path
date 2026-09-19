@@ -141,6 +141,39 @@ export async function startOrResumeClaraSession(options: {
   return promise;
 }
 
+/**
+ * Nouvelle conversation demandée par l'utilisateur.
+ * Un jeton neuf est généré et le serveur crée une VRAIE session canonique
+ * (aucune reprise de l'ancienne, ni par jeton, ni par compte). Le compte,
+ * le profil, la maison et les préférences ne sont jamais touchés.
+ */
+export async function startNewClaraSession(options: {
+  language?: string;
+  entrypoint?: string;
+} = {}): Promise<ClaraSessionState> {
+  const freshToken =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `clara_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  safeSet(TOKEN_KEY, freshToken);
+  const promise = call<ClaraSessionState>("start", {
+    session_token: freshToken,
+    force_new: true,
+    language: options.language ?? "fr",
+    entrypoint: options.entrypoint ?? "clara_reset",
+  }).then((state) => {
+    rememberToken(state.session_token);
+    return state;
+  });
+  sessionReady = promise.catch(() => {
+    sessionReady = null;
+    throw new Error("clara_session_unavailable");
+  });
+  return promise;
+}
+
+
+
 /** Garantit qu'une session existe côté serveur avant toute écriture. */
 export async function ensureClaraSession(): Promise<void> {
   if (!sessionReady) {
