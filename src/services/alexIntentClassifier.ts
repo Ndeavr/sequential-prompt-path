@@ -110,7 +110,8 @@ const INTENT_RULES: IntentRule[] = [
   { intent: "homeowner_compare_quotes", keywords: [
     "comparer soumissions", "analyser soumission", "comparer prix",
     "3 soumissions", "laquelle choisir", "meilleure soumission",
-    "analyse comparative",
+    "analyse comparative", "compare mes", "comparer mes soumissions",
+    "mes soumissions", "trois soumissions", "voici mes soumissions",
   ], weight: 75 },
   { intent: "homeowner_find_contractor", keywords: [
     "trouver un pro", "chercher un professionnel", "trouver entrepreneur",
@@ -135,6 +136,9 @@ const INTENT_RULES: IntentRule[] = [
   ], weight: 70 },
   { intent: "homeowner_verify_contractor", keywords: [
     "vérifier entrepreneur", "est-il fiable", "rbq", "licence",
+    "vérifier cet entrepreneur", "vérifie cet entrepreneur", "vérifier cette entreprise",
+    "vérifie construction", "vérifier l'entrepreneur", "carte d'affaires",
+    "est-ce que son rbq", "neq",
   ], weight: 65 },
 
   // ─── Rep/Admin ───
