@@ -121,6 +121,61 @@ function str(value: unknown, max: number): string | null {
   return trimmed.slice(0, max);
 }
 
+function wfText(value: unknown): string | null {
+  const text = str(value, 80);
+  if (!text || !WORKFLOW_TEXT_RE.test(text)) return null;
+  return text;
+}
+
+function wfList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const items: string[] = [];
+  for (const one of value) {
+    const text = wfText(one);
+    if (text) items.push(text);
+  }
+  return Array.from(new Set(items)).slice(0, MAX_WORKFLOW_ITEMS);
+}
+
+/**
+ * Forme stricte de l'état de workflow. Tout champ non conforme est ignoré :
+ * la conversation ne peut pas devenir un dépôt de données libres.
+ */
+function sanitizeWorkflow(raw: unknown): Record<string, unknown> | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const input = raw as Record<string, unknown>;
+  const intent = wfText(input.intent);
+  if (!intent) return null;
+
+  const suspended: Array<Record<string, unknown>> = [];
+  if (Array.isArray(input.suspended)) {
+    for (const entry of input.suspended.slice(0, MAX_SUSPENDED)) {
+      if (!entry || typeof entry !== "object") continue;
+      const one = entry as Record<string, unknown>;
+      const pausedIntent = wfText(one.intent);
+      if (!pausedIntent) continue;
+      suspended.push({
+        intent: pausedIntent,
+        step: wfText(one.step),
+        next_action: wfText(one.next_action),
+      });
+    }
+  }
+
+  return {
+    intent,
+    sub_workflow: wfText(input.sub_workflow),
+    step: wfText(input.step),
+    collected: wfList(input.collected),
+    missing: wfList(input.missing),
+    next_action: wfText(input.next_action),
+    suspended,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+
+
 /**
  * Filtrage de forme uniquement. La validation d'appartenance est faite ensuite
  * en base (`validateReferences`) : une clé autorisée ne suffit jamais.
