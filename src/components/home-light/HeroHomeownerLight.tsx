@@ -5,8 +5,8 @@ import ClaraConversationBox from "@/components/home-light/ClaraConversationBox";
 
 export default function HeroHomeownerLight() {
   const copy = {
-    title: "Montrez-moi.",
-    subtitle: "Qu’est-ce que vous voulez entreprendre, réparer, ou améliorer?",
+    title: "Discutons.",
+    subtitle: "Qu’est-ce que vous voulez rénover, réparer, ou améliorer ?",
   };
 
   return (
