@@ -11,6 +11,7 @@ export type ClaraSurfaceMode =
   | "LISTENING"
   | "ANALYZING"
   | "PHOTO"
+  | "VIDEO"
   | "DOCUMENT"
   | "QUOTE"
   | "CONTRACTOR"
@@ -26,6 +27,7 @@ interface Props {
 
 const modeCopy: Partial<Record<ClaraSurfaceMode, { title: string; detail: string }>> = {
   PHOTO: { title: "Photo", detail: "Ajoutez une image nette de la zone à comprendre." },
+  VIDEO: { title: "Vidéo", detail: "J’examine des images tirées de votre vidéo. Je n’analyse pas le son." },
   DOCUMENT: { title: "Document", detail: "Le document restera lié à cette conversation." },
   QUOTE: { title: "Analyse de soumissions", detail: "Ajoutez jusqu’à trois PDF ou images." },
   PROJECT: { title: "Projet", detail: "Clara précise le besoin une question à la fois." },

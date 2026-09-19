@@ -7,7 +7,7 @@
  */
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowUp, Camera, Mic, Plus } from "lucide-react";
+import { ArrowUp, Camera, FileText, Image as ImageIcon, Mic, Plus, RotateCcw, Video, X } from "lucide-react";
 
 import { cleanAlexText } from "@/utils/sanitizeAlexText";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
@@ -46,6 +46,13 @@ import {
   type PromptInputMessage,
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useClaraMediaQueue } from "@/services/clara/claraMediaQueue";
 
 const ClaraContextPanel = lazy(() => import("@/components/home-light/ClaraContextPanel"));
 import type { ClaraSurfaceMode } from "@/components/home-light/ClaraContextPanel";
@@ -126,9 +133,19 @@ export default function ClaraConversationBox() {
   const [quickReplies, setQuickReplies] = useState<QuickReplies | null>(null);
   const hydrated = useRef(false);
   const cameraRef = useRef<HTMLInputElement>(null);
+  const videoCameraRef = useRef<HTMLInputElement>(null);
+  const photoLibraryRef = useRef<HTMLInputElement>(null);
+  const videoLibraryRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLElement>(null);
   // Parcours en cours : lu depuis la session canonique, jamais recréé localement.
   const workflowRef = useRef<ClaraWorkflowState | null>(null);
+
+  // File d'attente média unique : progression réelle, reprise, rien de perdu.
+  const mediaItems = useClaraMediaQueue((state) => state.items);
+  const enqueueMedia = useClaraMediaQueue((state) => state.enqueue);
+  const removeMedia = useClaraMediaQueue((state) => state.remove);
+  const retryMedia = useClaraMediaQueue((state) => state.retry);
+  const announcedMedia = useRef<Set<string>>(new Set());
 
   const focusComposer = useCallback(() => {
     const textarea = rootRef.current?.querySelector("textarea");
@@ -201,6 +218,24 @@ export default function ClaraConversationBox() {
       window.removeEventListener(CLARA_VOICE_CLOSED_EVENT, onVoiceClosed);
     };
   }, [lang]);
+
+  // Résultat média : seulement ce que l'analyse a réellement produit.
+  useEffect(() => {
+    for (const item of mediaItems) {
+      if (item.status !== "done" || !item.summary) continue;
+      if (announcedMedia.current.has(item.id)) continue;
+      announcedMedia.current.add(item.id);
+
+      const messageId = uid();
+      setMessages((previous) => [...previous, { id: messageId, role: "assistant", text: item.summary as string }]);
+      setContextStatus(item.summary);
+      void appendClaraMessage({
+        role: "assistant",
+        text: item.summary,
+        clientMessageId: messageId,
+      }).catch(() => {});
+    }
+  }, [mediaItems]);
 
 
   const send = useCallback(
@@ -360,11 +395,18 @@ export default function ClaraConversationBox() {
           const analysis = await runQuoteAnalysis(files.slice(0, 3));
           setContextStatus(analysis.payload.recommendation || "Analyse terminée. Clara peut maintenant vous expliquer les écarts importants.");
         } else {
-          const file = files[0];
-          if (file) {
-            setMode(file.type.startsWith("image/") ? "PHOTO" : "DOCUMENT");
-            await handleUpload(file, message.text || undefined);
+          const first = files[0];
+          if (first) {
+            setMode(
+              first.type.startsWith("video/")
+                ? "VIDEO"
+                : first.type.startsWith("image/")
+                  ? "PHOTO"
+                  : "DOCUMENT",
+            );
           }
+          // File d'attente unique : envoi asynchrone, progression réelle, reprise possible.
+          enqueueMedia(files);
         }
         const uploadId = uid();
         const uploadText = message.text || (lang === "fr" ? "Document joint" : "Attached document");
@@ -387,7 +429,7 @@ export default function ClaraConversationBox() {
       return;
     }
     await send(message.text);
-  }, [busy, copy.fallback, handleUpload, lang, mode, send]);
+  }, [busy, copy.fallback, enqueueMedia, lang, mode, send]);
 
   const startVoice = () => {
     useAlexStore.getState().markUserEngaged();
@@ -395,16 +437,29 @@ export default function ClaraConversationBox() {
     openAlex("home_hero", "user_tapped_orb");
   };
 
-  const submitCameraFile = async (file: File | undefined) => {
-    if (!file) return;
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result || ""));
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(file);
-    });
-    await submit({ text: "", files: [{ type: "file", filename: file.name, mediaType: file.type, url: dataUrl }] });
-  };
+  // Capture directe (appareil photo, caméra, galerie) : le fichier entre
+  // immédiatement dans la file d'attente, sans passer par un aperçu factice.
+  const acceptDirectFiles = useCallback(
+    (list: FileList | null) => {
+      const files = list ? Array.from(list) : [];
+      if (files.length === 0) return;
+      const first = files[0];
+      setError(null);
+      setMode(first.type.startsWith("video/") ? "VIDEO" : first.type.startsWith("image/") ? "PHOTO" : "DOCUMENT");
+      enqueueMedia(files);
+
+      const messageId = uid();
+      const label = first.type.startsWith("video/") ? "Vidéo envoyée" : "Photo envoyée";
+      setMessages((previous) => [...previous, { id: messageId, role: "user", text: label }]);
+      void appendClaraMessage({
+        role: "user",
+        text: label,
+        messageType: "attachment",
+        clientMessageId: messageId,
+      }).catch(() => {});
+    },
+    [enqueueMedia],
+  );
 
   return (
     <motion.section
@@ -458,13 +513,53 @@ export default function ClaraConversationBox() {
         </Conversation>
       )}
 
+      {mediaItems.length > 0 && (
+        <ul className="home-clara-media" aria-label="Fichiers en cours">
+          {mediaItems.map((item) => (
+            <li key={item.id} className="home-clara-media-item" data-status={item.status}>
+              {item.previewUrl && item.kind !== "document" ? (
+                item.kind === "video"
+                  ? <video src={item.previewUrl} muted playsInline preload="metadata" aria-hidden="true" />
+                  : <img src={item.previewUrl} alt="" />
+              ) : (
+                <span className="home-clara-media-icon" aria-hidden="true"><FileText className="h-4 w-4" /></span>
+              )}
+              <div className="home-clara-media-body">
+                <p>{item.name}</p>
+                <span aria-live="polite">
+                  {item.status === "uploading" && `Envoi ${Math.round(item.progress * 100)} %`}
+                  {item.status === "analyzing" && "Analyse en cours…"}
+                  {item.status === "queued" && "En attente"}
+                  {item.status === "done" && "Terminé"}
+                  {item.status === "failed" && (item.error || "Échec de l’envoi")}
+                </span>
+                {(item.status === "uploading" || item.status === "analyzing") && (
+                  <progress max={100} value={Math.round(item.progress * 100)} />
+                )}
+              </div>
+              {item.status === "failed" && (
+                <button type="button" onClick={() => retryMedia(item.id)} aria-label={`Réessayer ${item.name}`}>
+                  <RotateCcw className="h-4 w-4" />
+                </button>
+              )}
+              <button type="button" onClick={() => removeMedia(item.id)} aria-label={`Retirer ${item.name}`}>
+                <X className="h-4 w-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
       <div className="home-clara-composer">
-        <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" aria-label={copy.camera} onChange={(event) => { void submitCameraFile(event.currentTarget.files?.[0]); event.currentTarget.value = ""; }} />
+        <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" aria-label={copy.camera} onChange={(event) => { acceptDirectFiles(event.currentTarget.files); event.currentTarget.value = ""; }} />
+        <input ref={videoCameraRef} type="file" accept="video/*" capture="environment" className="hidden" aria-label="Prendre une vidéo" onChange={(event) => { acceptDirectFiles(event.currentTarget.files); event.currentTarget.value = ""; }} />
+        <input ref={photoLibraryRef} type="file" accept="image/*" multiple className="hidden" aria-label="Choisir une photo" onChange={(event) => { acceptDirectFiles(event.currentTarget.files); event.currentTarget.value = ""; }} />
+        <input ref={videoLibraryRef} type="file" accept="video/*" className="hidden" aria-label="Choisir une vidéo" onChange={(event) => { acceptDirectFiles(event.currentTarget.files); event.currentTarget.value = ""; }} />
         <PromptInput
-          accept="image/*,.pdf,.doc,.docx"
-          multiple={mode === "QUOTE"}
-          maxFiles={mode === "QUOTE" ? 3 : 1}
-          maxFileSize={10 * 1024 * 1024}
+          accept="image/*,video/*,.pdf,.doc,.docx"
+          multiple
+          maxFiles={5}
+          maxFileSize={50 * 1024 * 1024}
           onSubmit={submit}
           onError={() => setError(copy.fallback)}
           className="home-clara-prompt"
@@ -477,7 +572,13 @@ export default function ClaraConversationBox() {
           />
           <PromptInputFooter className="home-clara-controls">
             <PromptInputTools>
-              <AttachmentButton label={copy.attach} />
+              <MediaMenu
+                label={copy.attach}
+                onTakePhoto={() => cameraRef.current?.click()}
+                onChoosePhoto={() => photoLibraryRef.current?.click()}
+                onTakeVideo={() => videoCameraRef.current?.click()}
+                onChooseVideo={() => videoLibraryRef.current?.click()}
+              />
               <PromptInputButton type="button" onClick={() => cameraRef.current?.click()} tooltip={copy.camera} aria-label={copy.camera} className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground">
                 <Camera className="h-5 w-5" />
               </PromptInputButton>
@@ -514,17 +615,45 @@ export default function ClaraConversationBox() {
   );
 }
 
-function AttachmentButton({ label }: { label: string }) {
+interface MediaMenuProps {
+  label: string;
+  onTakePhoto: () => void;
+  onChoosePhoto: () => void;
+  onTakeVideo: () => void;
+  onChooseVideo: () => void;
+}
+
+function MediaMenu({ label, onTakePhoto, onChoosePhoto, onTakeVideo, onChooseVideo }: MediaMenuProps) {
   const attachments = usePromptInputAttachments();
   return (
-    <PromptInputButton
-      type="button"
-      onClick={attachments.openFileDialog}
-      tooltip={label}
-      aria-label={label}
-      className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground"
-    >
-      <Plus className="h-5 w-5" />
-    </PromptInputButton>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <PromptInputButton
+          type="button"
+          tooltip={label}
+          aria-label={label}
+          className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground"
+        >
+          <Plus className="h-5 w-5" />
+        </PromptInputButton>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        <DropdownMenuItem onSelect={() => onTakePhoto()}>
+          <Camera className="h-4 w-4" /> Prendre une photo
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onChoosePhoto()}>
+          <ImageIcon className="h-4 w-4" /> Choisir une photo
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onTakeVideo()}>
+          <Video className="h-4 w-4" /> Prendre une vidéo
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onChooseVideo()}>
+          <Video className="h-4 w-4" /> Choisir une vidéo
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => attachments.openFileDialog()}>
+          <FileText className="h-4 w-4" /> Joindre un document
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

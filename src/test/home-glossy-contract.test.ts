@@ -17,7 +17,7 @@ describe("glossy homepage contract", () => {
 
   it("keeps Clara text, voice and attachment actions real", () => {
     expect(clara).toContain("/functions/v1/alex-chat");
-    expect(clara).toContain("handleUpload(file");
+    expect(clara).toContain("enqueueMedia(files)");
     expect(clara).toContain("openAlex(\"home_hero\"");
     expect(clara).toContain("PromptInput");
     expect(clara).toContain("Ajouter une photo ou un document");
