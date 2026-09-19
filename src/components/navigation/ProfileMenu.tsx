@@ -11,8 +11,8 @@ import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { getProfileActions, getStateActions } from "@/config/navigationConfig";
 import { resolveIcon, ChevronDown, ArrowRightLeft, LogOut, Settings, HelpCircle, Globe } from "./IconResolver";
 import { useLanguage } from "@/components/ui/LanguageToggle";
-import type { UserRole } from "@/types/navigation";
 import BecomeRoleCTA from "@/components/account/BecomeRoleCTA";
+import { roleHomePath, ROLE_LABELS } from "@/services/navigation/roleHome";
 import { CANONICAL_PLAN_LABELS } from "@/config/pricing";
 
 const roleLabels: Record<string, { fr: string; en: string }> = ROLE_LABELS;
