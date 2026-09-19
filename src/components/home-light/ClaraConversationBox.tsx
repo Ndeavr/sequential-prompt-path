@@ -572,7 +572,13 @@ export default function ClaraConversationBox() {
           />
           <PromptInputFooter className="home-clara-controls">
             <PromptInputTools>
-              <AttachmentButton label={copy.attach} />
+              <MediaMenu
+                label={copy.attach}
+                onTakePhoto={() => cameraRef.current?.click()}
+                onChoosePhoto={() => photoLibraryRef.current?.click()}
+                onTakeVideo={() => videoCameraRef.current?.click()}
+                onChooseVideo={() => videoLibraryRef.current?.click()}
+              />
               <PromptInputButton type="button" onClick={() => cameraRef.current?.click()} tooltip={copy.camera} aria-label={copy.camera} className="home-clara-tool rounded-full text-muted-foreground hover:text-foreground">
                 <Camera className="h-5 w-5" />
               </PromptInputButton>
