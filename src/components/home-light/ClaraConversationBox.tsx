@@ -7,7 +7,7 @@
  */
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowUp, Camera, Mic, Plus } from "lucide-react";
+import { ArrowUp, Camera, FileText, Image as ImageIcon, Mic, Plus, RotateCcw, Video, X } from "lucide-react";
 
 import { cleanAlexText } from "@/utils/sanitizeAlexText";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
