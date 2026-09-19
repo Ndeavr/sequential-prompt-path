@@ -152,6 +152,7 @@ export default function ClaraConversationBox() {
 
         const restored = state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text }));
         setMessages(restored);
+        workflowRef.current = readWorkflow(state.context);
         const latestUser = [...restored].reverse().find((message) => message.role === "user");
         const restoredMode = typeof state.context.current_intent === "string"
           ? state.context.current_intent.toUpperCase() as ClaraSurfaceMode
