@@ -147,6 +147,8 @@ export default function ClaraConversationBox() {
   const [quoteCount, setQuoteCount] = useState(0);
   const [contextStatus, setContextStatus] = useState<string | null>(null);
   const [quickReplies, setQuickReplies] = useState<QuickReplies | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
+
   const hydrated = useRef(false);
   const cameraRef = useRef<HTMLInputElement>(null);
   const videoCameraRef = useRef<HTMLInputElement>(null);
