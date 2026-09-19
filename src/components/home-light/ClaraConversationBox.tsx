@@ -23,6 +23,14 @@ import {
   CLARA_VOICE_CLOSED_EVENT,
   CLARA_VOICE_MESSAGE_EVENT,
 } from "@/services/clara/claraVoiceBridge";
+import { detectClaraWorkflowIntent } from "@/services/alexIntentClassifier";
+import {
+  logClaraWorkflowEvent,
+  nextWorkflowState,
+  readWorkflow,
+  rememberWorkflow,
+  type ClaraWorkflowState,
+} from "@/services/clara/claraWorkflow";
 
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
