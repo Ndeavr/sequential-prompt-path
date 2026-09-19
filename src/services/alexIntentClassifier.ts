@@ -290,3 +290,44 @@ export function isHomeownerIntent(intent: AlexIntent): boolean {
 export function requiresQualifiedNeed(intent: AlexIntent): boolean {
   return intent === "homeowner_find_contractor" || intent === "homeowner_book_appointment";
 }
+
+// ─── Routeur Clara : correspondance vers les parcours réels ───
+// La classification n'est jamais montrée à l'utilisateur : elle sert uniquement
+// à ouvrir le bon parcours existant sans perdre le contexte.
+import type { ClaraWorkflowIntent } from "@/services/clara/claraWorkflow";
+
+const CLARA_WORKFLOW_MAP: Partial<Record<AlexIntent, ClaraWorkflowIntent>> = {
+  affiliate_onboarding: "affiliate_onboarding",
+  contractor_join_platform: "contractor_onboarding",
+  contractor_choose_plan: "contractor_onboarding",
+  contractor_build_profile: "contractor_onboarding",
+  contractor_import_business_card: "contractor_onboarding",
+  contractor_payment_checkout: "contractor_onboarding",
+  contractor_booking_settings: "contractor_onboarding",
+  contractor_visibility_score: "contractor_onboarding",
+  contractor_revenue_projection: "contractor_onboarding",
+  homeowner_verify_contractor: "contractor_verification",
+  homeowner_compare_quotes: "quote_comparison",
+  homeowner_problem_diagnosis: "homeowner_problem",
+  homeowner_upload_photo_analysis: "photo_problem_analysis",
+  homeowner_upload_video_analysis: "video_problem_analysis",
+  homeowner_design_visualization: "design_generation",
+  homeowner_find_contractor: "contractor_search",
+  homeowner_book_appointment: "appointment_booking",
+};
+
+export function toClaraWorkflowIntent(intent: AlexIntent): ClaraWorkflowIntent {
+  return CLARA_WORKFLOW_MAP[intent] ?? "general_question";
+}
+
+/** Intention de parcours détectée directement depuis un message utilisateur. */
+export function detectClaraWorkflowIntent(
+  message: string,
+  contextRole?: string,
+): { intent: ClaraWorkflowIntent; confidence: number } {
+  const classification = classifyIntent(message, contextRole);
+  return {
+    intent: toClaraWorkflowIntent(classification.primary_intent),
+    confidence: classification.confidence_score,
+  };
+}
