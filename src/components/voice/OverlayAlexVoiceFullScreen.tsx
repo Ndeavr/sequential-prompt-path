@@ -800,6 +800,8 @@ export default function OverlayAlexVoiceFullScreen() {
   // ONE CLARA : à la fermeture de la voix, le chat recharge l'état serveur —
   // la transcription et la réponse restent visibles, sans doublon.
   const wasOverlayOpenRef = useRef(false);
+  const trackedConnectedRef = useRef(false);
+  const trackedErrorRef = useRef<LockedVoiceState | null>(null);
   useEffect(() => {
     if (store.isOverlayOpen) {
       wasOverlayOpenRef.current = true;
@@ -807,9 +809,26 @@ export default function OverlayAlexVoiceFullScreen() {
     }
     if (wasOverlayOpenRef.current) {
       wasOverlayOpenRef.current = false;
+      trackCopilotEvent("clara_voice_ended", { surface: store.feature });
       notifyClaraVoiceClosed();
     }
   }, [store.isOverlayOpen]);
+
+  useEffect(() => {
+    if (!store.isOverlayOpen) {
+      trackedConnectedRef.current = false;
+      trackedErrorRef.current = null;
+      return;
+    }
+    if (!trackedConnectedRef.current && ["session_ready", "listening", "capturing_voice", "speaking", "awaiting_user"].includes(store.machineState)) {
+      trackedConnectedRef.current = true;
+      trackCopilotEvent("clara_voice_connected", { surface: store.feature });
+    }
+    if ((store.machineState === "error_recoverable" || store.machineState === "error_fatal") && trackedErrorRef.current !== store.machineState) {
+      trackedErrorRef.current = store.machineState;
+      trackCopilotEvent("clara_voice_error", { surface: store.feature, state: store.machineState });
+    }
+  }, [store.feature, store.isOverlayOpen, store.machineState]);
 
   // ─── HANDLERS ───
   const handleClose = useCallback(() => {
@@ -822,9 +841,8 @@ export default function OverlayAlexVoiceFullScreen() {
     if (heartbeatRef.current) { clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
     try { elevenlabsService.stop(); } catch {}
     try { stop(); } catch {}
-    trackCopilotEvent("clara_voice_ended", { surface: store.feature });
     getStore().closeVoiceSession("user_explicit_close");
-  }, [stop, store.feature]);
+  }, [stop]);
 
 
   // ─── HARD RESET RETRY — fully destroys old session ───
