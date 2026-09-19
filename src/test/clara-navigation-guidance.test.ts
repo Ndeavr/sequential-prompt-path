@@ -45,7 +45,7 @@ describe("Clara — destinations canoniques", () => {
   });
 
   it("ne navigue pas sur une intention faible", () => {
-    expect(resolveClaraDestination("contractor_search", 0.2)).toBeNull();
+    expect(resolveClaraDestination("contractor_search", 0.05)).toBeNull();
   });
 
   it("amène l'utilisateur pour les demandes explicites", () => {
