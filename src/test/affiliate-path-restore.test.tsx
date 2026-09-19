@@ -59,7 +59,7 @@ describe("chemins affilié / partenaire", () => {
 
   it("« Ambassadeur » mène à la page d'information affiliés, pas au login propriétaire", () => {
     renderRolePage();
-    fireEvent.click(screen.getByText("Plus d'options"));
+    fireEvent.click(screen.getByText("Plus de profils"));
     fireEvent.click(screen.getByText("Ambassadeur"));
     fireEvent.click(screen.getByText("Continuer"));
     expect(screen.getByTestId("path").textContent).toBe("/affilies");
@@ -69,7 +69,7 @@ describe("chemins affilié / partenaire", () => {
 
   it("« Partenaire » mène au parcours dédié partenaire, pas au login propriétaire", () => {
     renderRolePage();
-    fireEvent.click(screen.getByText("Plus d'options"));
+    fireEvent.click(screen.getByText("Plus de profils"));
     fireEvent.click(screen.getByText("Partenaire"));
     fireEvent.click(screen.getByText("Continuer"));
     expect(screen.getByTestId("path").textContent).toBe("/partenaire/devenir-partenaire");
