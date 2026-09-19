@@ -144,6 +144,19 @@ const INTENT_RULES: IntentRule[] = [
   { intent: "rep_assign_plan", keywords: [
     "assigner plan", "attribuer plan",
   ], weight: 85 },
+
+  // ─── Affilié (priorité haute : ne doit jamais devenir un parcours propriétaire) ───
+  { intent: "affiliate_onboarding", keywords: [
+    "devenir affilié", "devenir affiliée", "je veux devenir affilié", "programme d'affiliation",
+    "programme affilié", "ambassadeur", "ambassadrice", "référer des entrepreneurs",
+    "commission affilié", "mon code affilié", "lien affilié", "inscription affilié",
+    "partenaire référent",
+  ], weight: 95 },
+
+  // ─── Médias ───
+  { intent: "homeowner_upload_video_analysis", keywords: [
+    "vidéo", "video", "filmer", "j'ai filmé", "envoyer une vidéo", "regarder ma vidéo",
+  ], weight: 72 },
 ];
 
 // ─── Cities list (NEVER trigger contractor recommendation alone) ───
