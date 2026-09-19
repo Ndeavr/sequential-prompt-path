@@ -133,9 +133,19 @@ export default function ClaraConversationBox() {
   const [quickReplies, setQuickReplies] = useState<QuickReplies | null>(null);
   const hydrated = useRef(false);
   const cameraRef = useRef<HTMLInputElement>(null);
+  const videoCameraRef = useRef<HTMLInputElement>(null);
+  const photoLibraryRef = useRef<HTMLInputElement>(null);
+  const videoLibraryRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLElement>(null);
   // Parcours en cours : lu depuis la session canonique, jamais recréé localement.
   const workflowRef = useRef<ClaraWorkflowState | null>(null);
+
+  // File d'attente média unique : progression réelle, reprise, rien de perdu.
+  const mediaItems = useClaraMediaQueue((state) => state.items);
+  const enqueueMedia = useClaraMediaQueue((state) => state.enqueue);
+  const removeMedia = useClaraMediaQueue((state) => state.remove);
+  const retryMedia = useClaraMediaQueue((state) => state.retry);
+  const announcedMedia = useRef<Set<string>>(new Set());
 
   const focusComposer = useCallback(() => {
     const textarea = rootRef.current?.querySelector("textarea");
