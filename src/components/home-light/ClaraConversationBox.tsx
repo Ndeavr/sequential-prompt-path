@@ -513,13 +513,53 @@ export default function ClaraConversationBox() {
         </Conversation>
       )}
 
+      {mediaItems.length > 0 && (
+        <ul className="home-clara-media" aria-label="Fichiers en cours">
+          {mediaItems.map((item) => (
+            <li key={item.id} className="home-clara-media-item" data-status={item.status}>
+              {item.previewUrl && item.kind !== "document" ? (
+                item.kind === "video"
+                  ? <video src={item.previewUrl} muted playsInline preload="metadata" aria-hidden="true" />
+                  : <img src={item.previewUrl} alt="" />
+              ) : (
+                <span className="home-clara-media-icon" aria-hidden="true"><FileText className="h-4 w-4" /></span>
+              )}
+              <div className="home-clara-media-body">
+                <p>{item.name}</p>
+                <span aria-live="polite">
+                  {item.status === "uploading" && `Envoi ${Math.round(item.progress * 100)} %`}
+                  {item.status === "analyzing" && "Analyse en cours…"}
+                  {item.status === "queued" && "En attente"}
+                  {item.status === "done" && "Terminé"}
+                  {item.status === "failed" && (item.error || "Échec de l’envoi")}
+                </span>
+                {(item.status === "uploading" || item.status === "analyzing") && (
+                  <progress max={100} value={Math.round(item.progress * 100)} />
+                )}
+              </div>
+              {item.status === "failed" && (
+                <button type="button" onClick={() => retryMedia(item.id)} aria-label={`Réessayer ${item.name}`}>
+                  <RotateCcw className="h-4 w-4" />
+                </button>
+              )}
+              <button type="button" onClick={() => removeMedia(item.id)} aria-label={`Retirer ${item.name}`}>
+                <X className="h-4 w-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
       <div className="home-clara-composer">
-        <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" aria-label={copy.camera} onChange={(event) => { void submitCameraFile(event.currentTarget.files?.[0]); event.currentTarget.value = ""; }} />
+        <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" aria-label={copy.camera} onChange={(event) => { acceptDirectFiles(event.currentTarget.files); event.currentTarget.value = ""; }} />
+        <input ref={videoCameraRef} type="file" accept="video/*" capture="environment" className="hidden" aria-label="Prendre une vidéo" onChange={(event) => { acceptDirectFiles(event.currentTarget.files); event.currentTarget.value = ""; }} />
+        <input ref={photoLibraryRef} type="file" accept="image/*" multiple className="hidden" aria-label="Choisir une photo" onChange={(event) => { acceptDirectFiles(event.currentTarget.files); event.currentTarget.value = ""; }} />
+        <input ref={videoLibraryRef} type="file" accept="video/*" className="hidden" aria-label="Choisir une vidéo" onChange={(event) => { acceptDirectFiles(event.currentTarget.files); event.currentTarget.value = ""; }} />
         <PromptInput
-          accept="image/*,.pdf,.doc,.docx"
-          multiple={mode === "QUOTE"}
-          maxFiles={mode === "QUOTE" ? 3 : 1}
-          maxFileSize={10 * 1024 * 1024}
+          accept="image/*,video/*,.pdf,.doc,.docx"
+          multiple
+          maxFiles={5}
+          maxFileSize={100 * 1024 * 1024}
           onSubmit={submit}
           onError={() => setError(copy.fallback)}
           className="home-clara-prompt"
