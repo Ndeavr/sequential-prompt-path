@@ -60,6 +60,8 @@ export interface ClaraContextPatch {
   quote_analysis_ids?: string[];
   verification_run_ids?: string[];
   visual_analysis_ids?: string[];
+  /** Avancement du parcours (aucune donnée métier copiée). */
+  workflow?: Record<string, unknown> | null;
 }
 
 function safeGet(key: string): string | null {

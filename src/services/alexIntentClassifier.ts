@@ -33,6 +33,10 @@ export type AlexIntent =
   | "rep_import_business_card"
   | "rep_assign_plan"
   | "admin_override_flow"
+  // Affilié
+  | "affiliate_onboarding"
+  // Médias
+  | "homeowner_upload_video_analysis"
   // Ambiguous
   | "ambiguous_need"
   | "needs_clarification"
