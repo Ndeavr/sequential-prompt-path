@@ -429,7 +429,7 @@ export default function ClaraConversationBox() {
       return;
     }
     await send(message.text);
-  }, [busy, copy.fallback, handleUpload, lang, mode, send]);
+  }, [busy, copy.fallback, enqueueMedia, lang, mode, send]);
 
   const startVoice = () => {
     useAlexStore.getState().markUserEngaged();
@@ -437,16 +437,29 @@ export default function ClaraConversationBox() {
     openAlex("home_hero", "user_tapped_orb");
   };
 
-  const submitCameraFile = async (file: File | undefined) => {
-    if (!file) return;
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result || ""));
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(file);
-    });
-    await submit({ text: "", files: [{ type: "file", filename: file.name, mediaType: file.type, url: dataUrl }] });
-  };
+  // Capture directe (appareil photo, caméra, galerie) : le fichier entre
+  // immédiatement dans la file d'attente, sans passer par un aperçu factice.
+  const acceptDirectFiles = useCallback(
+    (list: FileList | null) => {
+      const files = list ? Array.from(list) : [];
+      if (files.length === 0) return;
+      const first = files[0];
+      setError(null);
+      setMode(first.type.startsWith("video/") ? "VIDEO" : first.type.startsWith("image/") ? "PHOTO" : "DOCUMENT");
+      enqueueMedia(files);
+
+      const messageId = uid();
+      const label = first.type.startsWith("video/") ? "Vidéo envoyée" : "Photo envoyée";
+      setMessages((previous) => [...previous, { id: messageId, role: "user", text: label }]);
+      void appendClaraMessage({
+        role: "user",
+        text: label,
+        messageType: "attachment",
+        clientMessageId: messageId,
+      }).catch(() => {});
+    },
+    [enqueueMedia],
+  );
 
   return (
     <motion.section
