@@ -810,8 +810,17 @@ export default function OverlayAlexVoiceFullScreen() {
 
   // ─── HANDLERS ───
   const handleClose = useCallback(() => {
+    // Arrêt immédiat et complet : minuteries, micro, voix, session fournisseur.
+    if (inactivityTimerRef.current) { clearTimeout(inactivityTimerRef.current); inactivityTimerRef.current = null; }
+    if (nudgeTimerRef.current) { clearTimeout(nudgeTimerRef.current); nudgeTimerRef.current = null; }
+    if (firstAudioTimerRef.current) { clearTimeout(firstAudioTimerRef.current); firstAudioTimerRef.current = null; }
+    if (stabilizationTimerRef.current) { clearTimeout(stabilizationTimerRef.current); stabilizationTimerRef.current = null; }
+    if (slowTokenTimerRef.current) { clearTimeout(slowTokenTimerRef.current); slowTokenTimerRef.current = null; }
+    if (heartbeatRef.current) { clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
+    try { elevenlabsService.stop(); } catch {}
+    try { stop(); } catch {}
     getStore().closeVoiceSession("user_explicit_close");
-  }, []);
+  }, [stop]);
 
 
   // ─── HARD RESET RETRY — fully destroys old session ───
@@ -1153,6 +1162,15 @@ export default function OverlayAlexVoiceFullScreen() {
                   <MessageSquare className="w-4 h-4" />
                 </Button>
               </div>
+            ) : isPaused ? (
+              <>
+                <Button onClick={handleResumeVoice} className="rounded-full gap-2 px-6" variant="default">
+                  <Sparkles className="w-4 h-4" /> Reprendre
+                </Button>
+                <Button onClick={handleFallbackChat} variant="outline" className="rounded-full gap-2 px-6">
+                  <MessageSquare className="w-4 h-4" /> Passer au chat
+                </Button>
+              </>
             ) : (
               <>
                 <Button onClick={handleClose} variant="destructive" className="rounded-full gap-2 px-8">
