@@ -127,6 +127,8 @@ export default function ClaraConversationBox() {
   const hydrated = useRef(false);
   const cameraRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLElement>(null);
+  // Parcours en cours : lu depuis la session canonique, jamais recréé localement.
+  const workflowRef = useRef<ClaraWorkflowState | null>(null);
 
   const focusComposer = useCallback(() => {
     const textarea = rootRef.current?.querySelector("textarea");
