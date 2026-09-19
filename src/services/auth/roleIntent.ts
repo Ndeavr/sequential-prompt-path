@@ -260,6 +260,13 @@ export async function applyRoleIntent(
       account_type: intent.accountType,
     } as never, { onConflict: "user_id", ignoreDuplicates: false });
     if (error) return { role: intent.role, applied: false, error: error.message };
+  } else if (intent.role === "affiliate" || intent.role === "partner") {
+    // Ces rôles s'activent uniquement via leur parcours dédié vérifié côté
+    // serveur (/affilies/onboarding, /partenaire/devenir-partenaire). Aucune
+    // écriture de rôle depuis le navigateur : on efface l'intention pour ne
+    // pas bloquer la connexion et la destination dédiée prend le relais.
+    clearRoleIntent();
+    return { role: intent.role, applied: true };
   } else {
     return { role: intent.role, applied: false, error: "role_requires_server_approval" };
   }
