@@ -66,6 +66,42 @@ const CONTEXT_LIST_KEYS = [
   "visual_analysis_ids",
 ] as const;
 
+/**
+ * État de workflow Clara : une seule mémoire, celle de la conversation canonique.
+ * Aucune donnée métier n'est copiée ici — uniquement l'avancement déclaratif
+ * (intention active, étape, éléments obtenus/manquants, workflows suspendus).
+ */
+const WORKFLOW_KEY = "workflow";
+const WORKFLOW_TEXT_RE = /^[\p{L}\p{N}_\-. :/']{1,80}$/u;
+const MAX_SUSPENDED = 5;
+const MAX_WORKFLOW_ITEMS = 20;
+
+/** Événements journalisés (aucun secret, aucune donnée privée). */
+const WORKFLOW_EVENTS = new Set([
+  "intent_detected",
+  "workflow_started",
+  "workflow_paused",
+  "workflow_resumed",
+  "workflow_completed",
+  "affiliate_onboarding_started",
+  "affiliate_onboarding_completed",
+  "contractor_onboarding_started",
+  "contractor_onboarding_completed",
+  "media_upload_started",
+  "media_upload_completed",
+  "media_upload_failed",
+  "image_analysis_started",
+  "image_analysis_completed",
+  "video_analysis_started",
+  "video_analysis_completed",
+  "design_generation_started",
+  "design_generation_completed",
+  "homeowner_record_created",
+  "contractor_match_found",
+  "appointment_booking_started",
+  "appointment_booked",
+]);
+
 const MAX_LIST = 25;
 const MAX_MESSAGES = 40;
 const MAX_TEXT = 8000;
