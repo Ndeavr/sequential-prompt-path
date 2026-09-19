@@ -650,6 +650,25 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── event : journal d'audit du parcours (aucun secret, aucune donnée privée) ──
+    if (action === "event") {
+      const name = str(body.event, 60);
+      if (!name || !WORKFLOW_EVENTS.has(name)) return json({ error: "unknown_event" }, 400);
+
+      const intent = wfText(body.intent);
+      const step = wfText(body.step);
+      await admin.from("platform_operation_outcomes").insert({
+        service: "clara",
+        operation: name,
+        business_outcome: "achieved",
+        intent: intent,
+        affected_record: session.id,
+        payload: { step, session_id: session.id, auth_state: session.auth_state },
+      });
+      return json({ ok: true });
+    }
+
+
 
     // ── context : fusion de références uniquement ──
     if (action === "context") {
