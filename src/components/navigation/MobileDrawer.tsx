@@ -3,7 +3,7 @@
  * Full-screen mobile navigation with role-aware links + drawer items.
  */
 
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
@@ -11,20 +11,19 @@ import { headerNavByRole, getDrawerItems, getStateActions } from "@/config/navig
 import { resolveIcon, LogOut, ArrowRightLeft, Settings } from "./IconResolver";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import ThemeSwitcher from "@/components/theme/ThemeSwitcher";
-import type { UserRole } from "@/types/navigation";
+import { roleHomePath, ROLE_LABELS } from "@/services/navigation/roleHome";
 
-const roleLabels: Record<UserRole, string> = {
-  homeowner: "Propriétaire",
-  contractor: "Entrepreneur",
-  partner: "Partenaire",
-  admin: "Administrateur",
-};
+const roleLabels: Record<string, string> = Object.fromEntries(
+  Object.entries(ROLE_LABELS).map(([k, v]) => [k, v.fr]),
+);
 
 const MobileDrawer = ({ onClose }: { onClose: () => void }) => {
   const { pathname } = useLocation();
   const { signOut } = useAuth();
   const { ctx, activeRole, setActiveRole } = useNavigationContext();
   const { lang } = useLanguage();
+  const navigate = useNavigate();
+
 
   const navItems = headerNavByRole[activeRole] || headerNavByRole.guest;
   const drawerItems = ctx ? getDrawerItems(ctx) : [];
@@ -122,7 +121,7 @@ const MobileDrawer = ({ onClose }: { onClose: () => void }) => {
             {otherRoles.map((r) => (
               <button
                 key={r}
-                onClick={() => { setActiveRole(r); onClose(); }}
+                onClick={() => { setActiveRole(r); onClose(); navigate(roleHomePath(r)); }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-meta text-muted-foreground hover:bg-muted/30 transition-colors"
               >
                 <ArrowRightLeft className="h-4 w-4" />

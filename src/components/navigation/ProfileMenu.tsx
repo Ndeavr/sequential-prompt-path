@@ -11,16 +11,11 @@ import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { getProfileActions, getStateActions } from "@/config/navigationConfig";
 import { resolveIcon, ChevronDown, ArrowRightLeft, LogOut, Settings, HelpCircle, Globe } from "./IconResolver";
 import { useLanguage } from "@/components/ui/LanguageToggle";
-import type { UserRole } from "@/types/navigation";
 import BecomeRoleCTA from "@/components/account/BecomeRoleCTA";
+import { roleHomePath, ROLE_LABELS } from "@/services/navigation/roleHome";
 import { CANONICAL_PLAN_LABELS } from "@/config/pricing";
 
-const roleLabels: Record<UserRole, { fr: string; en: string }> = {
-  homeowner: { fr: "Propriétaire", en: "Homeowner" },
-  contractor: { fr: "Entrepreneur", en: "Contractor" },
-  partner: { fr: "Partenaire", en: "Partner" },
-  admin: { fr: "Administrateur", en: "Admin" },
-};
+const roleLabels: Record<string, { fr: string; en: string }> = ROLE_LABELS;
 
 // Display labels come from the canonical pricing source.
 // NEVER add legacy names here ("Starter", "Essentiel"…) — see legacyPlanGuard.
@@ -113,9 +108,8 @@ const ProfileMenu = () => {
                     onClick={() => {
                       setActiveRole(r);
                       setOpen(false);
-                      // Navigate to the role's home
-                      const dest = r === "admin" ? "/admin" : r === "contractor" ? "/pro" : "/dashboard";
-                      navigate(dest);
+                      // Navigate to the role's real home (never the homeowner default)
+                      navigate(roleHomePath(r));
                     }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-meta text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
                   >
