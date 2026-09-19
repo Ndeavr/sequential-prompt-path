@@ -119,6 +119,11 @@ export default function ClaraConversationBox() {
         send: "Envoyer",
         working: "Analyse en cours…",
         fallback: "Je continue ici avec vous. Reformulez en une phrase.",
+        reset: "Nouvelle conversation",
+        resetConfirm: "Commencer une nouvelle conversation ?",
+        resetYes: "Commencer",
+        resetNo: "Annuler",
+
       }
     : {
         placeholder: "Bonjour ! Que puis-je-faire pour vous?",
