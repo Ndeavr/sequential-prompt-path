@@ -395,11 +395,18 @@ export default function ClaraConversationBox() {
           const analysis = await runQuoteAnalysis(files.slice(0, 3));
           setContextStatus(analysis.payload.recommendation || "Analyse terminée. Clara peut maintenant vous expliquer les écarts importants.");
         } else {
-          const file = files[0];
-          if (file) {
-            setMode(file.type.startsWith("image/") ? "PHOTO" : "DOCUMENT");
-            await handleUpload(file, message.text || undefined);
+          const first = files[0];
+          if (first) {
+            setMode(
+              first.type.startsWith("video/")
+                ? "VIDEO"
+                : first.type.startsWith("image/")
+                  ? "PHOTO"
+                  : "DOCUMENT",
+            );
           }
+          // File d'attente unique : envoi asynchrone, progression réelle, reprise possible.
+          enqueueMedia(files);
         }
         const uploadId = uid();
         const uploadText = message.text || (lang === "fr" ? "Document joint" : "Attached document");
