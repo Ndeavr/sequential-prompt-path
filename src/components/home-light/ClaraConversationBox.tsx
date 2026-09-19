@@ -163,7 +163,9 @@ export default function ClaraConversationBox() {
   const enqueueMedia = useClaraMediaQueue((state) => state.enqueue);
   const removeMedia = useClaraMediaQueue((state) => state.remove);
   const retryMedia = useClaraMediaQueue((state) => state.retry);
+  const clearMedia = useClaraMediaQueue((state) => state.clear);
   const announcedMedia = useRef<Set<string>>(new Set());
+
 
   const focusComposer = useCallback(() => {
     const textarea = rootRef.current?.querySelector("textarea");
