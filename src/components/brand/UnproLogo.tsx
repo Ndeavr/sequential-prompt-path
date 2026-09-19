@@ -22,7 +22,7 @@ type UnproLogoProps = {
   /** Mark shape when the wordmark is hidden. */
   markShape?: "round" | "square" | "bare";
   /** Surface the logo sits on. `auto` follows the app theme. */
-  tone?: "auto" | "light" | "dark" | "blue";
+  tone?: "auto" | "light" | "dark" | "blue" | "gradient";
   /** Skip inline width/height so CSS classes control the size. */
   unsized?: boolean;
   className?: string;
@@ -45,7 +45,8 @@ export default function UnproLogo({
 
   useEffect(() => subscribeTheme((_m, next) => setResolved(next)), []);
 
-  const height = showWordmark ? Math.round(size / WORDMARK_RATIO) : size;
+  const ratio = tone === "gradient" ? BRAND.wordmarkGradientRatio : WORDMARK_RATIO;
+  const height = showWordmark ? Math.round(size / ratio) : size;
 
   // Last resort: clean wordmark text, never an initial badge.
   if (failed) {
@@ -76,15 +77,17 @@ export default function UnproLogo({
   const base = `object-contain ${className}`;
 
   const src =
-    tone === "light"
-      ? lightSrc
-      : tone === "blue" && showWordmark
-        ? BRAND.logoWordmarkWhite
-        : tone === "dark"
-          ? darkSrc
-          : resolved === "dark"
+    tone === "gradient" && showWordmark
+      ? BRAND.logoWordmarkGradient
+      : tone === "light"
+        ? lightSrc
+        : tone === "blue" && showWordmark
+          ? BRAND.logoWordmarkWhite
+          : tone === "dark"
             ? darkSrc
-            : lightSrc;
+            : resolved === "dark"
+              ? darkSrc
+              : lightSrc;
 
   return (
     <img
