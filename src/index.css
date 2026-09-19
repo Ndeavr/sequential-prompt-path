@@ -419,7 +419,61 @@
       radial-gradient(260px 90px at 9% 0%, hsl(0 0% 100% / 0.92), transparent 68%),
       radial-gradient(260px 90px at 91% 0%, hsl(204 100% 92% / 0.72), transparent 68%);
   }
+  .home-light .home-clara-reset {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    border: 1px solid hsl(var(--border));
+    background: hsl(0 0% 100% / 0.72);
+    color: hsl(220 14% 38%);
+    backdrop-filter: blur(12px);
+    transition: transform 420ms cubic-bezier(.22,1,.36,1), color 200ms ease, background 200ms ease;
+  }
+  .home-light .home-clara-reset:hover {
+    transform: translateY(-2px);
+    color: hsl(222 49% 9%);
+    background: hsl(0 0% 100% / 0.92);
+  }
+  .home-light .home-clara-reset:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
+  .home-light .home-clara-reset-confirm {
+    position: absolute;
+    top: 52px;
+    right: 10px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    max-width: 240px;
+    border-radius: 18px;
+    border: 1px solid hsl(var(--border));
+    background: hsl(0 0% 100% / 0.96);
+    box-shadow: 0 18px 40px hsl(222 49% 9% / 0.14);
+  }
+  .home-light .home-clara-reset-confirm p { font-size: 0.85rem; color: hsl(222 49% 9%); }
+  .home-light .home-clara-reset-confirm div { display: flex; gap: 8px; justify-content: flex-end; }
+  .home-light .home-clara-reset-confirm button {
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 0.82rem;
+    min-height: 36px;
+    border: 1px solid hsl(var(--border));
+    color: hsl(222 49% 9%);
+  }
+  .home-light .home-clara-reset-confirm button[data-variant="primary"] {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-color: transparent;
+  }
   .home-light .home-clara-presence {
+
     display: flex;
     align-items: center;
     justify-content: center;
