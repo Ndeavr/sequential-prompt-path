@@ -199,6 +199,7 @@ export default function ClaraConversationBox() {
     setQuoteCount(0);
     setContextStatus(null);
     setMode("IDLE");
+    trackCopilotEvent("clara_new_conversation", { surface: "home_clara_box" });
     try {
       await startNewClaraSession({ language: lang, entrypoint: "home_clara_box" });
     } catch {
@@ -245,6 +246,30 @@ export default function ClaraConversationBox() {
       }
     })();
   }, [lang]);
+
+  // Android Chrome et Safari ne traitent pas tous le clavier de la même façon.
+  // On mesure uniquement l'espace réellement masqué, puis on laisse la page
+  // conserver son scroll natif et le fil de messages son propre scroll.
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    const updateViewport = () => {
+      const covered = viewport
+        ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
+        : 0;
+      rootRef.current?.style.setProperty("--clara-keyboard-offset", `${covered}px`);
+    };
+    updateViewport();
+    viewport?.addEventListener("resize", updateViewport);
+    viewport?.addEventListener("scroll", updateViewport);
+    return () => {
+      viewport?.removeEventListener("resize", updateViewport);
+      viewport?.removeEventListener("scroll", updateViewport);
+    };
+  }, []);
+
+  useEffect(() => {
+    trackCopilotEvent("clara_chat_opened", { surface: "home_clara_box" });
+  }, []);
 
 
   // ONE CLARA — la voix n'a pas d'historique séparé : chaque parole apparaît
@@ -461,6 +486,7 @@ export default function ClaraConversationBox() {
       setError(null);
       setBusy(true);
       setMode("ANALYZING");
+      trackCopilotEvent("clara_upload_started", { surface: "home_clara_box", count: message.files.length });
       try {
         const files: File[] = [];
         for (const attachment of message.files) {
@@ -504,7 +530,9 @@ export default function ClaraConversationBox() {
           messageType: "attachment",
           clientMessageId: uploadId,
         }).catch(() => {});
+        trackCopilotEvent("clara_upload_completed", { surface: "home_clara_box", count: files.length });
       } catch {
+        trackCopilotEvent("clara_upload_failed", { surface: "home_clara_box" });
         setError(copy.fallback);
         setContextStatus("Je ne peux pas confirmer ce résultat maintenant. Vous pouvez ajouter un autre fichier ou me décrire la situation.");
       } finally {
@@ -518,7 +546,9 @@ export default function ClaraConversationBox() {
   const startVoice = () => {
     useAlexStore.getState().markUserEngaged();
     setMode("LISTENING");
-    openAlex("home_hero", "user_tapped_orb");
+    trackCopilotEvent("clara_input_mode_changed", { surface: "home_clara_box", mode: "voice" });
+    trackCopilotEvent("clara_voice_started", { surface: "home_clara_box" });
+    openAlex("home_hero", "user_tapped_orb", "floating");
   };
 
   // Capture directe (appareil photo, caméra, galerie) : le fichier entre
@@ -529,6 +559,8 @@ export default function ClaraConversationBox() {
       if (files.length === 0) return;
       const first = files[0];
       setError(null);
+      trackCopilotEvent("clara_input_mode_changed", { surface: "home_clara_box", mode: first.type.startsWith("video/") ? "video" : first.type.startsWith("image/") ? "photo" : "document" });
+      trackCopilotEvent("clara_upload_started", { surface: "home_clara_box", count: files.length });
       setMode(first.type.startsWith("video/") ? "VIDEO" : first.type.startsWith("image/") ? "PHOTO" : "DOCUMENT");
       enqueueMedia(files);
 
@@ -583,8 +615,9 @@ export default function ClaraConversationBox() {
         >
           <span /><i /><i />
         </div>
+        <div id="home-clara-voice-slot" className="home-clara-voice-slot" aria-live="polite" />
       {messages.length > 0 && (
-        <Conversation className="home-clara-conversation max-h-[38vh] min-h-28">
+        <Conversation className="home-clara-conversation min-h-0">
           <ConversationContent className="gap-3 px-5 py-4 sm:px-6">
             {messages.map((message) => (
               <Message from={message.role} key={message.id}>
@@ -673,6 +706,9 @@ export default function ClaraConversationBox() {
             aria-label={conversationStarted ? copy.placeholderActive : copy.placeholder}
             placeholder={conversationStarted ? copy.placeholderActive : copy.placeholder}
             disabled={busy}
+            onFocus={(event) => {
+              window.setTimeout(() => event.currentTarget.scrollIntoView({ block: "nearest", behavior: "smooth" }), 120);
+            }}
             className="home-clara-textarea text-foreground placeholder:text-muted-foreground"
           />
           <PromptInputFooter className="home-clara-controls">

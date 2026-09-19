@@ -353,8 +353,10 @@
   .home-light .home-profile-control button { border: 1px solid hsl(var(--foreground) / 0.55); border-radius: 999px; }
 
   .home-light .home-glossy-hero {
-    min-height: calc(100svh - 68px);
+    min-height: calc(100dvh - 68px);
     background: hsl(var(--background));
+    overflow-x: clip;
+    overflow-y: visible;
   }
   .home-light .home-clara-ambient {
     position: absolute;
@@ -364,7 +366,7 @@
       linear-gradient(180deg, hsl(var(--background)), hsl(225 68% 3%));
   }
   .home-light .home-hero-content {
-    min-height: calc(100svh - 68px);
+    min-height: calc(100dvh - 68px);
     justify-content: center;
     padding-top: clamp(3rem, 9vh, 7rem);
     padding-bottom: clamp(3rem, 8vh, 6rem);
@@ -407,6 +409,12 @@
     backdrop-filter: blur(30px) saturate(148%);
     isolation: isolate;
     color: hsl(222 49% 9%);
+  }
+  .home-light .home-clara-main {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: min(620px, calc(100dvh - 9rem - var(--clara-keyboard-offset, 0px)));
   }
   .home-light .home-clara-glass::before {
     content: "";
@@ -502,6 +510,11 @@
   .home-light .home-clara-presence i:first-of-type { height: 9px; animation-delay: 160ms; }
   .home-light .home-clara-presence i:last-of-type { height: 13px; animation-delay: 320ms; }
   .home-light .home-clara-conversation {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
     color: hsl(222 49% 9%);
     border-bottom: 1px solid hsl(222 30% 20% / 0.08);
   }
@@ -551,6 +564,7 @@
   .home-light .home-clara-quick button:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
   .home-light .home-clara-quick button:disabled { opacity: 0.5; }
   .home-light .home-clara-media {
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -619,7 +633,30 @@
     0%, 100% { transform: scaleY(0.7); opacity: 0.72; }
     50% { transform: scaleY(1.2); opacity: 1; }
   }
-  .home-light .home-clara-composer { padding: 0.9rem 1rem 0.6rem; }
+  .home-light .home-clara-composer {
+    flex: 0 0 auto;
+    padding: 0.9rem 1rem max(0.6rem, env(safe-area-inset-bottom));
+    scroll-margin-bottom: calc(var(--clara-keyboard-offset, 0px) + env(safe-area-inset-bottom));
+  }
+  .home-light .home-clara-voice-slot:empty { display: none; }
+  .home-light .home-clara-voice-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 68px;
+    padding: 0.25rem 0.75rem 0.7rem 1rem;
+    border-bottom: 1px solid hsl(222 30% 20% / 0.08);
+    color: hsl(222 49% 9%);
+  }
+  .home-light .home-clara-voice-inline .uc-orb-shell {
+    flex: 0 0 auto;
+    transform: scale(0.58);
+    margin: -13px;
+  }
+  .home-light .home-clara-voice-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 0.12rem; }
+  .home-light .home-clara-voice-copy strong { font-size: 0.9rem; color: hsl(222 49% 9%); }
+  .home-light .home-clara-voice-copy span { font-size: 0.78rem; color: hsl(220 14% 32%); }
+  .home-light .home-clara-voice-inline button { flex: 0 0 auto; min-height: 44px; }
   .home-light .home-clara-prompt { position: relative; }
   .home-light .home-clara-prompt [data-slot="input-group"] {
     min-height: 92px;
@@ -712,9 +749,9 @@
     .home-light .home-language-switch { gap: 0.8rem; height: 38px; }
     .home-light .home-language-switch button { height: 38px; font-size: 0.72rem; }
     .home-light .home-header-icon { width: 36px; height: 36px; }
-    .home-light .home-glossy-hero { min-height: calc(100svh - 58px); }
+    .home-light .home-glossy-hero { min-height: calc(100dvh - 58px); }
     .home-light .home-hero-content {
-      min-height: calc(100svh - 58px);
+      min-height: calc(100dvh - 58px);
       justify-content: center;
       padding-top: max(2.5rem, env(safe-area-inset-top));
       padding-bottom: max(2rem, env(safe-area-inset-bottom));
@@ -733,9 +770,10 @@
     .home-light .home-clara-shell,
     .home-light .home-clara-shell.has-context { grid-template-columns: minmax(0, 1fr); margin-top: 2rem; }
     .home-light .home-clara-glass { border-radius: 20px; }
-    .home-light .home-clara-composer { padding: 0.6rem 0.65rem 0.35rem; }
-    .home-light .home-clara-prompt [data-slot="input-group"] { min-height: 112px; border-radius: 16px; }
-    .home-light .home-clara-textarea { min-height: 110px; max-height: 150px; padding: 1rem 1rem 3.7rem; font-size: 1rem; }
+    .home-light .home-clara-main { max-height: min(64dvh, calc(100dvh - 7rem - var(--clara-keyboard-offset, 0px))); }
+    .home-light .home-clara-composer { padding: 0.6rem 0.65rem max(0.45rem, env(safe-area-inset-bottom)); }
+    .home-light .home-clara-prompt [data-slot="input-group"] { min-height: 100px; border-radius: 16px; }
+    .home-light .home-clara-textarea { min-height: 98px; max-height: 132px; padding: 1rem 1rem 3.45rem; font-size: 1rem; }
     .home-light .home-clara-controls { right: 0.7rem; bottom: 0.6rem; left: 0.7rem; justify-content: space-between; }
     .home-light .home-clara-tool { width: 38px; height: 38px; }
     .home-light .home-clara-submit { width: 46px; height: 46px; }

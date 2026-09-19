@@ -11,9 +11,11 @@
  * FIX V5: All timeouts/async use getState() instead of stale store snapshot.
  */
 import { useEffect, useRef, useCallback, useState, type MutableRefObject } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, PhoneOff, RefreshCw, AlertCircle, MessageSquare, Sparkles, WifiOff, CheckCircle2, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import { useAlexVoiceLockedStore, type LockedVoiceState } from "@/stores/alexVoiceLockedStore";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
 import { useAlexVoiceRecovery, type RecoveryPhase } from "@/hooks/useAlexVoiceRecovery";
@@ -776,7 +778,8 @@ export default function OverlayAlexVoiceFullScreen() {
   // ─── Toggle page-level background blur while overlay is open ───
   useEffect(() => {
     if (typeof document === "undefined") return;
-    if (store.isOverlayOpen) {
+    const isHomeInline = store.displayMode === "floating" && store.feature === "home_hero";
+    if (store.isOverlayOpen && !isHomeInline) {
       document.documentElement.classList.add("alex-overlay-active");
       document.body.dataset.alexOverlayOpen = "true";
     } else {
@@ -787,7 +790,7 @@ export default function OverlayAlexVoiceFullScreen() {
       document.documentElement.classList.remove("alex-overlay-active");
       if (document.body.dataset.alexOverlayOpen) delete document.body.dataset.alexOverlayOpen;
     };
-  }, [store.isOverlayOpen]);
+  }, [store.displayMode, store.feature, store.isOverlayOpen]);
 
   // Auto-scroll
   useEffect(() => {
@@ -819,8 +822,9 @@ export default function OverlayAlexVoiceFullScreen() {
     if (heartbeatRef.current) { clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
     try { elevenlabsService.stop(); } catch {}
     try { stop(); } catch {}
+    trackCopilotEvent("clara_voice_ended", { surface: store.feature });
     getStore().closeVoiceSession("user_explicit_close");
-  }, [stop]);
+  }, [stop, store.feature]);
 
 
   // ─── HARD RESET RETRY — fully destroys old session ───
@@ -921,6 +925,44 @@ export default function OverlayAlexVoiceFullScreen() {
     : "Session vocale";
 
   const isFloating = store.displayMode === "floating";
+
+  // La home héberge visuellement le moteur vocal global dans sa carte Clara.
+  // Le transcript reste le transcript canonique déjà rendu par la carte.
+  const homeVoiceSlot = store.feature === "home_hero" && typeof document !== "undefined"
+    ? document.getElementById("home-clara-voice-slot")
+    : null;
+  if (isFloating && store.feature === "home_hero" && homeVoiceSlot) {
+    const inlinePanel = (
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="home-clara-voice-inline"
+        role="region"
+        aria-label="Clara Voice"
+        data-voice-state={state}
+      >
+        <AlexMorphingOrb state={deriveOrbStateV2(state, isSpeaking)} size="sm" ariaLabel="État vocal de Clara" gesturesDisabled />
+        <div className="home-clara-voice-copy">
+          <strong>Clara Voice</strong>
+          <span role="status">{statusText}</span>
+        </div>
+        {isPaused && (
+          <Button type="button" variant="outline" size="sm" onClick={handleResumeVoice}>
+            Reprendre
+          </Button>
+        )}
+        {isError && (
+          <Button type="button" variant="outline" size="sm" onClick={handleFallbackChat}>
+            Continuer par écrit
+          </Button>
+        )}
+        <Button type="button" variant="ghost" size="icon" onClick={handleClose} aria-label="Fermer Clara Voice">
+          <X className="h-5 w-5" />
+        </Button>
+      </motion.div>
+    );
+    return createPortal(inlinePanel, homeVoiceSlot);
+  }
 
   // ── FLOATING (compact glass panel) rendering ───────────────────────────────
   if (isFloating) {
