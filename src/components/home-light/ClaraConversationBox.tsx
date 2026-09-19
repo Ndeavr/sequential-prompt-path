@@ -104,10 +104,11 @@ export function extractQuickReplies(raw: string): { text: string; options: strin
 type QuickReplies = { messageId: string; options: string[] };
 
 export default function ClaraConversationBox() {
-  const { openAlex } = useAlexVoice();
+  const { openAlex, closeAlex } = useAlexVoice();
   const { handleUpload } = useAlexConversation();
   const { lang } = useLanguage();
   const navigate = useNavigate();
+
   const copy = lang === "fr"
     ? {
         placeholder: "Bonjour ! Que puis-je-faire pour vous?",
