@@ -524,13 +524,19 @@ Deno.serve(async (req) => {
 
   try {
     // ── start : reprise stricte, sinon création ──
+    // `force_new` : l'utilisateur demande explicitement une nouvelle conversation.
+    // Aucune reprise (ni par jeton, ni par compte) : une vraie session propre est
+    // créée. Le compte, le profil et les données métier restent intacts.
     if (action === "start") {
-      let session: SessionRow | null = sessionToken ? await loadByToken(sessionToken) : null;
+      const forceNew = body.force_new === true;
+      let session: SessionRow | null =
+        !forceNew && sessionToken ? await loadByToken(sessionToken) : null;
 
       if (session && !ownedByCaller(session)) session = null;
 
       // Reprise multiappareil : même compte, autre navigateur.
-      if (!session && userId) session = await loadLatestForUser(userId);
+      if (!forceNew && !session && userId) session = await loadLatestForUser(userId);
+
 
       if (session) {
         // Rattachement immédiat si la session anonyme est reprise connectée.
