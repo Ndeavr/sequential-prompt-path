@@ -559,7 +559,7 @@ export default function ClaraConversationBox() {
           accept="image/*,video/*,.pdf,.doc,.docx"
           multiple
           maxFiles={5}
-          maxFileSize={100 * 1024 * 1024}
+          maxFileSize={50 * 1024 * 1024}
           onSubmit={submit}
           onError={() => setError(copy.fallback)}
           className="home-clara-prompt"
