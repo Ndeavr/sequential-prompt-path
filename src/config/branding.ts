@@ -10,6 +10,7 @@ import wordmarkNavyAsset from "@/assets/brand/unpro-wordmark-navy.asset.json";
 import wordmarkWhiteBlueWhiteAsset from "@/assets/brand/unpro-wordmark-white-blue-white.asset.json";
 import wordmarkBlueFilledAsset from "@/assets/brand/unpro-wordmark-blue-filled.asset.json";
 import wordmarkHomeLightAsset from "@/assets/brand/unpro-wordmark-home-light.asset.json";
+import wordmarkGradientAsset from "@/assets/brand/unpro-wordmark-gradient.asset.json";
 import wordmarkCreamAsset from "@/assets/brand/unpro-wordmark-cream.asset.json";
 import wordmarkNavyBlueAsset from "@/assets/brand/unpro-wordmark-navy-blue.asset.json";
 import wordmarkNavyFilledAsset from "@/assets/brand/unpro-wordmark-navy-filled.asset.json";

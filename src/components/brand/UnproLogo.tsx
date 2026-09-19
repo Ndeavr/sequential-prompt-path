@@ -22,7 +22,7 @@ type UnproLogoProps = {
   /** Mark shape when the wordmark is hidden. */
   markShape?: "round" | "square" | "bare";
   /** Surface the logo sits on. `auto` follows the app theme. */
-  tone?: "auto" | "light" | "dark" | "blue";
+  tone?: "auto" | "light" | "dark" | "blue" | "gradient";
   /** Skip inline width/height so CSS classes control the size. */
   unsized?: boolean;
   className?: string;
