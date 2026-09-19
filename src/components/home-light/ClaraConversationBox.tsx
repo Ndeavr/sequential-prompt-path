@@ -8,7 +8,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowUp, Camera, FileText, Image as ImageIcon, Mic, Plus, RotateCcw, Video, X } from "lucide-react";
+import { ArrowUp, Camera, FileText, Image as ImageIcon, Mic, Plus, RotateCcw, SquarePen, Video, X } from "lucide-react";
 
 import { cleanAlexText } from "@/utils/sanitizeAlexText";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
@@ -18,6 +18,7 @@ import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import {
   appendClaraMessage,
   rememberClaraReferences,
+  startNewClaraSession,
   startOrResumeClaraSession,
 } from "@/services/clara/claraSession";
 import {
@@ -553,7 +554,28 @@ export default function ClaraConversationBox() {
       className={`home-clara-shell mx-auto w-full text-left${contextVisible ? " has-context" : ""}`}
       aria-label="Conversation avec Clara"
     >
-      <div className="home-clara-main home-clara-glass overflow-hidden border border-border">
+      <div className="home-clara-main home-clara-glass relative overflow-hidden border border-border">
+        <button
+          type="button"
+          onClick={handleResetClick}
+          className="home-clara-reset"
+          title={copy.reset}
+          aria-label={copy.reset}
+          aria-expanded={confirmReset}
+        >
+          <SquarePen className="h-4 w-4" aria-hidden="true" />
+        </button>
+        {confirmReset && (
+          <div className="home-clara-reset-confirm" role="dialog" aria-label={copy.reset}>
+            <p>{copy.resetConfirm}</p>
+            <div>
+              <button type="button" onClick={() => setConfirmReset(false)}>{copy.resetNo}</button>
+              <button type="button" data-variant="primary" onClick={() => void startFreshConversation()}>
+                {copy.resetYes}
+              </button>
+            </div>
+          </div>
+        )}
         <div
           className={`home-clara-presence${busy ? " is-active" : ""}`}
           data-state={busy ? "working" : "idle"}
