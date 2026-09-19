@@ -22,6 +22,8 @@ const MobileDrawer = ({ onClose }: { onClose: () => void }) => {
   const { signOut } = useAuth();
   const { ctx, activeRole, setActiveRole } = useNavigationContext();
   const { lang } = useLanguage();
+  const navigate = useNavigate();
+
 
   const navItems = headerNavByRole[activeRole] || headerNavByRole.guest;
   const drawerItems = ctx ? getDrawerItems(ctx) : [];
@@ -119,7 +121,7 @@ const MobileDrawer = ({ onClose }: { onClose: () => void }) => {
             {otherRoles.map((r) => (
               <button
                 key={r}
-                onClick={() => { setActiveRole(r); onClose(); }}
+                onClick={() => { setActiveRole(r); onClose(); navigate(roleHomePath(r)); }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-meta text-muted-foreground hover:bg-muted/30 transition-colors"
               >
                 <ArrowRightLeft className="h-4 w-4" />
