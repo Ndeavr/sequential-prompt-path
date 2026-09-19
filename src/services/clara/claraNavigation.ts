@@ -36,8 +36,12 @@ const DESTINATIONS: Record<ClaraWorkflowIntent, ClaraDestination | null> = {
   general_question: null,
 };
 
-/** Intentions faibles : on ne navigue jamais sur une simple mention. */
-const MIN_CONFIDENCE = 0.6;
+/**
+ * Intentions faibles : on ne navigue jamais sur un signal quasi nul.
+ * Le classificateur normalise fortement ses scores : une demande explicite
+ * (« comparer mes soumissions ») se situe autour de 0.3.
+ */
+const MIN_CONFIDENCE = 0.15;
 
 export function resolveClaraDestination(
   intent: ClaraWorkflowIntent,
