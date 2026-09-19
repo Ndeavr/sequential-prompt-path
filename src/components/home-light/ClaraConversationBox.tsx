@@ -134,7 +134,12 @@ export default function ClaraConversationBox() {
         send: "Send",
         working: "Analyse en cours…",
         fallback: "Pour le moment je fonctionne en français. Je termine mes cours d'anglais sous peu.",
+        reset: "New conversation",
+        resetConfirm: "Start a new conversation?",
+        resetYes: "Start",
+        resetNo: "Cancel",
       };
+
   const [messages, setMessages] = useState<Msg[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
