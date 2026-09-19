@@ -33,6 +33,10 @@ export type AlexIntent =
   | "rep_import_business_card"
   | "rep_assign_plan"
   | "admin_override_flow"
+  // Affilié
+  | "affiliate_onboarding"
+  // Médias
+  | "homeowner_upload_video_analysis"
   // Ambiguous
   | "ambiguous_need"
   | "needs_clarification"
@@ -86,6 +90,8 @@ const INTENT_RULES: IntentRule[] = [
   ], weight: 80 },
   { intent: "contractor_join_platform", keywords: [
     "rejoindre unpro", "devenir partenaire", "inscription entrepreneur",
+    "je suis entrepreneur", "je suis un entrepreneur", "j'ai une entreprise",
+    "mon entreprise de", "je suis contracteur",
   ], weight: 75 },
   { intent: "contractor_booking_settings", keywords: [
     "configurer disponibilités", "mes créneaux", "heures d'ouverture",
@@ -106,7 +112,8 @@ const INTENT_RULES: IntentRule[] = [
   { intent: "homeowner_compare_quotes", keywords: [
     "comparer soumissions", "analyser soumission", "comparer prix",
     "3 soumissions", "laquelle choisir", "meilleure soumission",
-    "analyse comparative",
+    "analyse comparative", "compare mes", "comparer mes soumissions",
+    "mes soumissions", "trois soumissions", "voici mes soumissions",
   ], weight: 75 },
   { intent: "homeowner_find_contractor", keywords: [
     "trouver un pro", "chercher un professionnel", "trouver entrepreneur",
@@ -131,6 +138,9 @@ const INTENT_RULES: IntentRule[] = [
   ], weight: 70 },
   { intent: "homeowner_verify_contractor", keywords: [
     "vérifier entrepreneur", "est-il fiable", "rbq", "licence",
+    "vérifier cet entrepreneur", "vérifie cet entrepreneur", "vérifier cette entreprise",
+    "vérifie construction", "vérifier l'entrepreneur", "carte d'affaires",
+    "est-ce que son rbq", "neq",
   ], weight: 65 },
 
   // ─── Rep/Admin ───
@@ -140,6 +150,19 @@ const INTENT_RULES: IntentRule[] = [
   { intent: "rep_assign_plan", keywords: [
     "assigner plan", "attribuer plan",
   ], weight: 85 },
+
+  // ─── Affilié (priorité haute : ne doit jamais devenir un parcours propriétaire) ───
+  { intent: "affiliate_onboarding", keywords: [
+    "devenir affilié", "devenir affiliée", "je veux devenir affilié", "programme d'affiliation",
+    "programme affilié", "ambassadeur", "ambassadrice", "référer des entrepreneurs",
+    "commission affilié", "mon code affilié", "lien affilié", "inscription affilié",
+    "partenaire référent",
+  ], weight: 95 },
+
+  // ─── Médias ───
+  { intent: "homeowner_upload_video_analysis", keywords: [
+    "vidéo", "video", "filmer", "j'ai filmé", "envoyer une vidéo", "regarder ma vidéo",
+  ], weight: 72 },
 ];
 
 // ─── Cities list (NEVER trigger contractor recommendation alone) ───
@@ -272,4 +295,45 @@ export function isHomeownerIntent(intent: AlexIntent): boolean {
 // ─── Check if intent requires qualified need before contractor search ───
 export function requiresQualifiedNeed(intent: AlexIntent): boolean {
   return intent === "homeowner_find_contractor" || intent === "homeowner_book_appointment";
+}
+
+// ─── Routeur Clara : correspondance vers les parcours réels ───
+// La classification n'est jamais montrée à l'utilisateur : elle sert uniquement
+// à ouvrir le bon parcours existant sans perdre le contexte.
+import type { ClaraWorkflowIntent } from "@/services/clara/claraWorkflow";
+
+const CLARA_WORKFLOW_MAP: Partial<Record<AlexIntent, ClaraWorkflowIntent>> = {
+  affiliate_onboarding: "affiliate_onboarding",
+  contractor_join_platform: "contractor_onboarding",
+  contractor_choose_plan: "contractor_onboarding",
+  contractor_build_profile: "contractor_onboarding",
+  contractor_import_business_card: "contractor_onboarding",
+  contractor_payment_checkout: "contractor_onboarding",
+  contractor_booking_settings: "contractor_onboarding",
+  contractor_visibility_score: "contractor_onboarding",
+  contractor_revenue_projection: "contractor_onboarding",
+  homeowner_verify_contractor: "contractor_verification",
+  homeowner_compare_quotes: "quote_comparison",
+  homeowner_problem_diagnosis: "homeowner_problem",
+  homeowner_upload_photo_analysis: "photo_problem_analysis",
+  homeowner_upload_video_analysis: "video_problem_analysis",
+  homeowner_design_visualization: "design_generation",
+  homeowner_find_contractor: "contractor_search",
+  homeowner_book_appointment: "appointment_booking",
+};
+
+export function toClaraWorkflowIntent(intent: AlexIntent): ClaraWorkflowIntent {
+  return CLARA_WORKFLOW_MAP[intent] ?? "general_question";
+}
+
+/** Intention de parcours détectée directement depuis un message utilisateur. */
+export function detectClaraWorkflowIntent(
+  message: string,
+  contextRole?: string,
+): { intent: ClaraWorkflowIntent; confidence: number } {
+  const classification = classifyIntent(message, contextRole);
+  return {
+    intent: toClaraWorkflowIntent(classification.primary_intent),
+    confidence: classification.confidence_score,
+  };
 }

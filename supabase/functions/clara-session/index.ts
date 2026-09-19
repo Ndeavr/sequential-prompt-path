@@ -66,6 +66,42 @@ const CONTEXT_LIST_KEYS = [
   "visual_analysis_ids",
 ] as const;
 
+/**
+ * État de workflow Clara : une seule mémoire, celle de la conversation canonique.
+ * Aucune donnée métier n'est copiée ici — uniquement l'avancement déclaratif
+ * (intention active, étape, éléments obtenus/manquants, workflows suspendus).
+ */
+const WORKFLOW_KEY = "workflow";
+const WORKFLOW_TEXT_RE = /^[\p{L}\p{N}_\-. :/']{1,80}$/u;
+const MAX_SUSPENDED = 5;
+const MAX_WORKFLOW_ITEMS = 20;
+
+/** Événements journalisés (aucun secret, aucune donnée privée). */
+const WORKFLOW_EVENTS = new Set([
+  "intent_detected",
+  "workflow_started",
+  "workflow_paused",
+  "workflow_resumed",
+  "workflow_completed",
+  "affiliate_onboarding_started",
+  "affiliate_onboarding_completed",
+  "contractor_onboarding_started",
+  "contractor_onboarding_completed",
+  "media_upload_started",
+  "media_upload_completed",
+  "media_upload_failed",
+  "image_analysis_started",
+  "image_analysis_completed",
+  "video_analysis_started",
+  "video_analysis_completed",
+  "design_generation_started",
+  "design_generation_completed",
+  "homeowner_record_created",
+  "contractor_match_found",
+  "appointment_booking_started",
+  "appointment_booked",
+]);
+
 const MAX_LIST = 25;
 const MAX_MESSAGES = 40;
 const MAX_TEXT = 8000;
@@ -84,6 +120,61 @@ function str(value: unknown, max: number): string | null {
   if (!trimmed) return null;
   return trimmed.slice(0, max);
 }
+
+function wfText(value: unknown): string | null {
+  const text = str(value, 80);
+  if (!text || !WORKFLOW_TEXT_RE.test(text)) return null;
+  return text;
+}
+
+function wfList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const items: string[] = [];
+  for (const one of value) {
+    const text = wfText(one);
+    if (text) items.push(text);
+  }
+  return Array.from(new Set(items)).slice(0, MAX_WORKFLOW_ITEMS);
+}
+
+/**
+ * Forme stricte de l'état de workflow. Tout champ non conforme est ignoré :
+ * la conversation ne peut pas devenir un dépôt de données libres.
+ */
+function sanitizeWorkflow(raw: unknown): Record<string, unknown> | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const input = raw as Record<string, unknown>;
+  const intent = wfText(input.intent);
+  if (!intent) return null;
+
+  const suspended: Array<Record<string, unknown>> = [];
+  if (Array.isArray(input.suspended)) {
+    for (const entry of input.suspended.slice(0, MAX_SUSPENDED)) {
+      if (!entry || typeof entry !== "object") continue;
+      const one = entry as Record<string, unknown>;
+      const pausedIntent = wfText(one.intent);
+      if (!pausedIntent) continue;
+      suspended.push({
+        intent: pausedIntent,
+        step: wfText(one.step),
+        next_action: wfText(one.next_action),
+      });
+    }
+  }
+
+  return {
+    intent,
+    sub_workflow: wfText(input.sub_workflow),
+    step: wfText(input.step),
+    collected: wfList(input.collected),
+    missing: wfList(input.missing),
+    next_action: wfText(input.next_action),
+    suspended,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+
 
 /**
  * Filtrage de forme uniquement. La validation d'appartenance est faite ensuite
@@ -136,6 +227,19 @@ function sanitizeContextPatch(raw: unknown): {
     if (valid.length !== value.length) rejected.push(key);
     patch[key] = Array.from(new Set(valid)).slice(0, MAX_LIST);
   }
+
+  if (WORKFLOW_KEY in input) {
+    const value = input[WORKFLOW_KEY];
+    if (value === null) {
+      patch[WORKFLOW_KEY] = null;
+    } else {
+      const workflow = sanitizeWorkflow(value);
+      if (workflow) patch[WORKFLOW_KEY] = workflow;
+      else rejected.push(WORKFLOW_KEY);
+    }
+  }
+
+
 
   return { patch, rejected };
 }
@@ -528,6 +632,8 @@ Deno.serve(async (req) => {
       for (const key of CONTEXT_KEYS) {
         if (context[key]) refs[key] = context[key];
       }
+      // La voix reprend le workflow en cours : même étape, même prochaine action.
+      if (context[WORKFLOW_KEY]) refs[WORKFLOW_KEY] = context[WORKFLOW_KEY];
 
       return json({
         session_id: session.id,
@@ -543,6 +649,25 @@ Deno.serve(async (req) => {
         refs,
       });
     }
+
+    // ── event : journal d'audit du parcours (aucun secret, aucune donnée privée) ──
+    if (action === "event") {
+      const name = str(body.event, 60);
+      if (!name || !WORKFLOW_EVENTS.has(name)) return json({ error: "unknown_event" }, 400);
+
+      const intent = wfText(body.intent);
+      const step = wfText(body.step);
+      await admin.from("platform_operation_outcomes").insert({
+        service: "clara",
+        operation: name,
+        business_outcome: "achieved",
+        intent: intent,
+        affected_record: session.id,
+        payload: { step, session_id: session.id, auth_state: session.auth_state },
+      });
+      return json({ ok: true });
+    }
+
 
 
     // ── context : fusion de références uniquement ──

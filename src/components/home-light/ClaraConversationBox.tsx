@@ -23,6 +23,14 @@ import {
   CLARA_VOICE_CLOSED_EVENT,
   CLARA_VOICE_MESSAGE_EVENT,
 } from "@/services/clara/claraVoiceBridge";
+import { detectClaraWorkflowIntent } from "@/services/alexIntentClassifier";
+import {
+  logClaraWorkflowEvent,
+  nextWorkflowState,
+  readWorkflow,
+  rememberWorkflow,
+  type ClaraWorkflowState,
+} from "@/services/clara/claraWorkflow";
 
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
@@ -119,6 +127,8 @@ export default function ClaraConversationBox() {
   const hydrated = useRef(false);
   const cameraRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLElement>(null);
+  // Parcours en cours : lu depuis la session canonique, jamais recréé localement.
+  const workflowRef = useRef<ClaraWorkflowState | null>(null);
 
   const focusComposer = useCallback(() => {
     const textarea = rootRef.current?.querySelector("textarea");
@@ -142,6 +152,7 @@ export default function ClaraConversationBox() {
 
         const restored = state.messages.map((m) => ({ id: m.id, role: m.role, text: m.text }));
         setMessages(restored);
+        workflowRef.current = readWorkflow(state.context);
         const latestUser = [...restored].reverse().find((message) => message.role === "user");
         const restoredMode = typeof state.context.current_intent === "string"
           ? state.context.current_intent.toUpperCase() as ClaraSurfaceMode
@@ -205,6 +216,23 @@ export default function ClaraConversationBox() {
       const nextMode = detectSurfaceMode(text);
       setMode(nextMode === "IDLE" ? "ANALYZING" : nextMode);
       rememberClaraReferences({ current_intent: nextMode, detected_role: nextMode === "CONTRACTOR" ? "CONTRACTOR" : undefined });
+
+      // Routeur unique : l'intention ouvre, suspend ou reprend un parcours réel,
+      // sans jamais être montrée à l'utilisateur ni perdre l'étape en cours.
+      const detected = detectClaraWorkflowIntent(text).intent;
+      logClaraWorkflowEvent("intent_detected", { intent: detected });
+      const transition = nextWorkflowState(workflowRef.current, detected);
+      if (transition.state !== workflowRef.current) {
+        workflowRef.current = transition.state;
+        rememberWorkflow(transition.state);
+      }
+      for (const event of transition.events) {
+        logClaraWorkflowEvent(event, {
+          intent: transition.state.intent,
+          step: transition.state.step ?? null,
+        });
+      }
+
       setBusy(true);
       trackCopilotEvent("message_sent", { surface: "home_clara_box" });
       void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId }).catch(() => {});
@@ -221,7 +249,11 @@ export default function ClaraConversationBox() {
           body: JSON.stringify({
             messages: history
               .map((m) => ({ role: m.role, content: m.text })),
-            context: { surface: "home_clara_box", mode: nextMode },
+            context: {
+              surface: "home_clara_box",
+              mode: nextMode,
+              workflow: workflowRef.current,
+            },
           }),
         });
 
