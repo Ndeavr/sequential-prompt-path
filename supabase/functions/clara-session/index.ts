@@ -632,6 +632,8 @@ Deno.serve(async (req) => {
       for (const key of CONTEXT_KEYS) {
         if (context[key]) refs[key] = context[key];
       }
+      // La voix reprend le workflow en cours : même étape, même prochaine action.
+      if (context[WORKFLOW_KEY]) refs[WORKFLOW_KEY] = context[WORKFLOW_KEY];
 
       return json({
         session_id: session.id,
