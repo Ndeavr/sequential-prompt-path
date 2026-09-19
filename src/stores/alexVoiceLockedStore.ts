@@ -23,6 +23,7 @@ export type LockedVoiceState =
   | "speaking"
   | "awaiting_user"
   | "paused"             // silence technique réel : transport vocal coupé, conversation Clara intacte
+  | "completed"          // état terminal : la conversation est close, aucune relance automatique
   | "error_recoverable"
   | "error_fatal"
   | "closing";
@@ -33,15 +34,17 @@ const ALLOWED_TRANSITIONS: Record<LockedVoiceState, LockedVoiceState[]> = {
   requesting_permission: ["opening_session", "error_fatal", "error_recoverable", "paused", "closing"],
   opening_session: ["stabilizing", "error_recoverable", "error_fatal", "paused", "closing"],
   stabilizing: ["session_ready", "speaking", "listening", "error_recoverable", "error_fatal", "paused"],
-  session_ready: ["listening", "speaking", "capturing_voice", "error_recoverable", "paused", "closing"],
-  listening: ["capturing_voice", "processing_stt", "speaking", "error_recoverable", "paused", "closing"],
-  capturing_voice: ["processing_stt", "listening", "speaking", "error_recoverable", "paused", "closing"],
-  processing_stt: ["processing_response", "listening", "speaking", "error_recoverable", "paused", "closing"],
-  processing_response: ["speaking", "listening", "error_recoverable", "paused", "closing"],
-  speaking: ["awaiting_user", "listening", "capturing_voice", "error_recoverable", "paused", "closing"],
-  awaiting_user: ["listening", "capturing_voice", "speaking", "error_recoverable", "paused", "closing"],
-  paused: ["requesting_permission", "opening_session", "closing", "idle"],
-  error_recoverable: ["listening", "opening_session", "stabilizing", "paused", "closing", "error_fatal"],
+  session_ready: ["listening", "speaking", "capturing_voice", "error_recoverable", "paused", "completed", "closing"],
+  listening: ["capturing_voice", "processing_stt", "speaking", "error_recoverable", "paused", "completed", "closing"],
+  capturing_voice: ["processing_stt", "listening", "speaking", "error_recoverable", "paused", "completed", "closing"],
+  processing_stt: ["processing_response", "listening", "speaking", "error_recoverable", "paused", "completed", "closing"],
+  processing_response: ["speaking", "listening", "error_recoverable", "paused", "completed", "closing"],
+  speaking: ["awaiting_user", "listening", "capturing_voice", "error_recoverable", "paused", "completed", "closing"],
+  awaiting_user: ["listening", "capturing_voice", "speaking", "error_recoverable", "paused", "completed", "closing"],
+  paused: ["requesting_permission", "opening_session", "completed", "closing", "idle"],
+  // État terminal : seule une action explicite de l'utilisateur en sort.
+  completed: ["closing", "idle", "requesting_permission", "opening_session"],
+  error_recoverable: ["listening", "opening_session", "stabilizing", "paused", "completed", "closing", "error_fatal"],
   error_fatal: ["closing", "idle"],
   closing: ["idle"],
 };
@@ -112,6 +115,8 @@ interface AlexVoiceLockedState {
   pauseVoiceSession: (reason: string) => void;
   /** Reprend la voix sur la même conversation Clara canonique. */
   resumeVoiceSession: (reason: string) => void;
+  /** État terminal : la conversation est close. Aucune relance automatique. */
+  completeVoiceSession: (reason: string) => void;
   transitionTo: (newState: LockedVoiceState, reason?: string) => boolean;
   setError: (type: string, message: string, recoverable: boolean) => void;
   clearError: () => void;
@@ -315,9 +320,31 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
 
   resumeVoiceSession: (reason: string) => {
     const state = get();
-    if (state.machineState !== "paused") return;
+    if (state.machineState !== "paused" && state.machineState !== "completed") return;
+    const prev = state.machineState;
     set({ machineState: "requesting_permission", errorMessage: null, errorType: null });
-    if (state.sessionId) logTransition(state.sessionId, "paused", "requesting_permission", reason);
+    if (state.sessionId) logTransition(state.sessionId, prev, "requesting_permission", reason);
+  },
+
+  completeVoiceSession: (reason: string) => {
+    const state = get();
+    if (state.machineState === "completed") return;
+    const prev = state.machineState;
+    set({
+      machineState: "completed",
+      errorMessage: null,
+      errorType: null,
+      stabilizationEnd: null,
+      heartbeatFailures: 0,
+    });
+    if (state.sessionId) {
+      logTransition(state.sessionId, prev, "completed", reason);
+      supabase.from("voice_session_logs").update({
+        status: "closed",
+        close_reason: `completed:${reason}`,
+        closed_at: new Date().toISOString(),
+      }).eq("session_id", state.sessionId).then(() => {});
+    }
   },
 
 

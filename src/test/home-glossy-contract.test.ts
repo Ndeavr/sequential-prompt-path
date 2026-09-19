@@ -9,8 +9,8 @@ const header = readFileSync("src/components/navigation/SmartHeader.tsx", "utf8")
 
 describe("glossy homepage contract", () => {
   it("renders the approved ONE CLARA promise", () => {
-    expect(hero).toContain("Montrez-moi.");
-    expect(hero).toContain("Qu’est-ce que vous voulez entreprendre, réparer, ou améliorer?");
+    expect(hero).toContain("Discutons.");
+    expect(hero).toContain("rénover");
     expect(hero).not.toContain("Pas trois soumissions.");
     expect(hero).not.toContain("Rendez-vous exclusifs");
   });

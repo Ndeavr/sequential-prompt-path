@@ -26,7 +26,8 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // PATCH B — real columns + strict visibility filter
+    // Admissibilité stricte : aucun entrepreneur inventé, aucun élargissement
+    // silencieux hors métier ou hors territoire.
     let query = sb
       .from("contractors")
       .select("id, business_name, city, specialty, aipp_score, rating, review_count, logo_url, verification_status, is_published, is_discoverable")
@@ -36,56 +37,30 @@ serve(async (req) => {
     if (city) query = query.ilike("city", `%${city}%`);
     if (recommended_trade) query = query.ilike("specialty", `%${recommended_trade}%`);
 
-    let { data: contractors } = await query.limit(10);
+    const { data: found } = await query.limit(10);
 
-    // Broaden if no match on trade/city
-    if (!contractors || contractors.length === 0) {
-      const { data: any_active } = await sb
-        .from("contractors")
-        .select("id, business_name, city, specialty, aipp_score, rating, review_count, logo_url, verification_status, is_published, is_discoverable")
-        .eq("is_published", true)
-        .eq("is_discoverable", true)
-        .limit(10);
-      contractors = any_active || [];
-    }
+    // Exclusion ferme : statut de vérification non admissible.
+    const INELIGIBLE = new Set(["rejected", "suspended", "expired", "revoked"]);
+    const contractors = (found || []).filter(
+      (c: any) => !INELIGIBLE.has(String(c.verification_status || "").toLowerCase()),
+    );
 
-    // Only fall back to mocks if NO active contractor exists at all
-    if (!contractors || contractors.length === 0) {
-      const mockPrimary = {
-        id: "mock-c1",
-        business_name: getMockName(recommended_trade),
-        city: city || "Montréal",
-        specialty: recommended_trade || "rénovation_générale",
-        trust_score: 92,
-        response_time_hours: urgency_level === "emergency" ? 2 : 24,
-        avatar_url: null,
-        verification_status: "verified",
-        compatibility_score: 94,
-        availability_score: 88,
-        reason_summary: getMatchReason(recommended_trade, urgency_level),
-      };
-      const mockAlternative = {
-        id: "mock-c2",
-        business_name: getMockAltName(recommended_trade),
-        city: city || "Laval",
-        specialty: recommended_trade || "rénovation_générale",
-        trust_score: 87,
-        response_time_hours: 48,
-        avatar_url: null,
-        verification_status: "verified",
-        compatibility_score: 82,
-        availability_score: 75,
-        reason_summary: "Alternative solide si le premier choix ne convient pas.",
-      };
+    // Aucun entrepreneur admissible : état réel, jamais de recommandation fictive.
+    if (contractors.length === 0) {
       return new Response(
         JSON.stringify({
-          primary_match: mockPrimary,
-          alternative_match: mockAlternative,
-          match_source: "mock",
+          primary_match: null,
+          alternative_match: null,
+          match_source: "none",
+          no_match: true,
+          no_match_reason: !city && !recommended_trade
+            ? "insufficient_criteria"
+            : "no_eligible_contractor",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
 
     // Score and rank real contractors using real fields
     const scored = contractors.map((c: any) => {
@@ -138,37 +113,3 @@ serve(async (req) => {
     );
   }
 });
-
-function getMockName(trade: string): string {
-  const names: Record<string, string> = {
-    plomberie: "Plomberie Prestige Montréal",
-    électricité: "Électriciens Pro Québec",
-    toiture: "Toitures Excellence Inc.",
-    isolation: "Isolation Nordique",
-    chauffage: "Chauffage Confort Plus",
-    climatisation: "Climatisation Éco-Air",
-    rénovation_générale: "Rénovations Signature Mtl",
-    cuisine: "Cuisines Design Québec",
-    salle_de_bain: "Salles de Bain Prestige",
-  };
-  return names[trade] || "Pro Services Résidentiels";
-}
-
-function getMockAltName(trade: string): string {
-  const names: Record<string, string> = {
-    plomberie: "Plomberie Rapide Laval",
-    électricité: "Électro-Solutions Rive-Sud",
-    toiture: "Toitures Rive-Nord",
-    isolation: "Isolation Performance QC",
-    chauffage: "Chauffage 360 Montréal",
-    rénovation_générale: "Réno-Expert Laval",
-  };
-  return names[trade] || "Services Pro Alternatif";
-}
-
-function getMatchReason(trade: string, urgency: string): string {
-  if (urgency === "emergency") {
-    return `Spécialiste en ${trade || "services résidentiels"} avec disponibilité urgence. Temps de réponse garanti.`;
-  }
-  return `Meilleur profil vérifié en ${trade || "services résidentiels"} pour votre secteur. Score de compatibilité élevé.`;
-}
