@@ -216,6 +216,23 @@ export default function ClaraConversationBox() {
       const nextMode = detectSurfaceMode(text);
       setMode(nextMode === "IDLE" ? "ANALYZING" : nextMode);
       rememberClaraReferences({ current_intent: nextMode, detected_role: nextMode === "CONTRACTOR" ? "CONTRACTOR" : undefined });
+
+      // Routeur unique : l'intention ouvre, suspend ou reprend un parcours réel,
+      // sans jamais être montrée à l'utilisateur ni perdre l'étape en cours.
+      const detected = detectClaraWorkflowIntent(text).intent;
+      logClaraWorkflowEvent("intent_detected", { intent: detected });
+      const transition = nextWorkflowState(workflowRef.current, detected);
+      if (transition.state !== workflowRef.current) {
+        workflowRef.current = transition.state;
+        rememberWorkflow(transition.state);
+      }
+      for (const event of transition.events) {
+        logClaraWorkflowEvent(event, {
+          intent: transition.state.intent,
+          step: transition.state.step ?? null,
+        });
+      }
+
       setBusy(true);
       trackCopilotEvent("message_sent", { surface: "home_clara_box" });
       void appendClaraMessage({ role: "user", text, clientMessageId: userMessageId }).catch(() => {});
@@ -232,7 +249,11 @@ export default function ClaraConversationBox() {
           body: JSON.stringify({
             messages: history
               .map((m) => ({ role: m.role, content: m.text })),
-            context: { surface: "home_clara_box", mode: nextMode },
+            context: {
+              surface: "home_clara_box",
+              mode: nextMode,
+              workflow: workflowRef.current,
+            },
           }),
         });
 
