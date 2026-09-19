@@ -219,6 +219,24 @@ export default function ClaraConversationBox() {
     };
   }, [lang]);
 
+  // Résultat média : seulement ce que l'analyse a réellement produit.
+  useEffect(() => {
+    for (const item of mediaItems) {
+      if (item.status !== "done" || !item.summary) continue;
+      if (announcedMedia.current.has(item.id)) continue;
+      announcedMedia.current.add(item.id);
+
+      const messageId = uid();
+      setMessages((previous) => [...previous, { id: messageId, role: "assistant", text: item.summary as string }]);
+      setContextStatus(item.summary);
+      void appendClaraMessage({
+        role: "assistant",
+        text: item.summary,
+        clientMessageId: messageId,
+      }).catch(() => {});
+    }
+  }, [mediaItems]);
+
 
   const send = useCallback(
     async (raw: string) => {
