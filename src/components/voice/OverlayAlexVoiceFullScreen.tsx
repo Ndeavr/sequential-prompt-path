@@ -44,6 +44,13 @@ import {
   recordClaraVoiceTurn,
   type ClaraVoiceBrief,
 } from "@/services/clara/claraVoiceBridge";
+import { detectTerminalIntent } from "@/lib/alexTerminalIntents";
+
+// États où le transport vocal est réellement arrêté : aucun callback ne peut
+// relancer une parole, une salutation ou un minuteur d'inactivité.
+const HALTED = new Set<LockedVoiceState>(["paused", "completed"]);
+
+
 
 
 
@@ -72,7 +79,7 @@ function deriveMode(feature: string | undefined): "homeowner" | "contractor" | "
 
 function deriveOrbStateV2(state: LockedVoiceState, isSpeaking: boolean): AlexOrbStateV2 {
   if (state === "error_recoverable" || state === "error_fatal") return "error";
-  if (state === "paused") return "idle";
+  if (state === "paused" || state === "completed") return "idle";
   if (isSpeaking || state === "speaking") return "speaking";
   if (state === "processing_stt" || state === "processing_response" ||
       state === "stabilizing" || state === "opening_session" || state === "requesting_permission") return "thinking";
@@ -149,7 +156,7 @@ export default function OverlayAlexVoiceFullScreen() {
     const s = getStore();
     if (!s.isOverlayOpen) return;
     // En pause : jamais de parole de secours.
-    if (s.machineState === "paused") return;
+    if (HALTED.has(s.machineState)) return;
     if (hasGreeted()) {
       // Greeting already delivered this tab session — no replay, no red banner.
       // Just settle into a calm listening state so the user can speak.
@@ -219,7 +226,7 @@ export default function OverlayAlexVoiceFullScreen() {
 
   const { start, stop, isActive, isConnecting, isSpeaking, conversation } = useLiveVoice({
     onFirstAudio: () => {
-      if (getStore().machineState === "paused") return;
+      if (HALTED.has(getStore().machineState)) return;
       firstAudioReceivedRef.current = true;
       autoRetryCountRef.current = 0;
       markGreeted();
@@ -253,7 +260,7 @@ export default function OverlayAlexVoiceFullScreen() {
       const s = getStore();
       if (!s.isOverlayOpen) return;
       // En pause : aucun événement audio ne peut modifier la conversation.
-      if (s.machineState === "paused") return;
+      if (HALTED.has(s.machineState)) return;
       
       // Transition to speaking if we're in any "waiting" state
       const current = s.machineState;
@@ -282,7 +289,7 @@ export default function OverlayAlexVoiceFullScreen() {
     onUserTranscript: (text) => {
       const s = getStore();
       if (!s.isOverlayOpen || !text || text.trim().length < 2) return;
-      if (s.machineState === "paused") return;
+      if (HALTED.has(s.machineState)) return;
       lastAlexIdRef.current = null;
       armInactivityRef.current("user_speech");
       
@@ -331,7 +338,7 @@ export default function OverlayAlexVoiceFullScreen() {
       const s = getStore();
       console.warn("[VoiceOverlay] ElevenLabs disconnected. state:", s.machineState);
       // Déconnexion provoquée par une pause ou une fermeture : aucun rattrapage.
-      if (s.machineState === "paused") {
+      if (HALTED.has(s.machineState)) {
         hasConnectedRef.current = false;
         firstAudioReceivedRef.current = false;
         return;
@@ -367,7 +374,7 @@ export default function OverlayAlexVoiceFullScreen() {
     },
     onError: (error) => {
       console.error("[VoiceOverlay] Error:", error);
-      if (getStore().machineState === "paused") return;
+      if (HALTED.has(getStore().machineState)) return;
       if (firstAudioTimerRef.current) {
         clearTimeout(firstAudioTimerRef.current);
         firstAudioTimerRef.current = null;
@@ -438,7 +445,7 @@ export default function OverlayAlexVoiceFullScreen() {
 
   const pauseVoice = useCallback((reason: string) => {
     const s = getStore();
-    if (!s.isOverlayOpen || s.machineState === "paused") return;
+    if (!s.isOverlayOpen || HALTED.has(s.machineState)) return;
     console.log("[ALEX VOICE] ⏸️ Pause réelle de la session vocale —", reason);
 
     // L'état `paused` est posé AVANT toute coupure : aucun callback de
@@ -469,18 +476,52 @@ export default function OverlayAlexVoiceFullScreen() {
     setBootStep("init");
   }, [clearInactivityTimer, stop]);
 
+  // ─── ÉTAT TERMINAL : la conversation est terminée, Clara ne relance jamais ───
+  const completeVoice = useCallback((reason: string) => {
+    const s = getStore();
+    if (!s.isOverlayOpen || s.machineState === "completed") return;
+    console.log("[ALEX VOICE] ✅ Conversation terminée —", reason);
+
+    s.completeVoiceSession(reason);
+    hasConnectedRef.current = false;
+    firstAudioReceivedRef.current = false;
+    ttsFallbackInProgressRef.current = false;
+    bootInitiatedRef.current = false;
+
+    clearInactivityTimer();
+    if (firstAudioTimerRef.current) { clearTimeout(firstAudioTimerRef.current); firstAudioTimerRef.current = null; }
+    if (stabilizationTimerRef.current) { clearTimeout(stabilizationTimerRef.current); stabilizationTimerRef.current = null; }
+    if (slowTokenTimerRef.current) { clearTimeout(slowTokenTimerRef.current); slowTokenTimerRef.current = null; }
+    if (nudgeTimerRef.current) { clearTimeout(nudgeTimerRef.current); nudgeTimerRef.current = null; }
+    if (heartbeatRef.current) { clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
+
+    try { elevenlabsService.stop(); } catch {}
+    try { stop(); } catch {}
+    if (sessionIdRef.current) {
+      unlockRuntime();
+      sessionIdRef.current = "";
+    }
+
+    setSlowToken(false);
+    setShowListeningHint(false);
+    setBootStep("init");
+  }, [clearInactivityTimer, stop]);
+
   const armInactivity = useCallback((reason: string) => {
     clearInactivityTimer();
     const s = getStore();
-    if (!s.isOverlayOpen || s.machineState === "paused") return;
+    // Jamais de minuteur d'inactivité sur un état terminal ou en pause.
+    if (!s.isOverlayOpen || HALTED.has(s.machineState) || s.machineState === "completed") return;
     setShowListeningHint(false);
     inactivityTimerRef.current = setTimeout(() => {
       inactivityTimerRef.current = null;
-      if (!getStore().isOverlayOpen) return;
-      // Aucune parole : simple indication visuelle, Clara reste silencieuse.
+      const cur = getStore();
+      if (!cur.isOverlayOpen || cur.machineState === "completed") return;
+      // Une seule indication visuelle par tour. Clara reste silencieuse.
       setShowListeningHint(true);
       inactivityTimerRef.current = setTimeout(() => {
         inactivityTimerRef.current = null;
+        if (getStore().machineState === "completed") return;
         pauseVoiceRef.current(`inactivity:${reason}`);
       }, Math.max(1_000, IDLE_PAUSE_MS - IDLE_HINT_MS));
     }, IDLE_HINT_MS);
@@ -504,9 +545,21 @@ export default function OverlayAlexVoiceFullScreen() {
     }
   }, [store.machineState, store.isOverlayOpen, armInactivity, clearInactivityTimer]);
 
+  // Détection d'intention terminale : dès que l'utilisateur clôt la
+  // conversation, la session vocale passe en état terminal sans relance.
+  useEffect(() => {
+    if (!store.isOverlayOpen) return;
+    if (store.machineState === "completed") return;
+    const last = [...transcripts].reverse().find((t) => t.role === "user");
+    if (!last?.text) return;
+    if (detectTerminalIntent(last.text)) {
+      completeVoice("user_terminal_intent");
+    }
+  }, [transcripts, store.isOverlayOpen, store.machineState, completeVoice]);
+
   const handleResumeVoice = useCallback(() => {
     const s = getStore();
-    if (s.machineState !== "paused") return;
+    if (s.machineState !== "paused" && s.machineState !== "completed") return;
     setShowListeningHint(false);
     s.resumeVoiceSession("user_resume");
     setBootNonce((n) => n + 1);
@@ -713,7 +766,7 @@ export default function OverlayAlexVoiceFullScreen() {
       // Battery saver: skip heartbeat work when tab not visible
       if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       // En pause : aucun battement, aucune erreur de connexion.
-      if (getStore().machineState === "paused") return;
+      if (HALTED.has(getStore().machineState)) return;
       const timeSinceBoot = Date.now() - bootTimeRef.current;
       if (timeSinceBoot < 15000) return;
 
@@ -915,14 +968,18 @@ export default function OverlayAlexVoiceFullScreen() {
 
   const state = store.machineState;
   const isError = state === "error_recoverable" || state === "error_fatal";
-  const isPaused = state === "paused";
+  const isCompleted = state === "completed";
+  const isPaused = state === "paused" || isCompleted;
+  const haltedLabel = isCompleted
+    ? "Conversation terminée — toucher pour reprendre"
+    : "En pause — toucher pour reprendre";
   const isStabilizing = state === "stabilizing" || state === "opening_session" || state === "requesting_permission";
   const isSessionActive = ["session_ready", "listening", "capturing_voice", "processing_stt", "processing_response", "speaking", "awaiting_user"].includes(state);
   const isRecoveringNow = recovery.isRecovering;
 
   // Calm, single-line state caption — never echo error copy in the panel header.
   const calmCaption =
-    isPaused ? "En pause — toucher pour reprendre"
+    isPaused ? haltedLabel
     : isStabilizing ? "Clara démarre…"
     : state === "speaking" ? "Clara répond…"
     : state === "processing_stt" || state === "processing_response" ? "Clara réfléchit…"
@@ -931,7 +988,7 @@ export default function OverlayAlexVoiceFullScreen() {
     : "Clara est là.";
 
   const statusText =
-    isPaused ? "En pause — toucher pour reprendre"
+    isPaused ? haltedLabel
     : isRecoveringNow ? recovery.phaseLabel
     : isError ? "Clara est là."
     : slowToken && isStabilizing ? "Connexion de Clara…"
@@ -1169,9 +1226,9 @@ export default function OverlayAlexVoiceFullScreen() {
                 className="flex flex-col items-center gap-3 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
               >
                 <span className="opacity-60">
-                  <AlexMorphingOrb state="idle" size="lg" ariaLabel="Clara en pause" />
+                  <AlexMorphingOrb state="idle" size="lg" ariaLabel={isCompleted ? "Conversation terminée" : "Clara en pause"} />
                 </span>
-                <span className="text-sm text-foreground/80">En pause — toucher pour reprendre</span>
+                <span className="text-sm text-foreground/80">{haltedLabel}</span>
               </button>
             ) : (
               <AlexMorphingOrb state={deriveOrbStateV2(state, isSpeaking)} size="lg" ariaLabel="Clara" />

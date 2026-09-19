@@ -455,16 +455,22 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
           const action = aiResponse.ui_actions[0];
           if (action.type === "show_contractor" && aiResponse.primary_match) {
             cardType = "entrepreneur";
+            // Aucune donnée inventée : seuls les champs réellement retournés
+            // par le moteur de jumelage sont affichés.
             cardData = {
-              id: aiResponse.primary_match.contractor_id || "ai-match",
-              name: aiResponse.primary_match.company_name || "Professionnel recommandé",
-              specialty: aiResponse.primary_match.specialty || mem.get().service_category || "",
-              score: aiResponse.primary_match.score || 92,
-              city: aiResponse.primary_match.city || mem.get().city || "",
-              reviews: aiResponse.primary_match.reviews || 47,
-              avatar: "/placeholder.svg",
-              verified: true,
+              id: aiResponse.primary_match.contractor_id,
+              name: aiResponse.primary_match.company_name || aiResponse.primary_match.display_name,
+              specialty: aiResponse.primary_match.specialty || null,
+              score: aiResponse.primary_match.score ?? aiResponse.primary_match.match_score ?? null,
+              city: aiResponse.primary_match.city || null,
+              reviews: aiResponse.primary_match.reviews ?? null,
+              avatar: aiResponse.primary_match.logo_url || null,
+              verified: aiResponse.primary_match.verification_status === "verified",
             };
+            if (!cardData.id || !cardData.name) {
+              cardType = undefined;
+              cardData = undefined;
+            }
           } else if (action.type === "show_booking") {
             cardType = "booking_scheduler" as InlineCardType;
             cardData = action.data;

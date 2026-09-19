@@ -63,7 +63,8 @@ import type { ClaraSurfaceMode } from "@/components/home-light/ClaraContextPanel
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
-type Msg = { id: string; role: "user" | "assistant"; text: string };
+type MsgAttachment = { url: string; kind: "image" | "video" | "document"; name: string };
+type Msg = { id: string; role: "user" | "assistant"; text: string; attachments?: MsgAttachment[] };
 
 const QUOTE_PATTERN = /\b(soumission|soumissions|devis|comparer|comparaison)\b/i;
 const CONTRACTOR_PATTERN = /\b(vérifi|verification|entrepreneur|contracteur|construction|plombier|peintre|couvreur|électricien|mon entreprise|je suis pro)\b/i;
@@ -519,10 +520,21 @@ export default function ClaraConversationBox() {
           enqueueMedia(files);
         }
         const uploadId = uid();
-        const uploadText = message.text || (lang === "fr" ? "Document joint" : "Attached document");
+        const firstFile = files[0];
+        const defaultLabel = firstFile?.type.startsWith("image/")
+          ? (lang === "fr" ? "Photo envoyée" : "Photo sent")
+          : firstFile?.type.startsWith("video/")
+            ? (lang === "fr" ? "Vidéo envoyée" : "Video sent")
+            : (lang === "fr" ? "Document joint" : "Attached document");
+        const uploadText = message.text || defaultLabel;
+        const uploadAttachments: MsgAttachment[] = files.map((file) => ({
+          url: URL.createObjectURL(file),
+          kind: file.type.startsWith("video/") ? "video" : file.type.startsWith("image/") ? "image" : "document",
+          name: file.name,
+        }));
         setMessages((previous) => [
           ...previous,
-          { id: uploadId, role: "user", text: uploadText },
+          { id: uploadId, role: "user", text: uploadText, attachments: uploadAttachments },
         ]);
         void appendClaraMessage({
           role: "user",
@@ -566,7 +578,12 @@ export default function ClaraConversationBox() {
 
       const messageId = uid();
       const label = first.type.startsWith("video/") ? "Vidéo envoyée" : "Photo envoyée";
-      setMessages((previous) => [...previous, { id: messageId, role: "user", text: label }]);
+      const attachments: MsgAttachment[] = files.map((file) => ({
+        url: URL.createObjectURL(file),
+        kind: file.type.startsWith("video/") ? "video" : file.type.startsWith("image/") ? "image" : "document",
+        name: file.name,
+      }));
+      setMessages((previous) => [...previous, { id: messageId, role: "user", text: label, attachments }]);
       void appendClaraMessage({
         role: "user",
         text: label,
@@ -626,6 +643,21 @@ export default function ClaraConversationBox() {
                   data-streaming={busy && message.role === "assistant" && message.id === messages[messages.length - 1]?.id ? "true" : "false"}
                   className="home-clara-message home-clara-message leading-relaxed group-[.is-user]:bg-primary-strong group-[.is-user]:text-primary-foreground"
                 >
+                  {message.attachments && message.attachments.length > 0 && (
+                    <ul className="home-clara-attachments" aria-label="Pièces jointes">
+                      {message.attachments.map((attachment) => (
+                        <li key={attachment.url} data-kind={attachment.kind}>
+                          {attachment.kind === "image" ? (
+                            <img src={attachment.url} alt={attachment.name} />
+                          ) : attachment.kind === "video" ? (
+                            <video src={attachment.url} muted playsInline preload="metadata" aria-label={attachment.name} />
+                          ) : (
+                            <span><FileText className="h-4 w-4" aria-hidden="true" /> {attachment.name}</span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   <MessageResponse>{message.text}</MessageResponse>
                 </MessageContent>
               </Message>
