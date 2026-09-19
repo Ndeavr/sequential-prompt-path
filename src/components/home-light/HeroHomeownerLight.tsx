@@ -10,7 +10,7 @@ export default function HeroHomeownerLight() {
   };
 
   return (
-    <section className="home-glossy-hero relative isolate overflow-hidden">
+    <section className="home-glossy-hero relative isolate">
       <div aria-hidden="true" className="home-clara-ambient" />
       <div className="home-hero-content relative z-10 mx-auto flex w-full max-w-7xl flex-col items-center px-5 text-center sm:px-8">
         <motion.h1
