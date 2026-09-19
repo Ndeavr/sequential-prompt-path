@@ -140,6 +140,7 @@ function roleDefault(role: string | null): string {
     case "contractor": return "/join/profile";
     case "condo_manager": return "/condo";
     case "partner": return "/partenaire/dashboard";
+    case "affiliate": return "/affiliate";
     case "homeowner": return "/dashboard";
     default: return "/dashboard";
   }

@@ -41,6 +41,17 @@ export default function PreLoginRolePage() {
 
   const handleContinue = () => {
     if (!selected) return;
+    // Ambassador & partner have their own dedicated, server-verified paths.
+    // They must NOT go through the generic login intent (which would land
+    // them on the homeowner flow).
+    if (selected === "ambassador") {
+      navigate(`/affilies${location.search || ""}`);
+      return;
+    }
+    if (selected === "partner") {
+      navigate(`/partenaire/devenir-partenaire${location.search || ""}`);
+      return;
+    }
     // Persist selected role for post-login assignment
     const state = location.state as { from?: string } | null;
     const params = new URLSearchParams(location.search);

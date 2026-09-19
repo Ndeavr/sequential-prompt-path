@@ -283,7 +283,7 @@ export function destinationForRole(role: CanonicalRole | null, returnPath?: stri
     case "admin": return "/admin";
     case "contractor": return "/join/profile";
     case "partner": return "/partenaire/dashboard";
-    case "affiliate": return "/affilies/dashboard";
+    case "affiliate": return "/affilies/onboarding";
     default: return "/dashboard";
   }
 }
