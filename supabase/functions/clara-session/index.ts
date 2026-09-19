@@ -173,6 +173,19 @@ function sanitizeContextPatch(raw: unknown): {
     patch[key] = Array.from(new Set(valid)).slice(0, MAX_LIST);
   }
 
+  if (WORKFLOW_KEY in input) {
+    const value = input[WORKFLOW_KEY];
+    if (value === null) {
+      patch[WORKFLOW_KEY] = null;
+    } else {
+      const workflow = sanitizeWorkflow(value);
+      if (workflow) patch[WORKFLOW_KEY] = workflow;
+      else rejected.push(WORKFLOW_KEY);
+    }
+  }
+
+
+
   return { patch, rejected };
 }
 
